@@ -17,5 +17,8 @@
     "tests": "jasmine --config=jasmine.json --reporter=tests/helpers/reporter.js",
     "docs": "jsdoc -c jsdoc.json",
     "rp": "repopack -c repopack.config.json . "
+  },
+  "devDependencies": {
+    "jasmine": "^5.4.0"
   }
 }
