@@ -1,0 +1,21 @@
+{
+  "name": "semem",
+  "type": "module",
+  "version": "1.0.0",
+  "description": "vector-sparql-memory",
+  "main": "index.js",
+  "repository": "https://github.com/danja/semem.git",
+  "author": "Danny Ayers <danny.ayers@gmail.com>",
+  "license": "MIT",
+  "private": true,
+  "workspaces": {
+    "nohoist": [
+      "**/hyperdata-desktop/**"
+    ]
+  },
+  "scripts": {
+    "tests": "jasmine --config=jasmine.json --reporter=tests/helpers/reporter.js",
+    "docs": "jsdoc -c jsdoc.json",
+    "rp": "repopack -c repopack.config.json . "
+  }
+}
