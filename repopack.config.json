@@ -1,7 +1,7 @@
 {
     "output": {
-        "filePath": "./repopack-transmissions-large.txt",
-        "headerText": "Transmissions source code",
+        "filePath": "./repopack-semem.txt",
+        "headerText": "Semem source code",
         "removeComments": true
     },
     "ignore": {
