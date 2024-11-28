@@ -27,5 +27,11 @@
   "devDependencies": {
     "jasmine": "^5.4.0",
     "jsdoc": "^4.0.4"
+  },
+  "dependencies": {
+    "@langchain/core": "^0.3.19",
+    "@langchain/openai": "^0.3.14",
+    "faiss": "^1.0.0",
+    "ollama": "^0.5.10"
   }
 }
