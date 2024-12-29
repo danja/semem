@@ -9,11 +9,10 @@
         "customPatterns": [
             ".env",
             "**/_*",
-            ".git",
             "node_modules",
             "*.log",
             "docs",
-            "**/*repopack*.txt",
+            "**/*repomix*.txt",
             "**/*.html",
             "**/data/*",
             "**/*copy.js",
