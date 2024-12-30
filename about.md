@@ -1,6 +1,10 @@
 # About
 
 ```sh
+node src/OllamaExample.js
+```
+
+```sh
 # ollama pull nomic-embed-text
 
 curl http://localhost:11434/api/embeddings -d '{
