@@ -13,7 +13,7 @@ export default class Config {
         models: {
             chat: {
                 provider: 'ollama',
-                model: 'llama2',
+                model: 'qwen2:1.5b',
                 options: {}
             },
             embedding: {
@@ -27,7 +27,20 @@ export default class Config {
             similarityThreshold: 40,
             contextWindow: 3,
             decayRate: 0.0001
-        }
+        },
+        sparqlEndpoints: [
+            {
+                label: "tbox-test",
+                user: "admin",
+                password: "admin123",
+                urlBase: "http://localhost:4030",
+                upload: "/test/upload",
+                gspRead: "/test/get",
+                query: "/test/query",
+                update: "/test/update"
+            }
+        ]
+
     };
 
     constructor(userConfig = {}) {

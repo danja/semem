@@ -1,0 +1,153 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix dc: <http://purl.org/dc/terms/> .
+@prefix doap: <http://usefulinc.com/ns/doap#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix prj: <http://example.org/project/> .
+@prefix mcp: <http://purl.org/stuff/mcp/> .
+@prefix qb: <http://purl.org/linked-data/cube#> .
+
+prj:SPARQLStore
+    a doap:Project ;
+    dc:title "SPARQL Storage Implementation"@en ;
+    dc:description "Persistent storage implementation for Memory Context Protocol using SPARQL and RDF"@en ;
+    dc:created "2024-12-30"^^xsd:date ;
+    dc:status "Production"@en ;
+    doap:programming-language "JavaScript" ;
+    doap:repository [
+        a doap:GitRepository ;
+        doap:location <https://github.com/danja/semem>
+    ] ;
+    prj:mainFile "src/stores/SPARQLStore.js" ;
+    prj:testFile "spec/integration/SPARQLStore.spec.js" .
+
+prj:CoreComponents
+    a prj:ComponentSet ;
+    prj:includes prj:SPARQLStore, prj:CachedSPARQLStore ;
+    prj:mainFeatures (
+        "SPARQL endpoint interaction"
+        "Named graph storage"
+        "Transaction support"
+        "Query federation"
+        "Result caching"
+    ) .
+
+prj:DataModel
+    a prj:ArchitectureComponent ;
+    prj:usesVocabulary mcp:, qb:, skos: ;
+    prj:graphTypes (
+        [
+            rdfs:label "Main Memory Graph" ;
+            dc:description "Stores current memory state"
+        ]
+        [
+            rdfs:label "Backup Graph" ;
+            dc:description "Used for transaction management"
+        ]
+        [
+            rdfs:label "Metadata Graph" ;
+            dc:description "Stores version information and statistics"
+        ]
+    ) .
+
+prj:TransactionManagement
+    a prj:Feature ;
+    rdfs:label "Transaction Management" ;
+    prj:steps (
+        "Create backup graph copy"
+        "Perform operations on main graph"
+        "Remove backup on commit"
+        "Restore from backup on rollback"
+    ) .
+
+prj:QueryFederation
+    a prj:Feature ;
+    rdfs:label "Query Federation" ;
+    prj:aspects (
+        "Cross-graph queries"
+        "SERVICE keyword usage"
+        "Cache optimization"
+    ) .
+
+prj:TestingFramework
+    a prj:TestSuite ;
+    prj:includes [
+        rdfs:label "Core Tests" ;
+        prj:covers (
+            "Storage operations"
+            "Transactions"
+            "Federation"
+            "Caching"
+        )
+    ], [
+        rdfs:label "Integration Tests" ;
+        prj:covers (
+            "Backup operations"
+            "Advanced scenarios"
+            "Federation patterns"
+            "Large datasets"
+        )
+    ] .
+
+prj:Configuration
+    a prj:SystemConfig ;
+    prj:endpoints [
+        rdfs:label "SPARQL Endpoints" ;
+        prj:queryEndpoint "/test/query" ;
+        prj:updateEndpoint "/test/update" ;
+        prj:gspEndpoint "/test/get"
+    ] ;
+    prj:authentication [
+        a prj:AuthConfig ;
+        rdfs:label "Basic Authentication" ;
+        prj:configLocation "Config.js"
+    ] .
+
+prj:Limitations
+    a prj:KnownIssues ;
+    prj:issues (
+        "Large dataset performance requires caching"
+        "No built-in compression"
+        "Single endpoint backup only"
+        "Basic auth only"
+    ) .
+
+prj:FutureImprovements
+    a prj:Roadmap ;
+    prj:planned (
+        "Backup compression"
+        "Multi-endpoint replication"
+        "Advanced authentication"
+        "Query optimization"
+        "Backup versioning"
+        "SHACL validation"
+    ) ;
+    prj:priority "High" ;
+    dc:date "2025-06"^^xsd:gYearMonth .
+
+prj:CriticalNotes
+    a prj:Documentation ;
+    prj:notes (
+        "Always use transactions for updates"
+        "Monitor backup graph cleanup"
+        "Handle concurrent access"
+        "Verify data integrity"
+    ) ;
+    dc:importance "Critical" .
+
+prj:Dependencies
+    a prj:Requirements ;
+    prj:requires (
+        "Node.js fetch API"
+        "SPARQL 1.1 endpoint"
+        "Graph store protocol support"
+    ) .
+
+prj:Support
+    a prj:Documentation ;
+    prj:sourceCode "src/stores/SPARQLStore.js" ;
+    prj:tests "spec/integration/" ;
+    prj:documentation "docs/" ;
+    prj:issueTracker <https://github.com/danja/semem/issues> .

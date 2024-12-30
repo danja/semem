@@ -2,6 +2,8 @@
 
 ```sh
 node src/OllamaExample.js
+...
+ node src/SPARQLExample.js
 ```
 
 ```sh
