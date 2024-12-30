@@ -1,5 +1,4 @@
-// spec/unit/ContextWindow.spec.js
-import ContextWindowManager from '../../src/contextWindow.js';
+import ContextWindowManager from '../../src/ContextWindowManager.js';
 
 describe('ContextWindowManager', () => {
     let windowManager;

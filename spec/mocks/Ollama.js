@@ -1,5 +1,4 @@
-// spec/mocks/Olama.js
-export class MockOllamaAPI {
+export class MockOllamaConnector {
     async generateEmbedding(model, input) {
         return new Array(1536).fill(0).map(() => Math.random());
     }

@@ -1,11 +1,11 @@
 // spec/integration/ollama.spec.js
-import OllamaAPI from './ollama-api.js';
+import OllamaConnector from '../../src/connectors/OllamaConnector.js';
 
-describe('OllamaAPI Integration', () => {
+describe('OllamaConnector Integration', () => {
     let api;
 
     beforeEach(() => {
-        api = new OllamaAPI('http://localhost:11434');
+        api = new OllamaConnector('http://localhost:11434');
     });
 
     it('should generate chat response', async () => {

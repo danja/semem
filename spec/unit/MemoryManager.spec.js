@@ -1,17 +1,17 @@
 // spec/unit/MemoryManager.spec.js
-import MemoryManager from '../../src/memoryManager.js';
-import { MockOllamaAPI } from '../mocks/ollama.js';
-import InMemoryStorage from '../../src/inMemoryStorage.js';
+import MemoryManager from '../../src/MemoryManager.js';
+import { MockOllamaConnector } from '../mocks/Ollama.js';
+import InMemoryStore from '../../src/stores/InMemoryStore.js';
 
 describe('MemoryManager', () => {
     let manager;
     let mockOllama;
 
     beforeEach(() => {
-        mockOllama = new MockOllamaAPI();
+        mockOllama = new MockOllamaConnector();
         manager = new MemoryManager({
             llmProvider: mockOllama,
-            chatModel: 'llama2',
+            chatModel: 'qwen2:1.5b', // was llama2
             embeddingModel: 'nomic-embed-text',
             storage: new InMemoryStorage()
         });
