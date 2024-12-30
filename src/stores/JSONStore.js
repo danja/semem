@@ -1,8 +1,8 @@
 import { promises as fs } from 'fs';
-import BaseStorage from './storage.js';
+import BaseStorage from './stores/BaseStore.js';
 import { logger } from './utils.js';
 
-export default class JSONStorage extends BaseStorage {
+export default class JSONStore extends BaseStorage {
     constructor(filePath = 'interaction_history.json') {
         super();
         this.filePath = filePath;

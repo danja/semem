@@ -1,7 +1,7 @@
 import faiss from 'faiss';
 import { createRequire } from 'module';
 import { kmeans } from 'ml-kmeans';
-import { logger, vectorOps } from './utils.js';
+import { logger, vectorOps } from './Utils.js';
 
 const require = createRequire(import.meta.url);
 const { Graph } = require('graphology');
@@ -22,11 +22,11 @@ export default class MemoryStore {
     }
 
     addInteraction(interaction) {
-        const { id, prompt, output, embedding, timestamp = Date.now(), 
-                accessCount = 1, concepts = [], decayFactor = 1.0 } = interaction;
+        const { id, prompt, output, embedding, timestamp = Date.now(),
+            accessCount = 1, concepts = [], decayFactor = 1.0 } = interaction;
 
         logger.info(`Adding interaction: '${prompt}'`);
-        
+
         this.shortTermMemory.push({
             id, prompt, output, timestamp, accessCount, decayFactor
         });
@@ -65,7 +65,7 @@ export default class MemoryStore {
 
     classifyMemory() {
         this.shortTermMemory.forEach((interaction, idx) => {
-            if (this.accessCounts[idx] > 10 && 
+            if (this.accessCounts[idx] > 10 &&
                 !this.longTermMemory.some(ltm => ltm.id === interaction.id)) {
                 this.longTermMemory.push(interaction);
                 logger.info(`Moved interaction ${interaction.id} to long-term memory`);
@@ -117,7 +117,7 @@ export default class MemoryStore {
         });
 
         const activatedConcepts = await this.spreadingActivation(queryConcepts);
-        
+
         // Combine results
         return this.combineResults(relevantInteractions, activatedConcepts, normalizedQuery);
     }
@@ -134,20 +134,20 @@ export default class MemoryStore {
         // Spread activation for 2 steps
         for (let step = 0; step < 2; step++) {
             const newActivations = new Map();
-            
+
             for (const [node, activation] of activatedNodes) {
                 if (this.graph.hasNode(node)) {
                     this.graph.forEachNeighbor(node, (neighbor, attributes) => {
                         if (!activatedNodes.has(neighbor)) {
                             const weight = attributes.weight;
                             const newActivation = activation * decayFactor * weight;
-                            newActivations.set(neighbor, 
+                            newActivations.set(neighbor,
                                 (newActivations.get(neighbor) || 0) + newActivation);
                         }
                     });
                 }
             }
-            
+
             newActivations.forEach((value, key) => {
                 activatedNodes.set(key, value);
             });
@@ -161,7 +161,7 @@ export default class MemoryStore {
 
         const embeddingsMatrix = this.embeddings.map(e => Array.from(e));
         const numClusters = Math.min(10, this.embeddings.length);
-        
+
         const { clusters } = kmeans(embeddingsMatrix, numClusters);
         this.clusterLabels = clusters;
 
@@ -188,7 +188,7 @@ export default class MemoryStore {
         });
 
         combined.sort((a, b) => b.totalScore - a.totalScore);
-        
+
         // Add semantic memory results
         const semanticResults = this.retrieveFromSemanticMemory(normalizedQuery);
         return [...combined, ...semanticResults];
@@ -204,7 +204,7 @@ export default class MemoryStore {
         this.semanticMemory.forEach((items, label) => {
             const centroid = this.calculateCentroid(items.map(i => i.embedding));
             const similarity = vectorOps.cosineSimilarity(normalizedQuery, centroid);
-            
+
             if (similarity > bestSimilarity) {
                 bestSimilarity = similarity;
                 bestCluster = label;
@@ -217,7 +217,7 @@ export default class MemoryStore {
         return this.semanticMemory.get(bestCluster)
             .map(({ embedding, interaction }) => ({
                 ...interaction,
-                similarity: vectorOps.cosineSimilarity(normalizedQuery, 
+                similarity: vectorOps.cosineSimilarity(normalizedQuery,
                     vectorOps.normalize(Array.from(embedding)))
             }))
             .sort((a, b) => b.similarity - a.similarity)
@@ -229,7 +229,7 @@ export default class MemoryStore {
             const arr = Array.from(curr);
             return acc.map((val, idx) => val + arr[idx]);
         }, new Array(this.dimension).fill(0));
-        
+
         return sum.map(val => val / embeddings.length);
     }
 }

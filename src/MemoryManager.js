@@ -1,10 +1,10 @@
-// src/memoryManager.js
+// src/MemoryManager.js
 import { v4 as uuidv4 } from 'uuid';
-import MemoryStore from './memoryStore.js';
-import InMemoryStorage from './inMemoryStorage.js';
-import ContextManager from './contextManager.js';
-import PromptTemplates from './promptTemplates.js';
-import { logger } from './utils.js';
+import MemoryStore from './stores/MemoryStore.js';
+import InMemoryStore from './stores/InMemoryStore.js';
+import ContextManager from './ContextManager.js';
+import PromptTemplates from './PromptTemplates.js';
+import { logger } from './Utils.js';
 
 export default class MemoryManager {
     constructor({
@@ -24,7 +24,7 @@ export default class MemoryManager {
 
         // Initialize components
         this.memoryStore = new MemoryStore(this.dimension);
-        this.storage = storage || new InMemoryStorage();
+        this.storage = storage || new InMemoryStore();
         this.contextManager = new ContextManager(contextOptions);
 
         this.initialize();
@@ -78,14 +78,14 @@ export default class MemoryManager {
                 prompt,
                 { temperature: 0.2 }
             );
-            
+
             const match = response.match(/\[.*\]/);
             if (match) {
                 const concepts = JSON.parse(match[0]);
                 logger.info('Extracted concepts:', concepts);
                 return concepts;
             }
-            
+
             logger.info('No concepts extracted, returning empty array');
             return [];
         } catch (error) {

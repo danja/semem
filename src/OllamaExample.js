@@ -1,7 +1,7 @@
 // src/ollama-example.js
-import MemoryManager from './memoryManager.js';
-import JSONStorage from './jsonStorage.js';
-import Config from './config.js';
+import MemoryManager from './MemoryManager.js';
+import JSONStore from './JSONStore.js';
+import Config from './Config.js';
 import OllamaAPI from './ollama-api.js';
 
 async function main() {
@@ -35,7 +35,7 @@ async function main() {
     });
 
     const prompt = "What's the current state of AI technology?";
-    
+
     const relevantInteractions = await memoryManager.retrieveRelevantInteractions(prompt);
     const response = await memoryManager.generateResponse(prompt, [], relevantInteractions);
     console.log('Response:', response);

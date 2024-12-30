@@ -1,7 +1,7 @@
-// src/ollama-api.js
+
 import fetch from 'node-fetch';
 
-export default class OllamaAPI {
+export default class OllamaConnector {
     constructor(baseUrl = 'http://localhost:11434') {
         this.baseUrl = baseUrl;
     }
@@ -10,8 +10,8 @@ export default class OllamaAPI {
         const response = await fetch(`${this.baseUrl}/api/embeddings`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                model, 
+            body: JSON.stringify({
+                model,
                 prompt: input,
                 options: {
                     num_ctx: 8192

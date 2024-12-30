@@ -1,7 +1,7 @@
-import BaseStorage from './storage.js';
-import { logger } from './utils.js';
+import BaseStore from './BaseStore.js';
+import { logger } from '../Utils.js';
 
-export default class InMemoryStorage extends BaseStorage {
+export default class InMemoryStore extends BaseStore {
     constructor() {
         super();
         this.history = {
@@ -20,7 +20,7 @@ export default class InMemoryStorage extends BaseStorage {
 
     async saveMemoryToHistory(memoryStore) {
         logger.info('Saving history to in-memory storage');
-        
+
         this.history = {
             shortTermMemory: memoryStore.shortTermMemory.map((item, idx) => ({
                 id: item.id,
@@ -34,7 +34,7 @@ export default class InMemoryStorage extends BaseStorage {
             })),
             longTermMemory: [...memoryStore.longTermMemory]
         };
-        
+
         logger.info(`Saved ${this.history.shortTermMemory.length} short-term and ${this.history.longTermMemory.length} long-term memories`);
     }
 }

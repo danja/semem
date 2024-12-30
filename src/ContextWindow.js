@@ -1,5 +1,5 @@
-// src/contextWindow.js
-import { logger } from './utils.js';
+// src/ContextWindow.js
+import { logger } from './Utils.js';
 
 export default class ContextWindowManager {
     constructor(options = {}) {
@@ -17,7 +17,7 @@ export default class ContextWindowManager {
     // Calculate optimal window size based on input
     calculateWindowSize(input) {
         const estimatedTokens = this.estimateTokens(input);
-        
+
         // Scale window size based on input length
         let windowSize = Math.min(
             this.maxWindowSize,
@@ -36,7 +36,7 @@ export default class ContextWindowManager {
         const windows = [];
         const overlapSize = Math.floor(windowSize * this.overlapRatio);
         const stride = windowSize - overlapSize;
-        
+
         let position = 0;
         while (position < text.length) {
             const window = {
@@ -44,7 +44,7 @@ export default class ContextWindowManager {
                 start: position,
                 end: Math.min(position + windowSize, text.length)
             };
-            
+
             windows.push(window);
             position += stride;
 
@@ -72,7 +72,7 @@ export default class ContextWindowManager {
         let merged = windows[0].text;
         for (let i = 1; i < windows.length; i++) {
             const overlap = this._findBestOverlap(
-                merged.slice(-this.maxWindowSize), 
+                merged.slice(-this.maxWindowSize),
                 windows[i].text
             );
             merged += windows[i].text.slice(overlap);
@@ -87,12 +87,12 @@ export default class ContextWindowManager {
         for (let overlap = Math.min(end.length, start.length); overlap >= minOverlap; overlap--) {
             const endSlice = end.slice(-overlap);
             const startSlice = start.slice(0, overlap);
-            
+
             if (endSlice === startSlice) {
                 return overlap;
             }
         }
-        
+
         return 0;
     }
 
@@ -100,9 +100,9 @@ export default class ContextWindowManager {
     processContext(context, options = {}) {
         const windowSize = this.calculateWindowSize(context);
         const windows = this.createWindows(context, windowSize);
-        
+
         logger.debug(`Created ${windows.length} windows with size ${windowSize}`);
-        
+
         // Add window metadata if requested
         if (options.includeMetadata) {
             return windows.map(window => ({
@@ -110,7 +110,7 @@ export default class ContextWindowManager {
                 tokenEstimate: this.estimateTokens(window.text)
             }));
         }
-        
+
         return windows;
     }
 }

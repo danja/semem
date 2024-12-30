@@ -1,5 +1,5 @@
 // Base storage class defining interface
-export default class BaseStorage {
+export default class BaseStore {
     async loadHistory() {
         throw new Error('Method loadHistory() must be implemented');
     }

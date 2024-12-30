@@ -1,5 +1,5 @@
-// src/contextManager.js
-import { logger } from './utils.js';
+// src/ContextManager.js
+import { logger } from './Utils.js';
 
 export default class ContextManager {
     constructor(options = {}) {
@@ -8,7 +8,7 @@ export default class ContextManager {
         this.relevanceThreshold = options.relevanceThreshold || 0.7;
         this.maxContextSize = options.maxContextSize || 5;
         this.contextBuffer = [];
-        
+
         this.windowManager = new ContextWindowManager({
             maxWindowSize: this.maxTokens,
             minWindowSize: Math.floor(this.maxTokens / 4),
@@ -43,7 +43,7 @@ export default class ContextManager {
     summarizeContext(interactions) {
         // Group interactions by topic/concept
         const groupedInteractions = {};
-        
+
         for (const interaction of interactions) {
             const mainConcept = interaction.concepts?.[0] || 'general';
             if (!groupedInteractions[mainConcept]) {
@@ -102,13 +102,13 @@ export default class ContextManager {
         const historicalContext = this.summarizeContext(
             this.contextBuffer.slice(0, this.maxContextSize)
         );
-        
+
         if (historicalContext) {
             contextParts.push('Relevant Context:', historicalContext);
         }
 
         const fullContext = contextParts.join('\n\n');
-        
+
         // Process context through window manager if it might exceed limits
         if (this.windowManager.estimateTokens(fullContext) > this.maxTokens) {
             const windows = this.windowManager.processContext(fullContext);
