@@ -15,7 +15,7 @@ async function main() {
         models: {
             chat: {
                 provider: 'ollama',
-                model: 'llama2'
+                model: 'qwen2:1.5b'
             },
             embedding: {
                 provider: 'ollama',
