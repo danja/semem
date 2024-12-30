@@ -9,7 +9,7 @@ const { Graph } = require('graphology');
 export default class MemoryStore {
     constructor(dimension = 1536) {
         this.dimension = dimension;
-        this.initializeIndex();
+        this.index = new faiss.IndexFlatL2(dimension);
         this.shortTermMemory = [];
         this.longTermMemory = [];
         this.embeddings = [];
@@ -21,56 +21,24 @@ export default class MemoryStore {
         this.clusterLabels = [];
     }
 
-    initializeIndex() {
-        try {
-            this.index = new faiss.IndexFlatL2(this.dimension);
-            if (!this.index || !this.index.getDimension) {
-                throw new Error('Failed to initialize FAISS index');
-            }
-            logger.info(`Initialized FAISS index with dimension ${this.dimension}`);
-        } catch (error) {
-            logger.error('FAISS index initialization failed:', error);
-            throw new Error('Failed to initialize FAISS index: ' + error.message);
-        }
-    }
-
-    validateEmbedding(embedding) {
-        if (!Array.isArray(embedding)) {
-            throw new TypeError('Embedding must be an array');
-        }
-        if (embedding.length !== this.dimension) {
-            throw new Error(`Embedding dimension mismatch: expected ${this.dimension}, got ${embedding.length}`);
-        }
-        if (!embedding.every(x => typeof x === 'number' && !isNaN(x))) {
-            throw new TypeError('Embedding must contain only valid numbers');
-        }
-    }
-
     addInteraction(interaction) {
         const { id, prompt, output, embedding, timestamp = Date.now(),
             accessCount = 1, concepts = [], decayFactor = 1.0 } = interaction;
 
-        try {
-            this.validateEmbedding(embedding);
-            logger.info(`Adding interaction: '${prompt}'`);
+        logger.info(`Adding interaction: '${prompt}'`);
 
-            this.shortTermMemory.push({
-                id, prompt, output, timestamp, accessCount, decayFactor
-            });
+        this.shortTermMemory.push({
+            id, prompt, output, timestamp, accessCount, decayFactor
+        });
 
-            const embeddingArray = Float32Array.from(embedding);
-            this.embeddings.push(embeddingArray);
-            this.index.add(embedding);
-            this.timestamps.push(timestamp);
-            this.accessCounts.push(accessCount);
-            this.conceptsList.push(new Set(concepts));
+        this.embeddings.push(new Float32Array(embedding.flat()));
+        this.index.add(new Float32Array(embedding.flat()));
+        this.timestamps.push(timestamp);
+        this.accessCounts.push(accessCount);
+        this.conceptsList.push(new Set(concepts));
 
-            this.updateGraph(new Set(concepts));
-            this.clusterInteractions();
-        } catch (error) {
-            logger.error('Failed to add interaction:', error);
-            throw error;
-        }
+        this.updateGraph(new Set(concepts));
+        this.clusterInteractions();
     }
 
     updateGraph(concepts) {

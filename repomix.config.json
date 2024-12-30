@@ -10,6 +10,9 @@
     "ignore": {
         "useDefaultPatterns": false,
         "customPatterns": [
+            "docs",
+            "docs/jsdoc",
+            ".nyc_output",
             ".env",
             "**/_*",
             "node_modules",
