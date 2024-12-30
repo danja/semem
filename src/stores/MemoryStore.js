@@ -1,7 +1,7 @@
-import faiss from 'faiss';
+import faiss from 'faiss-node';
 import { createRequire } from 'module';
 import { kmeans } from 'ml-kmeans';
-import { logger, vectorOps } from './Utils.js';
+import { logger, vectorOps } from '../Utils.js';
 
 const require = createRequire(import.meta.url);
 const { Graph } = require('graphology');

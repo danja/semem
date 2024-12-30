@@ -1,4 +1,4 @@
-// src/ContextManager.js
+import ContextWindowManager from './ContextWindowManager.js'
 import { logger } from './Utils.js';
 
 export default class ContextManager {

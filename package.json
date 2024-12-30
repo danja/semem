@@ -32,7 +32,9 @@
   "dependencies": {
     "@langchain/core": "^0.3.19",
     "@langchain/openai": "^0.3.14",
-    "faiss": "^1.0.0",
+    "faiss-node": "^0.5.1",
+    "graphology": "^0.25.4",
+    "ml-kmeans": "^6.0.0",
     "ollama": "^0.5.10"
   }
 }

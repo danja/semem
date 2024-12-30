@@ -1,8 +1,8 @@
 // src/ollama-example.js
 import MemoryManager from './MemoryManager.js';
-import JSONStore from './JSONStore.js';
+import JSONStore from './stores/JSONStore.js';
 import Config from './Config.js';
-import OllamaAPI from './ollama-api.js';
+import OllamaConnector from './connectors/OllamaConnector.js';
 
 async function main() {
     const config = new Config({
@@ -24,8 +24,8 @@ async function main() {
         }
     });
 
-    const storage = new JSONStorage(config.get('storage.options.path'));
-    const ollama = new OllamaAPI();
+    const storage = new JSONStore(config.get('storage.options.path'));
+    const ollama = new OllamaConnector();
 
     const memoryManager = new MemoryManager({
         llmProvider: ollama,
