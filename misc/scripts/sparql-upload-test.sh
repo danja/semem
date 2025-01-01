@@ -1,3 +1,5 @@
+#!/bin/sh
+
 curl -X POST \
   -H "Authorization: Basic $(echo -n 'admin:admin123' | base64)" \
   -H "Content-Type: text/turtle" \

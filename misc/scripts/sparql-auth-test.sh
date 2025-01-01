@@ -1,3 +1,5 @@
+#!/bin/sh
+
 curl -X POST \
   -H "Authorization: Basic $(echo -n 'invalid:credentials' | base64)" \
   -H "Content-Type: application/sparql-query" \
