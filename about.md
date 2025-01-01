@@ -14,3 +14,13 @@ curl http://localhost:11434/api/embeddings -d '{
   "prompt": "The sky is blue because of Rayleigh scattering"
 }'
 ```
+
+```sh
+npm test -- --filter="SPARQL Endpoint Integration"
+```
+
+Needs #:tbox
+
+```sh
+ docker-compose up -d
+```
