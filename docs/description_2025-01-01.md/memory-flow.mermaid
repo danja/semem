@@ -1,0 +1,19 @@
+sequenceDiagram
+    participant U as User
+    participant MM as MemoryManager
+    participant LLM as LLM Provider
+    participant S as Storage
+
+    U->>MM: New Interaction
+    MM->>LLM: Generate Embedding
+    MM->>LLM: Extract Concepts
+    
+    MM->>MM: Process Memory
+    Note over MM: Classify Memory<br/>Update Concepts Graph<br/>Calculate Decay
+    
+    MM->>S: Store Memory
+    
+    U->>MM: Query Memory
+    MM->>S: Retrieve Similar
+    MM->>MM: Apply Context
+    MM->>U: Return Response
