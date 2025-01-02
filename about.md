@@ -1,6 +1,16 @@
 # About
 
+Needs a SPARQL endpoint - like #:tbox
+
 ```sh
+cd ~/github-danny/hyperdata/packages/tbox/
+
+ docker-compose up -d
+```
+
+```sh
+cd ~/github-danny/hyperdata/packages/semem
+
 node src/OllamaExample.js
 ...
  node src/SPARQLExample.js
@@ -17,10 +27,4 @@ curl http://localhost:11434/api/embeddings -d '{
 
 ```sh
 npm test -- --filter="SPARQL Endpoint Integration"
-```
-
-Needs #:tbox
-
-```sh
- docker-compose up -d
 ```

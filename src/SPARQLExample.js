@@ -37,7 +37,7 @@ async function main() {
     });
 
     // Example usage
-    const prompt = "What's the current state of AI technology?";
+    const prompt = "What's the current state of the Semantic Web?";
     try {
         const relevantInteractions = await memoryManager.retrieveRelevantInteractions(prompt);
         const response = await memoryManager.generateResponse(prompt, [], relevantInteractions);
