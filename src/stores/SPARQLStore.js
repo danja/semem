@@ -11,6 +11,7 @@ export default class SPARQLStore extends BaseStore {
         };
         this.graphName = options.graphName || 'http://example.org/mcp/memory';
         this.inTransaction = false;
+        this.dimension = options.dimension || 1536;
     }
 
     async _executeSparqlQuery(query, endpoint) {
@@ -67,9 +68,20 @@ export default class SPARQLStore extends BaseStore {
         }
     }
 
+    validateEmbedding(embedding) {
+        if (!Array.isArray(embedding)) {
+            throw new TypeError('Embedding must be an array');
+        }
+        if (embedding.length !== this.dimension) {
+            throw new Error(`Embedding dimension mismatch: expected ${this.dimension}, got ${embedding.length}`);
+        }
+        if (!embedding.every(x => typeof x === 'number' && !isNaN(x))) {
+            throw new TypeError('Embedding must contain only valid numbers');
+        }
+    }
+
     async verify() {
         try {
-            // First try to create graph if it doesn't exist
             try {
                 const createQuery = `
                     CREATE SILENT GRAPH <${this.graphName}>;
@@ -79,11 +91,9 @@ export default class SPARQLStore extends BaseStore {
                 `;
                 await this._executeSparqlUpdate(createQuery, this.endpoint.update);
             } catch (error) {
-                // Ignore errors, graph might already exist
                 logger.debug('Graph creation skipped:', error.message);
             }
 
-            // Verify graph exists
             const checkQuery = `ASK { GRAPH <${this.graphName}> { ?s ?p ?o } }`;
             const result = await this._executeSparqlQuery(checkQuery, this.endpoint.query);
             return result.boolean;
@@ -120,16 +130,38 @@ export default class SPARQLStore extends BaseStore {
             const shortTermMemory = [];
             const longTermMemory = [];
 
-            result.results.bindings.forEach(binding => {
+            for (const binding of result.results.bindings) {
                 try {
+                    let embedding = new Array(this.dimension).fill(0);
+                    if (binding.embedding?.value && binding.embedding.value !== 'undefined') {
+                        try {
+                            embedding = JSON.parse(binding.embedding.value.trim());
+                            this.validateEmbedding(embedding);
+                        } catch (embeddingError) {
+                            logger.error('Invalid embedding format:', embeddingError);
+                        }
+                    }
+
+                    let concepts = [];
+                    if (binding.concepts?.value && binding.concepts.value !== 'undefined') {
+                        try {
+                            concepts = JSON.parse(binding.concepts.value.trim());
+                            if (!Array.isArray(concepts)) {
+                                throw new Error('Concepts must be an array');
+                            }
+                        } catch (conceptsError) {
+                            logger.error('Invalid concepts format:', conceptsError);
+                        }
+                    }
+
                     const interaction = {
                         id: binding.id.value,
                         prompt: binding.prompt.value,
                         output: binding.output.value,
-                        embedding: binding.embedding ? JSON.parse(binding.embedding.value.trim()) : new Array(1536).fill(0),
+                        embedding,
                         timestamp: parseInt(binding.timestamp.value) || Date.now(),
                         accessCount: parseInt(binding.accessCount.value) || 1,
-                        concepts: binding.concepts ? JSON.parse(binding.concepts.value.trim()) : [],
+                        concepts,
                         decayFactor: parseFloat(binding.decayFactor.value) || 1.0
                     };
 
@@ -141,13 +173,13 @@ export default class SPARQLStore extends BaseStore {
                 } catch (parseError) {
                     logger.error('Failed to parse interaction:', parseError, binding);
                 }
-            });
+            }
 
             logger.info(`Loaded ${shortTermMemory.length} short-term and ${longTermMemory.length} long-term memories from store ${this.endpoint.query} graph <${this.graphName}>`);
             return [shortTermMemory, longTermMemory];
         } catch (error) {
-            logger.error('Error loading history from SPARQL store:', error);
-            throw error;
+            logger.error('Error loading history:', error);
+            return [[], []];
         }
     }
 
@@ -160,14 +192,12 @@ export default class SPARQLStore extends BaseStore {
             await this.verify();
             await this.beginTransaction();
 
-            // Clear existing data
             const clearQuery = `
                 PREFIX mcp: <http://purl.org/stuff/mcp/>
                 CLEAR GRAPH <${this.graphName}>
             `;
             await this._executeSparqlUpdate(clearQuery, this.endpoint.update);
 
-            // Insert new data
             const insertQuery = `
                 PREFIX mcp: <http://purl.org/stuff/mcp/>
                 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
@@ -192,18 +222,37 @@ export default class SPARQLStore extends BaseStore {
     }
 
     _generateInsertStatements(memories, type) {
-        return memories.map((interaction, index) => `
-            _:interaction${type}${index} a mcp:Interaction ;
-                mcp:id "${interaction.id}" ;
-                mcp:prompt "${this._escapeSparqlString(interaction.prompt)}" ;
-                mcp:output "${this._escapeSparqlString(interaction.output)}" ;
-                mcp:embedding """${JSON.stringify(interaction.embedding)}""" ;
-                mcp:timestamp "${interaction.timestamp}"^^xsd:integer ;
-                mcp:accessCount "${interaction.accessCount}"^^xsd:integer ;
-                mcp:concepts """${JSON.stringify(interaction.concepts)}""" ;
-                mcp:decayFactor "${interaction.decayFactor}"^^xsd:decimal ;
-                mcp:memoryType "${type}" .
-        `).join('\n');
+        return memories.map((interaction, index) => {
+            // Ensure embedding is valid before saving
+            let embeddingStr = '[]';
+            if (Array.isArray(interaction.embedding)) {
+                try {
+                    this.validateEmbedding(interaction.embedding);
+                    embeddingStr = JSON.stringify(interaction.embedding);
+                } catch (error) {
+                    logger.error('Invalid embedding in memory:', error);
+                }
+            }
+
+            // Ensure concepts is valid before saving
+            let conceptsStr = '[]';
+            if (Array.isArray(interaction.concepts)) {
+                conceptsStr = JSON.stringify(interaction.concepts);
+            }
+
+            return `
+                _:interaction${type}${index} a mcp:Interaction ;
+                    mcp:id "${interaction.id}" ;
+                    mcp:prompt "${this._escapeSparqlString(interaction.prompt)}" ;
+                    mcp:output "${this._escapeSparqlString(interaction.output)}" ;
+                    mcp:embedding """${embeddingStr}""" ;
+                    mcp:timestamp "${interaction.timestamp}"^^xsd:integer ;
+                    mcp:accessCount "${interaction.accessCount}"^^xsd:integer ;
+                    mcp:concepts """${conceptsStr}""" ;
+                    mcp:decayFactor "${interaction.decayFactor}"^^xsd:decimal ;
+                    mcp:memoryType "${type}" .
+            `;
+        }).join('\n');
     }
 
     _escapeSparqlString(str) {
@@ -217,7 +266,6 @@ export default class SPARQLStore extends BaseStore {
 
         this.inTransaction = true;
 
-        // Create backup
         const backupQuery = `
             PREFIX mcp: <http://purl.org/stuff/mcp/>
             COPY GRAPH <${this.graphName}> TO GRAPH <${this.graphName}.backup>
@@ -231,7 +279,6 @@ export default class SPARQLStore extends BaseStore {
         }
 
         try {
-            // Remove backup
             const dropBackup = `
                 PREFIX mcp: <http://purl.org/stuff/mcp/>
                 DROP SILENT GRAPH <${this.graphName}.backup>
@@ -248,7 +295,6 @@ export default class SPARQLStore extends BaseStore {
         }
 
         try {
-            // Restore from backup
             const restoreQuery = `
                 PREFIX mcp: <http://purl.org/stuff/mcp/>
                 DROP SILENT GRAPH <${this.graphName}> ;

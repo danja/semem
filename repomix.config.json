@@ -11,6 +11,7 @@
         "useDefaultPatterns": false,
         "customPatterns": [
             "docs",
+            "data",
             "docs/jsdoc",
             ".nyc_output",
             ".env",

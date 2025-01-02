@@ -69,20 +69,26 @@ export default class SPARQLStore extends BaseStore {
 
     async verify() {
         try {
-            // First try to create graph
-            const createQuery = `
-                CREATE GRAPH <${this.graphName}>;
-                INSERT DATA { GRAPH <${this.graphName}> {
-                    <${this.graphName}> a <http://example.org/mcp/MemoryStore>
-                }}
-            `;
-            await this._executeSparqlUpdate(createQuery, this.endpoint.update);
-            return true;
-        } catch (error) {
-            // If graph exists, this is fine
-            if (error.message.includes('Graph already exists')) {
-                return true;
+            // First try to create graph if it doesn't exist
+            try {
+                const createQuery = `
+                    CREATE SILENT GRAPH <${this.graphName}>;
+                    INSERT DATA { GRAPH <${this.graphName}> {
+                        <${this.graphName}> a <http://example.org/mcp/MemoryStore>
+                    }}
+                `;
+                await this._executeSparqlUpdate(createQuery, this.endpoint.update);
+            } catch (error) {
+                // Ignore errors, graph might already exist
+                logger.debug('Graph creation skipped:', error.message);
             }
+
+            // Verify graph exists
+            const checkQuery = `ASK { GRAPH <${this.graphName}> { ?s ?p ?o } }`;
+            const result = await this._executeSparqlQuery(checkQuery, this.endpoint.query);
+            return result.boolean;
+        } catch (error) {
+            logger.error('Graph verification failed:', error);
             throw error;
         }
     }
@@ -92,7 +98,6 @@ export default class SPARQLStore extends BaseStore {
 
         const query = `
             PREFIX mcp: <http://purl.org/stuff/mcp/>
-            PREFIX qb: <http://purl.org/linked-data/cube#>
             PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
             SELECT ?id ?prompt ?output ?embedding ?timestamp ?accessCount ?concepts ?decayFactor ?memoryType
@@ -112,29 +117,33 @@ export default class SPARQLStore extends BaseStore {
 
         try {
             const result = await this._executeSparqlQuery(query, this.endpoint.query);
-
             const shortTermMemory = [];
             const longTermMemory = [];
 
             result.results.bindings.forEach(binding => {
-                const interaction = {
-                    id: binding.id.value,
-                    prompt: binding.prompt.value,
-                    output: binding.output.value,
-                    embedding: binding.embedding ? JSON.parse(binding.embedding.value.replace(/\r?\n|\r/g, '')) : [],
-                    timestamp: parseInt(binding.timestamp.value),
-                    accessCount: parseInt(binding.accessCount.value),
-                    concepts: binding.concepts ? JSON.parse(binding.concepts.value) : [],
-                    decayFactor: parseFloat(binding.decayFactor.value)
-                };
+                try {
+                    const interaction = {
+                        id: binding.id.value,
+                        prompt: binding.prompt.value,
+                        output: binding.output.value,
+                        embedding: binding.embedding ? JSON.parse(binding.embedding.value.trim()) : new Array(1536).fill(0),
+                        timestamp: parseInt(binding.timestamp.value) || Date.now(),
+                        accessCount: parseInt(binding.accessCount.value) || 1,
+                        concepts: binding.concepts ? JSON.parse(binding.concepts.value.trim()) : [],
+                        decayFactor: parseFloat(binding.decayFactor.value) || 1.0
+                    };
 
-                if (binding.memoryType.value === 'short-term') {
-                    shortTermMemory.push(interaction);
-                } else {
-                    longTermMemory.push(interaction);
+                    if (binding.memoryType.value === 'short-term') {
+                        shortTermMemory.push(interaction);
+                    } else {
+                        longTermMemory.push(interaction);
+                    }
+                } catch (parseError) {
+                    logger.error('Failed to parse interaction:', parseError, binding);
                 }
             });
 
+            logger.info(`Loaded ${shortTermMemory.length} short-term and ${longTermMemory.length} long-term memories from store ${this.endpoint.query} graph <${this.graphName}>`);
             return [shortTermMemory, longTermMemory];
         } catch (error) {
             logger.error('Error loading history from SPARQL store:', error);
@@ -225,7 +234,7 @@ export default class SPARQLStore extends BaseStore {
             // Remove backup
             const dropBackup = `
                 PREFIX mcp: <http://purl.org/stuff/mcp/>
-                DROP GRAPH <${this.graphName}.backup>
+                DROP SILENT GRAPH <${this.graphName}.backup>
             `;
             await this._executeSparqlUpdate(dropBackup, this.endpoint.update);
         } finally {
@@ -242,7 +251,7 @@ export default class SPARQLStore extends BaseStore {
             // Restore from backup
             const restoreQuery = `
                 PREFIX mcp: <http://purl.org/stuff/mcp/>
-                DROP GRAPH <${this.graphName}> ;
+                DROP SILENT GRAPH <${this.graphName}> ;
                 MOVE GRAPH <${this.graphName}.backup> TO GRAPH <${this.graphName}>
             `;
             await this._executeSparqlUpdate(restoreQuery, this.endpoint.update);

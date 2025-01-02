@@ -11,9 +11,10 @@ cd ~/github-danny/hyperdata/packages/tbox/
 ```sh
 cd ~/github-danny/hyperdata/packages/semem
 
-node src/OllamaExample.js
-...
  node src/SPARQLExample.js
+ ...
+node src/OllamaExample.js
+
 ```
 
 ```sh

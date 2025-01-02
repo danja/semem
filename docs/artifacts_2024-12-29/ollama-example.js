@@ -35,7 +35,7 @@ async function main() {
     });
 
     const prompt = "What's the current state of AI technology?";
-    
+
     const relevantInteractions = await memoryManager.retrieveRelevantInteractions(prompt);
     const response = await memoryManager.generateResponse(prompt, [], relevantInteractions);
     console.log('Response:', response);

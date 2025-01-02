@@ -39,7 +39,7 @@ async function main() {
         storage: {
             type: 'json',
             options: {
-                path: 'memory.json'
+                path: 'data/memory.json'
             }
         },
         models: {
