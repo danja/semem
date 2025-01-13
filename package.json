@@ -30,7 +30,8 @@
   "devDependencies": {
     "jasmine": "^5.5.0",
     "jasmine-spec-reporter": "^7.0.0",
-    "jsdoc": "^4.0.4"
+    "jsdoc": "^4.0.4",
+    "repomix": "^0.2.20"
   },
   "dependencies": {
     "@langchain/core": "^0.3.19",

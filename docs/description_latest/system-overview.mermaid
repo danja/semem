@@ -1,0 +1,23 @@
+graph TB
+    User[User/Application] --> MM[Memory Manager]
+    
+    subgraph Core["Core Components"]
+        MM --> CM[Context Manager]
+        MM --> Vector[Vector Store]
+        MM --> Concepts[Concept Extractor]
+    end
+    
+    subgraph Storage["Storage Layer"]
+        MM --> InMem[In-Memory Store]
+        MM --> JSON[JSON Store]
+        MM --> SPARQL[SPARQL Store]
+    end
+    
+    subgraph AI["AI Integration"]
+        MM --> Ollama[Ollama]
+        MM --> OpenAI[OpenAI]
+        Ollama --> Embed[Embedding Models]
+        Ollama --> Chat[Chat Models]
+        OpenAI --> Embed
+        OpenAI --> Chat
+    end

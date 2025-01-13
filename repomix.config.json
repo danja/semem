@@ -5,12 +5,12 @@
         "removeComments": true
     },
     "include": [
-        "**/*"
+        "**/*",
+        "docs/description_latest"
     ],
     "ignore": {
         "useDefaultPatterns": false,
         "customPatterns": [
-            "docs",
             "data",
             "docs/jsdoc",
             ".nyc_output",
