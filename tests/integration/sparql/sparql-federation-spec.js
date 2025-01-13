@@ -1,6 +1,6 @@
-import Config from '../../src/Config.js';
-import SPARQLStore from '../../src/stores/SPARQLStore.js';
-import { logger } from '../../src/Utils.js';
+import Config from '../../../../src/Config.js';
+import SPARQLStore from '../../../../src/stores/SPARQLStore.js';
+import { logger } from '../../../../src/Utils.js';
 
 describe('SPARQLStore Federation Integration', () => {
     let store;
@@ -14,7 +14,7 @@ describe('SPARQLStore Federation Integration', () => {
     beforeAll(async () => {
         config = new Config();
         const sparqlConfig = config.get('sparqlEndpoints')[0];
-        
+
         store = new SPARQLStore({
             query: `${sparqlConfig.urlBase}${sparqlConfig.query}`,
             update: `${sparqlConfig.urlBase}${sparqlConfig.update}`
@@ -36,7 +36,7 @@ describe('SPARQLStore Federation Integration', () => {
                 CREATE GRAPH <${testGraphs.archive}>
             `;
             await store._executeSparqlUpdate(setupQuery, store.endpoint.update);
-            
+
             // Add test data to metadata graph
             const metadataQuery = `
                 INSERT DATA {
@@ -114,14 +114,14 @@ describe('SPARQLStore Federation Integration', () => {
         const setupQuery = `
             PREFIX mcp: <http://purl.org/stuff/mcp/>
             PREFIX qb: <http://purl.org/linked-data/cube#>
-            
+
             INSERT DATA {
                 GRAPH <${testGraphs.main}> {
                     _:interaction1 a mcp:Interaction ;
                         mcp:id "related-test-1" ;
                         mcp:relatedCube <cube1> .
                 }
-                
+
                 GRAPH <${testGraphs.metadata}> {
                     <cube1> a qb:DataSet ;
                         qb:structure <dsd1> ;
@@ -136,7 +136,7 @@ describe('SPARQLStore Federation Integration', () => {
         const relationQuery = `
             PREFIX mcp: <http://purl.org/stuff/mcp/>
             PREFIX qb: <http://purl.org/linked-data/cube#>
-            
+
             SELECT ?id ?cubeLabel
             WHERE {
                 GRAPH <${testGraphs.main}> {
@@ -159,7 +159,7 @@ describe('SPARQLStore Federation Integration', () => {
         try {
             const federatedUpdate = `
                 PREFIX mcp: <http://purl.org/stuff/mcp/>
-                
+
                 WITH <${testGraphs.main}>
                 DELETE { ?i mcp:accessCount ?oldCount }
                 INSERT { ?i mcp:accessCount ?newCount }
@@ -172,8 +172,8 @@ describe('SPARQLStore Federation Integration', () => {
                 WITH <${testGraphs.metadata}>
                 DELETE { <${testGraphs.main}> mcp:lastUpdated ?old }
                 INSERT { <${testGraphs.main}> mcp:lastUpdated "${new Date().toISOString()}"^^xsd:dateTime }
-                WHERE { 
-                    <${testGraphs.main}> mcp:lastUpdated ?old 
+                WHERE {
+                    <${testGraphs.main}> mcp:lastUpdated ?old
                 }
             `;
 
@@ -193,7 +193,7 @@ describe('SPARQLStore Federation Integration', () => {
         // Query using SERVICE keyword for explicit federation
         const serviceQuery = `
             PREFIX mcp: <http://purl.org/stuff/mcp/>
-            
+
             SELECT ?interaction ?metadata
             WHERE {
                 SERVICE <${store.endpoint.query}> {

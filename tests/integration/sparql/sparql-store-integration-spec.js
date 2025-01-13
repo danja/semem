@@ -1,6 +1,6 @@
-import Config from '../../src/Config.js';
-import SPARQLStore from '../../src/stores/SPARQLStore.js';
-import { logger } from '../../src/Utils.js';
+import Config from '../../../../src/Config.js';
+import SPARQLStore from '../../../../src/stores/SPARQLStore.js';
+import { logger } from '../../../../src/Utils.js';
 
 describe('SPARQLStore Integration', () => {
     let store;
@@ -11,7 +11,7 @@ describe('SPARQLStore Integration', () => {
         // Initialize with real config
         config = new Config();
         const sparqlConfig = config.get('sparqlEndpoints')[0];
-        
+
         store = new SPARQLStore({
             query: `${sparqlConfig.urlBase}${sparqlConfig.query}`,
             update: `${sparqlConfig.urlBase}${sparqlConfig.update}`
@@ -74,10 +74,10 @@ describe('SPARQLStore Integration', () => {
 
         // Load and verify
         const [shortTerm, longTerm] = await store.loadHistory();
-        
+
         expect(shortTerm.length).toBe(1);
         expect(longTerm.length).toBe(0);
-        
+
         const loaded = shortTerm[0];
         expect(loaded.id).toBe(testMemory.shortTermMemory[0].id);
         expect(loaded.prompt).toBe(testMemory.shortTermMemory[0].prompt);
@@ -87,7 +87,7 @@ describe('SPARQLStore Integration', () => {
 
     it('should handle transaction rollback', async () => {
         await store.beginTransaction();
-        
+
         const badMemory = {
             shortTermMemory: [{
                 id: 'test-rollback',
@@ -125,7 +125,7 @@ describe('SPARQLStore Integration', () => {
         });
 
         await store.beginTransaction();
-        
+
         // Second transaction should fail while first is in progress
         await expectAsync(store2.beginTransaction())
             .toBeRejectedWithError(/Transaction already in progress/);

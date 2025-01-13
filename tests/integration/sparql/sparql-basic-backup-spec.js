@@ -1,6 +1,6 @@
-import Config from '../../src/Config.js';
-import SPARQLStore from '../../src/stores/SPARQLStore.js';
-import { logger } from '../../src/Utils.js';
+import Config from '../../../../src/Config.js';
+import SPARQLStore from '../../../../src/stores/SPARQLStore.js';
+import { logger } from '../../../../src/Utils.js';
 
 describe('SPARQLStore Basic Backup Integration', () => {
     let store;
@@ -11,7 +11,7 @@ describe('SPARQLStore Basic Backup Integration', () => {
     beforeAll(async () => {
         config = new Config();
         const sparqlConfig = config.get('sparqlEndpoints')[0];
-        
+
         store = new SPARQLStore({
             query: `${sparqlConfig.urlBase}${sparqlConfig.query}`,
             update: `${sparqlConfig.urlBase}${sparqlConfig.update}`
@@ -45,7 +45,7 @@ describe('SPARQLStore Basic Backup Integration', () => {
             `;
             await store._executeSparqlUpdate(setupQuery, store.endpoint.update);
             await store.commitTransaction();
-            
+
             // Save initial data
             await store.saveMemoryToHistory(originalData);
         } catch (error) {
@@ -70,7 +70,7 @@ describe('SPARQLStore Basic Backup Integration', () => {
 
     it('should create backup during transaction', async () => {
         await store.beginTransaction();
-        
+
         // Verify backup graph exists
         const verifyQuery = `
             ASK { GRAPH <${testGraph}.backup> { ?s ?p ?o } }
@@ -121,7 +121,7 @@ describe('SPARQLStore Basic Backup Integration', () => {
 
     it('should handle nested transaction attempts', async () => {
         await store.beginTransaction();
-        
+
         await expectAsync(store.beginTransaction())
             .toBeRejectedWithError('Transaction already in progress');
 

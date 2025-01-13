@@ -1,6 +1,6 @@
-import Config from '../../src/Config.js';
-import SPARQLStore from '../../src/stores/SPARQLStore.js';
-import { logger } from '../../src/Utils.js';
+import Config from '../../../../src/Config.js';
+import SPARQLStore from '../../../../src/stores/SPARQLStore.js';
+import { logger } from '../../../../src/Utils.js';
 
 describe('SPARQLStore Advanced Backup Integration', () => {
     let store;
@@ -11,7 +11,7 @@ describe('SPARQLStore Advanced Backup Integration', () => {
     beforeAll(async () => {
         config = new Config();
         const sparqlConfig = config.get('sparqlEndpoints')[0];
-        
+
         store = new SPARQLStore({
             query: `${sparqlConfig.urlBase}${sparqlConfig.query}`,
             update: `${sparqlConfig.urlBase}${sparqlConfig.update}`
@@ -45,7 +45,7 @@ describe('SPARQLStore Advanced Backup Integration', () => {
             `;
             await store._executeSparqlUpdate(setupQuery, store.endpoint.update);
             await store.commitTransaction();
-            
+
             // Save initial data
             await store.saveMemoryToHistory(originalData);
         } catch (error) {
