@@ -1,6 +1,6 @@
-import Config from '../../../../src/Config.js';
-import SPARQLStore from '../../../../src/stores/SPARQLStore.js';
-import { logger } from '../../../../src/Utils.js';
+import Config from '../../../src/Config.js';
+import SPARQLStore from '../../../src/stores/SPARQLStore.js';
+import { logger } from '../../../src/Utils.js';
 
 describe('SPARQLStore Basic Backup Integration', () => {
     let store;

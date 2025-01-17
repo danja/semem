@@ -1,5 +1,5 @@
 // spec/integration/ollama.spec.js
-import OllamaConnector from '../../../../src/connectors/OllamaConnector.js';
+import OllamaConnector from '../../../src/connectors/OllamaConnector.js';
 
 describe('OllamaConnector Integration', () => {
     let api;
