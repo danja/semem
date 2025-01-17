@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<!-- https://codepen.io/ericbutler555/pen/WRLvKm?editors=1100#0 -->
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>HTML 5 Boilerplate</title>
+
+    <style>
+        .cf:before,
+        .cf:after {
+            content: " ";
+            display: table;
+        }
+
+        .cf:after {
+            clear: both;
+        }
+
+        .one,
+        .two,
+        .three {
+            width: 100%;
+            padding: 80px 0;
+            color: white;
+            font-family: sans-serif;
+            text-align: center;
+        }
+
+        .one {
+            background: red;
+        }
+
+        .two {
+            background: blue;
+        }
+
+        .three {
+            background: green;
+        }
+
+        @media (min-width: 768px) {
+            .one-two {
+                float: left;
+                width: 66.6666%;
+            }
+
+            .one,
+            .two {
+                float: right;
+                width: 50%;
+            }
+
+            .three {
+                float: left;
+                width: 33.3333%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="one-two cf">
+        <div class="two">2</div>
+        <div class="one">1</div>
+    </div>
+    <div class="three">3</div>
+</body>
+
+</html>

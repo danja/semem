@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Layout in progress</title>
+    <style>
+        .grid-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+        }
+
+        .directory {
+            grid-column: 1;
+        }
+
+        .articles {
+            grid-column: 2;
+        }
+
+        .about {
+            grid-column: 3;
+        }
+
+        @media (max-width: 1024px) {
+            .grid-container {
+                grid-template-columns: 1fr;
+            }
+
+            .articles {
+                grid-column: 1;
+                grid-row: 1;
+            }
+
+            .directory {
+                grid-column: 1;
+                grid-row: 2;
+            }
+
+            .about {
+                grid-column: 1;
+                grid-row: 3;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .grid-container {
+                grid-template-columns: 1fr;
+            }
+
+            .articles {
+                grid-column: 1;
+                grid-row: 1;
+            }
+
+            .directory {
+                grid-column: 1;
+                grid-row: 2;
+            }
+
+            .about {
+                grid-column: 1;
+                grid-row: 3;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header id="main-header">
+        <h1>
+            Main Header
+        </h1>
+        <p>probably a navbar etc too</p>
+    </header>
+    <div class="grid-container">
+        <div class="main-grid-item directory">
+            <h2>directory</h2>
+            <p>some links will go here</p>
+        </div>
+        <div class="main-grid-item articles">
+            <h2>articles</h2>
+            <article>
+                <h3>Blog Article</h3>
+                <p>
+                    Here is one post.
+                </p>
+            </article>
+            <article>
+                <h3>Blog Article 2</h3>
+                <p>
+                    Here is another post.
+                </p>
+            </article>
+        </div>
+        <div class="main-grid-item about">
+            <h2>About</h2>
+            <p>Qui ci va il testo sull'azienda</p>
+        </div>
+    </div>
+</body>
+
+</html>

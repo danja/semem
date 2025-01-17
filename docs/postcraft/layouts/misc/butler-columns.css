@@ -1,0 +1,44 @@
+/* https://codepen.io/ericbutler555/pen/WRLvKm?editors=1100#0
+columns */
+
+.clearfix {
+  content: "";
+ /* display: table;*/
+ display: block;
+ clear: both;
+}
+
+.directory,
+.articles,
+.about {
+  /*width: 100%;*/
+  width: 100%;
+ /* padding: 80px 0;*/
+ /*padding: 8px;*/
+}
+.directory {
+  background: #f7fff7
+}
+.articles {
+  background: #ff00f7
+}
+.about {
+  background: #f7f7ff
+}
+
+@media (min-width: 768px) {
+  .directory-articles {
+    float: left;
+    width: 66.6666%;
+  }
+  .directory,
+  .articles {
+    float: right;
+    width: 50%;
+  }
+  .about {
+    float: left;
+    width: 33.3333%;
+  }
+}
+/* end columns */

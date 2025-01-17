@@ -1,0 +1,49 @@
+body {
+   font-family: 'lora', serif;
+  font-size: 1em;
+  line-height: 1.5em;
+  color: #033;
+  background-color: #fff;
+  margin: 0;
+  padding: 0;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  display: block;
+  margin-left: 0;
+  margin-right: 0;
+  font-weight: bold;
+}
+
+/* , Verdana, Tahoma */
+h1 { 
+  font-family: 'robotoregular', Verdana, sans-serif;
+  font-size: 2em;
+  margin-top: 0.67em;
+  margin-bottom: 0.67em;
+}
+h2 {
+  font-size: 1.5em;
+  margin-top: 0.83em;
+  margin-bottom: 0.83em;
+}
+h3 { 
+  font-size: 1.17em;
+  margin-top: 1em;
+  margin-bottom: 1em;
+
+}
+h4 { 
+  font-size: 1.05em;
+  margin-top: 1.33em;
+  margin-bottom: 1.33em;
+}
+
+#main-header {
+  text-align: center
+}

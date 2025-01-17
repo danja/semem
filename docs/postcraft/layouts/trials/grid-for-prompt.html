@@ -1,0 +1,89 @@
+You are an expert in front end web development, favoring traditional html and css techniques and following best
+practices. You offer solutions to problems in a concise manner, just practical code with minimal explanation.
+
+I am trying to make a responsive web page in a blog style. I want it so that on a large screen, three columns will line
+up in the
+order directory, articles, about. On a tablet screen, I want the articles to take up the full width, and the directory
+and about to be below it next to each other. On a phone screen, I want the articles to be on top, and the directory and
+about to be below it in that order. I am trying to use CSS grid to do this. I have the following code so far:
+
+---
+In the CSS, I added a new media query for screens up to 1024px wide, and modified the grid properties for each element
+to stack them correctly. For screens up to 768px wide, I modified the grid to stack the elements vertically.
+---
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Layout in progress</title>
+    <style>
+        .grid-container {
+            display: grid;
+            grid-template-columns: 15% 1fr 25%;
+            grid-auto-rows: 50px;
+            /* for demo */
+            grid-gap: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .grid-container {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .directory:nth-child(1) {
+                order: 2;
+            }
+
+            .articles:nth-child(2) {
+                order: 1;
+                grid-column: 1 / 3;
+            }
+
+            .about:nth-child(3) {
+                order: 3;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header id="main-header">
+        <h1>
+            Main Header
+        </h1>
+        <p>probably a navbar etc too</p>
+    </header>
+    <div class="grid-container">
+        <div class="main-grid-item directory">
+            <h2>directory</h2>
+            <p>some links will got here</p>
+        </div>
+        <div class="main-grid-item articles">
+            <h2>articles</h2>
+            <article>
+                <h3>Blog Article</h3>
+                <p>
+                    Here is one post.
+                </p>
+            </article>
+            <article>
+                <h3>Blog Article 2</h3>
+                <p>
+                    Here is another post.
+                </p>
+            </article>
+        </div>
+        <div class="main-grid-item about">
+            <h2>About</h2>
+            <p>Qui ci va il testo sull'azienda</p>
+        </div>
+    </div>
+</body>
+
+</html>

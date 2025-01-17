@@ -1,0 +1,78 @@
+media="(min-width: 1080px)" {
+    .mk {
+        letter-spacing: -0.003em;
+    }
+}
+ media="(min-width: 1080px)" {
+    .mj {
+        line-height: 32px;
+    }
+}
+ media="(min-width: 1080px)" {
+    .mi {
+        margin-top: 2.14em;
+    }
+}
+ media="(min-width: 1080px)" {
+    .mh {
+        font-size: 20px;
+    }
+}
+.ml {
+    margin-bottom: -0.46em;
+}
+.lq {
+    font-family: source-serif-pro, Georgia, Cambria, "Times New Roman", Times, serif;
+}
+
+
+one : articles
+two : directory
+three : about
+cf : clearfix 
+
+<!--
+<body id="index" class="home">
+
+    <header>
+        <h1>
+            Main Header
+        </h1>
+    </header>
+
+    <div class="one-two cf">
+        <div class="two">2</div>
+
+
+
+        <div id="content" class="one">
+
+            <article class="entry">
+                <header>
+                    <h2>
+                        Entry Title
+                    </h2>
+                </header>
+                <div class="entry-content">
+                </div>
+                <footer class="post-info">
+                    <!-- Published on <abbr class="dt-published" title="2019-01-01T00:00:00+01:00">2019-01-01</abbr>
+by
+<span class="h-card p-author">Danny</span>
+in
+<a href="/writing/tag/tech.html" class="p-category">tech</a>
+                -->
+</footer>
+</article>
+
+<footer id="contentinfo">
+    <!--
+        <address id="about">
+            Powered by <a href="http://getpelican.com/">Pelican</a>.
+            Copyright 2012-2018 by .
+        </address>
+    -->
+</footer>
+</div>
+<div class="three">3</div>
+-->

@@ -1,0 +1,26 @@
+<html>
+<style>
+    div {
+        border: 1px solid;
+    }
+
+    body {
+        display: grid;
+        grid-template-columns: 10em auto 10em;
+        grid-template-areas:
+            "header header header"
+            "left   middle right"
+            "footer footer footer";
+    }
+</style>
+
+<body>
+    <a href="https://en.wikipedia.org/wiki/CSS_grid_layout">Holy Grail Layout</a>
+    <div style="grid-area: header">The header</div>
+    <div style="grid-area: footer">The footer</div>
+    <div style="grid-area: left">The left panel</div>
+    <div style="grid-area: middle; height: 200px">The main content area</div>
+    <div style="grid-area: right">The right panel</div>
+</body>
+
+</html>

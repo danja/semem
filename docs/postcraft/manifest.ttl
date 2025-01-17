@@ -1,0 +1,65 @@
+### manifest.ttl for danny.ayers.name ###
+
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+
+# SIOC
+
+@prefix trn: <http://purl.org/stuff/transmissions/> .
+@prefix trn: <http://purl.org/stuff/transmissions/> .
+@prefix trn: <http://purl.org/stuff/transmissions/> .
+@prefix trn: <http://purl.org/stuff/transmissions/> . # for custom terms & instances
+
+<https://danny.ayers.name> a trn:Site ;
+    rdfs:label "danny.ayers.name" ;
+    dcterms:title "Rawer" ;
+    trn:contains <https://danny.ayers.name/home> ;  # maybe
+    trn:includes trn:PostContent . # maybe
+
+# this should maybe give the contentgroup a renderType, indirect with template etc
+
+# POST CONTENT
+trn:PostContent a trn:ContentGroup ;
+    trn:site <https://danny.ayers.name> ;
+    trn:subdir "home" ; # better property name?
+    trn:sourceDirectory "content-raw/entries" ; # SOURCE DIR HERE journal, entries
+    trn:targetDirectory "cache" ;
+    trn:template "layouts/middlin/templates/entry-content_template.njk" .
+
+# POST PAGES
+trn:PostPages a trn:ContentGroup ;
+    trn:site <https://danny.ayers.name> ;
+   # trn:sourceDirectory "public/post-content-cache" ;
+    trn:targetDirectory "public/home/entries" ;
+    trn:template "layouts/middlin/templates/entry-page_template.njk" .
+
+# MAIN PAGE
+trn:IndexPage a trn:ContentGroup ; # TODO naming!
+    trn:site <https://danny.ayers.name> ;
+    trn:filepath "public/home/index.html" ;
+    trn:template "layouts/middlin/templates/index-page_template.njk" .
+
+# STYLES ETC not yet implemented
+trn:CSS a trn:StaticGroup ;
+    trn:site <https://danny.ayers.name> ;
+    trn:sourceDirectory "layouts/middlin/css" ;
+    trn:targetDirectory "public/home/css" .
+
+trn:fonts a trn:StaticGroup ;
+    trn:site <https://danny.ayers.name> ;
+    trn:sourceDirectory "layouts/middlin/fonts" ;
+    trn:targetDirectory "public/home/js" .
+
+trn:JS a trn:StaticGroup ;
+    trn:site <https://danny.ayers.name> ;
+    trn:sourceDirectory "layouts/middlin/js" ;
+    trn:targetDirectory "public/home/js" .
+
+
+# pinned - not yet implemented
+<https://danny.ayers.name/index> a trn:SpecialCase ;
+    trn:state "pinned" ;
+    trn:sourceFile "home/2023-10-27_hello.md" ;
+    trn:targetFile "public/home/2023-10-27_hello.html" .
+#     trn:template "layouts/middlin/middlin-posts_template.html" .
