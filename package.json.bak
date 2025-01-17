@@ -7,6 +7,7 @@
   "engines": {
     "node": ">=20.11.0"
   },
+  "preinstall": "node -r ./config.js",
   "scripts": {
     "test": "jasmine --config=jasmine.json --reporter=tests/helpers/reporter.js",
     "cov": "nyc -a --include=src --reporter=lcov npm run test",
@@ -33,7 +34,8 @@
   "devDependencies": {
     "jasmine": "^5.5.0",
     "jasmine-spec-reporter": "^7.0.0",
-    "jsdoc": "^4.0.4"
+    "jsdoc": "^4.0.4",
+    "repomix": "^0.2.20"
   },
   "dependencies": {
     "@langchain/core": "^0.3.19",
