@@ -34,10 +34,10 @@ export default class Config {
                 user: "admin",
                 password: "admin123",
                 urlBase: "http://localhost:4030",
-                upload: "/test/upload",
-                gspRead: "/test/get",
-                query: "/test/query",
-                update: "/test/update"
+                upload: "/test-db/upload",
+                gspRead: "/test-db/get",
+                query: "/test-db/query",
+                update: "/test-db/update"
             }
         ]
 

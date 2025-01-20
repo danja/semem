@@ -1,5 +1,7 @@
 # Semem API Implementation Handover
 
+This code described here is in-progess.
+
 ## Overview
 Implementation of an API layer for Semem (Semantic Memory) system with multiple access modes and comprehensive monitoring. Follows modular architecture with clear separation of concerns.
 

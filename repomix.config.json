@@ -5,8 +5,7 @@
         "removeComments": true
     },
     "include": [
-        "**/*",
-        "docs/description_latest"
+        "**/*"
     ],
     "ignore": {
         "useDefaultPatterns": false,

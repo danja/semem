@@ -1561,7 +1561,7 @@
         "AI systems may make decisions based on biased data or be programmed to reflect their developers' biases",
         "unfair outcomes in certain situations"
       ],
-      "decayFactor": 1.1
+      "decayFactor": 0.9900000000000001
     },
     {
       "id": "d4193315-d28f-43f4-916b-3e27e9b9ce34",
@@ -3119,7 +3119,7 @@
         "financial services",
         "healthcare"
       ],
-      "decayFactor": 1
+      "decayFactor": 0.9
     }
   ],
   "longTermMemory": []
