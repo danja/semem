@@ -20,7 +20,7 @@ node src/OllamaExample.js
 Needs SPARQL store, endpoint 127.0.0.1:4030
 
 ```sh
-~/github-danny/hyperdata/packages/tbox
+cd ~/github-danny/hyperdata/packages/tbox
 docker-compose up -d
 
  node src/SPARQLExample.js

@@ -1,9 +1,9 @@
 // index.js
-import { config } from './config.js';
+import { config } from './_old/config.js'
 
 async function init() {
-  await config.load();
+  await config.load()
   // rest of application logic
 }
 
-init().catch(console.error);
+init().catch(console.error)

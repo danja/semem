@@ -1,10 +1,10 @@
-// src/Config.js
 export default class Config {
     static defaults = {
         storage: {
-            type: 'memory',
+            type: 'memory',  // 'memory', 'json', or 'remote'
             options: {
                 path: 'interaction_history.json',
+                // Remote storage options
                 endpoint: 'http://localhost:8080',
                 apiKey: '',
                 timeout: 5000
@@ -30,17 +30,17 @@ export default class Config {
         },
         sparqlEndpoints: [
             {
-                label: "test-mem",
+                label: "tbox-test",
                 user: "admin",
                 password: "admin123",
                 urlBase: "http://localhost:4030",
-                query: "/test-mem",
-                update: "/test-mem",
-                upload: "/test-mem/upload",
-                gspRead: "/test-mem/data",
-                gspWrite: "/test-mem/data"
+                upload: "/test-db",
+                gspRead: "/test-db",
+                query: "/test-db",
+                update: "/test-db"
             }
         ]
+
     };
 
     constructor(userConfig = {}) {

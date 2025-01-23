@@ -36,6 +36,7 @@
     "jsdoc": "^4.0.4"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.36.2",
     "@langchain/core": "^0.3.19",
     "@langchain/openai": "^0.3.14",
     "faiss-node": "^0.5.1",

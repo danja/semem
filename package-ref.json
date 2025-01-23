@@ -1,0 +1,46 @@
+{
+    "name": "semem",
+    "version": "1.0.0",
+    "description": "Semantic Memory",
+    "type": "module",
+    "main": "index.js",
+    "engines": {
+        "node": ">=20.11.0"
+    },
+    "scripts": {
+        "test": "jasmine --config=jasmine.json --reporter=tests/helpers/reporter.js",
+        "cov": "nyc -a --include=src --reporter=lcov npm run test",
+        "docs": "jsdoc -c jsdoc.json",
+        "rp": "repomix -c repomix.config.json . "
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/danja/semem.git"
+    },
+    "keywords": [
+        "semantic",
+        "memory",
+        "llm",
+        "rdf",
+        "sparql"
+    ],
+    "author": "Danny Ayers",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/danja/semem/issues"
+    },
+    "homepage": "https://github.com/danja/semem#readme",
+    "devDependencies": {
+        "jasmine": "^5.5.0",
+        "jasmine-spec-reporter": "^7.0.0",
+        "jsdoc": "^4.0.4"
+    },
+    "dependencies": {
+        "@langchain/core": "^0.3.19",
+        "@langchain/openai": "^0.3.14",
+        "faiss-node": "^0.5.1",
+        "graphology": "^0.25.4",
+        "ml-kmeans": "^6.0.0",
+        "ollama": "^0.5.10"
+    }
+}
