@@ -1,6 +1,5 @@
-/**
- * Manages prompt templates for different LLM models
- */
+import logger from 'loglevel'
+// src/promptTemplates.js
 export default class PromptTemplates {
     static templates = {
         'llama2': {
@@ -71,11 +70,11 @@ export default class PromptTemplates {
     };
 
     static getTemplateForModel(modelName) {
-        if (typeof modelName !== 'string') {
-            throw new TypeError('Model name must be a string')
-        }
+        //   modelName = Promise.resolve(modelName) // TODO unhackify
+        // Handle model name variants
+        logger.log(`PromptTemplates.getTemplateForModel, modelName = ${modelName}`)
         const baseModel = modelName.split(':')[0].toLowerCase()
-        const modelFamily = baseModel.replace(/[\d.]/g, '')
+        const modelFamily = baseModel.replace(/[\d.]/g, '') // Remove version numbers
         return this.templates[modelFamily] || this.templates['llama2']
     }
 

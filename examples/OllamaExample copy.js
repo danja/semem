@@ -4,17 +4,18 @@ import JSONStore from '../src/stores/JSONStore.js'
 import Config from '../src/Config.js'
 import OllamaConnector from '../src/connectors/OllamaConnector.js'
 
+// Handle graceful shutdown
 let memoryManager = null
 
 async function shutdown(signal) {
-    logger.info(`\nReceived ${signal}, starting graceful shutdown...`)
+    console.log(`\nReceived ${signal}, starting graceful shutdown...`)
     if (memoryManager) {
         try {
             await memoryManager.dispose()
-            logger.info('Cleanup complete')
+            console.log('Cleanup complete')
             process.exit(0)
         } catch (error) {
-            logger.error('Error during cleanup:', error)
+            console.error('Error during cleanup:', error)
             process.exit(1)
         }
     } else {
@@ -22,19 +23,20 @@ async function shutdown(signal) {
     }
 }
 
+// Handle different termination signals
 process.on('SIGTERM', () => shutdown('SIGTERM'))
 process.on('SIGINT', () => shutdown('SIGINT'))
 process.on('uncaughtException', async (error) => {
-    logger.error('Uncaught Exception:', error)
+    console.error('Uncaught Exception:', error)
     await shutdown('uncaughtException')
 })
 process.on('unhandledRejection', async (reason, promise) => {
-    logger.error('Unhandled Rejection at:', promise, 'reason:', reason)
+    console.error('Unhandled Rejection at:', promise, 'reason:', reason)
     await shutdown('unhandledRejection')
 })
 
 async function main() {
-    const config = Config.create({
+    const config = new Config({
         storage: {
             type: 'json',
             options: {
@@ -68,18 +70,19 @@ async function main() {
     try {
         const relevantInteractions = await memoryManager.retrieveRelevantInteractions(prompt)
         const response = await memoryManager.generateResponse(prompt, [], relevantInteractions)
-        logger.info('Response:', response)
+        console.log('Response:', response)
 
         const embedding = await memoryManager.generateEmbedding(`${prompt} ${response}`)
         const concepts = await memoryManager.extractConcepts(`${prompt} ${response}`)
         await memoryManager.addInteraction(prompt, response, embedding, concepts)
     } catch (error) {
-        logger.error('Error during execution:', error)
+        console.error('Error during execution:', error)
         await shutdown('error')
     }
 }
 
+// Start the application
 main().catch(async (error) => {
-    logger.error('Fatal error:', error)
+    console.error('Fatal error:', error)
     await shutdown('fatal error')
 })

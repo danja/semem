@@ -20,7 +20,7 @@
             "**/*repomix*.txt",
             "**/*.html",
             "**/data/*",
-            "**/*copy.js",
+            "**/*copy*.js",
             "**/conversations.json"
         ]
     }

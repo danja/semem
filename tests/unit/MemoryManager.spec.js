@@ -1,54 +1,118 @@
 import MemoryManager from '../../src/MemoryManager.js'
-import { MockOllamaConnector } from '../mocks/Ollama.js'
-import InMemoryStore from '../../src/stores/InMemoryStore.js'
 
 describe('MemoryManager', () => {
     let manager
-    let mockOllama
-    let store
+    let mockLLMProvider
+    let mockStorage
+    let mockEmbedding
 
-    beforeEach(async () => {
-        mockOllama = new MockOllamaConnector()
-        store = new InMemoryStore()
+    beforeEach(() => {
+        mockLLMProvider = {
+            generateEmbedding: jasmine.createSpy('generateEmbedding'),
+            generateChat: jasmine.createSpy('generateChat'),
+            generateCompletion: jasmine.createSpy('generateCompletion')
+        }
+
+        mockStorage = {
+            loadHistory: jasmine.createSpy('loadHistory').and.resolveTo([[], []]),
+            saveMemoryToHistory: jasmine.createSpy('saveMemoryToHistory'),
+            close: jasmine.createSpy('close')
+        }
+
+        mockEmbedding = new Array(1536).fill(0)
+
         manager = new MemoryManager({
-            llmProvider: mockOllama,
-            chatModel: 'qwen2:1.5b',
-            embeddingModel: 'nomic-embed-text',
-            storage: store,
-            dimension: 1536
+            llmProvider: mockLLMProvider,
+            storage: mockStorage
         })
-        // Wait for initialization
-        await new Promise(resolve => setTimeout(resolve, 100))
     })
 
-    it('should generate embeddings', async () => {
-        const embedding = await manager.generateEmbedding('test text')
-        expect(embedding.length).toBe(1536)
-        expect(Array.isArray(embedding)).toBe(true)
+    describe('initialization', () => {
+        it('should handle string model names', () => {
+            const mgr = new MemoryManager({
+                llmProvider: mockLLMProvider,
+                chatModel: 'test-chat',
+                embeddingModel: 'test-embed'
+            })
+
+            expect(mgr.chatModel).toBe('test-chat')
+            expect(mgr.embeddingModel).toBe('test-embed')
+        })
+
+        it('should coerce non-string model names', () => {
+            const mgr = new MemoryManager({
+                llmProvider: mockLLMProvider,
+                chatModel: ['test'],
+                embeddingModel: { name: 'test' }
+            })
+
+            expect(typeof mgr.chatModel).toBe('string')
+            expect(typeof mgr.embeddingModel).toBe('string')
+        })
+
+        it('should require llmProvider', () => {
+            expect(() => new MemoryManager({}))
+                .toThrowError('LLM provider is required')
+        })
     })
 
-    it('should extract concepts', async () => {
-        const concepts = await manager.extractConcepts('AI and machine learning')
-        expect(Array.isArray(concepts)).toBe(true)
-        expect(concepts.length).toBeGreaterThan(0)
+    describe('memory operations', () => {
+        beforeEach(async () => {
+            mockLLMProvider.generateEmbedding.and.resolveTo(mockEmbedding)
+            mockLLMProvider.generateCompletion.and.resolveTo('["test"]')
+            mockLLMProvider.generateChat.and.resolveTo('test response')
+
+            await manager.initialize()
+        })
+
+        it('should add interactions', async () => {
+            await manager.addInteraction(
+                'test prompt',
+                'test output',
+                mockEmbedding,
+                ['test']
+            )
+
+            expect(mockStorage.saveMemoryToHistory).toHaveBeenCalled()
+            expect(manager.memStore.shortTermMemory.length).toBe(1)
+        })
+
+        it('should retrieve relevant interactions', async () => {
+            const relevantInteractions = await manager.retrieveRelevantInteractions('test query')
+
+            expect(mockLLMProvider.generateEmbedding).toHaveBeenCalled()
+            expect(mockLLMProvider.generateCompletion).toHaveBeenCalled()
+        })
+
+        it('should generate responses', async () => {
+            const response = await manager.generateResponse('test prompt')
+
+            expect(response).toBe('test response')
+            expect(mockLLMProvider.generateChat).toHaveBeenCalled()
+        })
+
+        it('should handle embedding generation', async () => {
+            const embedding = await manager.generateEmbedding('test text')
+
+            expect(embedding).toEqual(mockEmbedding)
+            expect(mockLLMProvider.generateEmbedding).toHaveBeenCalled()
+        })
     })
 
-    it('should add and retrieve interactions', async () => {
-        // Create unique test data
-        const prompt = 'unique test prompt ' + Date.now()
-        const response = 'test response'
-        const embedding = await manager.generateEmbedding(prompt)
-        const concepts = ['test']
+    describe('disposal', () => {
+        it('should clean up resources', async () => {
+            await manager.dispose()
 
-        // Add interaction
-        await manager.addInteraction(prompt, response, embedding, concepts)
+            expect(mockStorage.saveMemoryToHistory).toHaveBeenCalled()
+            expect(mockStorage.close).toHaveBeenCalled()
+            expect(manager.memStore).toBeNull()
+        })
 
-        // Retrieve with same prompt to ensure embedding similarity
-        const retrievals = await manager.retrieveRelevantInteractions(prompt)
+        it('should handle disposal errors', async () => {
+            mockStorage.saveMemoryToHistory.and.rejectWith(new Error('Save failed'))
 
-        expect(retrievals.length).toBeGreaterThan(0)
-        const firstResult = retrievals[0].interaction
-        expect(firstResult.prompt).toBe(prompt)
-        expect(firstResult.output).toBe(response)
+            await expectAsync(manager.dispose())
+                .toBeRejectedWithError('Save failed')
+        })
     })
 })

@@ -1,8 +1,6 @@
-/**
- * Configuration management for Semem system
- */
 export default class Config {
     static defaults = {
+
         storage: {
             type: 'memory',
             options: {
@@ -30,18 +28,21 @@ export default class Config {
             contextWindow: 3,
             decayRate: 0.0001
         },
-        sparqlEndpoints: [{
-            label: "test-mem",
-            user: "admin",
-            password: "admin123",
-            urlBase: "http://localhost:4030",
-            dataset: "test-mem",
-            query: "/test-mem",
-            update: "/test-mem",
-            upload: "/test-mem/upload",
-            gspRead: "/test-mem/data",
-            gspWrite: "/test-mem/data"
-        }]
+        sparqlEndpoints: [
+            {
+                label: "test-mem",
+                user: "admin",
+                password: "admin123",
+                urlBase: "http://localhost:4030",
+                dataset: "test-mem",
+
+                query: "/test-mem",
+                update: "/test-mem",
+                upload: "/test-mem/upload",
+                gspRead: "/test-mem/data",
+                gspWrite: "/test-mem/data"
+            }
+        ]
     };
 
     constructor(userConfig = {}) {
@@ -50,7 +51,7 @@ export default class Config {
         this.userConfig = userConfig
     }
 
-    init() {
+    async init() {
         if (this.initialized) return
 
         try {
@@ -84,35 +85,29 @@ export default class Config {
         }
     }
 
-    get(path) {
+    async get(path) {
         if (!this.initialized) {
-            this.init()
+            await this.init()
         }
-
-        return path.split('.').reduce((obj, key) => {
-            if (obj === undefined) return undefined
-            return obj[key]
-        }, this.config)
+        return path.split('.').reduce((obj, key) => obj && obj[key], this.config)
     }
 
-    set(path, value) {
+    async set(path, value) {
         if (!this.initialized) {
-            this.init()
+            await this.init()
         }
-
         const keys = path.split('.')
         const last = keys.pop()
         const target = keys.reduce((obj, key) => {
             if (!obj[key]) obj[key] = {}
             return obj[key]
         }, this.config)
-
         target[last] = value
     }
 
-    static create(userConfig = {}) {
+    static async create(userConfig = {}) {
         const config = new Config(userConfig)
-        config.init()
+        await config.init()
         return config
     }
 }

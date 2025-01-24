@@ -3,49 +3,31 @@ import logger from 'loglevel'
 import MemoryStore from './stores/MemoryStore.js'
 import InMemoryStore from './stores/InMemoryStore.js'
 import ContextManager from './ContextManager.js'
-import EmbeddingHandler from './handlers/EmbeddingHandler.js'
+import PromptTemplates from './PromptTemplates.js'
 import CacheManager from './handlers/CacheManager.js'
-import LLMHandler from './handlers/LLMHandler.js'
+import EmbeddingHandler from './handlers/EmbeddingHandler.js'
+import { MemoryConfig, Interaction } from './types/MemoryTypes.js'
 
-/**
- * Manages semantic memory operations, embeddings, and LLM interactions
- */
 export default class MemoryManager {
-    constructor({
-        llmProvider,
-        chatModel = 'qwen2:1.5b',
-        embeddingModel = 'nomic-embed-text',
-        storage = null,
-        dimension = 1536,
-        contextOptions = {
-            maxTokens: 8192
-        },
-        cacheOptions = {
-            maxSize: 1000,
-            ttl: 3600000
-        }
-    }) {
-        if (!llmProvider) {
+    constructor(config) {
+        const memConfig = new MemoryConfig(config)
+
+        if (!memConfig.llmProvider) {
             throw new Error('LLM provider is required')
         }
 
-        // Normalize model names
-        this.chatModel = String(chatModel)
-        this.embeddingModel = String(embeddingModel)
-
-        // Initialize components
-        this.cacheManager = new CacheManager(cacheOptions)
+        this.config = memConfig
+        this.cacheManager = new CacheManager(memConfig.cacheOptions)
         this.embeddingHandler = new EmbeddingHandler(
-            llmProvider,
-            this.embeddingModel,
-            dimension,
+            memConfig.llmProvider,
+            memConfig.embeddingModel,
+            memConfig.dimension,
             this.cacheManager
         )
 
-        this.llmHandler = new LLMHandler(llmProvider, this.chatModel)
-        this.memStore = new MemoryStore(dimension)
-        this.storage = storage || new InMemoryStore()
-        this.contextManager = new ContextManager(contextOptions)
+        this.memStore = new MemoryStore(memConfig.dimension)
+        this.storage = memConfig.storage || new InMemoryStore()
+        this.contextManager = new ContextManager(memConfig.contextOptions)
 
         this.initialize()
     }
@@ -67,7 +49,6 @@ export default class MemoryManager {
 
             this.memStore.longTermMemory.push(...longTerm)
             this.memStore.clusterInteractions()
-            logger.info('Memory initialization complete')
         } catch (error) {
             logger.error('Memory initialization failed:', error)
             throw error
@@ -76,16 +57,13 @@ export default class MemoryManager {
 
     async addInteraction(prompt, output, embedding, concepts) {
         try {
-            const interaction = {
+            const interaction = new Interaction({
                 id: uuidv4(),
                 prompt,
                 output,
                 embedding: this.embeddingHandler.standardizeEmbedding(embedding),
-                timestamp: Date.now(),
-                accessCount: 1,
                 concepts,
-                decayFactor: 1.0
-            }
+            })
 
             this.memStore.shortTermMemory.push(interaction)
             this.memStore.embeddings.push(interaction.embedding)
@@ -104,11 +82,28 @@ export default class MemoryManager {
     async retrieveRelevantInteractions(query, similarityThreshold = 40, excludeLastN = 0) {
         try {
             const queryEmbedding = await this.embeddingHandler.generateEmbedding(query)
-            const queryConcepts = await this.llmHandler.extractConcepts(query)
+            const queryConcepts = await this.extractConcepts(query)
             return this.memStore.retrieve(queryEmbedding, queryConcepts, similarityThreshold, excludeLastN)
         } catch (error) {
             logger.error('Failed to retrieve interactions:', error)
             throw error
+        }
+    }
+
+    async extractConcepts(text) {
+        try {
+            const prompt = PromptTemplates.formatConceptPrompt(this.config.chatModel, text)
+            const response = await this.config.llmProvider.generateCompletion(
+                this.config.chatModel,
+                prompt,
+                { temperature: 0.2 }
+            )
+
+            const match = response.match(/\[.*\]/)
+            return match ? JSON.parse(match[0]) : []
+        } catch (error) {
+            logger.error('Error extracting concepts:', error)
+            return []
         }
     }
 
@@ -121,19 +116,22 @@ export default class MemoryManager {
                 { systemContext: "You're a helpful assistant with memory of past interactions." }
             )
 
-            return await this.llmHandler.generateResponse(prompt, context)
+            const messages = PromptTemplates.formatChatPrompt(
+                this.config.chatModel,
+                "You're a helpful assistant with memory of past interactions.",
+                context,
+                prompt
+            )
+
+            return await this.config.llmProvider.generateChat(
+                this.config.chatModel,
+                messages,
+                { temperature: 0.7 }
+            )
         } catch (error) {
             logger.error('Error generating response:', error)
             throw error
         }
-    }
-
-    async generateEmbedding(text) {
-        return await this.embeddingHandler.generateEmbedding(text)
-    }
-
-    async extractConcepts(text) {
-        return await this.llmHandler.extractConcepts(text)
     }
 
     async dispose() {
@@ -146,6 +144,7 @@ export default class MemoryManager {
             }
 
             this.memStore = null
+            this.config.llmProvider = null
         } catch (error) {
             logger.error('Error during shutdown:', error)
             throw error
