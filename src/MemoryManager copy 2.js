@@ -3,7 +3,7 @@ import MemoryStore from './stores/MemoryStore.js'
 import InMemoryStore from './stores/InMemoryStore.js'
 import ContextManager from './ContextManager.js'
 import PromptTemplates from './PromptTemplates.js'
-import log from 'loglevel'
+import { logger } from './Utils.js'
 
 export default class MemoryManager {
     constructor({
@@ -29,15 +29,19 @@ export default class MemoryManager {
         this.embeddingModel = embeddingModel
         this.dimension = dimension
         this.cacheOptions = cacheOptions
-        this.logger = log.getLogger('MemoryManager')
-        this.logger.setLevel('debug')
 
         // Initialize embedding cache
         this.embeddingCache = new Map()
         this.cacheTimestamps = new Map()
-        this.memStore = new MemoryStore(this.dimension)
-        this.storage = storage || new InMemoryStore()
-        this.contextManager = new ContextManager(contextOptions)
+
+        try {
+            this.store = new MemoryStore(this.dimension)
+            this.storage = storage || new InMemoryStore()
+            this.contextManager = new ContextManager(contextOptions)
+        } catch (error) {
+            logger.error('Failed to initialize MemoryManager:', error)
+            throw new Error('Memory manager initialization failed: ' + error.message)
+        }
 
         this.initialize()
 
@@ -50,42 +54,30 @@ export default class MemoryManager {
     async initialize() {
         try {
             const [shortTerm, longTerm] = await this.storage.loadHistory()
-            this.logger.info(`Loading memory history: ${shortTerm.length} short-term, ${longTerm.length} long-term items`)
 
             for (const interaction of shortTerm) {
                 const embedding = this.standardizeEmbedding(interaction.embedding)
                 interaction.embedding = embedding
-                this.memStore.shortTermMemory.push(interaction)
-                this.memStore.embeddings.push(embedding)
-                this.memStore.timestamps.push(interaction.timestamp)
-                this.memStore.accessCounts.push(interaction.accessCount)
-                this.memStore.conceptsList.push(interaction.concepts)
+                this.store.addInteraction(interaction)
             }
 
-            this.memStore.longTermMemory.push(...longTerm)
-            this.memStore.clusterInteractions()
+            this.store.longTermMemory.push(...longTerm)
+            this.store.clusterInteractions()
 
-            this.logger.info('Memory initialization complete')
+            logger.info(`Memory initialized with ${shortTerm.length} short-term and ${longTerm.length} long-term memories`)
         } catch (error) {
-            this.logger.error('Memory initialization failed:', error)
+            logger.error('Memory initialization failed:', error)
             throw error
         }
     }
 
     cleanupCache() {
         const now = Date.now()
-        let removed = 0
-
         for (const [key, timestamp] of this.cacheTimestamps.entries()) {
             if (now - timestamp > this.cacheOptions.ttl) {
                 this.embeddingCache.delete(key)
                 this.cacheTimestamps.delete(key)
-                removed++
             }
-        }
-
-        if (removed > 0) {
-            this.logger.debug(`Cache cleanup: removed ${removed} expired entries`)
         }
 
         while (this.embeddingCache.size > this.cacheOptions.maxSize) {
@@ -102,7 +94,6 @@ export default class MemoryManager {
             if (oldestKey) {
                 this.embeddingCache.delete(oldestKey)
                 this.cacheTimestamps.delete(oldestKey)
-                this.logger.debug('Cache cleanup: removed oldest entry to maintain size limit')
             }
         }
     }
@@ -113,10 +104,8 @@ export default class MemoryManager {
 
     async generateEmbedding(text) {
         const cacheKey = this.getCacheKey(text)
-        this.logger.debug(`Generating embedding for text: ${text.slice(0, 50)}...`)
 
         if (this.embeddingCache.has(cacheKey)) {
-            this.logger.debug('Using cached embedding')
             const cached = this.embeddingCache.get(cacheKey)
             this.cacheTimestamps.set(cacheKey, Date.now())
             return cached
@@ -137,7 +126,7 @@ export default class MemoryManager {
 
             return embedding
         } catch (error) {
-            this.logger.error('Error generating embedding:', error)
+            logger.error('Error generating embedding:', error)
             throw error
         }
     }
@@ -163,8 +152,6 @@ export default class MemoryManager {
     }
 
     async addInteraction(prompt, output, embedding, concepts) {
-        this.logger.debug(`Adding interaction: ${prompt.slice(0, 50)}...`)
-
         try {
             this.validateEmbedding(embedding)
             const standardizedEmbedding = this.standardizeEmbedding(embedding)
@@ -180,36 +167,27 @@ export default class MemoryManager {
                 decayFactor: 1.0
             }
 
-            this.memStore.shortTermMemory.push(interaction)
-            this.memStore.embeddings.push(standardizedEmbedding)
-            this.memStore.timestamps.push(interaction.timestamp)
-            this.memStore.accessCounts.push(interaction.accessCount)
-            this.memStore.conceptsList.push(interaction.concepts)
-
-            await this.storage.saveMemoryToHistory(this.memStore)
-            this.logger.info('Interaction added successfully')
-
+            this.store.addInteraction(interaction)
+            await this.storage.saveMemoryToHistory(this.store)
         } catch (error) {
-            this.logger.error('Failed to add interaction:', error)
+            logger.error('Failed to add interaction:', error)
             throw error
         }
     }
 
     async retrieveRelevantInteractions(query, similarityThreshold = 40, excludeLastN = 0) {
-        this.logger.debug(`Retrieving relevant interactions for: ${query.slice(0, 50)}...`)
-
         try {
             const queryEmbedding = await this.generateEmbedding(query)
             const queryConcepts = await this.extractConcepts(query)
-            return this.memStore.retrieve(queryEmbedding, queryConcepts, similarityThreshold, excludeLastN)
+            return this.store.retrieve(queryEmbedding, queryConcepts, similarityThreshold, excludeLastN)
         } catch (error) {
-            this.logger.error('Failed to retrieve relevant interactions:', error)
+            logger.error('Failed to retrieve relevant interactions:', error)
             throw error
         }
     }
 
     async extractConcepts(text) {
-        this.logger.info('Extracting concepts...')
+        logger.info('Extracting concepts...')
         try {
             const prompt = PromptTemplates.formatConceptPrompt(this.chatModel, text)
             const response = await this.llmProvider.generateCompletion(
@@ -221,21 +199,19 @@ export default class MemoryManager {
             const match = response.match(/\[.*\]/)
             if (match) {
                 const concepts = JSON.parse(match[0])
-                this.logger.info('Extracted concepts:', concepts)
+                logger.info('Extracted concepts:', concepts)
                 return concepts
             }
 
-            this.logger.info('No concepts extracted, returning empty array')
+            logger.info('No concepts extracted, returning empty array')
             return []
         } catch (error) {
-            this.logger.error('Error extracting concepts:', error)
+            logger.error('Error extracting concepts:', error)
             return []
         }
     }
 
     async generateResponse(prompt, lastInteractions = [], retrievals = [], contextWindow = 3) {
-        this.logger.debug(`Generating response for: ${prompt.slice(0, 50)}...`)
-
         const context = this.contextManager.buildContext(
             prompt,
             retrievals,
@@ -259,23 +235,23 @@ export default class MemoryManager {
 
             return response.trim()
         } catch (error) {
-            this.logger.error('Error generating response:', error)
+            logger.error('Error generating response:', error)
             throw error
         }
     }
 
     async dispose() {
-        this.logger.info('Starting MemoryManager shutdown...')
+        logger.info('Starting MemoryManager shutdown...')
 
         if (this.cleanupInterval) {
             clearInterval(this.cleanupInterval)
         }
 
         try {
-            await this.storage.saveMemoryToHistory(this.memStore)
-            this.logger.info('Final memory state saved')
+            await this.storage.saveMemoryToHistory(this.store)
+            logger.info('Final memory state saved')
         } catch (error) {
-            this.logger.error('Error saving final memory state:', error)
+            logger.error('Error saving final memory state:', error)
         }
 
         this.embeddingCache.clear()
@@ -285,9 +261,9 @@ export default class MemoryManager {
             await this.storage.close()
         }
 
-        this.memStore = null
+        this.store = null
         this.llmProvider = null
 
-        this.logger.info('MemoryManager shutdown complete')
+        logger.info('MemoryManager shutdown complete')
     }
 }

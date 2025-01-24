@@ -1,27 +1,31 @@
-import MemoryManager from './MemoryManager.js'
-import JSONStore from './stores/JSONStore.js'
-import Config from './Config.js'
-import Anthropic from '@anthropic-ai/sdk'
+import MemoryManager from '../src/MemoryManager.js'
+import JSONStore from '../src/stores/JSONStore.js'
+import Config from '../src/Config.js'
 
-class HybridConnector {
-    constructor(claudeApiKey, ollamaBaseUrl = 'http://localhost:11434') {
-        this.anthropic = new Anthropic({ apiKey: claudeApiKey })
-        this.ollamaBaseUrl = ollamaBaseUrl
+class ClaudeConnector {
+    constructor(apiKey, baseUrl = 'https://api.anthropic.com/v1') {
+        this.apiKey = apiKey
+        this.baseUrl = baseUrl
+        this.defaultModel = 'claude-3-opus-20240229'
     }
 
     async generateEmbedding(model, input) {
-        const response = await fetch(`${this.ollamaBaseUrl}/api/embeddings`, {
+        const response = await fetch(`${this.baseUrl}/messages`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                'x-api-key': this.apiKey,
+                'anthropic-version': '2023-06-01'
+            },
             body: JSON.stringify({
-                model: 'nomic-embed-text',
-                prompt: input,
-                options: { num_ctx: 8192 }
+                model: this.defaultModel,
+                messages: [{ role: 'user', content: input }],
+                system: "Generate an embedding vector for the input text."
             })
         })
 
         if (!response.ok) {
-            throw new Error(`Ollama embedding error: ${response.status}`)
+            throw new Error(`Claude API error: ${response.status}`)
         }
 
         const data = await response.json()
@@ -29,17 +33,29 @@ class HybridConnector {
     }
 
     async generateChat(model, messages, options = {}) {
-        const response = await this.anthropic.messages.create({
-            model: "claude-3-opus-20240229",
-            max_tokens: options.max_tokens || 1024,
-            messages: messages.map(msg => ({
-                role: msg.role,
-                content: msg.content
-            })),
-            ...options
+        const response = await fetch(`${this.baseUrl}/messages`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-api-key': this.apiKey,
+                'anthropic-version': '2023-06-01'
+            },
+            body: JSON.stringify({
+                model: this.defaultModel,
+                messages: messages.map(msg => ({
+                    role: msg.role,
+                    content: msg.content
+                })),
+                ...options
+            })
         })
 
-        return response.content[0].text
+        if (!response.ok) {
+            throw new Error(`Claude API error: ${response.status}`)
+        }
+
+        const data = await response.json()
+        return data.content[0].text
     }
 
     async generateCompletion(model, prompt, options = {}) {
@@ -50,6 +66,7 @@ class HybridConnector {
     }
 }
 
+// Handle graceful shutdown
 let memoryManager = null
 
 async function shutdown(signal) {
@@ -68,6 +85,7 @@ async function shutdown(signal) {
     }
 }
 
+// Handle different termination signals
 process.on('SIGTERM', () => shutdown('SIGTERM'))
 process.on('SIGINT', () => shutdown('SIGINT'))
 process.on('uncaughtException', async (error) => {
@@ -80,6 +98,7 @@ process.on('unhandledRejection', async (reason, promise) => {
 })
 
 async function main() {
+    // Load environment variables
     const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY
     if (!CLAUDE_API_KEY) {
         throw new Error('CLAUDE_API_KEY environment variable is required')
@@ -98,17 +117,17 @@ async function main() {
                 model: 'claude-3-opus-20240229'
             },
             embedding: {
-                provider: 'ollama',
-                model: 'nomic-embed-text'
+                provider: 'claude',
+                model: 'claude-3-opus-20240229'
             }
         }
     })
 
     const storage = new JSONStore(config.get('storage.options.path'))
-    const hybridProvider = new HybridConnector(CLAUDE_API_KEY)
+    const claude = new ClaudeConnector(CLAUDE_API_KEY)
 
     memoryManager = new MemoryManager({
-        llmProvider: hybridProvider,
+        llmProvider: claude,
         chatModel: config.get('models.chat.model'),
         embeddingModel: config.get('models.embedding.model'),
         storage
@@ -130,7 +149,10 @@ async function main() {
     }
 }
 
+// Start the application
 main().catch(async (error) => {
     console.error('Fatal error:', error)
     await shutdown('fatal error')
 })
+
+export default ClaudeConnector

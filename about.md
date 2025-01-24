@@ -28,6 +28,14 @@ docker-compose up -d
 ```
 
 ```sh
+cd ~/github-danny/hyperdata/packages/tbox
+docker-compose up -d
+cd ~/github-danny/hyperdata/packages/semem
+node src/OllamaClaudeExample.js
+
+```
+
+```sh
 # ollama pull nomic-embed-text
 
 curl http://localhost:11434/api/embeddings -d '{
