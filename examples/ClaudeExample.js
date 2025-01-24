@@ -1,3 +1,4 @@
+import logger from 'loglevel'
 import MemoryManager from '../src/MemoryManager.js'
 import JSONStore from '../src/stores/JSONStore.js'
 import Config from '../src/Config.js'
@@ -6,10 +7,17 @@ class ClaudeConnector {
     constructor(apiKey, baseUrl = 'https://api.anthropic.com/v1') {
         this.apiKey = apiKey
         this.baseUrl = baseUrl
-        this.defaultModel = 'claude-3-opus-20240229'
+        this.defaultModel = 'voyage-3' // voyage-3 claude-3-5-sonnet-20241022
     }
 
     async generateEmbedding(model, input) {
+        logger.setLevel('debug')
+        logger.log(`ClaudeExample.generateEmbedding, this.apiKey = ${this.apiKey}`)
+        // process.exit(0)
+        model = await Promise.resolve(model) // TODO unhackify
+        logger.log(`ClaudeExample.generateEmbedding,
+            model = ${model}
+            input = ${input}`)
         const response = await fetch(`${this.baseUrl}/messages`, {
             method: 'POST',
             headers: {
@@ -18,14 +26,15 @@ class ClaudeConnector {
                 'anthropic-version': '2023-06-01'
             },
             body: JSON.stringify({
-                model: this.defaultModel,
+                //  model: this.defaultModel,
+                model: model,
                 messages: [{ role: 'user', content: input }],
                 system: "Generate an embedding vector for the input text."
             })
         })
 
         if (!response.ok) {
-            throw new Error(`Claude API error: ${response.status}`)
+            throw new Error(`Claude API error: ${response.status} ${response.text}`)
         }
 
         const data = await response.json()

@@ -1,12 +1,15 @@
-
-import fetch from 'node-fetch';
+import logger from 'loglevel'
+import fetch from 'node-fetch'
 
 export default class OllamaConnector {
     constructor(baseUrl = 'http://localhost:11434') {
-        this.baseUrl = baseUrl;
+        this.baseUrl = baseUrl
     }
 
     async generateEmbedding(model, input) {
+        logger.setLevel('debug')
+        model = await Promise.resolve(model) // TODO unhackify
+        logger.log(`OllamaConnector.generateEmbedding, \nmodel = ${model} \ninput = ${input}`)
         const response = await fetch(`${this.baseUrl}/api/embeddings`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -17,14 +20,14 @@ export default class OllamaConnector {
                     num_ctx: 8192
                 }
             })
-        });
+        })
 
         if (!response.ok) {
-            throw new Error(`Ollama API error: ${response.status}`);
+            throw new Error(`Ollama API error: ${response.status}`)
         }
 
-        const data = await response.json();
-        return data.embedding;
+        const data = await response.json()
+        return data.embedding
     }
 
     async generateChat(model, messages, options = {}) {
@@ -37,14 +40,14 @@ export default class OllamaConnector {
                 stream: false,
                 options
             })
-        });
+        })
 
         if (!response.ok) {
-            throw new Error(`Ollama API error: ${response.status}`);
+            throw new Error(`Ollama API error: ${response.status}`)
         }
 
-        const data = await response.json();
-        return data.message.content;
+        const data = await response.json()
+        return data.message.content
     }
 
     async generateCompletion(model, prompt, options = {}) {
@@ -57,13 +60,13 @@ export default class OllamaConnector {
                 stream: false,
                 options
             })
-        });
+        })
 
         if (!response.ok) {
-            throw new Error(`Ollama API error: ${response.status}`);
+            throw new Error(`Ollama API error: ${response.status}`)
         }
 
-        const data = await response.json();
-        return data.response;
+        const data = await response.json()
+        return data.response
     }
 }

@@ -1,3 +1,4 @@
+import logger from 'loglevel'
 import MemoryManager from '../src/MemoryManager.js'
 import JSONStore from '../src/stores/JSONStore.js'
 import Config from '../src/Config.js'
@@ -123,7 +124,7 @@ async function main() {
         storage
     })
 
-    const prompt = "What's the current state of AI technology?"
+    const prompt = "How many agents does it take to change a lightbulb?"
 
     try {
         const relevantInteractions = await memoryManager.retrieveRelevantInteractions(prompt)

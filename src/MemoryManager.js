@@ -1,3 +1,4 @@
+import logger from 'loglevel'
 import { v4 as uuidv4 } from 'uuid'
 import MemoryStore from './stores/MemoryStore.js'
 import InMemoryStore from './stores/InMemoryStore.js'
@@ -209,8 +210,12 @@ export default class MemoryManager {
     }
 
     async extractConcepts(text) {
-        this.logger.info('Extracting concepts...')
+        logger.setLevel('debug')
+        this.logger.log('Extracting concepts...')
         try {
+            logger.log(`Extracting concepts from ${text}`)
+            this.chatModel = await Promise.resolve(this.chatModel)
+            logger.log(`this.chatModel =  ${this.chatModel}`)
             const prompt = PromptTemplates.formatConceptPrompt(this.chatModel, text)
             const response = await this.llmProvider.generateCompletion(
                 this.chatModel,
