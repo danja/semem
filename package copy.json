@@ -8,10 +8,7 @@
     "node": ">=20.11.0"
   },
   "scripts": {
-    "test": "node scripts/run-tests.js",
-    "test:unit": "node scripts/run-tests.js tests/unit",
-    "test:integration": "node scripts/run-tests.js tests/integration",
-    "test:debug": "node --inspect-brk scripts/run-tests.js",
+    "tests": "jasmine --config=jasmine.json --reporter=tests/helpers/reporter.js",
     "cov": "nyc -a --include=src --reporter=lcov npm run test",
     "docs": "jsdoc -c jsdoc.json",
     "rp": "repomix -c repomix.config.json . "

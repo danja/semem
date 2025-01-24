@@ -1,6 +1,5 @@
 export default class Config {
     static defaults = {
-
         storage: {
             type: 'memory',
             options: {
@@ -34,12 +33,11 @@ export default class Config {
                 user: "admin",
                 password: "admin123",
                 urlBase: "http://localhost:4030",
-                dataset: "test-mem"  // Match Fuseki dataset name
-                //     query: "/test-mem",
-                //   update: "/test-mem",
-                // upload: "/test-mem/upload",
-                // gspRead: "/test-mem/data",
-                // gspWrite: "/test-mem/data"
+                query: "/test-mem",
+                update: "/test-mem",
+                upload: "/test-mem/upload",
+                gspRead: "/test-mem/data",
+                gspWrite: "/test-mem/data"
             }
         ]
     };

@@ -1,11 +1,15 @@
 {
     "spec_dir": "tests",
     "spec_files": [
-        "**/*[sS]pec.js"
+        "unit/**/*.spec.js",
+        "integration/**/*.spec.js"
     ],
     "helpers": [
-        "helpers/reporter.js"
+        "helpers/setupGlobals.js",
+        "helpers/setupSPARQL.js"
     ],
-    "stopSpecOnExpectationFailure": true,
-    "random": false
+    "env": {
+        "stopSpecOnExpectationFailure": false,
+        "random": false
+    }
 }

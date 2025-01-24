@@ -1,6 +1,5 @@
 export default class Config {
     static defaults = {
-
         storage: {
             type: 'memory',
             options: {
@@ -34,12 +33,11 @@ export default class Config {
                 user: "admin",
                 password: "admin123",
                 urlBase: "http://localhost:4030",
-                dataset: "test-mem"  // Match Fuseki dataset name
-                //     query: "/test-mem",
-                //   update: "/test-mem",
-                // upload: "/test-mem/upload",
-                // gspRead: "/test-mem/data",
-                // gspWrite: "/test-mem/data"
+                query: "/test-mem",
+                update: "/test-mem",
+                upload: "/test-mem/upload",
+                gspRead: "/test-mem/data",
+                gspWrite: "/test-mem/data"
             }
         ]
     };
@@ -47,15 +45,21 @@ export default class Config {
     constructor(userConfig = {}) {
         this.initialized = false
         this.config = {}
-        this.userConfig = userConfig
     }
 
     async init() {
         if (this.initialized) return
 
         try {
-            this.config = this.mergeConfigs(Config.defaults, this.userConfig || {})
+            // Load environment variables if needed
+            // await this.loadEnv();
+
+            // Deep merge defaults with user config
+            this.config = this.mergeConfigs(Config.defaults, this.userConfig)
+
+            // Validate configuration
             this.validateConfig()
+
             this.initialized = true
         } catch (error) {
             throw new Error(`Config initialization failed: ${error.message}`)
@@ -64,10 +68,9 @@ export default class Config {
 
     mergeConfigs(defaults, user) {
         const merged = { ...defaults }
-
         for (const [key, value] of Object.entries(user)) {
-            if (value && typeof value === 'object' && !Array.isArray(value)) {
-                merged[key] = this.mergeConfigs(merged[key] || {}, value)
+            if (value && typeof value === 'object') {
+                merged[key] = this.mergeConfigs(defaults[key] || {}, value)
             } else {
                 merged[key] = value
             }
@@ -97,10 +100,7 @@ export default class Config {
         }
         const keys = path.split('.')
         const last = keys.pop()
-        const target = keys.reduce((obj, key) => {
-            if (!obj[key]) obj[key] = {}
-            return obj[key]
-        }, this.config)
+        const target = keys.reduce((obj, key) => obj[key] = obj[key] || {}, this.config)
         target[last] = value
     }
 

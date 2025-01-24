@@ -1,116 +1,89 @@
-// src/ContextWindow.js
-import { logger } from './Utils.js';
-
 export default class ContextWindowManager {
     constructor(options = {}) {
-        this.minWindowSize = options.minWindowSize || 1024;
-        this.maxWindowSize = options.maxWindowSize || 8192;
-        this.overlapRatio = options.overlapRatio || 0.1; // 10% overlap
-        this.avgTokenLength = options.avgTokenLength || 4; // average chars per token
+        this.minWindowSize = options.minWindowSize || 1024
+        this.maxWindowSize = options.maxWindowSize || 8192
+        this.overlapRatio = options.overlapRatio || 0.1
+        this.avgTokenLength = options.avgTokenLength || 4
     }
 
-    // Estimate token count from text length
     estimateTokens(text) {
-        return Math.ceil(text.length / this.avgTokenLength);
+        return Math.ceil(text.length / this.avgTokenLength)
     }
 
-    // Calculate optimal window size based on input
     calculateWindowSize(input) {
-        const estimatedTokens = this.estimateTokens(input);
-
-        // Scale window size based on input length
-        let windowSize = Math.min(
+        const estimatedTokens = this.estimateTokens(input)
+        return Math.min(
             this.maxWindowSize,
-            Math.max(
-                this.minWindowSize,
-                estimatedTokens * 1.2 // Add 20% buffer
-            )
-        );
-
-        logger.debug(`Calculated window size: ${windowSize} for input length: ${input.length}`);
-        return windowSize;
+            Math.max(this.minWindowSize, estimatedTokens * 1.2)
+        )
     }
 
-    // Create overlapping windows
     createWindows(text, windowSize) {
-        const windows = [];
-        const overlapSize = Math.floor(windowSize * this.overlapRatio);
-        const stride = windowSize - overlapSize;
+        const windows = []
+        const overlapSize = Math.floor(windowSize * this.overlapRatio)
+        const stride = windowSize - overlapSize
 
-        let position = 0;
+        let position = 0
         while (position < text.length) {
+            const end = Math.min(position + windowSize, text.length)
             const window = {
-                text: text.slice(position, position + windowSize),
+                text: text.slice(position, end),
                 start: position,
-                end: Math.min(position + windowSize, text.length)
-            };
+                end: end
+            }
+            windows.push(window)
+            if (end === text.length) break
 
-            windows.push(window);
-            position += stride;
-
-            if (position + windowSize >= text.length) {
-                // Add final window if needed
-                if (position < text.length) {
-                    windows.push({
-                        text: text.slice(position),
-                        start: position,
-                        end: text.length
-                    });
-                }
-                break;
+            // Find next word boundary for clean split
+            position += Math.max(1, stride)
+            while (position < text.length && !text[position].match(/\s/)) {
+                position++
             }
         }
 
-        return windows;
+        return windows
     }
 
-    // Merge overlapping responses
-    mergeOverlappingContent(windows) {
-        if (windows.length === 0) return '';
-        if (windows.length === 1) return windows[0].text;
-
-        let merged = windows[0].text;
-        for (let i = 1; i < windows.length; i++) {
-            const overlap = this._findBestOverlap(
-                merged.slice(-this.maxWindowSize),
-                windows[i].text
-            );
-            merged += windows[i].text.slice(overlap);
-        }
-
-        return merged;
-    }
-
-    // Find best overlap point between two text segments
-    _findBestOverlap(end, start, minOverlap = 10) {
-        // Try to find the largest matching section
-        for (let overlap = Math.min(end.length, start.length); overlap >= minOverlap; overlap--) {
-            const endSlice = end.slice(-overlap);
-            const startSlice = start.slice(0, overlap);
-
-            if (endSlice === startSlice) {
-                return overlap;
-            }
-        }
-
-        return 0;
-    }
-
-    // Process context with optimal windowing
     processContext(context, options = {}) {
-        const windowSize = this.calculateWindowSize(context);
-        const windows = this.createWindows(context, windowSize);
+        const windowSize = this.calculateWindowSize(context)
+        const windows = this.createWindows(context, windowSize)
+        return options.includeMetadata ?
+            windows.map(w => ({ ...w, tokenEstimate: this.estimateTokens(w.text) })) :
+            windows
+    }
 
-        logger.debug(`Created ${windows.length} windows with size ${windowSize}`);
+    mergeOverlappingContent(windows) {
+        if (!windows?.length) return ''
+        if (windows.length === 1) return windows[0].text
 
-        // Add window metadata if requested
-        if (options.includeMetadata) {
-            return windows.map(window => ({
-                ...window,
-                tokenEstimate: this.estimateTokens(window.text)
-            }));
+        let result = windows[0].text
+        for (let i = 1; i < windows.length; i++) {
+            const currText = windows[i].text
+            const overlap = this._findOverlap(result, currText)
+            if (overlap > 0) {
+                result += currText.slice(overlap)
+            } else {
+                result += ' ' + currText
+            }
         }
+        return result.trim()
+    }
 
-        return windows;
+    _findOverlap(prev, curr) {
+        const minOverlap = Math.min(10, Math.floor(curr.length * 0.1))
+        for (let len = Math.min(prev.length, curr.length); len >= minOverlap; len--) {
+            const prevEnd = prev.slice(-len)
+            const currStart = curr.slice(0, len)
+
+            if (prevEnd === currStart) {
+                // Verify word boundary
+                const beforeChar = prev[prev.length - len - 1]
+                const afterChar = curr[len]
+                if (!beforeChar?.match(/\w/) && !afterChar?.match(/\w/)) {
+                    return len
+                }
+            }
+        }
+        return 0
     }
 }

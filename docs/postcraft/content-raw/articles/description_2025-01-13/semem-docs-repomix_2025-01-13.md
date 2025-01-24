@@ -1,3 +1,6 @@
+This file contains a summary of semem, taken from a series of files. It probably isn't accurate the current status.
+The code in project knowledge should be used as the primary reference, even though much is untested.
+
 
 File: api-index.md
 ================
