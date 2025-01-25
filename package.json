@@ -36,8 +36,7 @@
   "devDependencies": {
     "jasmine": "^5.5.0",
     "jasmine-spec-reporter": "^7.0.0",
-    "jsdoc": "^4.0.4",
-    "loglevel": "^1.9.2"
+    "jsdoc": "^4.0.4"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.36.2",
@@ -46,6 +45,7 @@
     "dotenv": "^16.4.7",
     "faiss-node": "^0.5.1",
     "graphology": "^0.25.4",
+    "loglevel": "^1.9.2",
     "ml-kmeans": "^6.0.0",
     "ollama": "^0.5.10"
   }
