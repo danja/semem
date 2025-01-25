@@ -1,162 +1,167 @@
-import express from 'express';
-import cors from 'cors';
-import helmet from 'helmet';
-import compression from 'compression';
-import { rateLimit } from 'express-rate-limit';
-import swaggerUi from 'swagger-ui-express';
-import BaseAPI from '../../common/BaseAPI.js';
-import { APIRegistry } from '../../common/APIRegistry.js';
+// src/api/http/server/HTTPServer.js
+import express from 'express'
+import cors from 'cors'
+import helmet from 'helmet'
+import rateLimit from 'express-rate-limit'
+import compression from 'compression'
+import swaggerUi from 'swagger-ui-express'
+import { APIRegistry } from '../../common/APIRegistry.js'
+import BaseAPI from '../../common/BaseAPI.js'
+import { authenticateRequest } from '../middleware/auth.js'
+import { errorHandler } from '../middleware/error.js'
+import { requestLogger } from '../middleware/logging.js'
+import apiSpec from './openapi-schema.js'
 
 export default class HTTPServer extends BaseAPI {
     constructor(config = {}) {
-        super(config);
-        this.app = express();
-        this.registry = new APIRegistry();
-        this.port = config.port || 3000;
-        this.setupMiddleware();
-        this.setupRoutes();
+        super(config)
+        this.app = express()
+        this.registry = new APIRegistry()
+        this.port = config.port || 3000
+        this.setupMiddleware()
+        this.setupRoutes()
+        this.setupErrorHandling()
     }
 
     setupMiddleware() {
-        // Security and optimization middleware
-        this.app.use(helmet());
-        this.app.use(cors());
-        this.app.use(compression());
-        this.app.use(express.json());
-        
+        // Security
+        this.app.use(helmet())
+        this.app.use(cors(this.config.cors))
+
+        // Performance
+        this.app.use(compression())
+        this.app.use(express.json({ limit: '1mb' }))
+
         // Rate limiting
         const limiter = rateLimit({
             windowMs: 15 * 60 * 1000,
             max: 100,
             standardHeaders: true,
-            legacyHeaders: false
-        });
-        this.app.use(limiter);
+            legacyHeaders: false,
+            message: 'Too many requests, please try again later.'
+        })
+        this.app.use('/api/', limiter)
 
-        // Request logging
+        // Logging and metrics
+        this.app.use(requestLogger(this.logger))
         this.app.use((req, res, next) => {
-            this.logger.debug(`${req.method} ${req.path}`);
-            const start = Date.now();
+            const start = Date.now()
             res.on('finish', () => {
-                const duration = Date.now() - start;
-                this._emitMetric('http.request.duration', duration);
-                this._emitMetric('http.request.status', res.statusCode);
-            });
-            next();
-        });
-
-        // Error handling
-        this.app.use((err, req, res, next) => {
-            this.logger.error('Server error:', err);
-            res.status(500).json({
-                success: false,
-                error: err.message,
-                metadata: {
-                    timestamp: Date.now(),
-                    path: req.path
-                }
-            });
-        });
+                this._emitMetric('http.request.duration', Date.now() - start)
+                this._emitMetric('http.response.status', res.statusCode)
+            })
+            next()
+        })
     }
 
     setupRoutes() {
         // API Documentation
-        if (this.config.openapi) {
-            this.app.use('/docs', swaggerUi.serve, 
-                swaggerUi.setup(this.config.openapi));
-        }
+        this.app.use('/docs', swaggerUi.serve, swaggerUi.setup(apiSpec))
 
-        // Chat endpoints
-        this.app.post('/api/chat', async (req, res) => {
-            try {
-                const api = this.registry.get('chat');
-                const response = await api.executeOperation('chat', req.body);
-                res.json({
-                    success: true,
-                    data: response
-                });
-            } catch (error) {
-                res.status(400).json({
-                    success: false,
-                    error: error.message
-                });
-            }
-        });
+        // API Routes
+        const apiRouter = express.Router()
 
-        // Storage endpoints
-        this.app.post('/api/store', async (req, res) => {
+        // Memory operations
+        apiRouter.post('/memory', authenticateRequest, async (req, res, next) => {
             try {
-                const api = this.registry.get('storage');
-                await api.storeInteraction(req.body);
-                res.json({ success: true });
+                const memoryAPI = this.registry.get('memory')
+                const result = await memoryAPI.storeInteraction(req.body)
+                res.json({ success: true, data: result })
             } catch (error) {
-                res.status(400).json({
-                    success: false,
-                    error: error.message
-                });
+                next(error)
             }
-        });
+        })
 
-        // Query endpoints
-        this.app.get('/api/query', async (req, res) => {
+        apiRouter.get('/memory/search', authenticateRequest, async (req, res, next) => {
             try {
-                const api = this.registry.get('storage');
-                const results = await api.retrieveInteractions(req.query);
-                res.json({
-                    success: true,
-                    data: results
-                });
+                const memoryAPI = this.registry.get('memory')
+                const results = await memoryAPI.retrieveInteractions(req.query)
+                res.json({ success: true, data: results })
             } catch (error) {
-                res.status(400).json({
-                    success: false,
-                    error: error.message
-                });
+                next(error)
             }
-        });
+        })
 
-        // Metrics endpoint
-        this.app.get('/api/metrics', async (req, res) => {
+        // Chat operations
+        apiRouter.post('/chat', authenticateRequest, async (req, res, next) => {
             try {
-                const metrics = await this.getMetrics();
-                res.json({
-                    success: true,
-                    data: metrics
-                });
+                const chatAPI = this.registry.get('chat')
+                const response = await chatAPI.executeOperation('chat', req.body)
+                res.json({ success: true, data: response })
             } catch (error) {
-                res.status(500).json({
-                    success: false,
-                    error: error.message
-                });
+                next(error)
             }
-        });
+        })
+
+        // Streaming chat
+        apiRouter.post('/chat/stream', authenticateRequest, async (req, res, next) => {
+            try {
+                const chatAPI = this.registry.get('chat')
+                res.setHeader('Content-Type', 'text/event-stream')
+                res.setHeader('Cache-Control', 'no-cache')
+                res.setHeader('Connection', 'keep-alive')
+
+                const stream = await chatAPI.executeOperation('stream', req.body)
+                stream.on('data', chunk => {
+                    res.write(`data: ${JSON.stringify(chunk)}\n\n`)
+                })
+                stream.on('end', () => res.end())
+                stream.on('error', error => next(error))
+            } catch (error) {
+                next(error)
+            }
+        })
+
+        // Metrics and monitoring
+        apiRouter.get('/metrics', authenticateRequest, async (req, res, next) => {
+            try {
+                const metrics = await this.getMetrics()
+                res.json({ success: true, data: metrics })
+            } catch (error) {
+                next(error)
+            }
+        })
 
         // Health check
-        this.app.get('/health', (req, res) => {
+        apiRouter.get('/health', (req, res) => {
             res.json({
                 status: 'healthy',
                 timestamp: Date.now(),
                 uptime: process.uptime()
-            });
-        });
+            })
+        })
+
+        this.app.use('/api', apiRouter)
+    }
+
+    setupErrorHandling() {
+        this.app.use(errorHandler(this.logger))
     }
 
     async initialize() {
-        await super.initialize();
+        await super.initialize()
         return new Promise((resolve) => {
             this.server = this.app.listen(this.port, () => {
-                this.logger.info(`HTTP server listening on port ${this.port}`);
-                resolve();
-            });
-        });
+                this.wsServer = new MemoryWebSocketServer(this.server)
+
+                // Notify clients of memory updates
+                this.registry.on('memoryUpdate', (interaction) => {
+                    this.wsServer.notifyUpdate(interaction)
+                })
+
+                this.logger.info(`HTTP server listening on port ${this.port}`)
+                resolve()
+            })
+        })
     }
 
     async shutdown() {
         if (this.server) {
             await new Promise((resolve) => {
-                this.server.close(resolve);
-            });
-            this.logger.info('HTTP server shut down');
+                this.server.close(resolve)
+            })
+            this.logger.info('HTTP server shut down')
         }
-        await super.shutdown();
+        await super.shutdown()
     }
 }

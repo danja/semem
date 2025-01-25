@@ -14,7 +14,7 @@
     "test:debug": "node --inspect-brk scripts/run-tests.js",
     "cov": "nyc -a --include=src --reporter=lcov npm run test",
     "docs": "jsdoc -c jsdoc.json",
-    "rp": "repomix -c repomix.config.json . "
+    "rp": "repomix -c repomix.config.json . && repomix -c repomix-docs.config.json . "
   },
   "repository": {
     "type": "git",

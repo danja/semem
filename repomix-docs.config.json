@@ -1,11 +1,13 @@
 {
     "output": {
-        "filePath": "./repomix-semem.md",
-        "headerText": "Semem repo",
+        "filePath": "./repomix-semem-docs.md",
+        "headerText": "Semem docs",
         "removeComments": false
     },
     "include": [
-        "**/*"
+        "**/*.md",
+        "docs/postcraft/content-raw/articles/description_pre_2025-01-25",
+        "docs/postcraft/content-raw/articles/description_2025-01-25"
     ],
     "ignore": {
         "useDefaultPatterns": false,
