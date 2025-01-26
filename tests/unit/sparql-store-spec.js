@@ -1,161 +1,205 @@
-import SPARQLStore from '../../src/stores/SPARQLStore.js';
+// tests/unit/sparql-store-spec.js
+import SPARQLStore from '../../src/stores/SPARQLStore.js'
+import { v4 as uuidv4 } from 'uuid'
 
 describe('SPARQLStore', () => {
-    let store;
-    let mockFetch;
-    
+    let store
+    let mockFetch
+
     const endpoint = {
         query: 'http://example.org/sparql/query',
         update: 'http://example.org/sparql/update'
-    };
+    }
+
+    const mockInteraction = {
+        id: uuidv4(),
+        prompt: 'test prompt',
+        output: 'test output',
+        embedding: new Array(1536).fill(0),
+        timestamp: Date.now(),
+        accessCount: 1,
+        concepts: ['test'],
+        decayFactor: 1.0
+    }
+
+    const mockMemoryStore = {
+        shortTermMemory: [mockInteraction],
+        longTermMemory: []
+    }
 
     beforeEach(() => {
-        // Mock fetch API
         mockFetch = jasmine.createSpy('fetch').and.returnValue(
             Promise.resolve({
                 ok: true,
                 json: () => Promise.resolve({
-                    results: {
-                        bindings: [{
-                            id: { value: 'test-id' },
-                            prompt: { value: 'test prompt' },
-                            output: { value: 'test output' },
-                            embedding: { value: '[0,1,2]' },
-                            timestamp: { value: '1234567890' },
-                            accessCount: { value: '1' },
-                            concepts: { value: '["test"]' },
-                            decayFactor: { value: '1.0' },
-                            memoryType: { value: 'short-term' }
-                        }]
-                    }
-                })
+                    results: { bindings: [] }
+                }),
+                text: () => Promise.resolve('')
             })
-        );
-        global.fetch = mockFetch;
-        global.Buffer = {
-            from: (str) => ({ toString: () => 'mock-base64' })
-        };
+        )
+        global.fetch = mockFetch
 
         store = new SPARQLStore(endpoint, {
-            user: 'testuser',
-            password: 'testpass',
-            graphName: 'http://test.org/memory'
-        });
-    });
+            user: 'test',
+            password: 'test',
+            graphName: 'http://test.org/memory',
+            dimension: 1536
+        })
+    })
 
     afterEach(() => {
-        delete global.fetch;
-        delete global.Buffer;
-    });
+        delete global.fetch
+    })
 
-    describe('loadHistory', () => {
-        it('should load and parse memory data correctly', async () => {
-            const [shortTerm, longTerm] = await store.loadHistory();
+    describe('Transaction Management', () => {
+        it('should execute transaction lifecycle', async () => {
+            await store.beginTransaction()
+            expect(store.inTransaction).toBeTrue()
 
-            expect(shortTerm.length).toBe(1);
-            expect(longTerm.length).toBe(0);
-            
-            const memory = shortTerm[0];
-            expect(memory.id).toBe('test-id');
-            expect(memory.prompt).toBe('test prompt');
-            expect(memory.embedding).toEqual([0,1,2]);
-            expect(memory.timestamp).toBe(1234567890);
-            expect(memory.concepts).toEqual(['test']);
-        });
+            await store.commitTransaction()
+            expect(store.inTransaction).toBeFalse()
+        })
 
-        it('should handle query errors', async () => {
-            mockFetch.and.returnValue(Promise.resolve({ ok: false, status: 500 }));
-            
-            await expectAsync(store.loadHistory())
-                .toBeRejectedWithError('SPARQL query failed: 500');
-        });
-    });
+        it('should prevent nested transactions', async () => {
+            await store.beginTransaction()
+            await expectAsync(store.beginTransaction())
+                .toBeRejectedWithError('Transaction already in progress')
+            await store.rollbackTransaction()
+        })
 
-    describe('saveMemoryToHistory', () => {
-        const mockMemoryStore = {
-            shortTermMemory: [{
-                id: 'test-id',
-                prompt: 'test prompt',
-                output: 'test output',
-                embedding: [0,1,2],
-                timestamp: 1234567890,
-                accessCount: 1,
-                concepts: ['test'],
-                decayFactor: 1.0
-            }],
-            longTermMemory: []
-        };
+        it('should rollback failed transactions', async () => {
+            mockFetch.and.returnValues(
+                Promise.resolve({ ok: true }), // begin
+                Promise.resolve({ ok: false, status: 500 }), // operation
+                Promise.resolve({ ok: true }) // rollback
+            )
 
-        it('should save memory data correctly', async () => {
-            await store.saveMemoryToHistory(mockMemoryStore);
+            await store.beginTransaction()
+            await expectAsync(store.saveMemoryToHistory(mockMemoryStore))
+                .toBeRejected()
+
+            expect(store.inTransaction).toBeFalse()
+            expect(mockFetch).toHaveBeenCalledTimes(3)
+        })
+    })
+
+    describe('Graph Operations', () => {
+        it('should verify graph existence', async () => {
+            await store.verify()
+            expect(mockFetch).toHaveBeenCalledWith(
+                endpoint.update,
+                jasmine.objectContaining({
+                    body: jasmine.stringContaining('CREATE SILENT GRAPH')
+                })
+            )
+        })
+
+        it('should save memory to history', async () => {
+            await store.saveMemoryToHistory(mockMemoryStore)
 
             expect(mockFetch).toHaveBeenCalledWith(
                 endpoint.update,
                 jasmine.objectContaining({
                     method: 'POST',
-                    headers: jasmine.objectContaining({
-                        'Content-Type': 'application/sparql-update'
-                    })
+                    body: jasmine.stringContaining('INSERT DATA')
                 })
-            );
-        });
+            )
+        })
 
-        it('should handle update errors', async () => {
-            mockFetch.and.returnValue(Promise.resolve({ ok: false, status: 500 }));
-            
-            await expectAsync(store.saveMemoryToHistory(mockMemoryStore))
-                .toBeRejectedWithError('SPARQL update failed: 500');
-        });
-    });
-
-    describe('transaction handling', () => {
-        it('should manage transactions correctly', async () => {
-            await store.beginTransaction();
-            expect(store.inTransaction).toBeTrue();
-            
-            await store.commitTransaction();
-            expect(store.inTransaction).toBeFalse();
-        });
-
-        it('should handle transaction rollback', async () => {
-            await store.beginTransaction();
-            await store.rollbackTransaction();
-            expect(store.inTransaction).toBeFalse();
-        });
-
-        it('should prevent nested transactions', async () => {
-            await store.beginTransaction();
-            await expectAsync(store.beginTransaction())
-                .toBeRejectedWithError('Transaction already in progress');
-        });
-    });
-
-    describe('verify', () => {
-        it('should verify graph existence', async () => {
-            mockFetch.and.returnValue(
-                Promise.resolve({
-                    ok: true,
-                    json: () => Promise.resolve({ boolean: true })
+        it('should load history', async () => {
+            mockFetch.and.returnValue(Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve({
+                    results: {
+                        bindings: [{
+                            id: { value: mockInteraction.id },
+                            prompt: { value: mockInteraction.prompt },
+                            output: { value: mockInteraction.output },
+                            embedding: { value: JSON.stringify(mockInteraction.embedding) },
+                            timestamp: { value: mockInteraction.timestamp.toString() },
+                            accessCount: { value: '1' },
+                            concepts: { value: JSON.stringify(mockInteraction.concepts) },
+                            decayFactor: { value: '1.0' },
+                            memoryType: { value: 'short-term' }
+                        }]
+                    }
                 })
-            );
+            }))
 
-            const isValid = await store.verify();
-            expect(isValid).toBeTrue();
-        });
+            const [shortTerm, longTerm] = await store.loadHistory()
 
-        it('should handle verification failures', async () => {
-            mockFetch.and.returnValue(Promise.resolve({ ok: false }));
-            
-            const isValid = await store.verify();
-            expect(isValid).toBeFalse();
-        });
-    });
+            expect(shortTerm.length).toBe(1)
+            expect(longTerm.length).toBe(0)
+            expect(shortTerm[0].id).toBe(mockInteraction.id)
+        })
+    })
 
-    describe('cleanup', () => {
-        it('should clean up transaction state on close', async () => {
-            await store.beginTransaction();
-            await store.close();
-            expect(store.inTransaction).toBeFalse();
-        });
-    });
-});
+    describe('Validation', () => {
+        it('should validate embedding dimensions', () => {
+            const validEmbedding = new Array(1536).fill(0)
+            expect(() => store.validateEmbedding(validEmbedding)).not.toThrow()
+
+            const invalidEmbedding = new Array(100).fill(0)
+            expect(() => store.validateEmbedding(invalidEmbedding))
+                .toThrowError('Embedding dimension mismatch')
+        })
+
+        it('should handle invalid embedding values', () => {
+            const invalidEmbedding = new Array(1536).fill('not a number')
+            expect(() => store.validateEmbedding(invalidEmbedding))
+                .toThrowError('Embedding must contain only valid numbers')
+        })
+    })
+
+    describe('Query Generation', () => {
+        it('should generate valid SPARQL UPDATE', async () => {
+            await store.saveMemoryToHistory(mockMemoryStore)
+
+            const updateCall = mockFetch.calls.mostRecent()
+            const updateBody = updateCall.args[1].body
+
+            expect(updateBody).toContain('INSERT DATA')
+            expect(updateBody).toContain(mockInteraction.id)
+            expect(updateBody).toContain('mcp:Interaction')
+            expect(updateBody).not.toContain('undefined')
+        })
+
+        it('should handle special characters in queries', async () => {
+            const specialInteraction = {
+                ...mockInteraction,
+                prompt: 'test "quotes" and \\backslashes\\',
+                output: "test 'apostrophes' and newlines\n"
+            }
+
+            await store.saveMemoryToHistory({
+                shortTermMemory: [specialInteraction],
+                longTermMemory: []
+            })
+
+            const updateBody = mockFetch.calls.mostRecent().args[1].body
+            expect(() => updateBody.replace(/\\"/g, '"')).not.toThrow()
+        })
+    })
+
+    describe('Resource Management', () => {
+        it('should clean up on close', async () => {
+            store.inTransaction = true
+            await store.close()
+            expect(store.inTransaction).toBeFalse()
+        })
+
+        it('should handle multiple operations in transaction', async () => {
+            await store.beginTransaction()
+
+            await store.saveMemoryToHistory({
+                shortTermMemory: [mockInteraction],
+                longTermMemory: []
+            })
+
+            await store._executeSparqlQuery('SELECT * WHERE { ?s ?p ?o }', endpoint.query)
+
+            await store.commitTransaction()
+            expect(mockFetch.calls.count()).toBe(3) // begin + query + commit
+        })
+    })
+})

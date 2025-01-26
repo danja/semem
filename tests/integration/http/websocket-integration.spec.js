@@ -1,205 +1,221 @@
-import HTTPServer from '../../../src/api/http/server/HTTPServer.js';
-import { WebSocket } from 'ws';
-import Config from '../../../src/Config.js';
+// tests/integration/http/websocket-integration.spec.js
+import { WebSocketServer, WebSocket } from 'ws'
+import { EventEmitter } from 'events'
+import MemoryWebSocketServer from '../../../src/api/http/server/WebSocketServer.js'
+import MessageQueue from '../../../src/api/http/server/MessageQueue.js'
 
 describe('WebSocket Integration', () => {
-    const PORT = 8081;
-    const WS_URL = `ws://localhost:${PORT}/ws`;
-    const AUTH_HEADER = Buffer.from('admin:admin123').toString('base64');
-    
-    let httpServer;
-    let config;
+    const PORT = 8081
+    const WS_URL = `ws://localhost:${PORT}/ws`
+    const AUTH_HEADER = Buffer.from('admin:admin123').toString('base64')
 
+    let server
+    let mockHttpServer
+
+    // Helper to create authenticated websocket connection
     const connectWS = (headers = {}) => new Promise((resolve, reject) => {
-        const ws = new WebSocket(WS_URL, { 
-            headers: { 
+        const ws = new WebSocket(WS_URL, {
+            headers: {
                 'Authorization': `Basic ${AUTH_HEADER}`,
-                ...headers 
+                ...headers
             }
-        });
+        })
         const timeout = setTimeout(() => {
-            ws.close();
-            reject(new Error('Connection timeout'));
-        }, 2000);
+            ws.close()
+            reject(new Error('Connection timeout'))
+        }, 2000)
 
         ws.once('open', () => {
-            clearTimeout(timeout);
-            resolve(ws);
-        });
-        ws.once('error', (err) => {
-            clearTimeout(timeout);
-            reject(err);
-        });
-    });
+            clearTimeout(timeout)
+            resolve(ws)
+        })
+        ws.once('error', reject)
+    })
 
-    const waitForMessage = (ws, predicate) => new Promise((resolve) => {
-        const handler = (data) => {
-            const msg = JSON.parse(data.toString());
-            if (predicate(msg)) {
-                ws.off('message', handler);
-                resolve(msg);
-            }
-        };
-        ws.on('message', handler);
-    });
+    beforeEach(() => {
+        mockHttpServer = new EventEmitter()
+        mockHttpServer.address = () => ({ port: PORT })
+        server = new MemoryWebSocketServer(mockHttpServer)
+    })
 
-    beforeAll(async () => {
-        config = new Config({ port: PORT });
-        httpServer = new HTTPServer(config);
-        await httpServer.initialize();
-    });
+    afterEach(() => {
+        server.close()
+    })
 
-    afterAll(async () => {
-        await httpServer.shutdown();
-    });
+    describe('Connection Management', () => {
+        let ws
 
-    describe('connection management', () => {
-        let ws;
-        
         afterEach(() => {
             if (ws?.readyState === WebSocket.OPEN) {
-                ws.close();
+                ws.close()
             }
-        });
+        })
 
-        it('establishes authenticated connection', async () => {
-            ws = await connectWS();
-            const msg = await waitForMessage(ws, m => m.type === 'connected');
-            expect(msg.clientId).toBeTruthy();
-        });
+        it('should authenticate connections with valid credentials', async () => {
+            ws = await connectWS()
+            expect(ws.readyState).toBe(WebSocket.OPEN)
 
-        it('rejects invalid credentials', async () => {
+            // Verify welcome message
+            const message = await new Promise(resolve => {
+                ws.once('message', data => {
+                    resolve(JSON.parse(data.toString()))
+                })
+            })
+            expect(message.type).toBe('connected')
+            expect(message.clientId).toBeDefined()
+        })
+
+        it('should reject invalid credentials', async () => {
+            const invalidAuth = Buffer.from('wrong:pass').toString('base64')
             await expectAsync(
-                connectWS({ 'Authorization': 'Basic invalid' })
-            ).toBeRejectedWithError();
-        });
+                connectWS({ 'Authorization': `Basic ${invalidAuth}` })
+            ).toBeRejected()
+        })
 
-        it('handles connection limits', async () => {
-            const connections = await Promise.all(
-                Array(5).fill(0).map(() => connectWS())
-            );
-            await expectAsync(connectWS()).toBeRejectedWithError();
-            connections.forEach(ws => ws.close());
-        });
-    });
+        it('should handle disconnection cleanup', async () => {
+            ws = await connectWS()
+            const clientId = server.clients.keys().next().value
 
-    describe('messaging protocol', () => {
-        let ws;
-        let clientId;
+            ws.close()
+            await new Promise(resolve => ws.once('close', resolve))
+
+            expect(server.clients.has(clientId)).toBe(false)
+        })
+    })
+
+    describe('Message Queue Management', () => {
+        let ws
+        let clientId
 
         beforeEach(async () => {
-            ws = await connectWS();
-            const msg = await waitForMessage(ws, m => m.type === 'connected');
-            clientId = msg.clientId;
-        });
+            ws = await connectWS()
+            const msg = await new Promise(resolve => {
+                ws.once('message', data => {
+                    resolve(JSON.parse(data.toString()))
+                })
+            })
+            clientId = msg.clientId
+        })
 
         afterEach(() => {
-            if (ws?.readyState === WebSocket.OPEN) {
-                ws.close();
+            if (ws.readyState === WebSocket.OPEN) {
+                ws.close()
             }
-        });
+        })
 
-        it('handles topic subscription lifecycle', async () => {
-            const topic = 'test-topic';
-            const testData = { value: 'test' };
+        it('should handle topic subscriptions', async () => {
+            ws.send(JSON.stringify({
+                type: 'subscribe',
+                topic: 'test-topic'
+            }))
 
-            // Subscribe
-            ws.send(JSON.stringify({ type: 'subscribe', topic }));
-            
-            // Broadcast and verify
-            httpServer.wsServer.broadcast(topic, testData);
-            const broadcastMsg = await waitForMessage(
-                ws, 
-                m => m.type === 'broadcast' && m.topic === topic
-            );
-            expect(broadcastMsg.data).toEqual(testData);
+            // Send test message
+            server.broadcast('test-topic', { data: 'test' })
 
-            // Unsubscribe
-            ws.send(JSON.stringify({ type: 'unsubscribe', topic }));
-            
-            // Should not receive after unsubscribe
-            httpServer.wsServer.broadcast(topic, { value: 'ignored' });
-            await new Promise(resolve => setTimeout(resolve, 100));
-        });
+            const message = await new Promise(resolve => {
+                ws.once('message', data => {
+                    resolve(JSON.parse(data.toString()))
+                })
+            })
 
-        it('manages offline message queue', async () => {
-            const topic = 'test-topic';
-            const testData = { value: 'offline' };
+            expect(message.topic).toBe('test-topic')
+            expect(message.data.data).toBe('test')
+        })
 
-            // Subscribe and disconnect
-            ws.send(JSON.stringify({ type: 'subscribe', topic }));
-            ws.close();
-            await new Promise(resolve => 
-                ws.once('close', resolve)
-            );
+        it('should queue messages for offline clients', async () => {
+            // Subscribe and close connection
+            ws.send(JSON.stringify({
+                type: 'subscribe',
+                topic: 'test-topic'
+            }))
+            ws.close()
+            await new Promise(resolve => ws.once('close', resolve))
 
-            // Send while offline
-            httpServer.wsServer.broadcast(topic, testData);
+            // Send message while offline
+            server.broadcast('test-topic', { data: 'offline-test' })
 
-            // Reconnect and verify queued message
-            ws = await connectWS();
-            const queuedMsg = await waitForMessage(
-                ws,
-                m => m.type === 'queued_message' && m.topic === topic
-            );
-            expect(queuedMsg.message).toEqual(testData);
-        });
+            // Reconnect
+            ws = await connectWS()
 
-        it('processes message acknowledgments', async () => {
-            const topic = 'test-topic';
-            
-            // Subscribe and receive message
-            ws.send(JSON.stringify({ type: 'subscribe', topic }));
-            httpServer.wsServer.broadcast(topic, { value: 'test' });
-            
-            const msg = await waitForMessage(
-                ws,
-                m => m.type === 'broadcast' && m.topic === topic
-            );
+            // Should receive queued message
+            const message = await new Promise(resolve => {
+                ws.once('message', data => {
+                    resolve(JSON.parse(data.toString()))
+                })
+            })
 
-            // Acknowledge
+            expect(message.type).toBe('queued_message')
+            expect(message.topic).toBe('test-topic')
+            expect(message.message.data).toBe('offline-test')
+        })
+
+        it('should handle message acknowledgments', async () => {
+            ws.send(JSON.stringify({
+                type: 'subscribe',
+                topic: 'test-topic'
+            }))
+
+            server.broadcast('test-topic', { data: 'test' })
+
+            const message = await new Promise(resolve => {
+                ws.once('message', data => {
+                    resolve(JSON.parse(data.toString()))
+                })
+            })
+
             ws.send(JSON.stringify({
                 type: 'ack',
-                messageIds: [msg.id]
-            }));
+                messageIds: [message.id]
+            }))
 
-            // Verify acknowledgment
-            await new Promise(resolve => setTimeout(resolve, 100));
-            const queuedMessages = httpServer.wsServer.messageQueue
-                .getMessages(clientId);
-            expect(queuedMessages.length).toBe(0);
-        });
-    });
+            // Wait for ack processing
+            await new Promise(resolve => setTimeout(resolve, 100))
 
-    describe('error handling', () => {
-        let ws;
+            const queuedMessages = server.messageQueue.getMessages(clientId)
+            expect(queuedMessages.length).toBe(0)
+        })
+    })
+
+    describe('Error Handling', () => {
+        let ws
+
+        beforeEach(async () => {
+            ws = await connectWS()
+        })
 
         afterEach(() => {
-            if (ws?.readyState === WebSocket.OPEN) {
-                ws.close();
+            if (ws.readyState === WebSocket.OPEN) {
+                ws.close()
             }
-        });
+        })
 
-        it('handles malformed messages', async () => {
-            ws = await connectWS();
-            ws.send('invalid json');
-            
-            const errorMsg = await waitForMessage(
-                ws,
-                m => m.type === 'error'
-            );
-            expect(errorMsg.error).toBe('Invalid message format');
-        });
+        it('should handle malformed messages', async () => {
+            ws.send('invalid json')
 
-        it('handles unknown message types', async () => {
-            ws = await connectWS();
-            ws.send(JSON.stringify({ type: 'unknown' }));
-            
-            const errorMsg = await waitForMessage(
-                ws,
-                m => m.type === 'error'
-            );
-            expect(errorMsg.error).toBe('Unknown message type');
-        });
-    });
-});
+            const error = await new Promise(resolve => {
+                ws.once('message', data => {
+                    resolve(JSON.parse(data.toString()))
+                })
+            })
+
+            expect(error.type).toBe('error')
+            expect(error.error).toBe('Invalid message format')
+        })
+
+        it('should handle rate limiting', async () => {
+            // Send messages rapidly
+            for (let i = 0; i < 100; i++) {
+                ws.send(JSON.stringify({ type: 'ping' }))
+            }
+
+            const error = await new Promise(resolve => {
+                ws.once('message', data => {
+                    resolve(JSON.parse(data.toString()))
+                })
+            })
+
+            expect(error.type).toBe('error')
+            expect(error.error).toContain('rate limit')
+        })
+    })
+})

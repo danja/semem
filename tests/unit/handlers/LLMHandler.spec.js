@@ -1,15 +1,15 @@
-import LLMHandler from '../../../src/handlers/LLMHandler'
-import type { LLMProvider } from '../../../src/types/MemoryTypes'
+// tests/unit/handlers/LLMHandler.spec.js
+import LLMHandler from '../../../src/handlers/LLMHandler.js'
 
 describe('LLMHandler', () => {
-    let handler: LLMHandler
-    let mockProvider: jest.Mocked<LLMProvider>
+    let handler
+    let mockProvider
 
     beforeEach(() => {
         mockProvider = {
-            generateEmbedding: jest.fn(),
-            generateChat: jest.fn(),
-            generateCompletion: jest.fn()
+            generateEmbedding: jasmine.createSpy('generateEmbedding'),
+            generateChat: jasmine.createSpy('generateChat'),
+            generateCompletion: jasmine.createSpy('generateCompletion')
         }
         handler = new LLMHandler(mockProvider, 'test-model')
     })
@@ -17,7 +17,7 @@ describe('LLMHandler', () => {
     describe('generateResponse', () => {
         it('should generate chat response with correct parameters', async () => {
             const expectedResponse = 'Test response'
-            mockProvider.generateChat.mockResolvedValue(expectedResponse)
+            mockProvider.generateChat.and.resolveTo(expectedResponse)
 
             const response = await handler.generateResponse(
                 'test prompt',
@@ -27,16 +27,16 @@ describe('LLMHandler', () => {
             expect(response).toBe(expectedResponse)
             expect(mockProvider.generateChat).toHaveBeenCalledWith(
                 'test-model',
-                expect.arrayContaining([
-                    expect.objectContaining({ role: 'system' }),
-                    expect.objectContaining({ role: 'user' })
+                jasmine.arrayContaining([
+                    jasmine.objectContaining({ role: 'system' }),
+                    jasmine.objectContaining({ role: 'user' })
                 ]),
-                expect.objectContaining({ temperature: 0.7 })
+                jasmine.objectContaining({ temperature: 0.7 })
             )
         })
 
         it('should handle chat generation errors', async () => {
-            mockProvider.generateChat.mockRejectedValue(new Error('API Error'))
+            mockProvider.generateChat.and.rejectWith(new Error('API Error'))
 
             await expectAsync(
                 handler.generateResponse('test prompt', 'test context')
@@ -47,7 +47,7 @@ describe('LLMHandler', () => {
     describe('extractConcepts', () => {
         it('should extract concepts from LLM response', async () => {
             const concepts = ['concept1', 'concept2']
-            mockProvider.generateCompletion.mockResolvedValue(
+            mockProvider.generateCompletion.and.resolveTo(
                 `Some text ["${concepts.join('", "')}"] more text`
             )
 
@@ -56,13 +56,13 @@ describe('LLMHandler', () => {
             expect(result).toEqual(concepts)
             expect(mockProvider.generateCompletion).toHaveBeenCalledWith(
                 'test-model',
-                expect.any(String),
-                expect.objectContaining({ temperature: 0.2 })
+                jasmine.any(String),
+                jasmine.objectContaining({ temperature: 0.2 })
             )
         })
 
         it('should return empty array when no concepts found', async () => {
-            mockProvider.generateCompletion.mockResolvedValue('Invalid response')
+            mockProvider.generateCompletion.and.resolveTo('Invalid response')
 
             const result = await handler.extractConcepts('test text')
 
@@ -70,7 +70,7 @@ describe('LLMHandler', () => {
         })
 
         it('should handle invalid JSON in concept extraction', async () => {
-            mockProvider.generateCompletion.mockResolvedValue('[invalid json]')
+            mockProvider.generateCompletion.and.resolveTo('[invalid json]')
 
             const result = await handler.extractConcepts('test text')
 
@@ -81,7 +81,7 @@ describe('LLMHandler', () => {
     describe('generateEmbedding', () => {
         it('should generate embeddings successfully', async () => {
             const expectedEmbedding = [0.1, 0.2, 0.3]
-            mockProvider.generateEmbedding.mockResolvedValue(expectedEmbedding)
+            mockProvider.generateEmbedding.and.resolveTo(expectedEmbedding)
 
             const embedding = await handler.generateEmbedding(
                 'test text',
@@ -97,9 +97,9 @@ describe('LLMHandler', () => {
 
         it('should retry failed embedding generations', async () => {
             mockProvider.generateEmbedding
-                .mockRejectedValueOnce(new Error('Retry 1'))
-                .mockRejectedValueOnce(new Error('Retry 2'))
-                .mockResolvedValueOnce([0.1, 0.2, 0.3])
+                .and.rejectWith(new Error('Retry 1'))
+                .and.rejectWith(new Error('Retry 2'))
+                .and.resolveTo([0.1, 0.2, 0.3])
 
             const embedding = await handler.generateEmbedding(
                 'test text',
@@ -111,7 +111,7 @@ describe('LLMHandler', () => {
         })
 
         it('should fail after max retries', async () => {
-            mockProvider.generateEmbedding.mockRejectedValue(new Error('API Error'))
+            mockProvider.generateEmbedding.and.rejectWith(new Error('API Error'))
 
             await expectAsync(
                 handler.generateEmbedding('test text', 'embedding-model')
@@ -121,9 +121,8 @@ describe('LLMHandler', () => {
         })
     })
 
-    describe('temperature management', () => {
+    describe('setTemperature', () => {
         it('should set valid temperature', () => {
-            handler.setTemperature(0.5)
             expect(() => handler.setTemperature(0.5)).not.toThrow()
         })
 
@@ -135,9 +134,9 @@ describe('LLMHandler', () => {
 
     describe('model validation', () => {
         it('should validate model names', () => {
-            expect(handler.validateModel('valid-model')).toBeTrue()
-            expect(handler.validateModel('')).toBeFalse()
-            expect(handler.validateModel('' as any)).toBeFalse()
+            expect(handler.validateModel('valid-model')).toBe(true)
+            expect(handler.validateModel('')).toBe(false)
+            expect(handler.validateModel(undefined)).toBe(false)
         })
     })
 })
