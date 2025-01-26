@@ -1,6 +1,6 @@
 // tests/unit/handlers/PassiveHandler.spec.js
 import PassiveHandler from '../../../src/api/features/PassiveHandler.js'
-import { APIRegistry } from '../../../src/api/common/APIRegistry.js'
+import APIRegistry from '../../../src/api/common/APIRegistry.js'
 import BaseAPI from '../../../src/api/common/BaseAPI.js'
 
 describe('PassiveHandler', () => {

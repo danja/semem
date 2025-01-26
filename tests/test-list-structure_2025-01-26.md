@@ -1,5 +1,3 @@
-npm test -- tests/unit/ProcessorSettings.spec.js
-
 # Core System
 
 - npm test -- tests/unit/Config.spec.js

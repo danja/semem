@@ -1,15 +1,15 @@
-import yargs from 'yargs';
-import { hideBin } from 'yargs/helpers';
-import chalk from 'chalk';
-import log from 'loglevel';
-import { APIRegistry } from '../common/APIRegistry.js';
-import BaseAPI from '../common/BaseAPI.js';
+import yargs from 'yargs'
+import { hideBin } from 'yargs/helpers'
+import chalk from 'chalk'
+import log from 'loglevel'
+import APIRegistry from '../common/APIRegistry.js'
+import BaseAPI from '../common/BaseAPI.js'
 
 export default class CLIHandler extends BaseAPI {
     constructor(config = {}) {
-        super(config);
-        this.registry = new APIRegistry();
-        this.setupCommands();
+        super(config)
+        this.registry = new APIRegistry()
+        this.setupCommands()
     }
 
     setupCommands() {
@@ -71,135 +71,135 @@ export default class CLIHandler extends BaseAPI {
                 describe: 'Run with verbose logging'
             })
             .help()
-            .alias('h', 'help');
+            .alias('h', 'help')
     }
 
     async initialize() {
-        await super.initialize();
-        
+        await super.initialize()
+
         // Set up logging based on verbosity
         if (this.yargs.argv.verbose) {
-            log.setLevel('debug');
+            log.setLevel('debug')
         }
 
         process.on('SIGINT', async () => {
-            await this.shutdown();
-            process.exit(0);
-        });
+            await this.shutdown()
+            process.exit(0)
+        })
     }
 
     async executeOperation(command, args) {
         try {
             switch (command) {
                 case 'chat':
-                    return this.handleChat(args);
+                    return this.handleChat(args)
                 case 'store':
-                    return this.handleStore(args);
+                    return this.handleStore(args)
                 case 'query':
-                    return this.handleQuery(args);
+                    return this.handleQuery(args)
                 case 'metrics':
-                    return this.handleMetrics(args);
+                    return this.handleMetrics(args)
                 default:
-                    throw new Error(`Unknown command: ${command}`);
+                    throw new Error(`Unknown command: ${command}`)
             }
         } catch (error) {
-            this.logger.error('Operation failed:', error);
+            this.logger.error('Operation failed:', error)
             this.formatOutput({
                 success: false,
                 error: error.message
-            }, args);
+            }, args)
         }
     }
 
     async handleChat({ prompt, model }) {
-        const api = this.registry.get('chat');
+        const api = this.registry.get('chat')
         const response = await api.executeOperation('chat', {
             prompt,
             model
-        });
-        
+        })
+
         return this.formatOutput({
             success: true,
             data: response
-        });
+        })
     }
 
     async handleStore({ data, format }) {
-        const api = this.registry.get('storage');
+        const api = this.registry.get('storage')
         const stored = await api.storeInteraction({
             content: data,
             format,
             timestamp: Date.now()
-        });
-        
+        })
+
         return this.formatOutput({
             success: true,
             data: stored
-        });
+        })
     }
 
     async handleQuery({ query, limit }) {
-        const api = this.registry.get('storage');
+        const api = this.registry.get('storage')
         const results = await api.retrieveInteractions({
             text: query,
             limit
-        });
-        
+        })
+
         return this.formatOutput({
             success: true,
             data: results
-        });
+        })
     }
 
     async handleMetrics({ format }) {
-        const metrics = await this.getMetrics();
+        const metrics = await this.getMetrics()
         return this.formatOutput({
             success: true,
             data: metrics
-        }, { format });
+        }, { format })
     }
 
     formatOutput(result, { format = 'text', color = true } = {}) {
-        const c = color ? chalk : (text => text);
-        
+        const c = color ? chalk : (text => text)
+
         if (format === 'json') {
-            return console.log(JSON.stringify(result, null, 2));
+            return console.log(JSON.stringify(result, null, 2))
         }
 
         if (!result.success) {
-            return console.error(c.red(`Error: ${result.error}`));
+            return console.error(c.red(`Error: ${result.error}`))
         }
 
         if (Array.isArray(result.data)) {
             result.data.forEach(item => {
-                console.log(c.cyan('---'));
+                console.log(c.cyan('---'))
                 Object.entries(item).forEach(([key, value]) => {
-                    console.log(c.yellow(`${key}:`), value);
-                });
-            });
-            return;
+                    console.log(c.yellow(`${key}:`), value)
+                })
+            })
+            return
         }
 
         if (typeof result.data === 'object') {
             Object.entries(result.data).forEach(([key, value]) => {
-                console.log(c.yellow(`${key}:`), value);
-            });
-            return;
+                console.log(c.yellow(`${key}:`), value)
+            })
+            return
         }
 
-        console.log(result.data);
+        console.log(result.data)
     }
 
     async run() {
-        await this.initialize();
-        const argv = await this.yargs.argv;
-        const command = argv._[0];
+        await this.initialize()
+        const argv = await this.yargs.argv
+        const command = argv._[0]
 
         if (!command) {
-            this.yargs.showHelp();
-            process.exit(1);
+            this.yargs.showHelp()
+            process.exit(1)
         }
 
-        await this.executeOperation(command, argv);
+        await this.executeOperation(command, argv)
     }
 }

@@ -1,6 +1,6 @@
 // tests/unit/api/REPLHandler.spec.js
 import REPLHandler from '../../../src/api/repl/REPLHandler.js'
-import { APIRegistry } from '../../../src/api/common/APIRegistry.js'
+import APIRegistry from '../../../src/api/common/APIRegistry.js'
 import { EventEmitter } from 'events'
 
 describe('REPLHandler', () => {

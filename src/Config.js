@@ -42,7 +42,7 @@ export default class Config {
             gspRead: "/test-mem/data",
             gspWrite: "/test-mem/data"
         }]
-    };
+    }
 
     constructor(userConfig = {}) {
         this.initialized = false
@@ -50,11 +50,12 @@ export default class Config {
         this.userConfig = userConfig
     }
 
-    init() {
+    async init() {
         if (this.initialized) return
 
         try {
-            this.config = this.mergeConfigs(Config.defaults, this.userConfig || {})
+            this.config = this.mergeConfigs(Config.defaults, this.userConfig)
+            this.applyEnvironmentOverrides()
             this.validateConfig()
             this.initialized = true
         } catch (error) {
@@ -76,10 +77,40 @@ export default class Config {
     }
 
     validateConfig() {
+        // Required sections
         const required = ['storage', 'models', 'sparqlEndpoints']
         for (const key of required) {
             if (!this.config[key]) {
                 throw new Error(`Missing required config section: ${key}`)
+            }
+        }
+
+        // Storage validation
+        const validStorageTypes = ['memory', 'json', 'sparql']
+        if (!validStorageTypes.includes(this.config.storage.type)) {
+            throw new Error('Invalid storage type')
+        }
+
+        // Model validation
+        const models = this.config.models
+        if (!models.chat?.provider || !models.chat?.model ||
+            !models.embedding?.provider || !models.embedding?.model) {
+            throw new Error('Invalid model configuration')
+        }
+
+        // SPARQL endpoint validation
+        const endpoint = this.config.sparqlEndpoints[0]
+        if (!endpoint?.urlBase || !endpoint?.query || !endpoint?.update) {
+            throw new Error('Invalid SPARQL endpoint configuration')
+        }
+    }
+
+    applyEnvironmentOverrides() {
+        // Handle environment variables with SEMEM_ prefix
+        for (const [key, value] of Object.entries(process.env)) {
+            if (key.startsWith('SEMEM_')) {
+                const configPath = key.slice(6).toLowerCase().split('_')
+                this.set(configPath.join('.'), value)
             }
         }
     }
@@ -114,5 +145,10 @@ export default class Config {
         const config = new Config(userConfig)
         config.init()
         return config
+    }
+
+    toJSON() {
+        const { password, ...safeConfig } = this.config
+        return safeConfig
     }
 }

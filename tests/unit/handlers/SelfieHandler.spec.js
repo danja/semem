@@ -1,6 +1,6 @@
 // tests/unit/handlers/SelfieHandler.spec.js
 import SelfieHandler from '../../../src/api/features/SelfieHandler.js'
-import { APIRegistry } from '../../../src/api/common/APIRegistry.js'
+import APIRegistry from '../../../src/api/common/APIRegistry.js'
 import BaseAPI from '../../../src/api/common/BaseAPI.js'
 
 describe('SelfieHandler', () => {

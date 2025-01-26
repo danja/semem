@@ -42,11 +42,17 @@
     "@anthropic-ai/sdk": "^0.36.2",
     "@langchain/core": "^0.3.19",
     "@langchain/openai": "^0.3.14",
+    "compression": "^1.7.5",
+    "cors": "^2.8.5",
     "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
     "faiss-node": "^0.5.1",
     "graphology": "^0.25.4",
+    "helmet": "^8.0.0",
     "loglevel": "^1.9.2",
     "ml-kmeans": "^6.0.0",
-    "ollama": "^0.5.10"
+    "ollama": "^0.5.10",
+    "swagger-ui-express": "^5.0.1"
   }
 }

@@ -1,6 +1,6 @@
 // tests/unit/handlers/ActiveHandler.spec.js
 import ActiveHandler from '../../../src/api/features/ActiveHandler.js'
-import { APIRegistry } from '../../../src/api/common/APIRegistry.js'
+import APIRegistry from '../../../src/api/common/APIRegistry.js'
 import BaseAPI from '../../../src/api/common/BaseAPI.js'
 
 describe('ActiveHandler', () => {

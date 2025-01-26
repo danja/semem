@@ -1,6 +1,6 @@
 // tests/unit/api/CLIHandler.spec.js
 import CLIHandler from '../../../src/api/cli/CLIHandler.js'
-import { APIRegistry } from '../../../src/api/common/APIRegistry.js'
+import APIRegistry from '../../../src/api/common/APIRegistry.js'
 
 describe('CLIHandler', () => {
     let handler

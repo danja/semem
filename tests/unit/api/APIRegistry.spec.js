@@ -1,5 +1,5 @@
 // tests/unit/api/APIRegistry.spec.js
-import { APIRegistry } from '../../../src/api/common/APIRegistry.js'
+import APIRegistry from '../../../src/api/common/APIRegistry.js'
 import BaseAPI from '../../../src/api/common/BaseAPI.js'
 
 class TestAPI extends BaseAPI {

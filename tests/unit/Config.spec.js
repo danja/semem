@@ -1,7 +1,7 @@
-// tests/unit/Config.spec.js
 import Config from '../../src/Config.js'
 
 describe('Config', () => {
+    let config
     const validConfig = {
         storage: {
             type: 'sparql',
@@ -20,18 +20,18 @@ describe('Config', () => {
             }
         },
         sparqlEndpoints: [{
-            label: 'test',
-            urlBase: 'http://localhost:4030',
-            query: '/test-mem',
-            update: '/test-mem',
-            user: 'admin',
-            password: 'admin123'
+            label: "test",
+            urlBase: "http://localhost:4030",
+            query: "/test-mem",
+            update: "/test-mem",
+            user: "admin",
+            password: "admin123"
         }]
     }
 
     describe('Initialization', () => {
         it('should initialize with defaults when no config provided', async () => {
-            const config = new Config()
+            config = new Config()
             await config.init()
 
             expect(config.get('models.chat.model')).toBe('qwen2:1.5b')
@@ -40,7 +40,7 @@ describe('Config', () => {
         })
 
         it('should merge user config with defaults', async () => {
-            const config = new Config({
+            config = new Config({
                 storage: {
                     type: 'sparql',
                     options: { graphName: 'test' }

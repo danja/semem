@@ -1,10 +1,12 @@
+/**
+ * Configuration management for Semem system
+ */
 export default class Config {
     static defaults = {
         storage: {
-            type: 'memory',  // 'memory', 'json', or 'remote'
+            type: 'memory',
             options: {
                 path: 'interaction_history.json',
-                // Remote storage options
                 endpoint: 'http://localhost:8080',
                 apiKey: '',
                 timeout: 5000
@@ -28,30 +30,44 @@ export default class Config {
             contextWindow: 3,
             decayRate: 0.0001
         },
-        sparqlEndpoints: [
-            {
-                label: "tbox-test",
-                user: "admin",
-                password: "admin123",
-                urlBase: "http://localhost:4030",
-                upload: "/test-db",
-                gspRead: "/test-db",
-                query: "/test-db",
-                update: "/test-db"
-            }
-        ]
-
+        sparqlEndpoints: [{
+            label: "test-mem",
+            user: "admin",
+            password: "admin123",
+            urlBase: "http://localhost:4030",
+            dataset: "test-mem",
+            query: "/test-mem",
+            update: "/test-mem",
+            upload: "/test-mem/upload",
+            gspRead: "/test-mem/data",
+            gspWrite: "/test-mem/data"
+        }]
     };
 
     constructor(userConfig = {}) {
-        this.config = this.mergeConfigs(Config.defaults, userConfig)
+        this.initialized = false
+        this.config = {}
+        this.userConfig = userConfig
+    }
+
+    init() {
+        if (this.initialized) return
+
+        try {
+            this.config = this.mergeConfigs(Config.defaults, this.userConfig || {})
+            this.validateConfig()
+            this.initialized = true
+        } catch (error) {
+            throw new Error(`Config initialization failed: ${error.message}`)
+        }
     }
 
     mergeConfigs(defaults, user) {
         const merged = { ...defaults }
+
         for (const [key, value] of Object.entries(user)) {
-            if (value && typeof value === 'object') {
-                merged[key] = this.mergeConfigs(defaults[key] || {}, value)
+            if (value && typeof value === 'object' && !Array.isArray(value)) {
+                merged[key] = this.mergeConfigs(merged[key] || {}, value)
             } else {
                 merged[key] = value
             }
@@ -59,14 +75,44 @@ export default class Config {
         return merged
     }
 
+    validateConfig() {
+        const required = ['storage', 'models', 'sparqlEndpoints']
+        for (const key of required) {
+            if (!this.config[key]) {
+                throw new Error(`Missing required config section: ${key}`)
+            }
+        }
+    }
+
     get(path) {
-        return path.split('.').reduce((obj, key) => obj && obj[key], this.config)
+        if (!this.initialized) {
+            this.init()
+        }
+
+        return path.split('.').reduce((obj, key) => {
+            if (obj === undefined) return undefined
+            return obj[key]
+        }, this.config)
     }
 
     set(path, value) {
+        if (!this.initialized) {
+            this.init()
+        }
+
         const keys = path.split('.')
         const last = keys.pop()
-        const target = keys.reduce((obj, key) => obj[key] = obj[key] || {}, this.config)
+        const target = keys.reduce((obj, key) => {
+            if (!obj[key]) obj[key] = {}
+            return obj[key]
+        }, this.config)
+
         target[last] = value
+    }
+
+    static create(userConfig = {}) {
+        const config = new Config(userConfig)
+        config.init()
+        return config
     }
 }
