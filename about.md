@@ -46,4 +46,5 @@ curl http://localhost:11434/api/embeddings -d '{
 
 ```sh
 npm test -- --filter="SPARQL Endpoint Integration"
+npm test -- tests/unit/Config.spec.js
 ```
