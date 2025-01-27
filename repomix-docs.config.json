@@ -6,19 +6,13 @@
     },
     "include": [
         "**/*.md",
-        "docs/postcraft/content-raw/articles/_description_pre_2025-01-25/**/*.md",
-        "docs/postcraft/content-raw/articles/_description_2025-01-25/**/*.md"
+        "**/*.mermaid",
+        "description-latest"
     ],
     "ignore": {
         "useDefaultPatterns": false,
         "customPatterns": [
             "docs",
-            "docs/postcraft/cache",
-            "docs/postcraft/content-static",
-            "docs/postcraft/layouts",
-            "docs/postcraft/manifest.ttl",
-            "docs/postcraft/media",
-            "docs/postcraft/public",
             "data",
             ".nyc_output",
             ".env",

@@ -1,0 +1,24 @@
+sequenceDiagram
+    participant C as Client
+    participant S as Store
+    participant B as Backup
+    participant D as Data Store
+
+    C->>S: beginTransaction()
+    S->>B: Create backup
+    activate S
+    
+    C->>S: saveMemoryToHistory()
+    S->>D: Update data
+    
+    alt Success
+        S->>B: Remove backup
+        S-->>C: Success
+    else Failure
+        S->>B: Restore from backup
+        S-->>C: Error
+    end
+    
+    deactivate S
+    
+    Note over S,D: Transaction complete

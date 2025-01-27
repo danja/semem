@@ -1,0 +1,95 @@
+flowchart TB
+    subgraph Interfaces
+        direction TB
+        CLI[CLI Handler]
+        REPL[REPL Handler]
+        HTTP[HTTP/WS Server]
+    end
+
+    subgraph Core
+        direction TB
+        MM[Memory Manager]
+        CM[Context Manager]
+        LLM[LLM Handler]
+        EH[Embedding Handler]
+    end
+
+    subgraph Storage
+        direction TB
+        Base[BaseStore]
+        SPARQL[SPARQLStore]
+        JSON[JSONStore]
+        Memory[InMemoryStore]
+        Cache[CacheManager]
+    end
+
+    subgraph Services
+        direction TB
+        Ollama[Ollama]
+        Claude[Claude]
+        Fuseki[Fuseki]
+    end
+
+    Interfaces --> MM
+    MM --> CM
+    MM --> LLM
+    MM --> EH
+    LLM --> Ollama
+    LLM --> Claude
+    MM --> Base
+    Base --> SPARQL
+    Base --> JSON
+    Base --> Memory
+    SPARQL --> Fuseki
+    SPARQL --> Cache
+
+---
+
+sequenceDiagram
+    participant Client
+    participant API
+    participant MM as Memory Manager
+    participant LLM
+    participant Store
+
+    Client->>API: Query/Interaction
+    API->>MM: Process Request
+    MM->>LLM: Generate Embedding
+    MM->>LLM: Extract Concepts
+    MM->>Store: Retrieve Similar
+    MM->>MM: Apply Context
+    MM->>LLM: Generate Response
+    MM->>Store: Store Interaction
+    MM->>API: Return Response
+    API->>Client: Formatted Response
+
+---
+
+classDiagram
+    class BaseStore {
+        <<abstract>>
+        +loadHistory()*
+        +saveMemoryToHistory()*
+        +beginTransaction()*
+        +commitTransaction()*
+        +rollbackTransaction()*
+    }
+
+    class SPARQLStore {
+        -endpoint: Object
+        -graphName: string
+        +executeSparqlQuery()
+        +executeSparqlUpdate()
+    }
+
+    class CachedSPARQLStore {
+        -queryCache: Map
+        -cacheTTL: number
+        +cleanupCache()
+        +invalidateCache()
+    }
+
+    BaseStore <|-- SPARQLStore
+    SPARQLStore <|-- CachedSPARQLStore
+    BaseStore <|-- JSONStore
+    BaseStore <|-- InMemoryStore

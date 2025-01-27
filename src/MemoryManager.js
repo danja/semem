@@ -137,18 +137,28 @@ export default class MemoryManager {
     }
 
     async dispose() {
+        let error = null
         try {
+            // Save current state before disposal
             await this.storage.saveMemoryToHistory(this.memStore)
-            this.cacheManager.dispose()
+        } catch (e) {
+            error = e
+        }
 
+        try {
+            // Clean up resources
+            this.cacheManager.dispose()
             if (this.storage?.close) {
                 await this.storage.close()
             }
-
-            this.memStore = null
-        } catch (error) {
-            logger.error('Error during shutdown:', error)
-            throw error
+        } catch (e) {
+            if (!error) error = e
         }
+
+        // Clear references
+        this.memStore = null
+
+        // If there were any errors, throw after cleanup
+        if (error) throw error
     }
 }

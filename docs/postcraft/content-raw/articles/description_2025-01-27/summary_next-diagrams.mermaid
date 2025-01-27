@@ -1,0 +1,54 @@
+gantt
+    dateFormat  YYYY-MM-DD
+    title Development Timeline
+    
+    section WebSocket
+    Message Queue     :done, ws1, 2025-01-01, 30d
+    Real-time Updates :active, ws2, after ws1, 30d
+    Client Reconnect  :ws3, after ws2, 30d
+    Error Handling    :ws4, after ws3, 30d
+
+    section Validation
+    SHACL Support    :active, val1, 2025-01-15, 45d
+    Custom Validators :val2, after val1, 30d
+    Error Reporting  :val3, after val2, 30d
+
+    section Testing
+    Integration Tests :active, test1, 2025-02-01, 60d
+    Performance Tests :test2, after test1, 45d
+    Test Utilities   :test3, after test2, 30d
+
+---
+
+flowchart TB
+    subgraph Current["Current System"]
+        direction TB
+        C1[Basic WebSocket]
+        C2[Simple Validation]
+        C3[Limited Tests]
+    end
+
+    subgraph Next["Next Phase"]
+        direction TB
+        N1[Full WebSocket]
+        N2[SHACL Validation]
+        N3[Complete Tests]
+    end
+
+    subgraph Future["Future Vision"]
+        direction TB
+        F1[Distributed System]
+        F2[ML Integration]
+        F3[Visual Tools]
+    end
+
+    C1 --> N1
+    C2 --> N2
+    C3 --> N3
+    N1 --> F1
+    N2 --> F2
+    N3 --> F3
+
+    style Current fill:#f9f,stroke:#333
+    style Next fill:#bbf,stroke:#333
+    style Future fill:#bfb,stroke:#333

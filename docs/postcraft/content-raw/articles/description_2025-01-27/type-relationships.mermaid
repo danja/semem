@@ -1,0 +1,48 @@
+classDiagram
+    class LLMProvider {
+        <<interface>>
+        +generateEmbedding(model, input)
+        +generateChat(model, messages, options)
+        +generateCompletion(model, prompt, options)
+    }
+
+    class StorageProvider {
+        <<interface>>
+        +loadHistory()
+        +saveMemoryToHistory(store)
+        +close()?
+    }
+
+    class Interaction {
+        +id: string
+        +prompt: string
+        +output: string
+        +embedding: number[]
+        +timestamp: number
+        +accessCount: number
+        +concepts: string[]
+        +decayFactor: number
+    }
+
+    class MemoryStore {
+        +shortTermMemory: Interaction[]
+        +longTermMemory: Interaction[]
+        +embeddings: number[][]
+        +timestamps: number[]
+        +accessCounts: number[]
+        +conceptsList: string[][]
+    }
+
+    class MemoryConfig {
+        +llmProvider: LLMProvider
+        +chatModel: string
+        +embeddingModel: string
+        +storage: StorageProvider
+        +dimension: number
+        +contextOptions: ContextOptions
+        +cacheOptions: CacheOptions
+    }
+
+    MemoryStore --> Interaction
+    MemoryConfig --> LLMProvider
+    MemoryConfig --> StorageProvider

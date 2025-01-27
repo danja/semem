@@ -1,0 +1,40 @@
+classDiagram
+    class CacheManager {
+        -cache: Map
+        -timestamps: Map
+        -maxSize: number
+        -ttl: number
+        +get(key)
+        +set(key, value)
+        +cleanup()
+    }
+
+    class EmbeddingHandler {
+        -llmProvider: LLMProvider
+        -model: string
+        -dimension: number
+        -cacheManager: CacheManager
+        +generateEmbedding(text)
+        +validateEmbedding(embedding)
+        +standardizeEmbedding(embedding)
+    }
+
+    class LLMHandler {
+        -llmProvider: LLMProvider
+        -chatModel: string
+        -temperature: number
+        +generateResponse(prompt, context)
+        +extractConcepts(text)
+        +setTemperature(temp)
+    }
+
+    class MemoryManager {
+        +addInteraction()
+        +retrieveRelevantInteractions()
+    }
+
+    EmbeddingHandler --> CacheManager
+    EmbeddingHandler --> LLMProvider
+    LLMHandler --> LLMProvider
+    MemoryManager --> EmbeddingHandler
+    MemoryManager --> LLMHandler

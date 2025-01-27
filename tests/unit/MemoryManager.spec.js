@@ -15,8 +15,8 @@ describe('MemoryManager', () => {
 
         mockStorage = {
             loadHistory: jasmine.createSpy('loadHistory').and.resolveTo([[], []]),
-            saveMemoryToHistory: jasmine.createSpy('saveMemoryToHistory'),
-            close: jasmine.createSpy('close')
+            saveMemoryToHistory: jasmine.createSpy('saveMemoryToHistory').and.resolveTo(),
+            close: jasmine.createSpy('close').and.resolveTo()
         }
 
         mockEmbedding = new Array(1536).fill(0)
@@ -101,7 +101,7 @@ describe('MemoryManager', () => {
 
     describe('disposal', () => {
         it('should clean up resources', async () => {
-            await manager.dispose()
+            await expectAsync(manager.dispose()).toBeResolved()
 
             expect(mockStorage.saveMemoryToHistory).toHaveBeenCalled()
             expect(mockStorage.close).toHaveBeenCalled()
@@ -109,10 +109,24 @@ describe('MemoryManager', () => {
         })
 
         it('should handle disposal errors', async () => {
-            mockStorage.saveMemoryToHistory.and.rejectWith(new Error('Save failed'))
+            const error = new Error('Save failed')
+            mockStorage.saveMemoryToHistory.and.rejectWith(error)
 
-            await expectAsync(manager.dispose())
-                .toBeRejectedWithError('Save failed')
+            await expectAsync(manager.dispose()).toBeRejectedWith(error)
+            // close() should still be called even if save fails
+            expect(mockStorage.close).toHaveBeenCalled()
+        })
+
+        afterEach(async () => {
+            // Reset mocks to successful state for cleanup
+            mockStorage.saveMemoryToHistory.and.resolveTo()
+            mockStorage.close.and.resolveTo()
+
+            try {
+                await manager?.dispose()
+            } catch (error) {
+                // Ignore cleanup errors in afterEach
+            }
         })
     })
 })

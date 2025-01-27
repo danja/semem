@@ -54,7 +54,7 @@ export default class Config {
         if (this.initialized) return
 
         try {
-            this.config = this.mergeConfigs(Config.defaults, this.userConfig, 0)
+            this.config = this.mergeConfigs(Config.defaults, this.userConfig)
             this.applyEnvironmentOverrides()
             this.validateConfig()
             this.initialized = true
@@ -63,22 +63,12 @@ export default class Config {
         }
     }
 
-    // Added maxDepth parameter to prevent infinite recursion
-    mergeConfigs(defaults, user, depth = 0) {
-        if (depth > 10) { // Set reasonable recursion limit
-            throw new Error('Config merge exceeded maximum depth')
-        }
-
-        if (!user || typeof user !== 'object' || Array.isArray(user)) {
-            return defaults
-        }
-
+    mergeConfigs(defaults, user) {
         const merged = { ...defaults }
 
         for (const [key, value] of Object.entries(user)) {
-            if (value && typeof value === 'object' && !Array.isArray(value) &&
-                defaults && typeof defaults === 'object' && defaults[key]) {
-                merged[key] = this.mergeConfigs(defaults[key], value, depth + 1)
+            if (value && typeof value === 'object' && !Array.isArray(value)) {
+                merged[key] = this.mergeConfigs(merged[key] || {}, value)
             } else {
                 merged[key] = value
             }
@@ -127,17 +117,18 @@ export default class Config {
 
     get(path) {
         if (!this.initialized) {
-            throw new Error('Config not initialized')
+            this.init()
         }
 
         return path.split('.').reduce((obj, key) => {
-            return obj === undefined ? undefined : obj[key]
+            if (obj === undefined) return undefined
+            return obj[key]
         }, this.config)
     }
 
     set(path, value) {
         if (!this.initialized) {
-            throw new Error('Config not initialized')
+            this.init()
         }
 
         const keys = path.split('.')

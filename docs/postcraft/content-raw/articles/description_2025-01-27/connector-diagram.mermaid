@@ -1,0 +1,34 @@
+classDiagram
+    class LLMConnector {
+        <<interface>>
+        +generateEmbedding(model, input)
+        +generateChat(model, messages, options)
+        +generateCompletion(model, prompt, options)
+    }
+
+    class OllamaConnector {
+        -baseUrl: string
+        +generateEmbedding()
+        +generateChat()
+        +generateCompletion()
+    }
+
+    class OpenAIConnector {
+        -apiKey: string
+        -baseUrl: string
+        +generateEmbedding()
+        +generateChat()
+        +generateCompletion()
+    }
+
+    class AnthropicConnector {
+        -apiKey: string
+        -baseUrl: string
+        +generateEmbedding()
+        +generateChat()
+        +generateCompletion()
+    }
+
+    LLMConnector <|.. OllamaConnector
+    LLMConnector <|.. OpenAIConnector
+    LLMConnector <|.. AnthropicConnector

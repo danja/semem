@@ -1,0 +1,36 @@
+flowchart TB
+    subgraph Interfaces
+        CLI[CLI Handler]
+        REPL[REPL Handler]
+        HTTP[HTTP Server]
+    end
+
+    subgraph Core
+        REG[API Registry]
+        MM[Memory Manager]
+        CM[Context Manager]
+        CWM[Context Window Mgr]
+    end
+
+    subgraph Handlers
+        AH[Active Handler]
+        PH[Passive Handler]
+        SH[Selfie Handler]
+        LLM[LLM Handler]
+        EH[Embedding Handler]
+    end
+
+    subgraph Storage
+        SPARQL[SPARQL Store]
+        Cache[Cached Store]
+        JSON[JSON Store]
+        Memory[Memory Store]
+    end
+
+    Interfaces --> REG
+    REG --> AH & PH & SH
+    AH & PH --> MM
+    MM --> CM
+    CM --> CWM
+    MM --> LLM & EH
+    MM --> Storage

@@ -1,0 +1,22 @@
+sequenceDiagram
+    participant MM as MemoryManager
+    participant EH as EmbeddingHandler
+    participant CM as CacheManager
+    participant LH as LLMHandler
+    participant LP as LLMProvider
+
+    MM->>EH: generateEmbedding(text)
+    EH->>CM: get(cacheKey)
+    alt Cache Hit
+        CM-->>EH: cached embedding
+    else Cache Miss
+        EH->>LP: generateEmbedding()
+        LP-->>EH: embedding
+        EH->>CM: set(cacheKey, embedding)
+    end
+    EH-->>MM: standardized embedding
+
+    MM->>LH: generateResponse(prompt)
+    LH->>LP: generateChat()
+    LP-->>LH: response
+    LH-->>MM: formatted response

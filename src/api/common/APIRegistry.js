@@ -11,24 +11,15 @@ export default class APIRegistry {
             return APIRegistry.instance
         }
         APIRegistry.instance = this
-
         this.apis = new Map()
-        this.logger = logger.getLogger('APIRegistry')
         this.metrics = new Map()
     }
 
     /**
      * Register a new API implementation
-     * @param {string} name - Unique identifier for the API
-     * @param {typeof BaseAPI} apiClass - API implementation class
-     * @param {Object} config - Configuration for the API
      */
     async register(name, apiClass, config = {}) {
-        logger.log(`APIRegistry.register,
-        name = ${name}
-        apiClass = ${apiClass}
-        config = ${config}`)
-
+        // Validate registration
         if (this.apis.has(name)) {
             throw new Error(`API ${name} already registered`)
         }
@@ -37,11 +28,13 @@ export default class APIRegistry {
             throw new Error('API must extend BaseAPI')
         }
 
+        // Create instance but don't store until fully initialized
+        const api = new apiClass(config)
         try {
-            const api = new apiClass(config)
             await api.initialize()
+            this.apis.set(name, api)
 
-            // Set up metric collection
+            // Set up metrics after successful initialization
             api.on('metric', (metric) => {
                 this.metrics.set(`${name}.${metric.name}`, {
                     value: metric.value,
@@ -49,20 +42,16 @@ export default class APIRegistry {
                 })
             })
 
-            this.apis.set(name, api)
-            this.logger.info(`Registered API: ${name}`)
-
             return api
         } catch (error) {
-            this.logger.error(`Failed to register API ${name}:`, error)
-            throw error
+            // Clean up on initialization failure
+            api.removeAllListeners()
+            throw error // Preserve original error
         }
     }
 
     /**
      * Get an API instance by name
-     * @param {string} name - API identifier
-     * @returns {BaseAPI} API instance
      */
     get(name) {
         const api = this.apis.get(name)
@@ -74,20 +63,27 @@ export default class APIRegistry {
 
     /**
      * Remove an API instance
-     * @param {string} name - API identifier
      */
     async unregister(name) {
         const api = this.apis.get(name)
         if (api) {
-            await api.shutdown()
-            this.apis.delete(name)
-            this.logger.info(`Unregistered API: ${name}`)
+            try {
+                await api.shutdown()
+            } finally {
+                api.removeAllListeners()
+                this.apis.delete(name)
+                // Clean up metrics
+                for (const key of this.metrics.keys()) {
+                    if (key.startsWith(`${name}.`)) {
+                        this.metrics.delete(key)
+                    }
+                }
+            }
         }
     }
 
     /**
      * Get all registered API instances
-     * @returns {Map<string, BaseAPI>}
      */
     getAll() {
         return new Map(this.apis)
@@ -95,7 +91,6 @@ export default class APIRegistry {
 
     /**
      * Get collected metrics
-     * @returns {Object} Metrics data
      */
     getMetrics() {
         return {
@@ -124,14 +119,10 @@ export default class APIRegistry {
      * Shutdown all registered APIs
      */
     async shutdownAll() {
-        const shutdowns = Array.from(this.apis.entries()).map(
-            async ([name, api]) => {
-                try {
-                    await this.unregister(name)
-                } catch (error) {
-                    this.logger.error(`Error shutting down ${name}:`, error)
-                }
-            }
+        const shutdowns = Array.from(this.apis.keys()).map(name =>
+            this.unregister(name).catch(error => {
+                logger.error(`Error shutting down ${name}:`, error)
+            })
         )
         await Promise.all(shutdowns)
     }
