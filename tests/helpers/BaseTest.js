@@ -5,27 +5,44 @@ export class BaseTest {
     constructor() {
         this.mocks = new Set()
         this.cleanupFunctions = new Set()
+        this.pendingPromises = new Set()
     }
 
     beforeAll() {
         jasmine.addMatchers(TestHelper.jasmineMatchers)
+        jasmine.DEFAULT_TIMEOUT_INTERVAL = 5000
     }
 
     beforeEach() {
         this.errorSpy = spyOn(console, 'error')
         this.logSpy = spyOn(console, 'log')
+        this.warnSpy = spyOn(console, 'warn')
+        this.debugSpy = spyOn(console, 'debug')
         jasmine.clock().install()
     }
 
-    afterEach() {
+    afterEach(done) {
         jasmine.clock().uninstall()
-        this.cleanupFunctions.forEach(cleanup => cleanup())
-        this.cleanupFunctions.clear()
+        Promise.all(this.pendingPromises)
+            .then(() => {
+                this.cleanupFunctions.forEach(cleanup => cleanup())
+                this.cleanupFunctions.clear()
+                this.pendingPromises.clear()
+                done()
+            })
+            .catch(done.fail)
     }
 
     async afterAll() {
+        await Promise.all([...this.pendingPromises])
         await TestHelper.cleanupMocks(...this.mocks)
         this.mocks.clear()
+    }
+
+    trackPromise(promise) {
+        this.pendingPromises.add(promise)
+        promise.finally(() => this.pendingPromises.delete(promise))
+        return promise
     }
 
     addMock(mock) {
@@ -36,28 +53,6 @@ export class BaseTest {
     addCleanup(fn) {
         this.cleanupFunctions.add(fn)
         return fn
-    }
-
-    isolateMethod(object, method, mock) {
-        const cleanup = TestHelper.isolateMethod(object, method, mock)
-        this.addCleanup(cleanup)
-        return cleanup
-    }
-
-    async expectSuccess(promise) {
-        const result = await TestHelper.wrapPromise(promise)
-        expect(result.success).toBe(true,
-            result.error ? `Unexpected error: ${result.error.message}` : '')
-        return result.value
-    }
-
-    async expectFailure(promise, errorType) {
-        const result = await TestHelper.wrapPromise(promise)
-        expect(result.success).toBe(false, 'Expected failure but got success')
-        if (errorType) {
-            expect(result.error).toBeInstanceOf(errorType)
-        }
-        return result.error
     }
 
     mockPromise(value) {

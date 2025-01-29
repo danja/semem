@@ -1,0 +1,896 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">        
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
+
+
+
+  <title>SKOS Simple Knowledge Organization System Namespace Document - HTML Variant, 18 August 2009 Recommendation Edition</title>
+  <link href="https://www.w3.org/TR/skos-reference/extras.css" rel="stylesheet" type="text/css" />
+  <link href="https://www.w3.org/StyleSheets/TR/base" rel="stylesheet" />
+
+</head><body>
+
+<div class="head">
+<a href="https://www.w3.org/"><img src="https://www.w3.org/Icons/w3c_home" alt="W3C" width="72" height="48" /></a> 
+
+<h1 id="title">SKOS Simple Knowledge Organization System Namespace Document - HTML Variant</h1>
+
+  <h2>18 August 2009 Recommendation Edition</h2>
+<dl>
+   <dt>This version: </dt>
+    <dd><a href="https://www.w3.org/2009/08/skos-reference/skos.html">http://www.w3.org/2009/08/skos-reference/skos.html</a><br
+      /></dd>
+  <dt>Latest version:</dt>
+    <dd><a href="https://www.w3.org/2004/02/skos/core.html">http://www.w3.org/2004/02/skos/core.html</a></dd>
+  <dt>Authors:</dt>
+    <dd><a href="http://purl.org/net/aliman">Alistair Miles</a>, STFC
+      Rutherford Appleton Laboratory / University of Oxford<br/>
+      <a href="http://www.cs.man.ac.uk/%7Eseanb/">Sean Bechhofer</a>,
+      University of Manchester<br/>
+    </dd>
+</dl>
+<hr/>
+</div>
+
+<!-- ABSTRACT -->
+<!--
+<h2 class="notoc"><a id="abstract" name="abstract">Abstract</a></h2>
+
+<p>Abstract?? </p>
+
+<hr />
+-->
+<!-- SOTD -->
+
+<h2 id="Status">Status of this Document</h2>
+
+<p>This document describes the schema available from the SKOS namespace.</p>
+
+<hr/>
+<!-- CONTENTS -->
+<!-- INTRODUCTION -->
+
+<h2 id="secintro">Introduction</h2>
+
+<p>The Simple Knowledge Organization System (SKOS) is a common data model for
+sharing and linking knowledge organization systems via the Semantic Web.This
+document provides a brief description of the SKOS Vocabulary. </p>
+
+<p>For detailed information about the SKOS Recommendation, please consult the
+SKOS Reference [<a class="citation" rel="citation" href="#SKOS-REFERENCE">SKOS-REFERENCE</a>] or
+the SKOS Primer [<a class="citation" rel="citation" href="#SKOS-PRIMER">SKOS-PRIMER</a>].</p>
+
+<hr/>
+  
+<h2 id="sectable">SKOS Schema Overview</h2>
+
+<p>The following table gives a non-normative overview of the SKOS
+vocabulary; it replicates a table found in the (normative) SKOS
+Reference [<a class="citation" rel="citation" href="#SKOS-REFERENCE">SKOS-REFERENCE</a>].
+This document can be referenced directly, by its own URI <a href="https://www.w3.org/2004/02/skos/core.html">http://www.w3.org/2004/02/skos/core.html</a>, or
+indirectly, by content negotiation from the SKOS namespace URI <code><a href="https://www.w3.org/2004/02/skos/core#">http://www.w3.org/2004/02/skos/core#</a></code>
+as described in Appendix C of SKOS Reference [<a class="citation" rel="citation"
+ href="#SKOS-REFERENCE">SKOS-REFERENCE</a>].</p>
+
+<p>See also the SKOS Namespace Document - RDF/XML Variant [<a
+class="citation" rel="citation" href="#SKOS-RDF">SKOS-RDF</a>].</p>
+
+<div id="div-appendix-overview-classes">
+<h3>Classes</h3>
+
+<table class="quick-reference">
+  <caption></caption>
+  <colgroup><col class="quick-ref-key" /><col class="quick-ref-value"
+  /></colgroup>
+  <tbody>
+    <tr>
+      <th colspan="2"><a href="#Collection" id="Collection">skos:Collection</a> </th>
+    </tr>
+    <tr>
+      <td>URI: </td>
+      <td><code>http://www.w3.org/2004/02/skos/core#Collection</code> </td>
+    </tr>
+    <tr>
+      <td>Definition: </td>
+      <td><a href="https://www.w3.org/TR/skos-reference/#collections">Section 9. Concept Collections</a></td>
+    </tr>
+    <tr>
+      <td>Label: </td>
+      <td><em>Collection</em></td>
+    </tr>
+    <tr>
+      <td>Disjoint classes: </td>
+      <td><code><a href="#Concept">skos:Concept</a></code><br />
+        <code><a href="#ConceptScheme">skos:ConceptScheme</a></code><br />
+      </td>
+    </tr>
+    <tr>
+      <th colspan="2"><a href="#Concept" id="Concept">skos:Concept</a> </th>
+    </tr>
+    <tr>
+      <td>URI: </td>
+      <td><code>http://www.w3.org/2004/02/skos/core#Concept</code> </td>
+    </tr>
+    <tr>
+      <td>Definition: </td>
+      <td><a href="https://www.w3.org/TR/skos-reference/#concepts">Section 3. The skos:Concept Class</a></td>
+    </tr>
+    <tr>
+      <td>Label: </td>
+      <td><em>Concept</em></td>
+    </tr>
+    <tr>
+      <td>Disjoint classes: </td>
+      <td><code><a href="#Collection">skos:Collection</a></code><br />
+        <code><a href="#ConceptScheme">skos:ConceptScheme</a></code><br />
+      </td>
+    </tr>
+    <tr>
+      <th colspan="2"><a href="#ConceptScheme" id="ConceptScheme">skos:ConceptScheme</a> </th>
+    </tr>
+    <tr>
+      <td>URI: </td>
+      <td><code>http://www.w3.org/2004/02/skos/core#ConceptScheme</code> </td>
+    </tr>
+    <tr>
+      <td>Definition: </td>
+      <td><a href="https://www.w3.org/TR/skos-reference/#schemes">Section 4. Concept Schemes</a></td>
+    </tr>
+    <tr>
+      <td>Label: </td>
+      <td><em>Concept Scheme</em></td>
+    </tr>
+    <tr>
+      <td>Disjoint classes: </td>
+      <td><code><a href="#Collection">skos:Collection</a></code><br />
+        <code><a href="#Concept">skos:Concept</a></code><br />
+      </td>
+    </tr>
+    <tr>
+      <th colspan="2"><a href="#OrderedCollection" id="OrderedCollection">skos:OrderedCollection</a> </th>
+    </tr>
+    <tr>
+      <td>URI: </td>
+      <td><code>http://www.w3.org/2004/02/skos/core#OrderedCollection</code> </td>
+    </tr>
+    <tr>
+      <td>Definition: </td>
+      <td><a href="https://www.w3.org/TR/skos-reference/#collections">Section 9. Concept Collections</a></td>
+    </tr>
+    <tr>
+      <td>Label: </td>
+      <td><em>Ordered Collection</em></td>
+    </tr>
+    <tr>
+      <td>Super-classes: </td>
+      <td><code><a href="#Collection">skos:Collection</a></code><br />
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+</div><div id="div-appendix-overview-properties">
+<h3>Properties</h3>
+
+<table class="quick-reference">
+  <caption></caption>
+  <colgroup><col class="quick-ref-key" /><col class="quick-ref-value"
+  /></colgroup>
+  <tbody>
+    <tr>
+      <th colspan="2"><a href="#altLabel" id="altLabel">skos:altLabel</a> </th>
+    </tr>
+    <tr>
+      <td>URI: </td>
+      <td><code>http://www.w3.org/2004/02/skos/core#altLabel</code> </td>
+    </tr>
+    <tr>
+      <td>Definition: </td>
+      <td><a href="https://www.w3.org/TR/skos-reference/#labels">Section 5. Lexical Labels</a></td>
+    </tr>
+    <tr>
+      <td>Label: </td>
+      <td><em>alternative label</em></td>
+    </tr>
+    <tr>
+      <td>Super-properties: </td>
+      <td><code>http://www.w3.org/2000/01/rdf-schema#label</code></td>
+    </tr>
+    <tr>
+      <th colspan="2"><a href="#broadMatch" id="broadMatch">skos:broadMatch</a> </th>
+    </tr>
+    <tr>
+      <td>URI: </td>
+      <td><code>http://www.w3.org/2004/02/skos/core#broadMatch</code> </td>
+    </tr>
+    <tr>
+      <td>Definition: </td>
+      <td><a href="https://www.w3.org/TR/skos-reference/#mapping">Section 10. Mapping Properties</a></td>
+    </tr>
+    <tr>
+      <td>Label: </td>
+      <td><em>has broader match</em></td>
+    </tr>
+    <tr>
+      <td>Super-properties: </td>
+      <td><code><a href="#broader">skos:broader</a></code><br />
+        <code><a href="#mappingRelation">skos:mappingRelation</a></code><br />
+      </td>
+    </tr>
+    <tr>
+      <td>Inverse of:</td>
+      <td><code><a href="#narrowMatch">skos:narrowMatch</a></code><br />
+      </td>
+    </tr>
+    <tr>
+      <th colspan="2"><a href="#broader" id="broader">skos:broader</a> </th>
+    </tr>
+    <tr>
+      <td>URI: </td>
+      <td><code>http://www.w3.org/2004/02/skos/core#broader</code> </td>
+    </tr>
+    <tr>
+      <td>Definition: </td>
+      <td><a href="https://www.w3.org/TR/skos-reference/#semantic-relations">Section 8. Semantic Relations</a></td>
+    </tr>
+    <tr>
+      <td>Label: </td>
+      <td><em>has broader</em></td>
+    </tr>
+    <tr>
+      <td>Super-properties: </td>
+      <td><code><a
+        href="#broaderTransitive">skos:broaderTransitive</a></code><br />
+      </td>
+    </tr>
+    <tr>
+      <td>Inverse of:</td>
+      <td><code><a href="#narrower">skos:narrower</a></code><br />
+      </td>
+    </tr>
+    <tr>
+      <th colspan="2"><a href="#broaderTransitive" id="broaderTransitive">skos:broaderTransitive</a> </th>
+    </tr>
+    <tr>
+      <td>URI: </td>
+      <td><code>http://www.w3.org/2004/02/skos/core#broaderTransitive</code> </td>
+    </tr>
+    <tr>
+      <td>Definition: </td>
+      <td><a href="https://www.w3.org/TR/skos-reference/#semantic-relations">Section 8. Semantic Relations</a></td>
+    </tr>
+    <tr>
+      <td>Label: </td>
+      <td><em>has broader transitive</em></td>
+    </tr>
+    <tr>
+      <td>Super-properties: </td>
+      <td><code><a
+        href="#semanticRelation">skos:semanticRelation</a></code><br />
+      </td>
+    </tr>
+    <tr>
+      <td>Inverse of:</td>
+      <td><code><a
+        href="#narrowerTransitive">skos:narrowerTransitive</a></code><br />
+      </td>
+    </tr>
+    <tr>
+      <td>Other characteristics:</td>
+      <td>Transitive<br />
+      </td>
+    </tr>
+    <tr>
+      <th colspan="2"><a href="#changeNote" id="changeNote">skos:changeNote</a> </th>
+    </tr>
+    <tr>
+      <td>URI: </td>
+      <td><code>http://www.w3.org/2004/02/skos/core#changeNote</code> </td>
+    </tr>
+    <tr>
+      <td>Definition: </td>
+      <td><a href="https://www.w3.org/TR/skos-reference/#notes">Section 7. Documentation Properties</a></td>
+    </tr>
+    <tr>
+      <td>Label: </td>
+      <td><em>change note</em></td>
+    </tr>
+    <tr>
+      <td>Super-properties: </td>
+      <td><code><a href="#note">skos:note</a></code><br />
+      </td>
+    </tr>
+    <tr>
+      <th colspan="2"><a href="#closeMatch" id="closeMatch">skos:closeMatch</a> </th>
+    </tr>
+    <tr>
+      <td>URI: </td>
+      <td><code>http://www.w3.org/2004/02/skos/core#closeMatch</code> </td>
+    </tr>
+    <tr>
+      <td>Definition: </td>
+      <td><a href="https://www.w3.org/TR/skos-reference/#mapping">Section 10. Mapping Properties</a></td>
+    </tr>
+    <tr>
+      <td>Label: </td>
+      <td><em>has close match</em></td>
+    </tr>
+    <tr>
+      <td>Super-properties: </td>
+      <td><code><a href="#mappingRelation">skos:mappingRelation</a></code><br
+        />
+      </td>
+    </tr>
+    <tr>
+      <td>Other characteristics:</td>
+      <td>Symmetric<br />
+      </td>
+    </tr>
+    <tr>
+      <th colspan="2"><a href="#definition" id="definition">skos:definition</a> </th>
+    </tr>
+    <tr>
+      <td>URI: </td>
+      <td><code>http://www.w3.org/2004/02/skos/core#definition</code> </td>
+    </tr>
+    <tr>
+      <td>Definition: </td>
+      <td><a href="https://www.w3.org/TR/skos-reference/#notes">Section 7. Documentation Properties</a></td>
+    </tr>
+    <tr>
+      <td>Label: </td>
+      <td><em>definition</em></td>
+    </tr>
+    <tr>
+      <td>Super-properties: </td>
+      <td><code><a href="#note">skos:note</a></code><br />
+      </td>
+    </tr>
+    <tr>
+      <th colspan="2"><a href="#editorialNote" id="editorialNote">skos:editorialNote</a> </th>
+    </tr>
+    <tr>
+      <td>URI: </td>
+      <td><code>http://www.w3.org/2004/02/skos/core#editorialNote</code> </td>
+    </tr>
+    <tr>
+      <td>Definition: </td>
+      <td><a href="https://www.w3.org/TR/skos-reference/#notes">Section 7. Documentation Properties</a></td>
+    </tr>
+    <tr>
+      <td>Label: </td>
+      <td><em>editorial note</em></td>
+    </tr>
+    <tr>
+      <td>Super-properties: </td>
+      <td><code><a href="#note">skos:note</a></code><br />
+      </td>
+    </tr>
+    <tr>
+      <th colspan="2"><a href="#exactMatch" id="exactMatch">skos:exactMatch</a> </th>
+    </tr>
+    <tr>
+      <td>URI: </td>
+      <td><code>http://www.w3.org/2004/02/skos/core#exactMatch</code> </td>
+    </tr>
+    <tr>
+      <td>Definition: </td>
+      <td><a href="https://www.w3.org/TR/skos-reference/#mapping">Section 10. Mapping Properties</a></td>
+    </tr>
+    <tr>
+      <td>Label: </td>
+      <td><em>has exact match</em></td>
+    </tr>
+    <tr>
+      <td>Super-properties: </td>
+      <td><code><a href="#closeMatch">skos:closeMatch</a></code><br />
+      </td>
+    </tr>
+    <tr>
+      <td>Other characteristics:</td>
+      <td>Transitive<br />
+        Symmetric<br />
+      </td>
+    </tr>
+    <tr>
+      <th colspan="2"><a href="#example" id="example">skos:example</a> </th>
+    </tr>
+    <tr>
+      <td>URI: </td>
+      <td><code>http://www.w3.org/2004/02/skos/core#example</code> </td>
+    </tr>
+    <tr>
+      <td>Definition: </td>
+      <td><a href="https://www.w3.org/TR/skos-reference/#notes">Section 7. Documentation Properties</a></td>
+    </tr>
+    <tr>
+      <td>Label: </td>
+      <td><em>example</em></td>
+    </tr>
+    <tr>
+      <td>Super-properties: </td>
+      <td><code><a href="#note">skos:note</a></code><br />
+      </td>
+    </tr>
+    <tr>
+      <th colspan="2"><a href="#hasTopConcept" id="hasTopConcept">skos:hasTopConcept</a> </th>
+    </tr>
+    <tr>
+      <td>URI: </td>
+      <td><code>http://www.w3.org/2004/02/skos/core#hasTopConcept</code> </td>
+    </tr>
+    <tr>
+      <td>Definition: </td>
+      <td><a href="https://www.w3.org/TR/skos-reference/#schemes">Section 4. Concept Schemes</a></td>
+    </tr>
+    <tr>
+      <td>Label: </td>
+      <td><em>label</em></td>
+    </tr>
+    <tr>
+      <td>Domain:</td>
+      <td><code><a href="#ConceptScheme">skos:ConceptScheme</a></code><br />
+      </td>
+    </tr>
+    <tr>
+      <td>Range:</td>
+      <td><code><a href="#Concept">skos:Concept</a></code><br />
+      </td>
+    </tr>
+    <tr>
+      <td>Inverse of:</td>
+      <td><code><a href="#topConceptOf">skos:topConceptOf</a></code><br />
+      </td>
+    </tr>
+    <tr>
+      <th colspan="2"><a href="#hiddenLabel" id="hiddenLabel">skos:hiddenLabel</a> </th>
+    </tr>
+    <tr>
+      <td>URI: </td>
+      <td><code>http://www.w3.org/2004/02/skos/core#hiddenLabel</code> </td>
+    </tr>
+    <tr>
+      <td>Definition: </td>
+      <td><a href="https://www.w3.org/TR/skos-reference/#labels">Section 5. Lexical Labels</a></td>
+    </tr>
+    <tr>
+      <td>Label: </td>
+      <td><em>hidden label</em></td>
+    </tr>
+    <tr>
+      <td>Super-properties: </td>
+      <td><code>http://www.w3.org/2000/01/rdf-schema#label</code></td>
+    </tr>
+    <tr>
+      <th colspan="2"><a href="#historyNote" id="historyNote">skos:historyNote</a> </th>
+    </tr>
+    <tr>
+      <td>URI: </td>
+      <td><code>http://www.w3.org/2004/02/skos/core#historyNote</code> </td>
+    </tr>
+    <tr>
+      <td>Definition: </td>
+      <td><a href="https://www.w3.org/TR/skos-reference/#notes">Section 7. Documentation Properties</a></td>
+    </tr>
+    <tr>
+      <td>Label: </td>
+      <td><em>history note</em></td>
+    </tr>
+    <tr>
+      <td>Super-properties: </td>
+      <td><code><a href="#note">skos:note</a></code><br />
+      </td>
+    </tr>
+    <tr>
+      <th colspan="2"><a href="#inScheme" id="inScheme">skos:inScheme</a> </th>
+    </tr>
+    <tr>
+      <td>URI: </td>
+      <td><code>http://www.w3.org/2004/02/skos/core#inScheme</code> </td>
+    </tr>
+    <tr>
+      <td>Definition: </td>
+      <td><a href="https://www.w3.org/TR/skos-reference/#schemes">Section 4. Concept Schemes</a></td>
+    </tr>
+    <tr>
+      <td>Label: </td>
+      <td><em>is in scheme</em></td>
+    </tr>
+    <tr>
+      <td>Range:</td>
+      <td><code><a href="#ConceptScheme">skos:ConceptScheme</a></code><br />
+      </td>
+    </tr>
+    <tr>
+      <th colspan="2"><a href="#mappingRelation" id="mappingRelation">skos:mappingRelation</a> </th>
+    </tr>
+    <tr>
+      <td>URI: </td>
+      <td><code>http://www.w3.org/2004/02/skos/core#mappingRelation</code> </td>
+    </tr>
+    <tr>
+      <td>Definition: </td>
+      <td><a href="https://www.w3.org/TR/skos-reference/#mapping">Section 10. Mapping Properties</a></td>
+    </tr>
+    <tr>
+      <td>Label: </td>
+      <td><em>is in mapping relation with</em></td>
+    </tr>
+    <tr>
+      <td>Super-properties:</td>
+      <td><code><a href="#semanticRelation">skos:semanticRelation</a></code><br />
+      </td>
+    </tr>
+    <tr>
+      <th colspan="2"><a href="#member" id="member">skos:member</a> </th>
+    </tr>
+    <tr>
+      <td>URI: </td>
+      <td><code>http://www.w3.org/2004/02/skos/core#member</code> </td>
+    </tr>
+    <tr>
+      <td>Definition: </td>
+      <td><a href="https://www.w3.org/TR/skos-reference/#collections">Section 9. Concept Collections</a></td>
+    </tr>
+    <tr>
+      <td>Label: </td>
+      <td><em>has member</em></td>
+    </tr>
+    <tr>
+      <td>Domain:</td>
+      <td><code><a href="#Collection">skos:Collection</a></code><br />
+      </td>
+    </tr>
+    <tr>
+      <td>Range:</td>
+      <td>union of <code><a href="#Concept">skos:Concept</a></code> and <code><a href="#Collection">skos:Collection</a></code><br />
+      </td>
+    </tr>
+    <tr>
+      <th colspan="2"><a href="#memberList" id="memberList">skos:memberList</a> </th>
+    </tr>
+    <tr>
+      <td>URI: </td>
+      <td><code>http://www.w3.org/2004/02/skos/core#memberList</code> </td>
+    </tr>
+    <tr>
+      <td>Definition: </td>
+      <td><a href="https://www.w3.org/TR/skos-reference/#collections">Section 9. Concept Collections</a></td>
+    </tr>
+    <tr>
+      <td>Label: </td>
+      <td><em>has member list</em></td>
+    </tr>
+    <tr>
+      <td>Domain:</td>
+      <td><code><a
+        href="#OrderedCollection">skos:OrderedCollection</a></code><br />
+      </td>
+    </tr>
+    <tr>
+      <td>Range:</td>
+      <td><code>http://www.w3.org/1999/02/22-rdf-syntax-ns#List</code><br />
+      </td>
+    </tr>
+    <tr>
+      <td>Other characteristics:</td>
+      <td>Functional<br />
+      </td>
+    </tr>
+    <tr>
+      <th colspan="2"><a href="#narrowMatch" id="narrowMatch">skos:narrowMatch</a> </th>
+    </tr>
+    <tr>
+      <td>URI: </td>
+      <td><code>http://www.w3.org/2004/02/skos/core#narrowMatch</code> </td>
+    </tr>
+    <tr>
+      <td>Definition: </td>
+      <td><a href="https://www.w3.org/TR/skos-reference/#mapping">Section 10. Mapping Properties</a></td>
+    </tr>
+    <tr>
+      <td>Label: </td>
+      <td><em>has narrower match</em></td>
+    </tr>
+    <tr>
+      <td>Super-properties: </td>
+      <td><code><a href="#mappingRelation">skos:mappingRelation</a></code><br
+        />
+        <code><a href="#narrower">skos:narrower</a></code><br />
+      </td>
+    </tr>
+    <tr>
+      <td>Inverse of:</td>
+      <td><code><a href="#broadMatch">skos:broadMatch</a></code><br />
+      </td>
+    </tr>
+    <tr>
+      <th colspan="2"><a href="#narrower" id="narrower">skos:narrower</a> </th>
+    </tr>
+    <tr>
+      <td>URI: </td>
+      <td><code>http://www.w3.org/2004/02/skos/core#narrower</code> </td>
+    </tr>
+    <tr>
+      <td>Definition: </td>
+      <td><a href="https://www.w3.org/TR/skos-reference/#semantic-relations">Section 8. Semantic Relations</a></td>
+    </tr>
+    <tr>
+      <td>Label: </td>
+      <td><em>has narrower</em></td>
+    </tr>
+    <tr>
+      <td>Super-properties: </td>
+      <td><code><a
+        href="#narrowerTransitive">skos:narrowerTransitive</a></code><br />
+      </td>
+    </tr>
+    <tr>
+      <td>Inverse of:</td>
+      <td><code><a href="#broader">skos:broader</a></code><br />
+      </td>
+    </tr>
+    <tr>
+      <th colspan="2"><a href="#narrowerTransitive" id="narrowerTransitive">skos:narrowerTransitive</a> </th>
+    </tr>
+    <tr>
+      <td>URI: </td>
+      <td><code>http://www.w3.org/2004/02/skos/core#narrowerTransitive</code> </td>
+    </tr>
+    <tr>
+      <td>Definition: </td>
+      <td><a href="https://www.w3.org/TR/skos-reference/#semantic-relations">Section 8. Semantic Relations</a></td>
+    </tr>
+    <tr>
+      <td>Label: </td>
+      <td><em>has narrower transitive</em></td>
+    </tr>
+    <tr>
+      <td>Super-properties: </td>
+      <td><code><a
+        href="#semanticRelation">skos:semanticRelation</a></code><br />
+      </td>
+    </tr>
+    <tr>
+      <td>Inverse of:</td>
+      <td><code><a
+        href="#broaderTransitive">skos:broaderTransitive</a></code><br />
+      </td>
+    </tr>
+    <tr>
+      <td>Other characteristics:</td>
+      <td>Transitive<br />
+      </td>
+    </tr>
+    <tr>
+      <th colspan="2"><a href="#notation" id="notation">skos:notation</a> </th>
+    </tr>
+    <tr>
+      <td>URI: </td>
+      <td><code>http://www.w3.org/2004/02/skos/core#notation</code> </td>
+    </tr>
+    <tr>
+      <td>Definition: </td>
+      <td><a href="https://www.w3.org/TR/skos-reference/#notations">Section 6. Notations</a></td>
+    </tr>
+    <tr>
+      <td>Label: </td>
+      <td><em>notation</em></td>
+    </tr>
+    <tr>
+      <th colspan="2"><a href="#note" id="note">skos:note</a>
+      </th>
+    </tr>
+    <tr>
+      <td>URI: </td>
+      <td><code>http://www.w3.org/2004/02/skos/core#note</code> </td>
+    </tr>
+    <tr>
+      <td>Definition: </td>
+      <td><a href="https://www.w3.org/TR/skos-reference/#notes">Section 7. Documentation Properties</a></td>
+    </tr>
+    <tr>
+      <td>Label: </td>
+      <td><em>note</em></td>
+    </tr>
+    <tr>
+      <th colspan="2"><a href="#prefLabel" id="prefLabel">skos:prefLabel</a> </th>
+    </tr>
+    <tr>
+      <td>URI: </td>
+      <td><code>http://www.w3.org/2004/02/skos/core#prefLabel</code> </td>
+    </tr>
+    <tr>
+      <td>Definition: </td>
+      <td><a href="https://www.w3.org/TR/skos-reference/#labels">Section 5. Lexical Labels</a></td>
+    </tr>
+    <tr>
+      <td>Label: </td>
+      <td><em>preferred label</em></td>
+    </tr>
+    <tr>
+      <td>Super-properties: </td>
+      <td><code>http://www.w3.org/2000/01/rdf-schema#label</code></td>
+    </tr>
+    <tr>
+      <th colspan="2"><a href="#related" id="related">skos:related</a> </th>
+    </tr>
+    <tr>
+      <td>URI: </td>
+      <td><code>http://www.w3.org/2004/02/skos/core#related</code> </td>
+    </tr>
+    <tr>
+      <td>Definition: </td>
+      <td><a href="https://www.w3.org/TR/skos-reference/#semantic-relations">Section 8. Semantic Relations</a></td>
+    </tr>
+    <tr>
+      <td>Label: </td>
+      <td><em>has related</em></td>
+    </tr>
+    <tr>
+      <td>Super-properties: </td>
+      <td><code><a
+        href="#semanticRelation">skos:semanticRelation</a></code><br />
+      </td>
+    </tr>
+    <tr>
+      <td>Other characteristics:</td>
+      <td>Symmetric<br />
+      </td>
+    </tr>
+    <tr>
+      <th colspan="2"><a href="#relatedMatch" id="relatedMatch">skos:relatedMatch</a> </th>
+    </tr>
+    <tr>
+      <td>URI: </td>
+      <td><code>http://www.w3.org/2004/02/skos/core#relatedMatch</code> </td>
+    </tr>
+    <tr>
+      <td>Definition: </td>
+      <td><a href="https://www.w3.org/TR/skos-reference/#mapping">Section 10. Mapping Properties</a></td>
+    </tr>
+    <tr>
+      <td>Label: </td>
+      <td><em>has related match</em></td>
+    </tr>
+    <tr>
+      <td>Super-properties: </td>
+      <td><code><a href="#mappingRelation">skos:mappingRelation</a></code><br
+        />
+        <code><a href="#related">skos:related</a></code><br />
+      </td>
+    </tr>
+    <tr>
+      <td>Other characteristics:</td>
+      <td>Symmetric<br />
+      </td>
+    </tr>
+    <tr>
+      <th colspan="2"><a href="#scopeNote" id="scopeNote">skos:scopeNote</a> </th>
+    </tr>
+    <tr>
+      <td>URI: </td>
+      <td><code>http://www.w3.org/2004/02/skos/core#scopeNote</code> </td>
+    </tr>
+    <tr>
+      <td>Definition: </td>
+      <td><a href="https://www.w3.org/TR/skos-reference/#notes">Section 7. Documentation Properties</a></td>
+    </tr>
+    <tr>
+      <td>Label: </td>
+      <td><em>scope note</em></td>
+    </tr>
+    <tr>
+      <td>Super-properties: </td>
+      <td><code><a href="#note">skos:note</a></code><br />
+      </td>
+    </tr>
+    <tr>
+      <th colspan="2"><a href="#semanticRelation" id="semanticRelation">skos:semanticRelation</a> </th>
+    </tr>
+    <tr>
+      <td>URI: </td>
+      <td><code>http://www.w3.org/2004/02/skos/core#semanticRelation</code> </td>
+    </tr>
+    <tr>
+      <td>Definition: </td>
+      <td><a href="https://www.w3.org/TR/skos-reference/#semantic-relations">Section 8. Semantic Relations</a></td>
+    </tr>
+    <tr>
+      <td>Label: </td>
+      <td><em>is in semantic relation with</em></td>
+    </tr>
+    <tr>
+      <td>Domain:</td>
+      <td><code><a href="#Concept">skos:Concept</a></code><br />
+      </td>
+    </tr>
+    <tr>
+      <td>Range:</td>
+      <td><code><a href="#Concept">skos:Concept</a></code><br />
+      </td>
+    </tr>
+    <tr>
+      <th colspan="2"><a href="#topConceptOf" id="topConceptOf">skos:topConceptOf</a> </th>
+    </tr>
+    <tr>
+      <td>URI: </td>
+      <td><code>http://www.w3.org/2004/02/skos/core#topConceptOf</code> </td>
+    </tr>
+    <tr>
+      <td>Definition: </td>
+      <td><a href="https://www.w3.org/TR/skos-reference/#schemes">Section 4. Concept Schemes</a></td>
+    </tr>
+    <tr>
+      <td>Label: </td>
+      <td><em>is top concept in scheme</em></td>
+    </tr>
+    <tr>
+      <td>Super-properties: </td>
+      <td><code><a href="#inScheme">skos:inScheme</a></code><br />
+      </td>
+    </tr>
+    <tr>
+      <td>Inverse of:</td>
+      <td><code><a href="#hasTopConcept">skos:hasTopConcept</a></code><br />
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+</div>
+<hr/>
+<h2 id="secref">References</h2>
+<dl>
+  <dt><a id="SKOS-REFERENCE" name="SKOS-REFERENCE">[SKOS-REFERENCE]</a></dt>
+    <dd><cite><a href="https://www.w3.org/TR/skos-reference">SKOS
+      Reference</a></cite>, Alistair Miles, Sean Bechhofer, Editors. <a href="https://www.w3.org/TR/skos-reference" title="Latest version of SKOS Reference">Latest version</a> available
+      at http://www.w3.org/TR/skos-reference.</dd>
+  <dt><a id="SKOS-RDF" name="SKOS-RDF">[SKOS-RDF]</a></dt>
+    <dd><cite><a href="https://www.w3.org/TR/skos-reference/skos.rdf">SKOS Namespace - RDF/XML Variant</a></cite>. <a href="https://www.w3.org/TR/skos-reference/skos.rdf">Latest version</a> available at http://www.w3.org/TR/skos-reference/skos.rdf</dd>
+  <dt><a id="SKOS-PRIMER" name="SKOS-PRIMER">[SKOS-PRIMER]</a></dt>
+
+    <dd><cite><a href="https://www.w3.org/TR/skos-primer">SKOS
+      Primer</a></cite>, Antoine Isaac, Ed Summers, Editors. <a href="https://www.w3.org/TR/skos-primer" title="Latest version of SKOS Primer">Latest version</a> available at
+      http://www.w3.org/TR/skos-primer.</dd>
+<!--
+      <dt><a id="RDF-RECIPES" name="RDF-RECIPES">[RDF-RECIPES]</a></dt>
+    <dd><cite><a href="http://www.w3.org/TR/swbp-vocab-pub/">Best Practice
+      Recipes for Publishing RDF Vocabularies </a></cite>, Diego Berrueta,
+      Jon Phipps, Editors, W3C Working Group Note, 28 August 2008. <a href="http://www.w3.org/TR/swbp-vocab-pub" title="Latest version of Best Practice Recipes">Latest version</a>
+      available at http://www.w3.org/TR/swbp-vocab-pub.</dd>
+
+  <dt><a id="OWL-REFERENCE" name="OWL-REFERENCE">[OWL-REFERENCE]</a></dt>
+    <dd><cite><a href="http://www.w3.org/TR/owl-ref">OWL Web Ontology
+      Language Semantics and Abstract Syntax </a></cite>, Mike Dean, Guus
+      Schreiber, Editors, W3C Working Draft, 10 February 2004. <a href="http://www.w3.org/TR/owl-ref" title="W3C Recommendation">W3C
+      Recommendation</a> available at http://www.w3.org/TR/owl-ref.</dd>
+  <dt><a id="OWL-SEMANTICS" name="OWL-SEMANTICS">[OWL-SEMANTICS]</a></dt>
+    <dd><cite><a href="http://www.w3.org/TR/owl-semantics">OWL Web Ontology
+      Language Semantics and Abstract Syntax </a></cite>, Peter F.
+      Patel-Schneider, Patrick Hayes, Ian Horrocks, Editors, W3C Working
+      Draft, 10 February 2004. <a href="http://www.w3.org/TR/owl-semantics" title="W3C Recommendation">W3C Recommendation</a> available at
+      http://www.w3.org/TR/owl-semantics.</dd>
+      -->
+
+</dl>
+  
+<hr/>
+<!-- FOOTER -->
+<h2>Acknowledgements</h2>
+
+<p>This document is the result of extensive discussions within the
+ W3C's <a href="https://www.w3.org/2006/07/SWD/">Semantic Web
+ Deployment Working Group</a>. The document drew on the experiences of
+ earlier groups and projects including <a href="https://www.w3.org/2001/sw/Europe/">SWAD-Europe</a> and W3C's <a href="https://www.w3.org/2001/sw/BestPractices/">Semantic Web Best
+ Practices and Deployment Working Group</a>. Members of the W3C's <a
+  href="http://lists.w3.org/Archives/Public/public-esw-thes/">public-esw-thes</a>
+ also made valuable contributions.</p>
+<hr />
+<p>
+$Revision: 1.2 $ of $Date: 2011/08/06 11:16:36 $
+</p>
+</body></html>

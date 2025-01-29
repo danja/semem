@@ -1,9 +1,9 @@
+// src/api/common/APIRegistry.js
 import logger from 'loglevel'
 import BaseAPI from './BaseAPI.js'
 
 /**
- * Registry for managing API instances
- * @singleton
+ * Centralized registry for managing API instances with lifecycle control
  */
 export default class APIRegistry {
     constructor() {
@@ -16,10 +16,9 @@ export default class APIRegistry {
     }
 
     /**
-     * Register a new API implementation
+     * Register and initialize a new API implementation
      */
     async register(name, apiClass, config = {}) {
-        // Validate registration
         if (this.apis.has(name)) {
             throw new Error(`API ${name} already registered`)
         }
@@ -30,28 +29,50 @@ export default class APIRegistry {
 
         // Create instance but don't store until fully initialized
         const api = new apiClass(config)
+
         try {
+            // Initialize and handle metric collection
             await api.initialize()
             this.apis.set(name, api)
 
-            // Set up metrics after successful initialization
             api.on('metric', (metric) => {
                 this.metrics.set(`${name}.${metric.name}`, {
                     value: metric.value,
-                    timestamp: metric.timestamp
+                    timestamp: metric.timestamp,
+                    labels: metric.labels || {}
                 })
             })
 
             return api
         } catch (error) {
-            // Clean up on initialization failure
             api.removeAllListeners()
-            throw error // Preserve original error
+            throw error
         }
     }
 
     /**
-     * Get an API instance by name
+     * Remove and cleanup an API instance
+     */
+    async unregister(name) {
+        const api = this.apis.get(name)
+        if (!api) return
+
+        try {
+            await api.shutdown()
+        } finally {
+            api.removeAllListeners()
+            this.apis.delete(name)
+            // Clean up related metrics
+            for (const key of this.metrics.keys()) {
+                if (key.startsWith(`${name}.`)) {
+                    this.metrics.delete(key)
+                }
+            }
+        }
+    }
+
+    /**
+     * Retrieve an API instance by name
      */
     get(name) {
         const api = this.apis.get(name)
@@ -62,27 +83,6 @@ export default class APIRegistry {
     }
 
     /**
-     * Remove an API instance
-     */
-    async unregister(name) {
-        const api = this.apis.get(name)
-        if (api) {
-            try {
-                await api.shutdown()
-            } finally {
-                api.removeAllListeners()
-                this.apis.delete(name)
-                // Clean up metrics
-                for (const key of this.metrics.keys()) {
-                    if (key.startsWith(`${name}.`)) {
-                        this.metrics.delete(key)
-                    }
-                }
-            }
-        }
-    }
-
-    /**
      * Get all registered API instances
      */
     getAll() {
@@ -90,7 +90,7 @@ export default class APIRegistry {
     }
 
     /**
-     * Get collected metrics
+     * Get collected metrics with timestamps
      */
     getMetrics() {
         return {
@@ -119,11 +119,17 @@ export default class APIRegistry {
      * Shutdown all registered APIs
      */
     async shutdownAll() {
-        const shutdowns = Array.from(this.apis.keys()).map(name =>
-            this.unregister(name).catch(error => {
+        const errors = []
+        for (const [name, api] of this.apis.entries()) {
+            try {
+                await this.unregister(name)
+            } catch (error) {
                 logger.error(`Error shutting down ${name}:`, error)
-            })
-        )
-        await Promise.all(shutdowns)
+                errors.push({ name, error })
+            }
+        }
+        if (errors.length > 0) {
+            throw new Error('Shutdown errors occurred')
+        }
     }
 }

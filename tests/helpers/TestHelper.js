@@ -1,7 +1,11 @@
 // tests/helpers/TestHelper.js
 import { EventEmitter } from 'events'
 
+/**
+ * Utility class providing test helpers and mock factories
+ */
 export class TestHelper {
+    // Mock factories
     static createMockAPI() {
         return {
             executeOperation: jasmine.createSpy('executeOperation').and.resolveTo({}),
@@ -41,21 +45,7 @@ export class TestHelper {
         return emitter
     }
 
-    static createMockResponse() {
-        return {
-            ok: true,
-            json: jasmine.createSpy('json').and.resolveTo({}),
-            text: jasmine.createSpy('text').and.resolveTo(''),
-            status: 200,
-            headers: new Map()
-        }
-    }
-
-    static createMockFetch() {
-        return jasmine.createSpy('fetch').and.resolveTo(this.createMockResponse())
-    }
-
-    // Custom jasmine matchers
+    // Custom matchers
     static jasmineMatchers = {
         toHaveBeenCalledWithError: () => ({
             compare: (actual, expected) => ({
@@ -65,10 +55,17 @@ export class TestHelper {
                     )
                 )
             })
+        }),
+
+        toBeWithinRange: () => ({
+            compare: (actual, min, max) => ({
+                pass: actual >= min && actual <= max,
+                message: `Expected ${actual} to be within range ${min}-${max}`
+            })
         })
     };
 
-    // Error simulation helpers
+    // Error simulation
     static simulateNetworkError() {
         return Promise.reject(new Error('Network error'))
     }
@@ -79,26 +76,30 @@ export class TestHelper {
         )
     }
 
-    // Test isolation helpers
+    // Method isolation
     static isolateMethod(object, method, mock) {
         const original = object[method]
         object[method] = mock
         return () => { object[method] = original }
     }
 
-    static wrapPromise(promise) {
-        return promise.then(
-            value => ({ success: true, value }),
-            error => ({ success: false, error })
-        )
+    // Promise wrapping
+    static async wrapPromise(promise) {
+        try {
+            const value = await promise
+            return { success: true, value }
+        } catch (error) {
+            return { success: false, error }
+        }
     }
 
-    // Cleanup helpers
+    // Mock cleanup
     static async cleanupMocks(...mocks) {
         for (const mock of mocks) {
             if (mock?.reset) mock.reset()
             if (mock?.restore) mock.restore()
             if (mock?.removeAllListeners) mock.removeAllListeners()
+            if (mock?.dispose) await mock.dispose()
         }
     }
 }
