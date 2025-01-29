@@ -1,0 +1,36 @@
+coverage:
+  status:
+    project:
+      default:
+        target: 85%
+        threshold: 1%
+    patch:
+      default:
+        target: 85%
+        threshold: 1%
+
+  notify:
+    slack:
+      default:
+        url: secret:slack_webhook
+        threshold: 1%
+        only_pulls: false
+        branches:
+          - main
+          - develop
+
+comment:
+  layout: "reach, diff, flags, files"
+  behavior: default
+  require_changes: false
+  require_base: false
+  require_head: true
+  branches:
+    - main
+    - develop
+
+ignore:
+  - "tests/**/*"
+  - "**/*.spec.js"
+  - "**/*.test.js"
+  - "**/types/**"

@@ -1,6 +1,13 @@
+`cd github-danny/hyperdata/packages/semem`
+
+- npm test -- tests/unit/MemoryManager.spec.js
+
 # Core System
 
 - npm test -- tests/unit/Config.spec.js
+
+// failed with errors in npm test -- tests/unit/handlers/EmbeddingHandler.spec.js
+
 - npm test -- tests/unit/api/BaseAPI.spec.js
 - npm test -- tests/unit/api/APIRegistry.spec.js
 - npm test -- tests/unit/api/APILogger.spec.js

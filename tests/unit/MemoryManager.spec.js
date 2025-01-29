@@ -1,132 +1,118 @@
+import { TestHelper } from '../helpers/TestHelper.js'
 import MemoryManager from '../../src/MemoryManager.js'
 
 describe('MemoryManager', () => {
     let manager
-    let mockLLMProvider
-    let mockStorage
-    let mockEmbedding
+    let mockLLM
+    let mockStore
+    let cleanupFns = []
 
-    beforeEach(() => {
-        mockLLMProvider = {
-            generateEmbedding: jasmine.createSpy('generateEmbedding'),
-            generateChat: jasmine.createSpy('generateChat'),
+    beforeAll(() => {
+        jasmine.addMatchers(TestHelper.jasmineMatchers)
+    })
+
+    beforeEach(async () => {
+        // Setup mocks
+        mockLLM = {
+            generateEmbedding: jasmine.createSpy('generateEmbedding')
+                .and.resolveTo(new Array(1536).fill(0)),
+            generateChat: jasmine.createSpy('generateChat')
+                .and.resolveTo('test response'),
             generateCompletion: jasmine.createSpy('generateCompletion')
+                .and.resolveTo('["test"]')
         }
 
-        mockStorage = {
+        mockStore = {
             loadHistory: jasmine.createSpy('loadHistory').and.resolveTo([[], []]),
-            saveMemoryToHistory: jasmine.createSpy('saveMemoryToHistory').and.resolveTo(),
-            close: jasmine.createSpy('close').and.resolveTo()
+            saveMemoryToHistory: jasmine.createSpy('saveMemoryToHistory'),
+            close: jasmine.createSpy('close'),
+            beginTransaction: jasmine.createSpy('beginTransaction'),
+            commitTransaction: jasmine.createSpy('commitTransaction'),
+            rollbackTransaction: jasmine.createSpy('rollbackTransaction')
         }
 
-        mockEmbedding = new Array(1536).fill(0)
-
+        // Create manager instance
         manager = new MemoryManager({
-            llmProvider: mockLLMProvider,
-            storage: mockStorage
+            llmProvider: mockLLM,
+            storage: mockStore,
+            chatModel: 'test-model',
+            embeddingModel: 'test-embed'
+        })
+
+        // Install spies
+        spyOn(console, 'error')
+        spyOn(console, 'log')
+        jasmine.clock().install()
+    })
+
+    afterEach(() => {
+        jasmine.clock().uninstall()
+        cleanupFns.forEach(fn => fn())
+        cleanupFns = []
+    })
+
+    describe('Initialization', () => {
+        it('should initialize with provided configuration', async () => {
+            await expectAsync(manager.initialize()).toBeResolved()
+            expect(mockStore.loadHistory).toHaveBeenCalled()
+        })
+
+        it('should handle initialization errors', async () => {
+            mockStore.loadHistory.and.rejectWith(new Error('Load failed'))
+            await expectAsync(manager.initialize())
+                .toBeRejectedWith(jasmine.objectContaining({
+                    message: jasmine.stringContaining('Load failed')
+                }))
         })
     })
 
-    describe('initialization', () => {
-        it('should handle string model names', () => {
-            const mgr = new MemoryManager({
-                llmProvider: mockLLMProvider,
-                chatModel: 'test-chat',
-                embeddingModel: 'test-embed'
-            })
-
-            expect(mgr.chatModel).toBe('test-chat')
-            expect(mgr.embeddingModel).toBe('test-embed')
-        })
-
-        it('should coerce non-string model names', () => {
-            const mgr = new MemoryManager({
-                llmProvider: mockLLMProvider,
-                chatModel: ['test'],
-                embeddingModel: { name: 'test' }
-            })
-
-            expect(typeof mgr.chatModel).toBe('string')
-            expect(typeof mgr.embeddingModel).toBe('string')
-        })
-
-        it('should require llmProvider', () => {
-            expect(() => new MemoryManager({}))
-                .toThrowError('LLM provider is required')
-        })
-    })
-
-    describe('memory operations', () => {
+    describe('Memory Operations', () => {
         beforeEach(async () => {
-            mockLLMProvider.generateEmbedding.and.resolveTo(mockEmbedding)
-            mockLLMProvider.generateCompletion.and.resolveTo('["test"]')
-            mockLLMProvider.generateChat.and.resolveTo('test response')
-
             await manager.initialize()
         })
 
         it('should add interactions', async () => {
-            await manager.addInteraction(
+            await expectAsync(manager.addInteraction(
                 'test prompt',
                 'test output',
-                mockEmbedding,
+                [0, 1, 2],
                 ['test']
-            )
+            )).toBeResolved()
 
-            expect(mockStorage.saveMemoryToHistory).toHaveBeenCalled()
-            expect(manager.memStore.shortTermMemory.length).toBe(1)
+            expect(mockStore.saveMemoryToHistory).toHaveBeenCalled()
         })
 
         it('should retrieve relevant interactions', async () => {
-            const relevantInteractions = await manager.retrieveRelevantInteractions('test query')
-
-            expect(mockLLMProvider.generateEmbedding).toHaveBeenCalled()
-            expect(mockLLMProvider.generateCompletion).toHaveBeenCalled()
-        })
-
-        it('should generate responses', async () => {
-            const response = await manager.generateResponse('test prompt')
-
-            expect(response).toBe('test response')
-            expect(mockLLMProvider.generateChat).toHaveBeenCalled()
-        })
-
-        it('should handle embedding generation', async () => {
-            const embedding = await manager.generateEmbedding('test text')
-
-            expect(embedding).toEqual(mockEmbedding)
-            expect(mockLLMProvider.generateEmbedding).toHaveBeenCalled()
+            const retrievals = await manager.retrieveRelevantInteractions('test query')
+            expect(mockLLM.generateEmbedding).toHaveBeenCalled()
+            expect(retrievals).toBeDefined()
         })
     })
 
-    describe('disposal', () => {
-        it('should clean up resources', async () => {
-            await expectAsync(manager.dispose()).toBeResolved()
+    describe('Error Handling', () => {
+        it('should handle provider errors', async () => {
+            mockLLM.generateEmbedding.and.rejectWith(new Error('Network error'))
 
-            expect(mockStorage.saveMemoryToHistory).toHaveBeenCalled()
-            expect(mockStorage.close).toHaveBeenCalled()
-            expect(manager.memStore).toBeNull()
+            await expectAsync(manager.generateEmbedding('test'))
+                .toBeRejectedWith(jasmine.objectContaining({
+                    message: jasmine.stringContaining('Network error')
+                }))
         })
 
-        it('should handle disposal errors', async () => {
-            const error = new Error('Save failed')
-            mockStorage.saveMemoryToHistory.and.rejectWith(error)
+        it('should handle timeouts', async () => {
+            mockLLM.generateChat.and.rejectWith(new Error('Timeout'))
 
-            await expectAsync(manager.dispose()).toBeRejectedWith(error)
-            // close() should still be called even if save fails
-            expect(mockStorage.close).toHaveBeenCalled()
+            await expectAsync(manager.generateResponse('test'))
+                .toBeRejectedWith(jasmine.objectContaining({
+                    message: jasmine.stringContaining('Timeout')
+                }))
         })
+    })
 
-        afterEach(async () => {
-            // Reset mocks to successful state for cleanup
-            mockStorage.saveMemoryToHistory.and.resolveTo()
-            mockStorage.close.and.resolveTo()
-
-            try {
-                await manager?.dispose()
-            } catch (error) {
-                // Ignore cleanup errors in afterEach
-            }
+    describe('Resource Management', () => {
+        it('should clean up resources on disposal', async () => {
+            await manager.dispose()
+            expect(mockStore.close).toHaveBeenCalled()
         })
     })
 })

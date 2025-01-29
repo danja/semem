@@ -36,6 +36,8 @@ node src/OllamaClaudeExample.js
 ```
 
 ```sh
+cd github-danny/hyperdata/packages/semem
+
 # ollama pull nomic-embed-text
 
 curl http://localhost:11434/api/embeddings -d '{

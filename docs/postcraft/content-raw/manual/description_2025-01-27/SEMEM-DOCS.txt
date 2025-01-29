@@ -1,0 +1,2880 @@
+# SEMEM-DOCS
+
+================================================================
+File Summary
+================================================================
+
+Purpose:
+--------
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+
+File Format:
+------------
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Multiple file entries, each consisting of:
+  a. A separator line (================)
+  b. The file path (File: path/to/file)
+  c. Another separator line
+  d. The full contents of the file
+  e. A blank line
+
+Usage Guidelines:
+-----------------
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+
+Notes:
+------
+- Some files may have been excluded based on .gitignore rules and Repomix's
+  configuration.
+- Binary files are not included in this packed representation. Please refer to
+  the Repository Structure section for a complete list of file paths, including
+  binary files.
+
+Additional Info:
+----------------
+
+For more information about Repomix, visit: https://github.com/yamadashy/repomix
+
+================================================================
+Directory Structure
+================================================================
+api-analysis.md
+api-architecture.mermaid
+api-flow.mermaid
+arch-diagram.mermaid
+class-relationships.mermaid
+connector-diagram.mermaid
+connector-guide.md
+handler-flow.mermaid
+handler-relationships.mermaid
+integration-patterns.md
+memory-flow.mermaid
+memory-organization.md
+runtime-validation.md
+sparql-caching.md
+src-analysis.md
+store-configs.md
+store-hierarchy.mermaid
+store-transaction.mermaid
+stores-analysis.md
+summary_next-diagrams.mermaid
+summary_overview-diagrams.mermaid
+summary_overview-doc.md
+summary_quickstart.md
+summary_status-next.md
+system-overview.md
+type-relationships.mermaid
+types-analysis.md
+utils-analysis.md
+utils-flow.mermaid
+
+================================================================
+Files
+================================================================
+
+================
+File: api-analysis.md
+================
+# API Layer Analysis
+
+## Common Components (api/common/)
+
+### BaseAPI.js
+**Purpose**: Abstract base class defining the API interface contract.
+- Key Methods:
+  - `initialize()`: Setup for API instance
+  - `shutdown()`: Cleanup resources
+  - `executeOperation(operation, params)`: Execute API operations
+  - `_emitMetric(name, value)`: Emit performance metrics
+
+### APIRegistry.js
+**Purpose**: Singleton registry managing API instances and lifecycle.
+- Key Methods:
+  - `register(name, apiClass, config)`: Register new API implementation
+  - `get(name)`: Retrieve API instance
+  - `unregister(name)`: Remove and cleanup API
+  - `getMetrics()`: Collect metrics from all APIs
+
+### RDFParser.js
+**Purpose**: Parses and processes RDF/SPARQL operations.
+- Key Methods:
+  - `parse(input)`: Parse RDF/SPARQL commands
+  - `parseCommand(command)`: Process individual commands
+  - `buildSimpleQuery(text, options)`: Generate SPARQL queries
+  - `expandPrefixes(text)`: Handle prefix resolution
+
+### RDFValidator.js
+**Purpose**: Validates RDF data and SHACL constraints.
+- Key Methods:
+  - `validateShape(data, shape)`: Validate against SHACL shapes
+  - `generateSHACL(shape)`: Generate SHACL constraints
+  - `validateConstraint(data, constraint)`: Individual constraint validation
+
+## Feature Handlers (api/features/)
+
+### ActiveHandler.js
+**Purpose**: Handles complex operations requiring multiple service coordination.
+- Key Methods:
+  - `handleInteraction(params)`: Process user interactions
+  - `handleSearch(params)`: Search operations
+  - `handleAnalysis(params)`: Content analysis
+- Core Interactions:
+  - Uses MemoryManager for retrieval
+  - Coordinates with LLMHandler for responses
+  - Manages context through ContextManager
+
+### PassiveHandler.js
+**Purpose**: Handles basic storage and retrieval operations.
+- Key Methods:
+  - `handleChat(params)`: Direct LLM interactions
+  - `handleQuery(params)`: SPARQL query execution
+  - `handleStore(params)`: Data storage
+- Core Interactions:
+  - Direct interaction with storage layer
+  - Basic LLM operations
+
+### SelfieHandler.js
+**Purpose**: System monitoring and metrics collection.
+- Key Methods:
+  - `collectMetrics()`: Gather system metrics
+  - `trackError(type, error)`: Error tracking
+  - `setupMetricInstruments()`: Initialize monitoring
+- Core Interactions:
+  - Monitors all API operations
+  - Tracks system health
+
+## Interface Handlers (api/cli/, api/repl/, api/http/)
+
+### CLIHandler.js
+**Purpose**: Command-line interface implementation.
+- Key Methods:
+  - `setupCommands()`: Register CLI commands
+  - `executeOperation(command, args)`: Process commands
+  - `formatOutput(result)`: Format responses
+- Core Interactions:
+  - Routes commands to appropriate handlers
+  - Manages command history
+
+### REPLHandler.js
+**Purpose**: Interactive shell environment.
+- Key Methods:
+  - `processInput(input)`: Handle user input
+  - `handleChat(input)`: Process chat mode
+  - `handleRDF(input)`: Process RDF mode
+- Core Interactions:
+  - Maintains interactive session
+  - Mode-specific processing
+
+### HTTPServer.js
+**Purpose**: REST API and WebSocket server.
+- Key Methods:
+  - `setupRoutes()`: Configure API endpoints
+  - `setupMiddleware()`: Configure middleware
+  - `handleWebSocket(socket)`: WebSocket handling
+- Core Interactions:
+  - REST endpoint routing
+  - WebSocket real-time updates
+  - Authentication/Authorization
+
+## Support Components
+
+### APILogger.js
+**Purpose**: Centralized logging system.
+- Key Methods:
+  - `createLogEntry(level, ...args)`: Format log entries
+  - `getEntries(options)`: Retrieve logs
+  - `createChild(name)`: Create scoped logger
+
+### MetricsCollector.js
+**Purpose**: Performance and operation metrics collection.
+- Key Methods:
+  - `collect(name, value, labels)`: Record metrics
+  - `getSummary(name)`: Calculate statistics
+  - `pruneMetrics()`: Clean old metrics
+
+================
+File: api-architecture.mermaid
+================
+classDiagram
+    class BaseAPI {
+        <<abstract>>
+        #initialized: boolean
+        #config: Object
+        +initialize()*
+        +shutdown()*
+        +executeOperation()*
+    }
+    
+    class APIRegistry {
+        -apis: Map
+        -metrics: Map
+        +register()
+        +get()
+        +unregister()
+    }
+
+    class ActiveHandler {
+        -contextWindow: number
+        +handleInteraction()
+        +handleSearch()
+        +handleAnalysis()
+    }
+
+    class PassiveHandler {
+        -llmProvider: Object
+        +handleChat()
+        +handleQuery()
+        +handleStore()
+    }
+
+    class SelfieHandler {
+        -collectors: Object
+        +collectMetrics()
+        +trackError()
+    }
+
+    class HTTPServer {
+        -app: Express
+        -wsServer: WebSocket
+        +setupRoutes()
+        +setupMiddleware()
+    }
+
+    BaseAPI <|-- ActiveHandler
+    BaseAPI <|-- PassiveHandler
+    BaseAPI <|-- SelfieHandler
+    BaseAPI <|-- HTTPServer
+    
+    ActiveHandler --> APIRegistry
+    PassiveHandler --> APIRegistry
+    SelfieHandler --> APIRegistry
+
+================
+File: api-flow.mermaid
+================
+sequenceDiagram
+    participant Client
+    participant Interface as Interface Handler
+    participant Registry as API Registry
+    participant Active as Active Handler
+    participant Memory as Memory Manager
+    participant Storage as Storage Layer
+
+    Client->>Interface: Request
+    Interface->>Registry: Get handler
+    Registry->>Active: Forward request
+    Active->>Memory: Process request
+    Memory->>Storage: Retrieve/Store
+    Storage-->>Memory: Result
+    Memory-->>Active: Processed result
+    Active-->>Interface: Response
+    Interface-->>Client: Formatted response
+
+    Note over Active,Storage: Metrics collected throughout flow
+
+================
+File: arch-diagram.mermaid
+================
+flowchart TB
+    subgraph Interfaces
+        CLI[CLI Handler]
+        REPL[REPL Handler]
+        HTTP[HTTP Server]
+    end
+
+    subgraph Core
+        REG[API Registry]
+        MM[Memory Manager]
+        CM[Context Manager]
+        CWM[Context Window Mgr]
+    end
+
+    subgraph Handlers
+        AH[Active Handler]
+        PH[Passive Handler]
+        SH[Selfie Handler]
+        LLM[LLM Handler]
+        EH[Embedding Handler]
+    end
+
+    subgraph Storage
+        SPARQL[SPARQL Store]
+        Cache[Cached Store]
+        JSON[JSON Store]
+        Memory[Memory Store]
+    end
+
+    Interfaces --> REG
+    REG --> AH & PH & SH
+    AH & PH --> MM
+    MM --> CM
+    CM --> CWM
+    MM --> LLM & EH
+    MM --> Storage
+
+================
+File: class-relationships.mermaid
+================
+classDiagram
+    class Config {
+        -config: Object
+        -initialized: boolean
+        +init()
+        +get(path)
+        +set(path, value)
+        +validateConfig()
+    }
+
+    class MemoryManager {
+        -memStore: MemoryStore
+        -llmHandler: LLMHandler
+        -embeddingHandler: EmbeddingHandler
+        -contextManager: ContextManager
+        +addInteraction()
+        +retrieveRelevantInteractions()
+        +generateResponse()
+    }
+
+    class ContextManager {
+        -contextBuffer: Array
+        -windowManager: ContextWindowManager
+        +addToContext()
+        +buildContext()
+        +pruneContext()
+    }
+
+    class ContextWindowManager {
+        -minWindowSize: number
+        -maxWindowSize: number
+        +estimateTokens()
+        +createWindows()
+        +mergeOverlappingContent()
+    }
+
+    class PromptTemplates {
+        -templates: Object
+        +formatChatPrompt()
+        +formatCompletionPrompt()
+        +formatConceptPrompt()
+    }
+
+    MemoryManager --> Config
+    MemoryManager --> ContextManager
+    ContextManager --> ContextWindowManager
+    MemoryManager --> PromptTemplates
+
+================
+File: connector-diagram.mermaid
+================
+classDiagram
+    class LLMConnector {
+        <<interface>>
+        +generateEmbedding(model, input)
+        +generateChat(model, messages, options)
+        +generateCompletion(model, prompt, options)
+    }
+
+    class OllamaConnector {
+        -baseUrl: string
+        +generateEmbedding()
+        +generateChat()
+        +generateCompletion()
+    }
+
+    class OpenAIConnector {
+        -apiKey: string
+        -baseUrl: string
+        +generateEmbedding()
+        +generateChat()
+        +generateCompletion()
+    }
+
+    class AnthropicConnector {
+        -apiKey: string
+        -baseUrl: string
+        +generateEmbedding()
+        +generateChat()
+        +generateCompletion()
+    }
+
+    LLMConnector <|.. OllamaConnector
+    LLMConnector <|.. OpenAIConnector
+    LLMConnector <|.. AnthropicConnector
+
+================
+File: connector-guide.md
+================
+# LLM Connector Implementation Guide
+
+## OllamaConnector Analysis
+
+The OllamaConnector provides integration with the Ollama API service, implementing three core methods:
+
+1. `generateEmbedding`: Generates vector embeddings from text input
+2. `generateChat`: Handles chat completion using message history
+3. `generateCompletion`: Simple text completion
+
+Key features:
+- Consistent error handling and logging
+- Configurable base URL
+- Standard response formatting
+- Request options handling
+
+## Creating New Connectors
+
+### Required Interface
+Every connector must implement these methods:
+
+```javascript
+class ExampleConnector {
+    async generateEmbedding(model, input) {
+        // Return number[] - embedding vector
+    }
+
+    async generateChat(model, messages, options = {}) {
+        // messages: Array<{role: string, content: string}>
+        // Return string - generated response
+    }
+
+    async generateCompletion(model, prompt, options = {}) {
+        // Return string - completion text
+    }
+}
+```
+
+### Implementation Guide
+
+1. Create a new file under `src/connectors/` with format `{Provider}Connector.js`
+
+2. Implement required methods:
+   - Handle authentication if needed
+   - Map to provider's API format
+   - Implement error handling
+   - Return standardized responses
+
+3. Add configurations:
+   - Base URL configuration
+   - API key management
+   - Model mappings if needed
+
+### Error Handling Pattern
+- Catch API-specific errors
+- Convert to standard error format
+- Log appropriately
+- Include request context in errors
+
+### Sample Implementation
+
+```javascript
+import logger from 'loglevel'
+
+export default class NewServiceConnector {
+    constructor(apiKey, baseUrl = 'https://api.service.com') {
+        this.apiKey = apiKey
+        this.baseUrl = baseUrl
+    }
+
+    async generateEmbedding(model, input) {
+        logger.debug(`Generating embedding with model ${model}`)
+        try {
+            const response = await fetch(`${this.baseUrl}/embeddings`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${this.apiKey}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    model,
+                    input
+                })
+            })
+
+            if (!response.ok) {
+                throw new Error(`API error: ${response.status}`)
+            }
+
+            const data = await response.json()
+            return data.embedding
+        } catch (error) {
+            logger.error('Embedding generation failed:', error)
+            throw error
+        }
+    }
+
+    async generateChat(model, messages, options = {}) {
+        // Similar pattern to generateEmbedding
+    }
+
+    async generateCompletion(model, prompt, options = {}) {
+        // Similar pattern to generateEmbedding
+    }
+}
+```
+
+### Testing Requirements
+
+1. Create unit tests in `tests/unit/connectors/`
+2. Create integration tests in `tests/integration/connectors/`
+3. Include mock responses for unit tests
+4. Test error conditions
+5. Test configuration variations
+
+### Adding New Connector
+
+1. Create connector class
+2. Add tests
+3. Register in Config.js model mappings
+4. Update documentation
+5. Add example usage
+
+================
+File: handler-flow.mermaid
+================
+sequenceDiagram
+    participant MM as MemoryManager
+    participant EH as EmbeddingHandler
+    participant CM as CacheManager
+    participant LH as LLMHandler
+    participant LP as LLMProvider
+
+    MM->>EH: generateEmbedding(text)
+    EH->>CM: get(cacheKey)
+    alt Cache Hit
+        CM-->>EH: cached embedding
+    else Cache Miss
+        EH->>LP: generateEmbedding()
+        LP-->>EH: embedding
+        EH->>CM: set(cacheKey, embedding)
+    end
+    EH-->>MM: standardized embedding
+
+    MM->>LH: generateResponse(prompt)
+    LH->>LP: generateChat()
+    LP-->>LH: response
+    LH-->>MM: formatted response
+
+================
+File: handler-relationships.mermaid
+================
+classDiagram
+    class CacheManager {
+        -cache: Map
+        -timestamps: Map
+        -maxSize: number
+        -ttl: number
+        +get(key)
+        +set(key, value)
+        +cleanup()
+    }
+
+    class EmbeddingHandler {
+        -llmProvider: LLMProvider
+        -model: string
+        -dimension: number
+        -cacheManager: CacheManager
+        +generateEmbedding(text)
+        +validateEmbedding(embedding)
+        +standardizeEmbedding(embedding)
+    }
+
+    class LLMHandler {
+        -llmProvider: LLMProvider
+        -chatModel: string
+        -temperature: number
+        +generateResponse(prompt, context)
+        +extractConcepts(text)
+        +setTemperature(temp)
+    }
+
+    class MemoryManager {
+        +addInteraction()
+        +retrieveRelevantInteractions()
+    }
+
+    EmbeddingHandler --> CacheManager
+    EmbeddingHandler --> LLMProvider
+    LLMHandler --> LLMProvider
+    MemoryManager --> EmbeddingHandler
+    MemoryManager --> LLMHandler
+
+================
+File: integration-patterns.md
+================
+# Storage Integration Patterns
+
+## Memory Manager Integration
+
+```javascript
+export default class MemoryManager {
+    constructor(config) {
+        // Initialize appropriate store based on config
+        this.store = this.initializeStore(config.storage)
+        this.llmHandler = new LLMHandler(config.models)
+        this.contextManager = new ContextManager(config.context)
+    }
+
+    initializeStore(config) {
+        switch (config.type) {
+            case 'sparql':
+                return new SPARQLStore(config.options)
+            case 'cached-sparql':
+                return new CachedSPARQLStore(config.options)
+            case 'json':
+                return new JSONStore(config.options)
+            default:
+                return new InMemoryStore(config.options)
+        }
+    }
+
+    async addInteraction(prompt, output, embedding, concepts) {
+        // Use transaction for atomic operations
+        await this.store.beginTransaction()
+        try {
+            const interaction = {
+                id: uuidv4(),
+                prompt,
+                output,
+                embedding,
+                timestamp: Date.now(),
+                accessCount: 1,
+                concepts,
+                decayFactor: 1.0
+            }
+
+            await this.store.saveMemoryToHistory({
+                shortTermMemory: [...this.store.shortTermMemory, interaction],
+                longTermMemory: this.store.longTermMemory
+            })
+
+            await this.store.commitTransaction()
+            return interaction
+        } catch (error) {
+            await this.store.rollbackTransaction()
+            throw error
+        }
+    }
+}
+```
+
+## Active Handler Integration
+
+```javascript
+export default class ActiveHandler extends BaseAPI {
+    async handleInteraction({ prompt, context = [] }) {
+        const memoryManager = this.registry.get('memory')
+        
+        try {
+            // Get relevant past interactions
+            const retrievals = await memoryManager.retrieveRelevantInteractions(
+                prompt,
+                this.similarityThreshold
+            )
+
+            // Generate response
+            const response = await this.llmHandler.generateResponse(
+                prompt,
+                this._buildContext(context, retrievals)
+            )
+
+            // Store with embeddings
+            const embedding = await memoryManager.generateEmbedding(
+                `${prompt} ${response}`
+            )
+            const concepts = await memoryManager.extractConcepts(
+                `${prompt} ${response}`
+            )
+
+            await memoryManager.addInteraction(
+                prompt, 
+                response, 
+                embedding, 
+                concepts
+            )
+
+            return { response, concepts, retrievals }
+        } catch (error) {
+            this._emitMetric('interaction.errors', 1)
+            throw error
+        }
+    }
+}
+```
+
+## SPARQL Store Transaction Pattern
+
+```javascript
+export default class SPARQLStore extends BaseStore {
+    async saveMemoryToHistory(memoryStore) {
+        if (this.inTransaction) {
+            throw new Error('Transaction already in progress')
+        }
+
+        try {
+            await this.beginTransaction()
+            
+            // Backup current graph
+            const backupQuery = `
+                COPY GRAPH <${this.graphName}> 
+                TO GRAPH <${this.graphName}.backup>
+            `
+            await this._executeSparqlUpdate(backupQuery)
+
+            // Clear and update main graph
+            const clearQuery = `CLEAR GRAPH <${this.graphName}>`
+            await this._executeSparqlUpdate(clearQuery)
+
+            const insertQuery = this._generateInsertStatements(
+                memoryStore.shortTermMemory,
+                memoryStore.longTermMemory
+            )
+            await this._executeSparqlUpdate(insertQuery)
+
+            await this.commitTransaction()
+        } catch (error) {
+            await this.rollbackTransaction()
+            throw error
+        }
+    }
+}
+```
+
+## Cache Integration Pattern
+
+```javascript
+export default class CachedSPARQLStore extends SPARQLStore {
+    async _executeSparqlQuery(query, endpoint) {
+        const cacheKey = this._generateCacheKey(query)
+        
+        // Check cache
+        const cachedResult = this.queryCache.get(cacheKey)
+        if (cachedResult) {
+            const timestamp = this.cacheTimestamps.get(cacheKey)
+            if (Date.now() - timestamp < this.cacheTTL) {
+                return JSON.parse(JSON.stringify(cachedResult))
+            }
+        }
+
+        // Cache miss - execute query
+        const result = await super._executeSparqlQuery(query, endpoint)
+        
+        // Update cache
+        this.queryCache.set(cacheKey, result)
+        this.cacheTimestamps.set(cacheKey, Date.now())
+        
+        // Cleanup if needed
+        if (this.queryCache.size > this.maxCacheSize) {
+            this.cleanupCache()
+        }
+
+        return result
+    }
+}
+```
+
+## Error Handling Pattern
+
+```javascript
+export default class BaseStore {
+    async executeWithRetry(operation, maxRetries = 3) {
+        let lastError
+        
+        for (let attempt = 0; attempt < maxRetries; attempt++) {
+            try {
+                return await operation()
+            } catch (error) {
+                lastError = error
+                
+                if (!this.isRetryableError(error)) {
+                    throw error
+                }
+
+                await new Promise(resolve => 
+                    setTimeout(resolve, Math.pow(2, attempt) * 1000)
+                )
+            }
+        }
+
+        throw lastError
+    }
+
+    isRetryableError(error) {
+        return error.code === 'ECONNRESET' ||
+               error.code === 'ETIMEDOUT' ||
+               error.message.includes('deadlock') ||
+               error.message.includes('timeout')
+    }
+}
+```
+
+================
+File: memory-flow.mermaid
+================
+sequenceDiagram
+    participant UI as Interface
+    participant AH as Active Handler
+    participant MM as Memory Manager
+    participant LLM as LLM Handler
+    participant EH as Embedding Handler
+    participant ST as Storage
+
+    UI->>AH: interaction request
+    AH->>MM: retrieve relevant context
+    MM->>EH: generate embedding
+    MM->>ST: query similar interactions
+    ST-->>MM: relevant memories
+    MM->>LLM: generate response
+    LLM-->>MM: response
+    MM->>ST: store interaction
+    AH-->>UI: complete response
+
+================
+File: memory-organization.md
+================
+# Memory Organization and Decay Analysis
+
+## Memory Structure
+
+The MemoryStore implements a multi-tier memory system:
+
+1. Short-term Memory
+   - Recent interactions
+   - Full embedding vectors
+   - Access frequency tracking
+   - Decay factor adjustment
+
+2. Long-term Memory
+   - Archived important interactions
+   - Concept-based organization
+   - Semantic clustering
+   - Permanent storage
+
+3. Semantic Memory
+   - Concept relationships
+   - Cluster organization
+   - Knowledge graph structure
+   - Cross-reference mapping
+
+## Implementation Details
+
+### Memory Classification
+```javascript
+classifyMemory() {
+    this.shortTermMemory.forEach((interaction, idx) => {
+        if (this.accessCounts[idx] > 10 &&
+            !this.longTermMemory.some(ltm => ltm.id === interaction.id)) {
+            
+            // Move to long-term memory
+            this.longTermMemory.push(interaction)
+            logger.info(`Moved interaction ${interaction.id} to long-term memory`)
+        }
+    })
+}
+```
+
+### Memory Retrieval
+```javascript
+async retrieve(queryEmbedding, queryConcepts, similarityThreshold = 40, excludeLastN = 0) {
+    const relevantInteractions = []
+    const currentTime = Date.now()
+    const decayRate = 0.0001
+    
+    // Calculate similarity and apply decay
+    for (let idx = 0; idx < this.shortTermMemory.length - excludeLastN; idx++) {
+        const similarity = vectorOps.cosineSimilarity(
+            queryEmbedding,
+            this.embeddings[idx]
+        ) * 100
+        
+        const timeDiff = (currentTime - this.timestamps[idx]) / 1000
+        const decayFactor = this.shortTermMemory[idx].decayFactor * 
+            Math.exp(-decayRate * timeDiff)
+        
+        const reinforcementFactor = Math.log1p(this.accessCounts[idx])
+        const adjustedSimilarity = similarity * decayFactor * reinforcementFactor
+
+        if (adjustedSimilarity >= similarityThreshold) {
+            // Update access patterns
+            this.accessCounts[idx]++
+            this.timestamps[idx] = currentTime
+            this.shortTermMemory[idx].decayFactor *= 1.1
+
+            relevantInteractions.push({
+                similarity: adjustedSimilarity,
+                interaction: this.shortTermMemory[idx],
+                concepts: this.conceptsList[idx]
+            })
+        } else {
+            // Apply decay
+            this.shortTermMemory[idx].decayFactor *= 0.9
+        }
+    }
+
+    return relevantInteractions
+}
+```
+
+### Semantic Organization
+```javascript
+clusterInteractions() {
+    if (this.embeddings.length < 2) return
+
+    // K-means clustering
+    const numClusters = Math.min(10, this.embeddings.length)
+    const { clusters } = kmeans(this.embeddings, numClusters)
+    
+    // Organize by cluster
+    this.semanticMemory.clear()
+    clusters.forEach((label, idx) => {
+        if (!this.semanticMemory.has(label)) {
+            this.semanticMemory.set(label, [])
+        }
+        this.semanticMemory.get(label).push({
+            embedding: this.embeddings[idx],
+            interaction: this.shortTermMemory[idx]
+        })
+    })
+}
+```
+
+## Memory Dynamics
+
+1. Decay Mechanisms
+   - Time-based decay
+   - Access-based reinforcement
+   - Concept relevance weighting
+   - Cluster stability
+
+2. Access Patterns
+   - Frequency tracking
+   - Recency weighting
+   - Cross-reference counting
+   - Concept co-occurrence
+
+3. Memory Transfer
+   - Short to long-term promotion
+   - Concept extraction
+   - Cluster reorganization
+   - Semantic linking
+
+## Optimization Strategies
+
+1. Vector Operations
+   - Batch similarity calculations
+   - Dimensionality optimization
+   - Sparse vector handling
+   - Distance caching
+
+2. Cluster Management
+   - Dynamic cluster sizing
+   - Periodic rebalancing
+   - Merge/split operations
+   - Outlier handling
+
+3. Concept Organization
+   - Hierarchical relationships
+   - Cross-cluster linking
+   - Concept drift tracking
+   - Relevance scoring
+
+================
+File: runtime-validation.md
+================
+# Runtime Type Validation System
+
+## Core Validation Functions
+
+### Interaction Validation
+```javascript
+export function validateInteraction(interaction) {
+    // Type check
+    if (!interaction || typeof interaction !== 'object') {
+        throw new TypeError('Interaction must be an object')
+    }
+
+    // Required fields
+    const required = ['id', 'prompt', 'output', 'embedding']
+    for (const field of required) {
+        if (!(field in interaction)) {
+            throw new TypeError(`Missing required field: ${field}`)
+        }
+    }
+
+    // Embedding validation
+    if (!Array.isArray(interaction.embedding)) {
+        throw new TypeError('Embedding must be an array')
+    }
+    if (!interaction.embedding.every(x => typeof x === 'number' && !isNaN(x))) {
+        throw new TypeError('Embedding must contain only valid numbers')
+    }
+
+    // Concepts validation
+    if (interaction.concepts && !Array.isArray(interaction.concepts)) {
+        throw new TypeError('Concepts must be an array')
+    }
+    if (interaction.concepts?.some(c => typeof c !== 'string')) {
+        throw new TypeError('Concepts must be strings')
+    }
+
+    // Numeric fields
+    if (typeof interaction.timestamp !== 'number') {
+        throw new TypeError('Timestamp must be a number')
+    }
+    if (typeof interaction.accessCount !== 'number' || interaction.accessCount < 0) {
+        throw new TypeError('AccessCount must be a non-negative number')
+    }
+    if (typeof interaction.decayFactor !== 'number' || 
+        interaction.decayFactor < 0 || 
+        interaction.decayFactor > 1) {
+        throw new TypeError('DecayFactor must be between 0 and 1')
+    }
+}
+```
+
+### Configuration Validation
+```javascript
+export function validateConfig(config) {
+    // LLM Provider validation
+    if (!config.llmProvider) {
+        throw new TypeError('LLMProvider is required')
+    }
+    const requiredMethods = [
+        'generateEmbedding',
+        'generateChat',
+        'generateCompletion'
+    ]
+    for (const method of requiredMethods) {
+        if (typeof config.llmProvider[method] !== 'function') {
+            throw new TypeError(`LLMProvider must implement ${method}()`)
+        }
+    }
+
+    // Model validation
+    if (!config.chatModel || typeof config.chatModel !== 'string') {
+        throw new TypeError('Invalid chat model specification')
+    }
+    if (!config.embeddingModel || typeof config.embeddingModel !== 'string') {
+        throw new TypeError('Invalid embedding model specification')
+    }
+
+    // Optional config validation
+    if (config.dimension !== undefined) {
+        if (typeof config.dimension !== 'number' || config.dimension <= 0) {
+            throw new TypeError('Dimension must be a positive number')
+        }
+    }
+
+    // Nested config validation
+    if (config.contextOptions) {
+        validateContextOptions(config.contextOptions)
+    }
+    if (config.cacheOptions) {
+        validateCacheOptions(config.cacheOptions)
+    }
+}
+```
+
+## Validation Integration
+
+### Constructor Integration
+```javascript
+export class MemoryManager {
+    constructor(config) {
+        validateConfig(config)
+        this.config = config
+        
+        // Initialize with validated config
+        this.dimension = config.dimension || 1536
+        this.llmProvider = config.llmProvider
+        // ...
+    }
+
+    async addInteraction(interaction) {
+        validateInteraction(interaction)
+        // Process validated interaction
+        await this.store.saveMemoryToHistory({
+            shortTermMemory: [...this.store.shortTermMemory, interaction],
+            longTermMemory: this.store.longTermMemory
+        })
+    }
+}
+```
+
+### Method Guards
+```javascript
+export function methodGuard(target, propertyKey, descriptor) {
+    const originalMethod = descriptor.value
+    descriptor.value = function (...args) {
+        // Validate this instance
+        if (!(this instanceof target)) {
+            throw new TypeError(`Method must be called on ${target.name} instance`)
+        }
+        
+        // Validate initialization
+        if (!this.initialized) {
+            throw new Error('Instance not initialized')
+        }
+        
+        return originalMethod.apply(this, args)
+    }
+    return descriptor
+}
+
+// Usage
+class MemoryStore {
+    @methodGuard
+    async saveMemoryToHistory(memoryStore) {
+        // Method is protected by validation
+    }
+}
+```
+
+## Type Guards
+
+### Custom Type Guards
+```javascript
+export function isInteraction(value): value is Interaction {
+    try {
+        validateInteraction(value)
+        return true
+    } catch {
+        return false
+    }
+}
+
+export function isValidEmbedding(value): value is number[] {
+    return Array.isArray(value) && 
+           value.every(x => typeof x === 'number' && !isNaN(x))
+}
+```
+
+### Guard Usage
+```javascript
+function processInteractions(items: unknown[]): Interaction[] {
+    return items.filter(isInteraction)
+}
+
+function calculateSimilarity(embedding: unknown): number {
+    if (!isValidEmbedding(embedding)) {
+        throw new TypeError('Invalid embedding format')
+    }
+    // Process valid embedding
+}
+```
+
+## Error Handling
+
+### Validation Errors
+```javascript
+export class ValidationError extends Error {
+    constructor(message, field) {
+        super(message)
+        this.name = 'ValidationError'
+        this.field = field
+    }
+}
+
+function validateWithContext(validation, value, context) {
+    try {
+        validation(value)
+    } catch (error) {
+        throw new ValidationError(
+            `${context}: ${error.message}`,
+            context
+        )
+    }
+}
+```
+
+### Error Recovery
+```javascript
+async function safeValidation(value, validation, fallback) {
+    try {
+        validation(value)
+        return value
+    } catch (error) {
+        logger.warn(`Validation failed: ${error.message}`)
+        return fallback
+    }
+}
+```
+
+## Performance Considerations
+
+1. Cache validation results where appropriate
+2. Use TypeScript for compile-time checks
+3. Only validate at system boundaries
+4. Batch validations when possible
+5. Profile validation overhead
+
+================
+File: sparql-caching.md
+================
+# SPARQL Caching Strategy Analysis
+
+## Cache Architecture
+
+The CachedSPARQLStore implements a two-level caching system:
+
+1. Query Cache
+   - Maps normalized SPARQL queries to results
+   - TTL-based expiration
+   - Size-limited with LRU eviction
+   - Handles query normalization
+
+2. Timestamp Cache
+   - Tracks cache entry ages
+   - Supports cleanup operations
+   - Manages eviction priorities
+
+## Implementation Details
+
+### Cache Key Generation
+```javascript
+_generateCacheKey(query) {
+    // Normalize query by removing whitespace variations
+    return query.replace(/\s+/g, ' ').trim()
+}
+```
+
+### Cache Operations
+
+1. Query Execution:
+```javascript
+async _executeSparqlQuery(query, endpoint) {
+    if (!this.cacheEnabled) {
+        return super._executeSparqlQuery(query, endpoint)
+    }
+
+    const cacheKey = this._generateCacheKey(query)
+    const cachedResult = this.queryCache.get(cacheKey)
+    
+    if (cachedResult) {
+        const timestamp = this.cacheTimestamps.get(cacheKey)
+        if (Date.now() - timestamp < this.cacheTTL) {
+            return JSON.parse(JSON.stringify(cachedResult)) // Deep clone
+        }
+    }
+
+    // Cache miss or expired
+    const result = await super._executeSparqlQuery(query, endpoint)
+    this.queryCache.set(cacheKey, result)
+    this.cacheTimestamps.set(cacheKey, Date.now())
+    
+    return result
+}
+```
+
+2. Cache Cleanup:
+```javascript
+cleanupCache() {
+    const now = Date.now()
+
+    // Remove expired entries
+    for (const [key, timestamp] of this.cacheTimestamps.entries()) {
+        if (now - timestamp > this.cacheTTL) {
+            this.queryCache.delete(key)
+            this.cacheTimestamps.delete(key)
+        }
+    }
+
+    // Enforce size limit with LRU
+    while (this.queryCache.size > this.maxCacheSize) {
+        let oldestKey = null
+        let oldestTime = Infinity
+
+        for (const [key, timestamp] of this.cacheTimestamps.entries()) {
+            if (timestamp < oldestTime) {
+                oldestTime = timestamp
+                oldestKey = key
+            }
+        }
+
+        if (oldestKey) {
+            this.queryCache.delete(oldestKey)
+            this.cacheTimestamps.delete(oldestKey)
+        }
+    }
+}
+```
+
+## Cache Invalidation
+
+1. Write Operations
+```javascript
+async saveMemoryToHistory(memoryStore) {
+    this.invalidateCache() // Clear cache on writes
+    return super.saveMemoryToHistory(memoryStore)
+}
+```
+
+2. Transaction Management
+```javascript
+async rollbackTransaction() {
+    await super.rollbackTransaction()
+    this.invalidateCache() // Clear cache on rollback
+}
+```
+
+## Performance Considerations
+
+1. Cache Hit Ratio
+   - Monitor with metrics
+   - Adjust TTL based on hit rate
+   - Track cache effectiveness
+
+2. Memory Usage
+   - Monitor cache size
+   - Adjust maxCacheSize based on memory
+   - Consider entry size in eviction
+
+3. Query Patterns
+   - Cache frequent queries longer
+   - Consider query complexity
+   - Optimize for common patterns
+
+## Configuration Options
+
+```javascript
+{
+    cacheEnabled: true,
+    cacheTTL: 300000, // 5 minutes
+    maxCacheSize: 1000,
+    cleanupInterval: 60000 // 1 minute
+}
+```
+
+================
+File: src-analysis.md
+================
+# Source File Analysis
+
+## Config.js
+**Purpose**: Central configuration management system supporting environment overrides and validation.
+
+Key Methods:
+- `init()`: Initializes configuration with defaults and environment overrides
+- `get(path)`: Retrieves nested configuration values using dot notation
+- `set(path, value)`: Updates configuration values with validation
+- `applyEnvironmentOverrides()`: Handles environment variable configuration
+- `validateConfig()`: Ensures required configuration is present and valid
+
+## ContextManager.js
+**Purpose**: Manages contextual information for LLM interactions, handling memory retrieval and text processing.
+
+Key Methods:
+- `addToContext(interaction, similarity)`: Adds interactions to context buffer
+- `buildContext(currentPrompt, retrievals, recentInteractions)`: Constructs prompt context
+- `pruneContext()`: Removes old or irrelevant context entries
+- `summarizeContext(interactions)`: Creates concise summary grouped by concept
+
+## ContextWindowManager.js
+**Purpose**: Handles text window management for context processing, ensuring content fits within model limits.
+
+Key Methods:
+- `estimateTokens(text)`: Estimates token count for text
+- `calculateWindowSize(input)`: Determines appropriate window size
+- `createWindows(text, windowSize)`: Segments text into overlapping windows
+- `mergeOverlappingContent(windows)`: Reconstructs text from windows
+
+## MemoryManager.js
+**Purpose**: Central coordinator for memory operations, managing interactions between LLMs and storage.
+
+Key Methods:
+- `addInteraction(prompt, output, embedding, concepts)`: Stores new interactions
+- `retrieveRelevantInteractions(query)`: Finds similar past interactions
+- `generateResponse(prompt, lastInteractions, retrievals)`: Coordinates response generation
+- `generateEmbedding(text)`: Creates vector embeddings for text
+- `extractConcepts(text)`: Identifies key concepts in text
+
+## PromptTemplates.js
+**Purpose**: Manages prompt formatting for different LLM models, ensuring consistent interaction.
+
+Key Methods:
+- `formatChatPrompt(modelName, system, context, query)`: Formats chat messages
+- `formatCompletionPrompt(modelName, context, query)`: Formats completion prompts
+- `formatConceptPrompt(modelName, text)`: Formats concept extraction prompts
+- `registerTemplate(modelName, template)`: Adds new model templates
+
+## Utils.js
+**Purpose**: Provides utility functions for logging and vector operations.
+
+Key Methods:
+- `logger`: Logging utility with different levels
+- `vectorOps.normalize(vector)`: Normalizes embedding vectors
+- `vectorOps.cosineSimilarity(vec1, vec2)`: Calculates vector similarity
+
+## index.js
+**Purpose**: Application entry point, initializes core components and configuration.
+
+Key Methods:
+- `init()`: Bootstraps the application
+- Error handling for uncaught exceptions
+
+================
+File: store-configs.md
+================
+# Storage Configuration Guide
+
+## Development Environment
+```javascript
+{
+    storage: {
+        type: 'memory',  // Use in-memory storage
+        options: {
+            maxSize: 1000,
+            enableMetrics: true
+        }
+    },
+    models: {
+        chat: {
+            provider: 'ollama',
+            model: 'qwen2:1.5b'
+        },
+        embedding: {
+            provider: 'ollama',
+            model: 'nomic-embed-text'
+        }
+    }
+}
+```
+Best for: Local development, testing, rapid prototyping
+
+## Small Production System
+```javascript
+{
+    storage: {
+        type: 'json',  // File-based storage
+        options: {
+            path: 'data/memory.json',
+            backupInterval: 3600000,  // 1 hour
+            maxBackups: 24
+        }
+    },
+    models: {
+        chat: {
+            provider: 'ollama',
+            model: 'qwen2:1.5b'
+        },
+        embedding: {
+            provider: 'ollama',
+            model: 'nomic-embed-text'
+        }
+    }
+}
+```
+Best for: Small deployments, single-server setups
+
+## Enterprise System
+```javascript
+{
+    storage: {
+        type: 'sparql',
+        options: {
+            graphName: 'http://example.org/memory',
+            endpoint: {
+                query: 'http://localhost:3030/ds/query',
+                update: 'http://localhost:3030/ds/update'
+            },
+            cache: {
+                enabled: true,
+                ttl: 300000,  // 5 minutes
+                maxSize: 10000
+            },
+            auth: {
+                user: 'admin',
+                passwordEnv: 'SPARQL_PASSWORD'
+            },
+            transaction: {
+                timeout: 30000,
+                retries: 3
+            }
+        }
+    },
+    models: {
+        chat: {
+            provider: 'anthropic',
+            model: 'claude-3-opus-20240229'
+        },
+        embedding: {
+            provider: 'ollama',
+            model: 'nomic-embed-text'
+        }
+    }
+}
+```
+Best for: Large-scale deployments, distributed systems
+
+## High-Performance Setup
+```javascript
+{
+    storage: {
+        type: 'cached-sparql',
+        options: {
+            graphName: 'http://example.org/memory',
+            endpoint: {
+                query: 'http://localhost:3030/ds/query',
+                update: 'http://localhost:3030/ds/update'
+            },
+            cache: {
+                enabled: true,
+                ttl: 60000,  // 1 minute
+                maxSize: 50000,
+                cleanupInterval: 30000
+            },
+            performance: {
+                batchSize: 1000,
+                parallelQueries: 4,
+                timeout: 5000
+            }
+        }
+    },
+    models: {
+        chat: {
+            provider: 'anthropic',
+            model: 'claude-3-opus-20240229',
+            temperature: 0.7
+        },
+        embedding: {
+            provider: 'ollama',
+            model: 'nomic-embed-text',
+            batchSize: 32
+        }
+    }
+}
+```
+Best for: High-throughput applications
+
+## Testing Environment
+```javascript
+{
+    storage: {
+        type: 'memory',
+        options: {
+            mockLatency: 100,  // Simulate network delay
+            mockErrors: 0.01,  // 1% error rate
+            validateData: true
+        }
+    },
+    models: {
+        chat: {
+            provider: 'mock',
+            model: 'test-model'
+        },
+        embedding: {
+            provider: 'mock',
+            model: 'test-embed'
+        }
+    }
+}
+```
+Best for: Testing, CI/CD pipelines
+
+================
+File: store-hierarchy.mermaid
+================
+classDiagram
+    class BaseStore {
+        <<abstract>>
+        +loadHistory()*
+        +saveMemoryToHistory()*
+        +beginTransaction()*
+        +commitTransaction()*
+        +rollbackTransaction()*
+        +verify()*
+        +close()*
+    }
+
+    class SPARQLStore {
+        -endpoint: Object
+        -credentials: Object
+        -graphName: string
+        -inTransaction: boolean
+        +_executeSparqlQuery()
+        +_executeSparqlUpdate()
+    }
+
+    class CachedSPARQLStore {
+        -queryCache: Map
+        -cacheTimestamps: Map
+        -cacheTTL: number
+        -maxCacheSize: number
+        +cleanupCache()
+        +invalidateCache()
+    }
+
+    class JSONStore {
+        -filePath: string
+        -tempPath: string
+        -backupPath: string
+        +ensureDirectory()
+        +verify()
+    }
+
+    class InMemoryStore {
+        -history: Object
+    }
+
+    class MemoryStore {
+        -dimension: number
+        -shortTermMemory: Array
+        -longTermMemory: Array
+        +addInteraction()
+        +retrieve()
+    }
+
+    BaseStore <|-- SPARQLStore
+    SPARQLStore <|-- CachedSPARQLStore
+    BaseStore <|-- JSONStore
+    BaseStore <|-- InMemoryStore
+    BaseStore <|-- MemoryStore
+
+================
+File: store-transaction.mermaid
+================
+sequenceDiagram
+    participant C as Client
+    participant S as Store
+    participant B as Backup
+    participant D as Data Store
+
+    C->>S: beginTransaction()
+    S->>B: Create backup
+    activate S
+    
+    C->>S: saveMemoryToHistory()
+    S->>D: Update data
+    
+    alt Success
+        S->>B: Remove backup
+        S-->>C: Success
+    else Failure
+        S->>B: Restore from backup
+        S-->>C: Error
+    end
+    
+    deactivate S
+    
+    Note over S,D: Transaction complete
+
+================
+File: stores-analysis.md
+================
+# Storage Layer Analysis
+
+## BaseStore.js
+**Purpose**: Abstract base class defining the storage interface contract.
+
+Key Methods:
+- `loadHistory()`: Load stored interactions
+- `saveMemoryToHistory(memoryStore)`: Persist memory state
+- `beginTransaction()`: Start transaction
+- `commitTransaction()`: Commit changes
+- `rollbackTransaction()`: Revert changes
+- `verify()`: Validate store state
+- `close()`: Cleanup resources
+
+## SPARQLStore.js
+**Purpose**: RDF triple store implementation using SPARQL endpoint.
+
+Key Features:
+- SPARQL query/update execution
+- Transaction management with backup graphs
+- Authentication handling
+- Embedding validation
+- Graph management
+
+Key Methods:
+- `_executeSparqlQuery(query, endpoint)`: Execute SPARQL queries
+- `_executeSparqlUpdate(update, endpoint)`: Execute SPARQL updates
+- `_generateInsertStatements(memories, type)`: Generate RDF statements
+- `validateEmbedding(embedding)`: Validate vector format
+
+## CachedSPARQLStore.js
+**Purpose**: Caching layer over SPARQLStore for performance optimization.
+
+Key Features:
+- Query result caching
+- Cache invalidation
+- TTL management
+- Size limits
+
+Key Methods:
+- `_generateCacheKey(query)`: Create cache keys
+- `cleanupCache()`: Remove expired entries
+- `invalidateCache()`: Clear cache on updates
+
+## JSONStore.js
+**Purpose**: File-based storage implementation.
+
+Key Features:
+- File-based persistence
+- Atomic updates
+- Backup management
+- Transaction support
+
+Key Methods:
+- `ensureDirectory()`: Create storage directory
+- `beginTransaction()`: Create temporary file
+- `commitTransaction()`: Atomic file replacement
+- `verify()`: Validate JSON integrity
+
+## InMemoryStore.js
+**Purpose**: Volatile memory storage for testing/development.
+
+Key Features:
+- In-memory data structures
+- No persistence
+- Simple implementation
+
+Key Methods:
+- `loadHistory()`: Return memory state
+- `saveMemoryToHistory()`: Update memory state
+
+## MemoryStore.js
+**Purpose**: Core memory management implementation.
+
+Key Features:
+- Vector similarity search
+- Concept clustering
+- Memory decay
+- Semantic memory organization
+
+Key Methods:
+- `addInteraction()`: Store new interaction
+- `retrieve()`: Find similar interactions
+- `classifyMemory()`: Long/short term classification
+- `clusterInteractions()`: Semantic grouping
+
+## Implementation Patterns
+
+### Transaction Management
+```javascript
+async beginTransaction() {
+    if (this.inTransaction) {
+        throw new Error('Transaction already in progress')
+    }
+    this.inTransaction = true
+    // Store specific setup
+}
+
+async commitTransaction() {
+    if (!this.inTransaction) {
+        throw new Error('No transaction in progress')
+    }
+    try {
+        // Commit changes
+    } finally {
+        this.inTransaction = false
+    }
+}
+```
+
+### Error Recovery
+```javascript
+async saveMemoryToHistory(memoryStore) {
+    try {
+        await this.beginTransaction()
+        // Save operations
+        await this.commitTransaction()
+    } catch (error) {
+        await this.rollbackTransaction()
+        throw error
+    }
+}
+```
+
+### Data Validation
+```javascript
+async verify() {
+    try {
+        // Store-specific verification
+        return true
+    } catch (error) {
+        logger.error('Verification failed:', error)
+        return false
+    }
+}
+```
+
+## Storage Selection
+
+Choose storage implementation based on:
+1. Persistence requirements
+2. Query complexity
+3. Performance needs
+4. Data volume
+5. Transaction requirements
+
+## Configuration
+
+```javascript
+// Example configuration
+{
+    storage: {
+        type: 'sparql',
+        options: {
+            endpoint: 'http://localhost:3030',
+            graphName: 'http://example.org/memory',
+            cacheEnabled: true,
+            cacheTTL: 300000,
+            maxCacheSize: 1000
+        }
+    }
+}
+```
+
+## Best Practices
+
+1. Always use transactions for updates
+2. Implement proper cleanup in close()
+3. Validate data before storage
+4. Handle partial failures
+5. Monitor performance metrics
+
+================
+File: summary_next-diagrams.mermaid
+================
+gantt
+    dateFormat  YYYY-MM-DD
+    title Development Timeline
+    
+    section WebSocket
+    Message Queue     :done, ws1, 2025-01-01, 30d
+    Real-time Updates :active, ws2, after ws1, 30d
+    Client Reconnect  :ws3, after ws2, 30d
+    Error Handling    :ws4, after ws3, 30d
+
+    section Validation
+    SHACL Support    :active, val1, 2025-01-15, 45d
+    Custom Validators :val2, after val1, 30d
+    Error Reporting  :val3, after val2, 30d
+
+    section Testing
+    Integration Tests :active, test1, 2025-02-01, 60d
+    Performance Tests :test2, after test1, 45d
+    Test Utilities   :test3, after test2, 30d
+
+---
+
+flowchart TB
+    subgraph Current["Current System"]
+        direction TB
+        C1[Basic WebSocket]
+        C2[Simple Validation]
+        C3[Limited Tests]
+    end
+
+    subgraph Next["Next Phase"]
+        direction TB
+        N1[Full WebSocket]
+        N2[SHACL Validation]
+        N3[Complete Tests]
+    end
+
+    subgraph Future["Future Vision"]
+        direction TB
+        F1[Distributed System]
+        F2[ML Integration]
+        F3[Visual Tools]
+    end
+
+    C1 --> N1
+    C2 --> N2
+    C3 --> N3
+    N1 --> F1
+    N2 --> F2
+    N3 --> F3
+
+    style Current fill:#f9f,stroke:#333
+    style Next fill:#bbf,stroke:#333
+    style Future fill:#bfb,stroke:#333
+
+================
+File: summary_overview-diagrams.mermaid
+================
+flowchart TB
+    subgraph Interfaces
+        direction TB
+        CLI[CLI Handler]
+        REPL[REPL Handler]
+        HTTP[HTTP/WS Server]
+    end
+
+    subgraph Core
+        direction TB
+        MM[Memory Manager]
+        CM[Context Manager]
+        LLM[LLM Handler]
+        EH[Embedding Handler]
+    end
+
+    subgraph Storage
+        direction TB
+        Base[BaseStore]
+        SPARQL[SPARQLStore]
+        JSON[JSONStore]
+        Memory[InMemoryStore]
+        Cache[CacheManager]
+    end
+
+    subgraph Services
+        direction TB
+        Ollama[Ollama]
+        Claude[Claude]
+        Fuseki[Fuseki]
+    end
+
+    Interfaces --> MM
+    MM --> CM
+    MM --> LLM
+    MM --> EH
+    LLM --> Ollama
+    LLM --> Claude
+    MM --> Base
+    Base --> SPARQL
+    Base --> JSON
+    Base --> Memory
+    SPARQL --> Fuseki
+    SPARQL --> Cache
+
+---
+
+sequenceDiagram
+    participant Client
+    participant API
+    participant MM as Memory Manager
+    participant LLM
+    participant Store
+
+    Client->>API: Query/Interaction
+    API->>MM: Process Request
+    MM->>LLM: Generate Embedding
+    MM->>LLM: Extract Concepts
+    MM->>Store: Retrieve Similar
+    MM->>MM: Apply Context
+    MM->>LLM: Generate Response
+    MM->>Store: Store Interaction
+    MM->>API: Return Response
+    API->>Client: Formatted Response
+
+---
+
+classDiagram
+    class BaseStore {
+        <<abstract>>
+        +loadHistory()*
+        +saveMemoryToHistory()*
+        +beginTransaction()*
+        +commitTransaction()*
+        +rollbackTransaction()*
+    }
+
+    class SPARQLStore {
+        -endpoint: Object
+        -graphName: string
+        +executeSparqlQuery()
+        +executeSparqlUpdate()
+    }
+
+    class CachedSPARQLStore {
+        -queryCache: Map
+        -cacheTTL: number
+        +cleanupCache()
+        +invalidateCache()
+    }
+
+    BaseStore <|-- SPARQLStore
+    SPARQLStore <|-- CachedSPARQLStore
+    BaseStore <|-- JSONStore
+    BaseStore <|-- InMemoryStore
+
+================
+File: summary_overview-doc.md
+================
+# Semem System Overview
+
+## Purpose
+Semem is a semantic memory system built to provide AI applications with persistent, queryable storage of conversational interactions. It integrates LLM capabilities with RDF/SPARQL storage while maintaining a flexible API layer supporting multiple access modes.
+
+## Documentation Index
+- [System Architecture](architecture.md) - Component architecture and interactions
+- [Storage Layer](storage.md) - Storage implementation details and patterns
+- [Memory Management](memory.md) - Memory handling and retrieval algorithms
+- [API Layer](api.md) - API infrastructure and access modes
+- [Configuration](config.md) - System configuration and deployment
+- [Development](development.md) - Development guides and best practices
+
+## Core Components
+
+### Memory Management
+- Central MemoryManager orchestrating operations
+- Interaction storage/retrieval with vector similarity
+- Concept extraction and semantic clustering
+- Memory classification (short/long-term)
+- Context management for conversations
+
+### Storage Layer
+- Pluggable storage architecture
+- Multiple backends (In-Memory, JSON, SPARQL)
+- Transaction support with rollback
+- Caching layer for performance
+- Federation capabilities
+
+### API Layer
+- Multiple interface options (CLI, REPL, HTTP)
+- Event-driven architecture
+- Comprehensive monitoring
+- Security middleware
+- OpenAPI documentation
+
+### LLM Integration
+- Multiple provider support (Ollama, Anthropic)
+- Configurable model selection
+- Embedding generation/caching
+- Prompt template management
+- Context window optimization
+
+## Key Features
+1. Semantic Memory
+   - Vector similarity search
+   - Concept relationship tracking
+   - Memory decay/reinforcement
+   - Context-aware retrieval
+
+2. Storage Options
+   - In-memory for development
+   - JSON file persistence
+   - SPARQL/RDF for production
+   - Caching optimization
+
+3. Access Methods
+   - Command-line interface
+   - Interactive REPL
+   - REST API endpoints
+   - WebSocket real-time
+   - RDF query language
+
+4. System Features
+   - Transaction support
+   - Backup/recovery
+   - Federation support
+   - Comprehensive monitoring
+   - Security controls
+
+## Technical Stack
+- Node.js (20.11.0+)
+- ES Modules
+- SPARQL/RDF
+- WebSocket
+- OpenTelemetry
+- Jasmine Testing
+
+================
+File: summary_quickstart.md
+================
+# Semem Quick Start Guide
+
+## Prerequisites
+- Node.js 20.11.0+
+- Ollama with required models
+- Apache Jena Fuseki (for SPARQL storage)
+- Git
+
+## Installation
+```bash
+# Clone repository
+git clone https://github.com/organization/semem
+cd semem
+
+# Install dependencies
+npm install
+
+# Pull required Ollama models
+ollama pull nomic-embed-text
+ollama pull qwen2:1.5b
+```
+
+## Basic Configuration
+Create .env file:
+```env
+SPARQL_USER=admin
+SPARQL_PASSWORD=admin123
+SPARQL_ENDPOINT=http://localhost:4030
+```
+
+## Quick Test
+```bash
+# Start Fuseki (using Docker)
+cd packages/tbox
+docker-compose up -d
+
+# Run basic test
+cd ../semem
+npm test -- tests/unit/Config.spec.js
+```
+
+## Running Examples
+```bash
+# Basic Ollama example
+node examples/OllamaExample.js
+
+# SPARQL storage example
+node examples/SPARQLExample.js
+
+# Combined example
+node examples/OllamaClaudeExample.js
+```
+
+## Development Server
+```bash
+# Start development server
+npm run dev
+
+# Run all tests
+npm test
+```
+
+## Basic Usage
+```javascript
+import MemoryManager from './src/MemoryManager.js';
+import Config from './src/Config.js';
+import OllamaConnector from './src/connectors/OllamaConnector.js';
+
+// Initialize
+const config = Config.create({
+    storage: {
+        type: 'sparql',
+        options: {
+            graphName: 'http://example.org/memory'
+        }
+    }
+});
+
+const llmProvider = new OllamaConnector();
+const memoryManager = new MemoryManager({
+    llmProvider,
+    chatModel: 'qwen2:1.5b',
+    embeddingModel: 'nomic-embed-text'
+});
+
+// Use system
+const response = await memoryManager.generateResponse(
+    "What's the weather like?",
+    [],  // recent interactions
+    []   // relevant memories
+);
+console.log(response);
+```
+
+## Next Steps
+1. Review [System Overview](overview.md)
+2. Check [Configuration Guide](config.md)
+3. Explore [API Documentation](api.md)
+4. Run [Example Applications](examples/)
+
+================
+File: summary_status-next.md
+================
+# Current Status and Next Steps
+
+## Current Status
+The system has evolved significantly since the initial design, with several key components now implemented:
+
+### Completed Features
+1. Core Memory System
+   - Memory Manager implementation
+   - Vector similarity search
+   - Memory decay/reinforcement
+   - Context management
+
+2. Storage Layer
+   - SPARQL store with transactions
+   - JSON file storage
+   - In-memory store
+   - Caching implementation
+
+3. API Infrastructure
+   - Base API architecture
+   - CLI handler
+   - REPL environment
+   - Initial HTTP server
+
+4. LLM Integration
+   - Ollama connector
+   - Claude/Anthropic integration
+   - Embedding generation
+   - Concept extraction
+
+### Known Issues
+1. WebSocket implementation incomplete
+2. SPARQL federation needs testing
+3. Caching performance optimization required
+4. Documentation gaps in API sections
+
+## Next Steps
+
+### Immediate Priorities (Q1 2025)
+1. Complete WebSocket Server
+   - Finish message queue implementation
+   - Add real-time updates
+   - Implement client reconnection
+   - Add proper error handling
+
+2. Enhance RDF Validation
+   - Complete SHACL support
+   - Add custom validators
+   - Improve error reporting
+   - Add validation caching
+
+3. Improve Testing Coverage
+   - Add integration tests
+   - Expand unit tests
+   - Add performance tests
+   - Improve test utilities
+
+### Short-term Goals (Q2 2025)
+1. Federation Support
+   - Implement cross-endpoint queries
+   - Add distributed storage
+   - Optimize query planning
+   - Add failover support
+
+2. Monitoring Improvements
+   - Enhance metric collection
+   - Add dashboard visualization
+   - Implement alerts
+   - Add performance tracking
+
+3. Context Optimization
+   - Improve window management
+   - Add adaptive sizing
+   - Optimize token counting
+   - Enhance context pruning
+
+### Long-term Vision
+1. Enhanced Visualization
+   - Add graph visualization
+   - Implement memory maps
+   - Create analysis tools
+   - Add debugging interfaces
+
+2. Advanced Features
+   - Distributed storage
+   - Machine learning integration
+   - Advanced concept extraction
+   - Automated optimization
+
+3. Developer Experience
+   - Improve documentation
+   - Add development tools
+   - Create example applications
+   - Enhance debugging support
+
+================
+File: system-overview.md
+================
+# Semem System Overview
+
+## Purpose
+Semem is a semantic memory system that integrates LLM capabilities with RDF/SPARQL storage. It provides a flexible API layer supporting multiple access modes and comprehensive monitoring.
+
+## Core Components
+
+### Memory Management Layer
+- `src/MemoryManager.js`: Central coordinator for memory operations
+- `src/ContextManager.js`: Manages context windows and memory retrieval
+- `src/ContextWindowManager.js`: Handles text segmentation and context window sizing
+- `src/Config.js`: System-wide configuration management
+
+### Storage Layer (src/stores/)
+- Base storage abstraction with multiple implementations:
+  - `SPARQLStore.js`: RDF triple store integration
+  - `CachedSPARQLStore.js`: Caching layer for SPARQL operations
+  - `JSONStore.js`: File-based storage
+  - `InMemoryStore.js`: Volatile memory storage
+
+### API Layer (src/api/)
+Multiple interfaces for system access:
+- Common:
+  - `BaseAPI.js`: Abstract base for all API implementations
+  - `APIRegistry.js`: Service discovery and registration
+  - `APILogger.js`: Unified logging system
+  - `MetricsCollector.js`: Performance monitoring
+- Features:
+  - `ActiveHandler.js`: Complex operations combining multiple services
+  - `PassiveHandler.js`: Basic storage and retrieval operations
+  - `SelfieHandler.js`: System monitoring and metrics
+- Interfaces:
+  - `CLIHandler.js`: Command line interface
+  - `REPLHandler.js`: Interactive shell
+  - `HTTPServer.js`: REST API and WebSocket support
+
+### LLM Integration (src/handlers/)
+- `LLMHandler.js`: LLM interaction management
+- `EmbeddingHandler.js`: Vector embedding generation and management
+- `CacheManager.js`: Caching for LLM operations
+
+### Utilities (src/utils/)
+- `EmbeddingValidator.js`: Validation for vector embeddings
+- `SPARQLHelpers.js`: SPARQL query utilities
+- `FusekiDiscovery.js`: SPARQL endpoint discovery
+
+## Key Concepts
+
+### Memory Types
+- Short-term memory: Recent interactions stored with embeddings
+- Long-term memory: Archived interactions with concept indexing
+- Semantic memory: RDF-based knowledge representation
+
+### Storage Architecture
+- Primary storage in SPARQL/RDF
+- Caching layer for performance
+- Transaction support with backup/restore
+- Federation capabilities
+
+### API Design
+- Event-driven architecture
+- Pluggable storage backends
+- Multiple access modes
+- Comprehensive monitoring
+
+## Data Flow
+1. Input received through API interfaces
+2. ActiveHandler coordinates processing
+3. LLM generates embeddings/responses
+4. Memory operations managed by MemoryManager
+5. Storage handled by appropriate store implementation
+6. Metrics collected throughout process
+
+## Deployment Requirements
+- Node.js 20.11.0+
+- SPARQL endpoint (e.g., Fuseki)
+- Ollama or compatible LLM service
+- Optional monitoring infrastructure
+
+================
+File: type-relationships.mermaid
+================
+classDiagram
+    class LLMProvider {
+        <<interface>>
+        +generateEmbedding(model, input)
+        +generateChat(model, messages, options)
+        +generateCompletion(model, prompt, options)
+    }
+
+    class StorageProvider {
+        <<interface>>
+        +loadHistory()
+        +saveMemoryToHistory(store)
+        +close()?
+    }
+
+    class Interaction {
+        +id: string
+        +prompt: string
+        +output: string
+        +embedding: number[]
+        +timestamp: number
+        +accessCount: number
+        +concepts: string[]
+        +decayFactor: number
+    }
+
+    class MemoryStore {
+        +shortTermMemory: Interaction[]
+        +longTermMemory: Interaction[]
+        +embeddings: number[][]
+        +timestamps: number[]
+        +accessCounts: number[]
+        +conceptsList: string[][]
+    }
+
+    class MemoryConfig {
+        +llmProvider: LLMProvider
+        +chatModel: string
+        +embeddingModel: string
+        +storage: StorageProvider
+        +dimension: number
+        +contextOptions: ContextOptions
+        +cacheOptions: CacheOptions
+    }
+
+    MemoryStore --> Interaction
+    MemoryConfig --> LLMProvider
+    MemoryConfig --> StorageProvider
+
+================
+File: types-analysis.md
+================
+# Type System Analysis
+
+## Overview
+The `src/types` directory contains both TypeScript (.ts) and JavaScript (.js) type definitions, providing type safety through TypeScript and runtime type checking through JavaScript.
+
+## MemoryTypes.ts
+Core type definitions for memory operations.
+
+### Provider Interfaces
+```typescript
+export interface LLMProvider {
+    generateEmbedding(model: string, input: string): Promise<number[]>
+    generateChat(model: string, messages: ChatMessage[], options?: Record<string, any>): Promise<string>
+    generateCompletion(model: string, prompt: string, options?: Record<string, any>): Promise<string>
+}
+
+export interface ChatMessage {
+    role: 'system' | 'user' | 'assistant'
+    content: string
+}
+```
+
+### Configuration Types
+```typescript
+export interface CacheOptions {
+    maxSize: number
+    ttl: number
+}
+
+export interface ContextOptions {
+    maxTokens: number
+    overlapRatio?: number
+}
+
+export interface MemoryConfig {
+    llmProvider: LLMProvider
+    chatModel?: string
+    embeddingModel?: string
+    storage?: StorageProvider
+    dimension?: number
+    contextOptions?: ContextOptions
+    cacheOptions?: CacheOptions
+}
+```
+
+### Storage Types
+```typescript
+export interface StorageProvider {
+    loadHistory(): Promise<[Interaction[], Interaction[]]>
+    saveMemoryToHistory(store: MemoryStore): Promise<void>
+    close?(): Promise<void>
+}
+
+export interface MemoryStore {
+    shortTermMemory: Interaction[]
+    longTermMemory: Interaction[]
+    embeddings: number[][]
+    timestamps: number[]
+    accessCounts: number[]
+    conceptsList: string[][]
+}
+```
+
+### Data Types
+```typescript
+export interface Interaction {
+    id: string
+    prompt: string
+    output: string
+    embedding: number[]
+    timestamp: number
+    accessCount: number
+    concepts: string[]
+    decayFactor: number
+}
+
+export enum MemoryType {
+    ShortTerm = 'short-term',
+    LongTerm = 'long-term'
+}
+```
+
+## MemoryTypes.js
+Runtime type checking and validation.
+
+### Type Constructors
+```javascript
+export class Interaction {
+    constructor({
+        id,
+        prompt,
+        output,
+        embedding,
+        timestamp = Date.now(),
+        accessCount = 1,
+        concepts = [],
+        decayFactor = 1.0
+    }) {
+        this.id = id
+        this.prompt = prompt
+        this.output = output
+        this.embedding = embedding
+        this.timestamp = timestamp
+        this.accessCount = accessCount
+        this.concepts = concepts
+        this.decayFactor = decayFactor
+    }
+}
+
+export class MemoryConfig {
+    constructor({
+        llmProvider,
+        chatModel = 'qwen2:1.5b',
+        embeddingModel = 'nomic-embed-text',
+        storage = null,
+        dimension = 1536,
+        contextOptions = { maxTokens: 8192 },
+        cacheOptions = { maxSize: 1000, ttl: 3600000 }
+    }) {
+        this.llmProvider = llmProvider
+        this.chatModel = chatModel
+        this.embeddingModel = embeddingModel
+        this.storage = storage
+        this.dimension = dimension
+        this.contextOptions = contextOptions
+        this.cacheOptions = cacheOptions
+    }
+}
+```
+
+### Constants
+```javascript
+export const MemoryTypes = {
+    SHORT_TERM: 'short-term',
+    LONG_TERM: 'long-term'
+}
+```
+
+## Usage Patterns
+
+### Type Validation
+```javascript
+// Runtime type checking
+function validateInteraction(interaction) {
+    if (!(interaction instanceof Interaction)) {
+        throw new TypeError('Expected Interaction instance')
+    }
+    
+    if (!Array.isArray(interaction.embedding) || 
+        !interaction.embedding.every(x => typeof x === 'number')) {
+        throw new TypeError('Invalid embedding format')
+    }
+    
+    if (!Array.isArray(interaction.concepts) || 
+        !interaction.concepts.every(x => typeof x === 'string')) {
+        throw new TypeError('Invalid concepts format')
+    }
+}
+
+// Configuration validation
+function validateConfig(config) {
+    if (!(config instanceof MemoryConfig)) {
+        throw new TypeError('Expected MemoryConfig instance')
+    }
+    
+    if (!config.llmProvider || 
+        typeof config.llmProvider.generateChat !== 'function') {
+        throw new TypeError('Invalid LLM provider')
+    }
+}
+```
+
+### TypeScript Integration
+```typescript
+// Type-safe API methods
+async function addInteraction(interaction: Interaction): Promise<void> {
+    validateInteraction(interaction)  // Runtime check
+    await this.store.saveMemoryToHistory({
+        shortTermMemory: [...this.store.shortTermMemory, interaction],
+        longTermMemory: this.store.longTermMemory
+    })
+}
+
+// Type-safe configuration
+function createMemoryManager(config: MemoryConfig): MemoryManager {
+    validateConfig(config)  // Runtime check
+    return new MemoryManager(config)
+}
+```
+
+## Best Practices
+
+1. Always use TypeScript interfaces for API boundaries
+2. Include runtime type checking for critical operations
+3. Use enums for fixed value sets
+4. Provide sensible defaults in constructors
+5. Keep type definitions synchronized between .ts and .js files
+6. Document type constraints and validation rules
+7. Use type guards for runtime safety
+
+## Type Extensions
+When adding new functionality:
+1. Add TypeScript interface
+2. Add corresponding JavaScript class
+3. Update existing interfaces if needed
+4. Add validation functions
+5. Update documentation
+
+================
+File: utils-analysis.md
+================
+# Utilities Layer Analysis
+
+## EmbeddingValidator.js
+**Purpose**: Validates and standardizes vector embeddings across different models.
+
+```javascript
+// Key functionality
+export class EmbeddingValidator {
+    constructor(config = {}) {
+        this.dimensionMap = {
+            'nomic-embed-text': 768,
+            'qwen2:1.5b': 1536,
+            'llama2': 4096,
+            'default': 1536,
+            ...config.dimensions
+        }
+    }
+
+    // Get correct dimension for model
+    getDimension(model) {
+        return this.dimensionMap[model] || this.dimensionMap.default
+    }
+
+    // Validate embedding format and dimensions
+    validateEmbedding(embedding, expectedDimension) {
+        if (!Array.isArray(embedding)) {
+            throw new TypeError('Embedding must be an array')
+        }
+        if (!embedding.every(x => typeof x === 'number' && !isNaN(x))) {
+            throw new TypeError('Embedding must contain only valid numbers')
+        }
+        if (embedding.length !== expectedDimension) {
+            throw new Error(`Dimension mismatch: expected ${expectedDimension}`)
+        }
+        return true
+    }
+
+    // Standardize embedding dimensions
+    standardizeEmbedding(embedding, targetDimension) {
+        if (embedding.length === targetDimension) return embedding
+        if (embedding.length < targetDimension) {
+            return [...embedding, ...new Array(targetDimension - embedding.length).fill(0)]
+        }
+        return embedding.slice(0, targetDimension)
+    }
+}
+```
+
+## FusekiDiscovery.js
+**Purpose**: Handles SPARQL endpoint discovery and configuration.
+
+```javascript
+export class FusekiDiscovery {
+    constructor(baseUrl, credentials) {
+        this.baseUrl = baseUrl
+        this.auth = Buffer.from(`${credentials.user}:${credentials.password}`).toString('base64')
+    }
+
+    // Discover available endpoints
+    async discoverEndpoints(dataset) {
+        const endpoints = {
+            base: `${this.baseUrl}/${dataset}`,
+            query: null,
+            update: null,
+            gsp: null,
+            upload: null
+        }
+
+        // Test endpoints
+        if (await this.testSparqlEndpoint(`${endpoints.base}`)) {
+            endpoints.query = endpoints.base
+            endpoints.update = endpoints.base
+        }
+
+        if (await this.testGSPEndpoint(`${endpoints.base}/data`)) {
+            endpoints.gsp = `${endpoints.base}/data`
+        }
+
+        return { 
+            success: true, 
+            endpoints: this.cleanEndpoints(endpoints) 
+        }
+    }
+
+    // Verify endpoint functionality
+    async testSparqlEndpoint(url) {
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Basic ${this.auth}`,
+                    'Content-Type': 'application/sparql-query'
+                },
+                body: 'ASK { ?s ?p ?o }'
+            })
+            return response.ok
+        } catch {
+            return false
+        }
+    }
+}
+```
+
+## SPARQLHelpers.js
+**Purpose**: Provides utility functions for SPARQL operations.
+
+```javascript
+export class SPARQLHelpers {
+    // Create authentication header
+    static createAuthHeader(user, password) {
+        return `Basic ${Buffer.from(`${user}:${password}`).toString('base64')}`
+    }
+
+    // Execute SPARQL queries
+    static async executeSPARQLQuery(endpoint, query, auth) {
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/sparql-query',
+                'Accept': 'application/sparql-results+json',
+                'Authorization': auth
+            },
+            body: query
+        })
+
+        if (!response.ok) {
+            throw new Error(`SPARQL query failed: ${response.status}`)
+        }
+
+        return response.json()
+    }
+
+    // Execute SPARQL updates
+    static async executeSPARQLUpdate(endpoint, update, auth) {
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/sparql-update',
+                'Authorization': auth
+            },
+            body: update
+        })
+
+        if (!response.ok) {
+            throw new Error(`SPARQL update failed: ${response.status}`)
+        }
+
+        return response
+    }
+
+    // Get dataset endpoint URL
+    static getDatasetEndpoint(baseUrl, dataset, operation) {
+        return `${baseUrl}/${dataset}/${operation}`
+    }
+}
+```
+
+## Integration Patterns
+
+### Embedding Validation
+```javascript
+// Usage in EmbeddingHandler
+class EmbeddingHandler {
+    constructor(llmProvider, model, dimension, cacheManager) {
+        this.validator = new EmbeddingValidator({ dimensions: { [model]: dimension } })
+    }
+
+    async generateEmbedding(text) {
+        const embedding = await this.llmProvider.generateEmbedding(this.model, text)
+        this.validator.validateEmbedding(embedding, this.dimension)
+        return this.validator.standardizeEmbedding(embedding, this.dimension)
+    }
+}
+```
+
+### SPARQL Integration
+```javascript
+// Usage in SPARQLStore
+class SPARQLStore {
+    constructor(endpoint, options) {
+        this.auth = SPARQLHelpers.createAuthHeader(options.user, options.password)
+        this.endpoints = await new FusekiDiscovery(endpoint.base, options)
+            .discoverEndpoints(options.dataset)
+    }
+
+    async executeQuery(query) {
+        return SPARQLHelpers.executeSPARQLQuery(
+            this.endpoints.query,
+            query,
+            this.auth
+        )
+    }
+}
+```
+
+## Error Handling
+```javascript
+// Common error handling pattern
+async function withErrorHandling(operation) {
+    try {
+        return await operation()
+    } catch (error) {
+        logger.error(`Operation failed: ${error.message}`)
+        if (error.response) {
+            logger.debug('Response:', await error.response.text())
+        }
+        throw error
+    }
+}
+```
+
+## Best Practices
+
+1. **Embedding Validation**
+   - Always validate before processing
+   - Use standardization for consistency
+   - Cache validation results when possible
+
+2. **SPARQL Operations**
+   - Use helper methods consistently
+   - Handle authentication securely
+   - Implement proper error handling
+
+3. **Endpoint Discovery**
+   - Cache discovery results
+   - Implement fallback mechanisms
+   - Validate endpoint functionality
+
+================
+File: utils-flow.mermaid
+================
+sequenceDiagram
+    participant Client
+    participant EV as EmbeddingValidator
+    participant FD as FusekiDiscovery
+    participant SH as SPARQLHelpers
+    participant Store as Storage
+
+    Client->>EV: validateEmbedding(vector)
+    EV-->>Client: validated vector
+
+    Client->>FD: discoverEndpoints(dataset)
+    FD->>SH: createAuthHeader()
+    FD->>FD: testEndpoints()
+    FD-->>Client: endpoint config
+
+    Client->>Store: executeQuery(query)
+    Store->>SH: executeSPARQLQuery()
+    SH-->>Store: query results
+    Store-->>Client: processed results

@@ -12,7 +12,11 @@
     "test:unit": "node scripts/run-tests.js tests/unit",
     "test:integration": "node scripts/run-tests.js tests/integration",
     "test:debug": "node --inspect-brk scripts/run-tests.js",
-    "cov": "nyc -a --include=src --reporter=lcov npm run test",
+    "test:coverage": "nyc npm test",
+    "test:report": "nyc report --reporter=html && open coverage/index.html",
+    "test:check": "nyc check-coverage",
+    "test:ci": "nyc --reporter=lcov npm test && codecov",
+    "coverage:badge": "coverage-badge-creator",
     "docs": "jsdoc -c jsdoc.json",
     "rp": "repomix -c repomix.config.json . && repomix -c repomix-docs.config.json . "
   },
@@ -34,9 +38,13 @@
   },
   "homepage": "https://github.com/danja/semem#readme",
   "devDependencies": {
+    "@istanbuljs/nyc-config-babel": "^3.0.0",
+    "codecov": "^3.8.2",
+    "coverage-badge-creator": "^1.0.19",
     "jasmine": "^5.5.0",
     "jasmine-spec-reporter": "^7.0.0",
-    "jsdoc": "^4.0.4"
+    "jsdoc": "^4.0.4",
+    "nyc": "^17.1.0"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.36.2",

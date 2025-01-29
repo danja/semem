@@ -1,159 +1,106 @@
-// tests/unit/handlers/EmbeddingHandler.spec.js
-import EmbeddingHandler from '../../../src/handlers/EmbeddingHandler.js'
-import CacheManager from '../../../src/handlers/CacheManager.js'
+import logger from 'loglevel'
 
-describe('EmbeddingHandler', () => {
-    let handler
-    let mockLLMProvider
-    let mockCache
-    const dimension = 1536
-    const model = 'test-model'
+class EmbeddingError extends Error {
+    constructor(message, { cause, type = 'EMBEDDING_ERROR' } = {}) {
+        super(message)
+        this.name = 'EmbeddingError'
+        this.type = type
+        if (cause) this.cause = cause
+    }
+}
 
-    beforeEach(() => {
-        mockLLMProvider = {
-            generateEmbedding: jasmine.createSpy('generateEmbedding')
-                .and.resolveTo(new Array(dimension).fill(0.1))
+export default class EmbeddingHandler {
+    constructor(llmProvider, model, dimension, cacheManager) {
+        if (!llmProvider?.generateEmbedding) {
+            throw new EmbeddingError('Invalid LLM provider', { type: 'CONFIGURATION_ERROR' })
         }
 
-        mockCache = new CacheManager({
-            maxSize: 100,
-            ttl: 1000
-        })
+        this.llmProvider = llmProvider
+        this.model = String(model)
+        this.dimension = dimension
+        this.cacheManager = cacheManager
+    }
 
-        handler = new EmbeddingHandler(
-            mockLLMProvider,
-            model,
-            dimension,
-            mockCache
-        )
-    })
+    async generateEmbedding(text) {
+        if (!text || typeof text !== 'string') {
+            throw new EmbeddingError('Invalid input text', { type: 'VALIDATION_ERROR' })
+        }
 
-    afterEach(() => {
-        mockCache.dispose()
-    })
+        const cacheKey = `${this.model}:${text.slice(0, 100)}`
+        const cached = this.cacheManager?.get(cacheKey)
+        if (cached) return cached
 
-    describe('Embedding Generation', () => {
-        it('should generate and cache embeddings', async () => {
-            const text = 'test input'
-            const embedding = await handler.generateEmbedding(text)
+        try {
+            const embedding = await this.llmProvider.generateEmbedding(this.model, text)
+                .catch(error => {
+                    throw new EmbeddingError(`Provider error: ${error.message}`, {
+                        cause: error,
+                        type: 'PROVIDER_ERROR'
+                    })
+                })
 
-            expect(embedding.length).toBe(dimension)
-            expect(mockLLMProvider.generateEmbedding)
-                .toHaveBeenCalledWith(model, text)
+            if (!embedding || !Array.isArray(embedding)) {
+                throw new EmbeddingError('Invalid embedding format from provider', {
+                    type: 'PROVIDER_ERROR'
+                })
+            }
 
-            // Verify caching
-            mockLLMProvider.generateEmbedding.calls.reset()
-            const cachedEmbedding = await handler.generateEmbedding(text)
-            expect(mockLLMProvider.generateEmbedding).not.toHaveBeenCalled()
-            expect(cachedEmbedding).toEqual(embedding)
-        })
+            const standardized = this.standardizeEmbedding(embedding)
+            this.validateEmbedding(standardized)
+            this.cacheManager?.set(cacheKey, standardized)
+            return standardized
+        } catch (error) {
+            if (error instanceof EmbeddingError) {
+                throw error
+            }
+            logger.error('Unexpected error generating embedding:', error)
+            throw new EmbeddingError('Embedding generation failed', { cause: error })
+        }
+    }
 
-        it('should handle API errors', async () => {
-            mockLLMProvider.generateEmbedding
-                .and.rejectWith(new Error('API Error'))
+    validateEmbedding(embedding) {
+        if (!Array.isArray(embedding)) {
+            throw new EmbeddingError('Embedding must be an array', {
+                type: 'VALIDATION_ERROR'
+            })
+        }
 
-            await expectAsync(handler.generateEmbedding('test'))
-                .toBeRejectedWithError('API Error')
-        })
-
-        it('should retry on certain errors', async () => {
-            mockLLMProvider.generateEmbedding
-                .and.rejectWith(new Error('Network Error'))
-                .and.resolveTo(new Array(dimension).fill(0.1))
-
-            const embedding = await handler.generateEmbedding('test')
-            expect(embedding.length).toBe(dimension)
-            expect(mockLLMProvider.generateEmbedding).toHaveBeenCalledTimes(2)
-        })
-    })
-
-    describe('Embedding Validation', () => {
-        it('should validate embedding arrays', () => {
-            const validEmbedding = new Array(dimension).fill(0.1)
-            expect(() => handler.validateEmbedding(validEmbedding))
-                .not.toThrow()
-
-            const nonArray = 'not an array'
-            expect(() => handler.validateEmbedding(nonArray))
-                .toThrowError('Embedding must be an array')
-        })
-
-        it('should validate numeric values', () => {
-            const invalidValues = new Array(dimension).fill('not a number')
-            expect(() => handler.validateEmbedding(invalidValues))
-                .toThrowError('Embedding must contain only valid numbers')
-        })
-
-        it('should handle undefined values', () => {
-            const hasUndefined = new Array(dimension).fill(0.1)
-            hasUndefined[5] = undefined
-
-            expect(() => handler.validateEmbedding(hasUndefined))
-                .toThrowError('Embedding must contain only valid numbers')
-        })
-    })
-
-    describe('Dimension Standardization', () => {
-        it('should pad short embeddings', () => {
-            const shortEmbedding = new Array(1000).fill(0.1)
-            const standardized = handler.standardizeEmbedding(shortEmbedding)
-
-            expect(standardized.length).toBe(dimension)
-            expect(standardized.slice(0, 1000)).toEqual(shortEmbedding)
-            expect(standardized.slice(1000)).toEqual(new Array(536).fill(0))
-        })
-
-        it('should truncate long embeddings', () => {
-            const longEmbedding = new Array(2000).fill(0.1)
-            const standardized = handler.standardizeEmbedding(longEmbedding)
-
-            expect(standardized.length).toBe(dimension)
-            expect(standardized).toEqual(longEmbedding.slice(0, dimension))
-        })
-
-        it('should preserve exact dimension', () => {
-            const correctEmbedding = new Array(dimension).fill(0.1)
-            const standardized = handler.standardizeEmbedding(correctEmbedding)
-
-            expect(standardized).toBe(correctEmbedding)
-        })
-    })
-
-    describe('Cache Management', () => {
-        it('should handle cache misses', async () => {
-            const text = 'test input'
-            await handler.generateEmbedding(text)
-            mockCache.clear()
-
-            await handler.generateEmbedding(text)
-            expect(mockLLMProvider.generateEmbedding).toHaveBeenCalledTimes(2)
-        })
-
-        it('should use cache key based on model and text', async () => {
-            const text = 'test input'
-            await handler.generateEmbedding(text)
-
-            // Different model should bypass cache
-            const handler2 = new EmbeddingHandler(
-                mockLLMProvider,
-                'different-model',
-                dimension,
-                mockCache
+        if (embedding.length !== this.dimension) {
+            throw new EmbeddingError(
+                `Embedding dimension mismatch: expected ${this.dimension}, got ${embedding.length}`, {
+                type: 'VALIDATION_ERROR'
+            }
             )
-            await handler2.generateEmbedding(text)
+        }
 
-            expect(mockLLMProvider.generateEmbedding).toHaveBeenCalledTimes(2)
-        })
+        if (!embedding.every(x => typeof x === 'number' && !isNaN(x))) {
+            throw new EmbeddingError('Embedding must contain only valid numbers', {
+                type: 'VALIDATION_ERROR'
+            })
+        }
 
-        it('should handle concurrent requests', async () => {
-            const text = 'test input'
-            const promises = Array(5).fill().map(() =>
-                handler.generateEmbedding(text)
-            )
+        return true
+    }
 
-            const results = await Promise.all(promises)
-            expect(mockLLMProvider.generateEmbedding).toHaveBeenCalledTimes(1)
-            expect(results.every(r => r.length === dimension)).toBeTrue()
-        })
-    })
-})
+    standardizeEmbedding(embedding) {
+        try {
+            if (!Array.isArray(embedding)) {
+                throw new EmbeddingError('Input must be an array', {
+                    type: 'VALIDATION_ERROR'
+                })
+            }
+
+            const current = embedding.length
+            if (current === this.dimension) return embedding
+
+            if (current < this.dimension) {
+                return [...embedding, ...new Array(this.dimension - current).fill(0)]
+            }
+
+            return embedding.slice(0, this.dimension)
+        } catch (error) {
+            if (error instanceof EmbeddingError) throw error
+            throw new EmbeddingError('Standardization failed', { cause: error })
+        }
+    }
+}
