@@ -1,10 +1,14 @@
 # Semem Next Steps
 
-### Added **2025-01-29**
+**2025-02-01**
+
+https://github.com/grafana/docker-otel-lgtm
+
+**2025-01-29**
 
 push extract concepts to store, use skos
 
-### Added **2025-01-25**
+**2025-01-25**
 
 test it/fix tests!
 
