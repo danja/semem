@@ -18,4 +18,6 @@ Future Plans
 
 ## Correlated Projects
 
-[SPINACH](https://github.com/stanford-oval/spinach) [paper](https://arxiv.org/abs/2407.11417)
+## References
+
+* SPINACH - [Code](https://github.com/stanford-oval/spinach) [paper](https://arxiv.org/abs/2407.11417)
