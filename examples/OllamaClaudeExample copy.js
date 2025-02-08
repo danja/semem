@@ -30,7 +30,10 @@ class HybridConnector {
     }
 
     async generateChat(model, messages, options = {}) {
+        // Extract system message if present
         const systemMessage = messages.find(msg => msg.role === 'system')?.content || ''
+
+        // Convert to Claude's format
         const claudeMessages = messages
             .filter(msg => msg.role !== 'system')
             .map(msg => ({
@@ -92,7 +95,6 @@ async function main() {
         throw new Error('CLAUDE_API_KEY environment variable is required')
     }
 
-    // Create and initialize config
     const config = new Config({
         storage: {
             type: 'json',
@@ -111,7 +113,6 @@ async function main() {
             }
         }
     })
-    await config.init()
 
     const storage = new JSONStore(config.get('storage.options.path'))
     const hybridProvider = new HybridConnector(CLAUDE_API_KEY)

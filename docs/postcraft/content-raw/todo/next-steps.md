@@ -1,5 +1,23 @@
 # Semem Next Steps
 
+Lobe Chat plugin
+
+https://towardsdatascience.com/how-and-why-to-use-llms-for-chunk-based-information-retrieval-5242f0133b55/
+
+object store MinIO
+
+
+**2025-02-07**
+
+Claude's tests need replacingù!
+
+**2025-02-06**
+
+stuff from before +
+
+* fix Claude's bloody useless tests.
+* incorporate #:clients - as git submodule would cause a loop?
+
 **2025-02-01**
 
 https://github.com/grafana/docker-otel-lgtm

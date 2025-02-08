@@ -12,8 +12,12 @@ async function runTests() {
         const config = new Config()
         await config.init()
 
-        console.log('Initializing test environment...')
-        await initTestGraphs(config)
+        // Only initialize SPARQL for integration tests
+        const testPath = process.argv[2] || ''
+        if (testPath.includes('integration')) {
+            console.log('Initializing test environment...')
+            await initTestGraphs(config)
+        }
 
         console.log('Running tests...')
         const jasmine = new Jasmine({
@@ -26,9 +30,8 @@ async function runTests() {
         jasmine.loadConfigFile(configPath)
         jasmine.exitOnCompletion = false
 
-        // Execute specs with proper error handling
         try {
-            const failures = await jasmine.execute()
+            const failures = await jasmine.execute([testPath])
             process.exit(failures ? 1 : 0)
         } catch (error) {
             console.error('Test execution failed:', error)

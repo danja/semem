@@ -1,6 +1,7 @@
-// tests/unit/sparql-store-spec.js
-import { BaseTest } from '../helpers/BaseTest.js'
-import SPARQLStore from '../../src/stores/SPARQLStore.js'
+// tests/unit/sparql/SPARQLStore.js
+
+import { BaseTest } from '../../helpers/BaseTest.js'
+import SPARQLStore from '../../../src/stores/SPARQLStore.js'
 import { v4 as uuidv4 } from 'uuid'
 
 class SPARQLStoreTest extends BaseTest {

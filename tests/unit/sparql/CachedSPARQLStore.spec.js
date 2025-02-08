@@ -1,6 +1,7 @@
-// tests/unit/cached-sparql-store-spec.js
-import { BaseTest } from '../helpers/BaseTest.js'
-import CachedSPARQLStore from '../../src/stores/CachedSPARQLStore.js'
+// tests/unit/sparql/CachedSPARQLStore.spec.js
+
+import { BaseTest } from '../../helpers/BaseTest.js'
+import CachedSPARQLStore from '../../../src/stores/CachedSPARQLStore.js'
 
 class CachedSPARQLStoreTest extends BaseTest {
     beforeEach() {

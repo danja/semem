@@ -27,6 +27,13 @@ npm test -- tests/unit/MemoryManager.spec.js
 
 #
 
+1665 npm test -- tests/unit/Config.spec.js
+1666 npm test -- tests/unit/MemoryManager.spec.js
+1667 npm test -- tests/unit/handlers/LLMHandler.spec.js
+
+1770 npm test -- tests/integration/application-manager.spec.js
+1780 npm test -- tests/integration/app-context.spec.js
+
 # NEXT
 
 re-pack
