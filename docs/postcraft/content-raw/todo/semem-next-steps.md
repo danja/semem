@@ -1,5 +1,7 @@
 # Semem Next Steps
 
+MCP server
+
 Lobe Chat plugin
 
 https://towardsdatascience.com/how-and-why-to-use-llms-for-chunk-based-information-retrieval-5242f0133b55/
