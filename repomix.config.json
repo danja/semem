@@ -10,6 +10,7 @@
     "ignore": {
         "useDefaultPatterns": false,
         "customPatterns": [
+            "package-lock.json",
             "data",
             "docs",
             ".nyc_output",

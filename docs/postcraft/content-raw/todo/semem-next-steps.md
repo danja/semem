@@ -1,5 +1,9 @@
 # Semem Next Steps
 
+https://docs.npmjs.com/cli/v11/configuring-npm/package-json
+
+grafana
+
 MCP server
 
 Lobe Chat plugin
