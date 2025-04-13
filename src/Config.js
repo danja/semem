@@ -31,17 +31,31 @@ export default class Config {
             decayRate: 0.0001
         },
         sparqlEndpoints: [{
+            label: "fuseki.hyperdata.it",
+            user: "admin",
+            password: "admin123",
+            urlBase: "http://localhost:3030",
+            dataset: "semem",
+            query: "/semem",
+            update: "/semem",
+            upload: "/semem/upload",
+            gspRead: "/semem/data",
+            gspWrite: "/semem/data"
+        }
+  /*
+        sparqlEndpoints: [{
             label: "test-mem",
             user: "admin",
             password: "admin123",
-            urlBase: "http://localhost:4030",
+           urlBase: "http://localhost:4030",
             dataset: "test-mem",
             query: "/test-mem",
             update: "/test-mem",
             upload: "/test-mem/upload",
             gspRead: "/test-mem/data",
             gspWrite: "/test-mem/data"
-        }]
+        }
+            */]
     }
 
     constructor(userConfig = {}) {

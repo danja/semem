@@ -211,6 +211,7 @@ export default class SPARQLStore extends BaseStore {
                 }
             `
 
+            logger.debug(`SPARQLStoresave.MemoryToHistory query = \n${insertQuery}`)
             await this._executeSparqlUpdate(insertQuery, this.endpoint.update)
             await this.commitTransaction()
 
