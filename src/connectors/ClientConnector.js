@@ -2,35 +2,33 @@
  * Connector for Ollama API operations using hyperdata-clients
  */
 import logger from 'loglevel'
-import HClientFactory from '../common/ClientFactoryWrapper.js'
-
-export default class HOllamaClientConnector {
+//import HClientFactory from '../common/ClientFactoryWrapper.js'
+import ClientFactory from '../../../hyperdata-clients/src/common/ClientFactory.js'
+class ClientConnector {
     /**
-     * Create a new HOllamaClientConnector
+     * Create a new ClientConnector
      * @param {string} baseUrl - Optional base URL for Ollama API (defaults to http://localhost:11434)
      * @param {string} defaultModel - Optional default model to use
      */
-    constructor(baseUrl = 'http://localhost:11434', defaultModel = 'qwen2:1.5b') {
-        this.baseUrl = baseUrl
-        this.defaultModel = defaultModel
+    constructor(provider, model) {
+        this.provider = provider
+        this.model = model
         this.client = null
         this.initialize()
     }
 
     /**
-     * Initialize the Ollama client
+     * Initialize the client
      */
     async initialize() {
         try {
-            this.client = await HClientFactory.createAPIClient('ollama', {
-                apiKey: 'NO_KEY_REQUIRED',
-                baseUrl: this.baseUrl,
-                model: this.defaultModel
+            this.client = await ClientFactory.createAPIClient(this.provider, {
+                model: this.model
             })
 
-            logger.debug('Ollama client initialized successfully')
+            logger.debug('new client initialized successfully')
         } catch (error) {
-            logger.error('Failed to initialize Ollama client:', error)
+            logger.error('Failed to initialize new client:', error)
             throw error
         }
     }
@@ -67,21 +65,15 @@ export default class HOllamaClientConnector {
      * @returns {string} - Response text
      */
     async generateChat(model, messages, options = {}) {
-        logger.debug(`Generating chat with model ${model}`)
-        logger.debug('Messages:', messages)
-
         try {
-            if (!this.client) {
-                await this.initialize()
-            }
+            logger.debug(`Generating chat with model ${model}`)
+            logger.debug('Messages:', messages)
+            const config = { model: 'open-codestral-mamba', apiKey: process.env.MISTRAL_API_KEY }
+            const client = await ClientFactory.createAPIClient('mistral', config)
+            const response = await client.chat([
+                { role: 'user', content: prompt }
+            ])
 
-            const response = await this.client.chat(messages, {
-                model,
-                temperature: options.temperature || 0.7,
-                ...options
-            })
-
-            logger.debug('Chat response:', response)
             return response
         } catch (error) {
             logger.error('Chat generation failed:', error)
@@ -119,3 +111,4 @@ export default class HOllamaClientConnector {
         }
     }
 }
+export default ClientConnector

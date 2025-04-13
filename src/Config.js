@@ -14,8 +14,10 @@ export default class Config {
         },
         models: {
             chat: {
-                provider: 'ollama',
-                model: 'qwen2:1.5b',
+                //    provider: 'ollama',
+                //  model: 'qwen2:1.5b',
+                provider: 'mistral',
+                model: 'open-codestral-mamba',
                 options: {}
             },
             embedding: {

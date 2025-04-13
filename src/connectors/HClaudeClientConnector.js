@@ -1,8 +1,8 @@
 /**
  * Connector for Anthropic Claude API operations using hyperdata-clients
  */
-import logger from 'loglevel';
-import HClientFactory from '../common/HClientFactory.js';
+import logger from 'loglevel'
+import HClientFactory from '../common/ClientFactoryWrapper.js'
 
 export default class HClaudeClientConnector {
     /**
@@ -12,13 +12,13 @@ export default class HClaudeClientConnector {
      */
     constructor(apiKey, defaultModel = 'claude-3-opus-20240229') {
         if (!apiKey) {
-            throw new Error('Claude API key is required');
+            throw new Error('Claude API key is required')
         }
-        
-        this.apiKey = apiKey;
-        this.defaultModel = defaultModel;
-        this.client = null;
-        this.initialize();
+
+        this.apiKey = apiKey
+        this.defaultModel = defaultModel
+        this.client = null
+        this.initialize()
     }
 
     /**
@@ -29,11 +29,11 @@ export default class HClaudeClientConnector {
             this.client = await HClientFactory.createAPIClient('claude', {
                 apiKey: this.apiKey,
                 model: this.defaultModel
-            });
-            logger.debug('Claude client initialized successfully');
+            })
+            logger.debug('Claude client initialized successfully')
         } catch (error) {
-            logger.error('Failed to initialize Claude client:', error);
-            throw error;
+            logger.error('Failed to initialize Claude client:', error)
+            throw error
         }
     }
 
@@ -44,20 +44,20 @@ export default class HClaudeClientConnector {
      * @returns {number[]} - Vector embedding
      */
     async generateEmbedding(model, input) {
-        logger.debug(`Generating embedding with model ${model}`);
-        logger.debug('Input length:', input.length);
+        logger.debug(`Generating embedding with model ${model}`)
+        logger.debug('Input length:', input.length)
 
         try {
             if (!this.client) {
-                await this.initialize();
+                await this.initialize()
             }
 
-            const embedding = await this.client.embedding(input, { model });
-            logger.debug('Embedding generated successfully');
-            return embedding;
+            const embedding = await this.client.embedding(input, { model })
+            logger.debug('Embedding generated successfully')
+            return embedding
         } catch (error) {
-            logger.error('Embedding generation failed:', error);
-            throw error;
+            logger.error('Embedding generation failed:', error)
+            throw error
         }
     }
 
@@ -69,12 +69,12 @@ export default class HClaudeClientConnector {
      * @returns {string} - Response text
      */
     async generateChat(model, messages, options = {}) {
-        logger.debug(`Generating chat with model ${model}`);
-        logger.debug('Messages count:', messages.length);
+        logger.debug(`Generating chat with model ${model}`)
+        logger.debug('Messages count:', messages.length)
 
         try {
             if (!this.client) {
-                await this.initialize();
+                await this.initialize()
             }
 
             const response = await this.client.chat(messages, {
@@ -82,13 +82,13 @@ export default class HClaudeClientConnector {
                 temperature: options.temperature || 0.7,
                 max_tokens: options.max_tokens || 1024,
                 ...options
-            });
+            })
 
-            logger.debug('Chat response received');
-            return response;
+            logger.debug('Chat response received')
+            return response
         } catch (error) {
-            logger.error('Chat generation failed:', error);
-            throw error;
+            logger.error('Chat generation failed:', error)
+            throw error
         }
     }
 
@@ -100,12 +100,12 @@ export default class HClaudeClientConnector {
      * @returns {string} - Response text
      */
     async generateCompletion(model, prompt, options = {}) {
-        logger.debug(`Generating completion with model ${model}`);
-        logger.debug('Prompt length:', prompt.length);
+        logger.debug(`Generating completion with model ${model}`)
+        logger.debug('Prompt length:', prompt.length)
 
         try {
             if (!this.client) {
-                await this.initialize();
+                await this.initialize()
             }
 
             // Convert to chat format since Claude uses chat API for completions
@@ -114,13 +114,13 @@ export default class HClaudeClientConnector {
                 temperature: options.temperature || 0.7,
                 max_tokens: options.max_tokens || 1024,
                 ...options
-            });
+            })
 
-            logger.debug('Completion response received');
-            return response;
+            logger.debug('Completion response received')
+            return response
         } catch (error) {
-            logger.error('Completion generation failed:', error);
-            throw error;
+            logger.error('Completion generation failed:', error)
+            throw error
         }
     }
 }

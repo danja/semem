@@ -26,13 +26,17 @@ export default class LLMHandler {
      */
     async generateResponse(prompt, context, systemPrompt = "You're a helpful assistant with memory of past interactions.") {
         try {
+            logger.log(`LLMHandler.generateResponse,
+                prompt = ${prompt}
+                context = ${context}
+                `)
             const messages = PromptTemplates.formatChatPrompt(
                 this.chatModel,
                 systemPrompt,
                 context,
                 prompt
             )
-
+            logger.log(`LLMHandler.generateResponse, this.chatModel = ${this.chatModel}`)
             return await this.llmProvider.generateChat(
                 this.chatModel,
                 messages,
