@@ -67,40 +67,40 @@ describe('Config', () => {
             const config = new Config()
             await config.init()
             expect(config.get('storage.type')).toBe('memory')
-            expect(config.get('models.chat.model')).toBe('qwen2:1.5b')
+            expect(config.get('models.chat.model')).toBe('open-codestral-mamba')
         })
 
-        it('should merge user config with defaults', async () => {
-            const config = new Config({
-                storage: {
-                    type: 'sparql',
-                    options: { graphName: 'test' }
+        it('should validate during creation', () => {
+            const invalidConfig = {
+                storage: { type: 'invalid' },
+                models: {
+                    chat: {
+                        provider: 'mistral',
+                        model: 'open-codestral-mamba'
+                    },
+                    embedding: {
+                        provider: 'ollama',
+                        model: 'nomic-embed-text'
+                    }
                 },
-                //    models: test.validConfig.models,
-                //  sparqlEndpoints: test.validConfig.sparqlEndpoints
-            })
-            await config.init()
-            expect(config.get('storage.type')).toBe('sparql')
-            expect(config.get('storage.options.graphName')).toBe('test')
-            expect(config.get('models.chat.model')).toBe('qwen2:1.5b')
+                sparqlEndpoints: [{
+                    label: 'test-mem',
+                    urlBase: 'http://localhost:4030',
+                    query: '/test-mem',
+                    update: '/test-mem'
+                }]
+            }
+            expect(() => Config.create(invalidConfig))
+                .toThrowError(/Invalid storage type/)
         })
-
-        /*
-        it('should reject with missing required sections', async () => {
-            const config = new Config({
-                storage: test.validConfig.storage // Missing models and sparqlEndpoints
-            })
-            await expectAsync(config.init())
-                .toBeRejectedWithError(/Missing required config section/)
-        })*/
     })
 
     describe('Configuration Access', () => {
         it('should retrieve nested values', async () => {
             const config = new Config(test.validConfig)
             await config.init()
-            expect(config.get('models.chat.provider')).toBe('ollama')
-            expect(config.get('sparqlEndpoints.0.label')).toBe('test-mem')
+            expect(config.get('models.chat.provider')).toBe('mistral')
+            expect(config.get('sparqlEndpoints.0.label')).toBe('fuseki.hyperdata.it')
         })
 
         it('should handle missing paths', async () => {
@@ -112,7 +112,19 @@ describe('Config', () => {
 
         it('should handle environment overrides', async () => {
             process.env.SEMEM_STORAGE_TYPE = 'json'
-            const config = new Config(test.validConfig)
+            const config = new Config({
+                ...test.validConfig,
+                models: {
+                    chat: {
+                        provider: 'mistral',
+                        model: 'open-codestral-mamba'
+                    },
+                    embedding: {
+                        provider: 'ollama',
+                        model: 'nomic-embed-text'
+                    }
+                }
+            })
             await config.init()
             expect(config.get('storage.type')).toBe('json')
         })
@@ -128,8 +140,22 @@ describe('Config', () => {
         it('should validate during creation', () => {
             const invalidConfig = {
                 storage: { type: 'invalid' },
-                models: test.validConfig.models,
-                sparqlEndpoints: test.validConfig.sparqlEndpoints
+                models: {
+                    chat: {
+                        provider: 'mistral',
+                        model: 'open-codestral-mamba'
+                    },
+                    embedding: {
+                        provider: 'ollama',
+                        model: 'nomic-embed-text'
+                    }
+                },
+                sparqlEndpoints: [{
+                    label: 'test-mem',
+                    urlBase: 'http://localhost:4030',
+                    query: '/test-mem',
+                    update: '/test-mem'
+                }]
             }
             expect(() => Config.create(invalidConfig))
                 .toThrowError(/Invalid storage type/)
