@@ -10,10 +10,7 @@
     "node": ">=20.11.0"
   },
   "scripts": {
-    "test": "node scripts/run-tests.js",
-    "test:unit": "node scripts/run-tests.js tests/unit",
-    "test:integration": "node scripts/run-tests.js tests/integration",
-    "test:debug": "node --inspect-brk scripts/run-tests.js",
+    "test": "jasmine --config=jasmine.json --reporter=tests/helpers/reporter.js",
     "test:coverage": "nyc npm test",
     "test:report": "nyc report --reporter=html && open coverage/index.html",
     "test:check": "nyc check-coverage",
@@ -39,6 +36,7 @@
   "homepage": "https://github.com/danja/semem#readme",
   "devDependencies": {
     "@istanbuljs/nyc-config-babel": "^3.0.0",
+    "@types/jasmine": "^5.1.7",
     "codecov": "^3.8.2",
     "coverage-badge-creator": "^1.0.19",
     "jasmine": "^5.5.0",
@@ -47,7 +45,6 @@
     "nyc": "^17.1.0"
   },
   "dependencies": {
-    "hyperdata-clients": "github:danja/hyperdata-clients",
     "@anthropic-ai/sdk": "^0.36.2",
     "@langchain/core": "^0.3.19",
     "@langchain/openai": "^0.3.14",
@@ -59,9 +56,11 @@
     "faiss-node": "^0.5.1",
     "graphology": "^0.25.4",
     "helmet": "^8.0.0",
+    "hyperdata-clients": "github:danja/hyperdata-clients",
     "loglevel": "^1.9.2",
     "ml-kmeans": "^6.0.0",
     "ollama": "^0.5.10",
-    "swagger-ui-express": "^5.0.1"
+    "swagger-ui-express": "^5.0.1",
+    "yargs": "^17.7.2"
   }
 }

@@ -25,9 +25,15 @@ export default class ContextWindowManager {
 
         let position = 0
         while (position < text.length) {
-            const end = Math.min(position + windowSize, text.length)
+            // Find a word boundary for the end position
+            let end = Math.min(position + windowSize, text.length)
+            while (end < text.length && !text[end].match(/\s/)) {
+                end++
+            }
+            end = Math.min(end, text.length)
+
             const window = {
-                text: text.slice(position, end),
+                text: text.slice(position, end).trim(),
                 start: position,
                 end: end
             }
@@ -35,10 +41,11 @@ export default class ContextWindowManager {
             if (end === text.length) break
 
             // Find next word boundary for clean split
-            position += Math.max(1, stride)
+            position += stride
             while (position < text.length && !text[position].match(/\s/)) {
                 position++
             }
+            position = Math.min(position, text.length)
         }
 
         return windows
@@ -49,7 +56,8 @@ export default class ContextWindowManager {
         const windows = this.createWindows(context, windowSize)
         return options.includeMetadata ?
             windows.map(w => ({ ...w, tokenEstimate: this.estimateTokens(w.text) })) :
-            windows
+            windows.map(w => w.text)
+        windows
     }
 
     mergeOverlappingContent(windows) {
