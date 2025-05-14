@@ -32,13 +32,11 @@ jobs:
     - name: Generate coverage for mocked tests only
       run: ./run-mocked-tests.sh --coverage
       
+    # Upload coverage to Codecov without token (public repo)
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
       with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        directory: ./coverage/
-        files: ./coverage/coverage-final.json
-        flags: unittests
-        name: codecov-umbrella
-        fail_ci_if_error: false
+        # No token needed for public repositories
+        directory: ./coverage
         verbose: true
+        fail_ci_if_error: false

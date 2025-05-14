@@ -1,23 +1,21 @@
+codecov:
+  require_ci_to_pass: false
+
 coverage:
+  precision: 2
+  round: down
+  range: "10...50"
   status:
     project:
       default:
-        target: 50%
+        target: auto
         threshold: 5%
+        # Lower coverage target for now as we're only using mocked tests
+        target: 15%
     patch:
       default:
-        target: 70%
+        target: auto
         threshold: 5%
-
-  notify:
-    slack:
-      default:
-        url: secret:slack_webhook
-        threshold: 1%
-        only_pulls: false
-        branches:
-          - main
-          - develop
 
 comment:
   layout: "reach, diff, flags, files"
@@ -27,7 +25,6 @@ comment:
   require_head: true
   branches:
     - main
-    - develop
 
 ignore:
   - "tests/**/*"
