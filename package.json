@@ -66,7 +66,7 @@
     "faiss-node": "^0.5.1",
     "graphology": "^0.25.4",
     "helmet": "^8.0.0",
-    "hyperdata-clients": "github:danja/hyperdata-clients",
+    "hyperdata-clients": "github:danja/hyperdata-clients", 
     "loglevel": "^1.9.2",
     "ml-kmeans": "^6.0.0",
     "node-fetch": "^3.3.2",
@@ -74,5 +74,8 @@
     "swagger-ui-express": "^5.0.1",
     "uuid": "^11.1.0",
     "yargs": "^17.7.2"
+  },
+  "optionalDependencies": {
+    "hyperdata-clients": "github:danja/hyperdata-clients"
   }
 }

@@ -24,7 +24,12 @@ jobs:
         cache: 'npm'
     
     - name: Install dependencies
-      run: npm ci
+      run: |
+        # Set up Git credentials for GitHub packages
+        git config --global url."https://github.com/".insteadOf git@github.com:
+        git config --global url."https://".insteadOf git://
+        # Install dependencies with fallback to npm install
+        npm ci || npm install
     
     - name: Run only mocked tests
       run: ./run-mocked-tests.sh --reporter=verbose

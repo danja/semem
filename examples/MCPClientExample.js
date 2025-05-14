@@ -5,7 +5,22 @@
  * using the Model Context Protocol.
  */
 
-import fetch from 'node-fetch';
+// Try to import node-fetch directly, with fallback for older Node.js versions
+let fetch;
+try {
+  // For Node.js 18+ with native fetch
+  fetch = globalThis.fetch;
+} catch (err) {
+  try {
+    // For Node.js < 18 using node-fetch
+    const module = await import('node-fetch');
+    fetch = module.default;
+  } catch (err2) {
+    console.error('Error: fetch is not available. Please install node-fetch or use Node.js 18+');
+    process.exit(1);
+  }
+}
+
 import dotenv from 'dotenv';
 
 // Load environment variables

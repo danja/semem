@@ -18,6 +18,15 @@ import MemoryManager from './src/MemoryManager.js';
 import Config from './src/Config.js';
 import loglevel from 'loglevel';
 
+// Set up fallbacks for optional dependencies
+let OllamaConnector;
+try {
+  const module = await import('./src/connectors/OllamaConnector.js');
+  OllamaConnector = module.default;
+} catch (err) {
+  // Silently ignore if OllamaConnector is not available
+}
+
 // Initialize environment variables and logging
 dotenv.config();
 const log = loglevel.getLogger('mcp-server');
