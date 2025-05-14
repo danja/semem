@@ -13,35 +13,6 @@ Docs below courtesy Claude.
 [![npm version](https://img.shields.io/npm/v/semem?style=flat-square)](https://www.npmjs.com/package/semem)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 
-## 🔌 Model Context Protocol (MCP) Support
-
-Semem now implements Anthropic's [Model Context Protocol (MCP)](https://docs.anthropic.com/en/docs/agents-and-tools/mcp) - an open standard that allows AI models to seamlessly access your semantic memory system.
-
-**With MCP support, you can:**
-- Connect Claude and other AI models directly to your knowledge base
-- Let models retrieve memories based on semantic similarity
-- Store new interactions in your memory system
-- Generate embeddings for content
-- Extract concepts from text
-
-```bash
-# Start the MCP server
-npm run mcp-server
-
-# Run the MCP client example
-npm run mcp-example
-
-# Test the MCP server
-npm run mcp-test
-```
-
-MCP works through standardized primitives:
-- **Tools**: Functions like memory.add, memory.retrieve, embeddings.create
-- **Resources**: Data sources like memory.stats, memory.config
-- **Prompts**: Templates for common memory operations
-
-For detailed information, see the [MCP Server Documentation](docs/mcp-server.md).
-
 ## Overview
 
 Semem (Semantic Memory) is a Node.js library for intelligent agent memory management that integrates large language models (LLMs) with Semantic Web technologies (RDF/SPARQL). It provides a memory system for AI applications with multiple storage backends and LLM provider integrations.
@@ -259,6 +230,32 @@ We're in the process of migrating from Jasmine to Vitest. This offers better ESM
 # Generate JSDoc documentation
 npm run docs
 ```
+
+## Experimental Features
+
+### Model Context Protocol (MCP) Support
+
+Semem has experimental support for Anthropic's [Model Context Protocol (MCP)](https://docs.anthropic.com/en/docs/agents-and-tools/mcp) - an open standard that allows AI models to access external data sources.
+
+This feature is under development and may not work in all environments, but you can try it:
+
+```bash
+# Start the MCP server
+npm run mcp-server
+
+# Run the MCP client example
+npm run mcp-example
+
+# Test the MCP server
+npm run mcp-test
+```
+
+MCP implementation provides:
+- **Tools**: Memory operations like add, retrieve, search
+- **Resources**: Data source access for stats and configuration
+- **Prompts**: Templates for common memory tasks
+
+For details, see the [MCP Server Documentation](docs/mcp-server.md).
 
 ## Architecture
 
