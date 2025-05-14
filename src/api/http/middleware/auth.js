@@ -1,41 +1,39 @@
-// Basic authentication middleware
+// API Key authentication middleware
 export const authenticateRequest = (req, res, next) => {
-    const authHeader = req.headers.authorization
+    const apiKey = req.headers['x-api-key'] || req.query.api_key
 
-    if (!authHeader) {
+    if (!apiKey) {
         return res.status(401).json({
             success: false,
-            error: 'Missing authorization header'
+            error: 'Missing API key',
+            message: 'API key must be provided in X-API-Key header or api_key query parameter'
         })
     }
 
     try {
-        const [type, credentials] = authHeader.split(' ')
-
-        if (type !== 'Basic') {
-            return res.status(401).json({
-                success: false,
-                error: 'Invalid authorization type'
-            })
-        }
-
-        const decoded = Buffer.from(credentials, 'base64').toString('utf-8')
-        const [username, password] = decoded.split(':')
-
-        // Simple credential check - should be environment variables in production
-        if (username === 'admin' && password === 'admin123') {
-            req.user = { username }
+        // In production, this should validate against a secure database of API keys
+        // For now, we use a simple check against environment variable or default value
+        const validApiKey = process.env.API_KEY || 'semem-dev-key'
+        
+        if (apiKey === validApiKey) {
+            // Store API key info in request for potential rate limiting
+            req.apiClient = {
+                key: apiKey,
+                timestamp: Date.now()
+            }
             next()
         } else {
             res.status(401).json({
                 success: false,
-                error: 'Invalid credentials'
+                error: 'Invalid API key',
+                message: 'The provided API key is not valid'
             })
         }
     } catch (error) {
-        res.status(401).json({
+        res.status(500).json({
             success: false,
-            error: 'Invalid authorization header'
+            error: 'Authentication error',
+            message: 'An error occurred during authentication'
         })
     }
 }

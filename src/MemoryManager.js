@@ -13,6 +13,7 @@ import LLMHandler from './handlers/LLMHandler.js'
 export default class MemoryManager {
     constructor({
         llmProvider,
+        embeddingProvider = null,
         chatModel = 'qwen2:1.5b',
         embeddingModel = 'nomic-embed-text',
         storage = null,
@@ -29,6 +30,9 @@ export default class MemoryManager {
             throw new Error('LLM provider is required')
         }
 
+        // Use llmProvider for embeddings if no separate embeddingProvider is provided
+        const embeddingProviderToUse = embeddingProvider || llmProvider;
+
         // Normalize model names
         this.chatModel = String(chatModel)
         this.embeddingModel = String(embeddingModel)
@@ -36,7 +40,7 @@ export default class MemoryManager {
         // Initialize components
         this.cacheManager = new CacheManager(cacheOptions)
         this.embeddingHandler = new EmbeddingHandler(
-            llmProvider,
+            embeddingProviderToUse,
             this.embeddingModel,
             dimension,
             this.cacheManager

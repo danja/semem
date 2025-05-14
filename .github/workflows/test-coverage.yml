@@ -40,7 +40,7 @@ jobs:
         run: npm ci
 
       - name: Run tests with coverage
-        run: npm run test:coverage
+        run: npm run test:ci
         env:
           NODE_ENV: test
           SPARQL_ENDPOINT: http://localhost:4030
@@ -50,7 +50,7 @@ jobs:
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
-          file: ./coverage/lcov.info
+          files: ./coverage/coverage.json
           flags: unittests
           name: codecov-semem
           fail_ci_if_error: true

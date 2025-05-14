@@ -2,47 +2,46 @@ import logger from 'loglevel'
 import MemoryManager from '../src/MemoryManager.js'
 import JSONStore from '../src/stores/JSONStore.js'
 import Config from '../src/Config.js'
+import OllamaConnector from '../src/connectors/OllamaConnector.js'
 
 class ClaudeConnector {
-    constructor(apiKey, baseUrl = 'https://api.anthropic.com/v1') {
+    constructor(apiKey, baseUrl = 'https://api.anthropic.com') {
         this.apiKey = apiKey
         this.baseUrl = baseUrl
-        this.defaultModel = 'voyage-3' // voyage-3 claude-3-5-sonnet-20241022
+        this.defaultModel = 'claude-3-opus-20240229' // Update default model
     }
 
     async generateEmbedding(model, input) {
+        // This is a fallback method - we won't use it in practice since we use Ollama for embeddings
+        // Claude doesn't have a stable embedding API yet, so we'll just log the attempt
         logger.setLevel('debug')
-        logger.log(`ClaudeExample.generateEmbedding, this.apiKey = ${this.apiKey}`)
-        // process.exit(0)
-        model = await Promise.resolve(model) // TODO unhackify
-        logger.log(`ClaudeExample.generateEmbedding,
-            model = ${model}
-            input = ${input}`)
-        const response = await fetch(`${this.baseUrl}/messages`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'x-api-key': this.apiKey,
-                'anthropic-version': '2023-06-01'
-            },
-            body: JSON.stringify({
-                //  model: this.defaultModel,
-                model: model,
-                messages: [{ role: 'user', content: input }],
-                system: "Generate an embedding vector for the input text."
-            })
-        })
-
-        if (!response.ok) {
-            throw new Error(`Claude API error: ${response.status} ${response.text}`)
-        }
-
-        const data = await response.json()
-        return data.embedding
+        logger.log(`ClaudeExample.generateEmbedding called but using Ollama instead`)
+        logger.log(`Model: ${model}, Input length: ${input.length} chars`)
+        
+        // Throw error - Claude embeddings are not supported
+        throw new Error('Claude embeddings not supported directly. Use Ollama for embeddings.');
     }
 
     async generateChat(model, messages, options = {}) {
-        const response = await fetch(`${this.baseUrl}/messages`, {
+        // Handle system message separately for Claude API
+        let systemPrompt = null;
+        const cleanedMessages = [];
+        
+        // Process messages
+        for (const msg of messages) {
+            if (msg.role === 'system') {
+                systemPrompt = msg.content;
+            } else {
+                cleanedMessages.push({
+                    role: msg.role,
+                    content: msg.content
+                });
+            }
+        }
+        
+        console.log("Using Claude API for chat with model:", this.defaultModel);
+        
+        const response = await fetch(`${this.baseUrl}/v1/messages`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -51,16 +50,16 @@ class ClaudeConnector {
             },
             body: JSON.stringify({
                 model: this.defaultModel,
-                messages: messages.map(msg => ({
-                    role: msg.role,
-                    content: msg.content
-                })),
+                messages: cleanedMessages,
+                system: systemPrompt, // Claude API takes system prompt separately
+                max_tokens: 1000,
                 ...options
             })
         })
 
         if (!response.ok) {
-            throw new Error(`Claude API error: ${response.status}`)
+            const errorText = await response.text();
+            throw new Error(`Claude API error: ${response.status} ${errorText}`);
         }
 
         const data = await response.json()
@@ -113,7 +112,7 @@ async function main() {
         throw new Error('CLAUDE_API_KEY environment variable is required')
     }
 
-    const config = new Config({
+    const config = Config.create({
         storage: {
             type: 'json',
             options: {
@@ -134,24 +133,41 @@ async function main() {
 
     const storage = new JSONStore(config.get('storage.options.path'))
     const claude = new ClaudeConnector(CLAUDE_API_KEY)
+    const ollama = new OllamaConnector()
 
     memoryManager = new MemoryManager({
         llmProvider: claude,
+        embeddingProvider: ollama,
         chatModel: config.get('models.chat.model'),
-        embeddingModel: config.get('models.embedding.model'),
+        embeddingModel: 'nomic-embed-text',
         storage
     })
 
     const prompt = "What's the current state of AI technology?"
 
     try {
-        const relevantInteractions = await memoryManager.retrieveRelevantInteractions(prompt)
-        const response = await memoryManager.generateResponse(prompt, [], relevantInteractions)
+        // Simplified example to just generate a response
+        const response = await memoryManager.generateResponse(prompt, [])
         console.log('Response:', response)
-
-        const embedding = await memoryManager.generateEmbedding(`${prompt} ${response}`)
-        const concepts = await memoryManager.extractConcepts(`${prompt} ${response}`)
-        await memoryManager.addInteraction(prompt, response, embedding, concepts)
+        
+        // Set a timeout to avoid hanging
+        const timeout = setTimeout(() => {
+            console.log('Operation timed out, shutting down gracefully...');
+            shutdown('timeout');
+        }, 60000); // 60 second timeout
+        
+        // Generate embedding using Ollama for the prompt only (faster)
+        const embedding = await memoryManager.generateEmbedding(prompt);
+        console.log('Generated embedding of length:', embedding.length);
+        
+        // Add simple concepts directly instead of extracting them (faster)
+        const concepts = ["AI", "technology", "current state"];
+        await memoryManager.addInteraction(prompt, response, embedding, concepts);
+        
+        // Clear timeout since we finished successfully
+        clearTimeout(timeout);
+        
+        console.log('Successfully added interaction')
     } catch (error) {
         console.error('Error during execution:', error)
         await shutdown('error')

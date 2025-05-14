@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Semantic Article Search</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Semantic Article Search</h1>
+            <p>Search articles using semantic similarity powered by embeddings</p>
+        </header>
+        
+        <main>
+            <section class="search-section">
+                <form id="search-form">
+                    <div class="search-input-container">
+                        <input 
+                            type="text" 
+                            id="search-input" 
+                            name="q" 
+                            placeholder="Enter your search query..." 
+                            required
+                            autocomplete="off"
+                        >
+                        <button type="submit" class="search-button">Search</button>
+                    </div>
+                    
+                    <div class="search-options">
+                        <label for="limit-select">Results:</label>
+                        <select id="limit-select" name="limit">
+                            <option value="5">5</option>
+                            <option value="10">10</option>
+                            <option value="15">15</option>
+                            <option value="20">20</option>
+                        </select>
+                    </div>
+                </form>
+            </section>
+            
+            <section class="results-section">
+                <div id="results-container">
+                    <div class="results-placeholder">
+                        <p>Enter a search query above to find semantically similar articles</p>
+                    </div>
+                </div>
+                
+                <div id="loading-indicator" class="hidden">
+                    <div class="spinner"></div>
+                    <p>Searching...</p>
+                </div>
+            </section>
+        </main>
+        
+        <footer>
+            <p>Powered by Semem, Faiss, and Ollama embeddings</p>
+        </footer>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>

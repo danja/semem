@@ -10,12 +10,12 @@ class EmbeddingError extends Error {
 }
 
 export default class EmbeddingHandler {
-    constructor(llmProvider, model, dimension, cacheManager) {
-        if (!llmProvider?.generateEmbedding) {
-            throw new EmbeddingError('Invalid LLM provider', { type: 'CONFIGURATION_ERROR' })
+    constructor(provider, model, dimension, cacheManager) {
+        if (!provider?.generateEmbedding) {
+            throw new EmbeddingError('Invalid embedding provider', { type: 'CONFIGURATION_ERROR' })
         }
 
-        this.llmProvider = llmProvider
+        this.provider = provider
         this.model = String(model)
         this.dimension = dimension
         this.cacheManager = cacheManager
@@ -31,7 +31,7 @@ export default class EmbeddingHandler {
         if (cached) return cached
 
         try {
-            const embedding = await this.llmProvider.generateEmbedding(this.model, text)
+            const embedding = await this.provider.generateEmbedding(this.model, text)
                 .catch(error => {
                     throw new EmbeddingError(`Provider error: ${error.message}`, {
                         cause: error,
