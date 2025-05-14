@@ -67,11 +67,22 @@ npm install
 ollama pull nomic-embed-text
 ollama pull qwen2:1.5b
 
-# Start the server
-node search-server.js
+# Start the server (Option 1 - direct start)
+node api-server.js
+
+# Start the server (Option 2 - using restart script)
+chmod +x restart-server.sh
+./restart-server.sh
 ```
 
-The server will start on port 3000 by default (or the port specified in your `.env` file).
+The restart script provides the following benefits:
+- Automatically stops any running server processes
+- Creates a .env file if missing
+- Starts the server with output logging
+- Performs a health check after starting
+- Displays detailed status information
+
+The server will start on port 3000 by default (or the port specified in your `.env` file with the PORT environment variable).
 
 ## Using the Web Interface
 
@@ -90,6 +101,18 @@ The interface provides access to all Semem APIs:
 5. **Concepts**: Extract semantic concepts from text
 6. **Index**: Add content to the semantic search index
 
+### Port Configuration
+
+The browser interface automatically detects if it's running on a different port than the API server (port 3000). If you access the interface on a different port, it will automatically adjust its API calls to target port 3000. This is helpful during development or when using different server configurations.
+
+The interface also provides detailed connectivity information and troubleshooting features:
+- Status indicator showing connection state
+- Detailed console logging for debugging
+- Auto-retry capability for failed connections
+- Specific error messages based on connection issues
+
+For detailed guidance on using the browser interface, see the [Browser Interface documentation](docs/api/browser-interface.md).
+
 ## API Documentation
 
 The Semem library provides both programmatic and HTTP APIs:
@@ -98,6 +121,7 @@ The Semem library provides both programmatic and HTTP APIs:
 - [API Plan](docs/api/api-plan.md) - Strategic plan for API exposure
 - [OpenAPI Specification](docs/api/openapi-spec.yaml) - REST API specification
 - [Implementation Status](docs/api/implementation-status.md) - Current status of API implementation
+- [Browser Interface](docs/api/browser-interface.md) - Guide to using the web-based API interface
 
 ### API Endpoints
 

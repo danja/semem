@@ -7,6 +7,7 @@ This directory contains documentation for the Semem (Semantic Memory) API system
 - [API Plan](./api-plan.md) - Strategic plan for exposing APIs from the Semem library
 - [OpenAPI Specification](./openapi-spec.yaml) - OpenAPI 3.0 specification of the proposed REST API
 - [Implementation Status](./implementation-status.md) - Current status of API implementation
+- [Browser Interface](./browser-interface.md) - Guide to using the web-based API interface
 
 ## Overview
 
@@ -29,7 +30,8 @@ To interact with the Semem API:
 
 1. Review the [API Plan](./api-plan.md) to understand the overall architecture
 2. Examine the [OpenAPI Specification](./openapi-spec.yaml) for detailed endpoint information
-3. Build your integration using the provided examples and guidelines
+3. Try the [Browser Interface](./browser-interface.md) for an interactive experience
+4. Build your integration using the provided examples and guidelines
 
 ## Implementation Examples
 

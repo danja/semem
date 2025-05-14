@@ -1,5 +1,53 @@
+// Global error handler
+window.addEventListener('error', function(event) {
+    console.error('Global error caught:', event.error || event.message);
+    // Always hide loading indicator if there's an error
+    let loadingElement = document.getElementById('loading-indicator');
+    if (loadingElement) {
+        loadingElement.style.display = 'none';
+        console.error('Loading indicator hidden due to global error');
+    }
+});
+
 document.addEventListener('DOMContentLoaded', () => {
     console.log('Initializing Semem API Interface');
+    
+    // Debug message display
+    window.showDebug = function(message) {
+        const debugInfo = document.getElementById('debug-info');
+        if (debugInfo) {
+            const timestamp = new Date().toLocaleTimeString();
+            debugInfo.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+            console.log(`[DEBUG] ${message}`);
+        }
+    };
+    
+    // Get reference to loading indicator (used throughout the script)
+    const loadingIndicator = document.getElementById('loading-indicator');
+    if (loadingIndicator) {
+        // Force it to be hidden at startup
+        loadingIndicator.style.display = 'none';
+        window.showDebug('Loading indicator hidden at initialization');
+    }
+    
+    window.showDebug('Application initialized');
+    
+    // API configuration
+    const apiConfig = {
+        baseUrl: '' // Empty string means same origin (default)
+        // For specific servers, use absolute URL, e.g.: 'http://localhost:3000'
+    };
+    
+    // Check if running on a different port than the API
+    // This is useful for development when the UI might be served from a different port
+    const currentPort = window.location.port;
+    if (currentPort && currentPort !== '3000') {
+        // If we're not on port 3000, explicitly set the API URL to port 3000
+        apiConfig.baseUrl = `http://${window.location.hostname}:3000`;
+        console.log(`Detected different port (${currentPort}), setting API base URL to port 3000`);
+    }
+    
+    console.log('API Config:', apiConfig);
 
     // Store conversation state
     const state = {
@@ -13,7 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const tabContents = document.querySelectorAll('.tab-content');
     const innerTabButtons = document.querySelectorAll('.tab-inner-btn');
     const innerTabContents = document.querySelectorAll('.inner-tab-content');
-    const loadingIndicator = document.getElementById('loading-indicator');
+    // Note: loadingIndicator is already defined above
     const apiStatus = document.getElementById('api-status');
     const statusIndicator = document.querySelector('.status-indicator');
     const statusText = document.querySelector('.status-text');
@@ -32,8 +80,28 @@ document.addEventListener('DOMContentLoaded', () => {
     initConceptsForm();
     initIndexForm();
     
+    // Failsafe mechanism to ensure loading indicator doesn't get stuck
+    let loadingTimeout = null;
+    const resetLoadingTimeout = () => {
+        if (loadingTimeout) {
+            clearTimeout(loadingTimeout);
+        }
+        // If loading indicator is visible for more than 10 seconds, force hide it
+        loadingTimeout = setTimeout(() => {
+            if (loadingIndicator && loadingIndicator.style.display !== 'none') {
+                window.showDebug('FAILSAFE: Loading indicator visible for too long, forcing hide');
+                loadingIndicator.style.display = 'none';
+            }
+        }, 10000);
+    };
+    
     // Check API health
+    window.showDebug('Checking API health...');
+    resetLoadingTimeout();
     checkAPIHealth();
+    
+    // Log the API URL
+    console.log('API URLs will use base:', apiConfig.baseUrl || 'same origin');
 
     /**
      * Initialize tab navigation
@@ -103,7 +171,7 @@ document.addEventListener('DOMContentLoaded', () => {
      * Initialize search form
      */
     function initSearchForm() {
-        console.log('Initializing search form');
+        window.showDebug('Initializing search form');
         
         const searchForm = document.getElementById('search-form');
         const searchResults = document.getElementById('search-results');
@@ -121,6 +189,14 @@ document.addEventListener('DOMContentLoaded', () => {
             
             try {
                 showLoading(true);
+                window.showDebug('Search form submitted, showing loading indicator');
+                
+                // Clear previous results first
+                searchResults.innerHTML = `
+                    <div class="results-placeholder">
+                        <p>Searching for "${escapeHtml(query)}"...</p>
+                    </div>
+                `;
                 
                 // Build query params
                 const params = new URLSearchParams({
@@ -131,24 +207,45 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (threshold) params.append('threshold', threshold);
                 if (types) params.append('types', types);
                 
-                console.log(`Searching with params: ${params.toString()}`);
+                window.showDebug(`Searching with params: ${params.toString()}`);
                 
-                // Perform search
-                const response = await fetchWithTimeout(`/api/search?${params.toString()}`);
+                // Perform search with longer timeout for search operations
+                const searchUrl = `${apiConfig.baseUrl}/api/search?${params.toString()}`;
+                window.showDebug(`Making search request to: ${searchUrl}`);
                 
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.message || 'Search failed');
+                try {
+                    const response = await fetchWithTimeout(searchUrl, { 
+                        timeout: 30000 // 30 second timeout for search
+                    });
+                    
+                    window.showDebug(`Search response received: ${response.status}`);
+                    
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.message || 'Search failed');
+                    }
+                    
+                    const data = await response.json();
+                    window.showDebug(`Search returned ${data.results?.length || 0} results`);
+                    displaySearchResults(data.results || [], searchResults);
+                    
+                } catch (fetchError) {
+                    window.showDebug(`Search fetch error: ${fetchError.message}`);
+                    
+                    // Special handling for timeouts
+                    if (fetchError.name === 'AbortError') {
+                        displayError('Search request timed out. This may happen if the server is busy or the search operation is complex. Please try again with a simpler query.', searchResults);
+                    } else {
+                        displayError(fetchError.message || 'Search operation failed', searchResults);
+                    }
                 }
                 
-                const data = await response.json();
-                displaySearchResults(data.results, searchResults);
-                
             } catch (error) {
-                console.error('Search error:', error);
-                displayError(error.message, searchResults);
+                window.showDebug(`General search error: ${error.message}`);
+                displayError(`Search error: ${error.message}`, searchResults);
             } finally {
                 showLoading(false);
+                window.showDebug('Search completed, hiding loading indicator');
             }
         });
     }
@@ -187,7 +284,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 console.log('Storing memory:', payload);
                 
-                const response = await fetchWithTimeout('/api/memory', {
+                const response = await fetchWithTimeout(`${apiConfig.baseUrl}/api/memory`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
@@ -236,7 +333,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 console.log(`Searching memory with params: ${params.toString()}`);
                 
-                const response = await fetchWithTimeout(`/api/memory/search?${params.toString()}`);
+                const response = await fetchWithTimeout(`${apiConfig.baseUrl}/api/memory/search?${params.toString()}`);
                 
                 if (!response.ok) {
                     const errorData = await response.json();
@@ -293,7 +390,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 console.log('Sending chat message:', payload);
                 
-                const response = await fetchWithTimeout('/api/chat', {
+                const response = await fetchWithTimeout(`${apiConfig.baseUrl}/api/chat`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
@@ -360,7 +457,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log('Sending streaming chat message:', payload);
                 
                 // Make streaming request
-                const response = await fetchWithTimeout('/api/chat/stream', {
+                const response = await fetchWithTimeout(`${apiConfig.baseUrl}/api/chat/stream`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
@@ -445,7 +542,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 console.log('Generating embedding:', payload);
                 
-                const response = await fetchWithTimeout('/api/memory/embedding', {
+                const response = await fetchWithTimeout(`${apiConfig.baseUrl}/api/memory/embedding`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
@@ -521,7 +618,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 console.log('Extracting concepts:', payload);
                 
-                const response = await fetchWithTimeout('/api/memory/concepts', {
+                const response = await fetchWithTimeout(`${apiConfig.baseUrl}/api/memory/concepts`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
@@ -600,7 +697,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 console.log('Indexing content:', payload);
                 
-                const response = await fetchWithTimeout('/api/index', {
+                const response = await fetchWithTimeout(`${apiConfig.baseUrl}/api/index`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
@@ -639,30 +736,91 @@ document.addEventListener('DOMContentLoaded', () => {
      */
     async function checkAPIHealth() {
         try {
+            window.showDebug('Starting API health check');
             statusIndicator.className = 'status-indicator';
             statusText.textContent = 'Checking API...';
             
-            const response = await fetchWithTimeout('/api/health', { timeout: 5000 });
+            const healthUrl = `${apiConfig.baseUrl}/api/health`;
+            window.showDebug(`Checking API health at: ${healthUrl}`);
+            
+            showLoading(true); // Show loading while checking
+            window.showDebug('Loading indicator shown during health check');
+            
+            const response = await fetchWithTimeout(healthUrl, { timeout: 5000 });
+            window.showDebug(`Health check response: ${response.status}`);
+            
+            // Always hide loading indicator after health check
+            showLoading(false);
+            window.showDebug('Loading indicator hidden after health check');
             
             if (response.ok) {
                 const data = await response.json();
+                window.showDebug(`Health check data: ${JSON.stringify(data).substring(0, 100)}...`);
                 
                 if (data.status === 'healthy') {
                     statusIndicator.classList.add('connected');
                     statusText.textContent = 'API Connected';
-                    console.log('API health check successful:', data);
+                    window.showDebug('API health check successful - API is healthy');
                 } else {
                     statusIndicator.classList.add('disconnected');
                     statusText.textContent = 'API Degraded';
-                    console.warn('API health check returned degraded status:', data);
+                    window.showDebug('API health check returned degraded status');
                 }
+                
+                // Force the loading indicator to hide again just to be sure
+                document.getElementById('loading-indicator').style.display = 'none';
+                window.showDebug('Forced loading indicator to hide with inline style');
+                
             } else {
-                throw new Error('Health check failed');
+                throw new Error(`Health check failed with status: ${response.status}`);
             }
         } catch (error) {
             console.error('API health check error:', error);
+            window.showDebug(`Health check error: ${error.message}`);
+            
+            // Always hide loading indicator after health check
+            showLoading(false);
+            window.showDebug('Loading indicator hidden after health check error');
+            
+            // Force the loading indicator to hide again just to be sure
+            document.getElementById('loading-indicator').style.display = 'none';
+            window.showDebug('Forced loading indicator to hide with inline style');
+            
             statusIndicator.classList.add('disconnected');
-            statusText.textContent = 'API Unavailable';
+            
+            // Provide more helpful error message based on error type
+            if (error.name === 'AbortError') {
+                statusText.textContent = 'API Timeout';
+                window.showDebug('Connection timed out. The API server might be overloaded or not running.');
+            } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+                statusText.textContent = 'API Unreachable';
+                window.showDebug(`Network error connecting to ${apiConfig.baseUrl || window.location.origin}`);
+                
+                // If we're not explicitly setting baseUrl, suggest checking the server port
+                if (!apiConfig.baseUrl) {
+                    window.showDebug('API connection failed. Make sure the server is running on port 3000.');
+                }
+            } else {
+                statusText.textContent = 'API Unavailable';
+            }
+            
+            // Add a retry button if health check fails
+            const apiStatus = document.getElementById('api-status');
+            if (!document.getElementById('retry-health-check')) {
+                const retryButton = document.createElement('button');
+                retryButton.id = 'retry-health-check';
+                retryButton.className = 'btn btn-sm';
+                retryButton.textContent = 'Retry';
+                retryButton.addEventListener('click', () => {
+                    // Remove self
+                    retryButton.remove();
+                    // Check health again
+                    window.showDebug('Retry button clicked, trying health check again');
+                    checkAPIHealth();
+                });
+                apiStatus.appendChild(retryButton);
+                window.showDebug('Added retry button for health check');
+            }
         }
     }
 
@@ -797,30 +955,83 @@ document.addEventListener('DOMContentLoaded', () => {
      * Show or hide loading indicator
      */
     function showLoading(show) {
+        window.showDebug(`showLoading(${show}) called`);
+        
+        // Direct DOM manipulation instead of CSS classes
         if (show) {
+            window.showDebug('Showing loading indicator with direct style');
+            loadingIndicator.style.display = 'flex';
             loadingIndicator.classList.remove('hidden');
         } else {
+            window.showDebug('Hiding loading indicator with direct style');
+            loadingIndicator.style.display = 'none';
             loadingIndicator.classList.add('hidden');
+            
+            // Force a reflow to make sure the browser updates the UI
+            void loadingIndicator.offsetWidth;
+            
+            // Double-check to make sure it's really hidden
+            setTimeout(() => {
+                if (loadingIndicator.style.display !== 'none') {
+                    window.showDebug('Loading indicator still visible after timeout, forcing hide');
+                    loadingIndicator.style.display = 'none';
+                }
+            }, 100);
         }
+        
+        window.showDebug(`Loading indicator display: ${loadingIndicator.style.display}, classes: ${loadingIndicator.className}`);
     }
 
     /**
      * Fetch with timeout
      */
     async function fetchWithTimeout(resource, options = {}) {
-        const { timeout = 8000 } = options;
+        const { timeout = 15000 } = options; // Increase default timeout to 15 seconds
+        
+        window.showDebug(`Fetching: ${resource} with timeout ${timeout}ms`);
         
         const controller = new AbortController();
-        const id = setTimeout(() => controller.abort(), timeout);
+        const id = setTimeout(() => {
+            window.showDebug(`Request timed out after ${timeout}ms: ${resource}`);
+            controller.abort('timeout'); // Provide a reason for the abort
+        }, timeout);
         
-        const response = await fetch(resource, {
-            ...options,
-            signal: controller.signal
-        });
-        
-        clearTimeout(id);
-        
-        return response;
+        try {
+            // For search requests, increase the timeout further as they can take longer
+            if (resource.includes('/api/search')) {
+                window.showDebug('Detected search request, increasing timeout');
+                clearTimeout(id); // Clear the original timeout
+                // Set a longer timeout for search requests
+                setTimeout(() => {
+                    window.showDebug(`Search request timed out after 30000ms: ${resource}`);
+                    controller.abort('search-timeout');
+                }, 30000);
+            }
+            
+            const response = await fetch(resource, {
+                ...options,
+                signal: controller.signal
+            });
+            
+            window.showDebug(`Response from ${resource}: ${response.status}`);
+            clearTimeout(id);
+            return response;
+        } catch (error) {
+            clearTimeout(id);
+            
+            // Handle AbortError specifically
+            if (error.name === 'AbortError') {
+                window.showDebug(`Request was aborted: ${resource}`);
+                // Create a more descriptive error
+                const enhancedError = new Error(`Request timed out or was aborted: ${resource}`);
+                enhancedError.name = 'AbortError';
+                enhancedError.originalError = error;
+                throw enhancedError;
+            }
+            
+            window.showDebug(`Fetch error for ${resource}: ${error.message}`);
+            throw error;
+        }
     }
 
     /**

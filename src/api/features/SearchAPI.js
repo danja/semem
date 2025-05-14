@@ -84,32 +84,85 @@ export default class SearchAPI extends BaseAPI {
             const similarityThreshold = threshold || this.similarityThreshold;
             
             // Use dedicated search service if available, otherwise fall back to memory manager
-            let results;
-            if (this.searchService) {
-                results = await this.searchService.search(query, {
-                    threshold: similarityThreshold,
-                    limit,
-                    types: types ? types.split(',') : undefined
-                });
-            } else {
-                // Fall back to memory manager for search
-                const embedding = await this.memoryManager.generateEmbedding(query);
-                const memories = await this.memoryManager.retrieveRelevantInteractions(
-                    query,
-                    similarityThreshold,
-                    0,
-                    limit
-                );
-                
-                // Transform memory format to search result format
-                results = memories.map(item => ({
-                    id: item.interaction.id || uuidv4(),
-                    title: item.interaction.metadata?.title || item.interaction.prompt.slice(0, 50),
-                    content: `${item.interaction.prompt}\n${item.interaction.output}`,
-                    similarity: item.similarity,
-                    type: item.interaction.metadata?.type || 'memory',
-                    metadata: item.interaction.metadata || {}
-                }));
+            let results = [];
+            
+            try {
+                if (this.searchService) {
+                    this.logger.info('Using search service for query:', query);
+                    results = await this.searchService.search(query, {
+                        threshold: similarityThreshold,
+                        limit,
+                        types: types ? types.split(',') : undefined
+                    });
+                } else {
+                    // Fall back to memory manager for search
+                    this.logger.info('Using memory manager fallback for search');
+                    
+                    try {
+                        // Generate embedding safely
+                        const embedding = await this.memoryManager.generateEmbedding(query);
+                        this.logger.info('Embedding generated successfully');
+                        
+                        // Retrieve interactions safely
+                        let memories = [];
+                        try {
+                            memories = await this.memoryManager.retrieveRelevantInteractions(
+                                query,
+                                similarityThreshold,
+                                0,
+                                limit
+                            );
+                            this.logger.info(`Retrieved ${memories?.length || 0} memories`);
+                        } catch (retrievalError) {
+                            this.logger.error('Error retrieving interactions:', retrievalError);
+                            memories = []; // Fallback to empty array
+                        }
+                        
+                        // Ensure memories is an array before processing
+                        if (!Array.isArray(memories)) {
+                            this.logger.warn('Memory retrieval did not return an array');
+                            memories = [];
+                        }
+                        
+                        // Apply safe transformation with defensive coding
+                        results = memories
+                            .filter(item => item && typeof item === 'object' && item.interaction)
+                            .map(item => {
+                                try {
+                                    const interaction = item.interaction || {};
+                                    return {
+                                        id: interaction.id || uuidv4(),
+                                        title: (interaction.metadata && interaction.metadata.title) || 
+                                              (interaction.prompt && interaction.prompt.slice(0, 50)) || 
+                                              'Untitled',
+                                        content: `${interaction.prompt || ''}\n${interaction.output || ''}`,
+                                        similarity: typeof item.similarity === 'number' ? item.similarity : 0,
+                                        type: (interaction.metadata && interaction.metadata.type) || 'memory',
+                                        metadata: interaction.metadata || {}
+                                    };
+                                } catch (transformError) {
+                                    this.logger.error('Error transforming memory item:', transformError);
+                                    // Return a default item on transform error
+                                    return {
+                                        id: uuidv4(),
+                                        title: 'Error Item',
+                                        content: 'Could not process this item',
+                                        similarity: 0,
+                                        type: 'error',
+                                        metadata: {}
+                                    };
+                                }
+                            });
+                    } catch (embeddingError) {
+                        this.logger.error('Error generating embedding:', embeddingError);
+                        // Return empty results on embedding error
+                        results = [];
+                    }
+                }
+            } catch (searchError) {
+                this.logger.error('Error during search process:', searchError);
+                // Return empty results on search error
+                results = [];
             }
             
             this._emitMetric('search.count', 1);
@@ -118,8 +171,15 @@ export default class SearchAPI extends BaseAPI {
                 count: results.length
             };
         } catch (error) {
+            this.logger.error('Search operation error:', error);
             this._emitMetric('search.errors', 1);
-            throw error;
+            
+            // Return empty results rather than throwing, for API stability
+            return { 
+                results: [],
+                count: 0,
+                error: error.message
+            };
         }
     }
 
