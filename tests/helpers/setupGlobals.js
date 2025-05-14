@@ -1,7 +1,9 @@
-import fetch from 'node-fetch'
-import { TextEncoder, TextDecoder } from 'util'
+// tests/helpers/setupGlobals.js - Global test setup for Vitest
+// This file replaces the old Jasmine helper with a Vitest-compatible version
 
-// Polyfill globals for Node.js environment
-globalThis.fetch = fetch
-globalThis.TextEncoder = TextEncoder
-globalThis.TextDecoder = TextDecoder
+// Add any global polyfills here if needed
+if (!global.structuredClone) {
+  global.structuredClone = (obj) => JSON.parse(JSON.stringify(obj));
+}
+
+// Add any other global setup needed for tests

@@ -1,0 +1,40 @@
+# Jasmine files to remove
+
+These files can be removed now that we've migrated to Vitest:
+
+## 1. Jasmine spec files that have been converted to Vitest:
+- /ubuntu/home/danny/hyperdata/semem/tests/unit/Config.spec.js (replaced by Config.vitest.js)
+- /ubuntu/home/danny/hyperdata/semem/tests/unit/ContextWindowManager.spec.js (replaced by ContextWindowManager.vitest.js)
+- /ubuntu/home/danny/hyperdata/semem/tests/unit/MemoryManager.spec.js (replaced by MemoryManager.vitest.js)
+- /ubuntu/home/danny/hyperdata/semem/tests/unit/api/APILogger.spec.js (replaced by APILogger.vitest.js)
+- /ubuntu/home/danny/hyperdata/semem/tests/unit/api/BaseAPI.spec.js (replaced by BaseAPI.vitest.js)
+- /ubuntu/home/danny/hyperdata/semem/tests/unit/handlers/CLIHandler.spec.js (replaced by CLIHandler.vitest.js)
+- /ubuntu/home/danny/hyperdata/semem/tests/unit/handlers/REPLHandler.spec.js (replaced by REPLHandler.vitest.js)
+- /ubuntu/home/danny/hyperdata/semem/tests/unit/http/message-queue.spec.js (replaced by message-queue.vitest.js)
+- /ubuntu/home/danny/hyperdata/semem/tests/unit/http/WebSocketServer.spec.js (replaced by WebSocketServer.vitest.js)
+- /ubuntu/home/danny/hyperdata/semem/tests/unit/sparql/SPARQLEndpoint.spec.js (replaced by SPARQLEndpoint.vitest.js)
+
+## 2. Jasmine-specific helper files:
+- /ubuntu/home/danny/hyperdata/semem/tests/helpers/BaseTest.js (replaced by testSetup.js for Vitest)
+- /ubuntu/home/danny/hyperdata/semem/tests/helpers/TestHelper.js (replaced by VitestTestHelper.js)
+- /ubuntu/home/danny/hyperdata/semem/tests/helpers/setupSPARQL.js (replaced by vitestSPARQL.js)
+- /ubuntu/home/danny/hyperdata/semem/tests/helpers/jasmine_examples/SpecHelper.js
+- /ubuntu/home/danny/hyperdata/semem/tests/helpers/reporter.js
+- /ubuntu/home/danny/hyperdata/semem/tests/helpers/setup.js
+- /ubuntu/home/danny/hyperdata/semem/tests/helpers/setupGlobals.js
+- /ubuntu/home/danny/hyperdata/semem/tests/helpers/init.js
+
+## 3. Jasmine configuration files:
+- /ubuntu/home/danny/hyperdata/semem/jasmine.json (if it exists)
+- /ubuntu/home/danny/hyperdata/semem/tests/support/jasmine.json (if it exists)
+
+## 4. Package.json dependencies:
+You should remove the Jasmine-related dependencies from package.json:
+```
+npm uninstall jasmine jasmine-spec-reporter --save-dev
+```
+
+## 5. Future Steps:
+1. All tests now use the .vitest.js extension. Consider standardizing to just .test.js in the future.
+2. Update documentation to reflect the migration to Vitest
+3. Add more comprehensive tests for edge cases that were skipped

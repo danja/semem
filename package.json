@@ -15,7 +15,10 @@
     "test:coverage": "vitest run --coverage",
     "test:ui": "vitest --ui",
     "test:ci": "vitest run --coverage --reporter=json --outputFile=./coverage/coverage.json",
+    "test:report": "vitest run --coverage --reporter=html",
+    "test:check": "vitest run --coverage",
     "coverage:badge": "coverage-badge-creator",
+    "badge:create": "npm run test:coverage && coverage-badge-creator && echo 'Badge created in coverage/'",
     "docs": "jsdoc -c jsdoc.json",
     "rp": "repomix -c repomix.config.json . && repomix -c repomix-docs.config.json . "
   },
@@ -36,16 +39,12 @@
   "homepage": "https://github.com/danja/semem#readme",
   "devDependencies": {
     "@istanbuljs/nyc-config-babel": "^3.0.0",
-    "@types/jasmine": "^5.1.7",
-    "@vitest/coverage-c8": "^0.33.0",
+    "@vitest/coverage-v8": "^3.1.3",
     "@vitest/ui": "^3.1.3",
     "codecov": "^3.8.2",
     "coverage-badge-creator": "^1.0.19",
-    "jasmine": "^5.5.0",
-    "jasmine-spec-reporter": "^7.0.0",
     "jsdoc": "^4.0.4",
     "jsdom": "^26.1.0",
-    "nyc": "^17.1.0",
     "vitest": "^3.1.3"
   },
   "dependencies": {

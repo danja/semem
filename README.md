@@ -8,7 +8,10 @@ I'm planning to have something potentially usable by summer solstice 2025.
 
 Docs below courtesy Claude.
  
-[![codecov](https://codecov.io/gh/username/semem/branch/main/graph/badge.svg)](https://codecov.io/gh/username/semem)
+[![tests](https://img.shields.io/github/actions/workflow/status/danja/semem/test.yml?branch=main&label=tests&style=flat-square)](https://github.com/danja/semem/actions/workflows/test.yml)
+[![codecov](https://codecov.io/gh/danja/semem/branch/main/graph/badge.svg)](https://codecov.io/gh/danja/semem)
+[![npm version](https://img.shields.io/npm/v/semem?style=flat-square)](https://www.npmjs.com/package/semem)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 
 ## Overview
 

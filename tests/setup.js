@@ -1,7 +1,13 @@
 // tests/setup.js - Global test setup for Vitest
+import { beforeEach, afterEach, vi } from 'vitest';
+import { registerCustomMatchers } from './helpers/testSetup.js';
+import './helpers/setupGlobals.js'; // Import polyfills
 
 // Set up global test timeout
 setTimeout.default = 5000;
+
+// Register custom matchers
+registerCustomMatchers();
 
 // Mock console methods to avoid cluttering test output
 beforeEach(() => {

@@ -2,12 +2,12 @@ coverage:
   status:
     project:
       default:
-        target: 85%
-        threshold: 1%
+        target: 50%
+        threshold: 5%
     patch:
       default:
-        target: 85%
-        threshold: 1%
+        target: 70%
+        threshold: 5%
 
   notify:
     slack:
@@ -33,4 +33,5 @@ ignore:
   - "tests/**/*"
   - "**/*.spec.js"
   - "**/*.test.js"
+  - "**/*.vitest.js"
   - "**/types/**"

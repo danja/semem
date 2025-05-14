@@ -28,6 +28,11 @@ lib-cov
 # Coverage directory used by tools like istanbul
 coverage
 *.lcov
+**/*.vitest.js
+**/*.test.js
+**/*.spec.js
+vitest.config.js
+run-tests.js
 
 # nyc test coverage
 .nyc_output
