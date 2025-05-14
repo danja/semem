@@ -18,6 +18,7 @@ Semem (Semantic Memory) is a Node.js library for intelligent agent memory manage
 - Connector system for different LLM providers
 - Context window management
 - Concept extraction and organization
+- HTTP API with browser-based interface
 
 ## Installation
 
@@ -50,6 +51,76 @@ await memoryManager.addInteraction(
 // Retrieve relevant past interactions
 const retrievals = await memoryManager.retrieveRelevantInteractions('Tell me about memory systems');
 ```
+
+## Running the Server
+
+To run the Semem API server and access the web interface:
+
+```bash
+# Copy example environment file and configure API keys
+cp example.env .env
+
+# Install dependencies
+npm install
+
+# Install Ollama models (if using Ollama)
+ollama pull nomic-embed-text
+ollama pull qwen2:1.5b
+
+# Start the server
+node search-server.js
+```
+
+The server will start on port 3000 by default (or the port specified in your `.env` file).
+
+## Using the Web Interface
+
+Once the server is running, you can access the web interface at:
+
+```
+http://localhost:3000
+```
+
+The interface provides access to all Semem APIs:
+
+1. **Search**: Search content using semantic similarity
+2. **Memory**: Store and retrieve interactions from semantic memory
+3. **Chat**: Interact with AI using memory context (standard and streaming)
+4. **Embeddings**: Generate vector embeddings for text
+5. **Concepts**: Extract semantic concepts from text
+6. **Index**: Add content to the semantic search index
+
+## API Documentation
+
+The Semem library provides both programmatic and HTTP APIs:
+
+- [API Overview](docs/api/README.md) - Overview of API capabilities and implementation status
+- [API Plan](docs/api/api-plan.md) - Strategic plan for API exposure
+- [OpenAPI Specification](docs/api/openapi-spec.yaml) - REST API specification
+- [Implementation Status](docs/api/implementation-status.md) - Current status of API implementation
+
+### API Endpoints
+
+The API provides the following key endpoints:
+
+#### Memory Management
+- `POST /api/memory` - Store interactions in memory
+- `GET /api/memory/search` - Retrieve relevant memories based on query
+- `POST /api/memory/embedding` - Generate embeddings for text
+- `POST /api/memory/concepts` - Extract concepts from text
+
+#### Chat and Completion
+- `POST /api/chat` - Generate responses with memory context
+- `POST /api/chat/stream` - Stream responses with memory context
+- `POST /api/completion` - Generate text completions with memory context
+
+#### Semantic Search
+- `GET /api/search` - Search content using vector similarity
+- `POST /api/index` - Index content for searching
+
+#### System Endpoints
+- `GET /api/health` - Check API health status
+- `GET /api/metrics` - Get API metrics and statistics
 
 ## Development
 
@@ -95,14 +166,6 @@ We're in the process of migrating from Jasmine to Vitest. This offers better ESM
   - [Jasmine to Vitest Migration Guide](docs/jasmine-to-vitest-migration.md)
 
 ### Documentation
-
-### API Documentation
-
-The Semem library provides both programmatic and HTTP APIs:
-
-- [API Plan](docs/api/api-plan.md) - Strategic plan for API exposure
-- [OpenAPI Specification](docs/api/openapi-spec.yaml) - REST API specification
-- [API Documentation README](docs/api/README.md) - Overview of API capabilities
 
 ### Code Documentation
 
