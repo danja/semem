@@ -1,14 +1,18 @@
 # Semem
 
-Semantic Memory for Intelligent Agents
+**Semantic Memory for Intelligent Agents**
 
-**Status: 2025-03-29** a lot in place, a lot to do. Publishing now to the npm registry so I don't have to rename later.
+I'm planning to have something potentially usable by summer solstice 2025.
 
+**Status: 2025-05-14** a lot in place, a lot to do. Added a bit of UI for sanity checking. I still need to tidy up the latest spike with Claude Code. 
+
+Docs below courtesy Claude.
+ 
 [![codecov](https://codecov.io/gh/username/semem/branch/main/graph/badge.svg)](https://codecov.io/gh/username/semem)
 
 ## Overview
 
-Semem (Semantic Memory) is a Node.js library for intelligent agent memory management that integrates large language models (LLMs) with semantic web technologies (RDF/SPARQL). It provides a memory system for AI applications with multiple storage backends and LLM provider integrations.
+Semem (Semantic Memory) is a Node.js library for intelligent agent memory management that integrates large language models (LLMs) with Semantic Web technologies (RDF/SPARQL). It provides a memory system for AI applications with multiple storage backends and LLM provider integrations.
 
 ## Features
 
