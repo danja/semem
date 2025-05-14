@@ -26,41 +26,9 @@ Semem (Semantic Memory) is a Node.js library for intelligent agent memory manage
 - Concept extraction and organization
 - HTTP API with browser-based interface
 
-## Installation
-
-```bash
-npm install semem
-```
-
-## Usage
-
-Basic usage example:
-
-```javascript
-import { MemoryManager } from 'semem';
-import { OllamaConnector } from 'semem/connectors';
-
-// Initialize a memory manager with Ollama
-const llmProvider = new OllamaConnector();
-const memoryManager = new MemoryManager({
-  llmProvider,
-  chatModel: 'qwen2:1.5b',
-  embeddingModel: 'nomic-embed-text'
-});
-
-// Add an interaction to memory
-await memoryManager.addInteraction(
-  'What is semantic memory?',
-  'Semantic memory stores general knowledge about the world, independent of personal experience.'
-);
-
-// Retrieve relevant past interactions
-const retrievals = await memoryManager.retrieveRelevantInteractions('Tell me about memory systems');
-```
-
 ## Quickstart
 
-Get up and running quickly with Semem:
+*I've only tested properly against a local Ollama model to do the embeddings, unlikely anything else will work.*
 
 ```bash
 # Setup environment and dependencies
