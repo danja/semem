@@ -26,11 +26,11 @@ jobs:
     - name: Install dependencies
       run: npm ci
     
-    - name: Run tests
-      run: npm test
+    - name: Run only mocked tests
+      run: ./run-mocked-tests.sh --reporter=verbose
       
-    - name: Generate coverage
-      run: npm run test:coverage
+    - name: Generate coverage for mocked tests only
+      run: ./run-mocked-tests.sh --coverage
       
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3

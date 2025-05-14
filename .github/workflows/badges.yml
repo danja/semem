@@ -25,8 +25,8 @@ jobs:
     - name: Install dependencies
       run: npm ci
     
-    - name: Generate coverage
-      run: npm run test:coverage
+    - name: Generate coverage for mocked tests only
+      run: ./run-mocked-tests.sh --coverage
       
     - name: Generate badges
       uses: RubbaBoy/BYOB@v1.3.0

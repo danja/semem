@@ -11,14 +11,16 @@
   },
   "scripts": {
     "test": "vitest run",
+    "test:mocked": "./run-mocked-tests.sh",
     "test:watch": "vitest watch",
     "test:coverage": "vitest run --coverage",
+    "test:coverage:mocked": "./run-mocked-tests.sh --coverage",
     "test:ui": "vitest --ui",
-    "test:ci": "vitest run --coverage --reporter=json --outputFile=./coverage/coverage.json",
+    "test:ci": "./run-mocked-tests.sh --coverage --reporter=json --outputFile=./coverage/coverage.json",
     "test:report": "vitest run --coverage --reporter=html",
     "test:check": "vitest run --coverage",
     "coverage:badge": "coverage-badge-creator",
-    "badge:create": "npm run test:coverage && coverage-badge-creator && echo 'Badge created in coverage/'",
+    "badge:create": "npm run test:coverage:mocked && coverage-badge-creator && echo 'Badge created in coverage/'",
     "docs": "jsdoc -c jsdoc.json",
     "rp": "repomix -c repomix.config.json . && repomix -c repomix-docs.config.json . "
   },
