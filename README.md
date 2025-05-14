@@ -56,30 +56,54 @@ await memoryManager.addInteraction(
 const retrievals = await memoryManager.retrieveRelevantInteractions('Tell me about memory systems');
 ```
 
-## Running the Server
+## Quickstart
 
-To run the Semem API server and access the web interface:
+Get up and running quickly with Semem:
 
 ```bash
-# Copy example environment file and configure API keys
+# Setup environment and dependencies
 cp example.env .env
-
-# Install dependencies
 npm install
 
 # Install Ollama models (if using Ollama)
 ollama pull nomic-embed-text
 ollama pull qwen2:1.5b
 
-# Start the server (Option 1 - direct start)
+# Start both API and UI servers in the background
+./start.sh
+
+# Access the web interface
+open http://localhost:3000
+
+# Stop the servers when finished
+./stop.sh
+```
+
+## Running the Server
+
+There are multiple ways to run the Semem server:
+
+```bash
+# Option 1: Start both API and UI servers in background (with logging)
+./start.sh
+
+# Option 2: Start only the API server directly
 node api-server.js
 
-# Start the server (Option 2 - using restart script)
+# Option 3: Start only the UI server directly
+node ui-server.js
+
+# Option 4: Using the restart script (includes health check)
 chmod +x restart-server.sh
 ./restart-server.sh
 ```
 
-The restart script provides the following benefits:
+The start.sh script provides:
+- Runs both API and UI servers in the background
+- Redirects output to log files for easy monitoring
+- Saves PIDs for easy shutdown later
+
+The restart-server.sh script provides:
 - Automatically stops any running server processes
 - Creates a .env file if missing
 - Starts the server with output logging

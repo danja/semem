@@ -38,14 +38,16 @@ document.addEventListener('DOMContentLoaded', () => {
         // For specific servers, use absolute URL, e.g.: 'http://localhost:3000'
     };
     
-    // Check if running on a different port than the API
-    // This is useful for development when the UI might be served from a different port
+    // Check if running on a different port than the API server
+    // The UI server runs on port 4100, search API endpoints are available on the same port
     const currentPort = window.location.port;
-    if (currentPort && currentPort !== '3000') {
-        // If we're not on port 3000, explicitly set the API URL to port 3000
-        apiConfig.baseUrl = `http://${window.location.hostname}:3000`;
-        console.log(`Detected different port (${currentPort}), setting API base URL to port 3000`);
-    }
+    
+    // No need to explicitly set the API URL since we're making requests to the same server
+    // Log the port we're running on for debugging
+    console.log(`Running on port: ${currentPort}`);
+    
+    window.showDebug(`Running on port: ${currentPort}`);
+    window.showDebug(`Using same origin for API requests`);
     
     console.log('API Config:', apiConfig);
 
@@ -200,7 +202,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // Build query params
                 const params = new URLSearchParams({
-                    query: query,
+                    q: query,  // Server expects 'q' parameter, not 'query'
                     limit: limit
                 });
                 
@@ -846,7 +848,7 @@ document.addEventListener('DOMContentLoaded', () => {
             resultElement.className = 'result-item';
             
             // Calculate similarity percentage
-            const similarityPercent = Math.min(100, Math.max(0, Math.round((result.similarity || 0) * 100)));
+            const similarityPercent = Math.min(100, Math.max(0, Math.round((result.score || 0) * 100)));
             
             resultElement.innerHTML = `
                 <h3 class="result-title">
@@ -900,7 +902,7 @@ document.addEventListener('DOMContentLoaded', () => {
             resultElement.className = 'result-item';
             
             // Calculate similarity percentage
-            const similarityPercent = Math.min(100, Math.max(0, Math.round((result.similarity || 0) * 100)));
+            const similarityPercent = Math.min(100, Math.max(0, Math.round((result.score || 0) * 100)));
             
             resultElement.innerHTML = `
                 <h3 class="result-title">Memory ID: ${escapeHtml(result.id || 'unknown')}</h3>
