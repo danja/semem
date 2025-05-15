@@ -1,14 +1,14 @@
 # Semem
 
-**Semantic Memory for Intelligent Agents**
+**Status: 2025-05-14** a lot in place, a lot to do. Added a bit of UI for sanity checking. I still need to tidy up the latest spike with Claude Code. 
+
+I'm planning to have something potentially usable by summer solstice 2025.
+
+## Semantic Memory for Intelligent Agents
 
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/danja/semem)
 
 It's meant as a bit of infrastructure, Graph RAG with a SPARQL store, a bit of embeddings, a bit of behind the scenes LLM interaction to do some knowledgegraph business. Set up as HTTP APIs. MCP is in there, but right now I'm mostly targetting my own kit, bit more generalized & webby. 
-
-I'm planning to have something potentially usable by summer solstice 2025.
-
-**Status: 2025-05-14** a lot in place, a lot to do. Added a bit of UI for sanity checking. I still need to tidy up the latest spike with Claude Code. 
 
 Docs below courtesy Claude.
  
