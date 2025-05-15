@@ -33,43 +33,43 @@ logger.setLevel(process.env.LOG_LEVEL || 'info');
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Port configuration
-const PORT = process.env.PORT || 3000;
-
-// Initialize API Registry
-const registry = new APIRegistry();
-
-// Define apiContext globally so it can be accessed by handler functions
-let apiContext = {};
-
 /**
- * Main function to start the server
+ * APIServer class that encapsulates the entire API server functionality
  */
-async function startServer() {
-    try {
-        logger.info('Initializing Semem API Server...');
-        
-        // Create Express app
-        const app = express();
-        const publicDir = path.join(__dirname, 'public');
-        
-        // Basic middleware
-        app.use((req, res, next) => {
+class APIServer {
+    constructor() {
+        this.port = process.env.PORT || 3000;
+        this.publicDir = path.join(__dirname, 'public');
+        this.app = express();
+        this.server = null;
+        this.apiContext = {};
+        this.registry = new APIRegistry();
+        this.initializeMiddleware();
+    }
+
+    /**
+     * Initialize all middleware
+     */
+    initializeMiddleware() {
+        // Request ID middleware
+        this.app.use((req, res, next) => {
             req.id = uuidv4();
             next();
         });
         
         // Security and performance middleware
-        app.use(helmet({
+        this.app.use(helmet({
             contentSecurityPolicy: false // Disable for development
         }));
-        app.use(cors({
+        
+        this.app.use(cors({
             origin: '*', // For development
             methods: ['GET', 'POST', 'PUT', 'DELETE'],
             allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key']
         }));
-        app.use(compression());
-        app.use(express.json({ limit: '1mb' }));
+        
+        this.app.use(compression());
+        this.app.use(express.json({ limit: '1mb' }));
         
         // Rate limiting
         const limiter = rateLimit({
@@ -79,30 +79,31 @@ async function startServer() {
             legacyHeaders: false,
             message: 'Too many requests, please try again later.'
         });
-        app.use('/api/', limiter);
+        this.app.use('/api/', limiter);
         
-        // Logging
-        app.use(requestLogger(logger));
-        
-        // Serve static files
-        logger.info(`Serving static files from: ${publicDir}`);
-        app.use(express.static(publicDir));
-        
+        // Request logging
+        this.app.use(requestLogger(logger));
+    }
+
+    /**
+     * Initialize API components
+     */
+    async initializeComponents() {
         // Create LLM provider
         const ollamaBaseUrl = process.env.OLLAMA_API_BASE || 'http://localhost:11434';
         const llmProvider = new OllamaConnector(ollamaBaseUrl);
         
         // Define models to use
         const embeddingModel = process.env.EMBEDDING_MODEL || 'nomic-embed-text';
-        const chatModel = process.env.CHAT_MODEL || 'qwen3:0.6b'; // Updated to use available model
+        const chatModel = process.env.CHAT_MODEL || 'qwen3:0.6b';
         
-        // Initialize components
+        // Initialize cache manager
         const cacheManager = new CacheManager({
             maxSize: 1000,
             ttl: 3600000 // 1 hour
         });
         
-        // Initialize handlers directly
+        // Initialize handlers
         const embeddingHandler = new EmbeddingHandler(
             llmProvider,
             embeddingModel,
@@ -110,10 +111,7 @@ async function startServer() {
             cacheManager
         );
         
-        const llmHandler = new LLMHandler(
-            llmProvider,
-            chatModel
-        );
+        const llmHandler = new LLMHandler(llmProvider, chatModel);
         
         // Initialize memory manager
         const memoryManager = new MemoryManager({
@@ -122,73 +120,90 @@ async function startServer() {
             embeddingModel
         });
         
-        // We'll use simple objects to store core components rather than the registry
-        // Update the global apiContext instead of redefining it
-        apiContext.memory = memoryManager;
-        apiContext.embedding = embeddingHandler;
-        apiContext.llm = llmHandler;
+        // Store components in context
+        this.apiContext = {
+            memory: memoryManager,
+            embedding: embeddingHandler,
+            llm: llmHandler,
+            apis: {}
+        };
         
-        // Create custom registry for compatibility with the API handlers
-        const apiRegistry = {
+        // Create API registry
+        this.apiRegistry = {
             get: (key) => {
-                if (key === 'memory') return apiContext.memory;
-                if (key === 'embedding') return apiContext.embedding;
-                if (key === 'llm') return apiContext.llm;
+                if (key in this.apiContext) {
+                    return this.apiContext[key];
+                }
                 throw new Error(`Unknown component: ${key}`);
             }
         };
         
-        // Register API handlers
+        return { memoryManager, embeddingHandler, llmHandler };
+    }
+
+    /**
+     * Initialize API endpoints
+     */
+    async initializeAPIs() {
+        // Initialize Memory API
         const memoryApi = new MemoryAPI({
-            registry: apiRegistry,
+            registry: this.apiRegistry,
             logger: logger,
             similarityThreshold: 0.7,
             defaultLimit: 10
         });
         await memoryApi.initialize();
         
+        // Initialize Chat API
         const chatApi = new ChatAPI({
-            registry: apiRegistry,
+            registry: this.apiRegistry,
             logger: logger,
             similarityThreshold: 0.7,
             contextWindow: 5
         });
         await chatApi.initialize();
         
+        // Initialize Search API
         const searchApi = new SearchAPI({
-            registry: apiRegistry,
+            registry: this.apiRegistry,
             logger: logger,
             similarityThreshold: 0.7,
             defaultLimit: 5
         });
         await searchApi.initialize();
         
-        // Store API handlers for route handling
-        apiContext.apis = {
+        // Store API handlers
+        this.apiContext.apis = {
             'memory-api': memoryApi,
             'chat-api': chatApi,
             'search-api': searchApi
         };
         
-        // Set up API routes
+        return { memoryApi, chatApi, searchApi };
+    }
+
+    /**
+     * Set up API routes
+     */
+    setupRoutes() {
         const apiRouter = express.Router();
         
         // Memory API routes
-        apiRouter.post('/memory', authenticateRequest, createHandler('memory-api', 'store'));
-        apiRouter.get('/memory/search', authenticateRequest, createHandler('memory-api', 'search'));
-        apiRouter.post('/memory/embedding', authenticateRequest, createHandler('memory-api', 'embedding'));
-        apiRouter.post('/memory/concepts', authenticateRequest, createHandler('memory-api', 'concepts'));
+        apiRouter.post('/memory', authenticateRequest, this.createHandler('memory-api', 'store'));
+        apiRouter.get('/memory/search', authenticateRequest, this.createHandler('memory-api', 'search'));
+        apiRouter.post('/memory/embedding', authenticateRequest, this.createHandler('memory-api', 'embedding'));
+        apiRouter.post('/memory/concepts', authenticateRequest, this.createHandler('memory-api', 'concepts'));
 
         // Chat API routes
-        apiRouter.post('/chat', authenticateRequest, createHandler('chat-api', 'chat'));
-        apiRouter.post('/chat/stream', authenticateRequest, createStreamHandler('chat-api', 'stream'));
-        apiRouter.post('/completion', authenticateRequest, createHandler('chat-api', 'completion'));
+        apiRouter.post('/chat', authenticateRequest, this.createHandler('chat-api', 'chat'));
+        apiRouter.post('/chat/stream', authenticateRequest, this.createStreamHandler('chat-api', 'stream'));
+        apiRouter.post('/completion', authenticateRequest, this.createHandler('chat-api', 'completion'));
 
         // Search API routes
-        apiRouter.get('/search', authenticateRequest, createHandler('search-api', 'search'));
-        apiRouter.post('/index', authenticateRequest, createHandler('search-api', 'index'));
+        apiRouter.get('/search', authenticateRequest, this.createHandler('search-api', 'search'));
+        apiRouter.post('/index', authenticateRequest, this.createHandler('search-api', 'index'));
         
-        // Health check
+        // Health check endpoint
         apiRouter.get('/health', (req, res) => {
             const components = {
                 memory: { status: 'healthy' },
@@ -196,8 +211,8 @@ async function startServer() {
                 llm: { status: 'healthy' }
             };
             
-            // Add API handlers
-            Object.entries(apiContext.apis).forEach(([name, api]) => {
+            // Add API handlers status
+            Object.entries(this.apiContext.apis).forEach(([name, api]) => {
                 components[name] = {
                     status: api.initialized ? 'healthy' : 'degraded'
                 };
@@ -212,16 +227,16 @@ async function startServer() {
             });
         });
         
-        // API metrics
+        // Metrics endpoint
         apiRouter.get('/metrics', authenticateRequest, async (req, res, next) => {
             try {
                 const metrics = {
                     timestamp: Date.now(),
-                    apiCount: Object.keys(apiContext.apis).length
+                    apiCount: Object.keys(this.apiContext.apis).length
                 };
 
                 // Get metrics from API handlers
-                for (const [name, api] of Object.entries(apiContext.apis)) {
+                for (const [name, api] of Object.entries(this.apiContext.apis)) {
                     if (typeof api.getMetrics === 'function') {
                         metrics[name] = await api.getMetrics();
                     }
@@ -238,48 +253,138 @@ async function startServer() {
         });
         
         // Mount API router
-        app.use('/api', apiRouter);
+        this.app.use('/api', apiRouter);
+        
+        // Serve static files
+        logger.info(`Serving static files from: ${this.publicDir}`);
+        this.app.use(express.static(this.publicDir));
         
         // Root route for web UI
-        app.get('/', (req, res) => {
-            res.sendFile(path.join(publicDir, 'index.html'));
+        this.app.get('/', (req, res) => {
+            res.sendFile(path.join(this.publicDir, 'index.html'));
         });
         
         // Handle 404 errors
-        app.use((req, res, next) => {
+        this.app.use((req, res, next) => {
             next(new NotFoundError('Endpoint not found'));
         });
         
         // Error handling
-        app.use(errorHandler(logger));
-        
-        // Start the server
-        const server = app.listen(PORT, () => {
-            logger.info(`Semem API Server is running at http://localhost:${PORT}`);
-        });
-        
-        // Handle server shutdown
-        process.on('SIGTERM', async () => {
-            logger.info('Received SIGTERM, shutting down...');
-            server.close(() => {
-                logger.info('HTTP server shut down');
-            });
+        this.app.use(errorHandler(logger));
+    }
+
+    /**
+     * Helper function to create route handlers
+     */
+    createHandler(apiName, operation) {
+        return async (req, res, next) => {
+            try {
+                const api = this.apiContext.apis[apiName];
+                if (!api) {
+                    throw new Error(`API handler not found: ${apiName}`);
+                }
+                
+                // Get parameters from appropriate source
+                const params = req.method === 'GET' ? req.query : req.body;
+                
+                // Execute operation
+                const result = await api.executeOperation(operation, params);
+                
+                // Determine status code based on operation
+                let statusCode = 200;
+                if (operation === 'store' || operation === 'index') {
+                    statusCode = 201; // Created
+                }
+                
+                res.status(statusCode).json({ 
+                    success: true, 
+                    ...result 
+                });
+            } catch (error) {
+                logger.error(`Error in ${apiName}.${operation}:`, error);
+                next(error);
+            }
+        };
+    }
+
+    /**
+     * Helper function to create streaming route handlers
+     */
+    createStreamHandler(apiName, operation) {
+        return async (req, res, next) => {
+            try {
+                const api = this.apiContext.apis[apiName];
+                if (!api) {
+                    throw new Error(`API handler not found: ${apiName}`);
+                }
+                
+                // Set response headers for streaming
+                res.setHeader('Content-Type', 'text/event-stream');
+                res.setHeader('Cache-Control', 'no-cache');
+                res.setHeader('Connection', 'keep-alive');
+                
+                // Execute streaming operation
+                const stream = await api.executeOperation(operation, req.body);
+                
+                // Handle stream events
+                stream.on('data', chunk => {
+                    res.write(`data: ${JSON.stringify(chunk)}\n\n`);
+                });
+                
+                stream.on('end', () => {
+                    res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
+                    res.end();
+                });
+                
+                stream.on('error', error => {
+                    logger.error(`Stream error in ${apiName}.${operation}:`, error);
+                    next(error);
+                });
+                
+                // Handle client disconnect
+                req.on('close', () => {
+                    if (typeof stream.destroy === 'function') {
+                        stream.destroy();
+                    }
+                });
+            } catch (error) {
+                logger.error(`Error in ${apiName}.${operation}:`, error);
+                next(error);
+            }
+        };
+    }
+
+    /**
+     * Setup signal handlers for graceful shutdown
+     */
+    setupSignalHandlers() {
+        const shutdown = async (signal) => {
+            logger.info(`Received ${signal}, shutting down...`);
+            
+            // Close the HTTP server
+            if (this.server) {
+                this.server.close(() => {
+                    logger.info('HTTP server shut down');
+                });
+            }
             
             // Shutdown API handlers
-            for (const api of Object.values(apiContext.apis)) {
-                if (typeof api.shutdown === 'function') {
-                    try {
-                        await api.shutdown();
-                    } catch (error) {
-                        logger.error('Error shutting down API:', error);
+            if (this.apiContext.apis) {
+                for (const api of Object.values(this.apiContext.apis)) {
+                    if (typeof api.shutdown === 'function') {
+                        try {
+                            await api.shutdown();
+                        } catch (error) {
+                            logger.error('Error shutting down API:', error);
+                        }
                     }
                 }
             }
             
-            // Dispose memory manager
-            if (memoryManager && typeof memoryManager.dispose === 'function') {
+            // Dispose memory manager if it exists
+            if (this.apiContext.memory && typeof this.apiContext.memory.dispose === 'function') {
                 try {
-                    await memoryManager.dispose();
+                    await this.apiContext.memory.dispose();
                     logger.info('Memory manager disposed');
                 } catch (error) {
                     logger.error('Error disposing memory manager:', error);
@@ -287,120 +392,46 @@ async function startServer() {
             }
             
             process.exit(0);
-        });
+        };
         
-        process.on('SIGINT', async () => {
-            logger.info('Received SIGINT, shutting down...');
-            server.close(() => {
-                logger.info('HTTP server shut down');
+        // Register signal handlers
+        process.on('SIGTERM', () => shutdown('SIGTERM'));
+        process.on('SIGINT', () => shutdown('SIGINT'));
+    }
+
+    /**
+     * Start the API server
+     */
+    async start() {
+        try {
+            logger.info('Initializing Semem API Server...');
+            
+            // Initialize components and APIs
+            await this.initializeComponents();
+            await this.initializeAPIs();
+            
+            // Set up routes
+            await this.setupRoutes();
+            
+            // Set up signal handlers for graceful shutdown
+            this.setupSignalHandlers();
+            
+            // Start the server
+            this.server = this.app.listen(this.port, () => {
+                logger.info(`Semem API Server is running at http://localhost:${this.port}`);
             });
             
-            // Shutdown API handlers
-            for (const api of Object.values(apiContext.apis)) {
-                if (typeof api.shutdown === 'function') {
-                    try {
-                        await api.shutdown();
-                    } catch (error) {
-                        logger.error('Error shutting down API:', error);
-                    }
-                }
-            }
-            
-            // Dispose memory manager
-            if (memoryManager && typeof memoryManager.dispose === 'function') {
-                try {
-                    await memoryManager.dispose();
-                    logger.info('Memory manager disposed');
-                } catch (error) {
-                    logger.error('Error disposing memory manager:', error);
-                }
-            }
-            
-            process.exit(0);
-        });
-        
-    } catch (error) {
-        logger.error('Failed to start Semem API Server:', error);
-        process.exit(1);
+            return this.server;
+        } catch (error) {
+            logger.error('Failed to start Semem API Server:', error);
+            process.exit(1);
+        }
     }
 }
 
-// Helper function to create route handlers
-function createHandler(apiName, operation) {
-    return async (req, res, next) => {
-        try {
-            const api = apiContext.apis[apiName];
-            if (!api) {
-                throw new Error(`API handler not found: ${apiName}`);
-            }
-            
-            // Get parameters from appropriate source
-            const params = req.method === 'GET' ? req.query : req.body;
-            
-            // Execute operation
-            const result = await api.executeOperation(operation, params);
-            
-            // Determine status code based on operation
-            let statusCode = 200;
-            if (operation === 'store' || operation === 'index') {
-                statusCode = 201; // Created
-            }
-            
-            res.status(statusCode).json({ 
-                success: true, 
-                ...result 
-            });
-        } catch (error) {
-            logger.error(`Error in ${apiName}.${operation}:`, error);
-            next(error);
-        }
-    };
-}
-
-// Helper function to create streaming route handlers
-function createStreamHandler(apiName, operation) {
-    return async (req, res, next) => {
-        try {
-            const api = apiContext.apis[apiName];
-            if (!api) {
-                throw new Error(`API handler not found: ${apiName}`);
-            }
-            
-            // Set response headers for streaming
-            res.setHeader('Content-Type', 'text/event-stream');
-            res.setHeader('Cache-Control', 'no-cache');
-            res.setHeader('Connection', 'keep-alive');
-            
-            // Execute streaming operation
-            const stream = await api.executeOperation(operation, req.body);
-            
-            // Handle stream events
-            stream.on('data', chunk => {
-                res.write(`data: ${JSON.stringify(chunk)}\n\n`);
-            });
-            
-            stream.on('end', () => {
-                res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
-                res.end();
-            });
-            
-            stream.on('error', error => {
-                logger.error(`Stream error in ${apiName}.${operation}:`, error);
-                next(error);
-            });
-            
-            // Handle client disconnect
-            req.on('close', () => {
-                if (typeof stream.destroy === 'function') {
-                    stream.destroy();
-                }
-            });
-        } catch (error) {
-            logger.error(`Error in ${apiName}.${operation}:`, error);
-            next(error);
-        }
-    };
-}
-
-// Start the server
-startServer();
+// Create and start the server
+const apiServer = new APIServer();
+apiServer.start().catch(error => {
+    logger.error('Failed to start server:', error);
+    process.exit(1);
+});
