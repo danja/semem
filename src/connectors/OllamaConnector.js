@@ -4,24 +4,40 @@ import logger from 'loglevel'
  * Connector for Ollama API operations
  */
 export default class OllamaConnector {
-    constructor(baseUrl = 'http://localhost:11434') {
-        this.baseUrl = baseUrl
-        logger.setLevel('debug')
+    constructor(options = {}) {
+        // Make sure we have a proper baseUrl string
+        this.baseUrl = typeof options === 'string' 
+            ? options 
+            : (options.baseUrl || 'http://localhost:11434');
+        
+        if (this.baseUrl.endsWith('/')) {
+            this.baseUrl = this.baseUrl.slice(0, -1); // Remove trailing slash
+        }
+        
+        logger.debug(`Initializing OllamaConnector with baseUrl: ${this.baseUrl}`);
+        this.chatModel = options.chatModel || 'qwen2:1.5b';
+        this.embeddingModel = options.embeddingModel || 'nomic-embed-text';
     }
 
     /**
      * Generate embeddings using Ollama
+     * @param {string} model - Model to use for embedding (or default if not provided)
+     * @param {string} input - Text to embed
+     * @returns {Promise<number[]>} - Vector embedding
      */
     async generateEmbedding(model, input) {
-        logger.debug(`Generating embedding with model ${model}`)
-        logger.debug('Input:', input)
+        // Allow model to be a parameter or use the default
+        const embeddingModel = model || this.embeddingModel;
+        
+        logger.debug(`Generating embedding with model ${embeddingModel}`);
+        logger.debug('Input length:', input.length);
 
         try {
             const response = await fetch(`${this.baseUrl}/api/embeddings`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    model,
+                    model: embeddingModel,
                     prompt: input,
                     options: { num_ctx: 8192 }
                 })
@@ -42,17 +58,24 @@ export default class OllamaConnector {
 
     /**
      * Generate chat completion using Ollama
+     * @param {string} model - Model to use for chat (or default if not provided)
+     * @param {Array} messages - Array of message objects with role and content
+     * @param {Object} options - Additional options for the API call
+     * @returns {Promise<string>} - Generated response text
      */
     async generateChat(model, messages, options = {}) {
-        logger.debug(`Generating chat with model ${model}`)
-        logger.debug('Messages:', messages)
+        // Allow model to be a parameter or use the default
+        const chatModel = model || this.chatModel;
+        
+        logger.debug(`Generating chat with model ${chatModel}`);
+        logger.debug('Messages count:', messages.length);
 
         try {
             const response = await fetch(`${this.baseUrl}/api/chat`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    model,
+                    model: chatModel,
                     messages,
                     stream: false,
                     options: {
@@ -77,17 +100,24 @@ export default class OllamaConnector {
 
     /**
      * Generate completion using Ollama
+     * @param {string} model - Model to use for completion (or default if not provided)
+     * @param {string} prompt - Text prompt
+     * @param {Object} options - Additional options for the API call
+     * @returns {Promise<string>} - Generated response text
      */
     async generateCompletion(model, prompt, options = {}) {
-        logger.debug(`Generating completion with model ${model}`)
-        logger.debug('Prompt:', prompt)
+        // Allow model to be a parameter or use the default
+        const chatModel = model || this.chatModel;
+        
+        logger.debug(`Generating completion with model ${chatModel}`);
+        logger.debug('Prompt length:', prompt.length);
 
         try {
             const response = await fetch(`${this.baseUrl}/api/generate`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    model,
+                    model: chatModel,
                     prompt,
                     stream: false,
                     options: {

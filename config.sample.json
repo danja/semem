@@ -1,0 +1,63 @@
+{
+  "port": 4100,
+  "graphName": "http://danny.ayers.name/content",
+  "chatModel": "qwen2:1.5b",
+  "embeddingModel": "nomic-embed-text",
+  "sparqlEndpoints": [
+    {
+      "queryEndpoint": "http://localhost:4030/semem/query",
+      "updateEndpoint": "http://localhost:4030/semem/update",
+      "auth": {
+        "user": "admin",
+        "password": "admin123"
+      }
+    },
+    {
+      "queryEndpoint": "http://localhost:3030/semem/query",
+      "updateEndpoint": "http://localhost:3030/semem/update",
+      "auth": {
+        "user": "admin",
+        "password": "admin"
+      }
+    }
+  ],
+  "llmProviders": [
+    {
+      "type": "ollama",
+      "baseUrl": "http://localhost:11434",
+      "chatModel": "qwen2:1.5b",
+      "embeddingModel": "nomic-embed-text",
+      "priority": 1,
+      "capabilities": ["embedding", "chat"],
+      "description": "Used primarily for embeddings with nomic-embed-text"
+    },
+    {
+      "type": "claude",
+      "implementation": "direct",
+      "apiKey": "YOUR_CLAUDE_API_KEY",
+      "baseUrl": "https://api.anthropic.com",
+      "chatModel": "claude-3-opus-20240229",
+      "priority": 2,
+      "capabilities": ["chat"],
+      "description": "Preferred provider for chat using direct API connection"
+    },
+    {
+      "type": "claude",
+      "implementation": "hyperdata",
+      "apiKey": "YOUR_CLAUDE_API_KEY",
+      "chatModel": "claude-3-opus-20240229",
+      "priority": 3,
+      "capabilities": ["chat"],
+      "description": "Alternative Claude implementation using hyperdata-clients"
+    },
+    {
+      "type": "openai",
+      "apiKey": "YOUR_OPENAI_API_KEY",
+      "chatModel": "gpt-3.5-turbo",
+      "embeddingModel": "text-embedding-3-small",
+      "priority": 4,
+      "capabilities": ["chat", "embedding"],
+      "description": "OpenAI API for both chat and embeddings (implementation pending)"
+    }
+  ]
+}
