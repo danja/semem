@@ -99,8 +99,12 @@ export default class CachedSPARQLStore extends SPARQLStore {
     }
 
     async close() {
-        if (this.cleanupInterval) {
-            clearInterval(this.cleanupInterval);
+        if (this.cleanupInterval && typeof clearInterval === 'function') {
+            try {
+                clearInterval(this.cleanupInterval);
+            } catch (error) {
+                console.warn('Failed to clear interval:', error);
+            }
         }
         
         this.invalidateCache();
