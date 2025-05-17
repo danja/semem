@@ -1,0 +1,10 @@
+PREFIX schema: <http://schema.org/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+SELECT *
+WHERE {
+  GRAPH ?graph {
+    ?s  ?p ?o .
+  }
+}
+LIMIT 10

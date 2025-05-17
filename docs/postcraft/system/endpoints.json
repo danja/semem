@@ -1,0 +1,20 @@
+[
+    {
+        "name": "local query",
+        "type": "query",
+        "url": "https://fuseki.hyperdata.it/semem/query",
+        "credentials": {
+            "user": "admin",
+            "password": "admin123"
+        }
+    },
+    {
+        "name": "local update",
+        "type": "update",
+        "url": "https://fuseki.hyperdata.it/semem/update",
+        "credentials": {
+            "user": "admin",
+            "password": "admin123"
+        }
+    }
+]

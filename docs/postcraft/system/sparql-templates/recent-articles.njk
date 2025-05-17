@@ -1,0 +1,20 @@
+PREFIX schema: <http://schema.org/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX : <http://purl.org/stuff/transmissions/>
+
+SELECT DISTINCT * WHERE {
+     GRAPH ?g {
+  ?article a schema:Article ;
+    schema:headline ?title ;
+    schema:dateModified ?modified ;
+    schema:dateCreated ?created ;
+    schema:creator ?creator ;
+    :htmlContent ?html .
+
+  ?creator a schema:Person ;
+    schema:name ?creatorName .
+
+}
+}
+ORDER BY DESC(?created)
+LIMIT 5

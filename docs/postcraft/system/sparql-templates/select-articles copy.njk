@@ -1,0 +1,26 @@
+PREFIX schema: <http://schema.org/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX : <http://purl.org/stuff/transmissions/>
+
+SELECT DISTINCT * WHERE {
+
+  ?article a schema:Article ;
+    :sourcePath ?sourcePath ;
+    :relPath ?relPath ;
+        :relative ?relative ;
+    :slug ?slug ;
+    schema:headline ?title ;
+    schema:dateCreated ?created ;
+    schema:dateModified ?modified ;
+    schema:articleBody ?content ;
+    schema:creator ?creator .
+
+  ?creator a schema:Person ;
+    schema:name ?creatorName .
+
+OPTIONAL {
+    ?article schema:datePublished ?published ;
+}
+#   FILTER(?published >= "{{startDate}}"^^xsd:dateTime)
+}
+ORDER BY DESC(?modified)

@@ -1,0 +1,30 @@
+
+.grid-container {
+    display: grid;
+    grid-template-columns: 15% 1fr 25%;
+    grid-auto-rows: 50px; /* for demo */
+    grid-gap: 10px;
+  }
+  
+  
+  @media ( max-width: 768px ) {  
+    .grid-container         { grid-template-columns: 1fr 1fr;  }
+    .directory:nth-child(1) { order: 2; }
+    .articles:nth-child(2) { order: 1; grid-column: 1 / 3; }
+    .about:nth-child(3) { order: 3; }
+  }
+  
+  /* non-essential decorative styles */
+  /*
+  .grid-item {
+    border: 1px solid gray;
+    background-color: lightgreen;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .grid-item:nth-child(2) {
+    background-color: orange;
+  }
+  */

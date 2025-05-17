@@ -1,0 +1,130 @@
+### manifest.ttl for ###
+
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+
+@prefix : <http://purl.org/stuff/transmissions/> .
+
+#######################
+# for md-to-sparqlstore
+
+:dirWalker a :ConfigSet ;
+   :sourceDir "content/raw" .
+
+:storeArticle a :ConfigSet ;
+    :dataBlock "contentBlocks" ;
+    :templateFilename "system/sparql-templates/store-article.njk" ;
+    :endpointSettings "system/endpoints.json" .
+
+###########################
+### for sparqlstore-to-html
+
+:resultIterator a :ConfigSet ;
+  :forEach "queryResults.results.bindings" ;
+  :remove "queryResults" .
+
+:prepArticle a :ConfigSet  ;
+    :remove "queryResults" ;
+    :rename (:c1 :c2 :c3 :u1)  .
+        # for content
+        :c1   :pre    "currentItem.title.value" ;
+              :post "contentBlocks.title"  .
+        :c2   :pre    "currentItem.content.value" ;
+              :post  "contentBlocks.content"  .
+        :c3   :pre    "appRunStart" ;
+              :post  "contentBlocks.published"  .
+        # for SPARQL update
+        :u1     :pre    "currentItem.article.value" ;
+                :post   "contentBlocks.uri"  .
+
+
+:selectArticles a :ConfigSet ;
+    :templateFilename "system/sparql-templates/select-articles.njk" ;
+    :endpointSettings "system/endpoints.json" .
+
+:articleContentTemplate a :ConfigSet ;
+    :templateFilename "layout/base/templates/article-content.njk" .
+
+:articlePageTemplate a :ConfigSet ;
+    :templateFilename "layout/base/templates/article-page.njk" .
+
+:recordRendering a :ConfigSet ;
+    :dataBlock "contentBlocks" ;
+    :templateFilename "system/sparql-templates/record-rendering.njk" ;
+    :endpointSettings "system/endpoints.json" .
+
+#################################
+# for sparqlstore-to-site-indexes
+
+:recentArticles a :ConfigSet ;
+    :templateFilename "system/sparql-templates/recent-articles.njk" ;
+    :endpointSettings "system/endpoints.json" .
+
+:indexResultIterator a :ConfigSet ;
+  :forEach "queryResults.results.bindings" .
+
+:prepRecents a :ConfigSet  ;
+    :remove "queryResults" ;
+    :rename (:pc1 :pc2 :pc3 :pu1)  .
+        :pc1   :pre    "currentItem.title.value" ;
+              :post "contentBlocks.title"  .
+        :pc2   :pre    "currentItem.html.value" ;
+              :post  "contentBlocks.html"  .
+        :pc3   :pre    "currentItem.created.value" ;
+              :post  "contentBlocks.created"  .
+
+        :pu1     :pre    "currentItem.article.value" ;
+                :post   "contentBlocks.uri"  .
+
+:accumulator a :ConfigSet ;
+    :label "test" ;
+    :sourceField "currentItem.html.value" .
+
+#### unforks -------------
+
+### create HTML index
+
+:prepHTML a :ConfigSet  ;
+    :rename (:ph1)  .
+        # for content
+        :ph1   :pre    "accumulator" ;
+              :post "contentBlocks.content"  .
+
+:htmlIndex a :ConfigSet ;
+    :templateFilename "layout/base/templates/index-html.njk" .
+
+:htmlFilepath a :ConfigSet ;
+  :asPath true ;
+  :targetField "destinationFile" ;
+  :values (:ip1 :ip2 :ip3) .
+  :ip1 :field "targetPath" .
+  :ip2 :string "public" .
+  :ip3 :string "index.html" .
+
+:htmlField a :ConfigSet ;
+   :contentField "content" .
+
+:contentLocation  a :ConfigSet ;
+   :contentField "accumulator" .
+
+### create Atom index
+
+:prepAtom a :ConfigSet  ;
+    :rename :pa1  .
+        # for content
+        :pa1   :pre    "accumulator" ;
+              :post "contentBlocks.content"  .
+
+:atomIndex a :ConfigSet ;
+    :templateFilename "layout/base/templates/index-atom.njk" .
+
+:atomFilepath a :ConfigSet ;
+  :asPath true ;
+  :targetField "destinationFile" ;
+  :values (:ip1 :ip2 :ip3) .
+  :ip1 :field "targetPath" .
+  :ip2 :string "public" .
+  :ip3 :string "atom.xml" .
+
+  ### for

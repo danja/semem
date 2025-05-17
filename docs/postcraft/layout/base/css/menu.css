@@ -1,0 +1,107 @@
+.menu-button {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 1000;
+    width: 40px;
+    height: 40px;
+    background: white;
+    border: none;
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.3s;
+}
+
+.menu-button:hover {
+    background-color: #f5f5f5;
+}
+
+.menu-icon, .close-icon {
+    width: 24px;
+    height: 24px;
+    position: relative;
+}
+
+.menu-icon span {
+    display: block;
+    position: absolute;
+    height: 2px;
+    width: 100%;
+    background: #333;
+    transition: transform 0.3s ease;
+}
+
+.menu-icon span:nth-child(1) { top: 6px; }
+.menu-icon span:nth-child(2) { top: 14px; }
+.menu-icon span:nth-child(3) { top: 22px; }
+
+.menu-button.active .menu-icon span:nth-child(1) {
+    transform: rotate(45deg) translate(6px, 6px);
+}
+
+.menu-button.active .menu-icon span:nth-child(2) {
+    opacity: 0;
+}
+
+.menu-button.active .menu-icon span:nth-child(3) {
+    transform: rotate(-45deg) translate(6px, -6px);
+}
+
+.menu-dropdown {
+    position: fixed;
+    top: 4rem;
+    right: 1rem;
+    background: white;
+    border-radius: 4px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    min-width: 200px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.3s ease;
+    z-index: 999;
+}
+
+.menu-dropdown.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.menu-dropdown nav {
+    padding: 0.5rem 0;
+}
+
+.menu-dropdown a {
+    display: block;
+    padding: 0.75rem 1rem;
+    color: #333;
+    text-decoration: none;
+    transition: background-color 0.2s;
+}
+
+.menu-dropdown a:hover {
+    background-color: #f5f5f5;
+}
+
+.menu-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.3);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    z-index: 998;
+}
+
+.menu-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}

@@ -1,0 +1,18 @@
+PREFIX schema: <http://schema.org/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+INSERT DATA {
+    GRAPH <{{graph}}> {
+      <http://example.com/posts/{{id}}> a schema:BlogPosting ;
+      schema:headline "TEST_PASSED" ;
+      schema:url <http://example.com/posts/{{id}}> ;
+      schema:description """{{content}}""" ;
+      schema:datePublished "{{published}}"^^xsd:dateTime ;
+      schema:dateModified "{{modified}}"^^xsd:dateTime ;
+      schema:author [
+        a schema:Person ;
+        schema:name "{{author.name}}" ;
+        schema:email "{{author.email}}"
+      ] .
+    }
+}

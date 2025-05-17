@@ -10,7 +10,7 @@
     "node": ">=20.11.0"
   },
   "scripts": {
-    "test": "vitest run",
+    "test": "vitest run --run",
     "test:mocked": "./run-mocked-tests.sh",
     "test:watch": "vitest watch",
     "test:coverage": "vitest run --coverage",
@@ -72,7 +72,7 @@
     "faiss-node": "^0.5.1",
     "graphology": "^0.25.4",
     "helmet": "^8.0.0",
-    "hyperdata-clients": "github:danja/hyperdata-clients", 
+    "hyperdata-clients": "github:danja/hyperdata-clients",
     "loglevel": "^1.9.2",
     "ml-kmeans": "^6.0.0",
     "node-fetch": "^3.3.2",
