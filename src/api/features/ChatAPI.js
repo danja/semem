@@ -17,13 +17,13 @@ export default class ChatAPI extends BaseAPI {
 
     async initialize() {
         await super.initialize();
-        
+
         // Get dependencies from registry
         const registry = this.config.registry;
         if (!registry) {
             throw new Error('Registry is required for ChatAPI');
         }
-        
+
         try {
             this.memoryManager = registry.get('memory');
             this.llmHandler = registry.get('llm');
@@ -39,12 +39,12 @@ export default class ChatAPI extends BaseAPI {
      */
     async executeOperation(operation, params) {
         this._validateParams(params);
-        
+
         const start = Date.now();
-        
+
         try {
             let result;
-            
+
             switch (operation) {
                 case 'chat':
                     result = await this.generateChatResponse(params);
@@ -58,11 +58,11 @@ export default class ChatAPI extends BaseAPI {
                 default:
                     throw new Error(`Unknown operation: ${operation}`);
             }
-            
+
             const duration = Date.now() - start;
             this._emitMetric(`chat.${operation}.duration`, duration);
             this._emitMetric(`chat.${operation}.count`, 1);
-            
+
             return result;
         } catch (error) {
             this._emitMetric(`chat.${operation}.errors`, 1);
@@ -81,7 +81,7 @@ export default class ChatAPI extends BaseAPI {
         try {
             // Get or create conversation
             const conversation = this._getConversation(conversationId);
-            
+
             // Get relevant memories if needed
             let relevantMemories = [];
             if (useMemory) {
@@ -90,26 +90,26 @@ export default class ChatAPI extends BaseAPI {
                     this.similarityThreshold
                 );
             }
-            
+
             // Create context from conversation history and relevant memories
             const context = this._buildContext(conversation, relevantMemories);
-            
+
             // Generate response
             const response = await this.llmHandler.generateResponse(
                 prompt,
                 context,
                 { temperature }
             );
-            
+
             // Update conversation history
             conversation.history.push({ role: 'user', content: prompt });
             conversation.history.push({ role: 'assistant', content: response });
-            
+
             // Trim conversation if needed
             if (conversation.history.length > this.contextWindow * 2) {
                 conversation.history = conversation.history.slice(-this.contextWindow * 2);
             }
-            
+
             // Store in memory if enabled
             if (useMemory) {
                 const embedding = await this.memoryManager.generateEmbedding(
@@ -118,11 +118,11 @@ export default class ChatAPI extends BaseAPI {
                 const concepts = await this.memoryManager.extractConcepts(
                     `${prompt} ${response}`
                 );
-                
+
                 await this.memoryManager.addInteraction(
-                    prompt, 
-                    response, 
-                    embedding, 
+                    prompt,
+                    response,
+                    embedding,
                     concepts,
                     {
                         conversationId: conversation.id,
@@ -130,7 +130,7 @@ export default class ChatAPI extends BaseAPI {
                     }
                 );
             }
-            
+
             this._emitMetric('chat.generate.count', 1);
             return {
                 response,
@@ -155,13 +155,13 @@ export default class ChatAPI extends BaseAPI {
         try {
             // Create a stream
             const stream = new EventEmitter();
-            
+
             // Process in background
             (async () => {
                 try {
                     // Get or create conversation
                     const conversation = this._getConversation(conversationId);
-                    
+
                     // Get relevant memories if needed
                     let relevantMemories = [];
                     if (useMemory) {
@@ -170,10 +170,10 @@ export default class ChatAPI extends BaseAPI {
                             this.similarityThreshold
                         );
                     }
-                    
+
                     // Create context from conversation history and relevant memories
                     const context = this._buildContext(conversation, relevantMemories);
-                    
+
                     // Generate streaming response
                     let responseText = '';
                     const responseStream = await this.llmHandler.generateStreamingResponse(
@@ -181,22 +181,22 @@ export default class ChatAPI extends BaseAPI {
                         context,
                         { temperature }
                     );
-                    
+
                     responseStream.on('data', (chunk) => {
                         responseText += chunk;
                         stream.emit('data', { chunk });
                     });
-                    
+
                     responseStream.on('end', async () => {
                         // Update conversation history
                         conversation.history.push({ role: 'user', content: prompt });
                         conversation.history.push({ role: 'assistant', content: responseText });
-                        
+
                         // Trim conversation if needed
                         if (conversation.history.length > this.contextWindow * 2) {
                             conversation.history = conversation.history.slice(-this.contextWindow * 2);
                         }
-                        
+
                         // Store in memory if enabled
                         if (useMemory) {
                             const embedding = await this.memoryManager.generateEmbedding(
@@ -205,11 +205,11 @@ export default class ChatAPI extends BaseAPI {
                             const concepts = await this.memoryManager.extractConcepts(
                                 `${prompt} ${responseText}`
                             );
-                            
+
                             await this.memoryManager.addInteraction(
-                                prompt, 
-                                responseText, 
-                                embedding, 
+                                prompt,
+                                responseText,
+                                embedding,
                                 concepts,
                                 {
                                     conversationId: conversation.id,
@@ -217,11 +217,11 @@ export default class ChatAPI extends BaseAPI {
                                 }
                             );
                         }
-                        
+
                         // End stream
                         stream.emit('end');
                     });
-                    
+
                     responseStream.on('error', (error) => {
                         stream.emit('error', error);
                     });
@@ -229,7 +229,7 @@ export default class ChatAPI extends BaseAPI {
                     stream.emit('error', error);
                 }
             })();
-            
+
             this._emitMetric('chat.stream.count', 1);
             return stream;
         } catch (error) {
@@ -252,19 +252,19 @@ export default class ChatAPI extends BaseAPI {
                 prompt,
                 this.similarityThreshold
             );
-            
+
             // Create context from relevant memories
-            const context = relevantMemories.map(m => 
+            const context = relevantMemories.map(m =>
                 `${m.interaction.prompt} ${m.interaction.output}`
             ).join('\n\n');
-            
+
             // Generate completion
             const completion = await this.llmHandler.generateCompletion(
                 prompt,
                 context,
                 { max_tokens, temperature }
             );
-            
+
             this._emitMetric('chat.completion.count', 1);
             return {
                 completion,
@@ -284,13 +284,13 @@ export default class ChatAPI extends BaseAPI {
         if (!conversationId) {
             return this._createConversation();
         }
-        
+
         const conversation = this.conversationCache.get(conversationId);
         if (!conversation) {
             // Create a new conversation with the provided ID
             return this._createConversation(conversationId);
         }
-        
+
         return conversation;
     }
 
@@ -305,7 +305,7 @@ export default class ChatAPI extends BaseAPI {
             lastAccessed: Date.now(),
             history: []
         };
-        
+
         this.conversationCache.set(conversationId, conversation);
         return conversation;
     }
@@ -322,7 +322,7 @@ export default class ChatAPI extends BaseAPI {
                 similarity: memory.similarity
             }))
         };
-        
+
         return context;
     }
 
@@ -331,7 +331,7 @@ export default class ChatAPI extends BaseAPI {
      */
     async getMetrics() {
         const baseMetrics = await super.getMetrics();
-        
+
         return {
             ...baseMetrics,
             conversations: {
@@ -359,14 +359,14 @@ export default class ChatAPI extends BaseAPI {
     _getActiveConversationCount() {
         const now = Date.now();
         const activeThreshold = 30 * 60 * 1000; // 30 minutes
-        
+
         let count = 0;
         for (const conversation of this.conversationCache.values()) {
             if (now - conversation.lastAccessed < activeThreshold) {
                 count++;
             }
         }
-        
+
         return count;
     }
 

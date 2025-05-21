@@ -1,18 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Semem API Interface</title>
     <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
     <div class="container">
         <header>
             <h1>Semem API Interface</h1>
             <p>Interact with the Semantic Memory API system</p>
         </header>
-        
+
         <nav class="tabs">
             <button class="tab-btn active" data-tab="search">Search</button>
             <button class="tab-btn" data-tab="memory">Memory</button>
@@ -21,7 +23,7 @@
             <button class="tab-btn" data-tab="concepts">Concepts</button>
             <button class="tab-btn" data-tab="index">Index</button>
         </nav>
-        
+
         <main>
             <!-- Search Tab -->
             <section id="search-tab" class="tab-content active">
@@ -29,16 +31,10 @@
                 <form id="search-form" class="api-form">
                     <div class="form-group">
                         <label for="search-input">Search Query:</label>
-                        <input 
-                            type="text" 
-                            id="search-input" 
-                            name="query" 
-                            placeholder="Enter your search query..." 
-                            required
-                            autocomplete="off"
-                        >
+                        <input type="text" id="search-input" name="query" placeholder="Enter your search query..."
+                            required autocomplete="off">
                     </div>
-                    
+
                     <div class="form-options">
                         <div class="form-group">
                             <label for="search-limit">Results:</label>
@@ -49,24 +45,26 @@
                                 <option value="20">20</option>
                             </select>
                         </div>
-                        
+
                         <div class="form-group">
                             <label for="search-threshold">Threshold:</label>
-                            <input type="range" id="search-threshold" name="threshold" min="0" max="1" step="0.1" value="0.7">
+                            <input type="range" id="search-threshold" name="threshold" min="0" max="1" step="0.1"
+                                value="0.7">
                             <span id="threshold-value">0.7</span>
                         </div>
-                        
+
                         <div class="form-group">
                             <label for="search-types">Content Types:</label>
-                            <input type="text" id="search-types" name="types" placeholder="E.g., article,document (optional)">
+                            <input type="text" id="search-types" name="types"
+                                placeholder="E.g., article,document (optional)">
                         </div>
                     </div>
-                    
+
                     <div class="form-actions">
                         <button type="submit" class="btn primary-btn">Search</button>
                     </div>
                 </form>
-                
+
                 <div class="results-section">
                     <div id="search-results" class="results-container">
                         <div class="results-placeholder">
@@ -75,50 +73,54 @@
                     </div>
                 </div>
             </section>
-            
+
             <!-- Memory Tab -->
             <section id="memory-tab" class="tab-content">
                 <h2>Memory Management</h2>
-                
+
                 <div class="tabs-inner">
                     <button class="tab-inner-btn active" data-inner-tab="store-memory">Store</button>
                     <button class="tab-inner-btn" data-inner-tab="search-memory">Search</button>
                 </div>
-                
+
                 <!-- Store Memory Form -->
                 <div id="store-memory" class="inner-tab-content active">
                     <form id="memory-store-form" class="api-form">
                         <div class="form-group">
                             <label for="memory-prompt">Prompt:</label>
-                            <textarea id="memory-prompt" name="prompt" placeholder="Enter the user prompt..." required></textarea>
+                            <textarea id="memory-prompt" name="prompt" placeholder="Enter the user prompt..."
+                                required></textarea>
                         </div>
-                        
+
                         <div class="form-group">
                             <label for="memory-response">Response:</label>
-                            <textarea id="memory-response" name="response" placeholder="Enter the response..." required></textarea>
+                            <textarea id="memory-response" name="response" placeholder="Enter the response..."
+                                required></textarea>
                         </div>
-                        
+
                         <div class="form-group">
                             <label for="memory-metadata">Metadata (JSON):</label>
-                            <textarea id="memory-metadata" name="metadata" placeholder='{"key": "value"} (optional)'></textarea>
+                            <textarea id="memory-metadata" name="metadata"
+                                placeholder='{"key": "value"} (optional)'></textarea>
                         </div>
-                        
+
                         <div class="form-actions">
                             <button type="submit" class="btn primary-btn">Store Memory</button>
                         </div>
                     </form>
-                    
+
                     <div id="memory-store-result" class="api-result hidden"></div>
                 </div>
-                
+
                 <!-- Search Memory Form -->
                 <div id="search-memory" class="inner-tab-content">
                     <form id="memory-search-form" class="api-form">
                         <div class="form-group">
                             <label for="memory-query">Search Query:</label>
-                            <input type="text" id="memory-query" name="query" placeholder="Enter your search query..." required>
+                            <input type="text" id="memory-query" name="query" placeholder="Enter your search query..."
+                                required>
                         </div>
-                        
+
                         <div class="form-options">
                             <div class="form-group">
                                 <label for="memory-limit">Results:</label>
@@ -129,19 +131,20 @@
                                     <option value="20">20</option>
                                 </select>
                             </div>
-                            
+
                             <div class="form-group">
                                 <label for="memory-threshold">Threshold:</label>
-                                <input type="range" id="memory-threshold" name="threshold" min="0" max="1" step="0.1" value="0.7">
+                                <input type="range" id="memory-threshold" name="threshold" min="0" max="1" step="0.1"
+                                    value="0.7">
                                 <span id="memory-threshold-value">0.7</span>
                             </div>
                         </div>
-                        
+
                         <div class="form-actions">
                             <button type="submit" class="btn primary-btn">Search Memory</button>
                         </div>
                     </form>
-                    
+
                     <div id="memory-search-results" class="results-container">
                         <div class="results-placeholder">
                             <p>Search memories to see results</p>
@@ -149,16 +152,16 @@
                     </div>
                 </div>
             </section>
-            
+
             <!-- Chat Tab -->
             <section id="chat-tab" class="tab-content">
                 <h2>Chat Interaction</h2>
-                
+
                 <div class="tabs-inner">
                     <button class="tab-inner-btn active" data-inner-tab="chat-standard">Standard</button>
                     <button class="tab-inner-btn" data-inner-tab="chat-stream">Streaming</button>
                 </div>
-                
+
                 <!-- Standard Chat -->
                 <div id="chat-standard" class="inner-tab-content active">
                     <div class="chat-container">
@@ -167,34 +170,31 @@
                                 <p>Start a new conversation with the AI assistant.</p>
                             </div>
                         </div>
-                        
+
                         <form id="chat-form" class="chat-input-form">
                             <div class="form-options chat-options">
                                 <div class="form-group">
                                     <label for="chat-temperature">Temperature:</label>
-                                    <input type="range" id="chat-temperature" name="temperature" min="0" max="2" step="0.1" value="0.7">
+                                    <input type="range" id="chat-temperature" name="temperature" min="0" max="2"
+                                        step="0.1" value="0.7">
                                     <span id="temperature-value">0.7</span>
                                 </div>
-                                
+
                                 <div class="form-group checkbox-group">
                                     <input type="checkbox" id="chat-memory" name="useMemory" checked>
                                     <label for="chat-memory">Use Memory</label>
                                 </div>
                             </div>
-                            
+
                             <div class="chat-input-container">
-                                <textarea 
-                                    id="chat-input" 
-                                    name="prompt" 
-                                    placeholder="Type your message..." 
-                                    required
-                                ></textarea>
+                                <textarea id="chat-input" name="prompt" placeholder="Type your message..."
+                                    required></textarea>
                                 <button type="submit" class="btn send-btn">Send</button>
                             </div>
                         </form>
                     </div>
                 </div>
-                
+
                 <!-- Streaming Chat -->
                 <div id="chat-stream" class="inner-tab-content">
                     <div class="chat-container">
@@ -203,55 +203,53 @@
                                 <p>Start a new streaming conversation with the AI assistant.</p>
                             </div>
                         </div>
-                        
+
                         <form id="chat-stream-form" class="chat-input-form">
                             <div class="form-options chat-options">
                                 <div class="form-group">
                                     <label for="chat-stream-temperature">Temperature:</label>
-                                    <input type="range" id="chat-stream-temperature" name="temperature" min="0" max="2" step="0.1" value="0.7">
+                                    <input type="range" id="chat-stream-temperature" name="temperature" min="0" max="2"
+                                        step="0.1" value="0.7">
                                     <span id="stream-temperature-value">0.7</span>
                                 </div>
-                                
+
                                 <div class="form-group checkbox-group">
                                     <input type="checkbox" id="chat-stream-memory" name="useMemory" checked>
                                     <label for="chat-stream-memory">Use Memory</label>
                                 </div>
                             </div>
-                            
+
                             <div class="chat-input-container">
-                                <textarea 
-                                    id="chat-stream-input" 
-                                    name="prompt" 
-                                    placeholder="Type your message..." 
-                                    required
-                                ></textarea>
+                                <textarea id="chat-stream-input" name="prompt" placeholder="Type your message..."
+                                    required></textarea>
                                 <button type="submit" class="btn send-btn">Stream</button>
                             </div>
                         </form>
                     </div>
                 </div>
             </section>
-            
+
             <!-- Embeddings Tab -->
             <section id="embeddings-tab" class="tab-content">
                 <h2>Generate Embeddings</h2>
-                
+
                 <form id="embedding-form" class="api-form">
                     <div class="form-group">
                         <label for="embedding-text">Text:</label>
-                        <textarea id="embedding-text" name="text" placeholder="Enter text to generate embeddings for..." required></textarea>
+                        <textarea id="embedding-text" name="text" placeholder="Enter text to generate embeddings for..."
+                            required></textarea>
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="embedding-model">Model (optional):</label>
                         <input type="text" id="embedding-model" name="model" placeholder="Embedding model name">
                     </div>
-                    
+
                     <div class="form-actions">
                         <button type="submit" class="btn primary-btn">Generate Embedding</button>
                     </div>
                 </form>
-                
+
                 <div id="embedding-result" class="api-result hidden">
                     <h3>Embedding Result</h3>
                     <div class="result-stats">
@@ -271,22 +269,23 @@
                     </div>
                 </div>
             </section>
-            
+
             <!-- Concepts Tab -->
             <section id="concepts-tab" class="tab-content">
                 <h2>Extract Concepts</h2>
-                
+
                 <form id="concepts-form" class="api-form">
                     <div class="form-group">
                         <label for="concepts-text">Text:</label>
-                        <textarea id="concepts-text" name="text" placeholder="Enter text to extract concepts from..." required></textarea>
+                        <textarea id="concepts-text" name="text" placeholder="Enter text to extract concepts from..."
+                            required></textarea>
                     </div>
-                    
+
                     <div class="form-actions">
                         <button type="submit" class="btn primary-btn">Extract Concepts</button>
                     </div>
                 </form>
-                
+
                 <div id="concepts-result" class="api-result hidden">
                     <h3>Extracted Concepts</h3>
                     <div id="concepts-list" class="concepts-list">
@@ -294,47 +293,49 @@
                     </div>
                 </div>
             </section>
-            
+
             <!-- Index Tab -->
             <section id="index-tab" class="tab-content">
                 <h2>Index Content</h2>
-                
+
                 <form id="index-form" class="api-form">
                     <div class="form-group">
                         <label for="index-title">Title:</label>
                         <input type="text" id="index-title" name="title" placeholder="Content title">
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="index-content">Content:</label>
-                        <textarea id="index-content" name="content" placeholder="Enter content to index..." required></textarea>
+                        <textarea id="index-content" name="content" placeholder="Enter content to index..."
+                            required></textarea>
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="index-type">Content Type:</label>
                         <input type="text" id="index-type" name="type" placeholder="E.g., article, document" required>
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="index-metadata">Metadata (JSON):</label>
-                        <textarea id="index-metadata" name="metadata" placeholder='{"key": "value"} (optional)'></textarea>
+                        <textarea id="index-metadata" name="metadata"
+                            placeholder='{"key": "value"} (optional)'></textarea>
                     </div>
-                    
+
                     <div class="form-actions">
                         <button type="submit" class="btn primary-btn">Index Content</button>
                     </div>
                 </form>
-                
+
                 <div id="index-result" class="api-result hidden"></div>
             </section>
         </main>
-        
+
         <!-- Loading indicator -->
         <div id="loading-indicator" class="hidden">
             <div class="spinner"></div>
             <p>Processing...</p>
         </div>
-        
+
         <footer>
             <p>Powered by Semem: Semantic Memory for Intelligent Agents</p>
             <div id="api-status" class="api-status">
@@ -344,7 +345,8 @@
             </div>
         </footer>
     </div>
-    
+
     <script src="script.js"></script>
 </body>
+
 </html>

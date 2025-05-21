@@ -6,14 +6,14 @@ import logger from 'loglevel'
 export default class OllamaConnector {
     constructor(options = {}) {
         // Make sure we have a proper baseUrl string
-        this.baseUrl = typeof options === 'string' 
-            ? options 
+        this.baseUrl = typeof options === 'string'
+            ? options
             : (options.baseUrl || 'http://localhost:11434');
-        
+
         if (this.baseUrl.endsWith('/')) {
             this.baseUrl = this.baseUrl.slice(0, -1); // Remove trailing slash
         }
-        
+
         logger.debug(`Initializing OllamaConnector with baseUrl: ${this.baseUrl}`);
         this.chatModel = options.chatModel || 'qwen2:1.5b';
         this.embeddingModel = options.embeddingModel || 'nomic-embed-text';
@@ -28,7 +28,7 @@ export default class OllamaConnector {
     async generateEmbedding(model, input) {
         // Allow model to be a parameter or use the default
         const embeddingModel = model || this.embeddingModel;
-        
+
         logger.debug(`Generating embedding with model ${embeddingModel}`);
         logger.debug('Input length:', input.length);
 
@@ -66,7 +66,7 @@ export default class OllamaConnector {
     async generateChat(model, messages, options = {}) {
         // Allow model to be a parameter or use the default
         const chatModel = model || this.chatModel;
-        
+
         logger.debug(`Generating chat with model ${chatModel}`);
         logger.debug('Messages count:', messages.length);
 
@@ -108,7 +108,7 @@ export default class OllamaConnector {
     async generateCompletion(model, prompt, options = {}) {
         // Allow model to be a parameter or use the default
         const chatModel = model || this.chatModel;
-        
+
         logger.debug(`Generating completion with model ${chatModel}`);
         logger.debug('Prompt length:', prompt.length);
 
