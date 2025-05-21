@@ -2,7 +2,7 @@
  * Connector for Anthropic Claude API operations using hyperdata-clients
  */
 import logger from 'loglevel';
-import ClientFactory from '../common/ClientFactoryWrapper.js';
+import { ClientFactory, OpenAI, Claude, KeyManager } from 'hyperdata-clients';
 
 export default class HClaudeClientConnector {
     /**

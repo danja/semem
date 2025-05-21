@@ -3,7 +3,7 @@
  */
 import logger from 'loglevel'
 //import HClientFactory from '../common/ClientFactoryWrapper.js'
-import ClientFactory from '../../../hyperdata-clients/src/common/ClientFactory.js'
+import { ClientFactory, OpenAI, Claude, KeyManager } from 'hyperdata-clients'
 class ClientConnector {
     /**
      * Create a new ClientConnector

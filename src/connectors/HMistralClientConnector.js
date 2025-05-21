@@ -2,7 +2,7 @@
  * Connector for Mistral AI API operations using hyperdata-clients
  */
 import logger from 'loglevel'
-import HClientFactory from '../common/ClientFactoryWrapper.js'
+import { ClientFactory as HClientFactory, OpenAI, Claude, KeyManager } from 'hyperdata-clients'
 
 export default class HMistralClientConnector {
     /**
