@@ -123,6 +123,11 @@ export default class JSONStore extends BaseStore {
     async saveMemoryToHistory(memoryStore) {
         try {
             await this.ensureDirectory()
+            
+            // Check if file exists and is readable
+            const fileExists = await fs.access(this.filePath).then(() => true).catch(() => false)
+            
+            // Begin transaction after checking file existence
             await this.beginTransaction()
 
             const history = {
@@ -136,21 +141,28 @@ export default class JSONStore extends BaseStore {
                     concepts: Array.from(memoryStore.conceptsList[idx]),
                     decayFactor: item.decayFactor || 1.0
                 })),
-                longTermMemory: memoryStore.longTermMemory
+                longTermMemory: memoryStore.longTermMemory || []
             }
+
 
             // Write to temp file first
             await fs.writeFile(this.tempPath, JSON.stringify(history, null, 2))
 
-            // Verify the written file
-            if (!await this.verify()) {
-                throw new Error('Data verification failed')
+
+            // Only verify if we're not creating a new file
+            if (fileExists) {
+                const isValid = await this.verify()
+                if (!isValid) {
+                    throw new Error('Data verification failed')
+                }
+            } else {
+                logger.info('Creating new history file')
             }
 
             // Commit the transaction
             await this.commitTransaction()
 
-            logger.info(`Saved interaction history to JSON. Short-term: ${history.shortTermMemory.length}, Long-term: ${history.longTermMemory.length}`)
+            logger.info(`Saved interaction history to JSON. Short-term: ${history.shortTermMemory?.length || 0}, Long-term: ${history.longTermMemory?.length || 0}`)
         } catch (error) {
             await this.rollbackTransaction()
             logger.error('Error saving history:', error)

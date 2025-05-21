@@ -1,5 +1,6 @@
 import fetch from 'node-fetch';
-import { IndexFlatIP } from 'faiss-node';
+import faiss from 'faiss-node';
+const { IndexFlatIP } = faiss;
 import OllamaConnector from '../src/connectors/OllamaConnector.js';
 import logger from 'loglevel';
 
