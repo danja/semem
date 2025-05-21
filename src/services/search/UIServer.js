@@ -152,6 +152,9 @@ class UIServer {
         this.app.get('/api/memory/search', this.handleMemorySearch.bind(this));
         this.app.post('/api/memory/embedding', this.handleEmbedding.bind(this));
         this.app.post('/api/memory/concepts', this.handleConcepts.bind(this));
+        
+        // Provider endpoints
+        this.app.get('/api/providers', this.handleListProviders.bind(this));
 
         // HTML route for the UI
         this.app.get('/', (req, res) => {
@@ -247,7 +250,14 @@ class UIServer {
     async handleChat(req, res) {
         try {
             // Validate request
-            const { prompt, conversationId, useMemory, temperature, useSearchInterjection } = req.body;
+            const { 
+                prompt, 
+                conversationId, 
+                useMemory, 
+                temperature, 
+                useSearchInterjection,
+                providerId 
+            } = req.body;
 
             if (!prompt) {
                 return res.status(400).json({
@@ -290,8 +300,17 @@ Based on the above information and your knowledge, here is the user's question: 
                     }
                 }
 
-                // Get chat API
-                const chatAPI = this.chatAPI;
+                // Get the selected provider or use the default
+                const selectedProvider = this.chatProviders?.find(p => p.id === providerId) || this.chatProviders?.[0];
+                
+                if (!selectedProvider) {
+                    throw new Error('No chat provider available');
+                }
+
+                logger.info(`Using provider: ${selectedProvider.type}${selectedProvider.implementation ? ` (${selectedProvider.implementation})` : ''}`);
+                
+                // Create chat API with selected provider
+                const chatAPI = this.createChatAPI(selectedProvider, selectedProvider.chatModel);
 
                 // Generate response
                 const result = await chatAPI.executeOperation('chat', {
@@ -378,7 +397,14 @@ Based on the above information and your knowledge, here is the user's question: 
     async handleChatStream(req, res) {
         try {
             // Validate request
-            const { prompt, conversationId, useMemory, temperature, useSearchInterjection } = req.body;
+            const { 
+                prompt, 
+                conversationId, 
+                useMemory, 
+                temperature, 
+                useSearchInterjection,
+                providerId 
+            } = req.body;
 
             if (!prompt) {
                 return res.status(400).json({
@@ -443,8 +469,17 @@ Based on the above information and your knowledge, here is the user's question: 
                     }
                 }
 
-                // Get chat API
-                const chatAPI = this.chatAPI;
+                // Get the selected provider or use the default
+                const selectedProvider = this.chatProviders?.find(p => p.id === providerId) || this.chatProviders?.[0];
+                
+                if (!selectedProvider) {
+                    throw new Error('No chat provider available');
+                }
+
+                logger.info(`Using provider: ${selectedProvider.type}${selectedProvider.implementation ? ` (${selectedProvider.implementation})` : ''}`);
+                
+                // Create chat API with selected provider
+                const chatAPI = this.createChatAPI(selectedProvider, selectedProvider.chatModel);
 
                 // Send event that we're generating a response
                 res.write(`data: ${JSON.stringify({ info: "Generating response..." })}\n\n`);
@@ -543,7 +578,12 @@ Based on the above information and your knowledge, here is the user's question: 
     async handleChatCompletion(req, res) {
         try {
             // Validate request
-            const { prompt, max_tokens, temperature } = req.body;
+            const { 
+                prompt, 
+                max_tokens, 
+                temperature,
+                providerId 
+            } = req.body;
 
             if (!prompt) {
                 return res.status(400).json({
@@ -554,8 +594,17 @@ Based on the above information and your knowledge, here is the user's question: 
 
             logger.info(`Chat completion request with prompt: "${prompt.slice(0, 30)}..."`);
 
-            // Get chat API
-            const chatAPI = this.chatAPI;
+            // Get the selected provider or use the default
+            const selectedProvider = this.chatProviders?.find(p => p.id === providerId) || this.chatProviders?.[0];
+            
+            if (!selectedProvider) {
+                throw new Error('No chat provider available');
+            }
+
+            logger.info(`Using provider: ${selectedProvider.type}${selectedProvider.implementation ? ` (${selectedProvider.implementation})` : ''}`);
+            
+            // Create chat API with selected provider
+            const chatAPI = this.createChatAPI(selectedProvider, selectedProvider.chatModel);
 
             // Generate completion
             const result = await chatAPI.executeOperation('completion', {
@@ -903,10 +952,64 @@ Based on the above information and your knowledge, here is the user's question: 
      * Initialize LLM providers with fallback
      * @returns {Promise<Array>} List of available providers with connectors
      */
+    /**
+     * Handle listing available providers
+     * @param {Request} req - The Express request
+     * @param {Response} res - The Express response
+     */
+    async handleListProviders(req, res) {
+        try {
+            const providers = this.chatProviders.map(p => ({
+                id: p.id,
+                type: p.type,
+                name: `${p.type}${p.implementation ? ` (${p.implementation})` : ''}`,
+                model: p.chatModel,
+                capabilities: p.capabilities || []
+            }));
+            
+            res.json({ providers });
+        } catch (error) {
+            logger.error('Error listing providers:', error);
+            res.status(500).json({ error: 'Failed to list providers' });
+        }
+    }
+
+    /**
+     * Create a chat API instance with the specified provider
+     * @param {Object} provider - The provider configuration
+     * @param {string} model - The model to use
+     * @returns {Object} Configured ChatAPI instance
+     */
+    createChatAPI(provider, model) {
+        const memoryManager = new MemoryManager({
+            llmProvider: provider.connector,
+            chatModel: model || provider.chatModel,
+            embeddingProvider: this.embeddingProviders[0]?.connector,
+            embeddingModel: this.embeddingProviders[0]?.embeddingModel
+        });
+
+        const llmHandler = new LLMHandler(provider.connector, model || provider.chatModel);
+
+        const registry = {
+            get: (name) => {
+                if (name === 'memory') return memoryManager;
+                if (name === 'llm') return llmHandler;
+                throw new Error(`API ${name} not found`);
+            }
+        };
+
+        return new ChatAPI({
+            registry,
+            similarityThreshold: 0.7,
+            contextWindow: 5
+        });
+    }
+
     async initializeLLMProvidersWithFallback() {
         const availableProviders = [];
         const embeddingProviders = [];
         const chatProviders = [];
+        let providerCounter = 0;
 
         // Try each provider and categorize them based on capabilities
         const sortedProviders = [...this.llmProviders].sort((a, b) => a.priority - b.priority);
@@ -1037,8 +1140,12 @@ Based on the above information and your knowledge, here is the user's question: 
         logger.info(`Found ${embeddingProviders.length} providers with embedding capabilities`);
 
         // Store providers by capability for easier access
-        this.chatProviders = chatProviders;
-        this.embeddingProviders = embeddingProviders;
+        this.chatProviders = [...new Map(chatProviders.map(p => [p.id, p])).values()]; // Deduplicate
+        this.embeddingProviders = [...new Map(embeddingProviders.map(p => [p.id, p])).values()]; // Deduplicate
+        
+        // Log available providers
+        logger.info(`Available chat providers: ${this.chatProviders.map(p => `${p.type} (${p.id})`).join(', ')}`);
+        logger.info(`Available embedding providers: ${this.embeddingProviders.map(p => `${p.type} (${p.id})`).join(', ')}`);
 
         return availableProviders;
     }
