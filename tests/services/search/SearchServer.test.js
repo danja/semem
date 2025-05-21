@@ -13,26 +13,33 @@ vi.mock('express', () => {
     })
   };
   
-  return {
-    default: vi.fn(() => mockApp),
-    json: vi.fn(),
-    urlencoded: vi.fn(),
-    static: vi.fn()
-  };
+  const express = vi.fn(() => mockApp);
+  
+  // Add static methods to the express function
+  express.json = vi.fn().mockReturnValue('json-middleware');
+  express.urlencoded = vi.fn().mockReturnValue('urlencoded-middleware');
+  express.static = vi.fn().mockReturnValue('static-middleware');
+  
+  return express;
+});
+
+// Create a mock search service implementation
+const createMockSearchService = () => ({
+  initialize: vi.fn().mockResolvedValue(),
+  search: vi.fn().mockResolvedValue([
+    { 
+      uri: 'http://example.org/article/1',
+      title: 'Article 1',
+      content: 'Content 1',
+      score: 0.9
+    }
+  ]),
+  index: vi.fn().mockResolvedValue({ id: 'test-id', success: true }),
+  getIndexSize: vi.fn().mockResolvedValue(42)
 });
 
 vi.mock('../../../src/services/search/SearchService.js', () => ({
-  default: vi.fn().mockImplementation(() => ({
-    initialize: vi.fn().mockResolvedValue(),
-    search: vi.fn().mockResolvedValue([
-      { 
-        uri: 'http://example.org/article/1',
-        title: 'Article 1',
-        content: 'Content 1',
-        score: 0.9
-      }
-    ])
-  }))
+  default: vi.fn().mockImplementation(createMockSearchService)
 }));
 
 vi.mock('../../../src/services/embeddings/EmbeddingService.js');

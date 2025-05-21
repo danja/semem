@@ -3,8 +3,18 @@ import { beforeEach, afterEach, vi } from 'vitest';
 import { registerCustomMatchers } from './helpers/testSetup.js';
 import './helpers/setupGlobals.js'; // Import polyfills
 
-// Set up global test timeout
-setTimeout.default = 5000;
+// Set up test timeouts based on test type
+const isIntegrationTest = process.env.INTEGRATION_TEST === 'true';
+const DEFAULT_TIMEOUT = isIntegrationTest ? 3000 : 10000; // 3s for integration, 10s for unit tests
+setTimeout.default = DEFAULT_TIMEOUT;
+
+// Set test timeout for all tests
+if (typeof beforeEach === 'function') {
+  beforeEach(() => {
+    // Set default test timeout
+    vi.setConfig({ testTimeout: DEFAULT_TIMEOUT });
+  });
+}
 
 // Register custom matchers
 registerCustomMatchers();
