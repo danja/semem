@@ -1,11 +1,15 @@
 #!/bin/bash
 
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PID_FILE="$SCRIPT_DIR/server-pids.txt"
+
 # Check if the PID file exists
-if [ -f "server-pids.txt" ]; then
+if [ -f "$PID_FILE" ]; then
     echo "Stopping servers..."
     
     # Read PIDs from file
-    read API_PID UI_PID < server-pids.txt
+    read API_PID UI_PID < "$PID_FILE"
     
     # Stop API server
     if ps -p $API_PID > /dev/null; then
@@ -24,7 +28,7 @@ if [ -f "server-pids.txt" ]; then
     fi
     
     # Remove PID file
-    rm server-pids.txt
+    rm -f "$PID_FILE"
     echo "Servers stopped successfully"
 else
     echo "No running servers found (server-pids.txt not found)"
