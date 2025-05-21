@@ -4,7 +4,7 @@
 import logger from 'loglevel';
 import { ClientFactory } from 'hyperdata-clients';
 
-export default class HClaudeClientConnector {
+export default class ClaudeConnector {
     /**
      * Create a new HClaudeClientConnector
      * @param {string} apiKey - Claude API key

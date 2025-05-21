@@ -1,55 +1,58 @@
-import logger from 'loglevel'
-
 /**
- * Connector for Ollama API operations
+ * Connector for Ollama API operations using hyperdata-clients
  */
+import logger from 'loglevel'
+import { ClientFactory } from 'hyperdata-clients'
+
 export default class OllamaConnector {
-    constructor(options = {}) {
-        // Make sure we have a proper baseUrl string
-        this.baseUrl = typeof options === 'string'
-            ? options
-            : (options.baseUrl || 'http://localhost:11434');
+    /**
+     * Create a new HOllamaClientConnector
+     * @param {string} baseUrl - Optional base URL for Ollama API (defaults to http://localhost:11434)
+     * @param {string} defaultModel - Optional default model to use
+     */
+    constructor(baseUrl = 'http://localhost:11434', defaultModel = 'qwen2:1.5b') {
+        this.baseUrl = baseUrl
+        this.defaultModel = defaultModel
+        this.client = null
+        this.initialize()
+    }
 
-        if (this.baseUrl.endsWith('/')) {
-            this.baseUrl = this.baseUrl.slice(0, -1); // Remove trailing slash
+    /**
+     * Initialize the Ollama client
+     */
+    async initialize() {
+        try {
+            this.client = await ClientFactory.createAPIClient('ollama', {
+                apiKey: 'NO_KEY_REQUIRED',
+                baseUrl: this.baseUrl,
+                model: this.defaultModel
+            })
+
+            logger.debug('Ollama client initialized successfully')
+        } catch (error) {
+            logger.error('Failed to initialize Ollama client:', error)
+            throw error
         }
-
-        logger.debug(`Initializing OllamaConnector with baseUrl: ${this.baseUrl}`);
-        this.chatModel = options.chatModel || 'qwen2:1.5b';
-        this.embeddingModel = options.embeddingModel || 'nomic-embed-text';
     }
 
     /**
      * Generate embeddings using Ollama
-     * @param {string} model - Model to use for embedding (or default if not provided)
-     * @param {string} input - Text to embed
-     * @returns {Promise<number[]>} - Vector embedding
+     * @param {string} model - Model name to use for embedding
+     * @param {string} input - Text to generate embedding for
+     * @returns {number[]} - Vector embedding
      */
     async generateEmbedding(model, input) {
-        // Allow model to be a parameter or use the default
-        const embeddingModel = model || this.embeddingModel;
-
-        logger.debug(`Generating embedding with model ${embeddingModel}`);
-        logger.debug('Input length:', input.length);
+        logger.debug(`Generating embedding with model ${model}`)
+        logger.debug('Input:', input)
 
         try {
-            const response = await fetch(`${this.baseUrl}/api/embeddings`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    model: embeddingModel,
-                    prompt: input,
-                    options: { num_ctx: 8192 }
-                })
-            })
-
-            if (!response.ok) {
-                throw new Error(`Ollama API error: ${response.status}`)
+            if (!this.client) {
+                await this.initialize()
             }
 
-            const data = await response.json()
+            const embedding = await this.client.embedding(input, { model })
             logger.debug('Embedding generated successfully')
-            return data.embedding
+            return embedding
         } catch (error) {
             logger.error('Embedding generation failed:', error)
             throw error
@@ -58,40 +61,28 @@ export default class OllamaConnector {
 
     /**
      * Generate chat completion using Ollama
-     * @param {string} model - Model to use for chat (or default if not provided)
+     * @param {string} model - Model name to use
      * @param {Array} messages - Array of message objects with role and content
-     * @param {Object} options - Additional options for the API call
-     * @returns {Promise<string>} - Generated response text
+     * @param {Object} options - Additional options
+     * @returns {string} - Response text
      */
     async generateChat(model, messages, options = {}) {
-        // Allow model to be a parameter or use the default
-        const chatModel = model || this.chatModel;
-
-        logger.debug(`Generating chat with model ${chatModel}`);
-        logger.debug('Messages count:', messages.length);
+        logger.debug(`Generating chat with model ${model}`)
+        logger.debug('Messages:', messages)
 
         try {
-            const response = await fetch(`${this.baseUrl}/api/chat`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    model: chatModel,
-                    messages,
-                    stream: false,
-                    options: {
-                        temperature: options.temperature || 0.7,
-                        ...options
-                    }
-                })
-            })
-
-            if (!response.ok) {
-                throw new Error(`Ollama API error: ${response.status}`)
+            if (!this.client) {
+                await this.initialize()
             }
 
-            const data = await response.json()
-            logger.debug('Chat response:', data.message?.content)
-            return data.message?.content || ''
+            const response = await this.client.chat(messages, {
+                model,
+                temperature: options.temperature || 0.7,
+                ...options
+            })
+
+            logger.debug('Chat response:', response)
+            return response
         } catch (error) {
             logger.error('Chat generation failed:', error)
             throw error
@@ -100,40 +91,28 @@ export default class OllamaConnector {
 
     /**
      * Generate completion using Ollama
-     * @param {string} model - Model to use for completion (or default if not provided)
+     * @param {string} model - Model name to use
      * @param {string} prompt - Text prompt
-     * @param {Object} options - Additional options for the API call
-     * @returns {Promise<string>} - Generated response text
+     * @param {Object} options - Additional options
+     * @returns {string} - Response text
      */
     async generateCompletion(model, prompt, options = {}) {
-        // Allow model to be a parameter or use the default
-        const chatModel = model || this.chatModel;
-
-        logger.debug(`Generating completion with model ${chatModel}`);
-        logger.debug('Prompt length:', prompt.length);
+        logger.debug(`Generating completion with model ${model}`)
+        logger.debug('Prompt:', prompt)
 
         try {
-            const response = await fetch(`${this.baseUrl}/api/generate`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    model: chatModel,
-                    prompt,
-                    stream: false,
-                    options: {
-                        temperature: options.temperature || 0.7,
-                        ...options
-                    }
-                })
-            })
-
-            if (!response.ok) {
-                throw new Error(`Ollama API error: ${response.status}`)
+            if (!this.client) {
+                await this.initialize()
             }
 
-            const data = await response.json()
-            logger.debug('Completion response:', data.response)
-            return data.response || ''
+            const response = await this.client.complete(prompt, {
+                model,
+                temperature: options.temperature || 0.7,
+                ...options
+            })
+
+            logger.debug('Completion response:', response)
+            return response
         } catch (error) {
             logger.error('Completion generation failed:', error)
             throw error

@@ -2,7 +2,7 @@ import logger from 'loglevel';
 import MemoryManager from '../src/MemoryManager.js';
 import JSONStore from '../src/stores/JSONStore.js';
 import Config from '../src/Config.js';
-import HOllamaClientConnector from '../src/connectors/HOllamaClientConnector.js';
+import HOllamaClientConnector from '../src/connectors/OllamaConnector.js';
 import dotenv from 'dotenv';
 
 // Load environment variables
@@ -41,7 +41,7 @@ process.on('unhandledRejection', async (reason, promise) => {
 async function main() {
     // Set appropriate log level
     logger.setLevel(process.env.LOG_LEVEL || 'info');
-    
+
     // Initialize configuration
     const config = Config.create({
         storage: {
@@ -63,7 +63,7 @@ async function main() {
     });
 
     const storage = new JSONStore(config.get('storage.options.path'));
-    
+
     // Use the new HOllamaClientConnector that leverages hyperdata-clients
     const ollama = new HOllamaClientConnector();
 

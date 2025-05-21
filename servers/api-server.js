@@ -11,7 +11,7 @@ import compression from 'compression';
 import { v4 as uuidv4 } from 'uuid';
 import rateLimit from 'express-rate-limit';
 import MemoryManager from '../src/MemoryManager.js';
-import OllamaConnector from '../src/connectorsOllamaConnector.js';
+import OllamaConnector from '../src/connectors/OllamaConnector.js';
 import LLMHandler from '../src/handlers/LLMHandler.js';
 import EmbeddingHandler from '../src/handlers/EmbeddingHandler.js';
 import CacheManager from '../src/handlers/CacheManager.js';

@@ -2,7 +2,7 @@ import logger from 'loglevel';
 import MemoryManager from '../src/MemoryManager.js';
 import JSONStore from '../src/stores/JSONStore.js';
 import Config from '../src/Config.js';
-import HClaudeClientConnector from '../src/connectors/HClaudeClientConnector.js';
+import HClaudeClientConnector from '../src/connectors/ClaudeConnector.js';
 import dotenv from 'dotenv';
 
 // Load environment variables
@@ -64,7 +64,7 @@ async function main() {
             }
         }
     });
-    
+
     await config.init();
 
     const storage = new JSONStore(config.get('storage.options.path'));
