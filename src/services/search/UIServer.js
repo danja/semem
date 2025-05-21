@@ -13,6 +13,7 @@ import LLMHandler from '../../handlers/LLMHandler.js';
 import OllamaConnector from '../../connectors/OllamaConnector.js';
 import ClaudeConnector from '../../connectors/ClaudeConnector.js';
 import HClaudeClientConnector from '../../connectors/HClaudeClientConnector.js';
+import MistralConnector from '../../connectors/MistralConnector.js';
 
 /**
  * UI server application that serves the web interface and API endpoints
@@ -53,18 +54,25 @@ class UIServer {
         // Configure LLM provider endpoints
         this.llmProviders = options.llmProviders || [
             {
+                type: 'mistral',
+                apiKey: process.env.MISTRAL_API_KEY || '',
+                baseUrl: process.env.MISTRAL_API_BASE || 'https://api.mistral.ai/v1',
+                chatModel: process.env.MISTRAL_MODEL || 'mistral-medium',
+                priority: 1
+            },
+            {
                 type: 'claude',
                 implementation: 'hyperdata', // Uses hyperdata-clients library
                 apiKey: process.env.CLAUDE_API_KEY || '',
                 chatModel: process.env.CLAUDE_MODEL || 'claude-3-opus-20240229',
-                priority: 1
+                priority: 2
             },
             {
                 type: 'ollama',
                 baseUrl: 'http://localhost:11434',
                 chatModel: this.chatModel,
                 embeddingModel: this.embeddingModel,
-                priority: 2
+                priority: 3
             },
             {
                 type: 'claude',
@@ -72,19 +80,20 @@ class UIServer {
                 apiKey: process.env.CLAUDE_API_KEY || '',
                 baseUrl: process.env.CLAUDE_API_BASE || 'https://api.anthropic.com',
                 chatModel: process.env.CLAUDE_MODEL || 'claude-3-opus-20240229',
-                priority: 3
+                priority: 4
             },
             {
                 type: 'openai',
                 apiKey: process.env.OPENAI_API_KEY || '',
                 chatModel: 'gpt-3.5-turbo',
                 embeddingModel: 'text-embedding-3-small',
-                priority: 4
+                priority: 5
             }
         ];
 
         // Separate default providers for chat and embedding
-        this.defaultChatProvider = this.llmProviders.find(p => p.type === 'claude' && p.implementation === 'direct') ||
+        this.defaultChatProvider = this.llmProviders.find(p => p.type === 'mistral') ||
+            this.llmProviders.find(p => p.type === 'claude' && p.implementation === 'direct') ||
             this.llmProviders.find(p => p.type === 'claude' && p.implementation === 'hyperdata') ||
             this.llmProviders.find(p => p.type === 'ollama') ||
             this.llmProviders[0];
@@ -246,6 +255,11 @@ class UIServer {
      * Handle chat API requests
      * @param {Request} req - The Express request
      * @param {Response} res - The Express response
+    }
+    /**
+     * Handle chat API requests
+     * @param {Request} req - The Express request
+     * @param {Response} res - The Express response
      */
     async handleChat(req, res) {
         try {
@@ -300,8 +314,22 @@ Based on the above information and your knowledge, here is the user's question: 
                     }
                 }
 
-                // Get the selected provider or use the default
-                const selectedProvider = this.chatProviders?.find(p => p.id === providerId) || this.chatProviders?.[0];
+                // Get the selected provider by ID or use the default
+                let selectedProvider;
+                
+                // If providerId is in the format 'provider-N', extract the index
+                if (providerId && providerId.startsWith('provider-')) {
+                    const index = parseInt(providerId.split('-')[1], 10);
+                    if (!isNaN(index) && this.llmProviders && this.llmProviders[index]) {
+                        selectedProvider = this.llmProviders[index];
+                    }
+                }
+                
+                // If no provider found by ID, use the default
+                if (!selectedProvider) {
+                    selectedProvider = this.defaultChatProvider;
+                    logger.warn(`Provider ${providerId} not found, falling back to default: ${selectedProvider?.type}`);
+                }
                 
                 if (!selectedProvider) {
                     throw new Error('No chat provider available');
@@ -1028,6 +1056,19 @@ Based on the above information and your knowledge, here is the user's question: 
                 let connector;
 
                 switch (provider.type) {
+                    case 'mistral':
+                        if (!provider.apiKey) {
+                            logger.warn('Skipping Mistral provider - no API key provided');
+                            continue;
+                        }
+                        connector = new MistralConnector(
+                            provider.apiKey,
+                            provider.baseUrl,
+                            provider.chatModel
+                        );
+                        logger.info('Using Mistral AI API');
+                        break;
+
                     case 'ollama':
                         connector = new OllamaConnector({
                             baseUrl: provider.baseUrl,
@@ -1067,7 +1108,6 @@ Based on the above information and your knowledge, here is the user's question: 
                             logger.warn('Skipping OpenAI provider - no API key provided');
                             continue;
                         }
-
                         // For now, we'll skip OpenAI since we don't have the connector implementation
                         logger.warn('OpenAI provider not yet implemented, skipping');
                         continue;

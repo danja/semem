@@ -1,6 +1,10 @@
 #!/usr/bin/env node
 
 import logger from 'loglevel';
+import dotenv from 'dotenv';
+
+// Load environment variables from .env file
+dotenv.config();
 import UIServer from '../src/services/search/UIServer.js';
 import fs from 'fs';
 import path from 'path';
