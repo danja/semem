@@ -329,13 +329,40 @@ h3 {
 
 .result-meta {
     display: flex;
-    justify-content: space-between;
+    flex-direction: column;
+    gap: 0.5rem;
     color: #7f8c8d;
     font-size: 0.9rem;
 }
 
+.result-meta-item {
+    display: flex;
+    justify-content: space-between;
+}
+
 .result-score {
     font-weight: bold;
+}
+
+.result-uri {
+    font-size: 0.85rem;
+    color: #5d6d7e;
+    word-break: break-all;
+    padding: 0.3rem 0.5rem;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    border-left: 3px solid #3498db;
+}
+
+.result-uri .uri-link {
+    color: #2980b9;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.result-uri .uri-link:hover {
+    color: #1a5276;
+    text-decoration: underline;
 }
 
 .result-stats {

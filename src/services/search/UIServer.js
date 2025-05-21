@@ -949,28 +949,34 @@ Based on the above information and your knowledge, here is the user's question: 
     }
 
     /**
-     * Initialize LLM providers with fallback
-     * @returns {Promise<Array>} List of available providers with connectors
-     */
-    /**
      * Handle listing available providers
      * @param {Request} req - The Express request
      * @param {Response} res - The Express response
      */
     async handleListProviders(req, res) {
         try {
-            const providers = this.chatProviders.map(p => ({
-                id: p.id,
+            // Ensure providers are initialized
+            if (!this.llmProviders || this.llmProviders.length === 0) {
+                logger.warn('No LLM providers available');
+                return res.json({ providers: [] });
+            }
+
+            const providers = this.llmProviders.map((p, index) => ({
+                id: p.id || `provider-${index}`,
                 type: p.type,
                 name: `${p.type}${p.implementation ? ` (${p.implementation})` : ''}`,
-                model: p.chatModel,
+                model: p.chatModel || 'default',
                 capabilities: p.capabilities || []
             }));
             
+            logger.info(`Returning ${providers.length} available providers`);
             res.json({ providers });
         } catch (error) {
             logger.error('Error listing providers:', error);
-            res.status(500).json({ error: 'Failed to list providers' });
+            res.status(500).json({ 
+                error: 'Failed to list providers',
+                message: error.message 
+            });
         }
     }
 
