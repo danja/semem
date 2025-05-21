@@ -11,7 +11,6 @@ import ChatAPI from '../../api/features/ChatAPI.js';
 import MemoryManager from '../../MemoryManager.js';
 import LLMHandler from '../../handlers/LLMHandler.js';
 import OllamaConnector from '../../connectors/OllamaConnector.js';
-import ClaudeConnector from '../../connectors/ClaudeConnector.js';
 import HClaudeClientConnector from '../../connectors/HClaudeClientConnector.js';
 import MistralConnector from '../../connectors/MistralConnector.js';
 
@@ -1083,23 +1082,12 @@ Based on the above information and your knowledge, here is the user's question: 
                             continue;
                         }
 
-                        // Choose the appropriate Claude implementation
-                        if (provider.implementation === 'hyperdata') {
-                            // Use hyperdata-clients implementation
-                            connector = new HClaudeClientConnector(
-                                provider.apiKey,
-                                provider.chatModel
-                            );
-                            logger.info('Using Claude with hyperdata-clients implementation');
-                        } else {
-                            // Use direct API implementation
-                            connector = new ClaudeConnector(
-                                provider.apiKey,
-                                provider.baseUrl,
-                                provider.chatModel
-                            );
-                            logger.info('Using Claude with direct API implementation');
-                        }
+                        // Use hyperdata-clients implementation for Claude
+                        connector = new HClaudeClientConnector(
+                            provider.apiKey,
+                            provider.chatModel
+                        );
+                        logger.info('Using Claude with hyperdata-clients implementation');
                         break;
 
                     case 'openai':

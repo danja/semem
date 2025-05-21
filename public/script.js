@@ -948,7 +948,29 @@ document.addEventListener('DOMContentLoaded', () => {
     function addChatMessage(message, sender, container) {
         const messageElement = document.createElement('div');
         messageElement.className = `chat-message ${sender}`;
-        messageElement.textContent = message;
+        
+        // Handle both string and object messages
+        if (typeof message === 'string') {
+            messageElement.textContent = message;
+        } else if (message && typeof message === 'object') {
+            // If the message has a content property, use that
+            if (message.content !== undefined) {
+                messageElement.textContent = message.content;
+            } 
+            // If it's a response object with a message property
+            else if (message.message !== undefined) {
+                messageElement.textContent = message.message;
+            }
+            // Otherwise stringify the object for debugging
+            else {
+                console.warn('Unexpected message format:', message);
+                messageElement.textContent = JSON.stringify(message, null, 2);
+            }
+        } else {
+            // Fallback for any other type
+            messageElement.textContent = String(message);
+        }
+        
         container.appendChild(messageElement);
         container.scrollTop = container.scrollHeight;
     }
