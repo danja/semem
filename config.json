@@ -1,4 +1,10 @@
 {
+  "servers": {
+    "api": 4100,
+    "ui": 4120,
+    "redirect": 4110,
+    "redirectTarget": 4120
+  },
   "port": 4100,
   "graphName": "http://danny.ayers.name/content",
   "chatModel": "qwen2:1.5b",

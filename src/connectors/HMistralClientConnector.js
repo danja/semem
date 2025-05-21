@@ -2,7 +2,7 @@
  * Connector for Mistral AI API operations using hyperdata-clients
  */
 import logger from 'loglevel'
-import { ClientFactory as HClientFactory, OpenAI, Claude, KeyManager } from 'hyperdata-clients'
+import { ClientFactory } from 'hyperdata-clients'
 
 export default class HMistralClientConnector {
     /**
@@ -28,15 +28,21 @@ export default class HMistralClientConnector {
      */
     async initialize() {
         try {
-            this.client = await HClientFactory.createAPIClient('mistral', {
+            // Create a client factory instance
+            this.client = await ClientFactory.createAPIClient('mistral', {
                 apiKey: this.apiKey,
                 baseUrl: this.baseUrl,
                 model: this.defaultModel
-            })
-            logger.debug('Mistral client initialized successfully')
+            });
+
+            if (!this.client) {
+                throw new Error('Failed to create Mistral client: Client is null');
+            }
+
+            logger.debug('Mistral client initialized successfully');
         } catch (error) {
-            logger.error('Failed to initialize Mistral client:', error)
-            throw error
+            logger.error('Failed to initialize Mistral client:', error);
+            throw error;
         }
     }
 

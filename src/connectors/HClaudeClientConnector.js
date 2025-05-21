@@ -2,7 +2,7 @@
  * Connector for Anthropic Claude API operations using hyperdata-clients
  */
 import logger from 'loglevel';
-import { ClientFactory, OpenAI, Claude, KeyManager } from 'hyperdata-clients';
+import { ClientFactory } from 'hyperdata-clients';
 
 export default class HClaudeClientConnector {
     /**
@@ -20,6 +20,35 @@ export default class HClaudeClientConnector {
         this.client = null;
         this.initialized = false;
         this.initializing = false;
+
+        // Initialize the client
+        this.initialize();
+    }
+
+    /**
+     * Initialize the Claude client
+     * @returns {Promise<void>}
+     */
+    async initialize() {
+        if (this.initialized || this.initializing) {
+            return;
+        }
+
+        this.initializing = true;
+
+        try {
+            this.client = new Claude({
+                apiKey: this.apiKey,
+                model: this.defaultModel
+            });
+            this.initialized = true;
+            logger.info('Claude client initialized successfully');
+        } catch (error) {
+            logger.error('Failed to initialize Claude client:', error);
+            throw error;
+        } finally {
+            this.initializing = false;
+        }
     }
 
     /**
@@ -71,10 +100,10 @@ export default class HClaudeClientConnector {
 
         try {
             await this.initialize();
-            
+
             // Convert single string to array if needed
             const inputs = Array.isArray(input) ? input : [input];
-            
+
             // Generate embeddings for all inputs
             const embeddings = [];
             for (const text of inputs) {
@@ -91,7 +120,7 @@ export default class HClaudeClientConnector {
                     embeddings.push(embedding);
                 }
             }
-            
+
             logger.debug('Embedding generation successful');
             return embeddings.length === 1 ? embeddings[0] : embeddings;
         } catch (error) {
@@ -99,7 +128,7 @@ export default class HClaudeClientConnector {
             throw error;
         }
     }
-    
+
     /**
      * Generate a simple local embedding as a fallback
      * @private
@@ -109,16 +138,16 @@ export default class HClaudeClientConnector {
         // It's not as good as a real embedding model but better than nothing
         const hash = this._hashCode(text);
         const embedding = new Array(1536).fill(0);
-        
+
         // Distribute the hash values across the embedding dimensions
         for (let i = 0; i < 1536; i++) {
             const val = (hash * (i + 1)) % 1.0; // Simple pseudo-random value based on hash and position
             embedding[i] = (val - 0.5) * 2; // Scale to [-1, 1]
         }
-        
+
         return embedding;
     }
-    
+
     /**
      * Simple string hash function
      * @private
@@ -172,7 +201,7 @@ export default class HClaudeClientConnector {
                 top_p: options.topP, // Note: top_p instead of topP
                 ...options
             };
-            
+
             // Remove any undefined options
             Object.keys(requestOptions).forEach(key => {
                 if (requestOptions[key] === undefined) {
@@ -190,7 +219,7 @@ export default class HClaudeClientConnector {
                 filteredMessages,
                 requestOptions
             );
-            
+
             // If the response is a string, wrap it in a proper response object
             if (typeof response === 'string') {
                 return {
@@ -198,7 +227,7 @@ export default class HClaudeClientConnector {
                     role: 'assistant'
                 };
             }
-            
+
             logger.debug('Chat response generated successfully');
             return response;
         } catch (error) {

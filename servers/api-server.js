@@ -11,7 +11,7 @@ import compression from 'compression';
 import { v4 as uuidv4 } from 'uuid';
 import rateLimit from 'express-rate-limit';
 import MemoryManager from '../src/MemoryManager.js';
-import OllamaConnector from '../src/connectors/OllamaConnector.js';
+import OllamaConnector from '../src/connectorsOllamaConnector.js';
 import LLMHandler from '../src/handlers/LLMHandler.js';
 import EmbeddingHandler from '../src/handlers/EmbeddingHandler.js';
 import CacheManager from '../src/handlers/CacheManager.js';
@@ -38,7 +38,7 @@ const __dirname = path.dirname(path.dirname(__filename)); // Go up one level to 
  */
 class APIServer {
     constructor() {
-        this.port = process.env.PORT || 3000;
+        this.port = process.env.PORT || 4100; // Updated port to 4100
         this.publicDir = path.join(__dirname, 'public');
         this.app = express();
         this.server = null;
@@ -56,21 +56,21 @@ class APIServer {
             req.id = uuidv4();
             next();
         });
-        
+
         // Security and performance middleware
         this.app.use(helmet({
             contentSecurityPolicy: false // Disable for development
         }));
-        
+
         this.app.use(cors({
             origin: '*', // For development
             methods: ['GET', 'POST', 'PUT', 'DELETE'],
             allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key']
         }));
-        
+
         this.app.use(compression());
         this.app.use(express.json({ limit: '1mb' }));
-        
+
         // Rate limiting
         const limiter = rateLimit({
             windowMs: 15 * 60 * 1000,
@@ -80,7 +80,7 @@ class APIServer {
             message: 'Too many requests, please try again later.'
         });
         this.app.use('/api/', limiter);
-        
+
         // Request logging
         this.app.use(requestLogger(logger));
     }
@@ -92,17 +92,17 @@ class APIServer {
         // Create LLM provider
         const ollamaBaseUrl = process.env.OLLAMA_API_BASE || 'http://localhost:11434';
         const llmProvider = new OllamaConnector(ollamaBaseUrl);
-        
+
         // Define models to use
         const embeddingModel = process.env.EMBEDDING_MODEL || 'nomic-embed-text';
         const chatModel = process.env.CHAT_MODEL || 'qwen3:0.6b';
-        
+
         // Initialize cache manager
         const cacheManager = new CacheManager({
             maxSize: 1000,
             ttl: 3600000 // 1 hour
         });
-        
+
         // Initialize handlers
         const embeddingHandler = new EmbeddingHandler(
             llmProvider,
@@ -110,16 +110,16 @@ class APIServer {
             1536, // Default dimension
             cacheManager
         );
-        
+
         const llmHandler = new LLMHandler(llmProvider, chatModel);
-        
+
         // Initialize memory manager
         const memoryManager = new MemoryManager({
             llmProvider,
             chatModel,
             embeddingModel
         });
-        
+
         // Store components in context
         this.apiContext = {
             memory: memoryManager,
@@ -127,7 +127,7 @@ class APIServer {
             llm: llmHandler,
             apis: {}
         };
-        
+
         // Create API registry
         this.apiRegistry = {
             get: (key) => {
@@ -137,7 +137,7 @@ class APIServer {
                 throw new Error(`Unknown component: ${key}`);
             }
         };
-        
+
         return { memoryManager, embeddingHandler, llmHandler };
     }
 
@@ -153,7 +153,7 @@ class APIServer {
             defaultLimit: 10
         });
         await memoryApi.initialize();
-        
+
         // Initialize Chat API
         const chatApi = new ChatAPI({
             registry: this.apiRegistry,
@@ -162,7 +162,7 @@ class APIServer {
             contextWindow: 5
         });
         await chatApi.initialize();
-        
+
         // Initialize Search API
         const searchApi = new SearchAPI({
             registry: this.apiRegistry,
@@ -171,14 +171,14 @@ class APIServer {
             defaultLimit: 5
         });
         await searchApi.initialize();
-        
+
         // Store API handlers
         this.apiContext.apis = {
             'memory-api': memoryApi,
             'chat-api': chatApi,
             'search-api': searchApi
         };
-        
+
         return { memoryApi, chatApi, searchApi };
     }
 
@@ -187,7 +187,7 @@ class APIServer {
      */
     setupRoutes() {
         const apiRouter = express.Router();
-        
+
         // Memory API routes
         apiRouter.post('/memory', authenticateRequest, this.createHandler('memory-api', 'store'));
         apiRouter.get('/memory/search', authenticateRequest, this.createHandler('memory-api', 'search'));
@@ -202,7 +202,7 @@ class APIServer {
         // Search API routes
         apiRouter.get('/search', authenticateRequest, this.createHandler('search-api', 'search'));
         apiRouter.post('/index', authenticateRequest, this.createHandler('search-api', 'index'));
-        
+
         // Health check endpoint
         apiRouter.get('/health', (req, res) => {
             const components = {
@@ -210,14 +210,14 @@ class APIServer {
                 embedding: { status: 'healthy' },
                 llm: { status: 'healthy' }
             };
-            
+
             // Add API handlers status
             Object.entries(this.apiContext.apis).forEach(([name, api]) => {
                 components[name] = {
                     status: api.initialized ? 'healthy' : 'degraded'
                 };
             });
-            
+
             res.json({
                 status: 'healthy',
                 timestamp: Date.now(),
@@ -226,7 +226,7 @@ class APIServer {
                 components
             });
         });
-        
+
         // Metrics endpoint
         apiRouter.get('/metrics', authenticateRequest, async (req, res, next) => {
             try {
@@ -242,33 +242,33 @@ class APIServer {
                     }
                 }
 
-                res.json({ 
-                    success: true, 
-                    data: metrics 
+                res.json({
+                    success: true,
+                    data: metrics
                 });
             } catch (error) {
                 logger.error('Error fetching metrics:', error);
                 next(error);
             }
         });
-        
+
         // Mount API router
         this.app.use('/api', apiRouter);
-        
+
         // Serve static files
         logger.info(`Serving static files from: ${this.publicDir}`);
         this.app.use(express.static(this.publicDir));
-        
+
         // Root route for web UI
         this.app.get('/', (req, res) => {
             res.sendFile(path.join(this.publicDir, 'index.html'));
         });
-        
+
         // Handle 404 errors
         this.app.use((req, res, next) => {
             next(new NotFoundError('Endpoint not found'));
         });
-        
+
         // Error handling
         this.app.use(errorHandler(logger));
     }
@@ -283,22 +283,22 @@ class APIServer {
                 if (!api) {
                     throw new Error(`API handler not found: ${apiName}`);
                 }
-                
+
                 // Get parameters from appropriate source
                 const params = req.method === 'GET' ? req.query : req.body;
-                
+
                 // Execute operation
                 const result = await api.executeOperation(operation, params);
-                
+
                 // Determine status code based on operation
                 let statusCode = 200;
                 if (operation === 'store' || operation === 'index') {
                     statusCode = 201; // Created
                 }
-                
-                res.status(statusCode).json({ 
-                    success: true, 
-                    ...result 
+
+                res.status(statusCode).json({
+                    success: true,
+                    ...result
                 });
             } catch (error) {
                 logger.error(`Error in ${apiName}.${operation}:`, error);
@@ -317,30 +317,30 @@ class APIServer {
                 if (!api) {
                     throw new Error(`API handler not found: ${apiName}`);
                 }
-                
+
                 // Set response headers for streaming
                 res.setHeader('Content-Type', 'text/event-stream');
                 res.setHeader('Cache-Control', 'no-cache');
                 res.setHeader('Connection', 'keep-alive');
-                
+
                 // Execute streaming operation
                 const stream = await api.executeOperation(operation, req.body);
-                
+
                 // Handle stream events
                 stream.on('data', chunk => {
                     res.write(`data: ${JSON.stringify(chunk)}\n\n`);
                 });
-                
+
                 stream.on('end', () => {
                     res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
                     res.end();
                 });
-                
+
                 stream.on('error', error => {
                     logger.error(`Stream error in ${apiName}.${operation}:`, error);
                     next(error);
                 });
-                
+
                 // Handle client disconnect
                 req.on('close', () => {
                     if (typeof stream.destroy === 'function') {
@@ -360,14 +360,14 @@ class APIServer {
     setupSignalHandlers() {
         const shutdown = async (signal) => {
             logger.info(`Received ${signal}, shutting down...`);
-            
+
             // Close the HTTP server
             if (this.server) {
                 this.server.close(() => {
                     logger.info('HTTP server shut down');
                 });
             }
-            
+
             // Shutdown API handlers
             if (this.apiContext.apis) {
                 for (const api of Object.values(this.apiContext.apis)) {
@@ -380,7 +380,7 @@ class APIServer {
                     }
                 }
             }
-            
+
             // Dispose memory manager if it exists
             if (this.apiContext.memory && typeof this.apiContext.memory.dispose === 'function') {
                 try {
@@ -390,10 +390,10 @@ class APIServer {
                     logger.error('Error disposing memory manager:', error);
                 }
             }
-            
+
             process.exit(0);
         };
-        
+
         // Register signal handlers
         process.on('SIGTERM', () => shutdown('SIGTERM'));
         process.on('SIGINT', () => shutdown('SIGINT'));
@@ -405,22 +405,22 @@ class APIServer {
     async start() {
         try {
             logger.info('Initializing Semem API Server...');
-            
+
             // Initialize components and APIs
             await this.initializeComponents();
             await this.initializeAPIs();
-            
+
             // Set up routes
             await this.setupRoutes();
-            
+
             // Set up signal handlers for graceful shutdown
             this.setupSignalHandlers();
-            
+
             // Start the server
             this.server = this.app.listen(this.port, () => {
                 logger.info(`Semem API Server is running at http://localhost:${this.port}`);
             });
-            
+
             return this.server;
         } catch (error) {
             logger.error('Failed to start Semem API Server:', error);

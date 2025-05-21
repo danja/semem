@@ -2,17 +2,27 @@
 
 import express from 'express';
 import logger from 'loglevel';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 // Configure logging
 logger.setLevel('info');
 
 const app = express();
-const PORT = 3000;
-const TARGET_PORT = 4100;
-const TARGET_HOST = 'localhost';
+const PORT = process.env.PORT || 4110; // Redirect server port
+const TARGET_PORT = process.env.TARGET_PORT || 4120; // UI server port
+const TARGET_HOST = process.env.TARGET_HOST || 'localhost';
+
+// Get the project root directory
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const projectRoot = path.dirname(__dirname);
 
 // Ensure we're in the right directory
-process.chdir(path.dirname(path.dirname(fileURLToPath(import.meta.url))));
+process.chdir(projectRoot);
+
+// Log configuration
+logger.info(`Starting redirect server on port ${PORT} -> ${TARGET_HOST}:${TARGET_PORT}`);
 
 // Set up the redirect middleware
 app.use((req, res) => {

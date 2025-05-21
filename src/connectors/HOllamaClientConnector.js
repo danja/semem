@@ -2,7 +2,7 @@
  * Connector for Ollama API operations using hyperdata-clients
  */
 import logger from 'loglevel'
-import { ClientFactory as HClientFactory, OpenAI, Claude, KeyManager } from 'hyperdata-clients'
+import { ClientFactory } from 'hyperdata-clients'
 
 export default class HOllamaClientConnector {
     /**
@@ -22,7 +22,7 @@ export default class HOllamaClientConnector {
      */
     async initialize() {
         try {
-            this.client = await HClientFactory.createAPIClient('ollama', {
+            this.client = await ClientFactory.createAPIClient('ollama', {
                 apiKey: 'NO_KEY_REQUIRED',
                 baseUrl: this.baseUrl,
                 model: this.defaultModel

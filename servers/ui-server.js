@@ -20,7 +20,7 @@ const __dirname = path.dirname(path.dirname(__filename)); // Go up one level to 
 
 // Load configuration
 let config = {
-    port: parseInt(process.env.PORT) || 4100,
+    port: parseInt(process.env.PORT) || 4120, // Updated port to 4120
     graphName: process.env.GRAPH_NAME || 'http://danny.ayers.name/content',
     chatModel: process.env.CHAT_MODEL || 'qwen2:1.5b',
     embeddingModel: process.env.EMBEDDING_MODEL || 'nomic-embed-text'
