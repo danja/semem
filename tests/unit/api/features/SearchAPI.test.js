@@ -2,10 +2,12 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import SearchAPI from '../../../../src/api/features/SearchAPI.js';
 import { testUtils } from '../../../helpers/testUtils.js';
+import { v4 as uuidv4 } from 'uuid';
 
 // Mock UUID for predictable test output
+const mockV4 = vi.fn().mockReturnValue('test-uuid-123');
 vi.mock('uuid', () => ({
-  v4: () => 'test-uuid-123'
+  v4: () => mockV4()
 }));
 
 describe('SearchAPI', () => {
@@ -202,7 +204,7 @@ describe('SearchAPI', () => {
       // We need to spy on uuidv4 because the SearchAPI generates a new ID
       // instead of using the one from the mock response
       const testId = 'indexed-id';
-      const uuidSpy = vi.spyOn(require('uuid'), 'v4').mockReturnValueOnce(testId);
+      mockV4.mockReturnValueOnce(testId);
       
       const result = await api.executeOperation('index', params);
       
@@ -323,7 +325,7 @@ describe('SearchAPI', () => {
       // We need to spy on uuidv4 because the SearchAPI generates a new ID
       // instead of using the one from the mock response
       const testId = 'indexed-id';
-      const uuidSpy = vi.spyOn(require('uuid'), 'v4').mockReturnValueOnce(testId);
+      mockV4.mockReturnValueOnce(testId);
       
       const result = await api.indexContent({
         content: 'Test content to index',

@@ -1,10 +1,8 @@
 import faiss from 'faiss-node'
-import { createRequire } from 'module'
 import { kmeans } from 'ml-kmeans'
 import { logger, vectorOps } from '../Utils.js'
-
-const require = createRequire(import.meta.url)
-const { Graph } = require('graphology')
+import graphology from 'graphology'
+const { Graph } = graphology
 
 export default class MemoryStore {
     constructor(dimension = 1536) {
