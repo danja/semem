@@ -3,6 +3,12 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
+import { fileURLToPath } from 'url';
+import path from 'path';
+
+// Set up __filename and __dirname for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 import compression from 'compression';
 import swaggerUi from 'swagger-ui-express';
 import { v4 as uuidv4 } from 'uuid';
@@ -67,10 +73,6 @@ export default class HTTPServer extends BaseAPI {
         });
         
         // Serve static files from public directory
-        import { fileURLToPath } from 'url';
-        import path from 'path';
-        const __filename = fileURLToPath(import.meta.url);
-        const __dirname = path.dirname(__filename);
         const publicDir = path.join(__dirname, '..', '..', '..', '..', 'public');
         this.logger.info(`Serving static files from: ${publicDir}`);
         this.app.use(express.static(publicDir));
@@ -146,10 +148,6 @@ export default class HTTPServer extends BaseAPI {
         // Add root route for the web UI
         this.app.get('/', (req, res) => {
             // Using the publicDir from setupMiddleware
-            import { fileURLToPath } from 'url';
-            import path from 'path';
-            const __filename = fileURLToPath(import.meta.url);
-            const __dirname = path.dirname(__filename);
             const publicDir = path.join(__dirname, '..', '..', '..', '..', 'public');
             res.sendFile(path.join(publicDir, 'index.html'));
         });

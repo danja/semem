@@ -78,26 +78,38 @@ describe('MemoryManager', () => {
         });
 
         it('should handle store initialization failure', async () => {
-            mockStore.loadHistory.mockRejectedValue(new Error('Store error'));
+            const errorMessage = 'Store initialization failed';
+            
+            // Mock the loadHistory to reject with our error
+            mockStore.loadHistory.mockRejectedValueOnce(new Error(errorMessage));
             
             // Create a new instance with the error-causing mock
-            // and override the initialize method to catch the error explicitly
             const tempManager = new MemoryManager({
                 llmProvider: mockLLM,
                 storage: mockStore
             });
             
-            // Replace the default initialization with our own test
-            vi.spyOn(tempManager, 'initialize').mockImplementation(async () => {
-                try {
-                    await mockStore.loadHistory();
-                } catch (error) {
-                    throw new Error('Store error');
-                }
-            });
+            // Test that initialization fails with the expected error
+            let error = null;
+            try {
+                // Wait for initialization to complete
+                await tempManager.ensureInitialized();
+                // If we get here, the test should fail
+                throw new Error('Expected initialization to fail but it succeeded');
+            } catch (e) {
+                error = e;
+                // Verify the error was caught and has the expected message
+                expect(error).toBeDefined();
+                expect(error).toBeInstanceOf(Error);
+                expect(error.message).toBe(errorMessage);
+            }
             
-            await expect(tempManager.initialize()).rejects.toThrow('Store error');
-        });
+            // Verify loadHistory was called
+            expect(mockStore.loadHistory).toHaveBeenCalled();
+            
+            // Verify the manager is marked as not initialized
+            expect(tempManager._initialized).toBe(false);
+        }, 10000);
     });
 
     describe('Memory Operations', () => {

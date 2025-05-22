@@ -37,6 +37,10 @@ export default class MemoryManager {
         this.chatModel = String(chatModel)
         this.embeddingModel = String(embeddingModel)
 
+        // Track initialization state
+        this._initialized = false;
+        this._initialization = null;
+
         // Initialize components
         this.cacheManager = new CacheManager(cacheOptions)
         this.embeddingHandler = new EmbeddingHandler(
@@ -51,10 +55,34 @@ export default class MemoryManager {
         this.storage = storage || new InMemoryStore()
         this.contextManager = new ContextManager(contextOptions)
 
-        this.initialize()
+        // Start initialization but don't wait for it here
+        this._initialization = this.initialize().catch(error => {
+            logger.error('Failed to initialize MemoryManager:', error);
+            // Re-throw the error to ensure it's not silently swallowed
+            throw error;
+        });
+    }
+
+    /**
+     * Wait for the MemoryManager to be fully initialized
+     * @returns {Promise<void>}
+     */
+    async ensureInitialized() {
+        if (this._initialized) {
+            return;
+        }
+        if (this._initialization) {
+            await this._initialization;
+        } else {
+            await this.initialize();
+        }
     }
 
     async initialize() {
+        if (this._initialized) {
+            return;
+        }
+
         try {
             const [shortTerm, longTerm] = await this.storage.loadHistory()
             logger.info(`Loading memory history: ${shortTerm.length} short-term, ${longTerm.length} long-term items`)
@@ -72,8 +100,11 @@ export default class MemoryManager {
             this.memStore.longTermMemory.push(...longTerm)
             this.memStore.clusterInteractions()
             logger.info('Memory initialization complete')
+            this._initialized = true;
+            return this;
         } catch (error) {
             logger.error('Memory initialization failed:', error)
+            this._initialized = false;
             throw error
         }
     }
