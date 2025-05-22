@@ -324,6 +324,7 @@ Based on the above information and your knowledge, here is the user's question: 
                     }
                 }
 
+
                 // If no provider found by ID, use the default
                 if (!selectedProvider) {
                     selectedProvider = this.defaultChatProvider;
@@ -336,8 +337,39 @@ Based on the above information and your knowledge, here is the user's question: 
 
                 logger.info(`Using provider: ${selectedProvider.type}${selectedProvider.implementation ? ` (${selectedProvider.implementation})` : ''}`);
 
+                // Make sure the provider has a connector
+                if (!selectedProvider.connector) {
+                    logger.warn(`Provider ${selectedProvider.type} has no connector, initializing...`);
+                    // Initialize the connector if it doesn't exist
+                    switch (selectedProvider.type) {
+                        case 'mistral':
+                            selectedProvider.connector = new MistralConnector(
+                                selectedProvider.apiKey,
+                                selectedProvider.baseUrl,
+                                selectedProvider.chatModel
+                            );
+                            break;
+                        case 'claude':
+                            selectedProvider.connector = new HClaudeClientConnector(
+                                selectedProvider.apiKey,
+                                selectedProvider.chatModel
+                            );
+                            break;
+                        case 'ollama':
+                            selectedProvider.connector = new OllamaConnector({
+                                baseUrl: selectedProvider.baseUrl,
+                                chatModel: selectedProvider.chatModel,
+                                embeddingModel: selectedProvider.embeddingModel
+                            });
+                            break;
+                        default:
+                            throw new Error(`Unsupported provider type: ${selectedProvider.type}`);
+                    }
+                    logger.info(`Initialized connector for provider: ${selectedProvider.type}`);
+                }
+
                 // Create chat API with selected provider
-                const chatAPI = this.createChatAPI(selectedProvider, selectedProvider.chatModel);
+                const chatAPI = await this.createChatAPI(selectedProvider, selectedProvider.chatModel);
 
                 // Generate response
                 const result = await chatAPI.executeOperation('chat', {
@@ -1011,31 +1043,54 @@ Based on the above information and your knowledge, here is the user's question: 
      * Create a chat API instance with the specified provider
      * @param {Object} provider - The provider configuration
      * @param {string} model - The model to use
-     * @returns {Object} Configured ChatAPI instance
+     * @returns {Promise<Object>} Configured ChatAPI instance
      */
-    createChatAPI(provider, model) {
-        const memoryManager = new MemoryManager({
-            llmProvider: provider.connector,
-            chatModel: model || provider.chatModel,
-            embeddingProvider: this.embeddingProviders[0]?.connector,
-            embeddingModel: this.embeddingProviders[0]?.embeddingModel
-        });
+    async createChatAPI(provider, model) {
+        if (!provider.connector) {
+            throw new Error(`Provider ${provider.type} has no connector`);
+        }
 
-        const llmHandler = new LLMHandler(provider.connector, model || provider.chatModel);
+        // Ensure the provider's connector is initialized
+        try {
+            await provider.connector.initialize();
+            logger.debug(`Successfully initialized ${provider.type} connector`);
+        } catch (error) {
+            logger.error(`Failed to initialize ${provider.type} connector:`, error);
+            throw new Error(`Failed to initialize ${provider.type} provider: ${error.message}`);
+        }
 
-        const registry = {
-            get: (name) => {
-                if (name === 'memory') return memoryManager;
-                if (name === 'llm') return llmHandler;
-                throw new Error(`API ${name} not found`);
-            }
-        };
+        // Verify the connector is properly initialized
+        if (!provider.connector.client) {
+            throw new Error(`${provider.type} connector client is not initialized`);
+        }
 
-        return new ChatAPI({
-            registry,
-            similarityThreshold: 0.7,
-            contextWindow: 5
-        });
+        try {
+            const memoryManager = new MemoryManager({
+                llmProvider: provider.connector,
+                chatModel: model || provider.chatModel,
+                embeddingProvider: this.embeddingProviders[0]?.connector,
+                embeddingModel: this.embeddingProviders[0]?.embeddingModel
+            });
+
+            const llmHandler = new LLMHandler(provider.connector, model || provider.chatModel);
+
+            const registry = {
+                get: (name) => {
+                    if (name === 'memory') return memoryManager;
+                    if (name === 'llm') return llmHandler;
+                    throw new Error(`API ${name} not found`);
+                }
+            };
+
+            return new ChatAPI({
+                registry,
+                similarityThreshold: 0.7,
+                contextWindow: 5
+            });
+        } catch (error) {
+            logger.error(`Error creating chat API for ${provider.type}:`, error);
+            throw new Error(`Failed to create chat API: ${error.message}`);
+        }
     }
 
     async initializeLLMProvidersWithFallback() {
@@ -1060,20 +1115,25 @@ Based on the above information and your knowledge, here is the user's question: 
                             logger.warn('Skipping Mistral provider - no API key provided');
                             continue;
                         }
-                        connector = new MistralConnector(
+                        // Create and attach the connector to the provider
+                        provider.connector = new MistralConnector(
                             provider.apiKey,
                             provider.baseUrl,
                             provider.chatModel
                         );
-                        logger.info('Using Mistral AI API');
+                        logger.info('Mistral AI connector created and attached to provider');
+                        connector = provider.connector; // Set the local connector variable as well
                         break;
 
                     case 'ollama':
-                        connector = new OllamaConnector({
+                        // Create and attach the connector to the provider
+                        provider.connector = new OllamaConnector({
                             baseUrl: provider.baseUrl,
                             chatModel: provider.chatModel,
                             embeddingModel: provider.embeddingModel
                         });
+                        logger.info('Ollama connector created and attached to provider');
+                        connector = provider.connector; // Set the local connector variable as well
                         break;
 
                     case 'claude':
@@ -1083,11 +1143,12 @@ Based on the above information and your knowledge, here is the user's question: 
                         }
 
                         // Use hyperdata-clients implementation for Claude
-                        connector = new HClaudeClientConnector(
+                        provider.connector = new HClaudeClientConnector(
                             provider.apiKey,
                             provider.chatModel
                         );
-                        logger.info('Using Claude with hyperdata-clients implementation');
+                        logger.info('Claude connector created and attached to provider');
+                        connector = provider.connector; // Set the local connector variable as well
                         break;
 
                     case 'openai':

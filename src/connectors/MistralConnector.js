@@ -6,43 +6,57 @@ import { ClientFactory } from 'hyperdata-clients'
 
 export default class MistralConnector {
     /**
-     * Create a new HMistralClientConnector
+     * Create a new MistralConnector
      * @param {string} apiKey - Mistral API key
      * @param {string} baseUrl - Optional base URL for the API (defaults to 'https://api.mistral.ai/v1')
      * @param {string} defaultModel - Optional default model to use (defaults to 'mistral-medium')
      */
     constructor(apiKey, baseUrl = 'https://api.mistral.ai/v1', defaultModel = 'mistral-medium') {
         if (!apiKey) {
-            throw new Error('Mistral API key is required')
+            throw new Error('Mistral API key is required');
         }
 
-        this.apiKey = apiKey
-        this.baseUrl = baseUrl
-        this.defaultModel = defaultModel
-        this.client = null
-        this.initialize()
+        this.apiKey = apiKey;
+        this.baseUrl = baseUrl;
+        this.defaultModel = defaultModel;
+        this.client = null;
+        this.initialized = false;
+        this.initializing = false;
     }
 
     /**
      * Initialize the Mistral client
+     * @returns {Promise<void>}
      */
     async initialize() {
+        if (this.initialized) return;
+        if (this.initializing) {
+            // If already initializing, wait for it to complete
+            return new Promise((resolve) => {
+                const checkInitialized = () => {
+                    if (this.initialized) resolve();
+                    else setTimeout(checkInitialized, 100);
+                };
+                checkInitialized();
+            });
+        }
+
+        this.initializing = true;
         try {
-            // Create a client factory instance
             this.client = await ClientFactory.createAPIClient('mistral', {
                 apiKey: this.apiKey,
                 baseUrl: this.baseUrl,
                 model: this.defaultModel
             });
-
-            if (!this.client) {
-                throw new Error('Failed to create Mistral client: Client is null');
-            }
-
+            this.initialized = true;
             logger.debug('Mistral client initialized successfully');
         } catch (error) {
             logger.error('Failed to initialize Mistral client:', error);
+            this.initialized = false;
+            this.initializing = false;
             throw error;
+        } finally {
+            this.initializing = false;
         }
     }
 
