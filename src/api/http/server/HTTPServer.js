@@ -29,7 +29,7 @@ export default class HTTPServer extends BaseAPI {
     constructor(config = {}) {
         super(config);
         this.app = express();
-        this.registry = new APIRegistry();
+        this.registry = config.registry || new APIRegistry();
         this.port = config.port || 3000;
         this.setupMiddleware();
         this.setupRoutes();
@@ -134,6 +134,7 @@ export default class HTTPServer extends BaseAPI {
                 };
             }
             
+            console.log('[HEALTH CHECK] Components:', components);
             res.json({
                 status: 'healthy',
                 timestamp: Date.now(),
