@@ -36,22 +36,31 @@ describe('MemoryManager', () => {
       expect(mockStore.loadHistory).toHaveBeenCalled();
     });
     
-    it('should reject without LLM provider', async () => {
-      try {
-        // This will throw synchronously during construction, not during initialization
-        const invalidManager = new MemoryManager({
+    it('should reject without LLM provider', () => {
+      expect(() => {
+        new MemoryManager({
           storage: mockStore
         });
-        // If we get here, the test should fail
-        expect(true).toBe(false);
-      } catch (error) {
-        expect(error.message).toContain('LLM provider is required');
-      }
+      }).toThrow('LLM provider is required');
     });
     
     it('should handle store initialization failure', async () => {
-      mockStore.loadHistory.mockRejectedValue(new Error('Store error'));
-      await expect(initManager()).rejects.toThrow();
+      // Mock the store to reject with an error
+      mockStore.loadHistory.mockRejectedValueOnce(new Error('Store error'));
+      
+      // Create a new manager with the failing store
+      const failingManager = new MemoryManager({
+        llmProvider: mockLLM,
+        storage: mockStore,
+        chatModel: 'test-model',
+        embeddingModel: 'test-embed',
+        dimension: 1536
+      });
+      
+      // The error should be thrown when we try to use the manager
+      await expect(failingManager.ensureInitialized())
+        .rejects
+        .toThrow('Store error');
     });
   });
   

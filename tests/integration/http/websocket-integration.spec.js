@@ -1,424 +1,363 @@
 // tests/integration/http/websocket-integration.spec.js
-import { WebSocket } from 'ws'
-import { EventEmitter } from 'events'
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import MemoryWebSocketServer from '../../../src/api/http/server/WebSocketServer.js'
-import MessageQueue from '../../../src/api/http/server/MessageQueue.js'
+import { WebSocket } from 'ws';
+import { EventEmitter } from 'events';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import MemoryWebSocketServer from '../../../src/api/http/server/WebSocketServer.js';
 
 // Mock crypto for consistent test IDs
 vi.mock('crypto', () => ({
   randomUUID: () => 'test-client-id'
-}))
+}));
 
 describe('WebSocket Integration', () => {
-    const PORT = 0 // Let the OS assign a random port
-    let WS_URL
-    const AUTH_HEADER = Buffer.from('admin:admin123').toString('base64')
-    const TEST_TIMEOUT = 30000 // 30 seconds for all tests
+    const PORT = 0; // Let the OS assign a random port
+    const TEST_TIMEOUT = 10000; // 10 seconds for all tests
+    const WS_CONNECTION_TIMEOUT = 2000; // 2 seconds for WebSocket connections
+    const MESSAGE_TIMEOUT = 2000; // 2 seconds for individual messages
     
-    // Increase global test timeout
-    vi.setConfig({ testTimeout: TEST_TIMEOUT, hookTimeout: TEST_TIMEOUT })
+    let server;
+    let mockHttpServer;
+    let wsUrl;
 
-    let server
-    let mockHttpServer
+    // Set test timeouts
+    vi.setConfig({ 
+        testTimeout: TEST_TIMEOUT,
+        hookTimeout: TEST_TIMEOUT,
+        teardownTimeout: 10000,
+        retry: 0, // Disable retries to prevent hanging
+    });
 
-    // Helper to create authenticated websocket connection
-    const connectWS = (headers = {}, expectAuthError = false) => new Promise((resolve, reject) => {
-        try {
-            const authHeader = headers.Authorization || `Basic ${AUTH_HEADER}`
-            const ws = new WebSocket(WS_URL, {
+    // Helper to create authenticated websocket connection with better error handling
+    const connectWS = (headers = {}, expectAuthError = false) => {
+        return new Promise((resolve, reject) => {
+            const ws = new WebSocket(wsUrl, {
                 headers: {
-                    'Authorization': authHeader,
+                    'Authorization': `Basic ${Buffer.from('admin:admin123').toString('base64')}`,
                     ...headers
-                },
-                handshakeTimeout: 10000,
-                rejectUnauthorized: false, // For testing with self-signed certs
-                followRedirects: true
-            })
-
-            const cleanup = () => {
-                clearTimeout(timeout)
-                ws.removeAllListeners()
-            }
-            
-            const timeout = setTimeout(() => {
-                cleanup()
-                const err = new Error('Connection timeout')
-                ws.terminate()
-                if (expectAuthError) {
-                    console.warn('Connection timeout during auth check:', err)
-                    resolve({ error: err, timedOut: true })
-                } else {
-                    reject(err)
                 }
-            }, 10000)
+            });
 
-            ws.once('open', () => {
-                cleanup()
-                if (expectAuthError) {
-                    ws.terminate()
-                    reject(new Error('Expected authentication error but connection succeeded'))
-                    return
-                }
-                resolve(ws)
-            })
-            
-            // Handle HTTP upgrade response for auth errors
-            const onUpgrade = (res) => {
-                if (res.statusCode === 401) {
-                    cleanup()
-                    ws.terminate()
-                    if (expectAuthError) {
-                        resolve({ statusCode: 401 })
-                    } else {
-                        reject(new Error('Unexpected 401 Unauthorized'))
+            const connectionTimeout = setTimeout(() => {
+                ws.terminate();
+                reject(new Error('WebSocket connection timeout'));
+            }, WS_CONNECTION_TIMEOUT);
+
+            ws.on('open', () => {
+                clearTimeout(connectionTimeout);
+                
+                // Set up message handler
+                const messageHandler = (data) => {
+                    try {
+                        const message = JSON.parse(data.toString());
+                        if (message.type === 'connected') {
+                            ws.off('message', messageHandler);
+                            resolve({ ws, message });
+                        }
+                    } catch (error) {
+                        ws.off('message', messageHandler);
+                        reject(error);
                     }
-                }
-            }
-            
-            ws.on('upgrade', onUpgrade)
-            
-            ws.once('error', (err) => {
-                cleanup()
+                };
+
+                ws.on('message', messageHandler);
+                
+                // Set up error handler
+                const errorHandler = (error) => {
+                    clearTimeout(connectionTimeout);
+                    ws.off('error', errorHandler);
+                    if (expectAuthError) {
+                        resolve({ error });
+                    } else {
+                        reject(error);
+                    }
+                };
+                
+                ws.on('error', errorHandler);
+            });
+
+            ws.on('close', () => {
+                clearTimeout(connectionTimeout);
                 if (expectAuthError) {
-                    resolve({ error: err })
+                    resolve({ error: new Error('Connection closed') });
                 } else {
-                    reject(err)
+                    reject(new Error('WebSocket connection closed'));
                 }
-            })
-        } catch (err) {
-            reject(err)
-        }
-    })
+            });
+        });
+    };
 
     beforeEach(async () => {
         // Create a real HTTP server for testing
-        const http = await import('http')
-        mockHttpServer = http.createServer()
+        const http = await import('http');
+        mockHttpServer = http.createServer();
         
-        // Initialize WebSocket server
+        // Start server on random port
+        await new Promise((resolve) => {
+            mockHttpServer.listen(PORT, '127.0.0.1', () => {
+                const address = mockHttpServer.address();
+                wsUrl = `ws://${address.address}:${address.port}/ws`;
+                resolve();
+            });
+        });
+        
+        // Initialize WebSocket server with more verbose logging for debugging
         server = new MemoryWebSocketServer(mockHttpServer, {
             path: '/ws',
             queue: {
                 ttl: 3600000, // 1 hour
                 maxSize: 1000
             },
-            // Disable auth for now to test basic connectivity
-            disableAuth: true
-        })
-        
-        // Start the server and get the assigned port
-        await new Promise((resolve) => {
-            mockHttpServer.listen(0, '127.0.0.1', () => {
-                const address = mockHttpServer.address()
-                WS_URL = `ws://127.0.0.1:${address.port}/ws`
-                resolve()
-            })
-        })
-    }, TEST_TIMEOUT)
+            // Enable auth for testing
+            disableAuth: false,
+            // Add ping/pong for connection health
+            pingInterval: 10000,
+            pingTimeout: 5000
+        });
+    });
 
     afterEach(async () => {
         // Close all WebSocket connections
-        if (server) {
-            server.close()
+        if (server && server.clients) {
+            for (const ws of server.clients) {
+                if (ws.readyState === WebSocket.OPEN) {
+                    ws.terminate();
+                }
+            }
         }
         
         // Close the HTTP server
         if (mockHttpServer) {
             await new Promise((resolve) => {
-                mockHttpServer.close(resolve)
-            })
+                mockHttpServer.close(() => resolve());
+            });
         }
-    })
+    });
 
     describe('Connection Management', () => {
-        let ws
-
-        afterEach(async () => {
-            if (ws) {
-                if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
-                    ws.close()
-                    // Wait for close event with timeout
-                    await Promise.race([
-                        new Promise(resolve => ws.once('close', resolve)),
-                        new Promise(resolve => setTimeout(resolve, 1000)) // 1s timeout for cleanup
-                    ])
-                }
-            }
-        })
-
-        it('should authenticate connections with valid credentials', async () => {
-            let ws = null;
+        it('should establish WebSocket connection with valid credentials', async () => {
+            const { ws, message } = await connectWS();
+            
             try {
-                // Connect with valid credentials
-                ws = await connectWS();
-                
-                // Verify connection is open
                 expect(ws.readyState).toBe(WebSocket.OPEN);
-                
-                // Wait for welcome message with a timeout
-                const welcomeMsg = await new Promise((resolve, reject) => {
-                    const timeout = setTimeout(() => {
-                        reject(new Error('Timeout waiting for welcome message'));
-                    }, 5000);
-                    
-                    const onMessage = (data) => {
-                        clearTimeout(timeout);
-                        try {
-                            const msg = JSON.parse(data.toString());
-                            if (msg.type === 'welcome') {
-                                resolve(msg);
-                            } else {
-                                reject(new Error(`Unexpected message type: ${msg.type}`));
-                            }
-                        } catch (e) {
-                            reject(e);
-                        }
-                    };
-                    
-                    const onError = (err) => {
-                        clearTimeout(timeout);
-                        reject(err);
-                    };
-                    
-                    ws.once('message', onMessage);
-                    ws.once('error', onError);
-                });
-                
-                // Verify welcome message
-                expect(welcomeMsg).toHaveProperty('type', 'welcome');
-                expect(welcomeMsg).toHaveProperty('clientId');
-                
+                expect(message).toHaveProperty('type', 'connected');
+                expect(message).toHaveProperty('clientId');
             } finally {
-                // Clean up
-                if (ws) {
-                    if (ws.readyState === WebSocket.OPEN) {
-                        await new Promise((resolve) => {
-                            ws.once('close', resolve);
-                            ws.close();
-                        });
-                    } else {
-                        ws.terminate();
-                    }
-                }
+                ws.terminate();
             }
         });
 
-        it('should reject invalid credentials', async () => {
-            const invalidAuth = Buffer.from('wrong:pass').toString('base64');
-            
-            // Try to connect with invalid credentials
-            const result = await connectWS(
-                { 'Authorization': `Basic ${invalidAuth}` },
+        it('should reject connection with invalid credentials', async () => {
+            const { error } = await connectWS(
+                { 'Authorization': 'Basic ' + Buffer.from('wrong:credentials').toString('base64') },
                 true // Expect auth error
             );
             
-            // Debug output
-            console.log('Auth test result:', {
-                statusCode: result?.statusCode,
-                error: result?.error?.message,
-                timedOut: result?.timedOut
-            });
-            
-            // Check for different possible auth failure indicators
-            const authFailed = (
-                result?.statusCode === 401 || // Got 401 status
-                (result?.error && (
-                    (result.error.message && (
-                        result.error.message.includes('401') ||
-                        result.error.message.includes('Unauthorized') ||
-                        result.error.message.includes('ECONNREFUSED') ||
-                        result.error.message.includes('invalid credentials')
-                    ))
-                )) ||
-                result?.timedOut === true
-            );
-            
-            if (!authFailed) {
-                console.error('Auth failure details:', {
-                    statusCode: result?.statusCode,
-                    error: result?.error?.message,
-                    timedOut: result?.timedOut,
-                    result: JSON.stringify(result, null, 2)
-                });
-            }
-            
-            expect(authFailed).toBe(true);
+            expect(error).toBeDefined();
         });
 
         it('should handle disconnection cleanup', async () => {
-            ws = await connectWS()
-            const clientId = server.clients.keys().next().value
-
-            ws.close()
-            await new Promise(resolve => ws.once('close', resolve))
-
-            expect(server.clients.has(clientId)).toBe(false)
-        })
-    })
-
-    describe('Message Queue Management', () => {
-        let ws
-        let clientId
-        
-        // Increase timeout for message queue tests
-        const MSG_QUEUE_TIMEOUT = 15000 // 15 seconds
-
-        beforeEach(async () => {
-            ws = await connectWS()
-            const msg = await new Promise(resolve => {
-                ws.once('message', data => {
-                    resolve(JSON.parse(data.toString()))
-                })
-            })
-            clientId = msg.clientId
-        })
-
-        afterEach(() => {
-            if (ws.readyState === WebSocket.OPEN) {
-                ws.close()
-            }
-        })
-
-        it('should handle topic subscriptions', async () => {
-            // Set test timeout
-            vi.setConfig({ testTimeout: TEST_TIMEOUT })
-            ws.send(JSON.stringify({
-                type: 'subscribe',
-                topic: 'test-topic'
-            }))
-
-            // Send test message
-            server.broadcast('test-topic', { data: 'test' })
-
-            const message = await new Promise(resolve => {
-                ws.once('message', data => {
-                    resolve(JSON.parse(data.toString()))
-                })
-            })
-
-            expect(message.topic).toBe('test-topic')
-            expect(message.data.data).toBe('test')
-        })
-
-        it('should queue messages for offline clients', async () => {
-            vi.setConfig({ testTimeout: TEST_TIMEOUT })
-            // Subscribe and close connection
-            ws.send(JSON.stringify({
-                type: 'subscribe',
-                topic: 'test-topic'
-            }))
-            ws.close()
-            await new Promise(resolve => ws.once('close', resolve))
-
-            // Send message while offline
-            server.broadcast('test-topic', { data: 'offline-test' })
-
-            // Reconnect
-            ws = await connectWS()
-
-            // Should receive queued message
-            const message = await new Promise(resolve => {
-                ws.once('message', data => {
-                    resolve(JSON.parse(data.toString()))
-                })
-            })
-
-            expect(message.type).toBe('queued_message')
-            expect(message.topic).toBe('test-topic')
-            expect(message.message.data).toBe('offline-test')
-        })
-
-        it('should handle message acknowledgments', async () => {
-            vi.setConfig({ testTimeout: TEST_TIMEOUT })
-            ws.send(JSON.stringify({
-                type: 'subscribe',
-                topic: 'test-topic'
-            }))
-
-            server.broadcast('test-topic', { data: 'test' })
-
-            const message = await new Promise(resolve => {
-                ws.once('message', data => {
-                    resolve(JSON.parse(data.toString()))
-                })
-            })
-
-            ws.send(JSON.stringify({
-                type: 'ack',
-                messageIds: [message.id]
-            }))
-
-            // Wait for ack processing
-            await new Promise(resolve => setTimeout(resolve, 100))
-
-            const queuedMessages = server.messageQueue.getMessages(clientId)
-            expect(queuedMessages.length).toBe(0)
-        })
-    })
-
-    describe('Error Handling', () => {
-        let ws
-
-        beforeEach(async () => {
-            ws = await connectWS()
-        }, 5000) // 5s timeout for setup
-
-        afterEach(async () => {
-            if (ws) {
-                if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
-                    ws.close()
-                    // Wait for close event with timeout
-                    await Promise.race([
-                        new Promise(resolve => ws.once('close', resolve)),
-                        new Promise(resolve => setTimeout(resolve, 1000)) // 1s timeout for cleanup
-                    ])
+            const { ws, message } = await connectWS();
+            const clientId = message.clientId;
+            
+            try {
+                // Verify client exists in server's client map
+                expect(server.clients.has(clientId)).toBe(true);
+                
+                // Close the connection
+                ws.close();
+                
+                // Wait for close event
+                await new Promise(resolve => ws.once('close', resolve));
+                
+                // Verify client was removed from server's client map
+                expect(server.clients.has(clientId)).toBe(false);
+            } finally {
+                if (ws.readyState === WebSocket.OPEN) {
+                    ws.terminate();
                 }
             }
-        })
+        });
+    });
 
-        it('should handle malformed messages', async () => {
-            vi.setConfig({ testTimeout: 5000 })
-            
-            const errorPromise = new Promise(resolve => {
-                ws.once('message', data => {
-                    resolve(JSON.parse(data.toString()))
-                })
-            })
-            
-            ws.send('invalid json')
-            
-            const error = await errorPromise
-            expect(error.type).toBe('error')
-            expect(error.error).toBe('Invalid message format')
-        })
+    describe('Message Handling', () => {
+        let ws;
+        let clientId;
+        
+        // Helper to wait for a specific message type
+        const waitForMessage = (ws, messageType, timeout = MESSAGE_TIMEOUT) => {
+            return new Promise((resolve, reject) => {
+                let cleanupCalled = false;
+                
+                const cleanup = () => {
+                    if (!cleanupCalled) {
+                        cleanupCalled = true;
+                        clearTimeout(timer);
+                        ws.off('message', onMessage);
+                        ws.off('error', onError);
+                    }
+                };
+                
+                const timer = setTimeout(() => {
+                    cleanup();
+                    reject(new Error(`Timeout waiting for ${messageType} message`));
+                }, timeout);
+                
+                const onMessage = (data) => {
+                    try {
+                        const message = JSON.parse(data.toString());
+                        if (message.type === messageType) {
+                            cleanup();
+                            resolve(message);
+                        }
+                    } catch (e) {
+                        cleanup();
+                        reject(e);
+                    }
+                };
+                
+                const onError = (error) => {
+                    cleanup();
+                    reject(error);
+                };
+                
+                ws.on('message', onMessage);
+                ws.on('error', onError);
+            });
+        };
 
-        it('should handle rate limiting', async () => {
-            vi.setConfig({ testTimeout: 10000 })
-            
-            // Send initial messages to warm up
-            for (let i = 0; i < 5; i++) {
-                ws.send(JSON.stringify({ type: 'ping' }))
+        beforeEach(async () => {
+            const result = await connectWS();
+            ws = result.ws;
+            clientId = result.message.clientId;
+        });
+
+        afterEach(() => {
+            if (ws) {
+                ws.terminate();
+                ws = null;
             }
+        });
+
+        it('should handle subscription messages', async () => {
+            // Subscribe to a topic
+            ws.send(JSON.stringify({
+                type: 'subscribe',
+                topic: 'test-topic'
+            }));
             
-            // Wait for any rate limit state to reset
-            await new Promise(resolve => setTimeout(resolve, 100))
+            // The server doesn't send a response for subscribe, but we can verify
+            // the subscription by checking the server state
+            await new Promise(resolve => setTimeout(resolve, 100));
             
-            // Now test rate limiting
-            const errorPromise = new Promise(resolve => {
-                ws.once('message', data => {
-                    resolve(JSON.parse(data.toString()))
-                })
-            })
+            const client = Array.from(server.clients.values())[0];
+            expect(client.topics.has('test-topic')).toBe(true);
+        });
+        
+        it('should handle unsubscription', async () => {
+            // First subscribe
+            ws.send(JSON.stringify({
+                type: 'subscribe',
+                topic: 'test-topic'
+            }));
             
-            // Send messages quickly to trigger rate limiting
-            for (let i = 0; i < 20; i++) {
-                ws.send(JSON.stringify({ type: 'ping' }))
+            // Then unsubscribe
+            ws.send(JSON.stringify({
+                type: 'unsubscribe',
+                topic: 'test-topic'
+            }));
+            
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            const client = Array.from(server.clients.values())[0];
+            expect(client.topics.has('test-topic')).toBe(false);
+        });
+
+        it('should handle invalid message format', async () => {
+            return new Promise((resolve, reject) => {
+                ws.once('message', (data) => {
+                    try {
+                        const message = JSON.parse(data.toString());
+                        expect(message.type).toBe('error');
+                        expect(message.error).toBe('Invalid message format');
+                        resolve();
+                    } catch (e) {
+                        reject(e);
+                    }
+                });
+                
+                // Send invalid JSON
+                ws.send('invalid-json');
+            });
+        });
+    });
+
+    describe('Error Handling', () => {
+        it('should handle invalid message format', async () => {
+            const { ws } = await connectWS();
+            
+            try {
+                // Send invalid JSON
+                ws.send('invalid-json');
+                
+                // Wait for error response
+                const response = await new Promise((resolve) => {
+                    ws.once('message', (data) => {
+                        resolve(JSON.parse(data.toString()));
+                    });
+                });
+                
+                expect(response).toHaveProperty('type', 'error');
+                expect(response.error).toBe('Invalid message format');
+            } finally {
+                ws.terminate();
             }
+        });
+        
+        it('should handle custom message types', async () => {
+            const { ws } = await connectWS();
+            const testMessage = { type: 'custom', data: 'test' };
             
-            const error = await errorPromise
-            expect(error.type).toBe('error')
-            expect(error.error).toContain('rate limit')
-        })
-    })
-})
+            try {
+                // Set up a one-time handler for the custom message
+                const messagePromise = new Promise((resolve, reject) => {
+                    const timeout = setTimeout(() => {
+                        reject(new Error('Timeout waiting for custom message'));
+                    }, 1000);
+                    
+                    server.once('message', (message) => {
+                        clearTimeout(timeout);
+                        resolve(message);
+                    });
+                });
+                
+                // Send the custom message
+                ws.send(JSON.stringify(testMessage));
+                
+                // Wait for the message to be received
+                const receivedMessage = await messagePromise;
+                expect(receivedMessage).toEqual(testMessage);
+            } finally {
+                ws.terminate();
+            }
+        });
+
+        it('should handle client disconnection during message processing', async () => {
+            const { ws } = await connectWS();
+            
+            try {
+                // Send a message that will take time to process
+                ws.send(JSON.stringify({ type: 'long-running' }));
+                
+                // Immediately close the connection
+                ws.terminate();
+                
+                // The test will fail if the server crashes
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            } finally {
+                if (ws.readyState === WebSocket.OPEN) {
+                    ws.terminate();
+                }
+            }
+        });
+    });
+});

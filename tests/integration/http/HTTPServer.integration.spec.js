@@ -2,6 +2,7 @@
 import HTTPServer from '../../../src/api/http/server/HTTPServer.js'
 import fetch from 'node-fetch'
 import WebSocket from 'ws'
+import { VitestTestHelper } from '../../helpers/VitestTestHelper.js'
 
 describe('HTTPServer Integration', () => {
     let server
@@ -10,7 +11,31 @@ describe('HTTPServer Integration', () => {
     const AUTH_HEADER = Buffer.from('admin:admin123').toString('base64')
 
     beforeAll(async () => {
-        server = new HTTPServer({ port: PORT })
+        // Create mock LLM provider
+        const mockLLM = VitestTestHelper.createMockLLMProvider()
+        const mockStore = VitestTestHelper.createMockStore()
+        
+        server = new HTTPServer({ 
+            port: PORT,
+            memory: {
+                llmProvider: mockLLM,
+                storage: mockStore,
+                chatModel: 'test-model',
+                embeddingModel: 'test-embed',
+                dimension: 1536,
+                similarityThreshold: 0.7,
+                defaultLimit: 10
+            },
+            chat: {
+                llmProvider: mockLLM
+            },
+            search: {
+                // Add any required search configuration
+            },
+            // Disable WebSocket for this test
+            enableWebSocket: false
+        })
+        
         await server.initialize()
         baseUrl = `http://localhost:${PORT}`
     })
