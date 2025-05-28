@@ -11,6 +11,14 @@
   "embeddingModel": "nomic-embed-text",
   "sparqlEndpoints": [
     {
+      "queryEndpoint": "http://fuseki:3030/semem/query",
+      "updateEndpoint": "http://fuseki:3030/semem/update",
+      "auth": {
+        "user": "admin",
+        "password": "admin123"
+      }
+    },
+    {
       "queryEndpoint": "http://localhost:4030/semem/query",
       "updateEndpoint": "http://localhost:4030/semem/update",
       "auth": {
@@ -34,7 +42,9 @@
       "apiKey": "your-claude-api-key-here",
       "chatModel": "claude-3-opus-20240229",
       "priority": 1,
-      "capabilities": ["chat"],
+      "capabilities": [
+        "chat"
+      ],
       "description": "Using hyperdata-clients implementation"
     },
     {
@@ -43,7 +53,10 @@
       "chatModel": "qwen2:1.5b",
       "embeddingModel": "nomic-embed-text",
       "priority": 2,
-      "capabilities": ["embedding", "chat"],
+      "capabilities": [
+        "embedding",
+        "chat"
+      ],
       "description": "Used primarily for embeddings with nomic-embed-text"
     }
   ]

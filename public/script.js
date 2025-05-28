@@ -120,6 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initEmbeddingForm();
     initConceptsForm();
     initIndexForm();
+    initSettingsForm();
 
     // Failsafe mechanism to ensure loading indicator doesn't get stuck
     let loadingTimeout = null;
@@ -1043,6 +1044,90 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('API health check failed:', error);
             if (statusIndicator) statusIndicator.className = 'status-indicator error';
             if (statusText) statusText.textContent = 'API connection failed';
+        }
+    }
+
+    /**
+     * Initialize settings form
+     */
+    function initSettingsForm() {
+        const settingsForm = document.getElementById('settings-form');
+        if (!settingsForm) return;
+
+        // Load saved settings if any
+        loadSettings();
+
+        // Handle form submission
+        settingsForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(settingsForm);
+            const settings = {
+                memoryBackend: formData.get('memoryBackend'),
+                sparqlServer: formData.get('sparqlServer'),
+                llmProvider: formData.get('llmProvider'),
+                embeddingsProvider: formData.get('embeddingsProvider')
+            };
+
+            try {
+                // Save settings to localStorage
+                localStorage.setItem('sememSettings', JSON.stringify(settings));
+                
+                // Show success message
+                const resultDiv = document.createElement('div');
+                resultDiv.className = 'success-message';
+                resultDiv.textContent = 'Settings saved successfully!';
+                
+                // Remove any existing messages
+                const existingMessages = settingsForm.querySelector('.success-message, .error-message');
+                if (existingMessages) {
+                    existingMessages.remove();
+                }
+                
+                settingsForm.prepend(resultDiv);
+                
+                // Auto-hide success message after 3 seconds
+                setTimeout(() => {
+                    resultDiv.remove();
+                }, 3000);
+                
+            } catch (error) {
+                console.error('Error saving settings:', error);
+                displayError('Failed to save settings. Please try again.', settingsForm);
+            }
+        });
+    }
+
+    /**
+     * Load saved settings from localStorage
+     */
+    function loadSettings() {
+        try {
+            const savedSettings = localStorage.getItem('sememSettings');
+            if (savedSettings) {
+                const settings = JSON.parse(savedSettings);
+                
+                // Set form values from saved settings
+                const memoryBackend = document.getElementById('memory-backend');
+                const sparqlServer = document.getElementById('sparql-server');
+                const llmProvider = document.getElementById('llm-provider');
+                const embeddingsProvider = document.getElementById('embeddings-provider');
+                
+                if (memoryBackend && settings.memoryBackend) {
+                    memoryBackend.value = settings.memoryBackend;
+                }
+                if (sparqlServer && settings.sparqlServer) {
+                    sparqlServer.value = settings.sparqlServer;
+                }
+                if (llmProvider && settings.llmProvider) {
+                    llmProvider.value = settings.llmProvider;
+                }
+                if (embeddingsProvider && settings.embeddingsProvider) {
+                    embeddingsProvider.value = settings.embeddingsProvider;
+                }
+            }
+        } catch (error) {
+            console.error('Error loading settings:', error);
         }
     }
 });

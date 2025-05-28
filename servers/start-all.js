@@ -11,7 +11,7 @@ const __dirname = dirname(__filename);
 const projectRoot = dirname(__dirname);
 
 // Read config file
-const configPath = join(projectRoot, 'config.json');
+const configPath = join(projectRoot, 'config', 'config.json');
 const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
 
 // Get server ports from config
