@@ -151,7 +151,8 @@ h3 {
 
 .form-group input[type="text"],
 .form-group input[type="number"],
-.form-group select {
+.form-group select,
+.settings-input {
     width: 100%;
     padding: 0.8rem 1rem;
     font-size: 1rem;
@@ -174,7 +175,8 @@ h3 {
 .form-group input[type="text"]:focus,
 .form-group input[type="number"]:focus,
 .form-group select:focus,
-.form-group textarea:focus {
+.form-group textarea:focus,
+.settings-input:focus {
     outline: none;
     border-color: #3498db;
 }

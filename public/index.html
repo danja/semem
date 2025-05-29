@@ -346,48 +346,45 @@
                 
                 <form id="settings-form" class="api-form">
                     <div class="form-group">
-                        <label for="memory-backend">Memory Backend:</label>
-                        <select id="memory-backend" name="memoryBackend" class="settings-select">
-                            <option value="">-- Select Memory Backend --</option>
-                            <option value="postgres">PostgreSQL</option>
-                            <option value="sqlite">SQLite</option>
-                            <option value="mongodb">MongoDB</option>
-                            <option value="redis">Redis</option>
+                        <label for="storage-type">Storage Backend:</label>
+                        <select id="storage-type" name="storageType" class="settings-select">
+                            <option value="">-- Select Storage Backend --</option>
+                            <option value="memory">In-Memory (Volatile)</option>
+                            <option value="json">JSON File (Persistent)</option>
+                            <option value="sparql">SPARQL Store (RDF)</option>
+                            <option value="inmemory">In-Memory Store (Transient)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" id="sparql-config-group" style="display: none;">
+                        <label for="sparql-endpoint">SPARQL Endpoint:</label>
+                        <select id="sparql-endpoint" name="sparqlEndpoint" class="settings-select">
+                            <option value="">-- Select SPARQL Endpoint --</option>
                         </select>
                     </div>
 
                     <div class="form-group">
-                        <label for="sparql-server">SPARQL Server:</label>
-                        <select id="sparql-server" name="sparqlServer" class="settings-select">
-                            <option value="">-- Select SPARQL Server --</option>
-                            <option value="fuseki">Apache Jena Fuseki</option>
-                            <option value="blazegraph">Blazegraph</option>
-                            <option value="graphdb">GraphDB</option>
-                            <option value="virtuoso">Virtuoso</option>
-                        </select>
-                    </div>
-
-
-                    <div class="form-group">
-                        <label for="llm-provider">LLM Provider:</label>
-                        <select id="llm-provider" name="llmProvider" class="settings-select">
-                            <option value="">-- Select LLM Provider --</option>
-                            <option value="openai">OpenAI</option>
-                            <option value="claude">Anthropic Claude</option>
-                            <option value="llama">Llama 2</option>
-                            <option value="mistral">Mistral</option>
+                        <label for="chat-provider">Chat Provider:</label>
+                        <select id="chat-provider" name="chatProvider" class="settings-select">
+                            <option value="">-- Select Chat Provider --</option>
                         </select>
                     </div>
 
                     <div class="form-group">
-                        <label for="embeddings-provider">Embeddings Provider:</label>
-                        <select id="embeddings-provider" name="embeddingsProvider" class="settings-select">
-                            <option value="">-- Select Embeddings Provider --</option>
-                            <option value="openai">OpenAI</option>
-                            <option value="huggingface">Hugging Face</option>
-                            <option value="sentence-transformers">Sentence Transformers</option>
-                            <option value="cohere">Cohere</option>
+                        <label for="chat-model">Chat Model:</label>
+                        <input type="text" id="chat-model" name="chatModel" placeholder="Model name" class="settings-input">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="embedding-provider">Embedding Provider:</label>
+                        <select id="embedding-provider" name="embeddingProvider" class="settings-select">
+                            <option value="">-- Select Embedding Provider --</option>
                         </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="embedding-model">Embedding Model:</label>
+                        <input type="text" id="embedding-model" name="embeddingModel" placeholder="Model name" class="settings-input">
                     </div>
 
                     <div class="form-actions">

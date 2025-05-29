@@ -1,3 +1,7 @@
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+import fs from 'fs';
+
 /**
  * Configuration management for Semem system
  */
@@ -61,23 +65,121 @@ export default class Config {
             */]
     }
 
-    constructor(userConfig = {}) {
+    constructor(userConfig = {}, loadFromFile = true) {
         this.initialized = false
         this.config = {}
         this.userConfig = userConfig
+        this.loadFromFile = loadFromFile
     }
 
     async init() {
         if (this.initialized) return
 
         try {
-            this.config = this.mergeConfigs(Config.defaults, this.userConfig, 0)
+            let fileConfig = {}
+            
+            // Load config file if requested
+            if (this.loadFromFile) {
+                fileConfig = this.loadConfigFile()
+            }
+            
+            // Merge in order: defaults -> file config -> user config
+            this.config = this.mergeConfigs(Config.defaults, fileConfig, 0)
+            this.config = this.mergeConfigs(this.config, this.userConfig, 0)
+            
             this.applyEnvironmentOverrides()
             this.validateConfig()
             this.initialized = true
         } catch (error) {
             throw new Error(`Config initialization failed: ${error.message}`)
         }
+    }
+
+    loadConfigFile() {
+        try {
+            const __filename = fileURLToPath(import.meta.url)
+            const __dirname = dirname(__filename)
+            const projectRoot = dirname(__dirname)
+            const configPath = join(projectRoot, 'config', 'config.json')
+            
+            if (!fs.existsSync(configPath)) {
+                return {}
+            }
+            
+            const fileContent = fs.readFileSync(configPath, 'utf8')
+            const jsonConfig = JSON.parse(fileContent)
+            
+            // Transform JSON config to match internal structure
+            return this.transformJsonConfig(jsonConfig)
+        } catch (error) {
+            console.warn(`Warning: Could not load config file: ${error.message}`)
+            return {}
+        }
+    }
+
+    transformJsonConfig(jsonConfig) {
+        const transformed = {}
+        
+        // Map server configs
+        if (jsonConfig.servers) {
+            transformed.servers = jsonConfig.servers
+        }
+        
+        // Map SPARQL endpoints
+        if (jsonConfig.sparqlEndpoints && jsonConfig.sparqlEndpoints.length > 0) {
+            const endpoint = jsonConfig.sparqlEndpoints[0]
+            transformed.sparqlEndpoints = [{
+                label: "config-file",
+                user: endpoint.auth?.user || "admin",
+                password: endpoint.auth?.password || "admin",
+                urlBase: endpoint.queryEndpoint.replace('/semem/query', ''),
+                dataset: "semem",
+                query: "/semem",
+                update: "/semem",
+                upload: "/semem/upload",
+                gspRead: "/semem/data",
+                gspWrite: "/semem/data"
+            }]
+        }
+        
+        // Map models from LLM providers
+        if (jsonConfig.llmProviders && jsonConfig.llmProviders.length > 0) {
+            const chatProvider = jsonConfig.llmProviders.find(p => p.capabilities?.includes('chat'))
+            const embeddingProvider = jsonConfig.llmProviders.find(p => p.capabilities?.includes('embedding'))
+            
+            if (chatProvider) {
+                transformed.models = transformed.models || {}
+                transformed.models.chat = {
+                    provider: chatProvider.type,
+                    model: chatProvider.chatModel,
+                    options: {}
+                }
+            }
+            
+            if (embeddingProvider) {
+                transformed.models = transformed.models || {}
+                transformed.models.embedding = {
+                    provider: embeddingProvider.type,
+                    model: embeddingProvider.embeddingModel,
+                    options: {}
+                }
+            }
+        }
+        
+        // Map other top-level configs
+        if (jsonConfig.chatModel) {
+            transformed.models = transformed.models || {}
+            transformed.models.chat = transformed.models.chat || {}
+            transformed.models.chat.model = jsonConfig.chatModel
+        }
+        
+        if (jsonConfig.embeddingModel) {
+            transformed.models = transformed.models || {}
+            transformed.models.embedding = transformed.models.embedding || {}
+            transformed.models.embedding.model = jsonConfig.embeddingModel
+        }
+        
+        return transformed
     }
 
     // Added maxDepth parameter to prevent infinite recursion
@@ -167,10 +269,18 @@ export default class Config {
         target[last] = value
     }
 
-    static create(userConfig = {}) {
-        const config = new Config(userConfig)
+    static create(userConfig = {}, loadFromFile = true) {
+        const config = new Config(userConfig, loadFromFile)
         config.init()
         return config
+    }
+
+    static createFromFile(userConfig = {}) {
+        return Config.create(userConfig, true)
+    }
+
+    static createWithoutFile(userConfig = {}) {
+        return Config.create(userConfig, false)
     }
 
     toJSON() {

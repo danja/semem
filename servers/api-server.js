@@ -10,6 +10,7 @@ import helmet from 'helmet';
 import compression from 'compression';
 import { v4 as uuidv4 } from 'uuid';
 import rateLimit from 'express-rate-limit';
+import Config from '../src/Config.js';
 import MemoryManager from '../src/MemoryManager.js';
 import OllamaConnector from '../src/connectors/OllamaConnector.js';
 import LLMHandler from '../src/handlers/LLMHandler.js';
@@ -202,6 +203,62 @@ class APIServer {
         // Search API routes
         apiRouter.get('/search', authenticateRequest, this.createHandler('search-api', 'search'));
         apiRouter.post('/index', authenticateRequest, this.createHandler('search-api', 'index'));
+
+        // Config endpoint
+        apiRouter.get('/config', (req, res) => {
+            try {
+                const config = Config.createFromFile();
+                config.init().then(() => {
+                    // Send sanitized config (no passwords)
+                    const safeConfig = {
+                        storage: {
+                            availableTypes: ['memory', 'json', 'sparql', 'inmemory'],
+                            current: config.get('storage.type') || 'memory'
+                        },
+                        models: {
+                            chat: config.get('models.chat') || {},
+                            embedding: config.get('models.embedding') || {}
+                        },
+                        sparqlEndpoints: config.get('sparqlEndpoints') ? 
+                            config.get('sparqlEndpoints').map(ep => ({
+                                label: ep.label,
+                                urlBase: ep.urlBase,
+                                dataset: ep.dataset
+                            })) : [],
+                        llmProviders: config.config.llmProviders ? 
+                            config.config.llmProviders.map(p => ({
+                                type: p.type,
+                                implementation: p.implementation,
+                                capabilities: p.capabilities,
+                                description: p.description,
+                                priority: p.priority,
+                                chatModel: p.chatModel,
+                                embeddingModel: p.embeddingModel
+                            })) : [],
+                        // Add top-level model defaults from file config
+                        defaultChatModel: config.config.chatModel,
+                        defaultEmbeddingModel: config.config.embeddingModel
+                    };
+                    
+                    res.json({
+                        success: true,
+                        data: safeConfig
+                    });
+                }).catch(error => {
+                    logger.error('Config initialization error:', error);
+                    res.status(500).json({
+                        success: false,
+                        error: 'Failed to load configuration'
+                    });
+                });
+            } catch (error) {
+                logger.error('Config endpoint error:', error);
+                res.status(500).json({
+                    success: false,
+                    error: 'Internal server error'
+                });
+            }
+        });
 
         // Health check endpoint
         apiRouter.get('/health', (req, res) => {

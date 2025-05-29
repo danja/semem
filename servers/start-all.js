@@ -2,20 +2,21 @@
 
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-import fs from 'fs';
 import ServerManager from './server-manager.js';
+import Config from '../src/Config.js';
 
 // Get directory name for ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const projectRoot = dirname(__dirname);
 
-// Read config file
-const configPath = join(projectRoot, 'config', 'config.json');
-const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+// Use consolidated config system
+const configInstance = Config.createFromFile();
+await configInstance.init();
+const config = configInstance.config;
 
 // Get server ports from config
-const { api, ui, redirect, redirectTarget } = config.servers;
+const { api, ui } = config.servers;
 
 // Create server manager instance
 const serverManager = new ServerManager();
@@ -43,23 +44,11 @@ const startServers = async () => {
             { NODE_ENV: 'production' }
         );
 
-        // Start redirect server
-        await serverManager.startServer(
-            join(__dirname, 'redirect-server.js'),
-            'Redirect Server',
-            redirect,
-            { 
-                TARGET_PORT: redirectTarget,
-                NODE_ENV: 'production' 
-            }
-        );
-
         console.log('\n--- All servers started successfully! ---');
         console.log(`- API Server:      http://localhost:${api}`);
         console.log(`- UI Server:       http://localhost:${ui}`);
-        console.log(`- Redirect Server: http://localhost:${redirect} -> http://localhost:${redirectTarget}`);
         console.log('\nPress Ctrl+C to stop all servers');
-        
+
     } catch (error) {
         console.error('\n❌ Error starting servers:', error.message);
         await serverManager.stopAllServers();
