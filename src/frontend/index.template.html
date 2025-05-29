@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Semem API Interface</title>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>Semem API Interface</h1>
+            <p>Interact with the Semantic Memory API system</p>
+        </header>
+
+        <nav class="tabs">
+            <button class="tab-btn active" data-tab="search">Search</button>
+            <button class="tab-btn" data-tab="memory">Memory</button>
+            <button class="tab-btn" data-tab="chat">Chat</button>
+            <button class="tab-btn" data-tab="embeddings">Embeddings</button>
+            <button class="tab-btn" data-tab="concepts">Concepts</button>
+            <button class="tab-btn" data-tab="index">Index</button>
+            <button class="tab-btn" data-tab="settings">Settings</button>
+        </nav>
+
+        <main>
+            <!-- Search Tab -->
+            <section id="search-tab" class="tab-content active">
+                <h2>Semantic Search</h2>
+                <form id="search-form" class="api-form">
+                    <div class="form-group">
+                        <label for="search-input">Search Query:</label>
+                        <input type="text" id="search-input" name="query" placeholder="Enter your search query..."
+                            required autocomplete="off">
+                    </div>
+
+                    <div class="form-options">
+                        <div class="form-group">
+                            <label for="search-limit">Results:</label>
+                            <select id="search-limit" name="limit">
+                                <option value="5">5</option>
+                                <option value="10">10</option>
+                                <option value="15">15</option>
+                                <option value="20">20</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="search-threshold">Threshold:</label>
+                            <input type="range" id="search-threshold" name="threshold" min="0" max="1" step="0.1"
+                                value="0.7">
+                            <span id="threshold-value">0.7</span>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="search-types">Content Types:</label>
+                            <input type="text" id="search-types" name="types"
+                                placeholder="E.g., article,document (optional)">
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn primary-btn">Search</button>
+                    </div>
+                </form>
+
+                <div class="results-section">
+                    <div id="search-results" class="results-container">
+                        <div class="results-placeholder">
+                            <p>Enter a search query above to find semantically similar content</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Memory Tab -->
+            <section id="memory-tab" class="tab-content">
+                <h2>Memory Management</h2>
+
+                <div class="tabs-inner">
+                    <button class="tab-inner-btn active" data-inner-tab="store-memory">Store</button>
+                    <button class="tab-inner-btn" data-inner-tab="search-memory">Search</button>
+                </div>
+
+                <!-- Store Memory Form -->
+                <div id="store-memory" class="inner-tab-content active">
+                    <form id="memory-store-form" class="api-form">
+                        <div class="form-group">
+                            <label for="memory-prompt">Prompt:</label>
+                            <textarea id="memory-prompt" name="prompt" placeholder="Enter the user prompt..."
+                                required></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="memory-response">Response:</label>
+                            <textarea id="memory-response" name="response" placeholder="Enter the response..."
+                                required></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="memory-metadata">Metadata (JSON):</label>
+                            <textarea id="memory-metadata" name="metadata"
+                                placeholder='{"key": "value"} (optional)'></textarea>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn primary-btn">Store Memory</button>
+                        </div>
+                    </form>
+
+                    <div id="memory-store-result" class="api-result hidden"></div>
+                </div>
+
+                <!-- Search Memory Form -->
+                <div id="search-memory" class="inner-tab-content">
+                    <form id="memory-search-form" class="api-form">
+                        <div class="form-group">
+                            <label for="memory-query">Search Query:</label>
+                            <input type="text" id="memory-query" name="query" placeholder="Enter your search query..."
+                                required>
+                        </div>
+
+                        <div class="form-options">
+                            <div class="form-group">
+                                <label for="memory-limit">Results:</label>
+                                <select id="memory-limit" name="limit">
+                                    <option value="5">5</option>
+                                    <option value="10">10</option>
+                                    <option value="15">15</option>
+                                    <option value="20">20</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="memory-threshold">Threshold:</label>
+                                <input type="range" id="memory-threshold" name="threshold" min="0" max="1" step="0.1"
+                                    value="0.7">
+                                <span id="memory-threshold-value">0.7</span>
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn primary-btn">Search Memory</button>
+                        </div>
+                    </form>
+
+                    <div id="memory-search-results" class="results-container">
+                        <div class="results-placeholder">
+                            <p>Search memories to see results</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Chat Tab -->
+            <section id="chat-tab" class="tab-content">
+                <h2>Chat Interaction</h2>
+
+                <div class="tabs-inner">
+                    <button class="tab-inner-btn active" data-inner-tab="chat-standard">Standard</button>
+                    <button class="tab-inner-btn" data-inner-tab="chat-stream">Streaming</button>
+                </div>
+
+                <!-- Standard Chat -->
+                <div id="chat-standard" class="inner-tab-content active">
+                    <div class="chat-container">
+                        <div id="chat-messages" class="chat-messages">
+                            <div class="chat-welcome">
+                                <p>Start a new conversation with the AI assistant.</p>
+                            </div>
+                        </div>
+
+                        <form id="chat-form" class="chat-input-form">
+                            <div class="form-options chat-options">
+                                <div class="form-group">
+                                    <label for="chat-provider">Provider:</label>
+                                    <select id="chat-provider" name="provider" class="provider-select">
+                                        <option value="" disabled selected>Loading providers...</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="chat-temperature">Temperature:</label>
+                                    <input type="range" id="chat-temperature" name="temperature" min="0" max="2"
+                                        step="0.1" value="0.7">
+                                    <span id="temperature-value">0.7</span>
+                                </div>
+                                <div class="form-group checkbox-group">
+                                    <input type="checkbox" id="chat-memory" name="useMemory" checked>
+                                    <label for="chat-memory">Use Memory</label>
+                                </div>
+                            </div>
+
+                            <div class="chat-input-container">
+                                <textarea id="chat-input" name="prompt" placeholder="Type your message..."
+                                    required></textarea>
+                                <button type="submit" class="btn send-btn">Send</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Streaming Chat -->
+                <div id="chat-stream" class="inner-tab-content">
+                    <div class="chat-container">
+                        <div id="chat-stream-messages" class="chat-messages">
+                            <div class="chat-welcome">
+                                <p>Start a new streaming conversation with the AI assistant.</p>
+                            </div>
+                        </div>
+
+                        <form id="chat-stream-form" class="chat-input-form">
+                            <div class="form-options chat-options">
+                                <div class="form-group">
+                                    <label for="chat-stream-provider">Provider:</label>
+                                    <select id="chat-stream-provider" name="provider" class="provider-select">
+                                        <option value="" disabled selected>Loading providers...</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="chat-stream-temperature">Temperature:</label>
+                                    <input type="range" id="chat-stream-temperature" name="temperature" min="0" max="2"
+                                        step="0.1" value="0.7">
+                                    <span id="stream-temperature-value">0.7</span>
+                                </div>
+                                <div class="form-group checkbox-group">
+                                    <input type="checkbox" id="chat-stream-memory" name="useMemory" checked>
+                                    <label for="chat-stream-memory">Use Memory</label>
+                                </div>
+                            </div>
+
+                            <div class="chat-input-container">
+                                <textarea id="chat-stream-input" name="prompt" placeholder="Type your message..."
+                                    required></textarea>
+                                <button type="submit" class="btn send-btn">Stream</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Embeddings Tab -->
+            <section id="embeddings-tab" class="tab-content">
+                <h2>Generate Embeddings</h2>
+
+                <form id="embedding-form" class="api-form">
+                    <div class="form-group">
+                        <label for="embedding-text">Text:</label>
+                        <textarea id="embedding-text" name="text" placeholder="Enter text to generate embeddings for..."
+                            required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="embedding-model">Model (optional):</label>
+                        <input type="text" id="embedding-model" name="model" placeholder="Embedding model name">
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn primary-btn">Generate Embedding</button>
+                    </div>
+                </form>
+
+                <div id="embedding-result" class="api-result hidden">
+                    <h3>Embedding Result</h3>
+                    <div class="result-stats">
+                        <div class="stat-item">
+                            <span class="stat-label">Dimensions:</span>
+                            <span id="embedding-dimensions" class="stat-value">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Model:</span>
+                            <span id="embedding-model-name" class="stat-value">default</span>
+                        </div>
+                    </div>
+                    <div class="embedding-preview">
+                        <p>Embedding vector (first 10 values):</p>
+                        <code id="embedding-preview"></code>
+                        <button id="copy-embedding" class="btn small-btn">Copy Full Vector</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Concepts Tab -->
+            <section id="concepts-tab" class="tab-content">
+                <h2>Extract Concepts</h2>
+
+                <form id="concepts-form" class="api-form">
+                    <div class="form-group">
+                        <label for="concepts-text">Text:</label>
+                        <textarea id="concepts-text" name="text" placeholder="Enter text to extract concepts from..."
+                            required></textarea>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn primary-btn">Extract Concepts</button>
+                    </div>
+                </form>
+
+                <div id="concepts-result" class="api-result hidden">
+                    <h3>Extracted Concepts</h3>
+                    <div id="concepts-list" class="concepts-list">
+                        <!-- Concepts will be displayed here -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Index Tab -->
+            <section id="index-tab" class="tab-content">
+                <h2>Index Content</h2>
+
+                <form id="index-form" class="api-form">
+                    <div class="form-group">
+                        <label for="index-title">Title:</label>
+                        <input type="text" id="index-title" name="title" placeholder="Content title">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="index-content">Content:</label>
+                        <textarea id="index-content" name="content" placeholder="Enter content to index..."
+                            required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="index-type">Content Type:</label>
+                        <input type="text" id="index-type" name="type" placeholder="E.g., article, document" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="index-metadata">Metadata (JSON):</label>
+                        <textarea id="index-metadata" name="metadata"
+                            placeholder='{"key": "value"} (optional)'></textarea>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn primary-btn">Index Content</button>
+                    </div>
+                </form>
+
+                <div id="index-result" class="api-result hidden"></div>
+            </section>
+
+            <!-- Settings Tab -->
+            <section id="settings-tab" class="tab-content">
+                <h2>System Settings</h2>
+                
+                <form id="settings-form" class="api-form">
+                    <div class="form-group">
+                        <label for="storage-type">Storage Backend:</label>
+                        <select id="storage-type" name="storageType" class="settings-select">
+                            <option value="">-- Select Storage Backend --</option>
+                            <option value="memory">In-Memory (Volatile)</option>
+                            <option value="json">JSON File (Persistent)</option>
+                            <option value="sparql">SPARQL Store (RDF)</option>
+                            <option value="inmemory">In-Memory Store (Transient)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" id="sparql-config-group" style="display: none;">
+                        <label for="sparql-endpoint">SPARQL Endpoint:</label>
+                        <select id="sparql-endpoint" name="sparqlEndpoint" class="settings-select">
+                            <option value="">-- Select SPARQL Endpoint --</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="chat-provider">Chat Provider:</label>
+                        <select id="chat-provider" name="chatProvider" class="settings-select">
+                            <option value="">-- Select Chat Provider --</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="chat-model">Chat Model:</label>
+                        <input type="text" id="chat-model" name="chatModel" placeholder="Model name" class="settings-input">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="embedding-provider">Embedding Provider:</label>
+                        <select id="embedding-provider" name="embeddingProvider" class="settings-select">
+                            <option value="">-- Select Embedding Provider --</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="embedding-model">Embedding Model:</label>
+                        <input type="text" id="embedding-model" name="embeddingModel" placeholder="Model name" class="settings-input">
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn primary-btn">Save Settings</button>
+                    </div>
+                </form>
+            </section>
+        </main>
+
+        <!-- Loading indicator -->
+        <div id="loading-indicator" class="hidden">
+            <div class="spinner"></div>
+            <p>Processing...</p>
+        </div>
+
+        <footer>
+            <p>Powered by Semem: Semantic Memory for Intelligent Agents</p>
+            <div id="api-status" class="api-status">
+                <span class="status-indicator"></span>
+                <span class="status-text">Checking API...</span>
+                <div id="debug-info" style="margin-top:5px; font-size:12px; color:#666;"></div>
+            </div>
+        </footer>
+    </div>
+</body>
+
+</html>

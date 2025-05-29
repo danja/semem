@@ -40,7 +40,8 @@ const __dirname = path.dirname(path.dirname(__filename)); // Go up one level to 
 class APIServer {
     constructor() {
         this.port = process.env.PORT || 4100; // Updated port to 4100
-        this.publicDir = path.join(__dirname, 'public');
+        this.publicDir = path.join(__dirname, '../public');
+        this.distDir = path.join(__dirname, '../public/dist');
         this.app = express();
         this.server = null;
         this.apiContext = {};
@@ -312,13 +313,13 @@ class APIServer {
         // Mount API router
         this.app.use('/api', apiRouter);
 
-        // Serve static files
-        logger.info(`Serving static files from: ${this.publicDir}`);
-        this.app.use(express.static(this.publicDir));
+        // Serve webpack-built static files
+        logger.info(`Serving static files from: ${this.distDir}`);
+        this.app.use(express.static(this.distDir));
 
-        // Root route for web UI
+        // Root route for web UI (webpack-built index.html)
         this.app.get('/', (req, res) => {
-            res.sendFile(path.join(this.publicDir, 'index.html'));
+            res.sendFile(path.join(this.distDir, 'index.html'));
         });
 
         // Handle 404 errors
