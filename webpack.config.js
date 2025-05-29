@@ -14,7 +14,7 @@ export default {
   
   output: {
     path: path.resolve(__dirname, 'public/dist'),
-    filename: '[name].[contenthash].js',
+    filename: process.env.NODE_ENV === 'production' ? '[name].[contenthash].js' : '[name].js',
     clean: true,
     publicPath: '/dist/'
   },
@@ -68,7 +68,7 @@ export default {
     },
     compress: true,
     port: 9000,
-    hot: true,
+    hot: process.env.NODE_ENV !== 'production', // Only enable HMR in development
     proxy: [
       {
         context: ['/api'],
@@ -92,7 +92,10 @@ export default {
     },
   },
   
-  experiments: {
-    outputModule: true
-  }
+  // Only use ES modules for production to avoid HMR conflicts
+  ...(process.env.NODE_ENV === 'production' && {
+    experiments: {
+      outputModule: true
+    }
+  })
 };

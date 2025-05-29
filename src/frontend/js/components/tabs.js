@@ -24,6 +24,12 @@ export function initTabs() {
             // Update content visibility
             tabContents.forEach(content => content.classList.remove('active'));
             document.getElementById(`${tabId}-tab`).classList.add('active');
+            
+            // Trigger settings initialization when settings tab is activated
+            if (tabId === 'settings') {
+                // Dispatch custom event for settings tab activation
+                window.dispatchEvent(new CustomEvent('settingsTabActivated'));
+            }
         });
     });
     

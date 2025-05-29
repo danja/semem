@@ -12,11 +12,11 @@
   "scripts": {
     "start": "node servers/start-all.js",
     "start:dev": "npm run build:dev && node servers/start-all.js",
-    "stop": "pkill -f 'node servers/start-all\\.js' || true",
+    "stop": "pkill -f 'node servers/start-all\\.js' || true; pkill -f 'webpack.*serve' || true",
     "build": "webpack --mode=production",
     "build:dev": "webpack --mode=development",
     "build:watch": "webpack --mode=development --watch",
-    "dev:server": "webpack serve --mode=development",
+    "dev": "webpack serve --mode=development",
     "test": "vitest run --run --exclude=**/*.llm.* --exclude=**/llms/** --exclude=**/Ollama* --exclude=**/embeddings/** --exclude=**/search/SearchService.test.js",
     "test:llms": "vitest run --run --include=**/*.llm.* **/llms/** **/Ollama* **/embeddings/** **/search/SearchService.test.js",
     "test:mocked": "./run-mocked-tests.sh",

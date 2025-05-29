@@ -16,10 +16,27 @@ Docs below courtesy Claude.
 [![npm version](https://img.shields.io/npm/v/semem?style=flat-square)](https://www.npmjs.com/package/semem)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 
- 1. For development: Run npm run dev:server for hot-reloading dev server
-  2. For production: Run npm run build && npm start
-  3. Watch mode: Run npm run build:watch to rebuild on changes
+```sh
+./start.sh
+
+./stop.sh
+```
+
+ 1. For development: Run npm run dev for hot-reloading dev server
+ 2. For production: Run npm run build && npm start
+ 3. Watch mode: Run npm run build:watch to rebuild on changes
   
+  npm stop
+
+  ```sh
+  Bash(netstat -tulpn 2>/dev/null | grep :9000)…
+  ⎿  tcp6       0      0 :::9000                 :::*                    LISTEN      952322/webpack
+
+  Bash(kill -9 952322)…
+```
+
+curl -s http://localhost:4100/api/config | python3 -m json.tool
+
 ## Overview
 
 Semem (Semantic Memory) is a Node.js library for intelligent agent memory management that integrates large language models (LLMs) with Semantic Web technologies (RDF/SPARQL). It provides a memory system for AI applications with multiple storage backends and LLM provider integrations.

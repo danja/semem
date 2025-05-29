@@ -220,12 +220,47 @@ class APIServer {
                             chat: config.get('models.chat') || {},
                             embedding: config.get('models.embedding') || {}
                         },
-                        sparqlEndpoints: config.get('sparqlEndpoints') ? 
-                            config.get('sparqlEndpoints').map(ep => ({
-                                label: ep.label,
-                                urlBase: ep.urlBase,
-                                dataset: ep.dataset
-                            })) : [],
+                        sparqlEndpoints: (() => {
+                            const endpoints = [];
+                            
+                            // Add endpoints from Config.js defaults (urlBase format)
+                            const configEndpoints = config.get('sparqlEndpoints');
+                            if (configEndpoints && configEndpoints.length > 0) {
+                                configEndpoints.forEach(ep => {
+                                    if (ep.urlBase) {
+                                        endpoints.push({
+                                            label: ep.label,
+                                            urlBase: ep.urlBase,
+                                            dataset: ep.dataset,
+                                            queryEndpoint: `${ep.urlBase}${ep.query}`,
+                                            updateEndpoint: `${ep.urlBase}${ep.update}`
+                                        });
+                                    }
+                                });
+                            }
+                            
+                            // Add endpoints from config.json (queryEndpoint format)
+                            const fileEndpoints = config.config.sparqlEndpoints;
+                            if (fileEndpoints && fileEndpoints.length > 0) {
+                                fileEndpoints.forEach((ep, index) => {
+                                    if (ep.queryEndpoint) {
+                                        const urlBase = ep.queryEndpoint.replace('/semem/query', '');
+                                        endpoints.push({
+                                            label: `JSON Config Endpoint ${index + 1}`,
+                                            urlBase: urlBase,
+                                            dataset: 'semem',
+                                            queryEndpoint: ep.queryEndpoint,
+                                            updateEndpoint: ep.updateEndpoint,
+                                            auth: ep.auth ? {
+                                                user: ep.auth.user
+                                            } : null
+                                        });
+                                    }
+                                });
+                            }
+                            
+                            return endpoints;
+                        })(),
                         llmProviders: config.config.llmProviders ? 
                             config.config.llmProviders.map(p => ({
                                 type: p.type,

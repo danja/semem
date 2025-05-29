@@ -360,6 +360,15 @@
                         <select id="sparql-endpoint" name="sparqlEndpoint" class="settings-select">
                             <option value="">-- Select SPARQL Endpoint --</option>
                         </select>
+                        
+                        <div id="custom-endpoint-group" style="display: none; margin-top: 10px;">
+                            <label for="custom-endpoint-url">Custom Endpoint URL:</label>
+                            <input type="text" id="custom-endpoint-url" placeholder="http://localhost:3030" class="settings-input">
+                            <label for="custom-endpoint-user">Username (optional):</label>
+                            <input type="text" id="custom-endpoint-user" placeholder="admin" class="settings-input">
+                            <label for="custom-endpoint-password">Password (optional):</label>
+                            <input type="password" id="custom-endpoint-password" placeholder="password" class="settings-input">
+                        </div>
                     </div>
 
                     <div class="form-group">
@@ -367,6 +376,22 @@
                         <select id="chat-provider" name="chatProvider" class="settings-select">
                             <option value="">-- Select Chat Provider --</option>
                         </select>
+                        
+                        <div id="custom-chat-provider-group" style="display: none; margin-top: 10px;">
+                            <label for="custom-chat-type">Provider Type:</label>
+                            <select id="custom-chat-type" class="settings-select">
+                                <option value="">-- Select Provider Type --</option>
+                                <option value="ollama">Ollama</option>
+                                <option value="claude">Claude</option>
+                                <option value="openai">OpenAI</option>
+                                <option value="mistral">Mistral</option>
+                                <option value="other">Other</option>
+                            </select>
+                            <label for="custom-chat-url">Base URL (optional):</label>
+                            <input type="text" id="custom-chat-url" placeholder="http://localhost:11434" class="settings-input">
+                            <label for="custom-chat-api-key">API Key (optional):</label>
+                            <input type="password" id="custom-chat-api-key" placeholder="your-api-key" class="settings-input">
+                        </div>
                     </div>
 
                     <div class="form-group">
@@ -379,6 +404,21 @@
                         <select id="embedding-provider" name="embeddingProvider" class="settings-select">
                             <option value="">-- Select Embedding Provider --</option>
                         </select>
+                        
+                        <div id="custom-embedding-provider-group" style="display: none; margin-top: 10px;">
+                            <label for="custom-embedding-type">Provider Type:</label>
+                            <select id="custom-embedding-type" class="settings-select">
+                                <option value="">-- Select Provider Type --</option>
+                                <option value="ollama">Ollama</option>
+                                <option value="openai">OpenAI</option>
+                                <option value="huggingface">Hugging Face</option>
+                                <option value="other">Other</option>
+                            </select>
+                            <label for="custom-embedding-url">Base URL (optional):</label>
+                            <input type="text" id="custom-embedding-url" placeholder="http://localhost:11434" class="settings-input">
+                            <label for="custom-embedding-api-key">API Key (optional):</label>
+                            <input type="password" id="custom-embedding-api-key" placeholder="your-api-key" class="settings-input">
+                        </div>
                     </div>
 
                     <div class="form-group">

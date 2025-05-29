@@ -13,6 +13,11 @@ export function initSettingsForm() {
 
     // Load config from server first, then populate UI
     loadConfigFromServer();
+    
+    // Listen for settings tab activation to reload config
+    window.addEventListener('settingsTabActivated', () => {
+        loadConfigFromServer();
+    });
 
     // Handle storage type changes
     const storageType = document.getElementById('storage-type');
@@ -27,19 +32,122 @@ export function initSettingsForm() {
             }
         });
     }
+    
+    // Handle SPARQL endpoint selection
+    const sparqlEndpoint = document.getElementById('sparql-endpoint');
+    const customEndpointGroup = document.getElementById('custom-endpoint-group');
+    
+    if (sparqlEndpoint && customEndpointGroup) {
+        sparqlEndpoint.addEventListener('change', (e) => {
+            if (e.target.value === 'custom') {
+                customEndpointGroup.style.display = 'block';
+            } else {
+                customEndpointGroup.style.display = 'none';
+            }
+        });
+    }
+    
+    // Handle Chat Provider selection
+    const chatProvider = document.getElementById('chat-provider');
+    const customChatProviderGroup = document.getElementById('custom-chat-provider-group');
+    
+    if (chatProvider && customChatProviderGroup) {
+        chatProvider.addEventListener('change', (e) => {
+            if (e.target.value === 'custom') {
+                customChatProviderGroup.style.display = 'block';
+            } else {
+                customChatProviderGroup.style.display = 'none';
+            }
+        });
+    }
+    
+    // Handle Embedding Provider selection
+    const embeddingProvider = document.getElementById('embedding-provider');
+    const customEmbeddingProviderGroup = document.getElementById('custom-embedding-provider-group');
+    
+    if (embeddingProvider && customEmbeddingProviderGroup) {
+        embeddingProvider.addEventListener('change', (e) => {
+            if (e.target.value === 'custom') {
+                customEmbeddingProviderGroup.style.display = 'block';
+            } else {
+                customEmbeddingProviderGroup.style.display = 'none';
+            }
+        });
+    }
 
     // Handle form submission
     settingsForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         
         const formData = new FormData(settingsForm);
+        
+        // Handle custom endpoint
+        let sparqlEndpoint = formData.get('sparqlEndpoint');
+        let customEndpointData = null;
+        
+        if (sparqlEndpoint === 'custom') {
+            const customUrl = document.getElementById('custom-endpoint-url').value;
+            const customUser = document.getElementById('custom-endpoint-user').value;
+            const customPassword = document.getElementById('custom-endpoint-password').value;
+            
+            if (customUrl) {
+                sparqlEndpoint = customUrl;
+                customEndpointData = {
+                    url: customUrl,
+                    user: customUser,
+                    password: customPassword
+                };
+            }
+        }
+        
+        // Handle custom chat provider
+        let chatProvider = formData.get('chatProvider');
+        let customChatProviderData = null;
+        
+        if (chatProvider === 'custom') {
+            const customType = document.getElementById('custom-chat-type').value;
+            const customUrl = document.getElementById('custom-chat-url').value;
+            const customApiKey = document.getElementById('custom-chat-api-key').value;
+            
+            if (customType) {
+                chatProvider = customType;
+                customChatProviderData = {
+                    type: customType,
+                    baseUrl: customUrl,
+                    apiKey: customApiKey
+                };
+            }
+        }
+        
+        // Handle custom embedding provider
+        let embeddingProvider = formData.get('embeddingProvider');
+        let customEmbeddingProviderData = null;
+        
+        if (embeddingProvider === 'custom') {
+            const customType = document.getElementById('custom-embedding-type').value;
+            const customUrl = document.getElementById('custom-embedding-url').value;
+            const customApiKey = document.getElementById('custom-embedding-api-key').value;
+            
+            if (customType) {
+                embeddingProvider = customType;
+                customEmbeddingProviderData = {
+                    type: customType,
+                    baseUrl: customUrl,
+                    apiKey: customApiKey
+                };
+            }
+        }
+        
         const settings = {
             storageType: formData.get('storageType'),
-            sparqlEndpoint: formData.get('sparqlEndpoint'),
-            chatProvider: formData.get('chatProvider'),
+            sparqlEndpoint: sparqlEndpoint,
+            customEndpoint: customEndpointData,
+            chatProvider: chatProvider,
             chatModel: formData.get('chatModel'),
-            embeddingProvider: formData.get('embeddingProvider'),
-            embeddingModel: formData.get('embeddingModel')
+            customChatProvider: customChatProviderData,
+            embeddingProvider: embeddingProvider,
+            embeddingModel: formData.get('embeddingModel'),
+            customEmbeddingProvider: customEmbeddingProviderData
         };
 
         try {
@@ -120,22 +228,70 @@ function populateSettingsFromConfig(config) {
 
     // Populate SPARQL endpoints
     const sparqlEndpoint = document.getElementById('sparql-endpoint');
-    if (sparqlEndpoint && config.sparqlEndpoints && config.sparqlEndpoints.length > 0) {
+    if (sparqlEndpoint) {
         // Clear existing options except first
         sparqlEndpoint.innerHTML = '<option value="">-- Select SPARQL Endpoint --</option>';
         
         let defaultEndpoint = null;
-        config.sparqlEndpoints.forEach((endpoint, index) => {
-            const option = document.createElement('option');
-            option.value = endpoint.urlBase;
-            option.textContent = `${endpoint.label} (${endpoint.urlBase})`;
-            sparqlEndpoint.appendChild(option);
-            
-            // Use first endpoint as default
-            if (index === 0) {
-                defaultEndpoint = endpoint.urlBase;
-            }
-        });
+        let endpointsToProcess = [];
+        
+        // Handle both config.sparqlEndpoints (from Config.js) and config.sparqlEndpoints (from config.json)
+        if (config.sparqlEndpoints && config.sparqlEndpoints.length > 0) {
+            // Process endpoints from either format
+            config.sparqlEndpoints.forEach((endpoint, index) => {
+                let endpointData;
+                
+                if (endpoint.urlBase) {
+                    // Config.js format
+                    endpointData = {
+                        url: endpoint.urlBase,
+                        label: endpoint.label || `Endpoint ${index + 1}`,
+                        auth: {
+                            user: endpoint.user,
+                            password: endpoint.password
+                        }
+                    };
+                } else if (endpoint.queryEndpoint) {
+                    // config.json format
+                    endpointData = {
+                        url: endpoint.queryEndpoint.replace('/semem/query', ''),
+                        label: `SPARQL Server ${index + 1}`,
+                        auth: endpoint.auth
+                    };
+                }
+                
+                if (endpointData) {
+                    endpointsToProcess.push(endpointData);
+                    
+                    const option = document.createElement('option');
+                    option.value = endpointData.url;
+                    option.textContent = `${endpointData.label} (${endpointData.url})`;
+                    
+                    // Add auth info to the display if available
+                    if (endpointData.auth && endpointData.auth.user) {
+                        option.textContent += ` [${endpointData.auth.user}]`;
+                    }
+                    
+                    sparqlEndpoint.appendChild(option);
+                    
+                    // Use first endpoint as default
+                    if (index === 0) {
+                        defaultEndpoint = endpointData.url;
+                    }
+                }
+            });
+        }
+        
+        // Always add custom endpoint option at the end
+        const customOption = document.createElement('option');
+        customOption.value = 'custom';
+        customOption.textContent = '+ Add Custom Endpoint';
+        sparqlEndpoint.appendChild(customOption);
+        
+        // Store processed endpoints for reference
+        if (endpointsToProcess.length > 0) {
+            localStorage.setItem('sememSparqlEndpoints', JSON.stringify(endpointsToProcess));
+        }
         
         // Set default SPARQL endpoint
         if (defaultEndpoint) {
@@ -188,19 +344,78 @@ function populateSettingsFromConfig(config) {
             }
         });
         
+        // Add custom provider options
+        if (chatProvider) {
+            const customChatOption = document.createElement('option');
+            customChatOption.value = 'custom';
+            customChatOption.textContent = '+ Add Custom Chat Provider';
+            chatProvider.appendChild(customChatOption);
+        }
+        
+        if (embeddingProvider) {
+            const customEmbeddingOption = document.createElement('option');
+            customEmbeddingOption.value = 'custom';
+            customEmbeddingOption.textContent = '+ Add Custom Embedding Provider';
+            embeddingProvider.appendChild(customEmbeddingOption);
+        }
+        
         // Set current provider selections
         if (currentChatProvider && chatProvider) {
             chatProvider.value = currentChatProvider;
-        } else if (chatProvider.children.length > 1) {
+        } else if (chatProvider && chatProvider.children.length > 1) {
             // Select first available option if no current provider
             chatProvider.selectedIndex = 1;
         }
         
         if (currentEmbeddingProvider && embeddingProvider) {
             embeddingProvider.value = currentEmbeddingProvider;
-        } else if (embeddingProvider.children.length > 1) {
+        } else if (embeddingProvider && embeddingProvider.children.length > 1) {
             // Select first available option if no current provider
             embeddingProvider.selectedIndex = 1;
+        }
+    } else {
+        // No providers configured in llmProviders, but add current active providers
+        if (chatProvider) {
+            chatProvider.innerHTML = '<option value="">-- Select Chat Provider --</option>';
+            
+            // Add current chat provider if available
+            if (currentChatProvider) {
+                const currentOption = document.createElement('option');
+                currentOption.value = currentChatProvider;
+                currentOption.textContent = `${currentChatProvider} (current)`;
+                chatProvider.appendChild(currentOption);
+            }
+            
+            const customChatOption = document.createElement('option');
+            customChatOption.value = 'custom';
+            customChatOption.textContent = '+ Add Custom Chat Provider';
+            chatProvider.appendChild(customChatOption);
+        }
+        
+        if (embeddingProvider) {
+            embeddingProvider.innerHTML = '<option value="">-- Select Embedding Provider --</option>';
+            
+            // Add current embedding provider if available
+            if (currentEmbeddingProvider) {
+                const currentOption = document.createElement('option');
+                currentOption.value = currentEmbeddingProvider;
+                currentOption.textContent = `${currentEmbeddingProvider} (current)`;
+                embeddingProvider.appendChild(currentOption);
+            }
+            
+            const customEmbeddingOption = document.createElement('option');
+            customEmbeddingOption.value = 'custom';
+            customEmbeddingOption.textContent = '+ Add Custom Embedding Provider';
+            embeddingProvider.appendChild(customEmbeddingOption);
+        }
+        
+        // Set current provider selections
+        if (currentChatProvider && chatProvider) {
+            chatProvider.value = currentChatProvider;
+        }
+        
+        if (currentEmbeddingProvider && embeddingProvider) {
+            embeddingProvider.value = currentEmbeddingProvider;
         }
     }
 
@@ -231,7 +446,9 @@ function populateSettingsFromConfig(config) {
     }
     
     // Debug logging
-    window.showDebug && window.showDebug(`Config loaded: Storage=${config.storage?.current}, Chat=${currentChatProvider}/${config.models?.chat?.model}, Embedding=${currentEmbeddingProvider}/${config.models?.embedding?.model}`);
+    const sparqlCount = config.sparqlEndpoints ? config.sparqlEndpoints.length : 0;
+    const providerCount = config.llmProviders ? config.llmProviders.length : 0;
+    window.showDebug && window.showDebug(`Config loaded: Storage=${config.storage?.current || config.storage?.type}, SPARQL endpoints=${sparqlCount}, LLM providers=${providerCount}, Chat=${currentChatProvider}/${config.models?.chat?.model}, Embedding=${currentEmbeddingProvider}/${config.models?.embedding?.model}`);
 }
 
 /**
