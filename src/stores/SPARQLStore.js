@@ -4,10 +4,7 @@ import logger from 'loglevel'
 export default class SPARQLStore extends BaseStore {
     constructor(endpoint, options = {}) {
         super()
-        this.endpoint = {
-            query: endpoint,
-            update: options.updateEndpoint || endpoint
-        }
+        this.endpoint = endpoint
         this.credentials = {
             user: options.user || 'admin',
             password: options.password || 'admin'
@@ -15,96 +12,53 @@ export default class SPARQLStore extends BaseStore {
         this.graphName = options.graphName || 'http://example.org/mcp/memory'
         this.inTransaction = false
         this.dimension = options.dimension || 1536
-        
-        logger.debug('SPARQLStore initialized with endpoints:', {
-            query: this.endpoint.query,
-            update: this.endpoint.update,
-            graphName: this.graphName
-        })
     }
 
     async _executeSparqlQuery(query, endpoint) {
-        const auth = this.credentials.user && this.credentials.password ? 
-            `Basic ${Buffer.from(`${this.credentials.user}:${this.credentials.password}`).toString('base64')}` : null;
-            
-        logger.debug(`Executing SPARQL query on ${endpoint}`);
-        logger.debug(`Query: ${query}`);
-        
+        const auth = Buffer.from(`${this.credentials.user}:${this.credentials.password}`).toString('base64')
+        logger.log(`endpoint = ${endpoint}`)
         try {
-            const headers = {
-                'Content-Type': 'application/sparql-query',
-                'Accept': 'application/json',
-                'Cache-Control': 'no-cache',
-                'Pragma': 'no-cache'
-            };
-            
-            if (auth) {
-                headers['Authorization'] = auth;
-            }
-            
             const response = await fetch(endpoint, {
                 method: 'POST',
-                headers: headers,
+                headers: {
+                    'Authorization': `Basic ${auth}`,
+                    'Content-Type': 'application/sparql-query',
+                    'Accept': 'application/json'
+                },
                 body: query,
-                // Don't include credentials by default as it can cause CORS issues
-                credentials: 'omit',
-                // Add timeout for the request (30 seconds)
-                signal: AbortSignal.timeout(30000)
-            });
+                credentials: 'include'
+            })
 
             if (!response.ok) {
-                const errorText = await response.text();
-                logger.error(`SPARQL query failed (${response.status}): ${errorText}`);
-                throw new Error(`SPARQL query failed: ${response.status} - ${errorText}`);
+                const errorText = await response.text()
+                throw new Error(`SPARQL query failed: ${response.status} - ${errorText}`)
             }
 
-            const result = await response.json();
-            logger.debug('SPARQL query successful, results:', result.results.bindings.length);
-            return result;
-            
+            return await response.json()
         } catch (error) {
-            if (error.name === 'AbortError') {
-                logger.error('SPARQL query timed out after 30 seconds');
-                throw new Error('SPARQL query timed out');
-            }
-            logger.error('SPARQL query error:', error);
-            throw error;
+            logger.error('SPARQL query error:', error)
+            throw error
         }
     }
 
     async _executeSparqlUpdate(update, endpoint) {
-        const auth = this.credentials.user && this.credentials.password ? 
-            `Basic ${Buffer.from(`${this.credentials.user}:${this.credentials.password}`).toString('base64')}` : null;
-            
-        logger.debug(`Executing SPARQL update on ${endpoint}`);
-        logger.debug(`Update: ${update}`);
-        
+        const auth = Buffer.from(`${this.credentials.user}:${this.credentials.password}`).toString('base64')
+
         try {
-            const headers = {
-                'Content-Type': 'application/sparql-update',
-                'Accept': 'application/json',
-                'Cache-Control': 'no-cache',
-                'Pragma': 'no-cache'
-            };
-            
-            if (auth) {
-                headers['Authorization'] = auth;
-            }
-            
             const response = await fetch(endpoint, {
                 method: 'POST',
-                headers: headers,
+                headers: {
+                    'Authorization': `Basic ${auth}`,
+                    'Content-Type': 'application/sparql-update',
+                    'Accept': 'application/json'
+                },
                 body: update,
-                // Don't include credentials by default as it can cause CORS issues
-                credentials: 'omit',
-                // Add timeout for the request (30 seconds)
-                signal: AbortSignal.timeout(30000)
-            });
+                credentials: 'include'
+            })
 
             if (!response.ok) {
-                const errorText = await response.text();
-                logger.error(`SPARQL update failed (${response.status}): ${errorText}`);
-                throw new Error(`SPARQL update failed: ${response.status} - ${errorText}`);
+                const errorText = await response.text()
+                throw new Error(`SPARQL update failed: ${response.status} - ${errorText}`)
             }
 
             return response
@@ -127,59 +81,33 @@ export default class SPARQLStore extends BaseStore {
     }
 
     async verify() {
-        this.graphName = await Promise.resolve(this.graphName); // TODO: Consider removing this hack
-        
+        this.graphName = await Promise.resolve(this.graphName)
         try {
-            logger.debug(`Verifying SPARQL store connection to graph: ${this.graphName}`);
-            
-            // First, try to create the graph if it doesn't exist
             try {
                 const createQuery = `
-                    PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+                    PREFIX ragno: <http://purl.org/stuff/ragno/>
+                    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
                     PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-                    PREFIX dcterms: <http://purl.org/dc/terms/>
-                    PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+                    PREFIX mcp: <http://purl.org/stuff/mcp/>
                     
                     CREATE SILENT GRAPH <${this.graphName}>;
-                    INSERT DATA { 
-                        GRAPH <${this.graphName}> {
-                            <${this.graphName}> a <http://example.org/mcp/MemoryStore> ;
-                                          rdfs:label "Semem Memory Store"@en ;
-                                          dcterms:created "${new Date().toISOString()}"^^xsd:dateTime .
-                        }
-                    }`;
-                
-                logger.debug('Creating graph if not exists...');
-                await this._executeSparqlUpdate(createQuery, this.endpoint.update);
-                logger.debug('Graph creation/verification completed');
+                    INSERT DATA { GRAPH <${this.graphName}> {
+                        <${this.graphName}> a ragno:Corpus ;
+                            rdfs:label "Semem Memory Store" ;
+                            skos:prefLabel "Semem Memory Store"@en
+                    }}
+                `
+                await this._executeSparqlUpdate(createQuery, this.endpoint.update)
             } catch (error) {
-                logger.debug('Graph creation/verification skipped:', error.message);
-                // Continue to check if the graph exists even if creation failed
+                logger.debug('Graph creation skipped:', error.message)
             }
 
-            // Check if the graph exists and is accessible
-            const checkQuery = `
-                PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-                PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-                PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
-                
-                SELECT (COUNT(*) as ?count) 
-                WHERE {
-                    GRAPH <${this.graphName}> { 
-                        ?s ?p ?o 
-                    }
-                }`;
-                
-            logger.debug('Checking graph contents...');
-            const result = await this._executeSparqlQuery(checkQuery, this.endpoint.query);
-            const count = parseInt(result.results.bindings[0].count.value, 10);
-            logger.debug(`Graph contains ${count} triples`);
-            
-            return count >= 0; // If we got here, the query succeeded
-            
+            const checkQuery = `ASK { GRAPH <${this.graphName}> { ?s ?p ?o } }`
+            const result = await this._executeSparqlQuery(checkQuery, this.endpoint.query)
+            return result.boolean
         } catch (error) {
-            logger.error('Graph verification failed:', error);
-            throw new Error(`Failed to verify SPARQL store: ${error.message}`);
+            logger.error('Graph verification failed:', error)
+            throw error
         }
     }
 
@@ -187,6 +115,9 @@ export default class SPARQLStore extends BaseStore {
         await this.verify()
 
         const query = `
+            PREFIX ragno: <http://purl.org/stuff/ragno/>
+            PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
             PREFIX mcp: <http://purl.org/stuff/mcp/>
             PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
@@ -273,12 +204,26 @@ export default class SPARQLStore extends BaseStore {
             await this.beginTransaction()
 
             const clearQuery = `
+                PREFIX ragno: <http://purl.org/stuff/ragno/>
                 PREFIX mcp: <http://purl.org/stuff/mcp/>
-                CLEAR GRAPH <${this.graphName}>
+                
+                DELETE {
+                    GRAPH <${this.graphName}> {
+                        ?interaction ?p ?o
+                    }
+                } WHERE {
+                    GRAPH <${this.graphName}> {
+                        ?interaction a mcp:Interaction ;
+                            ?p ?o
+                    }
+                }
             `
             await this._executeSparqlUpdate(clearQuery, this.endpoint.update)
 
             const insertQuery = `
+                PREFIX ragno: <http://purl.org/stuff/ragno/>
+                PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+                PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
                 PREFIX mcp: <http://purl.org/stuff/mcp/>
                 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
@@ -286,11 +231,13 @@ export default class SPARQLStore extends BaseStore {
                     GRAPH <${this.graphName}> {
                         ${this._generateInsertStatements(memoryStore.shortTermMemory, 'short-term')}
                         ${this._generateInsertStatements(memoryStore.longTermMemory, 'long-term')}
+                        ${this._generateConceptStatements(memoryStore.shortTermMemory)}
+                        ${this._generateConceptStatements(memoryStore.longTermMemory)}
                     }
                 }
             `
 
-            logger.debug(`SPARQLStoresave.MemoryToHistory query = \n${insertQuery}`)
+            logger.debug(`SPARQLStore saveMemoryToHistory query = \n${insertQuery}`)
             await this._executeSparqlUpdate(insertQuery, this.endpoint.update)
             await this.commitTransaction()
 
@@ -304,7 +251,6 @@ export default class SPARQLStore extends BaseStore {
 
     _generateInsertStatements(memories, type) {
         return memories.map((interaction, index) => {
-            // Ensure embedding is valid before saving
             let embeddingStr = '[]'
             if (Array.isArray(interaction.embedding)) {
                 try {
@@ -315,25 +261,55 @@ export default class SPARQLStore extends BaseStore {
                 }
             }
 
-            // Ensure concepts is valid before saving
             let conceptsStr = '[]'
             if (Array.isArray(interaction.concepts)) {
                 conceptsStr = JSON.stringify(interaction.concepts)
             }
 
             return `
-                _:interaction${type}${index} a mcp:Interaction ;
+                _:interaction${type}${index} a mcp:Interaction, ragno:Unit ;
                     mcp:id "${interaction.id}" ;
                     mcp:prompt "${this._escapeSparqlString(interaction.prompt)}" ;
                     mcp:output "${this._escapeSparqlString(interaction.output)}" ;
+                    ragno:content "${this._escapeSparqlString(interaction.prompt + ' ' + interaction.output)}" ;
                     mcp:embedding """${embeddingStr}""" ;
                     mcp:timestamp "${interaction.timestamp}"^^xsd:integer ;
                     mcp:accessCount "${interaction.accessCount}"^^xsd:integer ;
                     mcp:concepts """${conceptsStr}""" ;
                     mcp:decayFactor "${interaction.decayFactor}"^^xsd:decimal ;
-                    mcp:memoryType "${type}" .
+                    mcp:memoryType "${type}" ;
+                    skos:prefLabel "${this._escapeSparqlString(interaction.prompt.substring(0, 50))}" .
             `
         }).join('\n')
+    }
+
+    _generateConceptStatements(memories) {
+        const conceptStatements = []
+        const seenConcepts = new Set()
+
+        memories.forEach((interaction, index) => {
+            if (Array.isArray(interaction.concepts)) {
+                interaction.concepts.forEach(concept => {
+                    const conceptUri = `http://example.org/concept/${encodeURIComponent(concept)}`
+                    
+                    if (!seenConcepts.has(conceptUri)) {
+                        conceptStatements.push(`
+                            <${conceptUri}> a skos:Concept, ragno:Element ;
+                                skos:prefLabel "${this._escapeSparqlString(concept)}" ;
+                                ragno:content "${this._escapeSparqlString(concept)}" .
+                        `)
+                        seenConcepts.add(conceptUri)
+                    }
+
+                    conceptStatements.push(`
+                        _:interaction${interaction.id || index} ragno:connectsTo <${conceptUri}> .
+                        <${conceptUri}> ragno:connectsTo _:interaction${interaction.id || index} .
+                    `)
+                })
+            }
+        })
+
+        return conceptStatements.join('\n')
     }
 
     _escapeSparqlString(str) {
