@@ -4,7 +4,26 @@ import logger from 'loglevel'
 export default class SPARQLStore extends BaseStore {
     constructor(endpoint, options = {}) {
         super()
-        this.endpoint = endpoint
+        // Robust endpoint handling: allow string or object
+        if (typeof endpoint === 'string') {
+            this.endpoint = {
+                query: endpoint,
+                update: endpoint
+            }
+        } else if (endpoint && typeof endpoint === 'object') {
+            this.endpoint = {
+                query: endpoint.query || endpoint.update,
+                update: endpoint.update || endpoint.query
+            }
+        } else {
+            throw new Error('SPARQLStore: endpoint must be a string or object with query/update URLs')
+        }
+
+        // Validate endpoints
+        if (!this.endpoint.query || !this.endpoint.update) {
+            throw new Error(`SPARQLStore: Both query and update endpoints must be defined. Got: ${JSON.stringify(this.endpoint)}`)
+        }
+
         this.credentials = {
             user: options.user || 'admin',
             password: options.password || 'admin'

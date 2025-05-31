@@ -3,6 +3,18 @@
 ## Overview
 This document contains notes on the current state of the Semem project, including working strategies, known issues, and areas that need attention.
 
+---
+
+## Ollama/SPARQL Integration Status (2025-05-31)
+
+- SPARQLStore and most query construction in the codebase include necessary RDF prefixes or expand prefixes to full URIs. No further prefix issues are anticipated unless encountered during runtime.
+- OllamaConnector provides `generateChat` and `generateCompletion` methods, which are used for LLM interactions. Any legacy usage of `llm.chat` should be updated to these methods.
+- RDF term usage and graph structure align with the documentation in `docs/ragno`.
+- Next step: Run `node examples/OllamaExample.js` and debug any issues that arise, focusing on LLM/SPARQL integration and data flow.
+- Continue documenting findings, errors, and fixes in this file for future reference.
+
+---
+
 ## Working Strategies
 
 ### In-Memory Storage
@@ -38,6 +50,24 @@ This document contains notes on the current state of the Semem project, includin
 - The script is timing out after 10 seconds (as expected with our test timeout)
 - The timeout is likely due to the SPARQL query errors preventing proper initialization
 - Once the SPARQL and Ollama issues are fixed, we should adjust the timeout to a more reasonable value (e.g., 30-60 seconds)
+
+---
+
+## SPARQL & Ollama Integration - 2025-05-31
+
+### Findings
+- **SPARQLStore.js**: Queries (notably in `verify()` and `loadHistory()`) are missing the `PREFIX rdfs:` declaration, causing errors like `Unresolved prefixed name: rdfs:label`.
+- **OllamaConnector.js**: The Ollama connector does not have a `chat` method. The code should use the correct method provided by the Ollama client for chat/completion.
+
+### Action Plan
+1. **SPARQL Prefix Fix:**
+   - Update `SPARQLStore.js` so all queries include `PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>`.
+2. **Ollama Connector Fix:**
+   - Determine the correct method for chat/completion in the Ollama client and update usage accordingly in `OllamaExample.js` and related code.
+3. **Timeout Adjustment:**
+   - After fixing the above, increase the script timeout for more robust testing.
+
+---
 
 ### Reminder
 - Keep this file updated with any new findings or changes to the codebase.
