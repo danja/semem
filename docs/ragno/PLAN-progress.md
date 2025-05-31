@@ -20,11 +20,8 @@ Transform raw text into a heterogeneous knowledge graph with semantic units, ent
 5. **Relationship extraction & linking:** Extract relationships, create `ragno:Relationship` nodes, and connect source/target entities.
 6. **SPARQL integration:** Use templates from ragno-sparql.md for entity lookup/creation and edge creation.
 
-### Next Actions
-- Draft data structures for text chunks, units, entities, and relationships.
-- Outline the LLM prompt(s) and expected output structure for semantic unit/entity/relationship extraction.
-- Prepare SPARQL queries for node and edge creation.
-- Decide on initial implementation language and environment (Python, JS, etc.).
+### Status
+- ✅ Complete and tested (2025-05-31): All code and tests for decomposition step are working as expected.
 
 ---
 
@@ -79,6 +76,41 @@ Transform raw text into a heterogeneous knowledge graph with semantic units, ent
     FILTER(str(?label) = "Entity Name")
   }
   INSERT {
+
+---
+
+## 2025-05-31: Step 2 Kickoff - Graph Augmentation
+
+### Step 2: Graph Augmentation
+
+#### 2.1 Node Importance-Based Augmentation
+- **Goal:** Add attribute summaries to important entities.
+- **Status:**
+  - ✅ Implemented as `augmentWithAttributes` (Node.js ES module).
+  - ✅ Unit tested with Vitest and mock LLM handler.
+  - ✅ Integrated into pipeline after decomposition.
+  - ✅ Documented in README.md with usage and code example.
+- **Status:**
+  - ✅ SPARQL export for Attribute nodes implemented as `exportAttributesToSPARQL`.
+  - ✅ Unit tested with Vitest and mocked SPARQLHelpers.
+  - ✅ Documented in README.md with usage and integration example.
+  - ✅ Pipeline now supports persistence of attribute nodes and links after augmentation.
+- **Next Actions:**
+  - Implement Step 2.2: Community Detection (`aggregateCommunities`).
+
+#### 2.2 Community Detection
+- **Goal:** Cluster the graph and summarize communities.
+- **Status:**
+  - ✅ Implemented as `aggregateCommunities` (Node.js ES module, connected components placeholder for Leiden).
+  - ✅ Unit tested with Vitest and mock LLM handler.
+  - ✅ Integrated into pipeline after augmentation.
+  - ✅ Documented in README.md with usage and integration example.
+  - ✅ SPARQL export for community summaries implemented and tested as `exportCommunityAttributesToSPARQL`.
+- **Next Actions:**
+  - Implement Step 3: Graph Enrichment (vector embeddings, similarity links).
+  - Prepare for search and retrieval pipeline integration.
+
+---
     ?newEntity a ragno:Entity ;
                skos:prefLabel "Entity Name" ;
                ragno:isEntryPoint true .

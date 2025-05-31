@@ -82,4 +82,28 @@ Namespace : `<http://purl.org/stuff/ragno/>`
 - SKOS integration for concept organization
 - PROV-O integration for provenance tracking
 
+---
+
+## Step 2: Community Detection
+
+### Community Detection and Summarization
+
+`aggregateCommunities` clusters entities into communities (using connected components as a placeholder for Leiden) and generates LLM-based summaries for each community. Use `exportCommunityAttributesToSPARQL` to persist these summaries as CommunityAttribute nodes in your triple store.
+
+**Usage Example:**
+
+```js
+import { aggregateCommunities } from '../../src/ragno/aggregateCommunities.js';
+import exportCommunityAttributesToSPARQL from '../../src/ragno/exportCommunityAttributesToSPARQL.js';
+
+// Assume G is a graph object after augmentation
+const { communities, attributes } = await aggregateCommunities(G, llmHandler, { minCommunitySize: 2 });
+// Persist community summaries to SPARQL endpoint
+await exportCommunityAttributesToSPARQL(attributes, endpoint, auth);
+```
+
+- This step can be run after graph augmentation to further enrich the graph with community-level summaries.
+- Community summaries are stored as special Attribute nodes for retrieval and analysis.
+
+---
 
