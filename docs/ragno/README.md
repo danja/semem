@@ -53,6 +53,17 @@ await exportToRDF(result, endpoint, auth);
 - Use the same integration pattern: call LLMHandler for language tasks, SPARQLHelpers for RDF output.
 - See `docs/ragno/PLAN.md` for the full implementation plan.
 
+### MCP Server Integration: Unified Access to Ragno & Semem
+
+All Ragno pipeline outputs, Semem memory, and knowledge graph resources are accessible via the MCP (Memory Control Protocol) server. This includes:
+- Progress and design documents (`PLAN.md`, `PLAN-progress.md`)
+- All graph, attribute, and enrichment data produced by the pipeline
+- Any custom memory/resource objects you add
+
+The MCP server exposes a JSON-RPC 2.0 API for listing, retrieving, and updating resources. All requests and responses are validated using the MCP schema and TypeScript types, ensuring robust, interoperable access.
+
+**For programmatic access to Semem and Ragno data, use the MCP server as the preferred API.**
+
 ## Overview
 
 Ragno extends SKOS (Simple Knowledge Organization System) to model heterogeneous knowledge graphs with various element types that support semantic retrieval and graph-based navigation.
