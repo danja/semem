@@ -11,6 +11,48 @@ Ragno is an ontology for describing heterogenous knowledge bases and their graph
 
 ![Ontology Diagram](ontology-diagram.pnd)
 
+## Ragno Node.js Module Integration with Semem
+
+### Overview
+The Ragno algorithmic pipeline is implemented as ES modules in `src/ragno/` and is fully integrated with the Semem infrastructure. The pipeline leverages Semem's LLMHandler for language model tasks and SPARQLHelpers for RDF graph output.
+
+### Key Modules
+- `src/ragno/decomposeCorpus.js`: Main entry point for decomposing text into Ragno graph elements.
+- `src/ragno/SemanticUnit.js`, `Entity.js`, `Relationship.js`: Data models for semantic units, entities, and relationships.
+
+### Integration Points
+- **LLMHandler:** Used for extracting semantic units and entities from text chunks. Pass an initialized LLMHandler instance to `decomposeCorpus`.
+- **SPARQLHelpers:** Used to export the resulting graph elements to an RDF triple store.
+
+### Example Usage
+```js
+import { decomposeCorpus, exportToRDF } from '../src/ragno/decomposeCorpus.js';
+import LLMHandler from '../src/handlers/LLMHandler.js';
+import { SPARQLHelpers } from '../src/utils/SPARQLHelpers.js';
+
+// Initialize LLMHandler (see Semem docs for provider/config)
+const llmHandler = new LLMHandler(llmProvider, 'gpt-3.5-turbo');
+
+const textChunks = [
+  { content: 'Hinton invented backprop.', source: 'doc1.txt' },
+  { content: 'LeCun developed convolutional nets.', source: 'doc2.txt' }
+];
+
+const result = await decomposeCorpus(textChunks, llmHandler);
+console.log('Units:', result.units);
+console.log('Entities:', result.entities);
+
+// Export to RDF triple store
+const endpoint = 'http://localhost:3030/dataset/update';
+const auth = SPARQLHelpers.createAuthHeader('user', 'password');
+await exportToRDF(result, endpoint, auth);
+```
+
+### Extending the Pipeline
+- Add additional Ragno pipeline steps (augmentation, enrichment, search) as new ES modules in `src/ragno/`.
+- Use the same integration pattern: call LLMHandler for language tasks, SPARQLHelpers for RDF output.
+- See `docs/ragno/PLAN.md` for the full implementation plan.
+
 ## Overview
 
 Ragno extends SKOS (Simple Knowledge Organization System) to model heterogeneous knowledge graphs with various element types that support semantic retrieval and graph-based navigation.
