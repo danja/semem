@@ -33,50 +33,73 @@ process.on('unhandledRejection', async (reason, promise) => {
     await shutdown('unhandledRejection')
 })
 
+// === Easily switchable SPARQL endpoint config ===
+const sparqlEndpoints = {
+    local: {
+        query: 'http://localhost:4030/semem/query',
+        update: 'http://localhost:4030/semem/update'
+    },
+    remote: {
+        query: 'http://fuseki.hyperdata.it/semem/query',
+        update: 'http://fuseki.hyperdata.it/semem/update'
+    }
+}
+
+// Choose which endpoint to use here:
+let activeEndpoint = sparqlEndpoints.local
+
+async function trySparqlEndpoint(endpoint) {
+    const testStore = new SPARQLStore(endpoint, {
+        user: 'admin',
+        password: 'admin123',
+        graphName: 'http://danny.ayers.name/content'
+    })
+    try {
+        const ok = await testStore.verify()
+        logger.info(`[SPARQL TEST] Endpoint ${JSON.stringify(endpoint)} is reachable: ${ok}`)
+        return ok
+    } catch (e) {
+        logger.error(`[SPARQL TEST] Endpoint ${JSON.stringify(endpoint)} failed:`, e)
+        return false
+    }
+}
+
 async function main() {
     logger.setLevel('info')
 
-    // Create configuration for SPARQL storage
-    const config = Config.create({
-        storage: {
-            type: 'sparql',
-            options: {
-                endpoint: {
-                    query: 'http://localhost:4030/semem/query',
-                    update: 'http://localhost:4030/semem/update'
-                },
-                graphName: 'http://danny.ayers.name/content',
-                user: 'admin',
-                password: 'admin123'
-            }
-        },
-        models: {
-            chat: {
-                provider: 'ollama',
-                model: 'qwen2:1.5b'
-            },
-            embedding: {
-                provider: 'ollama',
-                model: 'nomic-embed-text'
-            }
+    // Try local endpoint first, fallback to remote if needed
+    let ok = await trySparqlEndpoint(sparqlEndpoints.local)
+    if (ok) {
+        activeEndpoint = sparqlEndpoints.local
+        logger.info('Using LOCAL SPARQL endpoint')
+    } else {
+        ok = await trySparqlEndpoint(sparqlEndpoints.remote)
+        if (ok) {
+            activeEndpoint = sparqlEndpoints.remote
+            logger.info('Using REMOTE SPARQL endpoint')
+        } else {
+            throw new Error('No working SPARQL endpoint found!')
         }
+    }
+
+    logger.info(`[SPARQLStore] Using endpoint: ${JSON.stringify(activeEndpoint)}`)
+    const store = new SPARQLStore(activeEndpoint, {
+        user: 'admin',
+        password: 'admin123',
+        graphName: 'http://danny.ayers.name/content'
     })
 
-    // Create SPARQL store
-    const sparqlStore = new SPARQLStore(
-        config.get('storage.options.endpoint'),
-        config.get('storage.options')
-    )
+    const ollama = new OllamaConnector({
+        model: 'qwen2:1.5b',
+        embeddingModel: 'nomic-embed-text',
+        apiBase: 'http://localhost:11434'
+    })
 
-    // Create Ollama connector
-    const ollama = new OllamaConnector()
-
-    // Create memory manager with SPARQL backend
     memoryManager = new MemoryManager({
         llmProvider: ollama,
-        chatModel: config.get('models.chat.model'),
-        embeddingModel: config.get('models.embedding.model'),
-        storage: sparqlStore
+        chatModel: 'qwen2:1.5b',
+        embeddingModel: 'nomic-embed-text',
+        storage: store
     })
 
     const prompt = "What are the benefits of semantic web technologies for AI applications?"

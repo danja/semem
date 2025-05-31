@@ -37,6 +37,7 @@ export default class SPARQLStore extends BaseStore {
         const auth = Buffer.from(`${this.credentials.user}:${this.credentials.password}`).toString('base64')
         logger.log(`endpoint = ${endpoint}`)
         try {
+            logger.error('[SPARQL QUERY]', { endpoint, query })
             const response = await fetch(endpoint, {
                 method: 'POST',
                 headers: {
@@ -50,12 +51,15 @@ export default class SPARQLStore extends BaseStore {
 
             if (!response.ok) {
                 const errorText = await response.text()
+                logger.error('[SPARQL QUERY FAIL]', { endpoint, query, status: response.status, errorText })
                 throw new Error(`SPARQL query failed: ${response.status} - ${errorText}`)
             }
 
-            return await response.json()
+            const json = await response.json()
+            logger.error('[SPARQL QUERY SUCCESS]', { endpoint, query, json })
+            return json
         } catch (error) {
-            logger.error('SPARQL query error:', error)
+            logger.error('SPARQL query error:', { endpoint, query, error })
             throw error
         }
     }
@@ -64,6 +68,7 @@ export default class SPARQLStore extends BaseStore {
         const auth = Buffer.from(`${this.credentials.user}:${this.credentials.password}`).toString('base64')
 
         try {
+            logger.error('[SPARQL UPDATE]', { endpoint, update })
             const response = await fetch(endpoint, {
                 method: 'POST',
                 headers: {
@@ -77,12 +82,14 @@ export default class SPARQLStore extends BaseStore {
 
             if (!response.ok) {
                 const errorText = await response.text()
+                logger.error('[SPARQL UPDATE FAIL]', { endpoint, update, status: response.status, errorText })
                 throw new Error(`SPARQL update failed: ${response.status} - ${errorText}`)
             }
 
+            logger.error('[SPARQL UPDATE SUCCESS]', { endpoint, update })
             return response
         } catch (error) {
-            logger.error('SPARQL update error:', error)
+            logger.error('SPARQL update error:', { endpoint, update, error })
             throw error
         }
     }
@@ -116,16 +123,18 @@ export default class SPARQLStore extends BaseStore {
                             skos:prefLabel "Semem Memory Store"@en
                     }}
                 `
+                logger.error('[VERIFY] Creating graph', { endpoint: this.endpoint.update, createQuery })
                 await this._executeSparqlUpdate(createQuery, this.endpoint.update)
             } catch (error) {
                 logger.debug('Graph creation skipped:', error.message)
             }
 
             const checkQuery = `ASK { GRAPH <${this.graphName}> { ?s ?p ?o } }`
+            logger.error('[VERIFY] Checking graph', { endpoint: this.endpoint.query, checkQuery })
             const result = await this._executeSparqlQuery(checkQuery, this.endpoint.query)
             return result.boolean
         } catch (error) {
-            logger.error('Graph verification failed:', error)
+            logger.error('Graph verification failed:', { endpoint: this.endpoint, error })
             throw error
         }
     }
