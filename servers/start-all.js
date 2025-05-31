@@ -11,7 +11,9 @@ const __dirname = dirname(__filename);
 const projectRoot = dirname(__dirname);
 
 // Use consolidated config system
-const configInstance = Config.createFromFile();
+console.log('Current working directory:', process.cwd());
+const configPath = join(projectRoot, 'config', 'config.json');
+const configInstance = Config.createFromFile(configPath);
 await configInstance.init();
 const config = configInstance.config;
 
@@ -21,8 +23,9 @@ const { api, ui } = config.servers;
 // Create server manager instance
 const serverManager = new ServerManager();
 
-// Log the project root and config
+// Log the project root, config, and config path
 console.log(`Project root: ${projectRoot}`);
+console.log('Config path used:', configPath);
 console.log('Server configuration:', JSON.stringify(config.servers, null, 2));
 
 // Start servers with proper error handling and cleanup
