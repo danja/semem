@@ -80,17 +80,15 @@ See the code and comments in each file for details on how to adapt for your own 
 
 ---
 
-## MCP Server (Memory Control Protocol)
+## MCP Server: Unified Memory Control Protocol
 
-Semem includes an experimental MCP server for unified memory/resource management using a JSON-RPC 2.0 protocol. The MCP server is designed to:
-- Provide a standard API for listing, retrieving, and updating memory resources (text, audio, blobs, etc.)
-- Use TypeScript types (`src/types/mcp-schema.ts`) and a detailed JSON Schema (`src/types/mcp-schema.json`) for strong type and runtime validation
-- Support extensible endpoints for agent/LLM integration, annotation, and streaming
+The MCP server provides a JSON-RPC 2.0 API for accessing Semem and Ragno resources, including pipeline outputs, progress logs, ontology, config, code modules, and all live compute facilities. All requests and responses are validated against a JSON Schema (`src/types/mcp-schema.json`).
 
-The MCP protocol is defined in `src/types/mcp-schema.ts` and `src/types/mcp-schema.json`, ensuring all messages and objects are validated both at compile time and runtime.
+- **API:** JSON-RPC 2.0 over HTTP (default port 4100)
+- **Schema validation:** Ajv, see `src/types/mcp-schema.json`
+- **Endpoints:** `/` (POST JSON-RPC requests)
 
-**Implementation is underway.**
-- The server will expose JSON-RPC endpoints for memory/resource operations.
+### Core Methods
 - All messages will be validated against the schema for safety and interoperability.
 - Contributions and feedback are welcome as the protocol and server evolve!
 

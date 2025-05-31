@@ -23,6 +23,20 @@ function rpcRequest(method, params = undefined, id = 1) {
   });
 }
 
+const exampleGraph = {
+  entities: [
+    { name: 'Alice' },
+    { name: 'Bob' }
+  ],
+  units: [
+    { text: 'Alice is a data scientist.', entities: ['Alice'] },
+    { text: 'Bob is a software engineer.', entities: ['Bob'] }
+  ],
+  relationships: [
+    { source: 'Alice', target: 'Bob', description: 'Colleagues' }
+  ]
+};
+
 (async () => {
   // Test: listResources returns expected known ids
   const listed = await rpcRequest('listResources', undefined, 1);
