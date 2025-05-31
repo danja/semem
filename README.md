@@ -1,20 +1,97 @@
 # Semem
 
-**Status: 2025-05-14** a lot in place, a lot to do. Added a bit of UI for sanity checking. I still need to tidy up the latest spike with Claude Code. 
+Semem is a modular, extensible semantic memory and graph augmentation system for LLMs, agents, and research. It provides a unified pipeline for entity extraction, embedding, semantic search, SPARQL/RDF graph operations, LLM-powered augmentation, and community detection.
 
-I'm planning to have something potentially usable by summer solstice 2025.
+---
 
-## Semantic Memory for Intelligent Agents
+## 🚀 Latest Developments (May 2025)
 
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/danja/semem)
+- **Interactive ES Module REPL:**  
+  Explore all MCP endpoints interactively with [`examples/REPL.js`](./examples/REPL.js).  
+  See a sample session in [`INTERACTIONS.md`](./INTERACTIONS.md).
 
-It's meant as a bit of infrastructure, Graph RAG with a SPARQL store, a bit of embeddings, a bit of behind the scenes LLM interaction to do some knowledgegraph business. Set up as HTTP APIs. MCP is in there, but right now I'm mostly targetting my own kit, bit more generalized & webby. 
+- **Live MCP Endpoints:**  
+  All Semem & Ragno pipeline facilities are now exposed as live, schema-validated JSON-RPC services, including LLM, embedding, SPARQL, semantic search, graph augmentation, and community detection.
 
-Docs below courtesy Claude.
- 
-[![tests](https://img.shields.io/github/actions/workflow/status/danja/semem/test.yml?branch=main&label=tests&style=flat-square)](https://github.com/danja/semem/actions/workflows/test.yml)
-[![npm version](https://img.shields.io/npm/v/semem?style=flat-square)](https://www.npmjs.com/package/semem)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
+- **Agent & LLM Integration:**  
+  [`PROMPTS.md`](./PROMPTS.md) provides ready-to-use prompt templates for LLMs/agents.  
+  All endpoints are designed for programmatic invocation and agent workflows.
+
+- **Testing & Robustness:**  
+  Integration tests for all endpoints in [`examples/mcpClient.test.js`](./examples/mcpClient.test.js).  
+  Full evaluation and recommendations in [`REPORT.md`](./REPORT.md).
+
+---
+
+## ⚡ Quick Start
+
+1. **Install dependencies:**  
+   ```bash
+   npm install
+   ```
+2. **Start the MCP server:**  
+   ```bash
+   node src/mcp/server.js
+   ```
+3. **Launch the interactive REPL:**  
+   ```bash
+   node examples/REPL.js
+   ```
+4. **Try endpoints:**  
+   - See [`INTERACTIONS.md`](./INTERACTIONS.md) for example sessions.
+   - Use [`PROMPTS.md`](./PROMPTS.md) for LLM/agent prompt templates.
+
+---
+
+## 🧠 Key Features
+
+- **Unified Memory Control Protocol (MCP):** JSON-RPC 2.0 API for all memory, graph, and compute resources
+- **Live Compute Endpoints:** LLM completions, embeddings, SPARQL, semantic search, graph augmentation, community detection
+- **Agent/LLM-Ready:** Prompt templates and robust schema validation for seamless integration
+- **Extensible:** Modular design, easy to add new pipelines or endpoints
+
+---
+
+## 📚 Documentation & Resources
+
+- [INTERACTIONS.md](./INTERACTIONS.md): Example REPL conversations
+- [REPORT.md](./REPORT.md): Test report and recommendations
+- [PROMPTS.md](./PROMPTS.md): Prompt templates for LLM/agent integration
+- [examples/REPL.js](./examples/REPL.js): Interactive ES module REPL
+- [examples/mcpClient.test.js](./examples/mcpClient.test.js): Integration tests
+- [docs/ragno/PLAN2-progress.md](./docs/ragno/PLAN2-progress.md): Progress log
+
+For full details, see the documentation in `docs/`.
+
+---
+
+## Demo: Ragno Pipeline (`examples/RagnoPipelineDemo.js`, `examples/RagnoSPARQLDemo.js`)
+
+These demo scripts show the end-to-end Ragno pipeline for semantic graph construction, augmentation, community detection, enrichment, and SPARQL export.
+
+- **`examples/RagnoPipelineDemo.js`**: Runs the full pipeline from decomposition to community detection and enrichment, printing each stage's output.
+- **`examples/RagnoSPARQLDemo.js`**: Shows how to export attribute, community, and similarity link data to a SPARQL triple store (using dummy endpoints/auth for demonstration).
+
+### How to Run
+
+```sh
+node examples/RagnoPipelineDemo.js
+node examples/RagnoSPARQLDemo.js
+```
+
+See the code and comments in each file for details on how to adapt for your own data and endpoints.
+
+---
+
+## Experimental: Model Context Protocol (MCP) Support
+
+Semem implements Anthropic's [Model Context Protocol (MCP)](https://docs.anthropic.com/en/docs/agents-and-tools/mcp), enabling LLMs and agents to access all memory and graph resources programmatically.
+
+---
+
+## License
+
+MIT
 
 ```sh
 ./start.sh
