@@ -44,9 +44,9 @@
 
 **Steps:**
 - Insert `ragno:TextElement` nodes for original text.
-- Generate and store vector embeddings for retrievable nodes.
-- Build HNSW or similar semantic index for fast similarity search.
-- Link nodes with semantic similarity edges.
+- Use `EmbeddingHandler` (with live embedding provider) to generate and store vector embeddings for all retrievable nodes (`TextElement`, `Unit`, `Attribute`, `CommunityElement`).
+- Build HNSW or similar semantic index for fast similarity search using live embeddings.
+- Use `SPARQLHelpers` to create and persist semantic similarity edges between nodes based on embedding similarity.
 
 ## 4. Graph Search & Retrieval
 
@@ -54,11 +54,12 @@
 
 **Steps:**
 - Implement dual search:
-  - Similarity-based (vector) search for `TextElement`, `Unit`, `Attribute`, `CommunityElement`.
+  - Similarity-based (vector) search for `TextElement`, `Unit`, `Attribute`, `CommunityElement` using live `EmbeddingHandler` and semantic index.
   - Exact match for `Entity`, Overview.
+- Use live LLMHandler for query understanding and retrieval augmentation if needed.
 - Implement shallow PPR (Personalized PageRank) to find cross nodes.
 - Filter retrieval nodes by type and entry point status.
-- Use SPARQL patterns for search and filtering.
+- Use `SPARQLHelpers` for SPARQL-based search, filtering, and result enrichment.
 
 ## 5. Configuration & Reference
 

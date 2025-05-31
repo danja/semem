@@ -124,10 +124,6 @@ Transform raw text into a heterogeneous knowledge graph with semantic units, ent
   WHERE { ... }
   ```
 
-#### 4. Language/Environment Recommendation
-- **Python** is recommended for rapid prototyping, LLM integration, and RDF/SPARQL operations (using rdflib, SPARQLWrapper, etc.).
-- **Alternatives:** JavaScript (for integration with web stack), but Python has richer ecosystem for LLM and graph processing.
 
----
 
-(Next: begin prototyping the decomposition pipeline in Python and documenting code artifacts.)
+

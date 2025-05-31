@@ -59,6 +59,43 @@ This demo script shows how to use Semem with a SPARQL backend and an Ollama LLM 
 ### Prerequisites
 - Node.js (v18+ recommended)
 - Running SPARQL backend (e.g., Apache Jena Fuseki)
+
+---
+
+## Demo: Ragno Pipeline (`examples/RagnoPipelineDemo.js`, `examples/RagnoSPARQLDemo.js`)
+
+These demo scripts show the end-to-end Ragno pipeline for semantic graph construction, augmentation, community detection, enrichment, and SPARQL export.
+
+- **`examples/RagnoPipelineDemo.js`**: Runs the full pipeline from decomposition to community detection and enrichment, printing each stage's output.
+- **`examples/RagnoSPARQLDemo.js`**: Shows how to export attribute, community, and similarity link data to a SPARQL triple store (using dummy endpoints/auth for demonstration).
+
+### How to Run
+
+```sh
+node examples/RagnoPipelineDemo.js
+node examples/RagnoSPARQLDemo.js
+```
+
+See the code and comments in each file for details on how to adapt for your own data and endpoints.
+
+---
+
+## MCP Server (Memory Control Protocol)
+
+Semem includes an experimental MCP server for unified memory/resource management using a JSON-RPC 2.0 protocol. The MCP server is designed to:
+- Provide a standard API for listing, retrieving, and updating memory resources (text, audio, blobs, etc.)
+- Use TypeScript types (`src/types/mcp-schema.ts`) and a detailed JSON Schema (`src/types/mcp-schema.json`) for strong type and runtime validation
+- Support extensible endpoints for agent/LLM integration, annotation, and streaming
+
+The MCP protocol is defined in `src/types/mcp-schema.ts` and `src/types/mcp-schema.json`, ensuring all messages and objects are validated both at compile time and runtime.
+
+**Implementation is underway.**
+- The server will expose JSON-RPC endpoints for memory/resource operations.
+- All messages will be validated against the schema for safety and interoperability.
+- Contributions and feedback are welcome as the protocol and server evolve!
+
+---
+
   - Local: `http://localhost:4030/semem/query` and `/update`
   - Remote: `http://fuseki.hyperdata.it/semem/query` and `/update`
 - Ollama server running locally (default: `http://localhost:11434`)
