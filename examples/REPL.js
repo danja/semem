@@ -1,8 +1,8 @@
+#!/usr/bin/env node
+
 // examples/REPL.js
 // Interactive REPL for MCP server using the sample client
 // Allows user to enter commands, suggests available actions, and shows results
-
-#!/usr/bin/env node
 import readline from 'readline';
 import http from 'http';
 

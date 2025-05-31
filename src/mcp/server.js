@@ -3,15 +3,25 @@ import http from 'http';
 import Ajv from 'ajv';
 import fs from 'fs/promises';
 import path from 'path';
-import { LATEST_PROTOCOL_VERSION } from '../types/mcp-schema.js';
+import { fileURLToPath } from 'url';
 import LLMHandler from '../handlers/LLMHandler.js';
 import EmbeddingHandler from '../handlers/EmbeddingHandler.js';
+import CacheManager from '../handlers/CacheManager.js';
 import { SPARQLHelpers } from '../utils/SPARQLHelpers.js';
 import SearchService from '../services/search/SearchService.js';
 import EmbeddingService from '../services/embeddings/EmbeddingService.js';
 import SPARQLService from '../services/embeddings/SPARQLService.js';
 import { augmentWithAttributes } from '../ragno/augmentWithAttributes.js';
 import { aggregateCommunities } from '../ragno/aggregateCommunities.js';
+import Config from '../Config.js';
+import OllamaConnector from '../connectors/OllamaConnector.js';
+import ClaudeConnector from '../connectors/ClaudeConnector.js';
+import MistralConnector from '../connectors/MistralConnector.js';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// MCP Protocol Version
+const LATEST_PROTOCOL_VERSION = '2025.1.0';
 
 // Load MCP JSON Schema
 const schemaPath = path.resolve('src/types/mcp-schema.json');
@@ -19,55 +29,168 @@ const schema = JSON.parse(await fs.readFile(schemaPath, 'utf-8'));
 const ajv = new Ajv({ allErrors: true, strict: false });
 const validate = ajv.compile(schema);
 
-// Load Ragno config and instantiate LLMHandler
-const ragnoConfigPath = path.resolve('docs/ragno/ragno-config.json');
+// Load configuration
+const config = new Config();
+await config.init();
+
+// Initialize cache manager
+const cacheManager = new CacheManager({
+  maxSize: 1000,
+  ttl: 3600000 // 1 hour
+});
+
+// Load Ragno config
+const ragnoConfigPath = path.resolve(__dirname, '../../docs/ragno/ragno-config.json');
 const ragnoConfig = JSON.parse(await fs.readFile(ragnoConfigPath, 'utf-8'));
-const llmProvider = {
-  async generateChat(model, messages, options) {
-    // Dummy provider: echo prompt for dev/test; replace with real provider
-    return `LLM(${model}): ${messages.map(m => m.content).join(' ')}`;
+
+// Initialize LLM provider based on config
+let llmProvider;
+try {
+  // Get all configured providers and sort by priority (lower number = higher priority)
+  const providers = (config.get('llmProviders') || []).sort((a, b) => (a.priority || 999) - (b.priority || 999));
+  
+  console.log('Configured LLM providers:', JSON.stringify(providers, null, 2));
+  console.log('Environment variables:', {
+    CLAUDE_API_KEY: process.env.CLAUDE_API_KEY ? '***' : 'Not set',
+    OLLAMA_API_KEY: process.env.OLLAMA_API_KEY ? '***' : 'Not set',
+    MISTRAL_API_KEY: process.env.MISTRAL_API_KEY ? '***' : 'Not set'
+  });
+  
+  // Try to initialize each provider in order until one succeeds
+  for (const providerConfig of providers) {
+    try {
+      let connector;
+      
+      switch (providerConfig.type) {
+        case 'ollama':
+          console.log(`Initializing Ollama provider with model: ${providerConfig.chatModel}`);
+          const { baseUrl = 'http://localhost:11434', chatModel = 'qwen2:1.5b' } = providerConfig;
+          connector = new OllamaConnector({
+            baseUrl,
+            chatModel,
+            embeddingModel: providerConfig.embeddingModel
+          });
+          await connector.initialize();
+          
+          llmProvider = {
+            type: 'ollama',
+            generateChat: connector.generateChat.bind(connector),
+            generateCompletion: connector.generateCompletion.bind(connector),
+            generateEmbedding: connector.generateEmbedding.bind(connector)
+          };
+          console.log('Ollama provider initialized successfully');
+          break;
+          
+        case 'claude':
+          console.log(`Initializing Claude provider with model: ${providerConfig.chatModel}`);
+          if (!providerConfig.apiKey) {
+            console.warn('Skipping Claude provider: Missing API key');
+            continue;
+          }
+          
+          connector = new ClaudeConnector(
+            providerConfig.apiKey,
+            providerConfig.chatModel || 'claude-3-opus-20240229'
+          );
+          await connector.initialize();
+          
+          llmProvider = {
+            type: 'claude',
+            generateChat: connector.generateChat.bind(connector),
+            generateCompletion: connector.generateCompletion.bind(connector),
+            generateEmbedding: connector.generateEmbedding.bind(connector)
+          };
+          console.log('Claude provider initialized successfully');
+          break;
+          
+        case 'mistral':
+          console.log(`Initializing Mistral provider with model: ${providerConfig.chatModel}`);
+          if (!providerConfig.apiKey) {
+            console.warn('Skipping Mistral provider: Missing API key');
+            continue;
+          }
+          
+          connector = new MistralConnector(
+            providerConfig.apiKey,
+            providerConfig.baseUrl || 'https://api.mistral.ai/v1',
+            providerConfig.chatModel || 'mistral-medium'
+          );
+          await connector.initialize();
+          
+          llmProvider = {
+            type: 'mistral',
+            generateChat: connector.generateChat.bind(connector),
+            generateCompletion: connector.generateCompletion.bind(connector),
+            generateEmbedding: connector.generateEmbedding ? connector.generateEmbedding.bind(connector) : null
+          };
+          console.log('Mistral provider initialized successfully');
+          break;
+          
+        default:
+          console.warn(`Unsupported provider type: ${providerConfig.type}`);
+          continue;
+      }
+      
+      // If we successfully initialized a provider, break the loop
+      if (llmProvider) break;
+      
+    } catch (error) {
+      console.error(`Failed to initialize ${providerConfig.type} provider:`, error);
+      continue;
+    }
   }
-};
+  
+  // If no provider was successfully initialized, use a mock provider
+  if (!llmProvider) {
+    console.warn('No valid LLM provider found, using mock provider');
+    llmProvider = {
+      type: 'mock',
+      generateChat: async () => 'Mock response: No LLM provider configured',
+      generateCompletion: async () => 'Mock response: No LLM provider configured',
+      generateEmbedding: async () => Array(1536).fill(0)
+    };
+  }
+} catch (error) {
+  console.error('Failed to initialize LLM provider:', error);
+  process.exit(1);
+}
+
+// Initialize handlers
 const llmHandler = new LLMHandler(
   llmProvider,
-  ragnoConfig.ragno.decomposition.llm.model,
-  ragnoConfig.ragno.decomposition.llm.temperature
+  config.get('chatModel') || 'qwen2:1.5b',
+  config.get('llm.temperature') || 0.7
 );
 
-// EmbeddingHandler setup
-const embeddingProvider = {
-  async generateEmbedding(model, text) {
-    // Dummy: returns a fixed vector for dev/test; replace with real provider
-    return Array(ragnoConfig.ragno.enrichment.embedding.dimensions).fill(text.length % 7);
-  }
-};
-const cacheManager = { get: () => undefined, set: () => {} };
 const embeddingHandler = new EmbeddingHandler(
-  embeddingProvider,
-  ragnoConfig.ragno.enrichment.embedding.model,
-  ragnoConfig.ragno.enrichment.embedding.dimensions,
+  llmProvider,
+  config.get('embeddingModel') || 'nomic-embed-text',
+  ragnoConfig.ragno?.enrichment?.embedding?.dimensions || 768,
   cacheManager
 );
 
-// Set up real embedding and SPARQL services for search
-const embeddingService = new EmbeddingService({
-  model: ragnoConfig.ragno.enrichment.embedding.model,
-  dimension: ragnoConfig.ragno.enrichment.embedding.dimensions
-});
+// Initialize services
+const sparqlConfig = config.get('sparqlEndpoints')?.[0] || {};
 const sparqlService = new SPARQLService({
-  queryEndpoint: process.env.SPARQL_QUERY_ENDPOINT || 'http://localhost:4030/semem/query',
-  updateEndpoint: process.env.SPARQL_UPDATE_ENDPOINT || 'http://localhost:4030/semem/update',
-  graphName: ragnoConfig.ragno.graphName || 'http://danny.ayers.name/content',
+  queryEndpoint: process.env.SPARQL_QUERY_ENDPOINT || sparqlConfig.query,
+  updateEndpoint: process.env.SPARQL_UPDATE_ENDPOINT || sparqlConfig.update,
+  graphName: config.get('graphName') || 'http://danny.ayers.name/content',
   auth: {
-    user: process.env.SPARQL_USER || 'admin',
-    password: process.env.SPARQL_PASSWORD || 'admin123'
+    user: process.env.SPARQL_USER || sparqlConfig.user,
+    password: process.env.SPARQL_PASSWORD || sparqlConfig.password
   }
 });
+
+const embeddingService = new EmbeddingService({
+  model: config.get('embeddingModel'),
+  dimension: ragnoConfig.ragno?.enrichment?.embedding?.dimensions || 768
+});
+
 const searchService = new SearchService({
   embeddingService,
   sparqlService,
-  graphName: ragnoConfig.ragno.graphName || 'http://danny.ayers.name/content',
-  dimension: ragnoConfig.ragno.enrichment.embedding.dimensions
+  graphName: config.get('graphName') || 'http://danny.ayers.name/content',
+  dimension: ragnoConfig.ragno?.enrichment?.embedding?.dimensions || 768
 });
 
 const PORT = process.env.MCP_PORT || 4100;
@@ -94,7 +217,8 @@ async function handleJSONRPC(req, res, body) {
     // Core documentation ... (as before)
     // ...
     SemanticUnit_js: {
-      id: 'SemanticUnit_js', type: 'code', path: 'src/ragno/SemanticUnit.js', title: 'JS: SemanticUnit Model' },
+      id: 'SemanticUnit_js', type: 'code', path: 'src/ragno/SemanticUnit.js', title: 'JS: SemanticUnit Model'
+    },
     // Live services
     callLLM: {
       id: 'callLLM', type: 'service', title: 'Call LLMHandler',

@@ -1,0 +1,27 @@
+{
+  "claude": {
+    "api": {
+      "baseUrl": "https://api.anthropic.com",
+      "version": "2023-06-01"
+    },
+    "models": {
+      "defaultChatModel": "claude-3-opus-20240229",
+      "defaultEmbeddingModel": "claude-3-opus-20240229"
+    },
+    "defaults": {
+      "temperature": 0.7,
+      "maxTokens": 1000,
+      "topP": 1,
+      "topK": 0,
+      "timeout": 30000
+    }
+  },
+  "server": {
+    "port": 4100,
+    "logLevel": "debug",
+    "environment": "development"
+  },
+  "embeddings": {
+    "dimension": 1536
+  }
+}

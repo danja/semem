@@ -1,6 +1,6 @@
 // Ragno: Graph Enrichment - Add vector embeddings and similarity edges
 // This step generates embeddings for retrievable nodes and links similar nodes
-import SPARQLHelpers from '../utils/SPARQLHelpers.js';
+import { SPARQLHelpers } from '../utils/SPARQLHelpers.js';
 
 /**
  * enrichWithEmbeddings(G, embeddingFn, options)

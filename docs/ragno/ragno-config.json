@@ -36,9 +36,10 @@
     },
     
     "enrichment": {
+      "provider": "ollama",
       "embedding": {
-        "model": "text-embedding-3-small",
-        "dimensions": 1536,
+        "model": "nomic-embed-text:latest",
+        "dimensions": 768,
         "batchSize": 100,
         "retrievableTypes": [
           "ragno:TextElement",

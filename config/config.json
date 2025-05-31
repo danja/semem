@@ -48,7 +48,7 @@
     {
       "type": "claude",
       "implementation": "hyperdata",
-      "apiKey": "your-claude-api-key-here",
+      "apiKey": "${CLAUDE_API_KEY}",
       "chatModel": "claude-3-opus-20240229",
       "priority": 1,
       "capabilities": [

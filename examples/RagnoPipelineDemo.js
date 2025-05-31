@@ -8,27 +8,32 @@ import LLMHandler from '../src/handlers/LLMHandler.js';
 import EmbeddingHandler from '../src/handlers/EmbeddingHandler.js';
 import loadRagnoConfig from './loadRagnoConfig.js';
 
-// Example provider stubs (replace with your actual provider instances)
+// Use real Ollama provider
+import OllamaConnector from '../src/connectors/OllamaConnector.js';
+
+// Initialize real providers
+const ollamaConnector = new OllamaConnector('http://localhost:11434', 'qwen2:1.5b');
+await ollamaConnector.initialize();
+
 const llmProvider = {
-  async generateChat(model, messages, options) {
-    return `LLM summary for: ${messages.map(m => m.content).join(' ')}`;
-  }
+  generateChat: ollamaConnector.generateChat.bind(ollamaConnector),
+  generateCompletion: ollamaConnector.generateCompletion.bind(ollamaConnector),
+  generateEmbedding: ollamaConnector.generateEmbedding.bind(ollamaConnector)
 };
+
 const embeddingProvider = {
-  async generateEmbedding(model, text) {
-    // Replace with actual embedding API call
-    return Array(8).fill(text.length % 7);
-  }
+  generateEmbedding: ollamaConnector.generateEmbedding.bind(ollamaConnector)
 };
+
 const cacheManager = { get: () => undefined, set: () => {} };
 
 (async () => {
   // Load config
   const config = await loadRagnoConfig();
-  // Instantiate with config-driven parameters
+  // Explicitly set the model name to use Ollama's qwen2:1.5b model
   const llmHandler = new LLMHandler(
     llmProvider,
-    config.decomposition.llm.model,
+    'qwen2:1.5b', // Override with the actual model we have
     config.decomposition.llm.temperature
   );
   const embeddingHandler = new EmbeddingHandler(

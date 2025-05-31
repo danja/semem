@@ -37,14 +37,19 @@ export default class ClaudeConnector {
         this.initializing = true;
 
         try {
-            this.client = new Claude({
+            this.client = await ClientFactory.createAPIClient('claude', {
                 apiKey: this.apiKey,
-                model: this.defaultModel
+                model: this.defaultModel,
+                clientOptions: {
+                    // Add any specific client options here
+                }
             });
             this.initialized = true;
             logger.info('Claude client initialized successfully');
         } catch (error) {
             logger.error('Failed to initialize Claude client:', error);
+            this.initialized = false;
+            this.initializing = false;
             throw error;
         } finally {
             this.initializing = false;

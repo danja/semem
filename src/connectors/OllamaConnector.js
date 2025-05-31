@@ -75,17 +75,23 @@ export default class OllamaConnector {
                 await this.initialize()
             }
 
-            const response = await this.client.chat(messages, {
+            // Convert messages to the format expected by Ollama
+            const ollamaMessages = messages.map(msg => ({
+                role: msg.role,
+                content: Array.isArray(msg.content) ? msg.content.join('\n') : String(msg.content)
+            }));
+
+            const response = await this.client.chat(ollamaMessages, {
                 model,
                 temperature: options.temperature || 0.7,
                 ...options
-            })
+            });
 
-            logger.debug('Chat response:', response)
-            return response
+            logger.debug('Chat response:', response);
+            return response;
         } catch (error) {
-            logger.error('Chat generation failed:', error)
-            throw error
+            logger.error('Chat generation failed:', error);
+            throw error;
         }
     }
 
