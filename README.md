@@ -50,6 +50,42 @@ Semem (Semantic Memory) is a Node.js library for intelligent agent memory manage
 - Context window management
 - Concept extraction and organization
 
+---
+
+## Demo: LLM + SPARQL Integration (`examples/OllamaExample.js`)
+
+This demo script shows how to use Semem with a SPARQL backend and an Ollama LLM connector for prompt/response memory, embeddings, and concept extraction.
+
+### Prerequisites
+- Node.js (v18+ recommended)
+- Running SPARQL backend (e.g., Apache Jena Fuseki)
+  - Local: `http://localhost:4030/semem/query` and `/update`
+  - Remote: `http://fuseki.hyperdata.it/semem/query` and `/update`
+- Ollama server running locally (default: `http://localhost:11434`)
+- Model: `qwen2:1.5b` for chat, `nomic-embed-text` for embeddings
+
+### Running the Demo
+
+1. **Start your SPARQL backend** (e.g., Jena Fuseki on port 4030 or use the provided remote endpoint).
+2. **Start Ollama** with the required models available.
+3. **Run the example script:**
+   ```sh
+   node examples/OllamaExample.js
+   ```
+   The script will automatically test the local SPARQL endpoint first, and fall back to the remote endpoint if the local one is not available. You can easily switch endpoints by editing the `sparqlEndpoints` block at the top of `OllamaExample.js`.
+
+4. **Expected Output:**
+   - The script will connect to the SPARQL backend, verify the graph, and interact with the Ollama LLM.
+   - It will log which SPARQL endpoint is in use and show memory operations.
+
+### Troubleshooting
+- If you see connection errors, ensure your SPARQL and Ollama servers are running and accessible at the configured URLs.
+- You can change the SPARQL endpoint URLs in `OllamaExample.js` to point to your preferred backend.
+- For authentication, default credentials are `admin`/`admin123`.
+- For more details on SPARQL queries and RDF terms, see `docs/ragno/`.
+
+---
+
 ## Storage Configuration
 
 Semem supports multiple storage backends that can be configured in `config.json`:
