@@ -8,6 +8,7 @@ export default class InMemoryStore extends BaseStore {
             shortTermMemory: [],
             longTermMemory: []
         };
+        this.transactionInProgress = false;
     }
 
     async loadHistory() {
@@ -36,5 +37,45 @@ export default class InMemoryStore extends BaseStore {
         };
 
         logger.info(`Saved ${this.history.shortTermMemory.length} short-term and ${this.history.longTermMemory.length} long-term memories`);
+    }
+
+    async beginTransaction() {
+        if (this.transactionInProgress) {
+            throw new Error('Transaction already in progress');
+        }
+        this.transactionInProgress = true;
+        this.transactionSnapshot = JSON.parse(JSON.stringify(this.history));
+    }
+
+    async commitTransaction() {
+        if (!this.transactionInProgress) {
+            throw new Error('No transaction in progress');
+        }
+        this.transactionInProgress = false;
+        delete this.transactionSnapshot;
+    }
+
+    async rollbackTransaction() {
+        if (!this.transactionInProgress) {
+            throw new Error('No transaction in progress');
+        }
+        if (this.transactionSnapshot) {
+            this.history = JSON.parse(JSON.stringify(this.transactionSnapshot));
+        }
+        this.transactionInProgress = false;
+        delete this.transactionSnapshot;
+    }
+
+    async verify() {
+        // For in-memory store, verification always succeeds
+        return true;
+    }
+
+    async close() {
+        // Clean up any resources (none in this case)
+        this.history = {
+            shortTermMemory: [],
+            longTermMemory: []
+        };
     }
 }

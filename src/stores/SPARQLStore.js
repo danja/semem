@@ -4,7 +4,10 @@ import logger from 'loglevel'
 export default class SPARQLStore extends BaseStore {
     constructor(endpoint, options = {}) {
         super()
-        this.endpoint = endpoint
+        this.endpoint = {
+            query: endpoint,
+            update: options.updateEndpoint || endpoint
+        }
         this.credentials = {
             user: options.user || 'admin',
             password: options.password || 'admin'
@@ -12,53 +15,96 @@ export default class SPARQLStore extends BaseStore {
         this.graphName = options.graphName || 'http://example.org/mcp/memory'
         this.inTransaction = false
         this.dimension = options.dimension || 1536
+        
+        logger.debug('SPARQLStore initialized with endpoints:', {
+            query: this.endpoint.query,
+            update: this.endpoint.update,
+            graphName: this.graphName
+        })
     }
 
     async _executeSparqlQuery(query, endpoint) {
-        const auth = Buffer.from(`${this.credentials.user}:${this.credentials.password}`).toString('base64')
-        logger.log(`endpoint = ${endpoint}`)
+        const auth = this.credentials.user && this.credentials.password ? 
+            `Basic ${Buffer.from(`${this.credentials.user}:${this.credentials.password}`).toString('base64')}` : null;
+            
+        logger.debug(`Executing SPARQL query on ${endpoint}`);
+        logger.debug(`Query: ${query}`);
+        
         try {
+            const headers = {
+                'Content-Type': 'application/sparql-query',
+                'Accept': 'application/json',
+                'Cache-Control': 'no-cache',
+                'Pragma': 'no-cache'
+            };
+            
+            if (auth) {
+                headers['Authorization'] = auth;
+            }
+            
             const response = await fetch(endpoint, {
                 method: 'POST',
-                headers: {
-                    'Authorization': `Basic ${auth}`,
-                    'Content-Type': 'application/sparql-query',
-                    'Accept': 'application/json'
-                },
+                headers: headers,
                 body: query,
-                credentials: 'include'
-            })
+                // Don't include credentials by default as it can cause CORS issues
+                credentials: 'omit',
+                // Add timeout for the request (30 seconds)
+                signal: AbortSignal.timeout(30000)
+            });
 
             if (!response.ok) {
-                const errorText = await response.text()
-                throw new Error(`SPARQL query failed: ${response.status} - ${errorText}`)
+                const errorText = await response.text();
+                logger.error(`SPARQL query failed (${response.status}): ${errorText}`);
+                throw new Error(`SPARQL query failed: ${response.status} - ${errorText}`);
             }
 
-            return await response.json()
+            const result = await response.json();
+            logger.debug('SPARQL query successful, results:', result.results.bindings.length);
+            return result;
+            
         } catch (error) {
-            logger.error('SPARQL query error:', error)
-            throw error
+            if (error.name === 'AbortError') {
+                logger.error('SPARQL query timed out after 30 seconds');
+                throw new Error('SPARQL query timed out');
+            }
+            logger.error('SPARQL query error:', error);
+            throw error;
         }
     }
 
     async _executeSparqlUpdate(update, endpoint) {
-        const auth = Buffer.from(`${this.credentials.user}:${this.credentials.password}`).toString('base64')
-
+        const auth = this.credentials.user && this.credentials.password ? 
+            `Basic ${Buffer.from(`${this.credentials.user}:${this.credentials.password}`).toString('base64')}` : null;
+            
+        logger.debug(`Executing SPARQL update on ${endpoint}`);
+        logger.debug(`Update: ${update}`);
+        
         try {
+            const headers = {
+                'Content-Type': 'application/sparql-update',
+                'Accept': 'application/json',
+                'Cache-Control': 'no-cache',
+                'Pragma': 'no-cache'
+            };
+            
+            if (auth) {
+                headers['Authorization'] = auth;
+            }
+            
             const response = await fetch(endpoint, {
                 method: 'POST',
-                headers: {
-                    'Authorization': `Basic ${auth}`,
-                    'Content-Type': 'application/sparql-update',
-                    'Accept': 'application/json'
-                },
+                headers: headers,
                 body: update,
-                credentials: 'include'
-            })
+                // Don't include credentials by default as it can cause CORS issues
+                credentials: 'omit',
+                // Add timeout for the request (30 seconds)
+                signal: AbortSignal.timeout(30000)
+            });
 
             if (!response.ok) {
-                const errorText = await response.text()
-                throw new Error(`SPARQL update failed: ${response.status} - ${errorText}`)
+                const errorText = await response.text();
+                logger.error(`SPARQL update failed (${response.status}): ${errorText}`);
+                throw new Error(`SPARQL update failed: ${response.status} - ${errorText}`);
             }
 
             return response
@@ -81,26 +127,54 @@ export default class SPARQLStore extends BaseStore {
     }
 
     async verify() {
-        this.graphName = await Promise.resolve(this.graphName) // TODO unhackify
+        this.graphName = await Promise.resolve(this.graphName); // TODO: Consider removing this hack
+        
         try {
+            logger.debug(`Verifying SPARQL store connection to graph: ${this.graphName}`);
+            
+            // First, try to create the graph if it doesn't exist
             try {
                 const createQuery = `
                     CREATE SILENT GRAPH <${this.graphName}>;
-                    INSERT DATA { GRAPH <${this.graphName}> {
-                        <${this.graphName}> a <http://example.org/mcp/MemoryStore>
-                    }}
-                `
-                await this._executeSparqlUpdate(createQuery, this.endpoint.update)
+                    INSERT DATA { 
+                        GRAPH <${this.graphName}> {
+                            <${this.graphName}> a <http://example.org/mcp/MemoryStore>;
+                                          rdfs:label "Semem Memory Store"@en;
+                                          dcterms:created "${new Date().toISOString()}"^^xsd:dateTime .
+                        }
+                    }`;
+                
+                logger.debug('Creating graph if not exists...');
+                await this._executeSparqlUpdate(createQuery, this.endpoint.update);
+                logger.debug('Graph creation/verification completed');
             } catch (error) {
-                logger.debug('Graph creation skipped:', error.message)
+                logger.debug('Graph creation/verification skipped:', error.message);
+                // Continue to check if the graph exists even if creation failed
             }
 
-            const checkQuery = `ASK { GRAPH <${this.graphName}> { ?s ?p ?o } }`
-            const result = await this._executeSparqlQuery(checkQuery, this.endpoint.query)
-            return result.boolean
+            // Check if the graph exists and is accessible
+            const checkQuery = `
+                PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+                PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+                PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+                
+                SELECT (COUNT(*) as ?count) 
+                WHERE {
+                    GRAPH <${this.graphName}> { 
+                        ?s ?p ?o 
+                    }
+                }`;
+                
+            logger.debug('Checking graph contents...');
+            const result = await this._executeSparqlQuery(checkQuery, this.endpoint.query);
+            const count = parseInt(result.results.bindings[0].count.value, 10);
+            logger.debug(`Graph contains ${count} triples`);
+            
+            return count >= 0; // If we got here, the query succeeded
+            
         } catch (error) {
-            logger.error('Graph verification failed:', error)
-            throw error
+            logger.error('Graph verification failed:', error);
+            throw new Error(`Failed to verify SPARQL store: ${error.message}`);
         }
     }
 

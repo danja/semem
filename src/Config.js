@@ -65,11 +65,10 @@ export default class Config {
             */]
     }
 
-    constructor(userConfig = {}, loadFromFile = true) {
-        this.initialized = false
-        this.config = {}
-        this.userConfig = userConfig
-        this.loadFromFile = loadFromFile
+    constructor(configPath = null) {
+        this.config = { ...Config.defaults };
+        this.configFilePath = configPath || null;
+        this.initialized = false;
     }
 
     async init() {
@@ -79,13 +78,12 @@ export default class Config {
             let fileConfig = {}
             
             // Load config file if requested
-            if (this.loadFromFile) {
+            if (this.configFilePath) {
                 fileConfig = this.loadConfigFile()
             }
             
             // Merge in order: defaults -> file config -> user config
             this.config = this.mergeConfigs(Config.defaults, fileConfig, 0)
-            this.config = this.mergeConfigs(this.config, this.userConfig, 0)
             
             this.applyEnvironmentOverrides()
             this.validateConfig()
@@ -97,23 +95,46 @@ export default class Config {
 
     loadConfigFile() {
         try {
-            const __filename = fileURLToPath(import.meta.url)
-            const __dirname = dirname(__filename)
-            const projectRoot = dirname(__dirname)
-            const configPath = join(projectRoot, 'config', 'config.json')
+            // If config file path was provided in constructor, use it directly
+            if (this.configFilePath) {
+                if (!fs.existsSync(this.configFilePath)) {
+                    console.warn('Config file not found at provided path:', this.configFilePath);
+                    return {};
+                }
+                console.log('Loading config from provided path:', this.configFilePath);
+                const fileContent = fs.readFileSync(this.configFilePath, 'utf8');
+                return JSON.parse(fileContent);
+            }
+
+            // Otherwise, try to find the config file in common locations
+            const possiblePaths = [
+                // Local development path
+                join(process.cwd(), 'config', 'config.json'),
+                // Path when running from project root
+                join(process.cwd(), '..', 'config', 'config.json'),
+                // Path when running from src directory
+                join(process.cwd(), '..', '..', 'config', 'config.json'),
+                // Docker container path
+                '/app/config/config.json',
+                // Fallback to environment variable if set
+                process.env.CONFIG_PATH
+            ].filter(Boolean);
             
-            if (!fs.existsSync(configPath)) {
-                return {}
+            for (const path of possiblePaths) {
+                if (path && fs.existsSync(path)) {
+                    console.log('Loading config from:', path);
+                    this.configFilePath = path;
+                    const fileContent = fs.readFileSync(path, 'utf8');
+                    return JSON.parse(fileContent);
+                }
             }
             
-            const fileContent = fs.readFileSync(configPath, 'utf8')
-            const jsonConfig = JSON.parse(fileContent)
+            console.warn('Config file not found in any of these locations:', possiblePaths);
+            return {};
             
-            // Transform JSON config to match internal structure
-            return this.transformJsonConfig(jsonConfig)
         } catch (error) {
-            console.warn(`Warning: Could not load config file: ${error.message}`)
-            return {}
+            console.error('Error loading config file:', error);
+            return {};
         }
     }
 

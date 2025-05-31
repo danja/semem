@@ -17,6 +17,7 @@ import LLMHandler from '../src/handlers/LLMHandler.js';
 import EmbeddingHandler from '../src/handlers/EmbeddingHandler.js';
 import CacheManager from '../src/handlers/CacheManager.js';
 import APIRegistry from '../src/api/common/APIRegistry.js';
+import InMemoryStore from '../src/stores/InMemoryStore.js';
 import { authenticateRequest } from '../src/api/http/middleware/auth.js';
 import { errorHandler, NotFoundError } from '../src/api/http/middleware/error.js';
 import { requestLogger } from '../src/api/http/middleware/logging.js';
@@ -91,13 +92,22 @@ class APIServer {
      * Initialize API components
      */
     async initializeComponents() {
+        // Load configuration
+        const config = new Config();
+        await config.init();
+        
         // Create LLM provider
         const ollamaBaseUrl = process.env.OLLAMA_API_BASE || 'http://localhost:11434';
         const llmProvider = new OllamaConnector(ollamaBaseUrl);
 
-        // Define models to use
-        const embeddingModel = process.env.EMBEDDING_MODEL || 'nomic-embed-text';
-        const chatModel = process.env.CHAT_MODEL || 'qwen3:0.6b';
+        // Get models from config with fallbacks
+        const embeddingModel = process.env.EMBEDDING_MODEL || 
+                             config.get('models.embedding.model') || 
+                             'nomic-embed-text';
+        const chatModel = process.env.CHAT_MODEL || 
+                         config.get('models.chat.model') || 
+                         'qwen3:0.6b';
+        const dimension = config.get('memory.dimension') || 1536;
 
         // Initialize cache manager
         const cacheManager = new CacheManager({
@@ -109,17 +119,42 @@ class APIServer {
         const embeddingHandler = new EmbeddingHandler(
             llmProvider,
             embeddingModel,
-            1536, // Default dimension
+            dimension,
             cacheManager
         );
 
         const llmHandler = new LLMHandler(llmProvider, chatModel);
 
-        // Initialize memory manager
+        // Initialize storage based on config
+        let storage;
+        const storageConfig = config.get('storage');
+        
+        if (storageConfig.type === 'sparql') {
+            const { default: SPARQLStore } = await import('../src/stores/SPARQLStore.js');
+            storage = new SPARQLStore(storageConfig.options.endpoint, {
+                user: storageConfig.options.user,
+                password: storageConfig.options.password,
+                graphName: storageConfig.options.graphName,
+                dimension: dimension
+            });
+            logger.info(`Initialized SPARQL store with endpoint: ${storageConfig.options.endpoint}`);
+        } else if (storageConfig.type === 'json') {
+            const { default: JSONStore } = await import('../src/stores/JSONStore.js');
+            storage = new JSONStore(storageConfig.options.path);
+            logger.info(`Initialized JSON store at path: ${storageConfig.options.path}`);
+        } else {
+            // Default to in-memory
+            storage = new InMemoryStore();
+            logger.info('Initialized in-memory store');
+        }
+
+        // Initialize memory manager with the configured storage
         const memoryManager = new MemoryManager({
             llmProvider,
             chatModel,
-            embeddingModel
+            embeddingModel,
+            dimension,
+            storage
         });
 
         // Store components in context
