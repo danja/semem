@@ -49,6 +49,50 @@ Semem (Semantic Memory) is a Node.js library for intelligent agent memory manage
 - Connector system for different LLM providers
 - Context window management
 - Concept extraction and organization
+
+## Storage Configuration
+
+Semem supports multiple storage backends that can be configured in `config.json`:
+
+### In-Memory Storage (default)
+```json
+{
+  "storage": {
+    "type": "in-memory",
+    "options": {}
+  }
+}
+```
+*Note: Data is lost when the application stops*
+
+### JSON File Storage
+```json
+{
+  "storage": {
+    "type": "json",
+    "options": {
+      "filePath": "./data/memories.json"
+    }
+  }
+}
+```
+*Persists data to a JSON file at the specified path*
+
+### SPARQL Storage
+```json
+{
+  "storage": {
+    "type": "sparql",
+    "options": {
+      "endpoint": "https://fuseki.hyperdata.it/semem",
+      "graphName": "http://danny.ayers.name/content",
+      "user": "admin",
+      "password": "admin123"
+    }
+  }
+}
+```
+*Stores data in a SPARQL endpoint*
 - HTTP API with browser-based interface
 
 ## Quickstart

@@ -135,11 +135,16 @@ export default class SPARQLStore extends BaseStore {
             // First, try to create the graph if it doesn't exist
             try {
                 const createQuery = `
+                    PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+                    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+                    PREFIX dcterms: <http://purl.org/dc/terms/>
+                    PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+                    
                     CREATE SILENT GRAPH <${this.graphName}>;
                     INSERT DATA { 
                         GRAPH <${this.graphName}> {
-                            <${this.graphName}> a <http://example.org/mcp/MemoryStore>;
-                                          rdfs:label "Semem Memory Store"@en;
+                            <${this.graphName}> a <http://example.org/mcp/MemoryStore> ;
+                                          rdfs:label "Semem Memory Store"@en ;
                                           dcterms:created "${new Date().toISOString()}"^^xsd:dateTime .
                         }
                     }`;

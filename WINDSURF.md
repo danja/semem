@@ -22,14 +22,22 @@ This document contains notes on the current state of the Semem project, includin
 ## Known Issues
 
 ### SPARQL Storage
-- **Critical**: SPARQLStore is failing with "No endpoint for request" errors.
-  - Direct curl requests to the SPARQL endpoint work, but the application fails with the same request.
-  - The issue persists even with hardcoded URLs that work in curl.
-  - The SPARQL server (Fuseki) is accessible but rejecting requests from the application.
-  - Possible causes:
-    - Different request headers between curl and fetch
-    - CORS or other server-side restrictions
-    - Authentication/authorization issues
+- **Critical**: SPARQLStore is failing with SPARQL query errors.
+  - Error: `Unresolved prefixed name: rdfs:label` in SPARQL update queries
+  - This suggests that the RDF Schema (RDFS) prefix is not properly defined in the SPARQL queries
+  - The query needs to include the proper RDFS namespace declaration
+  - The error occurs in the `verify()` and `loadHistory()` methods of SPARQLStore
+
+### Ollama Integration
+- **Error**: `TypeError: llm.chat is not a function`
+  - The Ollama connector doesn't have a `chat` method, but the code is trying to call it
+  - This happens in the `extractConcepts` function in OllamaExample.js
+  - Need to update the code to use the correct method from the OllamaConnector class
+
+### Timeout Issues
+- The script is timing out after 10 seconds (as expected with our test timeout)
+- The timeout is likely due to the SPARQL query errors preventing proper initialization
+- Once the SPARQL and Ollama issues are fixed, we should adjust the timeout to a more reasonable value (e.g., 30-60 seconds)
 
 ### Reminder
 - Keep this file updated with any new findings or changes to the codebase.
