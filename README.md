@@ -80,39 +80,6 @@ See the code and comments in each file for details on how to adapt for your own 
 
 ---
 
-## MCP Server: Unified Memory Control Protocol
-
-The MCP server provides a JSON-RPC 2.0 API for accessing Semem and Ragno resources, including pipeline outputs, progress logs, ontology, config, code modules, and all live compute facilities. All requests and responses are validated against a JSON Schema (`src/types/mcp-schema.json`).
-
-- **API:** JSON-RPC 2.0 over HTTP (default port 4100)
-- **Schema validation:** Ajv, see `src/types/mcp-schema.json`
-- **Endpoints:** `/` (POST JSON-RPC requests)
-
-### Core Methods
-- All messages will be validated against the schema for safety and interoperability.
-- Contributions and feedback are welcome as the protocol and server evolve!
-
----
-
-  - Local: `http://localhost:4030/semem/query` and `/update`
-  - Remote: `http://fuseki.hyperdata.it/semem/query` and `/update`
-- Ollama server running locally (default: `http://localhost:11434`)
-- Model: `qwen2:1.5b` for chat, `nomic-embed-text` for embeddings
-
-### Running the Demo
-
-1. **Start your SPARQL backend** (e.g., Jena Fuseki on port 4030 or use the provided remote endpoint).
-2. **Start Ollama** with the required models available.
-3. **Run the example script:**
-   ```sh
-   node examples/OllamaExample.js
-   ```
-   The script will automatically test the local SPARQL endpoint first, and fall back to the remote endpoint if the local one is not available. You can easily switch endpoints by editing the `sparqlEndpoints` block at the top of `OllamaExample.js`.
-
-4. **Expected Output:**
-   - The script will connect to the SPARQL backend, verify the graph, and interact with the Ollama LLM.
-   - It will log which SPARQL endpoint is in use and show memory operations.
-
 ### Troubleshooting
 - If you see connection errors, ensure your SPARQL and Ollama servers are running and accessible at the configured URLs.
 - You can change the SPARQL endpoint URLs in `OllamaExample.js` to point to your preferred backend.
