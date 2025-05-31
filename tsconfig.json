@@ -3,28 +3,48 @@
     "target": "ES2022",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
+    "lib": ["ES2022", "DOM"],
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "strict": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
     "forceConsistentCasingInFileNames": true,
-    "skipLibCheck": true,
+    "skipLibCheck": false,
     "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
     "resolveJsonModule": true,
+    "allowJs": true,
+    "checkJs": false,
     "rootDir": ".",
     "baseUrl": ".",
     "outDir": "dist",
+    "typeRoots": ["./node_modules/@types", "./src/types"],
     "paths": {
       "@src/*": ["src/*"],
-      "@tests/*": ["tests/*"]
+      "@tests/*": ["tests/*"],
+      "@types/*": ["src/types/*"]
     }
   },
   "include": [
     "src/**/*.ts",
     "src/**/*.js",
-    "src/**/*.d.ts"
+    "src/**/*.d.ts",
+    "tests/**/*.ts",
+    "examples/**/*.ts"
   ],
   "exclude": [
     "node_modules",
-    "dist"
-  ]
+    "dist",
+    "coverage",
+    "public",
+    "**/*.min.js",
+    "**/*.bundle.js"
+  ],
+  "ts-node": {
+    "esm": true
+  }
 }

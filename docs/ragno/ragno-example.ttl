@@ -1,0 +1,103 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix ragno: <http://purl.org/stuff/ragno/> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix ex: <http://example.org/ragno/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# Corpus
+ex:aiCorpus a ragno:Corpus ;
+    skos:prefLabel "AI Research Corpus"@en ;
+    skos:member ex:entity1, ex:entity2, ex:unit1, ex:unit2, ex:attr1, ex:commElem1 .
+
+# Entities (Non-retrievable entry points)
+ex:entity1 a ragno:Entity ;
+    skos:prefLabel "Hinton" ;
+    ragno:isEntryPoint true ;
+    ragno:inCorpus ex:aiCorpus ;
+    ragno:hasUnit ex:unit1 ;
+    ragno:hasAttribute ex:attr1 ;
+    skos:related ex:rel1 .
+
+ex:entity2 a ragno:Entity ;
+    skos:prefLabel "Nobel Prize" ;
+    ragno:isEntryPoint true ;
+    ragno:inCorpus ex:aiCorpus ;
+    ragno:hasUnit ex:unit1 .
+
+# Semantic Units (Retrievable)
+ex:unit1 a ragno:Unit ;
+    skos:prefLabel "Hinton Nobel Prize Event" ;
+    ragno:content "Hinton was awarded the Nobel Prize for inventing backpropagation." ;
+    ragno:inCorpus ex:aiCorpus ;
+    ragno:hasTextElement ex:text1 ;
+    ragno:inCommunity ex:comm1 ;
+    ragno:hasPPRScore "0.85"^^xsd:float .
+
+ex:unit2 a ragno:Unit ;
+    skos:prefLabel "Backpropagation Impact" ;
+    ragno:content "Backpropagation laid the foundation for modern neural networks." ;
+    ragno:inCorpus ex:aiCorpus ;
+    ragno:hasTextElement ex:text1 ;
+    ragno:inCommunity ex:comm1 .
+
+# Relationships (Retrievable)
+ex:rel1 a ragno:Relationship ;
+    skos:prefLabel "Hinton received Nobel Prize" ;
+    ragno:content "Hinton received Nobel Prize" ;
+    ragno:hasSourceEntity ex:entity1 ;
+    ragno:hasTargetEntity ex:entity2 ;
+    ragno:inCorpus ex:aiCorpus .
+
+# Attributes (Retrievable)
+ex:attr1 a ragno:Attribute ;
+    skos:prefLabel "Geoffrey Hinton attributes" ;
+    ragno:content "Geoffrey Hinton, often referred to as the 'Godfather of Deep Learning,' is a pioneer in artificial intelligence. In 2024, he was awarded the Nobel Prize for his contributions to AI and deep learning." ;
+    ragno:inCorpus ex:aiCorpus ;
+    ragno:inCommunity ex:comm1 .
+
+# Text Elements (Retrievable)
+ex:text1 a ragno:TextElement ;
+    skos:prefLabel "Text chunk 1" ;
+    ragno:content "Hinton was awarded the Nobel Prize in 2023 for his groundbreaking contributions to artificial intelligence, particularly in deep learning. His pioneering work on backpropagation laid the foundation for modern neural networks, influencing both academia and industry." ;
+    ragno:hasSourceDocument <http://example.org/doc1> ;
+    ragno:inCorpus ex:aiCorpus .
+
+# Community Elements (Retrievable)
+ex:commElem1 a ragno:CommunityElement ;
+    skos:prefLabel "AI Recognition Trend" ;
+    ragno:content "Due to the increasing importance of AI, the Nobel Prize is awarded to scholars who have made tremendous contributions to the field of AI." ;
+    ragno:inCorpus ex:aiCorpus ;
+    ragno:connectsTo ex:unit1, ex:unit2, ex:attr1 .
+
+# Overview (Non-retrievable entry point)
+ex:overview1 a ragno:Attribute ;
+    ragno:subType ex:Overview ;
+    skos:prefLabel "AI significance" ;
+    ragno:content "AI, Nobel Prize, recognition, Hinton" ;
+    ragno:isEntryPoint true ;
+    skos:related ex:commElem1 .
+
+# Community
+ex:comm1 a ragno:Community ;
+    skos:prefLabel "AI Pioneers Community" ;
+    skos:member ex:unit1, ex:unit2, ex:attr1 ;
+    ragno:hasCommunityElement ex:commElem1 .
+
+# HNSW Semantic Edges
+ex:unit1 ragno:connectsTo ex:unit2 .
+ex:unit2 ragno:connectsTo ex:attr1 .
+
+# Edge weights (using reification)
+[] a rdf:Statement ;
+   rdf:subject ex:unit1 ;
+   rdf:predicate ragno:connectsTo ;
+   rdf:object ex:unit2 ;
+   ragno:hasWeight "2.0"^^xsd:float ;
+   ragno:subType ex:SemanticEdge .
+
+# Search Results Example
+ex:searchResult1 a ragno:Corpuscle ;
+    skos:prefLabel "Search: Hinton Nobel Prize" ;
+    skos:member ex:unit1, ex:attr1, ex:commElem1, ex:text1 ;
+    ragno:hasSimilarityScore "0.92"^^xsd:float .
