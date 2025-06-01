@@ -449,7 +449,6 @@ class MCPClient {
             // Get the prompt ID and template content with fallbacks
             const promptId = prompt.id || '';
             let template = prompt.template || prompt.prompt_data?.template || '';
-            
             // If template is an object, stringify it for display
             if (template && typeof template === 'object') {
                 try {
@@ -459,30 +458,41 @@ class MCPClient {
                     template = 'Error: Invalid template format';
                 }
             }
-            
             const title = prompt.title || promptId || 'Untitled Prompt';
             const description = prompt.description || 'No description available';
-            
             console.log('Rendering prompt:', { promptId, title, hasTemplate: !!template });
-            
-            return `
-                <div class="prompt-item" data-prompt-id="${promptId}">
-                    <div class="prompt-header">
-                        <div class="prompt-title">${title}</div>
-                        <button class="btn small-btn view-prompt" data-prompt-id="${promptId}">View</button>
+            if (!template) {
+                // No template: show info and a clear message
+                return `
+                    <div class="prompt-item" data-prompt-id="${promptId}">
+                        <div class="prompt-header">
+                            <div class="prompt-title">${title}</div>
+                        </div>
+                        <div class="prompt-description">${description}</div>
+                        <div class="prompt-template no-template-msg">No template available</div>
                     </div>
-                    <div class="prompt-description">${description}</div>
-                    <div class="prompt-template hidden" id="prompt-template-${promptId}">
-                        <pre>${template ? JSON.stringify(template, null, 2) : 'No template available'}</pre>
-                        <div class="prompt-actions">
-                            <button class="btn small-btn use-prompt" data-prompt-id="${promptId}">Use This Template</button>
+                `;
+            } else {
+                // Template present: show info, View/Hide button, and collapsible template area
+                return `
+                    <div class="prompt-item" data-prompt-id="${promptId}">
+                        <div class="prompt-header">
+                            <div class="prompt-title">${title}</div>
+                            <button class="btn small-btn view-prompt" data-prompt-id="${promptId}">View</button>
+                        </div>
+                        <div class="prompt-description">${description}</div>
+                        <div class="prompt-template hidden" id="prompt-template-${promptId}">
+                            <pre>${template}</pre>
+                            <div class="prompt-actions">
+                                <button class="btn small-btn use-prompt" data-prompt-id="${promptId}">Use This Template</button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            `;
+                `;
+            }
         }).join('');
 
-        // Add event listeners for the new buttons
+        // Add event listeners for the new buttons (only for prompts with templates)
         document.querySelectorAll('.view-prompt').forEach(button => {
             button.addEventListener('click', (e) => {
                 e.stopPropagation();
