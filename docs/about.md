@@ -9,3 +9,4 @@ cd ~/hyperdata/transmissions # my local path
 ./trans sparqlstore-to-html ~/hyperdata/semem/docs/postcraft
 ./trans sparqlstore-to-site-indexes ~/hyperdata/semem/docs/postcraft
 ```
+

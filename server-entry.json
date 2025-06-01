@@ -1,0 +1,14 @@
+{
+    "command": "node",
+    "args": [
+        "src/mcp/server.js"
+    ],
+    "env": {
+        "HOME": "/home/danny",
+        "LOGNAME": "danny",
+        "PATH": "/home/danny/.npm/_npx/5a9d879542beca3a/node_modules/.bin:/flow/hyperdata/semem/node_modules/.bin:/flow/hyperdata/node_modules/.bin:/flow/node_modules/.bin:/node_modules/.bin:/home/danny/.nvm/versions/node/v24.0.1/lib/node_modules/npm/node_modules/@npmcli/run-script/lib/node-gyp-bin:/home/danny/.nvm/versions/node/v24.0.1/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin",
+        "SHELL": "/bin/bash",
+        "TERM": "xterm-256color",
+        "USER": "danny"
+    }
+}
