@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <link rel="stylesheet" href="/css/fonts.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/grid-columns.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/style.css" type="text/css"/>
+        <title> Creating the Docker Compose File</title>
+    </head>
+    <!-- POST PAGE TEMPLATE -->
+    <body>
+        <header id="entry-header">
+            <h1 class="post-title h-cinzel">
+                
+            </h1>
+        </header>
+        <p> MinIO is an open-source object storage server that provides an Amazon S3-compatible API. Deploying MinIO using Docker Compose is a convenient way to set up a standalone MinIO server for development or testing purposes. Here&#39;s how to deploy MinIO using Docker Compose:</p>
+<h2>Creating the Docker Compose File</h2>
+<p>To deploy MinIO on Docker Compose, create a file named <code>docker-compose.yaml</code> in your working directory. Docker Compose will use this file to pull the MinIO Docker image and configure the service.[1]</p>
+<p>Here&#39;s a basic Docker Compose configuration for MinIO:</p>
+<pre><code class=\"language-yaml\">version: &#39;3&#39;
+services:
+  minio:
+    image: quay.io/minio/minio
+    command: server /data --console-address &quot;:9001&quot;
+    ports:
+      - &quot;9000:9000&quot;
+      - &quot;9001:9001&quot;
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - minio_data:/data
+
+volumes:
+  minio_data:
+</code></pre>
+<p>Let&#39;s break down the key components of this configuration:</p>
+<ol>
+<li><p><strong>Image</strong>: The Docker Compose file uses the latest MinIO server image. You can specify a particular version by changing the image tag.[1]</p>
+</li>
+<li><p><strong>Command</strong>: The <code>command</code> line specifies that MinIO should run its server and sets the console address to port 9001.[2]</p>
+</li>
+<li><p><strong>Ports</strong>: Two ports are exposed:</p>
+<ul>
+<li>9000: For the MinIO API (S3 compatible)</li>
+<li>9001: For the MinIO Console (web-based user interface)[5]</li>
+</ul>
+</li>
+<li><p><strong>Environment Variables</strong>: MINIO_ROOT_USER and MINIO_ROOT_PASSWORD set the root user credentials. For production use, replace these with long, random, and unique strings.[5]</p>
+</li>
+<li><p><strong>Volumes</strong>: A named volume <code>minio_data</code> is created to persist the data stored in MinIO. This ensures that your data remains intact even if the container is stopped or removed.[4]</p>
+</li>
+</ol>
+<h2>Deploying MinIO</h2>
+<p>To deploy MinIO using this Docker Compose file:</p>
+<ol>
+<li><p>Save the Docker Compose configuration in a file named <code>docker-compose.yaml</code>.</p>
+</li>
+<li><p>Open a terminal, navigate to the directory containing the Docker Compose file, and run:</p>
+<pre><code>docker-compose up -d
+</code></pre>
+<p>This command will start the MinIO container in detached mode.[1]</p>
+</li>
+<li><p>Once the container is running, you can access:</p>
+<ul>
+<li>The MinIO API at <code>http://localhost:9000</code></li>
+<li>The MinIO Console at <code>http://localhost:9001</code></li>
+</ul>
+<p>Use the root user credentials specified in the Docker Compose file to log in to the Console.[1]</p>
+</li>
+</ol>
+<h2>Additional Considerations</h2>
+<ul>
+<li><p>For a distributed MinIO setup, you can add more MinIO services to your Docker Compose file (up to 16). You&#39;ll need to update the command section for each service and adjust the Nginx configuration if you&#39;re using a load balancer.[1]</p>
+</li>
+<li><p>MinIO is compatible with Amazon S3, making it an excellent choice for deploying your own storage infrastructure.[3]</p>
+</li>
+<li><p>This setup is suitable for development purposes. For production environments, additional configuration and security measures are necessary.[4]</p>
+</li>
+</ul>
+<p>Remember to secure your MinIO deployment by using strong passwords, enabling encryption, and following best practices for container security when moving to a production environment.</p>
+<p>Citations:
+[1] <a href=\"https://github.com/minio/minio/blob/master/docs/orchestration/docker-compose/README.md\">https://github.com/minio/minio/blob/master/docs/orchestration/docker-compose/README.md</a>
+[2] <a href=\"https://stackoverflow.com/questions/56627446/docker-compose-how-to-use-minio-in-and-outside-of-the-docker-network\">https://stackoverflow.com/questions/56627446/docker-compose-how-to-use-minio-in-and-outside-of-the-docker-network</a>
+[3] <a href=\"https://www.youtube.com/watch?v=tRlEctAwkk8\">https://www.youtube.com/watch?v=tRlEctAwkk8</a>
+[4] <a href=\"https://www.nathaniel-walser.com/docker-compose-templates/minio\">https://www.nathaniel-walser.com/docker-compose-templates/minio</a>
+[5] <a href=\"http://www.sefidian.com/2022/04/08/deploy-standalone-minio-using-docker-compose/\">http://www.sefidian.com/2022/04/08/deploy-standalone-minio-using-docker-compose/</a>
+[6] <a href=\"https://citizix.com/how-to-run-minio-in-docker-and-docker-compose/\">https://citizix.com/how-to-run-minio-in-docker-and-docker-compose/</a>
+[7] <a href=\"https://hub.docker.com/r/bitnami/minio\">https://hub.docker.com/r/bitnami/minio</a>
+[8] <a href=\"https://github.com/bitnami/containers/blob/main/bitnami/minio/docker-compose.yml\">https://github.com/bitnami/containers/blob/main/bitnami/minio/docker-compose.yml</a>
+[9] <a href=\"https://min.io/docs/minio/container/index.html\">https://min.io/docs/minio/container/index.html</a>
+ </p>
+
+        <div class="entry-footer">
+            <h2>About</h2>
+            
+        </div>
+    </body>
+</html>

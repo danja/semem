@@ -30,7 +30,9 @@ const ajv = new Ajv({ allErrors: true, strict: false });
 const validate = ajv.compile(schema);
 
 // Load configuration
-const config = new Config();
+const configPath = path.join(process.cwd(), 'config', 'config.json');
+console.log('Loading config from:', configPath);
+const config = new Config(configPath);
 await config.init();
 
 // Initialize cache manager

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <link rel="stylesheet" href="/css/fonts.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/grid-columns.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/style.css" type="text/css"/>
+        <title>fix-sparql-prompt.md</title>
+    </head>
+    <!-- POST PAGE TEMPLATE -->
+    <body>
+        <header id="entry-header">
+            <h1 class="post-title h-cinzel">
+                
+            </h1>
+        </header>
+        <p> There is an issue in the code around SPARQL UPDATE calls, this error:</p>
+<pre><code>[INFO] Adding interaction: &#39;What&#39;s the current state of AI technology?&#39;
+[ERROR] SPARQL update error: Error: SPARQL update failed: 500
+    at SPARQLStore._executeSparqlUpdate (file:///home/danny/github-danny/hyperdata/packages/semem/src/stores/SPARQLStore.js:55:23)
+...
+</code></pre>
+<p>Away from the JS, these scripts work fine :</p>
+<pre><code>misc/scripts/sparql-auth-test.sh
+misc/scripts/sparql-upload-test.sh
+misc/scripts/ollama-embedding-test.sh
+</code></pre>
+<p>The following test (with helper) works fine as well :</p>
+<pre><code>spec/unit/sparql-endpoint-spec.js
+src/utils/SPARQLHelpers.js
+</code></pre>
+
+        <div class="entry-footer">
+            <h2>About</h2>
+            
+        </div>
+    </body>
+</html>

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <link rel="stylesheet" href="/css/fonts.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/grid-columns.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/style.css" type="text/css"/>
+        <title>Semem System Overview</title>
+    </head>
+    <!-- POST PAGE TEMPLATE -->
+    <body>
+        <header id="entry-header">
+            <h1 class="post-title h-cinzel">
+                
+            </h1>
+        </header>
+        <h1>Semem System Overview</h1>
+<h2>Purpose</h2>
+<p>Semem is a semantic memory system built to provide AI applications with persistent, queryable storage of conversational interactions. It integrates LLM capabilities with RDF/SPARQL storage while maintaining a flexible API layer supporting multiple access modes.</p>
+<h2>Documentation Index</h2>
+<ul>
+<li><a href=\"architecture.md\">System Architecture</a> - Component architecture and interactions</li>
+<li><a href=\"storage.md\">Storage Layer</a> - Storage implementation details and patterns</li>
+<li><a href=\"memory.md\">Memory Management</a> - Memory handling and retrieval algorithms</li>
+<li><a href=\"api.md\">API Layer</a> - API infrastructure and access modes</li>
+<li><a href=\"config.md\">Configuration</a> - System configuration and deployment</li>
+<li><a href=\"development.md\">Development</a> - Development guides and best practices</li>
+</ul>
+<h2>Core Components</h2>
+<h3>Memory Management</h3>
+<ul>
+<li>Central MemoryManager orchestrating operations</li>
+<li>Interaction storage/retrieval with vector similarity</li>
+<li>Concept extraction and semantic clustering</li>
+<li>Memory classification (short/long-term)</li>
+<li>Context management for conversations</li>
+</ul>
+<h3>Storage Layer</h3>
+<ul>
+<li>Pluggable storage architecture</li>
+<li>Multiple backends (In-Memory, JSON, SPARQL)</li>
+<li>Transaction support with rollback</li>
+<li>Caching layer for performance</li>
+<li>Federation capabilities</li>
+</ul>
+<h3>API Layer</h3>
+<ul>
+<li>Multiple interface options (CLI, REPL, HTTP)</li>
+<li>Event-driven architecture</li>
+<li>Comprehensive monitoring</li>
+<li>Security middleware</li>
+<li>OpenAPI documentation</li>
+</ul>
+<h3>LLM Integration</h3>
+<ul>
+<li>Multiple provider support (Ollama, Anthropic)</li>
+<li>Configurable model selection</li>
+<li>Embedding generation/caching</li>
+<li>Prompt template management</li>
+<li>Context window optimization</li>
+</ul>
+<h2>Key Features</h2>
+<ol>
+<li><p>Semantic Memory</p>
+<ul>
+<li>Vector similarity search</li>
+<li>Concept relationship tracking</li>
+<li>Memory decay/reinforcement</li>
+<li>Context-aware retrieval</li>
+</ul>
+</li>
+<li><p>Storage Options</p>
+<ul>
+<li>In-memory for development</li>
+<li>JSON file persistence</li>
+<li>SPARQL/RDF for production</li>
+<li>Caching optimization</li>
+</ul>
+</li>
+<li><p>Access Methods</p>
+<ul>
+<li>Command-line interface</li>
+<li>Interactive REPL</li>
+<li>REST API endpoints</li>
+<li>WebSocket real-time</li>
+<li>RDF query language</li>
+</ul>
+</li>
+<li><p>System Features</p>
+<ul>
+<li>Transaction support</li>
+<li>Backup/recovery</li>
+<li>Federation support</li>
+<li>Comprehensive monitoring</li>
+<li>Security controls</li>
+</ul>
+</li>
+</ol>
+<h2>Technical Stack</h2>
+<ul>
+<li>Node.js (20.11.0+)</li>
+<li>ES Modules</li>
+<li>SPARQL/RDF</li>
+<li>WebSocket</li>
+<li>OpenTelemetry</li>
+<li>Jasmine Testing</li>
+</ul>
+
+        <div class="entry-footer">
+            <h2>About</h2>
+            
+        </div>
+    </body>
+</html>

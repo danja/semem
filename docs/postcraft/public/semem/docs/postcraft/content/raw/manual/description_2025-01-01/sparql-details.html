@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <link rel="stylesheet" href="/css/fonts.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/grid-columns.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/style.css" type="text/css"/>
+        <title>SPARQL Integration in Semem</title>
+    </head>
+    <!-- POST PAGE TEMPLATE -->
+    <body>
+        <header id="entry-header">
+            <h1 class="post-title h-cinzel">
+                
+            </h1>
+        </header>
+        <h1>SPARQL Integration in Semem</h1>
+<p>The SPARQL integration in Semem provides a sophisticated semantic storage layer that enables rich querying and knowledge graph capabilities. The system uses a carefully designed RDF schema to represent memories and their relationships.</p>
+<h2>Core Schema</h2>
+<p>Memories are stored using a custom vocabulary:</p>
+<pre><code class=\"language-turtle\">@prefix mcp: &lt;http://purl.org/stuff/mcp/&gt;
+
+mcp:Interaction 
+    a rdfs:Class ;
+    rdfs:label &quot;Memory Interaction&quot; .
+
+mcp:embedding
+    a rdf:Property ;
+    rdfs:domain mcp:Interaction ;
+    rdfs:range xsd:string .
+</code></pre>
+<h2>Transaction Management</h2>
+<p>The SPARQLStore implements ACID transactions through:</p>
+<ol>
+<li>Automatic backup creation before transactions</li>
+<li>Graph-level locking for concurrent access</li>
+<li>Rollback capability using backup graphs</li>
+<li>Transaction isolation through separate graph contexts</li>
+</ol>
+<h2>Caching Layer</h2>
+<p>The CachedSPARQLStore extends functionality with:</p>
+<ol>
+<li>In-memory query result caching</li>
+<li>Automatic cache invalidation on updates</li>
+<li>Time-based cache expiration</li>
+<li>Size-limited LRU caching strategy</li>
+</ol>
+<h2>Federation Support</h2>
+<p>The system supports federated queries across multiple endpoints, enabling:</p>
+<ol>
+<li>Distributed memory storage</li>
+<li>Cross-graph concept relationships</li>
+<li>Metadata management in separate graphs</li>
+<li>Scalable memory organization</li>
+</ol>
+
+        <div class="entry-footer">
+            <h2>About</h2>
+            
+        </div>
+    </body>
+</html>

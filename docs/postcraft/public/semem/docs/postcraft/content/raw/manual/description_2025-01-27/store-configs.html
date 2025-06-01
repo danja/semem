@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <link rel="stylesheet" href="/css/fonts.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/grid-columns.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/style.css" type="text/css"/>
+        <title>Storage Configuration Guide</title>
+    </head>
+    <!-- POST PAGE TEMPLATE -->
+    <body>
+        <header id="entry-header">
+            <h1 class="post-title h-cinzel">
+                
+            </h1>
+        </header>
+        <h1>Storage Configuration Guide</h1>
+<h2>Development Environment</h2>
+<pre><code class=\"language-javascript\">{
+    storage: {
+        type: &#39;memory&#39;,  // Use in-memory storage
+        options: {
+            maxSize: 1000,
+            enableMetrics: true
+        }
+    },
+    models: {
+        chat: {
+            provider: &#39;ollama&#39;,
+            model: &#39;qwen2:1.5b&#39;
+        },
+        embedding: {
+            provider: &#39;ollama&#39;,
+            model: &#39;nomic-embed-text&#39;
+        }
+    }
+}
+</code></pre>
+<p>Best for: Local development, testing, rapid prototyping</p>
+<h2>Small Production System</h2>
+<pre><code class=\"language-javascript\">{
+    storage: {
+        type: &#39;json&#39;,  // File-based storage
+        options: {
+            path: &#39;data/memory.json&#39;,
+            backupInterval: 3600000,  // 1 hour
+            maxBackups: 24
+        }
+    },
+    models: {
+        chat: {
+            provider: &#39;ollama&#39;,
+            model: &#39;qwen2:1.5b&#39;
+        },
+        embedding: {
+            provider: &#39;ollama&#39;,
+            model: &#39;nomic-embed-text&#39;
+        }
+    }
+}
+</code></pre>
+<p>Best for: Small deployments, single-server setups</p>
+<h2>Enterprise System</h2>
+<pre><code class=\"language-javascript\">{
+    storage: {
+        type: &#39;sparql&#39;,
+        options: {
+            graphName: &#39;http://example.org/memory&#39;,
+            endpoint: {
+                query: &#39;http://localhost:3030/ds/query&#39;,
+                update: &#39;http://localhost:3030/ds/update&#39;
+            },
+            cache: {
+                enabled: true,
+                ttl: 300000,  // 5 minutes
+                maxSize: 10000
+            },
+            auth: {
+                user: &#39;admin&#39;,
+                passwordEnv: &#39;SPARQL_PASSWORD&#39;
+            },
+            transaction: {
+                timeout: 30000,
+                retries: 3
+            }
+        }
+    },
+    models: {
+        chat: {
+            provider: &#39;anthropic&#39;,
+            model: &#39;claude-3-opus-20240229&#39;
+        },
+        embedding: {
+            provider: &#39;ollama&#39;,
+            model: &#39;nomic-embed-text&#39;
+        }
+    }
+}
+</code></pre>
+<p>Best for: Large-scale deployments, distributed systems</p>
+<h2>High-Performance Setup</h2>
+<pre><code class=\"language-javascript\">{
+    storage: {
+        type: &#39;cached-sparql&#39;,
+        options: {
+            graphName: &#39;http://example.org/memory&#39;,
+            endpoint: {
+                query: &#39;http://localhost:3030/ds/query&#39;,
+                update: &#39;http://localhost:3030/ds/update&#39;
+            },
+            cache: {
+                enabled: true,
+                ttl: 60000,  // 1 minute
+                maxSize: 50000,
+                cleanupInterval: 30000
+            },
+            performance: {
+                batchSize: 1000,
+                parallelQueries: 4,
+                timeout: 5000
+            }
+        }
+    },
+    models: {
+        chat: {
+            provider: &#39;anthropic&#39;,
+            model: &#39;claude-3-opus-20240229&#39;,
+            temperature: 0.7
+        },
+        embedding: {
+            provider: &#39;ollama&#39;,
+            model: &#39;nomic-embed-text&#39;,
+            batchSize: 32
+        }
+    }
+}
+</code></pre>
+<p>Best for: High-throughput applications</p>
+<h2>Testing Environment</h2>
+<pre><code class=\"language-javascript\">{
+    storage: {
+        type: &#39;memory&#39;,
+        options: {
+            mockLatency: 100,  // Simulate network delay
+            mockErrors: 0.01,  // 1% error rate
+            validateData: true
+        }
+    },
+    models: {
+        chat: {
+            provider: &#39;mock&#39;,
+            model: &#39;test-model&#39;
+        },
+        embedding: {
+            provider: &#39;mock&#39;,
+            model: &#39;test-embed&#39;
+        }
+    }
+}
+</code></pre>
+<p>Best for: Testing, CI/CD pipelines </p>
+
+        <div class="entry-footer">
+            <h2>About</h2>
+            
+        </div>
+    </body>
+</html>

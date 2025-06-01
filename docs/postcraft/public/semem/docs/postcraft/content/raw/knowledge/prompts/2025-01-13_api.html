@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <link rel="stylesheet" href="/css/fonts.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/grid-columns.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/style.css" type="text/css"/>
+        <title> JS API</title>
+    </head>
+    <!-- POST PAGE TEMPLATE -->
+    <body>
+        <header id="entry-header">
+            <h1 class="post-title h-cinzel">
+                
+            </h1>
+        </header>
+        <p> Please review the requirements below and compare with the code in your project knowledge. Please implement the missing pieces.</p>
+<p>Our project today is to create a set of APIs for Semem. Below are the provisional requirements for code. Tests and documentation will be covered later. The initial aim is to get draft code in place in a well-organised structure with all the necessary ES modules, classes and methods.
+First please read the requirements and refer to the documentation and current source code in project knowledge to get an idea of the current functionality and think hard about what will required. Then create a list of modules that will be needed, and we will step through creating these as artifacts one-by-one.</p>
+<h2>JS API</h2>
+<p>Wherever possible access to functionality for the APIs will be through shared interfaces, library-style. These will in turn delegate operations to modules found in <code>src/connectors</code>, <code>src/stores</code> and <code>src/utils</code>. Versatility and ease of extension will be enabled by separation of concerns and modularity. Interface/class hierarchies and dependency injection along with other design patterns should be used as appropriate.
+The loglevel lib will be used for logging.</p>
+<h4>Implementation Notes</h4>
+<p>Shared interfaces will be implemented by modules in the <code>src/api/common</code> dir.
+Default configuration will be in <code>src/Config.js</code>. Values may be overriden via the API.
+Any secrets will be managed using the dotenv lib.
+Typescript type descriptions (for VSCode support) should be included.</p>
+<h2>Access Modes</h2>
+<p>Semem will have five access modes :</p>
+<ol>
+<li>Command-line interface</li>
+<li>REPL</li>
+<li>HTTP JSON</li>
+<li>HTTP Forms</li>
+<li>RDF Turtle DSL</li>
+</ol>
+<h3>1. Command-line interface</h3>
+<p>The CLI will operate in the style of common Unix-style command line tools. It will use the chalk lib to colorize outputs for improved clarity.</p>
+<h4>Implementation Notes</h4>
+<p>The entry point will be <code>src/api/cli/run.js</code>. This will use the yargs lib to parse commands and nothing more, delegating elsewhere for functionality.</p>
+<h3>2. REPL</h3>
+<p>This will operate like eg. Python&#39;s command line interactive mode. It should be user-friendly with help available.</p>
+<h4>Implementation Notes</h4>
+<p>The REPL will have different modes of operation, for example human language chat and explicit RDF statements.</p>
+<h3>3. HTTP JSON</h3>
+<p>The API functionality will be accessible through a HTTP interface using standard REST techniques.</p>
+<h4>Implementation Notes</h4>
+<p>This should include an OpenAPI schema.
+The express lib should be used for HTTP services (HTTPS support will be the responsibility of any target host). Server code will appear under <code>src/api/http/server</code></p>
+<h3>4. HTTP Forms</h3>
+<p>Interactions will be available through simple statically-served HTML, CSS and vanilla JS forms.</p>
+<h4>Implementation Notes</h4>
+<p>Server code will appear under <code>src/api/http/server</code>, client code under <code>src/api/http/client</code></p>
+<h3>5. RDF Turtle DSL</h3>
+<p>This is not an immediate requirement but consideration should be given to how it might be supported.</p>
+<h2>Interaction Feature Sets</h2>
+<p>To give some intuition as to the nature of interactions, they will be grouped as follows :</p>
+<ol>
+<li>Selfie - self-analysis, monitoring and testing</li>
+<li>Passive -</li>
+<li>Active</li>
+</ol>
+<h3>1. Selfie (self-analysis, monitoring and testing)</h3>
+<ul>
+<li>storage metrics</li>
+<li>performance metrics</li>
+<li>error reporting</li>
+</ul>
+<h4>Implementation Notes</h4>
+<p>Only a very minimal implementation is needed at this point, but it should be created in such a way to support OpenTelemetry specifications. (If relevant, note that during development of Semem, Jasmine and chai are used for unit &amp; integration tests). The automatic posting of reports to a SPARQL store is requirement for a future phase.</p>
+<h3>2. Passive (functionality of units in isolation)</h3>
+<p>This should support things like posting data to, and querying the SPARQL store as well as direct chat with LLMs and semantic search of stored SPARQL data using embeddings.</p>
+<h3>3. Active (functionality of units in concert)</h3>
+<p>This will be the typical end-user style of interaction.</p>
+<hr>
+<p>Remember to generate complete artifacts corresponding to files containing full source code and give their name and path. Use &#39;ThisCase.js&#39; style file &amp; ES class naming.
+ </p>
+
+        <div class="entry-footer">
+            <h2>About</h2>
+            
+        </div>
+    </body>
+</html>

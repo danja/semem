@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <link rel="stylesheet" href="/css/fonts.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/grid-columns.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/style.css" type="text/css"/>
+        <title>Test Pattern Example</title>
+    </head>
+    <!-- POST PAGE TEMPLATE -->
+    <body>
+        <header id="entry-header">
+            <h1 class="post-title h-cinzel">
+                
+            </h1>
+        </header>
+        <p> // example/test/DataManagerTest.js
+import { BaseTest } from &#39;../../tests/helpers/BaseTest.js&#39;;
+import DataManager from &#39;../src/DataManager.js&#39;;</p>
+<p>/**</p>
+<ul>
+<li><p>Example test implementation demonstrating test patterns
+ */
+class DataManagerTest extends BaseTest {
+ beforeEach() {
+ super.beforeEach();
+ 
+ // Create mocks
+ this.mockStorage = {
+     save: jasmine.createSpy(&#39;save&#39;).and.resolveTo(true),
+     load: jasmine.createSpy(&#39;load&#39;).and.resolveTo([]),
+     delete: jasmine.createSpy(&#39;delete&#39;).and.resolveTo(true)
+ };
+ this.addMock(this.mockStorage);
+
+ this.mockValidator = {
+     validate: jasmine.createSpy(&#39;validate&#39;).and.returnValue(true)
+ };
+ this.addMock(this.mockValidator);
+
+ // Create test instance
+ this.manager = new DataManager(this.mockStorage, this.mockValidator);
+ 
+ // Setup cleanup
+ this.addCleanup(() =&gt; this.manager.dispose());
+ }</p>
+<p> // Helper to create test data
+ createTestData(id = &#39;test-1&#39;) {
+ return {
+     id,
+     value: &#39;test value&#39;,
+     timestamp: Date.now()
+ };
+ }</p>
+</li>
+</ul>
+<p>}</p>
+<p>describe(&#39;DataManager&#39;, () =&gt; {
+    let test;</p>
+<pre><code>beforeEach(() =&gt; {
+    test = new DataManagerTest();
+});
+
+describe(&#39;Data Operations&#39;, () =&gt; {
+    it(&#39;should save valid data&#39;, async (done) =&gt; {
+        const data = test.createTestData();
+        
+        await test.trackPromise(test.manager.saveData(data));
+
+        expect(test.mockValidator.validate).toHaveBeenCalledWith(data);
+        expect(test.mockStorage.save).toHaveBeenCalledWith(data);
+        done();
+    });
+
+    it(&#39;should reject invalid data&#39;, async (done) =&gt; {
+        const data = test.createTestData();
+        test.mockValidator.validate.and.returnValue(false);
+
+        try {
+            await test.trackPromise(test.manager.saveData(data));
+            done.fail(&#39;Should have rejected invalid data&#39;);
+        } catch (error) {
+            expect(error.message).toContain(&#39;Invalid data&#39;);
+            expect(test.mockStorage.save).not.toHaveBeenCalled();
+            done();
+        }
+    });
+
+    it(&#39;should handle storage errors&#39;, async (done) =&gt; {
+        const data = test.createTestData();
+        test.mockStorage.save.and.rejectWith(new Error(&#39;Storage error&#39;));
+
+        try {
+            await test.trackPromise(test.manager.saveData(data));
+            done.fail(&#39;Should have thrown storage error&#39;);
+        } catch (error) {
+            expect(error.message).toContain(&#39;Storage error&#39;);
+            expect(test.errorSpy).toHaveBeenCalled();
+            done();
+        }
+    });
+});
+
+describe(&#39;Data Retrieval&#39;, () =&gt; {
+    it(&#39;should load data with caching&#39;, async (done) =&gt; {
+        const testData = [test.createTestData()];
+        test.mockStorage.load.and.resolveTo(testData);
+
+        // First load
+        const result1 = await test.trackPromise(test.manager.loadData());
+        expect(result1).toEqual(testData);
+        expect(test.mockStorage.load).toHaveBeenCalledTimes(1);
+
+        // Should use cache
+        const result2 = await test.trackPromise(test.manager.loadData());
+        expect(result2).toEqual(testData);
+        expect(test.mockStorage.load).toHaveBeenCalledTimes(1);
+
+        // After timeout, should reload
+        await test.advanceTime(60000);
+        const result3 = await test.trackPromise(test.manager.loadData());
+        expect(result3).toEqual(testData);
+        expect(test.mockStorage.load).toHaveBeenCalledTimes(2);
+
+        done();
+    });
+});
+
+describe(&#39;Event Handling&#39;, () =&gt; {
+    it(&#39;should emit change events&#39;, async (done) =&gt; {
+        const data = test.createTestData();
+        const eventPromise = test.waitForEvent(test.manager, &#39;dataChanged&#39;);
+
+        await test.trackPromise(test.manager.saveData(data));
+        const event = await eventPromise;
+
+        expect(event.data).toEqual(data);
+        done();
+    });
+});
+
+describe(&#39;Resource Management&#39;, () =&gt; {
+    it(&#39;should cleanup resources&#39;, async (done) =&gt; {
+        const eventSpy = jasmine.createSpy(&#39;eventListener&#39;);
+        test.manager.on(&#39;dataChanged&#39;, eventSpy);
+
+        await test.trackPromise(test.manager.dispose());
+        
+        await test.trackPromise(test.manager.saveData(test.createTestData()));
+        expect(eventSpy).not.toHaveBeenCalled();
+        expect(test.mockStorage.save).not.toHaveBeenCalled();
+        done();
+    });
+});
+</code></pre>
+<p>});</p>
+<p>// example/src/DataManager.js
+import { EventEmitter } from &#39;events&#39;;</p>
+<p>export default class DataManager extends EventEmitter {
+    constructor(storage, validator) {
+        super();
+        this.storage = storage;
+        this.validator = validator;
+        this.cache = null;
+        this.cacheTime = null;
+        this.disposed = false;
+    }</p>
+<pre><code>async saveData(data) {
+    if (this.disposed) return;
+    
+    if (!this.validator.validate(data)) {
+        throw new Error(&#39;Invalid data&#39;);
+    }
+
+    try {
+        await this.storage.save(data);
+        this.cache = null;
+        this.emit(&#39;dataChanged&#39;, { data });
+    } catch (error) {
+        console.error(&#39;Save error:&#39;, error);
+        throw error;
+    }
+}
+
+async loadData() {
+    if (this.disposed) return [];
+
+    const now = Date.now();
+    if (this.cache &amp;&amp; now - this.cacheTime &lt; 60000) {
+        return this.cache;
+    }
+
+    this.cache = await this.storage.load();
+    this.cacheTime = now;
+    return this.cache;
+}
+
+async dispose() {
+    this.disposed = true;
+    this.cache = null;
+    this.removeAllListeners();
+}
+</code></pre>
+<p>} </p>
+
+        <div class="entry-footer">
+            <h2>About</h2>
+            
+        </div>
+    </body>
+</html>

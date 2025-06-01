@@ -32,7 +32,16 @@
     :dataBlock "contentBlocks" ;
     :templateFilename "system/sparql-templates/store-article.njk" ;
     :endpointSettings "system/endpoints.json" ;
-    :graph <http://danny.ayers.name/content> .
+    :graph <http://tensegrity.it/semem> .
+
+:readerSet a :ConfigSet ;
+    :metaField "meta" .
+
+:entryExtras a :ConfigSet ;
+    :relMap "blog" ; # relPath goes to this
+    :baseURI <hhttp://tensegrity.it/semem> ;
+    :creatorName "Danny" ;
+    :creatorURI <http://danny.ayers.name/me> .
 
 ###########################
 ### for sparqlstore-to-html
@@ -40,7 +49,7 @@
 :resultIterator a :ConfigSet ;
     :forEach "queryResults.results.bindings" ;
     :remove "queryResults" ;
-    :graph <http://danny.ayers.name/content> .
+    :graph <http://tensegrity.it/semem> .
 
 :prepArticle a :ConfigSet  ;
     :remove "queryResults" ;
@@ -60,7 +69,7 @@
 :selectArticles a :ConfigSet ;
     :templateFilename "system/sparql-templates/select-articles.njk" ;
     :endpointSettings "system/endpoints.json" ;
-        :graph <http://danny.ayers.name/content> .
+        :graph <http://tensegrity.it/semem> .
 
 :articleContentTemplate a :ConfigSet ;
     :templateFilename "layout/base/templates/article-content.njk" .
@@ -90,7 +99,7 @@
     :dataBlock "contentBlocks" ;
     :templateFilename "system/sparql-templates/record-rendering.njk" ;
     :endpointSettings "system/endpoints.json" ;
-        :graph <http://danny.ayers.name/content> .
+        :graph <http://tensegrity.it/semem> .
 
 :updateArticleHTML a :ConfigSet ;
     :delay "100" ;
@@ -98,7 +107,7 @@
     :escape true ;
     :templateFilename "system/sparql-templates/save-html-chunk.njk" ;
     :endpointSettings "system/endpoints.json" ;
-         :graph <http://danny.ayers.name/content> .
+         :graph <http://tensegrity.it/semem> .
 
 #################################
 # for sparqlstore-to-site-indexes
@@ -106,7 +115,7 @@
 :recentArticles a :ConfigSet ;
     :templateFilename "system/sparql-templates/recent-articles.njk" ;
     :endpointSettings "system/endpoints.json" ;
-        :graph <http://danny.ayers.name/content> .
+        :graph <http://tensegrity.it/semem> .
 
 :indexResultIterator a :ConfigSet ;
   :forEach "queryResults.results.bindings" .

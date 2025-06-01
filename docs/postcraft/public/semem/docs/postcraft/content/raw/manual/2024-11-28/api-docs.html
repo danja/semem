@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <link rel="stylesheet" href="/css/fonts.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/grid-columns.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/style.css" type="text/css"/>
+        <title>Remote Storage API Documentation</title>
+    </head>
+    <!-- POST PAGE TEMPLATE -->
+    <body>
+        <header id="entry-header">
+            <h1 class="post-title h-cinzel">
+                
+            </h1>
+        </header>
+        <h1>Remote Storage API Documentation</h1>
+<h2>Base URL</h2>
+<p><code>https://your-api-endpoint/memory</code></p>
+<h2>Endpoints</h2>
+<h3>GET /memory</h3>
+<p>Retrieves all stored memories.</p>
+<pre><code class=\"language-http\">GET /memory
+Authorization: Bearer &lt;your-api-key&gt;
+</code></pre>
+<p>Response:</p>
+<pre><code class=\"language-javascript\">{
+  &quot;shortTermMemory&quot;: [
+    {
+      &quot;id&quot;: &quot;uuid&quot;,
+      &quot;prompt&quot;: &quot;string&quot;,
+      &quot;output&quot;: &quot;string&quot;,
+      &quot;embedding&quot;: [number],
+      &quot;timestamp&quot;: number,
+      &quot;accessCount&quot;: number,
+      &quot;concepts&quot;: [string],
+      &quot;decayFactor&quot;: number
+    }
+  ],
+  &quot;longTermMemory&quot;: [/* similar structure */]
+}
+</code></pre>
+<h3>POST /memory</h3>
+<p>Stores new memory state.</p>
+<pre><code class=\"language-http\">POST /memory
+Authorization: Bearer &lt;your-api-key&gt;
+Content-Type: application/json
+
+{
+  &quot;shortTermMemory&quot;: [...],
+  &quot;longTermMemory&quot;: [...]
+}
+</code></pre>
+<h3>Error Responses</h3>
+<ul>
+<li>401: Unauthorized</li>
+<li>403: Forbidden</li>
+<li>500: Internal Server Error</li>
+</ul>
+
+        <div class="entry-footer">
+            <h2>About</h2>
+            
+        </div>
+    </body>
+</html>

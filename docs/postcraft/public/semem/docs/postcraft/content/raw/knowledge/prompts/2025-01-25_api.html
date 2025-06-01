@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <link rel="stylesheet" href="/css/fonts.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/grid-columns.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/style.css" type="text/css"/>
+        <title> Feature Handlers</title>
+    </head>
+    <!-- POST PAGE TEMPLATE -->
+    <body>
+        <header id="entry-header">
+            <h1 class="post-title h-cinzel">
+                
+            </h1>
+        </header>
+        <p> I&#39;d like you to help move forward the API implementation in the <code>src/api</code> directory.</p>
+<p>Base infrastructure looks reasonably solid with BaseAPI and APIRegistry providing core functionality. HTTP looks mostly done, but CLI and REPL API handlers only have skeleton implementations. Error handling, metrics, and authentication may need more work.</p>
+<p>Next steps :</p>
+<h2>Feature Handlers</h2>
+<ul>
+<li>ActiveHandler: Concept mapping and semantic search</li>
+<li>PassiveHandler: complete caching and transaction support</li>
+<li>SelfieHandler: metrics collection needs implementation</li>
+</ul>
+<h2>API</h2>
+<ul>
+<li>CLI Integration</li>
+<li>REPL Integration</li>
+<li>Command parsing - use yargs, include help</li>
+<li>History management</li>
+<li>Interactive completion</li>
+<li>Command-line interactions should have appropriate coloring using the &#39;chalk&#39; library</li>
+</ul>
+<h2>Docs</h2>
+<ul>
+<li>Swagger/OpenAPI docs need completion</li>
+</ul>
+<p>All of these will need Jasmine unit and integration tests.
+Render code as individual artifacts labeled with the target file path and include full source code in each.
+ </p>
+
+        <div class="entry-footer">
+            <h2>About</h2>
+            
+        </div>
+    </body>
+</html>

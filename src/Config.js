@@ -80,14 +80,23 @@ export default class Config {
             // Load config file if requested
             if (this.configFilePath) {
                 fileConfig = this.loadConfigFile()
+                console.log('Loaded config file content:', JSON.stringify(fileConfig, null, 2))
+            } else {
+                console.log('No config file path provided, using defaults')
             }
+            
+            console.log('Merging configs. Defaults:', JSON.stringify(Config.defaults, null, 2))
             
             // Merge in order: defaults -> file config -> user config
             this.config = this.mergeConfigs(Config.defaults, fileConfig, 0)
             
+            console.log('After merging, config is:', JSON.stringify(this.config, null, 2))
+            
             this.applyEnvironmentOverrides()
             this.validateConfig()
             this.initialized = true
+            
+            console.log('Final config after overrides and validation:', JSON.stringify(this.config, null, 2))
         } catch (error) {
             throw new Error(`Config initialization failed: ${error.message}`)
         }
@@ -97,6 +106,7 @@ export default class Config {
         try {
             // If config file path was provided in constructor, use it directly
             if (this.configFilePath) {
+                console.log('Checking provided config path:', this.configFilePath);
                 if (!fs.existsSync(this.configFilePath)) {
                     console.warn('Config file not found at provided path:', this.configFilePath);
                     return {};
@@ -108,28 +118,34 @@ export default class Config {
 
             // Otherwise, try to find the config file in common locations
             const possiblePaths = [
-                // Local development path
+                // Local development path (when running from project root)
                 join(process.cwd(), 'config', 'config.json'),
-                // Path when running from project root
-                join(process.cwd(), '..', 'config', 'config.json'),
                 // Path when running from src directory
+                join(process.cwd(), '..', 'config', 'config.json'),
+                // Path when running from src/mcp directory
                 join(process.cwd(), '..', '..', 'config', 'config.json'),
                 // Docker container path
                 '/app/config/config.json',
                 // Fallback to environment variable if set
-                process.env.CONFIG_PATH
+                process.env.CONFIG_PATH,
+                // Absolute path as a last resort
+                '/home/danny/hyperdata/semem/config/config.json'
             ].filter(Boolean);
             
+            console.log('Searching for config in these locations:', possiblePaths);
+            
             for (const path of possiblePaths) {
+                console.log('  Checking:', path);
                 if (path && fs.existsSync(path)) {
-                    console.log('Loading config from:', path);
+                    console.log('✓ Config file found at:', path);
                     this.configFilePath = path;
                     const fileContent = fs.readFileSync(path, 'utf8');
+                    console.log('Config file content:', fileContent);
                     return JSON.parse(fileContent);
                 }
             }
             
-            console.warn('Config file not found in any of these locations:', possiblePaths);
+            console.warn('❌ Config file not found in any of these locations:', possiblePaths);
             return {};
             
         } catch (error) {
@@ -139,32 +155,38 @@ export default class Config {
     }
 
     transformJsonConfig(jsonConfig) {
-        const transformed = {}
+        const transformed = { ...jsonConfig } // Start with a copy of the original config
         
-        // Map server configs
+        // Map server configs (preserve existing if none in jsonConfig)
         if (jsonConfig.servers) {
             transformed.servers = jsonConfig.servers
         }
         
-        // Map SPARQL endpoints
+        // Map SPARQL endpoints if they exist in the format we expect
         if (jsonConfig.sparqlEndpoints && jsonConfig.sparqlEndpoints.length > 0) {
             const endpoint = jsonConfig.sparqlEndpoints[0]
-            transformed.sparqlEndpoints = [{
-                label: "config-file",
-                user: endpoint.auth?.user || "admin",
-                password: endpoint.auth?.password || "admin",
-                urlBase: endpoint.queryEndpoint.replace('/semem/query', ''),
-                dataset: "semem",
-                query: "/semem",
-                update: "/semem",
-                upload: "/semem/upload",
-                gspRead: "/semem/data",
-                gspWrite: "/semem/data"
-            }]
+            // Only transform if we have the old format with queryEndpoint
+            if (endpoint.queryEndpoint) {
+                transformed.sparqlEndpoints = [{
+                    label: "config-file",
+                    user: endpoint.auth?.user || "admin",
+                    password: endpoint.auth?.password || "admin",
+                    urlBase: endpoint.queryEndpoint.replace('/semem/query', ''),
+                    dataset: "semem",
+                    query: "/semem",
+                    update: "/semem",
+                    upload: "/semem/upload",
+                    gspRead: "/semem/data",
+                    gspWrite: "/semem/data"
+                }]
+            }
         }
         
-        // Map models from LLM providers
-        if (jsonConfig.llmProviders && jsonConfig.llmProviders.length > 0) {
+        // Preserve llmProviders array as-is
+        if (jsonConfig.llmProviders && Array.isArray(jsonConfig.llmProviders)) {
+            transformed.llmProviders = jsonConfig.llmProviders;
+            
+            // Still set default models based on provider capabilities
             const chatProvider = jsonConfig.llmProviders.find(p => p.capabilities?.includes('chat'))
             const embeddingProvider = jsonConfig.llmProviders.find(p => p.capabilities?.includes('embedding'))
             
@@ -187,14 +209,14 @@ export default class Config {
             }
         }
         
-        // Map other top-level configs
-        if (jsonConfig.chatModel) {
+        // Map other top-level configs (only if they don't exist already)
+        if (jsonConfig.chatModel && !transformed.models?.chat?.model) {
             transformed.models = transformed.models || {}
             transformed.models.chat = transformed.models.chat || {}
             transformed.models.chat.model = jsonConfig.chatModel
         }
         
-        if (jsonConfig.embeddingModel) {
+        if (jsonConfig.embeddingModel && !transformed.models?.embedding?.model) {
             transformed.models = transformed.models || {}
             transformed.models.embedding = transformed.models.embedding || {}
             transformed.models.embedding.model = jsonConfig.embeddingModel
@@ -209,21 +231,37 @@ export default class Config {
             throw new Error('Config merge exceeded maximum depth')
         }
 
-        if (!user || typeof user !== 'object' || Array.isArray(user)) {
-            return defaults
+        // If user value is an array, replace the default entirely
+        if (Array.isArray(user)) {
+            return [...user];
         }
 
-        const merged = { ...defaults }
+        // If user is not an object, return it (overriding defaults)
+        if (!user || typeof user !== 'object') {
+            return user || defaults;
+        }
 
+        // If defaults is not an object, return user (overriding defaults)
+        if (!defaults || typeof defaults !== 'object') {
+            return { ...user };
+        }
+
+        // Create a new object to hold the merged result
+        const merged = { ...defaults };
+
+        // Merge each property
         for (const [key, value] of Object.entries(user)) {
             if (value && typeof value === 'object' && !Array.isArray(value) &&
-                defaults && typeof defaults === 'object' && defaults[key]) {
-                merged[key] = this.mergeConfigs(defaults[key], value, depth + 1)
+                defaults[key] && typeof defaults[key] === 'object') {
+                // Recursively merge objects
+                merged[key] = this.mergeConfigs(defaults[key], value, depth + 1);
             } else {
-                merged[key] = value
+                // Replace with user value (including arrays and primitives)
+                merged[key] = value !== undefined ? value : defaults[key];
             }
         }
-        return merged
+        
+        return merged;
     }
 
     validateConfig() {
@@ -263,6 +301,27 @@ export default class Config {
                 this.set(configPath.join('.'), value)
             }
         }
+        
+        // Replace ${VAR_NAME} placeholders with environment variables
+        const replaceEnvVars = (obj) => {
+            if (typeof obj === 'string' && obj.includes('${')) {
+                return obj.replace(/\$\{([^}]+)\}/g, (_, varName) => {
+                    return process.env[varName] || '';
+                });
+            } else if (Array.isArray(obj)) {
+                return obj.map(item => replaceEnvVars(item));
+            } else if (obj && typeof obj === 'object') {
+                const result = {};
+                for (const [key, value] of Object.entries(obj)) {
+                    result[key] = replaceEnvVars(value);
+                }
+                return result;
+            }
+            return obj;
+        };
+        
+        // Apply environment variable substitution to the entire config
+        this.config = replaceEnvVars(this.config);
     }
 
     get(path) {

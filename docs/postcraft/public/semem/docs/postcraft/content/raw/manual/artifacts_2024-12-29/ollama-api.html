@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <link rel="stylesheet" href="/css/fonts.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/grid-columns.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/style.css" type="text/css"/>
+        <title>ollama-api.js</title>
+    </head>
+    <!-- POST PAGE TEMPLATE -->
+    <body>
+        <header id="entry-header">
+            <h1 class="post-title h-cinzel">
+                
+            </h1>
+        </header>
+        <p> // src/ollama-api.js
+import fetch from &#39;node-fetch&#39;;</p>
+<p>export default class OllamaAPI {
+    constructor(baseUrl = &#39;<a href=\"http://localhost:11434\">http://localhost:11434</a>&#39;) {
+        this.baseUrl = baseUrl;
+    }</p>
+<pre><code>async generateEmbedding(model, input) {
+    const response = await fetch(`${this.baseUrl}/api/embeddings`, {
+        method: &#39;POST&#39;,
+        headers: { &#39;Content-Type&#39;: &#39;application/json&#39; },
+        body: JSON.stringify({ 
+            model, 
+            prompt: input,
+            options: {
+                num_ctx: 8192
+            }
+        })
+    });
+
+    if (!response.ok) {
+        throw new Error(`Ollama API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.embedding;
+}
+
+async generateChat(model, messages, options = {}) {
+    const response = await fetch(`${this.baseUrl}/api/chat`, {
+        method: &#39;POST&#39;,
+        headers: { &#39;Content-Type&#39;: &#39;application/json&#39; },
+        body: JSON.stringify({
+            model,
+            messages,
+            stream: false,
+            options
+        })
+    });
+
+    if (!response.ok) {
+        throw new Error(`Ollama API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.message.content;
+}
+
+async generateCompletion(model, prompt, options = {}) {
+    const response = await fetch(`${this.baseUrl}/api/generate`, {
+        method: &#39;POST&#39;,
+        headers: { &#39;Content-Type&#39;: &#39;application/json&#39; },
+        body: JSON.stringify({
+            model,
+            prompt,
+            stream: false,
+            options
+        })
+    });
+
+    if (!response.ok) {
+        throw new Error(`Ollama API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.response;
+}
+</code></pre>
+<p>}
+ </p>
+
+        <div class="entry-footer">
+            <h2>About</h2>
+            
+        </div>
+    </body>
+</html>

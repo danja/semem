@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <link rel="stylesheet" href="/css/fonts.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/grid-columns.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/style.css" type="text/css"/>
+        <title>Deployment Guide</title>
+    </head>
+    <!-- POST PAGE TEMPLATE -->
+    <body>
+        <header id="entry-header">
+            <h1 class="post-title h-cinzel">
+                
+            </h1>
+        </header>
+        <h1>Deployment Guide</h1>
+<h2>Prerequisites</h2>
+<pre><code class=\"language-bash\"># Node.js 18+ required
+node --version
+
+# Install dependencies
+npm install semem
+</code></pre>
+<h2>Environment Setup</h2>
+<pre><code class=\"language-bash\"># .env file
+OPENAI_API_KEY=your-key
+STORAGE_API_KEY=your-storage-key
+STORAGE_ENDPOINT=https://api.example.com
+</code></pre>
+<h2>Docker Deployment</h2>
+<pre><code class=\"language-dockerfile\">FROM node:18-alpine
+
+WORKDIR /app
+
+# Install dependencies
+COPY package*.json ./
+RUN npm install
+
+# Copy application files
+COPY . .
+
+# Set environment variables
+ENV NODE_ENV=production
+
+# Start the application
+CMD [&quot;node&quot;, &quot;index.js&quot;]
+</code></pre>
+<h2>Docker Compose</h2>
+<pre><code class=\"language-yaml\">version: &#39;3.8&#39;
+services:
+  semem:
+    build: .
+    environment:
+      - NODE_ENV=production
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    ports:
+      - &quot;3000:3000&quot;
+    volumes:
+      - ./data:/app/data
+</code></pre>
+<h2>PM2 Deployment</h2>
+<pre><code class=\"language-bash\"># Install PM2
+npm install -g pm2
+
+# Start application
+pm2 start index.js --name semem
+
+# Enable startup
+pm2 startup
+pm2 save
+</code></pre>
+
+        <div class="entry-footer">
+            <h2>About</h2>
+            
+        </div>
+    </body>
+</html>

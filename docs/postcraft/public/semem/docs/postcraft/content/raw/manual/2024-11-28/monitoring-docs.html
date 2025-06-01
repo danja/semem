@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <link rel="stylesheet" href="/css/fonts.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/grid-columns.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/style.css" type="text/css"/>
+        <title>Monitoring Documentation</title>
+    </head>
+    <!-- POST PAGE TEMPLATE -->
+    <body>
+        <header id="entry-header">
+            <h1 class="post-title h-cinzel">
+                
+            </h1>
+        </header>
+        <h1>Monitoring Documentation</h1>
+<h2>System Metrics</h2>
+<h3>Memory Usage Monitoring</h3>
+<pre><code class=\"language-javascript\">import { EventEmitter } from &#39;events&#39;;
+import { logger } from &#39;./utils.js&#39;;
+
+class MemoryMonitor extends EventEmitter {
+    constructor(memoryManager) {
+        super();
+        this.memoryManager = memoryManager;
+        this.stats = {
+            shortTermCount: 0,
+            longTermCount: 0,
+            embeddingSize: 0,
+            lastAccessed: new Date()
+        };
+    }
+
+    collectMetrics() {
+        this.stats = {
+            shortTermCount: this.memoryManager.memoryStore.shortTermMemory.length,
+            longTermCount: this.memoryManager.memoryStore.longTermMemory.length,
+            embeddingSize: this.memoryManager.memoryStore.embeddings.reduce((acc, curr) =&gt; 
+                acc + curr.byteLength, 0),
+            lastAccessed: new Date()
+        };
+        this.emit(&#39;metrics&#39;, this.stats);
+        logger.debug(&#39;Memory metrics:&#39;, this.stats);
+    }
+}
+</code></pre>
+<h3>Performance Metrics</h3>
+<pre><code class=\"language-javascript\">const performanceMetrics = {
+    responseTime: new Map(),
+    embeddingTime: new Map(),
+    storageOperations: new Map(),
+    
+    track(operation, duration) {
+        const metrics = this.responseTime.get(operation) || {
+            count: 0,
+            totalTime: 0,
+            avgTime: 0
+        };
+        metrics.count++;
+        metrics.totalTime += duration;
+        metrics.avgTime = metrics.totalTime / metrics.count;
+        this.responseTime.set(operation, metrics);
+    }
+};
+</code></pre>
+<h2>Integration with Monitoring Services</h2>
+<h3>Prometheus Integration</h3>
+<pre><code class=\"language-javascript\">import prometheus from &#39;prom-client&#39;;
+
+const memoryGauge = new prometheus.Gauge({
+    name: &#39;semem_memory_usage_bytes&#39;,
+    help: &#39;Memory usage of SeMeM&#39;
+});
+
+const responseHistogram = new prometheus.Histogram({
+    name: &#39;semem_response_time_seconds&#39;,
+    help: &#39;Response time of memory operations&#39;
+});
+</code></pre>
+<h3>Health Checks</h3>
+<pre><code class=\"language-javascript\">class HealthCheck {
+    constructor(memoryManager) {
+        this.memoryManager = memoryManager;
+    }
+
+    async check() {
+        try {
+            const status = {
+                storage: await this.checkStorage(),
+                embeddings: await this.checkEmbeddings(),
+                llm: await this.checkLLM(),
+                timestamp: new Date()
+            };
+            return status;
+        } catch (error) {
+            logger.error(&#39;Health check failed:&#39;, error);
+            throw error;
+        }
+    }
+
+    async checkStorage() {
+        const startTime = Date.now();
+        await this.memoryManager.storage.loadHistory();
+        return {
+            status: &#39;ok&#39;,
+            latency: Date.now() - startTime
+        };
+    }
+}
+</code></pre>
+<h2>Usage Monitoring</h2>
+<h3>Rate Limiting</h3>
+<pre><code class=\"language-javascript\">class RateLimiter {
+    constructor(limit = 100, window = 60000) {
+        this.limit = limit;
+        this.window = window;
+        this.requests = new Map();
+    }
+
+    async checkLimit(key) {
+        const now = Date.now();
+        const requests = this.requests.get(key) || [];
+        const windowStart = now - this.window;
+        
+        // Clean old requests
+        const recent = requests.filter(time =&gt; time &gt; windowStart);
+        this.requests.set(key, recent);
+        
+        return recent.length &lt; this.limit;
+    }
+}
+</code></pre>
+<h3>Error Tracking</h3>
+<pre><code class=\"language-javascript\">class ErrorTracker {
+    constructor() {
+        this.errors = new Map();
+    }
+
+    track(error, context) {
+        const key = error.message;
+        const entry = this.errors.get(key) || {
+            count: 0,
+            firstSeen: new Date(),
+            lastSeen: new Date(),
+            contexts: new Set()
+        };
+        
+        entry.count++;
+        entry.lastSeen = new Date();
+        entry.contexts.add(JSON.stringify(context));
+        
+        this.errors.set(key, entry);
+        logger.error(&#39;Error tracked:&#39;, { error, context });
+    }
+}
+</code></pre>
+<h2>Implementation Example</h2>
+<pre><code class=\"language-javascript\">import { MemoryManager } from &#39;./memoryManager.js&#39;;
+
+const manager = new MemoryManager({...});
+const monitor = new MemoryMonitor(manager);
+const health = new HealthCheck(manager);
+const errors = new ErrorTracker();
+
+// Setup periodic monitoring
+setInterval(() =&gt; {
+    monitor.collectMetrics();
+    health.check().catch(error =&gt; 
+        errors.track(error, { component: &#39;health_check&#39; }));
+}, 60000);
+
+// Track performance
+monitor.on(&#39;metrics&#39;, async (stats) =&gt; {
+    memoryGauge.set(stats.embeddingSize);
+    
+    try {
+        const healthStatus = await health.check();
+        logger.info(&#39;Health status:&#39;, healthStatus);
+    } catch (error) {
+        errors.track(error, { component: &#39;monitoring&#39; });
+    }
+});
+</code></pre>
+<p>This monitoring system provides:</p>
+<ol>
+<li>Memory usage tracking</li>
+<li>Performance metrics</li>
+<li>Health checks</li>
+<li>Error tracking</li>
+<li>Rate limiting</li>
+<li>Prometheus integration</li>
+</ol>
+<p>Q1: Would you like to see example Grafana dashboards?
+Q2: Should I add alerting configuration?
+Q3: Would you like to see logging best practices?
+Q4: Should I include scaling metrics? </p>
+
+        <div class="entry-footer">
+            <h2>About</h2>
+            
+        </div>
+    </body>
+</html>

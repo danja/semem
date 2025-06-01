@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <link rel="stylesheet" href="/css/fonts.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/grid-columns.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/style.css" type="text/css"/>
+        <title>Custom Storage Implementations</title>
+    </head>
+    <!-- POST PAGE TEMPLATE -->
+    <body>
+        <header id="entry-header">
+            <h1 class="post-title h-cinzel">
+                
+            </h1>
+        </header>
+        <h1>Custom Storage Implementations</h1>
+<h2>Redis Storage Implementation</h2>
+<pre><code class=\"language-javascript\">import { BaseStorage } from &#39;semem&#39;;
+import Redis from &#39;ioredis&#39;;
+
+export default class RedisStorage extends BaseStorage {
+    constructor(options = {}) {
+        super();
+        this.redis = new Redis({
+            host: options.host || &#39;localhost&#39;,
+            port: options.port || 6379,
+            password: options.password,
+            keyPrefix: &#39;semem:&#39;
+        });
+    }
+
+    async loadHistory() {
+        try {
+            const shortTerm = await this.redis.get(&#39;short_term_memory&#39;);
+            const longTerm = await this.redis.get(&#39;long_term_memory&#39;);
+            
+            return [
+                JSON.parse(shortTerm || &#39;[]&#39;),
+                JSON.parse(longTerm || &#39;[]&#39;)
+            ];
+        } catch (error) {
+            logger.error(&#39;Redis load error:&#39;, error);
+            return [[], []];
+        }
+    }
+
+    async saveMemoryToHistory(memoryStore) {
+        try {
+            const pipeline = this.redis.pipeline();
+            
+            pipeline.set(&#39;short_term_memory&#39;, 
+                JSON.stringify(memoryStore.shortTermMemory.map((item, idx) =&gt; ({
+                    id: item.id,
+                    prompt: item.prompt,
+                    output: item.output,
+                    embedding: Array.from(memoryStore.embeddings[idx].flat()),
+                    timestamp: memoryStore.timestamps[idx],
+                    accessCount: memoryStore.accessCounts[idx],
+                    concepts: Array.from(memoryStore.conceptsList[idx]),
+                    decayFactor: item.decayFactor || 1.0
+                }))));
+                
+            pipeline.set(&#39;long_term_memory&#39;, 
+                JSON.stringify(memoryStore.longTermMemory));
+            
+            await pipeline.exec();
+        } catch (error) {
+            logger.error(&#39;Redis save error:&#39;, error);
+            throw error;
+        }
+    }
+}
+</code></pre>
+<h2>MongoDB Storage Implementation</h2>
+<pre><code class=\"language-javascript\">import { BaseStorage } from &#39;semem&#39;;
+import { MongoClient } from &#39;mongodb&#39;;
+
+export default class MongoStorage extends BaseStorage {
+    constructor(options = {}) {
+        super();
+        this.url = options.url || &#39;mongodb://localhost:27017&#39;;
+        this.dbName = options.dbName || &#39;semem&#39;;
+        this.client = null;
+        this.db = null;
+    }
+
+    async connect() {
+        if (!this.client) {
+            this.client = await MongoClient.connect(this.url);
+            this.db = this.client.db(this.dbName);
+        }
+    }
+
+    async loadHistory() {
+        try {
+            await this.connect();
+            
+            const shortTerm = await this.db.collection(&#39;short_term_memory&#39;)
+                .find({})
+                .sort({ timestamp: -1 })
+                .toArray();
+                
+            const longTerm = await this.db.collection(&#39;long_term_memory&#39;)
+                .find({})
+                .toArray();
+                
+            return [shortTerm, longTerm];
+        } catch (error) {
+            logger.error(&#39;MongoDB load error:&#39;, error);
+            return [[], []];
+        }
+    }
+
+    async saveMemoryToHistory(memoryStore) {
+        try {
+            await this.connect();
+            
+            // Create session for transaction
+            const session = this.client.startSession();
+            
+            try {
+                await session.withTransaction(async () =&gt; {
+                    // Clear existing memories
+                    await this.db.collection(&#39;short_term_memory&#39;).deleteMany({}, { session });
+                    
+                    // Insert new short-term memories
+                    if (memoryStore.shortTermMemory.length &gt; 0) {
+                        await this.db.collection(&#39;short_term_memory&#39;).insertMany(
+                            memoryStore.shortTermMemory.map((item, idx) =&gt; ({
+                                id: item.id,
+                                prompt: item.prompt,
+                                output: item.output,
+                                embedding: Array.from(memoryStore.embeddings[idx].flat()),
+                                timestamp: memoryStore.timestamps[idx],
+                                accessCount: memoryStore.accessCounts[idx],
+                                concepts: Array.from(memoryStore.conceptsList[idx]),
+                                decayFactor: item.decayFactor || 1.0
+                            })),
+                            { session }
+                        );
+                    }
+                    
+                    // Update long-term memories
+                    await this.db.collection(&#39;long_term_memory&#39;).deleteMany({}, { session });
+                    if (memoryStore.longTermMemory.length &gt; 0) {
+                        await this.db.collection(&#39;long_term_memory&#39;).insertMany(
+                            memoryStore.longTermMemory,
+                            { session }
+                        );
+                    }
+                });
+            } finally {
+                await session.endSession();
+            }
+        } catch (error) {
+            logger.error(&#39;MongoDB save error:&#39;, error);
+            throw error;
+        }
+    }
+}
+</code></pre>
+<h2>SQLite Storage Implementation</h2>
+<pre><code class=\"language-javascript\">import { BaseStorage } from &#39;semem&#39;;
+import sqlite3 from &#39;sqlite3&#39;;
+import { open } from &#39;sqlite&#39;;
+
+export default class SQLiteStorage extends BaseStorage {
+    constructor(options = {}) {
+        super();
+        this.dbPath = options.dbPath || &#39;:memory:&#39;;
+        this.db = null;
+    }
+
+    async init() {
+        if (!this.db) {
+            this.db = await open({
+                filename: this.dbPath,
+                driver: sqlite3.Database
+            });
+            
+            await this.createTables();
+        }
+    }
+
+    async createTables() {
+        await this.db.exec(`
+            CREATE TABLE IF NOT EXISTS short_term_memory (
+                id TEXT PRIMARY KEY,
+                prompt TEXT,
+                output TEXT,
+                embedding BLOB,
+                timestamp INTEGER,
+                access_count INTEGER,
+                concepts TEXT,
+                decay_factor REAL
+            );
+            
+            CREATE TABLE IF NOT EXISTS long_term_memory (
+                id TEXT PRIMARY KEY,
+                prompt TEXT,
+                output TEXT,
+                timestamp INTEGER,
+                concepts TEXT
+            );
+        `);
+    }
+
+    async loadHistory() {
+        try {
+            await this.init();
+            
+            const shortTerm = await this.db.all(`
+                SELECT * FROM short_term_memory
+                ORDER BY timestamp DESC
+            `);
+            
+            const longTerm = await this.db.all(`
+                SELECT * FROM long_term_memory
+            `);
+            
+            // Convert stored format back to application format
+            return [
+                shortTerm.map(row =&gt; ({
+                    id: row.id,
+                    prompt: row.prompt,
+                    output: row.output,
+                    embedding: new Float32Array(row.embedding),
+                    timestamp: row.timestamp,
+                    accessCount: row.access_count,
+                    concepts: JSON.parse(row.concepts),
+                    decayFactor: row.decay_factor
+                })),
+                longTerm.map(row =&gt; ({
+                    id: row.id,
+                    prompt: row.prompt,
+                    output: row.output,
+                    timestamp: row.timestamp,
+                    concepts: JSON.parse(row.concepts)
+                }))
+            ];
+        } catch (error) {
+            logger.error(&#39;SQLite load error:&#39;, error);
+            return [[], []];
+        }
+    }
+
+    async saveMemoryToHistory(memoryStore) {
+        try {
+            await this.init();
+            
+            await this.db.run(&#39;BEGIN TRANSACTION&#39;);
+            
+            try {
+                // Clear existing memories
+                await this.db.run(&#39;DELETE FROM short_term_memory&#39;);
+                await this.db.run(&#39;DELETE FROM long_term_memory&#39;);
+                
+                // Insert short-term memories
+                const shortTermStmt = await this.db.prepare(`
+                    INSERT INTO short_term_memory VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                `);
+                
+                for (let idx = 0; idx &lt; memoryStore.shortTermMemory.length; idx++) {
+                    const item = memoryStore.shortTermMemory[idx];
+                    await shortTermStmt.run(
+                        item.id,
+                        item.prompt,
+                        item.output,
+                        Buffer.from(memoryStore.embeddings[idx].buffer),
+                        memoryStore.timestamps[idx],
+                        memoryStore.accessCounts[idx],
+                        JSON.stringify(Array.from(memoryStore.conceptsList[idx])),
+                        item.decayFactor || 1.0
+                    );
+                }
+                
+                // Insert long-term memories
+                const longTermStmt = await this.db.prepare(`
+                    INSERT INTO long_term_memory VALUES (?, ?, ?, ?, ?)
+                `);
+                
+                for (const item of memoryStore.longTermMemory) {
+                    await longTermStmt.run(
+                        item.id,
+                        item.prompt,
+                        item.output,
+                        item.timestamp,
+                        JSON.stringify(item.concepts)
+                    );
+                }
+                
+                await this.db.run(&#39;COMMIT&#39;);
+            } catch (error) {
+                await this.db.run(&#39;ROLLBACK&#39;);
+                throw error;
+            }
+        } catch (error) {
+            logger.error(&#39;SQLite save error:&#39;, error);
+            throw error;
+        }
+    }
+}
+</code></pre>
+<p>Q1: Would you like to see a GraphDB storage implementation?
+Q2: Should I show an S3/Object Storage implementation?
+Q3: Would you like to see a distributed storage implementation?
+Q4: Should I add caching layer examples? </p>
+
+        <div class="entry-footer">
+            <h2>About</h2>
+            
+        </div>
+    </body>
+</html>

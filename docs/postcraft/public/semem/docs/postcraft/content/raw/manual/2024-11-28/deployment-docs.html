@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <link rel="stylesheet" href="/css/fonts.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/grid-columns.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/style.css" type="text/css"/>
+        <title>Deployment Guide</title>
+    </head>
+    <!-- POST PAGE TEMPLATE -->
+    <body>
+        <header id="entry-header">
+            <h1 class="post-title h-cinzel">
+                
+            </h1>
+        </header>
+        <h1>Deployment Guide</h1>
+<h2>Prerequisites</h2>
+<ul>
+<li>Node.js 18+</li>
+<li>NPM or Yarn</li>
+<li>OpenAI API key (optional)</li>
+<li>Ollama installation (optional)</li>
+</ul>
+<h2>Installation</h2>
+<pre><code class=\"language-bash\">npm install semem
+</code></pre>
+<h2>Environment Setup</h2>
+<pre><code class=\"language-bash\">OPENAI_API_KEY=your-key
+STORAGE_API_KEY=your-storage-key
+STORAGE_ENDPOINT=https://api.example.com
+</code></pre>
+<h2>Docker Deployment</h2>
+<pre><code class=\"language-dockerfile\">FROM node:18-alpine
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+CMD [&quot;node&quot;, &quot;index.js&quot;]
+</code></pre>
+<h2>Security Considerations</h2>
+<ul>
+<li>API key management</li>
+<li>Rate limiting</li>
+<li>Error handling</li>
+<li>Logging configuration</li>
+</ul>
+
+        <div class="entry-footer">
+            <h2>About</h2>
+            
+        </div>
+    </body>
+</html>

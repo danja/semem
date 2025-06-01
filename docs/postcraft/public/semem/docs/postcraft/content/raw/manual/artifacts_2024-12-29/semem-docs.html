@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <link rel="stylesheet" href="/css/fonts.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/grid-columns.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/style.css" type="text/css"/>
+        <title>Semem Documentation</title>
+    </head>
+    <!-- POST PAGE TEMPLATE -->
+    <body>
+        <header id="entry-header">
+            <h1 class="post-title h-cinzel">
+                
+            </h1>
+        </header>
+        <h1>Semem Documentation</h1>
+<h2>Overview</h2>
+<p>Semem is a semantic memory management system for LLMs, providing context-aware interactions using vector embeddings and concept graphs.</p>
+<h2>Installation</h2>
+<pre><code class=\"language-bash\">npm install semem
+</code></pre>
+<h2>Basic Usage</h2>
+<pre><code class=\"language-javascript\">import { MemoryManager, JSONStorage } from &#39;semem&#39;;
+import OllamaAPI from &#39;./ollama-api.js&#39;;
+
+const ollama = new OllamaAPI();
+const storage = new JSONStorage(&#39;memory.json&#39;);
+
+const manager = new MemoryManager({
+    llmProvider: ollama,
+    chatModel: &#39;llama2&#39;,
+    embeddingModel: &#39;nomic-embed-text&#39;,
+    storage
+});
+</code></pre>
+<h2>Components</h2>
+<h3>OllamaAPI</h3>
+<p>Wrapper for Ollama&#39;s REST API endpoints:</p>
+<ul>
+<li>Chat generation</li>
+<li>Embeddings generation (supports 8192 context window)</li>
+<li>Completions</li>
+</ul>
+<h3>MemoryManager</h3>
+<p>Core component handling:</p>
+<ul>
+<li>Interaction storage</li>
+<li>Context management</li>
+<li>Response generation</li>
+<li>Concept extraction</li>
+</ul>
+<h3>ContextWindowManager</h3>
+<p>Handles large context processing:</p>
+<ul>
+<li>Adaptive window sizing</li>
+<li>Overlap management</li>
+<li>Context merging</li>
+</ul>
+<h2>Configuration</h2>
+<h3>Default Configuration</h3>
+<pre><code class=\"language-javascript\">const config = new Config({
+    storage: {
+        type: &#39;json&#39;,
+        options: { 
+            path: &#39;memory.json&#39; 
+        }
+    },
+    models: {
+        chat: {
+            provider: &#39;ollama&#39;,
+            model: &#39;llama2&#39;
+        },
+        embedding: {
+            provider: &#39;ollama&#39;,
+            model: &#39;nomic-embed-text&#39;
+        }
+    },
+    memory: {
+        dimension: 1536,
+        similarityThreshold: 40,
+        contextWindow: 3,
+        decayRate: 0.0001
+    }
+});
+</code></pre>
+<h3>Context Options</h3>
+<pre><code class=\"language-javascript\">const contextOptions = {
+    maxTokens: 8192,  // For nomic-embed-text
+    maxTimeWindow: 24 * 60 * 60 * 1000, // 24 hours
+    overlapRatio: 0.1, // 10% window overlap
+    minWindowSize: 1024
+};
+</code></pre>
+<h2>Testing</h2>
+<h3>Unit Tests</h3>
+<p>Located in <code>spec/unit/</code>:</p>
+<pre><code class=\"language-javascript\">// spec/unit/memoryManager.spec.js
+describe(&#39;MemoryManager&#39;, () =&gt; {
+    let manager;
+    
+    beforeEach(() =&gt; {
+        manager = new MemoryManager({...});
+    });
+
+    it(&#39;should generate embeddings&#39;, async () =&gt; {
+        const embedding = await manager.getEmbedding(&#39;test text&#39;);
+        expect(embedding.length).toBe(1536);
+    });
+});
+</code></pre>
+<h3>Integration Tests</h3>
+<p>Located in <code>spec/integration/</code>:</p>
+<pre><code class=\"language-javascript\">// spec/integration/ollama.spec.js
+describe(&#39;OllamaAPI Integration&#39;, () =&gt; {
+    let api;
+    
+    beforeEach(() =&gt; {
+        api = new OllamaAPI();
+    });
+
+    it(&#39;should generate embeddings&#39;, async () =&gt; {
+        const embedding = await api.generateEmbedding(
+            &#39;nomic-embed-text&#39;,
+            &#39;Test text&#39;
+        );
+        expect(embedding.length).toBe(1536);
+    });
+});
+</code></pre>
+<h3>Running Tests</h3>
+<pre><code class=\"language-bash\">npm test                 # Run all tests
+npm test:unit           # Run unit tests only
+npm test:integration    # Run integration tests only
+</code></pre>
+<h2>Error Handling</h2>
+<h3>API Errors</h3>
+<pre><code class=\"language-javascript\">try {
+    const response = await manager.generateResponse(prompt);
+} catch (error) {
+    if (error.name === &#39;OllamaAPIError&#39;) {
+        // Handle API-specific errors
+    } else if (error.name === &#39;StorageError&#39;) {
+        // Handle storage-related errors
+    }
+}
+</code></pre>
+<h3>Context Handling</h3>
+<pre><code class=\"language-javascript\">// Automatically handles context window limits
+const response = await manager.generateResponse(prompt, [], retrievals);
+</code></pre>
+<h2>Storage Options</h2>
+<h3>JSON Storage</h3>
+<pre><code class=\"language-javascript\">import { JSONStorage } from &#39;semem&#39;;
+const storage = new JSONStorage(&#39;memory.json&#39;);
+</code></pre>
+<h3>Remote Storage</h3>
+<pre><code class=\"language-javascript\">import { RemoteStorage } from &#39;semem&#39;;
+const storage = new RemoteStorage({
+    endpoint: &#39;https://api.example.com/memory&#39;,
+    apiKey: &#39;your-api-key&#39;
+});
+</code></pre>
+<h3>Custom Storage</h3>
+<pre><code class=\"language-javascript\">import { BaseStorage } from &#39;semem&#39;;
+
+class CustomStorage extends BaseStorage {
+    async loadHistory() {
+        // Implementation
+    }
+    
+    async saveMemoryToHistory(memoryStore) {
+        // Implementation
+    }
+}
+</code></pre>
+<h2>Next Steps</h2>
+<ol>
+<li><p>Test Implementation</p>
+<ul>
+<li>Create test fixtures</li>
+<li>Add unit tests for core components</li>
+<li>Add integration tests</li>
+<li>Add performance tests</li>
+</ul>
+</li>
+<li><p>Additional Features</p>
+<ul>
+<li>Token counting implementation</li>
+<li>Custom tokenization support</li>
+<li>Priority-based window selection</li>
+<li>Performance optimizations</li>
+</ul>
+</li>
+<li><p>Storage Extensions</p>
+<ul>
+<li>Redis implementation</li>
+<li>MongoDB implementation</li>
+<li>GraphDB support</li>
+</ul>
+</li>
+<li><p>Documentation</p>
+<ul>
+<li>API reference</li>
+<li>Performance guidelines</li>
+<li>Deployment guide</li>
+<li>Security considerations</li>
+</ul>
+</li>
+</ol>
+
+        <div class="entry-footer">
+            <h2>About</h2>
+            
+        </div>
+    </body>
+</html>

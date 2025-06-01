@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <link rel="stylesheet" href="/css/fonts.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/grid-columns.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/style.css" type="text/css"/>
+        <title>Semem HTTP JSON API</title>
+    </head>
+    <!-- POST PAGE TEMPLATE -->
+    <body>
+        <header id="entry-header">
+            <h1 class="post-title h-cinzel">
+                
+            </h1>
+        </header>
+        <h1>Semem HTTP JSON API</h1>
+<h2>Overview</h2>
+<p>RESTful API providing JSON-based access to Semem&#39;s functionality. Features include chat completion, memory storage/retrieval, and system monitoring.</p>
+<h2>Quick Start</h2>
+<pre><code class=\"language-javascript\">// Initialize client
+const client = new SememClient({
+  baseUrl: &#39;http://localhost:3000/api&#39;,
+  apiKey: &#39;your-api-key&#39;
+});
+
+// Basic chat
+const response = await client.chat({
+  prompt: &quot;What is semantic memory?&quot;,
+  model: &quot;qwen2:1.5b&quot;
+});
+</code></pre>
+<h2>Endpoints</h2>
+<h3>Chat Operations</h3>
+<pre><code class=\"language-http\">POST /api/chat
+Content-Type: application/json
+Authorization: Bearer &lt;token&gt;
+
+{
+  &quot;prompt&quot;: &quot;Hello, how are you?&quot;,
+  &quot;model&quot;: &quot;qwen2:1.5b&quot;,
+  &quot;options&quot;: {
+    &quot;temperature&quot;: 0.7
+  }
+}
+</code></pre>
+<h3>Storage Operations</h3>
+<pre><code class=\"language-http\">POST /api/store
+Content-Type: application/json
+Authorization: Bearer &lt;token&gt;
+
+{
+  &quot;content&quot;: &quot;Information to store&quot;,
+  &quot;format&quot;: &quot;text&quot;,
+  &quot;metadata&quot;: {
+    &quot;timestamp&quot;: &quot;2025-01-13T19:39:38.327Z&quot;,
+    &quot;tags&quot;: [&quot;example&quot;, &quot;documentation&quot;]
+  }
+}
+</code></pre>
+<h3>Query Operations</h3>
+<pre><code class=\"language-http\">GET /api/query?text=search+term&amp;limit=10
+Authorization: Bearer &lt;token&gt;
+
+POST /api/query
+Content-Type: application/json
+Authorization: Bearer &lt;token&gt;
+
+{
+  &quot;sparql&quot;: &quot;SELECT * WHERE { ?s ?p ?o } LIMIT 5&quot;
+}
+</code></pre>
+<h3>Metrics Endpoint</h3>
+<pre><code class=\"language-http\">GET /api/metrics
+Authorization: Bearer &lt;token&gt;
+
+GET /api/metrics?format=json&amp;detail=high
+Authorization: Bearer &lt;token&gt;
+</code></pre>
+<h2>Authentication</h2>
+<p>The API uses Bearer token authentication:</p>
+<pre><code class=\"language-http\">Authorization: Bearer your-api-key-here
+</code></pre>
+<h2>Error Handling</h2>
+<p>Errors follow standard HTTP status codes with JSON responses:</p>
+<pre><code class=\"language-json\">{
+  &quot;error&quot;: {
+    &quot;code&quot;: &quot;VALIDATION_ERROR&quot;,
+    &quot;message&quot;: &quot;Invalid input parameter&quot;,
+    &quot;details&quot;: {
+      &quot;field&quot;: &quot;prompt&quot;,
+      &quot;issue&quot;: &quot;required&quot;
+    }
+  }
+}
+</code></pre>
+<h2>Rate Limiting</h2>
+<ul>
+<li>100 requests per minute per API key</li>
+<li>Headers include rate limit information:<pre><code class=\"language-http\">X-RateLimit-Limit: 100
+X-RateLimit-Remaining: 95
+X-RateLimit-Reset: 1673647423
+</code></pre>
+</li>
+</ul>
+<h2>Streaming</h2>
+<p>Supports Server-Sent Events for real-time updates:</p>
+<pre><code class=\"language-javascript\">const eventSource = new EventSource(&#39;/api/chat/stream?token=api-key&#39;);
+eventSource.onmessage = (event) =&gt; {
+  const data = JSON.parse(event.data);
+  console.log(data.response);
+};
+</code></pre>
+<h2>Client Libraries</h2>
+<p>JavaScript client example:</p>
+<pre><code class=\"language-javascript\">import { SememClient } from &#39;semem&#39;;
+
+const client = new SememClient({
+  baseUrl: &#39;http://localhost:3000/api&#39;,
+  apiKey: process.env.SEMEM_API_KEY
+});
+
+// Chat completion
+const response = await client.chat({
+  prompt: &quot;What is semantic memory?&quot;,
+  model: &quot;qwen2:1.5b&quot;
+});
+
+// Store data
+await client.store({
+  content: &quot;Important information&quot;,
+  format: &quot;text&quot;
+});
+
+// Query data
+const results = await client.query({
+  text: &quot;search term&quot;,
+  limit: 10
+});
+</code></pre>
+
+        <div class="entry-footer">
+            <h2>About</h2>
+            
+        </div>
+    </body>
+</html>

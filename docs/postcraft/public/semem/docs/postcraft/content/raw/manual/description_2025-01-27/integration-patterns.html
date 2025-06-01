@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <link rel="stylesheet" href="/css/fonts.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/grid-columns.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/style.css" type="text/css"/>
+        <title>Storage Integration Patterns</title>
+    </head>
+    <!-- POST PAGE TEMPLATE -->
+    <body>
+        <header id="entry-header">
+            <h1 class="post-title h-cinzel">
+                
+            </h1>
+        </header>
+        <h1>Storage Integration Patterns</h1>
+<h2>Memory Manager Integration</h2>
+<pre><code class=\"language-javascript\">export default class MemoryManager {
+    constructor(config) {
+        // Initialize appropriate store based on config
+        this.store = this.initializeStore(config.storage)
+        this.llmHandler = new LLMHandler(config.models)
+        this.contextManager = new ContextManager(config.context)
+    }
+
+    initializeStore(config) {
+        switch (config.type) {
+            case &#39;sparql&#39;:
+                return new SPARQLStore(config.options)
+            case &#39;cached-sparql&#39;:
+                return new CachedSPARQLStore(config.options)
+            case &#39;json&#39;:
+                return new JSONStore(config.options)
+            default:
+                return new InMemoryStore(config.options)
+        }
+    }
+
+    async addInteraction(prompt, output, embedding, concepts) {
+        // Use transaction for atomic operations
+        await this.store.beginTransaction()
+        try {
+            const interaction = {
+                id: uuidv4(),
+                prompt,
+                output,
+                embedding,
+                timestamp: Date.now(),
+                accessCount: 1,
+                concepts,
+                decayFactor: 1.0
+            }
+
+            await this.store.saveMemoryToHistory({
+                shortTermMemory: [...this.store.shortTermMemory, interaction],
+                longTermMemory: this.store.longTermMemory
+            })
+
+            await this.store.commitTransaction()
+            return interaction
+        } catch (error) {
+            await this.store.rollbackTransaction()
+            throw error
+        }
+    }
+}
+</code></pre>
+<h2>Active Handler Integration</h2>
+<pre><code class=\"language-javascript\">export default class ActiveHandler extends BaseAPI {
+    async handleInteraction({ prompt, context = [] }) {
+        const memoryManager = this.registry.get(&#39;memory&#39;)
+        
+        try {
+            // Get relevant past interactions
+            const retrievals = await memoryManager.retrieveRelevantInteractions(
+                prompt,
+                this.similarityThreshold
+            )
+
+            // Generate response
+            const response = await this.llmHandler.generateResponse(
+                prompt,
+                this._buildContext(context, retrievals)
+            )
+
+            // Store with embeddings
+            const embedding = await memoryManager.generateEmbedding(
+                `${prompt} ${response}`
+            )
+            const concepts = await memoryManager.extractConcepts(
+                `${prompt} ${response}`
+            )
+
+            await memoryManager.addInteraction(
+                prompt, 
+                response, 
+                embedding, 
+                concepts
+            )
+
+            return { response, concepts, retrievals }
+        } catch (error) {
+            this._emitMetric(&#39;interaction.errors&#39;, 1)
+            throw error
+        }
+    }
+}
+</code></pre>
+<h2>SPARQL Store Transaction Pattern</h2>
+<pre><code class=\"language-javascript\">export default class SPARQLStore extends BaseStore {
+    async saveMemoryToHistory(memoryStore) {
+        if (this.inTransaction) {
+            throw new Error(&#39;Transaction already in progress&#39;)
+        }
+
+        try {
+            await this.beginTransaction()
+            
+            // Backup current graph
+            const backupQuery = `
+                COPY GRAPH &lt;${this.graphName}&gt; 
+                TO GRAPH &lt;${this.graphName}.backup&gt;
+            `
+            await this._executeSparqlUpdate(backupQuery)
+
+            // Clear and update main graph
+            const clearQuery = `CLEAR GRAPH &lt;${this.graphName}&gt;`
+            await this._executeSparqlUpdate(clearQuery)
+
+            const insertQuery = this._generateInsertStatements(
+                memoryStore.shortTermMemory,
+                memoryStore.longTermMemory
+            )
+            await this._executeSparqlUpdate(insertQuery)
+
+            await this.commitTransaction()
+        } catch (error) {
+            await this.rollbackTransaction()
+            throw error
+        }
+    }
+}
+</code></pre>
+<h2>Cache Integration Pattern</h2>
+<pre><code class=\"language-javascript\">export default class CachedSPARQLStore extends SPARQLStore {
+    async _executeSparqlQuery(query, endpoint) {
+        const cacheKey = this._generateCacheKey(query)
+        
+        // Check cache
+        const cachedResult = this.queryCache.get(cacheKey)
+        if (cachedResult) {
+            const timestamp = this.cacheTimestamps.get(cacheKey)
+            if (Date.now() - timestamp &lt; this.cacheTTL) {
+                return JSON.parse(JSON.stringify(cachedResult))
+            }
+        }
+
+        // Cache miss - execute query
+        const result = await super._executeSparqlQuery(query, endpoint)
+        
+        // Update cache
+        this.queryCache.set(cacheKey, result)
+        this.cacheTimestamps.set(cacheKey, Date.now())
+        
+        // Cleanup if needed
+        if (this.queryCache.size &gt; this.maxCacheSize) {
+            this.cleanupCache()
+        }
+
+        return result
+    }
+}
+</code></pre>
+<h2>Error Handling Pattern</h2>
+<pre><code class=\"language-javascript\">export default class BaseStore {
+    async executeWithRetry(operation, maxRetries = 3) {
+        let lastError
+        
+        for (let attempt = 0; attempt &lt; maxRetries; attempt++) {
+            try {
+                return await operation()
+            } catch (error) {
+                lastError = error
+                
+                if (!this.isRetryableError(error)) {
+                    throw error
+                }
+
+                await new Promise(resolve =&gt; 
+                    setTimeout(resolve, Math.pow(2, attempt) * 1000)
+                )
+            }
+        }
+
+        throw lastError
+    }
+
+    isRetryableError(error) {
+        return error.code === &#39;ECONNRESET&#39; ||
+               error.code === &#39;ETIMEDOUT&#39; ||
+               error.message.includes(&#39;deadlock&#39;) ||
+               error.message.includes(&#39;timeout&#39;)
+    }
+}
+</code></pre>
+
+        <div class="entry-footer">
+            <h2>About</h2>
+            
+        </div>
+    </body>
+</html>

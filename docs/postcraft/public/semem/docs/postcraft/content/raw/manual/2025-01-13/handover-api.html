@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <link rel="stylesheet" href="/css/fonts.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/grid-columns.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/style.css" type="text/css"/>
+        <title>Project Description</title>
+    </head>
+    <!-- POST PAGE TEMPLATE -->
+    <body>
+        <header id="entry-header">
+            <h1 class="post-title h-cinzel">
+                
+            </h1>
+        </header>
+        <p> @prefix rdf: <a href=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\">http://www.w3.org/1999/02/22-rdf-syntax-ns#</a> .
+@prefix rdfs: <a href=\"http://www.w3.org/2000/01/rdf-schema#\">http://www.w3.org/2000/01/rdf-schema#</a> .
+@prefix owl: <a href=\"http://www.w3.org/2002/07/owl#\">http://www.w3.org/2002/07/owl#</a> .
+@prefix xsd: <a href=\"http://www.w3.org/2001/XMLSchema#\">http://www.w3.org/2001/XMLSchema#</a> .
+@prefix doap: <a href=\"http://usefulinc.com/ns/doap#\">http://usefulinc.com/ns/doap#</a> .
+@prefix dc: <a href=\"http://purl.org/dc/terms/\">http://purl.org/dc/terms/</a> .
+@prefix foaf: <a href=\"http://xmlns.com/foaf/0.1/\">http://xmlns.com/foaf/0.1/</a> .
+@prefix prj: <a href=\"http://example.org/project/\">http://example.org/project/</a> .</p>
+<h1>Project Description</h1>
+<p>prj:SememAPI a doap:Project ;
+    dc:title &quot;Semem API Implementation&quot;@en ;
+    dc:description &quot;API layer for Semantic Memory System with multiple access modes&quot;@en ;
+    dc:created &quot;2025-01-13&quot;^^xsd:date ;
+    doap:programming-language &quot;JavaScript&quot; ;
+    doap:repository [
+        a doap:GitRepository ;
+        doap:location <a href=\"https://github.com/organization/semem\">https://github.com/organization/semem</a> 
+    ] .</p>
+<h1>Core Components</h1>
+<p>prj:CoreComponents a prj:ComponentSet ;
+    rdfs:label &quot;Core API Components&quot;@en ;
+    prj:includes 
+        prj:BaseAPI,
+        prj:APIRegistry,
+        prj:RDFParser,
+        prj:RDFValidator .</p>
+<p>prj:BaseAPI a prj:Component ;
+    rdfs:label &quot;Base API&quot;@en ;
+    dc:description &quot;Abstract base interface for all API implementations&quot;@en ;
+    prj:sourceFile &quot;src/api/common/BaseAPI.js&quot; ;
+    prj:features (
+        &quot;Lifecycle management&quot;
+        &quot;Event emission&quot;
+        &quot;Error handling&quot;
+        &quot;Metric collection&quot;
+    ) .</p>
+<p>prj:APIRegistry a prj:Component ;
+    rdfs:label &quot;API Registry&quot;@en ;
+    dc:description &quot;Central registry for API service discovery&quot;@en ;
+    prj:sourceFile &quot;src/api/common/APIRegistry.js&quot; ;
+    prj:features (
+        &quot;Service registration&quot;
+        &quot;Instance management&quot;
+        &quot;Configuration&quot;
+        &quot;Metrics aggregation&quot;
+    ) .</p>
+<h1>Access Modes</h1>
+<p>prj:AccessModes a prj:ComponentSet ;
+    rdfs:label &quot;Access Modes&quot;@en ;
+    prj:includes 
+        prj:CLIHandler,
+        prj:REPLHandler,
+        prj:HTTPServer,
+        prj:WebForms,
+        prj:RDFParser .</p>
+<p>prj:CLIHandler a prj:Component ;
+    rdfs:label &quot;CLI Handler&quot;@en ;
+    dc:description &quot;Command line interface implementation&quot;@en ;
+    prj:sourceFile &quot;src/api/cli/CLIHandler.js&quot; ;
+    prj:dependencies (
+        &quot;yargs&quot;
+        &quot;chalk&quot;
+    ) ;
+    prj:features (
+        &quot;Command parsing&quot;
+        &quot;Colorized output&quot;
+        &quot;History management&quot;
+    ) .</p>
+<h1>Feature Sets</h1>
+<p>prj:FeatureSets a prj:ComponentSet ;
+    rdfs:label &quot;Feature Sets&quot;@en ;
+    prj:includes 
+        prj:SelfieHandler,
+        prj:PassiveHandler,
+        prj:ActiveHandler .</p>
+<p>prj:SelfieHandler a prj:Component ;
+    rdfs:label &quot;Selfie Handler&quot;@en ;
+    dc:description &quot;System monitoring and metrics&quot;@en ;
+    prj:sourceFile &quot;src/api/features/SelfieHandler.js&quot; ;
+    prj:features (
+        &quot;Metric collection&quot;
+        &quot;Performance monitoring&quot;
+        &quot;Error tracking&quot;
+        &quot;OpenTelemetry integration&quot;
+    ) .</p>
+<h1>Data Validation</h1>
+<p>prj:Validation a prj:ComponentSet ;
+    rdfs:label &quot;Data Validation&quot;@en ;
+    prj:includes 
+        prj:RDFValidator,
+        prj:CustomValidators .</p>
+<p>prj:RDFValidator a prj:Component ;
+    rdfs:label &quot;RDF Validator&quot;@en ;
+    dc:description &quot;RDF schema and SHACL validation&quot;@en ;
+    prj:sourceFile &quot;src/api/common/RDFValidator.js&quot; ;
+    prj:features (
+        &quot;Schema validation&quot;
+        &quot;SHACL support&quot;
+        &quot;Error reporting&quot;
+        &quot;Shape management&quot;
+    ) .</p>
+<h1>Development Notes</h1>
+<p>prj:DevelopmentNotes a prj:Documentation ;
+    rdfs:label &quot;Development Notes&quot;@en ;
+    prj:shortTerm (
+        &quot;Complete WebSocket implementation&quot;
+        &quot;Add visualization components&quot;
+        &quot;Enhance RDF validation&quot;
+        &quot;Improve error handling&quot;
+        &quot;Add test coverage&quot;
+    ) ;
+    prj:mediumTerm (
+        &quot;Add federation support&quot;
+        &quot;Implement caching improvements&quot;
+        &quot;Enhance monitoring&quot;
+        &quot;Add backup systems&quot;
+    ) ;
+    prj:longTerm (
+        &quot;Add graph visualization&quot;
+        &quot;Implement distributed storage&quot;
+        &quot;Add machine learning features&quot;
+    ) .</p>
+<h1>Critical Notes</h1>
+<p>prj:CriticalNotes a prj:Documentation ;
+    rdfs:label &quot;Critical Implementation Notes&quot;@en ;
+    prj:notes (
+        &quot;Always use transactions for storage&quot;
+        &quot;Monitor API rate limits&quot;
+        &quot;Keep secret management secure&quot;
+        &quot;Regular metric collection&quot;
+        &quot;Proper error handling&quot;
+    ) .</p>
+<h1>Dependencies</h1>
+<p>prj:Dependencies a prj:Requirements ;
+    rdfs:label &quot;Project Dependencies&quot;@en ;
+    prj:runtime (
+        &quot;Node.js 18+&quot;
+        &quot;Express&quot;
+        &quot;yargs&quot;
+        &quot;chalk&quot;
+        &quot;dotenv&quot;
+        &quot;loglevel&quot;
+    ) ;
+    prj:development (
+        &quot;Jasmine&quot;
+        &quot;nodemon&quot;
+        &quot;eslint&quot;
+    ) . </p>
+
+        <div class="entry-footer">
+            <h2>About</h2>
+            
+        </div>
+    </body>
+</html>

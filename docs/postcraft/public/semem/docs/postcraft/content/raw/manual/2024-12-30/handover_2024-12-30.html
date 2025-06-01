@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <link rel="stylesheet" href="/css/fonts.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/grid-columns.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/style.css" type="text/css"/>
+        <title>SPARQL Storage Implementation Handover</title>
+    </head>
+    <!-- POST PAGE TEMPLATE -->
+    <body>
+        <header id="entry-header">
+            <h1 class="post-title h-cinzel">
+                
+            </h1>
+        </header>
+        <p> @prefix rdf: <a href=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\">http://www.w3.org/1999/02/22-rdf-syntax-ns#</a> .
+@prefix rdfs: <a href=\"http://www.w3.org/2000/01/rdf-schema#\">http://www.w3.org/2000/01/rdf-schema#</a> .
+@prefix owl: <a href=\"http://www.w3.org/2002/07/owl#\">http://www.w3.org/2002/07/owl#</a> .
+@prefix xsd: <a href=\"http://www.w3.org/2001/XMLSchema#\">http://www.w3.org/2001/XMLSchema#</a> .
+@prefix dc: <a href=\"http://purl.org/dc/terms/\">http://purl.org/dc/terms/</a> .
+@prefix doap: <a href=\"http://usefulinc.com/ns/doap#\">http://usefulinc.com/ns/doap#</a> .
+@prefix foaf: <a href=\"http://xmlns.com/foaf/0.1/\">http://xmlns.com/foaf/0.1/</a> .
+@prefix prj: <a href=\"http://example.org/project/\">http://example.org/project/</a> .
+@prefix mcp: <a href=\"http://purl.org/stuff/mcp/\">http://purl.org/stuff/mcp/</a> .
+@prefix qb: <a href=\"http://purl.org/linked-data/cube#\">http://purl.org/linked-data/cube#</a> .</p>
+<p>prj:SPARQLStore
+    a doap:Project ;
+    dc:title &quot;SPARQL Storage Implementation&quot;@en ;
+    dc:description &quot;Persistent storage implementation for Memory Context Protocol using SPARQL and RDF&quot;@en ;
+    dc:created &quot;2024-12-30&quot;^^xsd:date ;
+    dc:status &quot;Production&quot;@en ;
+    doap:programming-language &quot;JavaScript&quot; ;
+    doap:repository [
+        a doap:GitRepository ;
+        doap:location <a href=\"https://github.com/danja/semem\">https://github.com/danja/semem</a>
+    ] ;
+    prj:mainFile &quot;src/stores/SPARQLStore.js&quot; ;
+    prj:testFile &quot;spec/integration/SPARQLStore.spec.js&quot; .</p>
+<p>prj:CoreComponents
+    a prj:ComponentSet ;
+    prj:includes prj:SPARQLStore, prj:CachedSPARQLStore ;
+    prj:mainFeatures (
+        &quot;SPARQL endpoint interaction&quot;
+        &quot;Named graph storage&quot;
+        &quot;Transaction support&quot;
+        &quot;Query federation&quot;
+        &quot;Result caching&quot;
+    ) .</p>
+<p>prj:DataModel
+    a prj:ArchitectureComponent ;
+    prj:usesVocabulary mcp:, qb:, skos: ;
+    prj:graphTypes (
+        [
+            rdfs:label &quot;Main Memory Graph&quot; ;
+            dc:description &quot;Stores current memory state&quot;
+        ]
+        [
+            rdfs:label &quot;Backup Graph&quot; ;
+            dc:description &quot;Used for transaction management&quot;
+        ]
+        [
+            rdfs:label &quot;Metadata Graph&quot; ;
+            dc:description &quot;Stores version information and statistics&quot;
+        ]
+    ) .</p>
+<p>prj:TransactionManagement
+    a prj:Feature ;
+    rdfs:label &quot;Transaction Management&quot; ;
+    prj:steps (
+        &quot;Create backup graph copy&quot;
+        &quot;Perform operations on main graph&quot;
+        &quot;Remove backup on commit&quot;
+        &quot;Restore from backup on rollback&quot;
+    ) .</p>
+<p>prj:QueryFederation
+    a prj:Feature ;
+    rdfs:label &quot;Query Federation&quot; ;
+    prj:aspects (
+        &quot;Cross-graph queries&quot;
+        &quot;SERVICE keyword usage&quot;
+        &quot;Cache optimization&quot;
+    ) .</p>
+<p>prj:TestingFramework
+    a prj:TestSuite ;
+    prj:includes [
+        rdfs:label &quot;Core Tests&quot; ;
+        prj:covers (
+            &quot;Storage operations&quot;
+            &quot;Transactions&quot;
+            &quot;Federation&quot;
+            &quot;Caching&quot;
+        )
+    ], [
+        rdfs:label &quot;Integration Tests&quot; ;
+        prj:covers (
+            &quot;Backup operations&quot;
+            &quot;Advanced scenarios&quot;
+            &quot;Federation patterns&quot;
+            &quot;Large datasets&quot;
+        )
+    ] .</p>
+<p>prj:Configuration
+    a prj:SystemConfig ;
+    prj:endpoints [
+        rdfs:label &quot;SPARQL Endpoints&quot; ;
+        prj:queryEndpoint &quot;/test/query&quot; ;
+        prj:updateEndpoint &quot;/test/update&quot; ;
+        prj:gspEndpoint &quot;/test/get&quot;
+    ] ;
+    prj:authentication [
+        a prj:AuthConfig ;
+        rdfs:label &quot;Basic Authentication&quot; ;
+        prj:configLocation &quot;Config.js&quot;
+    ] .</p>
+<p>prj:Limitations
+    a prj:KnownIssues ;
+    prj:issues (
+        &quot;Large dataset performance requires caching&quot;
+        &quot;No built-in compression&quot;
+        &quot;Single endpoint backup only&quot;
+        &quot;Basic auth only&quot;
+    ) .</p>
+<p>prj:FutureImprovements
+    a prj:Roadmap ;
+    prj:planned (
+        &quot;Backup compression&quot;
+        &quot;Multi-endpoint replication&quot;
+        &quot;Advanced authentication&quot;
+        &quot;Query optimization&quot;
+        &quot;Backup versioning&quot;
+        &quot;SHACL validation&quot;
+    ) ;
+    prj:priority &quot;High&quot; ;
+    dc:date &quot;2025-06&quot;^^xsd:gYearMonth .</p>
+<p>prj:CriticalNotes
+    a prj:Documentation ;
+    prj:notes (
+        &quot;Always use transactions for updates&quot;
+        &quot;Monitor backup graph cleanup&quot;
+        &quot;Handle concurrent access&quot;
+        &quot;Verify data integrity&quot;
+    ) ;
+    dc:importance &quot;Critical&quot; .</p>
+<p>prj:Dependencies
+    a prj:Requirements ;
+    prj:requires (
+        &quot;Node.js fetch API&quot;
+        &quot;SPARQL 1.1 endpoint&quot;
+        &quot;Graph store protocol support&quot;
+    ) .</p>
+<p>prj:Support
+    a prj:Documentation ;
+    prj:sourceCode &quot;src/stores/SPARQLStore.js&quot; ;
+    prj:tests &quot;spec/integration/&quot; ;
+    prj:documentation &quot;docs/&quot; ;
+    prj:issueTracker <a href=\"https://github.com/danja/semem/issues\">https://github.com/danja/semem/issues</a> .
+ </p>
+
+        <div class="entry-footer">
+            <h2>About</h2>
+            
+        </div>
+    </body>
+</html>

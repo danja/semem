@@ -33,11 +33,122 @@
         </div>
         <div class="main-grid-item articles">
             <article>
-                <h1>Things to test 2</h1>
-<p>This&lt;sub&gt;subby&lt;/sub&gt; might have a subscript</p>
-<h1>Things to test</h1>
-<p>This&lt;sub&gt;subby&lt;/sub&gt; might have a subscript</p>
-<p>Review the material in your</p>
+                  <h1>Services</h1>
+<p>HTTP microservices</p>
+<p>Use code under <code>src/api/http/server</code> as a base</p>
+<p>#:transmissions main target. It should have an API consistent with those used in #:semem and #:clients
+ </p>
+<h1>Semem #:todo #:explore #:transmissions</h1>
+<p><a href="https://github.com/daviidli/summary">Summary : Extractive text summarization using TextRank and RAKE</a></p>
+<ul>
+<li>is typescript!</li>
+</ul>
+<p>textrank makes a graph, pop that in the sparqlstore why don&#39;t we</p>
+<p>where are my notes on using graph walking to make sentences to train llms?</p>
+<hr>
+<ul>
+<li><p><a href="https://www.tensorflow.org/js">TensorFlow.js</a>  is a library for machine learning in JavaScript</p>
+</li>
+<li><p><a href="https://github.com/dennybritz/cnn-text-classification-tf">Convolutional Neural Network for Text Classification in Tensorflow</a></p>
+</li>
+<li><p><a href="https://github.com/RituYadav92/Lightweighted-CNN-for-Document-Classification">Light-Weighted CNN for Text Classification</a> - also tensorflow</p>
+</li>
+</ul>
+<h1>SPARQL Integration in Semem</h1>
+<p>The SPARQL integration in Semem provides a sophisticated semantic storage layer that enables rich querying and knowledge graph capabilities. The system uses a carefully designed RDF schema to represent memories and their relationships.</p>
+<h2>Core Schema</h2>
+<p>Memories are stored using a custom vocabulary:</p>
+<pre><code class="language-turtle">@prefix mcp: &lt;http://purl.org/stuff/mcp/&gt;
+
+mcp:Interaction 
+    a rdfs:Class ;
+    rdfs:label &quot;Memory Interaction&quot; .
+
+mcp:embedding
+    a rdf:Property ;
+    rdfs:domain mcp:Interaction ;
+    rdfs:range xsd:string .
+</code></pre>
+<h2>Transaction Management</h2>
+<p>The SPARQLStore implements ACID transactions through:</p>
+<ol>
+<li>Automatic backup creation before transactions</li>
+<li>Graph-level locking for concurrent access</li>
+<li>Rollback capability using backup graphs</li>
+<li>Transaction isolation through separate graph contexts</li>
+</ol>
+<h2>Caching Layer</h2>
+<p>The CachedSPARQLStore extends functionality with:</p>
+<ol>
+<li>In-memory query result caching</li>
+<li>Automatic cache invalidation on updates</li>
+<li>Time-based cache expiration</li>
+<li>Size-limited LRU caching strategy</li>
+</ol>
+<h2>Federation Support</h2>
+<p>The system supports federated queries across multiple endpoints, enabling:</p>
+<ol>
+<li>Distributed memory storage</li>
+<li>Cross-graph concept relationships</li>
+<li>Metadata management in separate graphs</li>
+<li>Scalable memory organization</li>
+</ol>
+<h1>Troubleshooting Guide</h1>
+<h2>Common Issues and Solutions</h2>
+<h3>Embedding Generation</h3>
+<ul>
+<li>Error: &quot;Embedding dimension mismatch&quot;<ul>
+<li>Verify model configuration</li>
+<li>Check embedding model availability</li>
+<li>Ensure consistent dimensions across storage</li>
+</ul>
+</li>
+</ul>
+<h3>Storage Issues</h3>
+<ul>
+<li>SPARQL Connection Failures<ul>
+<li>Verify endpoint configuration</li>
+<li>Check authentication credentials</li>
+<li>Confirm graph exists and permissions</li>
+</ul>
+</li>
+</ul>
+<h3>Memory Management</h3>
+<ul>
+<li>High Memory Usage<ul>
+<li>Adjust cache size settings</li>
+<li>Enable automatic cleanup</li>
+<li>Use appropriate storage backend</li>
+</ul>
+</li>
+</ul>
+<h3>Performance</h3>
+<ul>
+<li>Slow Retrieval<ul>
+<li>Enable caching for SPARQL</li>
+<li>Optimize similarity threshold</li>
+<li>Adjust context window size</li>
+</ul>
+</li>
+</ul>
+<h3>Integration</h3>
+<ul>
+<li>LLM Provider Issues<ul>
+<li>Verify Ollama/OpenAI setup</li>
+<li>Check API credentials</li>
+<li>Confirm model availability</li>
+</ul>
+</li>
+</ul>
+<h2>Debugging Steps</h2>
+<ol>
+<li>Enable debug logging</li>
+<li>Check configuration</li>
+<li>Verify storage health</li>
+<li>Test LLM connectivity</li>
+<li>Validate embeddings</li>
+<li>Monitor memory usage</li>
+</ol>
 
             </article>
         </div>

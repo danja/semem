@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <link rel="stylesheet" href="/css/fonts.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/grid-columns.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/style.css" type="text/css"/>
+        <title>Storage System Documentation</title>
+    </head>
+    <!-- POST PAGE TEMPLATE -->
+    <body>
+        <header id="entry-header">
+            <h1 class="post-title h-cinzel">
+                
+            </h1>
+        </header>
+        <h1>Storage System Documentation</h1>
+<h2>BaseStorage (storage.js)</h2>
+<p>Abstract base class defining the storage interface. All storage implementations must extend this class.</p>
+<h3>Methods</h3>
+<ul>
+<li><code>loadHistory()</code>: Async method that retrieves stored memory interactions</li>
+<li><code>saveMemoryToHistory(memoryStore)</code>: Async method that persists current memory state</li>
+</ul>
+<h3>Key Features</h3>
+<ul>
+<li>Abstract interface ensuring consistency across implementations</li>
+<li>Async/await pattern for I/O operations</li>
+<li>Error handling requirements for implementations</li>
+</ul>
+<h2>InMemoryStorage (inMemoryStorage.js)</h2>
+<p>RAM-based storage implementation for development and testing.</p>
+<h3>Features</h3>
+<ul>
+<li>Fast access and retrieval</li>
+<li>No persistence between restarts</li>
+<li>Ideal for testing and prototyping</li>
+</ul>
+<h3>Implementation Details</h3>
+<ul>
+<li>Uses JavaScript objects for storage</li>
+<li>Maintains separate short-term and long-term memory arrays</li>
+<li>Handles data structure conversions</li>
+</ul>
+<h2>JSONStorage (jsonStorage.js)</h2>
+<p>File-based storage implementation using JSON format.</p>
+<h3>Features</h3>
+<ul>
+<li>Persistent storage between application restarts</li>
+<li>Human-readable storage format</li>
+<li>File-based backup capability</li>
+</ul>
+<h3>Implementation Details</h3>
+<ul>
+<li>Asynchronous file operations</li>
+<li>Automatic file creation if not exists</li>
+<li>Error handling for file operations</li>
+<li>JSON serialization/deserialization</li>
+</ul>
+<h2>RemoteStorage (remoteStorage.js)</h2>
+<p>Network-based storage implementation for distributed systems.</p>
+<h3>Features</h3>
+<ul>
+<li>RESTful API integration</li>
+<li>Authentication support</li>
+<li>Timeout handling</li>
+<li>Retry logic</li>
+</ul>
+<h3>Implementation Details</h3>
+<ul>
+<li>HTTP/HTTPS protocols</li>
+<li>Bearer token authentication</li>
+<li>Configurable endpoints</li>
+<li>Network error handling</li>
+</ul>
+
+        <div class="entry-footer">
+            <h2>About</h2>
+            
+        </div>
+    </body>
+</html>

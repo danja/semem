@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <link rel="stylesheet" href="/css/fonts.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/grid-columns.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/style.css" type="text/css"/>
+        <title>Troubleshooting Guide</title>
+    </head>
+    <!-- POST PAGE TEMPLATE -->
+    <body>
+        <header id="entry-header">
+            <h1 class="post-title h-cinzel">
+                
+            </h1>
+        </header>
+        <h1>Troubleshooting Guide</h1>
+<h2>Common Issues</h2>
+<h3>Memory Usage</h3>
+<p>Problem: High memory consumption</p>
+<pre><code class=\"language-javascript\">// Solution: Adjust memory settings
+const config = new Config({
+  memory: {
+    dimension: 1024,  // Lower dimension
+    contextWindow: 2  // Reduce context window
+  }
+});
+</code></pre>
+<h3>Storage Errors</h3>
+<p>Problem: Remote storage timeout</p>
+<pre><code class=\"language-javascript\">// Solution: Configure timeout and retries
+const storage = new RemoteStorage({
+  timeout: 10000,
+  retries: 3
+});
+</code></pre>
+<h3>Model Errors</h3>
+<p>Problem: OpenAI API errors</p>
+<pre><code class=\"language-javascript\">// Solution: Implement fallback
+try {
+  response = await manager.generateResponse(prompt);
+} catch {
+  response = await fallbackModel.generate(prompt);
+}
+</code></pre>
+<h2>Debugging</h2>
+<p>Enable debug logging:</p>
+<pre><code class=\"language-javascript\">logger.level = &#39;debug&#39;;
+</code></pre>
+<h2>Performance Optimization</h2>
+<ul>
+<li>Use appropriate embedding dimensions</li>
+<li>Implement caching</li>
+<li>Optimize storage patterns</li>
+</ul>
+
+        <div class="entry-footer">
+            <h2>About</h2>
+            
+        </div>
+    </body>
+</html>

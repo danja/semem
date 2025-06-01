@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <link rel="stylesheet" href="/css/fonts.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/grid-columns.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/style.css" type="text/css"/>
+        <title>Quick Start Guide</title>
+    </head>
+    <!-- POST PAGE TEMPLATE -->
+    <body>
+        <header id="entry-header">
+            <h1 class="post-title h-cinzel">
+                
+            </h1>
+        </header>
+        <h1>Quick Start Guide</h1>
+<h2>Basic Setup</h2>
+<pre><code class=\"language-javascript\">import { MemoryManager, JSONStorage } from &#39;semem&#39;;
+
+// Initialize with minimal configuration
+const manager = new MemoryManager({
+    apiKey: process.env.OPENAI_API_KEY,
+    storage: new JSONStorage(&#39;memory.json&#39;)
+});
+
+// Simple interaction
+async function basicExample() {
+    const prompt = &quot;What&#39;s the weather like?&quot;;
+    const response = await manager.generateResponse(prompt);
+    console.log(response);
+}
+
+// Advanced interaction with memory retrieval
+async function advancedExample() {
+    const prompt = &quot;Remember our discussion about AI?&quot;;
+    
+    // Get relevant past interactions
+    const relevantMemories = await manager.retrieveRelevantInteractions(prompt);
+    
+    // Generate contextual response
+    const response = await manager.generateResponse(prompt, [], relevantMemories);
+    
+    // Store interaction
+    const embedding = await manager.getEmbedding(`${prompt} ${response}`);
+    const concepts = await manager.extractConcepts(`${prompt} ${response}`);
+    await manager.addInteraction(prompt, response, embedding, concepts);
+}
+</code></pre>
+<h2>Using with Ollama</h2>
+<pre><code class=\"language-javascript\">const manager = new MemoryManager({
+    chatModel: &#39;ollama&#39;,
+    chatModelName: &#39;llama2&#39;,
+    embeddingModel: &#39;ollama&#39;,
+    embeddingModelName: &#39;nomic-embed-text&#39;
+});
+</code></pre>
+<h2>Using Remote Storage</h2>
+<pre><code class=\"language-javascript\">import { RemoteStorage } from &#39;semem&#39;;
+
+const manager = new MemoryManager({
+    apiKey: process.env.OPENAI_API_KEY,
+    storage: new RemoteStorage({
+        endpoint: &#39;https://api.example.com/memory&#39;,
+        apiKey: process.env.STORAGE_API_KEY
+    })
+});
+</code></pre>
+
+        <div class="entry-footer">
+            <h2>About</h2>
+            
+        </div>
+    </body>
+</html>

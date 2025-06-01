@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <link rel="stylesheet" href="/css/fonts.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/grid-columns.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/style.css" type="text/css"/>
+        <title>API Authentication</title>
+    </head>
+    <!-- POST PAGE TEMPLATE -->
+    <body>
+        <header id="entry-header">
+            <h1 class="post-title h-cinzel">
+                
+            </h1>
+        </header>
+        <p> // config/default.js - Default Configuration
+export default {
+    server: {
+        port: 3000,
+        host: &#39;localhost&#39;,
+        cors: {
+            origin: &#39;*&#39;,
+            methods: [&#39;GET&#39;, &#39;POST&#39;],
+            allowedHeaders: [&#39;Content-Type&#39;, &#39;Authorization&#39;]
+        }
+    },
+    auth: {
+        type: &#39;basic&#39;,
+        credentials: {
+            username: process.env.API_USER || &#39;admin&#39;,
+            password: process.env.API_PASS || &#39;admin123&#39;
+        },
+        rateLimits: {
+            window: 15 * 60 * 1000, // 15 minutes
+            max: 100
+        }
+    },
+    websocket: {
+        path: &#39;/ws&#39;,
+        queue: {
+            maxSize: 1000,
+            maxAge: 24 * 60 * 60 * 1000 // 24 hours
+        },
+        pingInterval: 30000,
+        pingTimeout: 5000
+    },
+    storage: {
+        type: &#39;sparql&#39;,
+        endpoint: process.env.SPARQL_ENDPOINT || &#39;<a href=\"http://localhost:4030\">http://localhost:4030</a>&#39;,
+        graphName: process.env.GRAPH_NAME || &#39;<a href=\"http://example.org/mcp/memory\">http://example.org/mcp/memory</a>&#39;,
+        auth: {
+            username: process.env.SPARQL_USER || &#39;admin&#39;,
+            password: process.env.SPARQL_PASS || &#39;admin123&#39;
+        }
+    },
+    metrics: {
+        enabled: true,
+        interval: 60000,
+        retention: 7 * 24 * 60 * 60 * 1000, // 7 days
+        openTelemetry: {
+            endpoint: process.env.OTEL_ENDPOINT,
+            serviceName: &#39;semem-api&#39;
+        }
+    }
+};</p>
+<p>// Example Usage:
+import Config from &#39;./Config.js&#39;;
+import HTTPServer from &#39;./api/http/server/HTTPServer.js&#39;;</p>
+<p>async function startServer() {
+    // Production configuration
+    const config = new Config({
+        server: {
+            port: process.env.PORT || 3000,
+            host: &#39;0.0.0.0&#39;,
+            cors: {
+                origin: [&#39;<a href=\"https://api.example.com\'%5D\">https://api.example.com&#39;]</a>,
+                credentials: true
+            }
+        },
+        auth: {
+            type: &#39;basic&#39;,
+            credentials: {
+                username: process.env.API_USER,
+                password: process.env.API_PASS
+            },
+            rateLimits: {
+                window: 5 * 60 * 1000, // 5 minutes
+                max: 50 // Stricter limits
+            }
+        },
+        websocket: {
+            queue: {
+                maxSize: 5000, // Larger queue
+                maxAge: 12 * 60 * 60 * 1000 // 12 hours
+            }
+        }
+    });</p>
+<pre><code>const server = new HTTPServer(config);
+await server.initialize();
+
+// Graceful shutdown
+process.on(&#39;SIGTERM&#39;, async () =&gt; {
+    console.log(&#39;Received SIGTERM, starting graceful shutdown...&#39;);
+    await server.shutdown();
+    process.exit(0);
+});
+</code></pre>
+<p>}</p>
+<p>// Docker Compose Example:
+/*
+version: &#39;3.8&#39;
+services:
+  api:
+    build: .
+    ports:
+      - &quot;3000:3000&quot;
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - API_USER=admin
+      - API_PASS=${API_PASSWORD}
+      - SPARQL_ENDPOINT=<a href=\"http://fuseki:3030\">http://fuseki:3030</a>
+      - GRAPH_NAME=<a href=\"http://example.org/mcp/memory\">http://example.org/mcp/memory</a>
+      - SPARQL_USER=admin
+      - SPARQL_PASS=${SPARQL_PASSWORD}
+      - OTEL_ENDPOINT=<a href=\"http://collector:4318\">http://collector:4318</a>
+    depends_on:
+      - fuseki
+    healthcheck:
+      test: [&quot;CMD&quot;, &quot;curl&quot;, &quot;-f&quot;, &quot;<a href=\"http://localhost:3000/health%22%5D\">http://localhost:3000/health&quot;]</a>
+      interval: 30s
+      timeout: 10s
+      retries: 3
+*/</p>
+<p>// Environment Variables (.env):
+/*</p>
+<h1>API Authentication</h1>
+<p>API_USER=admin
+API_PASS=secure_password_here</p>
+<h1>SPARQL Connection</h1>
+<p>SPARQL_ENDPOINT=<a href=\"http://localhost:4030\">http://localhost:4030</a>
+GRAPH_NAME=<a href=\"http://example.org/mcp/memory\">http://example.org/mcp/memory</a>
+SPARQL_USER=admin
+SPARQL_PASS=sparql_password_here</p>
+<h1>Monitoring</h1>
+<p>OTEL_ENDPOINT=<a href=\"http://localhost:4318\">http://localhost:4318</a>
+*/ </p>
+
+        <div class="entry-footer">
+            <h2>About</h2>
+            
+        </div>
+    </body>
+</html>

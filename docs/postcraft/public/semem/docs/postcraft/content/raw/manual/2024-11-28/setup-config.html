@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <link rel="stylesheet" href="/css/fonts.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/grid-columns.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/style.css" type="text/css"/>
+        <title>Setup and Configuration Guide</title>
+    </head>
+    <!-- POST PAGE TEMPLATE -->
+    <body>
+        <header id="entry-header">
+            <h1 class="post-title h-cinzel">
+                
+            </h1>
+        </header>
+        <h1>Setup and Configuration Guide</h1>
+<h2>Basic Configuration</h2>
+<pre><code class=\"language-javascript\">import { Config, MemoryManager } from &#39;semem&#39;;
+
+const config = new Config({
+    storage: {
+        type: &#39;json&#39;,
+        options: {
+            path: &#39;data/memory.json&#39;
+        }
+    },
+    models: {
+        chat: {
+            provider: &#39;openai&#39;,
+            model: &#39;gpt-4-turbo-preview&#39;
+        },
+        embedding: {
+            provider: &#39;openai&#39;,
+            model: &#39;text-embedding-3-small&#39;
+        }
+    },
+    memory: {
+        dimension: 1536,
+        similarityThreshold: 40,
+        contextWindow: 3,
+        decayRate: 0.0001
+    }
+});
+</code></pre>
+<h2>Storage Configuration</h2>
+<h3>JSON Storage</h3>
+<pre><code class=\"language-javascript\">import { JSONStorage } from &#39;semem&#39;;
+
+const storage = new JSONStorage(&#39;data/memory.json&#39;);
+</code></pre>
+<h3>Remote Storage</h3>
+<pre><code class=\"language-javascript\">import { RemoteStorage } from &#39;semem&#39;;
+
+const storage = new RemoteStorage({
+    endpoint: &#39;https://api.example.com/memory&#39;,
+    apiKey: process.env.STORAGE_API_KEY,
+    timeout: 5000,
+    retries: 3
+});
+</code></pre>
+<h2>Performance Tuning</h2>
+<pre><code class=\"language-javascript\">const config = new Config({
+    memory: {
+        // Reduce dimension for faster processing
+        dimension: 1024,
+        
+        // Increase threshold for more precise matching
+        similarityThreshold: 50,
+        
+        // Reduce window size for faster response
+        contextWindow: 2,
+        
+        // Adjust decay rate for memory persistence
+        decayRate: 0.0005
+    }
+});
+</code></pre>
+<h2>Error Handling</h2>
+<pre><code class=\"language-javascript\">try {
+    const manager = new MemoryManager({
+        apiKey: process.env.OPENAI_API_KEY,
+        storage,
+        onError: (error) =&gt; {
+            console.error(&#39;Memory manager error:&#39;, error);
+            // Implement error handling
+        }
+    });
+} catch (error) {
+    console.error(&#39;Initialization error:&#39;, error);
+}
+</code></pre>
+<h2>Logging Configuration</h2>
+<pre><code class=\"language-javascript\">import { logger } from &#39;semem&#39;;
+
+// Set log level
+logger.level = process.env.NODE_ENV === &#39;production&#39; ? &#39;info&#39; : &#39;debug&#39;;
+
+// Add custom logging
+logger.on(&#39;error&#39;, (error) =&gt; {
+    // Custom error handling
+});
+</code></pre>
+
+        <div class="entry-footer">
+            <h2>About</h2>
+            
+        </div>
+    </body>
+</html>

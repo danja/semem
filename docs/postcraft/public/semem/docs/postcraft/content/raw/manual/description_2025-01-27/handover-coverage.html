@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <link rel="stylesheet" href="/css/fonts.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/grid-columns.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/style.css" type="text/css"/>
+        <title>Coverage Configuration &amp; Tools</title>
+    </head>
+    <!-- POST PAGE TEMPLATE -->
+    <body>
+        <header id="entry-header">
+            <h1 class="post-title h-cinzel">
+                
+            </h1>
+        </header>
+        <h1>Coverage Configuration &amp; Tools</h1>
+<h2>Istanbul/nyc Setup</h2>
+<h3>Configuration (.nycrc.json)</h3>
+<pre><code class=\"language-json\">{
+  &quot;extends&quot;: &quot;@istanbuljs/nyc-config-babel&quot;,
+  &quot;all&quot;: true,
+  &quot;check-coverage&quot;: true,
+  &quot;include&quot;: [&quot;src/**/*.js&quot;],
+  &quot;exclude&quot;: [
+    &quot;src/**/*.spec.js&quot;,
+    &quot;src/types/**&quot;
+  ],
+  &quot;reporter&quot;: [
+    &quot;text&quot;,
+    &quot;html&quot;,
+    &quot;lcov&quot;
+  ],
+  &quot;branches&quot;: 80,
+  &quot;lines&quot;: 85,
+  &quot;functions&quot;: 85,
+  &quot;statements&quot;: 85
+}
+</code></pre>
+<h2>CI Integration</h2>
+<h3>GitHub Actions Workflow</h3>
+<pre><code class=\"language-yaml\">name: Test &amp; Coverage
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run coverage
+        run: npm run test:coverage
+      - name: Upload to Codecov
+        uses: codecov/codecov-action@v3
+</code></pre>
+<h2>Scripts</h2>
+<h3>Package.json</h3>
+<pre><code class=\"language-json\">{
+  &quot;scripts&quot;: {
+    &quot;test:coverage&quot;: &quot;nyc npm test&quot;,
+    &quot;test:report&quot;: &quot;nyc report --reporter=html&quot;
+  }
+}
+</code></pre>
+<h2>Coverage Reports</h2>
+<h3>Locations</h3>
+<pre><code>coverage/
+├── lcov-report/     # HTML reports
+├── coverage.json    # Raw data
+└── lcov.info       # LCOV format
+</code></pre>
+<h3>Report Types</h3>
+<ol>
+<li><p>HTML Report</p>
+<ul>
+<li>Interactive browsing</li>
+<li>Line-by-line coverage</li>
+<li>Branch coverage visualization</li>
+</ul>
+</li>
+<li><p>LCOV Report</p>
+<ul>
+<li>CI integration</li>
+<li>Tool consumption</li>
+<li>Historical tracking</li>
+</ul>
+</li>
+<li><p>Console Summary</p>
+<ul>
+<li>Quick feedback</li>
+<li>CI output</li>
+<li>Threshold checking</li>
+</ul>
+</li>
+</ol>
+<h2>Coverage Exclusions</h2>
+<h3>File Patterns</h3>
+<pre><code class=\"language-javascript\">/* istanbul ignore file */  // Ignore entire file
+/* istanbul ignore next */  // Ignore next block
+</code></pre>
+<h3>Configuration</h3>
+<pre><code class=\"language-json\">{
+  &quot;exclude&quot;: [
+    &quot;src/generated/**&quot;,
+    &quot;**/*.spec.js&quot;
+  ]
+}
+</code></pre>
+<h2>Integration Points</h2>
+<h3>1. VS Code</h3>
+<ul>
+<li>Coverage highlighting</li>
+<li>Inline coverage info</li>
+<li>Quick navigation</li>
+</ul>
+<h3>2. GitHub</h3>
+<ul>
+<li>PR comments</li>
+<li>Status checks</li>
+<li>Coverage badges</li>
+</ul>
+<h3>3. Codecov</h3>
+<ul>
+<li>Trend analysis</li>
+<li>PR feedback</li>
+<li>Team notifications</li>
+</ul>
+<h2>Usage Instructions</h2>
+<h3>Local Development</h3>
+<pre><code class=\"language-bash\"># Run tests with coverage
+npm run test:coverage
+
+# View report
+npm run test:report
+
+# Check thresholds
+npm run test:check
+</code></pre>
+<h3>CI Pipeline</h3>
+<ol>
+<li>Automated on push/PR</li>
+<li>Coverage thresholds enforced</li>
+<li>Reports uploaded to Codecov</li>
+<li>Status checks updated</li>
+</ol>
+<h2>Common Issues</h2>
+<h3>1. False Negatives</h3>
+<ul>
+<li>Async code coverage</li>
+<li>Branch coverage in promises</li>
+<li>Error handlers</li>
+</ul>
+<h3>2. Configuration</h3>
+<ul>
+<li>Path mapping</li>
+<li>Source maps</li>
+<li>Report formats</li>
+</ul>
+<h3>3. Performance</h3>
+<ul>
+<li>Instrumentation overhead</li>
+<li>Report generation time</li>
+<li>CI integration</li>
+</ul>
+<h2>Maintenance Tasks</h2>
+<h3>Regular</h3>
+<ol>
+<li>Review coverage reports</li>
+<li>Update thresholds</li>
+<li>Clean old reports</li>
+<li>Check exclusions</li>
+</ol>
+<h3>Occasional</h3>
+<ol>
+<li>Update tools</li>
+<li>Verify CI integration</li>
+<li>Review patterns</li>
+<li>Update documentation</li>
+</ol>
+
+        <div class="entry-footer">
+            <h2>About</h2>
+            
+        </div>
+    </body>
+</html>

@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <link rel="stylesheet" href="/css/fonts.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/grid-columns.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/style.css" type="text/css"/>
+        <title>Memory Organization and Decay Analysis</title>
+    </head>
+    <!-- POST PAGE TEMPLATE -->
+    <body>
+        <header id="entry-header">
+            <h1 class="post-title h-cinzel">
+                
+            </h1>
+        </header>
+        <h1>Memory Organization and Decay Analysis</h1>
+<h2>Memory Structure</h2>
+<p>The MemoryStore implements a multi-tier memory system:</p>
+<ol>
+<li><p>Short-term Memory</p>
+<ul>
+<li>Recent interactions</li>
+<li>Full embedding vectors</li>
+<li>Access frequency tracking</li>
+<li>Decay factor adjustment</li>
+</ul>
+</li>
+<li><p>Long-term Memory</p>
+<ul>
+<li>Archived important interactions</li>
+<li>Concept-based organization</li>
+<li>Semantic clustering</li>
+<li>Permanent storage</li>
+</ul>
+</li>
+<li><p>Semantic Memory</p>
+<ul>
+<li>Concept relationships</li>
+<li>Cluster organization</li>
+<li>Knowledge graph structure</li>
+<li>Cross-reference mapping</li>
+</ul>
+</li>
+</ol>
+<h2>Implementation Details</h2>
+<h3>Memory Classification</h3>
+<pre><code class=\"language-javascript\">classifyMemory() {
+    this.shortTermMemory.forEach((interaction, idx) =&gt; {
+        if (this.accessCounts[idx] &gt; 10 &amp;&amp;
+            !this.longTermMemory.some(ltm =&gt; ltm.id === interaction.id)) {
+            
+            // Move to long-term memory
+            this.longTermMemory.push(interaction)
+            logger.info(`Moved interaction ${interaction.id} to long-term memory`)
+        }
+    })
+}
+</code></pre>
+<h3>Memory Retrieval</h3>
+<pre><code class=\"language-javascript\">async retrieve(queryEmbedding, queryConcepts, similarityThreshold = 40, excludeLastN = 0) {
+    const relevantInteractions = []
+    const currentTime = Date.now()
+    const decayRate = 0.0001
+    
+    // Calculate similarity and apply decay
+    for (let idx = 0; idx &lt; this.shortTermMemory.length - excludeLastN; idx++) {
+        const similarity = vectorOps.cosineSimilarity(
+            queryEmbedding,
+            this.embeddings[idx]
+        ) * 100
+        
+        const timeDiff = (currentTime - this.timestamps[idx]) / 1000
+        const decayFactor = this.shortTermMemory[idx].decayFactor * 
+            Math.exp(-decayRate * timeDiff)
+        
+        const reinforcementFactor = Math.log1p(this.accessCounts[idx])
+        const adjustedSimilarity = similarity * decayFactor * reinforcementFactor
+
+        if (adjustedSimilarity &gt;= similarityThreshold) {
+            // Update access patterns
+            this.accessCounts[idx]++
+            this.timestamps[idx] = currentTime
+            this.shortTermMemory[idx].decayFactor *= 1.1
+
+            relevantInteractions.push({
+                similarity: adjustedSimilarity,
+                interaction: this.shortTermMemory[idx],
+                concepts: this.conceptsList[idx]
+            })
+        } else {
+            // Apply decay
+            this.shortTermMemory[idx].decayFactor *= 0.9
+        }
+    }
+
+    return relevantInteractions
+}
+</code></pre>
+<h3>Semantic Organization</h3>
+<pre><code class=\"language-javascript\">clusterInteractions() {
+    if (this.embeddings.length &lt; 2) return
+
+    // K-means clustering
+    const numClusters = Math.min(10, this.embeddings.length)
+    const { clusters } = kmeans(this.embeddings, numClusters)
+    
+    // Organize by cluster
+    this.semanticMemory.clear()
+    clusters.forEach((label, idx) =&gt; {
+        if (!this.semanticMemory.has(label)) {
+            this.semanticMemory.set(label, [])
+        }
+        this.semanticMemory.get(label).push({
+            embedding: this.embeddings[idx],
+            interaction: this.shortTermMemory[idx]
+        })
+    })
+}
+</code></pre>
+<h2>Memory Dynamics</h2>
+<ol>
+<li><p>Decay Mechanisms</p>
+<ul>
+<li>Time-based decay</li>
+<li>Access-based reinforcement</li>
+<li>Concept relevance weighting</li>
+<li>Cluster stability</li>
+</ul>
+</li>
+<li><p>Access Patterns</p>
+<ul>
+<li>Frequency tracking</li>
+<li>Recency weighting</li>
+<li>Cross-reference counting</li>
+<li>Concept co-occurrence</li>
+</ul>
+</li>
+<li><p>Memory Transfer</p>
+<ul>
+<li>Short to long-term promotion</li>
+<li>Concept extraction</li>
+<li>Cluster reorganization</li>
+<li>Semantic linking</li>
+</ul>
+</li>
+</ol>
+<h2>Optimization Strategies</h2>
+<ol>
+<li><p>Vector Operations</p>
+<ul>
+<li>Batch similarity calculations</li>
+<li>Dimensionality optimization</li>
+<li>Sparse vector handling</li>
+<li>Distance caching</li>
+</ul>
+</li>
+<li><p>Cluster Management</p>
+<ul>
+<li>Dynamic cluster sizing</li>
+<li>Periodic rebalancing</li>
+<li>Merge/split operations</li>
+<li>Outlier handling</li>
+</ul>
+</li>
+<li><p>Concept Organization</p>
+<ul>
+<li>Hierarchical relationships</li>
+<li>Cross-cluster linking</li>
+<li>Concept drift tracking</li>
+<li>Relevance scoring</li>
+</ul>
+</li>
+</ol>
+
+        <div class="entry-footer">
+            <h2>About</h2>
+            
+        </div>
+    </body>
+</html>

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <link rel="stylesheet" href="/css/fonts.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/grid-columns.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/style.css" type="text/css"/>
+        <title> Using PDF.js in Node.js</title>
+    </head>
+    <!-- POST PAGE TEMPLATE -->
+    <body>
+        <header id="entry-header">
+            <h1 class="post-title h-cinzel">
+                
+            </h1>
+        </header>
+        <p> PDF.js is primarily designed for rendering PDFs in web browsers, not for converting PDFs to HTML in Node.js environments. However, it is possible to use PDF.js in Node.js to extract text content from PDFs, which can then be used to create an HTML representation. Here&#39;s how you can approach this task:</p>
+<h2>Using PDF.js in Node.js</h2>
+<p>First, install the necessary packages:</p>
+<pre><code class=\"language-bash\">npm install pdfjs-dist
+</code></pre>
+<p>Then, you can use the following code to extract text content from a PDF:</p>
+<pre><code class=\"language-javascript\">import { getDocument } from &#39;pdfjs-dist/legacy/build/pdf.mjs&#39;;
+
+async function convertPdfToHtml(pdfPath) {
+  const loadingTask = getDocument(pdfPath);
+  const doc = await loadingTask.promise;
+  let htmlContent = &#39;&lt;html&gt;&lt;body&gt;&#39;;
+
+  for (let i = 1; i &lt;= doc.numPages; i++) {
+    const page = await doc.getPage(i);
+    const textContent = await page.getTextContent();
+    const pageText = textContent.items.map(item =&gt; item.str).join(&#39; &#39;);
+    htmlContent += `&lt;p&gt;${pageText}&lt;/p&gt;`;
+  }
+
+  htmlContent += &#39;&lt;/body&gt;&lt;/html&gt;&#39;;
+  return htmlContent;
+}
+
+// Usage
+convertPdfToHtml(&#39;path/to/your/pdf.pdf&#39;)
+  .then(html =&gt; console.log(html))
+  .catch(error =&gt; console.error(&#39;Error:&#39;, error));
+</code></pre>
+<p>This script does the following:</p>
+<ol>
+<li>It imports the <code>getDocument</code> function from PDF.js.</li>
+<li>The <code>convertPdfToHtml</code> function loads the PDF document.</li>
+<li>It iterates through each page of the PDF.</li>
+<li>For each page, it extracts the text content.</li>
+<li>The extracted text is wrapped in HTML paragraph tags.</li>
+<li>Finally, it returns a basic HTML structure containing the extracted text.</li>
+</ol>
+<h2>Limitations</h2>
+<p>It&#39;s important to note that this approach has several limitations:</p>
+<ol>
+<li>It only extracts text content, not images or complex formatting.</li>
+<li>The resulting HTML will be very basic and won&#39;t preserve the original PDF layout.</li>
+<li>PDF.js in Node.js doesn&#39;t support all the features available in browser environments.</li>
+</ol>
+<h2>Alternative Approaches</h2>
+<p>For more comprehensive PDF to HTML conversion in Node.js, you might want to consider alternative libraries or services:</p>
+<ol>
+<li><p><strong>pdf2htmlEX</strong>: A more powerful tool for converting PDFs to HTML, preserving layout and formatting[6].</p>
+</li>
+<li><p><strong>PDF.co Web API</strong>: Offers a cloud-based solution for converting PDFs to HTML, which can be integrated into Node.js applications[8].</p>
+</li>
+<li><p><strong>Poppler</strong>: A popular PDF rendering library that can be used for PDF to HTML conversion[11].</p>
+</li>
+</ol>
+<p>Remember that accurate PDF to HTML conversion, especially for complex documents, is a challenging task that often requires specialized tools or services.</p>
+<p>Citations:
+[1] <a href=\"https://www.convertapi.com/pdf-to-html/nodejs\">https://www.convertapi.com/pdf-to-html/nodejs</a>
+[2] <a href=\"https://www.nutrient.io/blog/how-to-build-a-javascript-pdf-viewer-with-pdfjs/\">https://www.nutrient.io/blog/how-to-build-a-javascript-pdf-viewer-with-pdfjs/</a>
+[3] <a href=\"https://github.com/mozilla/pdf.js\">https://github.com/mozilla/pdf.js</a>
+[4] <a href=\"https://gist.github.com/njlr/e31909f683ac2a841a39d47ec99c87ee\">https://gist.github.com/njlr/e31909f683ac2a841a39d47ec99c87ee</a>
+[5] <a href=\"https://pdfcrowd.com/api/pdf-to-html-nodejs/examples/\">https://pdfcrowd.com/api/pdf-to-html-nodejs/examples/</a>
+[6] <a href=\"https://mozilla.github.io/pdf.js/examples/\">https://mozilla.github.io/pdf.js/examples/</a>
+[7] <a href=\"https://www.nutrient.io/blog/complete-guide-to-pdfjs/\">https://www.nutrient.io/blog/complete-guide-to-pdfjs/</a>
+[8] <a href=\"https://www.youtube.com/watch?v=NO-UqmLf7Qk\">https://www.youtube.com/watch?v=NO-UqmLf7Qk</a>
+[9] <a href=\"https://mozilla.github.io/pdf.js/\">https://mozilla.github.io/pdf.js/</a>
+[10] <a href=\"https://www.nutrient.io/blog/complete-guide-to-pdfjs/\">https://www.nutrient.io/blog/complete-guide-to-pdfjs/</a>
+[11] <a href=\"https://stackoverflow.com/questions/16785198/use-pdf-js-to-statically-convert-a-pdf-to-html\">https://stackoverflow.com/questions/16785198/use-pdf-js-to-statically-convert-a-pdf-to-html</a>
+[12] <a href=\"https://www.nutrient.io/blog/how-to-build-a-javascript-pdf-viewer-with-pdfjs/\">https://www.nutrient.io/blog/how-to-build-a-javascript-pdf-viewer-with-pdfjs/</a>
+[13] <a href=\"https://docs.apryse.com/core/samples/pdf2htmltest\">https://docs.apryse.com/core/samples/pdf2htmltest</a>
+[14] <a href=\"https://pdfjs.express/documentation\">https://pdfjs.express/documentation</a>
+[15] <a href=\"https://github.com/mozilla/pdf.js/blob/master/examples/node/getinfo.mjs\">https://github.com/mozilla/pdf.js/blob/master/examples/node/getinfo.mjs</a>
+[16] <a href=\"https://www.convertapi.com/pdf-to-html/javascript\">https://www.convertapi.com/pdf-to-html/javascript</a></p>
+<hr>
+<p>Answer from Perplexity: pplx.ai/share
+ </p>
+
+        <div class="entry-footer">
+            <h2>About</h2>
+            
+        </div>
+    </body>
+</html>
