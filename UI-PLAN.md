@@ -62,8 +62,8 @@ Enhance memory visualization and interaction:
 
 ## Technical Considerations
 
-- **Frontend Framework**: Consider using a modern framework like React or Vue.js for better component management
-- **State Management**: Implement proper state management (e.g., Redux, Vuex)
+- **Frontend Framework**: Use vanilla JS
+- **State Management**: Implement proper state management with the evb library - perhaps later
 - **WebSockets**: Consider using WebSockets for real-time updates
 - **Error Handling**: Robust error handling and user feedback
 - **Responsive Design**: Ensure the UI works well on different screen sizes

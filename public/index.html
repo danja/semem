@@ -488,7 +488,44 @@
     </div>
 
     <script src="script.js"></script>
+    <script>
+        // Try to expose MCPPrompts if available
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof MCPPrompts !== 'undefined') {
+                console.log('MCPPrompts found in global scope');
+                window.MCPPrompts = MCPPrompts;
+            } else {
+                console.log('MCPPrompts not found in global scope');
+                // Fallback to a direct fetch if needed
+                fetch('http://localhost:4040/mcp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        jsonrpc: '2.0',
+                        id: 'init-prompts',
+                        method: 'mcp.prompts.list',
+                        params: {}
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.result) {
+                        window.MCPPrompts = data.result.prompts || data.result;
+                        console.log('Loaded prompts from server:', window.MCPPrompts);
+                    }
+                })
+                .catch(error => console.error('Failed to load prompts:', error));
+            }
+        });
+    </script>
     <script src="mcp-client.js"></script>
+    <script>
+        // Initialize MCP Client
+        document.addEventListener('DOMContentLoaded', () => {
+            window.mcpClient = new MCPClient();
+            console.log('MCP Client initialized');
+        });
+    </script>
 </body>
 
 </html>
