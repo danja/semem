@@ -1025,13 +1025,29 @@ Based on the above information and your knowledge, here is the user's question: 
                 return res.json({ providers: [] });
             }
 
-            const providers = this.llmProviders.map((p, index) => ({
-                id: p.id || `provider-${index}`,
-                type: p.type,
-                name: `${p.type}${p.implementation ? ` (${p.implementation})` : ''}`,
-                model: p.chatModel || 'default',
-                capabilities: p.capabilities || []
-            }));
+            // Define available models for each provider type
+            const providerModels = {
+                'mistral': ['mistral-medium', 'mistral-small', 'mistral-tiny'],
+                'claude': ['claude-3-opus-20240229', 'claude-3-sonnet-20240229', 'claude-3-haiku-20240307'],
+                'ollama': ['llama3', 'mistral', 'mixtral'],
+                'openai': ['gpt-4-turbo', 'gpt-4', 'gpt-3.5-turbo']
+            };
+
+            const providers = this.llmProviders.map((p, index) => {
+                const providerId = `provider-${index}`;
+                const implementation = p.implementation ? `-${p.implementation}` : '';
+                const models = providerModels[p.type] || [p.chatModel || 'default'];
+                
+                return {
+                    id: providerId,  // Consistent ID format
+                    type: p.type,
+                    name: `${p.type}${p.implementation ? ` (${p.implementation})` : ''}`,
+                    model: p.chatModel || 'default',
+                    models: models,  // Include available models
+                    capabilities: p.capabilities || [],
+                    implementation: p.implementation || 'default'
+                };
+            });
 
             logger.info(`Returning ${providers.length} available providers`);
             res.json({ providers });

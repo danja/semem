@@ -38,8 +38,9 @@
     :metaField "meta" .
 
 :entryExtras a :ConfigSet ;
+    :loglevel "debug" ;
     :relMap "blog" ; # relPath goes to this
-    :baseURI <hhttp://tensegrity.it/semem> ;
+    :baseURI <http://tensegrity.it/semem> ;
     :creatorName "Danny" ;
     :creatorURI <http://danny.ayers.name/me> .
 

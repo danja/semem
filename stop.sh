@@ -27,6 +27,10 @@ if [ -f "$PID_FILE" ]; then
         echo "UI server (PID: $UI_PID) is not running"
     fi
     
+    # Stop any MCP server running on port 4100
+    echo "Stopping MCP server on port 4100..."
+    lsof -ti :4100 | xargs -r kill -9 2>/dev/null || echo "No MCP server found on port 4100"
+    
     # Remove PID file
     rm -f "$PID_FILE"
     echo "Servers stopped successfully"
