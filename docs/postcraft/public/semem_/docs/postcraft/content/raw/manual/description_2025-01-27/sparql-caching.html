@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <link rel="stylesheet" href="/css/fonts.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/grid-columns.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/style.css" type="text/css"/>
+        <title>SPARQL Caching Strategy Analysis</title>
+    </head>
+    <!-- POST PAGE TEMPLATE -->
+    <body>
+        <header id="entry-header">
+            <h1 class="post-title h-cinzel">
+                
+            </h1>
+        </header>
+        <h1>SPARQL Caching Strategy Analysis</h1>
+<h2>Cache Architecture</h2>
+<p>The CachedSPARQLStore implements a two-level caching system:</p>
+<ol>
+<li><p>Query Cache</p>
+<ul>
+<li>Maps normalized SPARQL queries to results</li>
+<li>TTL-based expiration</li>
+<li>Size-limited with LRU eviction</li>
+<li>Handles query normalization</li>
+</ul>
+</li>
+<li><p>Timestamp Cache</p>
+<ul>
+<li>Tracks cache entry ages</li>
+<li>Supports cleanup operations</li>
+<li>Manages eviction priorities</li>
+</ul>
+</li>
+</ol>
+<h2>Implementation Details</h2>
+<h3>Cache Key Generation</h3>
+<pre><code class=\"language-javascript\">_generateCacheKey(query) {
+    // Normalize query by removing whitespace variations
+    return query.replace(/\\s+/g, &#39; &#39;).trim()
+}
+</code></pre>
+<h3>Cache Operations</h3>
+<ol>
+<li>Query Execution:</li>
+</ol>
+<pre><code class=\"language-javascript\">async _executeSparqlQuery(query, endpoint) {
+    if (!this.cacheEnabled) {
+        return super._executeSparqlQuery(query, endpoint)
+    }
+
+    const cacheKey = this._generateCacheKey(query)
+    const cachedResult = this.queryCache.get(cacheKey)
+    
+    if (cachedResult) {
+        const timestamp = this.cacheTimestamps.get(cacheKey)
+        if (Date.now() - timestamp &lt; this.cacheTTL) {
+            return JSON.parse(JSON.stringify(cachedResult)) // Deep clone
+        }
+    }
+
+    // Cache miss or expired
+    const result = await super._executeSparqlQuery(query, endpoint)
+    this.queryCache.set(cacheKey, result)
+    this.cacheTimestamps.set(cacheKey, Date.now())
+    
+    return result
+}
+</code></pre>
+<ol start=\"2\">
+<li>Cache Cleanup:</li>
+</ol>
+<pre><code class=\"language-javascript\">cleanupCache() {
+    const now = Date.now()
+
+    // Remove expired entries
+    for (const [key, timestamp] of this.cacheTimestamps.entries()) {
+        if (now - timestamp &gt; this.cacheTTL) {
+            this.queryCache.delete(key)
+            this.cacheTimestamps.delete(key)
+        }
+    }
+
+    // Enforce size limit with LRU
+    while (this.queryCache.size &gt; this.maxCacheSize) {
+        let oldestKey = null
+        let oldestTime = Infinity
+
+        for (const [key, timestamp] of this.cacheTimestamps.entries()) {
+            if (timestamp &lt; oldestTime) {
+                oldestTime = timestamp
+                oldestKey = key
+            }
+        }
+
+        if (oldestKey) {
+            this.queryCache.delete(oldestKey)
+            this.cacheTimestamps.delete(oldestKey)
+        }
+    }
+}
+</code></pre>
+<h2>Cache Invalidation</h2>
+<ol>
+<li>Write Operations</li>
+</ol>
+<pre><code class=\"language-javascript\">async saveMemoryToHistory(memoryStore) {
+    this.invalidateCache() // Clear cache on writes
+    return super.saveMemoryToHistory(memoryStore)
+}
+</code></pre>
+<ol start=\"2\">
+<li>Transaction Management</li>
+</ol>
+<pre><code class=\"language-javascript\">async rollbackTransaction() {
+    await super.rollbackTransaction()
+    this.invalidateCache() // Clear cache on rollback
+}
+</code></pre>
+<h2>Performance Considerations</h2>
+<ol>
+<li><p>Cache Hit Ratio</p>
+<ul>
+<li>Monitor with metrics</li>
+<li>Adjust TTL based on hit rate</li>
+<li>Track cache effectiveness</li>
+</ul>
+</li>
+<li><p>Memory Usage</p>
+<ul>
+<li>Monitor cache size</li>
+<li>Adjust maxCacheSize based on memory</li>
+<li>Consider entry size in eviction</li>
+</ul>
+</li>
+<li><p>Query Patterns</p>
+<ul>
+<li>Cache frequent queries longer</li>
+<li>Consider query complexity</li>
+<li>Optimize for common patterns</li>
+</ul>
+</li>
+</ol>
+<h2>Configuration Options</h2>
+<pre><code class=\"language-javascript\">{
+    cacheEnabled: true,
+    cacheTTL: 300000, // 5 minutes
+    maxCacheSize: 1000,
+    cleanupInterval: 60000 // 1 minute
+}
+</code></pre>
+
+        <div class="entry-footer">
+            <h2>About</h2>
+            
+        </div>
+    </body>
+</html>

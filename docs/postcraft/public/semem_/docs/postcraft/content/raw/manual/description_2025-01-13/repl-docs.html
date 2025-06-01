@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <link rel="stylesheet" href="/css/fonts.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/grid-columns.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/style.css" type="text/css"/>
+        <title>Semem REPL Environment</title>
+    </head>
+    <!-- POST PAGE TEMPLATE -->
+    <body>
+        <header id="entry-header">
+            <h1 class="post-title h-cinzel">
+                
+            </h1>
+        </header>
+        <h1>Semem REPL Environment</h1>
+<h2>Overview</h2>
+<p>The Semem REPL provides an interactive shell environment with support for both natural language chat and RDF query modes. It offers command history, auto-completion, and integrated help.</p>
+<h2>Quick Start</h2>
+<pre><code class=\"language-bash\"># Start REPL
+semem repl
+
+# Basic commands
+help           # Show available commands
+mode chat      # Switch to chat mode
+mode rdf       # Switch to RDF mode
+clear          # Clear screen
+exit           # Exit REPL
+</code></pre>
+<h2>Features</h2>
+<h3>Chat Mode</h3>
+<pre><code class=\"language-javascript\">// Default chat mode
+semem&gt; Hello, how do you work?
+
+// Switch models
+semem&gt; /model llama2
+
+// View context
+semem&gt; /context
+
+// Clear conversation
+semem&gt; /clear
+</code></pre>
+<h3>RDF Mode</h3>
+<pre><code class=\"language-sparql\">// Basic SPARQL query
+semem&gt; SELECT * WHERE { ?s ?p ?o } LIMIT 5
+
+// Store triple
+semem&gt; INSERT DATA { 
+  &lt;http://example.org/subject&gt; &lt;http://example.org/predicate&gt; &quot;object&quot; 
+}
+
+// Define prefix
+semem&gt; @prefix ex: &lt;http://example.org/&gt;
+</code></pre>
+<h3>Command History</h3>
+<ul>
+<li>Up/Down arrows for history navigation</li>
+<li><code>history</code> command to view recent commands</li>
+<li>History persistence between sessions</li>
+<li><code>!n</code> to repeat nth command</li>
+</ul>
+<h3>Auto-completion</h3>
+<ul>
+<li>Tab completion for commands</li>
+<li>Prefix completion for SPARQL keywords</li>
+<li>URI completion for known namespaces</li>
+<li>Command parameter hints</li>
+</ul>
+<h3>Help System</h3>
+<pre><code class=\"language-bash\"># General help
+semem&gt; help
+
+# Command-specific help
+semem&gt; help mode
+semem&gt; help query
+
+# Examples
+semem&gt; examples chat
+semem&gt; examples sparql
+</code></pre>
+<h3>Context Management</h3>
+<pre><code class=\"language-bash\"># View current context
+semem&gt; /context
+
+# Clear context
+semem&gt; /context clear
+
+# Save context
+semem&gt; /context save workspace1
+
+# Load context
+semem&gt; /context load workspace1
+</code></pre>
+<h2>Keyboard Shortcuts</h2>
+<ul>
+<li><code>Ctrl+C</code>: Cancel current input</li>
+<li><code>Ctrl+D</code>: Exit REPL</li>
+<li><code>Ctrl+L</code>: Clear screen</li>
+<li><code>Ctrl+R</code>: Reverse history search</li>
+<li><code>Ctrl+U</code>: Clear current line</li>
+</ul>
+<h2>Configuration</h2>
+<p>The REPL can be customized through:</p>
+<ul>
+<li><code>.sememrc</code> configuration file</li>
+<li>Environment variables</li>
+<li>Runtime commands</li>
+</ul>
+<p>Example configuration:</p>
+<pre><code class=\"language-json\">{
+  &quot;repl&quot;: {
+    &quot;prompt&quot;: &quot;semem λ&quot;,
+    &quot;historySize&quot;: 1000,
+    &quot;mode&quot;: &quot;chat&quot;,
+    &quot;autoSave&quot;: true
+  }
+}
+</code></pre>
+
+        <div class="entry-footer">
+            <h2>About</h2>
+            
+        </div>
+    </body>
+</html>

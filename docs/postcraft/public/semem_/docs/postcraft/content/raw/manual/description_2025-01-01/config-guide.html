@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <link rel="stylesheet" href="/css/fonts.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/grid-columns.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/style.css" type="text/css"/>
+        <title>Semem Configuration Guide</title>
+    </head>
+    <!-- POST PAGE TEMPLATE -->
+    <body>
+        <header id="entry-header">
+            <h1 class="post-title h-cinzel">
+                
+            </h1>
+        </header>
+        <h1>Semem Configuration Guide</h1>
+<h2>Basic Configuration</h2>
+<p>The configuration system uses a hierarchical structure with sensible defaults that can be overridden.</p>
+<h3>Storage Configuration</h3>
+<pre><code class=\"language-javascript\">{
+    storage: {
+        type: &#39;json&#39;,  // &#39;json&#39;, &#39;memory&#39;, or &#39;sparql&#39;
+        options: {
+            path: &#39;memory.json&#39;,  // For JSON storage
+            // OR for SPARQL:
+            graphName: &#39;http://example.org/memory&#39;,
+            endpoint: &#39;http://localhost:4030&#39;
+        }
+    }
+}
+</code></pre>
+<h3>Model Configuration</h3>
+<pre><code class=\"language-javascript\">{
+    models: {
+        chat: {
+            provider: &#39;ollama&#39;,  // &#39;ollama&#39; or &#39;openai&#39;
+            model: &#39;llama2&#39;,
+            options: {
+                temperature: 0.7
+            }
+        },
+        embedding: {
+            provider: &#39;ollama&#39;,
+            model: &#39;nomic-embed-text&#39;,
+            options: {
+                dimension: 1536
+            }
+        }
+    }
+}
+</code></pre>
+<h3>Memory Parameters</h3>
+<pre><code class=\"language-javascript\">{
+    memory: {
+        dimension: 1536,
+        similarityThreshold: 40,
+        contextWindow: 3,
+        decayRate: 0.0001
+    }
+}
+</code></pre>
+<h3>SPARQL Endpoint Configuration</h3>
+<pre><code class=\"language-javascript\">{
+    sparqlEndpoints: [{
+        label: &quot;main&quot;,
+        user: &quot;admin&quot;,
+        password: &quot;admin123&quot;,
+        urlBase: &quot;http://localhost:4030&quot;,
+        query: &quot;/query&quot;,
+        update: &quot;/update&quot;
+    }]
+}
+</code></pre>
+<h2>Advanced Options</h2>
+<ul>
+<li>Cache configuration for SPARQL store</li>
+<li>Transaction handling settings</li>
+<li>Context window parameters</li>
+<li>Backup and recovery settings</li>
+</ul>
+
+        <div class="entry-footer">
+            <h2>About</h2>
+            
+        </div>
+    </body>
+</html>

@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <link rel="stylesheet" href="/css/fonts.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/grid-columns.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/style.css" type="text/css"/>
+        <title>custom-storage.js</title>
+    </head>
+    <!-- POST PAGE TEMPLATE -->
+    <body>
+        <header id="entry-header">
+            <h1 class="post-title h-cinzel">
+                
+            </h1>
+        </header>
+        <p> // Import the base storage class
+import BaseStore from &#39;./BaseStore.js&#39;;
+import { logger } from &#39;../Utils.js&#39;;</p>
+<p>export default class CustomStore extends BaseStore {
+    constructor(options = {}) {
+        super();
+        // Initialize your custom storage
+        this.options = options;
+        this.connected = false;
+        this.inTransaction = false;
+    }</p>
+<pre><code>// Required: Load both short-term and long-term memories
+async loadHistory() {
+    try {
+        // Implement your loading logic
+        const shortTerm = await this.loadShortTermMemories();
+        const longTerm = await this.loadLongTermMemories();
+        
+        // Return as tuple: [shortTerm, longTerm]
+        return [shortTerm, longTerm];
+    } catch (error) {
+        logger.error(&#39;Error loading history:&#39;, error);
+        throw error;
+    }
+}
+
+// Required: Save the complete memory store
+async saveMemoryToHistory(memoryStore) {
+    try {
+        // Start transaction if supported
+        await this.beginTransaction();
+
+        // Save short-term memories
+        await this.saveMemories(
+            memoryStore.shortTermMemory,
+            &#39;short-term&#39;
+        );
+
+        // Save long-term memories
+        await this.saveMemories(
+            memoryStore.longTermMemory,
+            &#39;long-term&#39;
+        );
+
+        // Commit changes
+        await this.commitTransaction();
+    } catch (error) {
+        // Rollback on error
+        await this.rollbackTransaction();
+        throw error;
+    }
+}
+
+// Optional: Transaction support
+async beginTransaction() {
+    if (this.inTransaction) {
+        throw new Error(&#39;Transaction already in progress&#39;);
+    }
+    this.inTransaction = true;
+    // Implement transaction start logic
+}
+
+async commitTransaction() {
+    if (!this.inTransaction) {
+        throw new Error(&#39;No transaction in progress&#39;);
+    }
+    // Implement commit logic
+    this.inTransaction = false;
+}
+
+async rollbackTransaction() {
+    if (!this.inTransaction) {
+        throw new Error(&#39;No transaction in progress&#39;);
+    }
+    // Implement rollback logic
+    this.inTransaction = false;
+}
+
+// Optional: Storage health check
+async verify() {
+    try {
+        // Implement verification logic
+        return true;
+    } catch {
+        return false;
+    }
+}
+
+// Required: Cleanup resources
+async close() {
+    if (this.inTransaction) {
+        await this.rollbackTransaction();
+    }
+    // Implement cleanup logic
+}
+</code></pre>
+<p>}
+ </p>
+
+        <div class="entry-footer">
+            <h2>About</h2>
+            
+        </div>
+    </body>
+</html>

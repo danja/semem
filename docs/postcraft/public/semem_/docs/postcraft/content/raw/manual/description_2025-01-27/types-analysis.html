@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <link rel="stylesheet" href="/css/fonts.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/grid-columns.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/style.css" type="text/css"/>
+        <title>Type System Analysis</title>
+    </head>
+    <!-- POST PAGE TEMPLATE -->
+    <body>
+        <header id="entry-header">
+            <h1 class="post-title h-cinzel">
+                
+            </h1>
+        </header>
+        <h1>Type System Analysis</h1>
+<h2>Overview</h2>
+<p>The <code>src/types</code> directory contains both TypeScript (.ts) and JavaScript (.js) type definitions, providing type safety through TypeScript and runtime type checking through JavaScript.</p>
+<h2>MemoryTypes.ts</h2>
+<p>Core type definitions for memory operations.</p>
+<h3>Provider Interfaces</h3>
+<pre><code class=\"language-typescript\">export interface LLMProvider {
+    generateEmbedding(model: string, input: string): Promise&lt;number[]&gt;
+    generateChat(model: string, messages: ChatMessage[], options?: Record&lt;string, any&gt;): Promise&lt;string&gt;
+    generateCompletion(model: string, prompt: string, options?: Record&lt;string, any&gt;): Promise&lt;string&gt;
+}
+
+export interface ChatMessage {
+    role: &#39;system&#39; | &#39;user&#39; | &#39;assistant&#39;
+    content: string
+}
+</code></pre>
+<h3>Configuration Types</h3>
+<pre><code class=\"language-typescript\">export interface CacheOptions {
+    maxSize: number
+    ttl: number
+}
+
+export interface ContextOptions {
+    maxTokens: number
+    overlapRatio?: number
+}
+
+export interface MemoryConfig {
+    llmProvider: LLMProvider
+    chatModel?: string
+    embeddingModel?: string
+    storage?: StorageProvider
+    dimension?: number
+    contextOptions?: ContextOptions
+    cacheOptions?: CacheOptions
+}
+</code></pre>
+<h3>Storage Types</h3>
+<pre><code class=\"language-typescript\">export interface StorageProvider {
+    loadHistory(): Promise&lt;[Interaction[], Interaction[]]&gt;
+    saveMemoryToHistory(store: MemoryStore): Promise&lt;void&gt;
+    close?(): Promise&lt;void&gt;
+}
+
+export interface MemoryStore {
+    shortTermMemory: Interaction[]
+    longTermMemory: Interaction[]
+    embeddings: number[][]
+    timestamps: number[]
+    accessCounts: number[]
+    conceptsList: string[][]
+}
+</code></pre>
+<h3>Data Types</h3>
+<pre><code class=\"language-typescript\">export interface Interaction {
+    id: string
+    prompt: string
+    output: string
+    embedding: number[]
+    timestamp: number
+    accessCount: number
+    concepts: string[]
+    decayFactor: number
+}
+
+export enum MemoryType {
+    ShortTerm = &#39;short-term&#39;,
+    LongTerm = &#39;long-term&#39;
+}
+</code></pre>
+<h2>MemoryTypes.js</h2>
+<p>Runtime type checking and validation.</p>
+<h3>Type Constructors</h3>
+<pre><code class=\"language-javascript\">export class Interaction {
+    constructor({
+        id,
+        prompt,
+        output,
+        embedding,
+        timestamp = Date.now(),
+        accessCount = 1,
+        concepts = [],
+        decayFactor = 1.0
+    }) {
+        this.id = id
+        this.prompt = prompt
+        this.output = output
+        this.embedding = embedding
+        this.timestamp = timestamp
+        this.accessCount = accessCount
+        this.concepts = concepts
+        this.decayFactor = decayFactor
+    }
+}
+
+export class MemoryConfig {
+    constructor({
+        llmProvider,
+        chatModel = &#39;qwen2:1.5b&#39;,
+        embeddingModel = &#39;nomic-embed-text&#39;,
+        storage = null,
+        dimension = 1536,
+        contextOptions = { maxTokens: 8192 },
+        cacheOptions = { maxSize: 1000, ttl: 3600000 }
+    }) {
+        this.llmProvider = llmProvider
+        this.chatModel = chatModel
+        this.embeddingModel = embeddingModel
+        this.storage = storage
+        this.dimension = dimension
+        this.contextOptions = contextOptions
+        this.cacheOptions = cacheOptions
+    }
+}
+</code></pre>
+<h3>Constants</h3>
+<pre><code class=\"language-javascript\">export const MemoryTypes = {
+    SHORT_TERM: &#39;short-term&#39;,
+    LONG_TERM: &#39;long-term&#39;
+}
+</code></pre>
+<h2>Usage Patterns</h2>
+<h3>Type Validation</h3>
+<pre><code class=\"language-javascript\">// Runtime type checking
+function validateInteraction(interaction) {
+    if (!(interaction instanceof Interaction)) {
+        throw new TypeError(&#39;Expected Interaction instance&#39;)
+    }
+    
+    if (!Array.isArray(interaction.embedding) || 
+        !interaction.embedding.every(x =&gt; typeof x === &#39;number&#39;)) {
+        throw new TypeError(&#39;Invalid embedding format&#39;)
+    }
+    
+    if (!Array.isArray(interaction.concepts) || 
+        !interaction.concepts.every(x =&gt; typeof x === &#39;string&#39;)) {
+        throw new TypeError(&#39;Invalid concepts format&#39;)
+    }
+}
+
+// Configuration validation
+function validateConfig(config) {
+    if (!(config instanceof MemoryConfig)) {
+        throw new TypeError(&#39;Expected MemoryConfig instance&#39;)
+    }
+    
+    if (!config.llmProvider || 
+        typeof config.llmProvider.generateChat !== &#39;function&#39;) {
+        throw new TypeError(&#39;Invalid LLM provider&#39;)
+    }
+}
+</code></pre>
+<h3>TypeScript Integration</h3>
+<pre><code class=\"language-typescript\">// Type-safe API methods
+async function addInteraction(interaction: Interaction): Promise&lt;void&gt; {
+    validateInteraction(interaction)  // Runtime check
+    await this.store.saveMemoryToHistory({
+        shortTermMemory: [...this.store.shortTermMemory, interaction],
+        longTermMemory: this.store.longTermMemory
+    })
+}
+
+// Type-safe configuration
+function createMemoryManager(config: MemoryConfig): MemoryManager {
+    validateConfig(config)  // Runtime check
+    return new MemoryManager(config)
+}
+</code></pre>
+<h2>Best Practices</h2>
+<ol>
+<li>Always use TypeScript interfaces for API boundaries</li>
+<li>Include runtime type checking for critical operations</li>
+<li>Use enums for fixed value sets</li>
+<li>Provide sensible defaults in constructors</li>
+<li>Keep type definitions synchronized between .ts and .js files</li>
+<li>Document type constraints and validation rules</li>
+<li>Use type guards for runtime safety</li>
+</ol>
+<h2>Type Extensions</h2>
+<p>When adding new functionality:</p>
+<ol>
+<li>Add TypeScript interface</li>
+<li>Add corresponding JavaScript class</li>
+<li>Update existing interfaces if needed</li>
+<li>Add validation functions</li>
+<li>Update documentation</li>
+</ol>
+
+        <div class="entry-footer">
+            <h2>About</h2>
+            
+        </div>
+    </body>
+</html>

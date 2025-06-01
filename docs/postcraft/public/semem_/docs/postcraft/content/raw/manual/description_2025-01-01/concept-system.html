@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <link rel="stylesheet" href="/css/fonts.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/grid-columns.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/style.css" type="text/css"/>
+        <title>Concept System Architecture</title>
+    </head>
+    <!-- POST PAGE TEMPLATE -->
+    <body>
+        <header id="entry-header">
+            <h1 class="post-title h-cinzel">
+                
+            </h1>
+        </header>
+        <h1>Concept System Architecture</h1>
+<p>The concept system in Semem builds a semantic network of related ideas extracted from interactions. This network enhances memory retrieval by understanding conceptual relationships.</p>
+<h2>Concept Extraction</h2>
+<p>The system uses the LLM to extract key concepts through carefully crafted prompts that:</p>
+<ol>
+<li>Identify main topics and themes</li>
+<li>Extract entities and relationships</li>
+<li>Recognize abstract concepts</li>
+<li>Maintain consistency across extractions</li>
+</ol>
+<p>For example, from a weather-related interaction, it might extract:</p>
+<ul>
+<li>weather conditions</li>
+<li>temperature</li>
+<li>location</li>
+<li>time period</li>
+<li>weather patterns</li>
+</ul>
+<h2>Graph Building</h2>
+<p>The system maintains a weighted graph where:</p>
+<ul>
+<li>Nodes represent concepts</li>
+<li>Edges represent co-occurrence relationships</li>
+<li>Edge weights indicate relationship strength</li>
+<li>Node centrality reflects concept importance</li>
+</ul>
+<p>Each time concepts are extracted:</p>
+<ol>
+<li>New concepts become nodes</li>
+<li>Co-occurring concepts get connected</li>
+<li>Existing relationships are strengthened</li>
+<li>Graph metrics are updated</li>
+</ol>
+<h2>Spreading Activation</h2>
+<p>During memory retrieval, the system uses spreading activation to:</p>
+<ol>
+<li>Start from query concepts</li>
+<li>Activate connected concepts</li>
+<li>Decay activation with distance</li>
+<li>Combine with embedding similarity</li>
+</ol>
+<p>This creates a rich semantic network that improves memory retrieval accuracy. </p>
+
+        <div class="entry-footer">
+            <h2>About</h2>
+            
+        </div>
+    </body>
+</html>

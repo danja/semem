@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <link rel="stylesheet" href="/css/fonts.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/grid-columns.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/style.css" type="text/css"/>
+        <title>Semem Architecture</title>
+    </head>
+    <!-- POST PAGE TEMPLATE -->
+    <body>
+        <header id="entry-header">
+            <h1 class="post-title h-cinzel">
+                
+            </h1>
+        </header>
+        <h1>Semem Architecture</h1>
+<h2>Core Components</h2>
+<h3>Memory Manager</h3>
+<p>The central component that orchestrates all memory operations. It handles:</p>
+<ul>
+<li>Interaction storage and retrieval</li>
+<li>Embedding generation and caching</li>
+<li>Concept extraction</li>
+<li>Memory classification</li>
+</ul>
+<h3>Storage Layer</h3>
+<p>Implements a pluggable storage architecture with multiple backends:</p>
+<ul>
+<li>BaseStore: Abstract interface for storage implementations</li>
+<li>InMemoryStore: RAM-based storage for testing</li>
+<li>JSONStore: File-based persistent storage</li>
+<li>SPARQLStore: Semantic triple store integration</li>
+<li>CachedSPARQLStore: Performance-optimized SPARQL storage</li>
+</ul>
+<h3>Context Management</h3>
+<p>Manages conversation context through:</p>
+<ul>
+<li>Window size calculation</li>
+<li>Content overlap handling</li>
+<li>Token counting</li>
+<li>Context pruning</li>
+</ul>
+<h3>LLM Integration</h3>
+<p>Provides abstracted access to language models:</p>
+<ul>
+<li>OllamaConnector: Integration with local Ollama models</li>
+<li>Configurable model selection</li>
+<li>Prompt template management</li>
+<li>Embedding generation</li>
+</ul>
+<h3>Memory Processing</h3>
+<p>Sophisticated memory handling through:</p>
+<ul>
+<li>Vector similarity search</li>
+<li>Semantic clustering</li>
+<li>Concept graph maintenance</li>
+<li>Decay and reinforcement mechanisms</li>
+</ul>
+<h2>Data Flow</h2>
+<ol>
+<li>New interactions are processed for embedding generation</li>
+<li>Concepts are extracted using LLM</li>
+<li>Memory is stored with metadata</li>
+<li>Retrieval combines embedding similarity and concept matching</li>
+<li>Context is managed for optimal interaction</li>
+</ol>
+
+        <div class="entry-footer">
+            <h2>About</h2>
+            
+        </div>
+    </body>
+</html>

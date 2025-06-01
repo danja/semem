@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <link rel="stylesheet" href="/css/fonts.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/grid-columns.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/style.css" type="text/css"/>
+        <title>test-suite.js</title>
+    </head>
+    <!-- POST PAGE TEMPLATE -->
+    <body>
+        <header id="entry-header">
+            <h1 class="post-title h-cinzel">
+                
+            </h1>
+        </header>
+        <p> // spec/unit/memoryManager.spec.js
+import MemoryManager from &#39;../../src/memoryManager.js&#39;;
+import { MockOllamaAPI } from &#39;../mocks/ollama.js&#39;;
+import InMemoryStorage from &#39;../../src/inMemoryStorage.js&#39;;</p>
+<p>describe(&#39;MemoryManager&#39;, () =&gt; {
+    let manager;
+    let mockOllama;</p>
+<pre><code>beforeEach(() =&gt; {
+    mockOllama = new MockOllamaAPI();
+    manager = new MemoryManager({
+        llmProvider: mockOllama,
+        chatModel: &#39;llama2&#39;,
+        embeddingModel: &#39;nomic-embed-text&#39;,
+        storage: new InMemoryStorage()
+    });
+});
+
+it(&#39;should generate embeddings&#39;, async () =&gt; {
+    const embedding = await manager.getEmbedding(&#39;test text&#39;);
+    expect(embedding.length).toBe(1536);
+    expect(Array.isArray(embedding)).toBe(true);
+});
+
+it(&#39;should extract concepts&#39;, async () =&gt; {
+    const concepts = await manager.extractConcepts(&#39;AI and machine learning&#39;);
+    expect(Array.isArray(concepts)).toBe(true);
+    expect(concepts.length).toBeGreaterThan(0);
+});
+
+it(&#39;should add and retrieve interactions&#39;, async () =&gt; {
+    const prompt = &#39;test prompt&#39;;
+    const response = &#39;test response&#39;;
+    const embedding = new Array(1536).fill(0);
+    const concepts = [&#39;test&#39;];
+
+    await manager.addInteraction(prompt, response, embedding, concepts);
+    const retrievals = await manager.retrieveRelevantInteractions(prompt);
+    
+    expect(retrievals.length).toBeGreaterThan(0);
+    expect(retrievals[0].interaction.prompt).toBe(prompt);
+});
+</code></pre>
+<p>});</p>
+<p>// spec/unit/contextWindow.spec.js
+import ContextWindowManager from &#39;../../src/contextWindow.js&#39;;</p>
+<p>describe(&#39;ContextWindowManager&#39;, () =&gt; {
+    let windowManager;</p>
+<pre><code>beforeEach(() =&gt; {
+    windowManager = new ContextWindowManager({
+        maxWindowSize: 1000,
+        minWindowSize: 250,
+        overlapRatio: 0.1
+    });
+});
+
+it(&#39;should calculate correct window size&#39;, () =&gt; {
+    const size = windowManager.calculateWindowSize(&#39;x&#39;.repeat(1000));
+    expect(size).toBeLessThanOrEqual(1000);
+    expect(size).toBeGreaterThanOrEqual(250);
+});
+
+it(&#39;should create overlapping windows&#39;, () =&gt; {
+    const text = &#39;x&#39;.repeat(2000);
+    const windows = windowManager.createWindows(text, 1000);
+    expect(windows.length).toBeGreaterThan(1);
+    expect(windows[0].text.length).toBeLessThanOrEqual(1000);
+});
+
+it(&#39;should merge overlapping content&#39;, () =&gt; {
+    const windows = [
+        { text: &#39;Hello world&#39; },
+        { text: &#39;world and universe&#39; }
+    ];
+    const merged = windowManager.mergeOverlappingContent(windows);
+    expect(merged).toBe(&#39;Hello world and universe&#39;);
+});
+</code></pre>
+<p>});</p>
+<p>// spec/integration/ollama.spec.js
+import OllamaAPI from &#39;./ollama-api.js&#39;;</p>
+<p>describe(&#39;OllamaAPI Integration&#39;, () =&gt; {
+    let api;</p>
+<pre><code>beforeEach(() =&gt; {
+    api = new OllamaAPI(&#39;http://localhost:11434&#39;);
+});
+
+it(&#39;should generate chat response&#39;, async () =&gt; {
+    const messages = [{
+        role: &#39;user&#39;,
+        content: &#39;Hello, how are you?&#39;
+    }];
+    
+    const response = await api.generateChat(&#39;llama2&#39;, messages);
+    expect(typeof response).toBe(&#39;string&#39;);
+    expect(response.length).toBeGreaterThan(0);
+});
+
+it(&#39;should generate embeddings&#39;, async () =&gt; {
+    const embedding = await api.generateEmbedding(
+        &#39;nomic-embed-text&#39;,
+        &#39;Test text for embedding&#39;
+    );
+    
+    expect(Array.isArray(embedding)).toBe(true);
+    expect(embedding.length).toBe(1536);
+});
+
+it(&#39;should handle API errors gracefully&#39;, async () =&gt; {
+    try {
+        await api.generateChat(&#39;nonexistent-model&#39;, []);
+        fail(&#39;Should have thrown an error&#39;);
+    } catch (error) {
+        expect(error.message).toContain(&#39;Ollama API error&#39;);
+    }
+});
+</code></pre>
+<p>});</p>
+<p>// spec/mocks/ollama.js
+export class MockOllamaAPI {
+    async generateEmbedding(model, input) {
+        return new Array(1536).fill(0).map(() =&gt; Math.random());
+    }</p>
+<pre><code>async generateChat(model, messages) {
+    return &#39;Mock response&#39;;
+}
+
+async generateCompletion(model, prompt) {
+    return &#39;Mock completion&#39;;
+}
+</code></pre>
+<p>} </p>
+
+        <div class="entry-footer">
+            <h2>About</h2>
+            
+        </div>
+    </body>
+</html>

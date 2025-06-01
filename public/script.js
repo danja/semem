@@ -162,27 +162,47 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // Update content visibility
                 tabContents.forEach(content => content.classList.remove('active'));
-                document.getElementById(`${tabId}-tab`).classList.add('active');
-            });
-        });
-        
-        // Inner tabs
-        innerTabButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                const parentTab = button.closest('.tab-content');
-                const innerTabId = button.getAttribute('data-inner-tab');
                 
-                // Update button states within this parent tab
-                parentTab.querySelectorAll('.tab-inner-btn').forEach(btn => {
-                    btn.classList.remove('active');
+                // Initialize inner tabs for each tab content
+                document.querySelectorAll('.tab-content').forEach(tabContent => {
+                    const innerButtons = tabContent.querySelectorAll('.tab-inner-btn');
+                    
+                    innerButtons.forEach(button => {
+                        button.addEventListener('click', () => {
+                            const parentTab = button.closest('.tab-content');
+                            const innerTabId = button.getAttribute('data-inner-tab');
+                            
+                            if (!parentTab || !innerTabId) return;
+                            
+                            // Update button states within this parent tab
+                            const buttons = parentTab.querySelectorAll('.tab-inner-btn');
+                            if (buttons.length > 0) {
+                                buttons.forEach(btn => {
+                                    if (btn) btn.classList.remove('active');
+                                });
+                                button.classList.add('active');
+                            }
+                            
+                            // Update content visibility within this parent tab
+                            const innerContents = parentTab.querySelectorAll('.inner-tab-content');
+                            if (innerContents.length > 0) {
+                                innerContents.forEach(content => {
+                                    if (content) content.classList.remove('active');
+                                });
+                            }
+                            
+                            const targetTab = document.getElementById(innerTabId);
+                            if (targetTab) {
+                                targetTab.classList.add('active');
+                            }
+                        });
+                    });
                 });
-                button.classList.add('active');
                 
-                // Update content visibility within this parent tab
-                parentTab.querySelectorAll('.inner-tab-content').forEach(content => {
-                    content.classList.remove('active');
-                });
-                document.getElementById(innerTabId).classList.add('active');
+                const targetTab = document.getElementById(`${tabId}-tab`);
+                if (targetTab) {
+                    targetTab.classList.add('active');
+                }
             });
         });
     }

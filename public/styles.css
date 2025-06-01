@@ -72,6 +72,224 @@ header p {
     border-color: #3498db;
 }
 
+/* MCP Client Styles */
+.connection-status {
+    background-color: white;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    margin-bottom: 1.5rem;
+}
+
+.connection-info {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.status-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 8px;
+    background-color: #dc3545; /* red = disconnected */
+}
+
+.status-indicator.connected {
+    background-color: #28a745; /* green = connected */
+}
+
+.server-info {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #eee;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.info-item {
+    background-color: #f8f9fa;
+    padding: 0.75rem;
+    border-radius: 6px;
+}
+
+.info-label {
+    font-weight: 500;
+    color: #6c757d;
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.info-value {
+    font-family: monospace;
+    word-break: break-all;
+}
+
+.tools-list, .resources-list, .sessions-list {
+    background-color: white;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.empty-state {
+    text-align: center;
+    color: #6c757d;
+    padding: 2rem 0;
+}
+
+.sessions-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.session-item {
+    padding: 1rem;
+    border: 1px solid #eee;
+    border-radius: 6px;
+    margin-bottom: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.session-item:hover {
+    background-color: #f8f9fa;
+    border-color: #dee2e6;
+}
+
+.tool-item {
+    padding: 1rem;
+    border: 1px solid #eee;
+    border-radius: 6px;
+    margin-bottom: 0.75rem;
+}
+
+.tool-name {
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.tool-description {
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+/* Input group for connection form */
+.input-group {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.input-group .form-control {
+    flex: 1;
+}
+
+/* MCP Client Tabs */
+.mcp-tabs {
+    margin-top: 1rem;
+}
+
+.mcp-tabs .tabs-inner {
+    border-bottom: 1px solid #dee2e6;
+    margin-bottom: 1rem;
+}
+
+.mcp-tab-content {
+    display: none;
+    padding: 1rem 0;
+}
+
+.mcp-tab-content.active {
+    display: block;
+}
+
+/* Prompt Templates */
+.prompt-item {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    transition: all 0.2s ease;
+}
+
+.prompt-item:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.prompt-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.prompt-title {
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: #333;
+}
+
+.prompt-description {
+    color: #666;
+    margin-bottom: 0.5rem;
+}
+
+.prompt-template {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 4px;
+    border-left: 3px solid #4a89dc;
+}
+
+.prompt-template pre {
+    margin: 0;
+    white-space: pre-wrap;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    color: #2c3e50;
+    max-height: 200px;
+    overflow-y: auto;
+    background: #fff;
+    padding: 0.75rem;
+    border-radius: 4px;
+    border: 1px solid #e0e0e0;
+}
+
+.prompt-actions {
+    margin-top: 1rem;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.small-btn {
+    padding: 0.25rem 0.75rem;
+    font-size: 0.85rem;
+    border-radius: 4px;
+}
+
+.btn.primary-btn {
+    background-color: #4a89dc;
+    color: white;
+    border: none;
+}
+
+.btn.primary-btn:hover {
+    background-color: #3b7dd8;
+}
+
+.hidden {
+    display: none !important;
+}
+
 /* Inner tabs */
 .tabs-inner {
     display: flex;
