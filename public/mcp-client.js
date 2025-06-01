@@ -623,7 +623,7 @@ class MCPClient {
         // Update lists
         this.updateToolsList();
         this.updateResourcesList();
-        this.updateSessionsList();
+        this.updatePromptsList();
     }
 }
 
