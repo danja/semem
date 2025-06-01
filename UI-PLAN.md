@@ -62,7 +62,7 @@ Enhance memory visualization and interaction:
 
 ## Technical Considerations
 
-- **Frontend Framework**: Use vanilla JS
+- **Frontend Framework**: Use vanilla JS, ES modules as appropriate
 - **State Management**: Implement proper state management with the evb library - perhaps later
 - **WebSockets**: Consider using WebSockets for real-time updates
 - **Error Handling**: Robust error handling and user feedback

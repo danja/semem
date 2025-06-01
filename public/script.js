@@ -89,7 +89,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const state = {
         conversationId: null,
         chatHistory: [],
-        streamingChatHistory: []
+        streamingChatHistory: [],
+        currentModel: null,
+        useMCP: true,
+        contextWindow: 10, // Number of messages to keep in context
+        activeTools: new Set(),
+        availableModels: []
     };
 
     // Cache DOM elements for tabs
@@ -113,9 +118,11 @@ document.addEventListener('DOMContentLoaded', () => {
     initMemoryForms();
     
     // Initialize chat forms and load providers
-    initChatForms().then(() => {
-        loadChatProviders();
-    });
+    (async () => {
+        await initChatForms();
+        await loadChatProviders();
+        await initializeMCPChat();
+    })();
     
     initEmbeddingForm();
     initConceptsForm();
@@ -230,6 +237,66 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /**
+     * Initialize MCP chat integration
+     */
+    async function initializeMCPChat() {
+        if (!window.mcpClient || !window.mcpClient.connected) {
+            console.log('MCP client not available, using basic chat');
+            return;
+        }
+
+        try {
+            // Load available models from MCP
+            const response = await fetch(`${window.mcpClient.serverUrl}/mcp`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    jsonrpc: '2.0',
+                    id: window.mcpClient.generateRequestId(),
+                    method: 'mcp.models.list',
+                    params: {}
+                })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                state.availableModels = data.result?.models || [];
+                updateModelSelector();
+            }
+        } catch (error) {
+            console.error('Failed to load MCP models:', error);
+        }
+    }
+
+    /**
+     * Update the model selector dropdown
+     */
+    function updateModelSelector() {
+        const modelSelect = document.getElementById('chat-model');
+        if (!modelSelect) return;
+
+        // Clear existing options
+        modelSelect.innerHTML = '';
+
+        // Add default option
+        const defaultOption = document.createElement('option');
+        defaultOption.value = '';
+        defaultOption.textContent = 'Select a model...';
+        defaultOption.disabled = true;
+        defaultOption.selected = true;
+        modelSelect.appendChild(defaultOption);
+
+        // Add available models
+        state.availableModels.forEach(model => {
+            const option = document.createElement('option');
+            option.value = model.id;
+            option.textContent = model.name || model.id;
+            option.dataset.provider = model.provider || 'unknown';
+            modelSelect.appendChild(option);
+        });
+    }
+
+    /**
      * Load available chat providers
      */
     async function loadChatProviders() {
@@ -318,9 +385,193 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /**
+     * Show tool management modal
+     */
+    function showToolManagement() {
+        if (!window.mcpClient || !window.mcpClient.connected) {
+            alert('MCP client is not connected');
+            return;
+        }
+
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Manage Tools</h3>
+                    <button class="close-btn">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="tools-list">
+                        ${window.mcpClient.tools.map(tool => `
+                            <div class="tool-item">
+                                <label>
+                                    <input type="checkbox" name="tool" value="${tool.name}"
+                                        ${state.activeTools.has(tool.name) ? 'checked' : ''}>
+                                    <strong>${tool.name}</strong>
+                                    <p class="tool-description">${tool.description || 'No description'}</p>
+                                </label>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="save-tools" class="btn primary-btn">Save</button>
+                    <button class="btn secondary-btn close-btn">Cancel</button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        // Close modal handlers
+        const closeModal = () => modal.remove();
+        modal.querySelectorAll('.close-btn').forEach(btn => {
+            btn.addEventListener('click', closeModal);
+        });
+
+        // Save tools
+        modal.querySelector('#save-tools').addEventListener('click', () => {
+            const checkboxes = modal.querySelectorAll('input[type="checkbox"]:checked');
+            state.activeTools = new Set(Array.from(checkboxes).map(cb => cb.value));
+            updateActiveToolsDisplay();
+            closeModal();
+        });
+    }
+
+    /**
+     * Handle chat form submission
+     */
+    async function handleChatSubmit(e) {
+        e.preventDefault();
+        
+        const form = e.target;
+        const input = form.querySelector('textarea');
+        const message = input.value.trim();
+        
+        if (!message) return;
+        
+        // Add user message to chat
+        addChatMessage(message, 'user');
+        input.value = '';
+        
+        // Show typing indicator
+        const typingId = 'typing-' + Date.now();
+        const typingElement = document.createElement('div');
+        typingElement.id = typingId;
+        typingElement.className = 'message assistant';
+        typingElement.innerHTML = 'Thinking... <span class="streaming-indicator"><span></span><span></span><span></span></span>';
+        document.getElementById('chat-messages').appendChild(typingElement);
+        
+        try {
+            const useMCP = document.getElementById('chat-mcp').checked;
+            const model = document.getElementById('chat-model').value;
+            const temperature = parseFloat(document.getElementById('chat-temperature').value);
+            const contextWindow = parseInt(document.getElementById('chat-context').value);
+            
+            // Get the selected model and provider
+            const modelSelect = document.getElementById('chat-model');
+            const providerSelect = document.getElementById('chat-provider');
+            const selectedModel = modelSelect ? modelSelect.value : 'mistral';
+            const selectedProvider = providerSelect ? providerSelect.value : null;
+            
+            // Prepare request data according to server's expected format
+            const requestData = {
+                prompt: message,
+                model: selectedModel,
+                providerId: selectedProvider, // Include the selected provider ID
+                temperature: temperature,
+                useMemory: true, // Always use memory for now
+                conversationId: state.conversationId || undefined
+            };
+            
+            // Add MCP tools if enabled
+            if (useMCP && state.activeTools.size > 0) {
+                requestData.tools = Array.from(state.activeTools);
+            }
+            
+            console.log('Sending chat request with model:', selectedModel, 'and data:', requestData);
+            
+            // Make API call
+            const response = await fetch('/api/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestData)
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            
+            // Update conversation ID if provided
+            if (data.conversationId) {
+                state.conversationId = data.conversationId;
+            }
+            
+            // Extract response text - handle both direct string and response object
+            const responseText = data.response || data.text || data.message || 'No response received';
+            
+            // Update chat history
+            state.chatHistory.push(
+                { role: 'user', content: message },
+                { role: 'assistant', content: responseText }
+            );
+            
+            // Update UI
+            typingElement.outerHTML = `
+                <div class="message assistant">
+                    <div class="message-content">${responseText}</div>
+                    <div class="timestamp">${new Date().toLocaleTimeString()}</div>
+                </div>
+            `;
+            
+        } catch (error) {
+            console.error('Chat error:', error);
+            typingElement.outerHTML = `
+                <div class="message assistant error">
+                    <div class="message-content">Error: ${error.message}</div>
+                    <div class="timestamp">${new Date().toLocaleTimeString()}</div>
+                </div>
+            `;
+        }
+    }
+    
+    /**
      * Initialize chat forms
      */
     async function initChatForms() {
+        const chatFormElement = document.getElementById('chat-form');
+        if (!chatFormElement) return;
+        
+        // Set up form submission
+        chatFormElement.addEventListener('submit', handleChatSubmit);
+        
+        // Set up tool management
+        const manageToolsBtn = document.getElementById('manage-tools');
+        if (manageToolsBtn) {
+            manageToolsBtn.addEventListener('click', showToolManagement);
+        }
+        
+        // Set up MCP toggle
+        const mcpToggle = document.getElementById('chat-mcp');
+        if (mcpToggle) {
+            mcpToggle.addEventListener('change', (e) => {
+                const toolsSection = document.getElementById('tools-section');
+                if (toolsSection) {
+                    toolsSection.style.display = e.target.checked ? 'block' : 'none';
+                }
+            });
+            
+            // Initial state
+            const toolsSection = document.getElementById('tools-section');
+            if (toolsSection) {
+                toolsSection.style.display = mcpToggle.checked ? 'block' : 'none';
+            }
+        }
         console.log('Initializing chat forms');
         
         // Load providers first
@@ -966,34 +1217,66 @@ document.addEventListener('DOMContentLoaded', () => {
     /**
      * Add a chat message to the UI
      */
-    function addChatMessage(message, sender, container) {
-        const messageElement = document.createElement('div');
-        messageElement.className = `chat-message ${sender}`;
+    function addChatMessage(message, sender, containerId = 'chat-messages') {
+        const container = document.getElementById(containerId);
+        if (!container) return;
         
-        // Handle both string and object messages
+        // Handle different message types
+        let displayMessage;
         if (typeof message === 'string') {
-            messageElement.textContent = message;
+            displayMessage = message;
         } else if (message && typeof message === 'object') {
             // If the message has a content property, use that
             if (message.content !== undefined) {
-                messageElement.textContent = message.content;
+                displayMessage = message.content;
             } 
             // If it's a response object with a message property
             else if (message.message !== undefined) {
-                messageElement.textContent = message.message;
+                displayMessage = message.message;
             }
             // Otherwise stringify the object for debugging
             else {
                 console.warn('Unexpected message format:', message);
-                messageElement.textContent = JSON.stringify(message, null, 2);
+                displayMessage = JSON.stringify(message, null, 2);
             }
         } else {
             // Fallback for any other type
-            messageElement.textContent = String(message);
+            displayMessage = String(message);
         }
+        
+        const messageElement = document.createElement('div');
+        messageElement.className = `message ${sender}`;
+        
+        const messageContent = document.createElement('div');
+        messageContent.className = 'message-content';
+        messageContent.textContent = displayMessage;
+        
+        const timestamp = document.createElement('div');
+        timestamp.className = 'timestamp';
+        timestamp.textContent = new Date().toLocaleTimeString();
+        
+        messageElement.appendChild(messageContent);
+        messageElement.appendChild(timestamp);
         
         container.appendChild(messageElement);
         container.scrollTop = container.scrollHeight;
+        
+        // Add to chat history
+        const chatEntry = { 
+            role: sender, 
+            content: displayMessage, 
+            timestamp: timestamp.textContent 
+        };
+        
+        if (sender === 'user') {
+            state.chatHistory.push(chatEntry);
+        } else if (sender === 'assistant') {
+            // If last message was from user, add this as a response
+            const lastMessage = state.chatHistory[state.chatHistory.length - 1];
+            if (lastMessage && lastMessage.role === 'user') {
+                state.chatHistory.push(chatEntry);
+            }
+        }
     }
     
     /**

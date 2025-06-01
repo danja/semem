@@ -24,23 +24,36 @@ export default class LLMHandler {
      * @param {string} [systemPrompt]
      * @returns {Promise<string>}
      */
-    async generateResponse(prompt, context, systemPrompt = "You're a helpful assistant with memory of past interactions.") {
+    /**
+     * @param {string} prompt - The user's input prompt
+     * @param {string} context - Additional context for the prompt
+     * @param {Object} [options] - Additional options
+     * @param {string} [options.systemPrompt] - System prompt to use
+     * @param {string} [options.model] - Override the default model
+     * @param {number} [options.temperature] - Override the default temperature
+     * @returns {Promise<string>}
+     */
+    async generateResponse(prompt, context, { 
+        systemPrompt = "You're a helpful assistant with memory of past interactions.",
+        model = this.chatModel,
+        temperature = this.temperature
+    } = {}) {
         try {
             logger.log(`LLMHandler.generateResponse,
                 prompt = ${prompt}
                 context = ${context}
                 `)
             const messages = PromptTemplates.formatChatPrompt(
-                this.chatModel,
+                model,
                 systemPrompt,
                 context,
                 prompt
             )
-            logger.log(`LLMHandler.generateResponse, this.chatModel = ${this.chatModel}`)
+            logger.log(`LLMHandler.generateResponse, model = ${model}`)
             return await this.llmProvider.generateChat(
-                this.chatModel,
+                model,
                 messages,
-                { temperature: this.temperature }
+                { temperature }
             )
         } catch (error) {
             logger.error('Error generating chat response:', error)

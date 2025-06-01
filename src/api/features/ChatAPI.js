@@ -73,7 +73,7 @@ export default class ChatAPI extends BaseAPI {
     /**
      * Generate a chat response with memory context
      */
-    async generateChatResponse({ prompt, conversationId, useMemory = true, temperature = 0.7 }) {
+    async generateChatResponse({ prompt, conversationId, useMemory = true, temperature = 0.7, model }) {
         if (!prompt) {
             throw new Error('Prompt is required');
         }
@@ -95,11 +95,17 @@ export default class ChatAPI extends BaseAPI {
             const context = this._buildContext(conversation, relevantMemories);
 
             // Generate response
+            // Generate response with the specified model or use default
             const response = await this.llmHandler.generateResponse(
                 prompt,
                 context,
-                { temperature }
+                { 
+                    temperature,
+                    model: model // Will fall back to LLMHandler's default if not provided
+                }
             );
+            
+            this.logger.log(`Generated response using model: ${model || 'default'}`);
 
             // Update conversation history
             conversation.history.push({ role: 'user', content: prompt });

@@ -368,15 +368,20 @@ Based on the above information and your knowledge, here is the user's question: 
                     logger.info(`Initialized connector for provider: ${selectedProvider.type}`);
                 }
 
-                // Create chat API with selected provider
-                const chatAPI = await this.createChatAPI(selectedProvider, selectedProvider.chatModel);
+                // Use the model from the request or fall back to the provider's default
+                const modelToUse = req.body.model || selectedProvider.chatModel;
+                logger.info(`Using model: ${modelToUse} for provider: ${selectedProvider.type}`);
 
-                // Generate response
+                // Create chat API with selected provider and model
+                const chatAPI = await this.createChatAPI(selectedProvider, modelToUse);
+
+                // Generate response with the selected model
                 const result = await chatAPI.executeOperation('chat', {
                     prompt: enrichedPrompt, // Use the potentially enriched prompt
                     conversationId,
                     useMemory: useMemory !== false, // Default to true if not specified
-                    temperature: temperature || 0.7
+                    temperature: temperature || 0.7,
+                    model: modelToUse // Use the selected model
                 });
 
                 // Add search results to the response
