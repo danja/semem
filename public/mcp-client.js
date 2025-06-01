@@ -28,12 +28,17 @@ class MCPClient {
         this.promptsList = document.getElementById('mcp-prompts-list');
         this.serverInfoElement = document.getElementById('mcp-server-info');
         
+        // Ensure UI elements exist
+        if (!this.connectButton || !this.serverUrlInput) {
+            console.error('Required UI elements not found');
+            return;
+        }
+        
         // Initialize tabs
         this.setupTabs();
 
         // Bind event listeners
         this.connectButton.addEventListener('click', () => this.toggleConnection());
-        this.newSessionButton.addEventListener('click', () => this.createSession());
         this.serverUrlInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') this.toggleConnection();
         });
@@ -173,6 +178,7 @@ class MCPClient {
      */
     async loadPrompts() {
         try {
+            console.log('Loading prompts from:', `${this.serverUrl}/mcp`);
             const response = await fetch(`${this.serverUrl}/mcp`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -184,15 +190,32 @@ class MCPClient {
                 })
             });
 
-            if (!response.ok) throw new Error('Failed to load prompts');
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Failed to load prompts: ${response.status} ${errorText}`);
+            }
             
             const data = await response.json();
-            this.prompts = data.result?.prompts || [];
+            console.log('Received prompts data:', data);
+            
+            // Handle both direct prompts array and result.prompts format
+            this.prompts = Array.isArray(data.result) ? data.result : 
+                          (data.result?.prompts || []);
+                          
+            // If we have MCPPrompts object, transform it to array format
+            if (typeof this.prompts === 'object' && !Array.isArray(this.prompts)) {
+                this.prompts = Object.entries(this.prompts).map(([id, prompt]) => ({
+                    id,
+                    ...prompt
+                }));
+            }
+            
+            console.log('Processed prompts:', this.prompts);
             this.updatePromptsList();
             
         } catch (error) {
             console.error('Failed to load prompts:', error);
-            this.showError('Failed to load prompts');
+            this.showError(`Failed to load prompts: ${error.message}`);
         }
     }
 
@@ -409,20 +432,38 @@ class MCPClient {
      * Update the prompts list in the UI
      */
     updatePromptsList() {
+        if (!this.promptsList) {
+            console.error('Prompts list element not found');
+            return;
+        }
+        
         if (!this.prompts || !this.prompts.length) {
             this.promptsList.innerHTML = `
                 <div class="empty-state">
-                    <p>No prompt templates available.</p>
+                    <p>No prompt templates available. Connect to an MCP server that provides prompts.</p>
                 </div>`;
             return;
         }
 
         this.promptsList.innerHTML = this.prompts.map(prompt => {
-            // Get the prompt ID and template content
-            const promptId = prompt.id || prompt.prompt_id || '';
-            const template = prompt.template || (prompt.prompt_data && prompt.prompt_data.template) || '';
-            const title = prompt.title || promptId;
+            // Get the prompt ID and template content with fallbacks
+            const promptId = prompt.id || '';
+            let template = prompt.template || prompt.prompt_data?.template || '';
+            
+            // If template is an object, stringify it for display
+            if (template && typeof template === 'object') {
+                try {
+                    template = JSON.stringify(template, null, 2);
+                } catch (e) {
+                    console.error('Error stringifying template:', e);
+                    template = 'Error: Invalid template format';
+                }
+            }
+            
+            const title = prompt.title || promptId || 'Untitled Prompt';
             const description = prompt.description || 'No description available';
+            
+            console.log('Rendering prompt:', { promptId, title, hasTemplate: !!template });
             
             return `
                 <div class="prompt-item" data-prompt-id="${promptId}">
