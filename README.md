@@ -31,7 +31,7 @@ Semem is a modular, extensible semantic memory and graph augmentation system for
    ```
 2. **Start the MCP server:**  
    ```bash
-   node src/mcp/server.js
+   node src/servers/mcp.js
    ```
 3. **Launch the interactive REPL:**  
    ```bash
