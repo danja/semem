@@ -13,6 +13,9 @@
     "start": "node servers/start-all.js",
     "start:dev": "npm run build:dev && node servers/start-all.js",
     "stop": "pkill -f 'node servers/start-all\\.js' || true; pkill -f 'webpack.*serve' || true",
+    "mcp:http": "node src/servers/mcp-server-fixed.js http",
+    "mcp:stdio": "node src/servers/mcp-server-fixed.js stdio",
+    "mcp:sse": "node src/servers/mcp-server-fixed.js sse",
     "build": "webpack --mode=production",
     "build:dev": "webpack --mode=development",
     "build:watch": "webpack --mode=development --watch",
@@ -32,7 +35,7 @@
     "badge:create": "npm run test:coverage:mocked && coverage-badge-creator && echo 'Badge created in coverage/'",
     "docs": "jsdoc -c jsdoc.json",
     "rp": "repomix -c repomix.config.json . && repomix -c repomix-docs.config.json . ",
-    "mcp-server": "node mcp-server.js",
+    "mcp-server": "node src/servers/mcp-server-fixed.js",
     "mcp-example": "node examples/MCPClientExample.js",
     "mcp-test": "node test-mcp.js",
     "tsc": "tsc --noEmit",
@@ -81,6 +84,7 @@
     "@anthropic-ai/sdk": "^0.36.3",
     "@langchain/core": "^0.3.19",
     "@langchain/openai": "^0.3.14",
+    "@modelcontextprotocol/sdk": "^1.12.1",
     "body-parser": "^1.20.2",
     "compression": "^1.7.5",
     "cors": "^2.8.5",
@@ -97,6 +101,8 @@
     "ollama": "^0.5.10",
     "swagger-ui-express": "^5.0.1",
     "uuid": "^11.1.0",
-    "yargs": "^17.7.2"
+    "yargs": "^17.7.2",
+    "zod": "^3.25.49",
+    "zod-to-json-schema": "^3.24.5"
   }
 }

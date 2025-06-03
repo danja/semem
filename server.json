@@ -3,7 +3,7 @@
         "default-server": {
             "command": "node",
             "args": [
-                "src/servers/mcp.js"
+                "src/servers/mcp-server-fixed.js"
             ],
             "env": {
                 "HOME": "/home/danny",

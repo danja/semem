@@ -1,9 +1,4 @@
-// MCP Server: JSON-RPC 2.0 implementation for Semem memory/resource management
-import http from 'http';
-import Ajv from 'ajv';
-import fs from 'fs/promises';
-import path from 'path';
-import { fileURLToPath } from 'url';
+// MCP Server implementation for Semem
 import LLMHandler from '../handlers/LLMHandler.js';
 import EmbeddingHandler from '../handlers/EmbeddingHandler.js';
 import CacheManager from '../handlers/CacheManager.js';
