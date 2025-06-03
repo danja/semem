@@ -3,6 +3,7 @@
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
+import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import {
   ListResourcesRequestSchema,
   ReadResourceRequestSchema,
@@ -70,29 +71,74 @@ const ListResourcesResponseSchema = z.object({
 
 // Create MCP server with handlers
 export async function createServer() {
+  console.error('Creating MCP server...');
+  
   // Initialize server with basic info and required capabilities
-  const server = new Server({
+  const serverCapabilities = {
+    resources: { list: true, read: true, subscribe: true },
+    tools: { list: true, execute: true },
+    completions: { complete: true },
+    logging: { setLevel: true }
+  };
+  
+  const serverInfo = {
     name: 'semem/mcp',
     version: '1.0.0',
-    description: 'Semem MCP Server',
-    capabilities: {
-      resources: { 
-        list: true,
-        read: true,
-        subscribe: true
-      },
-      tools: {
-        list: true,
-        execute: true
-      },
-      completions: {
-        complete: true
-      },
-      logging: {
-        setLevel: true
-      }
-    }
+    description: 'Semem MCP Server'
+  };
+  
+  console.error('Server capabilities:', JSON.stringify(serverCapabilities, null, 2));
+  console.error('Server info:', JSON.stringify(serverInfo, null, 2));
+  
+  // Create the MCP server instance
+  const server = new Server(serverInfo, { 
+    capabilities: serverCapabilities 
   });
+  
+  console.error('MCP server instance created successfully');
+  
+  // Register a simple handler for the resources/list method
+  server.setRequestHandler('resources/list', async () => {
+    console.error('Handling resources/list request');
+    return {
+      resources: [
+        {
+          uri: 'mcp://semem/resources',
+          name: 'Semem Resources',
+          description: 'Semem knowledge graph resources',
+          resourceType: 'semem:KnowledgeGraph',
+          access: {
+            read: true,
+            write: true
+          }
+        }
+      ]
+    };
+  });
+  
+  console.error('Registered resources/list handler');
+  
+  // Register a simple handler for search requests
+  server.setRequestHandler('semem/search', async (params) => {
+    console.error('Handling semem/search request with params:', params);
+    // Implement search functionality here
+    return {
+      results: []
+    };
+  });
+  
+  console.error('Registered semem/search handler');
+  
+  // Register a simple handler for embedding generation
+  server.setRequestHandler('semem/generateEmbedding', async (params) => {
+    console.error('Handling semem/generateEmbedding request with params:', params);
+    // Implement embedding generation here
+    return {
+      embedding: []
+    };
+  });
+  
+  console.error('Registered semem/generateEmbedding handler');
 
   // Initialize services
   const config = new Config(path.join(process.cwd(), 'config', 'config.json'));
@@ -135,8 +181,32 @@ export async function createServer() {
     }
   });
 
-  // Register resource listing endpoint first, before other methods
-  server.setRequestHandler('resources/list', ListResourcesRequestSchema, async () => {
+  // Register search endpoint
+  server.setRequestHandler(SearchRequestSchema, async (request) => {
+    try {
+      const { query, limit } = request.params;
+      const results = await searchService.search(query, { limit });
+      return { results };
+    } catch (error) {
+      console.error('Search error:', error);
+      throw new Error(`Search failed: ${error.message}`);
+    }
+  });
+
+  // Register embedding generation endpoint
+  server.setRequestHandler(EmbeddingRequestSchema, async (request) => {
+    try {
+      const { text } = request.params;
+      const embedding = await embeddingHandler.generateEmbedding(text);
+      return { embedding };
+    } catch (error) {
+      console.error('Embedding generation error:', error);
+      throw new Error(`Embedding generation failed: ${error.message}`);
+    }
+  });
+  
+  // Register resource listing endpoint
+  server.setRequestHandler(ListResourcesRequestSchema, async () => {
     return {
       resources: [
         {
@@ -257,27 +327,176 @@ async function initializeLLMProvider(config) {
   throw new Error(`No valid LLM provider could be initialized. Tried: ${triedProviders}`);
 }
 
+// Map to store active sessions and their transports
+const sessions = new Map();
+
+// Clean up old sessions periodically
+setInterval(() => {
+  const now = Date.now();
+  const timeout = 30 * 60 * 1000; // 30 minutes
+  
+  for (const [sessionId, session] of sessions.entries()) {
+    if (now - session.lastActive > timeout) {
+      console.log(`Cleaning up inactive session: ${sessionId}`);
+      if (session.transport && typeof session.transport.close === 'function') {
+        session.transport.close().catch(error => {
+          console.error(`Error closing transport for session ${sessionId}:`, error);
+        });
+      }
+      sessions.delete(sessionId);
+    }
+  }
+}, 5 * 60 * 1000); // Check every 5 minutes
+
+// Handle MCP HTTP requests
+async function handleMcpRequest(req, res) {
+  try {
+    const sessionId = req.headers['mcp-session-id'];
+    let session = sessionId ? sessions.get(sessionId) : null;
+
+    // Handle new session initialization
+    if (!session && req.body?.method === 'initialize') {
+      const newSessionId = `sess-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      
+      // Create a new transport for this session
+      const transport = new StreamableHTTPServerTransport({
+        sessionIdGenerator: () => newSessionId,
+        onsessioninitialized: (sid) => {
+          console.log(`Session initialized: ${sid}`);
+        },
+        onerror: (error) => {
+          console.error(`Transport error for session ${newSessionId}:`, error);
+        }
+      });
+      
+      // Create MCP server instance
+      const server = await createServer();
+      await server.connect(transport);
+      
+      // Store the session
+      session = { 
+        transport,
+        lastActive: Date.now(),
+        id: newSessionId
+      };
+      sessions.set(newSessionId, session);
+      
+      // Set session ID in response header
+      res.setHeader('mcp-session-id', newSessionId);
+    } 
+    // Handle existing session
+    else if (session) {
+      session.lastActive = Date.now();
+    } 
+    // Invalid request - no session ID and not an initialization request
+    else {
+      res.status(400).json({
+        jsonrpc: '2.0',
+        error: {
+          code: -32000,
+          message: 'Invalid session. Please initialize a new session first.'
+        },
+        id: req.body?.id || null
+      });
+      return;
+    }
+    
+    // Handle the request with the transport
+    await session.transport.handleRequest(req, res, req.body);
+  } catch (error) {
+    console.error('Error handling MCP request:', error);
+    if (!res.headersSent) {
+      res.status(500).json({
+        jsonrpc: '2.0',
+        error: {
+          code: -32603,
+          message: 'Internal server error',
+          data: error.message
+        },
+        id: req.body?.id || null
+      });
+    }
+  }
+}
+
 // Start server based on command line arguments
 async function main() {
-  const args = process.argv.slice(2);
-  const mode = args[0] || 'http';
-
+  const mode = process.argv[2] || 'http';
+  
   try {
-    const server = await createServer();
-
-    // Handle different transport modes
-    if (mode === 'stdio') {
+    if (mode === 'http') {
+      console.log('Starting MCP HTTP server...');
+      
+      const app = express();
+      app.use(express.json());
+      
+      // Handle MCP requests
+      app.post('/mcp', handleMcpRequest);
+      
+      // Handle SSE connections
+      app.get('/mcp', async (req, res) => {
+        const sessionId = req.headers['mcp-session-id'];
+        if (!sessionId || !sessions.has(sessionId)) {
+          return res.status(400).send('Invalid or missing session ID');
+        }
+        
+        const session = sessions.get(sessionId);
+        session.lastActive = Date.now();
+        
+        try {
+          await session.transport.handleRequest(req, res);
+        } catch (error) {
+          console.error('Error handling SSE request:', error);
+          if (!res.headersSent) {
+            res.status(500).send('Internal server error');
+          }
+        }
+      });
+      
+      // Handle session termination
+      app.delete('/mcp', async (req, res) => {
+        const sessionId = req.headers['mcp-session-id'];
+        if (!sessionId || !sessions.has(sessionId)) {
+          return res.status(400).send('Invalid or missing session ID');
+        }
+        
+        console.log(`Terminating session: ${sessionId}`);
+        const session = sessions.get(sessionId);
+        
+        try {
+          await session.transport.handleRequest(req, res);
+          sessions.delete(sessionId);
+        } catch (error) {
+          console.error('Error terminating session:', error);
+          if (!res.headersSent) {
+            res.status(500).send('Error terminating session');
+          }
+        }
+      });
+      
+      const port = process.env.MCP_PORT || 4100;
+      app.listen(port, () => {
+        console.log(`MCP HTTP server listening on port ${port}`);
+        console.log(`MCP endpoint: http://localhost:${port}/mcp`);
+      });
+      
+    } else if (mode === 'stdio') {
+      console.log('Starting MCP server in stdio mode...');
+      
+      const server = await createServer();
       const transport = new StdioServerTransport();
       await server.connect(transport);
-      console.error('MCP server running in STDIO mode');
-    } 
-    else if (mode === 'sse') {
+      
+      console.log('MCP server running in stdio mode');
+      
+    } else if (mode === 'sse') {
+      console.log('Starting MCP server in SSE mode...');
+      
       const app = express();
       const httpServer = http.createServer(app);
       const port = process.env.MCP_PORT || 4100;
       
-      app.use(express.json());
-      
+      const server = await createServer();
       const transport = new SSEServerTransport({
         server: httpServer,
         path: '/mcp'
@@ -286,43 +505,16 @@ async function main() {
       await server.connect(transport);
       
       httpServer.listen(port, () => {
-        console.error(`MCP server running in SSE mode on port ${port}`);
+        console.log(`MCP SSE server listening on port ${port}`);
+        console.log(`MCP SSE endpoint: http://localhost:${port}/mcp`);
       });
+      
+    } else {
+      console.error(`Unknown mode: ${mode}`);
+      console.error('Usage: node mcp-server-fixed.js [http|stdio|sse]');
+      process.exit(1);
     }
-    else { // HTTP mode (default)
-      const app = express();
-      const port = process.env.MCP_PORT || 4100;
-      
-      app.use(express.json());
-      
-      app.post('/', async (req, res) => {
-        try {
-          const result = await server.handleRequest({
-            jsonrpc: '2.0',
-            id: req.body?.id || Date.now().toString(),
-            method: req.body?.method,
-            params: req.body?.params || {}
-          });
-          res.json(result);
-        } catch (error) {
-          console.error('Request error:', error);
-          res.status(500).json({
-            jsonrpc: '2.0',
-            id: req.body?.id || null,
-            error: {
-              code: -32603,
-              message: 'Internal error',
-              data: error.message
-            }
-          });
-        }
-      });
-      
-      app.listen(port, () => {
-        console.error(`MCP server running in HTTP mode on port ${port}`);
-      });
-    }
-
+    
   } catch (error) {
     console.error('Failed to start MCP server:', error);
     process.exit(1);
@@ -331,5 +523,8 @@ async function main() {
 
 // Start the server if this file is run directly
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  main().catch(console.error);
+  main().catch(error => {
+    console.error('Unhandled error in main:', error);
+    process.exit(1);
+  });
 }
