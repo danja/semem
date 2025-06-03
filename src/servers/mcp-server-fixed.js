@@ -98,44 +98,53 @@ export async function createServer() {
   console.error('MCP server instance created successfully');
   
   // Register a simple handler for the resources/list method
-  server.setRequestHandler('resources/list', async () => {
-    console.error('Handling resources/list request');
-    return {
-      resources: [
-        {
-          uri: 'mcp://semem/resources',
-          name: 'Semem Resources',
-          description: 'Semem knowledge graph resources',
-          resourceType: 'semem:KnowledgeGraph',
-          access: {
-            read: true,
-            write: true
+  server.setRequestHandler({
+    method: 'resources/list',
+    handler: async () => {
+      console.error('Handling resources/list request');
+      return {
+        resources: [
+          {
+            uri: 'mcp://semem/resources',
+            name: 'Semem Resources',
+            description: 'Semem knowledge graph resources',
+            resourceType: 'semem:KnowledgeGraph',
+            access: {
+              read: true,
+              write: true
+            }
           }
-        }
-      ]
-    };
+        ]
+      };
+    }
   });
   
   console.error('Registered resources/list handler');
   
   // Register a simple handler for search requests
-  server.setRequestHandler('semem/search', async (params) => {
-    console.error('Handling semem/search request with params:', params);
-    // Implement search functionality here
-    return {
-      results: []
-    };
+  server.setRequestHandler({
+    method: 'semem/search',
+    handler: async (params) => {
+      console.error('Handling semem/search request with params:', params);
+      // Implement search functionality here
+      return {
+        results: []
+      };
+    }
   });
   
   console.error('Registered semem/search handler');
   
   // Register a simple handler for embedding generation
-  server.setRequestHandler('semem/generateEmbedding', async (params) => {
-    console.error('Handling semem/generateEmbedding request with params:', params);
-    // Implement embedding generation here
-    return {
-      embedding: []
-    };
+  server.setRequestHandler({
+    method: 'semem/generateEmbedding',
+    handler: async (params) => {
+      console.error('Handling semem/generateEmbedding request with params:', params);
+      // Implement embedding generation here
+      return {
+        embedding: []
+      };
+    }
   });
   
   console.error('Registered semem/generateEmbedding handler');
