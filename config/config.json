@@ -20,7 +20,7 @@
   "embeddingModel": "nomic-embed-text",
   "sparqlEndpoints": [
     {
-      "label": "Production Fuseki",
+      "label": "Hyperdata Fuseki",
       "user": "admin",
       "password": "admin123",
       "urlBase": "https://fuseki.hyperdata.it",
@@ -32,10 +32,10 @@
       "gspWrite": "/semem/data"
     },
     {
-      "label": "Local Fuseki",
+      "label": "Tbox Fuseki",
       "user": "admin",
       "password": "admin123",
-      "urlBase": "http://localhost:3030",
+      "urlBase": "http://localhost:4030",
       "dataset": "semem",
       "query": "/semem/query",
       "update": "/semem/update",

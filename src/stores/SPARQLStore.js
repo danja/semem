@@ -277,6 +277,7 @@ export default class SPARQLStore extends BaseStore {
         }
     }
 
+    /*
     _generateInsertStatements(memories, type) {
         return memories.map((interaction, index) => {
             let embeddingStr = '[]'
@@ -310,7 +311,51 @@ export default class SPARQLStore extends BaseStore {
             `
         }).join('\n')
     }
+*/
+    // Replace the _generateInsertStatements method in SPARQLStore.js
 
+    _generateInsertStatements(memories, type) {
+        return memories.map((interaction, index) => {
+            // Ensure all required fields have values
+            const id = interaction.id || uuidv4()
+            const prompt = interaction.prompt || ''
+            const output = interaction.output || interaction.response || ''
+            const timestamp = interaction.timestamp || Date.now()
+            const accessCount = interaction.accessCount || 1
+            const decayFactor = interaction.decayFactor || 1.0
+
+            // Handle embeddings
+            let embeddingStr = '[]'
+            if (Array.isArray(interaction.embedding)) {
+                try {
+                    this.validateEmbedding(interaction.embedding)
+                    embeddingStr = JSON.stringify(interaction.embedding)
+                } catch (error) {
+                    logger.error('Invalid embedding in memory:', error)
+                }
+            }
+
+            // Handle concepts
+            let conceptsStr = '[]'
+            if (Array.isArray(interaction.concepts)) {
+                conceptsStr = JSON.stringify(interaction.concepts)
+            }
+
+            return `
+            _:interaction${type}${index} a mcp:Interaction ;
+                mcp:id "${this._escapeSparqlString(id)}" ;
+                mcp:prompt "${this._escapeSparqlString(prompt)}" ;
+                mcp:output "${this._escapeSparqlString(output)}" ;
+                mcp:embedding """${embeddingStr}""" ;
+                mcp:timestamp "${timestamp}"^^xsd:integer ;
+                mcp:accessCount "${accessCount}"^^xsd:integer ;
+                mcp:concepts """${conceptsStr}""" ;
+                mcp:decayFactor "${decayFactor}"^^xsd:decimal ;
+                mcp:memoryType "${type}" .
+        `
+        }).join('\n')
+    }
+    /*
     _generateConceptStatements(memories) {
         const conceptStatements = []
         const seenConcepts = new Set()
@@ -319,7 +364,7 @@ export default class SPARQLStore extends BaseStore {
             if (Array.isArray(interaction.concepts)) {
                 interaction.concepts.forEach(concept => {
                     const conceptUri = `http://example.org/concept/${encodeURIComponent(concept)}`
-                    
+
                     if (!seenConcepts.has(conceptUri)) {
                         conceptStatements.push(`
                             <${conceptUri}> a skos:Concept, ragno:Element ;
@@ -339,8 +384,30 @@ export default class SPARQLStore extends BaseStore {
 
         return conceptStatements.join('\n')
     }
+*/
+    _generateConceptStatements(concepts, nodeId) {
+        if (!Array.isArray(concepts) || concepts.length === 0) {
+            return ''
+        }
 
+        return concepts.map((concept, idx) => {
+            // Ensure concept is a string
+            const conceptStr = typeof concept === 'string' ? concept : String(concept);
+            return `
+            ${nodeId} mcp:concept "${this._escapeSparqlString(conceptStr)}" .
+        `
+        }).join('\n')
+    }
+    /*
     _escapeSparqlString(str) {
+        return str.replace(/["\\]/g, '\\$&').replace(/\n/g, '\\n')
+    }
+*/
+    _escapeSparqlString(str) {
+        // Ensure str is a string
+        if (typeof str !== 'string') {
+            str = String(str);
+        }
         return str.replace(/["\\]/g, '\\$&').replace(/\n/g, '\\n')
     }
 

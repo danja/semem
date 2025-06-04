@@ -1,4 +1,4 @@
-export class SPARQLHelpers {
+export default class SPARQLHelpers {
     static createAuthHeader(user, password) {
         const credentials = Buffer.from(`${user}:${password}`).toString('base64')
         return `Basic ${credentials}`
