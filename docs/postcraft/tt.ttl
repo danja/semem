@@ -27,22 +27,23 @@
 :dirWalker a :ConfigSet ;
    :sourceDir "content/raw" .
 
+:readerSet a :ConfigSet ;
+    :metaField "meta" .
+
+:entryExtras a :ConfigSet ;
+    :loglevel "debug" ;
+    :rawDir "content/raw" ;
+    :renderPath "docs" ;
+    :baseURI <http://tensegrity.it/semem/> ;
+    :creatorName "Danny" ;
+    :creatorURI <http://danny.ayers.name/me> .
+
 :storeArticle a :ConfigSet ;
     :delay "100" ;
     :dataBlock "contentBlocks" ;
     :templateFilename "system/sparql-templates/store-article.njk" ;
     :endpointSettings "system/endpoints.json" ;
     :graph <http://tensegrity.it/semem> .
-
-:readerSet a :ConfigSet ;
-    :metaField "meta" .
-
-:entryExtras a :ConfigSet ;
-    :loglevel "debug" ;
-    :relMap "blog" ; # relPath goes to this
-    :baseURI <http://tensegrity.it/semem> ;
-    :creatorName "Danny" ;
-    :creatorURI <http://danny.ayers.name/me> .
 
 ###########################
 ### for sparqlstore-to-html
