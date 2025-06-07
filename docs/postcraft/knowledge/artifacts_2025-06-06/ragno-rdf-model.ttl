@@ -1,0 +1,156 @@
+@prefix ragno: <http://purl.org/stuff/ragno/> .
+@prefix mcp: <http://purl.org/stuff/mcp/> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex: <http://example.org/semem/> .
+
+# ============================================
+# Memory Corpus Definition
+# ============================================
+
+ex:sememCorpus a ragno:Corpus ;
+    skos:prefLabel "Semem Memory Corpus"@en ;
+    dcterms:created "2024-01-01T00:00:00Z"^^xsd:dateTime ;
+    dcterms:description "Complete semantic memory knowledge base"@en ;
+    ragno:hasElement ex:concept_ai, ex:concept_ml, ex:interaction_123 .
+
+# ============================================
+# Concept Entities (from extracted concepts)
+# ============================================
+
+ex:concept_ai a ragno:Entity ;
+    skos:prefLabel "AI"@en ;
+    skos:altLabel "artificial intelligence"@en ;
+    ragno:subType ex:ExtractedConcept ;
+    ragno:isEntryPoint true ;
+    ragno:inCorpus ex:sememCorpus ;
+    mcp:frequency 42 ;
+    mcp:firstSeen "2024-01-15T10:30:00Z"^^xsd:dateTime ;
+    mcp:lastAccessed "2024-12-20T14:45:00Z"^^xsd:dateTime .
+
+ex:concept_ml a ragno:Entity ;
+    skos:prefLabel "machine learning"@en ;
+    skos:altLabel "ML"@en ;
+    ragno:subType ex:ExtractedConcept ;
+    ragno:isEntryPoint true ;
+    ragno:inCorpus ex:sememCorpus ;
+    mcp:frequency 38 ;
+    mcp:firstSeen "2024-01-15T10:30:00Z"^^xsd:dateTime .
+
+ex:concept_nn a ragno:Entity ;
+    skos:prefLabel "neural networks"@en ;
+    ragno:subType ex:ExtractedConcept ;
+    ragno:isEntryPoint true ;
+    ragno:inCorpus ex:sememCorpus ;
+    mcp:frequency 25 .
+
+# ============================================
+# Concept Relationships (weighted edges)
+# ============================================
+
+ex:rel_ai_ml a ragno:Relationship ;
+    ragno:hasSourceEntity ex:concept_ai ;
+    ragno:hasTargetEntity ex:concept_ml ;
+    ragno:hasWeight "8.5"^^xsd:float ;
+    mcp:cooccurrenceCount 17 ;
+    mcp:lastUpdated "2024-12-20T14:45:00Z"^^xsd:dateTime ;
+    dcterms:created "2024-01-15T10:30:00Z"^^xsd:dateTime .
+
+ex:rel_ml_nn a ragno:Relationship ;
+    ragno:hasSourceEntity ex:concept_ml ;
+    ragno:hasTargetEntity ex:concept_nn ;
+    ragno:hasWeight "10.0"^^xsd:float ;
+    mcp:cooccurrenceCount 20 ;
+    mcp:lastUpdated "2024-12-20T14:45:00Z"^^xsd:dateTime .
+
+ex:rel_ai_nn a ragno:Relationship ;
+    ragno:hasSourceEntity ex:concept_ai ;
+    ragno:hasTargetEntity ex:concept_nn ;
+    ragno:hasWeight "5.0"^^xsd:float ;
+    mcp:cooccurrenceCount 10 .
+
+# ============================================
+# Memory Units (Interactions)
+# ============================================
+
+ex:interaction_123 a ragno:Unit ;
+    ragno:content "User asked about AI and got response about machine learning"@en ;
+    mcp:prompt "What is AI?"@en ;
+    mcp:response "AI is a field of computer science..."@en ;
+    mcp:memoryType "short-term" ;
+    mcp:accessCount 5 ;
+    mcp:decayFactor "0.95"^^xsd:float ;
+    dcterms:created "2024-12-20T14:45:00Z"^^xsd:dateTime ;
+    ragno:inCorpus ex:sememCorpus ;
+    # Connections to concepts
+    ragno:connectsTo ex:concept_ai, ex:concept_ml ;
+    # Link to embedding
+    ragno:hasIndexElement ex:embedding_123 ;
+    # Link to source text
+    ragno:hasTextElement ex:text_123 .
+
+# ============================================
+# Embeddings as Index Elements
+# ============================================
+
+ex:embedding_123 a ragno:IndexElement ;
+    ragno:subType ex:VectorEmbedding ;
+    mcp:model "nomic-embed-text" ;
+    mcp:dimension 768 ;
+    ragno:content "[0.1, -0.2, 0.3, ...]"^^xsd:string ; # Truncated for brevity
+    mcp:vectorNorm "1.0"^^xsd:float .
+
+# ============================================
+# Original Text Elements
+# ============================================
+
+ex:text_123 a ragno:TextElement ;
+    ragno:content "What is AI? AI is a field of computer science..."@en ;
+    prov:wasGeneratedBy ex:interaction_123 ;
+    dcterms:created "2024-12-20T14:45:00Z"^^xsd:dateTime .
+
+# ============================================
+# Concept Communities (from clustering)
+# ============================================
+
+ex:community_ai_ml a ragno:Community ;
+    skos:prefLabel "AI/ML Concept Cluster"@en ;
+    ragno:hasCommunityElement ex:community_insight_1 ;
+    skos:member ex:concept_ai, ex:concept_ml, ex:concept_nn ;
+    mcp:clusterCentroid ex:centroid_embedding_1 .
+
+ex:community_insight_1 a ragno:CommunityElement ;
+    ragno:content "This cluster contains core AI and machine learning concepts"@en ;
+    skos:scopeNote "Highly interconnected concepts related to artificial intelligence"@en .
+
+# ============================================
+# Custom Properties for Semem
+# ============================================
+
+mcp:frequency a owl:DatatypeProperty ;
+    rdfs:domain ragno:Entity ;
+    rdfs:range xsd:integer ;
+    rdfs:label "concept frequency"@en .
+
+mcp:cooccurrenceCount a owl:DatatypeProperty ;
+    rdfs:domain ragno:Relationship ;
+    rdfs:range xsd:integer ;
+    rdfs:label "co-occurrence count"@en .
+
+mcp:accessCount a owl:DatatypeProperty ;
+    rdfs:domain ragno:Unit ;
+    rdfs:range xsd:integer ;
+    rdfs:label "access count"@en .
+
+mcp:decayFactor a owl:DatatypeProperty ;
+    rdfs:domain ragno:Unit ;
+    rdfs:range xsd:float ;
+    rdfs:label "decay factor"@en .
+
+mcp:memoryType a owl:DatatypeProperty ;
+    rdfs:domain ragno:Unit ;
+    rdfs:range xsd:string ;
+    rdfs:label "memory type"@en ;
+    rdfs:comment "Either 'short-term' or 'long-term'"@en .

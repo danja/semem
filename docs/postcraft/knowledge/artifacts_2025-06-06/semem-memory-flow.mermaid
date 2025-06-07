@@ -1,0 +1,62 @@
+flowchart TD
+    %% Input Processing
+    UI[User Input] --> MM[MemoryManager]
+    MM --> EH[EmbeddingHandler<br/>Generate Embedding]
+    MM --> LH[LLMHandler<br/>Extract Concepts]
+    
+    %% Memory Addition
+    EH --> INT[Create Interaction Object<br/>ID, timestamp, accessCount=1]
+    LH --> INT
+    INT --> STM[Short-Term Memory<br/>Array]
+    
+    %% Retrieval Process
+    QUERY[Query Input] --> RET{Retrieve Relevant<br/>Interactions}
+    RET --> EMBED[Generate Query<br/>Embedding]
+    EMBED --> SIM[Cosine Similarity<br/>Search]
+    
+    %% Memory Access
+    STM --> SIM
+    LTM[Long-Term Memory<br/>Array] --> SIM
+    
+    %% Scoring Factors
+    SIM --> SCORE[Calculate Score]
+    DECAY[Time Decay<br/>exp decay * time] --> SCORE
+    REINF[Reinforcement<br/>log 1+accessCount] --> SCORE
+    
+    %% Results Processing
+    SCORE --> RESULTS[Relevant Interactions]
+    RESULTS --> UPDATE[Update Metrics]
+    UPDATE -->|Increment accessCount| STM
+    UPDATE -->|Adjust decayFactor| STM
+    
+    %% Classification
+    STM --> CLASS{Classify Memory<br/>accessCount > 10?}
+    CLASS -->|Yes| PROMOTE[Promote to<br/>Long-Term Memory]
+    CLASS -->|No| STM
+    PROMOTE --> LTM
+    
+    %% Advanced Features
+    RESULTS --> GRAPH[Concept Graph<br/>Spreading Activation]
+    RESULTS --> CLUSTER[Semantic Clusters<br/>K-means]
+    GRAPH --> CONTEXT[Context Manager]
+    CLUSTER --> CONTEXT
+    
+    %% Response Generation
+    CONTEXT --> RESPONSE[Generate Response<br/>with Context]
+    RESPONSE --> OUTPUT[System Output]
+    
+    %% Persistence
+    STM --> STORE[Storage Backend<br/>JSON/SPARQL]
+    LTM --> STORE
+    STORE --> PERSIST[(Persistent Storage)]
+    
+    %% Styling
+    classDef memory fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef process fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef decision fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef storage fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
+    
+    class STM,LTM memory
+    class MM,EH,LH,SIM,SCORE,UPDATE,GRAPH,CLUSTER,CONTEXT process
+    class RET,CLASS decision
+    class STORE,PERSIST storage

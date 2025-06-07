@@ -31,7 +31,7 @@
     :metaField "meta" .
 
 :entryExtras a :ConfigSet ;
-    :loglevel "debug" ;
+ #  :loglevel "debug" ;
     :rawDir "content/raw" ;
     :renderPath "docs" ;
     :baseURI <http://tensegrity.it/semem/> ;
@@ -39,11 +39,12 @@
     :creatorURI <http://danny.ayers.name/me> .
 
 :storeArticle a :ConfigSet ;
+:loglevel "debug" ;
     :delay "100" ;
     :dataBlock "contentBlocks" ;
     :templateFilename "system/sparql-templates/store-article.njk" ;
     :endpointSettings "system/endpoints.json" ;
-    :graph <http://tensegrity.it/semem> .
+    :graph "http://tensegrity.it/semem" .
 
 ###########################
 ### for sparqlstore-to-html
@@ -55,26 +56,49 @@
 
 :prepArticle a :ConfigSet  ;
     :remove "queryResults" ;
-    :rename (:c1 :c2 :c3 :u1)  .
+    :rename (:c1 :c3 :u1)  .
         # for content
         :c1   :pre    "currentItem.title.value" ;
               :post "contentBlocks.title"  .
-        :c2   :pre    "currentItem.content.value" ;
-              :post  "contentBlocks.content"  .
+        :c2   :pre    "currentItem.htmlContent.value" ;
+              :post  "contentBlocks.htmlContent"  .
+        #:c2   :pre    "currentItem.content.value" ;
+         #     :post  "contentBlocks.content"  .
         :c3   :pre    "appRunStart" ;
               :post  "contentBlocks.published"  .
         # for SPARQL update
         :u1     :pre    "currentItem.article.value" ;
                 :post   "contentBlocks.uri"  .
 
+:markdown a :ConfigSet ;
+   # :loglevel "debug" ;
+    :sourceField "currentItem.content.value" ;
+    :outputField "contentBlocks.content" .
 
 :selectArticles a :ConfigSet ;
     :templateFilename "system/sparql-templates/select-articles.njk" ;
     :endpointSettings "system/endpoints.json" ;
         :graph <http://tensegrity.it/semem> .
 
+:updateArticleHTML a :ConfigSet ;
+:loglevel "debug" ;
+    :delay "100" ;
+    :dataBlock "contentBlocks" ;
+    :escape true ;
+    :templateFilename "system/sparql-templates/save-html-chunk.njk" ;
+    :endpointSettings "system/endpoints.json" ;
+         :graph <http://tensegrity.it/semem> .
+
+
 :articleContentTemplate a :ConfigSet ;
     :templateFilename "layout/base/templates/article-content.njk" .
+   # :loglevel "debug" .
+
+:shiftHTML a :ConfigSet  ;
+    :rename (:sh1)  .
+        # for content
+        :sh1   :pre    "content" ;
+              :post "contentBlocks.content"  .
 
 :articlePageTemplate a :ConfigSet ;
     :templateFilename "layout/base/templates/article-page.njk" .
@@ -97,19 +121,14 @@
 
 
 :recordRendering a :ConfigSet ;
+:loglevel "debug" ;
     :delay "100" ;
     :dataBlock "contentBlocks" ;
     :templateFilename "system/sparql-templates/record-rendering.njk" ;
     :endpointSettings "system/endpoints.json" ;
         :graph <http://tensegrity.it/semem> .
 
-:updateArticleHTML a :ConfigSet ;
-    :delay "100" ;
-    :dataBlock "contentBlocks" ;
-    :escape true ;
-    :templateFilename "system/sparql-templates/save-html-chunk.njk" ;
-    :endpointSettings "system/endpoints.json" ;
-         :graph <http://tensegrity.it/semem> .
+
 
 #################################
 # for sparqlstore-to-site-indexes

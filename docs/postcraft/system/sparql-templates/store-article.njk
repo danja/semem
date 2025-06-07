@@ -11,19 +11,19 @@ INSERT DATA {
       GRAPH <{{graph}}> {
   <{{uri}}> a schema:Article ;
       :sourcePath "{{sourcePath}}" ; # remove?
-      :hasRepresentation [
-            a :Representation ;
-            :representationType "file" ;
-            :mediaType "{{mediaType}}" ;
-            :sourcePath "{{sourcePath}}"
-      ] ;
+   #   :hasRepresentation [
+    #        a :Representation ;
+     #       :representationType "file" ;
+      #      :mediaType "{{mediaType}}" ;
+       #     :sourcePath "{{sourcePath}}"
+      #] ;
         :relative "{{relative}}" ;
-        :relPath "{{relPath}}" ;
-        :relMap "{{relMap}}" ;
+     #   :relPath "{{relPath}}" ;
+     #   :relMap "{{relMap}}" ;
         :slug "{{slug}}" ;
         schema:headline "{{title}}" ;
-        schema:dateCreated "{{dates.created}}"^^xsd:dateTime ;
-        schema:dateModified "{{dates.modified}}"^^xsd:dateTime ;
+        schema:dateCreated "{{created}}"; # ^^xsd:dateTime 
+        schema:dateModified "{{modified}}" ; # ^^xsd:dateTime
         schema:articleBody """ {{content | safe}} """ ;
         schema:creator <{{creator.uri}}> .
 

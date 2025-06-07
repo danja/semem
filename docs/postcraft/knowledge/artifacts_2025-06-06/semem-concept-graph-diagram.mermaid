@@ -1,0 +1,61 @@
+flowchart LR
+    subgraph "Concept Graph Structure"
+        AI((AI))
+        ML((Machine<br/>Learning))
+        NN((Neural<br/>Networks))
+        DL((Deep<br/>Learning))
+        ALG((Algorithms))
+        OPT((Optimization))
+        CV((Computer<br/>Vision))
+        NLP((NLP))
+        
+        AI ---|weight: 8| ML
+        AI ---|weight: 5| NN
+        ML ---|weight: 10| NN
+        ML ---|weight: 7| DL
+        NN ---|weight: 9| DL
+        DL ---|weight: 6| ALG
+        ALG ---|weight: 4| OPT
+        ML ---|weight: 3| CV
+        ML ---|weight: 4| NLP
+    end
+    
+    subgraph "Spreading Activation Example"
+        direction TB
+        Query[Query: 'deep learning algorithms'] --> Init[Initial Activation]
+        Init --> DL2[DL = 1.0]
+        Init --> ALG2[ALG = 1.0]
+        
+        DL2 --> Step1[Step 1: Spread]
+        ALG2 --> Step1
+        
+        Step1 --> NN2[NN = 0.5 * 9 = 4.5]
+        Step1 --> ML2[ML = 0.5 * 7 = 3.5]
+        Step1 --> OPT2[OPT = 0.5 * 4 = 2.0]
+        
+        NN2 --> Step2[Step 2: Spread]
+        ML2 --> Step2
+        OPT2 --> Step2
+        
+        Step2 --> AI2[AI = 0.25 * 5 = 1.25]
+        Step2 --> CV2[CV = 0.25 * 3 = 0.75]
+        Step2 --> NLP2[NLP = 0.25 * 4 = 1.0]
+    end
+    
+    subgraph "Memory Retrieval Integration"
+        VectorSearch[Vector Similarity<br/>Search] --> Results[Combined Results]
+        GraphActivation[Concept Graph<br/>Activation] --> Results
+        Results --> Ranking[Rank by<br/>Total Score]
+        Ranking --> Output[Retrieved<br/>Memories]
+    end
+    
+    style AI fill:#e1f5fe
+    style ML fill:#e1f5fe
+    style NN fill:#e1f5fe
+    style DL fill:#fff59d
+    style ALG fill:#fff59d
+    style OPT fill:#c8e6c9
+    style CV fill:#c8e6c9
+    style NLP fill:#c8e6c9
+    style Query fill:#ffccbc
+    style Output fill:#b2dfdb

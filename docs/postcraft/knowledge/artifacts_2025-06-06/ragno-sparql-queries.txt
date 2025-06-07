@@ -1,0 +1,227 @@
+# Ragno SPARQL Query Examples for Semem
+
+PREFIX ragno: <http://purl.org/stuff/ragno/>
+PREFIX mcp: <http://purl.org/stuff/mcp/>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+# ============================================
+# Concept Management Queries
+# ============================================
+
+# Find concept by label (case-insensitive)
+SELECT ?concept ?label ?frequency WHERE {
+    ?concept a ragno:Entity ;
+             skos:prefLabel ?label ;
+             mcp:frequency ?frequency .
+    FILTER(regex(?label, "^AI$", "i"))
+}
+
+# Get all concepts with their aliases
+SELECT ?concept ?prefLabel (GROUP_CONCAT(?altLabel; SEPARATOR=", ") AS ?aliases) WHERE {
+    ?concept a ragno:Entity ;
+             skos:prefLabel ?prefLabel .
+    OPTIONAL { ?concept skos:altLabel ?altLabel }
+}
+GROUP BY ?concept ?prefLabel
+ORDER BY DESC(?prefLabel)
+
+# Find top 10 most frequent concepts
+SELECT ?concept ?label ?frequency WHERE {
+    ?concept a ragno:Entity ;
+             skos:prefLabel ?label ;
+             mcp:frequency ?frequency .
+}
+ORDER BY DESC(?frequency)
+LIMIT 10
+
+# ============================================
+# Relationship Queries
+# ============================================
+
+# Get all relationships for a concept
+SELECT ?relatedConcept ?relatedLabel ?weight ?relationshipType WHERE {
+    {
+        # Outgoing relationships
+        ?rel ragno:hasSourceEntity <http://example.org/semem/concept_ai> ;
+             ragno:hasTargetEntity ?relatedConcept ;
+             ragno:hasWeight ?weight .
+        BIND("outgoing" AS ?relationshipType)
+    } UNION {
+        # Incoming relationships
+        ?rel ragno:hasTargetEntity <http://example.org/semem/concept_ai> ;
+             ragno:hasSourceEntity ?relatedConcept ;
+             ragno:hasWeight ?weight .
+        BIND("incoming" AS ?relationshipType)
+    }
+    ?relatedConcept skos:prefLabel ?relatedLabel .
+}
+ORDER BY DESC(?weight)
+
+# Find strongest concept relationships in the graph
+SELECT ?source ?sourceLabel ?target ?targetLabel ?weight WHERE {
+    ?rel a ragno:Relationship ;
+         ragno:hasSourceEntity ?source ;
+         ragno:hasTargetEntity ?target ;
+         ragno:hasWeight ?weight .
+    ?source skos:prefLabel ?sourceLabel .
+    ?target skos:prefLabel ?targetLabel .
+    FILTER(?weight > 5.0)
+}
+ORDER BY DESC(?weight)
+LIMIT 20
+
+# ============================================
+# Memory/Interaction Queries
+# ============================================
+
+# Get recent interactions for a concept
+SELECT ?interaction ?prompt ?response ?timestamp WHERE {
+    ?interaction a ragno:Unit ;
+                 ragno:connectsTo <http://example.org/semem/concept_ai> ;
+                 mcp:prompt ?prompt ;
+                 mcp:response ?response ;
+                 dcterms:created ?timestamp .
+}
+ORDER BY DESC(?timestamp)
+LIMIT 10
+
+# Find interactions by memory type
+SELECT ?interaction ?prompt ?accessCount ?decayFactor WHERE {
+    ?interaction a ragno:Unit ;
+                 mcp:memoryType "short-term" ;
+                 mcp:prompt ?prompt ;
+                 mcp:accessCount ?accessCount ;
+                 mcp:decayFactor ?decayFactor .
+    FILTER(?accessCount > 5)
+}
+
+# ============================================
+# Graph Algorithm Queries
+# ============================================
+
+# Simple PageRank approximation (2 levels)
+SELECT ?concept ?label (COUNT(DISTINCT ?rel) AS ?degree) WHERE {
+    ?concept a ragno:Entity ;
+             skos:prefLabel ?label .
+    {
+        ?rel ragno:hasSourceEntity ?concept .
+    } UNION {
+        ?rel ragno:hasTargetEntity ?concept .
+    }
+}
+GROUP BY ?concept ?label
+ORDER BY DESC(?degree)
+LIMIT 20
+
+# Find concept paths (2-hop)
+SELECT ?start ?middle ?end ?weight1 ?weight2 WHERE {
+    <http://example.org/semem/concept_ai> (ragno:hasSourceEntity|^ragno:hasTargetEntity)+ ?start .
+    ?rel1 ragno:hasSourceEntity ?start ;
+          ragno:hasTargetEntity ?middle ;
+          ragno:hasWeight ?weight1 .
+    ?rel2 ragno:hasSourceEntity ?middle ;
+          ragno:hasTargetEntity ?end ;
+          ragno:hasWeight ?weight2 .
+    FILTER(?end = <http://example.org/semem/concept_nn>)
+}
+
+# ============================================
+# Community/Cluster Queries
+# ============================================
+
+# Get community members
+SELECT ?community ?communityLabel ?member ?memberLabel WHERE {
+    ?community a ragno:Community ;
+               skos:prefLabel ?communityLabel ;
+               skos:member ?member .
+    ?member skos:prefLabel ?memberLabel .
+}
+ORDER BY ?community ?memberLabel
+
+# Find concepts in multiple communities (boundary nodes)
+SELECT ?concept ?label (COUNT(DISTINCT ?community) AS ?communityCount) WHERE {
+    ?concept a ragno:Entity ;
+             skos:prefLabel ?label ;
+             ragno:inCommunity ?community .
+}
+GROUP BY ?concept ?label
+HAVING(COUNT(DISTINCT ?community) > 1)
+
+# ============================================
+# Maintenance Queries
+# ============================================
+
+# Find orphaned concepts (no relationships)
+SELECT ?concept ?label WHERE {
+    ?concept a ragno:Entity ;
+             skos:prefLabel ?label .
+    FILTER NOT EXISTS {
+        {
+            ?rel ragno:hasSourceEntity ?concept .
+        } UNION {
+            ?rel ragno:hasTargetEntity ?concept .
+        }
+    }
+}
+
+# Update concept frequency
+DELETE {
+    <http://example.org/semem/concept_ai> mcp:frequency ?oldFreq .
+}
+INSERT {
+    <http://example.org/semem/concept_ai> mcp:frequency ?newFreq .
+}
+WHERE {
+    <http://example.org/semem/concept_ai> mcp:frequency ?oldFreq .
+    BIND((?oldFreq + 1) AS ?newFreq)
+}
+
+# Increment relationship weight
+DELETE {
+    ?rel ragno:hasWeight ?oldWeight ;
+         mcp:cooccurrenceCount ?oldCount ;
+         mcp:lastUpdated ?oldTime .
+}
+INSERT {
+    ?rel ragno:hasWeight ?newWeight ;
+         mcp:cooccurrenceCount ?newCount ;
+         mcp:lastUpdated ?now .
+}
+WHERE {
+    ?rel ragno:hasSourceEntity <http://example.org/semem/concept_ai> ;
+         ragno:hasTargetEntity <http://example.org/semem/concept_ml> ;
+         ragno:hasWeight ?oldWeight ;
+         mcp:cooccurrenceCount ?oldCount .
+    OPTIONAL { ?rel mcp:lastUpdated ?oldTime }
+    BIND((?oldWeight + 0.5) AS ?newWeight)
+    BIND((?oldCount + 1) AS ?newCount)
+    BIND(NOW() AS ?now)
+}
+
+# ============================================
+# Analytics Queries
+# ============================================
+
+# Concept co-occurrence matrix
+SELECT ?concept1 ?label1 ?concept2 ?label2 ?weight WHERE {
+    ?rel a ragno:Relationship ;
+         ragno:hasSourceEntity ?concept1 ;
+         ragno:hasTargetEntity ?concept2 ;
+         ragno:hasWeight ?weight .
+    ?concept1 skos:prefLabel ?label1 .
+    ?concept2 skos:prefLabel ?label2 .
+    FILTER(?concept1 < ?concept2)  # Avoid duplicates
+}
+ORDER BY ?label1 ?label2
+
+# Time-based concept popularity
+SELECT ?month (COUNT(DISTINCT ?interaction) AS ?interactions) WHERE {
+    ?interaction a ragno:Unit ;
+                 ragno:connectsTo <http://example.org/semem/concept_ai> ;
+                 dcterms:created ?timestamp .
+    BIND(SUBSTR(STR(?timestamp), 1, 7) AS ?month)
+}
+GROUP BY ?month
+ORDER BY ?month

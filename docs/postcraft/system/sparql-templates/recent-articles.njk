@@ -15,6 +15,7 @@ SELECT DISTINCT * WHERE {
     schema:name ?creatorName .
 
 }
+ # FILTER(STR(?created) != "")
 }
 ORDER BY DESC(?created)
-LIMIT 5
+LIMIT 10
