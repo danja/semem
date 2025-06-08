@@ -40,7 +40,7 @@ import { enrichWithEmbeddings } from '../src/ragno/enrichWithEmbeddings.js'
 import LLMHandler from '../src/handlers/LLMHandler.js'
 import EmbeddingHandler from '../src/handlers/EmbeddingHandler.js'
 import OllamaConnector from '../src/connectors/OllamaConnector.js'
-import loadRagnoConfig from './loadRagnoConfig.js'
+import loadRagnoConfig from '../src/utils/loadRagnoConfig.js'
 
 // Configure logging
 logger.setLevel('debug')
