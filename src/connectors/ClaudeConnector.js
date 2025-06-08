@@ -266,7 +266,20 @@ export default class ClaudeConnector {
             })
 
             logger.debug('Completion response received')
-            return response
+            
+            // Extract content string from the response object
+            // Based on the Claude response format: {content: '...', role: 'assistant'}
+            if (response && typeof response === 'object' && response.content) {
+                logger.debug('Extracting content from Claude response object')
+                return response.content;
+            } else if (typeof response === 'string') {
+                logger.debug('Response is already a string')
+                return response;
+            } else {
+                logger.error('Unexpected response format from Claude completion:', response);
+                // Fallback - return empty string to avoid JSON parse errors
+                return '';
+            }
         } catch (error) {
             logger.error('Completion generation failed:', error)
             throw error

@@ -33,7 +33,7 @@ export default class LLMHandler {
      * @param {number} [options.temperature] - Override the default temperature
      * @returns {Promise<string>}
      */
-    async generateResponse(prompt, context, { 
+    async generateResponse(prompt, context, {
         systemPrompt = "You're a helpful assistant with memory of past interactions.",
         model = this.chatModel,
         temperature = this.temperature
@@ -73,17 +73,18 @@ export default class LLMHandler {
                 prompt,
                 { temperature: 0.2 }
             )
-
+            console.log(`response = ${response}, ${JSON.stringify(response)}`)
             const match = response.match(/\[.*\]/)
             if (!match) {
                 logger.warn('No concept array found in LLM response')
                 return []
             }
-
+            // console.log(`match[0] = ${match[0]}, ${JSON.stringify(match[0])}`)
             try {
                 return JSON.parse(match[0])
             } catch (parseError) {
                 logger.error('Failed to parse concepts array:', parseError)
+                logger.error('Raw match was:', match[0])
                 return []
             }
         } catch (error) {
