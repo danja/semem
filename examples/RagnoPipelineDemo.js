@@ -215,10 +215,18 @@ async function main() {
         if (attributes && Object.keys(attributes).length > 0) {
             logger.info('🏷️  Sample generated attributes:')
             Object.entries(attributes).slice(0, 3).forEach(([nodeId, nodeAttrs]) => {
-                logger.info(`   📝 ${nodeId}: ${nodeAttrs.length} attributes`)
-                nodeAttrs.slice(0, 2).forEach(attr => {
-                    logger.info(`      • ${attr.type}: ${attr.description.substring(0, 60)}...`)
-                })
+                if (Array.isArray(nodeAttrs) && nodeAttrs.length > 0) {
+                    logger.info(`   📝 ${nodeId}: ${nodeAttrs.length} attributes`)
+                    nodeAttrs.slice(0, 2).forEach(attr => {
+                        if (attr && attr.type && attr.description) {
+                            logger.info(`      • ${attr.type}: ${attr.description.substring(0, 60)}...`)
+                        } else {
+                            logger.info(`      • ${JSON.stringify(attr)}`)
+                        }
+                    })
+                } else {
+                    logger.info(`   📝 ${nodeId}: ${nodeAttrs} (not an array)`)
+                }
             })
         }
 
@@ -239,8 +247,12 @@ async function main() {
         if (communities && communities.length > 0) {
             logger.info(`🎯 Detected ${communities.length} communities:`)
             communities.forEach((community, i) => {
-                logger.info(`   ${i+1}. Community ${community.id}: ${community.members.length} members`)
-                logger.info(`      Members: [${community.members.slice(0, 3).join(', ')}${community.members.length > 3 ? '...' : ''}]`)
+                if (community && community.id && Array.isArray(community.members)) {
+                    logger.info(`   ${i+1}. Community ${community.id}: ${community.members.length} members`)
+                    logger.info(`      Members: [${community.members.slice(0, 3).join(', ')}${community.members.length > 3 ? '...' : ''}]`)
+                } else {
+                    logger.info(`   ${i+1}. Community: ${JSON.stringify(community)}`)
+                }
             })
         }
 
@@ -261,7 +273,11 @@ async function main() {
         if (similarityLinks && similarityLinks.length > 0) {
             logger.info(`🔗 Generated ${similarityLinks.length} similarity links:`)
             similarityLinks.slice(0, 5).forEach((link, i) => {
-                logger.info(`   ${i+1}. ${link.source} ↔ ${link.target} (similarity: ${link.similarity.toFixed(3)})`)
+                if (link && link.source && link.target && typeof link.similarity === 'number') {
+                    logger.info(`   ${i+1}. ${link.source} ↔ ${link.target} (similarity: ${link.similarity.toFixed(3)})`)
+                } else {
+                    logger.info(`   ${i+1}. ${JSON.stringify(link)}`)
+                }
             })
             if (similarityLinks.length > 5) {
                 logger.info(`   ... and ${similarityLinks.length - 5} more links`)
@@ -298,15 +314,27 @@ async function main() {
         logger.info('\\n📋 Sample Extracted Entities:')
         if (knowledgeGraph.entities && knowledgeGraph.entities.length > 0) {
             knowledgeGraph.entities.slice(0, 5).forEach((entity, i) => {
-                logger.info(`   ${i+1}. ${entity.name} (${entity.type || 'Unknown'})`)
+                if (entity && entity.name) {
+                    logger.info(`   ${i+1}. ${entity.name} (${entity.type || 'Unknown'})`)
+                } else {
+                    logger.info(`   ${i+1}. ${JSON.stringify(entity)}`)
+                }
             })
+        } else {
+            logger.info('   No entities extracted')
         }
 
         logger.info('\\n📝 Sample Semantic Units:')
         if (knowledgeGraph.units && knowledgeGraph.units.length > 0) {
             knowledgeGraph.units.slice(0, 3).forEach((unit, i) => {
-                logger.info(`   ${i+1}. "${unit.content.substring(0, 80)}..."`)
+                if (unit && unit.content) {
+                    logger.info(`   ${i+1}. "${unit.content.substring(0, 80)}..."`)
+                } else {
+                    logger.info(`   ${i+1}. ${JSON.stringify(unit)}`)
+                }
             })
+        } else {
+            logger.info('   No semantic units extracted')
         }
 
     } catch (error) {
