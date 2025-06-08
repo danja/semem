@@ -16,8 +16,8 @@ class SPARQLService {
      * @param {string} options.auth.password - Password for basic auth
      */
     constructor(options = {}) {
-        this.queryEndpoint = options.queryEndpoint || 'http://localhost:4030/semem/query';
-        this.updateEndpoint = options.updateEndpoint || 'http://localhost:4030/semem/update';
+        this.queryEndpoint = options.queryEndpoint || 'https://fuseki.hyperdata.it/semem/query';
+        this.updateEndpoint = options.updateEndpoint || 'https://fuseki.hyperdata.it/semem/update';
         this.graphName = options.graphName || 'http://example.org/default';
         this.auth = options.auth || { user: 'admin', password: 'admin123' };
         

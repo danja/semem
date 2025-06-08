@@ -37,14 +37,13 @@ export default class Config {
             decayRate: 0.0001
         },
         sparqlEndpoints: [{
-            label: "tbox Fuseki",
+            label: "Hyperdata Fuseki",
             user: "admin",
             password: "admin123",
-            //    urlBase: "http://localhost:3030",
-            urlBase: "http://localhost:4030",
-            dataset: "semem",
-            query: "/semem",
-            update: "/semem",
+            urlBase: "https://fuseki.hyperdata.it",
+            dataset: "semem", 
+            query: "/semem/query",
+            update: "/semem/update",
             upload: "/semem/upload",
             gspRead: "/semem/data",
             gspWrite: "/semem/data"
