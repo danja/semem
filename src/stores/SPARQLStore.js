@@ -385,18 +385,33 @@ export default class SPARQLStore extends BaseStore {
         return conceptStatements.join('\n')
     }
 */
-    _generateConceptStatements(concepts, nodeId) {
-        if (!Array.isArray(concepts) || concepts.length === 0) {
-            return ''
-        }
+    _generateConceptStatements(memories) {
+        const conceptStatements = []
+        const seenConcepts = new Set()
 
-        return concepts.map((concept, idx) => {
-            // Ensure concept is a string
-            const conceptStr = typeof concept === 'string' ? concept : String(concept);
-            return `
-            ${nodeId} semem:concept "${this._escapeSparqlString(conceptStr)}" .
-        `
-        }).join('\n')
+        memories.forEach((interaction, index) => {
+            if (Array.isArray(interaction.concepts)) {
+                interaction.concepts.forEach(concept => {
+                    const conceptUri = `http://example.org/concept/${encodeURIComponent(concept)}`
+
+                    if (!seenConcepts.has(conceptUri)) {
+                        conceptStatements.push(`
+                            <${conceptUri}> a skos:Concept, ragno:Element ;
+                                skos:prefLabel "${this._escapeSparqlString(concept)}" ;
+                                ragno:content "${this._escapeSparqlString(concept)}" .
+                        `)
+                        seenConcepts.add(conceptUri)
+                    }
+
+                    conceptStatements.push(`
+                        _:interaction${interaction.id || index} ragno:connectsTo <${conceptUri}> .
+                        <${conceptUri}> ragno:connectsTo _:interaction${interaction.id || index} .
+                    `)
+                })
+            }
+        })
+
+        return conceptStatements.join('\n')
     }
     /*
     _escapeSparqlString(str) {
