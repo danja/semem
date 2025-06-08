@@ -3,7 +3,7 @@ import SemanticUnit from './SemanticUnit.js';
 import Entity from './Entity.js';
 import Relationship from './Relationship.js';
 import LLMHandler from '../handlers/LLMHandler.js';
-import { SPARQLHelpers } from '../utils/SPARQLHelpers.js';
+import SPARQLHelpers from '../utils/SPARQLHelpers.js';
 
 /**
  * Decompose text chunks into semantic units, entities, and relationships.
