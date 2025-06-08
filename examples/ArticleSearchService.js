@@ -21,14 +21,12 @@
 import fetch from 'node-fetch';
 import faiss from 'faiss-node';
 const { IndexFlatIP } = faiss;
-import OllamaConnector from '../../src/connectors/OllamaConnector.js';
-import Config from '../../src/Config.js';
+import OllamaConnector from '../src/connectors/OllamaConnector.js';
+import Config from '../src/Config.js';
 import logger from 'loglevel';
 
 // Configure logging
 logger.setLevel('debug') // Set to debug for more verbose output
-
-const EMBEDDING_DIMENSION = 1536; // nomic-embed-text actual dimension
 
 class ArticleSearchService {
     constructor(config) {
@@ -38,6 +36,7 @@ class ArticleSearchService {
         this.index = null;
         this.articles = [];
         this.articleMap = new Map(); // Map from index to article URI
+        this.embeddingDimension = 1536; // Default, will be adjusted based on stored data
         
         // Get configuration values
         this.sparqlEndpoint = null;
@@ -90,8 +89,8 @@ class ArticleSearchService {
         
         try {
             // Create the Faiss index
-            logger.info(`🧠 Creating FAISS index with dimension ${EMBEDDING_DIMENSION}...`);
-            this.index = new IndexFlatIP(EMBEDDING_DIMENSION);
+            logger.info(`🧠 Creating FAISS index with dimension ${this.embeddingDimension}...`);
+            this.index = new IndexFlatIP(this.embeddingDimension);
             logger.info('✅ FAISS index created successfully');
             
             // Load article embeddings from SPARQL store
@@ -160,25 +159,44 @@ class ArticleSearchService {
                     // Parse the embedding vector
                     const embedding = JSON.parse(embeddingStr);
                     
-                    if (Array.isArray(embedding) && embedding.length === EMBEDDING_DIMENSION) {
-                        // Add embedding to the index
-                        this.index.add(embedding);
+                    if (Array.isArray(embedding)) {
+                        // Log the actual dimensions we're seeing
+                        if (i === 0) {
+                            logger.info(`📏 Detected embedding dimension from stored data: ${embedding.length}`);
+                            if (embedding.length !== this.embeddingDimension) {
+                                logger.warn(`⚠️  Stored embeddings have dimension ${embedding.length}, but expected ${this.embeddingDimension}`);
+                                logger.warn('🔄 Adjusting FAISS index to match stored embeddings...');
+                                
+                                // Recreate the index with the correct dimension
+                                this.index = new IndexFlatIP(embedding.length);
+                                // Update our dimension for consistency
+                                this.embeddingDimension = embedding.length;
+                            }
+                        }
                         
-                        // Store article data
-                        const title = this.extractTitle(uri, content);
-                        this.articles.push({
-                            uri,
-                            content: this.truncateContent(content),
-                            title: title
-                        });
-                        
-                        // Map the index to the article
-                        this.articleMap.set(validEmbeddings, uri);
-                        validEmbeddings++;
-                        
-                        logger.debug(`   ✅ Added: "${title}"`);
+                        if (embedding.length > 0) {
+                            // Add embedding to the index
+                            this.index.add(embedding);
+                            
+                            // Store article data
+                            const title = this.extractTitle(uri, content);
+                            this.articles.push({
+                                uri,
+                                content: this.truncateContent(content),
+                                title: title
+                            });
+                            
+                            // Map the index to the article
+                            this.articleMap.set(validEmbeddings, uri);
+                            validEmbeddings++;
+                            
+                            logger.debug(`   ✅ Added: "${title}"`);
+                        } else {
+                            logger.warn(`   ❌ Invalid embedding (empty array): ${uri}`);
+                            invalidEmbeddings++;
+                        }
                     } else {
-                        logger.warn(`   ❌ Invalid embedding (expected ${EMBEDDING_DIMENSION}D, got ${embedding?.length || 'invalid'}): ${uri}`);
+                        logger.warn(`   ❌ Invalid embedding (not an array): ${uri}`);
                         invalidEmbeddings++;
                     }
                 } catch (error) {
@@ -243,6 +261,14 @@ class ArticleSearchService {
             const endTime = Date.now();
             
             logger.debug(`✅ Embedding generated in ${endTime - startTime}ms, dimension: ${embedding.length}`);
+            
+            // Check dimension mismatch
+            if (embedding.length !== this.embeddingDimension) {
+                logger.error(`❌ Dimension mismatch! Expected ${this.embeddingDimension}, got ${embedding.length}`);
+                logger.error('💡 This usually means the embedding model changed or there\'s a configuration issue');
+                throw new Error(`Embedding dimension mismatch: expected ${this.embeddingDimension}, got ${embedding.length}`);
+            }
+            
             return embedding;
         } catch (error) {
             logger.error('❌ Error generating embedding:', error.message);
@@ -349,7 +375,7 @@ async function main() {
     try {
         // Load configuration
         logger.info('⚙️  Loading configuration from config file...');
-        const config = new Config('../../config/config.json');
+        const config = new Config('../config/config.json');
         await config.init();
         logger.info('✅ Configuration loaded successfully');
         
