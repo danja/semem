@@ -155,12 +155,12 @@ describe('SPARQLStore Integration', () => {
         // Custom paginated query
         const pageSize = 2;
         const query = `
-            PREFIX mcp: <http://purl.org/stuff/mcp/>
+            PREFIX semem: <http://purl.org/stuff/semem/>
             SELECT ?id ?prompt
             FROM <${store.graphName}>
             WHERE {
-                ?s mcp:id ?id ;
-                   mcp:prompt ?prompt .
+                ?s semem:id ?id ;
+                   semem:prompt ?prompt .
             }
             LIMIT ${pageSize}
         `;

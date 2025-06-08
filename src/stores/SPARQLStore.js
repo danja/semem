@@ -114,7 +114,7 @@ export default class SPARQLStore extends BaseStore {
                     PREFIX ragno: <http://purl.org/stuff/ragno/>
                     PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
                     PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-                    PREFIX mcp: <http://purl.org/stuff/mcp/>
+                    PREFIX semem: <http://purl.org/stuff/semem/>
                     
                     CREATE SILENT GRAPH <${this.graphName}>;
                     INSERT DATA { GRAPH <${this.graphName}> {
@@ -146,22 +146,22 @@ export default class SPARQLStore extends BaseStore {
             PREFIX ragno: <http://purl.org/stuff/ragno/>
             PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
             PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-            PREFIX mcp: <http://purl.org/stuff/mcp/>
+            PREFIX semem: <http://purl.org/stuff/semem/>
             PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
             SELECT ?id ?prompt ?output ?embedding ?timestamp ?accessCount ?concepts ?decayFactor ?memoryType
             FROM <${this.graphName}>
             WHERE {
-                ?interaction a mcp:Interaction ;
-                    mcp:id ?id ;
-                    mcp:prompt ?prompt ;
-                    mcp:output ?output ;
-                    mcp:embedding ?embedding ;
-                    mcp:timestamp ?timestamp ;
-                    mcp:accessCount ?accessCount ;
-                    mcp:decayFactor ?decayFactor ;
-                    mcp:memoryType ?memoryType .
-                OPTIONAL { ?interaction mcp:concepts ?concepts }
+                ?interaction a semem:Interaction ;
+                    semem:id ?id ;
+                    semem:prompt ?prompt ;
+                    semem:output ?output ;
+                    semem:embedding ?embedding ;
+                    semem:timestamp ?timestamp ;
+                    semem:accessCount ?accessCount ;
+                    semem:decayFactor ?decayFactor ;
+                    semem:memoryType ?memoryType .
+                OPTIONAL { ?interaction semem:concepts ?concepts }
             }`
 
         try {
@@ -233,7 +233,7 @@ export default class SPARQLStore extends BaseStore {
 
             const clearQuery = `
                 PREFIX ragno: <http://purl.org/stuff/ragno/>
-                PREFIX mcp: <http://purl.org/stuff/mcp/>
+                PREFIX semem: <http://purl.org/stuff/semem/>
                 
                 DELETE {
                     GRAPH <${this.graphName}> {
@@ -241,7 +241,7 @@ export default class SPARQLStore extends BaseStore {
                     }
                 } WHERE {
                     GRAPH <${this.graphName}> {
-                        ?interaction a mcp:Interaction ;
+                        ?interaction a semem:Interaction ;
                             ?p ?o
                     }
                 }
@@ -252,7 +252,7 @@ export default class SPARQLStore extends BaseStore {
                 PREFIX ragno: <http://purl.org/stuff/ragno/>
                 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
                 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-                PREFIX mcp: <http://purl.org/stuff/mcp/>
+                PREFIX semem: <http://purl.org/stuff/semem/>
                 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
                 INSERT DATA {
@@ -296,17 +296,17 @@ export default class SPARQLStore extends BaseStore {
             }
 
             return `
-                _:interaction${type}${index} a mcp:Interaction, ragno:Unit ;
-                    mcp:id "${interaction.id}" ;
-                    mcp:prompt "${this._escapeSparqlString(interaction.prompt)}" ;
-                    mcp:output "${this._escapeSparqlString(interaction.output)}" ;
+                _:interaction${type}${index} a semem:Interaction, ragno:Unit ;
+                    semem:id "${interaction.id}" ;
+                    semem:prompt "${this._escapeSparqlString(interaction.prompt)}" ;
+                    semem:output "${this._escapeSparqlString(interaction.output)}" ;
                     ragno:content "${this._escapeSparqlString(interaction.prompt + ' ' + interaction.output)}" ;
-                    mcp:embedding """${embeddingStr}""" ;
-                    mcp:timestamp "${interaction.timestamp}"^^xsd:integer ;
-                    mcp:accessCount "${interaction.accessCount}"^^xsd:integer ;
-                    mcp:concepts """${conceptsStr}""" ;
-                    mcp:decayFactor "${interaction.decayFactor}"^^xsd:decimal ;
-                    mcp:memoryType "${type}" ;
+                    semem:embedding """${embeddingStr}""" ;
+                    semem:timestamp "${interaction.timestamp}"^^xsd:integer ;
+                    semem:accessCount "${interaction.accessCount}"^^xsd:integer ;
+                    semem:concepts """${conceptsStr}""" ;
+                    semem:decayFactor "${interaction.decayFactor}"^^xsd:decimal ;
+                    semem:memoryType "${type}" ;
                     skos:prefLabel "${this._escapeSparqlString(interaction.prompt.substring(0, 50))}" .
             `
         }).join('\n')
@@ -342,16 +342,16 @@ export default class SPARQLStore extends BaseStore {
             }
 
             return `
-            _:interaction${type}${index} a mcp:Interaction ;
-                mcp:id "${this._escapeSparqlString(id)}" ;
-                mcp:prompt "${this._escapeSparqlString(prompt)}" ;
-                mcp:output "${this._escapeSparqlString(output)}" ;
-                mcp:embedding """${embeddingStr}""" ;
-                mcp:timestamp "${timestamp}"^^xsd:integer ;
-                mcp:accessCount "${accessCount}"^^xsd:integer ;
-                mcp:concepts """${conceptsStr}""" ;
-                mcp:decayFactor "${decayFactor}"^^xsd:decimal ;
-                mcp:memoryType "${type}" .
+            _:interaction${type}${index} a semem:Interaction ;
+                semem:id "${this._escapeSparqlString(id)}" ;
+                semem:prompt "${this._escapeSparqlString(prompt)}" ;
+                semem:output "${this._escapeSparqlString(output)}" ;
+                semem:embedding """${embeddingStr}""" ;
+                semem:timestamp "${timestamp}"^^xsd:integer ;
+                semem:accessCount "${accessCount}"^^xsd:integer ;
+                semem:concepts """${conceptsStr}""" ;
+                semem:decayFactor "${decayFactor}"^^xsd:decimal ;
+                semem:memoryType "${type}" .
         `
         }).join('\n')
     }
@@ -394,7 +394,7 @@ export default class SPARQLStore extends BaseStore {
             // Ensure concept is a string
             const conceptStr = typeof concept === 'string' ? concept : String(concept);
             return `
-            ${nodeId} mcp:concept "${this._escapeSparqlString(conceptStr)}" .
+            ${nodeId} semem:concept "${this._escapeSparqlString(conceptStr)}" .
         `
         }).join('\n')
     }
@@ -419,7 +419,7 @@ export default class SPARQLStore extends BaseStore {
         this.inTransaction = true
 
         const backupQuery = `
-            PREFIX mcp: <http://purl.org/stuff/mcp/>
+            PREFIX semem: <http://purl.org/stuff/semem/>
             COPY GRAPH <${this.graphName}> TO GRAPH <${this.graphName}.backup>
         `
         await this._executeSparqlUpdate(backupQuery, this.endpoint.update)
@@ -432,7 +432,7 @@ export default class SPARQLStore extends BaseStore {
 
         try {
             const dropBackup = `
-                PREFIX mcp: <http://purl.org/stuff/mcp/>
+                PREFIX semem: <http://purl.org/stuff/semem/>
                 DROP SILENT GRAPH <${this.graphName}.backup>
             `
             await this._executeSparqlUpdate(dropBackup, this.endpoint.update)
@@ -448,7 +448,7 @@ export default class SPARQLStore extends BaseStore {
 
         try {
             const restoreQuery = `
-                PREFIX mcp: <http://purl.org/stuff/mcp/>
+                PREFIX semem: <http://purl.org/stuff/semem/>
                 DROP SILENT GRAPH <${this.graphName}> ;
                 MOVE GRAPH <${this.graphName}.backup> TO GRAPH <${this.graphName}>
             `

@@ -72,7 +72,7 @@ const ListResourcesResponseSchema = z.object({
 // Create MCP server with handlers
 export async function createServer() {
   console.error('Creating MCP server...');
-  
+
   // Initialize server with basic info and required capabilities
   const serverCapabilities = {
     resources: { list: true, read: true, subscribe: true },
@@ -80,23 +80,23 @@ export async function createServer() {
     completions: { complete: true },
     logging: { setLevel: true }
   };
-  
+
   const serverInfo = {
     name: 'semem/mcp',
     version: '1.0.0',
     description: 'Semem MCP Server'
   };
-  
+
   console.error('Server capabilities:', JSON.stringify(serverCapabilities, null, 2));
   console.error('Server info:', JSON.stringify(serverInfo, null, 2));
-  
+
   // Create the MCP server instance
-  const server = new Server(serverInfo, { 
-    capabilities: serverCapabilities 
+  const server = new Server(serverInfo, {
+    capabilities: serverCapabilities
   });
-  
+
   console.error('MCP server instance created successfully');
-  
+
   // Register a simple handler for the resources/list method
   server.setRequestHandler({
     method: 'resources/list',
@@ -105,7 +105,7 @@ export async function createServer() {
       return {
         resources: [
           {
-            uri: 'mcp://semem/resources',
+            uri: 'semem://semem/resources',
             name: 'Semem Resources',
             description: 'Semem knowledge graph resources',
             resourceType: 'semem:KnowledgeGraph',
@@ -118,9 +118,9 @@ export async function createServer() {
       };
     }
   });
-  
+
   console.error('Registered resources/list handler');
-  
+
   // Register a simple handler for search requests
   server.setRequestHandler({
     method: 'semem/search',
@@ -132,9 +132,9 @@ export async function createServer() {
       };
     }
   });
-  
+
   console.error('Registered semem/search handler');
-  
+
   // Register a simple handler for embedding generation
   server.setRequestHandler({
     method: 'semem/generateEmbedding',
@@ -146,13 +146,13 @@ export async function createServer() {
       };
     }
   });
-  
+
   console.error('Registered semem/generateEmbedding handler');
 
   // Initialize services
   const config = new Config(path.join(process.cwd(), 'config', 'config.json'));
   await config.init();
-  
+
   const cacheManager = new CacheManager({
     maxSize: 1000,
     ttl: 3600000 // 1 hour
@@ -213,7 +213,7 @@ export async function createServer() {
       throw new Error(`Embedding generation failed: ${error.message}`);
     }
   });
-  
+
   // Register resource listing endpoint
   server.setRequestHandler(ListResourcesRequestSchema, async () => {
     return {
@@ -244,7 +244,7 @@ export async function createServer() {
  */
 async function initializeLLMProvider(config) {
   let providers = config.get('llmProviders') || [];
-  
+
   // If no providers configured, try to create a default one based on environment
   if (providers.length === 0) {
     console.warn('No LLM providers configured in config.json, checking environment...');
@@ -263,64 +263,64 @@ async function initializeLLMProvider(config) {
       });
     }
   }
-  
+
   // Sort providers by priority
   providers = providers.sort((a, b) => (a.priority || 999) - (b.priority || 999));
-  
+
   for (const provider of providers) {
     try {
       console.log(`Attempting to initialize ${provider.type} provider...`);
-      
+
       // Get the provider's API key from environment variables or config
       let apiKey = provider.apiKey || '';
-      
+
       // Handle environment variable substitution (e.g., ${VARIABLE} syntax)
       if (apiKey.startsWith('${') && apiKey.endsWith('}')) {
         const envVar = apiKey.slice(2, -1); // Remove ${ and }
         apiKey = process.env[envVar] || '';
       }
-      
+
       // If still no API key, try the conventional environment variable name
       if (!apiKey) {
-        apiKey = process.env[`${provider.type.toUpperCase()}_API_KEY`] || 
-                process.env[`${provider.type}_api_key`] ||
-                '';
+        apiKey = process.env[`${provider.type.toUpperCase()}_API_KEY`] ||
+          process.env[`${provider.type}_api_key`] ||
+          '';
       }
-      
+
       if (!apiKey) {
         console.warn(`No API key found for ${provider.type}. Tried: ${provider.apiKey || 'N/A'}, ${provider.type.toUpperCase()}_API_KEY, ${provider.type}_api_key`);
         continue;
       }
-      
+
       let connector;
       switch (provider.type.toLowerCase()) {
         case 'ollama':
           const ollamaModule = await import('../connectors/OllamaConnector.js');
           // Check if the module has a default export or is the constructor itself
-          connector = ollamaModule.default ? 
-            new ollamaModule.default(apiKey, provider.model) : 
+          connector = ollamaModule.default ?
+            new ollamaModule.default(apiKey, provider.model) :
             new ollamaModule(apiKey, provider.model);
           break;
-          
+
         case 'claude':
           const claudeModule = await import('../connectors/ClaudeConnector.js');
-          connector = claudeModule.default ? 
-            new claudeModule.default(apiKey, provider.model) : 
+          connector = claudeModule.default ?
+            new claudeModule.default(apiKey, provider.model) :
             new claudeModule(apiKey, provider.model);
           break;
-          
+
         case 'mistral':
           const mistralModule = await import('../connectors/MistralConnector.js');
-          connector = mistralModule.default ? 
-            new mistralModule.default(apiKey, provider.model) : 
+          connector = mistralModule.default ?
+            new mistralModule.default(apiKey, provider.model) :
             new mistralModule(apiKey, provider.model);
           break;
-          
+
         default:
           console.warn(`Unsupported provider type: ${provider.type}`);
           continue;
       }
-      
+
       if (connector) {
         console.log(`Successfully initialized ${provider.type} provider`);
         return connector;
@@ -329,7 +329,7 @@ async function initializeLLMProvider(config) {
       console.warn(`Failed to initialize ${provider.type} provider:`, error);
     }
   }
-  
+
   const triedProviders = providers.map(p => p.type).join(', ') || 'none';
   console.error('No valid LLM provider could be initialized. Tried providers:', triedProviders);
   console.error('Please check your configuration and environment variables.');
@@ -343,7 +343,7 @@ const sessions = new Map();
 setInterval(() => {
   const now = Date.now();
   const timeout = 30 * 60 * 1000; // 30 minutes
-  
+
   for (const [sessionId, session] of sessions.entries()) {
     if (now - session.lastActive > timeout) {
       console.log(`Cleaning up inactive session: ${sessionId}`);
@@ -366,7 +366,7 @@ async function handleMcpRequest(req, res) {
     // Handle new session initialization
     if (!session && req.body?.method === 'initialize') {
       const newSessionId = `sess-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      
+
       // Create a new transport for this session
       const transport = new StreamableHTTPServerTransport({
         sessionIdGenerator: () => newSessionId,
@@ -377,26 +377,26 @@ async function handleMcpRequest(req, res) {
           console.error(`Transport error for session ${newSessionId}:`, error);
         }
       });
-      
+
       // Create MCP server instance
       const server = await createServer();
       await server.connect(transport);
-      
+
       // Store the session
-      session = { 
+      session = {
         transport,
         lastActive: Date.now(),
         id: newSessionId
       };
       sessions.set(newSessionId, session);
-      
+
       // Set session ID in response header
       res.setHeader('mcp-session-id', newSessionId);
-    } 
+    }
     // Handle existing session
     else if (session) {
       session.lastActive = Date.now();
-    } 
+    }
     // Invalid request - no session ID and not an initialization request
     else {
       res.status(400).json({
@@ -409,7 +409,7 @@ async function handleMcpRequest(req, res) {
       });
       return;
     }
-    
+
     // Handle the request with the transport
     await session.transport.handleRequest(req, res, req.body);
   } catch (error) {
@@ -431,27 +431,27 @@ async function handleMcpRequest(req, res) {
 // Start server based on command line arguments
 async function main() {
   const mode = process.argv[2] || 'http';
-  
+
   try {
     if (mode === 'http') {
       console.log('Starting MCP HTTP server...');
-      
+
       const app = express();
       app.use(express.json());
-      
+
       // Handle MCP requests
       app.post('/mcp', handleMcpRequest);
-      
+
       // Handle SSE connections
       app.get('/mcp', async (req, res) => {
         const sessionId = req.headers['mcp-session-id'];
         if (!sessionId || !sessions.has(sessionId)) {
           return res.status(400).send('Invalid or missing session ID');
         }
-        
+
         const session = sessions.get(sessionId);
         session.lastActive = Date.now();
-        
+
         try {
           await session.transport.handleRequest(req, res);
         } catch (error) {
@@ -461,17 +461,17 @@ async function main() {
           }
         }
       });
-      
+
       // Handle session termination
       app.delete('/mcp', async (req, res) => {
         const sessionId = req.headers['mcp-session-id'];
         if (!sessionId || !sessions.has(sessionId)) {
           return res.status(400).send('Invalid or missing session ID');
         }
-        
+
         console.log(`Terminating session: ${sessionId}`);
         const session = sessions.get(sessionId);
-        
+
         try {
           await session.transport.handleRequest(req, res);
           sessions.delete(sessionId);
@@ -482,48 +482,48 @@ async function main() {
           }
         }
       });
-      
+
       const port = process.env.MCP_PORT || 4100;
       app.listen(port, () => {
         console.log(`MCP HTTP server listening on port ${port}`);
         console.log(`MCP endpoint: http://localhost:${port}/mcp`);
       });
-      
+
     } else if (mode === 'stdio') {
       console.log('Starting MCP server in stdio mode...');
-      
+
       const server = await createServer();
       const transport = new StdioServerTransport();
       await server.connect(transport);
-      
+
       console.log('MCP server running in stdio mode');
-      
+
     } else if (mode === 'sse') {
       console.log('Starting MCP server in SSE mode...');
-      
+
       const app = express();
       const httpServer = http.createServer(app);
       const port = process.env.MCP_PORT || 4100;
-      
+
       const server = await createServer();
       const transport = new SSEServerTransport({
         server: httpServer,
         path: '/mcp'
       });
-      
+
       await server.connect(transport);
-      
+
       httpServer.listen(port, () => {
         console.log(`MCP SSE server listening on port ${port}`);
         console.log(`MCP SSE endpoint: http://localhost:${port}/mcp`);
       });
-      
+
     } else {
       console.error(`Unknown mode: ${mode}`);
       console.error('Usage: node mcp-server-fixed.js [http|stdio|sse]');
       process.exit(1);
     }
-    
+
   } catch (error) {
     console.error('Failed to start MCP server:', error);
     process.exit(1);

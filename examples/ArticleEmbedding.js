@@ -104,32 +104,29 @@ async function storeEmbedding(sparqlStore, articleUri, embedding) {
 }
 
 async function main() {
-    // Initialize configuration
-    const config = Config.create({
-        storage: {
-            type: 'sparql',
-            options: {
-                endpoint: {
-                    query: 'http://localhost:4030/semem',
-                    update: 'http://localhost:4030/semem'
-                },
-                graphName: 'http://danny.ayers.name/content',
-                user: 'admin',
-                password: 'admin123'
-            }
-        },
-        models: {
-            embedding: {
-                provider: 'ollama',
-                model: 'nomic-embed-text'
-            }
-        }
-    })
+    // Initialize configuration from config file
+    const config = new Config('config/config.json')
+    await config.init()
     
-    // Create SPARQL store
+    // Get SPARQL endpoint from config
+    const sparqlEndpoint = config.get('sparqlEndpoints.0')
+    if (!sparqlEndpoint) {
+        throw new Error('No SPARQL endpoint configured')
+    }
+    
+    // Create SPARQL store using sparqlEndpoints configuration
+    const endpoint = {
+        query: `${sparqlEndpoint.urlBase}${sparqlEndpoint.query}`,
+        update: `${sparqlEndpoint.urlBase}${sparqlEndpoint.update}`
+    }
+    
     const sparqlStore = new SPARQLStore(
-        config.get('storage.options.endpoint'),
-        config.get('storage.options')
+        endpoint,
+        {
+            graphName: config.get('graphName'),
+            user: sparqlEndpoint.user,
+            password: sparqlEndpoint.password
+        }
     )
     
     // Create Ollama connector for embeddings
@@ -138,7 +135,7 @@ async function main() {
     // Initialize memory manager
     memoryManager = new MemoryManager({
         llmProvider: ollama,
-        embeddingModel: config.get('models.embedding.model'),
+        embeddingModel: config.get('embeddingModel'),
         storage: sparqlStore
     })
     

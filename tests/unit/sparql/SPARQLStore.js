@@ -186,7 +186,7 @@ describe('SPARQLStore', () => {
 
             expect(updateBody).toContain('INSERT DATA')
             expect(updateBody).toContain(test.testInteraction.id)
-            expect(updateBody).toContain('mcp:Interaction')
+            expect(updateBody).toContain('semem:Interaction')
             expect(updateBody).not.toContain('undefined')
             done()
         })

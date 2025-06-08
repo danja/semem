@@ -41,9 +41,9 @@ describe('SPARQLStore Federation Integration', () => {
             const metadataQuery = `
                 INSERT DATA {
                     GRAPH <${testGraphs.metadata}> {
-                        <${testGraphs.main}> a mcp:MemoryStore ;
-                            mcp:hasVersion "1.0" ;
-                            mcp:lastUpdated "${new Date().toISOString()}"^^xsd:dateTime .
+                        <${testGraphs.main}> a semem:MemoryStore ;
+                            semem:hasVersion "1.0" ;
+                            semem:lastUpdated "${new Date().toISOString()}"^^xsd:dateTime .
                     }
                 }
             `;
@@ -90,16 +90,16 @@ describe('SPARQLStore Federation Integration', () => {
 
         // Federated query across memory and metadata
         const federatedQuery = `
-            PREFIX mcp: <http://purl.org/stuff/mcp/>
+            PREFIX semem: <http://purl.org/stuff/semem/>
             SELECT ?interaction ?version ?updated
             WHERE {
                 GRAPH <${testGraphs.main}> {
-                    ?interaction a mcp:Interaction ;
-                        mcp:id "federation-test-1" .
+                    ?interaction a semem:Interaction ;
+                        semem:id "federation-test-1" .
                 }
                 GRAPH <${testGraphs.metadata}> {
-                    <${testGraphs.main}> mcp:hasVersion ?version ;
-                        mcp:lastUpdated ?updated .
+                    <${testGraphs.main}> semem:hasVersion ?version ;
+                        semem:lastUpdated ?updated .
                 }
             }
         `;
@@ -112,14 +112,14 @@ describe('SPARQLStore Federation Integration', () => {
     it('should handle cross-graph data relationships', async () => {
         // Add related data across graphs
         const setupQuery = `
-            PREFIX mcp: <http://purl.org/stuff/mcp/>
+            PREFIX semem: <http://purl.org/stuff/semem/>
             PREFIX qb: <http://purl.org/linked-data/cube#>
 
             INSERT DATA {
                 GRAPH <${testGraphs.main}> {
-                    _:interaction1 a mcp:Interaction ;
-                        mcp:id "related-test-1" ;
-                        mcp:relatedCube <cube1> .
+                    _:interaction1 a semem:Interaction ;
+                        semem:id "related-test-1" ;
+                        semem:relatedCube <cube1> .
                 }
 
                 GRAPH <${testGraphs.metadata}> {
@@ -134,14 +134,14 @@ describe('SPARQLStore Federation Integration', () => {
 
         // Query relationship
         const relationQuery = `
-            PREFIX mcp: <http://purl.org/stuff/mcp/>
+            PREFIX semem: <http://purl.org/stuff/semem/>
             PREFIX qb: <http://purl.org/linked-data/cube#>
 
             SELECT ?id ?cubeLabel
             WHERE {
                 GRAPH <${testGraphs.main}> {
-                    ?interaction mcp:id ?id ;
-                        mcp:relatedCube ?cube .
+                    ?interaction semem:id ?id ;
+                        semem:relatedCube ?cube .
                 }
                 GRAPH <${testGraphs.metadata}> {
                     ?cube rdfs:label ?cubeLabel .
@@ -158,22 +158,22 @@ describe('SPARQLStore Federation Integration', () => {
         await store.beginTransaction();
         try {
             const federatedUpdate = `
-                PREFIX mcp: <http://purl.org/stuff/mcp/>
+                PREFIX semem: <http://purl.org/stuff/semem/>
 
                 WITH <${testGraphs.main}>
-                DELETE { ?i mcp:accessCount ?oldCount }
-                INSERT { ?i mcp:accessCount ?newCount }
+                DELETE { ?i semem:accessCount ?oldCount }
+                INSERT { ?i semem:accessCount ?newCount }
                 WHERE {
-                    ?i mcp:id "federation-test-1" ;
-                       mcp:accessCount ?oldCount .
+                    ?i semem:id "federation-test-1" ;
+                       semem:accessCount ?oldCount .
                     BIND(?oldCount + 1 AS ?newCount)
                 };
 
                 WITH <${testGraphs.metadata}>
-                DELETE { <${testGraphs.main}> mcp:lastUpdated ?old }
-                INSERT { <${testGraphs.main}> mcp:lastUpdated "${new Date().toISOString()}"^^xsd:dateTime }
+                DELETE { <${testGraphs.main}> semem:lastUpdated ?old }
+                INSERT { <${testGraphs.main}> semem:lastUpdated "${new Date().toISOString()}"^^xsd:dateTime }
                 WHERE {
-                    <${testGraphs.main}> mcp:lastUpdated ?old
+                    <${testGraphs.main}> semem:lastUpdated ?old
                 }
             `;
 
@@ -192,13 +192,13 @@ describe('SPARQLStore Federation Integration', () => {
     it('should handle service-based federation', async () => {
         // Query using SERVICE keyword for explicit federation
         const serviceQuery = `
-            PREFIX mcp: <http://purl.org/stuff/mcp/>
+            PREFIX semem: <http://purl.org/stuff/semem/>
 
             SELECT ?interaction ?metadata
             WHERE {
                 SERVICE <${store.endpoint.query}> {
                     GRAPH <${testGraphs.main}> {
-                        ?interaction mcp:id "federation-test-1"
+                        ?interaction semem:id "federation-test-1"
                     }
                 }
                 SERVICE <${store.endpoint.query}> {

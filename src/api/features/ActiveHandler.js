@@ -125,13 +125,13 @@ export default class ActiveHandler extends BaseAPI {
 
     _buildSearchQuery(query, limit) {
         return `
-            PREFIX mcp: <http://purl.org/stuff/mcp/>
+            PREFIX semem: <http://purl.org/stuff/semem/>
             SELECT ?interaction ?prompt ?output ?timestamp
             WHERE {
-                ?interaction a mcp:Interaction ;
-                    mcp:prompt ?prompt ;
-                    mcp:output ?output ;
-                    mcp:timestamp ?timestamp .
+                ?interaction a semem:Interaction ;
+                    semem:prompt ?prompt ;
+                    semem:output ?output ;
+                    semem:timestamp ?timestamp .
                 FILTER(CONTAINS(LCASE(?prompt), LCASE("${query}")) ||
                        CONTAINS(LCASE(?output), LCASE("${query}")))
             }

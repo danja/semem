@@ -97,22 +97,22 @@ export default class SPARQLStore extends BaseStore {
         await this.verify();
 
         const query = `
-            PREFIX mcp: <http://purl.org/stuff/mcp/>
+            PREFIX semem: <http://purl.org/stuff/semem/>
             PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
             SELECT ?id ?prompt ?output ?embedding ?timestamp ?accessCount ?concepts ?decayFactor ?memoryType
             FROM <${this.graphName}>
             WHERE {
-                ?interaction a mcp:Interaction ;
-                    mcp:id ?id ;
-                    mcp:prompt ?prompt ;
-                    mcp:output ?output ;
-                    mcp:embedding ?embedding ;
-                    mcp:timestamp ?timestamp ;
-                    mcp:accessCount ?accessCount ;
-                    mcp:decayFactor ?decayFactor ;
-                    mcp:memoryType ?memoryType .
-                OPTIONAL { ?interaction mcp:concepts ?concepts }
+                ?interaction a semem:Interaction ;
+                    semem:id ?id ;
+                    semem:prompt ?prompt ;
+                    semem:output ?output ;
+                    semem:embedding ?embedding ;
+                    semem:timestamp ?timestamp ;
+                    semem:accessCount ?accessCount ;
+                    semem:decayFactor ?decayFactor ;
+                    semem:memoryType ?memoryType .
+                OPTIONAL { ?interaction semem:concepts ?concepts }
             }`;
 
         try {
@@ -162,14 +162,14 @@ export default class SPARQLStore extends BaseStore {
 
             // Clear existing data
             const clearQuery = `
-                PREFIX mcp: <http://purl.org/stuff/mcp/>
+                PREFIX semem: <http://purl.org/stuff/semem/>
                 CLEAR GRAPH <${this.graphName}>
             `;
             await this._executeSparqlUpdate(clearQuery, this.endpoint.update);
 
             // Insert new data
             const insertQuery = `
-                PREFIX mcp: <http://purl.org/stuff/mcp/>
+                PREFIX semem: <http://purl.org/stuff/semem/>
                 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
                 INSERT DATA {
@@ -193,16 +193,16 @@ export default class SPARQLStore extends BaseStore {
 
     _generateInsertStatements(memories, type) {
         return memories.map((interaction, index) => `
-            _:interaction${type}${index} a mcp:Interaction ;
-                mcp:id "${interaction.id}" ;
-                mcp:prompt "${this._escapeSparqlString(interaction.prompt)}" ;
-                mcp:output "${this._escapeSparqlString(interaction.output)}" ;
-                mcp:embedding """${JSON.stringify(interaction.embedding)}""" ;
-                mcp:timestamp "${interaction.timestamp}"^^xsd:integer ;
-                mcp:accessCount "${interaction.accessCount}"^^xsd:integer ;
-                mcp:concepts """${JSON.stringify(interaction.concepts)}""" ;
-                mcp:decayFactor "${interaction.decayFactor}"^^xsd:decimal ;
-                mcp:memoryType "${type}" .
+            _:interaction${type}${index} a semem:Interaction ;
+                semem:id "${interaction.id}" ;
+                semem:prompt "${this._escapeSparqlString(interaction.prompt)}" ;
+                semem:output "${this._escapeSparqlString(interaction.output)}" ;
+                semem:embedding """${JSON.stringify(interaction.embedding)}""" ;
+                semem:timestamp "${interaction.timestamp}"^^xsd:integer ;
+                semem:accessCount "${interaction.accessCount}"^^xsd:integer ;
+                semem:concepts """${JSON.stringify(interaction.concepts)}""" ;
+                semem:decayFactor "${interaction.decayFactor}"^^xsd:decimal ;
+                semem:memoryType "${type}" .
         `).join('\n');
     }
 
@@ -219,7 +219,7 @@ export default class SPARQLStore extends BaseStore {
 
         // Create backup
         const backupQuery = `
-            PREFIX mcp: <http://purl.org/stuff/mcp/>
+            PREFIX semem: <http://purl.org/stuff/semem/>
             COPY GRAPH <${this.graphName}> TO GRAPH <${this.graphName}.backup>
         `;
         await this._executeSparqlUpdate(backupQuery, this.endpoint.update);
@@ -233,7 +233,7 @@ export default class SPARQLStore extends BaseStore {
         try {
             // Remove backup
             const dropBackup = `
-                PREFIX mcp: <http://purl.org/stuff/mcp/>
+                PREFIX semem: <http://purl.org/stuff/semem/>
                 DROP SILENT GRAPH <${this.graphName}.backup>
             `;
             await this._executeSparqlUpdate(dropBackup, this.endpoint.update);
@@ -250,7 +250,7 @@ export default class SPARQLStore extends BaseStore {
         try {
             // Restore from backup
             const restoreQuery = `
-                PREFIX mcp: <http://purl.org/stuff/mcp/>
+                PREFIX semem: <http://purl.org/stuff/semem/>
                 DROP SILENT GRAPH <${this.graphName}> ;
                 MOVE GRAPH <${this.graphName}.backup> TO GRAPH <${this.graphName}>
             `;

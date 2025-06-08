@@ -75,8 +75,8 @@ describe('SPARQLStore Advanced Backup Integration', () => {
         const corruptQuery = `
             INSERT DATA {
                 GRAPH <${testGraph}.backup> {
-                    _:corrupt a mcp:Invalid ;
-                        mcp:invalidProp "test" .
+                    _:corrupt a semem:Invalid ;
+                        semem:invalidProp "test" .
                 }
             }
         `;
@@ -129,11 +129,11 @@ describe('SPARQLStore Advanced Backup Integration', () => {
 
             // Verify backup contains incremental changes
             const verifyQuery = `
-                PREFIX mcp: <http://purl.org/stuff/mcp/>
+                PREFIX semem: <http://purl.org/stuff/semem/>
                 ASK {
                     GRAPH <${testGraph}.backup> {
-                        ?s mcp:id "${update.id}" ;
-                           mcp:output "${update.output}" .
+                        ?s semem:id "${update.id}" ;
+                           semem:output "${update.output}" .
                     }
                 }
             `;
@@ -174,15 +174,15 @@ describe('SPARQLStore Advanced Backup Integration', () => {
 
         // Verify backup matches original data
         const verifyQuery = `
-            PREFIX mcp: <http://purl.org/stuff/mcp/>
+            PREFIX semem: <http://purl.org/stuff/semem/>
             SELECT ?prop ?value
             WHERE {
                 GRAPH <${testGraph}> {
-                    ?s1 mcp:id "advanced-backup-1" ;
+                    ?s1 semem:id "advanced-backup-1" ;
                         ?prop ?value .
                 }
                 GRAPH <${testGraph}.backup> {
-                    ?s2 mcp:id "advanced-backup-1" ;
+                    ?s2 semem:id "advanced-backup-1" ;
                         ?prop ?value2 .
                     FILTER(?value = ?value2)
                 }
@@ -220,7 +220,7 @@ describe('SPARQLStore Advanced Backup Integration', () => {
             SELECT (COUNT(?s) as ?count)
             WHERE {
                 GRAPH <${testGraph}.backup> {
-                    ?s a mcp:Interaction
+                    ?s a semem:Interaction
                 }
             }
         `;
