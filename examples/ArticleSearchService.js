@@ -262,11 +262,22 @@ class ArticleSearchService {
             
             logger.debug(`✅ Embedding generated in ${endTime - startTime}ms, dimension: ${embedding.length}`);
             
-            // Check dimension mismatch
+            // Check dimension mismatch and handle it
             if (embedding.length !== this.embeddingDimension) {
-                logger.error(`❌ Dimension mismatch! Expected ${this.embeddingDimension}, got ${embedding.length}`);
-                logger.error('💡 This usually means the embedding model changed or there\'s a configuration issue');
-                throw new Error(`Embedding dimension mismatch: expected ${this.embeddingDimension}, got ${embedding.length}`);
+                logger.warn(`⚠️  Dimension mismatch! Expected ${this.embeddingDimension}, got ${embedding.length}`);
+                logger.warn('🔄 This may be due to different model versions. Attempting to handle...');
+                
+                if (embedding.length < this.embeddingDimension) {
+                    // Pad with zeros if too short
+                    const paddedEmbedding = [...embedding, ...new Array(this.embeddingDimension - embedding.length).fill(0)];
+                    logger.warn(`📏 Padded embedding from ${embedding.length} to ${paddedEmbedding.length} dimensions`);
+                    return paddedEmbedding;
+                } else {
+                    // Truncate if too long
+                    const truncatedEmbedding = embedding.slice(0, this.embeddingDimension);
+                    logger.warn(`✂️  Truncated embedding from ${embedding.length} to ${truncatedEmbedding.length} dimensions`);
+                    return truncatedEmbedding;
+                }
             }
             
             return embedding;
@@ -302,10 +313,26 @@ class ArticleSearchService {
             // Search the index
             logger.info('🔎 Searching FAISS index...');
             const searchResults = this.index.search(queryEmbedding, limit);
-            logger.info(`✅ Found ${searchResults.length} results`);
+            logger.debug('🔍 Raw search results:', searchResults);
+            
+            // Handle FAISS search results format
+            let resultsArray = [];
+            if (searchResults && typeof searchResults === 'object') {
+                if (Array.isArray(searchResults)) {
+                    resultsArray = searchResults;
+                } else if (searchResults.labels && searchResults.distances) {
+                    // Convert FAISS format to our expected format
+                    resultsArray = searchResults.labels.map((id, i) => ({
+                        id: id,
+                        score: searchResults.distances[i]
+                    }));
+                }
+            }
+            
+            logger.info(`✅ Found ${resultsArray.length} results`);
             
             // Map results to articles
-            const results = searchResults.map((result, i) => {
+            const results = resultsArray.map((result, i) => {
                 const uri = this.articleMap.get(result.id);
                 const article = this.articles.find(a => a.uri === uri);
                 
