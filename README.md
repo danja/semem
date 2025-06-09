@@ -1,6 +1,6 @@
 # Semem
 
-Semem is a modular, extensible semantic memory and graph augmentation system for LLMs, agents, and research. It provides a unified pipeline for entity extraction, embedding, semantic search, SPARQL/RDF graph operations, LLM-powered augmentation, and community detection.
+Semem is a modular, extensible semantic memory and graph augmentation system for LLMs, agents, and research. It provides a unified pipeline for entity extraction, embedding, semantic search, SPARQL/RDF graph operations, LLM-powered augmentation, community detection, and advanced knowledge graph algorithms including HyDE and VSOM.
 
 ---
 
@@ -48,7 +48,15 @@ Semem is a modular, extensible semantic memory and graph augmentation system for
 - **Unified Memory Control Protocol (MCP):** JSON-RPC 2.0 API for all memory, graph, and compute resources
 - **Live Compute Endpoints:** LLM completions, embeddings, SPARQL, semantic search, graph augmentation, community detection
 - **Agent/LLM-Ready:** Prompt templates and robust schema validation for seamless integration
+- **Advanced Algorithms:** HyDE (Hypothetical Document Embeddings), VSOM (Vectorized Self-Organizing Maps), graph analytics suite
 - **Extensible:** Modular design, easy to add new pipelines or endpoints
+
+## 🤖 Advanced Algorithms
+
+- **HyDE (Hypothetical Document Embeddings)**: Enhances retrieval by generating hypothetical answers using LLMs, marking uncertain content with `ragno:maybe` properties for improved semantic search
+- **VSOM (Vectorized Self-Organizing Map)**: Provides entity clustering and semantic organization for knowledge graphs with support for multiple topologies (rectangular/hexagonal)
+- **Graph Analytics Suite**: K-core decomposition, betweenness centrality, community detection (Leiden), and Personalized PageRank for comprehensive graph analysis
+- **Ragno Knowledge Graph Pipeline**: End-to-end corpus decomposition, entity extraction, relationship creation, and RDF export with semantic web standards
 
 ---
 
@@ -62,24 +70,6 @@ Semem is a modular, extensible semantic memory and graph augmentation system for
 - [docs/ragno/PLAN2-progress.md](./docs/ragno/PLAN2-progress.md): Progress log
 
 For full details, see the documentation in `docs/`.
-
----
-
-## Demo: Ragno Pipeline (`examples/RagnoPipelineDemo.js`, `examples/RagnoSPARQLDemo.js`)
-
-These demo scripts show the end-to-end Ragno pipeline for semantic graph construction, augmentation, community detection, enrichment, and SPARQL export.
-
-- **`examples/RagnoPipelineDemo.js`**: Runs the full pipeline from decomposition to community detection and enrichment, printing each stage's output.
-- **`examples/RagnoSPARQLDemo.js`**: Shows how to export attribute, community, and similarity link data to a SPARQL triple store (using dummy endpoints/auth for demonstration).
-
-### How to Run
-
-```sh
-node examples/RagnoPipelineDemo.js
-node examples/RagnoSPARQLDemo.js
-```
-
-See the code and comments in each file for details on how to adapt for your own data and endpoints.
 
 ---
 
@@ -120,40 +110,30 @@ Semem (Semantic Memory) is a Node.js library for intelligent agent memory manage
 
 ## Features
 
-- Semantic memory management
-- Vector embeddings for similarity search
-- Multiple storage backends (in-memory, JSON, SPARQL)
-- Connector system for different LLM providers
-- Context window management
-- Concept extraction and organization
+- **Semantic Memory Management**: Intelligent context retrieval and memory organization
+- **Advanced Algorithm Suite**: HyDE, VSOM, graph analytics, community detection, and PageRank
+- **Vector Embeddings**: High-dimensional similarity search with multiple embedding providers
+- **Multiple Storage Backends**: In-memory, JSON, and SPARQL/RDF with caching optimization
+- **LLM Provider Integration**: Ollama, Claude, Mistral and other providers via unified connector system
+- **Knowledge Graph Processing**: End-to-end Ragno pipeline for entity extraction and relationship modeling
+- **Uncertainty Modeling**: Hypothetical content marking with confidence scores and uncertainty properties
+- **Entity Clustering**: Semantic organization using self-organizing maps and community detection
+- **Context Window Management**: Intelligent text chunking and context size optimization
+- **MCP Protocol Support**: JSON-RPC 2.0 API for programmatic access to all capabilities
 
 ---
 
-## Demo: LLM + SPARQL Integration (`examples/OllamaExample.js`)
+## 📋 Example Demos
 
-This demo script shows how to use Semem with a SPARQL backend and an Ollama LLM connector for prompt/response memory, embeddings, and concept extraction.
+Comprehensive examples are available in the `examples/` directory:
 
-### Prerequisites
-- Node.js (v18+ recommended)
-- Running SPARQL backend (e.g., Apache Jena Fuseki)
+- **Core Algorithms**: `PPR.js`, `Communities.js`, `AnalyseGraph.js` for graph analytics
+- **Advanced Algorithms**: `Hyde.js` for hypothetical document embeddings, `VSOM.js` for entity clustering  
+- **Complete Pipeline**: `RagnoPipelineDemo.js` for end-to-end knowledge graph processing
+- **Semantic Memory**: `ArticleEmbedding.js`, `ArticleSearch.js`, `GraphRAGConceptAugment.js`
+- **LLM Integration**: Various provider examples in `examples/pending/`
 
----
-
-## Demo: Ragno Pipeline (`examples/RagnoPipelineDemo.js`, `examples/RagnoSPARQLDemo.js`)
-
-These demo scripts show the end-to-end Ragno pipeline for semantic graph construction, augmentation, community detection, enrichment, and SPARQL export.
-
-- **`examples/RagnoPipelineDemo.js`**: Runs the full pipeline from decomposition to community detection and enrichment, printing each stage's output.
-- **`examples/RagnoSPARQLDemo.js`**: Shows how to export attribute, community, and similarity link data to a SPARQL triple store (using dummy endpoints/auth for demonstration).
-
-### How to Run
-
-```sh
-node examples/RagnoPipelineDemo.js
-node examples/RagnoSPARQLDemo.js
-```
-
-See the code and comments in each file for details on how to adapt for your own data and endpoints.
+See [examples/README.md](examples/README.md) for complete documentation and usage instructions.
 
 ---
 
@@ -341,12 +321,26 @@ Semem has a layered architecture with the following key components:
    - `ClientConnector`: Base connector class
    - Provider-specific connectors (Ollama, Claude, etc.)
 
+6. **Ragno Algorithm Layer**
+   - `RagnoAlgorithms`: Unified algorithms suite with integrated workflow management
+   - `Hyde`: Hypothetical Document Embeddings for enhanced retrieval and uncertainty modeling
+   - `VSOM`: Vectorized Self-Organizing Maps for entity clustering and semantic organization
+   - `GraphAnalytics`: K-core decomposition, centrality analysis, and statistical graph operations
+   - `CommunityDetection`: Leiden algorithm for identifying semantic communities
+   - `PersonalizedPageRank`: Semantic search and graph traversal with multi-entry point support
+
 ## Requirements
 
 - Node.js 20.11.0+
-- SPARQL endpoint (Apache Fuseki) for SPARQL-based storage
-- Ollama or compatible LLM service
+- SPARQL endpoint (Apache Fuseki) for SPARQL-based storage (optional)
+- Ollama or compatible LLM service for text generation and embeddings
 - API keys for various LLM providers (configured in .env)
+
+### Algorithm-Specific Requirements
+- **HyDE Algorithm**: Requires text generation model (e.g., `qwen2:1.5b`)
+- **VSOM Algorithm**: Requires embedding model (e.g., `nomic-embed-text`) 
+- **Graph Analytics**: Works with any RDF data, no additional services needed
+- **Ragno Pipeline**: Combines multiple algorithms, benefits from both text and embedding models
 
 ## License
 

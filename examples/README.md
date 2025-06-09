@@ -31,6 +31,18 @@ node examples/AnalyseGraph.js
 ```
 Comprehensive demonstration of GraphAnalytics algorithms for analyzing semantic knowledge graph structure. Creates a research collaboration network from RDF data and applies multiple analysis algorithms: K-core decomposition for identifying dense clusters, betweenness centrality for finding bridge nodes, connected components analysis for network fragmentation, and comprehensive graph statistics. Includes network topology comparison (star, ring, complete, random) and exports all analysis results to RDF format for semantic integration.
 
+### Hyde.js
+```bash
+node examples/Hyde.js
+```
+Comprehensive demonstration of HyDE (Hypothetical Document Embeddings) algorithm for improving semantic search through synthetic document generation. Creates hypothetical answers for queries using LLM facilities, augments the RDF graph with ragno:maybe properties to mark hypothetical content, extracts entities from generated hypotheses, and exports complete results to RDF format for semantic integration. Shows how HyDE enhances retrieval for vague queries and augments sparse knowledge graphs with uncertainty modeling.
+
+### VSOM.js
+```bash
+node examples/VSOM.js
+```
+Complete demonstration of Vectorized Self-Organizing Map (VSOM) algorithm for entity clustering in knowledge graphs. Showcases entity loading, multiple topology types (rectangular/hexagonal), training with convergence monitoring, cluster generation, RDF export with ragno:cluster properties, and visualization coordinate export for map layouts. Demonstrates how VSOM organizes entities into semantic neighborhoods and creates spatial layouts for graph visualization.
+
 ### RagnoPipelineDemo.js
 ```bash
 node examples/RagnoPipelineDemo.js
@@ -153,10 +165,16 @@ Direct embedding generation without full pipeline. Demonstrates low-level embedd
 
 ### Required Services
 - **Ollama**: Running locally with models:
-  - `qwen2:1.5b` for text generation
-  - `nomic-embed-text` for embeddings
+  - `qwen2:1.5b` for text generation (required for Hyde and LLM examples)
+  - `nomic-embed-text` for embeddings (required for VSOM and embedding examples)
 - **SPARQL Endpoint** (optional): Apache Fuseki or compatible triplestore
 - **Redis** (optional): For production caching in API examples
+
+### Algorithm-Specific Requirements
+- **HyDE Algorithm**: Requires Ollama with text generation model for hypothetical document creation
+- **VSOM Algorithm**: Requires embedding model for entity clustering and vector operations
+- **Graph Analytics**: No additional services required, works with RDF data
+- **Ragno Pipeline**: Combines multiple algorithms, requires both text generation and embedding models
 
 ### Environment Variables
 Key environment variables used across examples:
@@ -180,7 +198,8 @@ cp example.env .env
 
 ## Example Categories
 
-- **🔬 Core Pipeline**: Complete knowledge graph processing workflows
+- **🔬 Core Pipeline**: Complete knowledge graph processing workflows (PPR, Communities, AnalyseGraph, RagnoPipelineDemo)
+- **🤖 Advanced Algorithms**: Cutting-edge semantic algorithms (Hyde, VSOM) 
 - **🚀 Production**: Deployment-ready server and API examples  
 - **🧠 Memory**: Semantic memory and embedding demonstrations
 - **🔗 Integration**: LLM provider and API protocol examples
