@@ -22,10 +22,12 @@
  */
 
 import rdf from 'rdf-ext'
+import namespace from '@rdfjs/namespace'
 import GraphAnalytics from './GraphAnalytics.js'
 import CommunityDetection from './CommunityDetection.js'
 import PersonalizedPageRank from './PersonalizedPageRank.js'
 import Hyde from './Hyde.js'
+import VSOM from './VSOM.js'
 import { logger } from '../../Utils.js'
 
 export default class RagnoAlgorithms {
@@ -56,6 +58,7 @@ export default class RagnoAlgorithms {
         this.communityDetection = new CommunityDetection(this.options)
         this.personalizedPageRank = new PersonalizedPageRank(this.options)
         this.hyde = new Hyde(this.options)
+        this.vsom = new VSOM(this.options)
         
         this.stats = {
             lastFullAnalysis: null,
@@ -279,6 +282,12 @@ export default class RagnoAlgorithms {
                     logger.info('Hyde algorithm requires LLM handler - use runHydeGeneration method')
                     break
                     
+                case 'vsom':
+                case 'clustering':
+                    // VSOM requires different parameters - would need entity data and embeddings
+                    logger.info('VSOM algorithm requires entity data and embeddings - use runEntityClustering method')
+                    break
+                    
                 default:
                     logger.warn(`Unknown algorithm: ${algorithm}`)
             }
@@ -388,6 +397,53 @@ export default class RagnoAlgorithms {
     }
 
     /**
+     * Run entity clustering using VSOM
+     * @param {Array} entities - Array of entities to cluster
+     * @param {Object} embeddingHandler - Embedding handler for vector generation
+     * @param {Object} [options] - VSOM options
+     * @returns {Promise<Object>} Clustering results
+     */
+    async runEntityClustering(entities, embeddingHandler, options = {}) {
+        logger.info('Running VSOM entity clustering...')
+        
+        const opts = { ...this.options, ...options }
+        
+        // Load entities into VSOM
+        const loadResults = await this.vsom.loadFromEntities(entities, embeddingHandler, opts)
+        
+        // Train the VSOM
+        const trainingResults = await this.vsom.train(opts)
+        
+        // Generate clusters
+        const clusters = this.vsom.getClusters(opts.clusterThreshold)
+        
+        return {
+            loadResults,
+            trainingResults,
+            clusters,
+            nodeMappings: this.vsom.getNodeMappings(),
+            topology: this.vsom.getTopology()
+        }
+    }
+
+    /**
+     * Run VSOM analysis on dataset
+     * @param {Dataset} dataset - RDF dataset containing entities
+     * @param {Object} embeddingHandler - Embedding handler for vector generation
+     * @param {Object} [options] - Analysis options
+     * @returns {Promise<Object>} VSOM analysis results
+     */
+    async runVSOMAnalysis(dataset, embeddingHandler, options = {}) {
+        logger.info('Running VSOM analysis on RDF dataset...')
+        
+        // Extract entities from dataset
+        const entities = this.extractEntitiesFromDataset(dataset)
+        
+        // Run clustering
+        return await this.runEntityClustering(entities, embeddingHandler, options)
+    }
+
+    /**
      * Get comprehensive statistics from all algorithm modules
      * @returns {Object} Combined statistics
      */
@@ -397,7 +453,8 @@ export default class RagnoAlgorithms {
             graphAnalytics: this.graphAnalytics.getStatistics(),
             communityDetection: this.communityDetection.getStatistics(),
             personalizedPageRank: this.personalizedPageRank.getStatistics(),
-            hyde: this.hyde.getStatistics()
+            hyde: this.hyde.getStatistics(),
+            vsom: this.vsom.getStatistics()
         }
     }
     
@@ -413,6 +470,47 @@ export default class RagnoAlgorithms {
         
         logger.info('Algorithm statistics reset')
     }
+
+    /**
+     * Extract entities from RDF dataset (helper method)
+     * @param {Dataset} dataset - RDF dataset
+     * @returns {Array} Array of entities
+     */
+    extractEntitiesFromDataset(dataset) {
+        const entities = []
+        
+        // Find all ragno:Entity triples
+        const ragnoNS = this.namespaces?.ragno || namespace('http://purl.org/stuff/ragno/')
+        const rdfNS = this.namespaces?.rdf || namespace('http://www.w3.org/1999/02/22-rdf-syntax-ns#')
+        const rdfsNS = this.namespaces?.rdfs || namespace('http://www.w3.org/2000/01/rdf-schema#')
+        
+        const entityTriples = [...dataset.match(null, rdfNS('type'), ragnoNS('Entity'))]
+        
+        for (const triple of entityTriples) {
+            const entityUri = triple.subject
+            
+            // Get entity properties
+            const labelTriples = [...dataset.match(entityUri, rdfsNS('label'), null)]
+            const contentTriples = [...dataset.match(entityUri, ragnoNS('content'), null)]
+            
+            const label = labelTriples[0]?.object.value || ''
+            const content = contentTriples[0]?.object.value || label
+            
+            if (content) {
+                entities.push({
+                    uri: entityUri.value,
+                    content: content,
+                    type: 'entity',
+                    metadata: {
+                        fromDataset: true
+                    }
+                })
+            }
+        }
+        
+        logger.debug(`Extracted ${entities.length} entities from dataset`)
+        return entities
+    }
 }
 
 // Export individual algorithm classes for direct use
@@ -420,5 +518,6 @@ export {
     GraphAnalytics,
     CommunityDetection,
     PersonalizedPageRank,
-    Hyde
+    Hyde,
+    VSOM
 }
