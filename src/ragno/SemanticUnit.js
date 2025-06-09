@@ -297,6 +297,22 @@ export default class SemanticUnit extends RDFElement {
     }
     
     /**
+     * Add an entity mention to this semantic unit as an RDF triple
+     * @param {string} entityURI - The URI of the mentioned entity
+     * @param {number} [relevance=1.0] - Optional relevance/confidence score
+     */
+    addEntityMention(entityURI, relevance = 1.0) {
+        // Add ragno:mention triple
+        const mentionPredicate = this.ns.properties.mention || this.ns.ex('mention') || rdf.namedNode('http://hyperdata.it/ontologies/ragno#mention');
+        this.addTriple(mentionPredicate, rdf.namedNode(entityURI));
+        // Optionally, add a relevance/confidence triple (custom property)
+        if (relevance !== undefined && !isNaN(relevance)) {
+            const relPredicate = this.ns.properties.mentionRelevance || this.ns.ex('mentionRelevance') || rdf.namedNode('http://hyperdata.it/ontologies/ragno#mentionRelevance');
+            this.addTriple(relPredicate, rdf.literal(relevance.toString(), this.ns.xsd.double));
+        }
+    }
+    
+    /**
      * Normalize different entity reference formats to NamedNode
      * @private
      * @param {Entity|NamedNode|string} entity - Entity reference

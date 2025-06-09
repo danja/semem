@@ -18,6 +18,13 @@ import NamespaceManager from '../core/NamespaceManager.js'
 import { logger } from '../../Utils.js'
 
 export default class RDFElement {
+    /**
+     * Get the URI of this element
+     * @returns {string} The URI string
+     */
+    getURI() {
+        return this.uri;
+    }
     constructor(options = {}) {
         // Initialize namespace manager
         this.ns = new NamespaceManager(options)
@@ -409,5 +416,14 @@ export default class RDFElement {
         }
         
         return cloned
+    }
+    /**
+     * Export all triples of this element to a target dataset
+     * @param {Dataset} targetDataset - The RDF-Ext dataset to export to
+     */
+    exportToDataset(targetDataset) {
+        for (const quad of this.getTriples()) {
+            targetDataset.add(quad)
+        }
     }
 }

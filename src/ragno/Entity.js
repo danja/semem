@@ -272,6 +272,16 @@ export default class Entity extends RDFElement {
     }
     
     /**
+     * Add a source document to this entity as an RDF triple
+     * @param {string} source - The source document URI or string
+     */
+    addSource(source) {
+        const sourcePredicate = this.ns.properties.hasSourceDocument || this.ns.ex('hasSourceDocument') || rdf.namedNode('http://hyperdata.it/ontologies/ragno#hasSourceDocument');
+        const sourceNode = typeof source === 'string' ? rdf.namedNode(source) : source;
+        this.addTriple(sourcePredicate, sourceNode);
+    }
+    
+    /**
      * Normalize different entity reference formats to NamedNode
      * @private
      * @param {Entity|NamedNode|string} entity - Entity reference
@@ -436,5 +446,13 @@ export default class Entity extends RDFElement {
         }
         
         return cloned
+    }
+    
+    /**
+     * Get the preferred label (SKOS prefLabel) for this entity
+     * @returns {string|null} The preferred label, or null if not set
+     */
+    getPreferredLabel() {
+        return this.getPrefLabel ? this.getPrefLabel() : null;
     }
 }
