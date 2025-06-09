@@ -478,4 +478,141 @@ export default class SPARQLStore extends BaseStore {
             await this.rollbackTransaction()
         }
     }
+
+    /**
+     * Store an entity or memory item with embedding
+     * @param {Object} data - Data to store (must have id, embedding, etc.)
+     */
+    async store(data) {
+        if (!data || !data.id) {
+            throw new Error('Data must have an id field')
+        }
+
+        const entityUri = `<${data.id}>`
+        
+        const insertQuery = `
+            PREFIX ragno: <http://purl.org/stuff/ragno/>
+            PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+            PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+            PREFIX dcterms: <http://purl.org/dc/terms/>
+
+            INSERT DATA {
+                GRAPH <${this.graphName}> {
+                    ${entityUri} a ragno:Element ;
+                        ragno:content "${this._escapeSparqlString(data.response || data.content || '')}" ;
+                        skos:prefLabel "${this._escapeSparqlString(data.prompt || '')}" ;
+                        ragno:embedding "${this._escapeSparqlString(JSON.stringify(data.embedding || []))}" ;
+                        dcterms:created "${new Date().toISOString()}"^^xsd:dateTime ;
+                        ragno:timestamp "${data.timestamp || new Date().toISOString()}" .
+                    ${data.concepts ? data.concepts.map(concept => 
+                        `${entityUri} ragno:connectsTo "${this._escapeSparqlString(concept)}" .`
+                    ).join('\n') : ''}
+                    ${data.metadata ? Object.entries(data.metadata).map(([key, value]) =>
+                        `${entityUri} ragno:${key} "${this._escapeSparqlString(String(value))}" .`
+                    ).join('\n') : ''}
+                }
+            }
+        `
+
+        await this._executeSparqlUpdate(insertQuery, this.endpoint.update)
+        logger.info(`Stored entity ${data.id} in SPARQL store`)
+    }
+
+    /**
+     * Search for similar items using basic string matching
+     * @param {Array<number>} queryEmbedding - Query embedding vector
+     * @param {number} limit - Maximum number of results
+     * @param {number} threshold - Similarity threshold (not used in this basic implementation)
+     * @returns {Array<Object>} Search results
+     */
+    async search(queryEmbedding, limit = 10, threshold = 0.3) {
+        const searchQuery = `
+            PREFIX ragno: <http://purl.org/stuff/ragno/>
+            PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+
+            SELECT ?entity ?prompt ?content ?embedding ?timestamp ?type
+            FROM <${this.graphName}>
+            WHERE {
+                ?entity a ragno:Element ;
+                    skos:prefLabel ?prompt ;
+                    ragno:content ?content ;
+                    ragno:embedding ?embedding ;
+                    ragno:timestamp ?timestamp .
+                OPTIONAL { ?entity ragno:type ?type }
+            }
+            LIMIT ${limit}
+        `
+
+        try {
+            const result = await this._executeSparqlQuery(searchQuery, this.endpoint.query)
+            const searchResults = []
+
+            for (const binding of result.results.bindings) {
+                try {
+                    let embedding = []
+                    if (binding.embedding?.value && binding.embedding.value !== 'undefined') {
+                        try {
+                            embedding = JSON.parse(binding.embedding.value.trim())
+                        } catch (embeddingError) {
+                            logger.warn('Invalid embedding format:', embeddingError)
+                        }
+                    }
+
+                    // Simple similarity calculation (cosine similarity)
+                    let similarity = 0.5 // Default similarity
+                    if (embedding.length === queryEmbedding.length && embedding.length > 0) {
+                        similarity = this._calculateCosineSimilarity(queryEmbedding, embedding)
+                    }
+
+                    if (similarity >= threshold) {
+                        searchResults.push({
+                            id: binding.entity.value,
+                            prompt: binding.prompt.value,
+                            response: binding.content.value,
+                            similarity: similarity,
+                            timestamp: binding.timestamp.value,
+                            metadata: {
+                                type: binding.type?.value || 'unknown'
+                            }
+                        })
+                    }
+                } catch (parseError) {
+                    logger.error('Failed to parse search result:', parseError, binding)
+                }
+            }
+
+            // Sort by similarity (highest first)
+            searchResults.sort((a, b) => b.similarity - a.similarity)
+            
+            logger.info(`Found ${searchResults.length} similar items`)
+            return searchResults.slice(0, limit)
+        } catch (error) {
+            logger.error('Error searching:', error)
+            return []
+        }
+    }
+
+    /**
+     * Calculate cosine similarity between two vectors
+     * @param {Array<number>} vecA - First vector
+     * @param {Array<number>} vecB - Second vector  
+     * @returns {number} Similarity score between 0 and 1
+     */
+    _calculateCosineSimilarity(vecA, vecB) {
+        if (vecA.length !== vecB.length) return 0
+
+        let dotProduct = 0
+        let normA = 0
+        let normB = 0
+
+        for (let i = 0; i < vecA.length; i++) {
+            dotProduct += vecA[i] * vecB[i]
+            normA += vecA[i] * vecA[i]
+            normB += vecB[i] * vecB[i]
+        }
+
+        if (normA === 0 || normB === 0) return 0
+
+        return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB))
+    }
 }

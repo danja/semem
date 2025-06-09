@@ -88,6 +88,14 @@ Semem has a layered architecture with the following key components:
    - `ClientConnector`: Base connector class
    - Provider-specific connectors (Ollama, Claude, etc.)
 
+6. **Ragno Layer (Knowledge Graph Integration)**
+   - `Entity`: RDF-based entities extracted from text
+   - `SemanticUnit`: Independent semantic units from corpus decomposition  
+   - `Relationship`: First-class relationship nodes between entities
+   - `RDFGraphManager`: Manages RDF graph operations
+   - `decomposeCorpus`: Main function for text-to-RDF decomposition
+   - Uses Ragno vocabulary (http://purl.org/stuff/ragno/) for RDF modeling
+
 ## Requirements
 
 - Node.js 20.11.0+
@@ -102,3 +110,36 @@ Semem has a layered architecture with the following key components:
 - Use appropriate storage backend for the specific use case
 - Respect semantic versioning in any changes or contributions
 - Follow the existing coding patterns for new functionality
+
+## Common Issues and Solutions
+
+### LLMHandler Method Names
+- Use `generateResponse(prompt, context, options)` for chat completion
+- Use `extractConcepts(text)` for concept extraction
+- Do NOT use `generateCompletion()` - this method doesn't exist
+
+### Entity Constructor Patterns
+- Entity constructor: `new Entity({ name, isEntryPoint, subType, ... })`
+- Do NOT pass `rdfManager` as first parameter to Entity constructor
+- Entity methods: `getPrefLabel()`, `isEntryPoint()`, `getSubType()`
+
+### SPARQLStore Methods
+- Use `store(data)` to save entities/memory items with embeddings
+- Use `search(queryEmbedding, limit, threshold)` for similarity search
+- Data format: `{ id, prompt, response, embedding, concepts, metadata }`
+- SPARQLStore supports cosine similarity search with embedded vectors
+
+### Ragno Integration
+- Use `decomposeCorpus(textChunks, llmHandler, options)` for text decomposition
+- Returns: `{ units, entities, relationships, dataset }`
+- Ragno classes follow RDF-Ext patterns with proper ontology compliance
+- All Ragno elements export to RDF dataset via `exportToDataset(dataset)`
+
+### Ollama Models
+- Embedding model: `nomic-embed-text` (1536 dimensions)
+- Chat model: `qwen2:1.5b` (commonly available, fast)
+- Verify models are installed: `ollama list`
+
+### Example Workflows
+- See `examples/MistralExample.js` for complete Ragno pipeline demo
+- Demonstrates: corpus decomposition → entity extraction → SPARQL storage → retrieval

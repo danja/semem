@@ -90,10 +90,10 @@ export async function decomposeCorpus(textChunks, llmHandler, options = {}) {
 
           if (!entity) {
             // Create new Entity
-            entity = new Entity(rdfManager, {
+            entity = new Entity({
               name: entityData.name,
               isEntryPoint: entityData.isEntryPoint || false,
-              type: entityData.type || 'general',
+              subType: entityData.type || 'general',
               confidence: entityData.confidence || 1.0,
               alternativeLabels: entityData.alternatives || [],
               source: chunk.source
@@ -133,7 +133,7 @@ export async function decomposeCorpus(textChunks, llmHandler, options = {}) {
         const targetEntity = entitiesMap.get(relData.target)
 
         if (sourceEntity && targetEntity) {
-          const relationship = new Relationship(rdfManager, {
+          const relationship = new Relationship({
             id: `rel_${relationships.length}`,
             sourceEntity: sourceEntity.getURI(),
             targetEntity: targetEntity.getURI(),
@@ -214,7 +214,7 @@ Return format: ["unit1", "unit2", "unit3"]
 Semantic units:`
 
   try {
-    const response = await llmHandler.generateCompletion(prompt, {
+    const response = await llmHandler.generateResponse(prompt, '', {
       max_tokens: 1000,
       temperature: 0.1
     })
@@ -247,7 +247,7 @@ async function generateUnitSummary(unitText, llmHandler) {
 Summary:`
 
   try {
-    const summary = await llmHandler.generateCompletion(prompt, {
+    const summary = await llmHandler.generateResponse(prompt, '', {
       max_tokens: 100,
       temperature: 0.1
     })
@@ -402,7 +402,7 @@ async function createInterUnitRelationships(units, dataset, rdfManager) {
 
     // Create a "follows" relationship
     const relationshipId = `unit_rel_${i}`
-    const relationship = new Relationship(rdfManager, {
+    const relationship = new Relationship({
       id: relationshipId,
       sourceEntity: currentUnit.getURI(),
       targetEntity: nextUnit.getURI(),

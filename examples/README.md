@@ -13,6 +13,12 @@ cp example.env .env
 
 ## Core Ragno Pipeline Examples
 
+### PPR.js
+```bash
+node examples/PPR.js
+```
+Comprehensive demonstration of PersonalizedPageRank algorithm for semantic knowledge graph analysis. Creates a sample AI research knowledge graph with entities (researchers, concepts, institutions, papers), runs various PPR analyses including basic, shallow vs deep traversal, multi-entry point queries, and result combination. Shows how PPR identifies semantically related nodes, discovers cross-domain connections, and exports results to RDF format for integration.
+
 ### RagnoPipelineDemo.js
 ```bash
 node examples/RagnoPipelineDemo.js
