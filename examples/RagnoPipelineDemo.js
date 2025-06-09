@@ -287,7 +287,7 @@ async function main() {
         logger.info('⚙️  Creating vector representations for semantic search...')
         const startEmbedding = Date.now()
         const enrichmentResult = await enrichWithEmbeddings(knowledgeGraph, embeddingHandler, { 
-            similarityThreshold: 0.7, // High-quality similarity links
+            similarityThreshold: 0.5, // Lower threshold to capture more relationships
             batchSize: 5,
             maxElements: 1000
         })

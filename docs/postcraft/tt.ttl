@@ -39,12 +39,12 @@
     :creatorURI <http://danny.ayers.name/me> .
 
 :storeArticle a :ConfigSet ;
-:loglevel "debug" ;
+ :loglevel "debug" ;
     :delay "100" ;
     :dataBlock "contentBlocks" ;
     :templateFilename "system/sparql-templates/store-article.njk" ;
     :endpointSettings "system/endpoints.json" ;
-    :graph "http://hyperdata.it" .
+    :graph <http://hyperdata.it/> .
 
 ###########################
 ### for sparqlstore-to-html
@@ -52,7 +52,7 @@
 :resultIterator a :ConfigSet ;
     :forEach "queryResults.results.bindings" ;
     :remove "queryResults" ;
-    :graph <http://hyperdata.it> .
+    :graph <http://hyperdata.it/> .
 
 :prepArticle a :ConfigSet  ;
     :remove "queryResults" ;
@@ -78,16 +78,16 @@
 :selectArticles a :ConfigSet ;
     :templateFilename "system/sparql-templates/select-articles.njk" ;
     :endpointSettings "system/endpoints.json" ;
-        :graph <http://hyperdata.it> .
+        :graph <http://hyperdata.it/> .
 
 :updateArticleHTML a :ConfigSet ;
-:loglevel "debug" ;
+#:loglevel "debug" ;
     :delay "100" ;
     :dataBlock "contentBlocks" ;
     :escape true ;
     :templateFilename "system/sparql-templates/save-html-chunk.njk" ;
     :endpointSettings "system/endpoints.json" ;
-         :graph <http://hyperdata.it> .
+         :graph <http://hyperdata.it/> .
 
 
 :articleContentTemplate a :ConfigSet ;
@@ -121,12 +121,12 @@
 
 
 :recordRendering a :ConfigSet ;
-:loglevel "debug" ;
+#:loglevel "debug" ;
     :delay "100" ;
     :dataBlock "contentBlocks" ;
     :templateFilename "system/sparql-templates/record-rendering.njk" ;
     :endpointSettings "system/endpoints.json" ;
-        :graph <http://hyperdata.it> .
+        :graph <http://hyperdata.it/> .
 
 
 
@@ -136,7 +136,7 @@
 :recentArticles a :ConfigSet ;
     :templateFilename "system/sparql-templates/recent-articles.njk" ;
     :endpointSettings "system/endpoints.json" ;
-        :graph <http://hyperdata.it> .
+        :graph <http://hyperdata.it/> .
 
 :indexResultIterator a :ConfigSet ;
   :forEach "queryResults.results.bindings" .

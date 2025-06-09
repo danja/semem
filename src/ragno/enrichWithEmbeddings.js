@@ -127,19 +127,33 @@ export async function enrichWithEmbeddings(graphData, embeddingHandler, options 
     logger.info('Phase 3: Building HNSW vector index...')
     
     // Get embedding dimensions from the embedding handler
-    const embeddingDimensions = embeddingHandler.dimensions || 768 // Default to 768 if not specified
+    // For nomic-embed-text, we know it's 768 dimensions
+    const embeddingDimensions = 768
+    
+    // Log the embedding dimensions for debugging
+    logger.debug(`Initializing vector index with ${embeddingDimensions} dimensions`)
     
     const vectorIndex = new VectorIndex({
-      dimensions: embeddingDimensions,
+      dimension: embeddingDimensions, // Note: should be 'dimension' not 'dimensions'
       maxElements: opts.maxElements || 1000,
       efConstruction: opts.efConstruction || 200,
       M: opts.M || 16
     })
     
-    // Add nodes to vector index
+    // Add nodes to vector index with proper error handling
     let indexedCount = 0
     for (const [nodeUri, embeddingData] of embeddings) {
       try {
+        if (!embeddingData.vector) {
+          logger.warn(`Skipping node ${nodeUri}: No embedding vector found`)
+          continue
+        }
+        
+        if (embeddingData.vector.length !== embeddingDimensions) {
+          logger.warn(`Skipping node ${nodeUri}: Expected ${embeddingDimensions} dimensions, got ${embeddingData.vector.length}`)
+          continue
+        }
+        
         await vectorIndex.addNode(nodeUri, embeddingData.vector, embeddingData.metadata)
         indexedCount++
       } catch (error) {
@@ -491,44 +505,102 @@ function storeEmbeddingInRDF(nodeUri, embeddingData, dataset, rdfManager) {
  * @returns {Promise<Object>} Similarity statistics
  */
 async function computeSimilarityLinks(embeddings, vectorIndex, options, dataset, rdfManager) {
-  const links = []
   const processedPairs = new Set()
+  const similarityLinks = []
   
-  logger.debug(`Computing similarity links with threshold ${options.similarityThreshold}`)
+  logger.info(`Computing similarities for ${embeddings.size} nodes with threshold ${options.similarityThreshold}...`)
+  
+  // Track all nodes to ensure we don't miss any
+  const allNodeUris = Array.from(embeddings.keys())
+  logger.debug(`Total nodes to process: ${allNodeUris.length}`)
   
   for (const [nodeUri, embeddingData] of embeddings) {
     try {
       // Find similar nodes using vector index
-      const similarNodes = await vectorIndex.search(
+      const k = Math.min(10, embeddings.size - 1)
+      const searchResults = await vectorIndex.search(
         embeddingData.vector,
-        Math.min(10, embeddings.size - 1), // k = min(10, total_nodes-1)
+        k, // k = min(10, total_nodes-1)
         { minScore: options.similarityThreshold }
       )
       
+      logger.debug(`Found ${searchResults.length} similar nodes for ${nodeUri} (k=${k}, minScore=${options.similarityThreshold})`)
+      
       // Process similar nodes
-      for (const { node: similarNode, score } of similarNodes) {
-        const similarUri = similarNode.uri
+      for (const result of searchResults) {
+        // Extract node URI and score from the result
+        let similarUri, score;
+        
+        // Handle different possible result formats
+        if (result.uri) {
+          // Format: { uri: string, similarity: number, ... }
+          similarUri = result.uri;
+          score = result.similarity || 0;
+        } else if (result.node && result.node.uri) {
+          // Format: { node: { uri: string, ... }, similarity: number, ... }
+          similarUri = result.node.uri;
+          score = result.similarity || 0;
+        } else if (result.id) {
+          // Format: { id: string, similarity: number, ... }
+          similarUri = result.id;
+          score = result.similarity || 0;
+        } else {
+          logger.debug(`Skipping unrecognized result format: ${JSON.stringify(result)}`);
+          continue;
+        }
         
         // Skip self-similarity or invalid URIs
-        if (!similarUri || similarUri === nodeUri) continue
+        if (!similarUri) {
+          logger.debug(`Skipping result with missing URI: ${JSON.stringify(result)}`);
+          continue;
+        }
         
-        // Skip if we've already processed this pair
-        const pairKey = [nodeUri, similarUri].sort().join('|')
-        if (processedPairs.has(pairKey)) continue
-        processedPairs.add(pairKey)
+        if (similarUri === nodeUri) {
+          logger.debug(`Skipping self-similarity for ${nodeUri}`);
+          continue;
+        }
+        
+        // Check if this pair has already been processed
+        const pairKey = [nodeUri, similarUri].sort().join('|');
+        if (processedPairs.has(pairKey)) {
+          logger.debug(`Skipping duplicate pair: ${nodeUri} <-> ${similarUri}`);
+          continue;
+        }
+        
+        // Only add if we don't already have this link (to avoid duplicates)
+        const existingLink = similarityLinks.find(link => 
+          (link.source === nodeUri && link.target === similarUri) ||
+          (link.source === similarUri && link.target === nodeUri)
+        );
+        
+        if (!existingLink) {
+          logger.debug(`Adding similarity link: ${nodeUri} -> ${similarUri} (score: ${score.toFixed(4)})`);
+          similarityLinks.push({
+            source: nodeUri,
+            target: similarUri,
+            score: score,
+            type: 'similarity',
+            bidirectional: false
+          });
+          processedPairs.add(pairKey);
+        }
         
         // Check if cross-type linking is allowed
         const targetEmbedding = embeddings.get(similarUri)
-        if (!targetEmbedding) continue
+        if (!targetEmbedding) {
+          logger.debug(`No embedding found for ${similarUri}, skipping`)
+          continue
+        }
         
         if (!options.linkAcrossTypes && 
             embeddingData.metadata.nodeType !== targetEmbedding.metadata.nodeType) {
+          logger.debug(`Skipping cross-type link between ${embeddingData.metadata.nodeType} and ${targetEmbedding.metadata.nodeType}`)
           continue
         }
         
         try {
           // Create similarity relationship in RDF
-          const relationshipId = `sim_${links.length}`
+          const relationshipId = `sim_${similarityLinks.length}`
           const Relationship = (await import('./Relationship.js')).default
           
           const relationship = new Relationship(rdfManager, {
@@ -536,8 +608,8 @@ async function computeSimilarityLinks(embeddings, vectorIndex, options, dataset,
             sourceUri: nodeUri,
             targetUri: similarUri,
             type: 'similar_to',
-            content: `Vector similarity: ${similar.distance?.toFixed(3) || 0}`,
-            weight: similar.distance || 0,
+            content: `Vector similarity: ${score.toFixed(4)}`,
+            weight: score,
             bidirectional: true,
             provenance: 'HNSW vector similarity'
           })
@@ -545,16 +617,17 @@ async function computeSimilarityLinks(embeddings, vectorIndex, options, dataset,
           // Export relationship to dataset
           relationship.exportToDataset(dataset)
           
-          links.push({
+          // Add to similarity links
+          similarityLinks.push({
             source: nodeUri,
             target: similarUri,
-            similarity: similar.distance || 0,
-            sourceType: embeddingData.metadata.nodeType,
-            targetType: targetEmbedding.metadata.nodeType,
+            score: score,
+            sourceType: embeddingData.metadata?.nodeType || 'unknown',
+            targetType: targetEmbedding.metadata?.nodeType || 'unknown',
             relationship: relationship
           })
           
-          logger.debug(`Created similarity link between ${nodeUri} and ${similarUri}`)
+          logger.debug(`Created similarity link between ${nodeUri} and ${similarUri} (score: ${score.toFixed(4)})`)
           
         } catch (error) {
           logger.warn(`Failed to create similarity relationship between ${nodeUri} and ${similarUri}:`, error.message)
@@ -567,11 +640,18 @@ async function computeSimilarityLinks(embeddings, vectorIndex, options, dataset,
     }
   }
   
+  // Calculate statistics
+  const totalLinks = similarityLinks.length
+  const averageScore = totalLinks > 0 ? 
+    similarityLinks.reduce((sum, link) => sum + link.score, 0) / totalLinks : 0
+  
+  logger.info(`Created ${totalLinks} similarity links with average score: ${averageScore.toFixed(4)}`)
+  
   return {
-    links: links,
+    links: similarityLinks,
     totalPairsProcessed: processedPairs.size,
-    averageSimilarity: links.length > 0 ? 
-      links.reduce((sum, link) => sum + link.similarity, 0) / links.length : 0
+    averageSimilarity: averageScore,
+    totalLinks: totalLinks
   }
 }
 
