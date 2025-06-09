@@ -25,6 +25,12 @@ node examples/Communities.js
 ```
 Complete demonstration of Leiden community detection algorithm for identifying clusters in multi-domain knowledge graphs. Creates a complex social network spanning academia, industry, funding bodies, and research projects. Demonstrates resolution parameter tuning, community quality analysis, iterative refinement, and algorithm stability testing. Shows how communities align with expected domain boundaries and reveals cross-domain bridge relationships. Exports community structure to RDF format for semantic integration.
 
+### AnalyseGraph.js
+```bash
+node examples/AnalyseGraph.js
+```
+Comprehensive demonstration of GraphAnalytics algorithms for analyzing semantic knowledge graph structure. Creates a research collaboration network from RDF data and applies multiple analysis algorithms: K-core decomposition for identifying dense clusters, betweenness centrality for finding bridge nodes, connected components analysis for network fragmentation, and comprehensive graph statistics. Includes network topology comparison (star, ring, complete, random) and exports all analysis results to RDF format for semantic integration.
+
 ### RagnoPipelineDemo.js
 ```bash
 node examples/RagnoPipelineDemo.js

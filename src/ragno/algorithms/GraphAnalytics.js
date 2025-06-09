@@ -49,13 +49,14 @@ export default class GraphAnalytics {
             outDegree: new Map() // node URI -> number
         }
         
-        // Extract nodes (entities and other elements)
+        // Extract nodes (entities only, not relationships)
         for (const quad of dataset) {
             if (quad.predicate.value === 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type') {
                 const nodeUri = quad.subject.value
                 const nodeType = quad.object.value
                 
-                if (!graph.nodes.has(nodeUri)) {
+                // Only include Entity types, not Relationship types
+                if (nodeType === 'http://purl.org/stuff/ragno/Entity' && !graph.nodes.has(nodeUri)) {
                     graph.nodes.set(nodeUri, {
                         uri: nodeUri,
                         type: nodeType,
