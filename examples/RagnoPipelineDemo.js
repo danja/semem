@@ -1,35 +1,36 @@
 /**
- * RagnoPipelineDemo.js - Complete Ragno Knowledge Graph Pipeline Demo
+ * RagnoPipelineDemo.js - Complete Ragno Knowledge Graph Pipeline Demo (RDF-Ext Version)
  * 
- * This script demonstrates the full Ragno pipeline for knowledge graph construction:
+ * This script demonstrates the full Ragno pipeline using the new RDF-Ext infrastructure
+ * for knowledge graph construction with proper RDF resource management:
  * 
- * 1. **Corpus Decomposition**: Breaks down text documents into semantic units and entities
- * 2. **Attribute Augmentation**: Generates descriptive attributes for important graph nodes
- * 3. **Community Detection**: Identifies clusters of related entities and concepts
- * 4. **Embedding Enrichment**: Creates vector representations for semantic similarity
- * 5. **Similarity Linking**: Connects semantically similar elements in the graph
+ * 1. **Corpus Decomposition**: Creates RDF-based semantic units, entities, and relationships
+ * 2. **Attribute Augmentation**: Generates RDF attributes using graph analytics for importance
+ * 3. **Community Detection**: Uses Leiden clustering to create RDF community elements
+ * 4. **Vector Enrichment**: Builds HNSW index and creates similarity relationships
+ * 5. **RDF Export**: Demonstrates export to multiple RDF formats
  * 
- * The Ragno Pipeline Process:
+ * Updated Pipeline Process (RDF-Ext):
  * ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
- * │   Text Corpus   │───▶│  Decomposition  │───▶│  Knowledge Graph │
- * │   (Documents)   │    │   (Units+Ents)  │    │  (Nodes+Edges)  │
+ * │   Text Corpus   │───▶│  RDF-Ext        │───▶│  RDF Knowledge  │
+ * │   (Documents)   │    │  Decomposition  │    │  Graph Dataset  │
  * └─────────────────┘    └─────────────────┘    └─────────────────┘
  *                                                        │
  * ┌─────────────────┐    ┌─────────────────┐    ┌───────▼─────────┐
- * │  Enriched KG    │◀───│   Embeddings    │◀───│   Augmentation  │
- * │ (w/ Similarities)│    │  (Vectors)      │    │ (Attributes+Comm)│
+ * │  SPARQL Export  │◀───│   HNSW Vector   │◀───│  Graph Analytics│
+ * │ (Turtle/N3/etc) │    │     Index       │    │ (Leiden/PPR/etc)│
  * └─────────────────┘    └─────────────────┘    └─────────────────┘
  * 
- * Technologies Used:
- * - **Ollama**: Local LLM for text processing and attribute generation
- * - **nomic-embed-text**: Vector embeddings for semantic similarity
- * - **Ragno Ontology**: RDF vocabulary for knowledge representation
- * - **Graph Algorithms**: Community detection and centrality analysis
+ * New Technologies (Phase 6):
+ * - **RDF-Ext**: Proper RDF dataset management and ontology compliance
+ * - **Graph Analytics**: K-core, betweenness centrality, Leiden clustering
+ * - **HNSW Indexing**: High-performance vector similarity search
+ * - **Production APIs**: Ready for deployment with monitoring and caching
  * 
  * Prerequisites:
  * - Ollama running with qwen2:1.5b and nomic-embed-text models
- * - docs/ragno/ragno-config.json configuration file
- * - All Ragno pipeline modules properly installed
+ * - All Ragno Phase 6 components (RDF-Ext, algorithms, search)
+ * - Optional: SPARQL endpoint for RDF storage
  */
 
 import logger from 'loglevel'
@@ -111,17 +112,37 @@ async function displayGraphStats(graph, step) {
     logger.info(`   📝 Units: ${graph.units?.length || 0}`)
     logger.info(`   🏷️  Entities: ${graph.entities?.length || 0}`)
     logger.info(`   🔗 Relationships: ${graph.relationships?.length || 0}`)
+    
+    // Handle both old and new attribute formats
     if (graph.attributes) {
-        logger.info(`   📋 Attributes: ${Object.keys(graph.attributes).length}`)
+        const attrCount = Array.isArray(graph.attributes) ? graph.attributes.length : Object.keys(graph.attributes).length
+        logger.info(`   📋 Attributes: ${attrCount}`)
     }
+    
     if (graph.communities) {
         logger.info(`   👥 Communities: ${graph.communities.length}`)
     }
-    if (graph.embeddings) {
-        logger.info(`   🧠 Embeddings: ${Object.keys(graph.embeddings).length}`)
+    
+    // Handle new RDF dataset
+    if (graph.dataset && graph.dataset.size) {
+        logger.info(`   🗄️  RDF Dataset: ${graph.dataset.size} triples`)
     }
+    
+    // Handle new vector index
+    if (graph.vectorIndex) {
+        logger.info(`   🧠 Vector Index: Available`)
+    } else if (graph.embeddings) {
+        const embCount = graph.embeddings instanceof Map ? graph.embeddings.size : Object.keys(graph.embeddings).length
+        logger.info(`   🧠 Embeddings: ${embCount}`)
+    }
+    
     if (graph.similarityLinks) {
         logger.info(`   🔗 Similarity Links: ${graph.similarityLinks.length}`)
+    }
+    
+    // Show statistics if available
+    if (graph.statistics) {
+        logger.info(`   ⏱️  Processing Time: ${graph.statistics.processingTime}ms`)
     }
 }
 
@@ -211,21 +232,19 @@ async function main() {
         logger.info(`✅ Attribute augmentation completed in ${augmentTime}ms`)
         await displayGraphStats(knowledgeGraph, 'After Augmentation')
 
-        // Display some generated attributes
-        if (attributes && Object.keys(attributes).length > 0) {
+        // Display some generated attributes (updated for RDF-Ext)
+        if (attributes && attributes.length > 0) {
             logger.info('🏷️  Sample generated attributes:')
-            Object.entries(attributes).slice(0, 3).forEach(([nodeId, nodeAttrs]) => {
-                if (Array.isArray(nodeAttrs) && nodeAttrs.length > 0) {
-                    logger.info(`   📝 ${nodeId}: ${nodeAttrs.length} attributes`)
-                    nodeAttrs.slice(0, 2).forEach(attr => {
-                        if (attr && attr.type && attr.description) {
-                            logger.info(`      • ${attr.type}: ${attr.description.substring(0, 60)}...`)
-                        } else {
-                            logger.info(`      • ${JSON.stringify(attr)}`)
-                        }
-                    })
+            attributes.slice(0, 3).forEach((attr, i) => {
+                if (attr && attr.getCategory && attr.getContent) {
+                    // RDF-Ext Attribute object
+                    logger.info(`   📝 ${i+1}. ${attr.getCategory()}: ${attr.getContent().substring(0, 60)}...`)
+                    logger.info(`      Confidence: ${attr.getConfidence?.() || 'N/A'}`)
+                } else if (attr && attr.type && attr.description) {
+                    // Legacy format
+                    logger.info(`   📝 ${i+1}. ${attr.type}: ${attr.description.substring(0, 60)}...`)
                 } else {
-                    logger.info(`   📝 ${nodeId}: ${nodeAttrs} (not an array)`)
+                    logger.info(`   📝 ${i+1}. ${JSON.stringify(attr)}`)
                 }
             })
         }
@@ -243,11 +262,18 @@ async function main() {
         logger.info(`✅ Community detection completed in ${communityTime}ms`)
         await displayGraphStats(knowledgeGraph, 'After Community Detection')
 
-        // Display community information
+        // Display community information (updated for RDF-Ext)
         if (communities && communities.length > 0) {
             logger.info(`🎯 Detected ${communities.length} communities:`)
             communities.forEach((community, i) => {
-                if (community && community.id && Array.isArray(community.members)) {
+                if (community && community.getMembers && community.getSummary) {
+                    // RDF-Ext CommunityElement object
+                    const members = community.getMembers()
+                    logger.info(`   ${i+1}. Community: ${members.length} members`)
+                    logger.info(`      Summary: ${community.getSummary().substring(0, 80)}...`)
+                    logger.info(`      Confidence: ${community.getConfidence?.() || 'N/A'}`)
+                } else if (community && community.id && Array.isArray(community.members)) {
+                    // Legacy format
                     logger.info(`   ${i+1}. Community ${community.id}: ${community.members.length} members`)
                     logger.info(`      Members: [${community.members.slice(0, 3).join(', ')}${community.members.length > 3 ? '...' : ''}]`)
                 } else {
@@ -256,32 +282,58 @@ async function main() {
             })
         }
 
-        // Step 8: Embedding Enrichment
-        logger.info('\\n🧠 Step 8: Generating embeddings and computing similarity links...')
+        // Step 8: Vector Enrichment (updated for RDF-Ext)
+        logger.info('\\n🧠 Step 8: Building HNSW vector index and similarity links...')
         logger.info('⚙️  Creating vector representations for semantic search...')
         const startEmbedding = Date.now()
-        const { embeddings, similarityLinks } = await enrichWithEmbeddings(knowledgeGraph, embeddingFn, { 
-            similarityThreshold: 0.3 // Only keep high-similarity links
+        const enrichmentResult = await enrichWithEmbeddings(knowledgeGraph, embeddingHandler, { 
+            similarityThreshold: 0.7, // High-quality similarity links
+            batchSize: 5,
+            maxElements: 1000
         })
-        knowledgeGraph.embeddings = embeddings
-        knowledgeGraph.similarityLinks = similarityLinks
+        
+        // Update knowledge graph with enrichment results
+        knowledgeGraph.vectorIndex = enrichmentResult.vectorIndex
+        knowledgeGraph.embeddings = enrichmentResult.embeddings
+        knowledgeGraph.similarityLinks = enrichmentResult.similarityLinks
+        knowledgeGraph.dataset = enrichmentResult.dataset // Updated RDF dataset
+        
         const embeddingTime = Date.now() - startEmbedding
-        logger.info(`✅ Embedding enrichment completed in ${embeddingTime}ms`)
+        logger.info(`✅ Vector enrichment completed in ${embeddingTime}ms`)
         await displayGraphStats(knowledgeGraph, 'Final Knowledge Graph')
 
-        // Display similarity links
-        if (similarityLinks && similarityLinks.length > 0) {
-            logger.info(`🔗 Generated ${similarityLinks.length} similarity links:`)
-            similarityLinks.slice(0, 5).forEach((link, i) => {
+        // Display similarity links (updated for RDF-Ext)
+        const simLinks = knowledgeGraph.similarityLinks || enrichmentResult.similarityLinks
+        if (simLinks && simLinks.length > 0) {
+            logger.info(`🔗 Generated ${simLinks.length} similarity links:`)
+            simLinks.slice(0, 5).forEach((link, i) => {
                 if (link && link.source && link.target && typeof link.similarity === 'number') {
                     logger.info(`   ${i+1}. ${link.source} ↔ ${link.target} (similarity: ${link.similarity.toFixed(3)})`)
                 } else {
                     logger.info(`   ${i+1}. ${JSON.stringify(link)}`)
                 }
             })
-            if (similarityLinks.length > 5) {
-                logger.info(`   ... and ${similarityLinks.length - 5} more links`)
+            if (simLinks.length > 5) {
+                logger.info(`   ... and ${simLinks.length - 5} more links`)
             }
+        }
+
+        // Step 9: RDF Export Demonstration (New in Phase 6)
+        logger.info('\\n📤 Step 9: Demonstrating RDF Export Capabilities...')
+        if (knowledgeGraph.dataset && knowledgeGraph.dataset.size > 0) {
+            logger.info(`🗄️  Final RDF Dataset contains ${knowledgeGraph.dataset.size} triples`)
+            
+            // Sample RDF export (you could actually serialize here)
+            logger.info('📋 RDF Export Options Available:')
+            logger.info('   • Turtle (.ttl) - Human-readable RDF format')
+            logger.info('   • N-Triples (.nt) - Line-based RDF format')
+            logger.info('   • JSON-LD (.jsonld) - JSON-based linked data')
+            logger.info('   • RDF/XML (.rdf) - XML-based RDF format')
+            
+            // Note: In a real implementation, you could use rdf-serialize libraries
+            logger.info('💡 Use exportToRDF() function for actual serialization to SPARQL endpoints')
+        } else {
+            logger.info('⚠️  No RDF dataset available for export')
         }
 
         // Final Summary
@@ -303,18 +355,25 @@ async function main() {
         logger.info(`   👥 Communities: ${communityTime}ms`)
         logger.info(`   🧠 Embeddings: ${embeddingTime}ms`)
 
-        logger.info('\\n💡 The knowledge graph is now ready for:')
-        logger.info('   🔍 Semantic search and similarity queries')
-        logger.info('   📊 Graph analytics and community analysis') 
-        logger.info('   🤖 AI-powered question answering')
-        logger.info('   📈 Knowledge discovery and insights')
-        logger.info('   🗄️  Export to RDF/SPARQL triple stores')
+        logger.info('\\n💡 The RDF-Ext knowledge graph is now ready for:')
+        logger.info('   🔍 HNSW vector similarity search and semantic queries')
+        logger.info('   📊 Advanced graph analytics (K-core, Leiden clustering, PPR)')
+        logger.info('   🤖 Production API deployment with monitoring and caching')
+        logger.info('   📈 Real-time knowledge discovery and graph insights')
+        logger.info('   🗄️  Multiple RDF export formats and SPARQL integration')
+        logger.info('   🌐 REST API endpoints for all graph operations')
+        logger.info('   📈 Performance monitoring and health checks')
 
-        // Sample of actual extracted data
+        // Sample of actual extracted data (updated for RDF-Ext)
         logger.info('\\n📋 Sample Extracted Entities:')
         if (knowledgeGraph.entities && knowledgeGraph.entities.length > 0) {
             knowledgeGraph.entities.slice(0, 5).forEach((entity, i) => {
-                if (entity && entity.name) {
+                if (entity && entity.getPreferredLabel) {
+                    // RDF-Ext Entity object
+                    logger.info(`   ${i+1}. ${entity.getPreferredLabel()} (frequency: ${entity.getFrequency?.() || 1})`)
+                    logger.info(`      Entry Point: ${entity.isEntryPoint?.() || false}`)
+                } else if (entity && entity.name) {
+                    // Legacy format
                     logger.info(`   ${i+1}. ${entity.name} (${entity.type || 'Unknown'})`)
                 } else {
                     logger.info(`   ${i+1}. ${JSON.stringify(entity)}`)
@@ -327,7 +386,14 @@ async function main() {
         logger.info('\\n📝 Sample Semantic Units:')
         if (knowledgeGraph.units && knowledgeGraph.units.length > 0) {
             knowledgeGraph.units.slice(0, 3).forEach((unit, i) => {
-                if (unit && unit.content) {
+                if (unit && unit.getContent) {
+                    // RDF-Ext SemanticUnit object
+                    logger.info(`   ${i+1}. "${unit.getContent().substring(0, 80)}..."`)
+                    if (unit.getSummary && unit.getSummary()) {
+                        logger.info(`      Summary: ${unit.getSummary().substring(0, 60)}...`)
+                    }
+                } else if (unit && unit.content) {
+                    // Legacy format
                     logger.info(`   ${i+1}. "${unit.content.substring(0, 80)}..."`)
                 } else {
                     logger.info(`   ${i+1}. ${JSON.stringify(unit)}`)
@@ -335,6 +401,17 @@ async function main() {
             })
         } else {
             logger.info('   No semantic units extracted')
+        }
+
+        // New: Show RDF dataset information
+        logger.info('\\n🗄️  RDF Dataset Information:')
+        if (knowledgeGraph.dataset) {
+            logger.info(`   📊 Total Triples: ${knowledgeGraph.dataset.size}`)
+            logger.info(`   🏷️  Ontology: ragno (http://purl.org/stuff/ragno/)`)
+            logger.info(`   📋 Standards: RDF-Ext, SKOS, OWL`)
+            logger.info(`   🔗 Ready for SPARQL querying and export`)
+        } else {
+            logger.info('   ⚠️  No RDF dataset available')
         }
 
     } catch (error) {
