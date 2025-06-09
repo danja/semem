@@ -22,7 +22,7 @@ class CommunityElement {
     this.ns = rdfManager.getNamespaceManager()
     this.id = options.id || `community_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
     this.uri = this.ns.createURI('ragno', this.id)
-    
+
     // Core properties
     this.members = options.members || []
     this.summary = options.summary || ''
@@ -31,54 +31,54 @@ class CommunityElement {
     this.cohesionScore = options.cohesionScore || 0.0
     this.keywords = options.keywords || []
     this.provenance = options.provenance || 'Leiden community detection'
-    
+
     // Initialize as RDF resource
     this._initializeRDF()
   }
-  
+
   _initializeRDF() {
     const quad = this.rdfManager.createQuad
     this.dataset = rdf.dataset()
-    
+
     // Type declaration
     this.dataset.add(quad(
       this.uri,
       this.ns.rdf.type,
       this.ns.ragno('CommunityElement')
     ))
-    
+
     // Add as SKOS Concept
     this.dataset.add(quad(
       this.uri,
       this.ns.rdf.type,
       this.ns.skos.Concept
     ))
-    
+
     // Core properties
     this.dataset.add(quad(
       this.uri,
       this.ns.ragno('content'),
       this.rdfManager.createLiteral(this.summary)
     ))
-    
+
     this.dataset.add(quad(
       this.uri,
       this.ns.ragno('hasConfidence'),
       this.rdfManager.createLiteral(this.confidence, this.ns.xsd.float)
     ))
-    
+
     this.dataset.add(quad(
       this.uri,
       this.ns.ragno('modularityScore'),
       this.rdfManager.createLiteral(this.modularityScore, this.ns.xsd.float)
     ))
-    
+
     this.dataset.add(quad(
       this.uri,
       this.ns.ragno('cohesionScore'),
       this.rdfManager.createLiteral(this.cohesionScore, this.ns.xsd.float)
     ))
-    
+
     // Add member entities
     for (const memberUri of this.members) {
       this.dataset.add(quad(
@@ -87,7 +87,7 @@ class CommunityElement {
         memberUri
       ))
     }
-    
+
     // Add keywords
     for (const keyword of this.keywords) {
       this.dataset.add(quad(
@@ -96,14 +96,14 @@ class CommunityElement {
         this.rdfManager.createLiteral(keyword)
       ))
     }
-    
+
     // Provenance
     this.dataset.add(quad(
       this.uri,
       this.ns.ragno('provenance'),
       this.rdfManager.createLiteral(this.provenance)
     ))
-    
+
     // Timestamp
     this.dataset.add(quad(
       this.uri,
@@ -111,7 +111,7 @@ class CommunityElement {
       this.rdfManager.createLiteral(new Date().toISOString(), this.ns.xsd.dateTime)
     ))
   }
-  
+
   // Accessor methods
   getURI() { return this.uri }
   getMembers() { return this.members }
@@ -120,14 +120,14 @@ class CommunityElement {
   getModularityScore() { return this.modularityScore }
   getCohesionScore() { return this.cohesionScore }
   getKeywords() { return this.keywords }
-  
+
   // Export to external dataset
   exportToDataset(targetDataset) {
     for (const quad of this.dataset) {
       targetDataset.add(quad)
     }
   }
-  
+
   // Create overview attribute for this community
   createOverviewAttribute(rdfManager) {
     return Attribute.createOverviewAttribute(rdfManager, {
@@ -150,43 +150,43 @@ class CommunityElement {
 export async function aggregateCommunities(graphData, llmHandler, options = {}) {
   const startTime = Date.now()
   logger.info('Starting community detection and aggregation...')
-  
+
   const opts = {
     // Leiden algorithm parameters
     resolution: options.resolution || 1.0,
     minCommunitySize: options.minCommunitySize || 3,
     maxIterations: options.maxIterations || 100,
     randomSeed: options.randomSeed || 42,
-    
+
     // Summary generation
     generateSummaries: options.generateSummaries !== false,
     maxSummaryLength: options.maxSummaryLength || 300,
     includeKeywords: options.includeKeywords !== false,
-    
+
     // Quality control
     minModularityScore: options.minModularityScore || 0.1,
     minCohesionScore: options.minCohesionScore || 0.3,
-    
+
     ...options
   }
-  
+
   // Initialize RDF infrastructure
   const namespaceManager = new NamespaceManager()
   const rdfManager = new RDFGraphManager({ namespace: namespaceManager })
   const resultDataset = rdf.dataset()
-  
+
   // Copy existing dataset
   if (graphData.dataset) {
     for (const quad of graphData.dataset) {
       resultDataset.add(quad)
     }
   }
-  
+
   try {
     // Phase 1: Run Leiden community detection
     const communityDetection = new CommunityDetection()
-    const graph = communityDetection.buildGraphFromRDF(graphData.dataset)
-    
+    const graph = await communityDetection.buildGraphFromRDF(graphData.dataset)
+
     if (graph.nodes.size < opts.minCommunitySize) {
       logger.warn('Graph too small for meaningful community detection')
       return {
@@ -200,44 +200,44 @@ export async function aggregateCommunities(graphData, llmHandler, options = {}) 
         }
       }
     }
-    
+
     logger.info(`Running Leiden clustering on graph with ${graph.nodes.size} nodes and ${graph.edges.size} edges`)
-    
+
     const clusteringResults = communityDetection.computeLeidenClustering(graph, {
       resolution: opts.resolution,
       maxIterations: opts.maxIterations,
       randomSeed: opts.randomSeed
     })
-    
+
     logger.info(`Detected ${clusteringResults.communities.length} communities with modularity: ${clusteringResults.modularity.toFixed(3)}`)
-    
+
     // Phase 2: Filter and process communities
-    const validCommunities = clusteringResults.communities.filter(community => 
+    const validCommunities = clusteringResults.communities.filter(community =>
       community.members.length >= opts.minCommunitySize &&
       (clusteringResults.modularityScores?.get(community.id) || 0) >= opts.minModularityScore
     )
-    
+
     logger.info(`${validCommunities.length} communities meet quality thresholds`)
-    
+
     // Phase 3: Generate comprehensive summaries for each community
     const communityElements = []
     const attributes = []
-    
+
     for (const community of validCommunities) {
       logger.debug(`Processing community ${community.id} with ${community.members.length} members`)
-      
+
       // Gather community context
       const communityContext = await gatherCommunityContext(
-        community, 
-        graphData, 
+        community,
+        graphData,
         opts
       )
-      
+
       // Generate LLM summary
       let summary = ''
       let keywords = []
       let confidence = 0.5
-      
+
       if (opts.generateSummaries && communityContext.contextText) {
         const summaryData = await generateCommunitySummary(
           community,
@@ -245,17 +245,17 @@ export async function aggregateCommunities(graphData, llmHandler, options = {}) 
           llmHandler,
           opts
         )
-        
+
         if (summaryData) {
           summary = summaryData.summary
           keywords = summaryData.keywords
           confidence = summaryData.confidence
         }
       }
-      
+
       // Calculate community cohesion score
       const cohesionScore = calculateCommunityCohesion(community, graph)
-      
+
       // Create CommunityElement
       const communityElement = new CommunityElement(rdfManager, {
         id: `community_${community.id}`,
@@ -267,26 +267,26 @@ export async function aggregateCommunities(graphData, llmHandler, options = {}) 
         keywords: keywords,
         provenance: `Leiden clustering (resolution=${opts.resolution})`
       })
-      
+
       communityElements.push(communityElement)
       communityElement.exportToDataset(resultDataset)
-      
+
       // Create overview attribute for searchability
       if (summary) {
         const overviewAttribute = communityElement.createOverviewAttribute(rdfManager)
         attributes.push(overviewAttribute)
         overviewAttribute.exportToDataset(resultDataset)
       }
-      
+
       logger.debug(`Community ${community.id}: ${summary.length} char summary, ${keywords.length} keywords, cohesion: ${cohesionScore.toFixed(3)}`)
     }
-    
+
     // Phase 4: Create inter-community relationships
     await createInterCommunityRelationships(communityElements, resultDataset, rdfManager, graph)
-    
+
     const processingTime = Date.now() - startTime
     logger.info(`Community aggregation completed in ${processingTime}ms: ${communityElements.length} communities, ${attributes.length} attributes`)
-    
+
     return {
       communities: communityElements,
       attributes: attributes,
@@ -302,7 +302,7 @@ export async function aggregateCommunities(graphData, llmHandler, options = {}) 
         attributesGenerated: attributes.length
       }
     }
-    
+
   } catch (error) {
     logger.error('Community aggregation failed:', error)
     throw error
@@ -325,7 +325,7 @@ async function gatherCommunityContext(community, graphData, options) {
     contextText: '',
     evidence: []
   }
-  
+
   // Get member entity objects
   if (graphData.entities) {
     for (const entity of graphData.entities) {
@@ -334,46 +334,46 @@ async function gatherCommunityContext(community, graphData, options) {
       }
     }
   }
-  
+
   // Gather units that mention community entities
   if (graphData.units) {
     const memberLabels = context.memberEntities.map(e => e.getPreferredLabel().toLowerCase())
-    
+
     for (const unit of graphData.units) {
       const unitContent = unit.getContent().toLowerCase()
       const mentionsMembers = memberLabels.some(label => unitContent.includes(label))
-      
+
       if (mentionsMembers) {
         context.units.push(unit)
         context.evidence.push(unit.getURI())
-        
+
         if (context.contextText.length < options.maxSummaryLength * 3) {
           context.contextText += unit.getContent() + '\n\n'
         }
       }
     }
   }
-  
+
   // Gather relationships within the community
   if (graphData.relationships) {
     for (const relationship of graphData.relationships) {
       const sourceInCommunity = community.members.includes(relationship.getSourceEntity().value)
       const targetInCommunity = community.members.includes(relationship.getTargetEntity().value)
-      
+
       if (sourceInCommunity && targetInCommunity) {
         context.relationships.push(relationship)
         context.evidence.push(relationship.getURI())
       }
     }
   }
-  
+
   // Trim context if too long
   if (context.contextText.length > options.maxSummaryLength * 3) {
     context.contextText = context.contextText.substring(0, options.maxSummaryLength * 3) + '...'
   }
-  
+
   logger.debug(`Community ${community.id} context: ${context.memberEntities.length} entities, ${context.units.length} units, ${context.relationships.length} relationships`)
-  
+
   return context
 }
 
@@ -387,7 +387,7 @@ async function gatherCommunityContext(community, graphData, options) {
  */
 async function generateCommunitySummary(community, context, llmHandler, options) {
   const memberNames = context.memberEntities.map(e => e.getPreferredLabel()).join(', ')
-  
+
   const prompt = `Analyze this community of related entities and provide a comprehensive summary of their shared theme, domain, or context.
 
 Community Members: ${memberNames}
@@ -407,32 +407,32 @@ Summary:`
       max_tokens: 150,
       temperature: 0.1
     })
-    
+
     const summary = response.trim()
-    
+
     if (summary.length < 20) {
       logger.debug(`Generated community summary too short: ${summary.length} chars`)
       return null
     }
-    
+
     // Extract keywords from summary and member names
     const keywords = extractCommunityKeywords(summary, context.memberEntities)
-    
+
     // Calculate confidence based on context quality
     const confidence = calculateSummaryConfidence(context, summary)
-    
+
     return {
       summary: summary,
       keywords: keywords,
       confidence: confidence
     }
-    
+
   } catch (error) {
     logger.warn(`Failed to generate community summary:`, error.message)
-    
+
     // Fallback: create simple summary from member names
     const fallbackSummary = `Community of related entities including ${memberNames.slice(0, 3).join(', ')}${memberNames.length > 3 ? ' and others' : ''}.`
-    
+
     return {
       summary: fallbackSummary,
       keywords: context.memberEntities.slice(0, 3).map(e => e.getPreferredLabel()),
@@ -449,22 +449,22 @@ Summary:`
  */
 function extractCommunityKeywords(summary, memberEntities) {
   const keywords = new Set()
-  
+
   // Add member entity names as keywords
   for (const entity of memberEntities.slice(0, 5)) {
     keywords.add(entity.getPreferredLabel())
   }
-  
+
   // Extract significant words from summary
   const summaryWords = summary.toLowerCase()
     .replace(/[^\w\s]/g, ' ')
     .split(/\s+/)
     .filter(word => word.length > 3 && !isStopWord(word))
-  
+
   for (const word of summaryWords.slice(0, 3)) {
     keywords.add(word)
   }
-  
+
   return Array.from(keywords).slice(0, 8)
 }
 
@@ -491,26 +491,26 @@ function isStopWord(word) {
  */
 function calculateSummaryConfidence(context, summary) {
   let confidence = 0.3 // Base confidence
-  
+
   // Factor in community size
   if (context.memberEntities.length > 2) {
     confidence += Math.min(context.memberEntities.length * 0.1, 0.3)
   }
-  
+
   // Factor in context richness
   if (context.units.length > 0) {
     confidence += Math.min(context.units.length * 0.05, 0.2)
   }
-  
+
   if (context.relationships.length > 0) {
     confidence += Math.min(context.relationships.length * 0.05, 0.15)
   }
-  
+
   // Factor in summary quality
   if (summary.length > 100) {
     confidence += 0.1
   }
-  
+
   return Math.min(confidence, 1.0)
 }
 
@@ -524,20 +524,20 @@ function calculateCommunityCohesion(community, graph) {
   const members = new Set(community.members)
   let internalEdges = 0
   let totalPossibleEdges = 0
-  
+
   // Count internal edges vs total possible
   for (const member of members) {
     const memberEdges = graph.adjacencyList.get(member) || new Set()
-    
+
     for (const neighbor of memberEdges) {
       if (members.has(neighbor) && member < neighbor) { // Avoid double counting
         internalEdges++
       }
     }
   }
-  
+
   totalPossibleEdges = (members.size * (members.size - 1)) / 2
-  
+
   return totalPossibleEdges > 0 ? internalEdges / totalPossibleEdges : 0
 }
 
@@ -550,21 +550,21 @@ function calculateCommunityCohesion(community, graph) {
  */
 async function createInterCommunityRelationships(communities, dataset, rdfManager, graph) {
   logger.debug('Creating inter-community relationships...')
-  
+
   const Relationship = (await import('./Relationship.js')).default
   let relationshipCount = 0
-  
+
   // Find overlapping or connected communities
   for (let i = 0; i < communities.length; i++) {
     for (let j = i + 1; j < communities.length; j++) {
       const comm1 = communities[i]
       const comm2 = communities[j]
-      
+
       // Check for shared members (overlap)
-      const sharedMembers = comm1.getMembers().filter(member => 
+      const sharedMembers = comm1.getMembers().filter(member =>
         comm2.getMembers().includes(member)
       )
-      
+
       if (sharedMembers.length > 0) {
         // Create overlap relationship
         const relationship = new Relationship(rdfManager, {
@@ -576,12 +576,12 @@ async function createInterCommunityRelationships(communities, dataset, rdfManage
           weight: sharedMembers.length / Math.min(comm1.getMembers().length, comm2.getMembers().length),
           bidirectional: true
         })
-        
+
         relationship.exportToDataset(dataset)
         relationshipCount++
         continue
       }
-      
+
       // Check for inter-community connections
       let connectionCount = 0
       for (const member1 of comm1.getMembers()) {
@@ -592,11 +592,11 @@ async function createInterCommunityRelationships(communities, dataset, rdfManage
           }
         }
       }
-      
+
       if (connectionCount > 0) {
         // Create connection relationship
         const connectionStrength = connectionCount / (comm1.getMembers().length + comm2.getMembers().length)
-        
+
         if (connectionStrength > 0.1) { // Only create if significant connection
           const relationship = new Relationship(rdfManager, {
             id: `comm_connected_${i}_${j}`,
@@ -607,13 +607,13 @@ async function createInterCommunityRelationships(communities, dataset, rdfManage
             weight: connectionStrength,
             bidirectional: true
           })
-          
+
           relationship.exportToDataset(dataset)
           relationshipCount++
         }
       }
     }
   }
-  
+
   logger.debug(`Created ${relationshipCount} inter-community relationships`)
 }

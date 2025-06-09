@@ -25,47 +25,47 @@ export default class SemanticUnit extends RDFElement {
             ...options,
             type: 'unit'
         })
-        
+
         // Add ragno:Unit type
         this.addType(this.ns.classes.Unit)
-        
+
         // Set text content if provided
         if (options.text || options.content) {
             const content = options.text || options.content
             this.setContent(content)
         }
-        
+
         // Set summary if provided (as SKOS definition)
         if (options.summary) {
             this.setSummary(options.summary)
         }
-        
+
         // Set source document if provided
         if (options.source || options.sourceDocument) {
             this.setSourceDocument(options.source || options.sourceDocument)
         }
-        
+
         // Set sub-type if provided (e.g., "Fact", "Event", "Description")
         if (options.subType) {
             this.setSubType(options.subType)
         }
-        
+
         // Units are typically not entry points (entities are)
         this.setEntryPoint(options.isEntryPoint !== undefined ? options.isEntryPoint : false)
-        
+
         // Set position in source if provided
         if (options.position !== undefined) {
             this.setPosition(options.position)
         }
-        
+
         // Set length if provided
         if (options.length !== undefined) {
             this.setLength(options.length)
         }
-        
+
         logger.debug(`Created ragno:Unit: ${this.uri}`)
     }
-    
+
     /**
      * Set the main text content for this unit
      * @param {string} text - Text content
@@ -73,7 +73,7 @@ export default class SemanticUnit extends RDFElement {
     setText(text) {
         this.setContent(text)
     }
-    
+
     /**
      * Get the main text content of this unit
      * @returns {string|null} Text content
@@ -81,7 +81,7 @@ export default class SemanticUnit extends RDFElement {
     getText() {
         return this.getContent()
     }
-    
+
     /**
      * Set summary for this unit (stored as SKOS definition)
      * @param {string} summary - Summary text
@@ -91,7 +91,7 @@ export default class SemanticUnit extends RDFElement {
         this.removeTriple(this.ns.skosProperties.definition)
         this.addTriple(this.ns.skosProperties.definition, rdf.literal(summary, lang))
     }
-    
+
     /**
      * Get summary for this unit
      * @returns {string|null} Summary text
@@ -100,7 +100,7 @@ export default class SemanticUnit extends RDFElement {
         const quads = this.getTriplesWithPredicate(this.ns.skosProperties.definition)
         return quads.length > 0 ? quads[0].object.value : null
     }
-    
+
     /**
      * Set source document for this unit
      * @param {string|NamedNode} source - Source document URI or node
@@ -110,7 +110,7 @@ export default class SemanticUnit extends RDFElement {
         const sourceNode = typeof source === 'string' ? rdf.namedNode(source) : source
         this.addTriple(this.ns.properties.hasSourceDocument, sourceNode)
     }
-    
+
     /**
      * Get source document for this unit
      * @returns {NamedNode|null} Source document node
@@ -119,7 +119,7 @@ export default class SemanticUnit extends RDFElement {
         const quads = this.getTriplesWithPredicate(this.ns.properties.hasSourceDocument)
         return quads.length > 0 ? quads[0].object : null
     }
-    
+
     /**
      * Set position in source document
      * @param {number} position - Character position
@@ -128,7 +128,7 @@ export default class SemanticUnit extends RDFElement {
         this.removeTriple(this.ns.ex('position'))
         this.addTriple(this.ns.ex('position'), rdf.literal(position))
     }
-    
+
     /**
      * Get position in source document
      * @returns {number|null} Character position
@@ -137,7 +137,7 @@ export default class SemanticUnit extends RDFElement {
         const quads = this.getTriplesWithPredicate(this.ns.ex('position'))
         return quads.length > 0 ? parseInt(quads[0].object.value) : null
     }
-    
+
     /**
      * Set length of this unit in characters
      * @param {number} length - Character length
@@ -146,7 +146,7 @@ export default class SemanticUnit extends RDFElement {
         this.removeTriple(this.ns.ex('length'))
         this.addTriple(this.ns.ex('length'), rdf.literal(length))
     }
-    
+
     /**
      * Get length of this unit in characters
      * @returns {number|null} Character length
@@ -155,7 +155,7 @@ export default class SemanticUnit extends RDFElement {
         const quads = this.getTriplesWithPredicate(this.ns.ex('length'))
         return quads.length > 0 ? parseInt(quads[0].object.value) : null
     }
-    
+
     /**
      * Set vector embedding for this unit
      * @param {Array<number>} embedding - Vector embedding
@@ -166,7 +166,7 @@ export default class SemanticUnit extends RDFElement {
         const embeddingStr = JSON.stringify(embedding)
         this.addTriple(this.ns.ex('embedding'), rdf.literal(embeddingStr))
     }
-    
+
     /**
      * Get vector embedding for this unit
      * @returns {Array<number>|null} Vector embedding
@@ -183,7 +183,7 @@ export default class SemanticUnit extends RDFElement {
         }
         return null
     }
-    
+
     /**
      * Add a connection to an entity that this unit mentions
      * @param {Entity|NamedNode|string} entity - Entity reference
@@ -192,10 +192,10 @@ export default class SemanticUnit extends RDFElement {
     addEntityConnection(entity, relevanceScore) {
         const entityNode = this._normalizeEntityReference(entity)
         this.connectTo(entityNode, relevanceScore)
-        
+
         // Also add specific property for entity connections
         this.addTriple(this.ns.ex('mentionsEntity'), entityNode)
-        
+
         if (relevanceScore !== undefined) {
             // Create reified statement for relevance score
             const connection = rdf.namedNode(`${this.uri}/entityConnection/${Date.now()}`)
@@ -205,7 +205,7 @@ export default class SemanticUnit extends RDFElement {
             this.dataset.add(rdf.quad(connection, this.ns.ex('relevanceScore'), rdf.literal(relevanceScore)))
         }
     }
-    
+
     /**
      * Get all entities mentioned by this unit
      * @returns {Array<NamedNode>} Entity nodes
@@ -214,7 +214,7 @@ export default class SemanticUnit extends RDFElement {
         return this.getTriplesWithPredicate(this.ns.ex('mentionsEntity'))
             .map(quad => quad.object)
     }
-    
+
     /**
      * Add a connection to another semantic unit
      * @param {SemanticUnit|NamedNode|string} unit - Unit reference
@@ -224,7 +224,7 @@ export default class SemanticUnit extends RDFElement {
     addUnitConnection(unit, relationType, weight) {
         const unitNode = this._normalizeUnitReference(unit)
         this.connectTo(unitNode, weight)
-        
+
         if (relationType) {
             // Add typed connection
             const connection = rdf.namedNode(`${this.uri}/unitConnection/${Date.now()}`)
@@ -232,20 +232,20 @@ export default class SemanticUnit extends RDFElement {
             this.dataset.add(rdf.quad(connection, this.ns.rdf.predicate, this.ns.properties.connectsTo))
             this.dataset.add(rdf.quad(connection, this.ns.rdf.object, unitNode))
             this.dataset.add(rdf.quad(connection, this.ns.ex('relationType'), rdf.literal(relationType)))
-            
+
             if (weight !== undefined) {
                 this.dataset.add(rdf.quad(connection, this.ns.properties.hasWeight, rdf.literal(weight)))
             }
         }
     }
-    
+
     /**
      * Get all connected semantic units
      * @returns {Array<Object>} Connected units with relationship info
      */
     getConnectedUnits() {
         const connections = this.getConnectedElements()
-        
+
         // Filter for units and get relationship info
         const unitConnections = []
         for (const connection of connections) {
@@ -255,10 +255,10 @@ export default class SemanticUnit extends RDFElement {
                 type: 'connectsTo'
             })
         }
-        
+
         return unitConnections
     }
-    
+
     /**
      * Set corpus association for this unit
      * @param {string|NamedNode} corpus - Corpus URI or node
@@ -268,7 +268,7 @@ export default class SemanticUnit extends RDFElement {
         const corpusNode = typeof corpus === 'string' ? rdf.namedNode(corpus) : corpus
         this.addTriple(this.ns.properties.inCorpus, corpusNode)
     }
-    
+
     /**
      * Get corpus association for this unit
      * @returns {NamedNode|null} Corpus node
@@ -277,7 +277,7 @@ export default class SemanticUnit extends RDFElement {
         const quads = this.getTriplesWithPredicate(this.ns.properties.inCorpus)
         return quads.length > 0 ? quads[0].object : null
     }
-    
+
     /**
      * Set language for this unit
      * @param {string} language - Language code (e.g., 'en', 'es')
@@ -286,7 +286,7 @@ export default class SemanticUnit extends RDFElement {
         this.removeTriple(this.ns.dcProperties.language)
         this.addTriple(this.ns.dcProperties.language, rdf.literal(language))
     }
-    
+
     /**
      * Get language for this unit
      * @returns {string|null} Language code
@@ -295,7 +295,7 @@ export default class SemanticUnit extends RDFElement {
         const quads = this.getTriplesWithPredicate(this.ns.dcProperties.language)
         return quads.length > 0 ? quads[0].object.value : null
     }
-    
+
     /**
      * Add an entity mention to this semantic unit as an RDF triple
      * @param {string} entityURI - The URI of the mentioned entity
@@ -311,7 +311,7 @@ export default class SemanticUnit extends RDFElement {
             this.addTriple(relPredicate, rdf.literal(relevance.toString(), this.ns.xsd.double));
         }
     }
-    
+
     /**
      * Normalize different entity reference formats to NamedNode
      * @private
@@ -331,7 +331,7 @@ export default class SemanticUnit extends RDFElement {
             throw new Error(`Invalid entity reference: ${entity}`)
         }
     }
-    
+
     /**
      * Normalize different unit reference formats to NamedNode
      * @private
@@ -351,7 +351,7 @@ export default class SemanticUnit extends RDFElement {
             throw new Error(`Invalid unit reference: ${unit}`)
         }
     }
-    
+
     /**
      * Validate this unit according to ragno ontology
      * @returns {Object} Validation result
@@ -359,36 +359,36 @@ export default class SemanticUnit extends RDFElement {
     validate() {
         const baseValidation = super.validate()
         const errors = [...baseValidation.errors]
-        
+
         // Check ragno:Unit type
         if (!this.hasType(this.ns.classes.Unit)) {
             errors.push('Unit must have ragno:Unit type')
         }
-        
+
         // Check required content
         if (!this.getText()) {
             errors.push('Unit must have text content')
         }
-        
+
         // Check text length is reasonable
         const text = this.getText()
         if (text && text.length < 10) {
             errors.push('Unit text content should be at least 10 characters')
         }
-        
+
         return {
             valid: errors.length === 0,
             errors
         }
     }
-    
+
     /**
      * Get unit metadata including ragno-specific properties
      * @returns {Object} Unit metadata
      */
     getMetadata() {
         const baseMetadata = super.getMetadata()
-        
+
         return {
             ...baseMetadata,
             text: this.getText(),
@@ -403,7 +403,7 @@ export default class SemanticUnit extends RDFElement {
             hasEmbedding: this.getEmbedding() !== null
         }
     }
-    
+
     /**
      * Convert to simple object representation (for backward compatibility)
      * @returns {Object} Simple object representation
@@ -423,7 +423,7 @@ export default class SemanticUnit extends RDFElement {
             isEntryPoint: this.isEntryPoint()
         }
     }
-    
+
     /**
      * Create unit from simple object (migration helper)
      * @param {Object} obj - Simple object representation
@@ -444,7 +444,7 @@ export default class SemanticUnit extends RDFElement {
             isEntryPoint: obj.isEntryPoint
         })
     }
-    
+
     /**
      * Create a semantic unit with automatic URI generation
      * @param {string} text - Unit text content
@@ -457,7 +457,7 @@ export default class SemanticUnit extends RDFElement {
             text
         })
     }
-    
+
     /**
      * Clone this unit with optional modifications
      * @param {Object} [modifications] - Properties to modify in the clone
@@ -476,7 +476,7 @@ export default class SemanticUnit extends RDFElement {
             corpus: modifications.corpus || this.getCorpus(),
             isEntryPoint: modifications.isEntryPoint !== undefined ? modifications.isEntryPoint : this.isEntryPoint()
         })
-        
+
         // Copy additional properties that aren't handled by constructor
         for (const quad of this.getTriples()) {
             // Skip properties that are handled by constructor
@@ -493,7 +493,7 @@ export default class SemanticUnit extends RDFElement {
                 cloned.addTriple(quad.predicate, quad.object)
             }
         }
-        
+
         return cloned
     }
 }

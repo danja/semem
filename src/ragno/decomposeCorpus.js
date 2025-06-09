@@ -25,7 +25,7 @@ import { logger } from '../Utils.js'
 export async function decomposeCorpus(textChunks, llmHandler, options = {}) {
   const startTime = Date.now()
   logger.info(`Starting corpus decomposition: ${textChunks.length} chunks`)
-  
+
   const opts = {
     extractRelationships: options.extractRelationships !== false,
     generateSummaries: options.generateSummaries !== false,
@@ -34,38 +34,38 @@ export async function decomposeCorpus(textChunks, llmHandler, options = {}) {
     chunkOverlap: options.chunkOverlap || 0.1,
     ...options
   }
-  
+
   // Initialize RDF infrastructure
   const namespaceManager = new NamespaceManager()
   const rdfManager = new RDFGraphManager({ namespace: namespaceManager })
   const dataset = rdf.dataset()
-  
+
   // Collections for results
   const units = []
   const entitiesMap = new Map() // name -> Entity
   const relationships = []
   const unitEntityConnections = [] // Track unit-entity connections
-  
+
   try {
     // Phase 1: Process each chunk into semantic units
     for (let chunkIndex = 0; chunkIndex < textChunks.length; chunkIndex++) {
       const chunk = textChunks[chunkIndex]
       logger.debug(`Processing chunk ${chunkIndex + 1}/${textChunks.length}`)
-      
+
       // Extract semantic units from chunk using LLM
       const unitTexts = await extractSemanticUnits(chunk.content, llmHandler, opts)
-      
+
       // Create SemanticUnit objects
       for (let unitIndex = 0; unitIndex < unitTexts.length; unitIndex++) {
         const unitText = unitTexts[unitIndex]
         const unitId = `unit_${chunkIndex}_${unitIndex}`
-        
+
         // Generate summary if requested
         let summary = ''
         if (opts.generateSummaries && unitText.length > 100) {
           summary = await generateUnitSummary(unitText, llmHandler)
         }
-        
+
         // Create RDF-based SemanticUnit
         const unit = new SemanticUnit(rdfManager, {
           id: unitId,
@@ -79,19 +79,19 @@ export async function decomposeCorpus(textChunks, llmHandler, options = {}) {
             endChar: unitText.length
           }
         })
-        
+
         units.push(unit)
-        
+
         // Add to RDF dataset
         unit.exportToDataset(dataset)
-        
+
         // Extract entities from this unit
         const unitEntities = await extractEntitiesFromUnit(unitText, llmHandler, opts)
-        
+
         // Process entities and create connections
         for (const entityData of unitEntities) {
           let entity = entitiesMap.get(entityData.name)
-          
+
           if (!entity) {
             // Create new Entity
             entity = new Entity(rdfManager, {
@@ -102,7 +102,7 @@ export async function decomposeCorpus(textChunks, llmHandler, options = {}) {
               alternativeLabels: entityData.alternatives || [],
               source: chunk.source
             })
-            
+
             entitiesMap.set(entityData.name, entity)
             entity.exportToDataset(dataset)
           } else {
@@ -110,7 +110,7 @@ export async function decomposeCorpus(textChunks, llmHandler, options = {}) {
             entity.incrementFrequency()
             entity.addSource(chunk.source)
           }
-          
+
           // Create unit-entity connection
           unit.addEntityMention(entity.getURI(), entityData.relevance || 1.0)
           unitEntityConnections.push({
@@ -120,22 +120,22 @@ export async function decomposeCorpus(textChunks, llmHandler, options = {}) {
             context: unitText
           })
         }
-        
+
         logger.debug(`Unit ${unitId}: ${unitEntities.length} entities extracted`)
       }
     }
-    
+
     // Phase 2: Extract relationships between entities
     if (opts.extractRelationships && entitiesMap.size > 1) {
       logger.info('Phase 2: Extracting relationships between entities...')
-      
+
       const entityList = Array.from(entitiesMap.values())
       const relationshipData = await extractRelationships(entityList, units, llmHandler, opts)
-      
+
       for (const relData of relationshipData) {
         const sourceEntity = entitiesMap.get(relData.source)
         const targetEntity = entitiesMap.get(relData.target)
-        
+
         if (sourceEntity && targetEntity) {
           const relationship = new Relationship(rdfManager, {
             id: `rel_${relationships.length}`,
@@ -147,25 +147,25 @@ export async function decomposeCorpus(textChunks, llmHandler, options = {}) {
             evidence: relData.evidence || [],
             bidirectional: relData.bidirectional || false
           })
-          
+
           relationships.push(relationship)
           relationship.exportToDataset(dataset)
-          
+
           // Update entity relationships
           sourceEntity.addRelationship(relationship.getURI(), 'outgoing')
           targetEntity.addRelationship(relationship.getURI(), 'incoming')
         }
       }
-      
+
       logger.info(`Created ${relationships.length} relationships`)
     }
-    
+
     // Phase 3: Create inter-unit relationships for coherence
     await createInterUnitRelationships(units, dataset, rdfManager)
-    
+
     const processingTime = Date.now() - startTime
     logger.info(`Corpus decomposition completed in ${processingTime}ms: ${units.length} units, ${entitiesMap.size} entities, ${relationships.length} relationships`)
-    
+
     return {
       units,
       entities: Array.from(entitiesMap.values()),
@@ -181,7 +181,7 @@ export async function decomposeCorpus(textChunks, llmHandler, options = {}) {
         averageEntitiesPerUnit: entitiesMap.size / units.length
       }
     }
-    
+
   } catch (error) {
     logger.error('Corpus decomposition failed:', error)
     throw error
@@ -209,14 +209,14 @@ Semantic units:`
       max_tokens: 1000,
       temperature: 0.1
     })
-    
+
     // Parse LLM response
     const units = JSON.parse(response.trim())
     return Array.isArray(units) ? units : [text] // Fallback to original text
-    
+
   } catch (error) {
     logger.warn('LLM unit extraction failed, using sentence splitting fallback:', error.message)
-    
+
     // Fallback: simple sentence splitting
     return text.split(/[.!?]+/)
       .map(sentence => sentence.trim())
@@ -242,9 +242,9 @@ Summary:`
       max_tokens: 100,
       temperature: 0.1
     })
-    
+
     return summary.trim()
-    
+
   } catch (error) {
     logger.warn('Summary generation failed:', error.message)
     return unitText.length > 100 ? unitText.substring(0, 100) + '...' : unitText
@@ -273,19 +273,19 @@ Entities:`
       max_tokens: 500,
       temperature: 0.1
     })
-    
+
     const entities = JSON.parse(response.trim())
-    
+
     // Filter and validate entities
-    return Array.isArray(entities) ? entities.filter(entity => 
-      entity.name && 
-      entity.name.length > 1 && 
+    return Array.isArray(entities) ? entities.filter(entity =>
+      entity.name &&
+      entity.name.length > 1 &&
       (entity.confidence || 1.0) >= options.minEntityConfidence
     ).slice(0, options.maxEntitiesPerUnit) : []
-    
+
   } catch (error) {
     logger.warn('Entity extraction failed, using fallback:', error.message)
-    
+
     // Fallback: extract capitalized words as potential entities
     const words = unitText.match(/\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b/g) || []
     return words.slice(0, options.maxEntitiesPerUnit).map(name => ({
@@ -308,16 +308,19 @@ Entities:`
  */
 async function extractRelationships(entities, units, llmHandler, options = {}) {
   const relationships = []
-  const entityNames = entities.map(e => e.getPreferredLabel())
-  
+  const entityNames = entities.map(e => {
+    const label = e.getPreferredLabel ? e.getPreferredLabel() : '';
+    return label || '';
+  });
+
   // Process units that contain multiple entities
   for (const unit of units) {
-    const unitEntityNames = entityNames.filter(name => 
+    const unitEntityNames = entityNames.filter(name =>
       unit.getContent().toLowerCase().includes(name.toLowerCase())
     )
-    
+
     if (unitEntityNames.length < 2) continue
-    
+
     const prompt = `Identify relationships between these entities in the given text. Return relationships as JSON array with source, target, type, content, and weight (0-1).
 
 Entities: [${unitEntityNames.map(name => `"${name}"`).join(', ')}]
@@ -333,9 +336,9 @@ Relationships:`
         max_tokens: 300,
         temperature: 0.1
       })
-      
+
       const unitRelationships = JSON.parse(response.trim())
-      
+
       if (Array.isArray(unitRelationships)) {
         for (const rel of unitRelationships) {
           if (rel.source && rel.target && rel.source !== rel.target) {
@@ -347,12 +350,12 @@ Relationships:`
           }
         }
       }
-      
+
     } catch (error) {
       logger.warn(`Relationship extraction failed for unit: ${error.message}`)
     }
   }
-  
+
   return relationships
 }
 
@@ -364,12 +367,12 @@ Relationships:`
  */
 async function createInterUnitRelationships(units, dataset, rdfManager) {
   logger.debug('Creating inter-unit relationships...')
-  
+
   // Create simple sequential relationships between adjacent units
   for (let i = 0; i < units.length - 1; i++) {
     const currentUnit = units[i]
     const nextUnit = units[i + 1]
-    
+
     // Create a "follows" relationship
     const relationshipId = `unit_rel_${i}`
     const relationship = new Relationship(rdfManager, {
@@ -381,10 +384,10 @@ async function createInterUnitRelationships(units, dataset, rdfManager) {
       weight: 0.3,
       bidirectional: false
     })
-    
+
     relationship.exportToDataset(dataset)
   }
-  
+
   logger.debug(`Created ${units.length - 1} inter-unit relationships`)
 }
 
@@ -398,27 +401,27 @@ async function createInterUnitRelationships(units, dataset, rdfManager) {
 export async function exportToRDF(decompositionResults, endpoint, auth = null) {
   const { dataset, statistics } = decompositionResults
   const startTime = Date.now()
-  
+
   logger.info(`Exporting decomposition results to SPARQL endpoint: ${endpoint}`)
-  
+
   try {
     // Convert dataset to N-Triples for SPARQL insertion
     const serializer = require('@rdfjs/serializer-ntriples')
     const ntriplesStream = serializer.import(dataset.toStream())
-    
+
     let ntriplesData = ''
     for await (const chunk of ntriplesStream) {
       ntriplesData += chunk
     }
-    
+
     // Insert all triples at once
     const insertQuery = `INSERT DATA { ${ntriplesData} }`
-    
+
     await SPARQLHelpers.executeSPARQLUpdate(endpoint, insertQuery, auth)
-    
+
     const exportTime = Date.now() - startTime
     logger.info(`Export completed in ${exportTime}ms`)
-    
+
     return {
       success: true,
       exportTime,
@@ -426,7 +429,7 @@ export async function exportToRDF(decompositionResults, endpoint, auth = null) {
       originalStatistics: statistics,
       endpoint
     }
-    
+
   } catch (error) {
     logger.error('RDF export failed:', error)
     throw error
