@@ -25,6 +25,7 @@ import rdf from 'rdf-ext'
 import GraphAnalytics from './GraphAnalytics.js'
 import CommunityDetection from './CommunityDetection.js'
 import PersonalizedPageRank from './PersonalizedPageRank.js'
+import Hyde from './Hyde.js'
 import { logger } from '../../Utils.js'
 
 export default class RagnoAlgorithms {
@@ -54,6 +55,7 @@ export default class RagnoAlgorithms {
         this.graphAnalytics = new GraphAnalytics(this.options)
         this.communityDetection = new CommunityDetection(this.options)
         this.personalizedPageRank = new PersonalizedPageRank(this.options)
+        this.hyde = new Hyde(this.options)
         
         this.stats = {
             lastFullAnalysis: null,
@@ -271,6 +273,12 @@ export default class RagnoAlgorithms {
                     results.statistics = this.graphAnalytics.computeGraphStatistics(graph)
                     break
                     
+                case 'hyde':
+                case 'hypothetical':
+                    // Hyde requires different parameters - would need LLM handler
+                    logger.info('Hyde algorithm requires LLM handler - use runHydeGeneration method')
+                    break
+                    
                 default:
                     logger.warn(`Unknown algorithm: ${algorithm}`)
             }
@@ -355,6 +363,31 @@ export default class RagnoAlgorithms {
     }
     
     /**
+     * Run HyDE hypothesis generation
+     * @param {Array|string} inputs - Query strings or entity URIs
+     * @param {Object} llmHandler - LLM handler instance
+     * @param {Dataset} targetDataset - RDF dataset to augment
+     * @param {Object} [options] - Hyde options
+     * @returns {Object} Hyde generation results
+     */
+    async runHydeGeneration(inputs, llmHandler, targetDataset, options = {}) {
+        logger.info('Running HyDE hypothesis generation...')
+        
+        const opts = { ...this.options, ...options }
+        return await this.hyde.generateHypotheses(inputs, llmHandler, targetDataset, opts)
+    }
+
+    /**
+     * Query hypothetical content from dataset
+     * @param {Dataset} dataset - RDF dataset to query
+     * @param {Object} [filters] - Query filters
+     * @returns {Array} Hypothetical content matching filters
+     */
+    queryHypotheticalContent(dataset, filters = {}) {
+        return this.hyde.queryHypotheticalContent(dataset, filters)
+    }
+
+    /**
      * Get comprehensive statistics from all algorithm modules
      * @returns {Object} Combined statistics
      */
@@ -363,7 +396,8 @@ export default class RagnoAlgorithms {
             suite: this.stats,
             graphAnalytics: this.graphAnalytics.getStatistics(),
             communityDetection: this.communityDetection.getStatistics(),
-            personalizedPageRank: this.personalizedPageRank.getStatistics()
+            personalizedPageRank: this.personalizedPageRank.getStatistics(),
+            hyde: this.hyde.getStatistics()
         }
     }
     
@@ -385,5 +419,6 @@ export default class RagnoAlgorithms {
 export {
     GraphAnalytics,
     CommunityDetection,
-    PersonalizedPageRank
+    PersonalizedPageRank,
+    Hyde
 }
