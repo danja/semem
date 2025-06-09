@@ -4,6 +4,8 @@ Semem is a modular, extensible semantic memory and graph augmentation system for
 
 ---
 
+*What follows is only Claude's opinion. I haven't been able to get the MCP working yet, but that's top priority right now (along with tidying up and more tests).*
+
 ## 🚀 Latest Developments (May 2025)
 
 - **Interactive ES Module REPL:**  
