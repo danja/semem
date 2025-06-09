@@ -67,17 +67,13 @@ export async function decomposeCorpus(textChunks, llmHandler, options = {}) {
         }
 
         // Create RDF-based SemanticUnit
-        const unit = new SemanticUnit(rdfManager, {
-          id: unitId,
-          content: unitText,
+        const unit = new SemanticUnit({
+          dataset: rdf.dataset(),
+          text: unitText,
           summary: summary,
-          sourceDocument: chunk.source,
-          position: {
-            chunkIndex: chunkIndex,
-            unitIndex: unitIndex,
-            startChar: 0, // Could be calculated if needed
-            endChar: unitText.length
-          }
+          source: chunk.source,
+          position: 0, // Start position
+          length: unitText.length // Content length
         })
 
         units.push(unit)
@@ -151,9 +147,22 @@ export async function decomposeCorpus(textChunks, llmHandler, options = {}) {
           relationships.push(relationship)
           relationship.exportToDataset(dataset)
 
-          // Update entity relationships
-          sourceEntity.addRelationship(relationship.getURI(), 'outgoing')
-          targetEntity.addRelationship(relationship.getURI(), 'incoming')
+          // Add relationship triples using RDF graph manager
+          const relUri = relationship.getURI()
+          const relNode = rdf.namedNode(relUri)
+          
+          // Add relationship type
+          rdfManager.addTriple(relNode, rdfManager.ns.rdf.type, rdfManager.ns.ragno.Relationship)
+          
+          // Connect relationship to source and target entities
+          rdfManager.addTriple(rdf.namedNode(sourceEntity.getURI()), rdfManager.ns.ragno.hasRelationship, relNode)
+          rdfManager.addTriple(relNode, rdfManager.ns.ragno.hasSource, rdf.namedNode(sourceEntity.getURI()))
+          rdfManager.addTriple(relNode, rdfManager.ns.ragno.hasTarget, rdf.namedNode(targetEntity.getURI()))
+          
+          // Add inverse relationship if bidirectional
+          if (relData.bidirectional) {
+            rdfManager.addTriple(rdf.namedNode(targetEntity.getURI()), rdfManager.ns.ragno.hasRelationship, relNode)
+          }
         }
       }
 
@@ -269,12 +278,21 @@ Return as JSON array:
 Entities:`
 
   try {
-    const response = await llmHandler.generateCompletion(prompt, {
+    const systemPrompt = "You are a helpful assistant that extracts entities from text. Return entities as a JSON array with name, type, relevance, isEntryPoint, and confidence.";
+    const response = await llmHandler.generateResponse(prompt, '', {
+      systemPrompt,
       max_tokens: 500,
       temperature: 0.1
-    })
+    });
 
-    const entities = JSON.parse(response.trim())
+    // Extract JSON from response if it's wrapped in markdown code blocks
+    let jsonResponse = response.trim();
+    const jsonMatch = jsonResponse.match(/```(?:json)?\n([\s\S]*?)\n```/);
+    if (jsonMatch && jsonMatch[1]) {
+      jsonResponse = jsonMatch[1];
+    }
+
+    const entities = JSON.parse(jsonResponse)
 
     // Filter and validate entities
     return Array.isArray(entities) ? entities.filter(entity =>
@@ -332,12 +350,21 @@ Return format:
 Relationships:`
 
     try {
-      const response = await llmHandler.generateCompletion(prompt, {
+      const systemPrompt = "You are a helpful assistant that identifies relationships between entities in text. Return relationships as a JSON array with source, target, type, content, and weight (0-1).";
+      const response = await llmHandler.generateResponse(prompt, '', {
+        systemPrompt,
         max_tokens: 300,
         temperature: 0.1
-      })
+      });
 
-      const unitRelationships = JSON.parse(response.trim())
+      // Extract JSON from response if it's wrapped in markdown code blocks
+      let jsonResponse = response.trim();
+      const jsonMatch = jsonResponse.match(/```(?:json)?\n([\s\S]*?)\n```/);
+      if (jsonMatch && jsonMatch[1]) {
+        jsonResponse = jsonMatch[1];
+      }
+
+      const unitRelationships = JSON.parse(jsonResponse)
 
       if (Array.isArray(unitRelationships)) {
         for (const rel of unitRelationships) {

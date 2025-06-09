@@ -1,3 +1,4 @@
+
 /**
  * CommunityDetection.js - Leiden algorithm implementation for Ragno knowledge graphs
  * 
@@ -39,6 +40,26 @@ export default class CommunityDetection {
         this.random = this.seededRandom(this.options.randomSeed)
 
         logger.debug('CommunityDetection initialized with Leiden algorithm')
+    }
+
+    /**
+     * Compute Leiden clustering (alias for detectCommunities for pipeline compatibility)
+     * @param {Object} graph - Graph representation from GraphAnalytics
+     * @param {Object} [options] - Algorithm options
+     * @returns {Object} Community detection results
+     */
+    computeLeidenClustering(graph, options = {}) {
+        return this.detectCommunities(graph, options);
+    }
+
+    /**
+     * Compute Leiden clustering (alias for detectCommunities for pipeline compatibility)
+     * @param {Object} graph - Graph representation from GraphAnalytics
+     * @param {Object} [options] - Algorithm options
+     * @returns {Object} Community detection results
+     */
+    computeLeidenClustering(graph, options = {}) {
+        return this.detectCommunities(graph, options);
     }
 
     /**
@@ -132,7 +153,7 @@ export default class CommunityDetection {
         logger.info(`Leiden algorithm completed: ${filteredCommunities.size} communities, modularity: ${currentModularity.toFixed(4)}`)
 
         return {
-            communities: filteredCommunities,
+            communities: Array.from(filteredCommunities.values()),
             nodeToCommId,
             modularity: currentModularity,
             iterations: iteration,
