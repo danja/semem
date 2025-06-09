@@ -14,7 +14,8 @@
  * - Persistence and loading capabilities
  */
 
-import { HierarchicalNSW } from 'hnswlib-node'
+import pkg from 'hnswlib-node'
+const { HierarchicalNSW } = pkg
 import rdf from 'rdf-ext'
 import { logger } from '../../Utils.js'
 

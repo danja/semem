@@ -13,17 +13,13 @@ export default defineConfig({
       exclude: ['node_modules/**', 'tests/**']
     },
     reporters: ['default'],
-    // Shorter timeouts for integration tests
-    testTimeout: 5000, // 5 seconds for regular tests
-    hookTimeout: 3000, // 3 seconds for hooks
-    // Override for integration tests
+    // Test timeouts - conditional based on test type
+    testTimeout: process.env.INTEGRATION_TEST ? 30000 : 10000, // 30s for integration, 10s for unit tests
+    hookTimeout: process.env.INTEGRATION_TEST ? 10000 : 5000,   // 10s for integration, 5s for unit tests
     env: {
       NODE_ENV: 'test'
     },
     silent: false,
-    setupFiles: ['tests/setup.js'],
-    // Define test-specific overrides
-    testTimeout: process.env.INTEGRATION_TEST ? 3000 : 10000, // 3s for integration, 10s for unit tests
-    hookTimeout: process.env.INTEGRATION_TEST ? 2000 : 5000,   // 2s for integration, 5s for unit tests
+    setupFiles: ['tests/setup.js']
   }
 });

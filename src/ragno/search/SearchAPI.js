@@ -17,7 +17,7 @@
 
 import DualSearch from './DualSearch.js'
 import VectorIndex from './VectorIndex.js'
-import { SPARQLHelpers } from '../../utils/SPARQLHelpers.js'
+import SPARQLHelpers from '../../utils/SPARQLHelpers.js'
 import { logger } from '../../Utils.js'
 
 export default class SearchAPI {

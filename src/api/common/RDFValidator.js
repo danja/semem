@@ -1,4 +1,4 @@
-import { SPARQLHelpers } from '../../utils/SPARQLHelpers.js';
+import SPARQLHelpers from '../../utils/SPARQLHelpers.js';
 
 export default class RDFValidator {
     constructor(config = {}) {

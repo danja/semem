@@ -1,6 +1,6 @@
 // tests/integration/sparql/sparql-endpoint-spec.js
 import Config from '../../../src/Config.js'
-import { SPARQLHelpers } from '../../../src/utils/SPARQLHelpers.js'
+import SPARQLHelpers from '../../../src/utils/SPARQLHelpers.js'
 
 describe('SPARQL Endpoint Integration', () => {
     let config

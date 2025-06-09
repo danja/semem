@@ -1,5 +1,5 @@
 import APIRegistry from './APIRegistry.js'
-import { SPARQLHelpers } from '../../utils/SPARQLHelpers.js'
+import SPARQLHelpers from '../../utils/SPARQLHelpers.js'
 
 export default class RDFParser {
     constructor(config = {}) {

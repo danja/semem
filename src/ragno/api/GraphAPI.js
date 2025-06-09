@@ -18,7 +18,7 @@ import GraphCache from '../cache/GraphCache.js'
 import GraphMetrics from '../monitoring/GraphMetrics.js'
 import RDFGraphManager from '../core/RDFGraphManager.js'
 import NamespaceManager from '../core/NamespaceManager.js'
-import { SPARQLHelpers } from '../../utils/SPARQLHelpers.js'
+import SPARQLHelpers from '../../utils/SPARQLHelpers.js'
 import { logger } from '../../Utils.js'
 
 /**

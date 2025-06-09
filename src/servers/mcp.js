@@ -2,7 +2,7 @@
 import LLMHandler from '../handlers/LLMHandler.js';
 import EmbeddingHandler from '../handlers/EmbeddingHandler.js';
 import CacheManager from '../handlers/CacheManager.js';
-import { SPARQLHelpers } from '../utils/SPARQLHelpers.js';
+import SPARQLHelpers from '../utils/SPARQLHelpers.js';
 import SearchService from '../services/search/SearchService.js';
 import EmbeddingService from '../services/embeddings/EmbeddingService.js';
 import SPARQLService from '../services/embeddings/SPARQLService.js';

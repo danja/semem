@@ -17,7 +17,7 @@
 import rdf from 'rdf-ext'
 import VectorIndex from './VectorIndex.js'
 import { PersonalizedPageRank } from '../algorithms/index.js'
-import { SPARQLHelpers } from '../../utils/SPARQLHelpers.js'
+import SPARQLHelpers from '../../utils/SPARQLHelpers.js'
 import { logger } from '../../Utils.js'
 
 export default class DualSearch {

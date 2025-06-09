@@ -2,7 +2,7 @@
 
 import { describe, it, expect, beforeAll, beforeEach, afterAll, vi } from 'vitest';
 import Config from '../../../src/Config.js';
-import { SPARQLHelpers } from '../../../src/utils/SPARQLHelpers.js';
+import SPARQLHelpers from '../../../src/utils/SPARQLHelpers.js';
 
 // Helper function to check if a SPARQL endpoint is actually available
 async function isSPARQLEndpointAvailable(url) {

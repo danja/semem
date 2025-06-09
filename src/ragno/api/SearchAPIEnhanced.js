@@ -11,7 +11,7 @@ import { DualSearch, VectorIndex } from '../search/index.js'
 import { PersonalizedPageRank } from '../algorithms/index.js'
 import GraphCache from '../cache/GraphCache.js'
 import GraphMetrics from '../monitoring/GraphMetrics.js'
-import { SPARQLHelpers } from '../../utils/SPARQLHelpers.js'
+import SPARQLHelpers from '../../utils/SPARQLHelpers.js'
 import { logger } from '../../Utils.js'
 
 /**
