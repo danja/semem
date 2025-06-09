@@ -19,6 +19,12 @@ node examples/PPR.js
 ```
 Comprehensive demonstration of PersonalizedPageRank algorithm for semantic knowledge graph analysis. Creates a sample AI research knowledge graph with entities (researchers, concepts, institutions, papers), runs various PPR analyses including basic, shallow vs deep traversal, multi-entry point queries, and result combination. Shows how PPR identifies semantically related nodes, discovers cross-domain connections, and exports results to RDF format for integration.
 
+### Communities.js
+```bash
+node examples/Communities.js
+```
+Complete demonstration of Leiden community detection algorithm for identifying clusters in multi-domain knowledge graphs. Creates a complex social network spanning academia, industry, funding bodies, and research projects. Demonstrates resolution parameter tuning, community quality analysis, iterative refinement, and algorithm stability testing. Shows how communities align with expected domain boundaries and reveals cross-domain bridge relationships. Exports community structure to RDF format for semantic integration.
+
 ### RagnoPipelineDemo.js
 ```bash
 node examples/RagnoPipelineDemo.js

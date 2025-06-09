@@ -592,7 +592,8 @@ export default class CommunityDetection {
         ))
 
         // Export communities
-        for (const [commId, nodes] of results.communities) {
+        for (let commId = 0; commId < results.communities.length; commId++) {
+            const nodes = results.communities[commId]
             const communityUri = `http://example.org/ragno/community/${commId}`
             const communityNode = rdf.namedNode(communityUri)
 
