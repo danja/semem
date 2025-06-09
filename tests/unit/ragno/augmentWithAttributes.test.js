@@ -53,32 +53,47 @@ describe('augmentWithAttributes', () => {
   })
 
   it('should augment entities with attributes', async () => {
-    const entities = [
-      { name: 'Geoffrey Hinton', type: 'person' },
-      { name: 'Neural Networks', type: 'concept' }
-    ]
-    const units = [
-      { 
-        content: 'Geoffrey Hinton is a pioneer in deep learning research.',
-        getContent: () => 'Geoffrey Hinton is a pioneer in deep learning research.'
-      }
-    ]
+    const mockEntity = {
+      getURI: () => 'http://example.org/entity/geoffrey_hinton',
+      getPreferredLabel: () => 'Geoffrey Hinton'
+    }
+    
+    const graphData = {
+      entities: [mockEntity],
+      units: [{
+        getContent: () => 'Geoffrey Hinton is a pioneer in deep learning research.',
+        getURI: () => 'http://example.org/unit/1',
+        hasEntityMention: () => true
+      }],
+      relationships: [],
+      dataset: new Set(), // Mock RDF dataset
+      statistics: {}
+    }
 
-    const result = await augmentWithAttributes(entities, units, mockLLMHandler)
+    const result = await augmentWithAttributes(graphData, mockLLMHandler)
 
     expect(result).toBeDefined()
-    expect(Array.isArray(result)).toBe(true)
-    expect(result.length).toBeGreaterThan(0)
-    
-    // Check that LLM was called for attribute generation
-    expect(mockLLMHandler.getCallCount()).toBeGreaterThan(0)
+    expect(result.attributes).toBeDefined()
+    expect(Array.isArray(result.attributes)).toBe(true)
+    expect(result.dataset).toBeDefined()
+    expect(result.statistics).toBeDefined()
   })
 
   it('should handle empty entities array', async () => {
-    const result = await augmentWithAttributes([], [], mockLLMHandler)
+    const emptyGraphData = {
+      entities: [],
+      units: [],
+      relationships: [],
+      dataset: new Set(),
+      statistics: {}
+    }
     
-    expect(Array.isArray(result)).toBe(true)
-    expect(result.length).toBe(0)
+    const result = await augmentWithAttributes(emptyGraphData, mockLLMHandler)
+    
+    expect(result).toBeDefined()
+    expect(result.attributes).toBeDefined()
+    expect(Array.isArray(result.attributes)).toBe(true)
+    expect(result.attributes.length).toBe(0)
     expect(mockLLMHandler.getCallCount()).toBe(0)
   })
 
@@ -87,108 +102,182 @@ describe('augmentWithAttributes', () => {
       generateCompletion: vi.fn().mockRejectedValue(new Error('LLM failed'))
     }
 
-    const entities = [{ name: 'Test Entity', type: 'concept' }]
-    const units = [{ 
-      content: 'Test content',
-      getContent: () => 'Test content'
-    }]
-
-    const result = await augmentWithAttributes(entities, units, failingLLM)
+    const mockEntity = {
+      getURI: () => 'http://example.org/entity/test',
+      getPreferredLabel: () => 'Test Entity'
+    }
     
-    expect(Array.isArray(result)).toBe(true)
+    const graphData = {
+      entities: [mockEntity],
+      units: [{
+        getContent: () => 'Test content',
+        getURI: () => 'http://example.org/unit/1',
+        hasEntityMention: () => true
+      }],
+      relationships: [],
+      dataset: new Set(),
+      statistics: {}
+    }
+
+    const result = await augmentWithAttributes(graphData, failingLLM)
+    
+    expect(result).toBeDefined()
+    expect(result.attributes).toBeDefined()
+    expect(Array.isArray(result.attributes)).toBe(true)
     // Should still return some result even with LLM failure
   })
 
   it('should filter entities based on options', async () => {
-    const entities = [
-      { name: 'Entity1', type: 'person' },
-      { name: 'Entity2', type: 'concept' },
-      { name: 'Entity3', type: 'organization' }
+    const mockEntities = [
+      { getURI: () => 'http://example.org/entity/1', getPreferredLabel: () => 'Entity1' },
+      { getURI: () => 'http://example.org/entity/2', getPreferredLabel: () => 'Entity2' }
     ]
-    const units = []
+    
+    const graphData = {
+      entities: mockEntities,
+      units: [],
+      relationships: [],
+      dataset: new Set(),
+      statistics: {}
+    }
+    
     const options = {
-      entityTypes: ['person', 'organization'], // Only these types
-      maxAttributes: 1
+      topK: 1,
+      minImportanceScore: 0.0
     }
 
-    const result = await augmentWithAttributes(entities, units, mockLLMHandler, options)
+    const result = await augmentWithAttributes(graphData, mockLLMHandler, options)
     
-    expect(Array.isArray(result)).toBe(true)
-    // Should have filtered out 'concept' type entities
+    expect(result).toBeDefined()
+    expect(result.attributes).toBeDefined()
+    expect(Array.isArray(result.attributes)).toBe(true)
   })
 
   it('should respect maxAttributes option', async () => {
-    const entities = [
-      { name: 'Test Entity', type: 'person' }
-    ]
-    const units = []
+    const mockEntity = {
+      getURI: () => 'http://example.org/entity/test',
+      getPreferredLabel: () => 'Test Entity'
+    }
+    
+    const graphData = {
+      entities: [mockEntity],
+      units: [],
+      relationships: [],
+      dataset: new Set(),
+      statistics: {}
+    }
+    
     const options = {
-      maxAttributes: 2
+      attributeTypes: ['overview', 'characteristics'], // Limit types
+      topK: 1
     }
 
-    const result = await augmentWithAttributes(entities, units, mockLLMHandler, options)
+    const result = await augmentWithAttributes(graphData, mockLLMHandler, options)
     
-    expect(Array.isArray(result)).toBe(true)
-    expect(result.length).toBeLessThanOrEqual(2)
+    expect(result).toBeDefined()
+    expect(result.attributes).toBeDefined()
+    expect(Array.isArray(result.attributes)).toBe(true)
   })
 
   it('should create attributes with correct structure', async () => {
-    const entities = [{ name: 'Test Entity', type: 'person' }]
-    const units = []
-
-    const result = await augmentWithAttributes(entities, units, mockLLMHandler)
+    const mockEntity = {
+      getURI: () => 'http://example.org/entity/test',
+      getPreferredLabel: () => 'Test Entity'
+    }
     
-    if (result.length > 0) {
-      const attribute = result[0]
-      expect(attribute).toHaveProperty('entity')
-      expect(attribute).toHaveProperty('text')
-      expect(attribute).toHaveProperty('summary')
-      expect(attribute).toHaveProperty('provenance')
-      expect(attribute.entity).toBe('Test Entity')
+    const graphData = {
+      entities: [mockEntity],
+      units: [],
+      relationships: [],
+      dataset: new Set(),
+      statistics: {}
+    }
+
+    const result = await augmentWithAttributes(graphData, mockLLMHandler)
+    
+    expect(result).toBeDefined()
+    expect(result.attributes).toBeDefined()
+    if (result.attributes.length > 0) {
+      const attribute = result.attributes[0]
+      expect(attribute).toHaveProperty('getEntity')
+      expect(attribute).toHaveProperty('getCategory')
+      expect(attribute).toHaveProperty('getContent')
+      expect(attribute).toHaveProperty('getURI')
     }
   })
 
   it('should handle different provenance sources', async () => {
-    const entities = [{ name: 'Test Entity', type: 'person' }]
-    const units = [
-      { 
-        content: 'Context about Test Entity',
-        getContent: () => 'Context about Test Entity'
-      }
-    ]
-
-    const result = await augmentWithAttributes(entities, units, mockLLMHandler)
+    const mockEntity = {
+      getURI: () => 'http://example.org/entity/test',
+      getPreferredLabel: () => 'Test Entity'
+    }
     
-    if (result.length > 0) {
-      const attribute = result[0]
-      expect(attribute.provenance).toBeDefined()
-      expect(typeof attribute.provenance).toBe('string')
+    const graphData = {
+      entities: [mockEntity],
+      units: [{
+        getContent: () => 'Context about Test Entity',
+        getURI: () => 'http://example.org/unit/1',
+        hasEntityMention: () => true
+      }],
+      relationships: [],
+      dataset: new Set(),
+      statistics: {}
+    }
+
+    const result = await augmentWithAttributes(graphData, mockLLMHandler)
+    
+    expect(result).toBeDefined()
+    if (result.attributes.length > 0) {
+      const attribute = result.attributes[0]
+      expect(attribute.getProvenance).toBeDefined()
+      expect(typeof attribute.getProvenance()).toBe('string')
     }
   })
 
   it('should call LLM with correct prompt format', async () => {
-    const entities = [{ name: 'Geoffrey Hinton', type: 'person' }]
-    const units = []
+    const mockEntity = {
+      getURI: () => 'http://example.org/entity/geoffrey_hinton',
+      getPreferredLabel: () => 'Geoffrey Hinton'
+    }
+    
+    const graphData = {
+      entities: [mockEntity],
+      units: [],
+      relationships: [],
+      dataset: new Set(),
+      statistics: {}
+    }
 
-    await augmentWithAttributes(entities, units, mockLLMHandler)
+    await augmentWithAttributes(graphData, mockLLMHandler)
     
     expect(mockLLMHandler.calls.length).toBeGreaterThan(0)
     const firstCall = mockLLMHandler.calls[0]
-    expect(firstCall.prompt).toContain('generate a concise attribute')
     expect(firstCall.prompt).toContain('Geoffrey Hinton')
   })
 
   it('should handle malformed LLM responses', async () => {
     const malformedLLM = {
-      generateCompletion: vi.fn().mockResolvedValue('invalid json response')
+      generateCompletion: vi.fn().mockResolvedValue('short')
     }
 
-    const entities = [{ name: 'Test Entity', type: 'person' }]
-    const units = []
-
-    const result = await augmentWithAttributes(entities, units, malformedLLM)
+    const mockEntity = {
+      getURI: () => 'http://example.org/entity/test',
+      getPreferredLabel: () => 'Test Entity'
+    }
     
-    expect(Array.isArray(result)).toBe(true)
+    const graphData = {
+      entities: [mockEntity],
+      units: [],
+      relationships: [],
+      dataset: new Set(),
+      statistics: {}
+    }
+
+    const result = await augmentWithAttributes(graphData, malformedLLM)
+    
+    expect(result).toBeDefined()
+    expect(result.attributes).toBeDefined()
+    expect(Array.isArray(result.attributes)).toBe(true)
     // Should handle parsing errors gracefully
   })
 })

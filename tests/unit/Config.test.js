@@ -1,9 +1,13 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import Config from '../../src/Config.js';
+import fs from 'fs';
+import { join } from 'path';
+import { tmpdir } from 'os';
 
 describe('Config', () => {
   // Store original env to restore after tests
   let originalEnv;
+  let tempConfigFiles = [];
 
   // Sample valid config matching Config.defaults
   const validConfig = {
@@ -56,7 +60,25 @@ describe('Config', () => {
   afterEach(() => {
     // Restore the original environment
     process.env = originalEnv;
+    // Clean up temporary config files
+    for (const file of tempConfigFiles) {
+      try {
+        if (fs.existsSync(file)) {
+          fs.unlinkSync(file);
+        }
+      } catch (error) {
+        // Ignore cleanup errors
+      }
+    }
+    tempConfigFiles = [];
   });
+
+  function createTempConfigFile(config) {
+    const tempPath = join(tmpdir(), `test-config-${Date.now()}-${Math.random().toString(36).substr(2, 9)}.json`);
+    fs.writeFileSync(tempPath, JSON.stringify(config, null, 2));
+    tempConfigFiles.push(tempPath);
+    return tempPath;
+  }
 
   describe('Initialization', () => {
     it('should initialize with defaults when no config provided', async () => {
@@ -136,7 +158,8 @@ describe('Config', () => {
         }]
       };
       
-      const config = new Config(invalidConfig);
+      const configFile = createTempConfigFile(invalidConfig);
+      const config = new Config(configFile);
       try {
         await config.init();
         // If we get here without an error, the test should fail
@@ -149,11 +172,14 @@ describe('Config', () => {
 
   describe('Schema Validation', () => {
     it('should validate storage configuration', async () => {
-      const config = new Config({
+      const invalidConfig = {
         storage: { type: 'invalid' },
         models: validConfig.models,
         sparqlEndpoints: validConfig.sparqlEndpoints
-      });
+      };
+      
+      const configFile = createTempConfigFile(invalidConfig);
+      const config = new Config(configFile);
       
       try {
         await config.init();
@@ -197,11 +223,14 @@ describe('Config', () => {
     });
 
     it('should validate SPARQL endpoints', async () => {
-      const config = new Config({
+      const invalidConfig = {
         storage: validConfig.storage,
         models: validConfig.models,
         sparqlEndpoints: [{ label: 'test' }] // Missing required endpoint fields
-      });
+      };
+      
+      const configFile = createTempConfigFile(invalidConfig);
+      const config = new Config(configFile);
       
       try {
         await config.init();

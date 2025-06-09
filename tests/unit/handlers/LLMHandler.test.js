@@ -71,7 +71,9 @@ describe('LLMHandler', () => {
         });
         
         it('should use custom system prompt when provided', async () => {
-            await handler.generateResponse('test prompt', 'test context', 'Custom system prompt');
+            await handler.generateResponse('test prompt', 'test context', { 
+                systemPrompt: 'Custom system prompt' 
+            });
             
             expect(PromptTemplates.formatChatPrompt).toHaveBeenCalledWith(
                 'test-model',
