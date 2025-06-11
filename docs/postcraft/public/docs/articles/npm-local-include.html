@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <link rel="stylesheet" href="/css/fonts.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/grid-columns.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/style.css" type="text/css"/>
+        <title></title>
+    </head>
+    <!-- POST PAGE TEMPLATE -->
+    <body>
+        <!-- ARTICLE CONTENT -->
+<article class=\"post-content\">
+     <img src=\"https://r2cdn.perplexity.ai/pplx-full-logo-primary-dark%402x.png\" class=\"logo\" width=\"120\"/>
+
+<h1>in a node project, how do you refer to, and include another project on the local filesystem or github, as if you were you were adding an npm dependency. Both the parent project and the child project have a package.json</h1>
+<p>To include another project in a Node.js project as if adding an npm dependency, you can use either local filesystem paths or GitHub repositories. Both the parent and child projects must have a <code>package.json</code> file for this to work. Below are the methods:</p>
+<h2><strong>1. Including a Local Project</strong></h2>
+<p>You can include a local project using either <code>npm install</code> or <code>npm link</code>.</p>
+<h3><strong>Method 1: Using <code>npm install</code></strong></h3>
+<ul>
+<li>Navigate to the parent project&#39;s directory.</li>
+<li>Run the following command:</li>
+</ul>
+<pre><code>npm install /path/to/local/project
+</code></pre>
+<p>Replace <code>/path/to/local/project</code> with the absolute or relative path to the child project&#39;s directory containing its <code>package.json</code>. This will add the local project as a dependency and update the <code>dependencies</code> section of the parent project&#39;s <code>package.json</code> with the local path<sup><a id=\"footnote-ref-1\" href=\"#footnote-1\" data-footnote-ref aria-describedby=\"footnote-label\">1</a></sup><sup><a id=\"footnote-ref-2\" href=\"#footnote-2\" data-footnote-ref aria-describedby=\"footnote-label\">2</a></sup>.</p>
+<h3><strong>Method 2: Using <code>npm link</code></strong></h3>
+<ul>
+<li>Navigate to the child project&#39;s directory and run:</li>
+</ul>
+<pre><code>npm link
+</code></pre>
+<p>This creates a global symlink for the child project.</p>
+<ul>
+<li>Then, navigate to the parent project&#39;s directory and run:</li>
+</ul>
+<pre><code>npm link &amp;lt;package-name&amp;gt;
+</code></pre>
+<p>Replace <code>&amp;lt;package-name&amp;gt;</code> with the name specified in the child project&#39;s <code>package.json</code>. This links the child project into the parent project<sup><a id=\"footnote-ref-1\" href=\"#footnote-1\" data-footnote-ref aria-describedby=\"footnote-label\">1</a></sup>.</p>
+<p><strong>Note:</strong> Use <code>npm unlink</code> or <code>npm rm --global &amp;lt;package-name&amp;gt;</code> to remove links when no longer needed<sup><a id=\"footnote-ref-1\" href=\"#footnote-1\" data-footnote-ref aria-describedby=\"footnote-label\">1</a></sup>.</p>
+<hr>
+<h2><strong>2. Including a GitHub Repository</strong></h2>
+<p>You can include a GitHub-hosted project directly by specifying its repository URL in your parent project&#39;s <code>package.json</code>.</p>
+<h3><strong>Method: Using GitHub URL</strong></h3>
+<ul>
+<li>In the parent project&#39;s <code>package.json</code>, add an entry under <code>dependencies</code> like this:</li>
+</ul>
+<pre><code class=\"language-json\">&quot;dependencies&quot;: {
+  &quot;child-project&quot;: &quot;github:username/repository-name#branch-or-tag&quot;
+}
+</code></pre>
+<p>Replace:
+    - <code>username/repository-name</code> with the GitHub repository&#39;s details.
+    - <code>branch-or-tag</code> with a specific branch, tag, or commit hash (optional).</p>
+<ul>
+<li>Alternatively, run this command to install directly:</li>
+</ul>
+<pre><code>npm install git+https://github.com/username/repository-name.git
+</code></pre>
+<p>This approach works for both public and private repositories (if you have access credentials)<sup><a id=\"footnote-ref-3\" href=\"#footnote-3\" data-footnote-ref aria-describedby=\"footnote-label\">3</a></sup><sup><a id=\"footnote-ref-4\" href=\"#footnote-4\" data-footnote-ref aria-describedby=\"footnote-label\">4</a></sup>.</p>
+<hr>
+<h2><strong>Considerations</strong></h2>
+<ul>
+<li><strong>Local Projects:</strong> Ideal for development when both projects are on your local machine.</li>
+<li><strong>GitHub Repositories:</strong> Useful for sharing code across teams or projects without publishing it to npm.</li>
+<li>Ensure compatibility between your projects (e.g., matching Node.js versions).</li>
+</ul>
+<div>⁂</div>
+
+<section class=\"footnotes\" data-footnotes>
+<h2 id=\"footnote-label\" class=\"sr-only\">Footnotes</h2>
+<ol>
+<li id=\"footnote-1\">
+<p><a href=\"https://www.geeksforgeeks.org/how-to-install-a-local-module-using-npm/\">https://www.geeksforgeeks.org/how-to-install-a-local-module-using-npm/</a> <a href=\"#footnote-ref-1\" data-footnote-backref aria-label=\"Back to reference 1\">↩</a> <a href=\"#footnote-ref-1\" data-footnote-backref aria-label=\"Back to reference 1\">↩<sup>2</sup></a> <a href=\"#footnote-ref-1\" data-footnote-backref aria-label=\"Back to reference 1\">↩<sup>3</sup></a></p>
+</li>
+<li id=\"footnote-2\">
+<p><a href=\"https://www.geeksforgeeks.org/how-local-installation-of-a-dependency-done/\">https://www.geeksforgeeks.org/how-local-installation-of-a-dependency-done/</a> <a href=\"#footnote-ref-2\" data-footnote-backref aria-label=\"Back to reference 2\">↩</a></p>
+</li>
+<li id=\"footnote-3\">
+<p><a href=\"https://blog.jim-nielsen.com/2018/installing-and-building-an-npm-package-from-github/\">https://blog.jim-nielsen.com/2018/installing-and-building-an-npm-package-from-github/</a> <a href=\"#footnote-ref-3\" data-footnote-backref aria-label=\"Back to reference 3\">↩</a></p>
+</li>
+<li id=\"footnote-4\">
+<p><a href=\"https://www.geeksforgeeks.org/how-to-install-an-npm-package-directly-from-github/\">https://www.geeksforgeeks.org/how-to-install-an-npm-package-directly-from-github/</a> <a href=\"#footnote-ref-4\" data-footnote-backref aria-label=\"Back to reference 4\">↩</a></p>
+</li>
+</ol>
+</section>
+
+</article>
+<p class=\"post-title h-cinzel\">
+    <em><a href=\"http://hyperdata.it/docs/articles/npm-local-include\">in a node project, how do you refer to, and include another project on the local filesystem or github, as if you were you were adding an npm dependency. Both the parent project and the child project have a package.json</a></em>
+</p> 
+<!-- END ARTICLE CONTENT -->
+    </body>
+      <!-- END POST PAGE TEMPLATE -->
+</html>

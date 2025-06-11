@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <link rel="stylesheet" href="/css/fonts.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/grid-columns.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/style.css" type="text/css"/>
+        <title></title>
+    </head>
+    <!-- POST PAGE TEMPLATE -->
+    <body>
+        <!-- ARTICLE CONTENT -->
+<article class=\"post-content\">
+    <h1>hyperdata next steps</h1>
+<h2>Semem</h2>
+<ul>
+<li>adapt tools to APIs</li>
+<li>attach to transmissions</li>
+<li>add grafana dashboards</li>
+</ul>
+<p>process of migrating from Jasmine for tests to Vitest. Many of the old tests are out of sync with the code, so we can be brutal about replacing the old tests with new ones. If in doubt, assume the code functions correctly, and test errors are due to errors in the tests. As you create replacements, please delete the old tests as you go along.</p>
+<p>cd /ubuntu/home/danny/hyperdata/semem &amp;&amp; npx vitest run tests/unit/api/features/MemoryAPI.test.js tests/unit/api/features/ChatAPI.test.js tests/unit/api/features/SearchAPI.test.js tests/integration/api/APIEndpoints.integration.test.js</p>
+<p>Update documentation in docs/api to include the current implementation status.</p>
+<p>Extend the search browser interface to support interaction with all the APIs as documented under /ubuntu/home/danny/hyperdata/semem/docs/api . Use vanilla JS. Include console logging of key events and errors.</p>
+<p>Create an MCP server proxy which will access the APIs. Follow the latest spec from Anthropic.</p>
+<p> bash -c &#39;kill $(ps -ef | grep &quot;[n]ode.*api-server.js&quot; | awk &quot;{print $2}&quot;) &amp;&amp; node api-server.js &amp;&#39;   </p>
+<h2>Postcraft</h2>
+<ul>
+<li><p>get sparqlstore-to-html working</p>
+</li>
+<li><p>Octotools paper to help describe big picture</p>
+</li>
+</ul>
+<h2>trestle</h2>
+<p>Make a list of the components that need to be created corresponding to the nav toolbar in index.html, then create skeleton code for each in turn. Design for modularity. Remember we will be using lightweight vanilla JS with ES modules.</p>
+<p>We are in the
+ </p>
+
+</article>
+<p class=\"post-title h-cinzel\">
+    <em><a href=\"http://hyperdata.it/docs/todo/next-steps\">hyperdata next steps</a></em>
+</p> 
+<!-- END ARTICLE CONTENT -->
+    </body>
+      <!-- END POST PAGE TEMPLATE -->
+</html>

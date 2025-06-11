@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <link rel="stylesheet" href="/css/fonts.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/grid-columns.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/style.css" type="text/css"/>
+        <title></title>
+    </head>
+    <!-- POST PAGE TEMPLATE -->
+    <body>
+        <!-- ARTICLE CONTENT -->
+<article class=\"post-content\">
+    <p> Please write a bash script I can use to make backups from my phone. I&#39;d like a copy on this local ubuntu computer and another on the LAN.
+The source dirs on the phone are :</p>
+<pre><code>/run/user/1000/gvfs/mtp:host=Blackview_BV6200_BV6200EEA0014999/SanDisk SD card/DCIM
+/run/user/1000/gvfs/mtp:host=Blackview_BV6200_BV6200EEA0014999/SanDisk SD card/Music$
+/run/user/1000/gvfs/mtp:host=Blackview_BV6200_BV6200EEA0014999/SanDisk SD card/Documents
+/run/user/1000/gvfs/mtp:host=Blackview_BV6200_BV6200EEA0014999/SanDisk SD card/Download
+</code></pre>
+<p>I have ssh on the lan machine, user:host is danny:monokith
+The destination paths on the local machine is <code>/space/</code> and on the remote <code>/internal/</code>.
+I&#39;d like the contents of the source dir to be copied to a dir on the two destinations with a name which includes today&#39;s date in the format : <code>blackview-DCIM_2024-10-15</code>. If I run the script tomorrow it should use <code>blackview-DCIM_2024-10-15</code> etc. After copying it should compare the size of the source and destination dirs to make sure they are the same, reporting their size in MB.
+ </p>
+
+</article>
+<p class=\"post-title h-cinzel\">
+    <em><a href=\"http://hyperdata.it/docs/articles/server/phone-backup\">phone-backup.md</a></em>
+</p> 
+<!-- END ARTICLE CONTENT -->
+    </body>
+      <!-- END POST PAGE TEMPLATE -->
+</html>

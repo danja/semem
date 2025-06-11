@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <link rel="stylesheet" href="/css/fonts.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/grid-columns.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/style.css" type="text/css"/>
+        <title></title>
+    </head>
+    <!-- POST PAGE TEMPLATE -->
+    <body>
+        <!-- ARTICLE CONTENT -->
+<article class=\"post-content\">
+    <h1>Declarative-Imperative Development for the Age of AI</h1>
+<p>TODO write the paper!</p>
+<p>tl;dr : for software projects, I&#39;d strongly recommend repopack[^1]
+Late to this thread, I was actually trying to find out if Claude has a limit on the number of Projects you can create (anyone?). Tip I must share before moving on...</p>
+<p>I&#39;ve found Claude Projects incredibly useful for not-huge (mostly coding) projects. I was using ChatGPT (and Cursor, and various free tools) but my funds are limited, and after a recent run around the block have settled on Claude Pro (and Codeium, and various free tools).</p>
+<p>The Projects made a big difference to my productivity out of the box (well, after giving them custom system prompts), but I was still running into familiar issues around context length, also size of &quot;project knowledge&quot; attachments. A little breakthrough for me was discovering <strong>repopack</strong>. It&#39;s an open source nodejs-built utility which will crawl filesystem dirs and collate code into a single AI-friendly text file, stripping comments along the way if you like. The config is fairly basic, but it can do things like respect .gitignore, any similar custom additions etc.
+The code I&#39;m working on at the moment makes use of a few obscure libs that both OpenAI and Claude tended to hallucinate a lot over. But repopack allows me to add a couple of those of immediate interest. My main project at the moment as a whole (plus an essential lib) is over the limit. But I&#39;ve been able to work around that by being selective, swapping out the &quot;project knowledge&quot; repopacks as I go along to focus on today&#39;s target.
+A curious side effect is that it&#39;s made me much more diligent with Best Practices - favouring small, independent components and creating (with the help of AI) lots more tests than I would working alone.
+Close to this is a <strong>new methodology</strong>  (to me at least - has it a name?), somewhere in between those ^^. My big project is a pipeliney thing which has open-ended use cases. The application functionality is defined declaratively (in RDF/Turtle), the pipeline only glued together at runtime (via a variant of dependency injection). But that gluing and runtime operation brings in a <em>lot</em> of (common) overhead. So I&#39;ve begun making (with AI assistance) quick &amp; dirty imperative-style runners for the specific applications. This gives me things that lie somewhere in between unit and (full) integration tests. It&#39;s been surprisingly useful. I&#39;m confident the declarative bits are close to correct, so if the new single-purpose imperative runner works, there&#39;s a very good chance those components will work correctly flipped in the larger environment.   </p>
+<p>I would have been very unlikely to go down this route otherwise, but it means I can significantly cut down the codebase an AI assistant has to consider, get it capable of much more of the work.<br>[^1]: <a href=\"https://github.com/yamadashy/repopack\">https://github.com/yamadashy/repopack</a></p>
+<p>I asked Claude :</p>
+<p>The approach you&#39;re describing doesn&#39;t have a specific, widely-recognized name in software development methodologies, but it shares elements with several existing practices and principles. Let&#39;s break down the key aspects of your approach and relate them to known methodologies:</p>
+<ol>
+<li>Use of AI assistants (Claude, ChatGPT) for development</li>
+<li>Employing projects and custom system prompts</li>
+<li>Utilizing repopack for code collation and context management</li>
+<li>Focusing on small, independent components</li>
+<li>Increased emphasis on testing</li>
+<li>Creating simplified, imperative-style runners for declarative systems</li>
+<li>Balancing between unit and integration tests</li>
+</ol>
+<p>This approach combines elements of:</p>
+<ol>
+<li><p>Agile Development: Your focus on iterative development, adapting to AI limitations, and emphasis on testing aligns with Agile principles.</p>
+</li>
+<li><p>Extreme Programming (XP): The increased focus on testing and creating small, independent components is reminiscent of XP practices.</p>
+</li>
+<li><p>Test-Driven Development (TDD): Your approach to creating more tests with AI assistance reflects aspects of TDD.</p>
+</li>
+<li><p>Modular Programming: The emphasis on small, independent components aligns with modular programming principles.</p>
+</li>
+<li><p>AI-Augmented Development: Your use of AI tools throughout the development process is part of an emerging trend in software development.</p>
+</li>
+<li><p>Continuous Integration (CI): The practice of frequently integrating code changes and running tests is implied in your workflow.</p>
+</li>
+</ol>
+<p>While there isn&#39;t a specific name for this exact combination of practices, it could be described as &quot;AI-Assisted Agile Development with Emphasis on Modularity and Testing&quot; or perhaps &quot;AI-Augmented Modular TDD.&quot;</p>
+<p>The use of simplified runners for declarative systems is an interesting approach that doesn&#39;t have a widely-used name, but it&#39;s conceptually similar to creating &quot;simulators&quot; or &quot;mock environments&quot; for complex systems. This practice allows for faster iteration and testing of components in isolation.</p>
+<p>If you&#39;re looking to name this approach, you might consider something like &quot;Declarative-Imperative Hybrid Testing&quot; or &quot;Selective Context AI-Assisted Development&quot; to capture the essence of your methodology.</p>
+<p>It&#39;s worth noting that as AI-assisted development evolves, we may see more formal methodologies emerge that incorporate these practices. Your approach seems to be at the forefront of adapting existing best practices to work effectively with AI assistance in software development.
+ </p>
+
+</article>
+<p class=\"post-title h-cinzel\">
+    <em><a href=\"http://hyperdata.it/docs/articles/new-methodology\">Declarative-Imperative Development for the Age of AI</a></em>
+</p> 
+<!-- END ARTICLE CONTENT -->
+    </body>
+      <!-- END POST PAGE TEMPLATE -->
+</html>

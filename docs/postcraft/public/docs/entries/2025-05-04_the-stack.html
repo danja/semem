@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <link rel="stylesheet" href="/css/fonts.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/grid-columns.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/style.css" type="text/css"/>
+        <title></title>
+    </head>
+    <!-- POST PAGE TEMPLATE -->
+    <body>
+        <!-- ARTICLE CONTENT -->
+<article class=\"post-content\">
+    <h1>Tensegrity Suite</h1>
+<p><strong>Main components</strong></p>
+<ul>
+<li>Transmissions - pipeline composer, nuts &amp; bolts layer</li>
+<li>Semem - semantic memory, knowledgebase interface, system layer</li>
+<li>Ontologies - <em>several</em> the abstract layer</li>
+<li>TIA Intelligence Agency - the goal is communities of autonomous agents, app layer</li>
+<li>Client stuff - assorted tools, app layer</li>
+<li>TBox - a container for experimenting with the above, quasi-production layer</li>
+</ul>
+<p>I&#39;ve given myself a deadline of <strong>2025-06-21</strong> to get this bunch of things to some kind of minimum viable pseudo-products. If I&#39;m happy with what I&#39;ve got to show at that point, I&#39;ll be doing announcements (haranguing the lists, socials and maybe even ex-girlfriends) on <strong>2025-07-03</strong>. I&#39;m more confident than usual that I&#39;ll have at least <em>something</em> to show, I have got the lion&#39;s share of the hard parts done already. We&#39;ll see.</p>
+<p>My dev process is to cycle through the subprojects, spending a day or two on each at time. Not a regular cycle : cross-dependencies often force a different direction; things always take longer than expected; distractions (often trying dev spikes, especially now with <em>vibes</em>).</p>
+<h2>Goals</h2>
+<p>Have fun. Hopefully produce useful things as a side effect.</p>
+<h3>Philosophy</h3>
+<p>This comes from wondering about cognition, what can computers, AI achieve? What can I achieve? I&#39;ll use <em>problem solving</em> as a catch-all for intentional state change.</p>
+<ol>
+<li>Systems can be described in terms of concepts and relationships between those concepts. <em>The human way.</em></li>
+<li>Problem solving is mostly about pattern matching. Fitting unknown systems to ones where their behaviour is known.</li>
+<li>All known agents, animal or artificial, at any given moment in time, have a finite amount of working memory. This acts as boundary on what they can process.</li>
+<li>Concepts can often be decomposed into smaller units.</li>
+<li>Groups of associated concepts can be abstracted into meta-concepts.  </li>
+<li><em><em>Scale-free thinking for the win!</em></em></li>
+</ol>
+<h3>Filthy Lucre</h3>
+<p>I can see commercial potential in this stuff (nb. a ground rule is that it&#39;s all open source), but the motivation is more an Everest-ian <em>because it&#39;s there</em> challenge, my wanting to get my head around these things and, yeah, better tools for problem-solving would be nice to have. Whatever, this lot maybe best considered an <strong>art/school project</strong>.</p>
+<h3>Bag of Stuff</h3>
+<p>I have been building these things as quasi-independent projects, each with their own repo. But to start seeing the utility I&#39;m after, they need joining up, which makes a big dependency graph : a <a href=\"https://en.wikipedia.org/wiki/Tensegrity\">tensegrity</a> structure. <em>However</em> many of the dependencies are soft, <code>X helps Y</code>, rather than critical, <code>X needs Y</code> (cf. non-functional requirements). Some parts I&#39;ve been working on for a long time (<em>25 years is a long time in tech, right..?</em>), but the arrival of Deep Learning, especially that around LLMs, forced a reboot. And obviously everything else is continually evolving. <em>Sitting still is not an option.</em></p>
+<p>It may seem like there&#39;s a lot of wheel reinvention, but that&#39;s mostly because I&#39;m fed up of (other people&#39;s) frameworks. My own very limited context window needs to be used on the tasty bits, not conventions. I&#39;m favouring ES module style nodejs and/or vanilla browser JS etc. so I don&#39;t have to flip languages so often.</p>
+<p>All this stuff is riddled with <a href=\"https://it.wikipedia.org/wiki/Resource_Description_Framework\">RDF</a>. I&#39;ll write a <em>Why RDF?</em> note (again) some time. But the <strong>tl;dr</strong> is twofold : the Web is the best graph knowledgebase in human history; some level of formal ontology definition helps considerably when describing things (especially knowledge).</p>
+<h2>Sites</h2>
+<p>Hyperdata is an arbitrary umbrella name I&#39;m using for all this stuff. I&#39;ve got the domain</p>
+<p><a href=\"https://hyperdata.it\">hyperdata.it</a> and associated hosting for any quasi-reliable service fixtures, docs etc. For experiments, maybe even useful things, I have <a href=\"https://strandz.it\">strandz.it</a>.</p>
+<p><a href=\"https://danny.ayers.name\">danny.ayers.name</a> is the dumping ground for everything else.</p>
+<h3>TIA</h3>
+<p>I&#39;ve many, mostly fuzzy forms which require a lot of hand-waving to describe. The main high-level target is to create communities of intelligent agents which improve on the state of the art in solving arbitrary problems. This aspect I&#39;ve labeled <a href=\"https://github.com/danja/tia\">TIA Intelligence Agency</a> (it has a repo but there&#39;s nothing to see yet). Some example problems below.</p>
+<p>For pragmatic reasons, and to keep things conceptually simple, the environment will be multi-user chat over  <a href=\"https://xmpp.org/\">XMPP</a>. A containerized environment will enable repeatable experimentation :</p>
+<h2><a href=\"https://github.com/danja/tbox\">tbox</a></h2>
+<p>A <code>docker-compose</code> setup with :</p>
+<ul>
+<li>SPARQL Store (<a href=\"https://jena.apache.org/documentation/fuseki2/\">Fuseki</a>)</li>
+<li>XMPP IM Server (<a href=\"https://prosody.im/\">Prosody</a>)</li>
+<li>Support for various subprojects (agent boilerplate, all this <em>hyperdata</em> stuff)</li>
+<li>Dev tooling (ssh etc, CI/CD, observability/metrics...)</li>
+</ul>
+<p><strong>Status 2025-05-04 :</strong> it&#39;s largely in place, needs a lot of tidying up, hardening. Only just started with telemetry</p>
+<p>The subproject with the most novelty is :</p>
+<h2>Semem</h2>
+<p>Semantic memory for agents. I want this mostly defined in terms of interfaces (see Vocabs), keep it flexible. Running code essentially helpers, just lowish-level things like concept extraction etc.</p>
+<p>Core components :</p>
+<ul>
+<li>SPARQL Store, RDF support (rdfjs &amp; RDF-Ext libs)</li>
+<li>Embeddings vector store &amp; tools (<a href=\"https://github.com/facebookresearch/faiss\">FAISS</a>, <a href=\"https://huggingface.co/nomic-ai\">Nomic</a> embedding model(s))</li>
+<li>Resource Store (quick &amp; dirty old school REST)</li>
+<li>LLM Clients</li>
+<li>Vocabularies</li>
+</ul>
+<p>The first 4 components are fairly self-explanatory, kind-of off the shelf. What sets it apart is an ontology-backed approach to composition &amp; choreography, <em>see Vocabs</em>...</p>
+<p>The background to this is probably worth noting. A while back I had a play with <a href=\"https://colab.research.google.com/drive/1cRAflpG2v1rS9Nz6xpILpPouuvILpYlL\">Graph RAG using SPARQL</a>, working with <a href=\"https://www.llamaindex.ai/\">LlamaIndex</a>. Crude proof of context. I wanted <em>more</em>, but not dependent on the whims of a framework. I stumbled on <a href=\"https://github.com/caspianmoon/memoripy\">memoripy</a> which had most of the skeleton of what I wanted. So my starting point for #:semem was a kind of rewrite that using JS &amp; SPARQL. At that point I shifted my energies back to #:transmissions, meanwhile working on the vocabulary support - very significant, <em>see Vocabs...</em>  </p>
+<p><strong>Status 2025-05-04 :</strong> the basics are pretty much in place, although in need of a lot of tweaking, #:transmissions hooking in. Dependencies around here :</p>
+<ul>
+<li>#:semem needs #:transmissions for proper wiring.</li>
+<li>#:semem isHelpedBy <em>vocabs</em> - to enable to good bits</li>
+<li>#:semem is helpedBy <em>the utility stuff</em> - docs, visualizations etc.</li>
+</ul>
+<h2>Transmissions</h2>
+<p>This is a pipeliney thing. In fancy speak, a workflow compositor.</p>
+<h2>Postcraft</h2>
+<h2>TIA Information Agency</h2>
+<h2>Vocabs</h2>
+<p> These are key. I&#39;ve determined the main things I need are : a knowledge representation language (<em>Ragno</em>), a knowledge navigation language (<em>ZPT</em>), a knowledge communication language (<em>Lingue</em>) and a methodology language (<em>UM</em>).</p>
+<p><em>The primary vocab links are placeholders, they&#39;ll hopefully resolve to something useful by 2025-06-21.</em></p>
+<h3><a href=\"https://github.com/danja/ragno\">Ragno</a></h3>
+<p>The Ragno ontology is used to <strong>describe a knowledgebase</strong>. General-purpose terms are pretty well covered by <a href=\"https://www.w3.org/2004/02/skos/\">SKOS</a> already, what was demanded here were terms for specialisms that would fit well with RAG applications. I&#39;d got a lot sketched out when I stumbled on the paper <a href=\"https://arxiv.org/abs/2504.11544\">NodeRAG: Structuring Graph-based RAG with Heterogenous Nodes</a>. The information model in that has nice intersections with what I was after, so I merged the ideas in. A significant bonus is that the paper describes algorithms for knowledge augmentation and retrieval that are a very good fit for what I was planning with Semem.</p>
+<h3><a href=\"https://github.com/danja/zpt\">Zoom, Pan, Tilt (ZPT)</a></h3>
+<p>The ZPT ontology is used to <strong>describe a view of (part of) a knowledgebase</strong>. The primary purpose is to navigate the knowledge <em>Universe</em> and <strong>scope the current context</strong> of interest. The core terms are lifted from the world of cinema, with increasing levels of analogy-stretching :</p>
+<ul>
+<li>Zoom : the layer of abstraction/detail</li>
+<li>Pan : the (sub)domain, topics of interest</li>
+<li>Tilt : the parametric projection</li>
+</ul>
+<h3><a href=\"https://github.com/danja/lingue\">Lingue</a></h3>
+<p>The Lingue ontology is designed to facilitate communication between agents in a way that is flexible in regard to agent capabilities. It subsumes much of MCP and A2A. A key notion is negotiation, such that an optimal <em>local</em> lingue franca may be determined. Agents will have self-descriptions (? in MCP <strong>cards</strong> in A2A) that may be compared at a fairly mechanical level. Any commonalities can allow promotion to more sophisticated or domain-specific language(s).   </p>
+<h3>Unnamed Methodology</h3>
+<p><em>This is yet to be decided. It is clear that dev methodology needs a review in the light of recent developments. I&#39;ll be taking notes as I go along in the hope that something reasonably coherent may fall out.</em></p>
+<h2>Client Stuff</h2>
+<p>I&#39;ve got a quasi-use case, implementation target pattern for RDF-CRDT. I&#39;ve not caught up with the list archives yet, thought I might as well dump this here while it&#39;s fresh in my mind.</p>
+<p>Where I&#39;m coming from: I&#39;ve been looking at browser apps with two things in mind - front end for various server-oriented systems; apps I want to use myself.</p>
+<h2>History</h2>
+<p>A few years back I played around with an architectural pattern I called &quot;SPARQL Diamonds&quot; for interactions between browser and a SPARQL store. This was intended for a bunch of different task-specific apps (blog engine, wiki, outliner, bookmarker...) that all address a common heterogenous graph. The apps had a browser-local, non-RDF data model. User content from forms or whatever would be templated into SPARQL UPDATE queries, any pulls from SPARQL SELECT would be templated from JSON results into the app&#39;s model. Client, server with templaters in between, diamond shape. It worked nicely for what it was.</p>
+<p>More recently I decided to reboot all this. In the interim PWAs have become a thing, RDF in the browser is viable, etc etc.</p>
+<h2>Now</h2>
+<p>I&#39;ve wound up sticking together the regular user (me)-oriented bits in to one app &quot;Squirt&quot; [1], RDF/SPARQL editing in another, &quot;Atuin&quot; [2] and other bits designed for specific server-ish things I&#39;m working on elsewhere [3]. They use RDFJS/RDF-Ext under the hood. All very much in-progress, nothing particularly usable right now.</p>
+<p>So <em>anyway</em>...</p>
+<h2>Event Bus</h2>
+<p>I&#39;ve been hopping between Node.js and vanilla browser JS (with npm, webpack, vitest). A mechanism that seemed to make sense is an event bus I could use in either. So I made a quick &amp; dirty lib - &quot;evb&quot; [4]. Even though there&#39;s very little to it, I&#39;ve published it as an npm package to try and keep some consistency across the things I make.  </p>
+<p>It occurred to me that I was missing a trick with inter-app comms. I googled RDF CRDT...and here I am.</p>
+<p>I&#39;m thinking that a potential app setup would be to use an event bus internally, with a single source of truth dataset(s) being replicated across CRDT. From 1.000 metres they do look kinda similar. Thoughts?</p>
+<h2>Intro</h2>
+<p>I&#39;m Danny Ayers, @danja in some other places. Homepage at [5]. Located in Italy, dog called Claudio. I&#39;ve been around semweb tech a while, occasionally involved in W3C groups. Also have some history around this other AI, have recently been looking at ways of encouraging symbiosis between LLMs and the Rather Enormous Global Graph Augmented Environment.   </p>
+<p>[1] <a href=\"https://github.com/danja/squirt\">https://github.com/danja/squirt</a>
+[2] <a href=\"https://github.com/danja/atuin\">https://github.com/danja/atuin</a>
+[3] <a href=\"https://github.com/danja/tensegrity\">https://github.com/danja/tensegrity</a>
+[4] <a href=\"https://github.com/danja/evb/\">https://github.com/danja/evb/</a>
+[5] <a href=\"https://danny.ayers.name\">https://danny.ayers.name</a></p>
+<p>farelo postcraft  sheltopusik                        squirt  trestle       wstore
+foaf-retro         mcp-o    trans-apps    a2a-o  elfquake  hyperdata          thiki            uve
+atuin  evb       hyperdata-clients  node-flow                               tbox   tia    viz
+ </p>
+
+</article>
+<p class=\"post-title h-cinzel\">
+    <em><a href=\"http://hyperdata.it/docs/entries/2025-05-04_the-stack\">Tensegrity Suite</a></em>
+</p> 
+<!-- END ARTICLE CONTENT -->
+    </body>
+      <!-- END POST PAGE TEMPLATE -->
+</html>

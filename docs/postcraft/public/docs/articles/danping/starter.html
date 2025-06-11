@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <link rel="stylesheet" href="/css/fonts.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/grid-columns.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/style.css" type="text/css"/>
+        <title></title>
+    </head>
+    <!-- POST PAGE TEMPLATE -->
+    <body>
+        <!-- ARTICLE CONTENT -->
+<article class=\"post-content\">
+    <h1>danping starter notes</h1>
+<p>I struggled to see ping times on termux on my phone yesterday, while up a ladder, using my other hand to adjust an antenna and my other hand to hold on... So I&#39;d like an app that gives an audible <strong>ping</strong>. I want to make a #:hyperdata-android and noticed Ionic and Capacitor the other day, something to try.</p>
+<p>So... made a repo and made it a submodule locally as <code>hyperdata/packages/danping</code>.</p>
+<p>Made a new workspace in VSCode.</p>
+<p>I&#39;ve also created a Claude Project of the same name, given it a tweaked version my current system prompt for dev. I&#39;ll keep my eyes open for relevant docs/code I can add to Project Knowledge.</p>
+<p>Annoyingly it seems most of the examples for vanilla JS use Tailwind CSS. I don&#39;t want to use any more bloody frameworks than I have to!</p>
+<p><a href=\"https://ionic.io/blog/create-powerful-native-mobile-apps-with-capacitor-vanillajs\">https://ionic.io/blog/create-powerful-native-mobile-apps-with-capacitor-vanillajs</a></p>
+<pre><code class=\"language-sh\">npm init @capacitor/app
+</code></pre>
+<p>Gave a wizard, looks like I should have started in <code>../</code>. Hey ho, <em>moving</em>...</p>
+<p>I see it uses Vite. It&#39;s not in my current toolchain, but I&#39;ve seen #:@bergi using it somewhere in #:link:RDF-Ext, so I&#39;m not averse.  </p>
+<pre><code class=\"language-sh\">npm install
+</code></pre>
+<p>#:todo add a browser window to #:hyperdata-desktop (or finally get around to figure out window tiling in Ubuntu)</p>
+<pre><code class=\"language-sh\">npm ERR! An unknown git error occurred
+npm ERR! command git --no-replace-objects ls-remote ssh://git@github.com/pulsar-edit/document-register-element.git
+npm ERR! fatal: cannot chdir to &#39;../../../../packages/danping.git&#39;: No such file or directory
+</code></pre>
+<p><a href=\"https://docs.npmjs.com/common-errors\">https://docs.npmjs.com/common-errors</a></p>
+<p>out-of-date</p>
+<pre><code>npm cache verify
+</code></pre>
+<p>well it compressed the cache...</p>
+<p>Nah, looks like my move buggered it up. </p>
+<pre><code class=\"language-sh\">cd ..
+mv danping danping_
+</code></pre>
+<p>and try  again.</p>
+<pre><code class=\"language-sh\">npm run start
+</code></pre>
+<hr>
+<blockquote>
+<p>Ionic is the toolkit that provides the UI components. Capacitor is what creates the bridge between the web and native functionality. It also provides the tooling to build the native apps.
+- <a href=\"https://forum.ionicframework.com/t/what-is-the-difference-between-ionic-and-capacitor/226726\">https://forum.ionicframework.com/t/what-is-the-difference-between-ionic-and-capacitor/226726</a></p>
+</blockquote>
+<p><a href=\"https://ionicframework.com/\">https://ionicframework.com/</a></p>
+<p><a href=\"https://ionic.io/blog/create-powerful-native-mobile-apps-with-capacitor-vanillajs\">https://ionic.io/blog/create-powerful-native-mobile-apps-with-capacitor-vanillajs</a></p>
+<p><a href=\"https://github.com/saimon24?tab=repositories\">https://github.com/saimon24?tab=repositories</a>
+ </p>
+
+</article>
+<p class=\"post-title h-cinzel\">
+    <em><a href=\"http://hyperdata.it/docs/articles/danping/starter\">danping starter notes</a></em>
+</p> 
+<!-- END ARTICLE CONTENT -->
+    </body>
+      <!-- END POST PAGE TEMPLATE -->
+</html>

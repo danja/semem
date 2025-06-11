@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <link rel="stylesheet" href="/css/fonts.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/grid-columns.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/style.css" type="text/css"/>
+        <title></title>
+    </head>
+    <!-- POST PAGE TEMPLATE -->
+    <body>
+        <!-- ARTICLE CONTENT -->
+<article class=\"post-content\">
+    <h1>Cleanup</h1>
+<p>I&#39;ve decided using git submodules was a bad idea (interdependencies got messy). So locally I&#39;ll move those from being nested in dir tree to quasi-root level.</p>
+<p>I&#39;ll have that quasi-root as <code>/home/danny/hyperdata/</code> which won&#39;t be under git itself, but the dirs below it will (mostly) be repos.</p>
+<p>What was the parent repo <a href=\"https://github.com/danja/hyperdata\">https://github.com/danja/hyperdata</a> I&#39;ll use for top-level docs, admin stuff etc. (locally at <code>/home/danny/hyperdata/hyperdata</code>).</p>
+<p>I&#39;ll move the child repos over one at a time as and when I actually need them. A lot of cruft &amp; duplication has accumulated. I&#39;ve already done #:transmissions, that&#39;s now at <code>/home/danny/hyperdata/transmissions</code>, but I still need to get rid of <code>/home/danny/hyperdata/hyperdata/packages/transmissions</code>. I can do the removal of all of them now.
+I just tested removal with <code>trellis</code>, that seemed ok. Now for the rest...</p>
+<pre><code class=\"language-sh\">cd /home/danny/hyperdata/hyperdata/packages
+ls
+
+(trellis)
+auth-test           danping       hyperdata-android           open-world-interface  sheltopusik        trans-dev
+chauvin             dogbot        hyperdata-package-template  progressive-scraper   sparql-store-lite  utils
+clients             farelo        kia                         semem                 store-wrapper
+cognitive-composer  graph-editor  ldap-auth-app               semem-test            strandz
+common              hoard         ns                          server                tbox
+</code></pre>
+<pre><code class=\"language-sh\">cd /home/danny/hyperdata/hyperdata
+git rm -r packages/auth-test           
+git rm -r packages/danping       
+git rm -r packages/hyperdata-android           
+git rm -r packages/open-world-interface  
+git rm -r packages/sheltopusik        
+git rm -r packages/trans-dev
+git rm -r packages/chauvin             
+git rm -r packages/dogbot        
+git rm -r packages/hyperdata-package-template  
+git rm -r packages/progressive-scraper   
+git rm -r packages/sparql-store-lite  
+git rm -r packages/utils
+git rm -r packages/clients             
+git rm -r packages/farelo        
+git rm -r packages/kia                         
+git rm -r packages/semem                 
+git rm -r packages/store-wrapper
+git rm -r packages/cognitive-composer  
+git rm -r packages/graph-editor  
+git rm -r packages/ldap-auth-app               
+git rm -r packages/semem-test            
+git rm -r packages/strandz
+git rm -r packages/common              
+git rm -r packages/hoard         
+git rm -r packages/ns                          
+git rm -r packages/server                
+git rm -r packages/tbox
+
+git commit -m &#39;remove submodules&#39;
+git push
+</code></pre>
+<p>Hmm, nearby...</p>
+<pre><code class=\"language-sh\">danny@danny-desktop:~/sites/hyperdata.it$ git rebase
+CONFLICT (modify/delete): .gitignore deleted in a1fb8fa (junk) and modified in HEAD.  Version HEAD of .gitignore left in tree.
+error: could not apply a1fb8fa... junk
+hint: Resolve all conflicts manually, mark them as resolved with
+hint: &quot;git add/rm &lt;conflicted_files&gt;&quot;, then run &quot;git rebase --continue&quot;.
+hint: You can instead skip this commit: run &quot;git rebase --skip&quot;.
+</code></pre>
+<p>I&#39;ll --skip.
+ </p>
+
+</article>
+<p class=\"post-title h-cinzel\">
+    <em><a href=\"http://hyperdata.it/docs/entries/2025-03-12_cleanup\">Cleanup</a></em>
+</p> 
+<!-- END ARTICLE CONTENT -->
+    </body>
+      <!-- END POST PAGE TEMPLATE -->
+</html>

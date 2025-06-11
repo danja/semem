@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <link rel="stylesheet" href="/css/fonts.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/grid-columns.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/style.css" type="text/css"/>
+        <title></title>
+    </head>
+    <!-- POST PAGE TEMPLATE -->
+    <body>
+        <!-- ARTICLE CONTENT -->
+<article class=\"post-content\">
+    <ul>
+<li>top level general notes : danny.ayers.name</li>
+<li>top level general notes : ps.hyperdata.it</li>
+</ul>
+<p>Domains :</p>
+<ul>
+<li>danny.ayers.name - personal, main</li>
+<li>hyperdata.it - coding related</li>
+<li>strandz.it - bookmarker project</li>
+<li>elfquake.org - ELFQuake project</li>
+</ul>
+<p>(all registered at gandi.net, elfquake at dynadot)</p>
+<h3>danny.ayers.name</h3>
+<p>@ 86400 IN SOA ns1.gandi.net. hostmaster.gandi.net. 1711462868 10800 3600 604800 10800
+@ 10800 IN A 178.79.189.240</p>
+<p>postscript direct</p>
+<ul>
+<li>local : <code>/home/danny/github-danny/postcraft/danny.ayers.name/public/home</code></li>
+<li>server : <code>/home/github/postcraft/danny.ayers.name/public/home</code></li>
+</ul>
+<p>└── www
+├── danny.ayers.name -&gt; ../github/postcraft/danny.ayers.name/public/home</p>
+<ul>
+<li>github :</li>
+</ul>
+<h3>hyperdata.it</h3>
+<p>for now, as previous server</p>
+<ul>
+<li>local : <code>/home/danny/HKMS/hyperdata-static</code></li>
+<li>server : <code>/home/github/hyperdata-static</code></li>
+<li>github :</li>
+</ul>
+<h4>ps.hyperdata.it</h4>
+<p>postscript</p>
+<ul>
+<li>local : <code>/home/danny/github-danny/hyperdata/docs/ps.hyperdata.it/public/home</code></li>
+<li>server : <code>/home/github/hyperdata/docs/ps.hyperdata.it/public/home</code></li>
+<li>github :</li>
+</ul>
+<h4>foaf-retro.hyperdata.it</h4>
+<p>postscript</p>
+<ul>
+<li>local : <code>/home/danny/github-danny/foaf-retro/foaf-retro.hyperdata.it/public/home</code></li>
+<li>server : <code>/home/github/foaf-retro/foaf-retro.hyperdata.it/public/home</code></li>
+<li>github :</li>
+</ul>
+<h3>elfquake.org</h3>
+<p>postscript direct</p>
+<ul>
+<li>local : <code>/home/danny/github-danny/elfquake/elfquake.org/public/home</code></li>
+<li>server :</li>
+<li>github :</li>
+</ul>
+<h3>strandz.it</h3>
+<p>is git submodule</p>
+<p>for app</p>
+<ul>
+<li>local : <code>/home/danny/github-danny/hyperdata/packages/strandz</code></li>
+<li>server :</li>
+<li>github :</li>
+</ul>
+<h4>ps.strandz.it</h4>
+<p>postscript</p>
+<ul>
+<li><p>local : <code>/home/danny/github-danny/strandz/docs/strandz.it/public/home</code></p>
+</li>
+<li><p>server : <code>/home/github/strandz/docs/strandz.it/public/home</code></p>
+</li>
+<li><p>github :</p>
+</li>
+</ul>
+<hr>
+<p><a href=\"https://github.blog/open-source/git/working-with-submodules/\">https://github.blog/open-source/git/working-with-submodules/</a></p>
+<pre><code>cd /home/danny/github-danny/hyperdata/packages
+git submodule add https://github.com/danja/strandz.git strandz
+</code></pre>
+<pre><code>git clone --recursive https://github.com/danja/strandz.git
+</code></pre>
+<pre><code>root@hyperdata:/home# tree -L 2
+.
+├── danny
+│   ├── nginx-sites-available
+│   └── rsync-nginx.sh
+├── fuseki
+├── github
+│   ├── cd
+│   ├── elfquake
+│   ├── environs
+│   ├── farelo
+│   ├── foolicious
+│   ├── foowiki
+│   ├── fuseki-ldap
+│   ├── HKMS
+│   ├── hyperdata
+│   ├── hyperdata-static
+│   ├── node-services
+│   ├── postcraft
+│   ├── schema-editor
+│   ├── transmissions
+│   ├── trellis
+│   └── trev
+├── hkms-apps -&gt; ./github
+├── services
+│   ├── CommunitySolidServer
+│   ├── fuseki
+│   ├── ldap
+│   ├── ldap-config
+│   └── solid
+└── www
+    ├── danny.ayers.name -&gt; ../github/postcraft/danny.ayers.name/public/home
+    ├── elfquake.org -&gt; /home/github/elfquake/elfquake.org/public/home
+    ├── git
+    ├── hyperdata.it -&gt; /home/github/hyperdata-static
+    └── strandz.it -&gt; git/provolone-piccante/strandz.it
+</code></pre>
+<p>root@hyperdata:/home/github/hyperdata/docs/ps.hyperdata.it/public/home# cd /etc/nginx/sites-available/
+root@hyperdata:/etc/nginx/sites-available# ls
+danny.ayers.name.conf elfquake.org.conf fuseki.conf hyperdata.it.conf solid.conf strandz.it.conf
+ </p>
+
+</article>
+<p class=\"post-title h-cinzel\">
+    <em><a href=\"http://hyperdata.it/docs/articles/sitemap\"> danny.ayers.name</a></em>
+</p> 
+<!-- END ARTICLE CONTENT -->
+    </body>
+      <!-- END POST PAGE TEMPLATE -->
+</html>

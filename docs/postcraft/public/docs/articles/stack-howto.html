@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <link rel="stylesheet" href="/css/fonts.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/grid-columns.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/style.css" type="text/css"/>
+        <title></title>
+    </head>
+    <!-- POST PAGE TEMPLATE -->
+    <body>
+        <!-- ARTICLE CONTENT -->
+<article class=\"post-content\">
+    <h1>hyperdata stack howto</h1>
+<p>install/run/troubleshooting</p>
+<h2>tbox</h2>
+<p><a href=\"http://localhost:4000/\">http://localhost:4000/</a> echos request via nginx</p>
+<p><a href=\"http://localhost:4040/\">http://localhost:4040/</a> gives status overview</p>
+<p><a href=\"http://localhost:4080/\">http://localhost:4080/</a> suggests it&#39;s status - doesn&#39;t work...</p>
+<p><a href=\"http://localhost:4030/\">http://localhost:4030/</a> is Fuseki admin</p>
+<h3>ssh</h3>
+<p>Two users :</p>
+<p>semem:semem
+root:semem</p>
+<pre><code class=\"language-sh\">ssh root@localhost -p 2222
+</code></pre>
+<h3>Troubleshooting</h3>
+<pre><code class=\"language-sh\">cd ~/hyperdata/tbox
+docker-compose logs
+...
+tbox-fuseki-1 | [2025-02-12 10:46:46] TDB        WARN  Your platform does not support checking process liveness so TDB disk locations cannot be reliably locked to prevent possible corruption due to unsafe multi-JVM usage
+</code></pre>
+<p>I already had an instance of Fuseki running through <code>systemctl</code>. Needed :</p>
+<pre><code class=\"language-sh\">sudo systemctl stop fuseki
+sudo systemctl disable fuseki
+sudo systemctl stop tbox
+sudo systemctl start tbox
+</code></pre>
+
+</article>
+<p class=\"post-title h-cinzel\">
+    <em><a href=\"http://hyperdata.it/docs/articles/stack-howto\">hyperdata stack howto</a></em>
+</p> 
+<!-- END ARTICLE CONTENT -->
+    </body>
+      <!-- END POST PAGE TEMPLATE -->
+</html>

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <link rel="stylesheet" href="/css/fonts.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/grid-columns.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/style.css" type="text/css"/>
+        <title></title>
+    </head>
+    <!-- POST PAGE TEMPLATE -->
+    <body>
+        <!-- ARTICLE CONTENT -->
+<article class=\"post-content\">
+    <h1>CSS Tips</h1>
+<h3>Allow user control of element size</h3>
+<pre><code class=\"language-css\">img {
+  resize: both;
+}
+</code></pre>
+<p>Works (as class or whatever) on anything with an <code>overflow</code> != <code>visible</code>.</p>
+<p><a href=\"https://developer.mozilla.org/en-US/docs/Web/CSS/resize\">https://developer.mozilla.org/en-US/docs/Web/CSS/resize</a></p>
+<ul>
+<li><p>Hover shadow</p>
+</li>
+<li><p>Non-Javascript interactive elements (button checked etc, list select, open drawer)</p>
+</li>
+<li><p>responsive, less code with min()</p>
+</li>
+<li><p><a href=\"https://developer.mozilla.org/en-US/docs/Web/CSS/min\">https://developer.mozilla.org/en-US/docs/Web/CSS/min</a></p>
+</li>
+<li><p><a href=\"https://developer.mozilla.org/en-US/docs/Web/CSS/max\">https://developer.mozilla.org/en-US/docs/Web/CSS/max</a></p>
+</li>
+<li><p><a href=\"https://developer.mozilla.org/en-US/docs/Web/CSS/clamp\">https://developer.mozilla.org/en-US/docs/Web/CSS/clamp</a></p>
+</li>
+<li><p>select :not() CSS pseudo-class</p>
+</li>
+<li><p><a href=\"https://developer.mozilla.org/en-US/docs/Web/CSS/:not\">https://developer.mozilla.org/en-US/docs/Web/CSS/:not</a></p>
+</li>
+<li><p><a href=\"https://developer.mozilla.org/en-US/docs/Web/CSS/:has\">https://developer.mozilla.org/en-US/docs/Web/CSS/:has</a>
+Glass morphism</p>
+<ul>
+<li>text gradients background-clip</li>
+<li><a href=\"https://developer.mozilla.org/en-US/docs/Web/CSS/background-clip\">https://developer.mozilla.org/en-US/docs/Web/CSS/background-clip</a></li>
+</ul>
+</li>
+<li><p>dropdown focus improvement</p>
+<ul>
+<li><a href=\"https://developer.mozilla.org/en-US/docs/Web/CSS/:focus-within\">https://developer.mozilla.org/en-US/docs/Web/CSS/:focus-within</a></li>
+</ul>
+</li>
+<li><p>auto heading numbering</p>
+</li>
+<li><p>card swiper improvement - snap</p>
+</li>
+<li><p><a href=\"https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-snap-type\">https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-snap-type</a></p>
+</li>
+<li><p><a href=\"https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-snap-align\">https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-snap-align</a></p>
+</li>
+</ul>
+<p>- from <a href=\"https://www.youtube.com/watch?v=PL3Odw-k8W4\">These CSS PRO Tips &amp; Tricks Will Blow Your Mind!</a> <em>(comparatively accurate clickbait title)</em></p>
+<pre><code class=\"language-html\">&lt;select&gt;
+  &lt;option value=&quot;light&quot;&gt;Light&lt;/option&gt;
+  &lt;option value=&quot;dark&quot;&gt;Dark&lt;/option&gt;
+&lt;/select&gt;
+</code></pre>
+<pre><code class=\"language-css\">body:has(option value=&quot;dark&quot;]):checked) {
+  --background: black;
+  --textcolor: white;
+}
+</code></pre>
+
+</article>
+<p class=\"post-title h-cinzel\">
+    <em><a href=\"http://hyperdata.it/docs/articles/css-tips\">CSS Tips</a></em>
+</p> 
+<!-- END ARTICLE CONTENT -->
+    </body>
+      <!-- END POST PAGE TEMPLATE -->
+</html>

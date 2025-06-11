@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <link rel="stylesheet" href="/css/fonts.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/grid-columns.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/style.css" type="text/css"/>
+        <title></title>
+    </head>
+    <!-- POST PAGE TEMPLATE -->
+    <body>
+        <!-- ARTICLE CONTENT -->
+<article class=\"post-content\">
+    <h1>Creating a new <code>hyperdata</code> project</h1>
+<p>#:farelo
+#:h
+#:todo automate</p>
+<h2>Set up in repo</h2>
+<ul>
+<li>create GitHub repo with README.md etc.</li>
+</ul>
+<pre><code class=\"language-sh\">cd /home/danny/github-danny/hyperdata/packages
+git submodule add https://github.com/danja/hyperdata-package-template.git hyperdata-package-template
+git submodule init hyperdata-package-template
+cd hyperdata-package-template
+
+# npm install
+# npm init -y
+# npm update
+</code></pre>
+<h2>Create Workspaces</h2>
+<pre><code>ln -s ~/github-danny/hyperdata/packages/hyperdata-package-template/docs/postcraft/content-raw ~/github-danny/hyperdata/workspaces/hyperdata-package-template
+
+# mkdir ~/github-danny/hyperdata/packages/tbox/docs
+
+# cp -r ~/github-danny/postcraft/postcraft-template ~/github-danny/hyperdata/packages/tbox/docs/postcraft
+</code></pre>
+<p>init</p>
+<pre><code class=\"language-sh\">npm install jsdoc --save-dev
+npm install  jasmine jasmine-core jasmine-spec-reporter jasmine-browser-runner webpack webpack-cli webpack-dev-server repomix --save-dev
+</code></pre>
+<pre><code class=\"language-sh\">cd /home/danny/github-danny/hyperdata/packages
+git submodule add https://github.com/danja/cognitive-composer.git cognitive-composer
+cd cognitive-composer
+
+cd /home/danny/github-danny/hyperdata/packages
+git submodule add https://github.com/danja/tbox.git tbox
+</code></pre>
+<p>#:seeAlso <a href=\"https://github.blog/open-source/git/working-with-submodules/\">working-with-submodules</a></p>
+<h2>Create package.json</h2>
+<pre><code class=\"language-sh\">cd trans-dev
+npm init -y
+</code></pre>
+<p>Edit later.</p>
+<h2>Init Docs</h2>
+<pre><code>cd ~/github-danny/hyperdata/packages/open-world-interface
+mkdir docs
+cp -r ~/github-danny/postcraft/postcraft-template ./docs/postcraft
+
+
+cd ~/github-danny/hyperdata/packages/store-wrapper
+mkdir docs
+cp -r ~/github-danny/postcraft/postcraft-template ./docs/postcraft
+</code></pre>
+<p>#:todo revisit locations, local, server, backup</p>
+<h2>Create Workspaces</h2>
+<pre><code>mkdir ~/github-danny/hyperdata/packages/tbox/docs
+
+cp -r ~/github-danny/postcraft/postcraft-template ~/github-danny/hyperdata/packages/tbox/docs/postcraft
+
+ln -s ~/github-danny/hyperdata/packages/tbox/docs/postcraft/content-raw ~/github-danny/hyperdata/workspaces/tbox
+</code></pre>
+<ul>
+<li>Add Project to #:h:desktop, symlink at <code>~/github-danny/hyperdata/workspaces/tbox</code></li>
+</ul>
+<p>(currently used for doc editing)</p>
+<ul>
+<li>add to VSCode uber-project <code>~/github-danny/hyperdata/workspaces/projects.code-workspace</code></li>
+</ul>
+<p>(currently used for git ops)
+ </p>
+
+</article>
+<p class=\"post-title h-cinzel\">
+    <em><a href=\"http://hyperdata.it/docs/articles/a-package-starter\">Creating a new `hyperdata` project</a></em>
+</p> 
+<!-- END ARTICLE CONTENT -->
+    </body>
+      <!-- END POST PAGE TEMPLATE -->
+</html>

@@ -63,6 +63,18 @@ Production server deployment guide demonstrating proper environment configuratio
 
 ## Semantic Memory Examples
 
+### MemoryEmbeddingJSON.js
+```bash
+node examples/MemoryEmbeddingJSON.js
+```
+Core memory functionality demonstration with storage and retrieval of interactions using MemoryManager with JSONStore and OllamaConnector. Shows memory initialization, interaction storage with embeddings and concepts, semantic retrieval based on similarity, response generation using memory context, and JSON file persistence.
+
+### MemoryEmbeddingSPARQL.js
+```bash
+node examples/MemoryEmbeddingSPARQL.js
+```
+SPARQL store integration for semantic memory management with RDF/SPARQL storage backend. Demonstrates SPARQL endpoint connectivity and authentication, RDF triple storage for semantic memory, semantic querying with vector similarity, data persistence across sessions, integration with semantic web standards, and configuration-driven endpoint management.
+
 ### ArticleEmbedding.js
 ```bash
 node examples/ArticleEmbedding.js

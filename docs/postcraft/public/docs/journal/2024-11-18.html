@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <link rel="stylesheet" href="/css/fonts.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/grid-columns.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/style.css" type="text/css"/>
+        <title></title>
+    </head>
+    <!-- POST PAGE TEMPLATE -->
+    <body>
+        <!-- ARTICLE CONTENT -->
+<article class=\"post-content\">
+    <h1>Semem starter</h1>
+<ol>
+<li>Plan <code>articles/semem/plan.md</code></li>
+<li>Port memoripy to JS</li>
+</ol>
+<p>Working dirs :</p>
+<pre><code class=\"language-sh\">~/github-danny/hyperdata/packages/semem
+~/github-other/memoripy
+</code></pre>
+<p>I already have a Claude project <code>vector-sparql-store</code>, I&#39;ll rename it <code>semem</code> once I&#39;ve checked its current project knowledge.
+Ok, in :
+<code>~/github-danny/hyperdata/workspaces/hyperdata/articles/semem/links.md</code></p>
+<p>#:todo mocks for APIs
+#:todo $ on OpenAI API</p>
+<pre><code class=\"language-sh\">cd ~/github-danny/hyperdata/packages/semem
+npm init esm -y
+</code></pre>
+<p><strong>make sure .env is in .gitignore</strong></p>
+<p>ew, that init wasn&#39;t great</p>
+<p>#:todo setup plop with new project template</p>
+<p>Added some bits :</p>
+<pre><code class=\"language-json\">{
+  &quot;name&quot;: &quot;semem&quot;,
+  &quot;type&quot;: &quot;module&quot;,
+  &quot;version&quot;: &quot;1.0.0&quot;,
+  &quot;description&quot;: &quot;vector-sparql-memory&quot;,
+  &quot;main&quot;: &quot;index.js&quot;,
+  &quot;repository&quot;: &quot;https://github.com/danja/semem.git&quot;,
+  &quot;author&quot;: &quot;Danny Ayers &lt;danny.ayers@gmail.com&gt;&quot;,
+  &quot;license&quot;: &quot;MIT&quot;,
+  &quot;private&quot;: true,
+  &quot;scripts&quot;: {
+    &quot;tests&quot;: &quot;jasmine --config=jasmine.json --reporter=tests/helpers/reporter.js&quot;,
+    &quot;docs&quot;: &quot;jsdoc -c jsdoc.json&quot;,
+    &quot;rp&quot;: &quot;repopack -c repopack.config.json . &quot;
+  }
+}
+</code></pre>
+<p>Ok, tweaked a <code>repopack.config.json</code>
+Hmm, <code>--reporter=tests/helpers/reporter.js</code>..?</p>
+<pre><code class=\"language-sh\">npm install jasmine --save-dev
+npm install jsdoc --save-dev
+npm install repomix --save-dev
+</code></pre>
+<p>Grrr! It fell over due to gyp again. But I have the solution (extracted from Claude conversations <code>/home/danny/github-danny/hyperdata/docs/postcraft/content-raw/chat-archives/md/7e3c/2024-09-21_eba.md</code>) :</p>
+<pre><code class=\"language-sh\">npm cache clean --force
+rm -rf node_modules
+</code></pre>
+<p>Nope...</p>
+<p>#:todo check current node &amp; npm versions</p>
+<p>Heh, <strong>now</strong> :</p>
+<pre><code>node --version
+...
+v20.11.0
+...
+nvm ls
+...
+-&gt;     v20.11.0
+        v21.2.0
+        v22.9.0
+</code></pre>
+<pre><code class=\"language-sh\">npm install -g npm
+npm install -g node # no!
+</code></pre>
+<p>from <a href=\"https://nodejs.org/en/download/package-manager\">https://nodejs.org/en/download/package-manager</a> :</p>
+<pre><code class=\"language-sh\"># installs nvm (Node Version Manager)
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.0/install.sh | bash
+# download and install Node.js (you may need to restart the terminal)
+nvm install 22
+# verifies the right Node.js version is in the environment
+node -v # should print `v22.11.0`
+# verifies the right npm version is in the environment
+npm -v # should print `10.9.0`
+</code></pre>
+<p>Ok :</p>
+<pre><code class=\"language-sh\">Now using node v22.11.0 (npm v10.9.0)
+</code></pre>
+<p>back up to :</p>
+<pre><code class=\"language-sh\">npm cache clean --force
+rm -rf node_modules
+npm install jasmine --save-dev
+</code></pre>
+<p>Grrrrrr!! Giving me gyp again. I do need to ringfence <code>hyperdata-desktop</code>, that&#39;s the only thing that isn&#39;t ok with latest node. But one last go without that:</p>
+<pre><code class=\"language-sh\">sudo apt update
+sudo apt upgrade # dogwalk time
+npm cache clean --force
+rm -rf node_modules
+npm install -g node-gyp
+...
+changed 101 packages in 19s
+ok!
+...
+npm install jasmine --save-dev
+</code></pre>
+<p>Boo.</p>
+<pre><code class=\"language-prompt\">I have a recurring problem with node projects. I have a git repo `hyperdata` with some submodules in its `packages` dir. One of these, `hyperdata-desktop` needs node version 16 (specified in .nvmrc), for everything else I want to use the latest, currently 20. I&#39;m currently in a subproject `hyperdata/packages/semem` trying `npm install jasmine --save-dev` but it fails trying to use `node-gyp rebuild` on a library used by `hyperdata-desktop`. I don&#39;t want to specify the node version outside of the specific for `hyperdata-desktop`, just let it use the system default, the latest. How can I ringfence this specific project?
+I have run :
+
+sudo apt update
+sudo apt upgrade
+npm cache clean --force
+rm -rf node_modules
+npm install -g node-gyp
+
+they are all ok.
+</code></pre>
+<h3>Specific Dependencies</h3>
+<p>I&#39;ve already skimmed memoripy code, its dependencies look very much in line with what I knew I needed for vector+sparql. I reckon if I give Claude a s/repopack/repomix of memorip + its README.md along with the corresponding JS lib interfaces that should get me most of the way.</p>
+<p>#:todo repopack #:transmission:packer</p>
+<p><code>/home/danny/github-other/memoripy/requirements.txt</code> is huge...</p>
+<p>From the source files, these are the less well-known libs:</p>
+<pre><code class=\"language-python\">from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+from langchain_ollama import ChatOllama
+from langchain_core.output_parsers import JsonOutputParser
+from langchain_core.prompts import PromptTemplate
+from pydantic import BaseModel, Field
+from langchain_core.messages import HumanMessage, SystemMessage
+import faiss
+import numpy as np
+import time
+import networkx as nx
+from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import normalize
+from collections import defaultdict
+</code></pre>
+
+</article>
+<p class=\"post-title h-cinzel\">
+    <em><a href=\"http://hyperdata.it/docs/journal/2024-11-18\">Semem starter</a></em>
+</p> 
+<!-- END ARTICLE CONTENT -->
+    </body>
+      <!-- END POST PAGE TEMPLATE -->
+</html>

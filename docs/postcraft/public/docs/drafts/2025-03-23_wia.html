@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <link rel="stylesheet" href="/css/fonts.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/grid-columns.css" type="text/css"/>
+        <link rel="stylesheet" href="/css/style.css" type="text/css"/>
+        <title></title>
+    </head>
+    <!-- POST PAGE TEMPLATE -->
+    <body>
+        <!-- ARTICLE CONTENT -->
+<article class=\"post-content\">
+    <h1>What I&#39;m at, 2025-03</h1>
+<p><strong>Muchos.</strong></p>
+<p>I tried to write things out as something like bullet points (below), but it&#39;s all very intertwingled. Try another path, start with a case study.</p>
+<h3>Goal</h3>
+<p>I&#39;m strongly convinced that useful <strong>earthquake prediction</strong> is possible with existing tech and data sources (with many caveats). I have spent enough time on the problem to have a strategy that should work for a sole developer given time (and no bills to pay). But it would be terribly inefficient to do it myself. At this point in time I believe someone else will use a similar strategy before very long. Machine learning is a key facet, but developing good algorithms for this is non-trivial.</p>
+<p>That&#39;s where the AI comes in. Someone else is bound to do it. There a many ways of [insert sweet toki pona expression for doing something].   </p>
+<p><em>Down a layer</em></p>
+<p>I think a lot of current activity around AI dev is up it&#39;s own backside. </p>
+<hr>
+<p>Grr. My SPARQL Update bit isn&#39;t doing the replace on the blog entry resources.</p>
+<p>Also I was selecting the <code>modified</code> for the most recent posts rather that <code>created</code></p>
+<p>Three live domains -</p>
+<ul>
+<li><a href=\"https://danny.ayers.name\">https://danny.ayers.name</a> - blog, more real-world-ish stuff</li>
+<li><a href=\"https://hyperdata.it\">https://hyperdata.it</a> - Web/AI tech stuff</li>
+<li><a href=\"https://strandz.it\">https://strandz.it</a> - placeholder. I&#39;ll be putting experimental services there</li>
+</ul>
+<p>ELFQuake, newsmonitor</p>
+<p>electronics
+sites</p>
+<p>llms!!!</p>
+<p>terrapack</p>
+<p><strong>Current status overall</strong> is basically &quot;<em>many tools that will enable things in progress, slowly approaching usability</em>&quot; - ie. <strong>bootstrapping</strong>.</p>
+<p>Virtually all code is <strong>node or vanilla JS</strong>.</p>
+<p>In order of need-to-know.</p>
+<ul>
+<li>tbox - container</li>
+<li>tia - XMPP agent templates (and vocab)</li>
+<li>linguine - RDF vocab for inter-agent comms</li>
+<li>clients - API connectors</li>
+<li>transmissions - pipeliney thing</li>
+<li>postcraft - doc management thing</li>
+<li>semem - semantic memory using various interfaces (SPARQL knowledgebase, vector store, LLM API connectors)</li>
+<li>zpt - <em>Zoom, Pan, Tilt</em> : RDF vocab for knowledgebase navigation</li>
+<li>farelo - getting things done</li>
+<li>squirt - user UI</li>
+<li>hyperdata-desktop - dev UI</li>
+<li>um - unnamed mythodology</li>
+</ul>
+<h2><a href=\"https://github.com/danja/tbox\">tbox</a></h2>
+<p>A Docker setup (based on Alpine Linux, has ssh) to provide a <del>sandpit</del> integrated ecosystem for playing with this stuff. Main components not of my making are <a href=\"https://prosody.im/\">Prosody</a> XMPP server, <a href=\"https://jena.apache.org/documentation/fuseki2/\">Fuseki</a> SPARQL store.</p>
+<p><strong>Status</strong> : Mostly set up, I need to cycle through again soon. Fuseki&#39;s working well enough for me to use it from other things, Prosody needs a bit more config. I think I&#39;ve got the environment to the point where it&#39;ll pull my bits from github and run - once they&#39;re working well enough. It needs something for auth, so far I&#39;ve only got hacky name/pass.</p>
+<h2>tia Intelligence Agency</h2>
+<p><em>I did think of a more usable name the other day, forgotten now...</em></p>
+<p>This will basically be just a bunch of boilerplate &amp; templates for XMPP agents, making hook into the stuff below avaiable. Aim is to make it easy enough to code up an agent that an agent can do it.</p>
+<p><strong>Status</strong> : I had a play around last year, enough to see what was needed client-wise, got a first-pass running (<a href=\"https://github.com/danja/dogbot\">dogbot</a>).</p>
+<h2>Transmissions</h2>
+<p><em>I should probably do a video demo, there&#39;s a lot in here</em></p>
+<p>This is the pipeliney thing that&#39;s been eating most of my time. I started because there were a bunch of things I wanted to make that followed this kind of app-shape. Recurring serendipity has kept me going.</p>
+<p>At minimum, pipelines pass along JSON objects as messages (I&#39;ve also including an RDF dataset in that object here and there). Under the hood they&#39;re event-driven, run forward. I&#39;ve got some flow control &amp; concurrency, but I&#39;ve only been building that out as &amp; when needed.</p>
+<p>The pipelines are defined in RDF Turtle, in a <code>transmissions.ttl</code> file, <a href=\"https://github.com/danja/transmissions/blob/main/src/applications/_pending/claude-json-converter/transmissions.ttl\">example here</a> for breaking a Claudio data dump into dirs/files of text (so I could find things again).</p>
+<p>Individual processors, eg. <code>:FileReader</code> follow an ultra-simple interface, essentially :</p>
+<pre><code class=\"language-javascript\">messageOut = process(messageIn)
+</code></pre>
+<p>The processors are intended to be little operations, like <code>:FileReader</code> reads a file and adds its contents to the <code>message</code> to be passed on.</p>
+<p>The details of how a processor behaves, its <em>config settings</em> can come from 3 sources in reverse order of precedence/increasing specificity :</p>
+<ul>
+<li>a <code>config.ttl</code> in the same dir as <code>transmissions.ttl</code> - this is like default/global settings, eg. with the the <a href=\"https://github.com/danja/transmissions/blob/main/src/applications/_pending/claude-json-converter/config.ttl\">Claude example</a></li>
+<li>a <code>manifest.ttl</code> that exists in a <code>target</code> (this will soon support HTTP URLs, so far only fs, see <strong>Postcraft</strong> below)   </li>
+<li>a <code>{ &quot;key&quot;:&quot;value&quot;}</code> pair in the message it receives to process</li>
+</ul>
+<p>One key bit of the <strong>serendipity</strong> I mentioned is that having all the pipeliney bits happening <strong>automagically</strong>, intended to make things easy for <em>me</em>, also happens to make things easier</p>
+<h2>Postcraft</h2>
+<p>This is the canonical example of a Transmissions application.</p>
+<h2>ns</h2>
+<h3>lingue</h3>
+<h3>zpt</h3>
+<ul>
+<li>#:Zoom for the level of detail/abstraction</li>
+<li>#:Pan for scope, domain</li>
+<li>#:Tilt for the mix of layers (<em>a more literal analogy would be optical filters, but tilt lives with the two other terms which I&#39;m redefining</em>).</li>
+</ul>
+<p>#:lingue = Lingue Franche, inter-agent messaging language</p>
+<h3>um</h3>
+<p><em>New vocabs...</em></p>
+<h2>Put Somewhere...</h2>
+<p><em>Rather bizarrely resuming things I was working on 20+ years ago, artifacts eg. <a href=\"https://hyperdata.it/stuff/ideagraph/\">IdeaGraph</a> mindmappy knowledgebase thing from 2003, <a href=\"https://hyperdata.it/xmlns/rpp/2001/\">RDF Process Profile</a>, vocab for expressing processes from 2001.</em>  </p>
+<p>A lot of fragments, but there is an overall structure of sort. Naming is for <em>internal purposes</em>. All this in GitHub somewhere.
+ </p>
+
+</article>
+<p class=\"post-title h-cinzel\">
+    <em><a href=\"http://hyperdata.it/docs/drafts/2025-03-23_wia\">What I&#92;&#39;m at, 2025-03</a></em>
+</p> 
+<!-- END ARTICLE CONTENT -->
+    </body>
+      <!-- END POST PAGE TEMPLATE -->
+</html>
