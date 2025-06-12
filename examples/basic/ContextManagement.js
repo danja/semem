@@ -20,12 +20,12 @@
  * - Network connectivity for LLM operations
  */
 
-import ContextManager from '../src/ContextManager.js';
-import ContextWindowManager from '../src/ContextWindowManager.js';
-import MemoryManager from '../src/MemoryManager.js';
-import Config from '../src/Config.js';
-import InMemoryStore from '../src/stores/InMemoryStore.js';
-import OllamaConnector from '../src/connectors/OllamaConnector.js';
+import ContextManager from '../../src/ContextManager.js';
+import ContextWindowManager from '../../src/ContextWindowManager.js';
+import MemoryManager from '../../src/MemoryManager.js';
+import Config from '../../src/Config.js';
+import InMemoryStore from '../../src/stores/InMemoryStore.js';
+import OllamaConnector from '../../src/connectors/OllamaConnector.js';
 import logger from 'loglevel';
 import dotenv from 'dotenv';
 

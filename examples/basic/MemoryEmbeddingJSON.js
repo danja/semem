@@ -12,9 +12,9 @@
  * - JSON file persistence
  */
 
-import MemoryManager from '../src/MemoryManager.js';
-import JSONStore from '../src/stores/JSONStore.js';
-import OllamaConnector from '../src/connectors/OllamaConnector.js';
+import MemoryManager from '../../src/MemoryManager.js';
+import JSONStore from '../../src/stores/JSONStore.js';
+import OllamaConnector from '../../src/connectors/OllamaConnector.js';
 import logger from 'loglevel';
 import dotenv from 'dotenv';
 

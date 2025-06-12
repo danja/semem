@@ -1,14 +1,14 @@
 import logger from 'loglevel';
-import Config from '../src/Config.js';
-import SPARQLStore from '../src/stores/SPARQLStore.js';
-import OllamaConnector from '../src/connectors/OllamaConnector.js';
-import LLMHandler from '../src/handlers/LLMHandler.js';
-import EmbeddingHandler from '../src/handlers/EmbeddingHandler.js';
-import CacheManager from '../src/handlers/CacheManager.js';
-import { decomposeCorpus } from '../src/ragno/decomposeCorpus.js';
-import Entity from '../src/ragno/Entity.js';
-import RDFGraphManager from '../src/ragno/core/RDFGraphManager.js';
-import NamespaceManager from '../src/ragno/core/NamespaceManager.js';
+import Config from '../../src/Config.js';
+import SPARQLStore from '../../src/stores/SPARQLStore.js';
+import OllamaConnector from '../../src/connectors/OllamaConnector.js';
+import LLMHandler from '../../src/handlers/LLMHandler.js';
+import EmbeddingHandler from '../../src/handlers/EmbeddingHandler.js';
+import CacheManager from '../../src/handlers/CacheManager.js';
+import { decomposeCorpus } from '../../src/ragno/decomposeCorpus.js';
+import Entity from '../../src/ragno/Entity.js';
+import RDFGraphManager from '../../src/ragno/core/RDFGraphManager.js';
+import NamespaceManager from '../../src/ragno/core/NamespaceManager.js';
 import rdf from 'rdf-ext';
 import dotenv from 'dotenv';
 

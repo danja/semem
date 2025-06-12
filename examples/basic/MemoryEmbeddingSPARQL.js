@@ -14,10 +14,10 @@
  * - Embedding generation and RDF storage
  */
 
-import MemoryManager from '../src/MemoryManager.js';
-import Config from '../src/Config.js';
-import SPARQLStore from '../src/stores/SPARQLStore.js';
-import OllamaConnector from '../src/connectors/OllamaConnector.js';
+import MemoryManager from '../../src/MemoryManager.js';
+import Config from '../../src/Config.js';
+import SPARQLStore from '../../src/stores/SPARQLStore.js';
+import OllamaConnector from '../../src/connectors/OllamaConnector.js';
 import logger from 'loglevel';
 import dotenv from 'dotenv';
 

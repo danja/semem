@@ -25,7 +25,7 @@ class SememMCPClient {
     this.client = new Client({ name: "semem-example-client", version: "1.0.0" });
     this.transport = new StdioClientTransport({
       command: 'node',
-      args: ['mcp/index.js'],
+      args: ['../../mcp/index.js'],
       cwd: process.cwd()
     });
 

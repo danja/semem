@@ -21,12 +21,12 @@
  * - Network connectivity for external API services
  */
 
-import MemoryManager from '../src/MemoryManager.js';
-import Config from '../src/Config.js';
-import InMemoryStore from '../src/stores/InMemoryStore.js';
-import OllamaConnector from '../src/connectors/OllamaConnector.js';
-import ClaudeConnector from '../src/connectors/ClaudeConnector.js';
-import MistralConnector from '../src/connectors/MistralConnector.js';
+import MemoryManager from '../../src/MemoryManager.js';
+import Config from '../../src/Config.js';
+import InMemoryStore from '../../src/stores/InMemoryStore.js';
+import OllamaConnector from '../../src/connectors/OllamaConnector.js';
+import ClaudeConnector from '../../src/connectors/ClaudeConnector.js';
+import MistralConnector from '../../src/connectors/MistralConnector.js';
 import logger from 'loglevel';
 import dotenv from 'dotenv';
 

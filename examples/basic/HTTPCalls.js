@@ -20,7 +20,7 @@
  */
 
 import fetch from 'node-fetch';
-import Config from '../src/Config.js';
+import Config from '../../src/Config.js';
 import logger from 'loglevel';
 import dotenv from 'dotenv';
 

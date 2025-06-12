@@ -26,10 +26,10 @@
  */
 
 import logger from 'loglevel'
-import MemoryManager from '../src/MemoryManager.js'
-import SPARQLStore from '../src/stores/SPARQLStore.js'
-import Config from '../src/Config.js'
-import OllamaConnector from '../src/connectors/OllamaConnector.js'
+import MemoryManager from '../../src/MemoryManager.js'
+import SPARQLStore from '../../src/stores/SPARQLStore.js'
+import Config from '../../src/Config.js'
+import OllamaConnector from '../../src/connectors/OllamaConnector.js'
 import { v4 as uuidv4 } from 'uuid'
 
 // Set logging level

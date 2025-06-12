@@ -15,9 +15,9 @@
  * collaborations, technology companies, research projects, and funding bodies.
  */
 
-import CommunityDetection from '../src/ragno/algorithms/CommunityDetection.js'
+import CommunityDetection from '../../src/ragno/algorithms/CommunityDetection.js'
 import rdf from 'rdf-ext'
-import { logger } from '../src/Utils.js'
+import { logger } from '../../src/Utils.js'
 
 console.log('='.repeat(60))
 console.log('🌐 Community Detection Demo - Multi-Domain Knowledge Graph')

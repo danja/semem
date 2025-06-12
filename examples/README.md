@@ -1,282 +1,348 @@
 # Semem Examples
 
-This directory contains comprehensive examples demonstrating the capabilities of the Semem (Semantic Memory) library and the Ragno knowledge graph system.
+This directory contains examples demonstrating the full capabilities of the Semem semantic memory system. The examples are organized into categories based on functionality and complexity.
 
-## Environment Setup
+## Directory Structure
 
-Most examples require environment variables that should be set in a `.env` file in the project root:
+```
+examples/
+├── basic/          # Core Semem functionality examples
+├── ragno/          # Knowledge graph and RDF examples  
+├── mcp/            # Model Context Protocol integration
+├── zpt/            # Zero-Point Traversal content processing
+├── data/           # Sample data files
+└── pending/        # Work-in-progress examples
+```
+
+## Quick Start
+
+To run any example:
+```bash
+# Basic memory operations
+node examples/basic/MemoryEmbeddingJSON.js
+
+# Knowledge graph processing
+node examples/ragno/RagnoPipelineDemo.js
+
+# MCP server integration
+npm run mcp-example
+
+# ZPT content processing
+node examples/zpt/BasicNavigation.js
+```
+
+## Prerequisites
+
+- **Node.js 20.11.0+**
+- **Ollama** with models:
+  - `ollama pull qwen2:1.5b` (chat)
+  - `ollama pull nomic-embed-text` (embeddings)
+- **SPARQL endpoint** (optional, for advanced examples)
+- **Environment variables** in `.env` file
 
 ```bash
 cp example.env .env
 # Edit .env with your API keys and configuration
 ```
 
-## Core Ragno Pipeline Examples
+## Categories
 
-### PPR.js
+### 🧠 Basic Examples (`examples/basic/`)
+
+Core Semem functionality demonstrating memory storage, retrieval, and semantic operations.
+
+| Example | Description | Prerequisites |
+|---------|-------------|---------------|
+| **MemoryEmbeddingJSON.js** | Basic memory operations with JSON storage | Ollama |
+| **MemoryEmbeddingSPARQL.js** | Memory operations with SPARQL backend | Ollama, Fuseki |
+| **ArticleEmbedding.js** | Generate and store article embeddings | Ollama, Fuseki |
+| **ArticleSearch.js** | Semantic search through article collections | Ollama, Fuseki |
+| **ContextManagement.js** | Context window and memory management | Ollama |
+| **CheckLLMProviders.js** | Test and validate LLM provider connections | Various APIs |
+| **ClaudeEnrichJSON.js** | Enhance data using Claude API | Claude API |
+| **HTTPCalls.js** | HTTP API integration examples | API servers |
+
+**Key Features Demonstrated:**
+- Memory initialization and configuration
+- Embedding generation and storage
+- Semantic similarity search
+- Context management
+- Multi-provider LLM integration
+- JSON and SPARQL persistence
+
+### 🕸️ Ragno Examples (`examples/ragno/`)
+
+Knowledge graph construction, entity extraction, and RDF processing using the Ragno subsystem.
+
+| Example | Description | Prerequisites |
+|---------|-------------|---------------|
+| **RagnoPipelineDemo.js** | Complete knowledge graph pipeline | Ollama, optional Fuseki |
+| **Communities.js** | Community detection in knowledge graphs | Ollama |
+| **AnalyseGraph.js** | Graph analytics and centrality measures | Ollama |
+| **GraphRAGConceptAugment.js** | Concept augmentation with graph analysis | Ollama, Fuseki |
+| **Hyde.js** | Hypothetical Document Embeddings | Ollama |
+| **VSOM.js** | Vector Self-Organizing Maps | Ollama |
+| **PPR.js** | Personalized PageRank algorithms | Ollama |
+| **OllamaEnrichSPARQL.js** | SPARQL data enrichment via Ollama | Ollama, Fuseki |
+
+**Key Features Demonstrated:**
+- Corpus decomposition into semantic units
+- Entity and relationship extraction
+- RDF dataset creation and export
+- Community detection (Leiden algorithm)
+- Graph centrality analysis
+- Vector similarity indexing (HNSW)
+- SPARQL integration
+
+### 🔌 MCP Examples (`examples/mcp/`)
+
+Model Context Protocol integration for AI assistant interoperability.
+
+| Example | Description | Prerequisites |
+|---------|-------------|---------------|
+| **MCPClient.js** | Complete MCP client demonstration | MCP server running |
+
+**Key Features Demonstrated:**
+- MCP server connection and tool usage
+- Semantic memory operations via MCP
+- Knowledge graph processing via MCP
+- ZPT content processing via MCP
+- Integrated workflow demonstrations
+
+**Usage:**
 ```bash
-node examples/PPR.js
-```
-Comprehensive demonstration of PersonalizedPageRank algorithm for semantic knowledge graph analysis. Creates a sample AI research knowledge graph with entities (researchers, concepts, institutions, papers), runs various PPR analyses including basic, shallow vs deep traversal, multi-entry point queries, and result combination. Shows how PPR identifies semantically related nodes, discovers cross-domain connections, and exports results to RDF format for integration.
+# Start MCP server (in one terminal)
+npm run mcp-server-new
 
-### Communities.js
-```bash
-node examples/Communities.js
-```
-Complete demonstration of Leiden community detection algorithm for identifying clusters in multi-domain knowledge graphs. Creates a complex social network spanning academia, industry, funding bodies, and research projects. Demonstrates resolution parameter tuning, community quality analysis, iterative refinement, and algorithm stability testing. Shows how communities align with expected domain boundaries and reveals cross-domain bridge relationships. Exports community structure to RDF format for semantic integration.
-
-### AnalyseGraph.js
-```bash
-node examples/AnalyseGraph.js
-```
-Comprehensive demonstration of GraphAnalytics algorithms for analyzing semantic knowledge graph structure. Creates a research collaboration network from RDF data and applies multiple analysis algorithms: K-core decomposition for identifying dense clusters, betweenness centrality for finding bridge nodes, connected components analysis for network fragmentation, and comprehensive graph statistics. Includes network topology comparison (star, ring, complete, random) and exports all analysis results to RDF format for semantic integration.
-
-### Hyde.js
-```bash
-node examples/Hyde.js
-```
-Comprehensive demonstration of HyDE (Hypothetical Document Embeddings) algorithm for improving semantic search through synthetic document generation. Creates hypothetical answers for queries using LLM facilities, augments the RDF graph with ragno:maybe properties to mark hypothetical content, extracts entities from generated hypotheses, and exports complete results to RDF format for semantic integration. Shows how HyDE enhances retrieval for vague queries and augments sparse knowledge graphs with uncertainty modeling.
-
-### VSOM.js
-```bash
-node examples/VSOM.js
-```
-Complete demonstration of Vectorized Self-Organizing Map (VSOM) algorithm for entity clustering in knowledge graphs. Showcases entity loading, multiple topology types (rectangular/hexagonal), training with convergence monitoring, cluster generation, RDF export with ragno:cluster properties, and visualization coordinate export for map layouts. Demonstrates how VSOM organizes entities into semantic neighborhoods and creates spatial layouts for graph visualization.
-
-### RagnoPipelineDemo.js
-```bash
-node examples/RagnoPipelineDemo.js
-```
-Complete demonstration of the Ragno knowledge graph pipeline using RDF-Ext infrastructure. Performs corpus decomposition into semantic units and entities, generates RDF attributes using graph analytics, applies Leiden clustering for community detection, builds HNSW vector index for similarity search, and exports to multiple RDF formats.
-
-### RagnoProductionAPIDemo.js
-```bash
-node examples/RagnoProductionAPIDemo.js
-```
-Showcases the full Ragno Phase 6 production API infrastructure with comprehensive deployment demonstration. Features production API server with monitoring, advanced unified search capabilities, real-time performance tracking, multi-tier caching with Redis support, and export to multiple formats (Turtle, JSON-LD).
-
-### RagnoServerDeployment.js
-```bash
-node examples/RagnoServerDeployment.js
-```
-Production server deployment guide demonstrating proper environment configuration, Kubernetes/Docker compatibility, security best practices, resource management, and graceful shutdown procedures. Shows how to deploy Ragno in real-world production environments.
-
-## Semantic Memory Examples
-
-### MemoryEmbeddingJSON.js
-```bash
-node examples/MemoryEmbeddingJSON.js
-```
-Core memory functionality demonstration with storage and retrieval of interactions using MemoryManager with JSONStore and OllamaConnector. Shows memory initialization, interaction storage with embeddings and concepts, semantic retrieval based on similarity, response generation using memory context, and JSON file persistence.
-
-### MemoryEmbeddingSPARQL.js
-```bash
-node examples/MemoryEmbeddingSPARQL.js
-```
-SPARQL store integration for semantic memory management with RDF/SPARQL storage backend. Demonstrates SPARQL endpoint connectivity and authentication, RDF triple storage for semantic memory, semantic querying with vector similarity, data persistence across sessions, integration with semantic web standards, and configuration-driven endpoint management.
-
-### HTTPCalls.js
-```bash
-node examples/HTTPCalls.js
-```
-Comprehensive HTTP API functionality demonstration testing REST API endpoints for memory, chat, search, and system operations. Shows server connectivity verification, API health monitoring, memory storage and retrieval, vector embedding generation, concept extraction, chat with memory context, semantic search, system metrics, and configuration-driven API endpoints. Requires servers running via `node servers/start-all.js`.
-
-### CheckLLMProviders.js
-```bash
-node examples/CheckLLMProviders.js
-```
-Comprehensive LLM provider testing and validation using configuration-driven provider discovery. Tests connectivity, authentication, chat generation, embedding capabilities, concept extraction, and memory integration for all configured providers (Ollama, Claude, Mistral). Provides detailed capability matrix, performance assessment, and recommendations for optimal provider selection and configuration.
-
-### ContextManagement.js
-```bash
-node examples/ContextManagement.js
-```
-Comprehensive context management and window processing demonstration including text chunking, token estimation, context buffer management, and memory-context integration. Shows window creation, overlapping content merging, context summarization, long context handling, and edge case processing with configuration-driven setup and performance assessment.
-
-### ArticleEmbedding.js
-```bash
-node examples/ArticleEmbedding.js
-```
-Demonstrates semantic article processing by connecting to SPARQL endpoints for data storage, generating vector embeddings using Ollama's nomic-embed-text model, and storing embeddings in RDF format. Creates embedding vectors suitable for semantic search and similarity matching.
-
-### ArticleSearch.js
-```bash
-node examples/ArticleSearch.js
-```
-Shows semantic search capabilities using vector embeddings for document retrieval. Performs similarity-based search across stored articles and demonstrates how to find semantically related content using embedding vectors.
-
-### GraphRAGConceptAugment.js
-```bash
-node examples/GraphRAGConceptAugment.js
-```
-Complete semantic memory processing demonstration that loads articles about semantic web technologies, extracts key concepts using LLMs, stores knowledge as RDF triples, performs similarity-based retrieval, and generates intelligent responses using retrieved context.
-
-### ClaudeEnrichJSON.js
-```bash
-node examples/ClaudeEnrichJSON.js
-```
-Demonstrates using Claude AI for JSON data enrichment and semantic processing. Shows integration patterns between Claude API and Semem's knowledge graph capabilities for enhanced content processing.
-
-## LLM Integration Examples (Pending)
-
-### OllamaExample.js
-```bash
-node examples/pending/OllamaExample.js
-```
-Basic Ollama integration using local models for both chat and embeddings. Works completely offline without external API calls, demonstrating local LLM processing capabilities.
-
-### SimpleClaudeExample.js
-```bash
-node examples/pending/SimpleClaudeExample.js
-```
-Simple Claude API integration demonstrating chat generation with embedding storage. Shows basic patterns for using Claude with Semem's memory management.
-
-### MistralExample.js
-```bash
-node examples/pending/MistralExample.js
-```
-Integration example for Mistral AI models. Demonstrates using Mistral for text processing and concept extraction within the Semem framework.
-
-## API and Protocol Examples (Pending)
-
-### MCPClientExample.js
-```bash
-node examples/pending/MCPClientExample.js
-```
-Model Context Protocol (MCP) client demonstration. Shows how to interact with Semem's MCP server for protocol-based communication and data exchange.
-
-### SearchServer.js
-```bash
-node examples/pending/SearchServer.js
-```
-Creates and serves a semantic search API for document retrieval. Demonstrates building web services around Semem's search capabilities with REST endpoints.
-
-### SPARQLExample.js
-```bash
-node examples/pending/SPARQLExample.js
-```
-Direct SPARQL endpoint interaction showing advanced query patterns. Demonstrates complex SPARQL queries for knowledge graph traversal and data manipulation.
-
-## Interactive Examples (Pending)
-
-### REPLExample.js
-```bash
-node examples/pending/REPL.js
-```
-Interactive REPL (Read-Eval-Print Loop) for exploring Semem capabilities. Provides command-line interface for experimenting with semantic memory operations and knowledge graph queries.
-
-### ChatSnippet.js
-```bash
-node examples/pending/ChatSnippet.js
-```
-Chat interface demonstration showing conversational AI capabilities. Integrates LLM chat with semantic memory for context-aware responses.
-
-### OllamaChat.js
-```bash
-node examples/pending/OllamaChat.js
-```
-Chat application using local Ollama models. Demonstrates building conversational interfaces with local LLMs and semantic memory integration.
-
-## Hybrid Examples (Pending)
-
-### HHybridClientExample.js
-```bash
-node examples/pending/HHybridClientExample.js
-```
-Hybrid client demonstrating multiple LLM provider integration. Shows patterns for using different LLM services together within a single application.
-
-### DirectEmbeddingScript.js
-```bash
-node examples/pending/DirectEmbeddingScript.js
-```
-Direct embedding generation without full pipeline. Demonstrates low-level embedding operations and vector processing capabilities.
-
-## Prerequisites
-
-### Required Services
-- **Ollama**: Running locally with models:
-  - `qwen2:1.5b` for text generation (required for Hyde and LLM examples)
-  - `nomic-embed-text` for embeddings (required for VSOM and embedding examples)
-- **SPARQL Endpoint** (optional): Apache Fuseki or compatible triplestore
-- **Redis** (optional): For production caching in API examples
-
-### Algorithm-Specific Requirements
-- **HyDE Algorithm**: Requires Ollama with text generation model for hypothetical document creation
-- **VSOM Algorithm**: Requires embedding model for entity clustering and vector operations
-- **Graph Analytics**: No additional services required, works with RDF data
-- **Ragno Pipeline**: Combines multiple algorithms, requires both text generation and embedding models
-
-### Environment Variables
-Key environment variables used across examples:
-- `OLLAMA_ENDPOINT`: Ollama API endpoint (default: http://localhost:11434)
-- `CLAUDE_API_KEY`: Claude API key for Claude examples
-- `SPARQL_ENDPOINT`: SPARQL endpoint URL for RDF storage
-- `REDIS_URL`: Redis connection for caching (production examples)
-
-### Installation
-```bash
-# Install dependencies
-npm install
-
-# Install Ollama models
-ollama pull qwen2:1.5b
-ollama pull nomic-embed-text
-
-# Copy and configure environment
-cp example.env .env
+# Run client example (in another terminal)
+npm run mcp-example
 ```
 
-## Example Categories
+### 🎯 ZPT Examples (`examples/zpt/`)
 
-- **🔬 Core Pipeline**: Complete knowledge graph processing workflows (PPR, Communities, AnalyseGraph, RagnoPipelineDemo)
-- **🤖 Advanced Algorithms**: Cutting-edge semantic algorithms (Hyde, VSOM) 
-- **🚀 Production**: Deployment-ready server and API examples  
-- **🧠 Memory**: Semantic memory and embedding demonstrations
-- **🔗 Integration**: LLM provider and API protocol examples
-- **💬 Interactive**: Chat and REPL interface examples
-- **⚡ Utilities**: Direct operations and specialized tools
+Zero-Point Traversal system for intelligent content navigation and processing.
 
-## Creating New Examples
+| Example | Description | Prerequisites |
+|---------|-------------|---------------|
+| **BasicNavigation.js** | Core ZPT navigation patterns | Ollama |
+| **AdvancedFiltering.js** | Complex filtering and selection | Ollama |
+| **TransformationPipeline.js** | Content transformation workflows | Ollama |
+| **PerformanceOptimization.js** | Optimization strategies | Ollama |
+| **APIEndpoints.js** | ZPT API integration patterns | API servers |
 
-To add your own example:
+**Key Features Demonstrated:**
+- Zoom/Pan/Tilt navigation paradigm
+- Content chunking strategies
+- Corpuscle selection algorithms
+- Transformation pipelines
+- Performance optimization
+- API integration patterns
 
-1. Create a new `.js` file in the appropriate category
-2. Include descriptive header comments explaining operations
-3. Add proper error handling and cleanup
-4. Use environment variables for configuration
-5. Update this README with a description
-6. Test with required services running
+## Running Examples
 
-Example template:
+### Environment Setup
+
+1. **Install dependencies:**
+   ```bash
+   npm install
+   ```
+
+2. **Configure environment:**
+   ```bash
+   cp example.env .env
+   # Edit .env with your API keys
+   ```
+
+3. **Start Ollama:**
+   ```bash
+   ollama serve
+   ollama pull qwen2:1.5b
+   ollama pull nomic-embed-text
+   ```
+
+4. **Optional - Start SPARQL endpoint:**
+   ```bash
+   # Using Docker
+   docker run -d --name fuseki -p 3030:3030 stain/jena-fuseki
+   ```
+
+### Example Execution
+
+**Basic Memory Operations:**
+```bash
+node examples/basic/MemoryEmbeddingJSON.js
+```
+
+**Knowledge Graph Pipeline:**
+```bash
+node examples/ragno/RagnoPipelineDemo.js
+```
+
+**MCP Integration:**
+```bash
+# Terminal 1: Start MCP server
+npm run mcp-server-new
+
+# Terminal 2: Run client
+npm run mcp-example
+```
+
+**ZPT Content Processing:**
+```bash
+node examples/zpt/BasicNavigation.js
+```
+
+## Configuration
+
+Examples use the main configuration system. Key configuration files:
+
+- `config/config.json` - Main configuration
+- `.env` - Environment variables and API keys
+- Individual example configs where needed
+
+## Data Files
+
+The `examples/data/` directory contains:
+- Sample JSON datasets
+- Test documents
+- Configuration files
+- Generated outputs
+
+## Common Patterns
+
+### Error Handling
+All examples include:
+- Graceful shutdown handlers
+- Connection timeout handling
+- Resource cleanup
+- Informative error messages
+
+### Logging
+Examples use structured logging:
 ```javascript
-/**
- * YourExample.js - Brief Description
- * 
- * Detailed description of operations performed:
- * 1. First operation
- * 2. Second operation
- * 
- * Prerequisites: List requirements
- */
-
-import dotenv from 'dotenv'
-dotenv.config()
-
-// Your example code here
+import logger from 'loglevel';
+logger.setLevel('info'); // Set appropriate level
 ```
+
+### Resource Management
+Examples demonstrate proper:
+- Memory manager initialization
+- Connection pooling
+- Resource disposal
+- Memory cleanup
 
 ## Troubleshooting
 
-- **Import Errors**: Ensure all dependencies are installed via `npm install`
-- **Ollama Connection**: Verify Ollama is running on the correct port
-- **SPARQL Errors**: Check triplestore is accessible and credentials are correct
-- **Memory Issues**: For large datasets, consider increasing Node.js memory limit
-- **Network Timeouts**: Adjust timeout values in configuration for slow networks
+### Common Issues
 
-## Support
+**Ollama Connection:**
+```bash
+# Check Ollama status
+ollama list
+curl http://localhost:11434/api/tags
+```
 
-For issues or questions:
-- Check the main [README.md](../README.md) for setup instructions
-- Review configuration files in `config/` directory
-- Examine working examples before modifying
-- Ensure all prerequisites are properly installed and running
+**Model Availability:**
+```bash
+# Install required models
+ollama pull qwen2:1.5b
+ollama pull nomic-embed-text
+```
+
+**SPARQL Endpoint:**
+```bash
+# Test SPARQL connectivity
+curl -X POST http://localhost:3030/dataset/query \
+  -H "Content-Type: application/sparql-query" \
+  -d "SELECT * WHERE { ?s ?p ?o } LIMIT 1"
+```
+
+**Memory Issues:**
+```bash
+# Increase Node.js memory limit
+export NODE_OPTIONS="--max-old-space-size=4096"
+```
+
+### Debug Mode
+
+Enable debug logging for any example:
+```bash
+LOG_LEVEL=debug node examples/basic/MemoryEmbeddingJSON.js
+```
+
+## Pending Examples (`examples/pending/`)
+
+Work-in-progress examples that demonstrate additional features:
+
+- **MCPClientExample.js** - Alternative MCP client patterns
+- **OllamaExample.js** - Pure Ollama integration
+- **SimpleClaudeExample.js** - Basic Claude API usage
+- **SearchServer.js** - Semantic search API server
+- **SPARQLExample.js** - Advanced SPARQL operations
+- **REPL.js** - Interactive command-line interface
+- **ChatSnippet.js** - Chat interface examples
+
+## Contributing
+
+When adding new examples:
+
+1. **Place in appropriate category directory**
+2. **Follow naming conventions**: `PascalCase.js`
+3. **Include comprehensive documentation**
+4. **Add error handling and cleanup**
+5. **Update this README**
+6. **Test with clean environment**
+
+### Example Template
+
+```javascript
+/**
+ * Example Name - Brief Description
+ * 
+ * Detailed description of what this example demonstrates.
+ * 
+ * Prerequisites:
+ * - List required services
+ * - List required models
+ * - List required configuration
+ */
+
+import logger from 'loglevel';
+// Other imports...
+
+// Global cleanup reference
+let globalCleanup = null;
+
+async function shutdown(signal) {
+    logger.info(`Received ${signal}, starting graceful shutdown...`);
+    if (globalCleanup) {
+        await globalCleanup();
+    }
+    process.exit(0);
+}
+
+// Signal handlers
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
+
+async function main() {
+    try {
+        // Example implementation
+        
+        // Set up cleanup
+        globalCleanup = async () => {
+            // Cleanup resources
+        };
+        
+    } catch (error) {
+        logger.error('Example failed:', error);
+        process.exit(1);
+    }
+}
+
+main().catch(console.error);
+```
+
+## License
+
+All examples are provided under the same MIT license as the main Semem project.

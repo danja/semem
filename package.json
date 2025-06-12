@@ -37,7 +37,7 @@
     "rp": "repomix -c repomix.config.json . && repomix -c repomix-docs.config.json . ",
     "mcp-server": "node src/servers/mcp-server-fixed.js",
     "mcp-server-new": "node mcp/index.js",
-    "mcp-example": "node examples/MCPClient.js",
+    "mcp-example": "node examples/mcp/MCPClient.js",
     "mcp-test": "node test-mcp.js",
     "tsc": "tsc --noEmit",
     "types:check": "tsc --noEmit"

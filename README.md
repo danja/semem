@@ -1,168 +1,163 @@
 # Semem
 
-Semem is a modular, extensible semantic memory and graph augmentation system for LLMs, agents, and research. It provides a unified pipeline for entity extraction, embedding, semantic search, SPARQL/RDF graph operations, LLM-powered augmentation, community detection, and advanced knowledge graph algorithms including HyDE and VSOM.
+**Semantic Memory for Intelligent Agents**
 
----
+Semem is a Node.js toolkit for AI memory management that integrates large language models (LLMs) with Semantic Web technologies (RDF/SPARQL). It offers knowledge graph retrieval and augmentation algorithms within a conceptual model based on the [Ragno](https://github.com/danja/ragno) (knowledge graph description) and [ZPT](https://github.com/danja/zpt) (knowledge graph navigation) ontologies. It is a [Tensegrity](https://github.com/danja/tensegrity) project.
 
-*What follows is only Claude's opinion. I haven't been able to get the MCP working yet, but that's top priority right now (along with tidying up and more tests).*
+**Status 2025-06-13 :** basically mostly in place but very, very sketchy. It has an MCP server with very limited functionality, HTTP APIs and a crude UI with a little more and code APIs that mostly work. The description below is very AI-sloppy. A lot to do before much will be usable. But a lot of the examples at least do *something*.
 
-## 🚀 Latest Developments (May 2025)
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![Node.js](https://img.shields.io/badge/node-%3E%3D20.11.0-brightgreen.svg)
+![Status](https://img.shields.io/badge/status-active-success.svg)
 
-- **Interactive ES Module REPL:**  
-  Explore all MCP endpoints interactively with [`examples/REPL.js`](./examples/REPL.js).  
-  See a sample session in [`INTERACTIONS.md`](./INTERACTIONS.md).
+## 🚀 Key Features
 
-- **Live MCP Endpoints:**  
-  All Semem & Ragno pipeline facilities are now exposed as live, schema-validated JSON-RPC services, including LLM, embedding, SPARQL, semantic search, graph augmentation, and community detection.
+- **🧠 Semantic Memory**: Intelligent context retrieval and memory organization with vector embeddings and SPARQL
+- **🕸️ Knowledge Graph Processing**: End-to-end Ragno pipeline for entity extraction and relationship modeling
+- **🎯 Zoom, Pan Tilt (ZPT)**: Knowledge navigation and processing, cinematic analogy 
+- **🔌 Model Context Protocol (MCP)**: JSON-RPC 2.0 API for seamless LLM and agent integration
+- **🤖 Advanced Algorithms**: HyDE, VSOM, graph analytics, community detection, and Personal PageRank
+- **🔗 Multi-Provider LLM Support**: Ollama, Claude, Mistral, and other providers via unified connector system
+- **📊 Multiple Storage Backends**: In-memory, JSON, and SPARQL/RDF with caching optimization
 
-- **Agent & LLM Integration:**  
-  [`PROMPTS.md`](./PROMPTS.md) provides ready-to-use prompt templates for LLMs/agents.  
-  All endpoints are designed for programmatic invocation and agent workflows.
+## 📁 Project Structure
 
-- **Testing & Robustness:**  
-  Integration tests for all endpoints in [`examples/mcpClient.test.js`](./examples/mcpClient.test.js).  
-  Full evaluation and recommendations in [`REPORT.md`](./REPORT.md).
-
----
+```
+semem/
+├── src/                    # Core library code
+│   ├── handlers/          # LLM and embedding handlers
+│   ├── stores/            # Storage backends (JSON, SPARQL, etc.)
+│   ├── connectors/        # LLM provider connectors
+│   ├── ragno/             # Knowledge graph algorithms
+│   └── zpt/               # Zero-Point Traversal system
+├── examples/              # Organized examples by category
+│   ├── basic/            # Core functionality examples
+│   ├── ragno/            # Knowledge graph examples
+│   ├── mcp/              # MCP integration examples
+│   ├── zpt/              # ZPT processing examples
+│   └── pending/          # Work-in-progress examples
+├── mcp/                   # MCP server implementation
+├── config/               # Configuration files
+└── docs/                 # Comprehensive documentation
+```
 
 ## ⚡ Quick Start
 
-1. **Install dependencies:**  
-   ```bash
-   npm install
-   ```
-2. **Start the MCP server:**  
-   ```bash
-   node src/servers/mcp.js
-   ```
-3. **Launch the interactive REPL:**  
-   ```bash
-   node examples/REPL.js
-   ```
-4. **Try endpoints:**  
-   - See [`INTERACTIONS.md`](./INTERACTIONS.md) for example sessions.
-   - Use [`PROMPTS.md`](./PROMPTS.md) for LLM/agent prompt templates.
+### Installation
 
----
+```bash
+# Clone and install
+git clone https://github.com/your-org/semem.git
+cd semem
+npm install
 
-## 🧠 Key Features
+# Configure environment
+cp example.env .env
+# Edit .env with your API keys and settings
+```
 
-- **Unified Memory Control Protocol (MCP):** JSON-RPC 2.0 API for all memory, graph, and compute resources
-- **Live Compute Endpoints:** LLM completions, embeddings, SPARQL, semantic search, graph augmentation, community detection
-- **Agent/LLM-Ready:** Prompt templates and robust schema validation for seamless integration
-- **Advanced Algorithms:** HyDE (Hypothetical Document Embeddings), VSOM (Vectorized Self-Organizing Maps), graph analytics suite
-- **Extensible:** Modular design, easy to add new pipelines or endpoints
+### Prerequisites
+
+1. **Ollama** (recommended for local processing):
+   ```bash
+   # Install required models
+   ollama pull qwen2:1.5b         # For chat/text generation
+   ollama pull nomic-embed-text   # For embeddings
+   ```
+
+2. **Optional - SPARQL Endpoint** (for advanced features):
+   ```bash
+   # Using Docker
+   docker run -d --name fuseki -p 3030:3030 stain/jena-fuseki
+   ```
+
+### Running Examples
+
+```bash
+# Basic memory operations
+node examples/basic/MemoryEmbeddingJSON.js
+
+# Knowledge graph processing  
+node examples/ragno/RagnoPipelineDemo.js
+
+# MCP server integration
+npm run mcp-server-new     # Start MCP server
+npm run mcp-example        # Run client example
+
+# ZPT content processing
+node examples/zpt/BasicNavigation.js
+```
+
+## 🧠 Core Components
+
+### Semantic Memory
+- **Vector embeddings** for semantic similarity
+- **Context window management** with intelligent chunking
+- **Multi-backend storage** (JSON, SPARQL, in-memory)
+- **Intelligent retrieval** with relevance scoring
+
+### Knowledge Graph (Ragno)
+- **Corpus decomposition** into semantic units and entities
+- **Relationship extraction** and RDF modeling
+- **Community detection** using Leiden algorithm
+- **Graph analytics** (centrality, k-core, PageRank)
+
+### Zero-Point Traversal (ZPT)
+- **Zoom/Pan/Tilt navigation** paradigm
+- **Content chunking** strategies (semantic, fixed, adaptive)
+- **Corpuscle selection** algorithms
+- **Transformation pipelines** for content processing
+
+### Model Context Protocol (MCP)
+- **Standardized API** for LLM integration
+- **Tool definitions** for all Semem capabilities
+- **Resource management** for data access
+- **Schema validation** for reliable interactions
 
 ## 🤖 Advanced Algorithms
 
-- **HyDE (Hypothetical Document Embeddings)**: Enhances retrieval by generating hypothetical answers using LLMs, marking uncertain content with `ragno:maybe` properties for improved semantic search
-- **VSOM (Vectorized Self-Organizing Map)**: Provides entity clustering and semantic organization for knowledge graphs with support for multiple topologies (rectangular/hexagonal)
-- **Graph Analytics Suite**: K-core decomposition, betweenness centrality, community detection (Leiden), and Personalized PageRank for comprehensive graph analysis
-- **Ragno Knowledge Graph Pipeline**: End-to-end corpus decomposition, entity extraction, relationship creation, and RDF export with semantic web standards
+### HyDE (Hypothetical Document Embeddings)
+Enhances retrieval by generating hypothetical answers using LLMs, with uncertainty modeling via `ragno:maybe` properties.
 
----
-
-## 📚 Documentation & Resources
-
-- [INTERACTIONS.md](./INTERACTIONS.md): Example REPL conversations
-- [REPORT.md](./REPORT.md): Test report and recommendations
-- [PROMPTS.md](./PROMPTS.md): Prompt templates for LLM/agent integration
-- [examples/REPL.js](./examples/REPL.js): Interactive ES module REPL
-- [examples/mcpClient.test.js](./examples/mcpClient.test.js): Integration tests
-- [docs/ragno/PLAN2-progress.md](./docs/ragno/PLAN2-progress.md): Progress log
-
-For full details, see the documentation in `docs/`.
-
----
-
-## Experimental: Model Context Protocol (MCP) Support
-
-Semem implements Anthropic's [Model Context Protocol (MCP)](https://docs.anthropic.com/en/docs/agents-and-tools/mcp), enabling LLMs and agents to access all memory and graph resources programmatically.
-
----
-
-## License
-
-MIT
-
-```sh
-./start.sh
-
-./stop.sh
+```bash
+node examples/ragno/Hyde.js
 ```
 
- 1. For development: Run npm run dev for hot-reloading dev server
- 2. For production: Run npm run build && npm start
- 3. Watch mode: Run npm run build:watch to rebuild on changes
-  
-  npm stop
+### VSOM (Vectorized Self-Organizing Maps)
+Provides entity clustering and semantic organization with support for multiple topologies.
 
-  ```sh
-  Bash(netstat -tulpn 2>/dev/null | grep :9000)…
-  ⎿  tcp6       0      0 :::9000                 :::*                    LISTEN      952322/webpack
-
-  Bash(kill -9 952322)…
+```bash
+node examples/ragno/VSOM.js
 ```
 
-curl -s http://localhost:4100/api/config | python3 -m json.tool
+### Graph Analytics Suite
+- **K-core decomposition** for dense cluster identification
+- **Betweenness centrality** for bridge node discovery
+- **Community detection** (Leiden algorithm)
+- **Personalized PageRank** for semantic traversal
 
-## Overview
-
-Semem (Semantic Memory) is a Node.js library for intelligent agent memory management that integrates large language models (LLMs) with Semantic Web technologies (RDF/SPARQL). It provides a memory system for AI applications with multiple storage backends and LLM provider integrations.
-
-## Features
-
-- **Semantic Memory Management**: Intelligent context retrieval and memory organization
-- **Advanced Algorithm Suite**: HyDE, VSOM, graph analytics, community detection, and PageRank
-- **Vector Embeddings**: High-dimensional similarity search with multiple embedding providers
-- **Multiple Storage Backends**: In-memory, JSON, and SPARQL/RDF with caching optimization
-- **LLM Provider Integration**: Ollama, Claude, Mistral and other providers via unified connector system
-- **Knowledge Graph Processing**: End-to-end Ragno pipeline for entity extraction and relationship modeling
-- **Uncertainty Modeling**: Hypothetical content marking with confidence scores and uncertainty properties
-- **Entity Clustering**: Semantic organization using self-organizing maps and community detection
-- **Context Window Management**: Intelligent text chunking and context size optimization
-- **MCP Protocol Support**: JSON-RPC 2.0 API for programmatic access to all capabilities
-
----
-
-## 📋 Example Demos
-
-Comprehensive examples are available in the `examples/` directory:
-
-- **Core Algorithms**: `PPR.js`, `Communities.js`, `AnalyseGraph.js` for graph analytics
-- **Advanced Algorithms**: `Hyde.js` for hypothetical document embeddings, `VSOM.js` for entity clustering  
-- **Complete Pipeline**: `RagnoPipelineDemo.js` for end-to-end knowledge graph processing
-- **Semantic Memory**: `ArticleEmbedding.js`, `ArticleSearch.js`, `GraphRAGConceptAugment.js`
-- **LLM Integration**: Various provider examples in `examples/pending/`
-
-See [examples/README.md](examples/README.md) for complete documentation and usage instructions.
-
----
-
-### Troubleshooting
-- If you see connection errors, ensure your SPARQL and Ollama servers are running and accessible at the configured URLs.
-- You can change the SPARQL endpoint URLs in `OllamaExample.js` to point to your preferred backend.
-- For authentication, default credentials are `admin`/`admin123`.
-- For more details on SPARQL queries and RDF terms, see `docs/ragno/`.
-
----
-
-## Storage Configuration
-
-Semem supports multiple storage backends that can be configured in `config.json`:
-
-### In-Memory Storage (default)
-```json
-{
-  "storage": {
-    "type": "in-memory",
-    "options": {}
-  }
-}
+```bash
+node examples/ragno/AnalyseGraph.js
+node examples/ragno/Communities.js
+node examples/ragno/PPR.js
 ```
-*Note: Data is lost when the application stops*
 
-### JSON File Storage
+## 📚 Examples Documentation
+
+The `examples/` directory contains comprehensive demonstrations organized by functionality:
+
+- **🧠 Basic Examples** (`examples/basic/`): Core memory operations, embedding generation, search
+- **🕸️ Ragno Examples** (`examples/ragno/`): Knowledge graph processing, entity extraction, RDF
+- **🔌 MCP Examples** (`examples/mcp/`): Model Context Protocol integration
+- **🎯 ZPT Examples** (`examples/zpt/`): Content processing and navigation
+
+See [examples/README.md](examples/README.md) for detailed documentation and usage instructions.
+
+## 🔧 Configuration
+
+### Storage Backends
+
+**JSON Storage** (simple persistence):
 ```json
 {
   "storage": {
@@ -173,177 +168,175 @@ Semem supports multiple storage backends that can be configured in `config.json`
   }
 }
 ```
-*Persists data to a JSON file at the specified path*
 
-### SPARQL Storage
+**SPARQL Storage** (semantic web integration):
 ```json
 {
   "storage": {
     "type": "sparql",
     "options": {
       "endpoint": "https://fuseki.hyperdata.it/semem",
-      "graphName": "http://danny.ayers.name/content",
+      "graphName": "http://example.org/graph",
       "user": "admin",
       "password": "admin123"
     }
   }
 }
 ```
-*Stores data in a SPARQL endpoint*
-- HTTP API with browser-based interface
 
-## Quickstart
+### LLM Providers
 
-*I've only tested properly against a local Ollama model to do the embeddings, unlikely anything else will work.*
+Configure multiple providers in `config/config.json`:
+
+```json
+{
+  "llmProviders": [
+    {
+      "type": "ollama",
+      "baseUrl": "http://localhost:11434",
+      "chatModel": "qwen2:1.5b",
+      "embeddingModel": "nomic-embed-text",
+      "capabilities": ["chat", "embedding"]
+    },
+    {
+      "type": "claude",
+      "apiKey": "${CLAUDE_API_KEY}",
+      "chatModel": "claude-3-sonnet-20240229",
+      "capabilities": ["chat"]
+    }
+  ]
+}
+```
+
+## 🔌 MCP Integration
+
+Semem implements Anthropic's [Model Context Protocol (MCP)](https://docs.anthropic.com/en/docs/agents-and-tools/mcp) for seamless LLM integration:
 
 ```bash
-# Setup environment and dependencies
-cp example.env .env
-npm install
+# Start MCP server
+npm run mcp-server-new
 
-# Install Ollama models (if using Ollama)
-ollama pull nomic-embed-text
-ollama pull qwen2:1.5b
-
-# Start both API and UI servers in the background
-./start.sh
-
-# Access the web interface
-open http://localhost:3000
-
-# Stop the servers when finished
-./stop.sh
+# Connect from Claude Desktop or other MCP clients
+# Server provides 10+ tools covering all Semem capabilities
 ```
 
-## Running the Server
+### Available MCP Tools
+- **Memory Operations**: Store, retrieve, generate responses
+- **Embeddings**: Generate vector embeddings for text
+- **Concepts**: Extract semantic concepts
+- **Knowledge Graph**: Entity creation, corpus decomposition  
+- **Content Processing**: Chunking, corpuscle selection
 
-There are multiple ways to run the Semem server:
+## 🧪 Testing
 
 ```bash
-# Option 1: Start both API and UI servers in background (with logging)
-./start.sh
+# Run core tests
+npm test
 
-# Option 2: Start only the API server directly
-node api-server.js
+# Run LLM-dependent tests
+npm run test:llms
 
-# Option 3: Start only the UI server directly
-node ui-server.js
+# Generate coverage report
+npm run test:coverage
 
-# Option 4: Using the restart script (includes health check)
-chmod +x restart-server.sh
-./restart-server.sh
+# Run with specific test file
+npm test -- tests/unit/Config.spec.js
 ```
 
-The start.sh script provides:
-- Runs both API and UI servers in the background
-- Redirects output to log files for easy monitoring
-- Saves PIDs for easy shutdown later
+## 🛠️ Development
 
-The restart-server.sh script provides:
-- Automatically stops any running server processes
-- Creates a .env file if missing
-- Starts the server with output logging
-- Performs a health check after starting
-- Displays detailed status information
+### Project Scripts
 
-The server will start on port 3000 by default (or the port specified in your `.env` file with the PORT environment variable).
+```bash
+# Development
+npm run dev                # Start dev server with hot reload
+npm run build:watch       # Build and watch for changes
 
-## Using the Web Interface
+# Testing
+npm test                   # Run unit tests
+npm run test:coverage     # Generate coverage report
 
-Once the server is running, you can access the web interface at:
+# Documentation
+npm run docs              # Generate JSDoc documentation
 
-```
-http://localhost:3000
-```
-
-The interface provides access to all Semem APIs:
-
-1. **Search**: Search content using semantic similarity
-2. **Memory**: Store and retrieve interactions from semantic memory
-3. **Chat**: Interact with AI using memory context (standard and streaming)
-4. **Embeddings**: Generate vector embeddings for text
-5. **Concepts**: Extract semantic concepts from text
-6. **Index**: Add content to the semantic search index
-
-### Port Configuration
-
-The browser interface automatically detects if it's running on a different port than the API server (port 3000). If you access the interface on a different port, it will automatically adjust its API calls to target port 3000. This is helpful during development or when using different server configurations.
-
-The interface also provides detailed connectivity information and troubleshooting features:
-- Status indicator showing connection state
-- Detailed console logging for debugging
-- Auto-retry capability for failed connections
-- Specific error messages based on connection issues
-
-For detailed guidance on using the browser interface, see the [Browser Interface documentation](docs/api/browser-interface.md).
-
-## API Documentation
-npm run mcp-example
-
-# Test the MCP server
-npm run mcp-test
+# MCP Server
+npm run mcp-server-new    # Start new MCP server
+npm run mcp-example       # Run MCP client example
 ```
 
-MCP implementation provides:
-- **Tools**: Memory operations like add, retrieve, search
-- **Resources**: Data source access for stats and configuration
-- **Prompts**: Templates for common memory tasks
+### Adding New Examples
 
-For details, see the [MCP Server Documentation](docs/mcp-server.md).
+1. Place in appropriate category directory (`basic/`, `ragno/`, `mcp/`, `zpt/`)
+2. Follow naming convention: `PascalCase.js`
+3. Include comprehensive documentation
+4. Add error handling and cleanup
+5. Update examples/README.md
 
-## Architecture
+## 📖 Documentation
 
-Semem has a layered architecture with the following key components:
+- **[Examples Documentation](examples/README.md)**: Comprehensive examples guide
+- **[API Documentation](docs/api/README.md)**: REST API and SDK reference
+- **[MCP Documentation](docs/mcp/README.md)**: Model Context Protocol integration
+- **[Architecture Guide](docs/architecture.md)**: System design and components
+- **[Algorithm Documentation](docs/ragno/README.md)**: Advanced algorithms guide
 
-1. **Memory Management Layer**
-   - `MemoryManager`: Core class that coordinates memory operations
-   - `ContextManager`: Manages context retrieval and window sizing
-   - `ContextWindowManager`: Handles text chunking and window management
+## 🔍 Troubleshooting
 
-2. **Storage Layer**
-   - `BaseStore`: Abstract base class for all storage backends
-   - `MemoryStore`: In-process memory management
-   - `InMemoryStore`: Transient in-memory storage
-   - `JSONStore`: Persistent storage using JSON files
-   - `SPARQLStore`: RDF-based storage with SPARQL endpoints
-   - `CachedSPARQLStore`: Optimized version with caching
+### Common Issues
 
-3. **Handlers Layer**
-   - `EmbeddingHandler`: Manages vector embeddings generation and processing
-   - `LLMHandler`: Orchestrates language model interactions
-   - `CacheManager`: Provides caching for improved performance
+**Ollama Connection:**
+```bash
+# Check Ollama status
+ollama list
+curl http://localhost:11434/api/tags
+```
 
-4. **API Layer**
-   - Multiple interface types (HTTP, CLI, REPL)
-   - `APIRegistry`: Central service registry
-   - Request handling via active/passive handlers
-   - [API documentation](docs/api/README.md) for REST and SDK interfaces
+**SPARQL Endpoint:**
+```bash
+# Test connectivity
+curl -X POST http://localhost:3030/dataset/query \
+  -H "Content-Type: application/sparql-query" \
+  -d "SELECT * WHERE { ?s ?p ?o } LIMIT 1"
+```
 
-5. **Connector Layer**
-   - `ClientConnector`: Base connector class
-   - Provider-specific connectors (Ollama, Claude, etc.)
+**Memory Issues:**
+```bash
+# Increase Node.js memory limit
+export NODE_OPTIONS="--max-old-space-size=4096"
+```
 
-6. **Ragno Algorithm Layer**
-   - `RagnoAlgorithms`: Unified algorithms suite with integrated workflow management
-   - `Hyde`: Hypothetical Document Embeddings for enhanced retrieval and uncertainty modeling
-   - `VSOM`: Vectorized Self-Organizing Maps for entity clustering and semantic organization
-   - `GraphAnalytics`: K-core decomposition, centrality analysis, and statistical graph operations
-   - `CommunityDetection`: Leiden algorithm for identifying semantic communities
-   - `PersonalizedPageRank`: Semantic search and graph traversal with multi-entry point support
+### Debug Mode
 
-## Requirements
+Enable detailed logging:
+```bash
+LOG_LEVEL=debug node examples/basic/MemoryEmbeddingJSON.js
+```
 
-- Node.js 20.11.0+
-- SPARQL endpoint (Apache Fuseki) for SPARQL-based storage (optional)
-- Ollama or compatible LLM service for text generation and embeddings
-- API keys for various LLM providers (configured in .env)
+## 🤝 Contributing
 
-### Algorithm-Specific Requirements
-- **HyDE Algorithm**: Requires text generation model (e.g., `qwen2:1.5b`)
-- **VSOM Algorithm**: Requires embedding model (e.g., `nomic-embed-text`) 
-- **Graph Analytics**: Works with any RDF data, no additional services needed
-- **Ragno Pipeline**: Combines multiple algorithms, benefits from both text and embedding models
+1. Fork the repository
+2. Create a feature branch
+3. Add tests for new functionality  
+4. Update documentation
+5. Submit a pull request
 
-## License
+### Code Style
+- Use ES modules
+- Follow existing patterns
+- Include JSDoc comments
+- Add comprehensive error handling
 
-MIT
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) for details.
+
+## 🔗 Links
+
+- **Documentation**: [docs/](docs/)
+- **Examples**: [examples/](examples/)
+- **MCP Server**: [mcp/](mcp/)
+- **Issue Tracker**: [GitHub Issues](https://github.com/your-org/semem/issues)
+
+---
+
+**Semem** - Intelligent semantic memory for the AI age.

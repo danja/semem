@@ -26,10 +26,10 @@
 
 import logger from 'loglevel'
 import rdf from 'rdf-ext'
-import LLMHandler from '../src/handlers/LLMHandler.js'
-import OllamaConnector from '../src/connectors/OllamaConnector.js'
-import Hyde from '../src/ragno/algorithms/Hyde.js'
-import NamespaceManager from '../src/ragno/core/NamespaceManager.js'
+import LLMHandler from '../../src/handlers/LLMHandler.js'
+import OllamaConnector from '../../src/connectors/OllamaConnector.js'
+import Hyde from '../../src/ragno/algorithms/Hyde.js'
+import NamespaceManager from '../../src/ragno/core/NamespaceManager.js'
 // Note: RDF export functionality would use existing utilities
 
 // Configure logging

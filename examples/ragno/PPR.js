@@ -14,9 +14,9 @@
  * authors, concepts, and institutions.
  */
 
-import PersonalizedPageRank from '../src/ragno/algorithms/PersonalizedPageRank.js'
+import PersonalizedPageRank from '../../src/ragno/algorithms/PersonalizedPageRank.js'
 import rdf from 'rdf-ext'
-import { logger } from '../src/Utils.js'
+import { logger } from '../../src/Utils.js'
 
 // Set up logging to see progress (logger from Utils.js doesn't have setLevel)
 

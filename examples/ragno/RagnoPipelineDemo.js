@@ -34,14 +34,14 @@
  */
 
 import logger from 'loglevel'
-import { decomposeCorpus } from '../src/ragno/decomposeCorpus.js'
-import { augmentWithAttributes } from '../src/ragno/augmentWithAttributes.js'
-import { aggregateCommunities } from '../src/ragno/aggregateCommunities.js'
-import { enrichWithEmbeddings } from '../src/ragno/enrichWithEmbeddings.js'
-import LLMHandler from '../src/handlers/LLMHandler.js'
-import EmbeddingHandler from '../src/handlers/EmbeddingHandler.js'
-import OllamaConnector from '../src/connectors/OllamaConnector.js'
-import loadRagnoConfig from '../src/utils/loadRagnoConfig.js'
+import { decomposeCorpus } from '../../src/ragno/decomposeCorpus.js'
+import { augmentWithAttributes } from '../../src/ragno/augmentWithAttributes.js'
+import { aggregateCommunities } from '../../src/ragno/aggregateCommunities.js'
+import { enrichWithEmbeddings } from '../../src/ragno/enrichWithEmbeddings.js'
+import LLMHandler from '../../src/handlers/LLMHandler.js'
+import EmbeddingHandler from '../../src/handlers/EmbeddingHandler.js'
+import OllamaConnector from '../../src/connectors/OllamaConnector.js'
+import loadRagnoConfig from '../../src/utils/loadRagnoConfig.js'
 
 // Configure logging
 logger.setLevel('debug')

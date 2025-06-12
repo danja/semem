@@ -17,9 +17,9 @@
  * algorithms reveal different aspects of graph structure.
  */
 
-import GraphAnalytics from '../src/ragno/algorithms/GraphAnalytics.js'
+import GraphAnalytics from '../../src/ragno/algorithms/GraphAnalytics.js'
 import rdf from 'rdf-ext'
-import { logger } from '../src/Utils.js'
+import { logger } from '../../src/Utils.js'
 
 console.log('='.repeat(60))
 console.log('📈 Graph Analytics Demo - Knowledge Graph Structure Analysis')

@@ -1,9 +1,9 @@
 import logger from 'loglevel';
-import MemoryManager from '../src/MemoryManager.js';
-import JSONStore from '../src/stores/JSONStore.js';
-import Config from '../src/Config.js';
-import ClaudeConnector from '../src/connectors/ClaudeConnector.js';
-import OllamaConnector from '../src/connectors/OllamaConnector.js';
+import MemoryManager from '../../src/MemoryManager.js';
+import JSONStore from '../../src/stores/JSONStore.js';
+import Config from '../../src/Config.js';
+import ClaudeConnector from '../../src/connectors/ClaudeConnector.js';
+import OllamaConnector from '../../src/connectors/OllamaConnector.js';
 import dotenv from 'dotenv';
 
 // Load environment variables
