@@ -4,7 +4,7 @@
 
 Semem is a Node.js toolkit for AI memory management that integrates large language models (LLMs) with Semantic Web technologies (RDF/SPARQL). It offers knowledge graph retrieval and augmentation algorithms within a conceptual model based on the [Ragno](https://github.com/danja/ragno) (knowledge graph description) and [ZPT](https://github.com/danja/zpt) (knowledge graph navigation) ontologies. It is a [Tensegrity](https://github.com/danja/tensegrity) project.
 
-**Status 2025-06-13 :** basically mostly in place but very, very sketchy. It has an MCP server with very limited functionality, HTTP APIs and a crude UI with a little more and code APIs that mostly work. The description below is very AI-sloppy. A lot to do before much will be usable. But a lot of the examples at least do *something*.
+**Status 2025-06-13 :** mostly in place but very, very sketchy. It has an MCP server with very limited functionality, HTTP APIs and a crude UI with a little more and code APIs that mostly work. The description below is very AI-sloppy. A lot to do before much will be usable. But a lot of the examples at least do *something*.
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Node.js](https://img.shields.io/badge/node-%3E%3D20.11.0-brightgreen.svg)
