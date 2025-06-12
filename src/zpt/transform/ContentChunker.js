@@ -365,7 +365,7 @@ export default class ContentChunker {
         if (type === 'corpuscles') {
             return this.chunkCorpuscles(content, options);
         } else {
-            return this.chunkHierarchicalText(content, options);
+            return await this.chunkHierarchicalText(content, options);
         }
     }
 
@@ -611,7 +611,7 @@ export default class ContentChunker {
     /**
      * Chunk hierarchical text based on structure
      */
-    chunkHierarchicalText(text, options) {
+    async chunkHierarchicalText(text, options) {
         // Find structural elements (headers, sections, etc.)
         const structure = this.analyzeTextStructure(text);
         const chunks = [];

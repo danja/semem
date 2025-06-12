@@ -62,7 +62,7 @@ async function initializeComponents() {
     logger.info('🔧 Initializing transformation pipeline components...')
     
     config = new Config()
-    await config.initialize()
+    await config.init()
     
     // Initialize individual components
     tokenCounter = new TokenCounter({
@@ -141,7 +141,7 @@ async function demonstrateTokenCounting() {
         const counts = []
         for (const tokenizer of tokenizers) {
             const result = await tokenCounter.countTokens(content.text, tokenizer.name)
-            counts.push(result.tokenCount.toString().padEnd(12))
+            counts.push(result.count.toString().padEnd(12))
         }
         
         logger.info(content.type.padEnd(15) + counts.join(''))
@@ -151,13 +151,13 @@ async function demonstrateTokenCounting() {
             logger.info(`\nDetailed Analysis for "${content.description}":`);
             for (const tokenizer of tokenizers) {
                 const result = await tokenCounter.countTokens(content.text, tokenizer.name)
-                const cost = await tokenCounter.estimateCost(result.tokenCount, tokenizer.model)
+                const cost = tokenCounter.estimateCost(result.count, 0, tokenizer.model)
                 
                 logger.info(`${tokenizer.name}:`)
-                logger.info(`  Tokens: ${result.tokenCount}`)
+                logger.info(`  Tokens: ${result.count}`)
                 logger.info(`  Characters: ${content.text.length}`)
-                logger.info(`  Ratio: ${(content.text.length / result.tokenCount).toFixed(2)} chars/token`)
-                logger.info(`  Estimated cost: $${cost.toFixed(6)}`)
+                logger.info(`  Ratio: ${(content.text.length / result.count).toFixed(2)} chars/token`)
+                logger.info(`  Estimated cost: $${cost.totalCost.toFixed(6)}`)
                 logger.info(`  Processing time: ${result.processingTime}ms`)
             }
         }
@@ -175,7 +175,7 @@ async function demonstrateTokenCounting() {
     const longText = sampleContent.find(c => c.type === 'long').text.repeat(10)
     
     for (const scenario of budgetScenarios) {
-        const budgetAnalysis = await tokenCounter.analyzeBudget(longText, scenario.budget, 'cl100k_base')
+        const budgetAnalysis = await simulateBudgetAnalysis(longText, scenario.budget, 'cl100k_base')
         logger.info(`${scenario.description} (${scenario.budget} tokens):`)
         logger.info(`  Fits in budget: ${budgetAnalysis.fitsInBudget}`)
         logger.info(`  Utilization: ${(budgetAnalysis.utilization * 100).toFixed(1)}%`)
@@ -562,7 +562,7 @@ async function demonstrateFullPipeline() {
     // Stage 1: Token Budget Analysis
     logger.info('\n📊 Stage 1: Token Budget Analysis')
     const combinedText = selectionResult.corpuscles.map(c => c.content).join(' ')
-    const tokenAnalysis = await tokenCounter.analyzeBudget(combinedText, transformOptions.maxTokens, transformOptions.tokenizer)
+    const tokenAnalysis = await simulateBudgetAnalysis(combinedText, transformOptions.maxTokens, transformOptions.tokenizer)
     
     logger.info('Token analysis:')
     logger.info(`  Input tokens: ${tokenAnalysis.inputTokens}`)
@@ -636,14 +636,14 @@ async function demonstrateFullPipeline() {
     )
     
     const validationResult = {
-        withinBudget: finalTokenCount.tokenCount <= transformOptions.maxTokens,
-        utilization: finalTokenCount.tokenCount / transformOptions.maxTokens,
+        withinBudget: finalTokenCount.count <= transformOptions.maxTokens,
+        utilization: finalTokenCount.count / transformOptions.maxTokens,
         qualityScore: calculateTransformationQuality(finalContent),
         readyForLLM: true
     }
     
     logger.info('Final validation:')
-    logger.info(`  Total tokens: ${finalTokenCount.tokenCount}/${transformOptions.maxTokens}`)
+    logger.info(`  Total tokens: ${finalTokenCount.count}/${transformOptions.maxTokens}`)
     logger.info(`  Budget utilization: ${(validationResult.utilization * 100).toFixed(1)}%`)
     logger.info(`  Within budget: ${validationResult.withinBudget}`)
     logger.info(`  Quality score: ${validationResult.qualityScore}/10`)
@@ -681,6 +681,29 @@ async function demonstrateFullPipeline() {
 /**
  * Helper functions for simulation and analysis
  */
+async function simulateBudgetAnalysis(text, budget, tokenizer) {
+    // Simple simulation based on character count estimation
+    const estimatedTokens = Math.ceil(text.length / 4); // 4 chars per token average
+    const utilization = estimatedTokens / budget;
+    const fitsInBudget = estimatedTokens <= budget;
+    
+    let recommendation = 'Content fits well in budget';
+    if (utilization > 1.0) {
+        recommendation = 'Reduce content size or increase budget';
+    } else if (utilization > 0.9) {
+        recommendation = 'Consider chunking for better control';
+    } else if (utilization < 0.3) {
+        recommendation = 'Budget is very generous';
+    }
+    
+    return {
+        inputTokens: estimatedTokens,
+        budget,
+        utilization,
+        fitsInBudget,
+        recommendation
+    };
+}
 async function simulateChunking(content, strategy) {
     const baseChunkSize = strategy.options?.targetSize || strategy.options?.chunkSize || 200
     const variation = 0.3 // 30% size variation
@@ -929,7 +952,7 @@ async function runTransformationPipelineDemo() {
         logger.error('Stack:', error.stack)
     } finally {
         if (config) {
-            await config.dispose()
+            config = null
         }
         logger.info('🧹 Cleanup completed')
     }

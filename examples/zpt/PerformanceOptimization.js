@@ -60,7 +60,7 @@ async function initializePerformanceEnvironment() {
     logger.info('🔧 Initializing performance testing environment...')
     
     config = new Config()
-    await config.initialize()
+    await config.init()
     
     // Initialize performance monitoring
     performanceMonitor = new PerformanceMonitor({
@@ -1017,7 +1017,7 @@ async function runPerformanceOptimizationDemo() {
         logger.error('Stack:', error.stack)
     } finally {
         if (config) {
-            await config.dispose()
+            config = null
         }
         logger.info('🧹 Cleanup completed')
     }

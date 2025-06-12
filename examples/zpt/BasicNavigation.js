@@ -56,7 +56,7 @@ async function initializeComponents() {
     
     // Initialize configuration
     config = new Config()
-    await config.initialize()
+    await config.init()
     
     // Initialize parameter processing
     validator = new ParameterValidator()
@@ -117,7 +117,7 @@ async function demonstrateParameterProcessing() {
             tilt: normalizedParams.tilt,
             transform: normalizedParams.transform
         })
-        logger.info('Parameter hash:', normalizedParams.metadata.parameterHash)
+        logger.info('Normalized at:', normalizedParams._metadata.normalizedAt)
     }
     
     // Example 2: Invalid parameters (shows error handling)
@@ -303,9 +303,9 @@ async function demonstrateFullPipeline() {
     logger.info('\n🔧 Step 2: Parameter Normalization')
     const normalizedParams = normalizer.normalize(navigationRequest)
     logger.info('Normalization complete:', {
-        parameterHash: normalizedParams.metadata.parameterHash,
-        defaultsApplied: normalizedParams.metadata.defaultsApplied,
-        complexity: normalizedParams.metadata.complexity
+        normalizedAt: normalizedParams._metadata.normalizedAt,
+        hasFilters: normalizedParams._metadata.hasFilters,
+        complexity: normalizedParams._metadata.complexity
     })
     
     // Step 3: Selection (simulated)
@@ -478,7 +478,8 @@ async function runBasicNavigationDemo() {
     } finally {
         // Cleanup
         if (config) {
-            await config.dispose()
+            // Config doesn't need explicit disposal
+            config = null
         }
         logger.info('🧹 Cleanup completed')
     }

@@ -57,7 +57,7 @@ async function initializeAPI() {
     logger.info('🔧 Initializing ZPT API components...')
     
     config = new Config()
-    await config.initialize()
+    await config.init()
     
     // Initialize NavigationEndpoint
     navigationEndpoint = new NavigationEndpoint({
@@ -1061,7 +1061,7 @@ async function runAPIEndpointsDemo() {
             mockServer.stop()
         }
         if (config) {
-            await config.dispose()
+            config = null
         }
         logger.info('🧹 Cleanup completed')
     }

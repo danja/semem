@@ -61,7 +61,7 @@ async function initializeComponents() {
     logger.info('🔧 Initializing pan filtering components...')
     
     config = new Config()
-    await config.initialize()
+    await config.init()
     
     validator = new ParameterValidator()
     normalizer = new ParameterNormalizer()
@@ -160,7 +160,7 @@ async function demonstrateTopicFiltering() {
             
             // Build SPARQL query
             const queryResult = filterBuilder.buildQuery(normalized)
-            logger.info('Generated SPARQL patterns:', queryResult.sparqlPatterns.slice(0, 2))
+            logger.info('Generated query metadata:', { zoomLevel: queryResult.zoomLevel, complexity: queryResult.metadata.complexity })
             logger.info('Estimated selectivity:', estimateTopicSelectivity(example.filter.pan.topic))
             
             // Simulate filtering result
@@ -354,7 +354,7 @@ async function demonstrateTemporalFiltering() {
             const normalized = normalizer.normalize(example.filter)
             const queryResult = filterBuilder.buildQuery(normalized)
             
-            logger.info('Temporal constraints:', queryResult.temporalConstraints?.length || 0)
+            logger.info('Query generated:', queryResult.query ? 'Yes' : 'No')
             logger.info('Date range coverage:', calculateDateRangeCoverage(example.filter.pan.temporal))
             
             // Simulate temporal filtering
@@ -460,7 +460,7 @@ async function demonstrateGeographicFiltering() {
             const normalized = normalizer.normalize(example.filter)
             const queryResult = filterBuilder.buildQuery(normalized)
             
-            logger.info('Geographic constraints:', queryResult.geographicConstraints?.length || 0)
+            logger.info('Query complexity:', queryResult.metadata.complexity)
             logger.info('Coverage area:', calculateGeographicCoverage(example.filter.pan.geographic))
             
             // Simulate geographic filtering
@@ -896,7 +896,7 @@ async function runAdvancedFilteringDemo() {
         logger.error('Stack:', error.stack)
     } finally {
         if (config) {
-            await config.dispose()
+            config = null
         }
         logger.info('🧹 Cleanup completed')
     }
