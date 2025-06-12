@@ -1,0 +1,113 @@
+graph TB
+    subgraph "Client Request"
+        REQ[Navigation Request]
+        PARAMS[Zoom/Pan/Tilt Parameters]
+        TRANS[Transform Options]
+    end
+
+    subgraph "Parameter Processing"
+        PV[ParameterValidator]
+        PN[ParameterNormalizer]
+        FB[FilterBuilder]
+        SC[SelectionCriteria]
+    end
+
+    subgraph "Corpuscle Selection"
+        CS[CorpuscleSelector]
+        ZLM[ZoomLevelMapper]
+        PDF[PanDomainFilter]
+        TP[TiltProjector]
+    end
+
+    subgraph "Ragno Corpus"
+        CORP[ragno:Corpus]
+        CPSC[ragno:Corpuscle]
+        ENT[ragno:Entity]
+        UNIT[ragno:Unit]
+        TEXT[ragno:TextElement]
+        COMM[ragno:Community]
+    end
+
+    subgraph "LLM Transformation"
+        CT[CorpuscleTransformer]
+        TC[TokenCounter]
+        CC[ContentChunker]
+        PF[PromptFormatter]
+        ME[MetadataEncoder]
+    end
+
+    subgraph "Response Building"
+        RF[ResponseFormatter]
+        CACHE[ResultCache]
+        RESP[Transformed Response]
+    end
+
+    subgraph "REST API"
+        EP[NavigateEndpoint]
+        RP[RequestParser]
+        EH[ErrorHandler]
+    end
+
+    %% Request flow
+    REQ --> EP
+    EP --> RP
+    RP --> PARAMS
+    RP --> TRANS
+    
+    %% Parameter processing
+    PARAMS --> PV
+    PV --> PN
+    PN --> FB
+    FB --> SC
+    
+    %% Selection flow
+    SC --> CS
+    CS --> ZLM
+    CS --> PDF
+    CS --> TP
+    
+    %% Zoom mapping
+    ZLM --> ENT
+    ZLM --> UNIT
+    ZLM --> TEXT
+    ZLM --> COMM
+    ZLM --> CORP
+    
+    %% Corpuscle selection
+    PDF --> CPSC
+    TP --> CPSC
+    CORP --> CPSC
+    
+    %% Transformation pipeline
+    CPSC --> CT
+    TRANS --> CT
+    CT --> TC
+    CT --> CC
+    CT --> PF
+    CT --> ME
+    
+    %% Response generation
+    CT --> RF
+    RF --> CACHE
+    RF --> RESP
+    RESP --> EP
+    
+    %% Error handling
+    PV -.-> EH
+    CS -.-> EH
+    CT -.-> EH
+    EH -.-> EP
+
+    classDef request fill:#e3f2fd,stroke:#1565c0,stroke-width:2px
+    classDef param fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px
+    classDef selection fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
+    classDef ragno fill:#ffebee,stroke:#c62828,stroke-width:2px
+    classDef transform fill:#fff8e1,stroke:#f57c00,stroke-width:2px
+    classDef api fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+
+    class REQ,PARAMS,TRANS request
+    class PV,PN,FB,SC param
+    class CS,ZLM,PDF,TP selection
+    class CORP,CPSC,ENT,UNIT,TEXT,COMM ragno
+    class CT,TC,CC,PF,ME transform
+    class EP,RP,EH,RF,CACHE,RESP api

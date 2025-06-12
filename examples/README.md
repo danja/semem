@@ -75,6 +75,24 @@ node examples/MemoryEmbeddingSPARQL.js
 ```
 SPARQL store integration for semantic memory management with RDF/SPARQL storage backend. Demonstrates SPARQL endpoint connectivity and authentication, RDF triple storage for semantic memory, semantic querying with vector similarity, data persistence across sessions, integration with semantic web standards, and configuration-driven endpoint management.
 
+### HTTPCalls.js
+```bash
+node examples/HTTPCalls.js
+```
+Comprehensive HTTP API functionality demonstration testing REST API endpoints for memory, chat, search, and system operations. Shows server connectivity verification, API health monitoring, memory storage and retrieval, vector embedding generation, concept extraction, chat with memory context, semantic search, system metrics, and configuration-driven API endpoints. Requires servers running via `node servers/start-all.js`.
+
+### CheckLLMProviders.js
+```bash
+node examples/CheckLLMProviders.js
+```
+Comprehensive LLM provider testing and validation using configuration-driven provider discovery. Tests connectivity, authentication, chat generation, embedding capabilities, concept extraction, and memory integration for all configured providers (Ollama, Claude, Mistral). Provides detailed capability matrix, performance assessment, and recommendations for optimal provider selection and configuration.
+
+### ContextManagement.js
+```bash
+node examples/ContextManagement.js
+```
+Comprehensive context management and window processing demonstration including text chunking, token estimation, context buffer management, and memory-context integration. Shows window creation, overlapping content merging, context summarization, long context handling, and edge case processing with configuration-driven setup and performance assessment.
+
 ### ArticleEmbedding.js
 ```bash
 node examples/ArticleEmbedding.js
