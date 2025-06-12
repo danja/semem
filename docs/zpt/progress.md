@@ -49,16 +49,16 @@ src/zpt/parameters/
 - **FilterBuilder.js**: Converts parameters to SPARQL queries with ragno ontology support, includes similarity search
 - **SelectionCriteria.js**: Multi-factor scoring system with configurable weights and optimization rules
 
-### Phase 2: Selection Engine ⚠️ (In Progress)
+### Phase 2: Selection Engine ✅ (Completed)
 **Goal**: Build corpuscle selector and dimension mappers
 
 #### Directory Structure
 ```
 src/zpt/selection/
-├── CorpuscleSelector.js     # Parameter-based selection ⚠️
-├── ZoomLevelMapper.js       # Map zoom to element types
-├── PanDomainFilter.js       # Apply domain constraints  
-└── TiltProjector.js         # Generate representations
+├── CorpuscleSelector.js     # Parameter-based selection ✅
+├── ZoomLevelMapper.js       # Map zoom to element types ✅
+├── PanDomainFilter.js       # Apply domain constraints ✅
+└── TiltProjector.js         # Generate representations ✅
 ```
 
 #### Core Components
@@ -67,14 +67,44 @@ src/zpt/selection/
 - **PanDomainFilter**: Applies domain-specific filtering constraints
 - **TiltProjector**: Generates appropriate representations based on tilt
 
-#### Current Tasks
-- [⚠️] Build CorpuscleSelector.js for parameter-based selection
-- [ ] Create ZoomLevelMapper.js to map zoom to element types
-- [ ] Create PanDomainFilter.js for domain constraints
-- [ ] Create TiltProjector.js for generating representations
+#### Completed Tasks
+- [x] Build CorpuscleSelector.js for parameter-based selection
+- [x] Create ZoomLevelMapper.js to map zoom to element types
+- [x] Create PanDomainFilter.js for domain constraints
+- [x] Create TiltProjector.js for generating representations
 
-### Phase 3: LLM Transform (Pending)  
+#### Implementation Notes
+- **CorpuscleSelector**: Main orchestrator with embedding similarity, keyword matching, graph connectivity, and temporal strategies
+- **ZoomLevelMapper**: Maps zoom levels to RDF types with granularity, selection strategies, and optimization recommendations
+- **PanDomainFilter**: Domain-aware filtering with semantic expansion, fuzzy matching, and selectivity estimation
+- **TiltProjector**: Multi-format projection supporting vector embeddings, keyword extraction, graph analysis, and temporal sequencing
+
+### Phase 3: LLM Transform ⚠️ (In Progress)  
 **Goal**: Implement token counting, content chunking, format templates
+
+#### Directory Structure
+```
+src/zpt/transform/
+├── CorpuscleTransformer.js  # Main transformation engine ⚠️
+├── TokenCounter.js          # Token usage estimation
+├── ContentChunker.js        # Split/merge for size limits
+├── PromptFormatter.js       # LLM-friendly structuring
+└── MetadataEncoder.js       # Preserve navigation context
+```
+
+#### Core Components
+- **CorpuscleTransformer**: Main engine coordinating all transformation steps
+- **TokenCounter**: Accurate token counting for different tokenizers and models
+- **ContentChunker**: Intelligent content chunking with semantic boundaries
+- **PromptFormatter**: Format content for optimal LLM consumption
+- **MetadataEncoder**: Preserve ZPT navigation context in outputs
+
+#### Current Tasks
+- [⚠️] Create CorpuscleTransformer.js main transformation engine
+- [ ] Create TokenCounter.js for token usage estimation
+- [ ] Create ContentChunker.js for size limit management
+- [ ] Create PromptFormatter.js for LLM-friendly structuring
+- [ ] Create MetadataEncoder.js for preserving navigation context
 
 ### Phase 4: API Development (Pending)
 **Goal**: RESTful endpoints, request/response handling, error management
