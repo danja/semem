@@ -96,31 +96,80 @@ Knowledge graph construction, entity extraction, and RDF processing using the Ra
 
 ### 🔌 MCP Examples (`examples/mcp/`)
 
-Model Context Protocol integration for AI assistant interoperability.
+Model Context Protocol integration for AI assistant interoperability with comprehensive GraphRAG capabilities.
 
 | Example | Description | Prerequisites |
 |---------|-------------|---------------|
-| **MCPClient.js** | Complete MCP client demonstration | MCP server running |
+| **MCPClient.js** | Original MCP client demonstration | MCP server running |
+| **GraphRAGDemo.js** | GraphRAG features showcase with verbose logging | MCP server, chalk |
+| **SememCoreDemo.js** | Traditional Semem capabilities demonstration | MCP server, chalk |
+| **IntegratedWorkflowDemo.js** | Advanced integrated workflows | MCP server, chalk |
 
 **Key Features Demonstrated:**
-- MCP server connection and tool usage
-- Semantic memory operations via MCP
-- Knowledge graph processing via MCP
-- ZPT content processing via MCP
-- Integrated workflow demonstrations
+
+**GraphRAG Capabilities (new):**
+- Document management (store, list, delete with metadata)
+- Relationship management (create, search, delete entity relationships)
+- Hybrid search (vector similarity + graph traversal + ZPT navigation)
+- Graph analytics (statistics, node discovery, structure export)
+- Enhanced retrieval (semantic document search, entity observations)
+
+**Semem Core Features:**
+- Semantic memory storage and retrieval
+- Vector embedding generation and analysis
+- Advanced concept extraction
+- Memory-enhanced response generation
+- Performance monitoring and optimization
+
+**Ragno Knowledge Graph:**
+- RDF-based entity and semantic unit creation
+- Corpus decomposition into knowledge graphs
+- Relationship extraction and analysis
+- Multi-format graph exports
+
+**ZPT Content Processing:**
+- Multi-dimensional content navigation (zoom/pan/tilt)
+- Intelligent content chunking strategies
+- Corpuscle selection and filtering
+- Content transformation pipelines
+
+**Advanced Features:**
+- Comprehensive workflow orchestration
+- Data flow tracking and visualization
+- Performance metrics and optimization
+- Progress monitoring with colored output
+- Error handling with graceful fallbacks
 
 **Usage:**
 ```bash
 # Start MCP server (in one terminal)
 npm run mcp-server-new
 
-# Run client example (in another terminal)
+# Run original client example
 npm run mcp-example
+
+# Run GraphRAG demonstration
+node examples/mcp/GraphRAGDemo.js
+
+# Run Semem core demonstration  
+node examples/mcp/SememCoreDemo.js
+
+# Run integrated workflow demonstration
+node examples/mcp/IntegratedWorkflowDemo.js
 ```
+
+**Logging and Visualization:**
+All new examples feature extensive verbose logging with:
+- Colored terminal output using chalk
+- Progress bars and performance tracking
+- Workflow step completion monitoring
+- Data flow analysis and metrics
+- System resource usage monitoring
+- Comprehensive error reporting with fallback modes
 
 ### 🎯 ZPT Examples (`examples/zpt/`)
 
-Zero-Point Traversal system for intelligent content navigation and processing.
+Zoom, Pan, Tilt system for intelligent content navigation and processing.
 
 | Example | Description | Prerequisites |
 |---------|-------------|---------------|
