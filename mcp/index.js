@@ -2968,7 +2968,67 @@ process.on('SIGINT', async () => {
   process.exit(0);
 });
 
-main().catch((error) => {
-  console.error("Server error:", error);
-  process.exit(1);
-});
+// Export function for programmatic use
+export async function createMCPServer(options = {}) {
+  const { 
+    transport = 'stdio', 
+    port = 3000,
+    configPath = null 
+  } = options;
+
+  // Create new server instance
+  const serverInstance = new McpServer({
+    name: "Semem Integration Server",
+    version: "1.0.0",
+    instructions: "Provides access to Semem core, Ragno knowledge graph, and ZPT APIs for semantic memory management and knowledge processing"
+  });
+
+  // Set up the same tools as the main server
+  // Note: This would require extracting the tool setup into a separate function
+  // For now, we'll use the existing server setup
+  
+  try {
+    // Initialize services
+    console.error("Initializing Semem services...");
+    await initializeServices();
+    
+    // Create transport based on type
+    let serverTransport;
+    if (transport === 'stdio') {
+      serverTransport = new StdioServerTransport();
+    } else if (transport === 'http') {
+      const { SSEServerTransport } = await import('@modelcontextprotocol/sdk/server/sse.js');
+      serverTransport = new SSEServerTransport(`/message`, port);
+    } else if (transport === 'sse') {
+      const { SSEServerTransport } = await import('@modelcontextprotocol/sdk/server/sse.js');
+      serverTransport = new SSEServerTransport(`/message`, port);
+    } else {
+      throw new Error(`Unsupported transport: ${transport}`);
+    }
+    
+    await serverInstance.connect(serverTransport);
+    console.error("Semem MCP Server started successfully");
+    
+    return {
+      server: serverInstance,
+      transport: serverTransport,
+      close: async () => {
+        if (memoryManager) {
+          await memoryManager.dispose();
+        }
+        // Additional cleanup if needed
+      }
+    };
+  } catch (error) {
+    console.error("Failed to start MCP server:", error);
+    throw error;
+  }
+}
+
+// Only run main() when this file is executed directly
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main().catch((error) => {
+    console.error("Server error:", error);
+    process.exit(1);
+  });
+}

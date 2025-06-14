@@ -1,3 +1,38 @@
+/**
+ * Semem TypeScript Definitions - Main Export File
+ * 
+ * This file serves as the main entry point for all TypeScript definitions
+ * used throughout the Semem semantic memory system.
+ * 
+ * Usage:
+ * ```typescript
+ * import { MemoryManager, Entity, ZPTParameters } from './types/index.js';
+ * ```
+ */
+
+// ======================
+// RE-EXPORT ALL TYPES
+// ======================
+
+// Core system types
+export * from './core.js';
+
+// Ragno knowledge graph types  
+export * from './ragno.js';
+
+// ZPT navigation types
+export * from './zpt.js';
+
+// MCP integration types
+export * from './mcp-schema.js';
+
+// API types
+export * from './api.js';
+
+// ======================
+// LEGACY COMPATIBILITY
+// ======================
+
 // Core Interfaces
 export interface LLMProvider {
     generateEmbedding(model: string, input: string): Promise<number[]>;

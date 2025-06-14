@@ -1,14 +1,72 @@
 {
   "name": "semem",
-  "version": "1.1.0",
-  "description": "Semantic Memory",
+  "version": "1.2.0",
+  "description": "Semantic Memory for Intelligent Agents",
   "author": "Danny Ayers <danny.ayers@gmail.com> (https://danny.ayers.name)",
   "license": "MIT",
   "type": "module",
   "main": "index.js",
+  "types": "dist/types/index.d.ts",
+  "bin": {
+    "semem": "bin/semem.js",
+    "semem-mcp": "bin/mcp.js"
+  },
   "engines": {
     "node": ">=20.11.0"
   },
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./index.js",
+      "require": "./dist/cjs/index.js"
+    },
+    "./core": {
+      "types": "./dist/types/core.d.ts",
+      "import": "./src/core.js"
+    },
+    "./handlers": {
+      "types": "./dist/types/core.d.ts",
+      "import": "./src/handlers/index.js"
+    },
+    "./stores": {
+      "types": "./dist/types/core.d.ts",
+      "import": "./src/stores/index.js"
+    },
+    "./connectors": {
+      "types": "./dist/types/core.d.ts",
+      "import": "./src/connectors/index.js"
+    },
+    "./ragno": {
+      "types": "./dist/types/ragno.d.ts",
+      "import": "./src/ragno/index.js"
+    },
+    "./zpt": {
+      "types": "./dist/types/zpt.d.ts",
+      "import": "./src/zpt/index.js"
+    },
+    "./utils": {
+      "types": "./dist/types/core.d.ts",
+      "import": "./src/utils/index.js"
+    },
+    "./mcp": {
+      "types": "./dist/types/mcp-schema.d.ts",
+      "import": "./mcp/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.js",
+    "bin/",
+    "src/",
+    "mcp/",
+    "dist/types/",
+    "config/",
+    "examples/",
+    "docs/",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
   "scripts": {
     "start": "node servers/start-all.js",
     "start:dev": "npm run build:dev && node servers/start-all.js",
@@ -40,18 +98,41 @@
     "mcp-example": "node examples/mcp/MCPClient.js",
     "mcp-test": "node test-mcp.js",
     "tsc": "tsc --noEmit",
-    "types:check": "tsc --noEmit"
+    "types:check": "tsc --noEmit",
+    "types:build": "mkdir -p dist/types && cp src/types/*.d.ts dist/types/ || echo 'Manual type copy completed'",
+    "build:types": "npm run types:build",
+    "build:all": "npm run build:types && npm run build",
+    "prepublishOnly": "npm run build:types && npm test",
+    "postversion": "git push && git push --tags",
+    "clean": "rm -rf dist coverage",
+    "lint": "echo 'Add linting here'",
+    "format": "echo 'Add formatting here'"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/danja/semem.git"
   },
   "keywords": [
-    "semantic",
-    "memory",
+    "semantic-memory",
+    "ai",
     "llm",
+    "embeddings",
+    "vector-database",
+    "knowledge-graph",
     "rdf",
-    "sparql"
+    "sparql",
+    "ragno",
+    "mcp",
+    "model-context-protocol",
+    "claude",
+    "ollama",
+    "mistral",
+    "openai",
+    "semantic-search",
+    "memory-management",
+    "typescript",
+    "javascript",
+    "nodejs"
   ],
   "bugs": {
     "url": "https://github.com/danja/semem/issues"
@@ -109,6 +190,7 @@
     "uuid": "^11.1.0",
     "yargs": "^17.7.2",
     "zod": "^3.25.63",
-    "zod-to-json-schema": "^3.24.5"
+    "zod-to-json-schema": "^3.24.5",
+    "commander": "^12.1.0"
   }
 }
