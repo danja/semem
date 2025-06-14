@@ -174,7 +174,7 @@ class IntegratedWorkflowDemo {
     this.client = new Client({ name: "integrated-workflow-demo", version: "3.0.0" });
     this.transport = new StdioClientTransport({
       command: 'node',
-      args: ['../../mcp/index.js'],
+      args: ['./mcp/index.js'],
       cwd: process.cwd()
     });
 

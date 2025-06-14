@@ -5,6 +5,10 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { z } from 'zod';
 import { fileURLToPath } from 'url';
 import path from 'path';
+import dotenv from 'dotenv';
+
+// Load environment variables from .env file
+dotenv.config();
 
 // Import Semem APIs
 import MemoryManager from '../src/MemoryManager.js';
@@ -15,6 +19,11 @@ import SemanticUnit from '../src/ragno/SemanticUnit.js';
 import Relationship from '../src/ragno/Relationship.js';
 import CorpuscleSelector from '../src/zpt/selection/CorpuscleSelector.js';
 import ContentChunker from '../src/zpt/transform/ContentChunker.js';
+
+// Import LLM Connectors
+import OllamaConnector from '../src/connectors/OllamaConnector.js';
+import ClaudeConnector from '../src/connectors/ClaudeConnector.js';
+import MistralConnector from '../src/connectors/MistralConnector.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -29,6 +38,25 @@ const server = new McpServer({
 let memoryManager = null;
 let config = null;
 
+// Create LLM connector based on available configuration - following working examples pattern
+function createLLMConnector() {
+  // Priority: Ollama (no API key needed) > Claude > Mistral
+  if (process.env.OLLAMA_HOST || !process.env.CLAUDE_API_KEY) {
+    console.log('Creating Ollama connector (preferred for local development)...');
+    return new OllamaConnector();
+  } else if (process.env.CLAUDE_API_KEY) {
+    console.log('Creating Claude connector...');
+    return new ClaudeConnector();
+  } else if (process.env.MISTRAL_API_KEY) {
+    console.log('Creating Mistral connector...');
+    return new MistralConnector();
+  } else {
+    // Fallback to Ollama (most examples use this)
+    console.log('Defaulting to Ollama connector...');
+    return new OllamaConnector();
+  }
+}
+
 // Initialize core services with proper error handling
 async function initializeServices() {
   try {
@@ -42,17 +70,47 @@ async function initializeServices() {
     if (!memoryManager) {
       console.error('Initializing memory manager...');
       
-      // Check for required environment variables
-      const hasOllama = process.env.OLLAMA_HOST || process.env.OLLAMA_API_KEY;
-      const hasClaude = process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY;
+      // Check for available LLM providers from config
+      const llmProviders = config.get('llmProviders') || [];
+      const ollamaHost = process.env.OLLAMA_HOST;
+      const claudeKey = process.env.CLAUDE_API_KEY;
+      const mistralKey = process.env.MISTRAL_API_KEY;
+      const openaiKey = process.env.OPENAI_API_KEY;
       
-      if (!hasOllama && !hasClaude) {
+      const hasOllama = ollamaHost && ollamaHost !== '';
+      const hasClaude = claudeKey && claudeKey !== '';
+      const hasMistral = mistralKey && mistralKey !== '';
+      const hasOpenAI = openaiKey && openaiKey !== '';
+      const hasConfigProviders = llmProviders.length > 0;
+      
+      if (!hasOllama && !hasClaude && !hasMistral && !hasOpenAI && !hasConfigProviders) {
         console.warn('No LLM provider API keys found. Some features may be limited.');
-        console.warn('Consider setting OLLAMA_HOST or CLAUDE_API_KEY environment variables.');
+        console.warn('Consider setting API keys in .env file or configuring providers in config.json');
+      } else {
+        const availableProviders = [];
+        if (hasOllama) availableProviders.push('Ollama');
+        if (hasClaude) availableProviders.push('Claude');
+        if (hasMistral) availableProviders.push('Mistral');
+        if (hasOpenAI) availableProviders.push('OpenAI');
+        if (hasConfigProviders) availableProviders.push(`Config providers (${llmProviders.length})`);
+        console.log(`Available LLM providers: ${availableProviders.join(', ')}`);
       }
       
-      // Initialize with fallback configuration if needed
-      memoryManager = new MemoryManager(config);
+      // Create LLM connector
+      const llmProvider = createLLMConnector();
+      
+      // Use working model names that exist in Ollama (following examples pattern)
+      const chatModel = 'qwen2:1.5b';  // Known working model
+      const embeddingModel = 'nomic-embed-text';  // Known working model
+      
+      // Initialize MemoryManager with proper parameters (following working examples)
+      memoryManager = new MemoryManager({
+        llmProvider,
+        chatModel,
+        embeddingModel,
+        storage: null // Will use default in-memory storage
+      });
+      
       await memoryManager.initialize();
       console.error('Memory manager initialized successfully');
     }
@@ -86,6 +144,7 @@ server.tool(
     response: z.string().describe("The AI response/output"),
     metadata: z.object({}).optional().describe("Additional metadata for the interaction")
   },
+  { description: "Store a conversation interaction in semantic memory with concept extraction and embeddings" },
   async ({ prompt, response, metadata = {} }) => {
     try {
       await initializeServices();
@@ -152,6 +211,7 @@ server.tool(
     limit: z.number().optional().default(10).describe("Maximum number of results"),
     excludeLastN: z.number().optional().default(0).describe("Exclude the last N interactions")
   },
+  { description: "Retrieve semantically similar memories using vector similarity search" },
   async ({ query, threshold, limit, excludeLastN }) => {
     try {
       await initializeServices();
@@ -237,10 +297,13 @@ server.tool(
 server.tool(
   "semem_generate_response",
   {
-    prompt: z.string().describe("The input prompt"),
+    description: "Generate an AI response using memory context and LLM integration",
+    parameters: {prompt: z.string().describe("The input prompt"),
     useMemory: z.boolean().optional().default(true).describe("Whether to use memory for context"),
     contextWindow: z.number().optional().default(4000).describe("Context window size in tokens"),
     temperature: z.number().optional().default(0.7).describe("Response temperature (0-1)")
+  
+    }
   },
   async ({ prompt, useMemory, contextWindow, temperature }) => {
     try {
@@ -254,7 +317,7 @@ server.tool(
           // Get relevant memories and recent interactions
           retrievals = await memoryManager.retrieveRelevantInteractions(prompt, 0.7, 0);
           // Get last few interactions for context
-          lastInteractions = await memoryManager.retrieveRelevantInteractions("", 0, 0);
+          lastInteractions = await memoryManager.retrieveRelevantInteractions("all", 0, 0);
           lastInteractions = lastInteractions.slice(-3); // Last 3 interactions
         }
         
@@ -324,8 +387,11 @@ server.tool(
 server.tool(
   "semem_generate_embedding",
   {
-    text: z.string().describe("Text to generate embedding for"),
+    description: "Generate vector embeddings for text using the configured embedding model",
+    parameters: {text: z.string().describe("Text to generate embedding for"),
     model: z.string().optional().describe("Embedding model to use")
+  
+    }
   },
   async ({ text, model }) => {
     try {
@@ -383,7 +449,10 @@ server.tool(
 server.tool(
   "semem_extract_concepts",
   {
-    text: z.string().describe("Text to extract concepts from")
+    description: "Extract semantic concepts from text using LLM analysis",
+    parameters: {text: z.string().describe("Text to extract concepts from")
+  
+    }
   },
   async ({ text }) => {
     try {
@@ -455,6 +524,7 @@ server.tool(
       tags: z.array(z.string()).optional()
     }).optional().describe("Document metadata")
   },
+  { description: "Store a document with metadata, generate embeddings, and extract concepts for GraphRAG" },
   async ({ content, metadata = {} }) => {
     try {
       await initializeServices();
@@ -556,7 +626,7 @@ server.tool(
       
       if (memoryManager) {
         // Retrieve all memories and filter for documents
-        const allMemories = await memoryManager.retrieveRelevantInteractions("", 0, 0);
+        const allMemories = await memoryManager.retrieveRelevantInteractions("all", 0, 0);
         
         let documents = allMemories
           .filter(memory => memory.metadata?.type === 'document')
@@ -667,8 +737,11 @@ server.tool(
 server.tool(
   "delete_documents",
   {
-    documentIds: z.array(z.string()).describe("Array of document IDs to delete"),
+    description: "Delete one or more documents by their IDs",
+    parameters: { documentIds: z.array(z.string()).describe("Array of document IDs to delete"),
     confirmDelete: z.boolean().default(false).describe("Confirm deletion (safety check)")
+  
+    }
   },
   async ({ documentIds, confirmDelete }) => {
     try {
@@ -692,7 +765,7 @@ server.tool(
         // In a full implementation, this would require extending MemoryManager
         // For now, we'll provide feedback about what would be deleted
         
-        const allMemories = await memoryManager.retrieveRelevantInteractions("", 0, 0);
+        const allMemories = await memoryManager.retrieveRelevantInteractions("all", 0, 0);
         const documentsToDelete = allMemories.filter(memory => 
           memory.metadata?.type === 'document' && 
           documentIds.includes(memory.metadata.documentId)
@@ -845,11 +918,14 @@ server.tool(
 server.tool(
   "search_relations",
   {
-    entityId: z.string().optional().describe("Entity ID to search relations for"),
+    description: "Search for relationships by entity, type, or other criteria",
+    parameters: {entityId: z.string().optional().describe("Entity ID to search relations for"),
     relationshipType: z.string().optional().describe("Filter by relationship type"),
     direction: z.enum(['outgoing', 'incoming', 'both']).optional().default('both').describe("Relationship direction"),
     limit: z.number().optional().default(50).describe("Maximum relationships to return"),
     minWeight: z.number().optional().default(0).describe("Minimum relationship weight")
+  
+    }
   },
   async ({ entityId, relationshipType, direction, limit, minWeight }) => {
     try {
@@ -857,7 +933,7 @@ server.tool(
       
       if (memoryManager) {
         // Retrieve all memories and filter for relationships
-        const allMemories = await memoryManager.retrieveRelevantInteractions("", 0, 0);
+        const allMemories = await memoryManager.retrieveRelevantInteractions("all", 0, 0);
         
         let relationships = allMemories
           .filter(memory => memory.metadata?.type === 'relationship')
@@ -965,8 +1041,11 @@ server.tool(
 server.tool(
   "delete_relations",
   {
-    relationshipIds: z.array(z.string()).describe("Array of relationship IDs to delete"),
+    description: "Delete relationships from the knowledge graph by ID",
+    parameters: {relationshipIds: z.array(z.string()).describe("Array of relationship IDs to delete"),
     confirmDelete: z.boolean().default(false).describe("Confirm deletion (safety check)")
+  
+    }
   },
   async ({ relationshipIds, confirmDelete }) => {
     try {
@@ -987,7 +1066,7 @@ server.tool(
       
       if (memoryManager) {
         // Note: Similar to document deletion, this requires MemoryManager enhancement
-        const allMemories = await memoryManager.retrieveRelevantInteractions("", 0, 0);
+        const allMemories = await memoryManager.retrieveRelevantInteractions("all", 0, 0);
         const relationshipsToDelete = allMemories.filter(memory => 
           memory.metadata?.type === 'relationship' && 
           relationshipIds.includes(memory.metadata.relationship?.id)
@@ -1142,10 +1221,13 @@ server.tool(
 server.tool(
   "ragno_create_entity",
   {
-    name: z.string().describe("Entity name"),
+    description: "Create an RDF entity with semantic properties and metadata",
+    parameters: {name: z.string().describe("Entity name"),
     isEntryPoint: z.boolean().optional().default(false).describe("Whether this is an entry point entity"),
     subType: z.string().optional().describe("Entity subtype"),
     frequency: z.number().optional().default(1).describe("Entity frequency/importance")
+  
+    }
   },
   async ({ name, isEntryPoint, subType, frequency }) => {
     try {
@@ -1181,11 +1263,14 @@ server.tool(
 server.tool(
   "ragno_create_semantic_unit",
   {
-    text: z.string().describe("Text content of the semantic unit"),
+    description: "Create a semantic text unit from corpus decomposition",
+    parameters: {text: z.string().describe("Text content of the semantic unit"),
     summary: z.string().optional().describe("Summary of the unit"),
     source: z.string().optional().describe("Source identifier"),
     position: z.number().optional().describe("Position in source"),
     length: z.number().optional().describe("Length of the unit")
+  
+    }
   },
   async ({ text, summary, source, position, length }) => {
     try {
@@ -1383,17 +1468,20 @@ server.tool(
 server.tool(
   "search_nodes",
   {
-    query: z.string().optional().describe("Search query for node discovery"),
+    description: "Search for nodes in the knowledge graph by query and type",
+    parameters: {query: z.string().optional().describe("Search query for node discovery"),
     nodeType: z.string().optional().describe("Filter by node type (entity, document, concept)"),
     limit: z.number().optional().default(50).describe("Maximum nodes to return"),
     includeConnections: z.boolean().optional().default(false).describe("Include connection count for each node")
+  
+    }
   },
   async ({ query, nodeType, limit, includeConnections }) => {
     try {
       await initializeServices();
       
       if (memoryManager) {
-        const allMemories = await memoryManager.retrieveRelevantInteractions("", 0, 0);
+        const allMemories = await memoryManager.retrieveRelevantInteractions("all", 0, 0);
         const nodes = new Map();
         
         // Collect entities from memory
@@ -1539,17 +1627,20 @@ server.tool(
 server.tool(
   "read_graph",
   {
-    rootNodes: z.array(z.string()).optional().describe("Starting nodes for graph exploration"),
+    description: "Export knowledge graph structure in various formats (adjacency, edge list, etc.)",
+    parameters: {rootNodes: z.array(z.string()).optional().describe("Starting nodes for graph exploration"),
     maxDepth: z.number().optional().default(3).describe("Maximum traversal depth"),
     includeMetadata: z.boolean().optional().default(true).describe("Include node and edge metadata"),
     format: z.enum(['adjacency', 'edge_list', 'cytoscape']).optional().default('adjacency').describe("Graph format")
+  
+    }
   },
   async ({ rootNodes, maxDepth, includeMetadata, format }) => {
     try {
       await initializeServices();
       
       if (memoryManager) {
-        const allMemories = await memoryManager.retrieveRelevantInteractions("", 0, 0);
+        const allMemories = await memoryManager.retrieveRelevantInteractions("all", 0, 0);
         const nodes = new Map();
         const edges = [];
         
@@ -1776,14 +1867,17 @@ server.tool(
 server.tool(
   "get_knowledge_graph_stats",
   {
-    includeDetails: z.boolean().optional().default(false).describe("Include detailed breakdowns")
+    description: "Get comprehensive statistics about the knowledge graph structure",
+    parameters: {includeDetails: z.boolean().optional().default(false).describe("Include detailed breakdowns")
+  
+    }
   },
   async ({ includeDetails }) => {
     try {
       await initializeServices();
       
       if (memoryManager) {
-        const allMemories = await memoryManager.retrieveRelevantInteractions("", 0, 0);
+        const allMemories = await memoryManager.retrieveRelevantInteractions("all", 0, 0);
         
         const stats = {
           overview: {
@@ -1972,6 +2066,7 @@ server.tool(
       }).optional().describe("ZPT navigation parameters")
     }).optional().describe("Hybrid search options")
   },
+  { description: "Perform GraphRAG hybrid search combining vector similarity with graph traversal" },
   async ({ query, options = {} }) => {
     try {
       await initializeServices();
@@ -2026,7 +2121,7 @@ server.tool(
         });
         
         // Phase 3: Graph traversal from related entities
-        const allMemories = await memoryManager.retrieveRelevantInteractions("", 0, 0);
+        const allMemories = await memoryManager.retrieveRelevantInteractions("all", 0, 0);
         const relationshipMemories = allMemories.filter(m => m.metadata?.type === 'relationship');
         
         const graphTraversalResults = new Set();
@@ -2430,7 +2525,7 @@ server.tool(
       
       if (memoryManager) {
         // Find existing entity information
-        const allMemories = await memoryManager.retrieveRelevantInteractions("", 0, 0);
+        const allMemories = await memoryManager.retrieveRelevantInteractions("all", 0, 0);
         const entityMemories = allMemories.filter(memory => 
           (memory.concepts && memory.concepts.includes(entityId)) ||
           memory.metadata?.documentId === entityId
@@ -2561,7 +2656,8 @@ server.resource(
       
       if (memoryManager) {
         try {
-          const allMemories = await memoryManager.retrieveRelevantInteractions("", 0, 0);
+          // Use a simple query instead of empty string to avoid embedding generation errors
+          const allMemories = await memoryManager.retrieveRelevantInteractions("all", 0, 0);
           status.memoryStats = {
             totalMemories: allMemories.length,
             documentCount: allMemories.filter(m => m.metadata?.type === 'document').length,
@@ -2569,7 +2665,12 @@ server.resource(
             observationCount: allMemories.filter(m => m.metadata?.type === 'observations').length
           };
         } catch (error) {
-          status.memoryStats = { error: error.message };
+          // Fallback: just show that memory manager is available
+          status.memoryStats = { 
+            available: true,
+            error: `Cannot retrieve stats: ${error.message}`,
+            note: "Memory manager is initialized but stats unavailable"
+          };
         }
       }
       
@@ -2752,6 +2853,10 @@ async function main() {
   const transport = new StdioServerTransport();
   
   try {
+    // Initialize services before starting server
+    console.error("Initializing Semem services...");
+    await initializeServices();
+    
     await server.connect(transport);
     console.error("Semem MCP Server started successfully");
   } catch (error) {

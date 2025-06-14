@@ -105,67 +105,156 @@ Model Context Protocol integration for AI assistant interoperability with compre
 | **SememCoreDemo.js** | Traditional Semem capabilities demonstration | MCP server, chalk |
 | **IntegratedWorkflowDemo.js** | Advanced integrated workflows | MCP server, chalk |
 
-**Key Features Demonstrated:**
+#### MCPClient.js - Original MCP Integration
 
-**GraphRAG Capabilities (new):**
-- Document management (store, list, delete with metadata)
-- Relationship management (create, search, delete entity relationships)
-- Hybrid search (vector similarity + graph traversal + ZPT navigation)
-- Graph analytics (statistics, node discovery, structure export)
-- Enhanced retrieval (semantic document search, entity observations)
+The foundational MCP example that demonstrates basic integration with Semem's MCP server.
 
-**Semem Core Features:**
-- Semantic memory storage and retrieval
-- Vector embedding generation and analysis
-- Advanced concept extraction
-- Memory-enhanced response generation
-- Performance monitoring and optimization
+**What it does:**
+- Connects to the Semem MCP server using stdio transport
+- Demonstrates semantic memory operations (store, retrieve, generate embeddings)
+- Shows knowledge graph processing with Ragno (entity creation, corpus decomposition)
+- Illustrates ZPT content processing (chunking, selection)
+- Runs an integrated workflow combining all three subsystems
 
-**Ragno Knowledge Graph:**
-- RDF-based entity and semantic unit creation
-- Corpus decomposition into knowledge graphs
-- Relationship extraction and analysis
-- Multi-format graph exports
-
-**ZPT Content Processing:**
-- Multi-dimensional content navigation (zoom/pan/tilt)
-- Intelligent content chunking strategies
-- Corpuscle selection and filtering
-- Content transformation pipelines
-
-**Advanced Features:**
-- Comprehensive workflow orchestration
-- Data flow tracking and visualization
-- Performance metrics and optimization
-- Progress monitoring with colored output
-- Error handling with graceful fallbacks
-
-**Usage:**
+**How to run:**
 ```bash
-# Start MCP server (in one terminal)
+# Terminal 1: Start MCP server
 npm run mcp-server-new
 
-# Run original client example
+# Terminal 2: Run client
 npm run mcp-example
+```
 
-# Run GraphRAG demonstration
+**What to expect:**
+- Clear step-by-step output showing each operation
+- Demonstration of semantic memory storage and retrieval
+- Knowledge graph entity creation and relationships
+- Content chunking with different strategies
+- End-to-end pipeline from raw text to enhanced memory
+
+#### GraphRAGDemo.js - GraphRAG Capabilities Showcase
+
+Comprehensive demonstration of the new GraphRAG-compatible tools with extensive logging and progress tracking.
+
+**What it does:**
+- Document Management: Stores academic documents with metadata, generates embeddings, extracts concepts
+- Relationship Management: Creates entity relationships, searches by type and entity, builds knowledge graph
+- Hybrid Search: Combines vector similarity with graph traversal and ZPT navigation
+- Graph Analytics: Analyzes graph statistics, discovers nodes, exports structure in multiple formats
+- Enhanced Retrieval: Advanced document search and entity enrichment with observations
+
+**How to run:**
+```bash
+# Terminal 1: Start MCP server
+npm run mcp-server-new
+
+# Terminal 2: Run GraphRAG demo
 node examples/mcp/GraphRAGDemo.js
+```
 
-# Run Semem core demonstration  
+**What to expect:**
+- Colorful progress indicators with chalk-styled output
+- Performance metrics for each operation (duration, memory usage)
+- Creation of documents about AI, machine learning, and deep learning topics
+- Building of semantic relationships between concepts
+- Multi-dimensional search results with hybrid scoring
+- Graph statistics showing connectivity and node distribution
+- Resource tracking summary at completion
+
+#### SememCoreDemo.js - Traditional Semem Capabilities
+
+In-depth exploration of Semem's core semantic memory features with enhanced performance monitoring.
+
+**What it does:**
+- Semantic Memory: Stores diverse conversations about scientific topics with metadata
+- Embedding Analysis: Generates and analyzes vector embeddings with mathematical properties
+- Concept Extraction: Processes complex technical texts to extract key concepts
+- Memory Retrieval: Performs similarity-based search with threshold filtering
+- Response Generation: Creates memory-enhanced responses using retrieved context
+- Ragno Processing: Creates structured entities, semantic units, and performs corpus decomposition
+- ZPT Processing: Tests multiple chunking strategies and content selection methods
+
+**How to run:**
+```bash
+# Terminal 1: Start MCP server  
+npm run mcp-server-new
+
+# Terminal 2: Run core demo
 node examples/mcp/SememCoreDemo.js
+```
 
-# Run integrated workflow demonstration
+**What to expect:**
+- Comprehensive system health check and capability discovery
+- Storage of conversations on quantum mechanics, AI, biology, and thermodynamics
+- Detailed embedding analysis including vector magnitude and distribution
+- Advanced concept extraction from technical literature
+- Performance benchmarking for all operations (embeddings, retrievals, generations)
+- Knowledge graph construction with entity frequency analysis
+- Multiple content chunking strategies comparison (fixed, semantic, adaptive, hierarchical)
+- ZPT navigation with different zoom/pan/tilt configurations
+- Complete performance report with operation timing and memory usage
+
+#### IntegratedWorkflowDemo.js - Advanced Integrated Workflows
+
+Sophisticated demonstration of integrated workflows combining all Semem capabilities with comprehensive analysis.
+
+**What it does:**
+- Document Ingestion Pipeline: Processes academic documents, generates chunks, builds knowledge graph
+- Knowledge Graph Enrichment: Creates domain relationships, adds entity observations
+- Multi-Modal Search: Executes hybrid searches with different configurations and parameters
+- Graph Analytics: Performs comprehensive graph analysis and exports in multiple formats
+- Workflow Orchestration: Coordinates end-to-end data flow with performance tracking
+
+**How to run:**
+```bash
+# Terminal 1: Start MCP server
+npm run mcp-server-new
+
+# Terminal 2: Run integrated demo
 node examples/mcp/IntegratedWorkflowDemo.js
 ```
 
+**What to expect:**
+- Multi-stage workflow with detailed progress visualization
+- Processing of documents on quantum computing, AI in healthcare, and renewable energy
+- Intelligent content chunking with ZPT semantic boundary detection
+- Ragno knowledge graph construction with entity and relationship extraction
+- Domain relationship creation connecting quantum computing, AI, and climate technologies
+- Entity enrichment with contextual observations and confidence scoring
+- Advanced hybrid search combining vector similarity, graph traversal, and ZPT navigation
+- Comprehensive graph analytics with connectivity metrics and node discovery
+- Multi-format graph exports (adjacency lists, edge lists, Cytoscape format)
+- Complete workflow analysis report with performance metrics, data flow tracking, and integration insights
+- Artifact summary showing all created documents, entities, relationships, and memories
+
+**Common Features Across New Examples:**
+
 **Logging and Visualization:**
-All new examples feature extensive verbose logging with:
-- Colored terminal output using chalk
-- Progress bars and performance tracking
-- Workflow step completion monitoring
-- Data flow analysis and metrics
-- System resource usage monitoring
-- Comprehensive error reporting with fallback modes
+- Colored terminal output using chalk for clear visual distinction
+- Progress bars showing completion percentage for multi-step operations
+- Performance tracking with execution time and memory usage monitoring
+- Workflow step completion with success/failure indicators
+- Data flow visualization showing transformations between pipeline stages
+- System resource monitoring including memory delta tracking
+- Comprehensive error reporting with graceful fallback modes
+
+**Error Handling:**
+- Graceful degradation when services are unavailable
+- Demo modes for tools that require external dependencies
+- Comprehensive exception handling with detailed error messages
+- Automatic cleanup and resource disposal on shutdown
+
+**Usage:**
+```bash
+# Start MCP server (required for all examples)
+npm run mcp-server-new
+
+# Run individual examples
+npm run mcp-example                           # Original client
+node examples/mcp/GraphRAGDemo.js            # GraphRAG features
+node examples/mcp/SememCoreDemo.js           # Core capabilities  
+node examples/mcp/IntegratedWorkflowDemo.js  # Advanced workflows
+```
 
 ### 🎯 ZPT Examples (`examples/zpt/`)
 

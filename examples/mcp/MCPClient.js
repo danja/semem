@@ -25,7 +25,7 @@ class SememMCPClient {
     this.client = new Client({ name: "semem-example-client", version: "1.0.0" });
     this.transport = new StdioClientTransport({
       command: 'node',
-      args: ['../../mcp/index.js'],
+      args: ['./mcp/index.js'],
       cwd: process.cwd()
     });
 
@@ -122,9 +122,11 @@ class SememMCPClient {
     if (memoryResult && memoryResult.memories) {
       console.log(`   ✅ Found ${memoryResult.count} relevant memories:`);
       memoryResult.memories.forEach((memory, i) => {
-        console.log(`      ${i + 1}. Similarity: ${memory.similarity.toFixed(3)}`);
-        console.log(`         Q: ${memory.prompt}`);
-        console.log(`         A: ${memory.response.substring(0, 100)}...`);
+        const similarity = memory.similarity !== undefined ? memory.similarity.toFixed(3) : 'N/A';
+        console.log(`      ${i + 1}. Similarity: ${similarity}`);
+        console.log(`         Q: ${memory.prompt || 'No prompt'}`);
+        const response = memory.response || memory.answer || memory.text || 'No response';
+        console.log(`         A: ${response.substring(0, 100)}...`);
       });
     }
 
@@ -382,9 +384,9 @@ As we move forward, the key lies in responsible AI development that maximizes be
         const statusData = JSON.parse(status.contents[0].text);
         
         console.log('🔍 System Status:');
-        console.log(`   - Memory Manager: ${statusData.memoryManagerInitialized ? '✅' : '❌'}`);
-        console.log(`   - Config: ${statusData.configInitialized ? '✅' : '❌'}`);
-        console.log(`   - Timestamp: ${statusData.timestamp}`);
+        console.log(`   - Memory Manager: ${statusData.services?.memoryManagerInitialized ? '✅' : '❌'}`);
+        console.log(`   - Config: ${statusData.services?.configInitialized ? '✅' : '❌'}`);
+        console.log(`   - Timestamp: ${statusData.server?.timestamp}`);
       }
     } catch (error) {
       console.log('❌ Could not retrieve system status:', error.message);

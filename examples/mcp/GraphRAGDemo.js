@@ -120,7 +120,7 @@ class GraphRAGDemo {
     this.logStep('2️⃣', 'Setting up stdio transport...');
     this.transport = new StdioClientTransport({
       command: 'node',
-      args: ['../../mcp/index.js'],
+      args: ['./mcp/index.js'],
       cwd: process.cwd()
     });
 

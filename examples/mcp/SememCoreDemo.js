@@ -153,7 +153,7 @@ class SememCoreDemo {
     
     this.transport = new StdioClientTransport({
       command: 'node',
-      args: ['../../mcp/index.js'],
+      args: ['./mcp/index.js'],
       cwd: process.cwd()
     });
 
