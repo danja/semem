@@ -1,8 +1,36 @@
 # Semem MCP Server
 
-This MCP (Model Context Protocol) server provides access to Semem core, Ragno knowledge graph, and ZPT APIs for semantic memory management and knowledge processing.
+This MCP (Model Context Protocol) server provides access to Semem core, Ragno knowledge graph, and ZPT APIs for semantic memory management and knowledge processing. **Now with full GraphRAG compatibility!**
 
 ## Features
+
+### 🆕 GraphRAG Standard Tools
+
+#### Document Management
+- `store_document` - Store documents with metadata and vector embeddings
+- `list_documents` - List and filter stored documents with pagination
+- `delete_documents` - Remove documents from storage (with confirmation)
+
+#### Relationship Management  
+- `create_relations` - Create typed relationships between entities
+- `search_relations` - Query relationships by entity, type, or direction
+- `delete_relations` - Remove relationships from knowledge graph
+
+#### Hybrid Search (Core GraphRAG Feature)
+- `hybrid_search` - **Combined vector similarity + graph traversal search**
+  - Configurable vector/graph weights
+  - Multi-hop graph traversal
+  - ZPT navigation integration
+  - Comprehensive result scoring
+
+#### Graph Traversal & Analytics
+- `search_nodes` - Discover and filter graph nodes by type or query
+- `read_graph` - Export graph structure (adjacency, edge list, Cytoscape formats)
+- `get_knowledge_graph_stats` - Comprehensive analytics and connectivity metrics
+
+#### Enhanced Retrieval
+- `search_documentation` - Advanced semantic document search with filtering
+- `add_observations` - Enrich entities with contextual observations
 
 ### Semem Core API Tools
 - `semem_store_interaction` - Store new interactions with embeddings and concepts
@@ -16,12 +44,14 @@ This MCP (Model Context Protocol) server provides access to Semem core, Ragno kn
 - `ragno_create_entity` - Create new RDF entities with ontology compliance
 - `ragno_create_semantic_unit` - Create semantic text units with metadata
 
-### ZPT (Zero-Point Traversal) Tools  
-- `zpt_select_corpuscles` - Intelligent content selection with various strategies
+### ZPT (Zoom, Pan, Tilt) Navigation Tools  
+- `zpt_select_corpuscles` - Multi-dimensional content selection with 3D navigation
 - `zpt_chunk_content` - Advanced content chunking with semantic boundaries
 
 ### Resources
-- `semem://status` - System status and health information
+- `semem://status` - System status and service health information
+- `semem://graph/schema` - RDF graph schema and ontology documentation
+- `semem://docs/api` - Complete API documentation
 
 ## Usage
 
@@ -54,7 +84,89 @@ The server requires:
 
 ### Example Tool Calls
 
-#### Store an Interaction
+#### 🆕 GraphRAG Examples
+
+##### Store a Document
+```json
+{
+  "name": "store_document",
+  "arguments": {
+    "content": "Artificial intelligence (AI) is intelligence demonstrated by machines...",
+    "metadata": {
+      "title": "Introduction to AI",
+      "author": "AI Research Team",
+      "type": "research",
+      "tags": ["ai", "technology", "research"]
+    }
+  }
+}
+```
+
+##### Hybrid Search (Core GraphRAG)
+```json
+{
+  "name": "hybrid_search",
+  "arguments": {
+    "query": "machine learning applications",
+    "options": {
+      "maxResults": 15,
+      "vectorWeight": 0.6,
+      "graphWeight": 0.4,
+      "graphDepth": 3,
+      "includeDocuments": true,
+      "includeEntities": true,
+      "includeRelationships": true
+    }
+  }
+}
+```
+
+##### Create Relationships
+```json
+{
+  "name": "create_relations",
+  "arguments": {
+    "sourceEntity": "artificial_intelligence",
+    "targetEntity": "machine_learning", 
+    "relationshipType": "includes",
+    "description": "AI includes machine learning as a subset",
+    "weight": 0.9
+  }
+}
+```
+
+##### Read Graph Structure
+```json
+{
+  "name": "read_graph",
+  "arguments": {
+    "rootNodes": ["artificial_intelligence"],
+    "maxDepth": 2,
+    "format": "cytoscape",
+    "includeMetadata": true
+  }
+}
+```
+
+##### Search Documentation
+```json
+{
+  "name": "search_documentation",
+  "arguments": {
+    "query": "neural networks deep learning",
+    "options": {
+      "maxResults": 10,
+      "sortBy": "relevance",
+      "documentTypes": ["research", "tutorial"],
+      "includeContent": true
+    }
+  }
+}
+```
+
+#### Traditional Semem Examples
+
+##### Store an Interaction
 ```json
 {
   "name": "semem_store_interaction",
@@ -66,7 +178,7 @@ The server requires:
 }
 ```
 
-#### Retrieve Memories
+##### Retrieve Memories
 ```json
 {
   "name": "semem_retrieve_memories", 
@@ -78,7 +190,7 @@ The server requires:
 }
 ```
 
-#### Decompose Text Corpus
+##### Decompose Text Corpus
 ```json
 {
   "name": "ragno_decompose_corpus",
@@ -89,13 +201,16 @@ The server requires:
 }
 ```
 
-#### Chunk Content
+##### ZPT Content Navigation
 ```json
 {
-  "name": "zpt_chunk_content",
+  "name": "zpt_select_corpuscles",
   "arguments": {
-    "content": "Long text to be chunked...",
-    "options": {"method": "semantic", "chunkSize": 1000, "overlap": 100}
+    "zoom": "entity",
+    "tilt": "embedding",
+    "selectionType": "embedding",
+    "criteria": {"query": "machine learning"},
+    "limit": 20
   }
 }
 ```
@@ -128,14 +243,45 @@ The server follows the standard MCP protocol and should work with any compatible
 - `zod` - Schema validation
 - Semem core modules (automatically imported from parent project)
 
+## GraphRAG Compatibility
+
+This server provides **full compatibility** with standard GraphRAG MCP patterns while adding unique Semem extensions:
+
+### ✅ Standard GraphRAG Tools Supported
+- Document storage and retrieval
+- Entity relationship management  
+- Hybrid vector + graph search
+- Graph traversal and analytics
+- Knowledge graph statistics
+- Entity observations and enrichment
+
+### 🚀 Semem Extensions
+- **ZPT (Zoom, Pan, Tilt)**: 3D navigation through knowledge space
+- **Ragno RDF Compliance**: Full semantic web ontology integration
+- **Multi-Tilt Representations**: Multiple perspectives on the same content
+- **Semantic Memory Integration**: Persistent conversational memory
+
+### Tool Count: **17 Total**
+- **9 GraphRAG Standard Tools**: `store_document`, `list_documents`, `delete_documents`, `create_relations`, `search_relations`, `delete_relations`, `hybrid_search`, `search_nodes`, `read_graph`, `get_knowledge_graph_stats`, `search_documentation`, `add_observations`
+- **5 Semem Core Tools**: Memory management and LLM integration
+- **3 Ragno Tools**: RDF knowledge graph construction  
+- **2 ZPT Tools**: Multi-dimensional content navigation
+
 ## Architecture
 
-The MCP server acts as a bridge between the MCP protocol and the Semem APIs:
+The MCP server acts as a bridge between the MCP protocol and the Semem APIs, now with full GraphRAG compatibility:
 
 ```
-MCP Client → MCP Server → Semem Core APIs
-                       → Ragno Knowledge Graph  
+MCP Client → MCP Server → GraphRAG Standard APIs
+                       → Semem Core APIs  
+                       → Ragno Knowledge Graph (RDF)
                        → ZPT Navigation/Transform
 ```
 
-Each tool call is validated, executed against the appropriate Semem API, and results are returned in MCP-compliant format.
+### Data Flow
+1. **Documents** → Vector embeddings + RDF entities + Graph relationships
+2. **Hybrid Search** → Vector similarity + Graph traversal + ZPT navigation  
+3. **Results** → Scored and ranked using multiple strategies
+4. **Storage** → Persistent memory + RDF graph + Relationship index
+
+Each tool call is validated, executed against the appropriate API layer, and results are returned in MCP-compliant format with comprehensive error handling and demo fallbacks.

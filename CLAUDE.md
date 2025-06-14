@@ -8,6 +8,8 @@ Semem (Semantic Memory) is a Node.js library for intelligent agent memory manage
 
 It uses ES modules and Vitest for tests.
 
+Only look at docs when requested. Always ignore all files under docs/ignore
+
 ## Commands
 
 ### Setup
