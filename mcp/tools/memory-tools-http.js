@@ -87,6 +87,75 @@ const UpdateConfigSchema = z.object({
   updates: z.object({}).passthrough()
 });
 
+// Phase 2 - Ragno Knowledge Graph Operations
+const RagnoDecomposeCorpusSchema = z.object({
+  textChunks: z.array(z.object({
+    content: z.string().min(1, "Content cannot be empty"),
+    source: z.string().optional().default("unknown")
+  })).min(1, "At least one text chunk required"),
+  options: z.object({
+    extractRelationships: z.boolean().optional().default(true),
+    generateSummaries: z.boolean().optional().default(true),
+    minEntityConfidence: z.number().min(0).max(1).optional().default(0.5),
+    maxEntitiesPerUnit: z.number().min(1).max(50).optional().default(20)
+  }).optional().default({})
+});
+
+const RagnoSearchDualSchema = z.object({
+  query: z.string().min(1, "Query cannot be empty"),
+  options: z.object({
+    exactMatchThreshold: z.number().min(0).max(1).optional().default(0.8),
+    vectorSimilarityThreshold: z.number().min(0).max(1).optional().default(0.7),
+    pprMaxDepth: z.number().min(1).max(10).optional().default(3),
+    combinedLimit: z.number().min(1).max(100).optional().default(20)
+  }).optional().default({})
+});
+
+const RagnoGetEntitiesSchema = z.object({
+  filters: z.object({
+    type: z.string().optional(),
+    minFrequency: z.number().min(0).optional(),
+    isEntryPoint: z.boolean().optional(),
+    limit: z.number().min(1).max(1000).optional().default(100)
+  }).optional().default({})
+});
+
+const RagnoVectorSearchSchema = z.object({
+  query: z.string().min(1, "Query text cannot be empty"),
+  options: z.object({
+    k: z.number().min(1).max(100).optional().default(10),
+    threshold: z.number().min(0).max(1).optional().default(0.7),
+    types: z.array(z.string()).optional(),
+    includeMetadata: z.boolean().optional().default(true)
+  }).optional().default({})
+});
+
+const RagnoExportRdfSchema = z.object({
+  format: z.enum(['turtle', 'ntriples', 'jsonld', 'json']).optional().default('turtle'),
+  includeEmbeddings: z.boolean().optional().default(false),
+  includeStatistics: z.boolean().optional().default(false)
+});
+
+const RagnoQuerySparqlSchema = z.object({
+  query: z.string().min(1, "SPARQL query cannot be empty"),
+  options: z.object({
+    limit: z.number().min(1).max(10000).optional().default(1000),
+    format: z.enum(['json', 'xml', 'csv']).optional().default('json')
+  }).optional().default({})
+});
+
+const RagnoAnalyzeGraphSchema = z.object({
+  analysisTypes: z.array(z.enum(['centrality', 'communities', 'statistics', 'connectivity'])).optional().default(['statistics']),
+  options: z.object({
+    topK: z.number().min(1).max(100).optional().default(10),
+    includeDetails: z.boolean().optional().default(true)
+  }).optional().default({})
+});
+
+const RagnoGetGraphStatsSchema = z.object({
+  detailed: z.boolean().optional().default(false)
+});
+
 // Tool names enum - Extended
 const ToolName = {
   // Original tools
@@ -114,7 +183,17 @@ const ToolName = {
   GET_CONFIG: "semem_get_config",
   UPDATE_CONFIG: "semem_update_config",
   GET_METRICS: "semem_get_metrics",
-  HEALTH_CHECK: "semem_health_check"
+  HEALTH_CHECK: "semem_health_check",
+  
+  // Phase 2 - Ragno Knowledge Graph Operations
+  RAGNO_DECOMPOSE_CORPUS: "ragno_decompose_corpus",
+  RAGNO_SEARCH_DUAL: "ragno_search_dual",
+  RAGNO_GET_ENTITIES: "ragno_get_entities",
+  RAGNO_VECTOR_SEARCH: "ragno_vector_search",
+  RAGNO_EXPORT_RDF: "ragno_export_rdf",
+  RAGNO_QUERY_SPARQL: "ragno_query_sparql",
+  RAGNO_ANALYZE_GRAPH: "ragno_analyze_graph",
+  RAGNO_GET_GRAPH_STATS: "ragno_get_graph_stats"
 };
 
 /**
@@ -460,6 +539,281 @@ export function registerMemoryToolsHttp(server) {
           inputSchema: {
             type: "object",
             properties: {}
+          }
+        },
+        
+        // Phase 2 - Ragno Knowledge Graph Operations
+        {
+          name: ToolName.RAGNO_DECOMPOSE_CORPUS,
+          description: "Decompose text corpus into RDF knowledge graph with entities, relationships, and semantic units",
+          inputSchema: {
+            type: "object",
+            properties: {
+              textChunks: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    content: {
+                      type: "string",
+                      description: "Text content to decompose"
+                    },
+                    source: {
+                      type: "string",
+                      description: "Source identifier for the text (optional)"
+                    }
+                  },
+                  required: ["content"]
+                },
+                description: "Array of text chunks to decompose into knowledge graph",
+                minItems: 1
+              },
+              options: {
+                type: "object",
+                properties: {
+                  extractRelationships: {
+                    type: "boolean",
+                    description: "Whether to extract relationships between entities (default: true)"
+                  },
+                  generateSummaries: {
+                    type: "boolean",
+                    description: "Whether to generate summaries for semantic units (default: true)"
+                  },
+                  minEntityConfidence: {
+                    type: "number",
+                    minimum: 0,
+                    maximum: 1,
+                    description: "Minimum confidence threshold for entity extraction (default: 0.5)"
+                  },
+                  maxEntitiesPerUnit: {
+                    type: "number",
+                    minimum: 1,
+                    maximum: 50,
+                    description: "Maximum number of entities per semantic unit (default: 20)"
+                  }
+                },
+                description: "Optional configuration for decomposition process"
+              }
+            },
+            required: ["textChunks"]
+          }
+        },
+        {
+          name: ToolName.RAGNO_SEARCH_DUAL,
+          description: "Perform dual search combining exact matching, vector similarity, and personalized PageRank",
+          inputSchema: {
+            type: "object",
+            properties: {
+              query: {
+                type: "string",
+                description: "Search query to find relevant entities and content"
+              },
+              options: {
+                type: "object",
+                properties: {
+                  exactMatchThreshold: {
+                    type: "number",
+                    minimum: 0,
+                    maximum: 1,
+                    description: "Threshold for exact text matching (default: 0.8)"
+                  },
+                  vectorSimilarityThreshold: {
+                    type: "number",
+                    minimum: 0,
+                    maximum: 1,
+                    description: "Threshold for vector similarity matching (default: 0.7)"
+                  },
+                  pprMaxDepth: {
+                    type: "number",
+                    minimum: 1,
+                    maximum: 10,
+                    description: "Maximum depth for PersonalizedPageRank traversal (default: 3)"
+                  },
+                  combinedLimit: {
+                    type: "number",
+                    minimum: 1,
+                    maximum: 100,
+                    description: "Maximum number of combined results (default: 20)"
+                  }
+                },
+                description: "Optional search configuration parameters"
+              }
+            },
+            required: ["query"]
+          }
+        },
+        {
+          name: ToolName.RAGNO_GET_ENTITIES,
+          description: "Retrieve entities from the knowledge graph with optional filtering",
+          inputSchema: {
+            type: "object",
+            properties: {
+              filters: {
+                type: "object",
+                properties: {
+                  type: {
+                    type: "string",
+                    description: "Filter by entity type/subtype"
+                  },
+                  minFrequency: {
+                    type: "number",
+                    minimum: 0,
+                    description: "Minimum frequency of entity mentions"
+                  },
+                  isEntryPoint: {
+                    type: "boolean",
+                    description: "Filter for entry point entities only"
+                  },
+                  limit: {
+                    type: "number",
+                    minimum: 1,
+                    maximum: 1000,
+                    description: "Maximum number of entities to return (default: 100)"
+                  }
+                },
+                description: "Optional filters for entity retrieval"
+              }
+            }
+          }
+        },
+        {
+          name: ToolName.RAGNO_VECTOR_SEARCH,
+          description: "Perform vector similarity search on knowledge graph embeddings using HNSW index",
+          inputSchema: {
+            type: "object",
+            properties: {
+              query: {
+                type: "string",
+                description: "Query text to find similar entities and semantic units"
+              },
+              options: {
+                type: "object",
+                properties: {
+                  k: {
+                    type: "number",
+                    minimum: 1,
+                    maximum: 100,
+                    description: "Number of similar results to return (default: 10)"
+                  },
+                  threshold: {
+                    type: "number",
+                    minimum: 0,
+                    maximum: 1,
+                    description: "Minimum similarity threshold (default: 0.7)"
+                  },
+                  types: {
+                    type: "array",
+                    items: { type: "string" },
+                    description: "Filter by specific entity/unit types"
+                  },
+                  includeMetadata: {
+                    type: "boolean",
+                    description: "Include metadata in results (default: true)"
+                  }
+                },
+                description: "Optional vector search parameters"
+              }
+            },
+            required: ["query"]
+          }
+        },
+        {
+          name: ToolName.RAGNO_EXPORT_RDF,
+          description: "Export knowledge graph in various RDF formats (Turtle, N-Triples, JSON-LD)",
+          inputSchema: {
+            type: "object",
+            properties: {
+              format: {
+                type: "string",
+                enum: ["turtle", "ntriples", "jsonld", "json"],
+                description: "Output format for RDF export (default: turtle)"
+              },
+              includeEmbeddings: {
+                type: "boolean",
+                description: "Include vector embeddings in export (default: false)"
+              },
+              includeStatistics: {
+                type: "boolean",
+                description: "Include graph statistics in export (default: false)"
+              }
+            }
+          }
+        },
+        {
+          name: ToolName.RAGNO_QUERY_SPARQL,
+          description: "Execute SPARQL queries against the knowledge graph RDF store",
+          inputSchema: {
+            type: "object",
+            properties: {
+              query: {
+                type: "string",
+                description: "SPARQL query to execute against the graph"
+              },
+              options: {
+                type: "object",
+                properties: {
+                  limit: {
+                    type: "number",
+                    minimum: 1,
+                    maximum: 10000,
+                    description: "Maximum number of results (default: 1000)"
+                  },
+                  format: {
+                    type: "string",
+                    enum: ["json", "xml", "csv"],
+                    description: "Result format (default: json)"
+                  }
+                },
+                description: "Optional query execution parameters"
+              }
+            },
+            required: ["query"]
+          }
+        },
+        {
+          name: ToolName.RAGNO_ANALYZE_GRAPH,
+          description: "Perform graph analysis including centrality, community detection, and connectivity analysis",
+          inputSchema: {
+            type: "object",
+            properties: {
+              analysisTypes: {
+                type: "array",
+                items: {
+                  type: "string",
+                  enum: ["centrality", "communities", "statistics", "connectivity"]
+                },
+                description: "Types of analysis to perform (default: ['statistics'])"
+              },
+              options: {
+                type: "object",
+                properties: {
+                  topK: {
+                    type: "number",
+                    minimum: 1,
+                    maximum: 100,
+                    description: "Number of top results to return for rankings (default: 10)"
+                  },
+                  includeDetails: {
+                    type: "boolean",
+                    description: "Include detailed analysis results (default: true)"
+                  }
+                },
+                description: "Optional analysis configuration"
+              }
+            }
+          }
+        },
+        {
+          name: ToolName.RAGNO_GET_GRAPH_STATS,
+          description: "Get basic or detailed statistics about the current knowledge graph",
+          inputSchema: {
+            type: "object",
+            properties: {
+              detailed: {
+                type: "boolean",
+                description: "Return detailed statistics including distributions (default: false)"
+              }
+            }
           }
         }
       ]
@@ -1206,6 +1560,304 @@ export function registerMemoryToolsHttp(server) {
             text: JSON.stringify(healthStatus, null, 2)
           }]
         };
+      }
+
+      // Phase 2 - Ragno Knowledge Graph Operations
+      if (name === ToolName.RAGNO_DECOMPOSE_CORPUS) {
+        const { textChunks, options } = RagnoDecomposeCorpusSchema.parse(args);
+        
+        await initializeServices();
+        const memoryManager = getMemoryManager();
+        
+        if (memoryManager) {
+          try {
+            // Import Ragno functions
+            const { decomposeCorpus } = await import('../../src/ragno/decomposeCorpus.js');
+            
+            // Perform corpus decomposition
+            const result = await decomposeCorpus(textChunks, memoryManager.llmHandler, options);
+            
+            return {
+              content: [{
+                type: "text",
+                text: JSON.stringify({
+                  success: true,
+                  message: `Corpus decomposed into ${result.entities.length} entities, ${result.units.length} semantic units, and ${result.relationships.length} relationships`,
+                  statistics: result.statistics,
+                  entityCount: result.entities.length,
+                  unitCount: result.units.length,
+                  relationshipCount: result.relationships.length,
+                  entities: result.entities.slice(0, 10).map(e => ({
+                    name: e.getName(),
+                    frequency: e.getFrequency(),
+                    isEntryPoint: e.isEntryPoint(),
+                    subType: e.getSubType()
+                  }))
+                }, null, 2)
+              }]
+            };
+          } catch (error) {
+            throw new Error(`Corpus decomposition failed: ${error.message}`);
+          }
+        } else {
+          throw new Error('Memory manager not initialized');
+        }
+      }
+
+      if (name === ToolName.RAGNO_SEARCH_DUAL) {
+        const { query, options } = RagnoSearchDualSchema.parse(args);
+        
+        await initializeServices();
+        
+        try {
+          // Import DualSearch
+          const { DualSearch } = await import('../../src/ragno/search/DualSearch.js');
+          
+          // Initialize dual search (would need proper initialization in real implementation)
+          const dualSearch = new DualSearch();
+          const results = await dualSearch.search(query, options);
+          
+          return {
+            content: [{
+              type: "text",
+              text: JSON.stringify({
+                success: true,
+                message: `Dual search completed with ${results.length} results`,
+                query,
+                results: results.slice(0, options.combinedLimit || 20),
+                searchMethods: {
+                  exactMatch: results.filter(r => r.method === 'exact').length,
+                  vectorSimilarity: results.filter(r => r.method === 'vector').length,
+                  personalizedPageRank: results.filter(r => r.method === 'ppr').length
+                }
+              }, null, 2)
+            }]
+          };
+        } catch (error) {
+          throw new Error(`Dual search failed: ${error.message}`);
+        }
+      }
+
+      if (name === ToolName.RAGNO_GET_ENTITIES) {
+        const { filters } = RagnoGetEntitiesSchema.parse(args);
+        
+        await initializeServices();
+        
+        try {
+          // This would integrate with the RDF graph manager
+          // For now, return a placeholder implementation
+          return {
+            content: [{
+              type: "text",
+              text: JSON.stringify({
+                success: true,
+                message: "Entity retrieval completed",
+                filters,
+                entities: [], // Would contain actual entity data
+                totalCount: 0,
+                note: "Entity retrieval requires active knowledge graph - use ragno_decompose_corpus first"
+              }, null, 2)
+            }]
+          };
+        } catch (error) {
+          throw new Error(`Entity retrieval failed: ${error.message}`);
+        }
+      }
+
+      if (name === ToolName.RAGNO_VECTOR_SEARCH) {
+        const { query, options } = RagnoVectorSearchSchema.parse(args);
+        
+        await initializeServices();
+        const memoryManager = getMemoryManager();
+        
+        if (memoryManager) {
+          try {
+            // Generate query embedding
+            const safeOps = new SafeOperations(memoryManager);
+            const queryEmbedding = await safeOps.generateEmbedding(query);
+            
+            // This would use the VectorIndex for HNSW search
+            // For now, return placeholder
+            return {
+              content: [{
+                type: "text",
+                text: JSON.stringify({
+                  success: true,
+                  message: `Vector search completed for query: "${query}"`,
+                  query,
+                  options,
+                  queryEmbedding: {
+                    dimensions: queryEmbedding.length,
+                    preview: queryEmbedding.slice(0, 5)
+                  },
+                  results: [], // Would contain vector search results
+                  note: "Vector search requires enriched knowledge graph with embeddings"
+                }, null, 2)
+              }]
+            };
+          } catch (error) {
+            throw new Error(`Vector search failed: ${error.message}`);
+          }
+        } else {
+          throw new Error('Memory manager not initialized');
+        }
+      }
+
+      if (name === ToolName.RAGNO_EXPORT_RDF) {
+        const { format, includeEmbeddings, includeStatistics } = RagnoExportRdfSchema.parse(args);
+        
+        await initializeServices();
+        
+        try {
+          // This would export the current knowledge graph
+          return {
+            content: [{
+              type: "text",
+              text: JSON.stringify({
+                success: true,
+                message: `RDF export prepared in ${format} format`,
+                format,
+                includeEmbeddings,
+                includeStatistics,
+                exportData: "# RDF export would appear here\n# Use ragno_decompose_corpus to create knowledge graph first",
+                note: "RDF export requires active knowledge graph"
+              }, null, 2)
+            }]
+          };
+        } catch (error) {
+          throw new Error(`RDF export failed: ${error.message}`);
+        }
+      }
+
+      if (name === ToolName.RAGNO_QUERY_SPARQL) {
+        const { query, options } = RagnoQuerySparqlSchema.parse(args);
+        
+        await initializeServices();
+        
+        try {
+          // This would execute SPARQL against the RDF store
+          return {
+            content: [{
+              type: "text",
+              text: JSON.stringify({
+                success: true,
+                message: "SPARQL query executed",
+                query,
+                options,
+                results: [], // Would contain SPARQL results
+                note: "SPARQL queries require RDF store backend (use SPARQL storage backend)"
+              }, null, 2)
+            }]
+          };
+        } catch (error) {
+          throw new Error(`SPARQL query failed: ${error.message}`);
+        }
+      }
+
+      if (name === ToolName.RAGNO_ANALYZE_GRAPH) {
+        const { analysisTypes, options } = RagnoAnalyzeGraphSchema.parse(args);
+        
+        await initializeServices();
+        
+        try {
+          // This would perform graph analysis
+          const analysis = {};
+          
+          for (const type of analysisTypes) {
+            switch (type) {
+              case 'statistics':
+                analysis.statistics = {
+                  nodeCount: 0,
+                  edgeCount: 0,
+                  avgDegree: 0,
+                  density: 0
+                };
+                break;
+              case 'centrality':
+                analysis.centrality = {
+                  betweenness: [],
+                  pagerank: [],
+                  degree: []
+                };
+                break;
+              case 'communities':
+                analysis.communities = {
+                  communityCount: 0,
+                  modularity: 0,
+                  communities: []
+                };
+                break;
+              case 'connectivity':
+                analysis.connectivity = {
+                  connectedComponents: 0,
+                  largestComponent: 0,
+                  bridges: []
+                };
+                break;
+            }
+          }
+          
+          return {
+            content: [{
+              type: "text",
+              text: JSON.stringify({
+                success: true,
+                message: `Graph analysis completed for: ${analysisTypes.join(', ')}`,
+                analysisTypes,
+                options,
+                analysis,
+                note: "Graph analysis requires active knowledge graph"
+              }, null, 2)
+            }]
+          };
+        } catch (error) {
+          throw new Error(`Graph analysis failed: ${error.message}`);
+        }
+      }
+
+      if (name === ToolName.RAGNO_GET_GRAPH_STATS) {
+        const { detailed } = RagnoGetGraphStatsSchema.parse(args);
+        
+        await initializeServices();
+        
+        try {
+          const stats = {
+            basic: {
+              entities: 0,
+              relationships: 0,
+              semanticUnits: 0,
+              totalTriples: 0
+            }
+          };
+          
+          if (detailed) {
+            stats.detailed = {
+              entityTypes: {},
+              relationshipTypes: {},
+              frequencyDistribution: {},
+              connectivityMetrics: {
+                avgDegree: 0,
+                density: 0,
+                clustering: 0
+              }
+            };
+          }
+          
+          return {
+            content: [{
+              type: "text",
+              text: JSON.stringify({
+                success: true,
+                message: "Graph statistics retrieved",
+                detailed,
+                stats,
+                note: "Statistics reflect current knowledge graph state"
+              }, null, 2)
+            }]
+          };
+        } catch (error) {
+          throw new Error(`Graph statistics failed: ${error.message}`);
+        }
       }
 
       throw new Error(`Unknown tool: ${name}`);

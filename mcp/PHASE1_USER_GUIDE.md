@@ -1,298 +1,300 @@
-# Semem MCP Phase 1 Tools - User Guide
+# Semem MCP Phase 1 User Guide
 
-## Quick Start
+## 🚀 Quick Start
 
-The enhanced Semem MCP server now provides **18 comprehensive tools** and **8 detailed resources** for complete semantic memory management.
+The Semem MCP integration provides 18 comprehensive tools for semantic memory management. Here's how to use them effectively.
 
-### Start the MCP Server
-```bash
-# Standard MCP server
-npm run mcp
+## 📋 Core Memory Operations (Original 5 Tools)
 
-# With HTTP tools (recommended)
-MCP_USE_HTTP_TOOLS=true npm run mcp
+### Basic Memory Storage and Retrieval
+```javascript
+// Store an interaction
+await callTool("semem_store_interaction", {
+  prompt: "What is machine learning?",
+  response: "Machine learning is a subset of AI that enables computers to learn without explicit programming.",
+  metadata: { source: "educational", confidence: 0.9 }
+});
+
+// Retrieve similar memories
+await callTool("semem_retrieve_memories", {
+  query: "artificial intelligence learning",
+  threshold: 0.7,
+  limit: 5
+});
+
+// Generate embeddings
+await callTool("semem_generate_embedding", {
+  text: "Neural networks and deep learning"
+});
+
+// Generate responses with memory context
+await callTool("semem_generate_response", {
+  prompt: "Explain neural networks",
+  useMemory: true,
+  temperature: 0.7,
+  maxTokens: 500
+});
+
+// Extract concepts from text
+await callTool("semem_extract_concepts", {
+  text: "The transformer architecture revolutionized natural language processing"
+});
 ```
 
-## Tool Categories & Usage
+## 🗄️ Storage Management (6 New Tools)
 
-### 🗄️ Storage Management Tools
+### Switch Storage Backends
+```javascript
+// Switch to JSON file storage
+await callTool("semem_switch_storage_backend", {
+  backend: "JSON",
+  config: { filePath: "./my-project-memory.json" }
+});
 
-#### Switch Storage Backends
-```json
-{
-  "tool": "semem_switch_storage_backend",
-  "params": {
-    "backend": "SPARQL",
-    "config": {
-      "endpoint": "http://localhost:3030/semem",
-      "user": "admin",
-      "password": "admin"
-    }
+// Switch to SPARQL triple store
+await callTool("semem_switch_storage_backend", {
+  backend: "SPARQL", 
+  config: {
+    endpoint: "http://localhost:3030/my-dataset",
+    user: "admin",
+    password: "secret123"
   }
-}
-```
+});
 
-#### Backup Memory
-```json
-{
-  "tool": "semem_backup_memory",
-  "params": {
-    "format": "json",
-    "includeEmbeddings": true
+// Switch to cached SPARQL for better performance
+await callTool("semem_switch_storage_backend", {
+  backend: "CachedSPARQL",
+  config: {
+    endpoint: "http://localhost:3030/my-dataset",
+    cacheOptions: { maxSize: 1000, ttl: 300000 }
   }
-}
+});
 ```
 
-#### Get Storage Statistics
-```json
-{
-  "tool": "semem_storage_stats",
-  "params": {}
-}
-```
-
-### 🧠 Context Management Tools
-
-#### Get Current Context
-```json
-{
-  "tool": "semem_get_context",
-  "params": {}
-}
-```
-
-#### Update Context Configuration
-```json
-{
-  "tool": "semem_update_context_config",
-  "params": {
-    "maxTokens": 16384,
-    "relevanceThreshold": 0.8,
-    "maxContextSize": 10
-  }
-}
-```
-
-#### Prune Context
-```json
-{
-  "tool": "semem_prune_context",
-  "params": {
-    "minRelevance": 0.6,
-    "maxAge": 3600000
-  }
-}
-```
-
-### ⚙️ Configuration & Status Tools
-
-#### Get System Configuration
-```json
-{
-  "tool": "semem_get_config",
-  "params": {}
-}
-```
-
-#### Update Configuration
-```json
-{
-  "tool": "semem_update_config",
-  "params": {
-    "section": "context",
-    "updates": {
-      "maxTokens": 12288,
-      "relevanceThreshold": 0.75
-    }
-  }
-}
-```
-
-#### Get System Metrics
-```json
-{
-  "tool": "semem_get_metrics",
-  "params": {}
-}
-```
-
-#### Health Check
-```json
-{
-  "tool": "semem_health_check",
-  "params": {}
-}
-```
-
-## Resource Access
-
-### Configuration Information
-```
-Resource: semem://config/current
-Returns: Current system configuration across all components
-```
-
-### Storage Backend Information
-```
-Resource: semem://storage/backends
-Returns: Available backends with usage examples
-```
-
-### Ragno Ontology
-```
-Resource: semem://ragno/ontology
-Returns: Complete RDF ontology in Turtle format
-```
-
-### System Metrics Dashboard
-```
-Resource: semem://metrics/dashboard
-Returns: Real-time system performance metrics
-```
-
-### Workflow Examples
-```
-Resource: semem://examples/workflows
-Returns: Common usage patterns and workflow templates
-```
-
-## Common Workflows
-
-### 1. Production Setup Workflow
-```bash
-# 1. Check system health
-semem_health_check
-
-# 2. Configure for production
-semem_update_context_config:
-  maxTokens: 16384
-  relevanceThreshold: 0.8
-
-# 3. Switch to persistent storage
-semem_switch_storage_backend:
-  backend: "SPARQL"
-  config: { endpoint: "your-sparql-endpoint" }
-
-# 4. Verify configuration
-semem_get_config
-```
-
-### 2. Performance Optimization Workflow
-```bash
-# 1. Check current metrics
-semem_get_metrics
-
-# 2. Inspect context usage
-semem_get_context
-
-# 3. Prune old context items
-semem_prune_context:
-  minRelevance: 0.7
-  maxAge: 1800000  # 30 minutes
-
-# 4. Optimize context settings
-semem_update_context_config:
-  maxContextSize: 8
-  relevanceThreshold: 0.75
-```
-
-### 3. Data Management Workflow
-```bash
-# 1. Check storage stats
-semem_storage_stats
-
-# 2. Create backup
-semem_backup_memory:
-  format: "json"
+### Backup and Restore Operations
+```javascript
+// Create comprehensive backup
+await callTool("semem_backup_memory", {
+  format: "json",
   includeEmbeddings: true
+});
 
-# 3. Migrate to better storage
-semem_migrate_storage:
-  fromBackend: "InMemory"
-  toBackend: "JSON"
-  config: { filePath: "./production-memory.json" }
-```
+// Create lightweight backup (no embeddings)
+await callTool("semem_backup_memory", {
+  format: "json", 
+  includeEmbeddings: false
+});
 
-### 4. Development & Testing Workflow
-```bash
-# 1. Start with clean state
-semem_clear_storage:
-  confirm: true
-  backup: true
+// Load from backup (merge with existing)
+await callTool("semem_load_memory", {
+  source: "./backup-2024-01-15.json",
+  format: "json",
+  merge: true
+});
 
-# 2. Load test data
-semem_load_memory:
-  source: "./test-data.json"
-  format: "json"
+// Load from backup (replace existing)
+await callTool("semem_load_memory", {
+  source: "./backup-2024-01-15.json",
+  format: "json", 
   merge: false
-
-# 3. Run tests and monitor
-semem_get_metrics
-semem_health_check
+});
 ```
 
-## Error Handling
+### Storage Monitoring and Management
+```javascript
+// Get storage statistics
+await callTool("semem_storage_stats", {});
 
-All tools provide comprehensive error reporting:
+// Migrate from one backend to another
+await callTool("semem_migrate_storage", {
+  fromBackend: "InMemory",
+  toBackend: "JSON",
+  config: { filePath: "./migrated-memory.json" }
+});
 
-```json
-{
-  "success": false,
-  "error": "Detailed error message",
-  "tool": "tool_name",
-  "context": "Additional context information"
-}
+// Clear storage (with backup)
+await callTool("semem_clear_storage", {
+  confirm: true,
+  backup: true
+});
 ```
 
-## Best Practices
+## 🧠 Context Management (4 New Tools)
 
-### Storage Selection
-- **InMemory**: Development and testing
-- **JSON**: Local development with persistence
-- **SPARQL**: Production with semantic queries
-- **CachedSPARQL**: High-performance production
+### Context Window Operations
+```javascript
+// Get current context information
+await callTool("semem_get_context", {});
 
-### Context Management
-- Monitor context size with `semem_get_context`
-- Prune regularly in high-traffic applications
-- Adjust relevance threshold based on use case
-- Use context summaries for optimization
+// Update context configuration
+await callTool("semem_update_context_config", {
+  maxTokens: 16384,
+  maxTimeWindow: 7200000, // 2 hours in milliseconds
+  relevanceThreshold: 0.8,
+  maxContextSize: 15
+});
+
+// Prune context based on criteria
+await callTool("semem_prune_context", {
+  minRelevance: 0.6,
+  maxAge: 3600000 // 1 hour in milliseconds
+});
+
+// Generate context summary
+await callTool("semem_summarize_context", {});
+```
+
+## ⚙️ System Configuration (3 New Tools)
+
+### Configuration Management
+```javascript
+// Get current system configuration
+await callTool("semem_get_config", {});
+
+// Update context-related settings
+await callTool("semem_update_config", {
+  section: "context",
+  updates: {
+    maxTokens: 20000,
+    relevanceThreshold: 0.85
+  }
+});
+
+// Update cache settings
+await callTool("semem_update_config", {
+  section: "cache",
+  updates: {
+    maxSize: 2000,
+    ttl: 600000
+  }
+});
+```
 
 ### System Monitoring
-- Run `semem_health_check` regularly
-- Monitor metrics during peak usage
-- Backup before major configuration changes
-- Use storage stats to track growth
+```javascript
+// Get detailed system metrics
+await callTool("semem_get_metrics", {});
 
-### Configuration Updates
-- Update context settings gradually
-- Test changes in development first
-- Backup configuration before updates
-- Monitor performance after changes
+// Comprehensive health check
+await callTool("semem_health_check", {});
+```
 
-## Integration with GraphRAG
+## 📚 Resources and Documentation
 
-Semem tools provide enhanced versions of standard GraphRAG operations:
+### Access System Resources
+```javascript
+// Get system status
+await readResource("semem://status");
 
-| GraphRAG Tool | Semem Equivalent | Enhancement |
-|---------------|------------------|-------------|
-| `store_document` | `semem_store_interaction` | + concept extraction |
-| `hybrid_search` | `semem_retrieve_memories` | + configurable similarity |
-| `get_knowledge_graph_stats` | `semem_storage_stats` | + comprehensive metrics |
-| System monitoring | `semem_health_check` | + component-level health |
+// Read complete API documentation
+await readResource("semem://docs/api");
 
-## Future Phase Preview
+// Get current configuration
+await readResource("semem://config/current");
 
-### Phase 2 (Ragno Knowledge Graph) - Coming Soon
-- RDF knowledge graph construction
-- SPARQL querying capabilities
-- Graph analytics and communities
-- Entity and relationship management
+// View available storage backends
+await readResource("semem://storage/backends");
 
-### Phase 3 (ZPT Navigation) - Planned
-- Multi-dimensional content navigation
-- Intelligent content transformation
-- Batch operations
-- Advanced similarity search
+// Access Ragno ontology
+await readResource("semem://ragno/ontology");
 
-**Current Status: Phase 1 Complete - Production Ready! 🚀**
+// View system metrics dashboard
+await readResource("semem://metrics/dashboard");
+
+// Get workflow examples
+await readResource("semem://examples/workflows");
+```
+
+## 🔄 Common Workflows
+
+### Development Workflow
+1. Start with InMemory storage for rapid development
+2. Use JSON storage for persistence during development
+3. Extract concepts and store interactions as you work
+4. Monitor context and prune when needed
+
+### Production Deployment Workflow
+1. Configure SPARQL or CachedSPARQL storage for scalability
+2. Set up regular backup schedules
+3. Configure context optimization for your use case
+4. Set up health monitoring and metrics collection
+
+### Migration Workflow
+1. Backup current data: `semem_backup_memory`
+2. Switch to new backend: `semem_switch_storage_backend`
+3. Migrate data: `semem_migrate_storage`
+4. Verify with: `semem_storage_stats` and `semem_health_check`
+
+## 🔧 Configuration Examples
+
+### High-Performance Configuration
+```javascript
+// Optimize for performance
+await callTool("semem_update_context_config", {
+  maxTokens: 32000,
+  relevanceThreshold: 0.9,
+  maxContextSize: 20
+});
+
+await callTool("semem_update_config", {
+  section: "cache",
+  updates: {
+    maxSize: 5000,
+    ttl: 900000 // 15 minutes
+  }
+});
+```
+
+### Memory-Efficient Configuration
+```javascript
+// Optimize for memory usage
+await callTool("semem_update_context_config", {
+  maxTokens: 8000,
+  relevanceThreshold: 0.8,
+  maxContextSize: 5
+});
+
+await callTool("semem_update_config", {
+  section: "cache", 
+  updates: {
+    maxSize: 500,
+    ttl: 300000 // 5 minutes
+  }
+});
+```
+
+## 🚨 Error Handling
+
+All tools return standardized error responses with `success: false` and detailed error messages. Always check the `success` field in responses:
+
+```javascript
+const result = await callTool("semem_store_interaction", {
+  prompt: "test",
+  response: "test response"
+});
+
+if (result.success) {
+  console.log("Stored successfully:", result.id);
+} else {
+  console.error("Storage failed:", result.error);
+}
+```
+
+## 📈 GraphRAG Compatibility
+
+Semem tools provide equivalents to GraphRAG standard tools:
+
+- `semem_store_interaction` ≈ `store_document`
+- `semem_retrieve_memories` ≈ `hybrid_search`
+- `semem_storage_stats` ≈ `get_knowledge_graph_stats`
+- `semem_health_check` ≈ comprehensive system monitoring
+
+Plus semantic web enhancements:
+- Multiple storage backends (JSON, SPARQL, Cached)
+- Context window management
+- Real-time configuration updates
+- RDF/SPARQL integration
+
+---
+
+**Need Help?** Check the comprehensive API documentation at `semem://docs/api` or explore workflow examples at `semem://examples/workflows`.
