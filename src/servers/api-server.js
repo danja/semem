@@ -10,20 +10,20 @@ import helmet from 'helmet';
 import compression from 'compression';
 import { v4 as uuidv4 } from 'uuid';
 import rateLimit from 'express-rate-limit';
-import Config from '../src/Config.js';
-import MemoryManager from '../src/MemoryManager.js';
-import OllamaConnector from '../src/connectors/OllamaConnector.js';
-import LLMHandler from '../src/handlers/LLMHandler.js';
-import EmbeddingHandler from '../src/handlers/EmbeddingHandler.js';
-import CacheManager from '../src/handlers/CacheManager.js';
-import APIRegistry from '../src/api/common/APIRegistry.js';
-import InMemoryStore from '../src/stores/InMemoryStore.js';
-import { authenticateRequest } from '../src/api/http/middleware/auth.js';
-import { errorHandler, NotFoundError } from '../src/api/http/middleware/error.js';
-import { requestLogger } from '../src/api/http/middleware/logging.js';
-import MemoryAPI from '../src/api/features/MemoryAPI.js';
-import ChatAPI from '../src/api/features/ChatAPI.js';
-import SearchAPI from '../src/api/features/SearchAPI.js';
+import Config from '../Config.js';
+import MemoryManager from '../MemoryManager.js';
+import OllamaConnector from '../connectors/OllamaConnector.js';
+import LLMHandler from '../handlers/LLMHandler.js';
+import EmbeddingHandler from '../handlers/EmbeddingHandler.js';
+import CacheManager from '../handlers/CacheManager.js';
+import APIRegistry from '../api/common/APIRegistry.js';
+import InMemoryStore from '../stores/InMemoryStore.js';
+import { authenticateRequest } from '../api/http/middleware/auth.js';
+import { errorHandler, NotFoundError } from '../api/http/middleware/error.js';
+import { requestLogger } from '../api/http/middleware/logging.js';
+import MemoryAPI from '../api/features/MemoryAPI.js';
+import ChatAPI from '../api/features/ChatAPI.js';
+import SearchAPI from '../api/features/SearchAPI.js';
 
 // Load environment variables
 dotenv.config();
@@ -33,7 +33,7 @@ logger.setLevel(process.env.LOG_LEVEL || 'info');
 
 // Get directory name for ES modules
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(path.dirname(__filename)); // Go up one level to project root
+const __dirname = path.dirname(path.dirname(path.dirname(__filename))); // Go up two levels to project root
 
 /**
  * APIServer class that encapsulates the entire API server functionality
@@ -130,7 +130,7 @@ class APIServer {
         const storageConfig = config.get('storage');
         
         if (storageConfig.type === 'sparql') {
-            const { default: SPARQLStore } = await import('../src/stores/SPARQLStore.js');
+            const { default: SPARQLStore } = await import('../stores/SPARQLStore.js');
             storage = new SPARQLStore(storageConfig.options.endpoint, {
                 user: storageConfig.options.user,
                 password: storageConfig.options.password,
@@ -139,7 +139,7 @@ class APIServer {
             });
             logger.info(`Initialized SPARQL store with endpoint: ${storageConfig.options.endpoint}`);
         } else if (storageConfig.type === 'json') {
-            const { default: JSONStore } = await import('../src/stores/JSONStore.js');
+            const { default: JSONStore } = await import('../stores/JSONStore.js');
             storage = new JSONStore(storageConfig.options.path);
             logger.info(`Initialized JSON store at path: ${storageConfig.options.path}`);
         } else {

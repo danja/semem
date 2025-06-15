@@ -43,18 +43,18 @@ async function createServer() {
 async function main() {
   try {
     console.log('🚀 Starting Semem MCP Integration Server...');
-    
+
     // Create server
     const server = await createServer();
-    
+
     // Create transport
     const transport = new StdioServerTransport();
-    
+
     // Connect server to transport
     await server.connect(transport);
-    
+
     console.log('✅ Semem MCP server running on stdio transport');
-    
+
   } catch (error) {
     console.error('❌ Failed to start server:', error);
     process.exit(1);

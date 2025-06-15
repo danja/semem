@@ -237,21 +237,28 @@ export function registerMemoryTools(server) {
         text: z.string().describe("Text to extract concepts from")
       }
     },
-    async ({ text }) => {
+    async (...args) => {
       try {
-        // Debug logging
-        console.log('semem_extract_concepts called with:', { text, textType: typeof text });
+        // Enhanced debug logging
+        console.log('semem_extract_concepts called with args:', args);
+        console.log('Arguments length:', args.length);
+        console.log('First arg type:', typeof args[0]);
+        console.log('First arg:', JSON.stringify(args[0], null, 2));
+        
+        const params = args[0] || {};
+        const { text } = params;
+        console.log('Extracted text:', { text, textType: typeof text });
         
         // Input validation
         if (!text || typeof text !== 'string') {
-          console.error('Invalid text parameter:', { text, textType: typeof text });
+          console.error('Invalid text parameter:', { text, textType: typeof text, allParams: params });
           return {
             content: [{
               type: "text",
               text: JSON.stringify({
                 success: false,
                 error: "Text parameter is required and must be a string",
-                received: { text, textType: typeof text }
+                received: { text, textType: typeof text, allParams: params }
               }, null, 2)
             }]
           };

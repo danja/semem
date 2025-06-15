@@ -39,6 +39,6 @@ else
     
     # Attempt to find and kill any running servers by name
     echo "Attempting to find and stop servers by process name..."
-    pkill -f "node api-server.js" && echo "API server stopped" || echo "No API server found"
-    pkill -f "node ui-server.js" && echo "UI server stopped" || echo "No UI server found"
+    pkill -f "src/servers/api-server.js" && echo "API server stopped" || echo "No API server found"
+    pkill -f "src/servers/ui-server.js" && echo "UI server stopped" || echo "No UI server found"
 fi

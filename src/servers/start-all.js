@@ -3,12 +3,12 @@
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import ServerManager from './server-manager.js';
-import Config from '../src/Config.js';
+import Config from '../Config.js';
 
 // Get directory name for ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const projectRoot = dirname(__dirname);
+const projectRoot = dirname(dirname(__dirname));
 
 // Use consolidated config system
 console.log('Current working directory:', process.cwd());

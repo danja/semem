@@ -28,6 +28,7 @@ semem/
 │   ├── handlers/          # LLM and embedding handlers
 │   ├── stores/            # Storage backends (JSON, SPARQL, etc.)
 │   ├── connectors/        # LLM provider connectors
+│   ├── servers/           # HTTP server implementations
 │   ├── ragno/             # Knowledge graph algorithms
 │   └── zpt/               # Zero-Point Traversal system
 ├── examples/              # Organized examples by category
@@ -40,6 +41,125 @@ semem/
 ├── config/               # Configuration files
 └── docs/                 # Comprehensive documentation
 ```
+
+## 🌐 Server Architecture
+
+Semem provides a complete HTTP server infrastructure for deploying AI memory and knowledge graph services. The server system consists of four main components located in `src/servers/`:
+
+### Core Server Components
+
+#### 🔥 **API Server** (`api-server.js`)
+The main REST API server providing HTTP endpoints for all Semem functionality:
+
+- **Memory Operations**: Store, search, and retrieve semantic memories
+- **Chat Interface**: Conversational AI with context awareness
+- **Embedding Services**: Vector embedding generation and management
+- **Configuration Management**: Dynamic provider and storage configuration
+- **Health Monitoring**: System status and metrics endpoints
+
+**Key Endpoints:**
+```
+POST /api/memory          # Store new memories
+GET  /api/memory/search   # Search existing memories
+POST /api/chat            # Chat with context
+POST /api/chat/stream     # Streaming chat responses
+GET  /api/health          # System health check
+GET  /api/config          # Server configuration
+```
+
+#### 🎛️ **UI Server** (`ui-server.js`)
+Web interface server for interactive access to Semem capabilities:
+
+- **Provider Selection**: Choose from configured LLM providers
+- **Memory Browser**: Visual interface for memory exploration
+- **Chat Interface**: Web-based conversational UI
+- **Configuration UI**: Visual configuration management
+
+#### 🚀 **Server Manager** (`server-manager.js`)
+Process management system for coordinating multiple server instances:
+
+- **Process Lifecycle**: Start, monitor, and gracefully stop servers
+- **Port Management**: Automatic port conflict resolution
+- **Health Monitoring**: Real-time process status tracking
+- **Signal Handling**: Graceful shutdown coordination
+- **Logging**: Centralized output management with timestamps
+
+#### 🎯 **Start All** (`start-all.js`)
+Orchestration script for launching the complete server ecosystem:
+
+- **Configuration Loading**: Unified config system integration
+- **Multi-Server Startup**: Coordinated API and UI server launch
+- **Interactive Control**: Keyboard shortcuts for shutdown (Ctrl+C, 'q')
+- **Error Handling**: Robust startup failure recovery
+
+### Quick Server Deployment
+
+```bash
+# Start all servers (recommended)
+./start.sh
+# OR
+npm run start-servers
+
+# Individual server startup
+node src/servers/api-server.js    # API only (port 4100)
+node src/servers/ui-server.js     # UI only (port 4120)
+
+# Stop all servers
+./stop.sh
+# OR
+npm run stop-servers
+```
+
+### Server Configuration
+
+Servers are configured via `config/config.json`:
+
+```json
+{
+  "servers": {
+    "api": 4100,      # API server port
+    "ui": 4120,       # UI server port
+    "redirect": 4110, # Optional redirect port
+    "redirectTarget": 4120
+  },
+  "storage": {
+    "type": "sparql",  # or "json", "memory"
+    "options": { /* storage-specific config */ }
+  },
+  "llmProviders": [
+    { /* provider configurations */ }
+  ]
+}
+```
+
+### Development and Production
+
+**Development Mode:**
+```bash
+# Start with hot reload and debug logging
+LOG_LEVEL=debug ./start.sh
+
+# Watch mode with automatic restarts
+npm run dev
+```
+
+**Production Deployment:**
+```bash
+# Set production environment
+NODE_ENV=production ./start.sh
+
+# With process management (PM2)
+pm2 start src/servers/start-all.js --name semem-servers
+```
+
+### Server Monitoring
+
+The server infrastructure includes comprehensive monitoring:
+
+- **Health Checks**: `/api/health` endpoint with component status
+- **Metrics**: `/api/metrics` endpoint with performance data  
+- **Process Monitoring**: Real-time process status in server manager
+- **Graceful Shutdown**: Proper cleanup on SIGTERM/SIGINT signals
 
 ## ⚡ Quick Start
 
@@ -70,6 +190,21 @@ cp example.env .env
    # Using Docker
    docker run -d --name fuseki -p 3030:3030 stain/jena-fuseki
    ```
+
+### Running Servers
+
+```bash
+# Start HTTP API and UI servers
+./start.sh
+
+# Access web interface
+open http://localhost:4120
+
+# Test API endpoints
+curl http://localhost:4100/api/health
+```
+
+> 📖 See [Server Architecture](#-server-architecture) section for detailed server documentation.
 
 ### Running Examples
 
@@ -258,6 +393,12 @@ npm run test:coverage     # Generate coverage report
 
 # Documentation
 npm run docs              # Generate JSDoc documentation
+
+# HTTP Servers
+./start.sh                # Start all servers (API + UI)
+./stop.sh                 # Stop all servers
+node src/servers/api-server.js    # Start API server only
+node src/servers/ui-server.js     # Start UI server only
 
 # MCP Server
 npm run mcp-server-new    # Start new MCP server
