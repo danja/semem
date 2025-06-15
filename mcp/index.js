@@ -17,7 +17,6 @@ import { initializeServices } from './lib/initialization.js';
 
 // Import tool registrations
 import { registerMemoryTools } from './tools/memory-tools.js';
-import { registerMemoryToolsFixed } from './tools/memory-tools-fixed.js';
 import { registerMemoryToolsHttp } from './tools/memory-tools-http.js';
 
 // Import resource registrations  
@@ -66,8 +65,6 @@ async function createServer() {
   // Choose which tools to register based on environment
   if (process.env.MCP_USE_HTTP_TOOLS !== 'false') {
     registerMemoryToolsHttp(server);
-  } else if (process.env.MCP_USE_FIXED_TOOLS !== 'false') {
-    registerMemoryToolsFixed(server);
   } else {
     registerMemoryTools(server);
   }

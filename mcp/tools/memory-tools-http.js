@@ -225,11 +225,8 @@ export function registerMemoryToolsHttp(server) {
         const safeOps = new SafeOperations(memoryManager);
         
         if (memoryManager) {
-          // Generate query embedding
-          const queryEmbedding = await safeOps.generateEmbedding(query);
-          
-          // Search for similar memories
-          const memories = await memoryManager.searchSimilar(query, queryEmbedding, limit, threshold);
+          // Search for similar memories using SafeOperations
+          const memories = await safeOps.retrieveMemories(query, threshold, 0);
           
           return {
             content: [{
@@ -288,9 +285,8 @@ export function registerMemoryToolsHttp(server) {
           let context = '';
           
           if (useMemory) {
-            // Get relevant memories for context
-            const queryEmbedding = await safeOps.generateEmbedding(prompt);
-            const memories = await memoryManager.searchSimilar(prompt, queryEmbedding, 3, 0.7);
+            // Get relevant memories for context using SafeOperations
+            const memories = await safeOps.retrieveMemories(prompt, 0.7, 0);
             
             if (memories.length > 0) {
               context = memories.map(m => `Previous: ${m.prompt} -> ${m.response}`).join('\n');
