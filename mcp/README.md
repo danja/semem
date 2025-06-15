@@ -57,22 +57,45 @@ This MCP (Model Context Protocol) server provides access to Semem core, Ragno kn
 
 ### Starting the Server
 
+#### HTTP/SSE Transport (Recommended)
+```bash
+# Start HTTP server with Server-Sent Events transport
+npm run mcp:http
+
+# Or directly
+node mcp/http-server.js
+
+# Custom port and host
+MCP_PORT=3002 MCP_HOST=localhost node mcp/http-server.js
+
+# Using binary
+semem-mcp-http --port=3002 --host=localhost
+```
+
+**Integration URL:** `http://localhost:3002/mcp` (default port changed to avoid conflicts)
+
+#### Stdio Transport (Legacy - Deprecated)
 ```bash
 # Start with stdio transport (for use with MCP clients)
 node mcp/index.js
 
-# Test with MCP inspector
-npx @modelcontextprotocol/inspector node mcp/index.js
-
-# Custom ports if defaults are in use
-CLIENT_PORT=8080 SERVER_PORT=9000 npx @modelcontextprotocol/inspector node mcp/index.js
+# Note: Stdio transport is deprecated in favor of HTTP/SSE
 ```
 
 ### Testing
 
 ```bash
-# Run the test script
-node mcp/test-server.js
+# Test HTTP/SSE transport
+curl -X GET http://localhost:3002/health
+
+# Test the bridge
+echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"1.0.0"}}}' | node mcp/stdio-to-http-bridge-simple.js
+
+# Test with MCP client examples
+node examples/mcp/HTTPClient.js
+
+# Run automated tests
+npm test tests/mcp/http-transport.test.js
 ```
 
 ### Configuration
@@ -218,8 +241,29 @@ The server requires:
 ## Integration
 
 ### Claude Desktop
-Add to your Claude Desktop configuration:
 
+#### Using HTTP/SSE Transport (Recommended)
+
+**Step 1:** Start the HTTP MCP server
+```bash
+MCP_PORT=3002 node mcp/http-server.js &
+```
+
+**Step 2:** Configure Claude Desktop with the bridge
+```json
+{
+  "mcpServers": {
+    "semem": {
+      "command": "node",
+      "args": ["/flow/hyperdata/semem/mcp/stdio-to-http-bridge-simple.js"]
+    }
+  }
+}
+```
+
+**Note:** The bridge script converts Claude Desktop's stdio transport to HTTP/SSE for the Semem server.
+
+#### Using Stdio Transport (Legacy - Deprecated)
 ```json
 {
   "mcpServers": {
@@ -234,8 +278,33 @@ Add to your Claude Desktop configuration:
 }
 ```
 
+**Note:** Stdio transport is deprecated. Use HTTP/SSE transport with bridge for better reliability.
+
 ### Other MCP Clients
-The server follows the standard MCP protocol and should work with any compatible client using stdio transport.
+The server follows the standard MCP protocol and should work with any compatible client. For HTTP/SSE transport, clients can connect directly to `http://localhost:3002/mcp`.
+
+## Current Status
+
+### ✅ Working Components
+- **HTTP/SSE MCP Server**: Fully functional on port 3002
+- **Stdio-to-HTTP Bridge**: Successfully converts between transports
+- **Core MCP Tools**: All Semem tools properly exposed via new MCP SDK API
+- **Tool Registration**: Using modern `server.tool()` API instead of deprecated `setRequestHandler()`
+
+### 🔧 Recent Fixes
+- **Fixed MCP SDK Compatibility**: Updated from deprecated `setRequestHandler()` to `server.tool()` API
+- **Fixed HTTP Transport**: Added proper SSE headers and response parsing
+- **Fixed Bridge Communication**: Created working stdio ↔ HTTP/SSE bridge for Claude Desktop
+- **Fixed Port Conflicts**: Server now runs on port 3002 to avoid conflicts
+
+### 🐛 Known Issues
+- **Stdio Transport**: Deprecated and may have compatibility issues with newer MCP clients
+- **Package Dependencies**: Some MCP transport packages don't exist in npm registry
+
+### 🚀 Recommended Setup
+1. Use HTTP/SSE transport with the bridge for Claude Desktop
+2. Start server on port 3002 to avoid conflicts
+3. Restart Claude Desktop after configuration changes
 
 ## Dependencies
 
