@@ -164,6 +164,14 @@ class UIServer {
         // Provider endpoints
         this.app.get('/api/providers', this.handleListProviders.bind(this));
 
+        // SPARQL Browser endpoints
+        this.app.get('/api/sparql/endpoints', this.handleSparqlEndpoints.bind(this));
+        this.app.post('/api/sparql/query', this.handleSparqlQuery.bind(this));
+        this.app.post('/api/sparql/construct', this.handleSparqlConstruct.bind(this));
+        this.app.post('/api/sparql/validate', this.handleSparqlValidate.bind(this));
+        this.app.post('/api/sparql/insert', this.handleSparqlInsert.bind(this));
+        this.app.post('/api/sparql/test', this.handleSparqlTest.bind(this));
+
         // HTML route for the UI
         this.app.get('/', (req, res) => {
             res.sendFile(path.join(this.publicDir, 'index.html'));
@@ -1264,6 +1272,312 @@ Based on the above information and your knowledge, here is the user's question: 
         logger.info(`Available embedding providers: ${this.embeddingProviders.map(p => `${p.type} (${p.id})`).join(', ')}`);
 
         return availableProviders;
+    }
+
+    /**
+     * Handle SPARQL endpoints listing
+     * @param {Request} req - The Express request
+     * @param {Response} res - The Express response
+     */
+    async handleSparqlEndpoints(req, res) {
+        try {
+            // Return configured SPARQL endpoints
+            const endpoints = this.sparqlEndpoints.map((endpoint, index) => ({
+                id: `endpoint-${index}`,
+                name: `SPARQL Endpoint ${index + 1}`,
+                queryUrl: endpoint.queryEndpoint,
+                updateUrl: endpoint.updateEndpoint,
+                defaultGraph: this.graphName,
+                auth: endpoint.auth ? { username: endpoint.auth.user } : null // Don't expose password
+            }));
+
+            res.json(endpoints);
+        } catch (error) {
+            logger.error('Error listing SPARQL endpoints:', error);
+            res.status(500).json({
+                error: 'Failed to list SPARQL endpoints',
+                message: error.message
+            });
+        }
+    }
+
+    /**
+     * Handle SPARQL SELECT queries
+     * @param {Request} req - The Express request
+     * @param {Response} res - The Express response
+     */
+    async handleSparqlQuery(req, res) {
+        try {
+            const { query, endpoint, limit } = req.body;
+
+            if (!query) {
+                return res.status(400).json({
+                    error: 'Bad Request',
+                    message: 'SPARQL query is required'
+                });
+            }
+
+            logger.info(`Executing SPARQL query: ${query.substring(0, 100)}...`);
+
+            // Use provided endpoint or default to the first configured one
+            const targetEndpoint = endpoint || this.sparqlService.queryEndpoint;
+            
+            // Apply limit if requested
+            let finalQuery = query;
+            if (limit && !query.toUpperCase().includes('LIMIT')) {
+                finalQuery += ` LIMIT ${limit}`;
+            }
+
+            const results = await this.sparqlService.executeQuery(finalQuery);
+            
+            logger.info('SPARQL query executed successfully');
+            res.json(results);
+        } catch (error) {
+            logger.error('SPARQL query error:', error);
+            res.status(500).json({
+                error: 'SPARQL query failed',
+                message: error.message
+            });
+        }
+    }
+
+    /**
+     * Handle SPARQL CONSTRUCT queries
+     * @param {Request} req - The Express request
+     * @param {Response} res - The Express response
+     */
+    async handleSparqlConstruct(req, res) {
+        try {
+            const { query, endpoint } = req.body;
+
+            if (!query) {
+                return res.status(400).json({
+                    error: 'Bad Request',
+                    message: 'SPARQL CONSTRUCT query is required'
+                });
+            }
+
+            logger.info(`Executing SPARQL CONSTRUCT query: ${query.substring(0, 100)}...`);
+
+            // Use provided endpoint or default to the first configured one
+            const targetEndpoint = endpoint || this.sparqlService.queryEndpoint;
+            
+            // Execute CONSTRUCT query - this should return RDF data
+            const results = await this.sparqlService.executeQuery(query);
+            
+            // For CONSTRUCT queries, we want to return the RDF data as text
+            // The format depends on the SPARQL service implementation
+            let rdfData;
+            if (typeof results === 'string') {
+                rdfData = results;
+            } else if (results.results && results.results.bindings) {
+                // Convert results to simple Turtle format
+                rdfData = this.convertBindingsToTurtle(results.results.bindings);
+            } else {
+                rdfData = '';
+            }
+            
+            logger.info('SPARQL CONSTRUCT query executed successfully');
+            res.set('Content-Type', 'text/turtle');
+            res.send(rdfData);
+        } catch (error) {
+            logger.error('SPARQL CONSTRUCT query error:', error);
+            res.status(500).json({
+                error: 'SPARQL CONSTRUCT query failed',
+                message: error.message
+            });
+        }
+    }
+
+    /**
+     * Handle RDF validation requests
+     * @param {Request} req - The Express request
+     * @param {Response} res - The Express response
+     */
+    async handleSparqlValidate(req, res) {
+        try {
+            const { content, format } = req.body;
+
+            if (!content) {
+                return res.status(400).json({
+                    error: 'Bad Request',
+                    message: 'RDF content is required'
+                });
+            }
+
+            logger.info('Validating RDF content...');
+
+            // Simple validation - in a real implementation, you'd use an RDF parser
+            let valid = true;
+            let errors = [];
+
+            try {
+                // Basic syntax checks for Turtle format
+                if (format === 'turtle' || !format) {
+                    // Check for basic Turtle syntax
+                    if (!content.includes('.') && !content.includes(';')) {
+                        valid = false;
+                        errors.push('Missing statement terminators (. or ;)');
+                    }
+                    
+                    // Check for balanced angle brackets
+                    const openBrackets = (content.match(/</g) || []).length;
+                    const closeBrackets = (content.match(/>/g) || []).length;
+                    if (openBrackets !== closeBrackets) {
+                        valid = false;
+                        errors.push('Unbalanced angle brackets in URIs');
+                    }
+                }
+            } catch (parseError) {
+                valid = false;
+                errors.push(`Parse error: ${parseError.message}`);
+            }
+
+            res.json({
+                valid,
+                errors: valid ? [] : errors,
+                format: format || 'turtle'
+            });
+        } catch (error) {
+            logger.error('RDF validation error:', error);
+            res.status(500).json({
+                error: 'RDF validation failed',
+                message: error.message
+            });
+        }
+    }
+
+    /**
+     * Handle RDF insertion requests
+     * @param {Request} req - The Express request
+     * @param {Response} res - The Express response
+     */
+    async handleSparqlInsert(req, res) {
+        try {
+            const { content, endpoint, graph, format } = req.body;
+
+            if (!content) {
+                return res.status(400).json({
+                    error: 'Bad Request',
+                    message: 'RDF content is required'
+                });
+            }
+
+            logger.info('Inserting RDF data into SPARQL store...');
+
+            // Use provided endpoint or default to the first configured one
+            const targetEndpoint = endpoint || this.sparqlService.updateEndpoint;
+            const targetGraph = graph || this.graphName;
+
+            // Create SPARQL UPDATE query to insert the data
+            const insertQuery = `
+                PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+                PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+                
+                INSERT DATA {
+                    GRAPH <${targetGraph}> {
+                        ${content}
+                    }
+                }
+            `;
+
+            // Execute the insert query
+            await this.sparqlService.executeUpdate(insertQuery);
+            
+            logger.info('RDF data inserted successfully');
+            res.json({
+                success: true,
+                message: 'RDF data inserted successfully',
+                graph: targetGraph
+            });
+        } catch (error) {
+            logger.error('RDF insertion error:', error);
+            res.status(500).json({
+                error: 'RDF insertion failed',
+                message: error.message
+            });
+        }
+    }
+
+    /**
+     * Handle SPARQL endpoint testing
+     * @param {Request} req - The Express request
+     * @param {Response} res - The Express response
+     */
+    async handleSparqlTest(req, res) {
+        try {
+            const { endpoint } = req.body;
+
+            if (!endpoint) {
+                return res.status(400).json({
+                    error: 'Bad Request',
+                    message: 'Endpoint URL is required'
+                });
+            }
+
+            logger.info(`Testing SPARQL endpoint: ${endpoint}`);
+
+            // Test with a simple ASK query
+            const testQuery = 'ASK { ?s ?p ?o }';
+            
+            try {
+                // Create a temporary SPARQL service for testing
+                const testService = new (await import('../embeddings/SPARQLService.js')).default({
+                    queryEndpoint: endpoint,
+                    graphName: this.graphName
+                });
+
+                const result = await testService.executeQuery(testQuery);
+                
+                logger.info(`SPARQL endpoint test successful: ${endpoint}`);
+                res.json({
+                    success: true,
+                    message: 'Endpoint is accessible',
+                    endpoint: endpoint
+                });
+            } catch (testError) {
+                logger.warn(`SPARQL endpoint test failed: ${endpoint} - ${testError.message}`);
+                res.json({
+                    success: false,
+                    error: testError.message,
+                    endpoint: endpoint
+                });
+            }
+        } catch (error) {
+            logger.error('SPARQL endpoint test error:', error);
+            res.status(500).json({
+                error: 'Endpoint test failed',
+                message: error.message
+            });
+        }
+    }
+
+    /**
+     * Convert SPARQL bindings to simple Turtle format
+     * @param {Array} bindings - SPARQL query bindings
+     * @returns {string} Turtle-formatted RDF
+     */
+    convertBindingsToTurtle(bindings) {
+        if (!bindings || bindings.length === 0) {
+            return '';
+        }
+
+        const triples = bindings.map(binding => {
+            const s = binding.s ? (binding.s.type === 'uri' ? `<${binding.s.value}>` : binding.s.value) : '';
+            const p = binding.p ? (binding.p.type === 'uri' ? `<${binding.p.value}>` : binding.p.value) : '';
+            const o = binding.o ? (
+                binding.o.type === 'uri' ? `<${binding.o.value}>` :
+                binding.o.type === 'literal' ? `"${binding.o.value}"` :
+                binding.o.value
+            ) : '';
+            
+            if (s && p && o) {
+                return `${s} ${p} ${o} .`;
+            }
+            return '';
+        }).filter(triple => triple);
+
+        return triples.join('\n');
     }
 
     /**

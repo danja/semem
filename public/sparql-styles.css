@@ -1,0 +1,467 @@
+/* SPARQL Browser Styles */
+
+/* Main SPARQL browser layout */
+.sparql-tabs {
+    width: 100%;
+}
+
+.sparql-tab-content {
+    display: none;
+    padding: 20px 0;
+}
+
+.sparql-tab-content.active {
+    display: block;
+}
+
+/* Query section styles */
+.sparql-query-section {
+    width: 100%;
+}
+
+.query-controls {
+    margin-bottom: 15px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+.query-controls .form-group {
+    display: inline-block;
+    margin-right: 15px;
+    vertical-align: middle;
+}
+
+.endpoint-select {
+    min-width: 200px;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.query-editor-container {
+    margin-bottom: 20px;
+}
+
+.query-editor-container label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #333;
+}
+
+.sparql-editor {
+    width: 100%;
+    min-height: 200px;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    resize: vertical;
+    background: #f8f8f8;
+}
+
+.sparql-editor:focus {
+    outline: none;
+    border-color: #007acc;
+    box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.1);
+}
+
+.query-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+.query-options {
+    margin-left: auto;
+    display: flex;
+    gap: 15px;
+}
+
+.query-options label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.query-results {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    min-height: 300px;
+    background: white;
+    overflow: auto;
+}
+
+.results-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 300px;
+    color: #666;
+    font-style: italic;
+}
+
+/* Graph visualization styles */
+.graph-controls {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+.form-row {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 10px;
+}
+
+.form-row:last-child {
+    margin-bottom: 0;
+}
+
+.graph-query-input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.depth-input, .limit-input {
+    width: 80px;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    text-align: center;
+}
+
+.rdf-graph-container {
+    width: 100%;
+    height: 500px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: white;
+    position: relative;
+    margin-bottom: 15px;
+}
+
+.graph-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #666;
+    font-style: italic;
+}
+
+.graph-info {
+    padding: 10px 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+.info-stats {
+    display: flex;
+    gap: 20px;
+    font-size: 14px;
+}
+
+.info-stats span {
+    color: #333;
+    font-weight: 500;
+}
+
+/* RDF Editor styles */
+.rdf-editor-section {
+    width: 100%;
+}
+
+.editor-controls {
+    margin-bottom: 15px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+.format-select {
+    min-width: 120px;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.rdf-editor-container {
+    margin-bottom: 20px;
+}
+
+.rdf-editor-container label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #333;
+}
+
+.turtle-editor {
+    width: 100%;
+    min-height: 300px;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    resize: vertical;
+    background: #f8f8f8;
+}
+
+.turtle-editor:focus {
+    outline: none;
+    border-color: #007acc;
+    box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.1);
+}
+
+.editor-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+.upload-section {
+    margin-left: auto;
+    display: flex;
+    gap: 10px;
+}
+
+.validation-result {
+    padding: 15px;
+    border-radius: 8px;
+    margin-top: 15px;
+}
+
+.validation-result.success {
+    background: #d4edda;
+    border: 1px solid #c3e6cb;
+    color: #155724;
+}
+
+.validation-result.error {
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+}
+
+/* Endpoints management styles */
+.endpoints-section {
+    width: 100%;
+}
+
+.add-endpoint-form {
+    margin-bottom: 30px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+.add-endpoint-form h4 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #333;
+}
+
+.endpoint-input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.endpoints-list {
+    width: 100%;
+}
+
+.endpoints-list h4 {
+    margin-bottom: 15px;
+    color: #333;
+}
+
+.endpoints-container {
+    min-height: 200px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: white;
+    padding: 15px;
+}
+
+.endpoints-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 150px;
+    color: #666;
+    font-style: italic;
+}
+
+.endpoint-item {
+    padding: 15px;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    background: #fafafa;
+}
+
+.endpoint-item:last-child {
+    margin-bottom: 0;
+}
+
+.endpoint-header {
+    display: flex;
+    justify-content: between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.endpoint-name {
+    font-weight: 600;
+    color: #333;
+    font-size: 16px;
+}
+
+.endpoint-status {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.endpoint-status.connected {
+    background: #d4edda;
+    color: #155724;
+}
+
+.endpoint-status.disconnected {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.endpoint-status.testing {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.endpoint-details {
+    font-size: 14px;
+    color: #666;
+    line-height: 1.4;
+}
+
+.endpoint-actions {
+    margin-top: 10px;
+    display: flex;
+    gap: 10px;
+}
+
+/* Button styles for SPARQL browser */
+.btn.small-btn {
+    padding: 6px 12px;
+    font-size: 13px;
+}
+
+.btn.secondary-btn {
+    background: #6c757d;
+    color: white;
+    border: 1px solid #6c757d;
+}
+
+.btn.secondary-btn:hover {
+    background: #5a6268;
+    border-color: #545b62;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .form-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+    
+    .query-actions, .editor-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .query-options, .upload-section {
+        margin-left: 0;
+        margin-top: 10px;
+    }
+    
+    .info-stats {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .rdf-graph-container {
+        height: 300px;
+    }
+}
+
+/* Integration with existing Atuin styles */
+.atuin-messages {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    max-width: 400px;
+}
+
+/* Override some Atuin defaults for better integration */
+.turtle-editor.atuin-editor {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.sparql-editor.atuin-editor {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+#rdf-graph-container .vis-network {
+    width: 100%;
+    height: 100%;
+}
+
+/* Tab description styling */
+.tab-description {
+    margin-bottom: 20px;
+    color: #666;
+    font-style: italic;
+    border-left: 4px solid #007acc;
+    padding-left: 15px;
+    background: #f8f9fa;
+    padding: 10px 15px;
+    border-radius: 0 4px 4px 0;
+}

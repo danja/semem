@@ -61,7 +61,7 @@
     "src/",
     "mcp/index.js",
     "dist/types/index.d.ts",
-    "dist/types/core.d.ts", 
+    "dist/types/core.d.ts",
     "dist/types/ragno.d.ts",
     "dist/types/zpt.d.ts",
     "config/config.json",
@@ -136,11 +136,14 @@
     "@langchain/openai": "^0.3.14",
     "@modelcontextprotocol/sdk": "^1.12.1",
     "@rdfjs/namespace": "^2.0.1",
+    "atuin": "^0.1.1",
     "body-parser": "^1.20.2",
     "chalk": "^5.4.1",
+    "commander": "^12.1.0",
     "compression": "^1.7.5",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
+    "evb": "^0.7.2",
     "express": "^4.21.2",
     "express-rate-limit": "^7.5.0",
     "faiss-node": "^0.5.1",
@@ -158,7 +161,6 @@
     "uuid": "^11.1.0",
     "yargs": "^17.7.2",
     "zod": "^3.25.63",
-    "zod-to-json-schema": "^3.24.5",
-    "commander": "^12.1.0"
+    "zod-to-json-schema": "^3.24.5"
   }
 }
