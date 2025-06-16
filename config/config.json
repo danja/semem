@@ -3,7 +3,7 @@
     "type": "sparql",
     "options": {
       "endpoint": "https://fuseki.hyperdata.it/semem",
-      "graphName": "http://danny.ayers.name/content",
+      "graphName": "http://purl.org/stuff/semem/memory-demo",
       "user": "admin",
       "password": "admin123"
     }
@@ -14,8 +14,8 @@
     "redirect": 4110,
     "redirectTarget": 4120
   },
-  "port": 4100,
-  "graphName": "http://danny.ayers.name/content",
+  "port": 4120,
+  "graphName": "http://purl.org/stuff/semem/memory-demo",
   "chatModel": "qwen2:1.5b",
   "embeddingModel": "nomic-embed-text",
   "sparqlEndpoints": [

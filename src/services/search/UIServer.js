@@ -130,7 +130,7 @@ class UIServer {
 
         // Calculate paths for project root and public directory
         this.projectRoot = path.resolve(__dirname, '..', '..', '..');
-        this.publicDir = path.join(this.projectRoot, 'public');
+        this.publicDir = path.join(this.projectRoot, 'public/dist');
 
         logger.info(`UIServer initialized with port: ${this.port}, graph: ${this.graphName}`);
     }
@@ -143,6 +143,9 @@ class UIServer {
         this.app.use(express.json());
         this.app.use(express.urlencoded({ extended: true }));
         this.app.use(express.static(this.publicDir));
+        
+        // Serve node_modules for Atuin CSS and other dependencies
+        this.app.use('/node_modules', express.static(path.join(this.projectRoot, 'node_modules')));
 
         // API endpoint for searching
         this.app.get('/api/search', this.handleSearch.bind(this));

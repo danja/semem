@@ -1,0 +1,46 @@
+{
+  "storage": {
+    "type": "memory",
+    "options": {
+      "path": "interaction_history.json"
+    }
+  },
+  "servers": {
+    "api": 4100,
+    "ui": 4120,
+    "redirect": 4110,
+    "redirectTarget": 4120
+  },
+  "port": 4120,
+  "graphName": "http://danny.ayers.name/content",
+  "chatModel": "qwen2:1.5b",
+  "embeddingModel": "nomic-embed-text",
+  "sparqlEndpoints": [
+    {
+      "label": "Local Test",
+      "user": "admin",
+      "password": "admin123",
+      "urlBase": "http://localhost:4030",
+      "dataset": "test",
+      "query": "/test/query",
+      "update": "/test/update",
+      "upload": "/test/upload",
+      "gspRead": "/test/data",
+      "gspWrite": "/test/data"
+    }
+  ],
+  "llmProviders": [
+    {
+      "type": "ollama",
+      "baseUrl": "http://localhost:11434",
+      "chatModel": "qwen2:1.5b",
+      "embeddingModel": "nomic-embed-text",
+      "priority": 1,
+      "capabilities": [
+        "embedding",
+        "chat"
+      ],
+      "description": "Used primarily for embeddings with nomic-embed-text"
+    }
+  ]
+}

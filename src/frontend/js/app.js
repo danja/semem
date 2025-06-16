@@ -5,6 +5,7 @@ import { setupDebug } from './utils/debug.js';
 import { initTabs } from './components/tabs.js';
 import { initSettingsForm } from './components/settings.js';
 import { checkAPIHealth } from './services/apiService.js';
+import { SPARQLBrowser } from './components/sparqlBrowser.js';
 
 /**
  * Initialize the entire application
@@ -52,6 +53,9 @@ export function initializeApp() {
     initConceptsForm();
     initIndexForm();
     initSettingsForm();
+
+    // Initialize SPARQL browser
+    initSPARQLBrowser();
 
     // Failsafe mechanism to ensure loading indicator doesn't get stuck
     setupFailsafeTimeout();
@@ -145,4 +149,30 @@ function initConceptsForm() {
 
 function initIndexForm() {
     console.log('TODO: Implement index form initialization');
+}
+
+function initSPARQLBrowser() {
+    // Initialize SPARQL browser when the tab becomes visible
+    const sparqlTab = document.querySelector('[data-tab="sparql-browser"]');
+    if (sparqlTab) {
+        const initializeSparqlBrowser = () => {
+            // Check if we're on the SPARQL browser tab
+            const sparqlSection = document.getElementById('sparql-browser-tab');
+            if (sparqlSection && !sparqlSection.classList.contains('hidden')) {
+                if (!window.sparqlBrowser) {
+                    console.log('Initializing SPARQL Browser...');
+                    window.sparqlBrowser = new SPARQLBrowser();
+                    window.sparqlBrowser.init().catch(error => {
+                        console.error('Failed to initialize SPARQL Browser:', error);
+                    });
+                }
+            }
+        };
+
+        // Initialize when tab is clicked
+        sparqlTab.addEventListener('click', initializeSparqlBrowser);
+        
+        // Also initialize if already active
+        setTimeout(initializeSparqlBrowser, 100);
+    }
 }

@@ -70,7 +70,10 @@
   ],
   "scripts": {
     "test": "vitest run --run --exclude=**/*.llm.* --exclude=**/llms/** --exclude=**/Ollama* --exclude=**/embeddings/** --exclude=**/search/SearchService.test.js",
-    "build": "npm run types:build",
+    "build": "npm run types:build && npm run build:frontend",
+    "build:frontend": "webpack --mode=production",
+    "build:dev": "webpack --mode=development",
+    "dev": "webpack-dev-server --mode=development",
     "types:build": "mkdir -p dist/types && cp src/types/*.d.ts dist/types/",
     "mcp": "node mcp/index.js",
     "mcp:http": "node mcp/http-server.js",

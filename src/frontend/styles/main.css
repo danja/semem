@@ -613,3 +613,253 @@ footer {
         gap: 1rem;
     }
 }
+
+/* TODO: Import Atuin CSS for RDF editing and visualization once webpack issues are resolved */
+
+/* SPARQL Browser specific styles */
+.sparql-tabs {
+    margin: 1rem 0;
+}
+
+.sparql-tab-content {
+    display: none;
+    padding: 1rem 0;
+}
+
+.sparql-tab-content.active {
+    display: block;
+}
+
+.query-controls {
+    margin-bottom: 1rem;
+}
+
+.endpoint-select {
+    min-width: 200px;
+    margin-right: 0.5rem;
+}
+
+.query-editor-container {
+    margin: 1rem 0;
+}
+
+.sparql-editor, .turtle-editor {
+    width: 100%;
+    min-height: 150px;
+    font-family: 'Courier New', monospace;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 0.75rem;
+    resize: vertical;
+}
+
+.query-actions {
+    margin: 1rem 0;
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.query-options {
+    display: flex;
+    gap: 1rem;
+    margin-left: auto;
+}
+
+.query-results {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    min-height: 200px;
+    padding: 1rem;
+    background: white;
+}
+
+.results-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+}
+
+.results-table th,
+.results-table td {
+    border: 1px solid #ddd;
+    padding: 0.5rem;
+    text-align: left;
+}
+
+.results-table th {
+    background-color: #f5f5f5;
+    font-weight: bold;
+}
+
+.rdf-graph-container {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    min-height: 400px;
+    background: white;
+    position: relative;
+}
+
+.graph-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 400px;
+    color: #666;
+}
+
+.graph-controls {
+    margin-bottom: 1rem;
+}
+
+.form-row {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    align-items: center;
+}
+
+.graph-query-input,
+.depth-input,
+.limit-input {
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.graph-query-input {
+    flex: 1;
+    min-width: 300px;
+}
+
+.depth-input,
+.limit-input {
+    width: 80px;
+}
+
+.graph-info {
+    margin-top: 1rem;
+    padding: 0.5rem;
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+.info-stats {
+    display: flex;
+    gap: 1rem;
+}
+
+.editor-controls {
+    margin-bottom: 1rem;
+}
+
+.format-select {
+    min-width: 120px;
+}
+
+.rdf-editor-container {
+    margin: 1rem 0;
+}
+
+.editor-actions {
+    margin: 1rem 0;
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.upload-section {
+    margin-left: auto;
+    display: flex;
+    gap: 0.5rem;
+}
+
+.validation-result {
+    margin-top: 1rem;
+    padding: 1rem;
+    border-radius: 4px;
+}
+
+.validation-result.success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.validation-result.error {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.endpoints-section {
+    margin: 1rem 0;
+}
+
+.add-endpoint-form {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 4px;
+    margin-bottom: 2rem;
+}
+
+.endpoint-input {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
+}
+
+.endpoints-container {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    min-height: 200px;
+    padding: 1rem;
+    background: white;
+}
+
+.endpoints-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 150px;
+    color: #666;
+}
+
+/* Atuin message container */
+.atuin-messages {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    max-width: 400px;
+    z-index: 1000;
+}
+
+/* Responsive design for SPARQL browser */
+@media (max-width: 768px) {
+    .form-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .query-actions {
+        justify-content: flex-start;
+    }
+    
+    .query-options {
+        margin-left: 0;
+        margin-top: 0.5rem;
+    }
+    
+    .upload-section {
+        margin-left: 0;
+        margin-top: 0.5rem;
+    }
+    
+    .graph-query-input {
+        min-width: auto;
+    }
+}
