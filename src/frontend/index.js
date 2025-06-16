@@ -7,7 +7,7 @@ import { setupErrorHandling } from './js/utils/errorHandler.js';
 setupErrorHandling();
 
 // Initialize the application when DOM is ready
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     console.log('Initializing Semem API Interface');
-    initializeApp();
+    await initializeApp();
 });

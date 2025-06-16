@@ -36,12 +36,16 @@ class SPARQLService {
         const auth = Buffer.from(`${this.auth.user}:${this.auth.password}`).toString('base64');
         
         try {
+            // Detect query type to set appropriate Accept header
+            const isConstruct = query.trim().toUpperCase().startsWith('CONSTRUCT');
+            const acceptHeader = isConstruct ? 'text/turtle' : 'application/json';
+            
             const response = await fetch(this.queryEndpoint, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Basic ${auth}`,
                     'Content-Type': 'application/sparql-query',
-                    'Accept': 'application/json'
+                    'Accept': acceptHeader
                 },
                 body: query
             });
@@ -51,7 +55,12 @@ class SPARQLService {
                 throw new Error(`SPARQL query failed: ${response.status} - ${errorText}`);
             }
             
-            return await response.json();
+            // Return appropriate response type based on query
+            if (isConstruct) {
+                return await response.text(); // RDF data as text
+            } else {
+                return await response.json(); // JSON results
+            }
         } catch (error) {
             logger.error('Error executing SPARQL query:', error);
             throw error;

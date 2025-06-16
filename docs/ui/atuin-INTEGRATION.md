@@ -94,6 +94,50 @@ Key dependencies your integration needs to be aware of:
 
 ## Core Components
 
+### SPARQLEndpointManager
+
+A reusable component for managing SPARQL endpoints with localStorage persistence. Available in `atuin/ui/components`.
+
+```javascript
+import { SPARQLEndpointManager } from 'atuin/ui/components';
+
+// Initialize with a logger
+const endpointManager = new SPARQLEndpointManager({
+  logger: console,  // or your logger instance
+  defaultEndpoints: [
+    'https://query.wikidata.org/sparql',
+    'https://dbpedia.org/sparql'
+  ]
+});
+
+// Add a new endpoint
+endpointManager.addEndpoint('https://your-endpoint.org/sparql');
+
+// Set active endpoint
+endpointManager.setActiveEndpoint('https://query.wikidata.org/sparql');
+
+// Get all endpoints
+const endpoints = endpointManager.getEndpoints();
+
+// Get active endpoint
+const activeEndpoint = endpointManager.getActiveEndpoint();
+
+// Remove an endpoint
+endpointManager.removeEndpoint('https://dbpedia.org/sparql');
+```
+
+#### Events
+
+- `EVENTS.ENDPOINT_UPDATED`: Emitted when the active endpoint changes
+
+```javascript
+import { eventBus, EVENTS } from 'evb';
+
+eventBus.on(EVENTS.ENDPOINT_UPDATED, ({ endpoint }) => {
+  console.log('Active endpoint changed to:', endpoint);
+});
+```
+
 ### TurtleEditor
 
 RDF Turtle syntax editor with real-time validation.
@@ -179,9 +223,229 @@ logger.success(message);     // Success message
 logger.clear();             // Clear all messages
 ```
 
+## Reusable UI Components
+
+### SPARQL Clips Manager
+
+A reusable component for managing saved SPARQL query clips. It provides a UI for saving, loading, and deleting frequently used SPARQL queries.
+
+```javascript
+import { SPARQLClipsUI } from 'atuin/ui/components';
+import { SPARQLClipsManager } from 'atuin/services';
+
+// Initialize with a logger
+const logger = console; // or your logger instance
+const clipsManager = new SPARQLClipsManager(logger);
+
+// Create the UI component
+const clipsUI = new SPARQLClipsUI({
+  clipsManager,
+  logger,
+  onClipSelect: (query) => {
+    // Handle when a clip is selected
+    console.log('Clip selected:', query);
+    // You might want to load this into your SPARQL editor
+    // sparqlEditor.setValue(query);
+  }
+});
+
+// Render the component into a container
+document.addEventListener('DOMContentLoaded', () => {
+  const container = document.getElementById('clips-container');
+  if (container) {
+    clipsUI.render(container);
+  }
+});
+
+// To save the current query (e.g., from a save button)
+function saveCurrentQuery() {
+  const currentQuery = ''; // Get the current query from your editor
+  clipsUI.showSaveModal(currentQuery);
+}
+```
+
+#### Features
+- Save frequently used SPARQL queries with custom names
+- Load saved queries with a single click
+- Delete unwanted queries
+- Default example queries included
+- Persistent storage using localStorage
+
+### SPARQL Endpoint Selector
+
+A reusable component for selecting SPARQL endpoints. The `SPARQLEndpointManager` handles the business logic, while you can implement the UI to match your application's design.
+
+Example implementation:
+
+```html
+<div class="sparql-endpoint-selector">
+  <select id="sparql-endpoint-select">
+    <option value="">Select an endpoint</option>
+  </select>
+  <input type="text" id="sparql-endpoint-url" placeholder="https://example.org/sparql">
+  <button id="add-endpoint">Add</button>
+  <button id="remove-endpoint">Remove</button>
+</div>
+
+<script type="module">
+  import { SPARQLEndpointManager } from 'atuin/ui/components';
+  import { eventBus, EVENTS } from 'evb';
+
+  const endpointManager = new SPARQLEndpointManager({
+    logger: console
+  });
+
+  // UI Elements
+  const select = document.getElementById('sparql-endpoint-select');
+  const urlInput = document.getElementById('sparql-endpoint-url');
+  const addBtn = document.getElementById('add-endpoint');
+  const removeBtn = document.getElementById('remove-endpoint');
+
+  // Populate select
+  function updateSelect() {
+    select.innerHTML = '<option value="">Select an endpoint</option>';
+    const endpoints = endpointManager.getEndpoints();
+    const active = endpointManager.getActiveEndpoint();
+    
+    endpoints.forEach(endpoint => {
+      const option = document.createElement('option');
+      option.value = endpoint;
+      option.textContent = endpoint;
+      option.selected = endpoint === active;
+      select.appendChild(option);
+    });
+  }
+
+  // Event Listeners
+  addBtn.addEventListener('click', () => {
+    const url = urlInput.value.trim();
+    if (url) {
+      endpointManager.addEndpoint(url);
+      urlInput.value = '';
+      updateSelect();
+    }
+  });
+
+  removeBtn.addEventListener('click', () => {
+    const selected = select.value;
+    if (selected) {
+      endpointManager.removeEndpoint(selected);
+      updateSelect();
+    }
+  });
+
+  select.addEventListener('change', (e) => {
+    endpointManager.setActiveEndpoint(e.target.value || null);
+  });
+
+  // Initial update
+  updateSelect();
+</script>
+```
+
+## Example: Complete SPARQL Editor with Clips and Endpoints
+
+Here's how to combine the SPARQL editor with clips and endpoint management:
+
+```html
+<div class="sparql-container">
+  <div class="sparql-toolbar">
+    <div class="endpoint-selector" id="endpoint-selector"></div>
+    <button id="run-query" class="btn btn-primary">Run Query</button>
+    <button id="save-query" class="btn">Save Query</button>
+  </div>
+  
+  <div class="sparql-content">
+    <div class="sparql-clips" id="clips-container"></div>
+    <div class="sparql-editor">
+      <textarea id="sparql-editor"></textarea>
+    </div>
+  </div>
+  
+  <div class="sparql-results" id="query-results">
+    <!-- Query results will be displayed here -->
+  </div>
+</div>
+
+<script type="module">
+  import { SPARQLEditor } from 'atuin/core';
+  import { SPARQLClipsUI, SPARQLEndpointManager } from 'atuin/ui/components';
+  import { SPARQLClipsManager, LoggerService } from 'atuin/services';
+  import { eventBus, EVENTS } from 'evb';
+  
+  // Initialize services
+  const logger = new LoggerService('sparql-editor');
+  const clipsManager = new SPARQLClipsManager(logger);
+  const endpointManager = new SPARQLEndpointManager({ logger });
+  
+  // Initialize UI components
+  const editor = new SPARQLEditor('sparql-editor', logger);
+  const clipsUI = new SPARQLClipsUI({
+    clipsManager,
+    logger,
+    onClipSelect: (query) => editor.setValue(query)
+  });
+  
+  // Render components
+  document.addEventListener('DOMContentLoaded', () => {
+    // Render clips UI
+    const clipsContainer = document.getElementById('clips-container');
+    if (clipsContainer) {
+      clipsUI.render(clipsContainer);
+    }
+    
+    // Set up save button
+    const saveButton = document.getElementById('save-query');
+    if (saveButton) {
+      saveButton.addEventListener('click', () => {
+        clipsUI.showSaveModal(editor.getValue());
+      });
+    }
+    
+    // Set up run button
+    const runButton = document.getElementById('run-query');
+    if (runButton) {
+      runButton.addEventListener('click', () => {
+        const query = editor.getValue();
+        const endpoint = endpointManager.getActiveEndpoint();
+        
+        if (!endpoint) {
+          logger.error('No SPARQL endpoint selected');
+          return;
+        }
+        
+        // Execute the query and handle results
+        executeSparqlQuery(query, endpoint);
+      });
+    }
+  });
+  
+  async function executeSparqlQuery(query, endpoint) {
+    try {
+      // Implement your query execution logic here
+      // This would typically use SparqlService or similar
+      console.log(`Executing query on ${endpoint}:`, query);
+      
+      // Example:
+      // const results = await sparqlService.executeQuery(query, endpoint);
+      // displayResults(results);
+    } catch (error) {
+      logger.error('Query execution failed:', error);
+    }
+  }
+  
+  function displayResults(results) {
+    const resultsContainer = document.getElementById('query-results');
+    if (resultsContainer) {
+      // Format and display results
+      resultsContainer.textContent = JSON.stringify(results, null, 2);
+    }
+  }
+</script>
+
 ## Event Bus Integration
 
-Atuin uses the [evb](https://github.com/danja/evb) event bus for loose coupling between components.
+Atuin uses the [evb](https://github.com/danja/evb) event bus for loose coupling between components, enabling seamless communication between the Turtle editor, SPARQL editor, and graph visualization components.
 
 ### Import and Setup
 
@@ -191,51 +455,113 @@ import { eventBus, EVENTS } from 'evb';
 
 ### Key Events
 
+#### Content Synchronization
+- **`EVENTS.MODEL_SYNCED`** (`'rdf:model:synced'`)
+  - **Emitted by**: `TurtleEditor` when content changes and passes validation
+  - **Payload**: The updated Turtle content as a string
+  - **Handled by**: `GraphVisualizer` to update the graph visualization
+  - **Example**:
+    ```javascript
+    // Emit when your application updates the model
+    eventBus.emit(EVENTS.MODEL_SYNCED, turtleContent);
+    
+    // Listen for model updates
+    eventBus.on(EVENTS.MODEL_SYNCED, (content) => {
+      console.log('Model updated:', content);
+    });
+    ```
+
+- **`EVENTS.ENDPOINT_UPDATED`** (`'endpoint:updated'`)
+  - **Emitted by**: `SettingsManager` when the SPARQL endpoint is changed
+  - **Handled by**: Components that need to be aware of endpoint changes
+  - **Example**:
+    ```javascript
+    eventBus.on(EVENTS.ENDPOINT_UPDATED, () => {
+      console.log('SPARQL endpoint updated:', settingsManager.getActiveSparqlEndpoint());
+    });
+    ```
+
+- **`EVENTS.SPARQL_QUERY_COMPLETED`** (`'sparql:query:completed'`)
+  - **Emitted by**: `SparqlService` when a SPARQL query execution completes
+  - **Payload**: Query results or error information
+
+#### UI Events
+- **`EVENTS.VIEW_CHANGED`** (`'ui:view:changed'`)
+  - **Emitted by**: UI components when the view state changes
+  - **Payload**: Information about the view state change
+
+- **`EVENTS.NOTIFICATION_SHOW`** (`'ui:notification:show'`)
+  - **Emitted by**: Various components to show user notifications
+  - **Payload**: Notification message and type (info, warning, error, success)
+
+#### Error Handling
+- **`EVENTS.ERROR`** (`'error'`)
+  - **Emitted by**: Various components when an error occurs
+  - **Payload**: Error object or error message
+
+### Integration Example
+
+Here's a complete example of setting up event listeners for a typical integration:
+
 ```javascript
-// Content synchronization
-EVENTS.MODEL_SYNCED           // 'rdf:model:synced'
-EVENTS.ENDPOINT_UPDATED       // 'endpoint:updated'
-EVENTS.SPARQL_QUERY_COMPLETED // 'sparql:query:completed'
+import { eventBus, EVENTS } from 'evb';
+import { TurtleEditor, GraphVisualizer } from 'atuin/core';
+import { LoggerService } from 'atuin/services';
 
-// UI events
-EVENTS.VIEW_CHANGED           // 'ui:view:changed'
-EVENTS.NOTIFICATION_SHOW      // 'ui:notification:show'
+// Initialize components
+const logger = new LoggerService('message-container');
+const editor = new TurtleEditor('turtle-editor', logger);
+const visualizer = new GraphVisualizer('graph-container', logger);
 
-// Error handling
-EVENTS.ERROR_OCCURRED         // 'error:occurred'
+// Listen for model updates
+const onModelUpdated = (content) => {
+  console.log('Turtle content updated:', content);
+  // The GraphVisualizer will automatically update via the event bus
+};
+
+// Set up event listeners
+const setupEventListeners = () => {
+  // Content synchronization
+  eventBus.on(EVENTS.MODEL_SYNCED, onModelUpdated);
+  
+  // Endpoint changes
+  eventBus.on(EVENTS.ENDPOINT_UPDATED, () => {
+    console.log('SPARQL endpoint changed');
+  });
+  
+  // Error handling
+  eventBus.on(EVENTS.ERROR, (error) => {
+    console.error('Error:', error);
+  });
+};
+
+// Clean up event listeners when needed
+const cleanup = () => {
+  eventBus.off(EVENTS.MODEL_SYNCED, onModelUpdated);
+  // Remove other listeners...
+};
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+  setupEventListeners();
+  
+  // Set initial content
+  editor.setValue('@prefix ex: <http://example.org/> .\n\n:subject a ex:Example .');
+});
+
+// Clean up when the component is unmounted
+window.addEventListener('beforeunload', cleanup);
 ```
 
-### Publishing Events
+### Troubleshooting Event Bus Issues
 
-```javascript
-// Notify of content changes
-eventBus.emit(EVENTS.MODEL_SYNCED, turtleContent);
+If the graph view is not updating when the Turtle content changes, check the following:
 
-// Notify of endpoint changes
-eventBus.emit(EVENTS.ENDPOINT_UPDATED, {
-    endpoints: endpointArray,
-    activeEndpoint: activeEndpointUrl
-});
-```
-
-### Subscribing to Events
-
-```javascript
-// Listen for content changes
-eventBus.on(EVENTS.MODEL_SYNCED, (content) => {
-    console.log('RDF content updated:', content);
-    // Update your components
-});
-
-// Listen for SPARQL query completion
-eventBus.on(EVENTS.SPARQL_QUERY_COMPLETED, (results) => {
-    console.log('Query results:', results);
-});
-
-// Cleanup (important for preventing memory leaks)
-eventBus.off(EVENTS.MODEL_SYNCED, callbackFunction);
-// or remove all listeners
-eventBus.removeAllListeners();
+1. **Event Listener Registration**: Ensure your event listeners are registered before any events are emitted.
+2. **Event Payload**: Verify that the payload being emitted with `MODEL_SYNCED` is valid Turtle syntax.
+3. **Error Handling**: Check for any errors in the console that might indicate why the graph isn't updating.
+4. **Multiple Instances**: If you have multiple instances of components, ensure they're all using the same event bus instance.
+5. **Event Bus Initialization**: The event bus is a singleton, so you don't need to create a new instance. Just import and use the default export from 'evb'.
 ```
 
 ### Event Payload Structures

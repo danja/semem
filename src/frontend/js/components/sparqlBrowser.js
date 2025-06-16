@@ -1,7 +1,6 @@
 /**
  * SPARQL Browser Component
- * Basic RDF query and visualization without Atuin (temporarily)
- * TODO: Integrate Atuin components properly
+ * Enhanced RDF query and visualization with Atuin syntax highlighting
  */
 
 export class SPARQLBrowser {
@@ -9,6 +8,14 @@ export class SPARQLBrowser {
         this.currentEndpoint = null;
         this.endpoints = [];
         this.initialized = false;
+        this.turtleEditor = null;
+        this.sparqlEditor = null;
+        this.graphVisualizer = null;
+        this.logger = null;
+        this.clipsManager = null;
+        this.clipsUI = null;
+        this.endpointManager = null;
+        this.modelSyncHandler = null;
     }
 
     async init() {
@@ -24,6 +31,9 @@ export class SPARQLBrowser {
             // Setup SPARQL browser tabs
             this.setupTabs();
             
+            // Initialize Atuin editors with syntax highlighting
+            await this.initializeAtuinEditors();
+            
             this.initialized = true;
             console.log('SPARQL Browser initialized');
             
@@ -32,6 +42,329 @@ export class SPARQLBrowser {
         }
     }
 
+    async initializeAtuinEditors() {
+        try {
+            // Check if Atuin components are available
+            if (!window.TurtleEditor || !window.SPARQLEditor || !window.GraphVisualizer || !window.LoggerService) {
+                console.log('Atuin components not available, trying to load...');
+                
+                // Import Atuin components using individual imports to avoid export issues
+                const { TurtleEditor } = await import('atuin/core/TurtleEditor');
+                const { SPARQLEditor } = await import('atuin/core/SPARQLEditor');
+                const { GraphVisualizer } = await import('atuin/core/GraphVisualizer');
+                const { LoggerService, SPARQLClipsManager } = await import('atuin/services');
+                const atuinUI = await import('atuin/ui');
+                
+                // Extract UI components from the UI module
+                const { SPARQLClipsUI, SPARQLEndpointManager } = atuinUI;
+                
+                window.TurtleEditor = TurtleEditor;
+                window.SPARQLEditor = SPARQLEditor;
+                window.GraphVisualizer = GraphVisualizer;
+                window.LoggerService = LoggerService;
+                window.SPARQLClipsManager = SPARQLClipsManager;
+                window.SPARQLClipsUI = SPARQLClipsUI;
+                window.SPARQLEndpointManager = SPARQLEndpointManager;
+                
+                console.log('Atuin components loaded successfully');
+            }
+            
+            // Create message queue container for LoggerService (required by Atuin)
+            this.createMessageQueue();
+            
+            // Initialize logger with message queue container ID (per Atuin docs)
+            this.logger = new window.LoggerService('atuin-message-queue');
+            
+            // Initialize SPARQL editor with element ID (per integration guide)
+            const sparqlElement = document.getElementById('sparql-query-editor');
+            if (sparqlElement && window.SPARQLEditor) {
+                this.sparqlEditor = new window.SPARQLEditor('sparql-query-editor', this.logger);
+                console.log('SPARQL editor with syntax highlighting initialized');
+            }
+            
+            // Initialize Turtle editor with element ID (per integration guide)
+            const turtleElement = document.getElementById('turtle-editor');
+            if (turtleElement && window.TurtleEditor) {
+                this.turtleEditor = new window.TurtleEditor('turtle-editor', this.logger);
+                
+                // Load sample RDF data by default for testing
+                const sampleRDF = this.getSampleRDFData();
+                this.turtleEditor.setValue(sampleRDF);
+                
+                console.log('Turtle editor with syntax highlighting initialized with sample data');
+            }
+            
+            // Initialize Graph Visualizer with container ID (per integration guide)
+            await this.initializeGraphVisualizer();
+            
+            // Initialize SPARQL Clips Manager and UI (new Atuin features)
+            await this.initializeClipsManager();
+            
+            // Initialize SPARQL Endpoint Manager (new Atuin features)
+            await this.initializeEndpointManager();
+            
+        } catch (error) {
+            console.warn('Could not initialize Atuin editors with syntax highlighting:', error);
+            console.log('Falling back to basic textarea editors');
+            
+            // Load sample data into basic textarea if Atuin fails
+            const turtleElement = document.getElementById('turtle-editor');
+            if (turtleElement) {
+                turtleElement.value = this.getSampleRDFData();
+                console.log('Loaded sample RDF data into basic textarea');
+            }
+        }
+    }
+
+    createMessageQueue() {
+        // Check if message queue already exists
+        if (document.getElementById('atuin-message-queue')) {
+            return;
+        }
+        
+        // Create message queue container as required by Atuin LoggerService
+        const messageQueue = document.createElement('div');
+        messageQueue.id = 'atuin-message-queue';
+        messageQueue.className = 'atuin-messages';
+        messageQueue.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            width: 300px;
+            max-height: 400px;
+            overflow-y: auto;
+        `;
+        
+        document.body.appendChild(messageQueue);
+        console.log('Created Atuin message queue container');
+    }
+
+    async initializeGraphVisualizer() {
+        try {
+            const graphContainer = document.getElementById('rdf-graph-container');
+            
+            if (graphContainer && window.GraphVisualizer) {
+                console.log('Graph container found:', graphContainer);
+                console.log('Graph container dimensions:', graphContainer.offsetWidth, 'x', graphContainer.offsetHeight);
+                
+                // Ensure container has proper dimensions before initialization
+                if (graphContainer.offsetHeight === 0) {
+                    graphContainer.style.height = '400px';
+                    graphContainer.style.width = '100%';
+                    console.log('Set graph container dimensions to 400px height');
+                }
+                
+                // Initialize GraphVisualizer with container ID (per Atuin integration guide)
+                this.graphVisualizer = new window.GraphVisualizer('rdf-graph-container', this.logger);
+                console.log('Graph visualizer initialized with container ID');
+                
+                // Set up event listener for MODEL_SYNCED events (automatic sync with TurtleEditor)
+                if (window.eventBus && window.EVENTS) {
+                    const modelSyncHandler = (content) => {
+                        console.log('DEBUG: Received MODEL_SYNCED event in SPARQLBrowser:', content ? content.substring(0, 100) + '...' : 'empty');
+                        
+                        // Ensure graph tab is visible when content updates
+                        setTimeout(() => {
+                            const graphContainer = document.getElementById('rdf-graph-container');
+                            if (graphContainer && this.graphVisualizer) {
+                                // Force container visibility and update graph
+                                if (graphContainer.offsetHeight === 0) {
+                                    graphContainer.style.height = '400px';
+                                    graphContainer.style.width = '100%';
+                                }
+                                
+                                // Update node/edge counts after graph update
+                                this.updateGraphStats();
+                            }
+                        }, 100);
+                    };
+                    
+                    window.eventBus.on(window.EVENTS.MODEL_SYNCED, modelSyncHandler);
+                    
+                    // Store handler reference for cleanup
+                    this.modelSyncHandler = modelSyncHandler;
+                }
+                
+                // The GraphVisualizer automatically listens for MODEL_SYNCED events from evb
+                // It will automatically update when TurtleEditor emits content changes
+            } else {
+                console.warn('Graph container not found or GraphVisualizer not available');
+                console.log('GraphContainer exists:', !!graphContainer);
+                console.log('GraphVisualizer available:', !!window.GraphVisualizer);
+            }
+        } catch (error) {
+            console.warn('Could not initialize Graph Visualizer:', error);
+        }
+    }
+
+    /**
+     * Initialize SPARQL Clips Manager for saving/loading query clips
+     */
+    async initializeClipsManager() {
+        try {
+            if (window.SPARQLClipsManager && window.SPARQLClipsUI) {
+                this.clipsManager = new window.SPARQLClipsManager(this.logger);
+                
+                // Create clips UI with query selection callback
+                this.clipsUI = new window.SPARQLClipsUI({
+                    clipsManager: this.clipsManager,
+                    logger: this.logger,
+                    onClipSelect: (query) => {
+                        // Load selected clip into SPARQL editor
+                        if (this.sparqlEditor && this.sparqlEditor.setValue) {
+                            this.sparqlEditor.setValue(query);
+                        } else {
+                            const sparqlElement = document.getElementById('sparql-query-editor');
+                            if (sparqlElement) sparqlElement.value = query;
+                        }
+                        console.log('Loaded SPARQL clip into editor');
+                    }
+                });
+                
+                // Render clips UI into container if it exists
+                const clipsContainer = document.getElementById('sparql-clips-container');
+                if (clipsContainer) {
+                    this.clipsUI.render(clipsContainer);
+                    console.log('SPARQL Clips Manager initialized');
+                } else {
+                    console.log('SPARQL clips container not found, clips UI not rendered');
+                }
+            }
+        } catch (error) {
+            console.warn('Could not initialize SPARQL Clips Manager:', error);
+        }
+    }
+
+    /**
+     * Initialize SPARQL Endpoint Manager for managing endpoints
+     */
+    async initializeEndpointManager() {
+        try {
+            if (window.SPARQLEndpointManager) {
+                this.endpointManager = new window.SPARQLEndpointManager({
+                    logger: this.logger,
+                    defaultEndpoints: [
+                        'http://localhost:3030/ds/sparql',
+                        'https://query.wikidata.org/sparql',
+                        'https://dbpedia.org/sparql'
+                    ]
+                });
+                
+                // Set up endpoint change listener
+                if (window.eventBus && window.EVENTS) {
+                    window.eventBus.on(window.EVENTS.ENDPOINT_UPDATED, ({ endpoint }) => {
+                        console.log('SPARQL endpoint updated to:', endpoint);
+                        this.currentEndpoint = endpoint;
+                    });
+                }
+                
+                console.log('SPARQL Endpoint Manager initialized');
+            }
+        } catch (error) {
+            console.warn('Could not initialize SPARQL Endpoint Manager:', error);
+        }
+    }
+
+    /**
+     * Get sample RDF data for initial testing
+     */
+    getSampleRDFData() {
+        return `@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix ex: <http://example.org/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix dbo: <http://dbpedia.org/ontology/> .
+@prefix dbr: <http://dbpedia.org/resource/> .
+
+# Sample knowledge graph about people and organizations
+ex:alice a foaf:Person ;
+    foaf:name "Alice Johnson" ;
+    foaf:age 30 ;
+    foaf:knows ex:bob, ex:charlie ;
+    ex:worksFor ex:acmeCorp ;
+    foaf:interest ex:semanticWeb, ex:artificialIntelligence .
+
+ex:bob a foaf:Person ;
+    foaf:name "Bob Smith" ;
+    foaf:age 35 ;
+    foaf:knows ex:alice ;
+    ex:worksFor ex:techStart ;
+    foaf:interest ex:machineLearning .
+
+ex:charlie a foaf:Person ;
+    foaf:name "Charlie Brown" ;
+    foaf:age 28 ;
+    foaf:knows ex:alice ;
+    ex:worksFor ex:acmeCorp ;
+    foaf:interest ex:dataScience, ex:semanticWeb .
+
+ex:acmeCorp a ex:Organization ;
+    rdfs:label "ACME Corporation" ;
+    ex:industry "Technology" ;
+    ex:foundedIn 2010 ;
+    ex:hasEmployee ex:alice, ex:charlie ;
+    ex:headquarteredIn ex:sanFrancisco .
+
+ex:techStart a ex:Organization ;
+    rdfs:label "Tech Startup Inc" ;
+    ex:industry "Software" ;
+    ex:foundedIn 2020 ;
+    ex:hasEmployee ex:bob ;
+    ex:headquarteredIn ex:austin .
+
+ex:semanticWeb a ex:Topic ;
+    rdfs:label "Semantic Web" ;
+    rdfs:comment "Technologies for machine-readable web data" .
+
+ex:artificialIntelligence a ex:Topic ;
+    rdfs:label "Artificial Intelligence" ;
+    rdfs:comment "Computer systems that perform tasks requiring human intelligence" .
+
+ex:machineLearning a ex:Topic ;
+    rdfs:label "Machine Learning" ;
+    rdfs:comment "AI systems that improve through experience" .
+
+ex:dataScience a ex:Topic ;
+    rdfs:label "Data Science" ;
+    rdfs:comment "Interdisciplinary field using statistics and algorithms" .
+
+ex:sanFrancisco a ex:Location ;
+    rdfs:label "San Francisco, CA" ;
+    ex:country "USA" ;
+    ex:state "California" .
+
+ex:austin a ex:Location ;
+    rdfs:label "Austin, TX" ;
+    ex:country "USA" ;
+    ex:state "Texas" .`;
+    }
+
+    /**
+     * Update graph statistics display
+     */
+    updateGraphStats() {
+        try {
+            if (this.graphVisualizer && this.graphVisualizer.network) {
+                const nodes = this.graphVisualizer.network.body.data.nodes;
+                const edges = this.graphVisualizer.network.body.data.edges;
+                
+                const nodeCount = nodes ? nodes.length : 0;
+                const edgeCount = edges ? edges.length : 0;
+                
+                // Update the UI counters
+                const nodeCountEl = document.getElementById('node-count');
+                const edgeCountEl = document.getElementById('edge-count');
+                if (nodeCountEl) nodeCountEl.textContent = nodeCount;
+                if (edgeCountEl) edgeCountEl.textContent = edgeCount;
+                
+                console.log(`Graph stats updated - Nodes: ${nodeCount}, Edges: ${edgeCount}`);
+            }
+        } catch (error) {
+            console.warn('Could not update graph stats:', error);
+        }
+    }
 
     setupEventListeners() {
         // Execute Query button
@@ -66,25 +399,132 @@ export class SPARQLBrowser {
     }
 
     setupTabs() {
+        // Add a small delay to ensure DOM is ready
+        setTimeout(() => {
+            const tabButtons = document.querySelectorAll('.sparql-tabs .tab-inner-btn');
+            const tabContents = document.querySelectorAll('.sparql-tab-content');
+
+            console.log('Setting up SPARQL tabs. Found', tabButtons.length, 'tab buttons');
+
+            if (tabButtons.length === 0) {
+                console.warn('No SPARQL tab buttons found - DOM might not be ready');
+                return;
+            }
+
+            tabButtons.forEach((button, index) => {
+                const targetTab = button.getAttribute('data-tab');
+                console.log(`Tab ${index}: ${targetTab}`);
+                
+                button.addEventListener('click', () => {
+                    console.log(`Tab clicked: ${targetTab}`);
+                    
+                    // Remove active class from all buttons and contents
+                    tabButtons.forEach(btn => {
+                        if (btn.classList) {
+                            btn.classList.remove('active');
+                        }
+                    });
+                    tabContents.forEach(content => {
+                        if (content.classList) {
+                            content.classList.remove('active');
+                        }
+                    });
+                    
+                    // Add active class to clicked button and corresponding content
+                    if (button.classList) {
+                        button.classList.add('active');
+                    }
+                    const targetContent = document.getElementById(targetTab);
+                    if (targetContent && targetContent.classList) {
+                        targetContent.classList.add('active');
+                    }
+                    
+                    // Special handling for Graph tab - trigger manual graph update
+                    if (targetTab === 'sparql-graph') {
+                        console.log('Graph tab clicked - calling refreshGraphVisualization');
+                        this.refreshGraphVisualization();
+                    }
+                });
+            });
+        }, 100);
+    }
+    
+    refreshGraphVisualization() {
+        console.log('Refreshing graph visualization...');
+        
+        // Get current content from turtle editor
+        const turtleElement = document.getElementById('turtle-editor');
+        let rdfContent = '';
+        
+        if (this.turtleEditor && this.turtleEditor.getValue) {
+            // Use Atuin TurtleEditor method
+            rdfContent = this.turtleEditor.getValue();
+            console.log('Got RDF content from Atuin TurtleEditor:', rdfContent ? rdfContent.substring(0, 100) + '...' : 'empty');
+        } else if (turtleElement && turtleElement.value) {
+            // Fallback to basic textarea
+            rdfContent = turtleElement.value;
+            console.log('Got RDF content from basic textarea:', rdfContent ? rdfContent.substring(0, 100) + '...' : 'empty');
+        }
+        
+        // Ensure graph container has proper dimensions
+        const graphContainer = document.getElementById('rdf-graph-container');
+        if (graphContainer) {
+            if (graphContainer.offsetHeight === 0) {
+                graphContainer.style.height = '400px';
+                graphContainer.style.width = '100%';
+                console.log('Set graph container dimensions to 400px height');
+            }
+            
+            console.log('Graph container dimensions:', graphContainer.offsetWidth, 'x', graphContainer.offsetHeight);
+        }
+        
+        // Emit MODEL_SYNCED event to trigger automatic graph update via event bus
+        if (rdfContent.trim() && window.eventBus && window.EVENTS) {
+            console.log('Emitting MODEL_SYNCED event for graph update...');
+            window.eventBus.emit(window.EVENTS.MODEL_SYNCED, rdfContent);
+            
+            // Update stats after a delay to allow graph to process
+            setTimeout(() => {
+                this.updateGraphStats();
+            }, 500);
+            
+        } else if (rdfContent.trim() && this.graphVisualizer && this.graphVisualizer.updateGraph) {
+            // Fallback: direct update if event bus not available
+            console.log('Calling updateGraph directly on GraphVisualizer...');
+            try {
+                this.graphVisualizer.updateGraph(rdfContent);
+                setTimeout(() => {
+                    this.updateGraphStats();
+                }, 500);
+                console.log('Graph visualization updated successfully');
+            } catch (error) {
+                console.error('Failed to update graph visualization:', error);
+            }
+        } else {
+            console.log('No RDF content or graph visualizer not available');
+            console.log('RDF content length:', rdfContent.length);
+            console.log('GraphVisualizer available:', !!this.graphVisualizer);
+            console.log('Event bus available:', !!(window.eventBus && window.EVENTS));
+        }
+    }
+
+    activateGraphTab() {
+        // Manually activate the graph tab without clicking
         const tabButtons = document.querySelectorAll('.sparql-tabs .tab-inner-btn');
         const tabContents = document.querySelectorAll('.sparql-tab-content');
-
-        tabButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                const targetTab = button.getAttribute('data-tab');
-                
-                // Remove active class from all buttons and contents
-                tabButtons.forEach(btn => btn.classList.remove('active'));
-                tabContents.forEach(content => content.classList.remove('active'));
-                
-                // Add active class to clicked button and corresponding content
-                button.classList.add('active');
-                const targetContent = document.getElementById(targetTab);
-                if (targetContent) {
-                    targetContent.classList.add('active');
-                }
-            });
-        });
+        
+        // Remove active class from all
+        tabButtons.forEach(btn => btn.classList.remove('active'));
+        tabContents.forEach(content => content.classList.remove('active'));
+        
+        // Activate graph tab
+        const graphTabButton = document.querySelector('[data-tab="sparql-graph"]');
+        const graphTabContent = document.getElementById('sparql-graph');
+        
+        if (graphTabButton) graphTabButton.classList.add('active');
+        if (graphTabContent) graphTabContent.classList.add('active');
+        
+        console.log('Manually activated graph tab');
     }
 
     async loadEndpoints() {
@@ -209,22 +649,91 @@ export class SPARQLBrowser {
     }
 
     displayGraphResult(result) {
-        // Switch to Graph tab
-        const graphTab = document.querySelector('[data-tab="sparql-graph"]');
-        if (graphTab) {
-            graphTab.click();
+        console.log('displayGraphResult called with:', result);
+        
+        // Switch to Graph tab safely
+        try {
+            const graphTab = document.querySelector('[data-tab="sparql-graph"]');
+            if (graphTab && typeof graphTab.click === 'function') {
+                graphTab.click();
+                console.log('Switched to graph tab');
+            } else {
+                console.warn('Graph tab not found or not clickable');
+                // Manually switch to graph tab content
+                this.activateGraphTab();
+            }
+        } catch (error) {
+            console.error('Error switching to graph tab:', error);
+            this.activateGraphTab();
         }
         
-        // For now, just display the raw result - TODO: implement visualization
+        // Debug: Log the full RDF structure
+        console.log('Full RDF object:', result.rdf);
+        console.log('Full graph object:', result.graph);
+        
+        // Load RDF data into turtle editor and trigger graph visualization via event bus
+        let rdfContent = null;
+        if (result.rdf && result.rdf.content) {
+            rdfContent = result.rdf.content;
+        } else if (result.rdf && typeof result.rdf === 'string') {
+            rdfContent = result.rdf;
+        } else if (result.rdf && result.rdf.data) {
+            rdfContent = result.rdf.data;
+        }
+        
+        if (rdfContent) {
+            console.log('Found RDF content:', rdfContent.substring(0, 200) + '...');
+            
+            // Update turtle editor with RDF content (use Atuin editor if available)
+            if (this.turtleEditor && this.turtleEditor.setValue) {
+                // Use Atuin TurtleEditor with syntax highlighting
+                this.turtleEditor.setValue(rdfContent);
+                console.log('Updated Atuin turtle editor with syntax highlighting');
+            } else {
+                // Fallback to basic textarea
+                const turtleElement = document.getElementById('turtle-editor');
+                if (turtleElement) {
+                    turtleElement.value = rdfContent;
+                    console.log('Updated basic turtle editor');
+                }
+            }
+            
+            // Emit event bus message for Atuin integration
+            if (window.eventBus && window.EVENTS) {
+                // Primary event that Atuin components listen for
+                window.eventBus.emit(window.EVENTS.MODEL_SYNCED, rdfContent);
+                console.log('Emitted MODEL_SYNCED event for Atuin graph visualization');
+            }
+        } else {
+            console.log('No RDF content found in result - structure:', Object.keys(result.rdf || {}));
+        }
+        
+        // Display graph metadata and controls
         const graphContainer = document.getElementById('rdf-graph-container');
         if (graphContainer && result.graph) {
+            const nodeCount = result.graph.nodes ? result.graph.nodes.length : 0;
+            const edgeCount = result.graph.edges ? result.graph.edges.length : 0;
+            
             graphContainer.innerHTML = `
                 <div style="padding: 1rem;">
-                    <h4>CONSTRUCT Query Result (${result.graph.length} triples)</h4>
-                    <pre style="background: #f5f5f5; padding: 1rem; overflow: auto; max-height: 300px;">${JSON.stringify(result.graph, null, 2)}</pre>
+                    <h4>CONSTRUCT Query Result (${nodeCount} nodes, ${edgeCount} edges)</h4>
+                    <div id="atuin-graph-display" style="width: 100%; height: 400px; border: 1px solid #ddd; margin: 1rem 0;">
+                        <!-- Atuin graph visualization will be rendered here -->
+                    </div>
+                    <details style="margin-top: 1rem;">
+                        <summary>Raw Graph Data</summary>
+                        <pre style="background: #f5f5f5; padding: 1rem; overflow: auto; max-height: 200px;">${JSON.stringify(result.graph, null, 2)}</pre>
+                    </details>
                 </div>
             `;
-            console.log(`Loaded graph with ${result.graph.length} triples`);
+            
+            // Update node and edge counts in the UI
+            const nodeCountEl = document.getElementById('node-count');
+            const edgeCountEl = document.getElementById('edge-count');
+            if (nodeCountEl) nodeCountEl.textContent = nodeCount;
+            if (edgeCountEl) edgeCountEl.textContent = edgeCount;
+            
+            console.log(`Loaded graph with ${nodeCount} nodes and ${edgeCount} edges`);
         }
     }
 
@@ -325,6 +834,42 @@ export class SPARQLBrowser {
             
         } catch (error) {
             console.error(`Insert error: ${error.message}`);
+        }
+    }
+
+    /**
+     * Cleanup method to remove event listeners and dispose of resources
+     */
+    cleanup() {
+        try {
+            // Remove event bus listeners
+            if (this.modelSyncHandler && window.eventBus && window.EVENTS) {
+                window.eventBus.off(window.EVENTS.MODEL_SYNCED, this.modelSyncHandler);
+            }
+            
+            // Dispose of Atuin components if they have cleanup methods
+            if (this.turtleEditor && this.turtleEditor.dispose) {
+                this.turtleEditor.dispose();
+            }
+            if (this.sparqlEditor && this.sparqlEditor.dispose) {
+                this.sparqlEditor.dispose();
+            }
+            if (this.graphVisualizer && this.graphVisualizer.dispose) {
+                this.graphVisualizer.dispose();
+            }
+            
+            // Clear references
+            this.turtleEditor = null;
+            this.sparqlEditor = null;
+            this.graphVisualizer = null;
+            this.clipsManager = null;
+            this.clipsUI = null;
+            this.endpointManager = null;
+            this.modelSyncHandler = null;
+            
+            console.log('SPARQL Browser cleaned up');
+        } catch (error) {
+            console.warn('Error during SPARQL Browser cleanup:', error);
         }
     }
 }

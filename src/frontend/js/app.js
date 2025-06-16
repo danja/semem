@@ -7,12 +7,64 @@ import { initSettingsForm } from './components/settings.js';
 import { checkAPIHealth } from './services/apiService.js';
 import { SPARQLBrowser } from './components/sparqlBrowser.js';
 
+// Import Atuin and event bus for RDF visualization
+let TurtleEditor, GraphVisualizer, LoggerService, eventBus, EVENTS;
+
+/**
+ * Initialize Atuin components and real event bus
+ */
+async function initializeAtuin() {
+    try {
+        // Use the real event bus from evb package
+        console.log('Setting up real event bus for RDF visualization');
+        
+        const { eventBus, EVENTS } = await import('evb');
+        
+        // Make the real event bus globally available
+        window.eventBus = eventBus;
+        window.EVENTS = EVENTS;
+        
+        console.log('Real event bus initialized for RDF visualization');
+        return true;
+    } catch (error) {
+        console.warn('Failed to initialize real event bus, falling back to mock:', error.message);
+        
+        // Fallback to simple mock only if real event bus fails
+        window.eventBus = {
+            listeners: {},
+            emit(event, data) {
+                console.log(`EventBus: Emitting ${event}`, data);
+                if (this.listeners[event]) {
+                    this.listeners[event].forEach(callback => callback(data));
+                }
+            },
+            on(event, callback) {
+                if (!this.listeners[event]) {
+                    this.listeners[event] = [];
+                }
+                this.listeners[event].push(callback);
+                console.log(`EventBus: Added listener for ${event}`);
+            }
+        };
+        
+        window.EVENTS = {
+            MODEL_SYNCED: 'rdf:model:synced',
+            GRAPH_UPDATED: 'dataset:graph:updated'
+        };
+        
+        return false;
+    }
+}
+
 /**
  * Initialize the entire application
  */
-export function initializeApp() {
+export async function initializeApp() {
     // Setup debug functionality
     setupDebug();
+    
+    // Initialize Atuin components first
+    await initializeAtuin();
     
     // Initialize loading indicator
     const loadingIndicator = document.getElementById('loading-indicator');
@@ -54,8 +106,8 @@ export function initializeApp() {
     initIndexForm();
     initSettingsForm();
 
-    // Initialize SPARQL browser
-    initSPARQLBrowser();
+    // Initialize SPARQL browser with Atuin integration
+    await initSPARQLBrowser();
 
     // Failsafe mechanism to ensure loading indicator doesn't get stuck
     setupFailsafeTimeout();
@@ -151,20 +203,28 @@ function initIndexForm() {
     console.log('TODO: Implement index form initialization');
 }
 
-function initSPARQLBrowser() {
+async function initSPARQLBrowser() {
     // Initialize SPARQL browser when the tab becomes visible
     const sparqlTab = document.querySelector('[data-tab="sparql-browser"]');
     if (sparqlTab) {
-        const initializeSparqlBrowser = () => {
+        const initializeSparqlBrowser = async () => {
             // Check if we're on the SPARQL browser tab
             const sparqlSection = document.getElementById('sparql-browser-tab');
             if (sparqlSection && !sparqlSection.classList.contains('hidden')) {
                 if (!window.sparqlBrowser) {
                     console.log('Initializing SPARQL Browser...');
                     window.sparqlBrowser = new SPARQLBrowser();
-                    window.sparqlBrowser.init().catch(error => {
-                        console.error('Failed to initialize SPARQL Browser:', error);
-                    });
+                    await window.sparqlBrowser.init();
+                    
+                    // Set up basic graph visualization listener
+                    if (window.eventBus && window.EVENTS) {
+                        window.eventBus.on(window.EVENTS.MODEL_SYNCED, (rdfContent) => {
+                            console.log('Received RDF content for visualization:', rdfContent);
+                            // This will be handled by the displayGraphResult method
+                        });
+                        
+                        console.log('Event bus listeners set up for RDF visualization');
+                    }
                 }
             }
         };

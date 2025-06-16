@@ -31,7 +31,8 @@ class UIServer {
         this.embeddingModel = options.embeddingModel || 'nomic-embed-text';
 
         // Configure SPARQL endpoints (list of servers to try in order)
-        this.sparqlEndpoints = options.sparqlEndpoints || [
+        // Support both old format (queryEndpoint/updateEndpoint) and new Config.js format (urlBase/query/update)
+        this.sparqlEndpoints = this.transformEndpoints(options.sparqlEndpoints) || [
             {
                 queryEndpoint: 'http://localhost:4030/semem/query',
                 updateEndpoint: 'http://localhost:4030/semem/update',
@@ -142,6 +143,17 @@ class UIServer {
         // Middleware
         this.app.use(express.json());
         this.app.use(express.urlencoded({ extended: true }));
+        
+        // Add timing middleware for performance tracking
+        this.app.use((req, res, next) => {
+            req.startTime = Date.now();
+            next();
+        });
+        
+        // Serve webpack dist files with /dist path
+        this.app.use('/dist', express.static(this.publicDir));
+        
+        // Also serve from root for main page
         this.app.use(express.static(this.publicDir));
         
         // Serve node_modules for Atuin CSS and other dependencies
@@ -933,8 +945,9 @@ Based on the above information and your knowledge, here is the user's question: 
         }
 
         // If we get here, all endpoints failed
-        logger.error(`All SPARQL endpoints failed. Last error:`, lastError);
-        throw new Error(`Failed to connect to any SPARQL endpoint. Last error: ${lastError.message}`);
+        logger.warn(`All SPARQL endpoints failed, but continuing without search service. Last error:`, lastError?.message);
+        // Don't throw error - allow server to start without SPARQL connectivity
+        this.searchService = null;
     }
 
     /**
@@ -1278,6 +1291,42 @@ Based on the above information and your knowledge, here is the user's question: 
     }
 
     /**
+     * Transform SPARQL endpoints from Config.js format to UIServer format
+     * @param {Array} endpoints - Array of endpoint configurations
+     * @returns {Array} Transformed endpoints
+     */
+    transformEndpoints(endpoints) {
+        if (!endpoints || !Array.isArray(endpoints)) {
+            return null;
+        }
+
+        return endpoints.map(endpoint => {
+            // If already in old format, return as-is
+            if (endpoint.queryEndpoint && endpoint.updateEndpoint) {
+                return endpoint;
+            }
+
+            // If in new Config.js format, transform it
+            if (endpoint.urlBase && endpoint.query && endpoint.update) {
+                return {
+                    queryEndpoint: `${endpoint.urlBase}${endpoint.query}`,
+                    updateEndpoint: `${endpoint.urlBase}${endpoint.update}`,
+                    auth: {
+                        user: endpoint.user || 'admin',
+                        password: endpoint.password || 'admin'
+                    },
+                    label: endpoint.label || 'Config Endpoint',
+                    dataset: endpoint.dataset
+                };
+            }
+
+            // Fallback: try to construct from available properties
+            console.warn('Unrecognized endpoint format:', endpoint);
+            return endpoint;
+        });
+    }
+
+    /**
      * Handle SPARQL endpoints listing
      * @param {Request} req - The Express request
      * @param {Response} res - The Express response
@@ -1287,14 +1336,18 @@ Based on the above information and your knowledge, here is the user's question: 
             // Return configured SPARQL endpoints
             const endpoints = this.sparqlEndpoints.map((endpoint, index) => ({
                 id: `endpoint-${index}`,
-                name: `SPARQL Endpoint ${index + 1}`,
+                name: endpoint.label || `SPARQL Endpoint ${index + 1}`,
+                label: endpoint.label || `SPARQL Endpoint ${index + 1}`,
                 queryUrl: endpoint.queryEndpoint,
+                queryEndpoint: endpoint.queryEndpoint, // For backward compatibility
                 updateUrl: endpoint.updateEndpoint,
+                updateEndpoint: endpoint.updateEndpoint, // For backward compatibility
                 defaultGraph: this.graphName,
+                dataset: endpoint.dataset,
                 auth: endpoint.auth ? { username: endpoint.auth.user } : null // Don't expose password
             }));
 
-            res.json(endpoints);
+            res.json({ endpoints });
         } catch (error) {
             logger.error('Error listing SPARQL endpoints:', error);
             res.status(500).json({
@@ -1351,7 +1404,7 @@ Based on the above information and your knowledge, here is the user's question: 
      */
     async handleSparqlConstruct(req, res) {
         try {
-            const { query, endpoint } = req.body;
+            const { query, endpoint, format = 'turtle' } = req.body;
 
             if (!query) {
                 return res.status(400).json({
@@ -1379,15 +1432,64 @@ Based on the above information and your knowledge, here is the user's question: 
             } else {
                 rdfData = '';
             }
+
+            // Analyze RDF data to extract graph information for visualization
+            const graphInfo = this.analyzeRdfForVisualization(rdfData, results);
             
             logger.info('SPARQL CONSTRUCT query executed successfully');
-            res.set('Content-Type', 'text/turtle');
-            res.send(rdfData);
+            
+            // Return JSON response with RDF data and metadata for frontend
+            res.json({
+                success: true,
+                query: query,
+                endpoint: targetEndpoint,
+                rdf: {
+                    data: rdfData,
+                    format: format,
+                    size: rdfData.length,
+                    encoding: 'utf-8'
+                },
+                graph: {
+                    nodes: graphInfo.nodes,
+                    edges: graphInfo.edges,
+                    nodeCount: graphInfo.nodeCount,
+                    edgeCount: graphInfo.edgeCount,
+                    namespaces: graphInfo.namespaces
+                },
+                metadata: {
+                    timestamp: new Date().toISOString(),
+                    executionTime: Date.now() - req.startTime || 0,
+                    queryType: 'CONSTRUCT',
+                    resultFormat: format
+                },
+                events: {
+                    // Event bus configuration for frontend
+                    triggerTurtleEditor: {
+                        type: 'rdf-data-loaded',
+                        data: {
+                            content: rdfData,
+                            format: format,
+                            source: 'sparql-construct'
+                        }
+                    },
+                    triggerGraphVisualization: {
+                        type: 'graph-data-updated',
+                        data: {
+                            nodes: graphInfo.nodes,
+                            edges: graphInfo.edges,
+                            layout: 'force-directed',
+                            source: 'sparql-construct'
+                        }
+                    }
+                }
+            });
         } catch (error) {
             logger.error('SPARQL CONSTRUCT query error:', error);
             res.status(500).json({
+                success: false,
                 error: 'SPARQL CONSTRUCT query failed',
-                message: error.message
+                message: error.message,
+                timestamp: new Date().toISOString()
             });
         }
     }
@@ -1553,6 +1655,164 @@ Based on the above information and your knowledge, here is the user's question: 
                 message: error.message
             });
         }
+    }
+
+    /**
+     * Analyze RDF data to extract graph information for visualization
+     * @param {string} rdfData - RDF data in Turtle format
+     * @param {Object} rawResults - Raw results from SPARQL service
+     * @returns {Object} Graph information with nodes, edges, and metadata
+     */
+    analyzeRdfForVisualization(rdfData, rawResults) {
+        const nodes = new Map();
+        const edges = [];
+        const namespaces = new Set();
+        
+        try {
+            // Parse RDF data to extract graph structure
+            const lines = rdfData.split('\n').filter(line => line.trim() && !line.trim().startsWith('#'));
+            
+            lines.forEach((line, index) => {
+                const trimmedLine = line.trim();
+                if (!trimmedLine || trimmedLine.startsWith('@prefix') || trimmedLine.startsWith('PREFIX')) {
+                    // Extract namespace prefixes
+                    const nsMatch = trimmedLine.match(/@prefix\s+(\w+):\s+<([^>]+)>/);
+                    if (nsMatch) {
+                        namespaces.add({
+                            prefix: nsMatch[1],
+                            uri: nsMatch[2]
+                        });
+                    }
+                    return;
+                }
+                
+                // Parse triple statements (basic implementation)
+                const tripleMatch = trimmedLine.match(/(<[^>]+>|\w+:\w+)\s+(<[^>]+>|\w+:\w+)\s+(<[^>]+>|"[^"]*"|\w+:\w+)/);
+                if (tripleMatch) {
+                    const subject = tripleMatch[1];
+                    const predicate = tripleMatch[2];
+                    const object = tripleMatch[3];
+                    
+                    // Add subject node
+                    if (!nodes.has(subject)) {
+                        nodes.set(subject, {
+                            id: subject,
+                            label: this.extractLabelFromUri(subject),
+                            type: this.determineNodeType(subject),
+                            uri: subject.startsWith('<') ? subject.slice(1, -1) : subject,
+                            properties: {}
+                        });
+                    }
+                    
+                    // Add object node if it's a URI (not a literal)
+                    if (object.startsWith('<') || (object.includes(':') && !object.startsWith('"'))) {
+                        if (!nodes.has(object)) {
+                            nodes.set(object, {
+                                id: object,
+                                label: this.extractLabelFromUri(object),
+                                type: this.determineNodeType(object),
+                                uri: object.startsWith('<') ? object.slice(1, -1) : object,
+                                properties: {}
+                            });
+                        }
+                        
+                        // Add edge between subject and object
+                        edges.push({
+                            id: `edge-${edges.length}`,
+                            source: subject,
+                            target: object,
+                            predicate: predicate,
+                            label: this.extractLabelFromUri(predicate),
+                            uri: predicate.startsWith('<') ? predicate.slice(1, -1) : predicate
+                        });
+                    } else {
+                        // Add literal value as property
+                        const subjectNode = nodes.get(subject);
+                        if (subjectNode) {
+                            const propertyName = this.extractLabelFromUri(predicate);
+                            subjectNode.properties[propertyName] = object.startsWith('"') ? 
+                                object.slice(1, -1) : object;
+                        }
+                    }
+                }
+            });
+        } catch (parseError) {
+            logger.warn('Error parsing RDF for visualization:', parseError);
+        }
+        
+        // Convert Maps to Arrays for JSON serialization
+        const nodeArray = Array.from(nodes.values());
+        const namespaceArray = Array.from(namespaces);
+        
+        return {
+            nodes: nodeArray,
+            edges: edges,
+            nodeCount: nodeArray.length,
+            edgeCount: edges.length,
+            namespaces: namespaceArray
+        };
+    }
+    
+    /**
+     * Extract a readable label from a URI
+     * @param {string} uri - The URI to extract label from
+     * @returns {string} Readable label
+     */
+    extractLabelFromUri(uri) {
+        if (!uri) return 'Unknown';
+        
+        // Remove angle brackets if present
+        const cleanUri = uri.startsWith('<') ? uri.slice(1, -1) : uri;
+        
+        // Handle prefixed names
+        if (cleanUri.includes(':') && !cleanUri.startsWith('http')) {
+            return cleanUri.split(':').pop();
+        }
+        
+        // Extract last part of URI path
+        const parts = cleanUri.split(/[/#]/);
+        const lastPart = parts[parts.length - 1];
+        
+        // Clean up the label
+        return lastPart
+            .replace(/([A-Z])/g, ' $1') // Add spaces before capital letters
+            .replace(/[-_]/g, ' ') // Replace hyphens and underscores with spaces
+            .trim()
+            .toLowerCase()
+            .replace(/^\w/, c => c.toUpperCase()); // Capitalize first letter
+    }
+    
+    /**
+     * Determine node type based on URI patterns
+     * @param {string} uri - The URI to analyze
+     * @returns {string} Node type
+     */
+    determineNodeType(uri) {
+        if (!uri) return 'unknown';
+        
+        const cleanUri = uri.startsWith('<') ? uri.slice(1, -1) : uri;
+        
+        // Common RDF/RDFS/OWL patterns
+        if (cleanUri.includes('rdf-schema') || cleanUri.includes('rdfs')) return 'schema';
+        if (cleanUri.includes('rdf-syntax') || cleanUri.includes('rdf#')) return 'rdf';
+        if (cleanUri.includes('owl')) return 'ontology';
+        if (cleanUri.includes('foaf')) return 'person';
+        if (cleanUri.includes('dc') || cleanUri.includes('dublin')) return 'metadata';
+        if (cleanUri.includes('skos')) return 'concept';
+        
+        // Ragno-specific patterns
+        if (cleanUri.includes('ragno')) {
+            if (cleanUri.includes('Entity')) return 'entity';
+            if (cleanUri.includes('SemanticUnit')) return 'semantic-unit';
+            if (cleanUri.includes('Relationship')) return 'relationship';
+        }
+        
+        // Default classification
+        if (cleanUri.includes('#type') || cleanUri.includes('type')) return 'type';
+        if (cleanUri.includes('Class')) return 'class';
+        if (cleanUri.includes('Property')) return 'property';
+        
+        return 'resource';
     }
 
     /**

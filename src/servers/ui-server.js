@@ -6,6 +6,7 @@ import dotenv from 'dotenv';
 // Load environment variables from .env file
 dotenv.config();
 import UIServer from '../services/search/UIServer.js';
+import Config from '../Config.js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -18,7 +19,7 @@ logger.setLevel(logLevel);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(path.dirname(path.dirname(__filename))); // Go up two levels to project root
 
-// Load configuration
+// Load configuration using Config.js (which includes SPARQL endpoints)
 let config = {
     port: parseInt(process.env.PORT) || 4120, // Updated port to 4120
     graphName: process.env.GRAPH_NAME || 'http://danny.ayers.name/content',
@@ -26,20 +27,44 @@ let config = {
     embeddingModel: process.env.EMBEDDING_MODEL || 'nomic-embed-text'
 };
 
-// Check if a config file path was provided
-const configPath = process.argv[2] || process.env.CONFIG_FILE;
-
-if (configPath) {
+// Initialize Config.js to get SPARQL endpoints and other settings  
+async function loadConfig() {
     try {
-        const configFile = path.resolve(__dirname, configPath);
-        logger.info(`Loading configuration from ${configFile}`);
-        const configData = fs.readFileSync(configFile, 'utf8');
-        const fileConfig = JSON.parse(configData);
-        config = { ...config, ...fileConfig };
+        const configPath = process.argv[2] || process.env.CONFIG_FILE;
+        const configInstance = new Config(configPath);
+        await configInstance.init();
+        
+        // Extract SPARQL endpoints from Config.js
+        config.sparqlEndpoints = configInstance.config.sparqlEndpoints;
+        
+        // Extract other relevant config
+        if (configInstance.config.models) {
+            config.chatModel = configInstance.config.models.chat?.model || config.chatModel;
+            config.embeddingModel = configInstance.config.models.embedding?.model || config.embeddingModel;
+        }
+        
+        logger.info('Loaded Config.js with SPARQL endpoints:', config.sparqlEndpoints?.map(e => e.label));
+        
     } catch (error) {
-        logger.error(`Failed to load configuration file: ${error.message}`);
+        logger.warn(`Failed to load Config.js: ${error.message}, using defaults`);
+        
+        // Fallback: try to load from JSON file if Config.js fails
+        const configPath = process.argv[2] || process.env.CONFIG_FILE;
+        if (configPath) {
+            try {
+                const configFile = path.resolve(__dirname, configPath);
+                logger.info(`Loading configuration from ${configFile}`);
+                const configData = fs.readFileSync(configFile, 'utf8');
+                const fileConfig = JSON.parse(configData);
+                config = { ...config, ...fileConfig };
+            } catch (error) {
+                logger.error(`Failed to load configuration file: ${error.message}`);
+            }
+        }
     }
 }
+
+await loadConfig();
 
 // Add SPARQL endpoints from environment if provided
 if (process.env.SPARQL_ENDPOINTS) {
