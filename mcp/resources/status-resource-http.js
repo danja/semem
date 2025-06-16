@@ -66,6 +66,25 @@ export function registerStatusResourcesHttp(server) {
           name: "Workflow Examples",
           description: "Common workflow examples and templates",
           mimeType: "application/json"
+        },
+        // Phase 2 - Ragno Resources
+        {
+          uri: "semem://ragno/pipeline",
+          name: "Ragno Pipeline Guide",
+          description: "Complete guide to using Ragno knowledge graph pipeline",
+          mimeType: "application/json"
+        },
+        {
+          uri: "semem://ragno/examples",
+          name: "Ragno Examples",
+          description: "Knowledge graph construction and analysis examples",
+          mimeType: "application/json"
+        },
+        {
+          uri: "semem://ragno/sparql/queries",
+          name: "SPARQL Query Templates",
+          description: "Pre-built SPARQL queries for common graph operations",
+          mimeType: "application/json"
         }
       ]
     };
@@ -144,14 +163,15 @@ export function registerStatusResourcesHttp(server) {
                 "semem_get_metrics - Get detailed system metrics",
                 "semem_health_check - Comprehensive health check"
               ],
-              future_ragno_api: [
-                "ragno_decompose_corpus - Text to RDF knowledge graph decomposition (Phase 2)", 
-                "ragno_create_entity - Create RDF entities with ontology compliance (Phase 2)",
-                "ragno_create_semantic_unit - Create semantic text units (Phase 2)",
-                "ragno_export_rdf - Export knowledge graph to RDF formats (Phase 2)",
-                "ragno_query_graph - SPARQL queries on knowledge graph (Phase 2)",
-                "ragno_graph_analytics - Run graph analytics (Phase 2)",
-                "ragno_vector_search - HNSW-based vector similarity search (Phase 2)"
+              ragno_knowledge_graph_api: [
+                "ragno_decompose_corpus - Text to RDF knowledge graph decomposition",
+                "ragno_search_dual - Combined exact + vector + PersonalizedPageRank search",
+                "ragno_get_entities - Retrieve entities with filtering and pagination",
+                "ragno_vector_search - HNSW-based vector similarity search on embeddings",
+                "ragno_export_rdf - Export knowledge graph in multiple RDF formats",
+                "ragno_query_sparql - Execute SPARQL queries against the graph",
+                "ragno_analyze_graph - Graph analysis (centrality, communities, connectivity)",
+                "ragno_get_graph_stats - Basic and detailed graph statistics"
               ],
               future_zpt_api: [
                 "zpt_select_corpuscles - Multi-dimensional content selection (Phase 3)",
@@ -184,15 +204,18 @@ export function registerStatusResourcesHttp(server) {
                   "Comprehensive health checks and metrics"
                 ]
               },
-              phase_2_planned: {
+              phase_2_completed: {
                 description: "Ragno Knowledge Graph Operations",
                 tools_count: 8,
                 features: [
                   "Corpus decomposition to RDF knowledge graphs",
-                  "Entity and relationship creation with ontology compliance",
+                  "Dual search (exact + vector + PersonalizedPageRank)",
+                  "Entity retrieval with advanced filtering",
                   "SPARQL querying and graph analytics",
-                  "RDF export in multiple formats",
-                  "HNSW-based vector similarity search"
+                  "RDF export in multiple formats (Turtle, N-Triples, JSON-LD)",
+                  "HNSW-based vector similarity search",
+                  "Graph analysis (centrality, communities, connectivity)",
+                  "Comprehensive graph statistics and metrics"
                 ]
               },
               phase_3_planned: {
@@ -623,6 +646,405 @@ ragno:maybe a owl:AnnotationProperty ;
                 "Use semem_decompose_corpus for advanced text processing",
                 "Use ZPT navigation for multi-dimensional content exploration",
                 "Use SPARQL backend for semantic web integration"
+              ]
+            }
+          }, null, 2)
+        }]
+      };
+    }
+
+    // Phase 2 - Ragno Resources
+    if (uri === "semem://ragno/pipeline") {
+      return {
+        contents: [{
+          uri: "semem://ragno/pipeline",
+          mimeType: "application/json",
+          text: JSON.stringify({
+            title: "Ragno Knowledge Graph Pipeline Guide",
+            version: "2.0.0",
+            description: "Complete guide to building knowledge graphs with Ragno",
+            
+            pipeline_overview: {
+              step_1: "Text Decomposition - Break corpus into semantic units",
+              step_2: "Entity Extraction - Identify and classify entities",
+              step_3: "Relationship Discovery - Find connections between entities",
+              step_4: "Graph Enrichment - Add embeddings and attributes",
+              step_5: "Analysis & Querying - Explore the knowledge graph"
+            },
+            
+            complete_workflow: {
+              description: "End-to-end knowledge graph construction",
+              steps: [
+                {
+                  step: 1,
+                  tool: "ragno_decompose_corpus",
+                  description: "Transform text into RDF knowledge graph",
+                  example: {
+                    textChunks: [
+                      {
+                        content: "Machine learning is a subset of artificial intelligence that enables computers to learn without explicit programming.",
+                        source: "ml_overview.txt"
+                      }
+                    ],
+                    options: {
+                      extractRelationships: true,
+                      generateSummaries: true,
+                      minEntityConfidence: 0.7
+                    }
+                  }
+                },
+                {
+                  step: 2,
+                  tool: "ragno_get_entities",
+                  description: "Retrieve and filter extracted entities",
+                  example: {
+                    filters: {
+                      minFrequency: 2,
+                      isEntryPoint: true,
+                      limit: 50
+                    }
+                  }
+                },
+                {
+                  step: 3,
+                  tool: "ragno_search_dual",
+                  description: "Search across the knowledge graph",
+                  example: {
+                    query: "artificial intelligence machine learning",
+                    options: {
+                      exactMatchThreshold: 0.8,
+                      vectorSimilarityThreshold: 0.7,
+                      combinedLimit: 20
+                    }
+                  }
+                },
+                {
+                  step: 4,
+                  tool: "ragno_analyze_graph",
+                  description: "Analyze graph structure and communities",
+                  example: {
+                    analysisTypes: ["centrality", "communities", "statistics"],
+                    options: {
+                      topK: 10,
+                      includeDetails: true
+                    }
+                  }
+                },
+                {
+                  step: 5,
+                  tool: "ragno_export_rdf",
+                  description: "Export final knowledge graph",
+                  example: {
+                    format: "turtle",
+                    includeEmbeddings: false,
+                    includeStatistics: true
+                  }
+                }
+              ]
+            },
+            
+            best_practices: {
+              text_preparation: [
+                "Clean and preprocess text chunks",
+                "Ensure chunks are semantically coherent",
+                "Include source metadata for traceability"
+              ],
+              entity_extraction: [
+                "Set appropriate confidence thresholds",
+                "Review and validate extracted entities",
+                "Use domain-specific entity types when possible"
+              ],
+              graph_analysis: [
+                "Start with basic statistics before complex analysis",
+                "Use PersonalizedPageRank for semantic navigation",
+                "Combine multiple search methods for best results"
+              ]
+            }
+          }, null, 2)
+        }]
+      };
+    }
+
+    if (uri === "semem://ragno/examples") {
+      return {
+        contents: [{
+          uri: "semem://ragno/examples",
+          mimeType: "application/json",
+          text: JSON.stringify({
+            title: "Ragno Knowledge Graph Examples",
+            version: "2.0.0",
+            
+            examples: {
+              "simple_text_analysis": {
+                description: "Basic text decomposition and entity extraction",
+                input: {
+                  textChunks: [
+                    {
+                      content: "The cat sat on the mat. The dog ran in the park.",
+                      source: "simple_story"
+                    }
+                  ]
+                },
+                expected_output: {
+                  entities: ["cat", "dog", "mat", "park"],
+                  relationships: ["cat sits_on mat", "dog runs_in park"],
+                  semantic_units: 2
+                }
+              },
+              
+              "scientific_paper_analysis": {
+                description: "Decompose scientific content into knowledge graph",
+                input: {
+                  textChunks: [
+                    {
+                      content: "Neural networks are computational models inspired by biological neural networks. Deep learning uses multiple layers of neural networks to learn complex patterns.",
+                      source: "deep_learning_paper.pdf"
+                    }
+                  ],
+                  options: {
+                    extractRelationships: true,
+                    generateSummaries: true,
+                    minEntityConfidence: 0.8,
+                    maxEntitiesPerUnit: 15
+                  }
+                },
+                expected_entities: [
+                  "neural networks",
+                  "computational models",
+                  "biological neural networks",
+                  "deep learning",
+                  "multiple layers",
+                  "complex patterns"
+                ]
+              },
+              
+              "entity_search_and_filtering": {
+                description: "Find specific entities in the knowledge graph",
+                searches: [
+                  {
+                    description: "Find all AI-related entities",
+                    tool: "ragno_search_dual",
+                    query: "artificial intelligence machine learning",
+                    expected_results: ["neural networks", "deep learning", "algorithms"]
+                  },
+                  {
+                    description: "Get high-frequency entities",
+                    tool: "ragno_get_entities",
+                    filters: {
+                      minFrequency: 5,
+                      limit: 20
+                    }
+                  }
+                ]
+              },
+              
+              "graph_analysis_workflow": {
+                description: "Comprehensive graph analysis example",
+                steps: [
+                  {
+                    analysis: "Basic Statistics",
+                    tool: "ragno_get_graph_stats",
+                    params: { detailed: false }
+                  },
+                  {
+                    analysis: "Centrality Analysis",
+                    tool: "ragno_analyze_graph",
+                    params: {
+                      analysisTypes: ["centrality"],
+                      options: { topK: 10 }
+                    }
+                  },
+                  {
+                    analysis: "Community Detection",
+                    tool: "ragno_analyze_graph",
+                    params: {
+                      analysisTypes: ["communities"],
+                      options: { includeDetails: true }
+                    }
+                  }
+                ]
+              },
+              
+              "rdf_export_examples": {
+                description: "Different RDF export formats",
+                exports: [
+                  {
+                    format: "turtle",
+                    description: "Human-readable RDF format",
+                    use_case: "Documentation and debugging"
+                  },
+                  {
+                    format: "jsonld",
+                    description: "JSON-based RDF format",
+                    use_case: "Web applications and APIs"
+                  },
+                  {
+                    format: "ntriples",
+                    description: "Simple line-based RDF format",
+                    use_case: "Large-scale data processing"
+                  }
+                ]
+              }
+            },
+            
+            integration_patterns: {
+              "with_semantic_memory": {
+                description: "Combine Ragno with Semem memory management",
+                workflow: [
+                  "Store interactions with semem_store_interaction",
+                  "Retrieve relevant memories with semem_retrieve_memories",
+                  "Decompose retrieved content with ragno_decompose_corpus",
+                  "Search knowledge graph with ragno_search_dual"
+                ]
+              },
+              
+              "with_sparql_backend": {
+                description: "Use SPARQL storage for persistent knowledge graphs",
+                setup: [
+                  "Switch to SPARQL backend with semem_switch_storage_backend",
+                  "Decompose corpus with ragno_decompose_corpus",
+                  "Query with ragno_query_sparql",
+                  "Export with ragno_export_rdf"
+                ]
+              }
+            }
+          }, null, 2)
+        }]
+      };
+    }
+
+    if (uri === "semem://ragno/sparql/queries") {
+      return {
+        contents: [{
+          uri: "semem://ragno/sparql/queries",
+          mimeType: "application/json",
+          text: JSON.stringify({
+            title: "SPARQL Query Templates for Ragno",
+            version: "2.0.0",
+            description: "Pre-built SPARQL queries for common knowledge graph operations",
+            
+            basic_queries: {
+              "list_all_entities": {
+                query: `PREFIX ragno: <http://purl.org/stuff/ragno/>
+SELECT ?entity ?label WHERE {
+  ?entity a ragno:Entity .
+  ?entity skos:prefLabel ?label .
+}`,
+                description: "List all entities in the knowledge graph"
+              },
+              
+              "count_entities_by_type": {
+                query: `PREFIX ragno: <http://purl.org/stuff/ragno/>
+SELECT ?type (COUNT(?entity) as ?count) WHERE {
+  ?entity a ragno:Entity .
+  ?entity ragno:subType ?type .
+} GROUP BY ?type ORDER BY DESC(?count)`,
+                description: "Count entities grouped by type"
+              },
+              
+              "find_entity_relationships": {
+                query: `PREFIX ragno: <http://purl.org/stuff/ragno/>
+SELECT ?source ?relationship ?target WHERE {
+  ?rel a ragno:Relationship .
+  ?rel ragno:sourceEntity ?source .
+  ?rel ragno:targetEntity ?target .
+  ?rel rdfs:label ?relationship .
+}`,
+                description: "Find all relationships between entities"
+              }
+            },
+            
+            advanced_queries: {
+              "high_frequency_entities": {
+                query: `PREFIX ragno: <http://purl.org/stuff/ragno/>
+SELECT ?entity ?label ?frequency WHERE {
+  ?entity a ragno:Entity .
+  ?entity skos:prefLabel ?label .
+  ?entity ragno:frequency ?frequency .
+  FILTER(?frequency > 5)
+} ORDER BY DESC(?frequency)`,
+                description: "Find entities with high frequency mentions"
+              },
+              
+              "connected_entities": {
+                query: `PREFIX ragno: <http://purl.org/stuff/ragno/>
+SELECT ?entity1 ?entity2 ?connection WHERE {
+  ?entity1 ragno:connectsTo ?entity2 .
+  ?connection ragno:sourceEntity ?entity1 .
+  ?connection ragno:targetEntity ?entity2 .
+  ?connection rdfs:label ?connectionType .
+}`,
+                description: "Find entities that are directly connected"
+              },
+              
+              "semantic_units_with_entities": {
+                query: `PREFIX ragno: <http://purl.org/stuff/ragno/>
+SELECT ?unit ?content ?entity ?entityLabel WHERE {
+  ?unit a ragno:SemanticUnit .
+  ?unit ragno:content ?content .
+  ?unit ragno:mentions ?entity .
+  ?entity skos:prefLabel ?entityLabel .
+}`,
+                description: "Get semantic units and their mentioned entities"
+              },
+              
+              "entity_attributes": {
+                query: `PREFIX ragno: <http://purl.org/stuff/ragno/>
+SELECT ?entity ?attribute ?value WHERE {
+  ?entity a ragno:Entity .
+  ?attr ragno:belongsTo ?entity .
+  ?attr ragno:content ?attribute .
+  ?attr ragno:value ?value .
+}`,
+                description: "Retrieve entity attributes and values"
+              }
+            },
+            
+            analytical_queries: {
+              "graph_statistics": {
+                query: `PREFIX ragno: <http://purl.org/stuff/ragno/>
+SELECT 
+  (COUNT(DISTINCT ?entity) as ?entityCount)
+  (COUNT(DISTINCT ?unit) as ?unitCount) 
+  (COUNT(DISTINCT ?relationship) as ?relationshipCount)
+WHERE {
+  { ?entity a ragno:Entity . }
+  UNION
+  { ?unit a ragno:SemanticUnit . }
+  UNION
+  { ?relationship a ragno:Relationship . }
+}`,
+                description: "Get basic graph statistics"
+              },
+              
+              "most_connected_entities": {
+                query: `PREFIX ragno: <http://purl.org/stuff/ragno/>
+SELECT ?entity ?label (COUNT(?connection) as ?degree) WHERE {
+  ?entity a ragno:Entity .
+  ?entity skos:prefLabel ?label .
+  {
+    ?entity ragno:connectsTo ?other .
+    ?connection ragno:sourceEntity ?entity .
+  } UNION {
+    ?other ragno:connectsTo ?entity .
+    ?connection ragno:targetEntity ?entity .
+  }
+} GROUP BY ?entity ?label ORDER BY DESC(?degree)`,
+                description: "Find most connected entities (highest degree)"
+              }
+            },
+            
+            usage_examples: {
+              "basic_exploration": [
+                "Start with list_all_entities to see what's in the graph",
+                "Use count_entities_by_type to understand entity distribution",
+                "Explore connections with find_entity_relationships"
+              ],
+              "analysis_workflow": [
+                "Get overview with graph_statistics",
+                "Find important entities with most_connected_entities",
+                "Examine high-frequency entities with high_frequency_entities",
+                "Dive deeper with semantic_units_with_entities"
               ]
             }
           }, null, 2)
