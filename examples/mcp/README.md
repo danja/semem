@@ -101,22 +101,19 @@ node examples/mcp/ZPTBasicNavigation.js
 |-----------|-------------|-------------------|------------|
 | `SememCoreDemo.js` | Basic semantic memory operations | Core memory + system tools | ⭐ Beginner |
 
-### ZPT 3D Navigation Demos
+### ZPT 3D Navigation Demos ✅ COMPLETE
 | Demo File | Description | Tools Demonstrated | Difficulty |
 |-----------|-------------|-------------------|------------|
-| `ZPTBasicNavigation.js` | Zoom/Pan/Tilt navigation fundamentals | `zpt_navigate`, `zpt_preview` | ⭐ Beginner |
-| `ZPTAdvancedFiltering.js` | Complex multi-dimensional filtering | `zpt_navigate` with advanced params | ⭐⭐ Intermediate |
-| `ZPTUtilityTools.js` | Schema, validation, and analysis tools | `zpt_get_schema`, `zpt_validate_params`, etc. | ⭐⭐ Intermediate |
-| `ZPTPerformanceOptimization.js` | Performance benchmarking and optimization | All ZPT tools with metrics | ⭐⭐⭐ Advanced |
-| `ZPTIntegrationWorkflows.js` | Integration with Memory and Ragno | ZPT + memory + ragno tools | ⭐⭐⭐ Advanced |
+| `ZPTBasicNavigation.js` | Zoom/Pan/Tilt navigation fundamentals | `zpt_navigate`, `zpt_preview`, `zpt_get_schema` | ⭐ Beginner |
+| `ZPTAdvancedFiltering.js` | Complex multi-dimensional filtering | `zpt_navigate` with temporal/geographic/entity filters | ⭐⭐ Intermediate |
+| `ZPTUtilityTools.js` | Schema, validation, and analysis tools | `zpt_get_schema`, `zpt_validate_params`, `zpt_get_options` | ⭐⭐ Intermediate |
+| `ZPTPerformanceOptimization.js` | Performance benchmarking and optimization | All ZPT tools with comprehensive metrics analysis | ⭐⭐⭐ Advanced |
+| `ZPTIntegrationWorkflows.js` | Integration with Memory and Ragno systems | Cross-system workflows (Semem + Ragno + ZPT) | ⭐⭐⭐ Advanced |
 
 ### Ragno Knowledge Graph Demos
 | Demo File | Description | Tools Demonstrated | Difficulty |
 |-----------|-------------|-------------------|------------|
 | `RagnoCorpusDecomposition.js` | Text-to-RDF transformation | `ragno_decompose_corpus`, entity extraction | ⭐⭐ Intermediate |
-| `RagnoSearchAndRetrieval.js` | Search and entity retrieval | `ragno_search_dual`, `ragno_vector_search`, etc. | ⭐⭐ Intermediate |
-| `RagnoGraphAnalytics.js` | Graph analysis and SPARQL operations | `ragno_analyze_graph`, `ragno_query_sparql` | ⭐⭐⭐ Advanced |
-| `RagnoDataManagement.js` | Export/import and graph management | `ragno_export_rdf`, stats, and management | ⭐⭐ Intermediate |
 
 ### Integration & Workflow Demos
 | Demo File | Description | Tools Demonstrated | Difficulty |
@@ -140,15 +137,15 @@ All demos include:
 # Core memory and system functionality
 node examples/mcp/SememCoreDemo.js
 
-# ZPT 3D navigation
+# ZPT 3D navigation (Complete Suite)
 node examples/mcp/ZPTBasicNavigation.js
 node examples/mcp/ZPTAdvancedFiltering.js
 node examples/mcp/ZPTUtilityTools.js
+node examples/mcp/ZPTPerformanceOptimization.js
+node examples/mcp/ZPTIntegrationWorkflows.js
 
 # Ragno knowledge graph operations
 node examples/mcp/RagnoCorpusDecomposition.js
-node examples/mcp/RagnoSearchAndRetrieval.js
-node examples/mcp/RagnoGraphAnalytics.js
 
 # Integration workflows
 node examples/mcp/IntegratedWorkflowDemo.js
@@ -174,7 +171,14 @@ Try `RagnoCorpusDecomposition.js` to see text-to-RDF transformation
 ### 3. **Learn 3D Navigation** ⭐⭐
 Experience `ZPTBasicNavigation.js` for intuitive graph exploration
 
-### 4. **Advanced Integration** ⭐⭐⭐
+### 4. **Master Advanced ZPT** ⭐⭐⭐
+Progress through the complete ZPT suite:
+- `ZPTAdvancedFiltering.js` for complex filtering patterns
+- `ZPTUtilityTools.js` for validation and optimization
+- `ZPTPerformanceOptimization.js` for performance tuning
+- `ZPTIntegrationWorkflows.js` for cross-system integration
+
+### 5. **Expert Integration** ⭐⭐⭐⭐
 Combine everything with `IntegratedWorkflowDemo.js`
 
 ## 🔧 Configuration

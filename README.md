@@ -215,12 +215,18 @@ node examples/basic/MemoryEmbeddingJSON.js
 # Knowledge graph processing  
 node examples/ragno/RagnoPipelineDemo.js
 
-# MCP server integration
+# MCP server integration (32 tools + 15 resources)
 npm run mcp-server-new     # Start MCP server
-npm run mcp-example        # Run client example
+node examples/mcp/SememCoreDemo.js           # Core memory operations
+node examples/mcp/RagnoCorpusDecomposition.js # Knowledge graphs
+node examples/mcp/ZPTBasicNavigation.js      # 3D navigation
 
-# ZPT content processing
-node examples/zpt/BasicNavigation.js
+# Complete ZPT suite (5 comprehensive demos)
+node examples/mcp/ZPTBasicNavigation.js      # Navigation fundamentals
+node examples/mcp/ZPTAdvancedFiltering.js    # Multi-dimensional filtering
+node examples/mcp/ZPTUtilityTools.js         # Schema and validation
+node examples/mcp/ZPTPerformanceOptimization.js # Performance tuning
+node examples/mcp/ZPTIntegrationWorkflows.js # Cross-system integration
 ```
 
 ## 🧠 Core Components
@@ -244,10 +250,11 @@ node examples/zpt/BasicNavigation.js
 - **Transformation pipelines** for content processing
 
 ### Model Context Protocol (MCP)
-- **Standardized API** for LLM integration
-- **Tool definitions** for all Semem capabilities
-- **Resource management** for data access
-- **Schema validation** for reliable interactions
+- **32 comprehensive tools** covering all Semem capabilities
+- **15 specialized resources** for documentation and data access
+- **Complete ZPT integration** with 6 navigation tools
+- **Cross-system workflows** combining Memory + Ragno + ZPT
+- **Standardized API** for LLM integration with schema validation
 
 ## 🤖 Advanced Algorithms
 
@@ -283,10 +290,14 @@ The `examples/` directory contains comprehensive demonstrations organized by fun
 
 - **🧠 Basic Examples** (`examples/basic/`): Core memory operations, embedding generation, search
 - **🕸️ Ragno Examples** (`examples/ragno/`): Knowledge graph processing, entity extraction, RDF
-- **🔌 MCP Examples** (`examples/mcp/`): Model Context Protocol integration
+- **🔌 MCP Examples** (`examples/mcp/`): **Complete MCP integration with 32 tools + 15 resources**
+  - **ZPT Suite**: 5 comprehensive demos covering all ZPT navigation capabilities ✅ COMPLETE
+  - **Memory Integration**: Core semantic memory with context management
+  - **Knowledge Graphs**: Ragno corpus decomposition and RDF processing
+  - **Cross-System Workflows**: Advanced integration patterns
 - **🎯 ZPT Examples** (`examples/zpt/`): Content processing and navigation
 
-See [examples/README.md](examples/README.md) for detailed documentation and usage instructions.
+See [examples/README.md](examples/README.md) and [examples/mcp/README.md](examples/mcp/README.md) for detailed documentation and usage instructions.
 
 ## 🔧 Configuration
 
@@ -352,15 +363,21 @@ Semem implements Anthropic's [Model Context Protocol (MCP)](https://docs.anthrop
 npm run mcp-server-new
 
 # Connect from Claude Desktop or other MCP clients
-# Server provides 10+ tools covering all Semem capabilities
+# Server provides 32 tools + 15 resources covering all Semem capabilities
 ```
 
-### Available MCP Tools
-- **Memory Operations**: Store, retrieve, generate responses
-- **Embeddings**: Generate vector embeddings for text
-- **Concepts**: Extract semantic concepts
-- **Knowledge Graph**: Entity creation, corpus decomposition  
-- **Content Processing**: Chunking, corpuscle selection
+### Available MCP Tools (32 Total)
+- **Memory Operations** (5 tools): Store, retrieve, generate responses, embeddings, concepts
+- **Storage Management** (6 tools): Backend switching, backup/restore, migration, statistics
+- **Context Management** (4 tools): Context windows, configuration, pruning, summarization
+- **System Monitoring** (4 tools): Configuration, metrics, health checks, system status
+- **Knowledge Graphs** (8 tools): Ragno corpus decomposition, entity extraction, SPARQL, analytics
+- **ZPT Navigation** (6 tools): 3D navigation, filtering, validation, schema, optimization
+
+### Available MCP Resources (15 Total)
+- **System Resources** (7): Status, API docs, schemas, configuration, metrics
+- **Ragno Resources** (4): Ontology, pipeline guide, examples, SPARQL templates
+- **ZPT Resources** (4): Navigation schema, examples, concepts guide, performance optimization
 
 ## 🧪 Testing
 
