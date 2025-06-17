@@ -7,6 +7,8 @@ import { initSettingsForm } from './components/settings.js';
 import { checkAPIHealth } from './services/apiService.js';
 import { SPARQLBrowser } from './components/sparqlBrowser.js';
 import { initMCPClient } from './components/mcpClient.js';
+import { initChatForms, loadChatProviders } from './components/chat.js';
+import { initMemoryVisualization } from './components/memoryVisualization.js';
 
 // Import Atuin and event bus for RDF visualization
 let TurtleEditor, GraphVisualizer, LoggerService, eventBus, EVENTS;
@@ -97,6 +99,9 @@ export async function initializeApp() {
     initSearchForm();
     initMemoryForms();
     
+    // Initialize memory visualization
+    initMemoryVisualization();
+    
     // Initialize chat forms and load providers
     initChatForms().then(() => {
         loadChatProviders();
@@ -186,14 +191,7 @@ function initMemoryForms() {
     console.log('TODO: Implement memory forms initialization');
 }
 
-function initChatForms() {
-    console.log('TODO: Implement chat forms initialization');
-    return Promise.resolve();
-}
-
-function loadChatProviders() {
-    console.log('TODO: Implement chat providers loading');
-}
+// Chat functions now imported from ./components/chat.js
 
 function initEmbeddingForm() {
     console.log('TODO: Implement embedding form initialization');

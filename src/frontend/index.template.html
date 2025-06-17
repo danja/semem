@@ -17,6 +17,7 @@
         <nav class="tabs">
             <button class="tab-btn active" data-tab="search">Search</button>
             <button class="tab-btn" data-tab="memory">Memory</button>
+            <button class="tab-btn" data-tab="memory-viz">Memory Viz</button>
             <button class="tab-btn" data-tab="chat">Chat</button>
             <button class="tab-btn" data-tab="embeddings">Embeddings</button>
             <button class="tab-btn" data-tab="concepts">Concepts</button>
@@ -150,6 +151,242 @@
                     <div id="memory-search-results" class="results-container">
                         <div class="results-placeholder">
                             <p>Search memories to see results</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Memory Visualization Tab -->
+            <section id="memory-viz-tab" class="tab-content">
+                <h2>Memory Visualization</h2>
+                <p class="tab-description">Explore memory relationships through interactive graphs and timelines</p>
+
+                <div class="memory-viz-tabs">
+                    <div class="tabs-inner">
+                        <button class="tab-inner-btn active" data-inner-tab="memory-graph">Memory Graph</button>
+                        <button class="tab-inner-btn" data-inner-tab="memory-timeline">Timeline</button>
+                        <button class="tab-inner-btn" data-inner-tab="memory-clusters">Clusters</button>
+                        <button class="tab-inner-btn" data-inner-tab="memory-search">Advanced Search</button>
+                    </div>
+
+                    <!-- Memory Graph Tab -->
+                    <div id="memory-graph" class="inner-tab-content active">
+                        <div class="graph-controls">
+                            <div class="control-group">
+                                <button id="load-memory-graph" class="btn primary-btn">Load Memory Graph</button>
+                                <button id="refresh-memory-graph" class="btn secondary-btn">Refresh</button>
+                                <div class="form-group inline">
+                                    <label for="memory-graph-limit">Max Memories:</label>
+                                    <input type="number" id="memory-graph-limit" min="10" max="500" value="50" class="small-input">
+                                </div>
+                                <div class="form-group inline">
+                                    <label for="memory-graph-threshold">Similarity Threshold:</label>
+                                    <input type="range" id="memory-graph-threshold" min="0" max="1" step="0.1" value="0.7">
+                                    <span id="memory-graph-threshold-value">0.7</span>
+                                </div>
+                            </div>
+                            <div class="graph-legend">
+                                <span class="legend-item">
+                                    <span class="node-color user-memory"></span>
+                                    User Memories
+                                </span>
+                                <span class="legend-item">
+                                    <span class="node-color assistant-memory"></span>
+                                    Assistant Memories
+                                </span>
+                                <span class="legend-item">
+                                    <span class="node-color concept-node"></span>
+                                    Concepts
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div id="memory-graph-container" class="memory-graph-container">
+                            <div class="graph-placeholder">
+                                <p>Click "Load Memory Graph" to visualize memory relationships</p>
+                            </div>
+                        </div>
+
+                        <div id="memory-graph-info" class="graph-info">
+                            <div class="info-stats">
+                                <span>Memories: <span id="memory-count">0</span></span>
+                                <span>Concepts: <span id="concept-count">0</span></span>
+                                <span>Connections: <span id="connection-count">0</span></span>
+                                <span>Selected: <span id="selected-memory">None</span></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Timeline Tab -->
+                    <div id="memory-timeline" class="inner-tab-content">
+                        <div class="timeline-controls">
+                            <div class="control-group">
+                                <button id="load-memory-timeline" class="btn primary-btn">Load Timeline</button>
+                                <div class="form-group inline">
+                                    <label for="timeline-period">Period:</label>
+                                    <select id="timeline-period" class="period-select">
+                                        <option value="day">Last 24 Hours</option>
+                                        <option value="week">Last Week</option>
+                                        <option value="month">Last Month</option>
+                                        <option value="all">All Time</option>
+                                    </select>
+                                </div>
+                                <div class="form-group inline">
+                                    <label for="timeline-grouping">Group by:</label>
+                                    <select id="timeline-grouping" class="grouping-select">
+                                        <option value="hour">Hour</option>
+                                        <option value="day">Day</option>
+                                        <option value="week">Week</option>
+                                        <option value="month">Month</option>
+                                    </select>
+                                </div>
+                                <div class="form-group checkbox-group">
+                                    <input type="checkbox" id="show-access-patterns" checked>
+                                    <label for="show-access-patterns">Show Access Patterns</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="memory-timeline-container" class="memory-timeline-container">
+                            <div class="timeline-placeholder">
+                                <p>Click "Load Timeline" to visualize memory creation and access patterns over time</p>
+                            </div>
+                        </div>
+
+                        <div id="timeline-details" class="timeline-details">
+                            <h4>Timeline Details</h4>
+                            <div id="timeline-memory-details" class="memory-details-panel">
+                                <p>Click on a timeline point to see memory details</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Clusters Tab -->
+                    <div id="memory-clusters" class="inner-tab-content">
+                        <div class="cluster-controls">
+                            <div class="control-group">
+                                <button id="load-memory-clusters" class="btn primary-btn">Load Clusters</button>
+                                <button id="recalculate-clusters" class="btn secondary-btn">Recalculate</button>
+                                <div class="form-group inline">
+                                    <label for="cluster-count">Number of Clusters:</label>
+                                    <input type="number" id="cluster-count" min="2" max="20" value="5" class="small-input">
+                                </div>
+                                <div class="form-group inline">
+                                    <label for="cluster-method">Method:</label>
+                                    <select id="cluster-method" class="cluster-method-select">
+                                        <option value="kmeans">K-Means</option>
+                                        <option value="semantic">Semantic Similarity</option>
+                                        <option value="temporal">Temporal</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="memory-clusters-container" class="memory-clusters-container">
+                            <div class="clusters-placeholder">
+                                <p>Click "Load Clusters" to see semantic memory clusters</p>
+                            </div>
+                        </div>
+
+                        <div id="cluster-details" class="cluster-details">
+                            <h4>Cluster Analysis</h4>
+                            <div id="cluster-stats" class="cluster-stats">
+                                <div class="stat-item">
+                                    <span class="stat-label">Total Clusters:</span>
+                                    <span id="total-clusters" class="stat-value">0</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Largest Cluster:</span>
+                                    <span id="largest-cluster" class="stat-value">0 memories</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Average Cluster Size:</span>
+                                    <span id="average-cluster-size" class="stat-value">0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Advanced Search Tab -->
+                    <div id="memory-search" class="inner-tab-content">
+                        <div class="advanced-search-section">
+                            <h3>Advanced Memory Search & Filtering</h3>
+                            
+                            <div class="search-filters">
+                                <div class="filter-group">
+                                    <h4>Text Filters</h4>
+                                    <div class="form-group">
+                                        <label for="search-query">Search Query:</label>
+                                        <input type="text" id="search-query" placeholder="Enter keywords or concepts..." class="search-input">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="search-in">Search In:</label>
+                                        <select id="search-in" class="filter-select" multiple>
+                                            <option value="prompt" selected>Prompts</option>
+                                            <option value="response" selected>Responses</option>
+                                            <option value="concepts">Concepts</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="filter-group">
+                                    <h4>Time Filters</h4>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="date-from">From:</label>
+                                            <input type="date" id="date-from" class="date-input">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="date-to">To:</label>
+                                            <input type="date" id="date-to" class="date-input">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="time-preset">Quick Presets:</label>
+                                        <select id="time-preset" class="preset-select">
+                                            <option value="">Custom Range</option>
+                                            <option value="today">Today</option>
+                                            <option value="yesterday">Yesterday</option>
+                                            <option value="week">This Week</option>
+                                            <option value="month">This Month</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="filter-group">
+                                    <h4>Memory Properties</h4>
+                                    <div class="form-group">
+                                        <label for="access-count-min">Min Access Count:</label>
+                                        <input type="number" id="access-count-min" min="0" value="0" class="small-input">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="similarity-threshold">Similarity Threshold:</label>
+                                        <input type="range" id="similarity-threshold" min="0" max="1" step="0.1" value="0.7">
+                                        <span id="similarity-threshold-value">0.7</span>
+                                    </div>
+                                    <div class="form-group checkbox-group">
+                                        <input type="checkbox" id="high-frequency-only">
+                                        <label for="high-frequency-only">High Frequency Only</label>
+                                    </div>
+                                    <div class="form-group checkbox-group">
+                                        <input type="checkbox" id="recent-only">
+                                        <label for="recent-only">Recent Only</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="search-actions">
+                                <button id="execute-memory-search" class="btn primary-btn">Search Memories</button>
+                                <button id="clear-filters" class="btn secondary-btn">Clear Filters</button>
+                                <button id="save-search" class="btn secondary-btn">Save Search</button>
+                                <button id="export-results" class="btn secondary-btn">Export Results</button>
+                            </div>
+
+                            <div id="memory-search-results" class="memory-search-results">
+                                <div class="results-placeholder">
+                                    <p>Configure filters and click "Search Memories" to find specific memories</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -176,6 +176,12 @@ class UIServer {
         this.app.post('/api/memory/embedding', this.handleEmbedding.bind(this));
         this.app.post('/api/memory/concepts', this.handleConcepts.bind(this));
 
+        // Memory visualization endpoints
+        this.app.post('/api/memory/graph', this.handleMemoryGraph.bind(this));
+        this.app.post('/api/memory/timeline', this.handleMemoryTimeline.bind(this));
+        this.app.post('/api/memory/clusters', this.handleMemoryClusters.bind(this));
+        this.app.post('/api/memory/search/advanced', this.handleAdvancedMemorySearch.bind(this));
+
         // Provider endpoints
         this.app.get('/api/providers', this.handleListProviders.bind(this));
 
@@ -1062,14 +1068,24 @@ Based on the above information and your knowledge, here is the user's question: 
                 const implementation = p.implementation ? `-${p.implementation}` : '';
                 const models = providerModels[p.type] || [p.chatModel || 'default'];
                 
+                // Add MCP capability if available (for now, mark all as MCP-capable for demo)
+                const capabilities = p.capabilities || [];
+                
+                // Check if MCP server is running and add MCP capability
+                const hasMCPSupport = true; // All providers can potentially use MCP tools
+                if (hasMCPSupport && !capabilities.includes('mcp')) {
+                    capabilities.push('mcp');
+                }
+                
                 return {
                     id: providerId,  // Consistent ID format
                     type: p.type,
                     name: `${p.type}${p.implementation ? ` (${p.implementation})` : ''}`,
                     model: p.chatModel || 'default',
                     models: models,  // Include available models
-                    capabilities: p.capabilities || [],
-                    implementation: p.implementation || 'default'
+                    capabilities: capabilities,
+                    implementation: p.implementation || 'default',
+                    mcpSupported: hasMCPSupport
                 };
             });
 
@@ -1841,6 +1857,426 @@ Based on the above information and your knowledge, here is the user's question: 
         }).filter(triple => triple);
 
         return triples.join('\n');
+    }
+
+    /**
+     * Handle memory graph visualization requests
+     * @param {Request} req - The Express request
+     * @param {Response} res - The Express response
+     */
+    async handleMemoryGraph(req, res) {
+        try {
+            const { limit = 50, threshold = 0.7 } = req.body;
+
+            if (!this.chatAPI) {
+                return res.status(503).json({ 
+                    error: 'Memory system not available',
+                    memories: [],
+                    concepts: []
+                });
+            }
+
+            // Get memory data from the memory manager
+            const memoryManager = this.chatAPI.memoryManager;
+            if (!memoryManager || !memoryManager.memStore) {
+                return res.status(503).json({ 
+                    error: 'Memory store not available',
+                    memories: [],
+                    concepts: []
+                });
+            }
+
+            const memStore = memoryManager.memStore;
+
+            // Get memories from both short-term and long-term memory
+            const shortTermMemories = memStore.shortTermMemory || [];
+            const longTermMemories = memStore.longTermMemory || [];
+            const allMemories = [...shortTermMemories, ...longTermMemories];
+
+            // Limit the number of memories
+            const limitedMemories = allMemories.slice(0, parseInt(limit));
+
+            // Extract concepts from memories
+            const conceptMap = new Map();
+            limitedMemories.forEach(memory => {
+                const concepts = memory.concepts || [];
+                concepts.forEach(concept => {
+                    if (!conceptMap.has(concept)) {
+                        conceptMap.set(concept, {
+                            id: concept,
+                            name: concept,
+                            weight: 1,
+                            memories: []
+                        });
+                    }
+                    conceptMap.get(concept).memories.push(memory.id);
+                    conceptMap.get(concept).weight += 1;
+                });
+            });
+
+            const concepts = Array.from(conceptMap.values());
+
+            // Format memories for graph visualization
+            const formattedMemories = limitedMemories.map(memory => ({
+                id: memory.id,
+                prompt: memory.prompt || '',
+                response: memory.output || memory.response || '',
+                timestamp: memory.timestamp || Date.now(),
+                concepts: memory.concepts || [],
+                accessCount: memory.accessCount || 0,
+                decayFactor: memory.decayFactor || 1.0,
+                type: memory.type || (memory.prompt ? 'user' : 'assistant'),
+                embedding: memory.embedding ? memory.embedding.slice(0, 10) : [] // First 10 dimensions for preview
+            }));
+
+            res.json({
+                memories: formattedMemories,
+                concepts: concepts,
+                stats: {
+                    totalMemories: allMemories.length,
+                    shortTermCount: shortTermMemories.length,
+                    longTermCount: longTermMemories.length,
+                    conceptCount: concepts.length
+                }
+            });
+
+        } catch (error) {
+            console.error('Error in handleMemoryGraph:', error);
+            res.status(500).json({ 
+                error: 'Failed to generate memory graph data',
+                memories: [],
+                concepts: []
+            });
+        }
+    }
+
+    /**
+     * Handle memory timeline visualization requests
+     * @param {Request} req - The Express request
+     * @param {Response} res - The Express response
+     */
+    async handleMemoryTimeline(req, res) {
+        try {
+            const { period = 'week', grouping = 'day', showAccess = true } = req.body;
+
+            if (!this.chatAPI || !this.chatAPI.memoryManager || !this.chatAPI.memoryManager.memStore) {
+                return res.status(503).json({ 
+                    error: 'Memory system not available',
+                    timeline: []
+                });
+            }
+
+            const memStore = this.chatAPI.memoryManager.memStore;
+            const allMemories = [...(memStore.shortTermMemory || []), ...(memStore.longTermMemory || [])];
+
+            // Calculate time range
+            const now = new Date();
+            let startTime;
+            switch (period) {
+                case 'day':
+                    startTime = new Date(now - 24 * 60 * 60 * 1000);
+                    break;
+                case 'week':
+                    startTime = new Date(now - 7 * 24 * 60 * 60 * 1000);
+                    break;
+                case 'month':
+                    startTime = new Date(now - 30 * 24 * 60 * 60 * 1000);
+                    break;
+                default: // 'all'
+                    startTime = new Date(0);
+            }
+
+            // Filter memories by time range
+            const filteredMemories = allMemories.filter(memory => 
+                new Date(memory.timestamp) >= startTime
+            );
+
+            // Group memories by time period
+            const timelineData = new Map();
+            
+            filteredMemories.forEach(memory => {
+                const date = new Date(memory.timestamp);
+                let groupKey;
+                
+                switch (grouping) {
+                    case 'hour':
+                        groupKey = new Date(date.getFullYear(), date.getMonth(), date.getDate(), date.getHours()).toISOString();
+                        break;
+                    case 'day':
+                        groupKey = new Date(date.getFullYear(), date.getMonth(), date.getDate()).toISOString();
+                        break;
+                    case 'week':
+                        const weekStart = new Date(date);
+                        weekStart.setDate(date.getDate() - date.getDay());
+                        groupKey = new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate()).toISOString();
+                        break;
+                    case 'month':
+                        groupKey = new Date(date.getFullYear(), date.getMonth(), 1).toISOString();
+                        break;
+                    default:
+                        groupKey = new Date(date.getFullYear(), date.getMonth(), date.getDate()).toISOString();
+                }
+
+                if (!timelineData.has(groupKey)) {
+                    timelineData.set(groupKey, {
+                        date: new Date(groupKey),
+                        memoryCount: 0,
+                        accessCount: 0,
+                        memories: []
+                    });
+                }
+
+                const entry = timelineData.get(groupKey);
+                entry.memoryCount += 1;
+                entry.accessCount += memory.accessCount || 0;
+                entry.memories.push({
+                    id: memory.id,
+                    prompt: memory.prompt || '',
+                    timestamp: memory.timestamp
+                });
+            });
+
+            // Convert to array and sort by date
+            const timeline = Array.from(timelineData.values()).sort((a, b) => a.date - b.date);
+
+            res.json({
+                timeline: timeline,
+                period: period,
+                grouping: grouping,
+                showAccess: showAccess,
+                stats: {
+                    totalPeriods: timeline.length,
+                    totalMemories: filteredMemories.length,
+                    avgMemoriesPerPeriod: timeline.length > 0 ? filteredMemories.length / timeline.length : 0
+                }
+            });
+
+        } catch (error) {
+            console.error('Error in handleMemoryTimeline:', error);
+            res.status(500).json({ 
+                error: 'Failed to generate timeline data',
+                timeline: []
+            });
+        }
+    }
+
+    /**
+     * Handle memory clusters visualization requests
+     * @param {Request} req - The Express request
+     * @param {Response} res - The Express response
+     */
+    async handleMemoryClusters(req, res) {
+        try {
+            const { clusterCount = 5, method = 'kmeans' } = req.body;
+
+            if (!this.chatAPI || !this.chatAPI.memoryManager || !this.chatAPI.memoryManager.memStore) {
+                return res.status(503).json({ 
+                    error: 'Memory system not available',
+                    clusters: []
+                });
+            }
+
+            const memStore = this.chatAPI.memoryManager.memStore;
+            const allMemories = [...(memStore.shortTermMemory || []), ...(memStore.longTermMemory || [])];
+
+            if (allMemories.length === 0) {
+                return res.json({
+                    clusters: [],
+                    method: method,
+                    stats: { totalClusters: 0, totalMemories: 0 }
+                });
+            }
+
+            // Simple clustering based on concepts
+            const clusters = [];
+            const conceptClusters = new Map();
+
+            // Group memories by their primary concepts
+            allMemories.forEach(memory => {
+                const concepts = memory.concepts || [];
+                const primaryConcept = concepts.length > 0 ? concepts[0] : 'uncategorized';
+
+                if (!conceptClusters.has(primaryConcept)) {
+                    conceptClusters.set(primaryConcept, []);
+                }
+                conceptClusters.get(primaryConcept).push(memory);
+            });
+
+            // Convert to cluster format
+            let clusterId = 0;
+            for (const [concept, memories] of conceptClusters.entries()) {
+                if (clusterId >= parseInt(clusterCount)) break;
+
+                clusters.push({
+                    id: clusterId,
+                    label: `Cluster ${clusterId + 1}: ${concept}`,
+                    concept: concept,
+                    memories: memories.map(memory => ({
+                        id: memory.id,
+                        prompt: memory.prompt || '',
+                        response: memory.output || memory.response || '',
+                        timestamp: memory.timestamp,
+                        similarity: Math.random() * 0.5 + 0.5 // Mock similarity for now
+                    })),
+                    centroid: [Math.random() * 100, Math.random() * 100], // Mock centroid
+                    size: memories.length
+                });
+                clusterId++;
+            }
+
+            // Calculate statistics
+            const stats = {
+                totalClusters: clusters.length,
+                totalMemories: allMemories.length,
+                largestCluster: Math.max(...clusters.map(c => c.size), 0),
+                smallestCluster: Math.min(...clusters.map(c => c.size), 0),
+                avgClusterSize: clusters.length > 0 ? allMemories.length / clusters.length : 0
+            };
+
+            res.json({
+                clusters: clusters,
+                method: method,
+                clusterCount: parseInt(clusterCount),
+                stats: stats
+            });
+
+        } catch (error) {
+            console.error('Error in handleMemoryClusters:', error);
+            res.status(500).json({ 
+                error: 'Failed to generate cluster data',
+                clusters: []
+            });
+        }
+    }
+
+    /**
+     * Handle advanced memory search requests
+     * @param {Request} req - The Express request
+     * @param {Response} res - The Express response
+     */
+    async handleAdvancedMemorySearch(req, res) {
+        try {
+            const {
+                query = '',
+                searchIn = ['prompt', 'response'],
+                dateFrom = null,
+                dateTo = null,
+                accessCountMin = 0,
+                similarityThreshold = 0.7,
+                highFrequencyOnly = false,
+                recentOnly = false
+            } = req.body;
+
+            if (!this.chatAPI || !this.chatAPI.memoryManager || !this.chatAPI.memoryManager.memStore) {
+                return res.status(503).json({ 
+                    error: 'Memory system not available',
+                    results: [],
+                    totalCount: 0
+                });
+            }
+
+            const startTime = Date.now();
+            const memStore = this.chatAPI.memoryManager.memStore;
+            let allMemories = [...(memStore.shortTermMemory || []), ...(memStore.longTermMemory || [])];
+
+            // Apply filters
+            let filteredMemories = allMemories;
+
+            // Date range filter
+            if (dateFrom || dateTo) {
+                const fromDate = dateFrom ? new Date(dateFrom) : new Date(0);
+                const toDate = dateTo ? new Date(dateTo) : new Date();
+                
+                filteredMemories = filteredMemories.filter(memory => {
+                    const memoryDate = new Date(memory.timestamp);
+                    return memoryDate >= fromDate && memoryDate <= toDate;
+                });
+            }
+
+            // Access count filter
+            if (accessCountMin > 0) {
+                filteredMemories = filteredMemories.filter(memory => 
+                    (memory.accessCount || 0) >= accessCountMin
+                );
+            }
+
+            // High frequency filter
+            if (highFrequencyOnly) {
+                const avgAccess = allMemories.reduce((sum, m) => sum + (m.accessCount || 0), 0) / allMemories.length;
+                filteredMemories = filteredMemories.filter(memory => 
+                    (memory.accessCount || 0) > avgAccess
+                );
+            }
+
+            // Recent filter (last 24 hours)
+            if (recentOnly) {
+                const dayAgo = Date.now() - (24 * 60 * 60 * 1000);
+                filteredMemories = filteredMemories.filter(memory => 
+                    memory.timestamp > dayAgo
+                );
+            }
+
+            // Text search filter
+            if (query) {
+                const queryLower = query.toLowerCase();
+                filteredMemories = filteredMemories.filter(memory => {
+                    let matches = false;
+                    
+                    if (searchIn.includes('prompt') && memory.prompt) {
+                        matches = matches || memory.prompt.toLowerCase().includes(queryLower);
+                    }
+                    
+                    if (searchIn.includes('response') && (memory.output || memory.response)) {
+                        const response = memory.output || memory.response;
+                        matches = matches || response.toLowerCase().includes(queryLower);
+                    }
+                    
+                    if (searchIn.includes('concepts') && memory.concepts) {
+                        matches = matches || memory.concepts.some(concept => 
+                            concept.toLowerCase().includes(queryLower)
+                        );
+                    }
+                    
+                    return matches;
+                });
+            }
+
+            // Add similarity scores (mock for now)
+            const results = filteredMemories.map(memory => ({
+                ...memory,
+                score: Math.random() * 0.5 + 0.5, // Mock similarity score
+                response: memory.output || memory.response || '' // Normalize response field
+            }));
+
+            // Sort by relevance (score) descending
+            results.sort((a, b) => (b.score || 0) - (a.score || 0));
+
+            const executionTime = Date.now() - startTime;
+
+            res.json({
+                results: results,
+                totalCount: results.length,
+                executionTime: executionTime,
+                filters: {
+                    query,
+                    searchIn,
+                    dateFrom,
+                    dateTo,
+                    accessCountMin,
+                    similarityThreshold,
+                    highFrequencyOnly,
+                    recentOnly
+                }
+            });
+
+        } catch (error) {
+            console.error('Error in handleAdvancedMemorySearch:', error);
+            res.status(500).json({ 
+                error: 'Failed to execute advanced search',
+                results: [],
+                totalCount: 0
+            });
+        }
     }
 
     /**

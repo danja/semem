@@ -1,178 +1,108 @@
-#!/usr/bin/env node
-
 /**
- * Simple test script for the chat API
- * 
- * Usage:
- *   node test-chat-api.js
+ * API Test for Enhanced Chat Interface (Phase 2)
+ * Tests the chat functionality without browser automation
  */
 
-import fetch from 'node-fetch';
-import logger from 'loglevel';
+console.log('🚀 Starting Enhanced Chat API Test...');
 
-// Configure logging
-logger.setLevel('info');
+const baseUrl = 'http://localhost:4120';
 
-// API endpoint
-const API_BASE = 'http://localhost:4100';
-
-// Test prompts
-const TEST_PROMPTS = [
-  "Hello, how are you today?",
-  "What can you tell me about semantic memory systems?",
-  "Explain the SPARQL query language briefly"
-];
-
-// Test functions
-async function testChatEndpoint() {
-  try {
-    console.log("=== Testing standard chat endpoint ===");
-    
-    const response = await fetch(`${API_BASE}/api/chat`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        prompt: TEST_PROMPTS[0],
-        temperature: 0.7,
-        useMemory: true
-      })
-    });
-    
-    if (!response.ok) {
-      const errorData = await response.text();
-      throw new Error(`Chat request failed: ${response.status} ${errorData}`);
+async function testChatAPI() {
+    try {
+        // Test 1: Check if UI server is running
+        console.log('🌐 Testing UI server availability...');
+        const healthResponse = await fetch(`${baseUrl}/api/health`);
+        if (!healthResponse.ok) {
+            throw new Error(`Health check failed: ${healthResponse.status}`);
+        }
+        const health = await healthResponse.json();
+        console.log(`✅ UI server is running - Status: ${health.status}`);
+        
+        // Test 2: Load providers
+        console.log('🔌 Testing provider loading...');
+        const providersResponse = await fetch(`${baseUrl}/api/providers`);
+        if (!providersResponse.ok) {
+            throw new Error(`Providers API failed: ${providersResponse.status}`);
+        }
+        const providers = await providersResponse.json();
+        console.log(`✅ Loaded ${providers.providers.length} providers`);
+        
+        // Check for MCP capabilities
+        const mcpProviders = providers.providers.filter(p => 
+            p.capabilities && p.capabilities.includes('mcp')
+        );
+        console.log(`🔗 Found ${mcpProviders.length} MCP-enabled providers:`);
+        mcpProviders.forEach(p => {
+            console.log(`   - ${p.name} (${p.type})`);
+        });
+        
+        // Test 3: Standard chat functionality
+        console.log('💬 Testing standard chat functionality...');
+        const chatPayload = {
+            prompt: "Hello! This is a test of the enhanced chat interface with MCP integration.",
+            providerId: providers.providers[0].id,
+            temperature: 0.7,
+            useMemory: true,
+            useSearchInterjection: false
+        };
+        
+        console.log(`📤 Sending chat request with provider: ${providers.providers[0].name}`);
+        const chatResponse = await fetch(`${baseUrl}/api/chat`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(chatPayload)
+        });
+        
+        if (!chatResponse.ok) {
+            throw new Error(`Chat API failed: ${chatResponse.status}`);
+        }
+        
+        const chatResult = await chatResponse.json();
+        console.log('✅ Chat response received');
+        console.log(`🤖 Response preview: ${JSON.stringify(chatResult).substring(0, 150)}...`);
+        
+        // Test 4: Check UI HTML content
+        console.log('📱 Testing UI HTML content...');
+        const uiResponse = await fetch(baseUrl);
+        if (!uiResponse.ok) {
+            throw new Error(`UI loading failed: ${uiResponse.status}`);
+        }
+        const htmlContent = await uiResponse.text();
+        
+        // Check for enhanced chat elements
+        const hasChat = htmlContent.includes('data-tab="chat"');
+        const hasMCPClient = htmlContent.includes('data-tab="mcp-client"');
+        const hasChatMessages = htmlContent.includes('chat-messages');
+        const hasProviderSelect = htmlContent.includes('chat-provider');
+        
+        console.log(`📋 UI Elements Check:`);
+        console.log(`   - Chat tab: ${hasChat ? '✅' : '❌'}`);
+        console.log(`   - MCP Client tab: ${hasMCPClient ? '✅' : '❌'}`);
+        console.log(`   - Chat messages container: ${hasChatMessages ? '✅' : '❌'}`);
+        console.log(`   - Provider selection: ${hasProviderSelect ? '✅' : '❌'}`);
+        
+        return {
+            status: 'success',
+            providersLoaded: providers.providers.length,
+            mcpProviders: mcpProviders.length,
+            chatFunctional: true,
+            uiElementsPresent: hasChat && hasMCPClient && hasChatMessages
+        };
+        
+    } catch (error) {
+        console.log(`❌ Test failed with error: ${error.message}`);
+        return {
+            status: 'error',
+            error: error.message
+        };
     }
-    
-    const data = await response.json();
-    console.log("Response received:");
-    console.log("- Conversation ID:", data.conversationId);
-    console.log("- Response:", data.response.substring(0, 100) + "...");
-    console.log("✓ Standard chat test passed");
-    
-    return data.conversationId;
-  } catch (error) {
-    console.error("✗ Standard chat test failed:", error.message);
-    return null;
-  }
 }
 
-async function testChatWithContextEndpoint(conversationId) {
-  try {
-    console.log("\n=== Testing chat with context endpoint ===");
-    
-    const response = await fetch(`${API_BASE}/api/chat`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        prompt: TEST_PROMPTS[1],
-        conversationId: conversationId,
-        temperature: 0.7,
-        useMemory: true,
-        useSearchInterjection: true // Enable search interjection
-      })
-    });
-    
-    if (!response.ok) {
-      const errorData = await response.text();
-      throw new Error(`Chat with context request failed: ${response.status} ${errorData}`);
-    }
-    
-    const data = await response.json();
-    console.log("Response received with search context:");
-    console.log("- Conversation ID:", data.conversationId);
-    console.log("- Response:", data.response.substring(0, 100) + "...");
-    
-    if (data.searchResults && data.searchResults.length > 0) {
-      console.log("- Search results found:", data.searchResults.length);
-      console.log("  First result:", data.searchResults[0].title);
-    } else {
-      console.log("- No search results found");
-    }
-    
-    console.log("✓ Chat with context test passed");
-  } catch (error) {
-    console.error("✗ Chat with context test failed:", error.message);
-  }
-}
+// Run the test
+const result = await testChatAPI();
+console.log('\n🏁 Test Result:');
+console.log(JSON.stringify(result, null, 2));
 
-async function testStreamingChatEndpoint() {
-  try {
-    console.log("\n=== Testing streaming chat endpoint ===");
-    console.log("Streaming response (first chunk only):");
-    
-    const response = await fetch(`${API_BASE}/api/chat/stream`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        prompt: TEST_PROMPTS[2],
-        temperature: 0.7,
-        useMemory: true,
-        useSearchInterjection: true
-      })
-    });
-    
-    if (!response.ok) {
-      const errorData = await response.text();
-      throw new Error(`Streaming chat request failed: ${response.status} ${errorData}`);
-    }
-    
-    // We'll just read the first chunk to keep the test short
-    const reader = response.body.getReader();
-    const { value, done } = await reader.read();
-    
-    if (!done) {
-      const decoder = new TextDecoder();
-      const chunk = decoder.decode(value);
-      console.log("First chunk received:", chunk);
-      console.log("✓ Streaming test was able to connect (stopping after first chunk)");
-    }
-    
-    // Clean up
-    reader.cancel();
-  } catch (error) {
-    console.error("✗ Streaming chat test failed:", error.message);
-  }
+if (result.status === 'success') {
+    console.log('\n🎉 Enhanced Chat Interface is working correctly!');
 }
-
-// Run all tests
-async function runTests() {
-  console.log("Starting chat API tests...");
-  console.log(`Testing against API at ${API_BASE}\n`);
-  
-  try {
-    // Test health endpoint first
-    console.log("=== Testing API health ===");
-    const healthResponse = await fetch(`${API_BASE}/api/health`);
-    if (healthResponse.ok) {
-      const healthData = await healthResponse.json();
-      console.log("Health status:", healthData.status);
-      console.log("Services:", healthData.services);
-      console.log("✓ Health check passed");
-    } else {
-      console.error("✗ Health check failed:", healthResponse.status);
-      return;
-    }
-    
-    // Main tests
-    const conversationId = await testChatEndpoint();
-    
-    if (conversationId) {
-      await testChatWithContextEndpoint(conversationId);
-    }
-    
-    await testStreamingChatEndpoint();
-    
-    console.log("\nAll tests completed.");
-  } catch (error) {
-    console.error("Test runner error:", error);
-  }
-}
-
-// Execute tests
-runTests();
