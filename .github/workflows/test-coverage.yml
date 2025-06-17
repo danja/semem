@@ -1,0 +1,77 @@
+name: Test & Coverage
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      fuseki:
+        image: stain/jena-fuseki
+        ports:
+          - 4030:3030
+        env:
+          ADMIN_PASSWORD: admin123
+          FUSEKI_DATASET_1: test-mem
+    strategy:
+      matrix:
+        node-version: [20.x]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install Ollama
+        run: |
+          curl -fsSL https://ollama.com/install.sh | sh
+          ollama pull nomic-embed-text
+          ollama pull qwen2:1.5b
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests with coverage
+        run: npm run test:ci
+        env:
+          NODE_ENV: test
+          SPARQL_ENDPOINT: http://localhost:4030
+          SPARQL_USER: admin
+          SPARQL_PASSWORD: admin123
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./coverage/coverage.json
+          flags: unittests
+          name: codecov-semem
+          fail_ci_if_error: true
+          verbose: true
+
+      - name: Cache coverage report
+        uses: actions/cache@v3
+        with:
+          path: ./coverage
+          key: ${{ runner.os }}-coverage-${{ github.sha }}
+
+  notify:
+    needs: test
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Notify status
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_COLOR: ${{ job.status }}
+          SLACK_TITLE: 'Test Coverage Report'
+          SLACK_MESSAGE: 'Coverage results available at Codecov'
+          SLACK_FOOTER: 'semem test coverage'

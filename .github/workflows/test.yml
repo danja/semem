@@ -1,0 +1,47 @@
+name: Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [20.x]
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: |
+        # Set up Git credentials for GitHub packages
+        git config --global url."https://github.com/".insteadOf git@github.com:
+        git config --global url."https://".insteadOf git://
+        # Install dependencies with fallback to npm install
+        npm ci || npm install
+    
+    - name: Run only mocked tests
+      run: ./run-mocked-tests.sh --reporter=verbose
+      
+    - name: Generate coverage for mocked tests only
+      run: ./run-mocked-tests.sh --coverage
+      
+    # Upload coverage to Codecov without token (public repo)
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        # No token needed for public repositories
+        directory: ./coverage
+        verbose: true
+        fail_ci_if_error: false

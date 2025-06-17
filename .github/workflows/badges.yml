@@ -1,0 +1,65 @@
+name: Update Badges
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  update-badges:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        persist-credentials: false
+        fetch-depth: 0
+    
+    - name: Use Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: |
+        # Set up Git credentials for GitHub packages
+        git config --global url."https://github.com/".insteadOf git@github.com:
+        git config --global url."https://".insteadOf git://
+        # Install dependencies with fallback to npm install
+        npm ci || npm install
+    
+    - name: Generate coverage for mocked tests only
+      run: ./run-mocked-tests.sh --coverage
+      
+    - name: Generate badges
+      uses: RubbaBoy/BYOB@v1.3.0
+      with:
+        NAME: ${{ github.repository_owner }}/semem
+        ICON: 'github'
+        STATUS: 'passing'
+        COLOR: '00DB45'
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Download Test Badge
+      uses: RubbaBoy/BYOB@v1.3.0
+      with:
+        NAME: ${{ github.repository_owner }}/semem
+        LABEL: 'tests'
+        STATUS: 'passing'
+        COLOR: '00DB45'
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Commit test reports
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add .
+        git commit -m "docs: update test badges [skip ci]" -a || echo "No changes to commit"
+        
+    - name: Push changes
+      uses: ad-m/github-push-action@master
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        branch: ${{ github.ref }}
