@@ -70,6 +70,47 @@ Core Semem functionality demonstrating memory storage, retrieval, and semantic o
 - Multi-provider LLM integration
 - JSON and SPARQL persistence
 
+#### 🌟 **SPARQLInferenceDemo.js** - Comprehensive SPARQL-Based Inference System
+
+The definitive demonstration of Semem's full capabilities using SPARQL storage for advanced semantic reasoning and cross-domain inference.
+
+**What it does:**
+- **SPARQL Ingestion**: Loads three discursive documents (climate science, urban planning, neuroscience) into RDF triplestore
+- **Knowledge Graph Construction**: Creates comprehensive RDF knowledge graph with entities, relationships, and semantic units
+- **Advanced SPARQL Queries**: Executes sophisticated inference queries for cross-domain analysis
+- **Semantic Question Answering**: Answers complex questions by reasoning across domains
+- **Graph Analytics**: Performs community detection, PageRank analysis, and centrality measures
+- **VSOM Visualization**: Creates vector self-organizing maps for high-dimensional embedding analysis
+- **HyDE Enhancement**: Uses hypothetical document embeddings for improved retrieval
+- **Multi-Modal Integration**: Combines vector search, graph traversal, and semantic reasoning
+
+**How to run:**
+```bash
+# Prerequisites: Fuseki SPARQL server running on localhost:3030
+docker run -d --name fuseki -p 3030:3030 stain/jena-fuseki
+# Create dataset named "semem" in Fuseki web interface (http://localhost:3030)
+
+# Run comprehensive SPARQL demo
+node examples/SPARQLInferenceDemo.js
+```
+
+**What to expect:**
+- Complete ingestion of 8,000+ words across three knowledge domains
+- RDF knowledge graph with 50+ entities and relationships
+- Advanced SPARQL queries revealing cross-domain connections
+- Semantic answers to questions like "How do neural networks relate to urban planning?"
+- Community detection revealing semantic clusters
+- PageRank analysis showing concept importance
+- VSOM clustering of document embeddings
+- Comprehensive system report with statistics and insights
+
+**Key Insights Demonstrated:**
+- SPARQL storage enables sophisticated semantic reasoning
+- Cross-domain entity extraction discovers conceptual bridges
+- Graph analytics reveal hidden relationship patterns  
+- Integrated pipeline enables complex multi-modal reasoning
+- Knowledge graphs facilitate interdisciplinary understanding
+
 ### 🕸️ Ragno Examples (`examples/ragno/`)
 
 Knowledge graph construction, entity extraction, and RDF processing using the Ragno subsystem.
