@@ -10,6 +10,8 @@ import { initMCPClient } from './components/mcpClient.js';
 import { initChatForms, loadChatProviders } from './components/chat.js';
 import { initMemoryVisualization } from './components/memoryVisualization.js';
 import { init as initVSOM } from './features/vsom/index.js';
+import { Console } from './components/Console/index.js';
+import { logger, replaceConsole } from './utils/logger.js';
 
 // Import Atuin and event bus for RDF visualization
 let TurtleEditor, GraphVisualizer, LoggerService, eventBus, EVENTS;
@@ -235,4 +237,56 @@ async function initSPARQLBrowser() {
         // Also initialize if already active
         setTimeout(initializeSparqlBrowser, 100);
     }
+}
+
+// Initialize the application when the DOM is fully loaded
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        // Initialize the app
+        initializeApp().then(() => {
+            // Initialize console after the app is loaded
+            const initializeConsole = () => {
+                const consoleContainer = document.createElement('div');
+                consoleContainer.id = 'console-root';
+                document.body.appendChild(consoleContainer);
+                
+                // Render the console component
+                const root = document.getElementById('console-root');
+                if (root) {
+                    import('preact').then(({ render, h }) => {
+                        render(h(Console, null), root);
+                    });
+                }
+                
+                // Replace console methods with our logger
+                replaceConsole();
+                
+                logger.info('Console initialized');
+            };
+            initializeConsole();
+        });
+    });
+} else {
+    initializeApp().then(() => {
+        // Initialize console after the app is loaded
+        const initializeConsole = () => {
+            const consoleContainer = document.createElement('div');
+            consoleContainer.id = 'console-root';
+            document.body.appendChild(consoleContainer);
+            
+            // Render the console component
+            const root = document.getElementById('console-root');
+            if (root) {
+                import('preact').then(({ render, h }) => {
+                    render(h(Console, null), root);
+                });
+            }
+            
+            // Replace console methods with our logger
+            replaceConsole();
+            
+            logger.info('Console initialized');
+        };
+        initializeConsole();
+    });
 }

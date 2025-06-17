@@ -10,6 +10,74 @@ Semem is a Node.js toolkit for AI memory management that integrates large langua
 ![Node.js](https://img.shields.io/badge/node-%3E%3D20.11.0-brightgreen.svg)
 ![Status](https://img.shields.io/badge/status-active-success.svg)
 
+## 🚀 Quick Start
+
+### Prerequisites
+- Node.js 20.11.0 or higher
+- npm (comes with Node.js)
+
+### Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/danja/semem.git
+   cd semem
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+### Starting the Application
+
+#### Option 1: Start all services (recommended)
+```bash
+npm start
+```
+This will start both the API server and UI server with a single command.
+
+#### Option 2: Start services individually
+```bash
+# Start API server
+npm run start:api
+
+# In a new terminal, start the UI server
+npm run start:ui
+```
+
+#### Development Mode
+For development with hot-reloading:
+```bash
+npm run dev
+```
+
+### Accessing the UI
+Once the servers are running, open your browser and navigate to:
+```
+http://localhost:3000
+```
+
+## 🖥️ UI Features
+
+### Interactive Console
+Access the developer console by clicking the tab on the right side of the screen. The console provides:
+- Real-time log viewing
+- Log level filtering (Error, Warn, Info, Debug, Trace)
+- Search functionality
+- Pause/Resume logging
+- Copy logs to clipboard
+
+### VSOM Visualization
+Explore high-dimensional data with the Vector Self-Organizing Map visualization:
+1. Navigate to the VSOM tab
+2. Load or train a SOM model
+3. Interact with the visualization
+4. Explore feature maps and clustering
+
+### SPARQL Browser
+Query and explore your knowledge graph using the built-in SPARQL browser.
+
 ## 🚀 Key Features
 
 - **🧠 Semantic Memory**: Intelligent context retrieval and memory organization with vector embeddings and SPARQL
@@ -21,7 +89,7 @@ Semem is a Node.js toolkit for AI memory management that integrates large langua
 - **🔗 Multi-Provider LLM Support**: Ollama, Claude, Mistral, and other providers via unified connector system
 - **📊 Multiple Storage Backends**: In-memory, JSON, and SPARQL/RDF with caching optimization
 
-## 🎨 VSOM Visualization
+## 📊 Data Visualization
 
 Semem includes an advanced VSOM (Vector Self-Organizing Map) visualization system for exploring high-dimensional data:
 
