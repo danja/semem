@@ -22,6 +22,7 @@
             <button class="tab-btn" data-tab="concepts">Concepts</button>
             <button class="tab-btn" data-tab="index">Index</button>
             <button class="tab-btn" data-tab="settings">Settings</button>
+            <button class="tab-btn" data-tab="mcp-client">MCP Client</button>
             <button class="tab-btn" data-tab="sparql-browser">SPARQL Browser</button>
         </nav>
 
@@ -431,6 +432,82 @@
                         <button type="submit" class="btn primary-btn">Save Settings</button>
                     </div>
                 </form>
+            </section>
+
+            <!-- MCP Client Tab -->
+            <section id="mcp-client-tab" class="tab-content">
+                <h2>MCP Client</h2>
+                
+                <div class="mcp-tabs">
+                    <div class="tabs-inner">
+                        <button class="tab-inner-btn active" data-tab="mcp-connection">Connection</button>
+                        <button class="tab-inner-btn" data-tab="mcp-tools">Tools</button>
+                        <button class="tab-inner-btn" data-tab="mcp-resources">Resources</button>
+                        <button class="tab-inner-btn" data-tab="mcp-prompts">Prompts</button>
+                    </div>
+
+                    <!-- Connection Tab -->
+                    <div id="mcp-connection" class="mcp-tab-content active">
+                        <div class="connection-status">
+                            <div class="connection-info">
+                                <div class="status-indicator" id="mcp-status-indicator"></div>
+                                <span id="mcp-status-text">Disconnected</span>
+                            </div>
+                            <div class="input-group">
+                                <input type="text" id="mcp-server-url" class="form-control" placeholder="MCP Server URL" value="http://localhost:3000">
+                                <button id="mcp-connect-btn" class="btn primary-btn">Connect</button>
+                            </div>
+                            <div id="mcp-server-info" class="server-info hidden">
+                                <h4>Server Information</h4>
+                                <div class="info-grid">
+                                    <div class="info-item">
+                                        <span class="info-label">Name</span>
+                                        <span id="mcp-server-name" class="info-value">-</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Version</span>
+                                        <span id="mcp-server-version" class="info-value">-</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Status</span>
+                                        <span id="mcp-server-status" class="info-value">-</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Uptime</span>
+                                        <span id="mcp-server-uptime" class="info-value">-</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tools Tab -->
+                    <div id="mcp-tools" class="mcp-tab-content">
+                        <div class="tools-list" id="mcp-tools-list">
+                            <div class="empty-state">
+                                <p>Connect to an MCP server to see available tools.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Resources Tab -->
+                    <div id="mcp-resources" class="mcp-tab-content">
+                        <div class="resources-list" id="mcp-resources-list">
+                            <div class="empty-state">
+                                <p>Connect to an MCP server to see available resources.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Prompts Tab -->
+                    <div id="mcp-prompts" class="mcp-tab-content">
+                        <div class="prompts-list" id="mcp-prompts-list">
+                            <div class="empty-state">
+                                <p>Connect to an MCP server to see available prompts.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </section>
 
             <!-- SPARQL Browser Tab -->

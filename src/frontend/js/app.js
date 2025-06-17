@@ -6,6 +6,7 @@ import { initTabs } from './components/tabs.js';
 import { initSettingsForm } from './components/settings.js';
 import { checkAPIHealth } from './services/apiService.js';
 import { SPARQLBrowser } from './components/sparqlBrowser.js';
+import { initMCPClient } from './components/mcpClient.js';
 
 // Import Atuin and event bus for RDF visualization
 let TurtleEditor, GraphVisualizer, LoggerService, eventBus, EVENTS;
@@ -108,6 +109,9 @@ export async function initializeApp() {
 
     // Initialize SPARQL browser with Atuin integration
     await initSPARQLBrowser();
+
+    // Initialize MCP Client
+    initMCPClient();
 
     // Failsafe mechanism to ensure loading indicator doesn't get stuck
     setupFailsafeTimeout();
