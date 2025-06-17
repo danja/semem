@@ -10,7 +10,7 @@ import { initMCPClient } from './components/mcpClient.js';
 import { initChatForms, loadChatProviders } from './components/chat.js';
 import { initMemoryVisualization } from './components/memoryVisualization.js';
 import { init as initVSOM } from './features/vsom/index.js';
-import Console from './components/Console/index.js';
+import Console from './components/Console/Console.js';
 import { logger, replaceConsole } from './utils/logger.js';
 
 // Import Atuin and event bus for RDF visualization
@@ -268,16 +268,24 @@ if (document.readyState === 'loading') {
             try {
                 // Import Preact and the Console component
                 const { h, render } = await import('preact');
-                const { default: Console } = await import('./components/Console');
+                const { default: Console } = await import('./components/Console/Console.js');
                 
                 // Create a container for the console
                 const consoleContainer = document.createElement('div');
                 document.body.appendChild(consoleContainer);
                 
-                // Import the console CSS
-                import('../../styles/console.css')
-                    .then(() => console.log('Console styles loaded'))
-                    .catch(err => console.error('Failed to load console styles:', err));
+                // Import console CSS
+                try {
+                    // Since we're using ES modules, we need to use import.meta.url to construct the correct path
+                    const cssUrl = new URL('./components/Console/styles/console.css', import.meta.url);
+                    const link = document.createElement('link');
+                    link.rel = 'stylesheet';
+                    link.href = cssUrl.href;
+                    document.head.appendChild(link);
+                    console.log('Console styles loaded');
+                } catch (err) {
+                    console.error('Failed to load console styles:', err);
+                }
                 
                 // Render the Console component
                 render(h(Console, {

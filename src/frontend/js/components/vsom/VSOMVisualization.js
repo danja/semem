@@ -1,5 +1,5 @@
 import log from 'loglevel';
-import { BaseVisualization } from './BaseVisualization';
+import { BaseVisualization } from './BaseVisualization.js';
 
 /**
  * Main VSOM visualization component
@@ -31,22 +31,22 @@ export class VSOMVisualization extends BaseVisualization {
   registerVisualizationTypes() {
     this.visualizationTypes.set('grid', {
       name: 'SOM Grid',
-      load: () => import('./SOMGrid/SOMGrid').then(m => m.SOMGrid)
+      load: () => import('./SOMGrid/SOMGrid.js').then(m => m.SOMGrid)
     });
     
     this.visualizationTypes.set('training', {
       name: 'Training',
-      load: () => import('./TrainingViz/TrainingViz').then(m => m.TrainingViz)
+      load: () => import('./TrainingViz/TrainingViz.js').then(m => m.TrainingViz)
     });
     
     this.visualizationTypes.set('featureMaps', {
       name: 'Feature Maps',
-      load: () => import('./FeatureMaps/FeatureMaps').then(m => m.FeatureMaps)
+      load: () => import('./FeatureMaps/FeatureMaps.js').then(m => m.FeatureMaps)
     });
     
     this.visualizationTypes.set('clustering', {
       name: 'Clustering',
-      load: () => import('./Clustering/Clustering').then(m => m.Clustering)
+      load: () => import('./Clustering/Clustering.js').then(m => m.Clustering)
     });
     
     this.logger.debug('Registered visualization types:', [...this.visualizationTypes.keys()]);

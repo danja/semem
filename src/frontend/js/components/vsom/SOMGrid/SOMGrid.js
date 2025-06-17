@@ -1,7 +1,7 @@
 import log from 'loglevel';
 import * as d3 from 'd3';
-import { BaseVisualization } from '../BaseVisualization';
-import { createResponsiveSVG, addTooltip, createColorScale } from '../../../utils/d3-helpers';
+import { BaseVisualization } from '../BaseVisualization.js';
+import { createResponsiveSVG, createTooltip, createColorScale } from '../../../utils/d3-helpers.js';
 
 /**
  * SOM Grid Visualization Component

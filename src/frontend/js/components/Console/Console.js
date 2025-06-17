@@ -1,5 +1,5 @@
 import log from 'loglevel';
-import './console.css';
+import './styles/console.css';
 
 // Log levels for the dropdown
 const LOG_LEVELS = [
