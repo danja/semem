@@ -3,11 +3,10 @@
  * Enhanced RDF query and visualization with Atuin syntax highlighting
  */
 
-import { eventBus, EVENTS } from '../services/eventBus';
-import store from '../stores/useStore';
-
 export class SPARQLBrowser {
     constructor() {
+        this.currentEndpoint = null;
+        this.endpoints = [];
         this.initialized = false;
         this.turtleEditor = null;
         this.sparqlEditor = null;
@@ -17,93 +16,57 @@ export class SPARQLBrowser {
         this.clipsUI = null;
         this.endpointManager = null;
         this.modelSyncHandler = null;
-        this.unsubscribe = null;
     }
 
     async init() {
         try {
-            eventBus.emit(EVENTS.CONSOLE_DEBUG, 'Initializing SPARQL Browser...');
-            
-            // Initialize state
-            store.setState({
-                currentEndpoint: localStorage.getItem('sparql-endpoint') || null,
-                endpoints: [],
-                queryResults: null,
-                isLoading: false,
-                error: null,
-                editorContent: '',
-                graphData: null
-            });
+            console.log('Initializing SPARQL Browser...');
             
             // Setup event listeners
             this.setupEventListeners();
             
-            // Initialize Atuin editors
-            await this.initializeAtuinEditors();
-            
-            // Load endpoints
+            // Load available endpoints
             await this.loadEndpoints();
             
             // Setup SPARQL browser tabs
             this.setupTabs();
             
-            // Initialize graph visualizer
-            await this.initializeGraphVisualizer();
-            
-            // Initialize SPARQL Clips Manager and UI
-            await this.initializeClipsManager();
+            // Initialize Atuin editors with syntax highlighting
+            await this.initializeAtuinEditors();
             
             this.initialized = true;
-            eventBus.emit(EVENTS.CONSOLE_INFO, 'SPARQL Browser initialized');
-            
-            // Subscribe to store updates
-            this.unsubscribe = store.subscribe(state => {
-                // Handle state updates here if needed
-                if (state.error) {
-                    eventBus.emit(EVENTS.CONSOLE_ERROR, state.error);
-                }
-            });
+            console.log('SPARQL Browser initialized');
             
         } catch (error) {
-            const errorMsg = `Failed to initialize SPARQL Browser: ${error.message}`;
-            eventBus.emit(EVENTS.APP_ERROR, new Error(errorMsg));
-            throw error;
+            console.error('Failed to initialize SPARQL Browser:', error);
         }
     }
 
     async initializeAtuinEditors() {
         try {
-            eventBus.emit(EVENTS.CONSOLE_DEBUG, 'Initializing Atuin editors...');
-            
             // Check if Atuin components are available
             if (!window.TurtleEditor || !window.SPARQLEditor || !window.GraphVisualizer || !window.LoggerService) {
-                eventBus.emit(EVENTS.CONSOLE_INFO, 'Atuin components not available, trying to load...');
+                console.log('Atuin components not available, trying to load...');
                 
-                try {
-                    // Import Atuin components using individual imports to avoid export issues
-                    const { TurtleEditor } = await import('atuin/core/TurtleEditor');
-                    const { SPARQLEditor } = await import('atuin/core/SPARQLEditor');
-                    const { GraphVisualizer } = await import('atuin/core/GraphVisualizer');
-                    const { LoggerService, SPARQLClipsManager } = await import('atuin/services');
-                    const atuinUI = await import('atuin/ui');
-                    
-                    // Extract UI components from the UI module
-                    const { SPARQLClipsUI, SPARQLEndpointManager } = atuinUI;
-                    
-                    window.TurtleEditor = TurtleEditor;
-                    window.SPARQLEditor = SPARQLEditor;
-                    window.GraphVisualizer = GraphVisualizer;
-                    window.LoggerService = LoggerService;
-                    window.SPARQLClipsManager = SPARQLClipsManager;
-                    window.SPARQLClipsUI = SPARQLClipsUI;
-                    window.SPARQLEndpointManager = SPARQLEndpointManager;
-                    
-                    eventBus.emit(EVENTS.CONSOLE_INFO, 'Atuin components loaded successfully');
-                } catch (error) {
-                    const errorMsg = `Failed to load Atuin components: ${error.message}`;
-                    eventBus.emit(EVENTS.APP_ERROR, new Error(errorMsg));
-                    throw error;
-                }
+                // Import Atuin components using individual imports to avoid export issues
+                const { TurtleEditor } = await import('atuin/core/TurtleEditor');
+                const { SPARQLEditor } = await import('atuin/core/SPARQLEditor');
+                const { GraphVisualizer } = await import('atuin/core/GraphVisualizer');
+                const { LoggerService, SPARQLClipsManager } = await import('atuin/services');
+                const atuinUI = await import('atuin/ui');
+                
+                // Extract UI components from the UI module
+                const { SPARQLClipsUI, SPARQLEndpointManager } = atuinUI;
+                
+                window.TurtleEditor = TurtleEditor;
+                window.SPARQLEditor = SPARQLEditor;
+                window.GraphVisualizer = GraphVisualizer;
+                window.LoggerService = LoggerService;
+                window.SPARQLClipsManager = SPARQLClipsManager;
+                window.SPARQLClipsUI = SPARQLClipsUI;
+                window.SPARQLEndpointManager = SPARQLEndpointManager;
+                
+                console.log('Atuin components loaded successfully');
             }
             
             // Create message queue container for LoggerService (required by Atuin)
@@ -877,45 +840,22 @@ ex:austin a ex:Location ;
     /**
      * Cleanup method to remove event listeners and dispose of resources
      */
-    /**
-     * Cleanup method to remove event listeners and dispose of resources
-     */
     cleanup() {
         try {
-            eventBus.emit(EVENTS.CONSOLE_DEBUG, 'Cleaning up SPARQL Browser...');
-            
-            // Unsubscribe from store updates
-            if (this.unsubscribe) {
-                this.unsubscribe();
-                this.unsubscribe = null;
-            }
-            
             // Remove event bus listeners
-            eventBus.off(EVENTS.SPARQL_ENDPOINT_CHANGED);
-            eventBus.off(EVENTS.GRAPH_UPDATED);
-            
-            if (this.modelSyncHandler) {
-                eventBus.off(EVENTS.MODEL_SYNCED, this.modelSyncHandler);
-                this.modelSyncHandler = null;
+            if (this.modelSyncHandler && window.eventBus && window.EVENTS) {
+                window.eventBus.off(window.EVENTS.MODEL_SYNCED, this.modelSyncHandler);
             }
             
             // Dispose of Atuin components if they have cleanup methods
-            if (this.turtleEditor?.dispose) {
+            if (this.turtleEditor && this.turtleEditor.dispose) {
                 this.turtleEditor.dispose();
             }
-            if (this.sparqlEditor?.dispose) {
+            if (this.sparqlEditor && this.sparqlEditor.dispose) {
                 this.sparqlEditor.dispose();
             }
-            if (this.graphVisualizer?.dispose) {
+            if (this.graphVisualizer && this.graphVisualizer.dispose) {
                 this.graphVisualizer.dispose();
-            }
-            
-            // Cleanup clips manager and UI if they exist
-            if (this.clipsManager?.cleanup) {
-                this.clipsManager.cleanup();
-            }
-            if (this.clipsUI?.cleanup) {
-                this.clipsUI.cleanup();
             }
             
             // Clear references
@@ -925,129 +865,11 @@ ex:austin a ex:Location ;
             this.clipsManager = null;
             this.clipsUI = null;
             this.endpointManager = null;
+            this.modelSyncHandler = null;
             
-            // Reset state
-            store.setState({
-                currentEndpoint: null,
-                endpoints: [],
-                queryResults: null,
-                isLoading: false,
-                error: null,
-                editorContent: '',
-                graphData: null
-            });
-            
-            this.initialized = false;
-            eventBus.emit(EVENTS.CONSOLE_INFO, 'SPARQL Browser cleaned up');
-            
+            console.log('SPARQL Browser cleaned up');
         } catch (error) {
-            const errorMsg = `Error during cleanup: ${error.message}`;
-            eventBus.emit(EVENTS.APP_ERROR, new Error(errorMsg));
-            console.error(errorMsg, error);
+            console.warn('Error during SPARQL Browser cleanup:', error);
         }
-    }
-    
-    /**
-     * Execute a SPARQL query
-     * @param {string} query - The SPARQL query to execute
-     * @param {string} [endpoint] - Optional endpoint URL to use
-     * @returns {Promise<Object>} Query results
-     */
-    async executeQuery(query, endpoint) {
-        try {
-            if (!query?.trim()) {
-                throw new Error('Query cannot be empty');
-            }
-            
-            store.setState({ 
-                isLoading: true, 
-                error: null,
-                queryResults: null
-            });
-            
-            const targetEndpoint = endpoint || store.getState().currentEndpoint;
-            if (!targetEndpoint) {
-                throw new Error('No SPARQL endpoint specified');
-            }
-            
-            eventBus.emit(EVENTS.CONSOLE_DEBUG, `Executing query on ${targetEndpoint}`);
-            eventBus.emit(EVENTS.CONSOLE_DEBUG, `Query: ${query.substring(0, 100)}...`);
-            
-            const startTime = performance.now();
-            const response = await fetch(targetEndpoint, {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/sparql-query',
-                    'Accept': 'application/sparql-results+json,application/ld+json,application/json'
-                },
-                body: query
-            });
-            
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`HTTP ${response.status}: ${errorText || 'No error details'}`);
-            }
-            
-            const results = await response.json();
-            const duration = (performance.now() - startTime).toFixed(2);
-            
-            // Update state with results
-            store.setState({
-                queryResults: results,
-                isLoading: false,
-                lastQueryTime: duration
-            });
-            
-            // Emit event with results
-            eventBus.emit(EVENTS.SPARQL_QUERY_EXECUTED, { 
-                query, 
-                endpoint: targetEndpoint,
-                results,
-                duration: parseFloat(duration)
-            });
-            
-            eventBus.emit(EVENTS.CONSOLE_INFO, `Query executed in ${duration}ms`);
-            
-            return results;
-            
-        } catch (error) {
-            const errorMsg = `Query execution failed: ${error.message}`;
-            store.setState({ 
-                error: errorMsg,
-                isLoading: false,
-                queryResults: null
-            });
-            eventBus.emit(EVENTS.APP_ERROR, new Error(errorMsg));
-            throw error;
-        }
-    }
-    
-    /**
-     * Set up event listeners for the SPARQL Browser
-     */
-    setupEventListeners() {
-        // Handle endpoint changes
-        eventBus.on(EVENTS.SPARQL_ENDPOINT_CHANGED, (endpoint) => {
-            if (endpoint) {
-                localStorage.setItem('sparql-endpoint', endpoint);
-                store.setState({ currentEndpoint: endpoint });
-                eventBus.emit(EVENTS.CONSOLE_INFO, `SPARQL endpoint changed to: ${endpoint}`);
-            }
-        });
-        
-        // Handle graph updates
-        eventBus.on(EVENTS.GRAPH_UPDATED, (graphData) => {
-            store.setState({ graphData });
-        });
-        
-        // Handle window unload
-        window.addEventListener('beforeunload', this.cleanup.bind(this));
-    }
-    
-    /**
-     * Alias for cleanup to maintain backward compatibility
-     */
-    destroy() {
-        this.cleanup();
     }
 }

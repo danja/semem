@@ -124,6 +124,7 @@
   },
   "homepage": "https://github.com/danja/semem#readme",
   "devDependencies": {
+    "undici": "^6.12.0",
     "@babel/core": "^7.26.0",
     "@babel/preset-env": "^7.26.0",
     "@istanbuljs/nyc-config-babel": "^3.0.0",
