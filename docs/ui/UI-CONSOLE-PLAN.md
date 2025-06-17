@@ -1,2 +1,2 @@
 Currently the UI has a crude console log at the bottom of the screen. More of the available screen should be used for the main panel of the UI in view, with the console as a pull-out to the right of screen, with a drop-down list of the loglevel to use. (Some parts of the system currently use direct console.log calls, which should be replaced with loglevel calls.) 
-The console should be created with best practices in mind, favoring code reuse and modularity, and should be easy to use and navigate.
+The console should be created with best practices in mind, favoring code reuse and modularity, and should be easy to use and navigate. It MUST NOT break existing code.
