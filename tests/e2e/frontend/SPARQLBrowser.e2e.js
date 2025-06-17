@@ -6,22 +6,24 @@ const TEST_ENDPOINT = 'http://localhost:3030/ds';
 
 test.describe('SPARQL Browser', () => {
   test.beforeEach(async ({ page }) => {
-    // Navigate to the SPARQL browser page
-    await page.goto('/sparql');
+    // Navigate to the main page
+    await page.goto('/');
+    await page.waitForLoadState('networkidle');
     
-    // Wait for the component to be ready
-    await expect(page.locator('.sparql-browser')).toBeVisible();
+    // Click on SPARQL Browser tab to activate it
+    await page.click('[data-tab="sparql-browser"]');
+    await page.waitForSelector('#sparql-browser-tab', { state: 'visible' });
   });
 
   test('should load with default state', async ({ page }) => {
-    // Verify initial UI elements
-    await expect(page.locator('.sparql-editor')).toBeVisible();
-    await expect(page.locator('.execute-query-btn')).toBeVisible();
-    await expect(page.locator('.endpoint-selector')).toBeVisible();
+    // Verify initial UI elements using correct selectors
+    await expect(page.locator('#sparql-query-editor')).toBeVisible();
+    await expect(page.locator('button:has-text("Execute")')).toBeVisible();
+    await expect(page.locator('#sparql-endpoint-select')).toBeVisible();
     
-    // Verify default query is present
-    const defaultQuery = await page.locator('.sparql-editor').textContent();
-    expect(defaultQuery).toContain('SELECT *');
+    // Verify default query placeholder
+    const placeholder = await page.locator('#sparql-query-editor').getAttribute('placeholder');
+    expect(placeholder).toContain('SELECT');
   });
 
   test('should execute a SPARQL query and display results', async ({ page }) => {

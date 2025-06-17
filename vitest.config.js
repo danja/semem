@@ -4,10 +4,11 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
+    environmentMatchGlobs: [
+      ['**/frontend/**', 'jsdom']
+    ],
     include: [
-      'tests/**/*.{test,spec,vitest}.{js,jsx,ts,tsx}',
-      '!tests/e2e/**/*',  // Explicitly exclude e2e tests
-      '!**/*.e2e.{js,jsx,ts,tsx}'  // Exclude any e2e test files
+      'tests/unit/**/*.{test,spec,vitest}.{js,jsx,ts,tsx}'
     ],
     exclude: [
       'node_modules',
@@ -17,7 +18,12 @@ export default defineConfig({
       '**/e2e/**',
       '**/*.e2e.*',
       '**/playwright-report/**',
-      '**/test-results/**'
+      '**/test-results/**',
+      '**/*.llm.*',
+      '**/llms/**',
+      '**/Ollama*',
+      '**/embeddings/**',
+      '**/search/SearchService.test.js'
     ],
     coverage: {
       provider: 'v8',

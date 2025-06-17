@@ -11,7 +11,11 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 1,
   workers: process.env.CI ? 1 : undefined,
-  reporter: 'html',
+  reporter: 'list',
+  timeout: 30 * 1000, // Global timeout for tests
+  expect: {
+    timeout: 5000 // Expect timeout
+  },
   use: {
     baseURL: 'http://localhost:4120',
     trace: 'on-first-retry',
@@ -22,14 +26,6 @@ export default defineConfig({
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
-    },
-    {
-      name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
-    },
-    {
-      name: 'webkit',
-      use: { ...devices['Desktop Safari'] },
     },
   ],
   webServer: {

@@ -2,27 +2,34 @@ export class SparqlPage {
   constructor(page) {
     this.page = page;
     this.url = 'http://localhost:4120';
-    this.timeout = 10000; // 10 seconds default timeout
+    this.timeout = 15000; // 15 seconds default timeout
     
-    // Query Editor
+    // Main SPARQL Browser tab (must be activated first)
+    this.sparqlBrowserTab = '[data-tab="sparql-browser"]';
+    this.sparqlBrowserContainer = '#sparql-browser-tab';
+    
+    // Query Editor (correct selectors)
     this.queryEditor = '#sparql-query-editor';
-    this.executeButton = '#execute-query';
+    this.executeButton = 'button:has-text("Execute")';
     this.saveQueryButton = '#save-query';
     this.loadQueryButton = '#load-query';
     
-    // Results
-    this.resultsContainer = '#query-results';
+    // Results (correct selectors)
+    this.resultsContainer = '.query-results';
     this.resultTable = `${this.resultsContainer} table`;
     
-    // Tabs
+    // Sub-tabs within SPARQL Browser (correct selectors and content IDs)
     this.tabs = {
-      query: { selector: 'button[data-tab="sparql-query"]', panel: '#sparql-query-panel' },
-      graph: { selector: 'button[data-tab="sparql-graph"]', panel: '#sparql-graph-panel' },
-      edit: { selector: 'button[data-tab="sparql-edit"]', panel: '#sparql-edit-panel' },
-      endpoints: { selector: 'button[data-tab="sparql-endpoints"]', panel: '#sparql-endpoints-panel' }
+      query: { selector: '[data-tab="sparql-query"]', contentId: '#sparql-query' },
+      graph: { selector: '[data-tab="sparql-graph"]', contentId: '#sparql-graph' },
+      edit: { selector: '[data-tab="sparql-edit"]', contentId: '#sparql-edit' },
+      endpoints: { selector: '[data-tab="sparql-endpoints"]', contentId: '#sparql-endpoints' }
     };
     
-    // Add tab references for backward compatibility
+    // Additional elements
+    this.endpointSelect = '#sparql-endpoint-select';
+    
+    // Backward compatibility properties
     this.queryTab = this.tabs.query.selector;
     this.graphTab = this.tabs.graph.selector;
     this.editTab = this.tabs.edit.selector;
@@ -38,47 +45,42 @@ export class SparqlPage {
     await this.page.goto(this.url);
     await this.waitForPageReady();
     
-    // Ensure we're on the query tab
+    // CRITICAL: First activate the main SPARQL Browser tab
+    await this.page.click(this.sparqlBrowserTab);
+    await this.page.waitForSelector(this.sparqlBrowserContainer, { state: 'visible', timeout: this.timeout });
+    
+    // Now ensure we're on the query sub-tab (default)
     await this.switchToTab('query');
   }
   
   async waitForTab(tabName, timeout = this.timeout) {
     const tab = this.tabs[tabName];
     if (!tab) {
-      throw new Error(`Unknown tab: ${tabName}`);
+      throw new Error(`Unknown tab: ${tabName}. Available tabs: ${Object.keys(this.tabs).join(', ')}`);
     }
     
-    // Wait for tab button to be visible and enabled
-    await this.page.waitForSelector(tab.selector, { 
-      state: 'visible',
-      timeout
-    });
+    // Ensure main SPARQL Browser tab is active first
+    await this.page.waitForSelector(this.sparqlBrowserContainer, { state: 'visible', timeout });
     
-    // Wait for tab panel to be visible
-    if (tab.panel) {
-      await this.page.waitForSelector(tab.panel, { 
-        state: 'visible',
-        timeout
-      });
-    }
+    // Wait for sub-tab button to be present (it may be hidden but clickable)
+    await this.page.waitForSelector(tab.selector, { state: 'attached', timeout });
+    
+    // Wait for tab content to be present in DOM
+    await this.page.waitForSelector(tab.contentId, { state: 'attached', timeout });
   }
   
   async executeQuery(query) {
-    // Clear existing query
-    await this.page.click(this.queryEditor);
-    await this.page.keyboard.down('Control');
-    await this.page.keyboard.press('A');
-    await this.page.keyboard.up('Control');
-    await this.page.keyboard.press('Backspace');
+    // Ensure we're on the query tab
+    await this.switchToTab('query');
     
-    // Enter new query
-    await this.page.type(this.queryEditor, query);
+    // Clear existing query and enter new one
+    await this.page.fill(this.queryEditor, query);
     
     // Execute query
     await this.page.click(this.executeButton);
     
-    // Wait for results
-    await this.page.waitForSelector(this.resultTable, { state: 'attached', timeout: 10000 });
+    // Wait for results container to be visible
+    await this.page.waitForSelector(this.resultsContainer, { state: 'visible', timeout: 10000 });
   }
   
   async getQueryResults() {
@@ -102,31 +104,35 @@ export class SparqlPage {
   async switchToTab(tabName, timeout = this.timeout) {
     const tab = this.tabs[tabName.toLowerCase()];
     if (!tab) {
-      throw new Error(`Unknown tab: ${tabName}`);
+      throw new Error(`Unknown tab: ${tabName}. Available tabs: ${Object.keys(this.tabs).join(', ')}`);
     }
     
     try {
-      // Wait for the tab to be ready
-      await this.waitForTab(tabName, timeout);
+      // Ensure main SPARQL Browser is active first
+      await this.page.waitForSelector(this.sparqlBrowserContainer, { state: 'visible', timeout });
       
-      // Click the tab
+      // Click the sub-tab
       await this.page.click(tab.selector);
       
-      // Wait for the tab panel to be visible
-      if (tab.panel) {
-        await this.page.waitForSelector(tab.panel, { 
-          state: 'visible',
-          timeout
-        });
-      }
+      // Wait for the tab content to become visible
+      await this.page.waitForSelector(tab.contentId, { state: 'visible', timeout });
       
-      // Add a small delay to ensure UI updates
-      await this.page.waitForTimeout(500);
+      // Add a small delay to ensure UI updates complete
+      await this.page.waitForTimeout(200);
       
       return true;
     } catch (error) {
-      console.error(`Failed to switch to tab '${tabName}':`, error);
-      await this.page.screenshot({ path: `test-results/tab-switch-error-${tabName}.png` });
+      console.error(`Failed to switch to tab '${tabName}':`, error.message);
+      
+      // Create directory if it doesn't exist
+      await this.page.evaluate(() => {
+        if (typeof window !== 'undefined') {
+          console.log('Current page title:', document.title);
+          console.log('SPARQL Browser tab visible:', !!document.querySelector('#sparql-browser-tab'));
+          console.log('Tab selector exists:', !!document.querySelector(arguments[0]));
+        }
+      }, tab.selector);
+      
       throw error;
     }
   }

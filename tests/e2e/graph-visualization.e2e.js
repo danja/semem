@@ -3,25 +3,30 @@ import { test, expect } from '@playwright/test';
 test.describe('Graph Visualization E2E Tests', () => {
   test.beforeEach(async ({ page }) => {
     // Navigate to the application before each test
-    await page.goto('http://localhost:9000');
+    await page.goto('http://localhost:4120');
     await page.waitForLoadState('networkidle');
     
-    // Navigate to SPARQL Browser tab
-    await page.click('button:has-text("SPARQL Browser")');
-    await page.waitForTimeout(1000);
+    // Navigate to SPARQL Browser tab using correct selector
+    await page.click('[data-tab="sparql-browser"]');
+    await page.waitForSelector('#sparql-browser-tab', { state: 'visible' });
   });
 
   test('should load the SPARQL Browser interface', async ({ page }) => {
     // Verify the SPARQL Browser interface elements are present
-    await expect(page.locator('#sparql-browser')).toBeVisible();
+    await expect(page.locator('#sparql-browser-tab')).toBeVisible();
+    
+    // Click on query tab to make it visible
+    await page.click('[data-tab="sparql-query"]');
+    await page.waitForSelector('#sparql-query', { state: 'visible' });
+    
     await expect(page.locator('#sparql-query')).toBeVisible();
     await expect(page.locator('button:has-text("Execute")')).toBeVisible();
   });
 
   test('should contain sample RDF data in the editor', async ({ page }) => {
-    // Navigate to Edit RDF tab
-    await page.click('button:has-text("Edit RDF")');
-    await page.waitForTimeout(1000);
+    // Navigate to Edit RDF tab using correct selector
+    await page.click('[data-tab="sparql-edit"]');
+    await page.waitForSelector('#sparql-edit', { state: 'visible' });
     
     // Check if turtle editor has sample data
     const turtleEditor = page.locator('#turtle-editor');
@@ -36,9 +41,10 @@ test.describe('Graph Visualization E2E Tests', () => {
   });
 
   test('should render graph visualization', async ({ page }) => {
-    // Navigate to Graph tab
-    await page.click('button:has-text("Graph")');
-    await page.waitForTimeout(3000); // Wait for graph to render
+    // Navigate to Graph tab using correct selector
+    await page.click('[data-tab="sparql-graph"]');
+    await page.waitForSelector('#sparql-graph', { state: 'visible' });
+    await page.waitForTimeout(2000); // Wait for graph to render
     
     // Check if graph container exists and is visible
     const graphContainer = page.locator('#rdf-graph-container');

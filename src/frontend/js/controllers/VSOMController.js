@@ -318,7 +318,8 @@ class VSOMController {
   }
 }
 
-// Export singleton instance
+// Export class and singleton instance
+export { VSOMController };
 export const vsomController = new VSOMController();
 
 // Auto-initialize when DOM is loaded

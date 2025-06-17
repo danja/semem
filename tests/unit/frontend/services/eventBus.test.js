@@ -63,7 +63,8 @@ describe('EventBus', () => {
     eventBus.emit('UNKNOWN_EVENT', { some: 'data' });
     
     expect(consoleWarn).toHaveBeenCalledWith(
-      expect.stringContaining('Unknown event type: UNKNOWN_EVENT')
+      expect.stringContaining('Unknown event type: UNKNOWN_EVENT'),
+      expect.any(Object)
     );
     
     consoleWarn.mockRestore();

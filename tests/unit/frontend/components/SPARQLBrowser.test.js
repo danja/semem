@@ -79,7 +79,8 @@ describe('SPARQLBrowser', () => {
       
       // Verify initialization complete
       expect(sparqlBrowser.initialized).toBe(true);
-      expect(mockEventBusEmit).toHaveBeenCalledWith(EVENTS.CONSOLE_DEBUG, 'SPARQL Browser initialized');
+      // Check that the info message was emitted
+      expect(mockEventBusEmit).toHaveBeenCalledWith(EVENTS.CONSOLE_INFO, 'SPARQL Browser initialized');
     });
   });
 
@@ -103,25 +104,36 @@ describe('SPARQLBrowser', () => {
       });
       
       // Execute
-      await sparqlBrowser.executeQuery(mockQuery);
+      const queryPromise = sparqlBrowser.executeQuery(mockQuery);
       
-      // Verify
+      // Verify loading state was set
+      expect(mockStoreSetState).toHaveBeenNthCalledWith(1, {
+        isLoading: true,
+        error: null,
+        queryResults: null
+      });
+      
+      // Wait for the query to complete
+      await queryPromise;
+      
+      // Verify fetch was called correctly
       expect(global.fetch).toHaveBeenCalledWith(
         'http://example.org/sparql',
         expect.objectContaining({
           method: 'POST',
           headers: expect.objectContaining({
             'Content-Type': 'application/sparql-query',
-            'Accept': 'application/sparql-results+json, application/json'
+            'Accept': 'application/sparql-results+json,application/ld+json,application/json'
           }),
           body: mockQuery
         })
       );
       
       // Verify state was updated with results
-      expect(mockStoreSetState).toHaveBeenCalledWith({
+      expect(mockStoreSetState).toHaveBeenNthCalledWith(2, {
         queryResults: mockResults,
-        isLoading: false
+        isLoading: false,
+        lastQueryTime: expect.any(String) // We'll check the exact format in a separate test
       });
     });
   });
