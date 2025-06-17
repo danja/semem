@@ -6,7 +6,11 @@
 
    netstat -tulpn | grep 6277
 
-kill -9
+  netstat -tulpn | grep 9000
+
+kill -9 [id]
+
+killall webpack
 
 claude mcp add playwright npx @playwright/mcp@latest
 

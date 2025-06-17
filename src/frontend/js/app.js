@@ -10,7 +10,7 @@ import { initMCPClient } from './components/mcpClient.js';
 import { initChatForms, loadChatProviders } from './components/chat.js';
 import { initMemoryVisualization } from './components/memoryVisualization.js';
 import { init as initVSOM } from './features/vsom/index.js';
-import { Console } from './components/Console/index.js';
+import Console from './components/Console/index.js';
 import { logger, replaceConsole } from './utils/logger.js';
 
 // Import Atuin and event bus for RDF visualization
@@ -245,48 +245,58 @@ if (document.readyState === 'loading') {
         // Initialize the app
         initializeApp().then(() => {
             // Initialize console after the app is loaded
-            const initializeConsole = () => {
-                const consoleContainer = document.createElement('div');
-                consoleContainer.id = 'console-root';
-                document.body.appendChild(consoleContainer);
-                
-                // Render the console component
-                const root = document.getElementById('console-root');
-                if (root) {
-                    import('preact').then(({ render, h }) => {
-                        render(h(Console, null), root);
-                    });
+            function initializeConsole() {
+                // Initialize the console component
+                try {
+                    const consoleInstance = new Console({ initialLogLevel: 'debug' });
+                    console.log('Console component initialized');
+                    
+                    // Make console available globally for debugging
+                    window.appConsole = consoleInstance;
+                } catch (error) {
+                    console.error('Failed to initialize console:', error);
                 }
-                
-                // Replace console methods with our logger
-                replaceConsole();
-                
-                logger.info('Console initialized');
-            };
+            }
+            
             initializeConsole();
         });
     });
 } else {
     initializeApp().then(() => {
         // Initialize console after the app is loaded
-        const initializeConsole = () => {
-            const consoleContainer = document.createElement('div');
-            consoleContainer.id = 'console-root';
-            document.body.appendChild(consoleContainer);
-            
-            // Render the console component
-            const root = document.getElementById('console-root');
-            if (root) {
-                import('preact').then(({ render, h }) => {
-                    render(h(Console, null), root);
-                });
+        async function initializeConsole() {
+            try {
+                // Import Preact and the Console component
+                const { h, render } = await import('preact');
+                const { default: Console } = await import('./components/Console');
+                
+                // Create a container for the console
+                const consoleContainer = document.createElement('div');
+                document.body.appendChild(consoleContainer);
+                
+                // Import the console CSS
+                import('../../styles/console.css')
+                    .then(() => console.log('Console styles loaded'))
+                    .catch(err => console.error('Failed to load console styles:', err));
+                
+                // Render the Console component
+                render(h(Console, {
+                    initialLogLevel: 'debug',
+                    maxLogs: 1000
+                }), consoleContainer);
+                
+                // Replace console methods to capture logs
+                replaceConsole();
+                
+                // Log a test message
+                logger.info('Console component initialized');
+                logger.debug('Debug message');
+                logger.warn('Warning message');
+                logger.error('Error message');
+            } catch (error) {
+                console.error('Failed to initialize console:', error);
             }
-            
-            // Replace console methods with our logger
-            replaceConsole();
-            
-            logger.info('Console initialized');
-        };
+        }
         initializeConsole();
     });
 }

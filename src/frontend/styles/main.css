@@ -1,3 +1,6 @@
+/* Console Styles */
+@import './console.css';
+
 /* Reset and base styles */
 * {
     margin: 0;

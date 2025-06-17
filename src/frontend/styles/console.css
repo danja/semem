@@ -1,0 +1,340 @@
+/* Console Container */
+.console-container {
+  position: fixed;
+  right: 0;
+  top: 0;
+  height: 100%;
+  width: 30%;
+  min-width: 300px;
+  max-width: 600px;
+  background: #1e1e1e;
+  color: #e0e0e0;
+  box-shadow: -2px 0 10px rgba(0, 0, 0, 0.3);
+  transform: translateX(calc(100% - 40px));
+  transition: transform 0.3s ease-in-out;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.console-container.open {
+  transform: translateX(0);
+}
+
+/* Toggle Button */
+.console-toggle {
+  position: absolute;
+  left: -40px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 80px;
+  background: #333;
+  border: none;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 4px 0 0 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  padding: 10px 0;
+}
+
+.console-toggle:hover {
+  background: #444;
+}
+
+.console-toggle::before {
+  content: '»';
+  transform: rotate(90deg);
+  display: block;
+}
+
+.console-container.open .console-toggle::before {
+  transform: rotate(-90deg);
+}
+
+/* Console Header */
+.console-header {
+  padding: 10px 15px;
+  background: #252526;
+  border-bottom: 1px solid #333;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.console-title {
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.console-controls {
+  display: flex;
+  gap: 10px;
+}
+
+.console-controls button {
+  background: none;
+  border: 1px solid #555;
+  color: #ddd;
+  border-radius: 3px;
+  padding: 3px 8px;
+  font-size: 11px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.console-controls button:hover {
+  background: #333;
+}
+
+/* Log Level Filter */
+.log-level-filter {
+  position: relative;
+  margin-left: 10px;
+}
+
+.log-level-filter select {
+  background: #2d2d2d;
+  color: #e0e0e0;
+  border: 1px solid #555;
+  border-radius: 3px;
+  padding: 3px 8px;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+/* Console Content */
+.console-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+/* Log Entry */
+.log-entry {
+  margin-bottom: 4px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  border-left: 3px solid transparent;
+  padding-left: 5px;
+}
+
+.log-entry.trace {
+  color: #888;
+  border-left-color: #888;
+}
+
+.log-entry.debug {
+  color: #9cdcfe;
+  border-left-color: #9cdcfe;
+}
+
+.log-entry.info {
+  color: #4ec9b0;
+  border-left-color: #4ec9b0;
+}
+
+.log-entry.warn {
+  color: #dcdcaa;
+  border-left-color: #dcdcaa;
+}
+
+.log-entry.error {
+  color: #f48771;
+  border-left-color: #f48771;
+}
+
+/* Timestamp */
+.log-timestamp {
+  color: #6a9955;
+  margin-right: 8px;
+  font-size: 11px;
+}
+
+/* Log Source */
+.log-source {
+  color: #9cdcfe;
+  margin-right: 8px;
+  font-weight: bold;
+}
+
+/* Log Message */
+.log-message {
+  color: inherit;
+}
+
+/* Search Bar */
+.console-search {
+  padding: 8px 15px;
+  background: #252526;
+  border-top: 1px solid #333;
+  border-bottom: 1px solid #333;
+}
+
+.console-search input {
+  width: 100%;
+  padding: 5px 10px;
+  background: #2d2d2d;
+  border: 1px solid #555;
+  border-radius: 3px;
+  color: #e0e0e0;
+  font-family: inherit;
+  font-size: 12px;
+}
+
+.console-search input:focus {
+  outline: none;
+  border-color: #4ec9b0;
+}
+
+/* Scrollbar */
+.console-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.console-content::-webkit-scrollbar-track {
+  background: #252526;
+}
+
+.console-content::-webkit-scrollbar-thumb {
+  background: #555;
+  border-radius: 4px;
+}
+
+.console-content::-webkit-scrollbar-thumb:hover {
+  background: #666;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .console-container {
+    width: 80%;
+    min-width: 250px;
+  }
+  
+  .console-toggle {
+    width: 30px;
+    height: 60px;
+    left: -30px;
+    font-size: 14px;
+  }
+}
+
+/* Animation for new log entries */
+@keyframes highlight {
+  from { background-color: rgba(78, 201, 176, 0.2); }
+  to { background-color: transparent; }
+}
+
+.log-entry.new {
+  animation: highlight 1.5s ease-out;
+}
+
+/* Pause indicator */
+.console-paused {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.7);
+  color: #f48771;
+  padding: 5px 10px;
+  border-radius: 3px;
+  font-weight: bold;
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* No logs message */
+.no-logs {
+  color: #888;
+  font-style: italic;
+  text-align: center;
+  margin-top: 20px;
+}
+
+/* Clear button */
+.clear-logs {
+  color: #f48771 !important;
+  border-color: #f48771 !important;
+}
+
+.clear-logs:hover {
+  background: rgba(244, 135, 113, 0.1) !important;
+}
+
+/* Copy button */
+.copy-logs {
+  color: #9cdcfe !important;
+  border-color: #9cdcfe !important;
+}
+
+.copy-logs:hover {
+  background: rgba(156, 220, 254, 0.1) !important;
+}
+
+/* Pause/Resume button */
+.pause-logs {
+  color: #dcdcaa !important;
+  border-color: #dcdcaa !important;
+}
+
+.pause-logs:hover {
+  background: rgba(220, 220, 170, 0.1) !important;
+}
+
+/* Scroll to bottom button */
+.scroll-to-bottom {
+  position: absolute;
+  right: 15px;
+  bottom: 60px;
+  background: #2d2d2d;
+  border: 1px solid #555;
+  color: #ddd;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+  z-index: 5;
+}
+
+.scroll-to-bottom:hover {
+  opacity: 1;
+  background: #3d3d3d;
+}
+
+/* Log level badges */
+.log-level-badge {
+  display: inline-block;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: bold;
+  text-transform: uppercase;
+  margin-right: 6px;
+  opacity: 0.8;
+}
+
+.log-level-trace { background: #888; color: #1e1e1e; }
+.log-level-debug { background: #9cdcfe; color: #1e1e1e; }
+.log-level-info { background: #4ec9b0; color: #1e1e1e; }
+.log-level-warn { background: #dcdcaa; color: #1e1e1e; }
+.log-level-error { background: #f48771; color: #1e1e1e; }
