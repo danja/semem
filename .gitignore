@@ -8,6 +8,8 @@
 **/playwright/trace/
 **/playwright/.screenshots/
 
+docs/jsdoc
+
 **/src-old
 **/*\ copy.js
 **/*repomix*.md
