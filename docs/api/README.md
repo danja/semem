@@ -1,59 +1,124 @@
-# Semem API Documentation
+# API Module
 
-This directory contains documentation for the Semem (Semantic Memory) API system.
+The API module provides comprehensive interfaces for interacting with the Semem semantic memory system. It implements multiple interaction paradigms including HTTP REST APIs, command-line interfaces, and REPL environments.
 
-## Contents
+## Architecture
 
-- [API Plan](./api-plan.md) - Strategic plan for exposing APIs from the Semem library
-- [OpenAPI Specification](./openapi-spec.yaml) - OpenAPI 3.0 specification of the proposed REST API
-- [Implementation Status](./implementation-status.md) - Current status of API implementation
-- [Browser Interface](./browser-interface.md) - Guide to using the web-based API interface
+The API module follows a layered architecture:
 
-## Overview
+### Core Components
 
-Semem provides a set of APIs for managing semantic memory, generating chat responses with context, and performing semantic search. The API is designed to be:
+- **APIRegistry**: Central service registry managing API lifecycle and dependencies
+- **BaseAPI**: Abstract base class providing common functionality for all API implementations
+- **MetricsCollector**: Performance monitoring and analytics collection
+- **APILogger**: Structured logging system for API operations
 
-- **Consistent**: Follow RESTful principles with consistent naming and patterns
-- **Secure**: Include authentication, rate limiting, and input validation
-- **Performant**: Optimize for low latency and efficient batch operations
-- **Extensible**: Support multiple LLM providers and storage backends
+### Interface Types
 
-## Key API Categories
+#### HTTP Server (`http/`)
+- **HTTPServer**: Express.js-based REST API server
+- **WebSocketServer**: Real-time bidirectional communication
+- **Middleware**: Authentication, error handling, and request logging
+- **Client**: JavaScript client SDK for browser and Node.js environments
 
-1. **Memory Management** - Store and retrieve semantic memories
-2. **Chat and Completion** - Generate responses with contextual memory
-3. **Semantic Search** - Perform vector-based content search
+#### Command Line Interface (`cli/`)
+- **CLIHandler**: Interactive command-line interface for system administration
+- Supports batch operations and scripting
 
-## Getting Started
+#### REPL Interface (`repl/`)
+- **REPLHandler**: Read-Eval-Print-Loop for interactive development and debugging
 
-To interact with the Semem API:
+### Feature APIs (`features/`)
 
-1. Review the [API Plan](./api-plan.md) to understand the overall architecture
-2. Examine the [OpenAPI Specification](./openapi-spec.yaml) for detailed endpoint information
-3. Try the [Browser Interface](./browser-interface.md) for an interactive experience
-4. Build your integration using the provided examples and guidelines
+#### Core Features
+- **MemoryAPI**: CRUD operations for semantic memories
+- **ChatAPI**: Conversational interface with LLM integration
+- **SearchAPI**: Vector similarity and semantic search capabilities
 
-## Implementation Examples
+#### Handler Types
+- **ActiveHandler**: Proactive system behaviors and automation
+- **PassiveHandler**: Reactive event processing
+- **SelfieHandler**: Self-monitoring and introspection capabilities
 
-The API can be used in three primary ways:
+### Request Processing (`processors/`)
 
-1. **HTTP REST API** - Interact with a deployed Semem server via HTTP requests
-2. **JavaScript SDK** - Use a client library wrapper for the HTTP API
-3. **Node.js Module** - Use the core classes directly in your Node.js application
+The processor layer implements the Command pattern for request handling:
 
-See the [API Plan](./api-plan.md) for concrete code examples of each approach.
+- **Processor**: Base processor interface
+- **MemoryAPIProcessor**: Memory operation processing and validation
+- **ChatAPIProcessor**: Conversation flow management
+- **SearchAPIProcessor**: Query optimization and result ranking
+- **ActiveHandlerProcessor**: Proactive task execution
+- **PassiveHandlerProcessor**: Event-driven response handling
 
-## Current Status
+### Common Utilities (`common/`)
 
-The Semem API has been implemented following the specifications in this documentation. For details on the current implementation status, see the [Implementation Status](./implementation-status.md) document.
+- **CustomValidators**: Input validation and sanitization
+- **RDFParser**: RDF/Turtle data format parsing
+- **RDFValidator**: Semantic data validation
+- **TypeDefinitions**: TypeScript type definitions for API contracts
 
-## Next Steps
+## Usage Patterns
 
-The API implementation will continue to evolve. Upcoming improvements include:
+### REST API
+```javascript
+// Initialize HTTP server
+const server = new HTTPServer(config);
+await server.start();
 
-- Complete integration test suite
-- Performance optimization for high-load scenarios
-- Interactive API explorer with Swagger UI
-- Client SDK for multiple languages (JavaScript, Python, Go)
-- Detailed integration guides for common use cases
-- API versioning and migration guidelines
+// Memory operations
+POST /api/memory - Store new memory
+GET /api/memory/:id - Retrieve memory
+PUT /api/memory/:id - Update memory
+DELETE /api/memory/:id - Remove memory
+
+// Search operations
+POST /api/search - Semantic search
+GET /api/search/similar/:id - Find similar memories
+```
+
+### CLI Interface
+```bash
+# Start interactive CLI
+semem cli
+
+# Batch operations
+semem memory store --prompt "question" --response "answer"
+semem search --query "semantic memory" --limit 10
+```
+
+### Programmatic API
+```javascript
+import { APIRegistry } from './src/api/common/APIRegistry.js';
+
+const registry = new APIRegistry();
+await registry.initialize();
+
+const memoryAPI = registry.getService('MemoryAPI');
+const result = await memoryAPI.store({ prompt, response });
+```
+
+## Authentication & Security
+
+- JWT-based authentication for HTTP APIs
+- Role-based access control (RBAC)
+- Request rate limiting and throttling
+- Input validation and sanitization
+- CORS configuration for browser clients
+
+## Monitoring & Observability
+
+- Structured logging with correlation IDs
+- Performance metrics collection
+- Error tracking and alerting
+- Request/response tracing
+- Health check endpoints
+
+## Extension Points
+
+The API module is designed for extensibility:
+
+- **Custom Processors**: Implement domain-specific request handling
+- **Middleware**: Add cross-cutting concerns (caching, transformation)
+- **Custom Validators**: Implement business-specific validation rules
+- **Protocol Adapters**: Support additional communication protocols

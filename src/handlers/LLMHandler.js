@@ -2,8 +2,8 @@ import logger from 'loglevel'
 import PromptTemplates from '../PromptTemplates.js'
 
 /**
- * @typedef {import('../types/MemoryTypes').LLMProvider} LLMProvider
- * @typedef {import('../types/MemoryTypes').ChatMessage} ChatMessage
+ * @typedef {Object} LLMProvider - Language model provider interface
+ * @typedef {Object} ChatMessage - Chat message object
  */
 
 export default class LLMHandler {

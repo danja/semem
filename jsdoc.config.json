@@ -1,0 +1,114 @@
+{
+  "source": {
+    "include": [
+      "./src/",
+      "./docs/api/README.md",
+      "./docs/connectors/README.md",
+      "./docs/handlers/README.md",
+      "./docs/ragno/README.md",
+      "./docs/stores/README.md",
+      "./docs/frontend/README.md",
+      "./docs/services/README.md",
+      "./docs/utils/README.md",
+      "./docs/types/README.md",
+      "./docs/README.md",
+      "./README.md"
+    ],
+    "includePattern": "\\.js$",
+    "exclude": [
+      "node_modules/",
+      "tests/",
+      "dist/",
+      "build/",
+      "coverage/",
+      "playwright-report/",
+      "test-results/",
+      ".git/",
+      "docs/ignore/",
+      "docs/postcraft/",
+      "docs/ui/",
+      "docs/test/",
+      "src/api/about.md",
+      "src/api/cli/about.md",
+      "src/types/README.md",
+      "src/servers/mcp-server.js",
+      "*.test.js",
+      "*.spec.js",
+      "*.vitest.js",
+      "*.e2e.js"
+    ]
+  },
+  "opts": {
+    "destination": "./docs-generated/",
+    "recurse": true,
+    "readme": "./README.md"
+  },
+  "plugins": [
+    "plugins/markdown",
+    "plugins/summarize"
+  ],
+  "templates": {
+    "cleverLinks": false,
+    "monospaceLinks": false,
+    "useLongnameInNav": false,
+    "showInheritedInNav": true
+  },
+  "markdown": {
+    "parser": "gfm",
+    "hardwrap": false
+  },
+  "docdash": {
+    "static": true,
+    "sort": true,
+    "sectionOrder": [
+      "API",
+      "Connectors", 
+      "Handlers",
+      "Ragno",
+      "Stores",
+      "Frontend",
+      "Services",
+      "Utils",
+      "Types",
+      "ZPT"
+    ],
+    "disqus": false,
+    "openGraph": {
+      "title": "Semem - Semantic Memory Documentation",
+      "type": "website",
+      "image": "",
+      "site_name": "Semem Documentation",
+      "url": "https://hyperdata.github.io/semem/"
+    },
+    "meta": {
+      "title": "Semem Documentation",
+      "description": "Comprehensive documentation for the Semem semantic memory management system",
+      "keyword": "semantic memory, knowledge graphs, AI, LLM, embeddings, SPARQL, RDF"
+    },
+    "search": true,
+    "collapse": false,
+    "typedefs": true,
+    "removeQuotes": "none",
+    "scripts": [],
+    "menu": {
+      "Getting Started": {
+        "href": "./README.md",
+        "target": "_blank",
+        "class": "menu-item",
+        "id": "getting-started"
+      },
+      "API Reference": {
+        "href": "./docs/api/README.md",
+        "target": "_blank", 
+        "class": "menu-item",
+        "id": "api-reference"
+      },
+      "GitHub": {
+        "href": "https://github.com/hyperdata/semem",
+        "target": "_blank",
+        "class": "menu-item",
+        "id": "github-link"
+      }
+    }
+  }
+}

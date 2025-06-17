@@ -9,6 +9,7 @@
 **/playwright/.screenshots/
 
 docs/jsdoc
+docs-generated/
 
 **/src-old
 **/*\ copy.js

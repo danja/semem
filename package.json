@@ -91,7 +91,11 @@
     "types:build": "mkdir -p dist/types && cp src/types/*.d.ts dist/types/",
     "mcp": "node mcp/index.js",
     "mcp:http": "node mcp/http-server.js",
-    "clean": "rm -rf dist coverage"
+    "docs": "jsdoc -c jsdoc.config.json",
+    "docs:watch": "nodemon --watch src --watch docs --ext js,md --exec 'npm run docs'",
+    "docs:serve": "npm run docs && npx http-server docs-generated -p 8080 -o",
+    "ghp": "npm run docs && npx gh-pages -d docs-generated -m 'Update documentation'",
+    "clean": "rm -rf dist coverage docs-generated"
   },
   "repository": {
     "type": "git",
@@ -138,9 +142,12 @@
     "codecov": "^3.8.2",
     "coverage-badge-creator": "^1.0.19",
     "css-loader": "^7.1.2",
+    "gh-pages": "^6.2.0",
     "html-webpack-plugin": "^5.6.3",
+    "http-server": "^14.1.1",
     "jsdoc": "^4.0.4",
     "jsdom": "^26.1.0",
+    "nodemon": "^3.1.9",
     "nyc": "^15.1.0",
     "style-loader": "^4.0.0",
     "typescript": "^5.8.3",
