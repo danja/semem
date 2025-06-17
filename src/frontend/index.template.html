@@ -18,6 +18,7 @@
             <button class="tab-btn active" data-tab="search">Search</button>
             <button class="tab-btn" data-tab="memory">Memory</button>
             <button class="tab-btn" data-tab="memory-viz">Memory Viz</button>
+            <button class="tab-btn" data-tab="vsom">VSOM</button>
             <button class="tab-btn" data-tab="chat">Chat</button>
             <button class="tab-btn" data-tab="embeddings">Embeddings</button>
             <button class="tab-btn" data-tab="concepts">Concepts</button>
@@ -385,6 +386,245 @@
                             <div id="memory-search-results" class="memory-search-results">
                                 <div class="results-placeholder">
                                     <p>Configure filters and click "Search Memories" to find specific memories</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VSOM Tab -->
+            <section id="vsom-tab" class="tab-content">
+                <h2>VSOM - Vector Self-Organizing Map</h2>
+                <p class="tab-description">Visualize and explore data using self-organizing maps with entity clustering and topology analysis</p>
+
+                <div class="vsom-tabs">
+                    <div class="tabs-inner">
+                        <button class="tab-inner-btn active" data-inner-tab="som-grid">SOM Grid</button>
+                        <button class="tab-inner-btn" data-inner-tab="som-training">Training</button>
+                        <button class="tab-inner-btn" data-inner-tab="som-features">Feature Maps</button>
+                        <button class="tab-inner-btn" data-inner-tab="som-clusters">Clustering</button>
+                    </div>
+
+                    <!-- SOM Grid Tab -->
+                    <div id="som-grid" class="inner-tab-content active">
+                        <div class="som-controls">
+                            <div class="control-group">
+                                <button id="load-som-data" class="btn primary-btn">Load Data</button>
+                                <button id="train-som" class="btn secondary-btn">Train SOM</button>
+                                <button id="refresh-som-grid" class="btn secondary-btn">Refresh</button>
+                                <div class="form-group inline">
+                                    <label for="som-grid-width">Grid Width:</label>
+                                    <input type="number" id="som-grid-width" min="5" max="50" value="20" class="small-input">
+                                </div>
+                                <div class="form-group inline">
+                                    <label for="som-grid-height">Grid Height:</label>
+                                    <input type="number" id="som-grid-height" min="5" max="50" value="20" class="small-input">
+                                </div>
+                                <div class="form-group inline">
+                                    <label for="som-topology">Topology:</label>
+                                    <select id="som-topology" class="topology-select">
+                                        <option value="rectangular">Rectangular</option>
+                                        <option value="hexagonal">Hexagonal</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="som-legend">
+                                <span class="legend-item">
+                                    <span class="node-color high-activation"></span>
+                                    High Activation
+                                </span>
+                                <span class="legend-item">
+                                    <span class="node-color medium-activation"></span>
+                                    Medium Activation
+                                </span>
+                                <span class="legend-item">
+                                    <span class="node-color low-activation"></span>
+                                    Low Activation
+                                </span>
+                                <span class="legend-item">
+                                    <span class="node-color no-activation"></span>
+                                    No Data
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div id="som-grid-container" class="som-grid-container">
+                            <div class="som-placeholder">
+                                <p>Click "Load Data" and then "Train SOM" to visualize the self-organizing map</p>
+                            </div>
+                        </div>
+
+                        <div id="som-grid-info" class="som-info">
+                            <div class="info-stats">
+                                <span>Entities: <span id="som-entity-count">0</span></span>
+                                <span>Grid Size: <span id="som-grid-size">20x20</span></span>
+                                <span>Trained: <span id="som-trained-status">No</span></span>
+                                <span>Selected Node: <span id="selected-som-node">None</span></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Training Tab -->
+                    <div id="som-training" class="inner-tab-content">
+                        <div class="training-controls">
+                            <div class="control-group">
+                                <button id="start-som-training" class="btn primary-btn">Start Training</button>
+                                <button id="stop-som-training" class="btn secondary-btn" disabled>Stop Training</button>
+                                <button id="reset-som-training" class="btn secondary-btn">Reset</button>
+                                <div class="form-group inline">
+                                    <label for="som-max-iterations">Max Iterations:</label>
+                                    <input type="number" id="som-max-iterations" min="100" max="10000" value="1000" class="small-input">
+                                </div>
+                                <div class="form-group inline">
+                                    <label for="som-learning-rate">Learning Rate:</label>
+                                    <input type="range" id="som-learning-rate" min="0.01" max="1.0" step="0.01" value="0.1">
+                                    <span id="som-learning-rate-value">0.1</span>
+                                </div>
+                                <div class="form-group checkbox-group">
+                                    <input type="checkbox" id="show-training-progress" checked>
+                                    <label for="show-training-progress">Show Progress</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="som-training-container" class="som-training-container">
+                            <div class="training-placeholder">
+                                <p>Click "Start Training" to see real-time training progress and convergence</p>
+                            </div>
+                        </div>
+
+                        <div id="training-details" class="training-details">
+                            <h4>Training Progress</h4>
+                            <div id="training-progress-info" class="training-progress-panel">
+                                <div class="progress-stats">
+                                    <div class="stat-item">
+                                        <span class="stat-label">Current Iteration:</span>
+                                        <span id="current-iteration" class="stat-value">0</span>
+                                    </div>
+                                    <div class="stat-item">
+                                        <span class="stat-label">Training Error:</span>
+                                        <span id="training-error" class="stat-value">0.000</span>
+                                    </div>
+                                    <div class="stat-item">
+                                        <span class="stat-label">Learning Rate:</span>
+                                        <span id="current-learning-rate" class="stat-value">0.100</span>
+                                    </div>
+                                    <div class="stat-item">
+                                        <span class="stat-label">Progress:</span>
+                                        <span id="training-progress-percent" class="stat-value">0%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Feature Maps Tab -->
+                    <div id="som-features" class="inner-tab-content">
+                        <div class="features-controls">
+                            <div class="control-group">
+                                <button id="load-som-features" class="btn primary-btn">Load Feature Maps</button>
+                                <button id="export-som-features" class="btn secondary-btn">Export</button>
+                                <div class="form-group inline">
+                                    <label for="feature-dimension">Feature Dimension:</label>
+                                    <input type="number" id="feature-dimension" min="0" max="1535" value="0" class="small-input">
+                                </div>
+                                <div class="form-group inline">
+                                    <label for="feature-color-scheme">Color Scheme:</label>
+                                    <select id="feature-color-scheme" class="color-scheme-select">
+                                        <option value="viridis">Viridis</option>
+                                        <option value="plasma">Plasma</option>
+                                        <option value="cool">Cool</option>
+                                        <option value="warm">Warm</option>
+                                    </select>
+                                </div>
+                                <div class="form-group checkbox-group">
+                                    <input type="checkbox" id="show-feature-grid" checked>
+                                    <label for="show-feature-grid">Show Grid Lines</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="som-features-container" class="som-features-container">
+                            <div class="features-placeholder">
+                                <p>Train the SOM first, then click "Load Feature Maps" to visualize feature dimensions</p>
+                            </div>
+                        </div>
+
+                        <div id="feature-details" class="feature-details">
+                            <h4>Feature Analysis</h4>
+                            <div id="feature-stats" class="feature-stats">
+                                <div class="stat-item">
+                                    <span class="stat-label">Total Dimensions:</span>
+                                    <span id="total-dimensions" class="stat-value">1536</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Current Dimension:</span>
+                                    <span id="current-dimension" class="stat-value">0</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Min Value:</span>
+                                    <span id="feature-min-value" class="stat-value">0.000</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Max Value:</span>
+                                    <span id="feature-max-value" class="stat-value">1.000</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Clustering Tab -->
+                    <div id="som-clusters" class="inner-tab-content">
+                        <div class="cluster-controls">
+                            <div class="control-group">
+                                <button id="load-som-clusters" class="btn primary-btn">Load Clusters</button>
+                                <button id="recalculate-som-clusters" class="btn secondary-btn">Recalculate</button>
+                                <div class="form-group inline">
+                                    <label for="som-cluster-threshold">Cluster Threshold:</label>
+                                    <input type="range" id="som-cluster-threshold" min="0.1" max="1.0" step="0.1" value="0.8">
+                                    <span id="som-cluster-threshold-value">0.8</span>
+                                </div>
+                                <div class="form-group inline">
+                                    <label for="som-min-cluster-size">Min Cluster Size:</label>
+                                    <input type="number" id="som-min-cluster-size" min="1" max="20" value="3" class="small-input">
+                                </div>
+                                <div class="form-group inline">
+                                    <label for="som-data-source">Data Source:</label>
+                                    <select id="som-data-source" class="data-source-select">
+                                        <option value="memory">Memory Data</option>
+                                        <option value="entities">Entity Data</option>
+                                        <option value="concepts">Concept Data</option>
+                                        <option value="custom">Custom Data</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="som-clusters-container" class="som-clusters-container">
+                            <div class="clusters-placeholder">
+                                <p>Train the SOM first, then click "Load Clusters" to see entity clustering results</p>
+                            </div>
+                        </div>
+
+                        <div id="som-cluster-details" class="cluster-details">
+                            <h4>Cluster Analysis</h4>
+                            <div id="som-cluster-stats" class="cluster-stats">
+                                <div class="stat-item">
+                                    <span class="stat-label">Total Clusters:</span>
+                                    <span id="som-total-clusters" class="stat-value">0</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Largest Cluster:</span>
+                                    <span id="som-largest-cluster" class="stat-value">0 entities</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Average Size:</span>
+                                    <span id="som-average-cluster-size" class="stat-value">0.0</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Clustering Quality:</span>
+                                    <span id="som-clustering-quality" class="stat-value">0.000</span>
                                 </div>
                             </div>
                         </div>

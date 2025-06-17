@@ -1656,3 +1656,322 @@ footer {
         min-height: 300px;
     }
 }
+
+/* VSOM Visualization Styles */
+.vsom-tabs {
+    margin-top: 1rem;
+}
+
+.som-grid-container, 
+.som-training-container, 
+.som-features-container, 
+.som-clusters-container {
+    background: white;
+    border: 1px solid #e1e8ed;
+    border-radius: 8px;
+    min-height: 400px;
+    margin: 1rem 0;
+    position: relative;
+    overflow: hidden;
+}
+
+.som-placeholder, 
+.training-placeholder, 
+.features-placeholder, 
+.clusters-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 400px;
+    color: #7f8c8d;
+    font-size: 1.1rem;
+    background: #f8f9fa;
+}
+
+/* SOM Controls */
+.som-controls, 
+.training-controls, 
+.features-controls, 
+.cluster-controls {
+    background: white;
+    border: 1px solid #e1e8ed;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.topology-select, 
+.color-scheme-select, 
+.data-source-select {
+    width: 120px;
+    padding: 0.25rem 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+/* SOM Legend */
+.som-legend {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    margin-top: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.node-color.high-activation {
+    background: #e74c3c;
+}
+
+.node-color.medium-activation {
+    background: #f39c12;
+}
+
+.node-color.low-activation {
+    background: #3498db;
+}
+
+.node-color.no-activation {
+    background: #95a5a6;
+}
+
+/* SOM Info */
+.som-info {
+    background: white;
+    border: 1px solid #e1e8ed;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+/* Training Progress */
+.training-details, 
+.feature-details {
+    background: white;
+    border: 1px solid #e1e8ed;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+.training-progress-panel {
+    background: #f8f9fa;
+    border: 1px solid #e1e8ed;
+    border-radius: 6px;
+    padding: 1rem;
+    margin-top: 0.5rem;
+}
+
+.progress-stats, 
+.feature-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+/* SOM Grid D3 Styles */
+.som-grid-container svg {
+    width: 100%;
+    height: 100%;
+}
+
+.som-node {
+    cursor: pointer;
+    stroke: #fff;
+    stroke-width: 1px;
+}
+
+.som-node.rectangular {
+    /* Rectangular nodes will be rendered as rectangles */
+}
+
+.som-node.hexagonal {
+    /* Hexagonal nodes will be rendered as hexagons */
+}
+
+.som-node.selected {
+    stroke: #e74c3c;
+    stroke-width: 3px;
+}
+
+.som-node.high-activation {
+    fill: #e74c3c;
+}
+
+.som-node.medium-activation {
+    fill: #f39c12;
+}
+
+.som-node.low-activation {
+    fill: #3498db;
+}
+
+.som-node.no-activation {
+    fill: #95a5a6;
+}
+
+.som-label {
+    font-size: 8px;
+    font-family: Arial, sans-serif;
+    text-anchor: middle;
+    pointer-events: none;
+    fill: #2c3e50;
+}
+
+/* Training Visualization Styles */
+.som-training-container svg {
+    width: 100%;
+    height: 100%;
+}
+
+.training-line {
+    stroke: #3498db;
+    stroke-width: 2px;
+    fill: none;
+}
+
+.training-point {
+    fill: #e74c3c;
+    stroke: #fff;
+    stroke-width: 1px;
+    r: 3;
+}
+
+.training-axis {
+    font-size: 11px;
+    color: #7f8c8d;
+}
+
+.progress-bar {
+    fill: #3498db;
+    height: 20px;
+}
+
+.progress-background {
+    fill: #ecf0f1;
+    height: 20px;
+}
+
+/* Feature Map Styles */
+.som-features-container svg {
+    width: 100%;
+    height: 100%;
+}
+
+.feature-cell {
+    stroke: #fff;
+    stroke-width: 0.5px;
+    cursor: pointer;
+}
+
+.feature-grid-line {
+    stroke: #ddd;
+    stroke-width: 0.5px;
+}
+
+.feature-scale {
+    font-size: 10px;
+    text-anchor: middle;
+}
+
+/* Color scheme definitions for feature maps */
+.color-viridis-0 { fill: #440154; }
+.color-viridis-1 { fill: #482777; }
+.color-viridis-2 { fill: #3f4a8a; }
+.color-viridis-3 { fill: #31678e; }
+.color-viridis-4 { fill: #26838f; }
+.color-viridis-5 { fill: #1f9d8a; }
+.color-viridis-6 { fill: #6cce5a; }
+.color-viridis-7 { fill: #b6de2b; }
+.color-viridis-8 { fill: #fee825; }
+
+.color-plasma-0 { fill: #0c0786; }
+.color-plasma-1 { fill: #40039c; }
+.color-plasma-2 { fill: #6a00a7; }
+.color-plasma-3 { fill: #8f0da4; }
+.color-plasma-4 { fill: #b12a90; }
+.color-plasma-5 { fill: #cc4778; }
+.color-plasma-6 { fill: #e16462; }
+.color-plasma-7 { fill: #f2844b; }
+.color-plasma-8 { fill: #fca636; }
+
+/* Cluster Visualization for VSOM */
+.som-cluster-group {
+    stroke: #95a5a6;
+    stroke-width: 2px;
+    stroke-dasharray: 5,5;
+    fill: none;
+}
+
+.som-cluster-label {
+    font-size: 12px;
+    font-weight: 600;
+    text-anchor: middle;
+    fill: #2c3e50;
+}
+
+.som-cluster-node {
+    cursor: pointer;
+    stroke: #fff;
+    stroke-width: 2px;
+}
+
+/* VSOM cluster colors */
+.som-cluster-0 { fill: #3498db; }
+.som-cluster-1 { fill: #2ecc71; }
+.som-cluster-2 { fill: #f39c12; }
+.som-cluster-3 { fill: #e74c3c; }
+.som-cluster-4 { fill: #9b59b6; }
+.som-cluster-5 { fill: #1abc9c; }
+.som-cluster-6 { fill: #34495e; }
+.som-cluster-7 { fill: #f1c40f; }
+
+/* Entity markers on SOM */
+.som-entity-marker {
+    fill: #e74c3c;
+    stroke: #fff;
+    stroke-width: 2px;
+    r: 4;
+    cursor: pointer;
+}
+
+.som-entity-marker:hover {
+    r: 6;
+    fill: #c0392b;
+}
+
+/* Responsive Design for VSOM */
+@media (max-width: 768px) {
+    .som-controls .control-group,
+    .training-controls .control-group,
+    .features-controls .control-group,
+    .cluster-controls .control-group {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+    }
+    
+    .som-legend {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .progress-stats, 
+    .feature-stats {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+    }
+    
+    .som-grid-container, 
+    .som-training-container, 
+    .som-features-container, 
+    .som-clusters-container {
+        min-height: 300px;
+    }
+    
+    .topology-select, 
+    .color-scheme-select, 
+    .data-source-select {
+        width: 100%;
+    }
+}
