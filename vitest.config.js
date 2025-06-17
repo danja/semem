@@ -4,13 +4,33 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    include: ['tests/**/*.{test,spec,vitest}.js'],
-    exclude: ['node_modules', 'dist', '.git', '.cache'],
+    include: [
+      'tests/**/*.{test,spec,vitest}.{js,jsx,ts,tsx}',
+      '!tests/e2e/**/*',  // Explicitly exclude e2e tests
+      '!**/*.e2e.{js,jsx,ts,tsx}'  // Exclude any e2e test files
+    ],
+    exclude: [
+      'node_modules',
+      'dist',
+      '.git',
+      '.cache',
+      '**/e2e/**',
+      '**/*.e2e.*',
+      '**/playwright-report/**',
+      '**/test-results/**'
+    ],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html', 'lcov'],
       include: ['src/**/*.js'],
-      exclude: ['node_modules/**', 'tests/**']
+      exclude: [
+        'node_modules/**',
+        'tests/**',
+        '**/e2e/**',
+        '**/*.e2e.*',
+        '**/playwright-report/**',
+        '**/test-results/**'
+      ]
     },
     reporters: ['default'],
     // Test timeouts - conditional based on test type

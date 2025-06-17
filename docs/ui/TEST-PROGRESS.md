@@ -39,22 +39,29 @@ This document tracks the progress of UI testing for the Semem application, inclu
 
 ## Identified Issues
 
-1. **Console Toggle Not Found**
-   - **Status**: Resolved
-   - **Description**: Debug test revealed that the console toggle button doesn't exist in the current UI. The UI has a different structure than expected.
+1. **UI Interaction Issues**
+   - **Status**: Investigating
+   - **Description**: Tests are failing due to element interaction problems
    - **Findings**:
-     - The application has multiple tabs (Query, Graph, Edit RDF, Endpoints)
-     - Main functional areas include SPARQL query execution, graph visualization, and RDF editing
-     - No direct console toggle button found in the current UI
+     - Elements are present in the DOM but not visible/interactable
+     - May need to wait for specific conditions before interacting
+     - Possible iframes or shadow DOM affecting element selection
 
-2. **Test Coverage Mismatch**
-   - **Status**: Identified
-   - **Description**: Current test cases don't match the actual UI structure
+2. **Tab Navigation Problems**
+   - **Status**: Investigating
+   - **Description**: Unable to reliably switch between tabs in the UI
    - **Next Steps**:
-     - Update test cases to match actual UI components
-     - Add tests for SPARQL query execution
-     - Add tests for graph visualization
-     - Add tests for RDF editing
+     - Add more robust waiting for tab content to load
+     - Verify tab selection mechanism
+     - Consider direct URL navigation for tab switching
+
+3. **Test Stability**
+   - **Status**: Addressing
+   - **Description**: Tests are flaky and time out frequently
+   - **Improvements Needed**:
+     - Implement better element waiting strategies
+     - Add retry logic for flaky tests
+     - Increase timeouts where necessary
 
 ## Test Execution
 
@@ -64,18 +71,32 @@ This document tracks the progress of UI testing for the Semem application, inclu
 - Created console component tests (FAILING - element not found)
 - Added debug test to investigate page structure
 - Debug test revealed actual UI structure and available components
-- Identified need to update test strategy to match actual application features
+- Created SPARQL page object and test cases
+- Identified UI interaction issues with tab navigation
 
 ## Next Steps
-1. Update test strategy to match actual UI components:
-   - SPARQL query execution
-   - Graph visualization
-   - RDF editing
-   - Endpoint management
-2. Create page objects for main UI components
-3. Add tests for core functionality
-4. Implement visual regression testing
-5. Set up test reporting and CI/CD integration
+
+1. **Improve Test Reliability**
+   - Add explicit waits for element visibility/clickability
+   - Implement retry logic for flaky tests
+   - Add more detailed error logging
+
+2. **Debug Tab Navigation**
+   - Investigate why tab clicks aren't working as expected
+   - Try alternative selectors or interaction methods
+   - Consider direct URL navigation for tab switching
+
+3. **Enhance Test Coverage**
+   - Once basic navigation works, proceed with testing:
+     - SPARQL query execution
+     - Graph visualization
+     - RDF editing
+     - Endpoint management
+
+4. **Infrastructure**
+   - Set up test reporting
+   - Configure CI/CD pipeline
+   - Add visual regression testing
 
 ## Test Reports
 

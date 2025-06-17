@@ -1,3 +1,13 @@
+# Playwright
+/playwright-report/
+/test-results/
+/playwright/.cache/
+/playwright/artifacts/
+/playwright/.screenshots/
+/playwright/videos/
+/playwright/trace/
+/playwright/.screenshots/
+
 **/src-old
 **/*\ copy.js
 **/*repomix*.md

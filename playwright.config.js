@@ -5,10 +5,11 @@ import { defineConfig, devices } from '@playwright/test';
  * @see https://playwright.dev/docs/test-configuration
  */
 export default defineConfig({
-  testDir: './tests/ui',
+  testDir: './tests/e2e',
+  testMatch: '**/*.e2e.js',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
+  retries: process.env.CI ? 2 : 1,
   workers: process.env.CI ? 1 : undefined,
   reporter: 'html',
   use: {
