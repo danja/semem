@@ -40,9 +40,44 @@ Enhance memory visualization and interaction:
 - **Search & Filter**: Advanced filtering of memories
 - **Memory Details**: Detailed view of individual memories
 
+## VSOM Visualization Integration
+
+### Overview
+Integrate Vector Self-Organizing Map (VSOM) visualization to provide insights into high-dimensional memory embeddings through interactive 2D projections.
+
+### Key Features
+- **Interactive SOM Grid**: Visual representation of memory clusters
+- **Training Visualization**: Real-time monitoring of SOM training progress
+- **Feature Maps**: Component plane visualizations for analyzing individual features
+- **Clustering**: Automatic clustering of similar memories
+- **Interactive Exploration**: Zoom, pan, and tooltip interactions
+
+### Technical Implementation
+- **Frontend**: D3.js for visualization with reusable components
+- **Architecture**:
+  - Base visualization class for common functionality
+  - Individual components for each visualization type
+  - Centralized VSOM service for API communication
+- **Performance**:
+  - Web Workers for heavy computations
+  - Efficient data sampling for large datasets
+  - Progressive rendering for smooth interactions
+
+### Data Flow
+1. Memory embeddings are sent to the VSOM service
+2. VSOM processes and projects data to 2D space
+3. Frontend visualizes the results with interactive controls
+4. User interactions trigger updates and refinements
+
 ## Implementation Plan
 
-### Phase 1: MCP Client Tab (Priority 1)
+### Phase 0: VSOM Core (Priority 1 - In Progress)
+1. Implement base visualization components
+2. Create VSOM service for API communication
+3. Develop reusable D3.js utilities
+4. Set up logging and error handling
+
+### Phase 1: MCP Client Tab (Priority 2)
 1. Add new MCP Client tab to the UI
 2. Implement basic connection to MCP server
 3. Display server information and available tools

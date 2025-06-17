@@ -190,6 +190,108 @@ Semem Memory Data → Data Adapter → VSOM API → VSOM.js → Visualization Da
   - Interactive cluster selection
 - **D3.js Components**: Cluster overlays, data point markers, statistics panels
 
+## Design Principles
+
+### Code Reuse Strategy
+1. **Component Inheritance**
+   - Create a base `BaseVisualization` class with common functionality
+   - Extend for specific visualizations (SOMGrid, TrainingViz, etc.)
+   - Reuse D3 utility functions from existing visualizations
+
+2. **Shared Utilities**
+   - Centralize common functions in `src/frontend/js/utils/`
+   - Create reusable D3 components in `src/frontend/js/components/common/`
+   - Share color schemes and styling with existing visualizations
+
+3. **Service Layer**
+   - Abstract VSOM.js interactions behind a service interface
+   - Reuse HTTP client and error handling from existing services
+   - Implement data transformation as pure functions for testability
+
+### Modular Architecture
+```
+src/frontend/js/
+  components/
+    vsom/
+      VSOMVisualization.js     # Main container component
+      SOMGrid/                # SOM Grid visualization
+      TrainingViz/            # Training visualization
+      FeatureMaps/            # Feature maps visualization
+      Clustering/             # Clustering visualization
+    common/                   # Shared components
+  services/
+    VSOMService.js          # VSOM.js wrapper
+    VSOMDataAdapter.js       # Data transformation
+  utils/
+    d3-helpers.js           # Reusable D3 utilities
+    logging.js               # Logging utilities
+```
+
+### Logging Strategy
+1. **Log Levels**
+   ```javascript
+   import log from 'loglevel';
+   
+   // Set default log level
+   const logger = log.getLogger('vsom');
+   logger.setLevel('debug');  // Default to debug in development
+   
+   // Example usage
+   logger.debug('Initializing SOM grid with size:', { width, height });
+   logger.info('Training started with parameters:', trainingParams);
+   logger.warn('Slow performance detected during training');
+   logger.error('Failed to initialize VSOM:', error);
+   ```
+
+2. **Key Logging Points**
+   - Component lifecycle events (mount/update/unmount)
+   - API request/response cycles
+   - User interactions (selections, parameter changes)
+   - Performance metrics (training time, render time)
+   - Error conditions with stack traces
+   - State changes in complex components
+
+3. **Production Configuration**
+   - Set log level to 'warn' or 'error' in production
+   - Implement log aggregation for production monitoring
+   - Include session IDs for correlating client-side logs
+
+## Progress Tracking
+
+### Current Status (2024-06-17)
+- [ ] Phase 1: VSOM Tab Structure
+  - [ ] Add VSOM tab to main navigation
+  - [ ] Create VSOM sub-tabs structure
+  - [ ] Set up container structure for visualizations
+
+- [ ] Phase 2: VSOM HTTP API Integration
+  - [ ] Research VSOM.js API and capabilities
+  - [ ] Create HTTP API wrapper for VSOM functionality
+  - [ ] Implement RESTful endpoints in UIServer.js
+
+- [ ] Phase 3: Visualization Components
+  - [ ] Create VSOMVisualizationManager class
+  - [ ] Implement SOM grid visualization
+  - [ ] Build training visualization
+  - [ ] Create feature map visualizations
+  - [ ] Implement clustering visualization
+
+- [ ] Phase 4: Data Integration
+  - [ ] Create data adapters for Semem → VSOM format
+  - [ ] Integrate with memory embeddings
+  - [ ] Connect concept data to feature maps
+  - [ ] Implement real-time data updates
+
+### Next Steps (Immediate)
+1. Complete Phase 1 tasks by setting up the basic VSOM tab structure
+2. Research VSOM.js API requirements for HTTP integration
+3. Design data transformation layer between Semem and VSOM formats
+
+### Notes
+- Reuse existing D3.js visualization patterns from Memory Visualization
+- Ensure responsive design works across different screen sizes
+- Plan for WebSocket integration for real-time training updates
+
 ## User Experience Design
 
 ### Navigation Flow

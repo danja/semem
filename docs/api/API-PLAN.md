@@ -1,3 +1,6 @@
+
+The doc below is out-of-date, needs updating based on current code implementation. All APIs should be exposed systematically via HTTP REST API endpoints and documented both in Open API specs and developer-oriented text docs. Their behaviours should be checked and reported via the healthcheck endpoint. Each block of functionality should have an integration test/demo under examples/api/ following the style of the existing examples, with verbose console logging describing what is happening using loglevel and chalk to showcase facilities. 
+
 # Semantic Memory API Exposure Plan
 
 This document outlines a strategic plan for exposing APIs from the Semem (Semantic Memory) library, based on analysis of current functionality and example implementations.

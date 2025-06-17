@@ -9,6 +9,7 @@ import { SPARQLBrowser } from './components/sparqlBrowser.js';
 import { initMCPClient } from './components/mcpClient.js';
 import { initChatForms, loadChatProviders } from './components/chat.js';
 import { initMemoryVisualization } from './components/memoryVisualization.js';
+import { init as initVSOM } from './features/vsom/index.js';
 
 // Import Atuin and event bus for RDF visualization
 let TurtleEditor, GraphVisualizer, LoggerService, eventBus, EVENTS;
@@ -89,32 +90,29 @@ export async function initializeApp() {
     window.showDebug(`Running on port: ${currentPort}`);
     window.showDebug(`Using same origin for API requests`);
 
-    // Initialize tab navigation
+    // Initialize UI components
     initTabs();
-    
-    // Initialize range inputs with value display
     initRangeInputs();
-    
-    // Initialize API endpoint forms
+    initSettingsForm();
     initSearchForm();
     initMemoryForms();
-    
-    // Initialize memory visualization
     initMemoryVisualization();
     
     // Initialize chat forms and load providers
-    initChatForms().then(() => {
-        loadChatProviders();
-    });
+    await initChatForms();
+    loadChatProviders();
     
+    // Initialize remaining forms
     initEmbeddingForm();
     initConceptsForm();
     initIndexForm();
-    initSettingsForm();
-
-    // Initialize SPARQL browser with Atuin integration
+    
+    // Initialize VSOM feature
+    initVSOM();
+    
+    // Initialize SPARQL browser
     await initSPARQLBrowser();
-
+    
     // Initialize MCP Client
     initMCPClient();
 

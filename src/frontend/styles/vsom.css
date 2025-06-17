@@ -1,0 +1,190 @@
+/* VSOM Tab Styles */
+.vsom-tabs {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.vsom-tabs .tabs-inner {
+  display: flex;
+  border-bottom: 1px solid #dee2e6;
+  background-color: #f1f3f5;
+  padding: 0.5rem 0.5rem 0;
+}
+
+.vsom-tabs .tab-inner-btn {
+  padding: 0.5rem 1rem;
+  margin-right: 0.25rem;
+  background: none;
+  border: 1px solid transparent;
+  border-bottom: none;
+  border-top-left-radius: 4px;
+  border-top-right-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #495057;
+  transition: all 0.2s ease;
+}
+
+.vsom-tabs .tab-inner-btn:hover {
+  background-color: #e9ecef;
+  color: #0d6efd;
+}
+
+.vsom-tabs .tab-inner-btn.active {
+  background-color: #fff;
+  border-color: #dee2e6;
+  border-bottom-color: #fff;
+  color: #0d6efd;
+  font-weight: 500;
+}
+
+.vsom-tabs .inner-tab-content {
+  display: none;
+  flex: 1;
+  padding: 1rem;
+  background-color: #fff;
+  border: 1px solid #dee2e6;
+  border-top: none;
+  border-radius: 0 0 6px 6px;
+  overflow: auto;
+}
+
+.vsom-tabs .inner-tab-content.active {
+  display: block;
+}
+
+/* VSOM Container */
+#vsom-container {
+  width: 100%;
+  height: 600px;
+  background-color: #fff;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Controls */
+.vsom-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  border: 1px solid #e9ecef;
+}
+
+.control-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.control-group label {
+  margin: 0;
+  font-weight: 500;
+  font-size: 0.9rem;
+  color: #495057;
+}
+
+/* Loading and Error States */
+#vsom-loading,
+#vsom-error {
+  display: none;
+  position: absolute;
+  top: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  z-index: 1000;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+#vsom-loading {
+  background-color: rgba(13, 110, 253, 0.9);
+  color: white;
+}
+
+#vsom-error {
+  background-color: rgba(220, 53, 69, 0.9);
+  color: white;
+}
+
+/* Visualization Specific */
+.som-grid {
+  width: 100%;
+  height: 100%;
+}
+
+.som-node {
+  fill: #0d6efd;
+  stroke: #fff;
+  stroke-width: 1px;
+  transition: all 0.2s ease;
+}
+
+.som-node:hover {
+  stroke: #0a58ca;
+  stroke-width: 2px;
+  cursor: pointer;
+}
+
+.som-node.highlighted {
+  fill: #fd7e14;
+  stroke: #e8590c;
+  stroke-width: 2px;
+}
+
+.som-grid-lines line {
+  stroke: #e9ecef;
+  stroke-width: 1px;
+}
+
+.som-tooltip {
+  position: absolute;
+  padding: 0.5rem;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  border-radius: 4px;
+  pointer-events: none;
+  font-size: 0.85rem;
+  max-width: 300px;
+  z-index: 1000;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .vsom-controls {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .control-group {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  #vsom-container {
+    height: 400px;
+  }
+}
+
+/* Animation for training progress */
+@keyframes pulse {
+  0% { opacity: 0.7; }
+  50% { opacity: 1; }
+  100% { opacity: 0.7; }
+}
+
+.training-in-progress {
+  animation: pulse 1.5s infinite;
+  color: #0d6efd !important;
+}

@@ -16,9 +16,30 @@ Semem is a Node.js toolkit for AI memory management that integrates large langua
 - **🕸️ Knowledge Graph Processing**: End-to-end Ragno pipeline for entity extraction and relationship modeling
 - **🎯 Zoom, Pan Tilt (ZPT)**: Knowledge navigation and processing, cinematic analogy 
 - **🔌 Model Context Protocol (MCP)**: JSON-RPC 2.0 API for seamless LLM and agent integration
-- **🤖 Advanced Algorithms**: HyDE, VSOM, graph analytics, community detection, and Personal PageRank
+- **🔍 Advanced Algorithms**: HyDE, VSOM, graph analytics, community detection, and Personal PageRank
+- **📊 Interactive Visualizations**: VSOM (Vector Self-Organizing Maps) for high-dimensional data exploration
 - **🔗 Multi-Provider LLM Support**: Ollama, Claude, Mistral, and other providers via unified connector system
 - **📊 Multiple Storage Backends**: In-memory, JSON, and SPARQL/RDF with caching optimization
+
+## 🎨 VSOM Visualization
+
+Semem includes an advanced VSOM (Vector Self-Organizing Map) visualization system for exploring high-dimensional data:
+
+### Key Features
+- Interactive SOM grid visualization with zoom/pan
+- Real-time training visualization
+- Feature map exploration (U-Matrix, component planes)
+- Interactive clustering of SOM nodes
+- Responsive design for all screen sizes
+
+### Getting Started
+
+1. Navigate to the VSOM tab in the Semem UI
+2. Load or train a SOM model
+3. Explore the visualization and interact with nodes
+4. Use the feature maps to understand data relationships
+
+For more details, see the [VSOM Documentation](docs/features/vsom/README.md).
 
 ## 📁 Project Structure
 
