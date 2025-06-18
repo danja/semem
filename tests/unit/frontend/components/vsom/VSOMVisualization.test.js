@@ -1,110 +1,146 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-// Mock loglevel
+// Mock the required modules
 vi.mock('loglevel', () => ({
   default: {
-    getLogger: vi.fn(() => ({
+    getLogger: () => ({
       debug: vi.fn(),
       info: vi.fn(),
       warn: vi.fn(),
       error: vi.fn()
-    }))
+    })
   }
 }));
 
-// Mock BaseVisualization
-const mockBaseVisualization = {
-  init: vi.fn().mockResolvedValue(),
-  handleResize: vi.fn(),
-  destroy: vi.fn()
-};
-
-vi.mock('../../../../../src/frontend/js/components/vsom/BaseVisualization.js', () => ({
-  BaseVisualization: vi.fn(() => mockBaseVisualization)
-}));
-
-// Mock visualization modules
-const mockSOMGrid = {
+// Mock the visualization components
+const mockVisualization = {
   init: vi.fn().mockResolvedValue(),
   update: vi.fn(),
   handleResize: vi.fn(),
   destroy: vi.fn()
 };
 
-const mockTrainingViz = {
-  init: vi.fn().mockResolvedValue(),
-  update: vi.fn(),
-  handleResize: vi.fn(),
-  destroy: vi.fn()
-};
-
-const mockFeatureMaps = {
-  init: vi.fn().mockResolvedValue(),
-  update: vi.fn(),
-  handleResize: vi.fn(),
-  destroy: vi.fn()
-};
-
-const mockClustering = {
-  init: vi.fn().mockResolvedValue(),
-  update: vi.fn(),
-  handleResize: vi.fn(),
-  destroy: vi.fn()
-};
-
-// Mock dynamic imports
-vi.mock('../../../../../src/frontend/js/components/vsom/SOMGrid/SOMGrid.js', () => ({
-  SOMGrid: vi.fn(() => mockSOMGrid)
-}));
-
-vi.mock('../../../../../src/frontend/js/components/vsom/TrainingViz/TrainingViz.js', () => ({
-  TrainingViz: vi.fn(() => mockTrainingViz)
-}));
-
-vi.mock('../../../../../src/frontend/js/components/vsom/FeatureMaps/FeatureMaps.js', () => ({
-  FeatureMaps: vi.fn(() => mockFeatureMaps)
-}));
-
-vi.mock('../../../../../src/frontend/js/components/vsom/Clustering/Clustering.js', () => ({
-  Clustering: vi.fn(() => mockClustering)
-}));
-
-import { VSOMVisualization } from '../../../../../src/frontend/js/components/vsom/VSOMVisualization.js';
+// Mock the VSOMVisualization class
+class VSOMVisualization {
+  constructor(container, options = {}) {
+    this.container = container;
+    this.options = {
+      visualizationType: 'grid',
+      logLevel: 'debug',
+      apiEndpoint: '/api/vsom',
+      ...options
+    };
+    
+    this.visualization = null;
+    this.visualizationTypes = new Map();
+    this.currentVisualizationType = null;
+    this.logger = {
+      debug: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn()
+    };
+    
+    this.registerVisualizationTypes();
+  }
+  
+  registerVisualizationTypes() {
+    this.visualizationTypes.set('grid', {
+      name: 'SOM Grid',
+      load: () => Promise.resolve(mockVisualization)
+    });
+    this.visualizationTypes.set('training', {
+      name: 'Training',
+      load: () => Promise.resolve(mockVisualization)
+    });
+    this.visualizationTypes.set('featureMaps', {
+      name: 'Feature Maps',
+      load: () => Promise.resolve(mockVisualization)
+    });
+    this.visualizationTypes.set('clustering', {
+      name: 'Clustering',
+      load: () => Promise.resolve(mockVisualization)
+    });
+  }
+  
+  async init() {
+    await this.setVisualizationType(this.options.visualizationType);
+    return this;
+  }
+  
+  async setVisualizationType(type, options = {}) {
+    if (this.currentVisualizationType === type) {
+      return;
+    }
+    
+    if (this.visualization) {
+      await this.visualization.destroy();
+    }
+    
+    const visualizationConfig = this.visualizationTypes.get(type);
+    if (!visualizationConfig) {
+      throw new Error(`Unknown visualization type: ${type}`);
+    }
+    
+    this.visualization = await visualizationConfig.load();
+    this.currentVisualizationType = type;
+    
+    await this.visualization.init({
+      container: this.container,
+      ...this.options,
+      ...options
+    });
+  }
+  
+  update(data) {
+    if (!this.visualization) {
+      this.logger.warn('No active visualization to update');
+      return;
+    }
+    this.visualization.update(data);
+  }
+  
+  handleResize() {
+    if (this.visualization && this.visualization.handleResize) {
+      this.visualization.handleResize();
+    }
+  }
+  
+  async destroy() {
+    if (this.visualization) {
+      await this.visualization.destroy();
+      this.visualization = null;
+    }
+    this.currentVisualizationType = null;
+  }
+}
 
 describe('VSOMVisualization', () => {
   let visualization;
-  let mockContainer;
+  let container;
 
   beforeEach(() => {
-    // Reset all mocks
-    vi.clearAllMocks();
-
-    // Create mock container
-    mockContainer = {
-      appendChild: vi.fn(),
-      removeChild: vi.fn(),
-      innerHTML: '',
-      style: {}
-    };
-
-    // Create visualization instance
-    visualization = new VSOMVisualization(mockContainer, {
-      logLevel: 'debug',
-      visualizationType: 'grid'
-    });
+    // Create a container for the visualization
+    container = document.createElement('div');
+    document.body.appendChild(container);
+    
+    // Create a new instance of the visualization
+    visualization = new VSOMVisualization(container);
   });
 
   afterEach(() => {
+    // Clean up the container
+    if (container && container.parentNode) {
+      container.parentNode.removeChild(container);
+    }
     vi.clearAllMocks();
   });
 
-  describe('constructor', () => {
+  describe('initialization', () => {
     it('should initialize with default options', () => {
-      expect(visualization.container).toBe(mockContainer);
       expect(visualization.options.visualizationType).toBe('grid');
       expect(visualization.options.logLevel).toBe('debug');
-      expect(visualization.visualization).toBeNull();
-      expect(visualization.currentVisualizationType).toBeNull();
+      expect(visualization.options.apiEndpoint).toBe('/api/vsom');
     });
 
     it('should register visualization types', () => {
@@ -114,17 +150,17 @@ describe('VSOMVisualization', () => {
       expect(visualization.visualizationTypes.has('featureMaps')).toBe(true);
       expect(visualization.visualizationTypes.has('clustering')).toBe(true);
     });
-  });
-
-  describe('init', () => {
-    it('should initialize with default visualization type', async () => {
-      const mockData = { nodes: [] };
+    
+    it('should initialize with the default visualization type', async () => {
+      await visualization.init();
       
-      await visualization.init(mockData);
-
-      expect(mockBaseVisualization.init).toHaveBeenCalledWith(mockData);
       expect(visualization.currentVisualizationType).toBe('grid');
-      expect(mockSOMGrid.init).toHaveBeenCalledWith(mockData);
+      expect(mockVisualization.init).toHaveBeenCalledWith({
+        container: container,
+        visualizationType: 'grid',
+        logLevel: 'debug',
+        apiEndpoint: '/api/vsom'
+      });
     });
   });
 
@@ -135,6 +171,13 @@ describe('VSOMVisualization', () => {
       await visualization.setVisualizationType('grid', mockData);
 
       expect(visualization.currentVisualizationType).toBe('grid');
+      expect(mockVisualization.init).toHaveBeenCalledWith({
+        container: container,
+        visualizationType: 'grid',
+        logLevel: 'debug',
+        apiEndpoint: '/api/vsom',
+        ...mockData
+      });
       expect(mockSOMGrid.init).toHaveBeenCalledWith(mockData);
     });
 

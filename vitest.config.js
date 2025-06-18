@@ -1,20 +1,14 @@
 import { defineConfig } from 'vitest/config';
 
-import { vi } from 'vitest';
-
 export default defineConfig({
   test: {
     globals: true,
-    environment: 'jsdom', // Changed from 'node' to 'jsdom' for frontend tests
+    environment: 'node',
     setupFiles: ['./tests/setup.js'],
     environmentMatchGlobs: [
       ['**/frontend/**', 'jsdom']
     ],
-    include: [
-      'tests/unit/**/*.{test,spec,vitest}.{js,jsx,ts,tsx}',
-      'tests/unit/**/*.test.js',
-      'tests/unit/**/*.vitest.js'
-    ],
+    include: ['tests/unit/**/*.{test,spec,vitest}.{js,jsx,ts,tsx}'],
     exclude: [
       'node_modules',
       'dist',
@@ -44,13 +38,11 @@ export default defineConfig({
       ]
     },
     reporters: ['default'],
-    // Test timeouts - conditional based on test type
-    testTimeout: process.env.INTEGRATION_TEST ? 30000 : 10000, // 30s for integration, 10s for unit tests
-    hookTimeout: process.env.INTEGRATION_TEST ? 10000 : 5000,   // 10s for integration, 5s for unit tests
+    testTimeout: 10000, // 10 second timeout for tests
+    hookTimeout: 5000,  // 5 second timeout for hooks
     env: {
       NODE_ENV: 'test'
     },
-    silent: false,
-    // setupFiles is already defined above
+    silent: false
   }
 });

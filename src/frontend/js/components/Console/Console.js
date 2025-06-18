@@ -40,29 +40,117 @@ class Console {
     // Create main container
     this.container = document.createElement('div');
     this.container.className = 'console-container';
+    this.container.style.position = 'fixed';
+    this.container.style.right = '0';
+    this.container.style.top = '0';
+    this.container.style.height = '100vh';
+    this.container.style.width = '30%';
+    this.container.style.minWidth = '300px';
+    this.container.style.maxWidth = '600px';
+    this.container.style.backgroundColor = '#1e1e1e';
+    this.container.style.color = '#e0e0e0';
+    this.container.style.boxShadow = '-2px 0 10px rgba(0, 0, 0, 0.3)';
+    this.container.style.transform = 'translateX(calc(100% - 40px))';
+    this.container.style.transition = 'transform 0.3s ease-in-out';
+    this.container.style.zIndex = '1000';
+    this.container.style.display = 'flex';
+    this.container.style.flexDirection = 'column';
+    this.container.style.fontFamily = 'monospace';
+    this.container.style.fontSize = '12px';
+    this.container.style.lineHeight = '1.4';
+    this.container.style.overflow = 'hidden';
+
     this.container.innerHTML = `
-      <button class="console-toggle" title="Toggle Console">Console</button>
-      <div class="console-header">
-        <div class="console-title">Developer Console</div>
-        <div class="console-controls">
-          <select class="log-level-filter">
+      <button class="console-toggle" style="
+        position: absolute;
+        left: -40px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 40px;
+        height: 80px;
+        background: #333;
+        border: none;
+        color: white;
+        font-size: 16px;
+        cursor: pointer;
+        border-radius: 4px 0 0 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        writing-mode: vertical-rl;
+        text-orientation: mixed;
+        padding: 10px 0;
+      ">Console</button>
+      <div class="console-header" style="
+        padding: 10px;
+        background: #252526;
+        border-bottom: 1px solid #333;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      ">
+        <div class="console-title" style="font-weight: bold;">Developer Console</div>
+        <div class="console-controls" style="display: flex; gap: 5px;">
+          <select class="log-level-filter" style="
+            background: #333;
+            color: #fff;
+            border: 1px solid #555;
+            border-radius: 3px;
+            padding: 3px 5px;
+          ">
             ${LOG_LEVELS.map(level => 
               `<option value="${level.value}" ${level.value === this.logLevel ? 'selected' : ''}>
                 ${level.label}
               </option>`
             ).join('')}
           </select>
-          <button class="pause-logs" title="Pause/Resume">⏸️</button>
-          <button class="clear-logs" title="Clear">🗑️</button>
-          <button class="copy-logs" title="Copy to Clipboard">⎘</button>
+          <button class="pause-logs" title="Pause/Resume" style="
+            background: #333;
+            border: 1px solid #555;
+            color: #fff;
+            border-radius: 3px;
+            cursor: pointer;
+            padding: 3px 8px;
+          ">⏸️</button>
+          <button class="clear-logs" title="Clear" style="
+            background: #333;
+            border: 1px solid #555;
+            color: #fff;
+            border-radius: 3px;
+            cursor: pointer;
+            padding: 3px 8px;
+          ">🗑️</button>
+          <button class="copy-logs" title="Copy to Clipboard" style="
+            background: #333;
+            border: 1px solid #555;
+            color: #fff;
+            border-radius: 3px;
+            cursor: pointer;
+            padding: 3px 8px;
+          ">⎘</button>
         </div>
       </div>
-      <div class="console-search">
-        <input type="text" placeholder="Filter logs..." class="search-input">
+      <div class="console-search" style="padding: 10px; border-bottom: 1px solid #333;">
+        <input type="text" placeholder="Filter logs..." class="search-input" style="
+          width: 100%;
+          padding: 5px;
+          background: #333;
+          border: 1px solid #555;
+          color: #fff;
+          border-radius: 3px;
+        ">
       </div>
-      <div class="console-content"></div>
+      <div class="console-content" style="
+        flex: 1;
+        overflow-y: auto;
+        padding: 10px;
+        font-family: 'Courier New', monospace;
+        white-space: pre-wrap;
+        word-break: break-word;
+      "></div>
     `;
     
+    // Add to body
     document.body.appendChild(this.container);
     
     // Cache DOM elements
@@ -70,6 +158,16 @@ class Console {
     this.searchInput = this.container.querySelector('.search-input');
     this.logLevelSelect = this.container.querySelector('.log-level-filter');
     this.toggleButton = this.container.querySelector('.console-toggle');
+    
+    // Ensure body has proper styles
+    document.body.style.margin = '0';
+    document.body.style.padding = '0';
+    document.body.style.overflowX = 'hidden';
+    document.body.style.minHeight = '100vh';
+    document.body.style.position = 'relative';
+    
+    // Force a reflow to ensure styles are applied
+    void this.container.offsetHeight;
   }
   
   bindEvents() {
@@ -103,7 +201,11 @@ class Console {
   // Toggle console visibility
   toggle() {
     this.isOpen = !this.isOpen;
-    this.container.classList.toggle('open');
+    if (this.isOpen) {
+      this.container.style.transform = 'translateX(0)';
+    } else {
+      this.container.style.transform = 'translateX(calc(100% - 40px))';
+    }
   }
   
   // Toggle pause state

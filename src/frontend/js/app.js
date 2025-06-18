@@ -239,72 +239,47 @@ async function initSPARQLBrowser() {
     }
 }
 
+// Initialize console after the app is loaded
+async function initializeConsole() {
+    try {
+        // Import the Console component
+        const { default: Console } = await import('./components/Console/Console.js');
+        
+        // Create and initialize the console
+        const consoleInstance = new Console({
+            initialLogLevel: 'debug',
+            maxLogs: 1000
+        });
+        
+        // Make console available globally for debugging
+        window.appConsole = consoleInstance;
+        
+        // Replace console methods to capture logs
+        replaceConsole();
+        
+        // Log a test message
+        console.log('Console component initialized');
+        console.debug('Debug message');
+        console.warn('Warning message');
+        console.error('Error message');
+        
+        // Open the console after a short delay
+        setTimeout(() => {
+            consoleInstance.toggle();
+        }, 500);
+        
+        return consoleInstance;
+    } catch (error) {
+        console.error('Failed to initialize console:', error);
+        throw error;
+    }
+}
+
 // Initialize the application when the DOM is fully loaded
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-        // Initialize the app
-        initializeApp().then(() => {
-            // Initialize console after the app is loaded
-            function initializeConsole() {
-                // Initialize the console component
-                try {
-                    const consoleInstance = new Console({ initialLogLevel: 'debug' });
-                    console.log('Console component initialized');
-                    
-                    // Make console available globally for debugging
-                    window.appConsole = consoleInstance;
-                } catch (error) {
-                    console.error('Failed to initialize console:', error);
-                }
-            }
-            
-            initializeConsole();
-        });
+        initializeApp().then(initializeConsole).catch(console.error);
     });
 } else {
-    initializeApp().then(() => {
-        // Initialize console after the app is loaded
-        async function initializeConsole() {
-            try {
-                // Import Preact and the Console component
-                const { h, render } = await import('preact');
-                const { default: Console } = await import('./components/Console/Console.js');
-                
-                // Create a container for the console
-                const consoleContainer = document.createElement('div');
-                document.body.appendChild(consoleContainer);
-                
-                // Import console CSS
-                try {
-                    // Since we're using ES modules, we need to use import.meta.url to construct the correct path
-                    const cssUrl = new URL('./components/Console/styles/console.css', import.meta.url);
-                    const link = document.createElement('link');
-                    link.rel = 'stylesheet';
-                    link.href = cssUrl.href;
-                    document.head.appendChild(link);
-                    console.log('Console styles loaded');
-                } catch (err) {
-                    console.error('Failed to load console styles:', err);
-                }
-                
-                // Render the Console component
-                render(h(Console, {
-                    initialLogLevel: 'debug',
-                    maxLogs: 1000
-                }), consoleContainer);
-                
-                // Replace console methods to capture logs
-                replaceConsole();
-                
-                // Log a test message
-                logger.info('Console component initialized');
-                logger.debug('Debug message');
-                logger.warn('Warning message');
-                logger.error('Error message');
-            } catch (error) {
-                console.error('Failed to initialize console:', error);
-            }
-        }
-        initializeConsole();
-    });
+    initializeApp().then(initializeConsole).catch(console.error);
 }
