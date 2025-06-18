@@ -14,10 +14,10 @@ export default {
   },
   
   output: {
-    path: path.resolve(__dirname, 'public/dist'),
+    path: path.resolve(__dirname, 'dist'),
     filename: process.env.NODE_ENV === 'production' ? '[name].[contenthash].js' : '[name].js',
     clean: true,
-    publicPath: '/dist/'
+    publicPath: '/'
   },
   
   module: {
@@ -58,8 +58,8 @@ export default {
   plugins: [
     new HtmlWebpackPlugin({
       template: './src/frontend/index.template.html',
-      filename: '../index.html',
-      publicPath: '/dist/'
+      filename: 'index.html',
+      inject: 'body'
     }),
     new CopyWebpackPlugin({
       patterns: [
@@ -82,19 +82,11 @@ export default {
     }
   },
   
-  plugins: [
-    new HtmlWebpackPlugin({
-      template: './src/frontend/index.template.html',
-      filename: 'index.html',
-      inject: 'body'
-    })
-  ],
-  
   devtool: process.env.NODE_ENV === 'production' ? 'source-map' : 'eval-source-map',
   
   devServer: {
     static: {
-      directory: path.join(__dirname, 'public'),
+      directory: path.join(__dirname, 'dist'),
     },
     compress: true,
     port: 9000,

@@ -76,39 +76,5 @@
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* Dark Mode Support */
-@media (prefers-color-scheme: dark) {
-    :root {
-        --tabs-bg: #2d2d2d;
-        --border-color: #444;
-        --primary-color: #6ea8fe;
-        --hover-bg: rgba(110, 168, 254, 0.1);
-        --content-bg: #2d2d2d;
-        --text-color: #e0e0e0;
-    }
-    
-    .tabs {
-        background-color: var(--tabs-bg);
-        border-bottom-color: var(--border-color);
-    }
-    
-    .tab-btn {
-        color: var(--text-color);
-    }
-    
-    .tab-btn:hover {
-        color: var(--primary-color);
-        background-color: var(--hover-bg);
-    }
-    
-    .tab-btn.active {
-        color: var(--primary-color);
-        border-bottom-color: var(--primary-color);
-        background-color: var(--content-bg);
-    }
-    
-    .tab-content {
-        background-color: var(--content-bg);
-        color: var(--text-color);
-    }
-}
+/* Dark Mode Support - disabled to prevent automatic dark mode */
+/* Use .theme-dark class for explicit dark theme if needed */

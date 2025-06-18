@@ -80,15 +80,12 @@ export class SPARQLBrowser {
                 eventBus.emit(EVENTS.CONSOLE_INFO, 'Atuin components not available, trying to load...');
                 
                 try {
-                    // Import Atuin components using individual imports to avoid export issues
+                    // Import Atuin components directly from individual modules to avoid core index issues
                     const { TurtleEditor } = await import('atuin/core/TurtleEditor');
                     const { SPARQLEditor } = await import('atuin/core/SPARQLEditor');
                     const { GraphVisualizer } = await import('atuin/core/GraphVisualizer');
                     const { LoggerService, SPARQLClipsManager } = await import('atuin/services');
-                    const atuinUI = await import('atuin/ui');
-                    
-                    // Extract UI components from the UI module
-                    const { SPARQLClipsUI, SPARQLEndpointManager } = atuinUI;
+                    const { SPARQLClipsUI, SPARQLEndpointManager } = await import('atuin/ui');
                     
                     window.TurtleEditor = TurtleEditor;
                     window.SPARQLEditor = SPARQLEditor;
@@ -112,17 +109,19 @@ export class SPARQLBrowser {
             // Initialize logger with message queue container ID (per Atuin docs)
             this.logger = new window.LoggerService('atuin-message-queue');
             
-            // Initialize SPARQL editor with element ID (per integration guide)
+            // Initialize SPARQL editor with DOM element (not string ID)
             const sparqlElement = document.getElementById('sparql-query-editor');
             if (sparqlElement && window.SPARQLEditor) {
-                this.sparqlEditor = new window.SPARQLEditor('sparql-query-editor', this.logger);
+                this.sparqlEditor = new window.SPARQLEditor(sparqlElement, this.logger);
+                this.sparqlEditor.initialize();
                 console.log('SPARQL editor with syntax highlighting initialized');
             }
             
-            // Initialize Turtle editor with element ID (per integration guide)
+            // Initialize Turtle editor with DOM element (not string ID)
             const turtleElement = document.getElementById('turtle-editor');
             if (turtleElement && window.TurtleEditor) {
-                this.turtleEditor = new window.TurtleEditor('turtle-editor', this.logger);
+                this.turtleEditor = new window.TurtleEditor(turtleElement, this.logger);
+                this.turtleEditor.initialize();
                 
                 // Load sample RDF data by default for testing
                 const sampleRDF = this.getSampleRDFData();

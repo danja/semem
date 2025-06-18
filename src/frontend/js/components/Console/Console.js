@@ -53,7 +53,7 @@ class Console {
     this.container = document.createElement('div');
     this.container.className = 'console-container';
     
-    // Set container styles
+    // Set container styles - using CSS classes instead of hardcoded dark theme
     Object.assign(this.container.style, {
       position: 'fixed',
       right: '0',
@@ -62,46 +62,17 @@ class Console {
       width: '30%',
       minWidth: '300px',
       maxWidth: '600px',
-      backgroundColor: '#1e1e1e',
-      color: '#e0e0e0',
-      boxShadow: '-2px 0 10px rgba(0, 0, 0, 0.3)',
       transform: 'translateX(calc(100% - 40px))',
       transition: 'transform 0.3s ease-in-out',
       zIndex: '1000',
       display: 'flex',
       flexDirection: 'column',
-      fontFamily: 'Fira Code, monospace',
-      fontSize: '13px',
-      lineHeight: '1.5',
       overflow: 'hidden'
     });
 
     // Set up the HTML structure
     this.container.innerHTML = `
-      <button class="console-toggle" aria-label="Toggle console" style="
-        position: absolute;
-        left: -40px;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 40px;
-        height: 80px;
-        background: #2a2a2a;
-        border: none;
-        color: #e0e0e0;
-        font-size: 13px;
-        font-weight: 500;
-        cursor: pointer;
-        border-radius: 4px 0 0 4px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        writing-mode: vertical-rl;
-        text-orientation: mixed;
-        padding: 12px 0;
-        transition: all 0.2s ease;
-        user-select: none;
-        letter-spacing: 0.5px;
-      ">Console</button>
+      <button class="console-toggle" aria-label="Toggle console">Console</button>
       
       <div class="console-header">
         <div class="console-title">Developer Console</div>

@@ -49,8 +49,8 @@ class TabManager {
             return;
           }
           
-          // Find the content element that has an ID matching the data-tab value
-          const content = document.querySelector(`#${tabId}`);
+          // Find the content element that has an ID matching the data-tab value with '-tab' suffix
+          const content = document.querySelector(`#${tabId}-tab`);
           
           if (!content) {
             console.warn(`No content element found for tab: ${tabId}`);
