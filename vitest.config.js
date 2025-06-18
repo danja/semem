@@ -1,14 +1,19 @@
 import { defineConfig } from 'vitest/config';
 
+import { vi } from 'vitest';
+
 export default defineConfig({
   test: {
     globals: true,
-    environment: 'node',
+    environment: 'jsdom', // Changed from 'node' to 'jsdom' for frontend tests
+    setupFiles: ['./tests/setup.js'],
     environmentMatchGlobs: [
       ['**/frontend/**', 'jsdom']
     ],
     include: [
-      'tests/unit/**/*.{test,spec,vitest}.{js,jsx,ts,tsx}'
+      'tests/unit/**/*.{test,spec,vitest}.{js,jsx,ts,tsx}',
+      'tests/unit/**/*.test.js',
+      'tests/unit/**/*.vitest.js'
     ],
     exclude: [
       'node_modules',
@@ -46,6 +51,6 @@ export default defineConfig({
       NODE_ENV: 'test'
     },
     silent: false,
-    setupFiles: ['tests/setup.js']
+    // setupFiles is already defined above
   }
 });
