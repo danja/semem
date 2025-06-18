@@ -1,6 +1,7 @@
 import path from 'path';
 import { fileURLToPath } from 'url';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
+import CopyWebpackPlugin from 'copy-webpack-plugin';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -40,10 +41,39 @@ export default {
       },
       {
         test: /\.css$/,
-        use: ['style-loader', 'css-loader']
+        use: [
+          'style-loader',
+          {
+            loader: 'css-loader',
+            options: {
+              importLoaders: 1,
+              modules: false
+            }
+          }
+        ]
       }
     ]
   },
+  
+  plugins: [
+    new HtmlWebpackPlugin({
+      template: './src/frontend/index.template.html',
+      filename: '../index.html',
+      publicPath: '/dist/'
+    }),
+    new CopyWebpackPlugin({
+      patterns: [
+        {
+          from: 'src/frontend/styles/theme.css',
+          to: 'theme.css'
+        },
+        {
+          from: 'src/frontend/styles/components',
+          to: 'components'
+        }
+      ]
+    })
+  ],
   
   resolve: {
     extensions: ['.js', '.json'],

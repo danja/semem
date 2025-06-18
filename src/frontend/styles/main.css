@@ -2,6 +2,7 @@
 @import './theme.css';
 
 /* Component styles */
+@import './components/tabs.css';
 @import './console.css';
 @import './tabs.css';
 

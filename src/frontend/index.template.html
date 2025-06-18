@@ -5,6 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Semem API Interface</title>
+    <!-- Theme and base styles -->
+    <link rel="stylesheet" href="/dist/theme.css">
 </head>
 
 <body>
@@ -14,23 +16,25 @@
             <p>Interact with the Semantic Memory API system</p>
         </header>
 
-        <nav class="tabs">
-            <button class="tab-btn active" data-tab="search">Search</button>
-            <button class="tab-btn" data-tab="memory">Memory</button>
-            <button class="tab-btn" data-tab="memory-viz">Memory Viz</button>
-            <button class="tab-btn" data-tab="vsom">VSOM</button>
-            <button class="tab-btn" data-tab="chat">Chat</button>
-            <button class="tab-btn" data-tab="embeddings">Embeddings</button>
-            <button class="tab-btn" data-tab="concepts">Concepts</button>
-            <button class="tab-btn" data-tab="index">Index</button>
-            <button class="tab-btn" data-tab="settings">Settings</button>
-            <button class="tab-btn" data-tab="mcp-client">MCP Client</button>
-            <button class="tab-btn" data-tab="sparql-browser">SPARQL Browser</button>
-        </nav>
+        <div class="tabs-container">
+            <nav class="tabs" role="tablist" aria-label="Main navigation">
+                <button class="tab-btn active" data-tab="search" role="tab" aria-selected="true" aria-controls="search-tab" id="tab-search">Search</button>
+                <button class="tab-btn" data-tab="memory" role="tab" aria-selected="false" aria-controls="memory-tab" id="tab-memory">Memory</button>
+                <button class="tab-btn" data-tab="memory-viz" role="tab" aria-selected="false" aria-controls="memory-viz-tab" id="tab-memory-viz">Memory Viz</button>
+                <button class="tab-btn" data-tab="vsom" role="tab" aria-selected="false" aria-controls="vsom-tab" id="tab-vsom">VSOM</button>
+                <button class="tab-btn" data-tab="chat" role="tab" aria-selected="false" aria-controls="chat-tab" id="tab-chat">Chat</button>
+                <button class="tab-btn" data-tab="embeddings" role="tab" aria-selected="false" aria-controls="embeddings-tab" id="tab-embeddings">Embeddings</button>
+                <button class="tab-btn" data-tab="concepts" role="tab" aria-selected="false" aria-controls="concepts-tab" id="tab-concepts">Concepts</button>
+                <button class="tab-btn" data-tab="index" role="tab" aria-selected="false" aria-controls="index-tab" id="tab-index">Index</button>
+                <button class="tab-btn" data-tab="settings" role="tab" aria-selected="false" aria-controls="settings-tab" id="tab-settings">Settings</button>
+                <button class="tab-btn" data-tab="mcp-client" role="tab" aria-selected="false" aria-controls="mcp-client-tab" id="tab-mcp-client">MCP Client</button>
+                <button class="tab-btn" data-tab="sparql-browser" role="tab" aria-selected="false" aria-controls="sparql-browser-tab" id="tab-sparql-browser">SPARQL Browser</button>
+            </nav>
+        </div>
 
         <main>
             <!-- Search Tab -->
-            <section id="search-tab" class="tab-content active">
+            <section id="search-tab" class="tab-content active" role="tabpanel" aria-labelledby="tab-search" tabindex="0">
                 <h2>Semantic Search</h2>
                 <form id="search-form" class="api-form">
                     <div class="form-group">
@@ -79,7 +83,7 @@
             </section>
 
             <!-- Memory Tab -->
-            <section id="memory-tab" class="tab-content">
+            <section id="memory-tab" class="tab-content" role="tabpanel" aria-labelledby="tab-memory" tabindex="0" hidden>
                 <h2>Memory Management</h2>
 
                 <div class="tabs-inner">
@@ -158,7 +162,7 @@
             </section>
 
             <!-- Memory Visualization Tab -->
-            <section id="memory-viz-tab" class="tab-content">
+            <section id="memory-viz-tab" class="tab-content" role="tabpanel" aria-labelledby="tab-memory-viz" tabindex="0" hidden>
                 <h2>Memory Visualization</h2>
                 <p class="tab-description">Explore memory relationships through interactive graphs and timelines</p>
 
@@ -394,7 +398,7 @@
             </section>
 
             <!-- VSOM Tab -->
-            <section id="vsom-tab" class="tab-content">
+            <section id="vsom-tab" class="tab-content" role="tabpanel" aria-labelledby="tab-vsom" tabindex="0" hidden>
                 <h2>VSOM - Vector Self-Organizing Map</h2>
                 <p class="tab-description">Visualize and explore data using self-organizing maps with entity clustering and topology analysis</p>
 
@@ -633,7 +637,7 @@
             </section>
 
             <!-- Chat Tab -->
-            <section id="chat-tab" class="tab-content">
+            <section id="chat-tab" class="tab-content" role="tabpanel" aria-labelledby="tab-chat" tabindex="0" hidden>
                 <h2>Chat Interaction</h2>
 
                 <div class="tabs-inner">
@@ -719,7 +723,7 @@
             </section>
 
             <!-- Embeddings Tab -->
-            <section id="embeddings-tab" class="tab-content">
+            <section id="embeddings-tab" class="tab-content" role="tabpanel" aria-labelledby="tab-embeddings" tabindex="0" hidden>
                 <h2>Generate Embeddings</h2>
 
                 <form id="embedding-form" class="api-form">
@@ -760,7 +764,7 @@
             </section>
 
             <!-- Concepts Tab -->
-            <section id="concepts-tab" class="tab-content">
+            <section id="concepts-tab" class="tab-content" role="tabpanel" aria-labelledby="tab-concepts" tabindex="0" hidden>
                 <h2>Extract Concepts</h2>
 
                 <form id="concepts-form" class="api-form">
@@ -784,7 +788,7 @@
             </section>
 
             <!-- Index Tab -->
-            <section id="index-tab" class="tab-content">
+            <section id="index-tab" class="tab-content" role="tabpanel" aria-labelledby="tab-index" tabindex="0" hidden>
                 <h2>Index Content</h2>
 
                 <form id="index-form" class="api-form">
@@ -819,7 +823,7 @@
             </section>
 
             <!-- Settings Tab -->
-            <section id="settings-tab" class="tab-content">
+            <section id="settings-tab" class="tab-content" role="tabpanel" aria-labelledby="tab-settings" tabindex="0" hidden>
                 <h2>System Settings</h2>
                 
                 <form id="settings-form" class="api-form">
@@ -912,7 +916,7 @@
             </section>
 
             <!-- MCP Client Tab -->
-            <section id="mcp-client-tab" class="tab-content">
+            <section id="mcp-client-tab" class="tab-content" role="tabpanel" aria-labelledby="tab-mcp-client" tabindex="0" hidden>
                 <h2>MCP Client</h2>
                 
                 <div class="mcp-tabs">
@@ -988,7 +992,7 @@
             </section>
 
             <!-- SPARQL Browser Tab -->
-            <section id="sparql-browser-tab" class="tab-content">
+            <section id="sparql-browser-tab" class="tab-content" role="tabpanel" aria-labelledby="tab-sparql-browser" tabindex="0" hidden>
                 <h2>SPARQL Browser</h2>
                 <p class="tab-description">Explore and query RDF data stored in SPARQL endpoints with visual graph interface</p>
                 

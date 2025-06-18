@@ -1,0 +1,159 @@
+/**
+ * Tabs Component
+ * Provides accessible, responsive tabbed interface
+ */
+
+/* Tab container */
+.tabs-container {
+  width: 100%;
+  margin: 0 0 var(--spacing-lg);
+  position: relative;
+  background-color: var(--tabs-bg);
+  border-bottom: 1px solid var(--tabs-border);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; /* Hide scrollbar for Firefox */
+  -ms-overflow-style: none; /* Hide scrollbar for IE/Edge */
+}
+
+/* Hide scrollbar for Chrome/Safari */
+.tabs-container::-webkit-scrollbar {
+  display: none;
+}
+
+/* Tabs list */
+.tabs {
+  display: inline-flex;
+  list-style: none;
+  margin: 0;
+  padding: 0 var(--spacing-sm);
+  min-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Individual tab button */
+.tab-btn {
+  position: relative;
+  padding: var(--spacing-md) var(--spacing-lg);
+  margin: 0 var(--spacing-xs);
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  font-weight: 500;
+  line-height: 1.5;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: var(--transition);
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+/* Hover state */
+.tab-btn:hover:not(.active) {
+  color: var(--primary-color);
+  background-color: var(--tabs-hover-bg);
+  border-bottom-color: var(--primary-color-30);
+}
+
+/* Active tab */
+.tab-btn.active {
+  color: var(--primary-color);
+  border-bottom-color: var(--primary-color);
+  font-weight: 600;
+  background-color: var(--tabs-active-bg);
+  border-top-left-radius: var(--border-radius-sm);
+  border-top-right-radius: var(--border-radius-sm);
+}
+
+/* Focus state - for keyboard navigation */
+.tab-btn:focus-visible {
+  outline: 2px solid var(--primary-color-30);
+  outline-offset: 2px;
+  border-radius: var(--border-radius-sm) var(--border-radius-sm) 0 0;
+  box-shadow: 0 0 0 2px var(--primary-color-20);
+}
+
+/* Tab content area */
+.tab-content {
+  display: none;
+  padding: var(--spacing-lg) 0;
+  animation: fadeIn 0.3s ease-out;
+  will-change: opacity, transform;
+}
+
+/* Active tab content */
+.tab-content.active {
+  display: block;
+}
+
+/* Animation for tab content */
+@keyframes fadeIn {
+  from { 
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Tab indicator (optional animation) */
+.tab-indicator {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  background-color: var(--primary-color);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  .tab-btn {
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: 0.9rem;
+  }
+}
+
+/* Mobile styles */
+@media (max-width: 768px) {
+  .tabs-container {
+    margin-bottom: var(--spacing-md);
+    border-bottom: none;
+    box-shadow: 0 1px 0 0 var(--tabs-border);
+  }
+  
+  .tabs {
+    padding: 0 var(--spacing-xs);
+  }
+  
+  .tab-btn {
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: 0.85rem;
+    margin: 0 2px;
+    border-bottom-width: 2px;
+  }
+  
+  .tab-content {
+    padding: var(--spacing-md) 0;
+  }
+}
+
+/* Print styles */
+@media print {
+  .tabs-container {
+    display: none;
+  }
+  
+  .tab-content {
+    display: block !important;
+    opacity: 1 !important;
+    animation: none !important;
+    padding: 0 !important;
+  }
+}

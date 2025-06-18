@@ -23,6 +23,9 @@ import QueryModule from './Query.js';
 import AnalyticsModule from './Analytics.js';
 import PageRankModule from './PageRank.js';
 import VSOMModule from './VSOM.js';
+import HyDEModule from './HyDE.js';
+import QAModule from './QA.js';
+import ReportModule from './Report.js';
 
 class WorkflowOrchestrator {
     constructor(options = {}) {
@@ -89,23 +92,23 @@ class WorkflowOrchestrator {
         
         this.modules.set('hyde', {
             name: 'HyDE Enhancement',
-            class: null, // HydeModule,
+            class: HyDEModule,
             dependencies: ['search'],
-            implemented: false
+            implemented: true
         });
         
         this.modules.set('qa', {
             name: 'Multi-Modal Question Answering',
-            class: null, // QaModule,
+            class: QAModule,
             dependencies: ['search', 'enrich'],
-            implemented: false
+            implemented: true
         });
         
         this.modules.set('report', {
             name: 'Integration Report',
-            class: null, // ReportModule,
+            class: ReportModule,
             dependencies: ['ingest', 'enrich', 'search'],
-            implemented: false
+            implemented: true
         });
     }
 
@@ -224,6 +227,12 @@ class WorkflowOrchestrator {
                 const moduleInstance = new moduleInfo.class(this.config);
                 
                 await moduleInstance.initialize();
+                
+                // Special handling for Report module - provide workflow results
+                if (moduleName === 'report' && typeof moduleInstance.setWorkflowResults === 'function') {
+                    moduleInstance.setWorkflowResults(this.results);
+                }
+                
                 await moduleInstance.execute();
                 await moduleInstance.cleanup();
                 
@@ -312,6 +321,15 @@ class WorkflowOrchestrator {
             case 'vsom':
                 console.log(`      Entities: ${result.entitiesProcessed}, Map: ${result.mapSize}, Clusters: ${result.clustersFound}, Epochs: ${result.trainingEpochs}`);
                 break;
+            case 'hyde':
+                console.log(`      Queries: ${result.queriesProcessed}, Docs Generated: ${result.hypotheticalDocsGenerated}, Avg Improvement: ${result.averageImprovement?.toFixed(1) || 0}%`);
+                break;
+            case 'qa':
+                console.log(`      Questions: ${result.questionsAnswered}, Avg Confidence: ${(result.averageConfidence * 100).toFixed(1)}%, Sources: ${result.totalSources}`);
+                break;
+            case 'report':
+                console.log(`      Modules Analyzed: ${result.modulesAnalyzed}, Health: ${result.overallHealth}, Integration: ${result.integrationScore}/10`);
+                break;
             default:
                 console.log(`      Status: ${result.success ? 'Success' : 'Failed'}`);
         }
@@ -346,6 +364,14 @@ class WorkflowOrchestrator {
             await this.executeWorkflow();
             await this.generateSummary();
             
+            // Successful completion - exit cleanly
+            console.log('\n✅ Workflow execution completed successfully');
+            
+            // Small delay to allow any pending operations to complete
+            setTimeout(() => {
+                process.exit(0);
+            }, 100);
+            
         } catch (error) {
             console.error(chalk.red('\n💥 Workflow execution failed:'), error.message);
             process.exit(1);
@@ -356,7 +382,16 @@ class WorkflowOrchestrator {
 // Run the orchestrator if executed directly
 if (import.meta.url === `file://${process.argv[1]}`) {
     const orchestrator = new WorkflowOrchestrator();
-    orchestrator.run();
+    
+    // Ensure process exits even if something hangs
+    const timeoutId = setTimeout(() => {
+        console.log('\n⚠️  Process timeout - forcing exit');
+        process.exit(1);
+    }, 600000); // 10 minute timeout
+    
+    orchestrator.run().finally(() => {
+        clearTimeout(timeoutId);
+    });
 }
 
 export default WorkflowOrchestrator;
