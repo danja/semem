@@ -140,6 +140,10 @@ class Console {
     // Toggle console
     this.toggleButton.addEventListener('click', () => this.toggle());
     
+    // Listen for toggle events from AppMenu
+    this.handleToggleEvent = () => this.toggle();
+    document.addEventListener('toggleConsole', this.handleToggleEvent);
+    
     // Search input
     this.searchInput.addEventListener('input', (e) => {
       this.searchTerm = e.target.value.toLowerCase();
@@ -349,12 +353,18 @@ class Console {
   
   // Clean up event listeners
   destroy() {
-    // Remove keyboard event listener
+    // Remove event listeners
     document.removeEventListener('keydown', this.handleKeyDown);
+    document.removeEventListener('toggleConsole', this.handleToggleEvent);
     
-    // Remove console from DOM
+    // Clean up DOM
     if (this.container && this.container.parentNode) {
       this.container.parentNode.removeChild(this.container);
+    }
+    
+    // Restore original console methods if they were overridden
+    if (this.originalConsole) {
+      Object.assign(console, this.originalConsole);
     }
   }
 }

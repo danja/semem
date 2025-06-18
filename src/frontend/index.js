@@ -6,6 +6,9 @@ import { setupErrorHandling } from './js/utils/errorHandler.js';
 // Import console initialization
 import './js/console-init.js';
 
+// Import app menu initialization
+import './js/app-menu-init.js';
+
 // Setup global error handling
 setupErrorHandling();
 

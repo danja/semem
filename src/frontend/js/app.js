@@ -2,7 +2,6 @@
  * Main application initialization
  */
 import { setupDebug } from './utils/debug.js';
-import { initTabs } from './components/tabs.js';
 import { initSettingsForm } from './components/settings.js';
 import { checkAPIHealth } from './services/apiService.js';
 import { SPARQLBrowser } from './components/sparqlBrowser.js';
@@ -12,6 +11,7 @@ import { initMemoryVisualization } from './components/memoryVisualization.js';
 import { init as initVSOM } from './features/vsom/index.js';
 import Console from './components/Console/Console.js';
 import { logger, replaceConsole } from './utils/logger.js';
+import tabManager from './utils/tabManager.js';
 
 // Import Atuin and event bus for RDF visualization
 let TurtleEditor, GraphVisualizer, LoggerService, eventBus, EVENTS;
@@ -77,49 +77,7 @@ export async function initializeApp() {
     if (loadingIndicator) {
         // Force it to be hidden at startup
         loadingIndicator.style.display = 'none';
-        window.showDebug('Loading indicator hidden at initialization');
     }
-
-    window.showDebug('Application initialized');
-
-    // Check API health
-    window.showDebug('Checking API health...');
-    checkAPIHealth();
-    
-    // Log the API URL
-    const currentPort = window.location.port;
-    console.log(`Running on port: ${currentPort}`);
-    window.showDebug(`Running on port: ${currentPort}`);
-    window.showDebug(`Using same origin for API requests`);
-
-    // Initialize UI components
-    initTabs();
-    initRangeInputs();
-    initSettingsForm();
-    initSearchForm();
-    initMemoryForms();
-    initMemoryVisualization();
-    
-    // Initialize chat forms and load providers
-    await initChatForms();
-    loadChatProviders();
-    
-    // Initialize remaining forms
-    initEmbeddingForm();
-    initConceptsForm();
-    initIndexForm();
-    
-    // Initialize VSOM feature
-    initVSOM();
-    
-    // Initialize SPARQL browser
-    await initSPARQLBrowser();
-    
-    // Initialize MCP Client
-    initMCPClient();
-
-    // Failsafe mechanism to ensure loading indicator doesn't get stuck
-    setupFailsafeTimeout();
 }
 
 /**

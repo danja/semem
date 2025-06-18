@@ -1,5 +1,6 @@
 /* Console Styles */
 @import './console.css';
+@import './tabs.css';
 
 /* Reset and base styles */
 * {

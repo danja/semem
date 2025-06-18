@@ -1,0 +1,196 @@
+/* App Menu Styles */
+
+:root {
+    --menu-bg: #ffffff;
+    --menu-text: #333333;
+    --menu-hover: #f5f5f5;
+    --menu-border: #e0e0e0;
+    --menu-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+}
+
+.app-menu {
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    z-index: 1001; /* Higher than console */
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+}
+
+.app-menu-button {
+    background: var(--menu-bg);
+    border: 1px solid var(--menu-border);
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    box-shadow: var(--menu-shadow);
+}
+
+.app-menu-button:hover {
+    background-color: var(--menu-hover);
+}
+
+.app-menu-button:focus {
+    outline: 2px solid var(--primary-color, #4a90e2);
+    outline-offset: 2px;
+}
+
+.menu-icon {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 24px;
+    height: 18px;
+}
+
+.menu-line {
+    display: block;
+    width: 100%;
+    height: 2px;
+    background-color: #333;
+    transition: transform 0.3s, opacity 0.3s;
+}
+
+.app-menu.open .menu-line:nth-child(1) {
+    transform: translateY(8px) rotate(45deg);
+}
+
+.app-menu.open .menu-line:nth-child(2) {
+    opacity: 0;
+}
+
+.app-menu.open .menu-line:nth-child(3) {
+    transform: translateY(-8px) rotate(-45deg);
+}
+
+.app-menu-dropdown {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    left: 0;
+    background: var(--menu-bg);
+    border: 1px solid var(--menu-border);
+    border-radius: 4px;
+    box-shadow: var(--menu-shadow);
+    min-width: 220px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.2s ease;
+    z-index: 1002;
+    overflow: hidden;
+}
+
+.app-menu.open .app-menu-dropdown {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.app-menu-list {
+    list-style: none;
+    margin: 0;
+    padding: 0.25rem 0;
+}
+
+.app-menu-item {
+    margin: 0;
+    padding: 0;
+}
+
+.app-menu-item-button {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding: 0.65rem 1rem;
+    background: none;
+    border: none;
+    text-align: left;
+    cursor: pointer;
+    color: var(--menu-text, #333);
+    font-size: 0.9rem;
+    transition: all 0.15s ease;
+    box-sizing: border-box;
+}
+
+.app-menu-item-button:hover {
+    background-color: var(--menu-hover, #f5f5f5);
+}
+
+.app-menu-item-button:focus {
+    outline: none;
+    background-color: var(--menu-hover, #f0f0f0);
+}
+
+.app-menu-item-shortcut {
+    margin-left: 1rem;
+    color: var(--menu-text, #666);
+    font-size: 0.75em;
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    background: var(--menu-hover, #f0f0f0);
+    padding: 0.15rem 0.5rem;
+    border-radius: 3px;
+    border: 1px solid var(--menu-border, #e0e0e0);
+    opacity: 0.8;
+    transition: all 0.15s ease;
+}
+
+.app-menu-item-button:hover .app-menu-item-shortcut {
+    opacity: 1;
+    background: var(--menu-hover, #e9e9e9);
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --menu-bg: #2d2d2d;
+        --menu-text: #e0e0e0;
+        --menu-hover: #3a3a3a;
+        --menu-border: #444;
+        --menu-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    }
+    
+    .menu-line {
+        background-color: var(--menu-text);
+    }
+    
+    .app-menu-button {
+        background: var(--menu-bg);
+        border-color: var(--menu-border);
+    }
+    
+    .app-menu-button:hover {
+        background-color: var(--menu-hover);
+    }
+    
+    .app-menu-dropdown {
+        background: var(--menu-bg);
+        border-color: var(--menu-border);
+        box-shadow: var(--menu-shadow);
+    }
+    
+    .app-menu-item-button {
+        color: var(--menu-text);
+    }
+    
+    .app-menu-item-button:hover,
+    .app-menu-item-button:focus {
+        background-color: var(--menu-hover);
+    }
+    
+    .app-menu-item-shortcut {
+        color: #aaa;
+        background: #3a3a3a;
+        border-color: #444;
+    }
+    
+    .app-menu.open .menu-line:nth-child(1),
+    .app-menu.open .menu-line:nth-child(3) {
+        background-color: var(--menu-text);
+    }
+}
