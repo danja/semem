@@ -3,8 +3,8 @@
  * Enhanced RDF query and visualization with Atuin syntax highlighting
  */
 
-import { eventBus, EVENTS } from '../services/eventBus';
-import store from '../stores/useStore';
+import { eventBus, EVENTS } from '../services/eventBus.js';
+import store from '../stores/useStore.js';
 
 export class SPARQLBrowser {
     constructor() {

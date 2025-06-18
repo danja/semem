@@ -1,0 +1,350 @@
+import log from 'loglevel';
+import './styles/console.css';
+
+// Log levels for the dropdown
+const LOG_LEVELS = [
+  { value: 'trace', label: 'Trace' },
+  { value: 'debug', label: 'Debug' },
+  { value: 'info', label: 'Info' },
+  { value: 'warn', label: 'Warning' },
+  { value: 'error', label: 'Error' },
+  { value: 'silent', label: 'Silent' },
+];
+
+class Console {
+  constructor(options = {}) {
+    console.log('[DEBUG] Console constructor called', options);
+    this.options = {
+      initialLogLevel: 'debug',
+      maxLogs: 1000,
+      ...options
+    };
+    
+    this.logs = [];
+    this.isOpen = false;
+    this.searchTerm = '';
+    this.logLevel = this.options.initialLogLevel;
+    this.isPaused = false;
+    this.autoScroll = true;
+    
+    this.init();
+  }
+  
+  init() {
+    console.log('[DEBUG] Console.init() called');
+    this.createDOM();
+    this.bindEvents();
+    this.overrideConsoleMethods();
+    this.log('Console initialized', 'info');
+  }
+  
+  createDOM() {
+    console.log('[DEBUG] Console.createDOM() called');
+    // Create main container
+    this.container = document.createElement('div');
+    this.container.className = 'console-container';
+    this.container.style.position = 'fixed';
+    this.container.style.right = '0';
+    this.container.style.top = '0';
+    this.container.style.height = '100vh';
+    this.container.style.width = '30%';
+    this.container.style.minWidth = '300px';
+    this.container.style.maxWidth = '600px';
+    this.container.style.backgroundColor = '#1e1e1e';
+    this.container.style.color = '#e0e0e0';
+    this.container.style.boxShadow = '-2px 0 10px rgba(0, 0, 0, 0.3)';
+    this.container.style.transform = 'translateX(calc(100% - 40px))';
+    this.container.style.transition = 'transform 0.3s ease-in-out';
+    this.container.style.zIndex = '1000';
+    this.container.style.display = 'flex';
+    this.container.style.flexDirection = 'column';
+    this.container.style.fontFamily = 'monospace';
+    this.container.style.fontSize = '12px';
+    this.container.style.lineHeight = '1.4';
+    this.container.style.overflow = 'hidden';
+
+    this.container.innerHTML = `
+      <button class="console-toggle" style="
+        position: absolute;
+        left: -40px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 40px;
+        height: 80px;
+        background: #333;
+        border: none;
+        color: white;
+        font-size: 16px;
+        cursor: pointer;
+        border-radius: 4px 0 0 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        writing-mode: vertical-rl;
+        text-orientation: mixed;
+        padding: 10px 0;
+      ">Console</button>
+      <div class="console-header" style="
+        padding: 10px;
+        background: #252526;
+        border-bottom: 1px solid #333;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      ">
+        <div class="console-title" style="font-weight: bold;">Developer Console</div>
+        <div class="console-controls" style="display: flex; gap: 5px;">
+          <select class="log-level-filter" style="
+            background: #333;
+            color: #fff;
+            border: 1px solid #555;
+            border-radius: 3px;
+            padding: 3px 5px;
+          ">
+            ${LOG_LEVELS.map(level => 
+              `<option value="${level.value}" ${level.value === this.logLevel ? 'selected' : ''}>
+                ${level.label}
+              </option>`
+            ).join('')}
+          </select>
+          <button class="pause-logs" title="Pause/Resume" style="
+            background: #333;
+            border: 1px solid #555;
+            color: #fff;
+            border-radius: 3px;
+            cursor: pointer;
+            padding: 3px 8px;
+          ">⏸️</button>
+          <button class="clear-logs" title="Clear" style="
+            background: #333;
+            border: 1px solid #555;
+            color: #fff;
+            border-radius: 3px;
+            cursor: pointer;
+            padding: 3px 8px;
+          ">🗑️</button>
+          <button class="copy-logs" title="Copy to Clipboard" style="
+            background: #333;
+            border: 1px solid #555;
+            color: #fff;
+            border-radius: 3px;
+            cursor: pointer;
+            padding: 3px 8px;
+          ">⎘</button>
+        </div>
+      </div>
+      <div class="console-search" style="padding: 10px; border-bottom: 1px solid #333;">
+        <input type="text" placeholder="Filter logs..." class="search-input" style="
+          width: 100%;
+          padding: 5px;
+          background: #333;
+          border: 1px solid #555;
+          color: #fff;
+          border-radius: 3px;
+        ">
+      </div>
+      <div class="console-content" style="
+        flex: 1;
+        overflow-y: auto;
+        padding: 10px;
+        font-family: 'Courier New', monospace;
+        white-space: pre-wrap;
+        word-break: break-word;
+      "></div>
+    `;
+    
+    // Add to body
+    document.body.appendChild(this.container);
+    
+    // Cache DOM elements
+    this.contentEl = this.container.querySelector('.console-content');
+    this.searchInput = this.container.querySelector('.search-input');
+    this.logLevelSelect = this.container.querySelector('.log-level-filter');
+    this.toggleButton = this.container.querySelector('.console-toggle');
+    
+    // Ensure body has proper styles
+    document.body.style.margin = '0';
+    document.body.style.padding = '0';
+    document.body.style.overflowX = 'hidden';
+    document.body.style.minHeight = '100vh';
+    document.body.style.position = 'relative';
+    
+    // Force a reflow to ensure styles are applied
+    void this.container.offsetHeight;
+  }
+  
+  bindEvents() {
+    // Toggle console
+    this.toggleButton.addEventListener('click', () => this.toggle());
+    
+    // Search input
+    this.searchInput.addEventListener('input', (e) => {
+      this.searchTerm = e.target.value.toLowerCase();
+      this.renderLogs();
+    });
+    
+    // Log level filter
+    this.logLevelSelect.addEventListener('change', (e) => {
+      this.logLevel = e.target.value;
+      this.renderLogs();
+    });
+    
+    // Control buttons
+    this.container.querySelector('.pause-logs').addEventListener('click', () => this.togglePause());
+    this.container.querySelector('.clear-logs').addEventListener('click', () => this.clearLogs());
+    this.container.querySelector('.copy-logs').addEventListener('click', () => this.copyLogs());
+    
+    // Auto-scroll
+    this.contentEl.addEventListener('scroll', () => {
+      const { scrollTop, scrollHeight, clientHeight } = this.contentEl;
+      this.autoScroll = scrollTop + clientHeight >= scrollHeight - 10;
+    });
+  }
+  
+  // Toggle console visibility
+  toggle(forceState) {
+    // If forceState is provided, use it, otherwise toggle
+    this.isOpen = forceState !== undefined ? forceState : !this.isOpen;
+    
+    // Update transform based on state
+    if (this.isOpen) {
+      this.container.style.transform = 'translateX(0)';
+      this.container.classList.add('open');
+      document.body.classList.add('console-open');
+    } else {
+  
+// Ensure body has proper styles
+document.body.style.margin = '0';
+document.body.style.padding = '0';
+document.body.style.overflowX = 'hidden';
+document.body.style.minHeight = '100vh';
+document.body.style.position = 'relative';
+  
+// Force a reflow to ensure styles are applied
+void this.container.offsetHeight;
+      .map(log => `[${log.timestamp}] [${log.level}] ${log.message}`)
+      .join('\n');
+    
+    navigator.clipboard.writeText(text).then(() => {
+      this.log('Logs copied to clipboard', 'info');
+    }).catch(err => {
+      this.log(`Failed to copy logs: ${err.message}`, 'error');
+    });
+  }
+  
+  // Add a log entry
+  log(message, level = 'info', data = null) {
+    if (this.isPaused) return;
+    
+    const timestamp = new Date().toISOString();
+    const logEntry = { message, level, timestamp, data };
+    
+    this.logs.push(logEntry);
+    
+    // Keep logs within max limit
+    if (this.logs.length > this.options.maxLogs) {
+      this.logs.shift();
+    }
+    
+    this.renderLogs();
+  }
+  
+  // Render logs to the DOM
+  renderLogs() {
+    if (!this.contentEl) return;
+    
+    const filteredLogs = this.logs.filter(log => this.shouldShowLog(log));
+    
+    this.contentEl.innerHTML = filteredLogs
+      .map(log => this.createLogElement(log))
+      .join('');
+    
+    // Auto-scroll to bottom if enabled
+    if (this.autoScroll) {
+      this.contentEl.scrollTop = this.contentEl.scrollHeight;
+    }
+  }
+  
+  // Create a log entry element
+  createLogElement(log) {
+    const time = new Date(log.timestamp).toLocaleTimeString();
+    return `
+      <div class="log-entry ${log.level}">
+        <span class="log-timestamp">[${time}]</span>
+        <span class="log-level-badge log-level-${log.level}">${log.level.toUpperCase()}</span>
+        <span class="log-message">${this.highlightSearchTerm(log.message)}</span>
+        ${log.data ? `<pre class="log-data">${JSON.stringify(log.data, null, 2)}</pre>` : ''}
+      </div>
+    `;
+  }
+  
+  // Check if a log should be shown based on filters
+  shouldShowLog(log) {
+    // Check log level
+    const levelIndex = LOG_LEVELS.findIndex(l => l.value === log.level);
+    const minLevelIndex = LOG_LEVELS.findIndex(l => l.value === this.logLevel);
+    if (levelIndex < minLevelIndex) return false;
+    
+    // Check search term
+    if (this.searchTerm) {
+      const searchIn = `${log.message} ${JSON.stringify(log.data || '')}`.toLowerCase();
+      if (!searchIn.includes(this.searchTerm)) return false;
+    }
+    
+    return true;
+  }
+  
+  // Highlight search term in log messages
+  highlightSearchTerm(text) {
+    if (!this.searchTerm) return this.escapeHtml(text);
+    
+    const escapedTerm = this.escapeRegex(this.searchTerm);
+    const regex = new RegExp(`(${escapedTerm})`, 'gi');
+    return this.escapeHtml(text).replace(regex, '<mark>$1</mark>');
+  }
+  
+  // Escape HTML special characters
+  escapeHtml(unsafe) {
+    return unsafe
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+  
+  // Escape regex special characters
+  escapeRegex(string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+  
+  // Override console methods
+  overrideConsoleMethods() {
+    const originalConsole = { ...console };
+    
+    const logMethods = {
+      log: 'info',
+      info: 'info',
+      warn: 'warn',
+      error: 'error',
+      debug: 'debug',
+      trace: 'trace'
+    };
+    
+    Object.entries(logMethods).forEach(([method, level]) => {
+      console[method] = (...args) => {
+        // Call original console method
+        originalConsole[method](...args);
+        
+        // Add to our console
+        const message = args.map(arg => 
+          typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
+        ).join(' ');
+        
+        this.log(message, level, args.length > 1 ? args : null);
+      };
+    });
+  }
+}
+
+export default Console;

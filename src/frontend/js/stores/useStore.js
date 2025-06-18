@@ -1,4 +1,4 @@
-import { eventBus, EVENTS } from '../services/eventBus';
+import { eventBus, EVENTS } from '../services/eventBus.js';
 
 const createStore = (initialState = {}) => {
   let state = { ...initialState };

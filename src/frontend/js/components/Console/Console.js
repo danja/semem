@@ -13,7 +13,6 @@ const LOG_LEVELS = [
 
 class Console {
   constructor(options = {}) {
-    console.log('[DEBUG] Console constructor called', options);
     this.options = {
       initialLogLevel: 'debug',
       maxLogs: 1000,
@@ -27,11 +26,13 @@ class Console {
     this.isPaused = false;
     this.autoScroll = true;
     
+    // Bind methods
+    this.handleKeyDown = this.handleKeyDown.bind(this);
+    
     this.init();
   }
   
   init() {
-    console.log('[DEBUG] Console.init() called');
     this.createDOM();
     this.bindEvents();
     this.overrideConsoleMethods();
@@ -39,42 +40,47 @@ class Console {
   }
   
   createDOM() {
-    console.log('[DEBUG] Console.createDOM() called');
     // Create main container
     this.container = document.createElement('div');
     this.container.className = 'console-container';
-    this.container.style.position = 'fixed';
-    this.container.style.right = '0';
-    this.container.style.top = '0';
-    this.container.style.height = '100vh';
-    this.container.style.width = '30%';
-    this.container.style.minWidth = '300px';
-    this.container.style.maxWidth = '600px';
-    this.container.style.backgroundColor = '#1e1e1e';
-    this.container.style.color = '#e0e0e0';
-    this.container.style.boxShadow = '-2px 0 10px rgba(0, 0, 0, 0.3)';
-    this.container.style.transform = 'translateX(calc(100% - 40px))';
-    this.container.style.transition = 'transform 0.3s ease-in-out';
-    this.container.style.zIndex = '1000';
-    this.container.style.display = 'flex';
-    this.container.style.flexDirection = 'column';
-    this.container.style.fontFamily = 'monospace';
-    this.container.style.fontSize = '12px';
-    this.container.style.lineHeight = '1.4';
-    this.container.style.overflow = 'hidden';
+    
+    // Set container styles
+    Object.assign(this.container.style, {
+      position: 'fixed',
+      right: '0',
+      top: '0',
+      height: '100vh',
+      width: '30%',
+      minWidth: '300px',
+      maxWidth: '600px',
+      backgroundColor: '#1e1e1e',
+      color: '#e0e0e0',
+      boxShadow: '-2px 0 10px rgba(0, 0, 0, 0.3)',
+      transform: 'translateX(calc(100% - 40px))',
+      transition: 'transform 0.3s ease-in-out',
+      zIndex: '1000',
+      display: 'flex',
+      flexDirection: 'column',
+      fontFamily: 'Fira Code, monospace',
+      fontSize: '13px',
+      lineHeight: '1.5',
+      overflow: 'hidden'
+    });
 
+    // Set up the HTML structure
     this.container.innerHTML = `
-      <button class="console-toggle" style="
+      <button class="console-toggle" aria-label="Toggle console" style="
         position: absolute;
         left: -40px;
         top: 50%;
         transform: translateY(-50%);
         width: 40px;
         height: 80px;
-        background: #333;
+        background: #2a2a2a;
         border: none;
-        color: white;
-        font-size: 16px;
+        color: #e0e0e0;
+        font-size: 13px;
+        font-weight: 500;
         cursor: pointer;
         border-radius: 4px 0 0 4px;
         display: flex;
@@ -82,75 +88,33 @@ class Console {
         justify-content: center;
         writing-mode: vertical-rl;
         text-orientation: mixed;
-        padding: 10px 0;
+        padding: 12px 0;
+        transition: all 0.2s ease;
+        user-select: none;
+        letter-spacing: 0.5px;
       ">Console</button>
-      <div class="console-header" style="
-        padding: 10px;
-        background: #252526;
-        border-bottom: 1px solid #333;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      ">
-        <div class="console-title" style="font-weight: bold;">Developer Console</div>
-        <div class="console-controls" style="display: flex; gap: 5px;">
-          <select class="log-level-filter" style="
-            background: #333;
-            color: #fff;
-            border: 1px solid #555;
-            border-radius: 3px;
-            padding: 3px 5px;
-          ">
+      
+      <div class="console-header">
+        <div class="console-title">Developer Console</div>
+        <div class="console-controls">
+          <select class="log-level-filter">
             ${LOG_LEVELS.map(level => 
               `<option value="${level.value}" ${level.value === this.logLevel ? 'selected' : ''}>
                 ${level.label}
               </option>`
             ).join('')}
           </select>
-          <button class="pause-logs" title="Pause/Resume" style="
-            background: #333;
-            border: 1px solid #555;
-            color: #fff;
-            border-radius: 3px;
-            cursor: pointer;
-            padding: 3px 8px;
-          ">⏸️</button>
-          <button class="clear-logs" title="Clear" style="
-            background: #333;
-            border: 1px solid #555;
-            color: #fff;
-            border-radius: 3px;
-            cursor: pointer;
-            padding: 3px 8px;
-          ">🗑️</button>
-          <button class="copy-logs" title="Copy to Clipboard" style="
-            background: #333;
-            border: 1px solid #555;
-            color: #fff;
-            border-radius: 3px;
-            cursor: pointer;
-            padding: 3px 8px;
-          ">⎘</button>
+          <button class="pause-logs" title="Pause/Resume">⏸️</button>
+          <button class="clear-logs" title="Clear">🗑️</button>
+          <button class="copy-logs" title="Copy to Clipboard">⎘</button>
         </div>
       </div>
-      <div class="console-search" style="padding: 10px; border-bottom: 1px solid #333;">
-        <input type="text" placeholder="Filter logs..." class="search-input" style="
-          width: 100%;
-          padding: 5px;
-          background: #333;
-          border: 1px solid #555;
-          color: #fff;
-          border-radius: 3px;
-        ">
+      
+      <div class="console-search">
+        <input type="text" placeholder="Filter logs..." class="search-input">
       </div>
-      <div class="console-content" style="
-        flex: 1;
-        overflow-y: auto;
-        padding: 10px;
-        font-family: 'Courier New', monospace;
-        white-space: pre-wrap;
-        word-break: break-word;
-      "></div>
+      
+      <div class="console-content"></div>
     `;
     
     // Add to body
@@ -163,14 +127,13 @@ class Console {
     this.toggleButton = this.container.querySelector('.console-toggle');
     
     // Ensure body has proper styles
-    document.body.style.margin = '0';
-    document.body.style.padding = '0';
-    document.body.style.overflowX = 'hidden';
-    document.body.style.minHeight = '100vh';
-    document.body.style.position = 'relative';
-    
-    // Force a reflow to ensure styles are applied
-    void this.container.offsetHeight;
+    Object.assign(document.body.style, {
+      margin: '0',
+      padding: '0',
+      overflowX: 'hidden',
+      minHeight: '100vh',
+      position: 'relative'
+    });
   }
   
   bindEvents() {
@@ -199,24 +162,65 @@ class Console {
       const { scrollTop, scrollHeight, clientHeight } = this.contentEl;
       this.autoScroll = scrollTop + clientHeight >= scrollHeight - 10;
     });
+    
+    // Add keyboard event listener
+    document.addEventListener('keydown', this.handleKeyDown);
+  }
+  
+  // Handle keyboard events
+  handleKeyDown(e) {
+    // Close console with Escape key when open
+    if (e.key === 'Escape' && this.isOpen) {
+      this.toggle(false);
+    }
+    // Toggle console with backtick (`) key
+    else if (e.key === '`' && !e.ctrlKey && !e.metaKey) {
+      e.preventDefault();
+      this.toggle();
+    }
   }
   
   // Toggle console visibility
-  toggle() {
-    this.isOpen = !this.isOpen;
+  toggle(forceState) {
+    // If forceState is provided, use it, otherwise toggle
+    this.isOpen = forceState !== undefined ? forceState : !this.isOpen;
+    
+    // Update transform based on state
     if (this.isOpen) {
       this.container.style.transform = 'translateX(0)';
+      this.container.classList.add('open');
+      document.body.classList.add('console-open');
+      document.body.style.overflow = 'hidden';
     } else {
       this.container.style.transform = 'translateX(calc(100% - 40px))';
+      this.container.classList.remove('open');
+      document.body.classList.remove('console-open');
+      document.body.style.overflow = '';
     }
+    
+    // Update toggle button text and title
+    if (this.toggleButton) {
+      this.toggleButton.textContent = this.isOpen ? '×' : 'Console';
+      this.toggleButton.title = this.isOpen ? 'Close Console (Esc)' : 'Open Console (`` ` ``)';
+      this.toggleButton.setAttribute('aria-expanded', this.isOpen);
+    }
+    
+    // Auto-scroll if opening
+    if (this.isOpen && this.autoScroll) {
+      this.scrollToBottom();
+    }
+    
+    return this.isOpen;
   }
   
   // Toggle pause state
   togglePause() {
     this.isPaused = !this.isPaused;
     const pauseBtn = this.container.querySelector('.pause-logs');
-    pauseBtn.textContent = this.isPaused ? '▶️' : '⏸️';
-    pauseBtn.title = this.isPaused ? 'Resume' : 'Pause';
+    if (pauseBtn) {
+      pauseBtn.textContent = this.isPaused ? '▶️' : '⏸️';
+      pauseBtn.title = this.isPaused ? 'Resume' : 'Pause';
+    }
   }
   
   // Clear all logs
@@ -235,94 +239,74 @@ class Console {
     navigator.clipboard.writeText(text).then(() => {
       this.log('Logs copied to clipboard', 'info');
     }).catch(err => {
-      this.log(`Failed to copy logs: ${err.message}`, 'error');
+      this.log(`Failed to copy logs: ${err}`, 'error');
     });
   }
   
-  // Add a log entry
-  log(message, level = 'info', data = null) {
-    if (this.isPaused) return;
-    
-    const timestamp = new Date().toISOString();
-    const logEntry = { message, level, timestamp, data };
-    
-    this.logs.push(logEntry);
-    
-    // Keep logs within max limit
-    if (this.logs.length > this.options.maxLogs) {
-      this.logs.shift();
-    }
-    
-    this.renderLogs();
-  }
-  
-  // Render logs to the DOM
-  renderLogs() {
-    if (!this.contentEl) return;
-    
-    const filteredLogs = this.logs.filter(log => this.shouldShowLog(log));
-    
-    this.contentEl.innerHTML = filteredLogs
-      .map(log => this.createLogElement(log))
-      .join('');
-    
-    // Auto-scroll to bottom if enabled
-    if (this.autoScroll) {
-      this.contentEl.scrollTop = this.contentEl.scrollHeight;
-    }
-  }
-  
-  // Create a log entry element
-  createLogElement(log) {
-    const time = new Date(log.timestamp).toLocaleTimeString();
-    return `
-      <div class="log-entry ${log.level}">
-        <span class="log-timestamp">[${time}]</span>
-        <span class="log-level-badge log-level-${log.level}">${log.level.toUpperCase()}</span>
-        <span class="log-message">${this.highlightSearchTerm(log.message)}</span>
-        ${log.data ? `<pre class="log-data">${JSON.stringify(log.data, null, 2)}</pre>` : ''}
-      </div>
-    `;
-  }
-  
-  // Check if a log should be shown based on filters
+  // Check if log should be shown based on current filters
   shouldShowLog(log) {
+    const levelIndex = LOG_LEVELS.findIndex(l => l.value === this.logLevel);
+    const logLevelIndex = LOG_LEVELS.findIndex(l => l.value === log.level);
+    
     // Check log level
-    const levelIndex = LOG_LEVELS.findIndex(l => l.value === log.level);
-    const minLevelIndex = LOG_LEVELS.findIndex(l => l.value === this.logLevel);
-    if (levelIndex < minLevelIndex) return false;
+    if (logLevelIndex < levelIndex) {
+      return false;
+    }
     
     // Check search term
     if (this.searchTerm) {
       const searchIn = `${log.message} ${JSON.stringify(log.data || '')}`.toLowerCase();
-      if (!searchIn.includes(this.searchTerm)) return false;
+      if (!searchIn.includes(this.searchTerm)) {
+        return false;
+      }
     }
     
     return true;
   }
   
-  // Highlight search term in log messages
-  highlightSearchTerm(text) {
-    if (!this.searchTerm) return this.escapeHtml(text);
+  // Render logs to the console
+  renderLogs() {
+    if (this.isPaused) return;
     
-    const escapedTerm = this.escapeRegex(this.searchTerm);
-    const regex = new RegExp(`(${escapedTerm})`, 'gi');
-    return this.escapeHtml(text).replace(regex, '<mark>$1</mark>');
+    const visibleLogs = this.logs.filter(log => this.shouldShowLog(log));
+    
+    this.contentEl.innerHTML = visibleLogs.map(log => `
+      <div class="log-entry log-${log.level}">
+        <span class="log-timestamp">[${log.timestamp}]</span>
+        <span class="log-level">[${log.level.toUpperCase()}]</span>
+        <span class="log-message">${log.message}</span>
+        ${log.data ? `<pre class="log-data">${JSON.stringify(log.data, null, 2)}</pre>` : ''}
+      </div>
+    `).join('');
+    
+    if (this.autoScroll) {
+      this.scrollToBottom();
+    }
   }
   
-  // Escape HTML special characters
-  escapeHtml(unsafe) {
-    return unsafe
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;');
+  // Scroll to bottom of console
+  scrollToBottom() {
+    if (this.contentEl) {
+      this.contentEl.scrollTop = this.contentEl.scrollHeight;
+    }
   }
   
-  // Escape regex special characters
-  escapeRegex(string) {
-    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  // Add a log entry
+  log(message, level = 'info', data = null) {
+    const timestamp = new Date().toISOString().substr(11, 12);
+    const logEntry = { message, level, timestamp, data };
+    
+    this.logs.push(logEntry);
+    
+    // Limit number of logs
+    if (this.logs.length > this.options.maxLogs) {
+      this.logs.shift();
+    }
+    
+    // Render if not paused
+    if (!this.isPaused) {
+      this.renderLogs();
+    }
   }
   
   // Override console methods
@@ -343,14 +327,35 @@ class Console {
         // Call original console method
         originalConsole[method](...args);
         
-        // Add to our console
-        const message = args.map(arg => 
-          typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
-        ).join(' ');
+        // Format message and data
+        let message = '';
+        const data = [];
         
-        this.log(message, level, args.length > 1 ? args : null);
+        args.forEach(arg => {
+          if (typeof arg === 'object' && arg !== null && !(arg instanceof Error)) {
+            data.push(arg);
+          } else if (arg instanceof Error) {
+            message += `${arg.message}\n${arg.stack || ''}`;
+          } else {
+            message += String(arg) + ' ';
+          }
+        });
+        
+        // Add to our console
+        this.log(message.trim(), level, data.length ? data : null);
       };
     });
+  }
+  
+  // Clean up event listeners
+  destroy() {
+    // Remove keyboard event listener
+    document.removeEventListener('keydown', this.handleKeyDown);
+    
+    // Remove console from DOM
+    if (this.container && this.container.parentNode) {
+      this.container.parentNode.removeChild(this.container);
+    }
   }
 }
 
