@@ -13,6 +13,7 @@ const LOG_LEVELS = [
 
 class Console {
   constructor(options = {}) {
+    console.log('[DEBUG] Console constructor called', options);
     this.options = {
       initialLogLevel: 'debug',
       maxLogs: 1000,
@@ -30,6 +31,7 @@ class Console {
   }
   
   init() {
+    console.log('[DEBUG] Console.init() called');
     this.createDOM();
     this.bindEvents();
     this.overrideConsoleMethods();
@@ -37,6 +39,7 @@ class Console {
   }
   
   createDOM() {
+    console.log('[DEBUG] Console.createDOM() called');
     // Create main container
     this.container = document.createElement('div');
     this.container.className = 'console-container';

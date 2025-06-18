@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Console Test</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+        #app {
+            padding: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <h1>Console Test Page</h1>
+        <p>This page tests the Console component in isolation.</p>
+        <div>
+            <button onclick="testLogs()">Test Logs</button>
+            <button onclick="testError()">Test Error</button>
+            <button onclick="testWarn()">Test Warning</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import Console from '/js/components/Console/Console.js';
+
+        // Create and initialize the console
+        const consoleInstance = new Console({
+            initialLogLevel: 'debug',
+            maxLogs: 1000
+        });
+
+        // Make available globally for testing
+        window.consoleInstance = consoleInstance;
+
+        // Override console methods
+        const originalConsole = { ...console };
+        
+        function overrideConsoleMethod(method) {
+            const original = console[method];
+            console[method] = function(...args) {
+                original.apply(console, args);
+                consoleInstance.log(args.join(' '), method);
+            };
+        }
+
+        ['log', 'info', 'warn', 'error', 'debug'].forEach(method => {
+            overrideConsoleMethod(method);
+        });
+
+        // Test functions
+        window.testLogs = () => {
+            console.log('This is a test log message');
+            console.info('This is an info message');
+            console.debug('This is a debug message');
+        };
+
+        window.testError = () => {
+            console.error('This is an error message');
+        };
+
+        window.testWarn = () => {
+            console.warn('This is a warning message');
+        };
+
+        // Initial test log
+        console.log('Console test page initialized');
+
+        // Auto-open console after a delay
+        setTimeout(() => {
+            consoleInstance.toggle();
+            console.log('Console should now be visible on the right side of the screen');
+        }, 500);
+    </script>
+</body>
+</html>

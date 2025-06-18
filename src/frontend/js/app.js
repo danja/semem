@@ -242,20 +242,28 @@ async function initSPARQLBrowser() {
 // Initialize console after the app is loaded
 async function initializeConsole() {
     try {
+        console.log('[DEBUG] Starting initializeConsole()');
         // Import the Console component
         const { default: Console } = await import('./components/Console/Console.js');
+        console.log('[DEBUG] Console component imported:', typeof Console);
         
         // Create and initialize the console
         const consoleInstance = new Console({
             initialLogLevel: 'debug',
             maxLogs: 1000
         });
+        console.log('[DEBUG] Console instance created:', consoleInstance);
         
         // Make console available globally for debugging
         window.appConsole = consoleInstance;
         
         // Replace console methods to capture logs
-        replaceConsole();
+        if (typeof replaceConsole === 'function') {
+            replaceConsole();
+            console.log('[DEBUG] replaceConsole() called');
+        } else {
+            console.warn('[DEBUG] replaceConsole is not a function');
+        }
         
         // Log a test message
         console.log('Console component initialized');
@@ -265,14 +273,28 @@ async function initializeConsole() {
         
         // Open the console after a short delay
         setTimeout(() => {
-            consoleInstance.toggle();
+            if (consoleInstance.toggle) {
+                console.log('[DEBUG] Calling consoleInstance.toggle()');
+                consoleInstance.toggle();
+            } else {
+                console.warn('[DEBUG] consoleInstance.toggle is not a function');
+            }
         }, 500);
         
         return consoleInstance;
     } catch (error) {
-        console.error('Failed to initialize console:', error);
+        console.error('[DEBUG] Failed to initialize console:', error);
         throw error;
     }
+}
+
+// Make sure initializeConsole runs after DOMContentLoaded
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        initializeConsole().catch(e => console.error('[DEBUG] Console init error after DOMContentLoaded:', e));
+    });
+} else {
+    initializeConsole().catch(e => console.error('[DEBUG] Console init error:', e));
 }
 
 // Initialize the application when the DOM is fully loaded
