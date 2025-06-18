@@ -40,6 +40,10 @@ node examples/end-to-end/Run.js --module qa     # Question answering
 node examples/end-to-end/Run.js --module hyde   # HyDE enhancement
 node examples/end-to-end/Run.js --module report # Integration analysis
 
+# Use custom configuration file
+node examples/end-to-end/Run.js --config custom-config.json
+node examples/end-to-end/Run.js --config /path/to/config.json --module qa
+
 # Get help and see all available modules
 node examples/end-to-end/Run.js --help
 ```
@@ -204,12 +208,80 @@ node examples/end-to-end/Run.js --steps 1-7  # Skip HyDE/QA for speed
 
 ## 🔧 **Configuration**
 
+### Default Configuration
 The system uses standard Semem configuration with:
 - **SPARQL Endpoints**: Fuseki triplestore settings
 - **LLM Services**: Ollama configuration for chat and embeddings
 - **Model Specifications**: nomic-embed-text (embeddings), qwen2:1.5b (chat)
 - **Memory Settings**: Vector dimensions, similarity thresholds
 - **Graph Configuration**: RDF vocabularies and authentication
+
+### Custom Configuration Files
+You can provide custom configuration files using the `--config` option:
+
+```bash
+# Use custom config for different environments
+node examples/end-to-end/Run.js --config configs/development.json
+node examples/end-to-end/Run.js --config configs/production.json --steps 1-3
+
+# Test with different SPARQL endpoints
+node examples/end-to-end/Run.js --config local-fuseki.json --module ingest
+
+# Use different LLM models
+node examples/end-to-end/Run.js --config ollama-llama.json --module qa
+```
+
+### Predefined Configuration Files
+The project includes several pre-configured files:
+
+```bash
+# Use Claude for chat, Ollama for embeddings (recommended for production)
+node examples/end-to-end/Run.js --config config/claude.config.json --module qa
+
+# Use default Ollama for both chat and embeddings (local development)
+node examples/end-to-end/Run.js --config config/config.json --module qa
+```
+
+### Configuration Examples
+```json
+{
+  "sparqlEndpoints": [
+    {
+      "label": "Local Fuseki",
+      "urlBase": "http://localhost:3030",
+      "dataset": "my-dataset",
+      "user": "admin",
+      "password": "admin"
+    }
+  ],
+  "models": {
+    "chat": {
+      "provider": "claude",
+      "model": "claude-3-5-haiku-latest"
+    },
+    "embedding": {
+      "provider": "ollama",
+      "model": "nomic-embed-text"
+    }
+  },
+  "llmProviders": [
+    {
+      "type": "claude",
+      "apiKey": "${CLAUDE_API_KEY}",
+      "chatModel": "claude-3-5-haiku-latest",
+      "priority": 1,
+      "capabilities": ["chat"]
+    },
+    {
+      "type": "ollama",
+      "baseUrl": "http://localhost:11434",
+      "embeddingModel": "nomic-embed-text",
+      "priority": 2,
+      "capabilities": ["embedding", "chat"]
+    }
+  ]
+}
+```
 
 See the main Semem documentation for detailed configuration options.
 

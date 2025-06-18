@@ -13,7 +13,11 @@
  */
 
 import chalk from 'chalk';
+import dotenv from 'dotenv';
 import Config from '../../src/Config.js';
+
+// Load environment variables from .env file
+dotenv.config();
 
 // Import workflow modules
 import IngestModule from './Ingest.js';
@@ -31,6 +35,7 @@ class WorkflowOrchestrator {
     constructor(options = {}) {
         this.config = null;
         this.options = options;
+        this.configPath = options.configPath || null;
         this.results = {};
         this.modules = new Map();
         this.executionPlan = [];
@@ -116,13 +121,14 @@ class WorkflowOrchestrator {
         console.log(chalk.bold.magenta('🎯 SEMEM END-TO-END WORKFLOW ORCHESTRATOR'));
         console.log(chalk.gray('   Modular demonstration of complete Semem capabilities\n'));
 
+        // Parse execution plan first (to get config path)
+        this.parseExecutionPlan();
+
         // Load shared configuration
-        this.config = new Config();
+        this.config = new Config(this.configPath);
         await this.config.init();
         console.log('✅ Configuration loaded\n');
 
-        // Parse execution plan
-        this.parseExecutionPlan();
         this.displayExecutionPlan();
     }
 
@@ -132,6 +138,12 @@ class WorkflowOrchestrator {
         if (args.includes('--help') || args.includes('-h')) {
             this.showHelp();
             process.exit(0);
+        }
+
+        // Check for config file option
+        const configIndex = args.indexOf('--config');
+        if (configIndex !== -1 && args[configIndex + 1]) {
+            this.configPath = args[configIndex + 1];
         }
 
         // Check for specific module execution
@@ -347,6 +359,7 @@ class WorkflowOrchestrator {
         console.log('  node examples/end-to-end/Run.js --steps 1-3        Run steps 1 through 3');
         console.log('  node examples/end-to-end/Run.js --steps 2          Run only step 2');
         console.log('  node examples/end-to-end/Run.js --module ingest    Run specific module');
+        console.log('  node examples/end-to-end/Run.js --config path.json  Use custom config file');
         console.log('  node examples/end-to-end/Run.js --help             Show this help\n');
         
         console.log('Available modules:');
@@ -381,7 +394,12 @@ class WorkflowOrchestrator {
 
 // Run the orchestrator if executed directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-    const orchestrator = new WorkflowOrchestrator();
+    // Parse config path from command line arguments
+    const args = process.argv.slice(2);
+    const configIndex = args.indexOf('--config');
+    const configPath = (configIndex !== -1 && args[configIndex + 1]) ? args[configIndex + 1] : null;
+    
+    const orchestrator = new WorkflowOrchestrator({ configPath });
     
     // Ensure process exits even if something hangs
     const timeoutId = setTimeout(() => {

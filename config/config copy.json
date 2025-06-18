@@ -16,7 +16,7 @@
   },
   "port": 4120,
   "graphName": "http://purl.org/stuff/semem/memory-demo",
-  "chatModel": "claude-3-5-haiku-latest",
+  "chatModel": "qwen2:1.5b",
   "embeddingModel": "nomic-embed-text",
   "sparqlEndpoints": [
     {
@@ -49,12 +49,12 @@
       "type": "claude",
       "implementation": "hyperdata",
       "apiKey": "${CLAUDE_API_KEY}",
-      "chatModel": "claude-3-5-haiku-latest",
+      "chatModel": "claude-3-opus-20240229",
       "priority": 1,
       "capabilities": [
         "chat"
       ],
-      "description": "Using claude-3-5-haiku-latest for chat via hyperdata-clients"
+      "description": "Using hyperdata-clients implementation"
     },
     {
       "type": "ollama",
@@ -66,50 +66,7 @@
         "embedding",
         "chat"
       ],
-      "description": "Used primarily for embeddings with nomic-embed-text, fallback chat"
+      "description": "Used primarily for embeddings with nomic-embed-text"
     }
-  ],
-  "models": {
-    "chat": {
-      "provider": "claude",
-      "model": "claude-3-5-haiku-latest",
-      "options": {
-        "temperature": 0.7,
-        "maxTokens": 1000,
-        "topP": 1,
-        "timeout": 30000
-      }
-    },
-    "embedding": {
-      "provider": "ollama",
-      "model": "nomic-embed-text",
-      "options": {
-        "dimension": 1536
-      }
-    }
-  },
-  "memory": {
-    "dimension": 1536,
-    "similarityThreshold": 40,
-    "contextWindow": 3,
-    "decayRate": 0.0001
-  },
-  "claude": {
-    "api": {
-      "baseUrl": "https://api.anthropic.com",
-      "version": "2023-06-01"
-    },
-    "defaults": {
-      "temperature": 0.7,
-      "maxTokens": 1000,
-      "topP": 1,
-      "topK": 0,
-      "timeout": 30000
-    }
-  },
-  "server": {
-    "port": 4100,
-    "logLevel": "debug",
-    "environment": "development"
-  }
+  ]
 }

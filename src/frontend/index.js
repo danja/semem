@@ -3,9 +3,6 @@ import './styles/main.css';
 import { initializeApp } from './js/app.js';
 import { setupErrorHandling } from './js/utils/errorHandler.js';
 
-// Import console initialization
-import './js/console-init.js';
-
 // Import app menu initialization
 import './js/app-menu-init.js';
 

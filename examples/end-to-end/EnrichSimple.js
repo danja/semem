@@ -12,6 +12,7 @@ import chalk from 'chalk';
 import Config from '../../src/Config.js';
 import SPARQLStore from '../../src/stores/SPARQLStore.js';
 import OllamaConnector from '../../src/connectors/OllamaConnector.js';
+import ClaudeConnector from '../../src/connectors/ClaudeConnector.js';
 import LLMHandler from '../../src/handlers/LLMHandler.js';
 import EmbeddingHandler from '../../src/handlers/EmbeddingHandler.js';
 import CacheManager from '../../src/handlers/CacheManager.js';
@@ -77,18 +78,22 @@ export default class EnrichSimpleModule {
     }
 
     async initializeLLMServices() {
-        // Check Ollama availability - REQUIRED for demonstration
+        // Create LLM handler based on config
+        const llmHandler = await this.createLLMHandler();
+        console.log('✅ LLM handler created with config-based provider');
+        
+        // Initialize embedding handler (still uses Ollama for embeddings)
         const ollamaBaseUrl = this.config.get('ollama.baseUrl') || 'http://localhost:11434';
         const embeddingModel = 'nomic-embed-text:latest';
-        const chatModel = 'qwen2:1.5b';
 
-        // Test Ollama connection
+        // Test Ollama connection for embeddings
+        console.log('🔌 Testing Ollama connection for embeddings...');
         const response = await fetch(`${ollamaBaseUrl}/api/version`);
         if (!response.ok) {
-            throw new Error(`Ollama is required for Module 2 demonstration. Please start Ollama at ${ollamaBaseUrl}`);
+            throw new Error(`Ollama is required for embeddings. Please start Ollama at ${ollamaBaseUrl}`);
         }
         
-        const ollamaConnector = new OllamaConnector(ollamaBaseUrl, chatModel);
+        const ollamaConnector = new OllamaConnector(ollamaBaseUrl, 'qwen2:1.5b');
         
         // Initialize cache manager
         const cacheManager = new CacheManager({
@@ -104,11 +109,40 @@ export default class EnrichSimpleModule {
             cacheManager
         );
 
-        this.llmHandler = new LLMHandler(ollamaConnector, chatModel);
+        this.llmHandler = llmHandler;
 
-        console.log(`✅ Ollama services initialized: ${chalk.bold(ollamaBaseUrl)}`);
-        console.log(`📄 Chat model: ${chalk.bold(chatModel)}`);
+        console.log(`✅ LLM and embedding services initialized`);
+        console.log(`📄 Chat provider: ${chalk.bold(this.config.get('models.chat.provider') || 'ollama')}`);
         console.log(`🔢 Embedding model: ${chalk.bold(embeddingModel)}`);
+    }
+
+    /**
+     * Create LLM handler based on config
+     */
+    async createLLMHandler() {
+        const chatConfig = this.config.get('models.chat');
+        const provider = chatConfig?.provider || 'ollama';
+        const model = chatConfig?.model || 'qwen2:1.5b';
+        
+        console.log(`🤖 Initializing ${provider} LLM handler with model: ${model}`);
+        
+        let llmConnector;
+        
+        if (provider === 'claude') {
+            const apiKey = process.env.CLAUDE_API_KEY;
+            if (!apiKey) {
+                console.log('⚠️  CLAUDE_API_KEY not found, falling back to Ollama');
+                llmConnector = new OllamaConnector('http://localhost:11434', 'qwen2:1.5b');
+            } else {
+                llmConnector = new ClaudeConnector(apiKey, model);
+            }
+        } else {
+            // Default to Ollama
+            const ollamaBaseUrl = this.config.get('ollama.baseUrl') || 'http://localhost:11434';
+            llmConnector = new OllamaConnector(ollamaBaseUrl, model);
+        }
+        
+        return new LLMHandler(llmConnector, model);
     }
 
     async execute() {
@@ -176,8 +210,14 @@ export default class EnrichSimpleModule {
     async extractKeyEntities() {
         console.log('🔍 Extracting key entities from documents...');
 
-        for (const doc of this.documents) {
+        for (let i = 0; i < this.documents.length; i++) {
+            const doc = this.documents[i];
             console.log(`  📄 Processing: ${chalk.cyan(doc.title)}`);
+            
+            // Add a small delay between documents to avoid overwhelming the API
+            if (i > 0) {
+                await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 500));
+            }
             
             // Extract first 500 characters for quick entity extraction
             const excerpt = doc.content.slice(0, 500);

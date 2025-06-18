@@ -43,13 +43,14 @@ class TabManager {
       // First pass: find all tab buttons and their corresponding content
       this.tabButtons.forEach(button => {
         try {
-          const tabId = button.dataset.tab;
+          const tabId = button.getAttribute('data-tab');
           if (!tabId) {
             console.warn('Tab button is missing data-tab attribute:', button);
             return;
           }
           
-          const content = document.getElementById(`${tabId}-tab`);
+          // Find the content element that has an ID matching the data-tab value
+          const content = document.querySelector(`#${tabId}`);
           
           if (!content) {
             console.warn(`No content element found for tab: ${tabId}`);
@@ -63,7 +64,10 @@ class TabManager {
             content
           });
           
-          console.log(`Registered tab: ${tabId}`);
+          console.log(`Registered tab: ${tabId}`, { 
+            button: button.outerHTML, 
+            content: content.outerHTML 
+          });
           
         } catch (error) {
           console.error('Error processing tab button:', button, error);
@@ -195,8 +199,9 @@ class TabManager {
       this.tabs.forEach(tab => {
         try {
           if (tab.content) {
-            tab.content.style.display = 'none';
+            // Use classList to handle visibility instead of inline styles
             tab.content.classList.remove('active');
+            tab.content.setAttribute('hidden', '');
             tab.content.setAttribute('aria-hidden', 'true');
           }
           if (tab.button) {
@@ -221,7 +226,8 @@ class TabManager {
         
         // Show tab content
         if (tabToActivate.content) {
-          tabToActivate.content.style.display = 'block';
+          // Remove hidden attribute and add active class
+          tabToActivate.content.removeAttribute('hidden');
           tabToActivate.content.classList.add('active');
           tabToActivate.content.setAttribute('aria-hidden', 'false');
           

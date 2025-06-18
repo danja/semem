@@ -228,20 +228,41 @@ async function initSPARQLBrowser() {
     }
 }
 
+// Track if console is already initialized
+let consoleInstance = null;
+
 // Initialize console after the app is loaded
 async function initializeConsole() {
     try {
+        // Return existing instance if already initialized
+        if (window.appConsole) {
+            console.log('[DEBUG] Console already initialized, returning existing instance');
+            return window.appConsole;
+        }
+        
         console.log('[DEBUG] Starting initializeConsole()');
+        
         // Import the Console component
         const { default: Console } = await import('./components/Console/Console.js');
         console.log('[DEBUG] Console component imported:', typeof Console);
         
-        // Create and initialize the console
-        const consoleInstance = new Console({
-            initialLogLevel: 'debug',
-            maxLogs: 1000
-        });
-        console.log('[DEBUG] Console instance created:', consoleInstance);
+        // Create and initialize the console if not already in DOM
+        const consoleRoot = document.getElementById('console-root');
+        if (!consoleRoot) {
+            console.warn('[DEBUG] Console root element not found, creating one');
+            const newRoot = document.createElement('div');
+            newRoot.id = 'console-root';
+            document.body.appendChild(newRoot);
+        }
+        
+        // Only create new instance if one doesn't exist
+        if (!consoleInstance) {
+            consoleInstance = new Console({
+                initialLogLevel: 'debug',
+                maxLogs: 1000
+            });
+            console.log('[DEBUG] New console instance created');
+        }
         
         // Make console available globally for debugging
         window.appConsole = consoleInstance;
@@ -256,17 +277,12 @@ async function initializeConsole() {
         
         // Log a test message
         console.log('Console component initialized');
-        console.debug('Debug message');
-        console.warn('Warning message');
-        console.error('Error message');
         
-        // Open the console after a short delay
+        // Open the console after a short delay if not already open
         setTimeout(() => {
-            if (consoleInstance.toggle) {
-                console.log('[DEBUG] Calling consoleInstance.toggle()');
+            if (consoleInstance.toggle && !consoleInstance.isOpen) {
+                console.log('[DEBUG] Opening console');
                 consoleInstance.toggle();
-            } else {
-                console.warn('[DEBUG] consoleInstance.toggle is not a function');
             }
         }, 500);
         

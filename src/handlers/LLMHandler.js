@@ -36,7 +36,9 @@ export default class LLMHandler {
     async generateResponse(prompt, context, {
         systemPrompt = "You're a helpful assistant with memory of past interactions.",
         model = this.chatModel,
-        temperature = this.temperature
+        temperature = this.temperature,
+        maxRetries = 3,
+        baseDelay = 1000
     } = {}) {
         try {
             logger.log(`LLMHandler.generateResponse,
@@ -50,15 +52,63 @@ export default class LLMHandler {
                 prompt
             )
             logger.log(`LLMHandler.generateResponse, model = ${model}`)
-            return await this.llmProvider.generateChat(
-                model,
-                messages,
-                { temperature }
-            )
+            
+            // Add rate limiting with exponential backoff for Claude
+            return await this.withRateLimit(async () => {
+                return await this.llmProvider.generateChat(
+                    model,
+                    messages,
+                    { temperature }
+                )
+            }, maxRetries, baseDelay)
+            
         } catch (error) {
             logger.error('Error generating chat response:', error)
             throw error
         }
+    }
+
+    /**
+     * Execute a function with rate limiting and exponential backoff
+     */
+    async withRateLimit(fn, maxRetries = 3, baseDelay = 1000) {
+        let lastError = null;
+        
+        for (let attempt = 0; attempt <= maxRetries; attempt++) {
+            try {
+                // Add a small delay before each request to avoid overwhelming the API
+                if (attempt > 0) {
+                    const delay = baseDelay * Math.pow(2, attempt - 1) + Math.random() * 500; // Add jitter
+                    logger.log(`Retrying after ${delay.toFixed(0)}ms (attempt ${attempt}/${maxRetries})`);
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                } else {
+                    // Even on first attempt, add a small delay to avoid rapid-fire requests
+                    await new Promise(resolve => setTimeout(resolve, Math.random() * 200 + 100));
+                }
+                
+                return await fn();
+                
+            } catch (error) {
+                lastError = error;
+                
+                // Check if it's a rate limit error
+                if (error.code === 529 || error.message?.includes('overloaded') || error.message?.includes('rate limit')) {
+                    if (attempt < maxRetries) {
+                        logger.warn(`Rate limited (attempt ${attempt + 1}/${maxRetries + 1}), retrying...`);
+                        continue;
+                    }
+                }
+                
+                // For non-rate-limit errors, throw immediately
+                if (!error.message?.includes('overloaded') && error.code !== 529) {
+                    throw error;
+                }
+            }
+        }
+        
+        // If we've exhausted all retries, throw the last error
+        logger.error(`All ${maxRetries + 1} attempts failed due to rate limiting`);
+        throw lastError;
     }
 
     /**
@@ -68,11 +118,16 @@ export default class LLMHandler {
     async extractConcepts(text) {
         try {
             const prompt = PromptTemplates.formatConceptPrompt(this.chatModel, text)
-            const response = await this.llmProvider.generateCompletion(
-                this.chatModel,
-                prompt,
-                { temperature: 0.2 }
-            )
+            
+            // Use rate limiting for concept extraction too
+            const response = await this.withRateLimit(async () => {
+                return await this.llmProvider.generateCompletion(
+                    this.chatModel,
+                    prompt,
+                    { temperature: 0.2 }
+                )
+            })
+            
             console.log(`response = ${response}, ${JSON.stringify(response)}`)
             const match = response.match(/\[.*\]/)
             if (!match) {

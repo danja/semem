@@ -27,7 +27,9 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import Config from '../../src/Config.js';
 import OllamaConnector from '../../src/connectors/OllamaConnector.js';
+import ClaudeConnector from '../../src/connectors/ClaudeConnector.js';
 import EmbeddingHandler from '../../src/handlers/EmbeddingHandler.js';
+import LLMHandler from '../../src/handlers/LLMHandler.js';
 import CacheManager from '../../src/handlers/CacheManager.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -37,8 +39,8 @@ const __dirname = dirname(__filename);
  * Question Answering System
  */
 class QuestionAnsweringSystem {
-    constructor(llmConnector, embeddingHandler) {
-        this.llmConnector = llmConnector;
+    constructor(llmHandler, embeddingHandler) {
+        this.llmHandler = llmHandler;
         this.embeddingHandler = embeddingHandler;
         this.entities = [];
         this.documents = [];
@@ -219,11 +221,13 @@ ANSWER:`;
 
         try {
             console.log('🤖 Generating answer using LLM...');
-            const response = await this.llmConnector.generateCompletion('qwen2:1.5b', prompt, {
-                max_tokens: 500,
-                temperature: 0.7,
-                stop: ['QUESTION:', 'CONTEXT:']
-            });
+            const response = await this.llmHandler.generateResponse(
+                prompt,
+                '', // no additional context needed
+                {
+                    temperature: 0.7
+                }
+            );
 
             return response.trim();
         } catch (error) {
@@ -415,6 +419,35 @@ ANSWER:`;
 }
 
 /**
+ * Create LLM handler based on config
+ */
+async function createLLMHandler(config) {
+    const chatConfig = config.get('models.chat');
+    const provider = chatConfig?.provider || 'ollama';
+    const model = chatConfig?.model || 'qwen2:1.5b';
+    
+    console.log(`🤖 Initializing ${provider} LLM handler with model: ${model}`);
+    
+    let llmConnector;
+    
+    if (provider === 'claude') {
+        const apiKey = process.env.CLAUDE_API_KEY;
+        if (!apiKey) {
+            console.log('⚠️  CLAUDE_API_KEY not found, falling back to Ollama');
+            llmConnector = new OllamaConnector('http://localhost:11434', 'qwen2:1.5b');
+        } else {
+            llmConnector = new ClaudeConnector(apiKey, model);
+        }
+    } else {
+        // Default to Ollama
+        const ollamaBaseUrl = config.get('ollama.baseUrl') || 'http://localhost:11434';
+        llmConnector = new OllamaConnector(ollamaBaseUrl, model);
+    }
+    
+    return new LLMHandler(llmConnector, model);
+}
+
+/**
  * Execute SPARQL SELECT query
  */
 async function executeSparqlSelect(query, config) {
@@ -571,14 +604,18 @@ async function runQAAnalysis() {
         
         console.log('✓ Configuration initialized');
         
-        // Initialize Ollama connector and embedding handler
+        // Create LLM handler based on config
+        const llmHandler = await createLLMHandler(config);
+        console.log('✅ LLM handler created with config-based provider');
+        
+        // Initialize embedding handler (still uses Ollama for embeddings)
         const ollamaBaseUrl = config.get('ollama.baseUrl') || 'http://localhost:11434';
         
-        // Test Ollama connection
-        console.log('🔌 Testing Ollama connection...');
+        // Test Ollama connection for embeddings
+        console.log('🔌 Testing Ollama connection for embeddings...');
         const response = await fetch(`${ollamaBaseUrl}/api/version`);
         if (!response.ok) {
-            throw new Error(`Ollama is required for QA demonstration. Please start Ollama at ${ollamaBaseUrl}`);
+            throw new Error(`Ollama is required for embeddings. Please start Ollama at ${ollamaBaseUrl}`);
         }
         
         const ollamaConnector = new OllamaConnector(ollamaBaseUrl, 'qwen2:1.5b');
@@ -596,7 +633,7 @@ async function runQAAnalysis() {
             cacheManager
         );
         
-        console.log('✅ Ollama services initialized');
+        console.log('✅ LLM and embedding services initialized');
         
         // Load knowledge graph
         const { entities, documents } = await loadKnowledgeGraph(config);
@@ -614,7 +651,7 @@ async function runQAAnalysis() {
         }
         
         // Initialize QA system
-        const qaSystem = new QuestionAnsweringSystem(ollamaConnector, embeddingHandler);
+        const qaSystem = new QuestionAnsweringSystem(llmHandler, embeddingHandler);
         await qaSystem.loadKnowledge(entities, documents);
         
         console.log('🚀 Question Answering system initialized\n');
@@ -644,6 +681,12 @@ async function runQAAnalysis() {
             console.log(`\n${'='.repeat(80)}`);
             console.log(`Question ${i + 1}/${testQuestions.length}`);
             console.log('='.repeat(80));
+            
+            // Add delay between questions to avoid rate limiting
+            if (i > 0) {
+                console.log('   ⏱️  Waiting to avoid rate limits...');
+                await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 800));
+            }
             
             try {
                 const result = await qaSystem.answerQuestion(question);

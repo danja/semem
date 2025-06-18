@@ -13,6 +13,8 @@ const LOG_LEVELS = [
 
 class Console {
   constructor(options = {}) {
+    console.log('[Console] Creating new Console instance', new Error().stack);
+    
     this.options = {
       initialLogLevel: 'debug',
       maxLogs: 1000,
@@ -30,6 +32,13 @@ class Console {
     this.handleKeyDown = this.handleKeyDown.bind(this);
     
     this.init();
+    
+    // Add instance to window for debugging
+    if (!window.consoleInstances) {
+      window.consoleInstances = [];
+    }
+    window.consoleInstances.push(this);
+    console.log(`[Console] Total instances: ${window.consoleInstances.length}`);
   }
   
   init() {
@@ -268,20 +277,45 @@ class Console {
     return true;
   }
   
+  // Helper function to safely stringify objects with circular references
+  safeStringify(obj, space = 2) {
+    const seen = new WeakSet();
+    return JSON.stringify(obj, (key, value) => {
+      if (typeof value === 'object' && value !== null) {
+        if (seen.has(value)) {
+          return '[Circular Reference]';
+        }
+        seen.add(value);
+      }
+      return value;
+    }, space);
+  }
+
   // Render logs to the console
   renderLogs() {
     if (this.isPaused) return;
     
     const visibleLogs = this.logs.filter(log => this.shouldShowLog(log));
     
-    this.contentEl.innerHTML = visibleLogs.map(log => `
-      <div class="log-entry log-${log.level}">
-        <span class="log-timestamp">[${log.timestamp}]</span>
-        <span class="log-level">[${log.level.toUpperCase()}]</span>
-        <span class="log-message">${log.message}</span>
-        ${log.data ? `<pre class="log-data">${JSON.stringify(log.data, null, 2)}</pre>` : ''}
-      </div>
-    `).join('');
+    this.contentEl.innerHTML = visibleLogs.map(log => {
+      let dataString = '';
+      if (log.data) {
+        try {
+          dataString = `<pre class="log-data">${this.safeStringify(log.data)}</pre>`;
+        } catch (error) {
+          dataString = `<pre class="log-data error">[Error stringifying data: ${error.message}]</pre>`;
+        }
+      }
+      
+      return `
+        <div class="log-entry log-${log.level}">
+          <span class="log-timestamp">[${log.timestamp}]</span>
+          <span class="log-level">[${log.level.toUpperCase()}]</span>
+          <span class="log-message">${log.message}</span>
+          ${dataString}
+        </div>
+      `;
+    }).join('');
     
     if (this.autoScroll) {
       this.scrollToBottom();
