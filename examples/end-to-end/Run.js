@@ -21,7 +21,8 @@ import EnrichSimpleModule from './EnrichSimple.js';
 import SearchModule from './Search.js';
 import QueryModule from './Query.js';
 import AnalyticsModule from './Analytics.js';
-// etc.
+import PageRankModule from './PageRank.js';
+import VSOMModule from './VSOM.js';
 
 class WorkflowOrchestrator {
     constructor(options = {}) {
@@ -74,16 +75,16 @@ class WorkflowOrchestrator {
         
         this.modules.set('pagerank', {
             name: 'Personalized PageRank Analysis',
-            class: null, // PageRankModule,
+            class: PageRankModule,
             dependencies: ['enrich'],
-            implemented: false
+            implemented: true
         });
         
         this.modules.set('vsom', {
             name: 'Vector Self-Organizing Map',
-            class: null, // VsomModule,
+            class: VSOMModule,
             dependencies: ['search'],
-            implemented: false
+            implemented: true
         });
         
         this.modules.set('hyde', {
@@ -304,6 +305,12 @@ class WorkflowOrchestrator {
                 break;
             case 'analytics':
                 console.log(`      Nodes: ${result.nodesAnalyzed}, Communities: ${result.communitiesFound}, Density: ${(result.networkDensity * 100).toFixed(1)}%`);
+                break;
+            case 'pagerank':
+                console.log(`      Entities: ${result.entitiesAnalyzed}, Top Score: ${result.topScore?.toFixed(4) || 'N/A'}, Convergence: ${result.converged ? 'Yes' : 'No'}`);
+                break;
+            case 'vsom':
+                console.log(`      Entities: ${result.entitiesProcessed}, Map: ${result.mapSize}, Clusters: ${result.clustersFound}, Epochs: ${result.trainingEpochs}`);
                 break;
             default:
                 console.log(`      Status: ${result.success ? 'Success' : 'Failed'}`);

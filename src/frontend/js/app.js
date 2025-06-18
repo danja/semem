@@ -66,17 +66,48 @@ async function initializeAtuin() {
  * Initialize the entire application
  */
 export async function initializeApp() {
-    // Setup debug functionality
-    setupDebug();
-    
-    // Initialize Atuin components first
-    await initializeAtuin();
-    
-    // Initialize loading indicator
-    const loadingIndicator = document.getElementById('loading-indicator');
-    if (loadingIndicator) {
-        // Force it to be hidden at startup
-        loadingIndicator.style.display = 'none';
+    try {
+        // Setup debug functionality
+        setupDebug();
+        
+        // Initialize Atuin components first
+        await initializeAtuin();
+        
+        // Initialize TabManager first
+        tabManager.init();
+        
+        // Initialize other components
+        initSettingsForm();
+        initRangeInputs();
+        initSearchForm();
+        initMemoryForms();
+        await loadChatProviders();
+        initChatForms();
+        initMemoryVisualization();
+        initVSOM();
+        await initMCPClient();
+        await initSPARQLBrowser();
+        
+        // Initialize console after a short delay
+        setTimeout(initializeConsole, 500);
+        
+        // Hide loading indicator
+        const loadingIndicator = document.getElementById('loading-indicator');
+        if (loadingIndicator) {
+            loadingIndicator.style.display = 'none';
+        }
+        
+        console.log('Application initialized successfully');
+    } catch (error) {
+        console.error('Error initializing application:', error);
+        const loadingIndicator = document.getElementById('loading-indicator');
+        if (loadingIndicator) {
+            loadingIndicator.innerHTML = `
+                <div class="error">
+                    <h3>Error initializing application</h3>
+                    <p>${error.message}</p>
+                </div>`;
+        }
     }
 }
 

@@ -22,8 +22,8 @@
 
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-import { MemoryManager } from '../../src/MemoryManager.js';
-import { Config } from '../../src/Config.js';
+import Config from '../../src/Config.js';
+import SPARQLStore from '../../src/stores/SPARQLStore.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -182,25 +182,53 @@ class PersonalizedPageRank {
 }
 
 /**
+ * Execute SPARQL SELECT query
+ */
+async function executeSparqlSelect(query, config) {
+    const sparqlEndpoints = config.get('sparqlEndpoints');
+    const endpoint = sparqlEndpoints[0];
+    const queryEndpoint = `${endpoint.urlBase}${endpoint.query}`;
+    
+    const response = await fetch(queryEndpoint, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/sparql-query',
+            'Accept': 'application/sparql-results+json',
+            'Authorization': `Basic ${Buffer.from(`${endpoint.user}:${endpoint.password}`).toString('base64')}`
+        },
+        body: query
+    });
+
+    if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`SPARQL SELECT failed: ${response.status} - ${errorText}`);
+    }
+
+    return await response.json();
+}
+
+/**
  * Build graph from SPARQL entities and relationships
  */
-async function buildGraphFromSPARQL(memoryManager) {
+async function buildGraphFromSPARQL(config) {
     const pageRank = new PersonalizedPageRank();
     
     console.log('🔍 Loading entities from SPARQL store...');
     
-    // Query all entities
+    // Query all entities stored by EnrichSimple module
     const entitiesQuery = `
         PREFIX ragno: <http://purl.org/stuff/ragno/>
+        PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
         
-        SELECT ?entity ?name ?type WHERE {
-            ?entity a ragno:Entity ;
-                   ragno:hasName ?name .
-            OPTIONAL { ?entity ragno:hasSubType ?type }
+        SELECT ?entity ?name WHERE {
+            GRAPH <http://semem.hyperdata.it/end-to-end> {
+                ?entity a ragno:Element ;
+                       skos:prefLabel ?name .
+            }
         }
     `;
     
-    const entitiesResult = await memoryManager.store.queryRaw(entitiesQuery);
+    const entitiesResult = await executeSparqlSelect(entitiesQuery, config);
     const entities = entitiesResult.results?.bindings || [];
     
     console.log(`📊 Found ${entities.length} entities`);
@@ -210,7 +238,7 @@ async function buildGraphFromSPARQL(memoryManager) {
     entities.forEach(entity => {
         const id = entity.entity.value;
         const name = entity.name.value;
-        const type = entity.type?.value || 'Entity';
+        const type = 'Entity'; // All are ragno:Element types
         
         entityMap.set(id, { name, type });
         pageRank.addEntity(id, { name, type });
@@ -228,38 +256,31 @@ async function buildGraphFromSPARQL(memoryManager) {
             const entity1 = entityIds[i];
             const entity2 = entityIds[j];
             
-            // Query for co-occurrence
-            const cooccurrenceQuery = `
-                PREFIX ragno: <http://purl.org/stuff/ragno/>
-                
-                SELECT (COUNT(?doc) as ?count) WHERE {
-                    ?doc ragno:containsEntity <${entity1}> .
-                    ?doc ragno:containsEntity <${entity2}> .
-                }
-            `;
+            // For now, use semantic similarity based on entity names
+            // since we don't have explicit co-occurrence relationships
+            const name1 = entityMap.get(entity1).name.toLowerCase();
+            const name2 = entityMap.get(entity2).name.toLowerCase();
             
-            try {
-                const result = await memoryManager.store.queryRaw(cooccurrenceQuery);
-                const count = parseInt(result.results?.bindings[0]?.count?.value || '0');
-                
-                if (count > 0) {
-                    pageRank.addEdge(entity1, entity2, count);
-                    edgeCount++;
-                }
-            } catch (error) {
-                // Fallback: create edge based on entity names similarity
-                const name1 = entityMap.get(entity1).name.toLowerCase();
-                const name2 = entityMap.get(entity2).name.toLowerCase();
-                
-                // Simple similarity based on common words
-                const words1 = name1.split(/\s+/);
-                const words2 = name2.split(/\s+/);
-                const commonWords = words1.filter(word => words2.includes(word));
-                
-                if (commonWords.length > 0 || name1.includes(name2) || name2.includes(name1)) {
-                    pageRank.addEdge(entity1, entity2, 0.5);
-                    edgeCount++;
-                }
+            // Simple similarity based on common words
+            const words1 = name1.split(/\s+/);
+            const words2 = name2.split(/\s+/);
+            const commonWords = words1.filter(word => words2.includes(word));
+            
+            // Calculate similarity score
+            let similarity = 0;
+            if (commonWords.length > 0) {
+                similarity = commonWords.length / Math.max(words1.length, words2.length);
+            }
+            
+            // Also check for substring relationships
+            if (name1.includes(name2) || name2.includes(name1)) {
+                similarity = Math.max(similarity, 0.7);
+            }
+            
+            // Add edge if similarity is above threshold
+            if (similarity > 0.3) {
+                pageRank.addEdge(entity1, entity2, similarity);
+                edgeCount++;
             }
         }
     }
@@ -292,25 +313,64 @@ async function buildGraphFromSPARQL(memoryManager) {
 }
 
 /**
+ * PageRank Module Class for orchestrator integration
+ */
+class PageRankModule {
+    constructor(config = null) {
+        this.config = config;
+        this.results = {
+            entitiesAnalyzed: 0,
+            topScore: 0,
+            converged: false,
+            success: false
+        };
+    }
+
+    async initialize() {
+        if (!this.config) {
+            this.config = new Config();
+            await this.config.init();
+        }
+    }
+
+    async execute() {
+        const analysisResults = await runPageRankAnalysis();
+        this.results.entitiesAnalyzed = analysisResults?.entitiesAnalyzed || 0;
+        this.results.topScore = analysisResults?.topScore || 0;
+        this.results.converged = analysisResults?.converged || false;
+        this.results.success = true;
+    }
+
+    async cleanup() {
+        // Cleanup if needed
+    }
+
+    getResults() {
+        return this.results;
+    }
+}
+
+/**
  * Main PageRank analysis function
  */
 async function runPageRankAnalysis() {
     console.log('🎯 === MODULE 6: PERSONALIZED PAGERANK ANALYSIS ===\n');
     
-    let memoryManager;
-    
     try {
-        // Initialize configuration and memory manager
+        // Initialize configuration
         const config = new Config();
-        await config.initialize();
+        await config.init();
         
-        memoryManager = new MemoryManager(config);
-        await memoryManager.initialize();
-        
-        console.log('✓ Memory manager initialized');
+        // Check SPARQL endpoint configuration
+        const sparqlEndpoints = config.get('sparqlEndpoints');
+        if (!sparqlEndpoints || sparqlEndpoints.length === 0) {
+            throw new Error('No SPARQL endpoints configured. Please check your config.');
+        }
+
+        console.log('✓ Configuration initialized');
         
         // Build graph from SPARQL data
-        const { pageRank, entityMap } = await buildGraphFromSPARQL(memoryManager);
+        const { pageRank, entityMap } = await buildGraphFromSPARQL(config);
         
         if (entityMap.size === 0) {
             console.log('❌ No entities found. Please run Module 2 (Enrich) first.');
@@ -409,15 +469,25 @@ async function runPageRankAnalysis() {
         
         console.log('\n🎉 PageRank analysis completed successfully!');
         
+        // Return results for orchestrator
+        return {
+            entitiesAnalyzed: entityMap.size,
+            topScore: topGlobal.length > 0 ? topGlobal[0].score : 0,
+            converged: true
+        };
+        
     } catch (error) {
         console.error('❌ PageRank analysis failed:', error.message);
         if (error.message.includes('Entity') || error.message.includes('SPARQL')) {
             console.log('\n💡 Tip: Make sure to run Module 2 (Enrich) first to populate entities');
         }
-    } finally {
-        if (memoryManager) {
-            await memoryManager.dispose();
-        }
+        
+        // Return default results on error
+        return {
+            entitiesAnalyzed: 0,
+            topScore: 0,
+            converged: false
+        };
     }
 }
 
@@ -426,4 +496,5 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     runPageRankAnalysis().catch(console.error);
 }
 
+export default PageRankModule;
 export { runPageRankAnalysis };

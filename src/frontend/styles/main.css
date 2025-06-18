@@ -1,4 +1,7 @@
-/* Console Styles */
+/* Theme and base styles */
+@import './theme.css';
+
+/* Component styles */
 @import './console.css';
 @import './tabs.css';
 
@@ -1785,13 +1788,7 @@ footer {
     stroke-width: 1px;
 }
 
-.som-node.rectangular {
-    /* Rectangular nodes will be rendered as rectangles */
-}
-
-.som-node.hexagonal {
-    /* Hexagonal nodes will be rendered as hexagons */
-}
+/* Rectangular and hexagonal nodes are styled via JavaScript */
 
 .som-node.selected {
     stroke: #e74c3c;

@@ -14,55 +14,126 @@ class TabManager {
   /**
    * Initialize the tab manager
    */
+  /**
+   * Initialize the tab manager
+   */
   init() {
-    if (this.initialized) return;
+    if (this.initialized) {
+      console.log('TabManager already initialized');
+      return;
+    }
     
     try {
+      console.log('Initializing TabManager...');
+      
       // Get all tab buttons and content sections
       this.tabButtons = document.querySelectorAll('.tabs .tab-btn');
-      this.tabContents = document.querySelectorAll('main > .tab-content');
+      this.tabContents = document.querySelectorAll('main > .tab-content, main > section.tab-content');
       
-      if (this.tabButtons.length === 0 || this.tabContents.length === 0) {
-        console.warn('No tabs found. Make sure your HTML structure is correct.');
+      console.log(`Found ${this.tabButtons.length} tab buttons and ${this.tabContents.length} tab contents`);
+      
+      if (this.tabButtons.length === 0) {
+        console.warn('No tab buttons found. Make sure your HTML structure includes elements with class "tabs" and "tab-btn".');
         return;
       }
       
       // Store tab information
-      this.tabs = Array.from(this.tabButtons).map(button => {
-        const tabId = button.dataset.tab;
-        const content = document.getElementById(`${tabId}-tab`);
-        
-        if (!content) {
-          console.warn(`No content found for tab: ${tabId}`);
+      this.tabs = [];
+      
+      // First pass: find all tab buttons and their corresponding content
+      this.tabButtons.forEach(button => {
+        try {
+          const tabId = button.dataset.tab;
+          if (!tabId) {
+            console.warn('Tab button is missing data-tab attribute:', button);
+            return;
+          }
+          
+          const content = document.getElementById(`${tabId}-tab`);
+          
+          if (!content) {
+            console.warn(`No content element found for tab: ${tabId}`);
+            return;
+          }
+          
+          // Add tab to our collection
+          this.tabs.push({
+            id: tabId,
+            button,
+            content
+          });
+          
+          console.log(`Registered tab: ${tabId}`);
+          
+        } catch (error) {
+          console.error('Error processing tab button:', button, error);
         }
-        
-        return {
-          id: tabId,
-          button,
-          content
-        };
-      }).filter(tab => tab.content); // Only keep tabs with valid content
+      });
+      
+      if (this.tabs.length === 0) {
+        console.warn('No valid tabs found with corresponding content. Check your HTML structure and data-tab attributes.');
+        return;
+      }
       
       // Add click event listeners to tab buttons
-      this.tabButtons.forEach(button => {
-        button.addEventListener('click', (e) => {
-          e.preventDefault();
-          this.switchTab(e.currentTarget.dataset.tab);
-        });
+      this.tabs.forEach(tab => {
+        try {
+          tab.button.addEventListener('click', (e) => {
+            e.preventDefault();
+            this.switchTab(tab.id);
+          });
+          tab.button.setAttribute('role', 'tab');
+          tab.button.setAttribute('aria-selected', 'false');
+          tab.button.setAttribute('aria-controls', `${tab.id}-tab`);
+          
+          // Set up content attributes
+          tab.content.setAttribute('role', 'tabpanel');
+          tab.content.setAttribute('aria-labelledby', tab.id);
+          
+        } catch (error) {
+          console.error(`Error setting up tab ${tab.id}:`, error);
+        }
       });
       
       // Initialize with the first tab active if none is active
-      const activeTab = Array.from(this.tabButtons).find(btn => btn.classList.contains('active'));
+      const activeTab = this.tabs.find(tab => tab.button.classList.contains('active'));
       if (activeTab) {
-        this.switchTab(activeTab.dataset.tab, true);
-      } else if (this.tabButtons.length > 0) {
-        this.switchTab(this.tabButtons[0].dataset.tab, true);
+        console.log(`Initial active tab found: ${activeTab.id}`);
+        this.switchTab(activeTab.id, true);
+      } else if (this.tabs.length > 0) {
+        console.log(`No active tab found, defaulting to first tab: ${this.tabs[0].id}`);
+        this.switchTab(this.tabs[0].id, true);
       }
       
-      console.log(`Tab Manager initialized with ${this.tabs.length} tabs`);
+      // Handle browser back/forward navigation
+      window.addEventListener('popstate', (e) => {
+        try {
+          if (e.state && e.state.tab) {
+            console.log('Popstate - switching to tab:', e.state.tab);
+            this.switchTab(e.state.tab);
+          }
+        } catch (error) {
+          console.error('Error handling popstate:', error);
+        }
+      });
+      
+      console.log(`Tab Manager successfully initialized with ${this.tabs.length} tabs`);
       this.initialized = true;
+      
+      // Dispatch event that tabs are ready
+      document.dispatchEvent(new CustomEvent('tabsReady', { 
+        detail: { 
+          tabCount: this.tabs.length,
+          currentTab: this.currentTab
+        } 
+      }));
+      
     } catch (error) {
-      console.error('Error initializing TabManager:', error);
+      console.error('Critical error initializing TabManager:', error);
+      // Try to recover by showing the first tab if possible
+      if (this.tabs && this.tabs.length > 0) {
+        this.switchTab(this.tabs[0].id, true);
+      }
     }
   }
 
@@ -70,91 +141,132 @@ class TabManager {
    * Switch to a specific tab
    * @param {string} tabId - The ID of the tab to switch to
    * @param {boolean} [force=false] - Force the tab switch even if it's already active
+   * @returns {boolean} - Returns true if the tab switch was successful, false otherwise
    */
   switchTab(tabId, force = false) {
-    if (!tabId) {
-      console.warn('No tab ID provided to switchTab');
-      return;
-    }
-    
-    // Don't do anything if we're already on this tab and not forcing
-    if (this.currentTab === tabId && !force) {
-      return;
-    }
-    
-    // Find the tab to activate
-    const tabToActivate = this.tabs.find(tab => tab.id === tabId);
-    if (!tabToActivate) {
-      console.warn(`Tab with ID '${tabId}' not found`);
-      return;
-    }
-    
-    // Get the currently active tab
-    const currentActiveTab = this.tabs.find(tab => tab.button.classList.contains('active'));
-    
-    // Dispatch beforeTabChange event
-    const beforeChangeEvent = new CustomEvent('beforeTabChange', {
-      cancelable: true,
-      detail: {
-        fromTab: this.currentTab,
-        toTab: tabId,
-        fromTabElement: currentActiveTab?.content,
-        toTabElement: tabToActivate.content
+    try {
+      // Validate tabId
+      if (!tabId) {
+        console.warn('No tab ID provided to switchTab');
+        return false;
       }
-    });
-    
-    const continueChange = document.dispatchEvent(beforeChangeEvent);
-    
-    // If the event was prevented, don't change tabs
-    if (!continueChange) {
-      console.log(`Tab change to '${tabId}' was cancelled`);
-      return;
-    }
-    
-    // Update UI - hide all tabs first
-    this.tabs.forEach(tab => {
-      if (tab.content) {
-        tab.content.style.display = 'none';
-        tab.content.classList.remove('active');
+      
+      // Don't do anything if we're already on this tab and not forcing
+      if (this.currentTab === tabId && !force) {
+        console.log(`Tab '${tabId}' is already active`);
+        return true;
       }
-      if (tab.button) {
-        tab.button.classList.remove('active');
-        tab.button.setAttribute('aria-selected', 'false');
+      
+      console.log(`Attempting to switch to tab: ${tabId}`);
+      
+      // Find the tab to activate
+      const tabToActivate = this.tabs.find(tab => tab.id === tabId);
+      if (!tabToActivate) {
+        console.warn(`Tab with ID '${tabId}' not found in registered tabs`);
+        return false;
       }
-    });
-    
-    // Show the selected tab
-    tabToActivate.button.classList.add('active');
-    tabToActivate.button.setAttribute('aria-selected', 'true');
-    
-    if (tabToActivate.content) {
-      tabToActivate.content.style.display = 'block';
-      tabToActivate.content.classList.add('active');
-    }
-    
-    // Update current tab
-    const previousTab = this.currentTab;
-    this.currentTab = tabId;
-    
-    // Dispatch tabChanged event
-    const changeEvent = new CustomEvent('tabChanged', {
-      detail: {
-        fromTab: previousTab,
-        toTab: tabId,
-        fromTabElement: currentActiveTab?.content,
-        toTabElement: tabToActivate.content
+      
+      // Get the currently active tab
+      const currentActiveTab = this.tabs.find(tab => tab.button.classList.contains('active'));
+      const previousTabId = this.currentTab;
+      
+      // Dispatch beforeTabChange event
+      const beforeChangeEvent = new CustomEvent('beforeTabChange', {
+        cancelable: true,
+        detail: {
+          fromTab: previousTabId,
+          toTab: tabId,
+          fromTabElement: currentActiveTab?.content,
+          toTabElement: tabToActivate.content
+        }
+      });
+      
+      const continueChange = document.dispatchEvent(beforeChangeEvent);
+      
+      // If the event was prevented, don't change tabs
+      if (!continueChange) {
+        console.log(`Tab change to '${tabId}' was cancelled by event handler`);
+        return false;
       }
-    });
-    
-    document.dispatchEvent(changeEvent);
-    
-    // Update URL hash if needed (optional)
-    if (window.history && window.history.pushState) {
-      const newUrl = window.location.pathname + (tabId ? `#${tabId}` : '');
-      window.history.pushState({ tab: tabId }, '', newUrl);
+      
+      console.log(`Hiding all tabs and deactivating buttons...`);
+      
+      // Update UI - hide all tabs first
+      this.tabs.forEach(tab => {
+        try {
+          if (tab.content) {
+            tab.content.style.display = 'none';
+            tab.content.classList.remove('active');
+            tab.content.setAttribute('aria-hidden', 'true');
+          }
+          if (tab.button) {
+            tab.button.classList.remove('active');
+            tab.button.setAttribute('aria-selected', 'false');
+            tab.button.setAttribute('tabindex', '-1');
+          }
+        } catch (error) {
+          console.error(`Error updating tab ${tab.id}:`, error);
+        }
+      });
+      
+      console.log(`Activating tab: ${tabId}`);
+      
+      // Show the selected tab
+      try {
+        // Update button state
+        tabToActivate.button.classList.add('active');
+        tabToActivate.button.setAttribute('aria-selected', 'true');
+        tabToActivate.button.setAttribute('tabindex', '0');
+        tabToActivate.button.focus();
+        
+        // Show tab content
+        if (tabToActivate.content) {
+          tabToActivate.content.style.display = 'block';
+          tabToActivate.content.classList.add('active');
+          tabToActivate.content.setAttribute('aria-hidden', 'false');
+          
+          // Trigger a resize event in case any components need to adjust
+          window.dispatchEvent(new Event('resize'));
+        }
+        
+        // Update current tab
+        this.currentTab = tabId;
+        
+        // Dispatch tabChanged event
+        const changeEvent = new CustomEvent('tabChanged', {
+          detail: {
+            fromTab: previousTabId,
+            toTab: tabId,
+            fromTabElement: currentActiveTab?.content,
+            toTabElement: tabToActivate.content
+          }
+        });
+        
+        document.dispatchEvent(changeEvent);
+        
+        // Update URL hash if needed (optional)
+        if (window.history && window.history.pushState) {
+          const newUrl = window.location.pathname + (tabId ? `#${tabId}` : '');
+          window.history.pushState({ tab: tabId }, '', newUrl);
+        }
+        
+        console.log(`Successfully switched to tab: ${tabId}`);
+        return true;
+        
+      } catch (error) {
+        console.error(`Error activating tab ${tabId}:`, error);
+        // Try to recover by showing the first tab if possible
+        if (this.tabs.length > 0 && this.tabs[0].id !== tabId) {
+          console.log('Attempting to recover by showing first tab');
+          return this.switchTab(this.tabs[0].id, true);
+        }
+        return false;
+      }
+      
+    } catch (error) {
+      console.error('Error in switchTab:', error);
+      return false;
     }
-    
-    console.log(`Switched to tab: ${tabId}`);
   }
 
   /**
