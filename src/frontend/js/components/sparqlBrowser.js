@@ -224,6 +224,12 @@ export class SPARQLBrowser {
 
     async initializeGraphVisualizer() {
         try {
+            // Prevent multiple initializations
+            if (this.graphVisualizer) {
+                console.log('GraphVisualizer already initialized, skipping...');
+                return;
+            }
+            
             const graphContainer = document.getElementById('rdf-graph-container');
             
             if (graphContainer && window.GraphVisualizer) {
@@ -305,49 +311,24 @@ export class SPARQLBrowser {
                             window.showDebug(`MODEL_SYNCED event received with ${content?.length || 0} characters - auto-updating graph`);
                         }
                         
-                        // Check if the graph updates automatically
-                        setTimeout(() => {
-                            console.log('Checking if GraphVisualizer auto-updated...');
-                            console.log('Network state after MODEL_SYNCED:', !!this.graphVisualizer?.network);
-                            if (this.graphVisualizer?.network) {
-                                console.log('🎉 GraphVisualizer auto-updated successfully!');
-                                this.updateGraphStats();
-                                
-                                // Force a resize/fit to ensure proper display
-                                if (typeof this.graphVisualizer.resizeAndFit === 'function') {
-                                    console.log('Calling resizeAndFit() to ensure proper display');
-                                    this.graphVisualizer.resizeAndFit();
-                                }
-                            } else {
-                                console.warn('GraphVisualizer did not auto-update. Network is still null.');
-                                console.log('This suggests the automatic event listening is not working properly.');
-                                console.log('Falling back to manual updateGraph() call...');
-                                
-                                // Fallback: manually call updateGraph
-                                if (content && content.trim() && typeof this.graphVisualizer.updateGraph === 'function') {
-                                    try {
-                                        console.log('Manually calling updateGraph() as fallback...');
-                                        this.graphVisualizer.updateGraph(content);
-                                        console.log('✅ Manual updateGraph() completed');
-                                        
-                                        // Check if it worked
-                                        setTimeout(() => {
-                                            if (this.graphVisualizer.network) {
-                                                console.log('🎉 Manual updateGraph() succeeded!');
-                                                this.updateGraphStats();
-                                                if (typeof this.graphVisualizer.resizeAndFit === 'function') {
-                                                    this.graphVisualizer.resizeAndFit();
-                                                }
-                                            }
-                                        }, 500);
-                                        
-                                    } catch (error) {
-                                        console.error('Manual updateGraph() also failed:', error);
-                                        console.log('Container check:', document.getElementById('rdf-graph-container'));
+                        // Check if the graph updates automatically (debounced)
+                        if (!this._checkUpdateTimeout) {
+                            this._checkUpdateTimeout = setTimeout(() => {
+                                console.log('Checking if GraphVisualizer auto-updated...');
+                                console.log('Network state after MODEL_SYNCED:', !!this.graphVisualizer?.network);
+                                if (this.graphVisualizer?.network) {
+                                    console.log('🎉 GraphVisualizer auto-updated successfully!');
+                                    this.updateGraphStats();
+                                    
+                                    // Force a resize/fit to ensure proper display
+                                    if (typeof this.graphVisualizer.resizeAndFit === 'function') {
+                                        console.log('Calling resizeAndFit() to ensure proper display');
+                                        this.graphVisualizer.resizeAndFit();
                                     }
                                 }
-                            }
-                        }, 1500);
+                                this._checkUpdateTimeout = null;
+                            }, 300);
+                        }
                         
                         // Ensure graph tab is visible when content updates
                         setTimeout(() => {
@@ -527,9 +508,20 @@ ex:austin a ex:Location ;
     }
 
     /**
-     * Update graph statistics display
+     * Update graph statistics display (debounced to prevent infinite loops)
      */
     updateGraphStats() {
+        // Debounce to prevent rapid successive calls
+        if (this._statsUpdateTimeout) {
+            clearTimeout(this._statsUpdateTimeout);
+        }
+        
+        this._statsUpdateTimeout = setTimeout(() => {
+            this._doUpdateGraphStats();
+        }, 100);
+    }
+    
+    _doUpdateGraphStats() {
         try {
             if (this.graphVisualizer && this.graphVisualizer.network) {
                 const nodes = this.graphVisualizer.network.body.data.nodes;
@@ -573,8 +565,8 @@ ex:austin a ex:Location ;
                 }
             }
             
-            // Force update stats
-            setTimeout(() => this.updateGraphStats(), 500);
+            // Force update stats (debounced)
+            this.updateGraphStats();
         }
     }
 
@@ -753,10 +745,8 @@ ex:austin a ex:Location ;
                 console.warn('No event bus systems available for MODEL_SYNCED');
             }
             
-            // Update stats after a delay to allow graph to process
-            setTimeout(() => {
-                this.updateGraphStats();
-            }, 500);
+            // Update stats after a delay to allow graph to process (single call)
+            this.updateGraphStats();
             
         } else if (rdfContent.trim() && this.graphVisualizer && this.graphVisualizer.updateGraph) {
             // Fallback: direct update if event bus not available
