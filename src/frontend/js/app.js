@@ -278,13 +278,9 @@ async function initializeConsole() {
         // Log a test message
         console.log('Console component initialized');
         
-        // Open the console after a short delay if not already open
-        setTimeout(() => {
-            if (consoleInstance.toggle && !consoleInstance.isOpen) {
-                console.log('[DEBUG] Opening console');
-                consoleInstance.toggle();
-            }
-        }, 500);
+        // Console is ready but remains hidden by default
+        // Users can open it with the hamburger menu or backtick (`) key
+        console.log('[DEBUG] Console initialized and ready (hidden by default)');
         
         return consoleInstance;
     } catch (error) {

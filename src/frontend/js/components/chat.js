@@ -448,8 +448,38 @@ export class ChatManager {
     formatMessageContent(content) {
         if (!content) return '';
         
-        // Ensure content is a string
-        const contentStr = typeof content === 'string' ? content : String(content);
+        // Debug logging for non-string content
+        if (typeof content !== 'string') {
+            console.debug('formatMessageContent received non-string content:', typeof content, content);
+        }
+        
+        // Handle different content types
+        let contentStr;
+        if (typeof content === 'string') {
+            contentStr = content;
+        } else if (typeof content === 'object') {
+            // If it's an object, try to extract text content
+            if (content.text) {
+                contentStr = content.text;
+            } else if (content.content) {
+                contentStr = content.content;
+            } else if (content.message) {
+                contentStr = content.message;
+            } else if (content.response) {
+                contentStr = content.response;
+            } else if (content.data && typeof content.data === 'string') {
+                contentStr = content.data;
+            } else {
+                // Fallback to JSON representation for objects
+                try {
+                    contentStr = JSON.stringify(content, null, 2);
+                } catch (e) {
+                    contentStr = String(content);
+                }
+            }
+        } else {
+            contentStr = String(content);
+        }
         
         // Basic HTML escaping
         const escaped = contentStr

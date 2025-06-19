@@ -542,8 +542,11 @@ class MemoryGraphViz {
         this.nodes = [];
         this.links = [];
 
+        // Ensure memories is an array
+        const memoriesArray = Array.isArray(memories) ? memories : [];
+
         // Add memory nodes
-        memories.forEach(memory => {
+        memoriesArray.forEach(memory => {
             this.nodes.push({
                 id: memory.id,
                 label: memory.prompt || memory.response || 'Memory',
@@ -553,8 +556,11 @@ class MemoryGraphViz {
             });
         });
 
+        // Ensure concepts is an array
+        const conceptsArray = Array.isArray(concepts) ? concepts : [];
+
         // Add concept nodes
-        concepts.forEach(concept => {
+        conceptsArray.forEach(concept => {
             this.nodes.push({
                 id: concept.id,
                 label: concept.name || concept.id,
@@ -565,10 +571,10 @@ class MemoryGraphViz {
         });
 
         // Add links between memories and concepts
-        memories.forEach(memory => {
+        memoriesArray.forEach(memory => {
             const memoryConcepts = memory.concepts || [];
             memoryConcepts.forEach(conceptId => {
-                if (concepts.find(c => c.id === conceptId)) {
+                if (conceptsArray.find(c => c.id === conceptId)) {
                     this.links.push({
                         source: memory.id,
                         target: conceptId,
