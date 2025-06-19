@@ -308,9 +308,11 @@ class UIServer {
                 });
             }
 
-            logger.info(`Chat request with prompt: "${prompt.slice(0, 30)}..."`);
+            logger.info(`🔍 [CHAT DEBUG] Chat request with prompt: "${prompt.slice(0, 30)}..."`);
+            logger.info(`🔍 [CHAT DEBUG] Request providerId: "${providerId}"`);
 
             try {
+                logger.info(`🔍 [CHAT DEBUG] Entering try block for chat processing`);
                 // Optionally enrich the prompt with search results if requested
                 let enrichedPrompt = prompt;
                 let searchResults = [];
@@ -342,69 +344,37 @@ Based on the above information and your knowledge, here is the user's question: 
                     }
                 }
 
-                // Get the selected provider by ID or use the default
-                let selectedProvider;
+                // DEBUG: Log the provider selection process
+                logger.info(`🔍 [CHAT DEBUG] Received provider ID: "${providerId}"`);
+                logger.info(`🔍 [CHAT DEBUG] Available chatProviders: ${this.chatProviders?.map(p => `${p.id}:${p.type}`).join(', ')}`);
 
-                // If providerId is in the format 'provider-N', extract the index
-                if (providerId && providerId.startsWith('provider-')) {
-                    const index = parseInt(providerId.split('-')[1], 10);
-                    if (!isNaN(index) && this.llmProviders && this.llmProviders[index]) {
-                        selectedProvider = this.llmProviders[index];
-                    }
-                }
-
-
-                // If no provider found by ID, use the default
-                if (!selectedProvider) {
-                    selectedProvider = this.defaultChatProvider;
-                    logger.warn(`Provider ${providerId} not found, falling back to default: ${selectedProvider?.type}`);
-                }
+                // Get the selected provider by ID or use the default (use chatProviders like streaming)
+                const selectedProvider = this.chatProviders?.find(p => p.id === providerId) || this.chatProviders?.[0];
 
                 if (!selectedProvider) {
                     throw new Error('No chat provider available');
                 }
 
-                logger.info(`Using provider: ${selectedProvider.type}${selectedProvider.implementation ? ` (${selectedProvider.implementation})` : ''}`);
+                logger.info(`🚀 [CHAT DEBUG] Selected provider: ${selectedProvider.type}${selectedProvider.implementation ? ` (${selectedProvider.implementation})` : ''} with ID: ${selectedProvider.id}`);
 
-                // Make sure the provider has a connector
+                // Ensure the provider has a connector (chatProviders should already be initialized)
                 if (!selectedProvider.connector) {
-                    logger.warn(`Provider ${selectedProvider.type} has no connector, initializing...`);
-                    // Initialize the connector if it doesn't exist
-                    switch (selectedProvider.type) {
-                        case 'mistral':
-                            selectedProvider.connector = new MistralConnector(
-                                selectedProvider.apiKey,
-                                selectedProvider.baseUrl,
-                                selectedProvider.chatModel
-                            );
-                            break;
-                        case 'claude':
-                            selectedProvider.connector = new HClaudeClientConnector(
-                                selectedProvider.apiKey,
-                                selectedProvider.chatModel
-                            );
-                            break;
-                        case 'ollama':
-                            selectedProvider.connector = new OllamaConnector({
-                                baseUrl: selectedProvider.baseUrl,
-                                chatModel: selectedProvider.chatModel,
-                                embeddingModel: selectedProvider.embeddingModel
-                            });
-                            break;
-                        default:
-                            throw new Error(`Unsupported provider type: ${selectedProvider.type}`);
-                    }
-                    logger.info(`Initialized connector for provider: ${selectedProvider.type}`);
+                    logger.error(`🚨 [CHAT DEBUG] Provider ${selectedProvider.type} has no connector! This should not happen with chatProviders.`);
+                    throw new Error(`Provider ${selectedProvider.type} is not properly initialized`);
                 }
+
+                logger.info(`✅ [CHAT DEBUG] Provider ${selectedProvider.type} has connector: ${selectedProvider.connector.constructor.name}`);
 
                 // Use the model from the request or fall back to the provider's default
                 const modelToUse = req.body.model || selectedProvider.chatModel;
-                logger.info(`Using model: ${modelToUse} for provider: ${selectedProvider.type}`);
+                logger.info(`🎯 [CHAT DEBUG] Using model: ${modelToUse} for provider: ${selectedProvider.type}`);
 
                 // Create chat API with selected provider and model
                 const chatAPI = await this.createChatAPI(selectedProvider, modelToUse);
+                logger.info(`🔧 [CHAT DEBUG] Created ChatAPI with provider: ${selectedProvider.type}, connector: ${selectedProvider.connector.constructor.name}`);
 
                 // Generate response with the selected model
+                logger.info(`🚀 [CHAT DEBUG] About to execute chat operation with provider: ${selectedProvider.type}`);
                 const result = await chatAPI.executeOperation('chat', {
                     prompt: enrichedPrompt, // Use the potentially enriched prompt
                     conversationId,
@@ -412,6 +382,7 @@ Based on the above information and your knowledge, here is the user's question: 
                     temperature: temperature || 0.7,
                     model: modelToUse // Use the selected model
                 });
+                logger.info(`✅ [CHAT DEBUG] Chat operation completed with provider: ${selectedProvider.type}`);
 
                 // Add search results to the response
                 if (searchResults && searchResults.length > 0) {
@@ -425,7 +396,8 @@ Based on the above information and your knowledge, here is the user's question: 
                 // Return response
                 res.json(result);
             } catch (apiError) {
-                logger.error('Chat API error:', apiError);
+                logger.error('🚨 [CHAT DEBUG] Chat API error:', apiError);
+                logger.error('🚨 [CHAT DEBUG] Error stack:', apiError.stack);
 
                 // Fallback: Use direct LLM if chatAPI fails
                 if (this.llmHandler) {
@@ -1049,23 +1021,27 @@ Based on the above information and your knowledge, here is the user's question: 
      */
     async handleListProviders(req, res) {
         try {
-            // Ensure providers are initialized
-            if (!this.llmProviders || this.llmProviders.length === 0) {
-                logger.warn('No LLM providers available');
-                return res.json({ providers: [] });
+            // Ensure providers are initialized by checking chatProviders
+            if (!this.chatProviders || this.chatProviders.length === 0) {
+                logger.warn('No chat providers available, trying to initialize...');
+                await this.initializeLLMProvidersWithFallback();
+                
+                if (!this.chatProviders || this.chatProviders.length === 0) {
+                    logger.warn('Still no chat providers available after initialization');
+                    return res.json({ providers: [] });
+                }
             }
 
             // Define available models for each provider type
             const providerModels = {
                 'mistral': ['mistral-medium', 'mistral-small', 'mistral-tiny'],
                 'claude': ['claude-3-opus-20240229', 'claude-3-sonnet-20240229', 'claude-3-haiku-20240307'],
-                'ollama': ['llama3', 'mistral', 'mixtral'],
+                'ollama': ['llama3', 'mistral', 'mixtral', 'qwen2:1.5b'],
                 'openai': ['gpt-4-turbo', 'gpt-4', 'gpt-3.5-turbo']
             };
 
-            const providers = this.llmProviders.map((p, index) => {
-                const providerId = `provider-${index}`;
-                const implementation = p.implementation ? `-${p.implementation}` : '';
+            // Use initialized chatProviders instead of raw llmProviders
+            const providers = this.chatProviders.map(p => {
                 const models = providerModels[p.type] || [p.chatModel || 'default'];
                 
                 // Add MCP capability if available (for now, mark all as MCP-capable for demo)
@@ -1078,18 +1054,19 @@ Based on the above information and your knowledge, here is the user's question: 
                 }
                 
                 return {
-                    id: providerId,  // Consistent ID format
+                    id: p.id,  // Use the actual provider ID from chatProviders
                     type: p.type,
                     name: `${p.type}${p.implementation ? ` (${p.implementation})` : ''}`,
                     model: p.chatModel || 'default',
                     models: models,  // Include available models
                     capabilities: capabilities,
                     implementation: p.implementation || 'default',
-                    mcpSupported: hasMCPSupport
+                    mcpSupported: hasMCPSupport,
+                    isInitialized: !!p.connector // Show if the provider has a working connector
                 };
             });
 
-            logger.info(`Returning ${providers.length} available providers`);
+            logger.info(`Returning ${providers.length} available chat providers`);
             res.json({ providers });
         } catch (error) {
             logger.error('Error listing providers:', error);
@@ -1234,12 +1211,14 @@ Based on the above information and your knowledge, here is the user's question: 
                         // Just check if the function exists, no need to actually call it
                         logger.info(`${provider.type} provider has chat capabilities`);
 
-                        // Add to chat providers
+                        // Add to chat providers with unique ID
                         chatProviders.push({
                             ...provider,
+                            id: `provider-${providerCounter}`,
                             connector,
                             capabilities: ['chat']
                         });
+                        providerCounter++;
                     }
                 } catch (chatError) {
                     logger.warn(`Provider ${provider.type} chat capability check failed:`, chatError.message);
@@ -1256,12 +1235,14 @@ Based on the above information and your knowledge, here is the user's question: 
 
                         logger.info(`${provider.type} provider has embedding capabilities`);
 
-                        // Add to embedding providers
+                        // Add to embedding providers with unique ID
                         embeddingProviders.push({
                             ...provider,
+                            id: `provider-${providerCounter}`,
                             connector,
                             capabilities: ['embedding']
                         });
+                        providerCounter++;
                     }
                 } catch (embeddingError) {
                     logger.warn(`Provider ${provider.type} embedding test failed:`, embeddingError.message);
