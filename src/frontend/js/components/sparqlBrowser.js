@@ -24,6 +24,9 @@ export class SPARQLBrowser {
         try {
             eventBus.emit(EVENTS.CONSOLE_DEBUG, 'Initializing SPARQL Browser...');
             
+            // Initialize evb event bus for Atuin integration
+            await this.initializeEvbEventBus();
+            
             // Initialize state
             store.setState({
                 currentEndpoint: localStorage.getItem('sparql-endpoint') || null,
@@ -71,6 +74,46 @@ export class SPARQLBrowser {
             const errorMsg = `Failed to initialize SPARQL Browser: ${error.message}`;
             eventBus.emit(EVENTS.APP_ERROR, new Error(errorMsg));
             throw error;
+        }
+    }
+
+    /**
+     * Initialize evb event bus for Atuin integration
+     */
+    async initializeEvbEventBus() {
+        try {
+            console.log('Initializing evb event bus for Atuin integration...');
+            
+            // Try to import evb module if not already available
+            if (!window.evb) {
+                try {
+                    const evbModule = await import('evb');
+                    window.evb = evbModule.eventBus || evbModule.default || evbModule;
+                    console.log('Imported evb module:', !!window.evb);
+                } catch (error) {
+                    console.log('Could not import evb module (this is normal if evb is not installed):', error.message);
+                }
+            }
+            
+            // Ensure the global event bus and events are available
+            if (!window.eventBus) {
+                window.eventBus = eventBus;
+                console.log('Set window.eventBus');
+            }
+            
+            if (!window.EVENTS) {
+                window.EVENTS = EVENTS;
+                console.log('Set window.EVENTS');
+            }
+            
+            // Test event emission
+            console.log('Testing event bus availability:');
+            console.log('- window.eventBus.emit:', typeof window.eventBus?.emit);
+            console.log('- window.evb.emit:', typeof window.evb?.emit);
+            console.log('- MODEL_SYNCED event defined:', !!window.EVENTS?.MODEL_SYNCED);
+            
+        } catch (error) {
+            console.warn('Failed to initialize evb event bus:', error);
         }
     }
 
@@ -194,14 +237,117 @@ export class SPARQLBrowser {
                     console.log('Set graph container dimensions to 400px height');
                 }
                 
+                // Ensure container has proper dimensions BEFORE initializing GraphVisualizer
+                console.log('Preparing container for GraphVisualizer...');
+                if (graphContainer.offsetHeight === 0) {
+                    graphContainer.style.height = '400px';
+                    graphContainer.style.width = '100%';
+                    graphContainer.style.display = 'block';
+                    graphContainer.style.visibility = 'visible';
+                    console.log('Set container dimensions before GraphVisualizer init');
+                }
+                
+                // Force a reflow to ensure dimensions are applied
+                const _ = graphContainer.offsetHeight;
+                
                 // Initialize GraphVisualizer with container ID (per Atuin integration guide)
                 this.graphVisualizer = new window.GraphVisualizer('rdf-graph-container', this.logger);
-                console.log('Graph visualizer initialized with container ID');
+                console.log('=== GRAPH VISUALIZER INITIALIZED ===');
+                console.log('GraphVisualizer instance:', this.graphVisualizer);
+                console.log('Container ID:', 'rdf-graph-container');
+                console.log('Logger:', this.logger);
+                
+                // Check if GraphVisualizer properly initialized its network
+                console.log('GraphVisualizer network after init:', !!this.graphVisualizer.network);
+                if (!this.graphVisualizer.network) {
+                    console.warn('GraphVisualizer network is null after initialization');
+                    console.log('This means automatic event listening likely failed');
+                    
+                    // Try manual initialization
+                    if (typeof this.graphVisualizer.initialize === 'function') {
+                        console.log('Attempting manual initialize() call...');
+                        try {
+                            this.graphVisualizer.initialize();
+                            console.log('Manual initialize() completed. Network:', !!this.graphVisualizer.network);
+                        } catch (error) {
+                            console.error('Manual initialize() failed:', error);
+                        }
+                    }
+                }
+                
+                // Add debug info
+                if (window.showDebug) {
+                    window.showDebug('GraphVisualizer initialized successfully');
+                }
                 
                 // Set up event listener for MODEL_SYNCED events (automatic sync with TurtleEditor)
                 if (window.eventBus && window.EVENTS) {
                     const modelSyncHandler = (content) => {
-                        console.log('DEBUG: Received MODEL_SYNCED event in SPARQLBrowser:', content ? content.substring(0, 100) + '...' : 'empty');
+                        console.log('=== MODEL_SYNCED EVENT RECEIVED ===');
+                        console.log('Content length:', content ? content.length : 0);
+                        console.log('Content preview:', content ? content.substring(0, 100) + '...' : 'empty');
+                        console.log('Graph visualizer available:', !!this.graphVisualizer);
+                        console.log('Graph container:', document.getElementById('rdf-graph-container'));
+                        
+                        // Add to debug info
+                        if (window.showDebug) {
+                            window.showDebug(`MODEL_SYNCED event received with ${content?.length || 0} characters`);
+                        }
+                        
+                        // According to Atuin docs, GraphVisualizer automatically listens for MODEL_SYNCED events
+                        // We don't need to manually call updateGraph() - it should happen automatically
+                        console.log('MODEL_SYNCED event received - GraphVisualizer should auto-update');
+                        console.log('Content length:', content ? content.length : 0);
+                        console.log('GraphVisualizer network status:', !!this.graphVisualizer?.network);
+                        
+                        // Add debug info
+                        if (window.showDebug) {
+                            window.showDebug(`MODEL_SYNCED event received with ${content?.length || 0} characters - auto-updating graph`);
+                        }
+                        
+                        // Check if the graph updates automatically
+                        setTimeout(() => {
+                            console.log('Checking if GraphVisualizer auto-updated...');
+                            console.log('Network state after MODEL_SYNCED:', !!this.graphVisualizer?.network);
+                            if (this.graphVisualizer?.network) {
+                                console.log('🎉 GraphVisualizer auto-updated successfully!');
+                                this.updateGraphStats();
+                                
+                                // Force a resize/fit to ensure proper display
+                                if (typeof this.graphVisualizer.resizeAndFit === 'function') {
+                                    console.log('Calling resizeAndFit() to ensure proper display');
+                                    this.graphVisualizer.resizeAndFit();
+                                }
+                            } else {
+                                console.warn('GraphVisualizer did not auto-update. Network is still null.');
+                                console.log('This suggests the automatic event listening is not working properly.');
+                                console.log('Falling back to manual updateGraph() call...');
+                                
+                                // Fallback: manually call updateGraph
+                                if (content && content.trim() && typeof this.graphVisualizer.updateGraph === 'function') {
+                                    try {
+                                        console.log('Manually calling updateGraph() as fallback...');
+                                        this.graphVisualizer.updateGraph(content);
+                                        console.log('✅ Manual updateGraph() completed');
+                                        
+                                        // Check if it worked
+                                        setTimeout(() => {
+                                            if (this.graphVisualizer.network) {
+                                                console.log('🎉 Manual updateGraph() succeeded!');
+                                                this.updateGraphStats();
+                                                if (typeof this.graphVisualizer.resizeAndFit === 'function') {
+                                                    this.graphVisualizer.resizeAndFit();
+                                                }
+                                            }
+                                        }, 500);
+                                        
+                                    } catch (error) {
+                                        console.error('Manual updateGraph() also failed:', error);
+                                        console.log('Container check:', document.getElementById('rdf-graph-container'));
+                                    }
+                                }
+                            }
+                        }, 1500);
                         
                         // Ensure graph tab is visible when content updates
                         setTimeout(() => {
@@ -405,6 +551,33 @@ ex:austin a ex:Location ;
         }
     }
 
+    updateGraphWithTriples(triples) {
+        console.log('Updating graph with parsed triples:', triples?.length || 0);
+        
+        if (triples && triples.length > 0) {
+            // Store triples in the GraphVisualizer
+            this.graphVisualizer.triples = triples;
+            
+            // Try different methods to trigger visualization
+            const updateMethods = ['update', 'render', 'draw', 'refresh', 'build', 'create', 'visualize'];
+            
+            for (const method of updateMethods) {
+                if (typeof this.graphVisualizer[method] === 'function') {
+                    console.log(`Calling graphVisualizer.${method}()`);
+                    try {
+                        this.graphVisualizer[method]();
+                        break; // If successful, stop trying other methods
+                    } catch (error) {
+                        console.warn(`Error calling ${method}:`, error);
+                    }
+                }
+            }
+            
+            // Force update stats
+            setTimeout(() => this.updateGraphStats(), 500);
+        }
+    }
+
     setupEventListeners() {
         // Execute Query button
         const executeBtn = document.getElementById('execute-query');
@@ -480,7 +653,18 @@ ex:austin a ex:Location ;
                     
                     // Special handling for Graph tab - trigger manual graph update
                     if (targetTab === 'sparql-graph') {
-                        console.log('Graph tab clicked - calling refreshGraphVisualization');
+                        console.log('=== GRAPH TAB CLICKED ===');
+                        console.log('Target tab:', targetTab);
+                        console.log('SPARQLBrowser instance:', this);
+                        console.log('Turtle editor available:', !!this.turtleEditor);
+                        console.log('Graph visualizer available:', !!this.graphVisualizer);
+                        console.log('Calling refreshGraphVisualization...');
+                        
+                        // Add to debug info div if available
+                        if (window.showDebug) {
+                            window.showDebug('Graph tab clicked - refreshing visualization');
+                        }
+                        
                         this.refreshGraphVisualization();
                     }
                 });
@@ -490,6 +674,13 @@ ex:austin a ex:Location ;
     
     refreshGraphVisualization() {
         console.log('Refreshing graph visualization...');
+        
+        // Debug available event bus systems
+        console.log('Event bus systems available:');
+        console.log('- window.eventBus:', !!window.eventBus);
+        console.log('- window.evb:', !!window.evb);
+        console.log('- window.EVENTS:', !!window.EVENTS);
+        console.log('- local eventBus:', !!eventBus);
         
         // Get current content from turtle editor
         const turtleElement = document.getElementById('turtle-editor');
@@ -505,6 +696,22 @@ ex:austin a ex:Location ;
             console.log('Got RDF content from basic textarea:', rdfContent ? rdfContent.substring(0, 100) + '...' : 'empty');
         }
         
+        if (!rdfContent.trim()) {
+            console.log('=== NO RDF CONTENT TO VISUALIZE ===');
+            console.log('RDF content length:', rdfContent.length);
+            console.log('Turtle element exists:', !!turtleElement);
+            console.log('Turtle element value:', turtleElement?.value?.substring(0, 100));
+            console.log('Turtle editor exists:', !!this.turtleEditor);
+            console.log('Turtle editor getValue method:', !!this.turtleEditor?.getValue);
+            
+            // Add to debug info
+            if (window.showDebug) {
+                window.showDebug('No RDF content found in turtle editor');
+            }
+            
+            return;
+        }
+        
         // Ensure graph container has proper dimensions
         const graphContainer = document.getElementById('rdf-graph-container');
         if (graphContainer) {
@@ -517,10 +724,34 @@ ex:austin a ex:Location ;
             console.log('Graph container dimensions:', graphContainer.offsetWidth, 'x', graphContainer.offsetHeight);
         }
         
-        // Emit MODEL_SYNCED event to trigger automatic graph update via event bus
-        if (rdfContent.trim() && window.eventBus && window.EVENTS) {
-            console.log('Emitting MODEL_SYNCED event for graph update...');
-            window.eventBus.emit(window.EVENTS.MODEL_SYNCED, rdfContent);
+        // Emit MODEL_SYNCED event to trigger automatic graph update via evb event bus
+        if (rdfContent.trim()) {
+            console.log('=== EMITTING MODEL_SYNCED EVENT ===');
+            console.log('RDF content length:', rdfContent.length);
+            console.log('RDF content preview:', rdfContent.substring(0, 200) + '...');
+            
+            // Emit to both event bus systems to ensure GraphVisualizer receives the event
+            let eventsEmitted = 0;
+            
+            // Emit to window.eventBus (for general UI)
+            if (window.eventBus && window.EVENTS && window.EVENTS.MODEL_SYNCED) {
+                console.log('✓ Using window.eventBus for MODEL_SYNCED event');
+                window.eventBus.emit(window.EVENTS.MODEL_SYNCED, rdfContent);
+                eventsEmitted++;
+            }
+            
+            // Emit to evb eventBus (for GraphVisualizer)
+            if (window.evb && window.evb.emit) {
+                console.log('✓ Using window.evb for MODEL_SYNCED event (for GraphVisualizer)');
+                window.evb.emit('MODEL_SYNCED', rdfContent);
+                eventsEmitted++;
+            }
+            
+            console.log(`Events emitted to ${eventsEmitted} event bus systems`);
+            
+            if (eventsEmitted === 0) {
+                console.warn('No event bus systems available for MODEL_SYNCED');
+            }
             
             // Update stats after a delay to allow graph to process
             setTimeout(() => {

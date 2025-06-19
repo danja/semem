@@ -131,7 +131,7 @@ class UIServer {
 
         // Calculate paths for project root and public directory
         this.projectRoot = path.resolve(__dirname, '..', '..', '..');
-        this.publicDir = path.join(this.projectRoot, 'public/dist');
+        this.publicDir = path.join(this.projectRoot, 'dist');
 
         logger.info(`UIServer initialized with port: ${this.port}, graph: ${this.graphName}`);
     }

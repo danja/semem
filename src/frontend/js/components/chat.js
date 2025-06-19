@@ -542,7 +542,8 @@ export class ChatManager {
     showError(message) {
         console.error('Chat Error:', message);
         // Could be enhanced with toast notifications
-        alert(message);
+        // Temporarily disabled alert to prevent modal dialogs during debugging
+        // alert(message);
     }
 }
 

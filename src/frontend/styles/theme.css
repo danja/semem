@@ -4,11 +4,21 @@
   --bg-color: #f5f7fa;
   --content-bg: #ffffff;
   --text-color: #333333;
+  --text-muted: #6c757d;
   --border-color: #e0e0e0;
-  --primary-color: #0d6efd;
+  --primary-color: #3498db;
+  --primary-dark: #2980b9;
   --secondary-color: #6c757d;
-  --hover-bg: rgba(13, 110, 253, 0.05);
+  --hover-bg: rgba(52, 152, 219, 0.05);
   --tabs-bg: #f8f9fa;
+  --tabs-border: #e0e0e0;
+  --tabs-active-bg: #ffffff;
+  --tabs-hover-bg: #f1f3f5;
+  --primary-color-10: rgba(52, 152, 219, 0.1);
+  --primary-color-20: rgba(52, 152, 219, 0.2);
+  --primary-color-30: rgba(52, 152, 219, 0.3);
+  --transition: all 0.2s ease;
+  --spacing-xs: 0.25rem;
   
   /* Spacing */
   --spacing-sm: 0.5rem;

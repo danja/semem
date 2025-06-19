@@ -20,7 +20,10 @@ export const EVENTS = {
   GRAPH_LOADING: 'graph:loading',
   // Editor events
   EDITOR_INITIALIZED: 'editor:initialized',
-  EDITOR_CONTENT_CHANGED: 'editor:content:changed'
+  EDITOR_CONTENT_CHANGED: 'editor:content:changed',
+  // Model sync events (for Atuin compatibility)
+  MODEL_SYNCED: 'model:synced',
+  ENDPOINT_UPDATED: 'endpoint:updated'
 };
 
 // Enhanced event bus with type checking
@@ -80,9 +83,10 @@ export const resetEventBus = () => {
   }
 };
 
-// Make event bus globally available
+// Make event bus and events globally available for Atuin integration
 if (typeof window !== 'undefined') {
   window.eventBus = eventBus;
+  window.EVENTS = EVENTS;
 }
 
 export default eventBus;
