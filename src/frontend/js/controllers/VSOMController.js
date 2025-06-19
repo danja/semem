@@ -21,6 +21,7 @@ class VSOMController {
     this.stopTraining = this.stopTraining.bind(this);
     this.loadFeatureMaps = this.loadFeatureMaps.bind(this);
     this.loadClusters = this.loadClusters.bind(this);
+    this.loadData = this.loadData.bind(this);
   }
 
   /**
@@ -81,10 +82,12 @@ class VSOMController {
     if (stopBtn) stopBtn.addEventListener('click', this.stopTraining);
     
     // Load buttons
+    const loadDataBtn = document.getElementById('load-som-data');
     const loadGridBtn = document.getElementById('load-som-grid');
     const loadFeaturesBtn = document.getElementById('load-som-features');
     const loadClustersBtn = document.getElementById('load-som-clusters');
     
+    if (loadDataBtn) loadDataBtn.addEventListener('click', this.loadData);
     if (loadGridBtn) loadGridBtn.addEventListener('click', this.loadSOMGrid);
     if (loadFeaturesBtn) loadFeaturesBtn.addEventListener('click', this.loadFeatureMaps);
     if (loadClustersBtn) loadClustersBtn.addEventListener('click', this.loadClusters);
@@ -295,6 +298,64 @@ class VSOMController {
     const loadingEl = document.getElementById('vsom-loading');
     if (loadingEl) {
       loadingEl.style.display = 'none';
+    }
+  }
+
+  /**
+   * Load data into VSOM
+   */
+  async loadData() {
+    try {
+      this.showLoading('Loading data into VSOM...');
+      
+      // Create a simple data input dialog
+      const dataInput = prompt(
+        'Enter data in JSON format:\n\n' +
+        'Example formats:\n' +
+        '1. Entities: {"type":"entities","entities":[{"uri":"http://example.org/e1","content":"text","type":"concept"}]}\n' +
+        '2. SPARQL: {"type":"sparql","endpoint":"http://localhost:3030/dataset/query","query":"SELECT * WHERE {?s ?p ?o} LIMIT 10"}\n' +
+        '3. Sample data: {"type":"sample","count":50}'
+      );
+      
+      if (!dataInput) {
+        this.hideLoading();
+        return;
+      }
+      
+      let data;
+      try {
+        data = JSON.parse(dataInput);
+      } catch (parseError) {
+        throw new Error('Invalid JSON format: ' + parseError.message);
+      }
+      
+      // Handle sample data generation
+      if (data.type === 'sample') {
+        const count = data.count || 50;
+        const sampleData = await vsomService.generateSampleData(count);
+        data = {
+          type: 'entities',
+          entities: sampleData
+        };
+      }
+      
+      // Load data into VSOM
+      const result = await vsomService.loadData(data);
+      
+      this.hideLoading();
+      
+      // Show success message
+      const successMsg = `Data loaded successfully! ${result.message || ''}`;
+      alert(successMsg);
+      
+      // Refresh the current view
+      if (this.currentTab === 'som-grid') {
+        this.loadSOMGrid();
+      }
+      
+    } catch (error) {
+      this.logger.error('Failed to load data:', error);
+      this.showError('Failed to load data: ' + (error.message || 'Unknown error'));
     }
   }
 

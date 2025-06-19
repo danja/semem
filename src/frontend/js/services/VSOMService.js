@@ -153,6 +153,24 @@ export class VSOMService {
     this.logger.debug('Stopping training');
     return this._request('POST', '/stop-training');
   }
+
+  /**
+   * Load data into VSOM
+   * @param {Object} data - Data to load
+   */
+  async loadData(data) {
+    this.logger.debug('Loading data into VSOM', { data });
+    return this._request('POST', '/load-data', data);
+  }
+
+  /**
+   * Generate sample data for testing
+   * @param {number} count - Number of sample entities to generate
+   */
+  async generateSampleData(count = 50) {
+    this.logger.debug('Generating sample data', { count });
+    return this._request('POST', '/generate-sample-data', { count });
+  }
 }
 
 // Export a singleton instance

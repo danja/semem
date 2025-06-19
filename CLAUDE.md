@@ -142,6 +142,14 @@ Semem has a layered architecture with the following key components:
 - Chat model: `qwen2:1.5b` (commonly available, fast)
 - Verify models are installed: `ollama list`
 
+### VSOM UI Integration
+- VSOM "Load Data" button in UI now functional (src/frontend/js/controllers/VSOMController.js:279-325)
+- Supports JSON input formats:
+  - Entities: `{"type":"entities","entities":[{"uri":"http://example.org/e1","content":"text","type":"concept"}]}`
+  - SPARQL: `{"type":"sparql","endpoint":"http://localhost:3030/dataset/query","query":"SELECT * WHERE {?s ?p ?o} LIMIT 10"}`
+  - Sample data: `{"type":"sample","count":50}` (generates test entities)
+- Backend API endpoints: `/api/vsom/load-data` and `/api/vsom/generate-sample-data`
+
 ### Example Workflows
 - See `examples/MistralExample.js` for complete Ragno pipeline demo
 - Demonstrates: corpus decomposition → entity extraction → SPARQL storage → retrieval
