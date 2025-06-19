@@ -646,18 +646,19 @@ ex:austin a ex:Location ;
                     // Special handling for Graph tab - trigger manual graph update
                     if (targetTab === 'sparql-graph') {
                         console.log('=== GRAPH TAB CLICKED ===');
-                        console.log('Target tab:', targetTab);
-                        console.log('SPARQLBrowser instance:', this);
-                        console.log('Turtle editor available:', !!this.turtleEditor);
-                        console.log('Graph visualizer available:', !!this.graphVisualizer);
-                        console.log('Calling refreshGraphVisualization...');
                         
-                        // Add to debug info div if available
-                        if (window.showDebug) {
-                            window.showDebug('Graph tab clicked - refreshing visualization');
+                        // Only refresh if the graph is not already loaded to prevent loops
+                        if (this.graphVisualizer && this.graphVisualizer.network && this.graphVisualizer.nodes.length > 0) {
+                            console.log('Graph already loaded with', this.graphVisualizer.nodes.length, 'nodes - skipping refresh');
+                            
+                            // Just resize/fit the existing graph
+                            if (typeof this.graphVisualizer.resizeAndFit === 'function') {
+                                this.graphVisualizer.resizeAndFit();
+                            }
+                        } else {
+                            console.log('Graph not loaded - calling refreshGraphVisualization...');
+                            this.refreshGraphVisualization();
                         }
-                        
-                        this.refreshGraphVisualization();
                     }
                 });
             });
@@ -665,6 +666,16 @@ ex:austin a ex:Location ;
     }
     
     refreshGraphVisualization() {
+        // Debounce to prevent rapid successive calls
+        if (this._refreshTimeout) {
+            console.log('Refresh already in progress, skipping...');
+            return;
+        }
+        
+        this._refreshTimeout = setTimeout(() => {
+            this._refreshTimeout = null;
+        }, 1000);
+        
         console.log('Refreshing graph visualization...');
         
         // Debug available event bus systems
