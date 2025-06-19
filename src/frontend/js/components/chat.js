@@ -448,8 +448,11 @@ export class ChatManager {
     formatMessageContent(content) {
         if (!content) return '';
         
+        // Ensure content is a string
+        const contentStr = typeof content === 'string' ? content : String(content);
+        
         // Basic HTML escaping
-        const escaped = content
+        const escaped = contentStr
             .replace(/&/g, '&amp;')
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;')
