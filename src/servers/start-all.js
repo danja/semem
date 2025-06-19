@@ -2,8 +2,12 @@
 
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import dotenv from 'dotenv';
 import ServerManager from './server-manager.js';
 import Config from '../Config.js';
+
+// Load environment variables from .env file
+dotenv.config();
 
 // Get directory name for ES modules
 const __filename = fileURLToPath(import.meta.url);

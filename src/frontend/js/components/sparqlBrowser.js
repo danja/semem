@@ -53,6 +53,9 @@ export class SPARQLBrowser {
             // Initialize SPARQL Clips Manager and UI
             await this.initializeClipsManager();
             
+            // Automatically load RDF data from Edit panel into Graph visualization
+            await this.autoLoadGraphData();
+            
             this.initialized = true;
             eventBus.emit(EVENTS.CONSOLE_INFO, 'SPARQL Browser initialized');
             
@@ -542,6 +545,30 @@ ex:austin a ex:Location ;
             console.log('GraphVisualizer available:', !!this.graphVisualizer);
             console.log('Event bus available:', !!(window.eventBus && window.EVENTS));
         }
+    }
+
+    /**
+     * Automatically load RDF data from Edit panel into Graph visualization on startup
+     */
+    async autoLoadGraphData() {
+        console.log('Auto-loading RDF data from Edit panel into Graph visualization...');
+        
+        // Small delay to ensure all components are initialized
+        setTimeout(() => {
+            // Trigger the graph refresh which will pull data from the turtle editor
+            this.refreshGraphVisualization();
+            
+            // Also emit a MODEL_SYNCED event to ensure the event bus system is triggered
+            if (this.turtleEditor && this.turtleEditor.getValue) {
+                const rdfContent = this.turtleEditor.getValue();
+                if (rdfContent && rdfContent.trim()) {
+                    console.log('Auto-loading: Emitting MODEL_SYNCED event with RDF data');
+                    if (window.eventBus && window.EVENTS) {
+                        window.eventBus.emit(window.EVENTS.MODEL_SYNCED, rdfContent);
+                    }
+                }
+            }
+        }, 200);
     }
 
     activateGraphTab() {
