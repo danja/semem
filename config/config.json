@@ -15,7 +15,7 @@
     "redirectTarget": 4120
   },
   "port": 4120,
-  "graphName": "http://phyperdata.it/content",
+  "graphName": "http://hyperdata.it/content",
   "chatModel": "qwen2:1.5b",
   "embeddingModel": "nomic-embed-text",
   "sparqlEndpoints": [

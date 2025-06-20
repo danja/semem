@@ -41,7 +41,7 @@ class ClientConnector {
      */
     async generateEmbedding(model, input) {
         logger.debug(`Generating embedding with model ${model}`)
-        logger.debug('Input:', input)
+        //   logger.debug('Input:', input)
 
         try {
             if (!this.client) {
