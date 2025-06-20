@@ -37,7 +37,7 @@ export default class SPARQLStore extends BaseStore {
         const auth = Buffer.from(`${this.credentials.user}:${this.credentials.password}`).toString('base64')
         logger.log(`endpoint = ${endpoint}`)
         try {
-            logger.error('[SPARQL QUERY]', { endpoint, query })
+            logger.error('[SPARQL QUERY]', endpoint) // { endpoint, query }
             const response = await fetch(endpoint, {
                 method: 'POST',
                 headers: {
@@ -56,7 +56,7 @@ export default class SPARQLStore extends BaseStore {
             }
 
             const json = await response.json()
-            logger.error('[SPARQL QUERY SUCCESS]', { endpoint, query, json })
+            logger.error('[SPARQL QUERY SUCCESS]', endpoint) // , { endpoint, query, json }
             return json
         } catch (error) {
             logger.error('SPARQL query error:', { endpoint, query, error })
@@ -68,7 +68,7 @@ export default class SPARQLStore extends BaseStore {
         const auth = Buffer.from(`${this.credentials.user}:${this.credentials.password}`).toString('base64')
 
         try {
-            logger.error('[SPARQL UPDATE]', { endpoint, update })
+            logger.error('[SPARQL UPDATE]', endpoint) //  { endpoint, update }
             const response = await fetch(endpoint, {
                 method: 'POST',
                 headers: {
@@ -86,7 +86,7 @@ export default class SPARQLStore extends BaseStore {
                 throw new Error(`SPARQL update failed: ${response.status} - ${errorText}`)
             }
 
-            logger.error('[SPARQL UPDATE SUCCESS]', { endpoint, update })
+            logger.error('[SPARQL UPDATE SUCCESS]', endpoint) // { endpoint, update}
             return response
         } catch (error) {
             logger.error('SPARQL update error:', { endpoint, update, error })
@@ -123,14 +123,14 @@ export default class SPARQLStore extends BaseStore {
                             skos:prefLabel "Semem Memory Store"@en
                     }}
                 `
-                logger.error('[VERIFY] Creating graph', { endpoint: this.endpoint.update, createQuery })
+                logger.error('[VERIFY] Creating graph', this.endpoint.update, { endpoint: this.endpoint.update, graph: this.graphName }) //  { endpoint: this.endpoint.update, createQuery }
                 await this._executeSparqlUpdate(createQuery, this.endpoint.update)
             } catch (error) {
                 logger.debug('Graph creation skipped:', error.message)
             }
 
             const checkQuery = `ASK { GRAPH <${this.graphName}> { ?s ?p ?o } }`
-            logger.error('[VERIFY] Checking graph', { endpoint: this.endpoint.query, checkQuery })
+            logger.error('[VERIFY] ASKing graph', this.endpoint.query, { endpoint: this.endpoint.query, graph: this.graphName }) // { endpoint: this.endpoint.query, checkQuery }
             const result = await this._executeSparqlQuery(checkQuery, this.endpoint.query)
             return result.boolean
         } catch (error) {
@@ -265,7 +265,7 @@ export default class SPARQLStore extends BaseStore {
                 }
             `
 
-            logger.debug(`SPARQLStore saveMemoryToHistory query = \n${insertQuery}`)
+            //   logger.debug(`SPARQLStore saveMemoryToHistory query = \n${insertQuery}`)
             await this._executeSparqlUpdate(insertQuery, this.endpoint.update)
             await this.commitTransaction()
 
@@ -489,7 +489,7 @@ export default class SPARQLStore extends BaseStore {
         }
 
         const entityUri = `<${data.id}>`
-        
+
         const insertQuery = `
             PREFIX ragno: <http://purl.org/stuff/ragno/>
             PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
@@ -504,12 +504,12 @@ export default class SPARQLStore extends BaseStore {
                         ragno:embedding "${this._escapeSparqlString(JSON.stringify(data.embedding || []))}" ;
                         dcterms:created "${new Date().toISOString()}"^^xsd:dateTime ;
                         ragno:timestamp "${data.timestamp || new Date().toISOString()}" .
-                    ${data.concepts ? data.concepts.map(concept => 
-                        `${entityUri} ragno:connectsTo "${this._escapeSparqlString(concept)}" .`
-                    ).join('\n') : ''}
+                    ${data.concepts ? data.concepts.map(concept =>
+            `${entityUri} ragno:connectsTo "${this._escapeSparqlString(concept)}" .`
+        ).join('\n') : ''}
                     ${data.metadata ? Object.entries(data.metadata).map(([key, value]) =>
-                        `${entityUri} ragno:${key} "${this._escapeSparqlString(String(value))}" .`
-                    ).join('\n') : ''}
+            `${entityUri} ragno:${key} "${this._escapeSparqlString(String(value))}" .`
+        ).join('\n') : ''}
                 }
             }
         `
@@ -583,7 +583,7 @@ export default class SPARQLStore extends BaseStore {
 
             // Sort by similarity (highest first)
             searchResults.sort((a, b) => b.similarity - a.similarity)
-            
+
             logger.info(`Found ${searchResults.length} similar items`)
             return searchResults.slice(0, limit)
         } catch (error) {
