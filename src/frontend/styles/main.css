@@ -577,27 +577,6 @@ footer {
     flex-wrap: wrap;
 }
 
-.api-status {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.status-indicator {
-    display: inline-block;
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background-color: #ffc107; /* yellow = connecting */
-}
-
-.status-indicator.connected {
-    background-color: #28a745; /* green = connected */
-}
-
-.status-indicator.disconnected {
-    background-color: #dc3545; /* red = disconnected */
-}
 
 /* Responsive styles */
 @media (max-width: 768px) {

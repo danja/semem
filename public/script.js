@@ -46,14 +46,9 @@ window.addEventListener('error', function (event) {
 document.addEventListener('DOMContentLoaded', () => {
     console.log('Initializing Semem API Interface');
 
-    // Debug message display
+    // Debug message display (console only)
     window.showDebug = function (message) {
-        const debugInfo = document.getElementById('debug-info');
-        if (debugInfo) {
-            const timestamp = new Date().toLocaleTimeString();
-            debugInfo.innerHTML += `<div>[${timestamp}] ${message}</div>`;
-            console.log(`[DEBUG] ${message}`);
-        }
+        console.log(`[DEBUG] ${message}`);
     };
 
     // Get reference to loading indicator (used throughout the script)
@@ -103,9 +98,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const innerTabButtons = document.querySelectorAll('.tab-inner-btn');
     const innerTabContents = document.querySelectorAll('.inner-tab-content');
     // Note: loadingIndicator is already defined above
-    const apiStatus = document.getElementById('api-status');
-    const statusIndicator = document.querySelector('.status-indicator');
-    const statusText = document.querySelector('.status-text');
 
     // Initialize tab navigation
     initTabs();
@@ -144,13 +136,36 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 10000);
     };
     
-    // Check API health
+    // Check API health and initialize application
     window.showDebug('Checking API health...');
     resetLoadingTimeout();
     checkAPIHealth();
     
     // Log the API URL
     console.log('API URLs will use base:', apiConfig.baseUrl || 'same origin');
+
+    /**
+     * Check API health (console output only)
+     */
+    async function checkAPIHealth() {
+        try {
+            const response = await fetchWithTimeout(`${apiConfig.baseUrl}/api/health`, {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                console.log('✅ API Health: API is healthy', data);
+                window.showDebug('API health check passed');
+            } else {
+                throw new Error(`API returned status ${response.status}`);
+            }
+        } catch (error) {
+            console.error('❌ API Health: Connection failed', error);
+            window.showDebug(`API health check failed: ${error.message}`);
+        }
+    }
 
     /**
      * Initialize tab navigation
@@ -1325,30 +1340,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    /**
-     * Check API health
-     */
-    async function checkAPIHealth() {
-        try {
-            const response = await fetchWithTimeout(`${apiConfig.baseUrl}/api/health`, {
-                method: 'GET',
-                headers: { 'Content-Type': 'application/json' }
-            });
-            
-            if (response.ok) {
-                const data = await response.json();
-                if (statusIndicator) statusIndicator.className = 'status-indicator active';
-                if (statusText) statusText.textContent = 'API is healthy';
-                console.log('API Health:', data);
-            } else {
-                throw new Error('API is not healthy');
-            }
-        } catch (error) {
-            console.error('API health check failed:', error);
-            if (statusIndicator) statusIndicator.className = 'status-indicator error';
-            if (statusText) statusText.textContent = 'API connection failed';
-        }
-    }
 
     /**
      * Initialize settings form

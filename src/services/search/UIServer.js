@@ -215,6 +215,15 @@ class UIServer {
                 return res.json({ results: [] });
             }
 
+            // Check if search service is available
+            if (!this.searchService) {
+                logger.warn('Search service not available, returning empty results');
+                return res.json({ 
+                    results: [],
+                    error: 'Search service not available (SPARQL endpoints unreachable)'
+                });
+            }
+
             // Perform search
             const results = await this.searchService.search(query, limit);
 
@@ -437,6 +446,12 @@ Based on the above information and your knowledge, here is the user's question: 
     async performEmbeddingSearch(query, limit = 3, threshold = 0.6) {
         try {
             logger.info(`Performing embedding search for: "${query.slice(0, 30)}..."`);
+
+            // Check if search service is available
+            if (!this.searchService) {
+                logger.warn('Search service not available for embedding search');
+                return []; // Return empty array if search service is not available
+            }
 
             // Use the search service to find relevant content
             const results = await this.searchService.search(query, limit, threshold);
