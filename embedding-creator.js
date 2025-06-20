@@ -11,7 +11,7 @@ logger.setLevel('info');
 const args = process.argv.slice(2);
 let limit = 0;
 let graphName = 'http://hyperdata.it/content';
-// let graphName = 'http://danny.ayers.name/content';
+//let graphName = 'http://danny.ayers.name/content';
 // Simple argument parsing
 for (let i = 0; i < args.length; i++) {
     if (args[i] === '--limit' && i + 1 < args.length) {

@@ -19,3 +19,11 @@ claude mcp add semem node mcp/index.js
 use extract_concepts on "the cat sat on the mat"
 
 semem:semem_extract_concepts (MCP)(text: "the cat sat on the mat")
+
+  To Fix This:
+
+  Either change line 13 in embedding-creator.js:
+  let graphName = 'http://danny.ayers.name/content'; // Match SearchService
+
+  Or change line 29 in UIServer.js:
+  this.graphName = options.graphName || 'http://hyperdata.it/content'; // Match embedding-creator
