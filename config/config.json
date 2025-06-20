@@ -2,8 +2,8 @@
   "storage": {
     "type": "sparql",
     "options": {
-      "endpoint": "https://fuseki.hyperdata.it/semem",
-      "graphName": "http://purl.org/stuff/semem/memory-demo",
+      "endpoint": "https://fuseki.hyperdata.it/hyperdata.it",
+      "graphName": "http://hyperdata.it/content",
       "user": "admin",
       "password": "admin123"
     }
@@ -15,7 +15,7 @@
     "redirectTarget": 4120
   },
   "port": 4120,
-  "graphName": "http://purl.org/stuff/semem/memory-demo",
+  "graphName": "http://phyperdata.it/content",
   "chatModel": "qwen2:1.5b",
   "embeddingModel": "nomic-embed-text",
   "sparqlEndpoints": [
@@ -24,24 +24,24 @@
       "user": "admin",
       "password": "admin123",
       "urlBase": "https://fuseki.hyperdata.it",
-      "dataset": "semem",
-      "query": "/semem/query",
-      "update": "/semem/update",
-      "upload": "/semem/upload",
-      "gspRead": "/semem/data",
-      "gspWrite": "/semem/data"
+      "dataset": "hyperdata.it",
+      "query": "/hyperdata.it/query",
+      "update": "/hyperdata.it/update",
+      "upload": "/hyperdata.it/upload",
+      "gspRead": "/hyperdata.it/data",
+      "gspWrite": "/hyperdata.it/data"
     },
     {
       "label": "Tbox Fuseki",
       "user": "admin",
       "password": "admin123",
       "urlBase": "http://localhost:4030",
-      "dataset": "semem",
-      "query": "/semem/query",
-      "update": "/semem/update",
-      "upload": "/semem/upload",
-      "gspRead": "/semem/data",
-      "gspWrite": "/semem/data"
+      "dataset": "hyperdata.it",
+      "query": "/hyperdata.it/query",
+      "update": "/hyperdata.it/update",
+      "upload": "/hyperdata.it/upload",
+      "gspRead": "/hyperdata.it/data",
+      "gspWrite": "/hyperdata.it/data"
     }
   ],
   "llmProviders": [

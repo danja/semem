@@ -17,6 +17,7 @@
  * - config/config.json properly configured
  */
 
+import path from 'path'
 import logger from 'loglevel'
 import MemoryManager from '../../src/MemoryManager.js'
 import SPARQLStore from '../../src/stores/SPARQLStore.js'
@@ -59,12 +60,12 @@ process.on('unhandledRejection', async (reason, promise) => {
 async function executeQuery(sparqlStore, query) {
     try {
         logger.debug(`🔍 Executing SPARQL query to endpoint: ${sparqlStore.endpoint.query}`)
-        logger.debug(`📋 Query: ${query}`)
+        //   logger.debug(`📋 Query: ${query}`)
         const result = await sparqlStore._executeSparqlQuery(query, sparqlStore.endpoint.query)
         logger.debug(`✅ Query executed successfully, returned ${result.results?.bindings?.length || 0} results`)
         return result
     } catch (error) {
-        logger.error('❌ Error executing SPARQL query:', error.message)
+        logger.error('❌ Error executing SPARQL query:', error.message, query)
         logger.error('🔧 This might be due to connectivity issues or incorrect endpoint configuration.')
         logger.error('📝 Please ensure that:')
         logger.error('   1. The SPARQL endpoint is running')
@@ -80,11 +81,11 @@ async function storeEmbedding(sparqlStore, articleUri, embedding) {
         // Create a transaction to safely update the data
         logger.debug(`🔄 Beginning transaction for storing embedding for article: ${articleUri}`)
         await sparqlStore.beginTransaction()
-        
+
         // Prepare the embedding to be stored as a JSON string
         const embeddingStr = JSON.stringify(embedding)
         logger.debug(`📦 Serialized embedding to JSON (${embeddingStr.length} characters)`)
-        
+
         // SPARQL update query to add the embedding to the article
         const updateQuery = `
             PREFIX schema: <http://schema.org/>
@@ -96,13 +97,13 @@ async function storeEmbedding(sparqlStore, articleUri, embedding) {
                 }
             }
         `
-        
+
         logger.debug(`💾 Executing SPARQL update to endpoint: ${sparqlStore.endpoint.update}`)
         logger.debug(`📝 Update query prepared for article: ${articleUri}`)
-        
+
         // Execute the update
         await sparqlStore._executeSparqlUpdate(updateQuery, sparqlStore.endpoint.update)
-        
+
         // Commit the transaction
         await sparqlStore.commitTransaction()
         logger.debug(`✅ Successfully stored embedding vector for article: ${articleUri}`)
@@ -110,7 +111,7 @@ async function storeEmbedding(sparqlStore, articleUri, embedding) {
     } catch (error) {
         // Roll back in case of errors
         logger.error(`❌ Failed to store embedding for article ${articleUri}:`, error.message)
-        
+
         try {
             if (sparqlStore.inTransaction) {
                 logger.debug('🔄 Rolling back transaction due to error')
@@ -119,7 +120,7 @@ async function storeEmbedding(sparqlStore, articleUri, embedding) {
         } catch (rollbackError) {
             logger.error('❌ Failed to roll back transaction:', rollbackError.message)
         }
-        
+
         throw error
     }
 }
@@ -132,7 +133,7 @@ async function insertTestData(sparqlStore) {
             content: 'The Semantic Web is a vision of the World Wide Web where data is machine-readable and can be processed by computers. It uses technologies like RDF, SPARQL, and ontologies to create a web of linked data that enables intelligent applications and services.'
         },
         {
-            uri: 'http://example.org/article/2', 
+            uri: 'http://example.org/article/2',
             title: 'Understanding Vector Embeddings',
             content: 'Vector embeddings are dense numerical representations of text that capture semantic meaning. They are created by neural networks and allow computers to understand the similarity between different pieces of text based on their vector distances in high-dimensional space.'
         },
@@ -149,7 +150,7 @@ async function insertTestData(sparqlStore) {
     ]
 
     logger.info('🔄 Inserting test data into SPARQL store...')
-    
+
     for (const article of testArticles) {
         try {
             const insertQuery = `
@@ -163,22 +164,22 @@ async function insertTestData(sparqlStore) {
                     }
                 }
             `
-            
+
             logger.debug(`📝 Inserting article: ${article.title}`)
             await sparqlStore._executeSparqlUpdate(insertQuery, sparqlStore.endpoint.update)
             logger.debug(`✅ Successfully inserted: ${article.uri}`)
-            
+
         } catch (error) {
             logger.error(`❌ Failed to insert article ${article.uri}:`, error.message)
         }
     }
-    
+
     logger.info(`✅ Test data insertion completed - added ${testArticles.length} articles`)
 }
 
 async function checkExistingData(sparqlStore) {
     logger.info('🔍 Checking for existing articles in SPARQL store...')
-    
+
     const countQuery = `
         SELECT (COUNT(?article) as ?count) WHERE {
             GRAPH <${sparqlStore.graphName}> {
@@ -186,7 +187,7 @@ async function checkExistingData(sparqlStore) {
             } 
         }
     `
-    
+
     try {
         const result = await executeQuery(sparqlStore, countQuery)
         const count = parseInt(result.results.bindings[0]?.count?.value || '0')
@@ -200,14 +201,17 @@ async function checkExistingData(sparqlStore) {
 
 async function main() {
     logger.info('🚀 Starting ArticleEmbedding.js - Semantic Article Processing System')
-    logger.info('=' .repeat(70))
-    
+    logger.info('='.repeat(70))
+
     // Initialize configuration from config file
     logger.info('⚙️  Initializing configuration from config file...')
-    const config = new Config('../config/config.json')
+    const configPath = 'config/config.json'
+    const config = new Config(configPath)
+    // logger.log(process.cwd())
+    // logger.log(path.join(process.cwd(), configPath))
     await config.init()
     logger.info('✅ Configuration loaded successfully')
-    
+
     // Get SPARQL endpoint from config
     logger.info('🔗 Loading SPARQL endpoint configuration...')
     const allEndpoints = config.get('sparqlEndpoints')
@@ -215,27 +219,27 @@ async function main() {
     allEndpoints.forEach((ep, idx) => {
         logger.info(`   ${idx}: ${ep.label} - ${ep.urlBase}`)
     })
-    
+
     const sparqlEndpoint = config.get('sparqlEndpoints.0')
     if (!sparqlEndpoint) {
         throw new Error('No SPARQL endpoint configured')
     }
-    
+
     logger.info(`🎯 Using endpoint: ${sparqlEndpoint.label} at ${sparqlEndpoint.urlBase}`)
-    
+
     // Create SPARQL store using sparqlEndpoints configuration
     const endpoint = {
         query: `${sparqlEndpoint.urlBase}${sparqlEndpoint.query}`,
         update: `${sparqlEndpoint.urlBase}${sparqlEndpoint.update}`
     }
-    
+
     logger.info(`🗄️  Connecting to SPARQL endpoint: ${sparqlEndpoint.urlBase}`)
     logger.info(`🔍 Query endpoint: ${endpoint.query}`)
     logger.info(`✏️  Update endpoint: ${endpoint.update}`)
     // Get graph name from config
     const graphName = config.get('graphName') || config.get('storage.options.graphName') || 'http://danny.ayers.name/content'
     logger.info(`📊 Target graph: ${graphName}`)
-    
+
     const sparqlStore = new SPARQLStore(
         endpoint,
         {
@@ -244,11 +248,11 @@ async function main() {
             password: sparqlEndpoint.password
         }
     )
-    
+
     // Create Ollama connector for embeddings
     logger.info('🤖 Initializing Ollama connector for embeddings...')
     const ollama = new OllamaConnector()
-    
+
     // Initialize memory manager
     logger.info(`🧠 Setting up MemoryManager with embedding model: ${config.get('embeddingModel')}`)
     memoryManager = new MemoryManager({
@@ -256,7 +260,7 @@ async function main() {
         embeddingModel: config.get('embeddingModel'),
         storage: sparqlStore
     })
-    
+
     // Verify SPARQL store is accessible
     logger.info('🔍 Verifying SPARQL store connectivity...')
     try {
@@ -267,7 +271,7 @@ async function main() {
         await shutdown('SPARQL verification failed')
         return
     }
-    
+
     // Check for existing data and insert test data if needed
     const existingCount = await checkExistingData(sparqlStore)
     if (existingCount === 0) {
@@ -276,7 +280,7 @@ async function main() {
     } else {
         logger.info(`📚 Using ${existingCount} existing articles from the database`)
     }
-    
+
     // SPARQL query to retrieve articles
     logger.info('🔍 Querying for articles to process...')
     const query = `
@@ -286,54 +290,54 @@ async function main() {
             } 
         }
     `
-    
+
     try {
         // Execute query to get articles
         logger.info('📋 Executing SPARQL query to retrieve articles...')
         const results = await executeQuery(sparqlStore, query)
         const articles = results.results.bindings
-        
+
         logger.info(`📚 Found ${articles.length} articles to process for embedding generation`)
-        logger.info('=' .repeat(50))
-        
+        logger.info('='.repeat(50))
+
         if (articles.length === 0) {
             logger.warn('⚠️  No articles found to process. The script will exit.')
             await shutdown('No articles to process')
             return
         }
-        
+
         let successCount = 0
         let errorCount = 0
-        
+
         // Process each article
         for (let i = 0; i < articles.length; i++) {
             const article = articles[i]
             const articleUri = article.article.value
             const content = article.content.value
-            
-            logger.info(`🔄 Processing article ${i+1}/${articles.length}`)
+
+            logger.info(`🔄 Processing article ${i + 1}/${articles.length}`)
             logger.info(`📄 Article URI: ${articleUri}`)
             logger.info(`📝 Content length: ${content.length} characters`)
             logger.info(`🧾 Content preview: ${content.substring(0, 100)}...`)
-            
+
             // Generate embedding for content
             try {
                 logger.info('🤖 Generating embedding using Ollama...')
                 const startTime = Date.now()
                 const embedding = await memoryManager.generateEmbedding(content)
                 const endTime = Date.now()
-                
+
                 logger.info(`✅ Embedding generated successfully in ${endTime - startTime}ms`)
                 logger.info(`📊 Embedding dimensions: ${embedding.length}`)
                 logger.info(`🔢 Sample embedding values: [${embedding.slice(0, 3).map(x => x.toFixed(4)).join(', ')}...]`)
-                
+
                 // Store the embedding in the SPARQL store
                 logger.info('💾 Storing embedding in SPARQL store...')
                 await storeEmbedding(sparqlStore, articleUri, embedding)
                 successCount++
-                
-                logger.info(`✅ Article ${i+1} processed successfully`)
-                
+
+                logger.info(`✅ Article ${i + 1} processed successfully`)
+
                 // Space out requests to avoid overloading the embedding service
                 if (i < articles.length - 1) {
                     logger.info('⏱️  Waiting 500ms before processing next article...')
@@ -345,22 +349,22 @@ async function main() {
                 // Continue with next article despite the error
                 continue
             }
-            
+
             logger.info('-'.repeat(40))
         }
-        
+
         logger.info('🎉 EMBEDDING GENERATION COMPLETED!')
-        logger.info('=' .repeat(50))
+        logger.info('='.repeat(50))
         logger.info(`📊 Summary:`)
         logger.info(`   ✅ Successfully processed: ${successCount} articles`)
         logger.info(`   ❌ Failed to process: ${errorCount} articles`)
         logger.info(`   📈 Success rate: ${((successCount / articles.length) * 100).toFixed(1)}%`)
-        
+
         if (successCount > 0) {
             logger.info('🔍 You can now query the SPARQL store to retrieve articles with their embeddings!')
             logger.info('💡 Example: Look for triples with predicate <http://example.org/embedding/vector>')
         }
-        
+
     } catch (error) {
         logger.error('❌ Error during execution:', error)
     } finally {
