@@ -781,6 +781,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const limit = formData.get('limit');
             const threshold = formData.get('threshold');
             const types = formData.get('types');
+            const graph = formData.get('graph');
             
             if (!query) return;
             
@@ -803,6 +804,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 if (threshold) params.append('threshold', threshold);
                 if (types) params.append('types', types);
+                if (graph) params.append('graph', graph);
                 
                 window.showDebug(`Searching with params: ${params.toString()}`);
                 
@@ -845,6 +847,142 @@ document.addEventListener('DOMContentLoaded', () => {
                 window.showDebug('Search completed, hiding loading indicator');
             }
         });
+        
+        // Initialize graph selector
+        initGraphSelector();
+    }
+    
+    // Graph selector functionality
+    function initGraphSelector() {
+        const graphSelector = document.getElementById('graph-selector');
+        const addGraphBtn = document.getElementById('add-graph-btn');
+        const removeGraphBtn = document.getElementById('remove-graph-btn');
+        
+        if (!graphSelector || !addGraphBtn || !removeGraphBtn) {
+            console.warn('Graph selector elements not found, skipping initialization');
+            return;
+        }
+        
+        // Load default graph from config and saved graphs from localStorage
+        loadGraphList();
+        
+        // Add event listeners
+        addGraphBtn.addEventListener('click', addNewGraph);
+        removeGraphBtn.addEventListener('click', removeSelectedGraph);
+        graphSelector.addEventListener('change', saveSelectedGraph);
+    }
+
+    function loadGraphList() {
+        const graphSelector = document.getElementById('graph-selector');
+        if (!graphSelector) return;
+        
+        // Get saved graphs from localStorage
+        const savedGraphs = JSON.parse(localStorage.getItem('semem-graph-list') || '[]');
+        
+        // Default graph (from config fallback)
+        const defaultGraph = 'http://hyperdata.it/content';
+        
+        // Create Set to avoid duplicates
+        const allGraphs = new Set([defaultGraph, ...savedGraphs]);
+        
+        // Clear existing options
+        graphSelector.innerHTML = '';
+        
+        // Add all graphs as options
+        allGraphs.forEach(graph => {
+            const option = document.createElement('option');
+            option.value = graph;
+            option.textContent = graph;
+            graphSelector.appendChild(option);
+        });
+        
+        // Set selected graph from localStorage or default
+        const selectedGraph = localStorage.getItem('semem-selected-graph') || defaultGraph;
+        if (graphSelector.querySelector(`option[value="${selectedGraph}"]`)) {
+            graphSelector.value = selectedGraph;
+        }
+    }
+
+    function saveGraphList() {
+        const graphSelector = document.getElementById('graph-selector');
+        if (!graphSelector) return;
+        
+        const graphs = Array.from(graphSelector.options).map(option => option.value);
+        const defaultGraph = 'http://hyperdata.it/content';
+        
+        // Save all graphs except the default one
+        const savedGraphs = graphs.filter(graph => graph !== defaultGraph);
+        localStorage.setItem('semem-graph-list', JSON.stringify(savedGraphs));
+    }
+
+    function saveSelectedGraph() {
+        const graphSelector = document.getElementById('graph-selector');
+        if (!graphSelector) return;
+        
+        localStorage.setItem('semem-selected-graph', graphSelector.value);
+    }
+
+    function addNewGraph() {
+        const newGraph = prompt('Enter the graph name (URI):');
+        if (!newGraph || !newGraph.trim()) return;
+        
+        const graphSelector = document.getElementById('graph-selector');
+        if (!graphSelector) return;
+        
+        // Check if graph already exists
+        if (graphSelector.querySelector(`option[value="${newGraph.trim()}"]`)) {
+            alert('Graph already exists in the list');
+            return;
+        }
+        
+        // Add new option
+        const option = document.createElement('option');
+        option.value = newGraph.trim();
+        option.textContent = newGraph.trim();
+        graphSelector.appendChild(option);
+        
+        // Select the new graph
+        graphSelector.value = newGraph.trim();
+        
+        // Save to localStorage
+        saveGraphList();
+        saveSelectedGraph();
+    }
+
+    function removeSelectedGraph() {
+        const graphSelector = document.getElementById('graph-selector');
+        if (!graphSelector) return;
+        
+        const selectedValue = graphSelector.value;
+        const defaultGraph = 'http://hyperdata.it/content';
+        
+        // Don't allow removing the default graph
+        if (selectedValue === defaultGraph) {
+            alert('Cannot remove the default graph');
+            return;
+        }
+        
+        if (graphSelector.options.length <= 1) {
+            alert('Cannot remove the last graph');
+            return;
+        }
+        
+        if (confirm(`Remove graph "${selectedValue}" from the list?`)) {
+            // Remove the selected option
+            const selectedOption = graphSelector.querySelector(`option[value="${selectedValue}"]`);
+            if (selectedOption) {
+                selectedOption.remove();
+            }
+            
+            // Select the first remaining option
+            if (graphSelector.options.length > 0) {
+                graphSelector.selectedIndex = 0;
+            }
+            
+            // Save to localStorage
+            saveGraphList();
+            saveSelectedGraph();
+        }
     }
 
     /**

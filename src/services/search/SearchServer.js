@@ -90,17 +90,45 @@ class SearchServer {
         try {
             const query = req.query.q || '';
             const limit = parseInt(req.query.limit) || 5;
+            const graph = req.query.graph || this.graphName;
 
-            logger.info(`Search request for: "${query}" with limit: ${limit}`);
+            logger.info(`Search request for: "${query}" with limit: ${limit}, graph: ${graph}`);
 
             if (!query.trim()) {
                 return res.json({ results: [] });
             }
 
-            // Perform search
-            const results = await this.searchService.search(query, limit);
+            // If the requested graph is different from the current one, create a new search service
+            let searchService = this.searchService;
+            if (graph !== this.graphName) {
+                logger.info(`Using different graph: ${graph} (current: ${this.graphName})`);
+                
+                // Create a new SPARQLService with the requested graph
+                const sparqlService = new SPARQLService({
+                    queryEndpoint: 'http://localhost:4030/semem/query',
+                    updateEndpoint: 'http://localhost:4030/semem/update',
+                    graphName: graph,
+                    auth: {
+                        user: 'admin',
+                        password: 'admin123'
+                    }
+                });
 
-            logger.info(`Found ${results.length} results for query: "${query}"`);
+                // Create a new SearchService with the requested graph
+                searchService = new SearchService({
+                    embeddingService: this.embeddingService,
+                    sparqlService: sparqlService,
+                    graphName: graph
+                });
+
+                // Initialize the new search service
+                await searchService.initialize();
+            }
+
+            // Perform search
+            const results = await searchService.search(query, limit);
+
+            logger.info(`Found ${results.length} results for query: "${query}" in graph: ${graph}`);
 
             res.json({ results });
         } catch (error) {

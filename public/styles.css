@@ -443,6 +443,38 @@ h3 {
     justify-content: flex-end;
 }
 
+/* Graph selector styles */
+.graph-selector-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.graph-selector-container select {
+    flex: 1;
+    min-width: 200px;
+}
+
+.graph-controls {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.graph-controls .btn {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.9rem;
+    min-width: auto;
+}
+
+.graph-controls .btn.secondary-btn {
+    background-color: #6c757d;
+    color: white;
+}
+
+.graph-controls .btn.secondary-btn:hover {
+    background-color: #5a6268;
+}
+
 /* Buttons */
 .btn {
     padding: 0.8rem 1.5rem;

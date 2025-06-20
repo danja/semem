@@ -67,6 +67,19 @@
                             <input type="text" id="search-types" name="types"
                                 placeholder="E.g., article,document (optional)">
                         </div>
+
+                        <div class="form-group">
+                            <label for="graph-selector">Graph:</label>
+                            <div class="graph-selector-container">
+                                <select id="graph-selector" name="graph">
+                                    <option value="http://hyperdata.it/content">http://hyperdata.it/content</option>
+                                </select>
+                                <div class="graph-controls">
+                                    <button type="button" id="add-graph-btn" class="btn secondary-btn" title="Add new graph">+</button>
+                                    <button type="button" id="remove-graph-btn" class="btn secondary-btn" title="Remove selected graph">-</button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="form-actions">
