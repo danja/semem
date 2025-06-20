@@ -468,6 +468,12 @@ export class SPARQLBrowser {
                 this.clipsManager = new window.SPARQLClipsManager(this.logger);
                 
                 // Create clips UI with options object
+                // Note: We need to override the render method to always use our container
+                const originalRender = window.SPARQLClipsUI.prototype.render;
+                window.SPARQLClipsUI.prototype.render = function(container = clipsContainer) {
+                    return originalRender.call(this, container);
+                };
+                
                 this.clipsUI = new window.SPARQLClipsUI({
                     clipsManager: this.clipsManager,
                     logger: this.logger,
@@ -483,12 +489,7 @@ export class SPARQLBrowser {
                     }
                 });
                 
-                // Render the clips UI to the container
-                if (typeof this.clipsUI.render === 'function') {
-                    this.clipsUI.render(clipsContainer);
-                } else if (typeof this.clipsUI.initialize === 'function') {
-                    this.clipsUI.initialize();
-                }
+                // The clips UI will automatically render when loadClips() is called in the constructor
                 
                 console.log('SPARQL Clips Manager initialized successfully');
             } else {
