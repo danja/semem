@@ -119,97 +119,167 @@ export class SPARQLBrowser {
 
     async initializeAtuinEditors() {
         try {
-            eventBus.emit(EVENTS.CONSOLE_DEBUG, 'Initializing Atuin editors...');
+            eventBus.emit(EVENTS.CONSOLE_DEBUG, 'Initializing Atuin components...');
             
-            // Check if Atuin components are available
-            if (!window.TurtleEditor || !window.SPARQLEditor || !window.GraphVisualizer || !window.LoggerService) {
-                eventBus.emit(EVENTS.CONSOLE_INFO, 'Atuin components not available, trying to load...');
-                
-                try {
-                    // Import Atuin components directly from their specific exports to avoid utils issues
-                    const { TurtleEditor } = await import('atuin/core/TurtleEditor');
-                    const { SPARQLEditor } = await import('atuin/core/SPARQLEditor');
-                    const { GraphVisualizer } = await import('atuin/core/GraphVisualizer');
-                    const { LoggerService } = await import('atuin/services');
-                    
-                    // Import clips components from exported paths
-                    const { SPARQLClipsManager } = await import('atuin/services');
-                    const { SPARQLClipsUI } = await import('atuin/ui');
-                    
-                    console.log('Atuin components imported successfully');
-                    
-                    // Set up window globals
-                    window.TurtleEditor = TurtleEditor;
-                    window.SPARQLEditor = SPARQLEditor;
-                    window.GraphVisualizer = GraphVisualizer;
-                    window.LoggerService = LoggerService;
-                    window.SPARQLClipsManager = SPARQLClipsManager;
-                    window.SPARQLClipsUI = SPARQLClipsUI;
-                    
-                    console.log('Atuin components set up:', {
-                        TurtleEditor: !!window.TurtleEditor,
-                        SPARQLEditor: !!window.SPARQLEditor,
-                        GraphVisualizer: !!window.GraphVisualizer,
-                        LoggerService: !!window.LoggerService,
-                        SPARQLClipsManager: !!window.SPARQLClipsManager,
-                        SPARQLClipsUI: !!window.SPARQLClipsUI
-                    });
-                    
-                    eventBus.emit(EVENTS.CONSOLE_INFO, 'Atuin components loaded successfully');
-                } catch (error) {
-                    const errorMsg = `Failed to load Atuin components: ${error.message}`;
-                    console.error('Atuin import error:', error);
-                    eventBus.emit(EVENTS.APP_ERROR, new Error(errorMsg));
-                    throw error;
-                }
-            }
+            // Import and set up Atuin components
+            const { TurtleEditor } = await import('atuin/core/TurtleEditor');
+            const { SPARQLEditor } = await import('atuin/core/SPARQLEditor');
+            const { GraphVisualizer } = await import('atuin/core/GraphVisualizer');
+            const { LoggerService } = await import('atuin/services');
+            const { SPARQLClipsManager } = await import('atuin/services');
+            const { SPARQLClipsUI, SplitPaneManager, UIManager } = await import('atuin/ui');
             
-            // Create message queue container for LoggerService (required by Atuin)
+            console.log('Atuin components imported successfully');
+            
+            // Set up window globals
+            window.TurtleEditor = TurtleEditor;
+            window.SPARQLEditor = SPARQLEditor;
+            window.GraphVisualizer = GraphVisualizer;
+            window.LoggerService = LoggerService;
+            window.SPARQLClipsManager = SPARQLClipsManager;
+            window.SPARQLClipsUI = SPARQLClipsUI;
+            window.SplitPaneManager = SplitPaneManager;
+            window.UIManager = UIManager;
+            
+            // Create message queue container for LoggerService
             this.createMessageQueue();
+            this.logger = new LoggerService('atuin-message-queue');
             
-            // Initialize logger with message queue container ID (per Atuin docs)
-            this.logger = new window.LoggerService('atuin-message-queue');
+            // Initialize split pane layout
+            await this.initializeAtuinLayout();
             
-            // Initialize SPARQL editor with DOM element (not string ID)
+            // Initialize SPARQL editor
             const sparqlElement = document.getElementById('sparql-query-editor');
-            if (sparqlElement && window.SPARQLEditor) {
-                this.sparqlEditor = new window.SPARQLEditor(sparqlElement, this.logger);
-                this.sparqlEditor.initialize();
+            if (sparqlElement) {
+                this.sparqlEditor = new SPARQLEditor(sparqlElement, this.logger);
+                await this.sparqlEditor.initialize();
                 console.log('SPARQL editor with syntax highlighting initialized');
             }
             
-            // Initialize Turtle editor with DOM element (not string ID)
-            const turtleElement = document.getElementById('turtle-editor');
-            if (turtleElement && window.TurtleEditor) {
-                this.turtleEditor = new window.TurtleEditor(turtleElement, this.logger);
-                this.turtleEditor.initialize();
-                
-                // Load sample RDF data by default for testing
-                const sampleRDF = this.getSampleRDFData();
-                this.turtleEditor.setValue(sampleRDF);
-                
-                console.log('Turtle editor with syntax highlighting initialized with sample data');
-            }
-            
-            // Initialize Graph Visualizer with container ID (per integration guide)
-            await this.initializeGraphVisualizer();
-            
-            // Initialize SPARQL Clips Manager and UI (new Atuin features)
-            await this.initializeClipsManager();
-            
-            // Initialize SPARQL Endpoint Manager (new Atuin features)
-            await this.initializeEndpointManager();
-            
-        } catch (error) {
-            console.warn('Could not initialize Atuin editors with syntax highlighting:', error);
-            console.log('Falling back to basic textarea editors');
-            
-            // Load sample data into basic textarea if Atuin fails
+            // Initialize Turtle editor
             const turtleElement = document.getElementById('turtle-editor');
             if (turtleElement) {
-                turtleElement.value = this.getSampleRDFData();
-                console.log('Loaded sample RDF data into basic textarea');
+                this.turtleEditor = new TurtleEditor(turtleElement, this.logger);
+                await this.turtleEditor.initialize();
+                
+                // Load sample RDF data
+                const sampleRDF = this.getSampleRDFData();
+                this.turtleEditor.setValue(sampleRDF);
+                console.log('Turtle editor with syntax highlighting initialized');
             }
+            
+            // Initialize Graph Visualizer
+            await this.initializeGraphVisualizer();
+            
+            // Initialize SPARQL Clips Manager
+            await this.initializeClipsManager();
+            
+            eventBus.emit(EVENTS.CONSOLE_INFO, 'Atuin components initialized successfully');
+            
+        } catch (error) {
+            console.warn('Could not initialize Atuin components:', error);
+            eventBus.emit(EVENTS.APP_ERROR, new Error(`Atuin initialization failed: ${error.message}`));
+        }
+    }
+
+    async initializeAtuinLayout() {
+        try {
+            // Get layout containers
+            const container = document.getElementById('atuin-split-container');
+            const leftPane = document.getElementById('atuin-left-pane');
+            const rightPane = document.getElementById('atuin-right-pane');
+            const divider = document.getElementById('atuin-split-divider');
+            
+            if (container && leftPane && rightPane && divider) {
+                // Initialize split pane manager
+                this.splitPaneManager = new window.SplitPaneManager({
+                    container,
+                    leftPane,
+                    rightPane,
+                    divider
+                });
+                
+                console.log('Atuin split pane layout initialized');
+                
+                // Set up tab switching for both panels
+                this.setupAtuinTabs();
+            } else {
+                console.warn('Could not find all required layout elements for Atuin');
+            }
+        } catch (error) {
+            console.error('Failed to initialize Atuin layout:', error);
+        }
+    }
+
+    setupAtuinTabs() {
+        // Left panel tabs
+        const leftTabs = document.querySelectorAll('#atuin-left-pane .tab-btn');
+        leftTabs.forEach(tab => {
+            tab.addEventListener('click', (e) => {
+                const tabName = e.target.getAttribute('data-tab');
+                this.switchLeftTab(tabName);
+            });
+        });
+
+        // Right panel tabs  
+        const rightTabs = document.querySelectorAll('#atuin-right-pane .tab-btn');
+        rightTabs.forEach(tab => {
+            tab.addEventListener('click', (e) => {
+                const tabName = e.target.getAttribute('data-tab');
+                this.switchRightTab(tabName);
+            });
+        });
+    }
+
+    switchLeftTab(tabName) {
+        try {
+            // Update active tab button
+            const leftTabs = document.querySelectorAll('#atuin-left-pane .tab-btn');
+            leftTabs.forEach(tab => tab.classList.remove('active'));
+            
+            const activeTab = document.querySelector(`#atuin-left-pane [data-tab="${tabName}"]`);
+            if (activeTab) {
+                activeTab.classList.add('active');
+            }
+
+            // Show corresponding content
+            const leftContents = document.querySelectorAll('#atuin-left-pane .tab-content');
+            leftContents.forEach(content => content.classList.remove('active'));
+            
+            const activeContent = document.getElementById(`${tabName}-content`);
+            if (activeContent) {
+                activeContent.classList.add('active');
+            }
+            
+            console.log(`Switched to left tab: ${tabName}`);
+        } catch (error) {
+            console.warn(`Error switching left tab to ${tabName}:`, error);
+        }
+    }
+
+    switchRightTab(tabName) {
+        try {
+            // Update active tab button
+            const rightTabs = document.querySelectorAll('#atuin-right-pane .tab-btn');
+            rightTabs.forEach(tab => tab.classList.remove('active'));
+            
+            const activeTab = document.querySelector(`#atuin-right-pane [data-tab="${tabName}"]`);
+            if (activeTab) {
+                activeTab.classList.add('active');
+            }
+
+            // Show corresponding content
+            const rightContents = document.querySelectorAll('#atuin-right-pane .tab-content');
+            rightContents.forEach(content => content.classList.remove('active'));
+            
+            const activeContent = document.getElementById(`${tabName}-content`);
+            if (activeContent) {
+                activeContent.classList.add('active');
+            }
+            
+            console.log(`Switched to right tab: ${tabName}`);
+        } catch (error) {
+            console.warn(`Error switching right tab to ${tabName}:`, error);
         }
     }
 

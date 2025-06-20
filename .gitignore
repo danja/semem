@@ -8,6 +8,8 @@
 **/playwright/trace/
 **/playwright/.screenshots/
 
+**/debug-screenshots
+debug-*
 docs/jsdoc
 docs-generated/
 
