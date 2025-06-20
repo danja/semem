@@ -443,36 +443,58 @@ h3 {
     justify-content: flex-end;
 }
 
+/* Graph options section */
+.graph-options {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
+}
+
+.graph-options .form-group {
+    margin-bottom: 0;
+}
+
 /* Graph selector styles */
 .graph-selector-container {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.75rem;
+    max-width: 600px;
 }
 
 .graph-selector-container select {
     flex: 1;
-    min-width: 200px;
+    min-width: 300px;
+    padding: 0.5rem;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 0.9rem;
 }
 
 .graph-controls {
     display: flex;
-    gap: 0.25rem;
+    gap: 0.5rem;
 }
 
 .graph-controls .btn {
-    padding: 0.4rem 0.8rem;
+    padding: 0.5rem 0.9rem;
     font-size: 0.9rem;
     min-width: auto;
+    border-radius: 4px;
+    font-weight: 500;
 }
 
 .graph-controls .btn.secondary-btn {
     background-color: #6c757d;
     color: white;
+    border: 1px solid #6c757d;
 }
 
 .graph-controls .btn.secondary-btn:hover {
     background-color: #5a6268;
+    border-color: #545b62;
 }
 
 /* Buttons */
