@@ -9,7 +9,8 @@ export class AppMenu {
     constructor() {
         this.isOpen = false;
         this.menuItems = [
-            { id: 'console', label: 'Console', shortcut: '`' }
+            { id: 'console', label: 'Console', shortcut: '`' },
+            { id: 'help', label: 'Help', shortcut: '?' }
         ];
         this.init();
     }
@@ -116,6 +117,10 @@ export class AppMenu {
             case 'console':
                 // Dispatch custom event to toggle console
                 document.dispatchEvent(new CustomEvent('toggleConsole'));
+                break;
+            case 'help':
+                // Dispatch custom event to toggle help
+                document.dispatchEvent(new CustomEvent('toggleHelp'));
                 break;
             // Add more cases for other menu items
         }

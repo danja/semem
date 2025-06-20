@@ -1,0 +1,238 @@
+/* Help Panel Styles */
+.help-container {
+  background-color: var(--bg-color, #1a1a1a);
+  color: var(--text-color, #e0e0e0);
+  border-left: 1px solid var(--border-color, #333);
+  font-family: var(--font-family, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.help-toggle {
+  position: absolute;
+  left: -35px;
+  top: 50%;
+  transform: translateY(-50%) rotate(-90deg);
+  background: var(--accent-color, #0066cc);
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px 4px 0 0;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: background-color 0.2s;
+  white-space: nowrap;
+  z-index: 1001;
+}
+
+.help-toggle:hover {
+  background: var(--accent-hover, #0052a3);
+}
+
+.help-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: var(--header-bg, #2d2d2d);
+  border-bottom: 1px solid var(--border-color, #333);
+  min-height: 48px;
+}
+
+.help-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--primary-text, #ffffff);
+}
+
+.help-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.help-controls button {
+  background: transparent;
+  border: 1px solid var(--border-color, #444);
+  color: var(--text-color, #e0e0e0);
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s;
+}
+
+.help-controls button:hover {
+  background: var(--hover-bg, #3a3a3a);
+  border-color: var(--accent-color, #0066cc);
+}
+
+.close-help {
+  font-size: 16px !important;
+  line-height: 1 !important;
+  padding: 6px 8px !important;
+}
+
+.help-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0;
+  background: var(--bg-color, #1a1a1a);
+}
+
+.help-section {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border-color, #2a2a2a);
+}
+
+.help-section:last-child {
+  border-bottom: none;
+}
+
+.help-section h2 {
+  margin: 0 0 12px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--accent-color, #4a9eff);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.help-section h3 {
+  margin: 16px 0 8px 0;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--secondary-accent, #7db46c);
+}
+
+.help-section p {
+  margin: 0 0 12px 0;
+  color: var(--text-color, #e0e0e0);
+  line-height: 1.6;
+}
+
+.help-section ul {
+  margin: 0 0 12px 0;
+  padding-left: 20px;
+}
+
+.help-section ol {
+  margin: 0 0 12px 0;
+  padding-left: 20px;
+}
+
+.help-section li {
+  margin: 6px 0;
+  color: var(--text-color, #e0e0e0);
+  line-height: 1.5;
+}
+
+.help-section strong {
+  color: var(--primary-text, #ffffff);
+  font-weight: 600;
+}
+
+.help-subsection {
+  margin: 16px 0;
+  padding-left: 16px;
+  border-left: 2px solid var(--border-color, #333);
+}
+
+.help-subsection h3 {
+  margin-top: 0;
+}
+
+.help-footer {
+  padding: 20px 24px;
+  background: var(--header-bg, #2d2d2d);
+  border-top: 1px solid var(--border-color, #333);
+  text-align: center;
+}
+
+.help-footer p {
+  margin: 4px 0;
+  color: var(--muted-text, #888);
+  font-size: 13px;
+}
+
+.help-footer a {
+  color: var(--accent-color, #4a9eff);
+  text-decoration: none;
+}
+
+.help-footer a:hover {
+  text-decoration: underline;
+}
+
+/* Open state */
+.help-container.open .help-toggle {
+  background: var(--accent-hover, #0052a3);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .help-container {
+    width: 90% !important;
+    min-width: 300px !important;
+  }
+  
+  .help-section {
+    padding: 16px 20px;
+  }
+  
+  .help-section h2 {
+    font-size: 16px;
+  }
+}
+
+/* Scrollbar styling */
+.help-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.help-content::-webkit-scrollbar-track {
+  background: var(--bg-color, #1a1a1a);
+}
+
+.help-content::-webkit-scrollbar-thumb {
+  background: var(--border-color, #444);
+  border-radius: 4px;
+}
+
+.help-content::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-color, #666);
+}
+
+/* Dark theme support */
+@media (prefers-color-scheme: dark) {
+  .help-container {
+    --bg-color: #1a1a1a;
+    --header-bg: #2d2d2d;
+    --text-color: #e0e0e0;
+    --primary-text: #ffffff;
+    --muted-text: #888;
+    --border-color: #333;
+    --accent-color: #4a9eff;
+    --secondary-accent: #7db46c;
+    --accent-hover: #0052a3;
+    --hover-bg: #3a3a3a;
+  }
+}
+
+/* Light theme support */
+@media (prefers-color-scheme: light) {
+  .help-container {
+    --bg-color: #ffffff;
+    --header-bg: #f5f5f5;
+    --text-color: #333333;
+    --primary-text: #000000;
+    --muted-text: #666;
+    --border-color: #ddd;
+    --accent-color: #0066cc;
+    --secondary-accent: #2d8659;
+    --accent-hover: #004499;
+    --hover-bg: #f0f0f0;
+  }
+}

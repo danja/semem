@@ -10,6 +10,7 @@ import { initChatForms, loadChatProviders } from './components/chat.js';
 import { initMemoryVisualization } from './components/memoryVisualization.js';
 import { init as initVSOM } from './features/vsom/index.js';
 import Console from './components/Console/Console.js';
+import Help from './components/Help/Help.js';
 import { logger, replaceConsole } from './utils/logger.js';
 import tabManager from './utils/tabManager.js';
 
@@ -88,8 +89,11 @@ export async function initializeApp() {
         await initMCPClient();
         await initSPARQLBrowser();
 
-        // Initialize console after a short delay
-        setTimeout(initializeConsole, 500);
+        // Initialize console and help after a short delay
+        setTimeout(() => {
+            initializeConsole();
+            initializeHelp();
+        }, 500);
 
         // Hide loading indicator
         const loadingIndicator = document.getElementById('loading-indicator');
@@ -595,8 +599,9 @@ async function initSPARQLBrowser() {
     }
 }
 
-// Track if console is already initialized
+// Track if console and help are already initialized
 let consoleInstance = null;
+let helpInstance = null;
 
 // Initialize console after the app is loaded
 async function initializeConsole() {
@@ -656,20 +661,59 @@ async function initializeConsole() {
     }
 }
 
-// Make sure initializeConsole runs after DOMContentLoaded
+// Initialize help panel
+async function initializeHelp() {
+    try {
+        // Return existing instance if already initialized
+        if (window.appHelp) {
+            console.log('[DEBUG] Help already initialized, returning existing instance');
+            return window.appHelp;
+        }
+
+        console.log('[DEBUG] Starting initializeHelp()');
+
+        // Only create new instance if one doesn't exist
+        if (!helpInstance) {
+            helpInstance = new Help();
+            console.log('[DEBUG] New help instance created');
+        }
+
+        // Make help available globally for debugging
+        window.appHelp = helpInstance;
+
+        // Help is ready but remains hidden by default
+        // Users can open it with the hamburger menu or ? key
+        console.log('[DEBUG] Help initialized and ready (hidden by default)');
+
+        return helpInstance;
+    } catch (error) {
+        console.error('[DEBUG] Failed to initialize help:', error);
+        throw error;
+    }
+}
+
+// Make sure initializeConsole and initializeHelp run after DOMContentLoaded
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         initializeConsole().catch(e => console.error('[DEBUG] Console init error after DOMContentLoaded:', e));
+        initializeHelp().catch(e => console.error('[DEBUG] Help init error after DOMContentLoaded:', e));
     });
 } else {
     initializeConsole().catch(e => console.error('[DEBUG] Console init error:', e));
+    initializeHelp().catch(e => console.error('[DEBUG] Help init error:', e));
 }
 
 // Initialize the application when the DOM is fully loaded
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-        initializeApp().then(initializeConsole).catch(console.error);
+        initializeApp().then(() => {
+            initializeConsole();
+            initializeHelp();
+        }).catch(console.error);
     });
 } else {
-    initializeApp().then(initializeConsole).catch(console.error);
+    initializeApp().then(() => {
+        initializeConsole();
+        initializeHelp();
+    }).catch(console.error);
 }

@@ -370,10 +370,20 @@ export class SPARQLBrowser {
     async initializeClipsManager() {
         try {
             if (window.SPARQLClipsManager && window.SPARQLClipsUI) {
+                // First check if the container exists before creating the UI
+                const clipsContainer = document.getElementById('sparql-clips-container');
+                if (!clipsContainer) {
+                    console.warn('SPARQL clips container not found - clips feature will not be available');
+                    return;
+                }
+                
+                console.log('Initializing SPARQL Clips Manager with container:', clipsContainer);
+                
+                // Initialize the clips manager
                 this.clipsManager = new window.SPARQLClipsManager(this.logger);
                 
-                // Create clips UI with query selection callback
-                this.clipsUI = new window.SPARQLClipsUI({
+                // Create clips UI with container and callback
+                this.clipsUI = new window.SPARQLClipsUI(clipsContainer, {
                     clipsManager: this.clipsManager,
                     logger: this.logger,
                     onClipSelect: (query) => {
@@ -388,17 +398,27 @@ export class SPARQLBrowser {
                     }
                 });
                 
-                // Render clips UI into container if it exists
-                const clipsContainer = document.getElementById('sparql-clips-container');
-                if (clipsContainer) {
-                    this.clipsUI.render(clipsContainer);
-                    console.log('SPARQL Clips Manager initialized');
-                } else {
-                    console.log('SPARQL clips container not found, clips UI not rendered');
+                // Initialize the clips UI (render method may not be needed if container passed to constructor)
+                if (typeof this.clipsUI.render === 'function') {
+                    this.clipsUI.render();
+                } else if (typeof this.clipsUI.initialize === 'function') {
+                    this.clipsUI.initialize();
                 }
+                
+                console.log('SPARQL Clips Manager initialized successfully');
+            } else {
+                console.log('SPARQLClipsManager or SPARQLClipsUI not available - skipping clips initialization');
             }
         } catch (error) {
             console.warn('Could not initialize SPARQL Clips Manager:', error);
+            console.warn('Error details:', error.message);
+            
+            // Fallback: Hide the clips container if initialization fails
+            const clipsContainer = document.getElementById('sparql-clips-container');
+            if (clipsContainer) {
+                clipsContainer.style.display = 'none';
+                console.log('Hidden clips container due to initialization failure');
+            }
         }
     }
 
@@ -605,64 +625,81 @@ ex:austin a ex:Location ;
     setupTabs() {
         // Add a small delay to ensure DOM is ready
         setTimeout(() => {
-            const tabButtons = document.querySelectorAll('.sparql-tabs .tab-inner-btn');
-            const tabContents = document.querySelectorAll('.sparql-tab-content');
-
-            console.log('Setting up SPARQL tabs. Found', tabButtons.length, 'tab buttons');
-
-            if (tabButtons.length === 0) {
-                console.warn('No SPARQL tab buttons found - DOM might not be ready');
-                return;
-            }
-
-            tabButtons.forEach((button, index) => {
-                const targetTab = button.getAttribute('data-tab');
-                console.log(`Tab ${index}: ${targetTab}`);
-                
-                button.addEventListener('click', () => {
-                    console.log(`Tab clicked: ${targetTab}`);
-                    
-                    // Remove active class from all buttons and contents
-                    tabButtons.forEach(btn => {
-                        if (btn.classList) {
-                            btn.classList.remove('active');
-                        }
-                    });
-                    tabContents.forEach(content => {
-                        if (content.classList) {
-                            content.classList.remove('active');
-                        }
-                    });
-                    
-                    // Add active class to clicked button and corresponding content
-                    if (button.classList) {
-                        button.classList.add('active');
-                    }
-                    const targetContent = document.getElementById(targetTab);
-                    if (targetContent && targetContent.classList) {
-                        targetContent.classList.add('active');
-                    }
-                    
-                    // Special handling for Graph tab - trigger manual graph update
-                    if (targetTab === 'sparql-graph') {
-                        console.log('=== GRAPH TAB CLICKED ===');
-                        
-                        // Only refresh if the graph is not already loaded to prevent loops
-                        if (this.graphVisualizer && this.graphVisualizer.network && this.graphVisualizer.nodes.length > 0) {
-                            console.log('Graph already loaded with', this.graphVisualizer.nodes.length, 'nodes - skipping refresh');
-                            
-                            // Just resize/fit the existing graph
-                            if (typeof this.graphVisualizer.resizeAndFit === 'function') {
-                                this.graphVisualizer.resizeAndFit();
-                            }
-                        } else {
-                            console.log('Graph not loaded - calling refreshGraphVisualization...');
-                            this.refreshGraphVisualization();
-                        }
-                    }
-                });
-            });
+            this.setupLeftPanelTabs();
+            this.setupRightPanelTabs();
         }, 100);
+    }
+
+    setupLeftPanelTabs() {
+        const leftTabButtons = document.querySelectorAll('.sparql-left-panel .tab-inner-btn');
+        const leftTabContents = document.querySelectorAll('.sparql-left-content .sparql-tab-content');
+
+        console.log('Setting up left panel SPARQL tabs. Found', leftTabButtons.length, 'tab buttons');
+
+        leftTabButtons.forEach((button, index) => {
+            const targetTab = button.getAttribute('data-tab');
+            console.log(`Left tab ${index}: ${targetTab}`);
+            
+            button.addEventListener('click', () => {
+                console.log(`Left tab clicked: ${targetTab}`);
+                
+                // Remove active class from all left panel buttons and contents
+                leftTabButtons.forEach(btn => btn.classList.remove('active'));
+                leftTabContents.forEach(content => content.classList.remove('active'));
+                
+                // Add active class to clicked button and corresponding content
+                button.classList.add('active');
+                const targetContent = document.getElementById(targetTab);
+                if (targetContent) {
+                    targetContent.classList.add('active');
+                }
+            });
+        });
+    }
+
+    setupRightPanelTabs() {
+        const rightTabButtons = document.querySelectorAll('.sparql-right-panel .tab-inner-btn');
+        const rightTabContents = document.querySelectorAll('.sparql-right-content .sparql-tab-content');
+
+        console.log('Setting up right panel SPARQL tabs. Found', rightTabButtons.length, 'tab buttons');
+
+        rightTabButtons.forEach((button, index) => {
+            const targetTab = button.getAttribute('data-tab');
+            console.log(`Right tab ${index}: ${targetTab}`);
+            
+            button.addEventListener('click', () => {
+                console.log(`Right tab clicked: ${targetTab}`);
+                
+                // Remove active class from all right panel buttons and contents
+                rightTabButtons.forEach(btn => btn.classList.remove('active'));
+                rightTabContents.forEach(content => content.classList.remove('active'));
+                
+                // Add active class to clicked button and corresponding content
+                button.classList.add('active');
+                const targetContent = document.getElementById(targetTab);
+                if (targetContent) {
+                    targetContent.classList.add('active');
+                }
+                
+                // Special handling for Graph tab - trigger manual graph update
+                if (targetTab === 'sparql-graph') {
+                    console.log('=== GRAPH TAB CLICKED ===');
+                    
+                    // Only refresh if the graph is not already loaded to prevent loops
+                    if (this.graphVisualizer && this.graphVisualizer.network && this.graphVisualizer.nodes && this.graphVisualizer.nodes.length > 0) {
+                        console.log('Graph already loaded with', this.graphVisualizer.nodes.length, 'nodes - skipping refresh');
+                        
+                        // Just resize/fit the existing graph
+                        if (typeof this.graphVisualizer.resizeAndFit === 'function') {
+                            this.graphVisualizer.resizeAndFit();
+                        }
+                    } else {
+                        console.log('Graph not loaded - calling refreshGraphVisualization...');
+                        this.refreshGraphVisualization();
+                    }
+                }
+            });
+        });
     }
     
     refreshGraphVisualization() {

@@ -2021,3 +2021,241 @@ footer {
         width: 100%;
     }
 }
+
+/* SPARQL Clips Container Styles */
+.sparql-clips-container {
+    margin-top: 1rem;
+    padding: 1rem;
+    background-color: var(--content-bg, #f8f9fa);
+    border: 1px solid var(--border-color, #e0e0e0);
+    border-radius: var(--border-radius-md, 6px);
+    box-shadow: var(--shadow-sm, 0 1px 3px rgba(0,0,0,0.1));
+}
+
+.clips-placeholder {
+    color: var(--muted-text, #666);
+    font-style: italic;
+    text-align: center;
+    padding: 1rem;
+}
+
+.sparql-clips-container .clips-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.sparql-clips-container .clip-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    background: var(--bg-color, #ffffff);
+    border: 1px solid var(--border-color, #e0e0e0);
+    border-radius: var(--border-radius-sm, 4px);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.sparql-clips-container .clip-item:hover {
+    background: var(--hover-bg, #f0f0f0);
+    border-color: var(--accent-color, #007bff);
+}
+
+.sparql-clips-container .clip-name {
+    font-weight: 500;
+    color: var(--text-color, #333);
+}
+
+.sparql-clips-container .clip-preview {
+    font-size: 0.85rem;
+    color: var(--muted-text, #666);
+    margin-top: 0.25rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 300px;
+}
+
+.sparql-clips-container .clip-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.sparql-clips-container .clip-actions button {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.8rem;
+    border: 1px solid var(--border-color, #ddd);
+    background: transparent;
+    color: var(--text-color, #333);
+    border-radius: var(--border-radius-sm, 3px);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.sparql-clips-container .clip-actions button:hover {
+    background: var(--accent-color, #007bff);
+    color: white;
+    border-color: var(--accent-color, #007bff);
+}
+
+/* Dark theme support for clips */
+@media (prefers-color-scheme: dark) {
+    .sparql-clips-container {
+        background-color: var(--content-bg, #2d2d2d);
+        border-color: var(--border-color, #404040);
+    }
+    
+    .sparql-clips-container .clip-item {
+        background: var(--bg-color, #1a1a1a);
+        border-color: var(--border-color, #404040);
+    }
+    
+    .sparql-clips-container .clip-item:hover {
+        background: var(--hover-bg, #3a3a3a);
+    }
+}
+
+/* SPARQL Browser Wide Layout Styles */
+.sparql-wide-layout {
+    max-width: none !important;
+    width: 95% !important;
+    margin: 0 auto;
+}
+
+.sparql-wide-layout .container {
+    max-width: none !important;
+    width: 100% !important;
+}
+
+.sparql-dual-panel {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.sparql-left-panel {
+    flex: 1;
+}
+
+.sparql-right-panel {
+    flex: 1;
+}
+
+.sparql-content-area {
+    display: flex;
+    gap: 1rem;
+    min-height: 600px;
+}
+
+.sparql-left-content {
+    flex: 1;
+    background: var(--content-bg, #ffffff);
+    border: 1px solid var(--border-color, #e0e0e0);
+    border-radius: var(--border-radius-md, 6px);
+    padding: 1rem;
+}
+
+.sparql-right-content {
+    flex: 1;
+    background: var(--content-bg, #ffffff);
+    border: 1px solid var(--border-color, #e0e0e0);
+    border-radius: var(--border-radius-md, 6px);
+    padding: 1rem;
+}
+
+/* Tab button styling for dual panels */
+.sparql-left-panel .tabs-inner,
+.sparql-right-panel .tabs-inner {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 0;
+    border-bottom: 1px solid var(--border-color, #e0e0e0);
+    padding-bottom: 0.5rem;
+}
+
+.sparql-left-panel .tab-inner-btn,
+.sparql-right-panel .tab-inner-btn {
+    padding: 0.5rem 1rem;
+    border: none;
+    background: transparent;
+    color: var(--text-color, #666);
+    border-radius: var(--border-radius-sm, 4px) var(--border-radius-sm, 4px) 0 0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 500;
+}
+
+.sparql-left-panel .tab-inner-btn:hover,
+.sparql-right-panel .tab-inner-btn:hover {
+    background: var(--hover-bg, #f0f0f0);
+    color: var(--text-color, #333);
+}
+
+.sparql-left-panel .tab-inner-btn.active,
+.sparql-right-panel .tab-inner-btn.active {
+    background: var(--accent-color, #007bff);
+    color: white;
+}
+
+/* Content area styling for both panels */
+.sparql-left-content .sparql-tab-content,
+.sparql-right-content .sparql-tab-content {
+    display: none;
+    padding-top: 1rem;
+}
+
+.sparql-left-content .sparql-tab-content.active,
+.sparql-right-content .sparql-tab-content.active {
+    display: block;
+}
+
+/* Adjust form elements for dual panel layout */
+.sparql-left-content .query-editor-container textarea,
+.sparql-left-content .rdf-editor-container textarea {
+    min-height: 200px;
+    width: 100%;
+}
+
+.sparql-right-content .rdf-graph-container {
+    min-height: 400px;
+    width: 100%;
+    border: 1px solid var(--border-color, #e0e0e0);
+    border-radius: var(--border-radius-sm, 4px);
+}
+
+/* Responsive adjustments for dual panel */
+@media (max-width: 1200px) {
+    .sparql-dual-panel {
+        flex-direction: column;
+    }
+    
+    .sparql-content-area {
+        flex-direction: column;
+    }
+    
+    .sparql-left-content,
+    .sparql-right-content {
+        flex: none;
+    }
+}
+
+/* Dark theme support for dual panel */
+@media (prefers-color-scheme: dark) {
+    .sparql-left-content,
+    .sparql-right-content {
+        background: var(--content-bg, #2d2d2d);
+        border-color: var(--border-color, #404040);
+    }
+    
+    .sparql-left-panel .tabs-inner,
+    .sparql-right-panel .tabs-inner {
+        border-bottom-color: var(--border-color, #404040);
+    }
+    
+    .sparql-left-panel .tab-inner-btn:hover,
+    .sparql-right-panel .tab-inner-btn:hover {
+        background: var(--hover-bg, #3a3a3a);
+        color: var(--text-color, #e0e0e0);
+    }
+}

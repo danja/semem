@@ -1006,188 +1006,216 @@
             </section>
 
             <!-- SPARQL Browser Tab -->
-            <section id="sparql-browser-tab" class="tab-content" role="tabpanel" aria-labelledby="tab-sparql-browser" tabindex="0" hidden>
+            <section id="sparql-browser-tab" class="tab-content sparql-wide-layout" role="tabpanel" aria-labelledby="tab-sparql-browser" tabindex="0" hidden>
                 <h2>SPARQL Browser</h2>
                 <p class="tab-description">Explore and query RDF data stored in SPARQL endpoints with visual graph interface</p>
                 
-                <div class="sparql-tabs">
-                    <div class="tabs-inner">
-                        <button class="tab-inner-btn active" data-tab="sparql-query">Query</button>
-                        <button class="tab-inner-btn" data-tab="sparql-graph">Graph</button>
-                        <button class="tab-inner-btn" data-tab="sparql-edit">Edit RDF</button>
-                        <button class="tab-inner-btn" data-tab="sparql-endpoints">Endpoints</button>
-                    </div>
-
-                    <!-- Query Tab -->
-                    <div id="sparql-query" class="sparql-tab-content active">
-                        <div class="sparql-query-section">
-                            <div class="query-controls">
-                                <div class="form-group">
-                                    <label for="sparql-endpoint-select">Endpoint:</label>
-                                    <select id="sparql-endpoint-select" class="endpoint-select">
-                                        <option value="">Loading endpoints...</option>
-                                    </select>
-                                    <button id="refresh-endpoints" class="btn small-btn">Refresh</button>
-                                </div>
-                            </div>
-                            
-                            <div class="query-editor-container">
-                                <label for="sparql-query-editor">SPARQL Query:</label>
-                                <textarea id="sparql-query-editor" class="sparql-editor" placeholder="SELECT * WHERE { ?s ?p ?o } LIMIT 10"></textarea>
-                            </div>
-                            
-                            <div class="query-actions">
-                                <button id="execute-query" class="btn primary-btn">Execute Query</button>
-                                <button id="save-query" class="btn secondary-btn">Save Query</button>
-                                <button id="load-query" class="btn secondary-btn">Load Query</button>
-                                <div class="query-options">
-                                    <label>
-                                        <input type="checkbox" id="limit-results" checked>
-                                        Limit results (1000)
-                                    </label>
-                                    <label>
-                                        <input type="checkbox" id="format-results" checked>
-                                        Format results
-                                    </label>
-                                </div>
-                            </div>
-                            
-                            <div id="query-results" class="query-results">
-                                <div class="results-placeholder">
-                                    <p>Execute a SPARQL query to see results</p>
-                                </div>
+                <div class="sparql-dual-panel">
+                    <!-- Left Panel -->
+                    <div class="sparql-left-panel">
+                        <div class="sparql-tabs">
+                            <div class="tabs-inner">
+                                <button class="tab-inner-btn active" data-tab="sparql-query">SPARQL</button>
+                                <button class="tab-inner-btn" data-tab="sparql-edit">RDF</button>
                             </div>
                         </div>
                     </div>
-
-                    <!-- Graph Tab -->
-                    <div id="sparql-graph" class="sparql-tab-content">
-                        <div class="graph-controls">
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="graph-query">Graph Query:</label>
-                                    <input type="text" id="graph-query" placeholder="Enter subject URI or use CONSTRUCT query" class="graph-query-input">
-                                </div>
-                                <button id="load-graph" class="btn primary-btn">Load Graph</button>
-                            </div>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="graph-depth">Depth:</label>
-                                    <input type="number" id="graph-depth" min="1" max="5" value="2" class="depth-input">
-                                </div>
-                                <div class="form-group">
-                                    <label for="graph-limit">Node Limit:</label>
-                                    <input type="number" id="graph-limit" min="10" max="1000" value="100" class="limit-input">
-                                </div>
-                                <button id="fit-graph" class="btn secondary-btn">Fit Graph</button>
-                                <button id="export-graph" class="btn secondary-btn">Export</button>
-                            </div>
-                        </div>
-                        
-                        <div id="rdf-graph-container" class="rdf-graph-container">
-                            <div class="graph-placeholder">
-                                <p>Load RDF data to visualize the graph</p>
-                            </div>
-                        </div>
-                        
-                        <div id="graph-info" class="graph-info">
-                            <div class="info-stats">
-                                <span>Nodes: <span id="node-count">0</span></span>
-                                <span>Edges: <span id="edge-count">0</span></span>
-                                <span>Selected: <span id="selected-node">None</span></span>
+                    
+                    <!-- Right Panel -->
+                    <div class="sparql-right-panel">
+                        <div class="sparql-tabs">
+                            <div class="tabs-inner">
+                                <button class="tab-inner-btn active" data-tab="sparql-graph">Graph</button>
+                                <button class="tab-inner-btn" data-tab="sparql-endpoints">Settings</button>
                             </div>
                         </div>
                     </div>
-
-                    <!-- Edit RDF Tab -->
-                    <div id="sparql-edit" class="sparql-tab-content">
-                        <div class="rdf-editor-section">
-                            <div class="editor-controls">
-                                <div class="form-row">
+                </div>
+                
+                <div class="sparql-content-area">
+                    <!-- Left Panel Content -->
+                    <div class="sparql-left-content">
+                        <!-- SPARQL Tab (Query) -->
+                        <div id="sparql-query" class="sparql-tab-content active">
+                            <div class="sparql-query-section">
+                                <div class="query-controls">
                                     <div class="form-group">
-                                        <label for="rdf-format">Format:</label>
-                                        <select id="rdf-format" class="format-select">
-                                            <option value="turtle">Turtle</option>
-                                            <option value="n3">N3</option>
-                                            <option value="jsonld">JSON-LD</option>
-                                            <option value="rdfxml">RDF/XML</option>
+                                        <label for="sparql-endpoint-select">Endpoint:</label>
+                                        <select id="sparql-endpoint-select" class="endpoint-select">
+                                            <option value="">Loading endpoints...</option>
                                         </select>
+                                        <button id="refresh-endpoints" class="btn small-btn">Refresh</button>
                                     </div>
-                                    <button id="validate-rdf" class="btn secondary-btn">Validate</button>
-                                    <button id="format-rdf" class="btn secondary-btn">Format</button>
+                                </div>
+                                
+                                <div class="query-editor-container">
+                                    <label for="sparql-query-editor">SPARQL Query:</label>
+                                    <textarea id="sparql-query-editor" class="sparql-editor" placeholder="SELECT * WHERE { ?s ?p ?o } LIMIT 10"></textarea>
+                                </div>
+                                
+                                <div class="query-actions">
+                                    <button id="execute-query" class="btn primary-btn">Execute Query</button>
+                                    <button id="save-query" class="btn secondary-btn">Save Query</button>
+                                    <button id="load-query" class="btn secondary-btn">Load Query</button>
+                                    <div class="query-options">
+                                        <label>
+                                            <input type="checkbox" id="limit-results" checked>
+                                            Limit results (1000)
+                                        </label>
+                                        <label>
+                                            <input type="checkbox" id="format-results" checked>
+                                            Format results
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <!-- SPARQL Clips Container for Atuin integration -->
+                                <div id="sparql-clips-container" class="sparql-clips-container">
+                                    <div class="clips-placeholder">
+                                        <p>SPARQL query clips will appear here when Atuin is loaded</p>
+                                    </div>
+                                </div>
+                                
+                                <div id="query-results" class="query-results">
+                                    <div class="results-placeholder">
+                                        <p>Execute a SPARQL query to see results</p>
+                                    </div>
                                 </div>
                             </div>
-                            
-                            <div class="rdf-editor-container">
-                                <label for="turtle-editor">RDF Content:</label>
-                                <textarea id="turtle-editor" class="turtle-editor" placeholder="@prefix ex: <http://example.org/> .&#10;ex:subject ex:predicate ex:object ."></textarea>
-                            </div>
-                            
-                            <div class="editor-actions">
-                                <button id="insert-rdf" class="btn primary-btn">Insert into Store</button>
-                                <button id="update-rdf" class="btn secondary-btn">Update Store</button>
-                                <button id="clear-editor" class="btn secondary-btn">Clear</button>
-                                <div class="upload-section">
-                                    <input type="file" id="rdf-file-input" accept=".ttl,.n3,.rdf,.jsonld" style="display: none;">
-                                    <button id="load-file" class="btn secondary-btn">Load File</button>
-                                    <button id="save-file" class="btn secondary-btn">Save File</button>
+                        </div>
+
+                        <!-- RDF Tab (Edit RDF) -->
+                        <div id="sparql-edit" class="sparql-tab-content">
+                            <div class="rdf-editor-section">
+                                <div class="editor-controls">
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="rdf-format">Format:</label>
+                                            <select id="rdf-format" class="format-select">
+                                                <option value="turtle">Turtle</option>
+                                                <option value="n3">N3</option>
+                                                <option value="jsonld">JSON-LD</option>
+                                                <option value="rdfxml">RDF/XML</option>
+                                            </select>
+                                        </div>
+                                        <button id="validate-rdf" class="btn secondary-btn">Validate</button>
+                                        <button id="format-rdf" class="btn secondary-btn">Format</button>
+                                    </div>
                                 </div>
-                            </div>
-                            
-                            <div id="rdf-validation-result" class="validation-result hidden">
-                                <!-- Validation results will appear here -->
+                                
+                                <div class="rdf-editor-container">
+                                    <label for="turtle-editor">RDF Content:</label>
+                                    <textarea id="turtle-editor" class="turtle-editor" placeholder="@prefix ex: <http://example.org/> .&#10;ex:subject ex:predicate ex:object ."></textarea>
+                                </div>
+                                
+                                <div class="editor-actions">
+                                    <button id="insert-rdf" class="btn primary-btn">Insert into Store</button>
+                                    <button id="update-rdf" class="btn secondary-btn">Update Store</button>
+                                    <button id="clear-editor" class="btn secondary-btn">Clear</button>
+                                    <div class="upload-section">
+                                        <input type="file" id="rdf-file-input" accept=".ttl,.n3,.rdf,.jsonld" style="display: none;">
+                                        <button id="load-file" class="btn secondary-btn">Load File</button>
+                                        <button id="save-file" class="btn secondary-btn">Save File</button>
+                                    </div>
+                                </div>
+                                
+                                <div id="rdf-validation-result" class="validation-result hidden">
+                                    <!-- Validation results will appear here -->
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Endpoints Tab -->
-                    <div id="sparql-endpoints" class="sparql-tab-content">
-                        <div class="endpoints-section">
-                            <h3>SPARQL Endpoint Management</h3>
-                            
-                            <div class="add-endpoint-form">
-                                <h4>Add New Endpoint</h4>
+                    <!-- Right Panel Content -->
+                    <div class="sparql-right-content">
+                        <!-- Graph Tab -->
+                        <div id="sparql-graph" class="sparql-tab-content active">
+                            <div class="graph-controls">
                                 <div class="form-row">
                                     <div class="form-group">
-                                        <label for="endpoint-name">Name:</label>
-                                        <input type="text" id="endpoint-name" placeholder="My SPARQL Endpoint" class="endpoint-input">
+                                        <label for="graph-query">Graph Query:</label>
+                                        <input type="text" id="graph-query" placeholder="Enter subject URI or use CONSTRUCT query" class="graph-query-input">
                                     </div>
-                                    <div class="form-group">
-                                        <label for="endpoint-query-url">Query URL:</label>
-                                        <input type="url" id="endpoint-query-url" placeholder="http://localhost:3030/dataset/query" class="endpoint-input">
-                                    </div>
+                                    <button id="load-graph" class="btn primary-btn">Load Graph</button>
                                 </div>
                                 <div class="form-row">
                                     <div class="form-group">
-                                        <label for="endpoint-update-url">Update URL:</label>
-                                        <input type="url" id="endpoint-update-url" placeholder="http://localhost:3030/dataset/update" class="endpoint-input">
+                                        <label for="graph-depth">Depth:</label>
+                                        <input type="number" id="graph-depth" min="1" max="5" value="2" class="depth-input">
                                     </div>
                                     <div class="form-group">
-                                        <label for="endpoint-graph">Default Graph:</label>
-                                        <input type="text" id="endpoint-graph" placeholder="http://example.org/graph" class="endpoint-input">
+                                        <label for="graph-limit">Node Limit:</label>
+                                        <input type="number" id="graph-limit" min="10" max="1000" value="100" class="limit-input">
                                     </div>
-                                </div>
-                                <div class="form-row">
-                                    <div class="form-group">
-                                        <label for="endpoint-username">Username:</label>
-                                        <input type="text" id="endpoint-username" placeholder="admin" class="endpoint-input">
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="endpoint-password">Password:</label>
-                                        <input type="password" id="endpoint-password" placeholder="password" class="endpoint-input">
-                                    </div>
-                                </div>
-                                <div class="form-actions">
-                                    <button id="add-endpoint" class="btn primary-btn">Add Endpoint</button>
-                                    <button id="test-endpoint" class="btn secondary-btn">Test Connection</button>
+                                    <button id="fit-graph" class="btn secondary-btn">Fit Graph</button>
+                                    <button id="export-graph" class="btn secondary-btn">Export</button>
                                 </div>
                             </div>
                             
-                            <div class="endpoints-list">
-                                <h4>Available Endpoints</h4>
-                                <div id="endpoints-container" class="endpoints-container">
-                                    <div class="endpoints-placeholder">
-                                        <p>No endpoints configured. Add an endpoint above to get started.</p>
+                            <div id="rdf-graph-container" class="rdf-graph-container">
+                                <div class="graph-placeholder">
+                                    <p>Load RDF data to visualize the graph</p>
+                                </div>
+                            </div>
+                            
+                            <div id="graph-info" class="graph-info">
+                                <div class="info-stats">
+                                    <span>Nodes: <span id="node-count">0</span></span>
+                                    <span>Edges: <span id="edge-count">0</span></span>
+                                    <span>Selected: <span id="selected-node">None</span></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Settings Tab (Endpoints) -->
+                        <div id="sparql-endpoints" class="sparql-tab-content">
+                            <div class="endpoints-section">
+                                <h3>SPARQL Endpoint Management</h3>
+                                
+                                <div class="add-endpoint-form">
+                                    <h4>Add New Endpoint</h4>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="endpoint-name">Name:</label>
+                                            <input type="text" id="endpoint-name" placeholder="My SPARQL Endpoint" class="endpoint-input">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="endpoint-query-url">Query URL:</label>
+                                            <input type="url" id="endpoint-query-url" placeholder="http://localhost:3030/dataset/query" class="endpoint-input">
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="endpoint-update-url">Update URL:</label>
+                                            <input type="url" id="endpoint-update-url" placeholder="http://localhost:3030/dataset/update" class="endpoint-input">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="endpoint-graph">Default Graph:</label>
+                                            <input type="text" id="endpoint-graph" placeholder="http://example.org/graph" class="endpoint-input">
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="endpoint-username">Username:</label>
+                                            <input type="text" id="endpoint-username" placeholder="admin" class="endpoint-input">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="endpoint-password">Password:</label>
+                                            <input type="password" id="endpoint-password" placeholder="password" class="endpoint-input">
+                                        </div>
+                                    </div>
+                                    <div class="form-actions">
+                                        <button id="add-endpoint" class="btn primary-btn">Add Endpoint</button>
+                                        <button id="test-endpoint" class="btn secondary-btn">Test Connection</button>
+                                    </div>
+                                </div>
+                                
+                                <div class="endpoints-list">
+                                    <h4>Available Endpoints</h4>
+                                    <div id="endpoints-container" class="endpoints-container">
+                                        <div class="endpoints-placeholder">
+                                            <p>No endpoints configured. Add an endpoint above to get started.</p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
