@@ -41,12 +41,12 @@ export default class Config {
             user: "admin",
             password: "admin123",
             urlBase: "https://fuseki.hyperdata.it",
-            dataset: "semem", 
-            query: "/semem/query",
-            update: "/semem/update",
-            upload: "/semem/upload",
-            gspRead: "/semem/data",
-            gspWrite: "/semem/data"
+            dataset: "hyperdata.it", 
+            query: "/hyperdata.it/query",
+            update: "/hyperdata.it/update",
+            upload: "/hyperdata.it/upload",
+            gspRead: "/hyperdata.it/data",
+            gspWrite: "/hyperdata.it/data"
         }
   /*
         sparqlEndpoints: [{

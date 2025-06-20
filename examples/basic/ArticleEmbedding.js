@@ -89,11 +89,11 @@ async function storeEmbedding(sparqlStore, articleUri, embedding) {
         // SPARQL update query to add the embedding to the article
         const updateQuery = `
             PREFIX schema: <http://schema.org/>
-            PREFIX emb: <http://example.org/embedding/>
+            PREFIX ragno: <http://purl.org/stuff/ragno/>
             
             INSERT DATA {
                 GRAPH <${sparqlStore.graphName}> {
-                    <${articleUri}> emb:vector """${embeddingStr}""" .
+                    <${articleUri}> ragno:hasEmbedding """${embeddingStr}""" .
                 }
             }
         `
@@ -362,7 +362,7 @@ async function main() {
 
         if (successCount > 0) {
             logger.info('🔍 You can now query the SPARQL store to retrieve articles with their embeddings!')
-            logger.info('💡 Example: Look for triples with predicate <http://example.org/embedding/vector>')
+            logger.info('💡 Example: Look for triples with predicate <http://purl.org/stuff/ragno/hasEmbedding>')
         }
 
     } catch (error) {

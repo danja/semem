@@ -4,7 +4,7 @@ import OllamaConnector from '../../connectors/OllamaConnector.js';
 // Default Ollama embedding model
 const DEFAULT_MODEL = 'nomic-embed-text';
 // Default embedding dimension
-const DEFAULT_DIMENSION = 768;
+const DEFAULT_DIMENSION = 1536;
 
 /**
  * Service for generating and managing embeddings
@@ -38,10 +38,14 @@ class EmbeddingService {
             logger.debug(`Generating embedding for text (${text.length} characters)...`);
             logger.debug(`Generating embedding with model ${this.model}`);
             
-            const embedding = await this.ollama.generateEmbedding(this.model, text);
-            logger.debug(`Generated embedding with ${embedding.length} dimensions`);
+            const rawEmbedding = await this.ollama.generateEmbedding(this.model, text);
+            logger.debug(`Generated raw embedding with ${rawEmbedding.length} dimensions`);
             
-            // Validate the embedding
+            // Standardize the embedding to match expected dimensions
+            const embedding = this.standardizeEmbedding(rawEmbedding);
+            logger.debug(`Standardized embedding to ${embedding.length} dimensions`);
+            
+            // Validate the standardized embedding
             this.validateEmbedding(embedding);
             
             return embedding;

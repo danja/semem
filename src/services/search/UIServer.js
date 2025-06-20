@@ -223,6 +223,17 @@ class UIServer {
                     error: 'Search service not available (SPARQL endpoints unreachable)'
                 });
             }
+            
+            logger.info(`Search service available, initialized: ${this.searchService.initialized}`);
+            
+            // Check if search service is properly initialized
+            if (!this.searchService.initialized) {
+                logger.warn('Search service not initialized, returning empty results');
+                return res.json({
+                    results: [],
+                    error: 'Search service not initialized (still loading embeddings)'
+                });
+            }
 
             // Perform search
             const results = await this.searchService.search(query, limit);
@@ -271,7 +282,7 @@ class UIServer {
                 timestamp: new Date().toISOString(),
                 uptime: process.uptime(),
                 services: {
-                    search: 'online',
+                    search: this.searchService ? 'online' : 'offline',
                     chat: chatStatus,
                     memory: memoryStatus
                 }

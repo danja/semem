@@ -21,7 +21,7 @@ class SearchService {
         this.embeddingService = options.embeddingService || new EmbeddingService();
         this.sparqlService = options.sparqlService || new SPARQLService();
         this.graphName = options.graphName || 'http://hyperdata.it/content';
-        this.dimension = options.dimension || 768;
+        this.dimension = options.dimension || 1536;
 
         this.initialized = false;
         this.index = null;
@@ -74,7 +74,7 @@ class SearchService {
             const resources = await this.sparqlService.fetchResourcesWithEmbeddings(
                 null, // No specific resource class
                 'http://schema.org/articleBody', // Content predicate
-                'http://example.org/embedding/vector', // Embedding predicate
+                'http://purl.org/stuff/ragno/hasEmbedding', // Embedding predicate (Ragno namespace)
                 this.graphName
             );
 
