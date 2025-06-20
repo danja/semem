@@ -126,24 +126,39 @@ export class SPARQLBrowser {
                 eventBus.emit(EVENTS.CONSOLE_INFO, 'Atuin components not available, trying to load...');
                 
                 try {
-                    // Import Atuin components directly from individual modules to avoid core index issues
+                    // Import Atuin components directly from their specific exports to avoid utils issues
                     const { TurtleEditor } = await import('atuin/core/TurtleEditor');
                     const { SPARQLEditor } = await import('atuin/core/SPARQLEditor');
                     const { GraphVisualizer } = await import('atuin/core/GraphVisualizer');
-                    const { LoggerService, SPARQLClipsManager } = await import('atuin/services');
-                    const { SPARQLClipsUI, SPARQLEndpointManager } = await import('atuin/ui');
+                    const { LoggerService } = await import('atuin/services');
                     
+                    // Import clips components from exported paths
+                    const { SPARQLClipsManager } = await import('atuin/services');
+                    const { SPARQLClipsUI } = await import('atuin/ui');
+                    
+                    console.log('Atuin components imported successfully');
+                    
+                    // Set up window globals
                     window.TurtleEditor = TurtleEditor;
                     window.SPARQLEditor = SPARQLEditor;
                     window.GraphVisualizer = GraphVisualizer;
                     window.LoggerService = LoggerService;
                     window.SPARQLClipsManager = SPARQLClipsManager;
                     window.SPARQLClipsUI = SPARQLClipsUI;
-                    window.SPARQLEndpointManager = SPARQLEndpointManager;
+                    
+                    console.log('Atuin components set up:', {
+                        TurtleEditor: !!window.TurtleEditor,
+                        SPARQLEditor: !!window.SPARQLEditor,
+                        GraphVisualizer: !!window.GraphVisualizer,
+                        LoggerService: !!window.LoggerService,
+                        SPARQLClipsManager: !!window.SPARQLClipsManager,
+                        SPARQLClipsUI: !!window.SPARQLClipsUI
+                    });
                     
                     eventBus.emit(EVENTS.CONSOLE_INFO, 'Atuin components loaded successfully');
                 } catch (error) {
                     const errorMsg = `Failed to load Atuin components: ${error.message}`;
+                    console.error('Atuin import error:', error);
                     eventBus.emit(EVENTS.APP_ERROR, new Error(errorMsg));
                     throw error;
                 }
@@ -382,8 +397,8 @@ export class SPARQLBrowser {
                 // Initialize the clips manager
                 this.clipsManager = new window.SPARQLClipsManager(this.logger);
                 
-                // Create clips UI with container and callback
-                this.clipsUI = new window.SPARQLClipsUI(clipsContainer, {
+                // Create clips UI with options object
+                this.clipsUI = new window.SPARQLClipsUI({
                     clipsManager: this.clipsManager,
                     logger: this.logger,
                     onClipSelect: (query) => {
@@ -398,9 +413,9 @@ export class SPARQLBrowser {
                     }
                 });
                 
-                // Initialize the clips UI (render method may not be needed if container passed to constructor)
+                // Render the clips UI to the container
                 if (typeof this.clipsUI.render === 'function') {
-                    this.clipsUI.render();
+                    this.clipsUI.render(clipsContainer);
                 } else if (typeof this.clipsUI.initialize === 'function') {
                     this.clipsUI.initialize();
                 }
@@ -619,6 +634,18 @@ ex:austin a ex:Location ;
         const refreshBtn = document.getElementById('refresh-endpoints');
         if (refreshBtn) {
             refreshBtn.addEventListener('click', () => this.loadEndpoints());
+        }
+
+        // Save Query button
+        const saveQueryBtn = document.getElementById('save-query');
+        if (saveQueryBtn) {
+            saveQueryBtn.addEventListener('click', () => this.saveQuery());
+        }
+
+        // Load Query button
+        const loadQueryBtn = document.getElementById('load-query');
+        if (loadQueryBtn) {
+            loadQueryBtn.addEventListener('click', () => this.loadQuery());
         }
     }
 
@@ -1339,6 +1366,90 @@ ex:austin a ex:Location ;
         window.addEventListener('beforeunload', this.cleanup.bind(this));
     }
     
+    /**
+     * Save current SPARQL query as a clip
+     */
+    async saveQuery() {
+        try {
+            // Get current query from editor
+            let query = '';
+            if (this.sparqlEditor && this.sparqlEditor.getValue) {
+                query = this.sparqlEditor.getValue();
+            } else {
+                const sparqlElement = document.getElementById('sparql-query-editor');
+                if (sparqlElement) query = sparqlElement.value;
+            }
+
+            if (!query.trim()) {
+                console.warn('No query to save');
+                return;
+            }
+
+            // Prompt for clip name
+            const name = prompt('Enter a name for this query:');
+            if (!name) return;
+
+            // Save using clips manager
+            if (this.clipsManager) {
+                await this.clipsManager.saveClip(name, query);
+                console.log('Query saved successfully:', name);
+                
+                // Refresh clips UI
+                if (this.clipsUI && this.clipsUI.loadClips) {
+                    await this.clipsUI.loadClips();
+                }
+            } else {
+                console.warn('Clips manager not available');
+            }
+        } catch (error) {
+            console.error('Failed to save query:', error);
+        }
+    }
+
+    /**
+     * Load a query from saved clips (show clips UI)
+     */
+    async loadQuery() {
+        try {
+            if (this.clipsManager) {
+                // Get all clips and show selection
+                const clips = await this.clipsManager.getAllClips();
+                
+                if (!clips || clips.length === 0) {
+                    alert('No saved queries found');
+                    return;
+                }
+
+                // Create simple selection dialog
+                const clipNames = clips.map((clip, index) => `${index + 1}. ${clip.name}`).join('\n');
+                const selection = prompt(`Select a query to load:\n\n${clipNames}\n\nEnter the number:`);
+                
+                if (!selection) return;
+                
+                const clipIndex = parseInt(selection) - 1;
+                if (clipIndex >= 0 && clipIndex < clips.length) {
+                    const selectedClip = clips[clipIndex];
+                    
+                    // Load query into editor
+                    if (this.sparqlEditor && this.sparqlEditor.setValue) {
+                        this.sparqlEditor.setValue(selectedClip.query);
+                    } else {
+                        const sparqlElement = document.getElementById('sparql-query-editor');
+                        if (sparqlElement) sparqlElement.value = selectedClip.query;
+                    }
+                    
+                    console.log('Query loaded successfully:', selectedClip.name);
+                } else {
+                    alert('Invalid selection');
+                }
+            } else {
+                console.warn('Clips manager not available');
+            }
+        } catch (error) {
+            console.error('Failed to load query:', error);
+        }
+    }
+
     /**
      * Alias for cleanup to maintain backward compatibility
      */

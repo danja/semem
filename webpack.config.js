@@ -79,6 +79,13 @@ export default {
     extensions: ['.js', '.json'],
     alias: {
       '@': path.resolve(__dirname, 'src/frontend')
+    },
+    fallback: {
+      "path": "path-browserify",
+      "url": "url/",
+      "fs": false,
+      "stream": "stream-browserify",
+      "buffer": "buffer"
     }
   },
   
