@@ -24,10 +24,10 @@ class SearchServer {
      */
     constructor(options = {}) {
         this.port = options.port || 4100;
-        this.graphName = options.graphName || 'http://danny.ayers.name/content';
+        this.graphName = options.graphName || 'http://hyperdata.it/content';
         this.chatModel = options.chatModel || 'qwen2:1.5b';
         this.embeddingModel = options.embeddingModel || 'nomic-embed-text';
-        
+
         // Initialize services
         this.embeddingService = new EmbeddingService();
         this.sparqlService = new SPARQLService({
@@ -39,30 +39,30 @@ class SearchServer {
                 password: 'admin123'
             }
         });
-        
+
         this.searchService = new SearchService({
             embeddingService: this.embeddingService,
             sparqlService: this.sparqlService,
             graphName: this.graphName
         });
-        
+
         // Initialize API registry
         this.apiRegistry = new APIRegistry();
-        
+
         // Create Express app
         this.app = express();
-        
+
         // Get directory name for ES modules
         const __filename = fileURLToPath(import.meta.url);
         const __dirname = path.dirname(__filename);
-        
+
         // Calculate paths for project root and public directory
         this.projectRoot = path.resolve(__dirname, '..', '..', '..');
         this.publicDir = path.join(this.projectRoot, 'public');
-        
+
         logger.info(`SearchServer initialized with port: ${this.port}, graph: ${this.graphName}`);
     }
-    
+
     /**
      * Configure the Express app
      */
@@ -71,16 +71,16 @@ class SearchServer {
         this.app.use(express.json());
         this.app.use(express.urlencoded({ extended: true }));
         this.app.use(express.static(this.publicDir));
-        
+
         // API endpoint for searching
         this.app.get('/api/search', this.handleSearch.bind(this));
-        
+
         // HTML route for the search form
         this.app.get('/', (req, res) => {
             res.sendFile(path.join(this.publicDir, 'index.html'));
         });
     }
-    
+
     /**
      * Handle search API requests
      * @param {Request} req - The Express request
@@ -90,28 +90,28 @@ class SearchServer {
         try {
             const query = req.query.q || '';
             const limit = parseInt(req.query.limit) || 5;
-            
+
             logger.info(`Search request for: "${query}" with limit: ${limit}`);
-            
+
             if (!query.trim()) {
                 return res.json({ results: [] });
             }
-            
+
             // Perform search
             const results = await this.searchService.search(query, limit);
-            
+
             logger.info(`Found ${results.length} results for query: "${query}"`);
-            
+
             res.json({ results });
         } catch (error) {
             logger.error('Search error:', error);
-            res.status(500).json({ 
-                error: 'Search failed', 
-                message: error.message 
+            res.status(500).json({
+                error: 'Search failed',
+                message: error.message
             });
         }
     }
-    
+
     /**
      * Start the server
      * @returns {Promise<void>}
@@ -120,15 +120,15 @@ class SearchServer {
         try {
             // Configure the app
             this.configureApp();
-            
+
             // Initialize the search service
             logger.info('Initializing search service...');
             await this.searchService.initialize();
-            
+
             // Initialize LLM and chat features
             logger.info('Initializing LLM and chat features...');
             await this.initializeChatFeatures();
-            
+
             // Start the Express server
             this.server = this.app.listen(this.port, () => {
                 logger.info(`Search server running at http://localhost:${this.port}`);
@@ -138,7 +138,7 @@ class SearchServer {
             throw error;
         }
     }
-    
+
     /**
      * Initialize chat features and register API
      */
@@ -151,7 +151,7 @@ class SearchServer {
                 chatModel: this.chatModel,
                 embeddingModel: this.embeddingModel
             });
-            
+
             // Create memory manager for semantic memory
             logger.info('Initializing memory manager...');
             this.memoryManager = new MemoryManager({
@@ -159,19 +159,19 @@ class SearchServer {
                 chatModel: this.chatModel,
                 embeddingModel: this.embeddingModel
             });
-            
+
             // Create LLM handler for direct LLM requests
             logger.info('Initializing LLM handler...');
             this.llmHandler = new LLMHandler(
                 this.ollamaConnector,
                 this.chatModel
             );
-            
+
             // Register core services with API registry
             logger.info('Registering core services with API registry...');
             this.apiRegistry.register('memory', this.memoryManager);
             this.apiRegistry.register('llm', this.llmHandler);
-            
+
             // Register the chat API
             logger.info('Registering Chat API...');
             await this.apiRegistry.register('chat', ChatAPI, {
@@ -179,14 +179,14 @@ class SearchServer {
                 similarityThreshold: 0.7,
                 contextWindow: 5
             });
-            
+
             logger.info('Chat features initialized successfully');
         } catch (error) {
             logger.error('Failed to initialize chat features:', error);
             throw error;
         }
     }
-    
+
     /**
      * Stop the server
      * @returns {Promise<void>}
@@ -198,13 +198,13 @@ class SearchServer {
                 logger.info('Shutting down API services...');
                 await this.apiRegistry.shutdownAll();
             }
-            
+
             // Clean up memory manager if needed
             if (this.memoryManager) {
                 logger.info('Disposing memory manager...');
                 await this.memoryManager.dispose();
             }
-            
+
             // Stop the HTTP server
             if (this.server) {
                 logger.info('Stopping HTTP server...');

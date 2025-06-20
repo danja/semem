@@ -20,17 +20,17 @@ class SearchService {
     constructor(options = {}) {
         this.embeddingService = options.embeddingService || new EmbeddingService();
         this.sparqlService = options.sparqlService || new SPARQLService();
-        this.graphName = options.graphName || 'http://danny.ayers.name/content';
+        this.graphName = options.graphName || 'http://hyperdata.it/content';
         this.dimension = options.dimension || 768;
-        
+
         this.initialized = false;
         this.index = null;
         this.resources = [];
         this.resourceMap = new Map(); // Map from index to resource URI
-        
+
         logger.info(`SearchService initialized with graph: ${this.graphName}`);
     }
-    
+
     /**
      * Initialize the search service
      * @returns {Promise<void>}
@@ -39,21 +39,21 @@ class SearchService {
         if (this.initialized) return;
 
         logger.info('Initializing SearchService...');
-        
+
         try {
             // Create the Faiss index
             this.index = new IndexFlatIP(this.dimension);
-            
+
             // Check if the graph exists
             const graphExists = await this.sparqlService.graphExists(this.graphName);
-            
+
             if (!graphExists) {
                 throw new Error(`Graph ${this.graphName} does not exist or is empty`);
             }
-            
+
             // Load embeddings from SPARQL store
             await this.loadEmbeddings();
-            
+
             this.initialized = true;
             logger.info(`SearchService initialized with ${this.resources.length} resources`);
         } catch (error) {
@@ -61,14 +61,14 @@ class SearchService {
             throw error;
         }
     }
-    
+
     /**
      * Load embeddings from the SPARQL store
      * @returns {Promise<void>}
      */
     async loadEmbeddings() {
         logger.info('Loading embeddings from SPARQL store...');
-        
+
         try {
             // Fetch resources with their embeddings
             const resources = await this.sparqlService.fetchResourcesWithEmbeddings(
@@ -77,35 +77,35 @@ class SearchService {
                 'http://example.org/embedding/vector', // Embedding predicate
                 this.graphName
             );
-            
+
             logger.info(`Found ${resources.length} resources with embeddings`);
-            
+
             this.resources = [];
             this.resourceMap = new Map();
-            
+
             let validEmbeddings = 0;
-            
+
             // Process each resource and add to the index
             resources.forEach((resource) => {
                 try {
                     const uri = resource.resource.value;
                     const content = resource.content.value;
                     const embeddingStr = resource.embedding.value;
-                    
+
                     // Parse the embedding vector
                     const embedding = JSON.parse(embeddingStr);
-                    
+
                     if (Array.isArray(embedding) && embedding.length === this.dimension) {
                         // Add embedding to the index
                         this.index.add(embedding);
-                        
+
                         // Store resource data
                         this.resources.push({
                             uri,
                             content: this.truncateContent(content),
                             title: this.extractTitle(uri, content)
                         });
-                        
+
                         // Map the index to the resource
                         this.resourceMap.set(validEmbeddings, uri);
                         validEmbeddings++;
@@ -116,14 +116,14 @@ class SearchService {
                     logger.error(`Error processing resource embedding: ${error.message}`);
                 }
             });
-            
+
             logger.info(`Added ${validEmbeddings} valid embeddings to the index`);
         } catch (error) {
             logger.error('Error loading embeddings:', error);
             throw error;
         }
     }
-    
+
     /**
      * Search for resources similar to the query text
      * @param {string} queryText - The search query text
@@ -134,34 +134,34 @@ class SearchService {
         if (!this.initialized) {
             await this.initialize();
         }
-        
+
         if (!queryText || queryText.trim().length === 0) {
             return [];
         }
-        
+
         try {
             // Generate embedding for the query
             const queryEmbedding = await this.embeddingService.generateEmbedding(queryText);
-            
+
             // Search the index
             const searchResults = this.index.search(queryEmbedding, limit);
-            
+
             // Faiss-node returns an object with labels and distances
             const results = [];
-            
+
             // Process the faiss search results
             for (let i = 0; i < searchResults.labels.length; i++) {
                 const id = searchResults.labels[i];
                 const score = searchResults.distances[i];
-                
+
                 const uri = this.resourceMap.get(id);
                 const resource = this.resources.find(r => r.uri === uri);
-                
+
                 if (uri) {
                     // Normalize the score to be between 0 and 1
                     // Inner product can be > 1, so we'll clamp it
                     const normalizedScore = Math.min(1, Math.max(0, score));
-                    
+
                     results.push({
                         uri,
                         title: resource?.title || this.getFilenameFromUri(uri),
@@ -170,14 +170,14 @@ class SearchService {
                     });
                 }
             }
-            
+
             return results;
         } catch (error) {
             logger.error('Error searching resources:', error);
             throw error;
         }
     }
-    
+
     /**
      * Extract a title from the content or URI
      * @param {string} uri - The resource URI
@@ -190,11 +190,11 @@ class SearchService {
         if (firstLine.startsWith('# ')) {
             return firstLine.substring(2).trim();
         }
-        
+
         // Otherwise get filename from URI
         return this.getFilenameFromUri(uri);
     }
-    
+
     /**
      * Extract filename from URI
      * @param {string} uri - The resource URI
@@ -204,7 +204,7 @@ class SearchService {
         const parts = uri.split('/');
         return parts[parts.length - 1];
     }
-    
+
     /**
      * Truncate content for display
      * @param {string} content - The content to truncate
@@ -215,7 +215,7 @@ class SearchService {
         if (!content || content.length <= maxLength) {
             return content;
         }
-        
+
         return content.substring(0, maxLength) + '...';
     }
 }

@@ -26,7 +26,7 @@ class UIServer {
      */
     constructor(options = {}) {
         this.port = options.port || 4100;
-        this.graphName = options.graphName || 'http://danny.ayers.name/content';
+        this.graphName = options.graphName || 'http://hyperdata.it/content';
         this.chatModel = options.chatModel || 'qwen2:1.5b';
         this.embeddingModel = options.embeddingModel || 'nomic-embed-text';
 
@@ -143,19 +143,19 @@ class UIServer {
         // Middleware
         this.app.use(express.json());
         this.app.use(express.urlencoded({ extended: true }));
-        
+
         // Add timing middleware for performance tracking
         this.app.use((req, res, next) => {
             req.startTime = Date.now();
             next();
         });
-        
+
         // Serve webpack dist files with /dist path
         this.app.use('/dist', express.static(this.publicDir));
-        
+
         // Also serve from root for main page
         this.app.use(express.static(this.publicDir));
-        
+
         // Serve node_modules for Atuin CSS and other dependencies
         this.app.use('/node_modules', express.static(path.join(this.projectRoot, 'node_modules')));
 
@@ -218,7 +218,7 @@ class UIServer {
             // Check if search service is available
             if (!this.searchService) {
                 logger.warn('Search service not available, returning empty results');
-                return res.json({ 
+                return res.json({
                     results: [],
                     error: 'Search service not available (SPARQL endpoints unreachable)'
                 });
@@ -1040,7 +1040,7 @@ Based on the above information and your knowledge, here is the user's question: 
             if (!this.chatProviders || this.chatProviders.length === 0) {
                 logger.warn('No chat providers available, trying to initialize...');
                 await this.initializeLLMProvidersWithFallback();
-                
+
                 if (!this.chatProviders || this.chatProviders.length === 0) {
                     logger.warn('Still no chat providers available after initialization');
                     return res.json({ providers: [] });
@@ -1058,16 +1058,16 @@ Based on the above information and your knowledge, here is the user's question: 
             // Use initialized chatProviders instead of raw llmProviders
             const providers = this.chatProviders.map(p => {
                 const models = providerModels[p.type] || [p.chatModel || 'default'];
-                
+
                 // Add MCP capability if available (for now, mark all as MCP-capable for demo)
                 const capabilities = p.capabilities || [];
-                
+
                 // Check if MCP server is running and add MCP capability
                 const hasMCPSupport = true; // All providers can potentially use MCP tools
                 if (hasMCPSupport && !capabilities.includes('mcp')) {
                     capabilities.push('mcp');
                 }
-                
+
                 return {
                     id: p.id,  // Use the actual provider ID from chatProviders
                     type: p.type,
@@ -1389,7 +1389,7 @@ Based on the above information and your knowledge, here is the user's question: 
 
             // Use provided endpoint or default to the first configured one
             const targetEndpoint = endpoint || this.sparqlService.queryEndpoint;
-            
+
             // Apply limit if requested
             let finalQuery = query;
             if (limit && !query.toUpperCase().includes('LIMIT')) {
@@ -1397,7 +1397,7 @@ Based on the above information and your knowledge, here is the user's question: 
             }
 
             const results = await this.sparqlService.executeQuery(finalQuery);
-            
+
             logger.info('SPARQL query executed successfully');
             res.json(results);
         } catch (error) {
@@ -1429,10 +1429,10 @@ Based on the above information and your knowledge, here is the user's question: 
 
             // Use provided endpoint or default to the first configured one
             const targetEndpoint = endpoint || this.sparqlService.queryEndpoint;
-            
+
             // Execute CONSTRUCT query - this should return RDF data
             const results = await this.sparqlService.executeQuery(query);
-            
+
             // For CONSTRUCT queries, we want to return the RDF data as text
             // The format depends on the SPARQL service implementation
             let rdfData;
@@ -1447,9 +1447,9 @@ Based on the above information and your knowledge, here is the user's question: 
 
             // Analyze RDF data to extract graph information for visualization
             const graphInfo = this.analyzeRdfForVisualization(rdfData, results);
-            
+
             logger.info('SPARQL CONSTRUCT query executed successfully');
-            
+
             // Return JSON response with RDF data and metadata for frontend
             res.json({
                 success: true,
@@ -1536,7 +1536,7 @@ Based on the above information and your knowledge, here is the user's question: 
                         valid = false;
                         errors.push('Missing statement terminators (. or ;)');
                     }
-                    
+
                     // Check for balanced angle brackets
                     const openBrackets = (content.match(/</g) || []).length;
                     const closeBrackets = (content.match(/>/g) || []).length;
@@ -1600,7 +1600,7 @@ Based on the above information and your knowledge, here is the user's question: 
 
             // Execute the insert query
             await this.sparqlService.executeUpdate(insertQuery);
-            
+
             logger.info('RDF data inserted successfully');
             res.json({
                 success: true,
@@ -1636,7 +1636,7 @@ Based on the above information and your knowledge, here is the user's question: 
 
             // Test with a simple ASK query
             const testQuery = 'ASK { ?s ?p ?o }';
-            
+
             try {
                 // Create a temporary SPARQL service for testing
                 const testService = new (await import('../embeddings/SPARQLService.js')).default({
@@ -1645,7 +1645,7 @@ Based on the above information and your knowledge, here is the user's question: 
                 });
 
                 const result = await testService.executeQuery(testQuery);
-                
+
                 logger.info(`SPARQL endpoint test successful: ${endpoint}`);
                 res.json({
                     success: true,
@@ -1679,11 +1679,11 @@ Based on the above information and your knowledge, here is the user's question: 
         const nodes = new Map();
         const edges = [];
         const namespaces = new Set();
-        
+
         try {
             // Parse RDF data to extract graph structure
             const lines = rdfData.split('\n').filter(line => line.trim() && !line.trim().startsWith('#'));
-            
+
             lines.forEach((line, index) => {
                 const trimmedLine = line.trim();
                 if (!trimmedLine || trimmedLine.startsWith('@prefix') || trimmedLine.startsWith('PREFIX')) {
@@ -1697,14 +1697,14 @@ Based on the above information and your knowledge, here is the user's question: 
                     }
                     return;
                 }
-                
+
                 // Parse triple statements (basic implementation)
                 const tripleMatch = trimmedLine.match(/(<[^>]+>|\w+:\w+)\s+(<[^>]+>|\w+:\w+)\s+(<[^>]+>|"[^"]*"|\w+:\w+)/);
                 if (tripleMatch) {
                     const subject = tripleMatch[1];
                     const predicate = tripleMatch[2];
                     const object = tripleMatch[3];
-                    
+
                     // Add subject node
                     if (!nodes.has(subject)) {
                         nodes.set(subject, {
@@ -1715,7 +1715,7 @@ Based on the above information and your knowledge, here is the user's question: 
                             properties: {}
                         });
                     }
-                    
+
                     // Add object node if it's a URI (not a literal)
                     if (object.startsWith('<') || (object.includes(':') && !object.startsWith('"'))) {
                         if (!nodes.has(object)) {
@@ -1727,7 +1727,7 @@ Based on the above information and your knowledge, here is the user's question: 
                                 properties: {}
                             });
                         }
-                        
+
                         // Add edge between subject and object
                         edges.push({
                             id: `edge-${edges.length}`,
@@ -1742,7 +1742,7 @@ Based on the above information and your knowledge, here is the user's question: 
                         const subjectNode = nodes.get(subject);
                         if (subjectNode) {
                             const propertyName = this.extractLabelFromUri(predicate);
-                            subjectNode.properties[propertyName] = object.startsWith('"') ? 
+                            subjectNode.properties[propertyName] = object.startsWith('"') ?
                                 object.slice(1, -1) : object;
                         }
                     }
@@ -1751,11 +1751,11 @@ Based on the above information and your knowledge, here is the user's question: 
         } catch (parseError) {
             logger.warn('Error parsing RDF for visualization:', parseError);
         }
-        
+
         // Convert Maps to Arrays for JSON serialization
         const nodeArray = Array.from(nodes.values());
         const namespaceArray = Array.from(namespaces);
-        
+
         return {
             nodes: nodeArray,
             edges: edges,
@@ -1764,7 +1764,7 @@ Based on the above information and your knowledge, here is the user's question: 
             namespaces: namespaceArray
         };
     }
-    
+
     /**
      * Extract a readable label from a URI
      * @param {string} uri - The URI to extract label from
@@ -1772,19 +1772,19 @@ Based on the above information and your knowledge, here is the user's question: 
      */
     extractLabelFromUri(uri) {
         if (!uri) return 'Unknown';
-        
+
         // Remove angle brackets if present
         const cleanUri = uri.startsWith('<') ? uri.slice(1, -1) : uri;
-        
+
         // Handle prefixed names
         if (cleanUri.includes(':') && !cleanUri.startsWith('http')) {
             return cleanUri.split(':').pop();
         }
-        
+
         // Extract last part of URI path
         const parts = cleanUri.split(/[/#]/);
         const lastPart = parts[parts.length - 1];
-        
+
         // Clean up the label
         return lastPart
             .replace(/([A-Z])/g, ' $1') // Add spaces before capital letters
@@ -1793,7 +1793,7 @@ Based on the above information and your knowledge, here is the user's question: 
             .toLowerCase()
             .replace(/^\w/, c => c.toUpperCase()); // Capitalize first letter
     }
-    
+
     /**
      * Determine node type based on URI patterns
      * @param {string} uri - The URI to analyze
@@ -1801,9 +1801,9 @@ Based on the above information and your knowledge, here is the user's question: 
      */
     determineNodeType(uri) {
         if (!uri) return 'unknown';
-        
+
         const cleanUri = uri.startsWith('<') ? uri.slice(1, -1) : uri;
-        
+
         // Common RDF/RDFS/OWL patterns
         if (cleanUri.includes('rdf-schema') || cleanUri.includes('rdfs')) return 'schema';
         if (cleanUri.includes('rdf-syntax') || cleanUri.includes('rdf#')) return 'rdf';
@@ -1811,19 +1811,19 @@ Based on the above information and your knowledge, here is the user's question: 
         if (cleanUri.includes('foaf')) return 'person';
         if (cleanUri.includes('dc') || cleanUri.includes('dublin')) return 'metadata';
         if (cleanUri.includes('skos')) return 'concept';
-        
+
         // Ragno-specific patterns
         if (cleanUri.includes('ragno')) {
             if (cleanUri.includes('Entity')) return 'entity';
             if (cleanUri.includes('SemanticUnit')) return 'semantic-unit';
             if (cleanUri.includes('Relationship')) return 'relationship';
         }
-        
+
         // Default classification
         if (cleanUri.includes('#type') || cleanUri.includes('type')) return 'type';
         if (cleanUri.includes('Class')) return 'class';
         if (cleanUri.includes('Property')) return 'property';
-        
+
         return 'resource';
     }
 
@@ -1842,10 +1842,10 @@ Based on the above information and your knowledge, here is the user's question: 
             const p = binding.p ? (binding.p.type === 'uri' ? `<${binding.p.value}>` : binding.p.value) : '';
             const o = binding.o ? (
                 binding.o.type === 'uri' ? `<${binding.o.value}>` :
-                binding.o.type === 'literal' ? `"${binding.o.value}"` :
-                binding.o.value
+                    binding.o.type === 'literal' ? `"${binding.o.value}"` :
+                        binding.o.value
             ) : '';
-            
+
             if (s && p && o) {
                 return `${s} ${p} ${o} .`;
             }
@@ -1865,7 +1865,7 @@ Based on the above information and your knowledge, here is the user's question: 
             const { limit = 50, threshold = 0.7 } = req.body;
 
             if (!this.chatAPI) {
-                return res.status(503).json({ 
+                return res.status(503).json({
                     error: 'Memory system not available',
                     memories: [],
                     concepts: []
@@ -1875,7 +1875,7 @@ Based on the above information and your knowledge, here is the user's question: 
             // Get memory data from the memory manager
             const memoryManager = this.chatAPI.memoryManager;
             if (!memoryManager || !memoryManager.memStore) {
-                return res.status(503).json({ 
+                return res.status(503).json({
                     error: 'Memory store not available',
                     memories: [],
                     concepts: []
@@ -1938,7 +1938,7 @@ Based on the above information and your knowledge, here is the user's question: 
 
         } catch (error) {
             console.error('Error in handleMemoryGraph:', error);
-            res.status(500).json({ 
+            res.status(500).json({
                 error: 'Failed to generate memory graph data',
                 memories: [],
                 concepts: []
@@ -1956,7 +1956,7 @@ Based on the above information and your knowledge, here is the user's question: 
             const { period = 'week', grouping = 'day', showAccess = true } = req.body;
 
             if (!this.chatAPI || !this.chatAPI.memoryManager || !this.chatAPI.memoryManager.memStore) {
-                return res.status(503).json({ 
+                return res.status(503).json({
                     error: 'Memory system not available',
                     timeline: []
                 });
@@ -1983,17 +1983,17 @@ Based on the above information and your knowledge, here is the user's question: 
             }
 
             // Filter memories by time range
-            const filteredMemories = allMemories.filter(memory => 
+            const filteredMemories = allMemories.filter(memory =>
                 new Date(memory.timestamp) >= startTime
             );
 
             // Group memories by time period
             const timelineData = new Map();
-            
+
             filteredMemories.forEach(memory => {
                 const date = new Date(memory.timestamp);
                 let groupKey;
-                
+
                 switch (grouping) {
                     case 'hour':
                         groupKey = new Date(date.getFullYear(), date.getMonth(), date.getDate(), date.getHours()).toISOString();
@@ -2049,7 +2049,7 @@ Based on the above information and your knowledge, here is the user's question: 
 
         } catch (error) {
             console.error('Error in handleMemoryTimeline:', error);
-            res.status(500).json({ 
+            res.status(500).json({
                 error: 'Failed to generate timeline data',
                 timeline: []
             });
@@ -2066,7 +2066,7 @@ Based on the above information and your knowledge, here is the user's question: 
             const { clusterCount = 5, method = 'kmeans' } = req.body;
 
             if (!this.chatAPI || !this.chatAPI.memoryManager || !this.chatAPI.memoryManager.memStore) {
-                return res.status(503).json({ 
+                return res.status(503).json({
                     error: 'Memory system not available',
                     clusters: []
                 });
@@ -2138,7 +2138,7 @@ Based on the above information and your knowledge, here is the user's question: 
 
         } catch (error) {
             console.error('Error in handleMemoryClusters:', error);
-            res.status(500).json({ 
+            res.status(500).json({
                 error: 'Failed to generate cluster data',
                 clusters: []
             });
@@ -2164,7 +2164,7 @@ Based on the above information and your knowledge, here is the user's question: 
             } = req.body;
 
             if (!this.chatAPI || !this.chatAPI.memoryManager || !this.chatAPI.memoryManager.memStore) {
-                return res.status(503).json({ 
+                return res.status(503).json({
                     error: 'Memory system not available',
                     results: [],
                     totalCount: 0
@@ -2182,7 +2182,7 @@ Based on the above information and your knowledge, here is the user's question: 
             if (dateFrom || dateTo) {
                 const fromDate = dateFrom ? new Date(dateFrom) : new Date(0);
                 const toDate = dateTo ? new Date(dateTo) : new Date();
-                
+
                 filteredMemories = filteredMemories.filter(memory => {
                     const memoryDate = new Date(memory.timestamp);
                     return memoryDate >= fromDate && memoryDate <= toDate;
@@ -2191,7 +2191,7 @@ Based on the above information and your knowledge, here is the user's question: 
 
             // Access count filter
             if (accessCountMin > 0) {
-                filteredMemories = filteredMemories.filter(memory => 
+                filteredMemories = filteredMemories.filter(memory =>
                     (memory.accessCount || 0) >= accessCountMin
                 );
             }
@@ -2199,7 +2199,7 @@ Based on the above information and your knowledge, here is the user's question: 
             // High frequency filter
             if (highFrequencyOnly) {
                 const avgAccess = allMemories.reduce((sum, m) => sum + (m.accessCount || 0), 0) / allMemories.length;
-                filteredMemories = filteredMemories.filter(memory => 
+                filteredMemories = filteredMemories.filter(memory =>
                     (memory.accessCount || 0) > avgAccess
                 );
             }
@@ -2207,7 +2207,7 @@ Based on the above information and your knowledge, here is the user's question: 
             // Recent filter (last 24 hours)
             if (recentOnly) {
                 const dayAgo = Date.now() - (24 * 60 * 60 * 1000);
-                filteredMemories = filteredMemories.filter(memory => 
+                filteredMemories = filteredMemories.filter(memory =>
                     memory.timestamp > dayAgo
                 );
             }
@@ -2217,22 +2217,22 @@ Based on the above information and your knowledge, here is the user's question: 
                 const queryLower = query.toLowerCase();
                 filteredMemories = filteredMemories.filter(memory => {
                     let matches = false;
-                    
+
                     if (searchIn.includes('prompt') && memory.prompt) {
                         matches = matches || memory.prompt.toLowerCase().includes(queryLower);
                     }
-                    
+
                     if (searchIn.includes('response') && (memory.output || memory.response)) {
                         const response = memory.output || memory.response;
                         matches = matches || response.toLowerCase().includes(queryLower);
                     }
-                    
+
                     if (searchIn.includes('concepts') && memory.concepts) {
-                        matches = matches || memory.concepts.some(concept => 
+                        matches = matches || memory.concepts.some(concept =>
                             concept.toLowerCase().includes(queryLower)
                         );
                     }
-                    
+
                     return matches;
                 });
             }
@@ -2267,7 +2267,7 @@ Based on the above information and your knowledge, here is the user's question: 
 
         } catch (error) {
             console.error('Error in handleAdvancedMemorySearch:', error);
-            res.status(500).json({ 
+            res.status(500).json({
                 error: 'Failed to execute advanced search',
                 results: [],
                 totalCount: 0
