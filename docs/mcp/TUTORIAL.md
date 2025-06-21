@@ -113,6 +113,13 @@ Then start Claude.
 To check operation, try the prompt :
 > use extract_concepts on "the cat sat on the mat"
 
+ semem:prompt_list()
+  semem:prompt_get(name: "research-workflow")
+
+ mcp__semem__prompt_execute with name="research-workflow"
+
+ mcp__semem__prompt_execute with name="research-workflow" on the content of docs/mcp/dotarag-paper.md
+
 #### For Claude Desktop
 
 Add to your Claude Desktop configuration file:
