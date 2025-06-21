@@ -3,7 +3,10 @@
     "target": "ES2022",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
-    "lib": ["ES2022", "DOM"],
+    "lib": [
+      "ES2022",
+      "DOM"
+    ],
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "strict": true,
@@ -22,11 +25,20 @@
     "rootDir": ".",
     "baseUrl": ".",
     "outDir": "dist",
-    "typeRoots": ["./node_modules/@types", "./src/types"],
+    "typeRoots": [
+      "./node_modules/@types",
+      "./src/types"
+    ],
     "paths": {
-      "@src/*": ["src/*"],
-      "@tests/*": ["tests/*"],
-      "@types/*": ["src/types/*"]
+      "@src/*": [
+        "src/*"
+      ],
+      "@tests/*": [
+        "tests/*"
+      ],
+      "@types/*": [
+        "src/types/*"
+      ]
     }
   },
   "include": [

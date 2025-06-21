@@ -120,6 +120,9 @@ To check operation, try the prompt :
 
  mcp__semem__prompt_execute with name="research-workflow" on the content of docs/mcp/dotarag-paper.md
 
+~/hyperdata/semem/mcp/index.js
+
+
 #### For Claude Desktop
 
 Add to your Claude Desktop configuration file:
