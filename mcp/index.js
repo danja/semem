@@ -7,6 +7,10 @@
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { 
+  ListPromptsRequestSchema,
+  GetPromptRequestSchema 
+} from '@modelcontextprotocol/sdk/types.js';
 
 // Import debugging utilities
 import { mcpDebugger } from './lib/debug-utils.js';
@@ -35,10 +39,8 @@ import { workflowOrchestrator } from './lib/workflow-orchestrator.js';
  * Register MCP prompt handlers
  */
 function registerPromptHandlers(server) {
-  // List prompts handler - using newer MCP pattern
-  server.setRequestHandler({
-    method: 'prompts/list'
-  }, async () => {
+  // List prompts handler
+  server.setRequestHandler(ListPromptsRequestSchema, async () => {
     try {
       const prompts = promptRegistry.listPrompts();
       mcpDebugger.info(`Listed ${prompts.length} available prompts`);
@@ -63,9 +65,7 @@ function registerPromptHandlers(server) {
   });
 
   // Get prompt handler
-  server.setRequestHandler({
-    method: 'prompts/get'
-  }, async (request) => {
+  server.setRequestHandler(GetPromptRequestSchema, async (request) => {
     try {
       const { name } = request.params;
       if (!name) {
@@ -92,46 +92,6 @@ function registerPromptHandlers(server) {
       };
     } catch (error) {
       mcpDebugger.error('Error getting prompt:', error);
-      throw error;
-    }
-  });
-
-  // Execute prompt handler
-  server.setRequestHandler({
-    method: 'prompts/execute'
-  }, async (request) => {
-    try {
-      const { name, arguments: args = {} } = request.params;
-      if (!name) {
-        throw new Error('Prompt name is required');
-      }
-
-      const prompt = promptRegistry.getPrompt(name);
-      if (!prompt) {
-        throw new Error(`Prompt not found: ${name}`);
-      }
-
-      // Validate prerequisites
-      const prerequisites = validateExecutionPrerequisites(prompt, server);
-      if (!prerequisites.valid) {
-        throw new Error(`Prerequisites not met: ${prerequisites.errors.join(', ')}`);
-      }
-
-      // Create tool executor
-      const toolExecutor = createSafeToolExecutor(server);
-
-      // Execute the prompt workflow
-      mcpDebugger.info(`Executing prompt: ${name}`, { arguments: args });
-      const result = await executePromptWorkflow(prompt, args, toolExecutor);
-
-      mcpDebugger.info(`Prompt execution completed: ${name}`, { 
-        success: result.success,
-        steps: result.results.length 
-      });
-
-      return result;
-    } catch (error) {
-      mcpDebugger.error('Error executing prompt:', error);
       throw error;
     }
   });
@@ -204,9 +164,9 @@ async function createServer() {
     registerStatusResources(server);
   }
 
-  // Prompt tools are now integrated into memory tools
-  // mcpDebugger.info('Registering prompt workflow tools...');
-  // registerPromptTools(server);
+  // Register prompt handlers
+  mcpDebugger.info('Registering prompt handlers...');
+  registerPromptHandlers(server);
 
   mcpDebugger.info('MCP server creation complete');
   return server;
