@@ -9,7 +9,8 @@
  * Usage: claude mcp add semem npx semem-mcp
  */
 
-import { createMCPServer } from '../mcp/index.js';
+import { createServer } from '../mcp/index.js';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 
 async function main() {
   try {
@@ -27,11 +28,11 @@ async function main() {
                        args[configIndex + 1] : undefined;
 
     // Start the MCP server
-    const server = await createMCPServer({
-      transport,
-      port,
-      configPath
-    });
+    const server = await createServer();
+    
+    // Create and connect transport
+    const serverTransport = new StdioServerTransport();
+    await server.connect(serverTransport);
 
     // Handle graceful shutdown
     process.on('SIGINT', async () => {
