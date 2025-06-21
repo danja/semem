@@ -11,6 +11,7 @@ import {
 import { initializeServices, getMemoryManager } from '../lib/initialization.js';
 import { SafeOperations } from '../lib/safe-operations.js';
 import { mcpDebugger } from '../lib/debug-utils.js';
+import { PROMPT_TOOLS } from './prompt-tools.js';
 
 // Tool input schemas
 const StoreInteractionSchema = z.object({
@@ -206,6 +207,7 @@ export function registerMemoryToolsHttp(server) {
   server.setRequestHandler(ListToolsRequestSchema, async () => {
     return {
       tools: [
+        ...PROMPT_TOOLS,
         {
           name: ToolName.STORE_INTERACTION,
           description: "Store a new interaction in semantic memory with embeddings and concept extraction",
@@ -1858,6 +1860,143 @@ export function registerMemoryToolsHttp(server) {
         } catch (error) {
           throw new Error(`Graph statistics failed: ${error.message}`);
         }
+      }
+
+      // Handle prompt tools
+      if (name === "prompt_list") {
+        const { promptRegistry } = await import('../prompts/registry.js');
+        const { category } = args || {};
+        
+        const prompts = promptRegistry.listPrompts();
+        mcpDebugger.info(`Listed ${prompts.length} available prompts`);
+        
+        // Filter by category if specified
+        let filteredPrompts = prompts;
+        if (category) {
+          filteredPrompts = prompts.filter(prompt => {
+            const category = prompt.name.startsWith('semem-') ? 'Memory Workflows' :
+                           prompt.name.startsWith('ragno-') ? 'Knowledge Graph' :
+                           prompt.name.startsWith('zpt-') ? '3D Navigation' : 'Integrated Workflows';
+            return category.toLowerCase().includes(category.toLowerCase());
+          });
+        }
+        
+        // Group prompts by category for better display
+        const categories = {};
+        filteredPrompts.forEach(prompt => {
+          const cat = prompt.name.startsWith('semem-') ? 'Memory Workflows' :
+                     prompt.name.startsWith('ragno-') ? 'Knowledge Graph' :
+                     prompt.name.startsWith('zpt-') ? '3D Navigation' : 'Integrated Workflows';
+          if (!categories[cat]) categories[cat] = [];
+          categories[cat].push({
+            name: prompt.name,
+            description: prompt.description,
+            arguments: prompt.arguments.length,
+            requiredArgs: prompt.arguments.filter(a => a.required).length
+          });
+        });
+
+        return {
+          content: [{
+            type: "text",
+            text: JSON.stringify({
+              success: true,
+              totalPrompts: prompts.length,
+              filteredPrompts: filteredPrompts.length,
+              categories,
+              availableCategories: ["memory", "ragno", "zpt", "integrated"]
+            }, null, 2)
+          }]
+        };
+      }
+
+      if (name === "prompt_get") {
+        const { promptRegistry } = await import('../prompts/registry.js');
+        const { name: promptName } = args || {};
+        
+        if (!promptName) {
+          throw new Error('Prompt name is required');
+        }
+
+        const prompt = promptRegistry.getPrompt(promptName);
+        if (!prompt) {
+          throw new Error(`Prompt not found: ${promptName}`);
+        }
+
+        mcpDebugger.info(`Retrieved prompt: ${promptName}`);
+        
+        return {
+          content: [{
+            type: "text",
+            text: JSON.stringify({
+              success: true,
+              prompt: {
+                name: prompt.name,
+                description: prompt.description,
+                category: prompt.name.startsWith('semem-') ? 'Memory Workflows' :
+                         prompt.name.startsWith('ragno-') ? 'Knowledge Graph' :
+                         prompt.name.startsWith('zpt-') ? '3D Navigation' : 'Integrated Workflows',
+                arguments: prompt.arguments,
+                workflow: prompt.workflow.map(step => ({
+                  tool: step.tool,
+                  arguments: step.arguments,
+                  condition: step.condition,
+                  description: step.description || `Execute ${step.tool} tool`
+                })),
+                examples: prompt.examples || []
+              }
+            }, null, 2)
+          }]
+        };
+      }
+
+      if (name === "prompt_execute") {
+        const { promptRegistry } = await import('../prompts/registry.js');
+        const { executePromptWorkflow, createSafeToolExecutor, validateExecutionPrerequisites } = await import('../prompts/utils.js');
+        const { name: promptName, arguments: promptArgs = {} } = args || {};
+        
+        if (!promptName) {
+          throw new Error('Prompt name is required');
+        }
+
+        const prompt = promptRegistry.getPrompt(promptName);
+        if (!prompt) {
+          throw new Error(`Prompt not found: ${promptName}`);
+        }
+
+        // Validate prerequisites
+        const prerequisites = validateExecutionPrerequisites(prompt, server);
+        if (!prerequisites.valid) {
+          throw new Error(`Prerequisites not met: ${prerequisites.errors.join(', ')}`);
+        }
+
+        // Create tool executor
+        const toolExecutor = createSafeToolExecutor(server);
+
+        // Execute the prompt workflow
+        mcpDebugger.info(`Executing prompt: ${promptName}`, { arguments: promptArgs });
+        const result = await executePromptWorkflow(prompt, promptArgs, toolExecutor);
+
+        mcpDebugger.info(`Prompt execution completed: ${promptName}`, { 
+          success: result.success,
+          steps: result.results.length 
+        });
+
+        return {
+          content: [{
+            type: "text",
+            text: JSON.stringify({
+              success: result.success,
+              promptName: promptName,
+              executionId: result.executionId,
+              steps: result.results.length,
+              results: result.results,
+              summary: result.summary,
+              error: result.error,
+              partialCompletion: result.partialCompletion
+            }, null, 2)
+          }]
+        };
       }
 
       throw new Error(`Unknown tool: ${name}`);

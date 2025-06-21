@@ -30,6 +30,10 @@ import OllamaConnector from '../src/connectors/OllamaConnector.js';
 import ClaudeConnector from '../src/connectors/ClaudeConnector.js';
 import MistralConnector from '../src/connectors/MistralConnector.js';
 
+// Import prompt system
+import { initializePromptRegistry, promptRegistry } from './prompts/registry.js';
+import { executePromptWorkflow, createSafeToolExecutor, validateExecutionPrerequisites } from './prompts/utils.js';
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Configuration
@@ -115,6 +119,11 @@ async function initializeSemem() {
     
     await memoryManager.initialize();
     console.log('Memory manager initialized successfully');
+    
+    // Initialize prompt registry
+    console.log('Initializing prompt registry...');
+    await initializePromptRegistry();
+    console.log('Prompt registry initialized successfully');
     
     console.log('Semem services initialized successfully');
     return true;
@@ -298,6 +307,81 @@ function createMCPServer() {
         }, null, 2)
       }]
     };
+  });
+
+  // Add prompt handlers
+  server.addPromptHandler('list', async () => {
+    const prompts = promptRegistry.listPrompts();
+    return {
+      prompts: prompts.map(prompt => ({
+        name: prompt.name,
+        description: prompt.description,
+        arguments: prompt.arguments.map(arg => ({
+          name: arg.name,
+          description: arg.description,
+          required: arg.required,
+          type: arg.type,
+          default: arg.default
+        }))
+      }))
+    };
+  });
+
+  server.addPromptHandler('get', async (params) => {
+    const { name } = params;
+    if (!name) {
+      throw new Error('Prompt name is required');
+    }
+
+    const prompt = promptRegistry.getPrompt(name);
+    if (!prompt) {
+      throw new Error(`Prompt not found: ${name}`);
+    }
+
+    return {
+      prompt: {
+        name: prompt.name,
+        description: prompt.description,
+        arguments: prompt.arguments,
+        workflow: prompt.workflow.map(step => ({
+          tool: step.tool,
+          arguments: step.arguments,
+          condition: step.condition
+        }))
+      }
+    };
+  });
+
+  server.addPromptHandler('execute', async (params) => {
+    const { name, arguments: args = {} } = params;
+    if (!name) {
+      throw new Error('Prompt name is required');
+    }
+
+    const prompt = promptRegistry.getPrompt(name);
+    if (!prompt) {
+      throw new Error(`Prompt not found: ${name}`);
+    }
+
+    // Validate prerequisites
+    const prerequisites = validateExecutionPrerequisites(prompt, server);
+    if (!prerequisites.valid) {
+      throw new Error(`Prerequisites not met: ${prerequisites.errors.join(', ')}`);
+    }
+
+    // Create tool executor
+    const toolExecutor = createSafeToolExecutor(server);
+
+    // Execute the prompt workflow
+    console.log(`Executing prompt: ${name}`, { arguments: args });
+    const result = await executePromptWorkflow(prompt, args, toolExecutor);
+
+    console.log(`Prompt execution completed: ${name}`, { 
+      success: result.success,
+      steps: result.results.length 
+    });
+
+    return result;
   });
 
   return server;

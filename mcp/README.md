@@ -1,8 +1,35 @@
 # Semem MCP Server
 
-This MCP (Model Context Protocol) server provides access to Semem core, Ragno knowledge graph, and ZPT APIs for semantic memory management and knowledge processing. **Now with full GraphRAG compatibility!**
+This MCP (Model Context Protocol) server provides access to Semem core, Ragno knowledge graph, and ZPT APIs for semantic memory management and knowledge processing. **Now with full GraphRAG compatibility and MCP Prompts for workflow orchestration!**
 
 ## Features
+
+### 🚀 MCP Prompts - Workflow Orchestration (NEW!)
+
+Transform complex multi-step operations into simple, guided workflows with **8 pre-built prompt templates**:
+
+#### Memory Workflows (3 prompts)
+- `semem-research-analysis` - Analyze research documents with semantic memory context
+- `semem-memory-qa` - Q&A using semantic memory retrieval and context assembly
+- `semem-concept-exploration` - Deep concept exploration through memory relationships
+
+#### Knowledge Graph Construction (2 prompts)  
+- `ragno-corpus-to-graph` - Transform text corpus to structured RDF knowledge graph
+- `ragno-entity-analysis` - Analyze and enrich entities with contextual relationships
+
+#### 3D Navigation (1 prompt)
+- `zpt-navigate-explore` - Interactive 3D knowledge space navigation and analysis
+
+#### Integrated Workflows (2 prompts)
+- `semem-full-pipeline` - Complete memory → graph → navigation processing pipeline
+- `research-workflow` - Academic research document processing and insight generation
+
+**Key Features:**
+- **Multi-step Coordination**: Chain multiple tools with context passing
+- **Dynamic Arguments**: Type validation, defaults, and requirement checking  
+- **Conditional Execution**: Skip workflow steps based on conditions
+- **Error Recovery**: Graceful handling of failures with partial results
+- **Execution Tracking**: Unique execution IDs and detailed step results
 
 ### 🆕 GraphRAG Standard Tools
 
@@ -52,6 +79,11 @@ This MCP (Model Context Protocol) server provides access to Semem core, Ragno kn
 - `semem://status` - System status and service health information
 - `semem://graph/schema` - RDF graph schema and ontology documentation
 - `semem://docs/api` - Complete API documentation
+
+### MCP Prompts Documentation
+- **Complete Guide**: `mcp/prompts/resources/prompt-guide.md` - Comprehensive user guide with examples
+- **Usage Examples**: `mcp/prompts/resources/examples.md` - Real-world usage patterns and scenarios
+- **Implementation Plan**: `docs/mcp/MCP-PROMPTS-PLAN.md` - Technical architecture and design decisions
 
 ## Usage
 
@@ -106,6 +138,80 @@ The server requires:
 - Node.js 20.11.0+
 
 ### Example Tool Calls
+
+#### 🚀 MCP Prompts Examples (NEW!)
+
+##### List Available Prompts
+```json
+{
+  "method": "prompts/list",
+  "params": {}
+}
+```
+
+##### Research Document Analysis Workflow
+```json
+{
+  "method": "prompts/execute",
+  "params": {
+    "name": "semem-research-analysis",
+    "arguments": {
+      "document_text": "Artificial intelligence has evolved significantly with the introduction of transformer architectures. These models have revolutionized natural language processing tasks and enabled the development of large language models like GPT and BERT.",
+      "analysis_depth": "deep",
+      "context_threshold": 0.8
+    }
+  }
+}
+```
+
+##### Memory-Based Q&A Workflow
+```json
+{
+  "method": "prompts/execute", 
+  "params": {
+    "name": "semem-memory-qa",
+    "arguments": {
+      "question": "What are the main advantages of transformer architectures?",
+      "context_limit": 10,
+      "similarity_threshold": 0.7
+    }
+  }
+}
+```
+
+##### Knowledge Graph Construction Workflow
+```json
+{
+  "method": "prompts/execute",
+  "params": {
+    "name": "ragno-corpus-to-graph",
+    "arguments": {
+      "corpus_chunks": [
+        "Apple Inc. is a technology company founded by Steve Jobs.",
+        "The iPhone was first released in 2007.",
+        "Tim Cook became CEO in 2011."
+      ],
+      "entity_confidence": 0.8,
+      "extract_relationships": true
+    }
+  }
+}
+```
+
+##### Full Pipeline Workflow
+```json
+{
+  "method": "prompts/execute",
+  "params": {
+    "name": "semem-full-pipeline",
+    "arguments": {
+      "input_data": "Machine learning is transforming healthcare through predictive analytics and diagnostic assistance.",
+      "pipeline_stages": ["memory", "graph", "navigation"],
+      "output_formats": ["json", "rdf", "summary"]
+    }
+  }
+}
+```
 
 #### 🆕 GraphRAG Examples
 
@@ -290,12 +396,18 @@ The server follows the standard MCP protocol and should work with any compatible
 - **Stdio-to-HTTP Bridge**: Successfully converts between transports
 - **Core MCP Tools**: All Semem tools properly exposed via new MCP SDK API
 - **Tool Registration**: Using modern `server.tool()` API instead of deprecated `setRequestHandler()`
+- **MCP Prompts System**: 8 workflow templates with full orchestration capabilities
+- **Prompt Registry**: Dynamic prompt loading and validation system
+- **Workflow Execution**: Multi-step tool coordination with error handling
 
 ### 🔧 Recent Fixes
 - **Fixed MCP SDK Compatibility**: Updated from deprecated `setRequestHandler()` to `server.tool()` API
 - **Fixed HTTP Transport**: Added proper SSE headers and response parsing
 - **Fixed Bridge Communication**: Created working stdio ↔ HTTP/SSE bridge for Claude Desktop
 - **Fixed Port Conflicts**: Server now runs on port 3002 to avoid conflicts
+- **Added MCP Prompts**: Implemented comprehensive workflow orchestration system
+- **Enhanced Test Coverage**: 62 new prompt tests + maintained existing test compatibility
+- **Updated Documentation**: Complete prompt guides and integration examples
 
 ### 🐛 Known Issues
 - **Stdio Transport**: Deprecated and may have compatibility issues with newer MCP clients
@@ -305,6 +417,7 @@ The server follows the standard MCP protocol and should work with any compatible
 1. Use HTTP/SSE transport with the bridge for Claude Desktop
 2. Start server on port 3002 to avoid conflicts
 3. Restart Claude Desktop after configuration changes
+4. **Try MCP Prompts** for complex workflows - start with `semem-memory-qa` or `research-workflow`
 
 ## Dependencies
 
@@ -330,27 +443,30 @@ This server provides **full compatibility** with standard GraphRAG MCP patterns 
 - **Multi-Tilt Representations**: Multiple perspectives on the same content
 - **Semantic Memory Integration**: Persistent conversational memory
 
-### Tool Count: **17 Total**
+### Tool Count: **17 Total** + **8 Prompt Workflows**
 - **9 GraphRAG Standard Tools**: `store_document`, `list_documents`, `delete_documents`, `create_relations`, `search_relations`, `delete_relations`, `hybrid_search`, `search_nodes`, `read_graph`, `get_knowledge_graph_stats`, `search_documentation`, `add_observations`
 - **5 Semem Core Tools**: Memory management and LLM integration
 - **3 Ragno Tools**: RDF knowledge graph construction  
 - **2 ZPT Tools**: Multi-dimensional content navigation
+- **8 MCP Prompts**: Workflow orchestration templates for complex multi-step operations
 
 ## Architecture
 
-The MCP server acts as a bridge between the MCP protocol and the Semem APIs, now with full GraphRAG compatibility:
+The MCP server acts as a bridge between the MCP protocol and the Semem APIs, now with full GraphRAG compatibility and workflow orchestration:
 
 ```
-MCP Client → MCP Server → GraphRAG Standard APIs
+MCP Client → MCP Server → MCP Prompts (Workflow Orchestration)
+                       → GraphRAG Standard APIs
                        → Semem Core APIs  
                        → Ragno Knowledge Graph (RDF)
                        → ZPT Navigation/Transform
 ```
 
 ### Data Flow
-1. **Documents** → Vector embeddings + RDF entities + Graph relationships
-2. **Hybrid Search** → Vector similarity + Graph traversal + ZPT navigation  
-3. **Results** → Scored and ranked using multiple strategies
-4. **Storage** → Persistent memory + RDF graph + Relationship index
+1. **Prompts** → Multi-step workflows orchestrating tools and data flow
+2. **Documents** → Vector embeddings + RDF entities + Graph relationships
+3. **Hybrid Search** → Vector similarity + Graph traversal + ZPT navigation  
+4. **Results** → Scored and ranked using multiple strategies
+5. **Storage** → Persistent memory + RDF graph + Relationship index
 
 Each tool call is validated, executed against the appropriate API layer, and results are returned in MCP-compliant format with comprehensive error handling and demo fallbacks.

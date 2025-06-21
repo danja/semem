@@ -83,7 +83,8 @@ Query and explore your knowledge graph using the built-in SPARQL browser.
 - **🧠 Semantic Memory**: Intelligent context retrieval and memory organization with vector embeddings and SPARQL
 - **🕸️ Knowledge Graph Processing**: End-to-end Ragno pipeline for entity extraction and relationship modeling
 - **🎯 Zoom, Pan Tilt (ZPT)**: Knowledge navigation and processing, cinematic analogy 
-- **🔌 Model Context Protocol (MCP)**: JSON-RPC 2.0 API for seamless LLM and agent integration
+- **🔌 Model Context Protocol (MCP)**: JSON-RPC 2.0 API for seamless LLM and agent integration with workflow orchestration
+- **🚀 MCP Prompts**: 8 pre-built workflow templates for complex multi-step operations
 - **🔍 Advanced Algorithms**: HyDE, VSOM, graph analytics, community detection, and Personal PageRank
 - **📊 Interactive Visualizations**: VSOM (Vector Self-Organizing Maps) for high-dimensional data exploration
 - **🔗 Multi-Provider LLM Support**: Ollama, Claude, Mistral, and other providers via unified connector system
@@ -304,7 +305,7 @@ node examples/basic/MemoryEmbeddingJSON.js
 # Knowledge graph processing  
 node examples/ragno/RagnoPipelineDemo.js
 
-# MCP server integration (32 tools + 15 resources)
+# MCP server integration (32 tools + 15 resources + 8 prompt workflows)
 npm run mcp-server-new     # Start MCP server
 node examples/mcp/SememCoreDemo.js           # Core memory operations
 node examples/mcp/RagnoCorpusDecomposition.js # Knowledge graphs
@@ -316,6 +317,14 @@ node examples/mcp/ZPTAdvancedFiltering.js    # Multi-dimensional filtering
 node examples/mcp/ZPTUtilityTools.js         # Schema and validation
 node examples/mcp/ZPTPerformanceOptimization.js # Performance tuning
 node examples/mcp/ZPTIntegrationWorkflows.js # Cross-system integration
+
+# MCP Prompts workflows (NEW!)
+# Start MCP server first: npm run mcp-server-new
+# Then use Claude Desktop or other MCP clients to execute:
+# - semem-research-analysis: Analyze research documents
+# - semem-memory-qa: Q&A with semantic memory
+# - ragno-corpus-to-graph: Build knowledge graphs from text
+# - semem-full-pipeline: Complete memory+graph+navigation workflows
 ```
 
 ## 🧠 Core Components
@@ -341,9 +350,36 @@ node examples/mcp/ZPTIntegrationWorkflows.js # Cross-system integration
 ### Model Context Protocol (MCP)
 - **32 comprehensive tools** covering all Semem capabilities
 - **15 specialized resources** for documentation and data access
+- **8 MCP Prompts** for workflow orchestration and multi-step operations
 - **Complete ZPT integration** with 6 navigation tools
 - **Cross-system workflows** combining Memory + Ragno + ZPT
 - **Standardized API** for LLM integration with schema validation
+
+### MCP Prompts - Workflow Orchestration
+Transform complex multi-step operations into simple, guided workflows:
+
+**Memory Workflows:**
+- `semem-research-analysis` - Research document analysis with semantic memory context
+- `semem-memory-qa` - Q&A using semantic memory retrieval and context assembly
+- `semem-concept-exploration` - Deep concept exploration through memory relationships
+
+**Knowledge Graph Construction:**
+- `ragno-corpus-to-graph` - Transform text corpus to structured RDF knowledge graph
+- `ragno-entity-analysis` - Analyze and enrich entities with contextual relationships
+
+**3D Navigation:**
+- `zpt-navigate-explore` - Interactive 3D knowledge space navigation and analysis
+
+**Integrated Workflows:**
+- `semem-full-pipeline` - Complete memory → graph → navigation processing pipeline
+- `research-workflow` - Academic research document processing and insight generation
+
+**Key Features:**
+- **Multi-step Coordination**: Chain multiple tools with context passing
+- **Dynamic Arguments**: Type validation, defaults, and requirement checking
+- **Conditional Execution**: Skip workflow steps based on conditions
+- **Error Recovery**: Graceful handling of failures with partial results
+- **Execution Tracking**: Unique execution IDs and detailed step results
 
 ## 🤖 Advanced Algorithms
 
@@ -379,11 +415,12 @@ The `examples/` directory contains comprehensive demonstrations organized by fun
 
 - **🧠 Basic Examples** (`examples/basic/`): Core memory operations, embedding generation, search
 - **🕸️ Ragno Examples** (`examples/ragno/`): Knowledge graph processing, entity extraction, RDF
-- **🔌 MCP Examples** (`examples/mcp/`): **Complete MCP integration with 32 tools + 15 resources**
+- **🔌 MCP Examples** (`examples/mcp/`): **Complete MCP integration with 32 tools + 15 resources + 8 prompt workflows**
   - **ZPT Suite**: 5 comprehensive demos covering all ZPT navigation capabilities ✅ COMPLETE
   - **Memory Integration**: Core semantic memory with context management
   - **Knowledge Graphs**: Ragno corpus decomposition and RDF processing
   - **Cross-System Workflows**: Advanced integration patterns
+  - **🚀 MCP Prompts**: 8 workflow templates for orchestrating complex multi-step operations ✅ NEW!
 - **🎯 ZPT Examples** (`examples/zpt/`): Content processing and navigation
 
 See [examples/README.md](examples/README.md) and [examples/mcp/README.md](examples/mcp/README.md) for detailed documentation and usage instructions.
@@ -452,7 +489,7 @@ Semem implements Anthropic's [Model Context Protocol (MCP)](https://docs.anthrop
 npm run mcp-server-new
 
 # Connect from Claude Desktop or other MCP clients
-# Server provides 32 tools + 15 resources covering all Semem capabilities
+# Server provides 32 tools + 15 resources + 8 prompt workflows covering all Semem capabilities
 ```
 
 ### Available MCP Tools (32 Total)
@@ -462,6 +499,12 @@ npm run mcp-server-new
 - **System Monitoring** (4 tools): Configuration, metrics, health checks, system status
 - **Knowledge Graphs** (8 tools): Ragno corpus decomposition, entity extraction, SPARQL, analytics
 - **ZPT Navigation** (6 tools): 3D navigation, filtering, validation, schema, optimization
+
+### Available MCP Prompts (8 Workflows)
+- **Memory Workflows** (3): Research analysis, memory Q&A, concept exploration
+- **Knowledge Graph** (2): Corpus-to-graph, entity analysis  
+- **3D Navigation** (1): Interactive exploration
+- **Integrated** (2): Full pipeline, research workflow
 
 ### Available MCP Resources (15 Total)
 - **System Resources** (7): Status, API docs, schemas, configuration, metrics
@@ -524,6 +567,8 @@ npm run mcp-example       # Run MCP client example
 - **[Examples Documentation](examples/README.md)**: Comprehensive examples guide
 - **[API Documentation](docs/api/README.md)**: REST API and SDK reference
 - **[MCP Documentation](docs/mcp/README.md)**: Model Context Protocol integration
+- **[MCP Prompts Guide](mcp/prompts/resources/prompt-guide.md)**: Complete workflow orchestration guide
+- **[MCP Prompts Examples](mcp/prompts/resources/examples.md)**: Real-world usage patterns
 - **[Architecture Guide](docs/architecture.md)**: System design and components
 - **[Algorithm Documentation](docs/ragno/README.md)**: Advanced algorithms guide
 

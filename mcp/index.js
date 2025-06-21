@@ -18,10 +18,123 @@ import { initializeServices } from './lib/initialization.js';
 // Import tool registrations
 import { registerMemoryTools } from './tools/memory-tools.js';
 import { registerMemoryToolsHttp } from './tools/memory-tools-http.js';
+// import { registerPromptTools } from './tools/prompt-tools.js';
 
 // Import resource registrations  
 import { registerStatusResources } from './resources/status-resource.js';
 import { registerStatusResourcesHttp } from './resources/status-resource-http.js';
+
+// Import prompt system
+import { initializePromptRegistry, promptRegistry } from './prompts/registry.js';
+import { executePromptWorkflow, createSafeToolExecutor, validateExecutionPrerequisites } from './prompts/utils.js';
+
+/**
+ * Register MCP prompt handlers
+ */
+function registerPromptHandlers(server) {
+  // List prompts handler - using newer MCP pattern
+  server.setRequestHandler({
+    method: 'prompts/list'
+  }, async () => {
+    try {
+      const prompts = promptRegistry.listPrompts();
+      mcpDebugger.info(`Listed ${prompts.length} available prompts`);
+      
+      return {
+        prompts: prompts.map(prompt => ({
+          name: prompt.name,
+          description: prompt.description,
+          arguments: prompt.arguments.map(arg => ({
+            name: arg.name,
+            description: arg.description,
+            required: arg.required,
+            type: arg.type,
+            default: arg.default
+          }))
+        }))
+      };
+    } catch (error) {
+      mcpDebugger.error('Error listing prompts:', error);
+      throw error;
+    }
+  });
+
+  // Get prompt handler
+  server.setRequestHandler({
+    method: 'prompts/get'
+  }, async (request) => {
+    try {
+      const { name } = request.params;
+      if (!name) {
+        throw new Error('Prompt name is required');
+      }
+
+      const prompt = promptRegistry.getPrompt(name);
+      if (!prompt) {
+        throw new Error(`Prompt not found: ${name}`);
+      }
+
+      mcpDebugger.info(`Retrieved prompt: ${name}`);
+      return {
+        prompt: {
+          name: prompt.name,
+          description: prompt.description,
+          arguments: prompt.arguments,
+          workflow: prompt.workflow.map(step => ({
+            tool: step.tool,
+            arguments: step.arguments,
+            condition: step.condition
+          }))
+        }
+      };
+    } catch (error) {
+      mcpDebugger.error('Error getting prompt:', error);
+      throw error;
+    }
+  });
+
+  // Execute prompt handler
+  server.setRequestHandler({
+    method: 'prompts/execute'
+  }, async (request) => {
+    try {
+      const { name, arguments: args = {} } = request.params;
+      if (!name) {
+        throw new Error('Prompt name is required');
+      }
+
+      const prompt = promptRegistry.getPrompt(name);
+      if (!prompt) {
+        throw new Error(`Prompt not found: ${name}`);
+      }
+
+      // Validate prerequisites
+      const prerequisites = validateExecutionPrerequisites(prompt, server);
+      if (!prerequisites.valid) {
+        throw new Error(`Prerequisites not met: ${prerequisites.errors.join(', ')}`);
+      }
+
+      // Create tool executor
+      const toolExecutor = createSafeToolExecutor(server);
+
+      // Execute the prompt workflow
+      mcpDebugger.info(`Executing prompt: ${name}`, { arguments: args });
+      const result = await executePromptWorkflow(prompt, args, toolExecutor);
+
+      mcpDebugger.info(`Prompt execution completed: ${name}`, { 
+        success: result.success,
+        steps: result.results.length 
+      });
+
+      return result;
+    } catch (error) {
+      mcpDebugger.error('Error executing prompt:', error);
+      throw error;
+    }
+  });
+
+  mcpDebugger.info('Prompt handlers registered successfully');
+}
 
 /**
  * Create and configure MCP server
@@ -33,31 +146,37 @@ async function createServer() {
   const server = new Server(mcpConfig, {
     capabilities: {
       tools: {},
-      resources: {}
+      resources: {},
+      prompts: {}
     }
   });
 
-  // Add debugging hooks to server
-  const originalSetRequestHandler = server.setRequestHandler;
-  server.setRequestHandler = function(schema, handler) {
-    const wrappedHandler = async (request) => {
-      mcpDebugger.logProtocolMessage('incoming', request.method, request.params);
-      try {
-        const result = await handler(request);
-        mcpDebugger.logProtocolMessage('outgoing', request.method, null, result);
-        return result;
-      } catch (error) {
-        mcpDebugger.logProtocolMessage('outgoing', request.method, null, null, error);
-        throw error;
-      }
-    };
-    return originalSetRequestHandler.call(this, schema, wrappedHandler);
-  };
+  // Temporarily disable debugging wrapper to fix prompt registration
+  // const originalSetRequestHandler = server.setRequestHandler;
+  // server.setRequestHandler = function(schema, handler) {
+  //   const wrappedHandler = async (request) => {
+  //     mcpDebugger.logProtocolMessage('incoming', request.method, request.params);
+  //     try {
+  //       const result = await handler(request);
+  //       mcpDebugger.logProtocolMessage('outgoing', request.method, null, result);
+  //       return result;
+  //     } catch (error) {
+  //       mcpDebugger.logProtocolMessage('outgoing', request.method, null, null, error);
+  //       throw error;
+  //     }
+  //   };
+  //   return originalSetRequestHandler.call(this, schema, wrappedHandler);
+  // };
 
   // Initialize services
   mcpDebugger.info('Initializing services...');
   await initializeServices();
   mcpDebugger.info('Services initialized successfully');
+
+  // Initialize prompt registry
+  mcpDebugger.info('Initializing prompt registry...');
+  await initializePromptRegistry();
+  mcpDebugger.info('Prompt registry initialized successfully');
 
   // Register all tools using HTTP pattern
   mcpDebugger.info('Registering memory tools...');
@@ -76,6 +195,10 @@ async function createServer() {
   } else {
     registerStatusResources(server);
   }
+
+  // Prompt tools are now integrated into memory tools
+  // mcpDebugger.info('Registering prompt workflow tools...');
+  // registerPromptTools(server);
 
   mcpDebugger.info('MCP server creation complete');
   return server;

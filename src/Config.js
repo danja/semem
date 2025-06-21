@@ -91,12 +91,14 @@ export default class Config {
             
             console.log('After merging, config is:', JSON.stringify(this.config, null, 2))
             
+            this.initialized = true
             this.applyEnvironmentOverrides()
             this.validateConfig()
-            this.initialized = true
             
             console.log('Final config after overrides and validation:', JSON.stringify(this.config, null, 2))
         } catch (error) {
+            console.error('Config initialization error details:', error);
+            console.error('Error stack:', error.stack);
             throw new Error(`Config initialization failed: ${error.message}`)
         }
     }

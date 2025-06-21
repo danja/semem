@@ -23,9 +23,17 @@ export async function initializeServices() {
     
     // Initialize config first
     console.log('Initializing config...');
-    config = new Config(path.join(process.cwd(), 'config', 'config.json'));
-    await config.init();
-    console.log('Config initialized successfully');
+    const configPath = process.env.SEMEM_CONFIG_PATH || path.join(process.cwd(), 'config', 'config.json');
+    console.log(`Environment SEMEM_CONFIG_PATH: ${process.env.SEMEM_CONFIG_PATH}`);
+    console.log(`Resolved config file path: ${configPath}`);
+    config = new Config(configPath);
+    try {
+      await config.init();
+      console.log('Config initialized successfully');
+    } catch (configError) {
+      console.error('Config initialization failed with detailed error:', configError);
+      throw configError;
+    }
     
     // Initialize memory manager
     console.log('Initializing memory manager...');
