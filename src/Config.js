@@ -80,6 +80,10 @@ export default class Config {
             if (this.configFilePath) {
                 fileConfig = this.loadConfigFile()
                 console.log('Loaded config file content:', JSON.stringify(fileConfig, null, 2))
+                
+                // Transform config file format to internal format
+                fileConfig = this.transformJsonConfig(fileConfig)
+                console.log('Transformed config:', JSON.stringify(fileConfig, null, 2))
             } else {
                 console.log('No config file path provided, using defaults')
             }
@@ -166,7 +170,8 @@ export default class Config {
         // Map SPARQL endpoints if they exist in the format we expect
         if (jsonConfig.sparqlEndpoints && jsonConfig.sparqlEndpoints.length > 0) {
             const endpoint = jsonConfig.sparqlEndpoints[0]
-            // Only transform if we have the old format with queryEndpoint
+            
+            // Handle old format with queryEndpoint
             if (endpoint.queryEndpoint) {
                 transformed.sparqlEndpoints = [{
                     label: "config-file",
@@ -180,6 +185,29 @@ export default class Config {
                     gspRead: "/semem/data",
                     gspWrite: "/semem/data"
                 }]
+            }
+            // Handle new format with urlBase and query/update paths
+            else if (endpoint.urlBase && endpoint.query && endpoint.update) {
+                // Only update storage configuration if it uses a single endpoint string
+                // and we can safely enhance it with proper query/update URLs
+                if (jsonConfig.storage && 
+                    jsonConfig.storage.type === 'sparql' && 
+                    jsonConfig.storage.options && 
+                    jsonConfig.storage.options.endpoint &&
+                    typeof jsonConfig.storage.options.endpoint === 'string') {
+                    
+                    transformed.storage = {
+                        ...jsonConfig.storage,
+                        options: {
+                            ...jsonConfig.storage.options,
+                            query: endpoint.urlBase + endpoint.query,
+                            update: endpoint.urlBase + endpoint.update,
+                            user: endpoint.user || jsonConfig.storage.options.user,
+                            password: endpoint.password || jsonConfig.storage.options.password,
+                            graphName: jsonConfig.storage.options.graphName || jsonConfig.graphName
+                        }
+                    }
+                }
             }
         }
         

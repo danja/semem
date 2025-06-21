@@ -870,6 +870,7 @@ export function registerMemoryToolsHttp(server) {
       }
 
       if (name === ToolName.RETRIEVE_MEMORIES) {
+        console.log('🔍 DEBUG: RETRIEVE_MEMORIES handler called with:', { query: args.query, threshold: args.threshold });
         const { query, threshold, limit } = RetrieveMemoriesSchema.parse(args);
         
         await initializeServices();
@@ -878,7 +879,13 @@ export function registerMemoryToolsHttp(server) {
         
         if (memoryManager) {
           // Search for similar memories using SafeOperations
-          const memories = await safeOps.retrieveMemories(query, threshold, 0);
+          // Convert threshold from 0-1 scale to 0-100 scale that MemoryStore expects
+          const memories = await safeOps.retrieveMemories(query, threshold * 100, 0);
+          console.log('🔍 DEBUG: Retrieved memories count:', memories.length);
+          if (memories.length > 0) {
+            console.log('🔍 DEBUG: First memory object keys:', Object.keys(memories[0]));
+            console.log('🔍 DEBUG: First memory object:', JSON.stringify(memories[0], null, 2));
+          }
           
           return {
             content: [{
@@ -888,9 +895,13 @@ export function registerMemoryToolsHttp(server) {
                 message: `Found ${memories.length} similar memories`,
                 memories: memories.map(m => ({
                   prompt: m.prompt,
-                  response: m.response,
+                  response: m.output || m.response || 'No response available',
                   similarity: m.similarity,
-                  concepts: m.concepts?.slice(0, 5) // Limit concepts shown
+                  concepts: m.concepts?.slice(0, 5), // Limit concepts shown
+                  has_output: !!m.output,
+                  has_response: !!m.response,
+                  object_keys: Object.keys(m),
+                  raw_memory_object: m // Include full object for debugging
                 }))
               }, null, 2)
             }]
@@ -938,10 +949,16 @@ export function registerMemoryToolsHttp(server) {
           
           if (useMemory) {
             // Get relevant memories for context using SafeOperations
-            const memories = await safeOps.retrieveMemories(prompt, 0.7, 0);
+            // Note: MemoryStore uses percentage similarity (0-100), so convert from 0-1 scale to 0-100 scale
+            const memories = await safeOps.retrieveMemories(prompt, 0.7 * 100, 0);
             
             if (memories.length > 0) {
-              context = memories.map(m => `Previous: ${m.prompt} -> ${m.response}`).join('\n');
+              // Debug: Check what fields are available in memory objects
+              console.log('Memory object keys:', memories[0] ? Object.keys(memories[0]) : 'No memories');
+              console.log('First memory:', JSON.stringify(memories[0], null, 2));
+              
+              // The interaction object uses 'output' field, not 'response'
+              context = memories.map(m => `Previous: ${m.prompt} -> ${m.output || m.response || 'No response available'}`).join('\n');
             }
           }
           

@@ -13,18 +13,21 @@ export default class PromptTemplates {
                 if (context) {
                     messages.push({
                         role: 'user',
-                        content: context
+                        content: `Here is relevant information from my memory that you must use to answer the following question:
+
+MEMORY CONTEXT:
+${context}
+
+Please base your response on this specific information. If the question relates to topics covered in the memory context, use that information as your primary source. Do not make up information that contradicts or isn't supported by the provided context.
+
+QUESTION: ${query}`
                     })
+                } else {
                     messages.push({
-                        role: 'assistant',
-                        content: 'I understand the context provided. How can I help with your query?'
+                        role: 'user',
+                        content: query
                     })
                 }
-
-                messages.push({
-                    role: 'user',
-                    content: query
-                })
 
                 return messages
             },
@@ -46,18 +49,21 @@ export default class PromptTemplates {
                 if (context) {
                     messages.push({
                         role: 'user',
-                        content: `Previous Context:\n${context}`
+                        content: `Here is relevant information from my memory that you must use to answer the following question:
+
+MEMORY CONTEXT:
+${context}
+
+Please base your response on this specific information. If the question relates to topics covered in the memory context, use that information as your primary source. Do not make up information that contradicts or isn't supported by the provided context.
+
+QUESTION: ${query}`
                     })
+                } else {
                     messages.push({
-                        role: 'assistant',
-                        content: 'Context received. What would you like to know?'
+                        role: 'user',
+                        content: query
                     })
                 }
-
-                messages.push({
-                    role: 'user',
-                    content: query
-                })
 
                 return messages
             },

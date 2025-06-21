@@ -171,6 +171,23 @@ export default class MemoryManager {
         return await this.llmHandler.extractConcepts(text)
     }
 
+    async storeInteraction(prompt, response, metadata = {}) {
+        // Generate embedding for the combined prompt and response
+        const embedding = await this.generateEmbedding(`${prompt} ${response}`)
+        
+        // Extract concepts from the combined text
+        const concepts = await this.extractConcepts(`${prompt} ${response}`)
+        
+        // Store the interaction using addInteraction
+        await this.addInteraction(prompt, response, embedding, concepts, metadata)
+        
+        return {
+            success: true,
+            concepts: concepts.length,
+            timestamp: Date.now()
+        }
+    }
+
     async dispose() {
         let error = null
         try {
