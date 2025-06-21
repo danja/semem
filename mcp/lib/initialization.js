@@ -42,11 +42,27 @@ export async function initializeServices() {
     const llmProvider = createLLMConnector();
     
     // Initialize MemoryManager with proper parameters
+    // Create storage backend based on config
+    let storageBackend = null;
+    const storageType = config.get('storage.type');
+    console.log(`Creating ${storageType} storage backend...`);
+    
+    if (storageType === 'sparql') {
+      const { default: SPARQLStore } = await import('../../src/stores/SPARQLStore.js');
+      const storageOptions = config.get('storage.options');
+      storageBackend = new SPARQLStore(storageOptions);
+    } else if (storageType === 'json') {
+      const { default: JSONStore } = await import('../../src/stores/JSONStore.js');
+      const storageOptions = config.get('storage.options');
+      storageBackend = new JSONStore(storageOptions.path);
+    }
+    // If storageType is 'memory' or null, storageBackend remains null (default InMemoryStore)
+    
     memoryManager = new MemoryManager({
       llmProvider,
       chatModel: modelConfig.chatModel,
       embeddingModel: modelConfig.embeddingModel,
-      storage: null // Will use default in-memory storage
+      storage: storageBackend
     });
     
     await memoryManager.initialize();
