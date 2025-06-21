@@ -102,6 +102,17 @@ npm run mcp-server-new
 
 ### Step 3: Connect Your MCP Client
 
+#### For Claude Code
+
+Run:
+```sh
+claude mcp add semem node mcp/index.js
+```
+Then start Claude.
+
+To check operation, try the prompt :
+> use extract_concepts on "the cat sat on the mat"
+
 #### For Claude Desktop
 
 Add to your Claude Desktop configuration file:
@@ -122,17 +133,6 @@ Add to your Claude Desktop configuration file:
   }
 }
 ```
-
-#### For Claude Code
-
-Run:
-```sh
-claude mcp add semem node mcp/index.js
-```
-Then start Claude.
-
-To check operation, try the prompt :
-> use extract_concepts on "the cat sat on the mat"
 
 #### For Other MCP Clients
 
