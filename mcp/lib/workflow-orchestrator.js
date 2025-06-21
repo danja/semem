@@ -716,6 +716,19 @@ export class WorkflowOrchestrator {
   generateExecutionId() {
     return `enhanced_exec_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   }
+
+  /**
+   * Get list of available tools (for testing and introspection)
+   */
+  getAvailableTools() {
+    const mcpTools = Object.keys(TOOL_MAPPING);
+    const customTools = Array.from(this.toolExecutors.keys());
+    return {
+      mcpTools,
+      customTools,
+      totalCount: mcpTools.length + customTools.length
+    };
+  }
 }
 
 // Export singleton instance

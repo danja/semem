@@ -40,7 +40,7 @@ export * as Utils from './src/Utils.js';
 
 // API Components available via separate imports when needed
 
-// MCP Server (for external MCP integration)
-export { createMCPServer } from './mcp/index.js';
+// MCP (Model Context Protocol) Integration
+export * as MCP from './mcp/mcp.js';
 
 // Note: Type definitions are available in ./dist/types/index.d.ts for TypeScript users

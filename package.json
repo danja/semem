@@ -51,7 +51,7 @@
     },
     "./mcp": {
       "types": "./dist/types/mcp-schema.d.ts",
-      "import": "./mcp/index.js"
+      "import": "./mcp/mcp.js"
     },
     "./package.json": "./package.json"
   },
@@ -59,7 +59,7 @@
     "index.js",
     "bin/",
     "src/",
-    "mcp/index.js",
+    "mcp/",
     "dist/types/index.d.ts",
     "dist/types/core.d.ts",
     "dist/types/ragno.d.ts",
