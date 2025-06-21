@@ -1135,27 +1135,269 @@ Semem is open source and welcomes contributions:
 
 ---
 
+## Enhanced Workflows (Version 2.0)
+
+Semem now includes next-generation enhanced workflows that provide intelligent document processing with SPARQL storage, hybrid search, and incremental learning capabilities.
+
+### Running Enhanced Workflows
+
+#### Starting the Enhanced MCP Server
+
+```bash
+# From the semem root directory
+cd /flow/hyperdata/semem
+node mcp/index.js
+```
+
+You should see confirmation that the enhanced workflow orchestrator is initialized:
+```
+✅ Enhanced workflow orchestrator initialized successfully
+✅ Semem MCP server running on stdio transport
+```
+
+#### Connecting via Claude Code
+
+```bash
+# Add semem to Claude Code (if not already done)
+claude mcp add semem node mcp/index.js
+
+# Start Claude Code
+claude
+```
+
+#### Available Enhanced Workflows
+
+The enhanced workflow system includes two powerful v2.0 workflows:
+
+1. **`enhanced-research-workflow`** - Intelligent document processing with SPARQL storage
+2. **`intelligent-qa-workflow`** - Adaptive question answering with learning
+
+List available workflows:
+```
+> mcp__semem__prompt_list
+```
+
+### Enhanced Research Workflow
+
+Process research documents with advanced analysis, SPARQL storage, and insight generation:
+
+```javascript
+{
+  "tool": "mcp__semem__prompt_execute",
+  "arguments": {
+    "name": "enhanced-research-workflow",
+    "arguments": {
+      "research_documents": [
+        "Transformer models have revolutionized natural language processing through their attention mechanism, allowing for better context understanding and parallel processing compared to sequential models like RNNs.",
+        "Large language models built on transformer architecture demonstrate emergent capabilities in reasoning, code generation, and complex problem solving as they scale to billions of parameters."
+      ],
+      "domain_focus": "AI/ML", 
+      "analysis_goals": [
+        "concept_extraction",
+        "relationship_mapping", 
+        "insight_generation",
+        "trend_analysis"
+      ],
+      "user_context": {
+        "userId": "researcher_001",
+        "expertise_level": "expert",
+        "preferences": {
+          "focus_areas": ["transformers", "attention_mechanisms", "scaling"],
+          "output_detail": "comprehensive"
+        }
+      }
+    }
+  }
+}
+```
+
+**Enhanced Features:**
+- **SPARQL-First Storage**: Documents stored in RDF format with embeddings
+- **Hybrid Search**: Combines vector similarity + SPARQL queries + dual search
+- **Domain-Focused Analysis**: Specialized processing based on research domain
+- **User Personalization**: Adapts to expertise level and preferences
+- **Comprehensive Insights**: Multi-perspective analysis with confidence scoring
+
+### Intelligent Q&A Workflow
+
+Answer questions using adaptive search strategies and incremental learning:
+
+```javascript
+{
+  "tool": "mcp__semem__prompt_execute",
+  "arguments": {
+    "name": "intelligent-qa-workflow",
+    "arguments": {
+      "question": "How do transformer attention mechanisms compare to RNN memory systems in terms of computational efficiency?",
+      "user_context": {
+        "userId": "student_001", 
+        "expertise_level": "intermediate",
+        "domain_interests": ["machine_learning", "neural_networks"]
+      },
+      "search_config": {
+        "searchDepth": "comprehensive",
+        "confidenceThreshold": 0.8,
+        "maxSources": 15
+      },
+      "response_style": {
+        "detail_level": "balanced",
+        "include_sources": true,
+        "include_confidence": true,
+        "include_alternatives": true
+      }
+    }
+  }
+}
+```
+
+**Enhanced Features:**
+- **Adaptive Query Processing**: Context-aware search optimization
+- **User History Integration**: Learns from previous interactions
+- **Confidence Assessment**: Reliability scoring for answers
+- **Multi-Perspective Analysis**: Includes alternative viewpoints
+- **Incremental Learning**: Improves responses based on feedback
+
+### Enhanced Tool Access
+
+You can also access individual enhanced tools directly:
+
+```bash
+# Enhanced document ingestion
+> research_ingest_documents with documents=["Climate change research shows accelerating trends"] domain="climate_science"
+
+# Hybrid search capabilities
+> hybrid_search with query="machine learning applications" threshold=0.7 limit=10
+
+# Adaptive query processing
+> adaptive_query_processing with query="neural network architectures" userContext={"expertise_level": "expert"}
+
+# User feedback integration
+> capture_user_feedback with queryId="12345" feedback={"type": "positive", "score": 0.9}
+```
+
+### Enhanced Workflow Results
+
+Enhanced workflows return comprehensive results with rich metadata:
+
+```json
+{
+  "success": true,
+  "promptName": "enhanced-research-workflow",
+  "executionId": "enhanced_exec_1703123456789_abc123",
+  "outputs": {
+    "concepts": ["transformer", "attention_mechanism", "neural_networks"],
+    "entities": [
+      {"name": "transformer_model", "type": "concept"},
+      {"name": "attention_mechanism", "type": "method"}
+    ],
+    "insights": "Comprehensive analysis of transformer architecture benefits...",
+    "summary": "Executive summary of research findings...",
+    "searchCapabilities": "Hybrid search results combining vector and SPARQL",
+    "executionMetrics": {
+      "documentsProcessed": 2,
+      "entitiesExtracted": 15,
+      "relationshipsFound": 8,
+      "processingTime": "45.2 seconds",
+      "storageBackend": "CachedSPARQL",
+      "embeddingsGenerated": 1536
+    }
+  },
+  "features": {
+    "adaptiveLearning": true,
+    "hybridSearch": true,
+    "sparqlIntegration": true,
+    "userPersonalization": true
+  }
+}
+```
+
+### Validation and Testing
+
+Verify the enhanced workflow system is functioning correctly:
+
+```bash
+# Run comprehensive validation test
+node mcp/test/enhanced-workflow-validation.js
+```
+
+Expected output:
+```
+🚀 Starting Enhanced Workflow Validation Tests...
+📊 Test Report
+==================================================
+Total Tests: 18
+Passed: 17
+Failed: 1
+Success Rate: 94.4%
+🎉 Enhanced workflow system is functional.
+```
+
+### Enhanced vs Standard Workflows
+
+| Feature | Standard Workflows (v1.0) | Enhanced Workflows (v2.0) |
+|---------|---------------------------|---------------------------|
+| Storage | JSON/Memory | SPARQL with embeddings |
+| Search | Basic vector similarity | Hybrid vector + SPARQL + dual |
+| Learning | Static responses | Adaptive with user feedback |
+| Performance | Standard execution | Optimized with caching |
+| Personalization | None | User context awareness |
+| Confidence | Basic | Comprehensive scoring |
+| Metadata | Limited | Rich execution metrics |
+
+### Configuration Options
+
+Enhanced workflows support advanced configuration:
+
+```javascript
+{
+  "storage_config": {
+    "backend": "CachedSPARQL",
+    "enableEmbeddings": true,
+    "cacheSize": 10000,
+    "graphName": "http://semem.org/research-workflow"
+  },
+  "search_config": {
+    "searchDepth": "comprehensive",
+    "includeRelated": true,
+    "confidenceThreshold": 0.7,
+    "maxSources": 15
+  },
+  "response_style": {
+    "detail_level": "balanced",
+    "include_sources": true,
+    "include_confidence": true,
+    "include_alternatives": false
+  }
+}
+```
+
+---
+
 ## Conclusion
 
-This tutorial has covered the comprehensive capabilities of Semem's MCP integration, from basic memory operations to sophisticated multi-system workflows. The combination of semantic memory, knowledge graphs, and 3D navigation provides unprecedented flexibility for information processing and analysis.
+This tutorial has covered the comprehensive capabilities of Semem's MCP integration, from basic memory operations to sophisticated enhanced workflows with SPARQL integration and intelligent learning. The combination of semantic memory, knowledge graphs, 3D navigation, and enhanced v2.0 workflows provides unprecedented flexibility for intelligent information processing and analysis.
 
 ### Key Takeaways
 
-- **Start Simple**: Begin with basic memory operations before advancing to complex workflows
-- **Use Prompt Templates**: Leverage pre-built workflows for common tasks
-- **Combine Systems**: The real power comes from integrating memory, graphs, and navigation
-- **Customize Configuration**: Adapt settings to your specific use case and performance requirements
-- **Monitor Performance**: Use built-in tools to optimize and troubleshoot
+- **Start Simple**: Begin with basic memory operations before advancing to enhanced workflows
+- **Use Enhanced Templates**: Leverage v2.0 workflows for SPARQL storage and hybrid search
+- **Combine Systems**: The real power comes from integrating memory, graphs, navigation, and learning
+- **Leverage User Context**: Enhanced workflows adapt to your expertise and preferences
+- **Monitor Performance**: Use built-in metrics and validation tools to optimize usage
+- **Embrace Learning**: Enhanced workflows improve over time with user feedback
 
 ### Next Steps
 
-1. **Experiment** with the provided examples in your domain
-2. **Build Custom Workflows** combining multiple tools
-3. **Integrate** with your existing systems and data
-4. **Contribute** improvements and new capabilities
-5. **Share** your use cases with the community
+1. **Experiment** with enhanced workflows in your domain
+2. **Build Custom Enhanced Workflows** using the v2.0 orchestrator
+3. **Integrate SPARQL Storage** for persistent knowledge management
+4. **Utilize Hybrid Search** for comprehensive information retrieval
+5. **Provide User Feedback** to improve system responses over time
+6. **Monitor Execution Metrics** to optimize workflow performance
+7. **Contribute** improvements and new enhanced capabilities
+8. **Share** your enhanced workflow use cases with the community
 
-Semem transforms individual AI tools into a comprehensive knowledge processing platform. Through MCP integration, these capabilities become accessible to any AI application, enabling new possibilities for intelligent information management and analysis.
+Semem's enhanced workflow system transforms individual AI tools into a comprehensive, intelligent knowledge processing platform. Through MCP integration with SPARQL storage, hybrid search, and adaptive learning, these capabilities enable new possibilities for intelligent information management, analysis, and continuous improvement.
 
 ---
 

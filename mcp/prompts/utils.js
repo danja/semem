@@ -6,6 +6,7 @@
  */
 
 import logger from 'loglevel';
+import { workflowOrchestrator } from '../lib/workflow-orchestrator.js';
 
 /**
  * Validate prompt arguments against the prompt template
@@ -100,6 +101,25 @@ export async function executePromptWorkflow(prompt, args, toolExecutor) {
   const validation = validatePromptArguments(prompt, args);
   if (!validation.valid) {
     throw new Error(`Argument validation failed: ${validation.errors.join(', ')}`);
+  }
+
+  // Use enhanced orchestrator for version 2.0 workflows
+  if (prompt.version === '2.0' || prompt.features) {
+    logger.info(`Using enhanced orchestrator for workflow: ${prompt.name}`);
+    try {
+      const orchestratorResult = await workflowOrchestrator.executeWorkflow(
+        prompt.name, 
+        validation.processedArgs, 
+        toolExecutor
+      );
+      
+      if (orchestratorResult.toolExecutor) {
+        // Use the enhanced tool executor
+        toolExecutor = orchestratorResult.toolExecutor;
+      }
+    } catch (error) {
+      logger.warn(`Enhanced orchestrator failed, falling back to standard execution: ${error.message}`);
+    }
   }
 
   const results = [];

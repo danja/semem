@@ -542,7 +542,18 @@ class PromptRegistry {
    * Get integrated workflow prompt templates
    */
   getIntegratedPrompts() {
+    // Import enhanced workflows
+    let enhancedWorkflows = [];
+    try {
+      // Dynamic import would be used here in production
+      // For now, we'll add them programmatically
+      enhancedWorkflows = this.getEnhancedWorkflows();
+    } catch (error) {
+      logger.warn('Enhanced workflows not available, using standard workflows');
+    }
+
     return [
+      ...enhancedWorkflows,
       {
         name: 'semem-full-pipeline',
         description: 'Complete memory → graph → navigation workflow',
@@ -677,6 +688,229 @@ class PromptRegistry {
             }
           }
         ]
+      }
+    ];
+  }
+
+  /**
+   * Get enhanced workflow templates (Phase 2 implementation)
+   */
+  getEnhancedWorkflows() {
+    return [
+      {
+        name: 'enhanced-research-workflow',
+        description: 'Intelligent document processing with SPARQL storage and learning',
+        version: '2.0',
+        category: 'integrated',
+        arguments: [
+          {
+            name: 'research_documents',
+            description: 'Array of research documents to process',
+            required: true,
+            type: 'array'
+          },
+          {
+            name: 'domain_focus',
+            description: 'Research domain focus area',
+            required: false,
+            type: 'string',
+            default: 'general'
+          },
+          {
+            name: 'analysis_goals',
+            description: 'Specific analysis objectives',
+            required: false,
+            type: 'array',
+            default: ['concept_extraction', 'relationship_mapping', 'insight_generation']
+          },
+          {
+            name: 'user_context',
+            description: 'User interaction context for personalization',
+            required: false,
+            type: 'object',
+            default: {}
+          }
+        ],
+        workflow: [
+          {
+            tool: 'semem_switch_storage_backend',
+            arguments: {
+              backend: 'CachedSPARQL',
+              config: {
+                endpoint: 'http://localhost:3030/semem/query',
+                enableEmbeddings: true,
+                cacheSize: 10000
+              }
+            },
+            description: 'Initialize enhanced SPARQL storage'
+          },
+          {
+            tool: 'research_ingest_documents',
+            arguments: {
+              documents: '${research_documents}',
+              domain: '${domain_focus}'
+            },
+            description: 'Enhanced document ingestion with dual storage'
+          },
+          {
+            tool: 'semem_extract_concepts',
+            arguments: {
+              text: 'combined document text',
+              options: { domainFocus: '${domain_focus}' }
+            },
+            description: 'Extract domain-focused concepts'
+          },
+          {
+            tool: 'ragno_decompose_corpus',
+            arguments: {
+              textChunks: 'document chunks',
+              options: {
+                extractRelationships: true,
+                enableEmbeddings: true,
+                minEntityConfidence: 0.7
+              }
+            },
+            description: 'Build enhanced knowledge graph'
+          },
+          {
+            tool: 'ragno_analyze_graph',
+            arguments: {
+              analysisTypes: ['statistics', 'centrality', 'communities'],
+              options: { includeDetails: true }
+            },
+            description: 'Comprehensive graph analysis'
+          },
+          {
+            tool: 'research_generate_insights',
+            arguments: {
+              concepts: 'extracted concepts',
+              entities: 'graph entities',
+              relationships: 'graph relationships',
+              goals: '${analysis_goals}',
+              userContext: '${user_context}'
+            },
+            description: 'Generate comprehensive research insights'
+          },
+          {
+            tool: 'hybrid_search',
+            arguments: {
+              query: '${domain_focus} research insights',
+              threshold: 0.7,
+              limit: 20
+            },
+            description: 'Setup hybrid search capabilities'
+          }
+        ],
+        features: {
+          adaptiveLearning: true,
+          hybridSearch: true,
+          sparqlIntegration: true,
+          embeddingSupport: true,
+          userPersonalization: true
+        }
+      },
+      {
+        name: 'intelligent-qa-workflow',
+        description: 'Answer questions using hybrid search and incremental learning',
+        version: '2.0',
+        category: 'integrated',
+        arguments: [
+          {
+            name: 'question',
+            description: 'User question to answer using intelligent search',
+            required: true,
+            type: 'string'
+          },
+          {
+            name: 'user_context',
+            description: 'User interaction context for personalization',
+            required: false,
+            type: 'object',
+            default: {}
+          },
+          {
+            name: 'search_config',
+            description: 'Advanced search configuration',
+            required: false,
+            type: 'object',
+            default: {
+              searchDepth: 'comprehensive',
+              confidenceThreshold: 0.7
+            }
+          }
+        ],
+        workflow: [
+          {
+            tool: 'semem_extract_concepts',
+            arguments: {
+              text: '${question}',
+              options: { extractIntent: true }
+            },
+            description: 'Analyze question intent and concepts'
+          },
+          {
+            tool: 'adaptive_query_processing',
+            arguments: {
+              query: '${question}',
+              userContext: '${user_context}'
+            },
+            description: 'Process query adaptively'
+          },
+          {
+            tool: 'hybrid_search',
+            arguments: {
+              query: '${question}',
+              threshold: '${adaptive_strategy.threshold}',
+              limit: '${adaptive_strategy.limit}'
+            },
+            description: 'Execute comprehensive hybrid search'
+          },
+          {
+            tool: 'semem_generate_response',
+            arguments: {
+              prompt: '${enhanced_question_prompt}',
+              useMemory: true,
+              contextLimit: 15,
+              options: {
+                structuredResponse: true,
+                includeConfidence: true
+              }
+            },
+            description: 'Generate intelligent, context-aware answer'
+          },
+          {
+            tool: 'semem_store_interaction',
+            arguments: {
+              prompt: '${question}',
+              response: '${intelligent_answer}',
+              metadata: {
+                userContext: '${user_context}',
+                confidence: '${answer_confidence}',
+                workflowVersion: '2.0'
+              }
+            },
+            description: 'Store Q&A interaction for learning'
+          },
+          {
+            tool: 'capture_user_feedback',
+            arguments: {
+              queryId: '${execution_id}',
+              response: '${intelligent_answer}',
+              feedback: {
+                type: 'qa_response',
+                context: '${user_context}'
+              }
+            },
+            description: 'Setup feedback capture for learning'
+          }
+        ],
+        features: {
+          adaptiveSearch: true,
+          contextualLearning: true,
+          confidenceAssessment: true,
+          userPersonalization: true,
+          continuousImprovement: true
+        }
       }
     ];
   }

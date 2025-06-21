@@ -28,6 +28,9 @@ import { registerStatusResourcesHttp } from './resources/status-resource-http.js
 import { initializePromptRegistry, promptRegistry } from './prompts/registry.js';
 import { executePromptWorkflow, createSafeToolExecutor, validateExecutionPrerequisites } from './prompts/utils.js';
 
+// Import enhanced workflow orchestrator
+import { workflowOrchestrator } from './lib/workflow-orchestrator.js';
+
 /**
  * Register MCP prompt handlers
  */
@@ -177,6 +180,11 @@ async function createServer() {
   mcpDebugger.info('Initializing prompt registry...');
   await initializePromptRegistry();
   mcpDebugger.info('Prompt registry initialized successfully');
+
+  // Initialize enhanced workflow orchestrator
+  mcpDebugger.info('Initializing enhanced workflow orchestrator...');
+  await workflowOrchestrator.initialize(server);
+  mcpDebugger.info('Enhanced workflow orchestrator initialized successfully');
 
   // Register all tools using HTTP pattern
   mcpDebugger.info('Registering memory tools...');
