@@ -344,9 +344,61 @@ export function createSafeToolExecutor(mcpServer) {
 export function validateExecutionPrerequisites(prompt, mcpServer) {
   const errors = [];
   
+  // Tool name mapping - matches workflow-orchestrator.js TOOL_MAPPING
+  const TOOL_MAPPING = {
+    // Memory tools
+    'semem_store_interaction': 'semem_store_interaction',
+    'semem_retrieve_memories': 'semem_retrieve_memories', 
+    'semem_generate_response': 'semem_generate_response',
+    'semem_generate_embedding': 'semem_generate_embedding',
+    'semem_extract_concepts': 'semem_extract_concepts',
+    
+    // Ragno tools
+    'ragno_decompose_corpus': 'ragno_decompose_corpus',
+    'ragno_search_dual': 'ragno_search_dual',
+    'ragno_get_entities': 'ragno_get_entities',
+    'ragno_vector_search': 'ragno_vector_search',
+    'ragno_export_rdf': 'ragno_export_rdf',
+    'ragno_query_sparql': 'ragno_query_sparql',
+    'ragno_analyze_graph': 'ragno_analyze_graph',
+    
+    // Workflow aliases
+    'ragno_build_relationships': 'ragno_analyze_graph',
+    'ragno_extract_entities': 'ragno_get_entities',
+    
+    // Custom workflow tools (implemented by orchestrator)
+    'research_ingest_documents': 'research_ingest_documents',
+    'research_generate_insights': 'research_generate_insights',
+    'adaptive_query_processing': 'adaptive_query_processing',
+    'hybrid_search': 'hybrid_search',
+    'capture_user_feedback': 'capture_user_feedback',
+    'incremental_learning': 'incremental_learning'
+  };
+
+  // Custom workflow tools that are implemented by the orchestrator
+  const CUSTOM_TOOLS = [
+    'research_ingest_documents', 
+    'research_generate_insights',
+    'adaptive_query_processing',
+    'hybrid_search', 
+    'capture_user_feedback',
+    'incremental_learning'
+  ];
+  
   // Check if all required tools are available
   for (const step of prompt.workflow) {
-    if (!mcpServer.tools || !mcpServer.tools[step.tool]) {
+    const mappedTool = TOOL_MAPPING[step.tool] || step.tool;
+    
+    // For custom tools, assume they're available (implemented by orchestrator)
+    if (CUSTOM_TOOLS.includes(mappedTool)) {
+      continue;
+    }
+    
+    // For MCP tools, check if they're registered
+    // The tools are registered by name in the tools list, not with mcp__ prefix
+    const toolExists = mcpServer.tools && mcpServer.tools.some(tool => tool.name === mappedTool);
+    
+    if (!toolExists) {
       errors.push(`Required tool not available: ${step.tool}`);
     }
   }
