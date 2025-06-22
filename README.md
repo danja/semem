@@ -14,21 +14,19 @@
 <details>
 <summary>Semem is an experimental Node.js toolkit for AI memory management</summary> that integrates large language models (LLMs) with Semantic Web technologies (RDF/SPARQL). It offers knowledge graph retrieval and augmentation algorithms within a conceptual model based on the [Ragno](https://github.com/danja/ragno) (knowledge graph description) and [ZPT](https://github.com/danja/zpt) (knowledge graph navigation) ontologies. It is a [Tensegrity](https://github.com/danja/tensegrity) subproject.
 
-The intuition is that while LLMs and associated techniques have massively advanced the field of AI and offer considerable utility, the typical approach is missing the elephant in the room: **the Web** - the biggest known knowledgebase in our universe. Semantic Web technologies offer data integration at a global scale, with tried & tested conceptual models for knowledge representation. **There is a lot of low-hanging fruit.**
+The intuition is that while LLMs and associated techniques have massively advanced the field of AI and offer considerable utility, the typical approach is missing the elephant in the room: <strong>the Web</strong> - the biggest known knowledgebase in our universe. Semantic Web technologies offer data integration at a global scale, with tried & tested conceptual models for knowledge representation. <strong>There is a lot of low-hanging fruit.</strong>
 </details>
 
 ## Status 2025-06-21 
 
-
-
 <details>
-<summary>Mostly functional but very, very sketchy. It has an MCP server, HTTP API, a crude browser UI and code APIs. A lot to do before much will be genuinely useful. It is in active development as of June 2025. **It is not for the fainthearted**.</summary>
+<summary>Mostly functional but very, very sketchy. It has an MCP server, HTTP API, a crude browser UI and code APIs. A lot to do before much will be genuinely useful. It is in active development as of June 2025. <strong>It is not for the fainthearted</strong>.</summary>
 
 The codebase is registered as the npm package [semem](https://www.npmjs.com/package/semem) though there hasn't been much time spent on this angle, currently it's pretty much essential to use this repo (or MCP). 
 
-The dev process has involved pushing out in various directions with spikes, then circling back to ensure the core is still functional, then consolidation. To date it's been a one-man + various AI assistants (and a dog) operation. **Collaborators would be very welcome**.
+The dev process has involved pushing out in various directions with spikes, then circling back to ensure the core is still functional, then consolidation. To date it's been a one-man + various AI assistants (and a dog) operation. <strong>Collaborators would be very welcome</strong>.
 </details>
-It is feature-complete as originally conceived, in the sense of *[all the right notes, but not necessarily in the right order](https://www.youtube.com/watch?v=R7GeKLE0x3s)*. There is a lot of cruft, no doubt numerous bugs. Right now it's in a **consolidation phase**.
+It is feature-complete as originally conceived, in the sense of <em>[all the right notes, but not necessarily in the right order](https://www.youtube.com/watch?v=R7GeKLE0x3s)</em>. There is a lot of cruft, no doubt numerous bugs. Right now it's in a <strong>consolidation phase</strong>.
 
 ## System Overview
 
