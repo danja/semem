@@ -1,21 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
     <title>Rawer</title>
-    todo
-
-    <link href=""/>
-    <updated></updated>
-    <id></id>
+    <subtitle>Latest updates</subtitle>
+    <link href="{{ site.url }}/feed/" rel="self" />
+    <link href="{{ site.url }}" />
+    <id>{{ site.url }}</id>
+    <updated>{{ now | date('YYYY-MM-DDTHH:mm:ssZ') }}</updated>
     <author>
-        <name></name>
-
+        <name>{{ site.author.name }}</name>
+        <email>{{ site.author.email }}</email>
     </author>
-<entry>
-    <title>
-        This feed isn't formatted properly yet
-   </title>
-   <content>
-      {{content | safe}}
-      </content>
+    
+    {% for post in collections.posts | reverse %}
+    <entry>
+        <title>{{ post.data.title }}</title>
+        <link href="{{ site.url }}{{ post.url }}" />
+        <link rel="alternate" type="text/html" href="{{ site.url }}{{ post.url }}" />
+        <id>urn:uuid:{{ post.date | date('YYYY-MM-DD') }}-{{ post.fileSlug }}</id>
+        <published>{{ post.date | date('YYYY-MM-DDTHH:mm:ssZ') }}</published>
+        <updated>{{ post.date | date('YYYY-MM-DDTHH:mm:ssZ') }}</updated>
+        <summary>{{ post.data.summary | default(post.data.title) }}</summary>
+        <content type="xhtml">
+            <div xmlns="http://www.w3.org/1999/xhtml">
+                {{ post.templateContent | safe }}
+            </div>
+        </content>
+        <author>
+            <name>{{ site.author.name }}</name>
+            <email>{{ site.author.email }}</email>
+        </author>
     </entry>
+    {% endfor %}
 </feed>

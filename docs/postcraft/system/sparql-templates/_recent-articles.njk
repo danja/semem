@@ -4,16 +4,18 @@ PREFIX : <http://purl.org/stuff/transmissions/>
 
 SELECT DISTINCT * WHERE {
      GRAPH ?g {
-  ?uri a schema:Article ;
+  ?article a schema:Article ;
     schema:headline ?title ;
     schema:dateModified ?modified ;
-    :slug ?slug ;
-       schema:articleBody ?content ;
-        :relative ?relative ;
-    schema:dateCreated ?created .
+    schema:dateCreated ?created ;
+    schema:creator ?creator ;
+    :htmlContent ?html .
+
+  ?creator a schema:Person ;
+    schema:name ?creatorName .
 
 }
-FILTER(?created != "")
+ # FILTER(STR(?created) != "")
 }
 ORDER BY DESC(?created)
-# LIMIT 8
+LIMIT 10

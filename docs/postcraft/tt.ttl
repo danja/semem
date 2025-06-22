@@ -25,6 +25,7 @@
 # for md-to-sparqlstore
 
 :dirWalker a :ConfigSet ;
+  #  :limit "3" ; # for debugging
    :sourceDir "content/raw" .
 
 :readerSet a :ConfigSet ;
@@ -33,42 +34,43 @@
 :entryExtras a :ConfigSet ;
  #  :loglevel "debug" ;
     :rawDir "content/raw" ;
-    :renderPath "docs" ;
-    :baseURI <http://hyperdata.it/> ;
+    :renderPath "" ; # should probably come at render time
+    :baseURI <https://hyperdata.it/content/> ;
+    :graph <http://hyperdata.it/content> ;
     :creatorName "Danny" ;
     :creatorURI <http://danny.ayers.name/me> .
 
 :storeArticle a :ConfigSet ;
- :loglevel "debug" ;
+# :loglevel "debug" ;
     :delay "100" ;
     :dataBlock "contentBlocks" ;
     :templateFilename "system/sparql-templates/store-article.njk" ;
     :endpointSettings "system/endpoints.json" ;
-    :graph <http://hyperdata.it/> .
+    :graph <http://hyperdata.it/content> .
 
 ###########################
 ### for sparqlstore-to-html
 
 :resultIterator a :ConfigSet ;
+  #  :limit "2"; # for debugging
     :forEach "queryResults.results.bindings" ;
     :remove "queryResults" ;
-    :graph <http://hyperdata.it/> .
+    :graph <http://hyperdata.it/content> .
 
 :prepArticle a :ConfigSet  ;
     :remove "queryResults" ;
-    :rename (:c1 :c3 :u1)  .
-        # for content
-        :c1   :pre    "currentItem.title.value" ;
-              :post "contentBlocks.title"  .
-        :c2   :pre    "currentItem.htmlContent.value" ;
-              :post  "contentBlocks.htmlContent"  .
-        #:c2   :pre    "currentItem.content.value" ;
-         #     :post  "contentBlocks.content"  .
-        :c3   :pre    "appRunStart" ;
-              :post  "contentBlocks.published"  .
-        # for SPARQL update
-        :u1     :pre    "currentItem.article.value" ;
+    :rename (:prepA1 :prepA2 :prepA3 :prepA4)  .
+       # :prepA0 :pre    "currentItem.graph.value" ;
+        #        :post   "contentBlocks.graph"  .
+        :prepA1 :pre    "currentItem.uri.value" ;
                 :post   "contentBlocks.uri"  .
+        :prepA2 :pre    "currentItem.title.value" ;
+                :post   "contentBlocks.title"  .
+        :prepA3 :pre    "currentItem.created.value" ;
+                :post  "contentBlocks.created"  .
+        :prepA4 :pre    "appRunStart" ;
+                :post  "contentBlocks.published"  .
+
 
 :markdown a :ConfigSet ;
    # :loglevel "debug" ;
@@ -78,27 +80,33 @@
 :selectArticles a :ConfigSet ;
     :templateFilename "system/sparql-templates/select-articles.njk" ;
     :endpointSettings "system/endpoints.json" ;
-        :graph <http://hyperdata.it/> .
+        :graph <http://hyperdata.it/content> .
+
+:shiftHTML a :ConfigSet  ;
+    :rename ( :sh1 :sh3)  .
+        # for content
+        :sh1    :pre    "content" ;
+                :post "contentBlocks.content"  .
+        #:sh2    :pre    "graph" ;
+         #       :post "contentBlocks.graph"  .
+        :sh3    :pre    "currentItem.uri.value" ;
+                :post "contentBlocks.uri"  .
 
 :updateArticleHTML a :ConfigSet ;
 #:loglevel "debug" ;
     :delay "100" ;
     :dataBlock "contentBlocks" ;
-    :escape true ;
+   # :escape true ;
     :templateFilename "system/sparql-templates/save-html-chunk.njk" ;
     :endpointSettings "system/endpoints.json" ;
-         :graph <http://hyperdata.it/> .
+         :graph <http://hyperdata.it/content> .
 
 
 :articleContentTemplate a :ConfigSet ;
     :templateFilename "layout/base/templates/article-content.njk" .
    # :loglevel "debug" .
 
-:shiftHTML a :ConfigSet  ;
-    :rename (:sh1)  .
-        # for content
-        :sh1   :pre    "content" ;
-              :post "contentBlocks.content"  .
+
 
 :articlePageTemplate a :ConfigSet ;
     :templateFilename "layout/base/templates/article-page.njk" .
@@ -107,7 +115,7 @@
   :asPath true ;
   :targetField "temp" ;
   :values (:fn1 :fn2 :fn3 :fn4) .
-  :fn1 :field "targetPath" .
+  :fn1 :field "targetDir" .
   :fn2 :string "public" .
   :fn3 :field "currentItem.relative.value" .
   :fn4 :field "currentItem.slug.value" .
@@ -126,7 +134,7 @@
     :dataBlock "contentBlocks" ;
     :templateFilename "system/sparql-templates/record-rendering.njk" ;
     :endpointSettings "system/endpoints.json" ;
-        :graph <http://hyperdata.it/> .
+        :graph <http://hyperdata.it/content> .
 
 
 
@@ -136,7 +144,7 @@
 :recentArticles a :ConfigSet ;
     :templateFilename "system/sparql-templates/recent-articles.njk" ;
     :endpointSettings "system/endpoints.json" ;
-        :graph <http://hyperdata.it/> .
+        :graph <http://hyperdata.it/content> .
 
 :indexResultIterator a :ConfigSet ;
   :forEach "queryResults.results.bindings" .
@@ -151,7 +159,7 @@
         :pc3   :pre    "currentItem.created.value" ;
               :post  "contentBlocks.created"  .
 
-        :pu1     :pre    "currentItem.article.value" ;
+        :pu1     :pre    "currentItem.uri.value" ;
                 :post   "contentBlocks.uri"  .
 
 :accumulator a :ConfigSet ;
@@ -163,6 +171,7 @@
 ### create HTML index
 
 :prepHTML a :ConfigSet  ;
+    :loglevel "debug" ;
     :rename (:ph1 :ph2)  .
         # for content
         :ph1   :pre    "accumulator" ;
@@ -177,7 +186,7 @@
   :asPath true ;
   :targetField "destinationFile" ;
   :values (:hp1 :hp2 :hp3) .
-  :hp1 :field "targetPath" .
+  :hp1 :field "targetDir" . ####
   :hp2 :string "public" .
   :hp3 :string "index.html" .
 

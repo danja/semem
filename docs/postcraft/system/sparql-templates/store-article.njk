@@ -10,24 +10,14 @@ PREFIX : <http://purl.org/stuff/transmissions/>
 INSERT DATA {
       GRAPH <{{graph}}> {
   <{{uri}}> a schema:Article ;
-      :sourcePath "{{sourcePath}}" ; # remove?
-   #   :hasRepresentation [
-    #        a :Representation ;
-     #       :representationType "file" ;
-      #      :mediaType "{{mediaType}}" ;
-       #     :sourcePath "{{sourcePath}}"
-      #] ;
+     :sourcePath "{{sourcePath}}" ; # remove?
         :relative "{{relative}}" ;
-     #   :relPath "{{relPath}}" ;
-     #   :relMap "{{relMap}}" ;
+  #      :relPath "{{relPath}}" ;
+ #       :relMap "{{relMap}}" ;
         :slug "{{slug}}" ;
         schema:headline "{{title}}" ;
-        schema:dateCreated "{{created}}"; # ^^xsd:dateTime 
-        schema:dateModified "{{modified}}" ; # ^^xsd:dateTime
-        schema:articleBody """ {{content | safe}} """ ;
-        schema:creator <{{creator.uri}}> .
-
-    <{{creator.uri}}> a schema:Person ;
-        schema:name "{{creator.name}}" .
+        schema:dateCreated "{{dates.created}}"^^xsd:dateTime ;
+        schema:dateModified "{{dates.modified}}"^^xsd:dateTime ;
+        schema:articleBody """ {{content | safe}} """ .
 }
 }

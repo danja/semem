@@ -11,7 +11,12 @@
     </head>
     <!-- POST PAGE TEMPLATE -->
     <body>
+    <strong>{{dates}}</strong><em>{{dates.created}}</em>
+        <header id="entry-header">
+            <h1 class="post-title h-cinzel">
+                {{header}}
+            </h1>
+        </header>
         {{content |safe}}
     </body>
-      <!-- END POST PAGE TEMPLATE -->
 </html>
