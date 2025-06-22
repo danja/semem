@@ -8,21 +8,24 @@
 
 **tl;dr - flipping ideas (mostly) from the LLM world over to the Semantic Web for massively simplified integration, at global scale**
 
-Semem is an experimental Node.js toolkit for AI memory management that integrates large language models (LLMs) with Semantic Web technologies (RDF/SPARQL). It offers knowledge graph retrieval and augmentation algorithms within a conceptual model based on the [Ragno](https://github.com/danja/ragno) (knowledge graph description) and [ZPT](https://github.com/danja/zpt) (knowledge graph navigation) ontologies. It is a [Tensegrity](https://github.com/danja/tensegrity) subproject.
+<details>
+<summary>Semem is an experimental Node.js toolkit for AI memory management</summary> that integrates large language models (LLMs) with Semantic Web technologies (RDF/SPARQL). It offers knowledge graph retrieval and augmentation algorithms within a conceptual model based on the [Ragno](https://github.com/danja/ragno) (knowledge graph description) and [ZPT](https://github.com/danja/zpt) (knowledge graph navigation) ontologies. It is a [Tensegrity](https://github.com/danja/tensegrity) subproject.
 
 The intuition is that while LLMs and associated techniques have massively advanced the field of AI and offer considerable utility, the typical approach is missing the elephant in the room: **the Web** - the biggest known knowledgebase in our universe. Semantic Web technologies offer data integration at a global scale, with tried & tested conceptual models for knowledge representation. **There is a lot of low-hanging fruit.**
+</details>
 
 ## Status 2025-06-21 
 
-Semem is mostly functional but very, very sketchy. It has an MCP server, HTTP API, a crude browser UI and code APIs. A lot to do before much will be genuinely useful. It is in active development as of June 2025. **It is not for the fainthearted**.
+<details>
+<summary>Semem is mostly functional but very, very sketchy. It has an MCP server, HTTP API, a crude browser UI and code APIs. A lot to do before much will be genuinely useful. It is in active development as of June 2025. **It is not for the fainthearted**.</summary>
 
 The codebase is registered as the npm package [semem](https://www.npmjs.com/package/semem) though there hasn't been much time spent on this angle, currently it's pretty much essential to use this repo (or MCP). 
 
 The dev process has involved pushing out in various directions with spikes, then circling back to ensure the core is still functional, then consolidation. To date it's been a one-man + various AI assistants (and a dog) operation. **Collaborators would be very welcome**.
-
+</details>
 It is feature-complete as originally conceived, in the sense of *[all the right notes, but not necessarily in the right order](https://www.youtube.com/watch?v=R7GeKLE0x3s)*. There is a lot of cruft, no doubt numerous bugs. Right now it's in a **consolidation phase**.
 
-## System
+## System Overview
 
 The SPARQL store, chat LLMs and embeddings service are all external. SPARQL uses the standard HTTP interfaces. There are also in-memory and JSON file storage subsystems but these are an artifact of dev history, though they can be useful as a fallback durin testing. LLMs use the [hyperdata-clients](https://github.com/danja/hyperdata-clients) library to simplify configuration. 
 
