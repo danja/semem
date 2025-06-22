@@ -32,7 +32,7 @@ It is feature-complete as originally conceived, in the sense of <em>[all the rig
 
 The SPARQL store, chat LLMs and embeddings service are all external. SPARQL uses the standard HTTP interfaces. There are also in-memory and JSON file storage subsystems but these are an artifact of dev history, though they can be useful as a fallback durin testing. LLMs use the [hyperdata-clients](https://github.com/danja/hyperdata-clients) library to simplify configuration. 
 
-The system is layered in a couple of dimensions: interfacing may be direct (SDK-style) API, via the HTTP server or MCP server. Functionality is grouped broadly into *Basic*, *Ragno* and *ZPT*. 
+The system is layered in a couple of dimensions: interfacing may be direct (SDK-style) API, via the HTTP server or MCP server. Functionality is grouped by purpose broadly into *Basic*, *Ragno* and *ZPT*. 
 
 There are fairly comprehensive demos under [examples](https://github.com/danja/semem/tree/main/examples) which exercise the different parts of the system (think manual integration tests).
 
