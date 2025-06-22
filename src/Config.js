@@ -27,7 +27,24 @@ export default class Config {
             embedding: {
                 provider: 'ollama',
                 model: 'nomic-embed-text',
-                options: {}
+                options: {
+                    baseUrl: 'http://localhost:11434'
+                }
+            },
+            // Alternative embedding providers
+            embeddingProviders: {
+                ollama: {
+                    model: 'nomic-embed-text',
+                    options: {
+                        baseUrl: 'http://localhost:11434'
+                    }
+                },
+                nomic: {
+                    model: 'nomic-embed-text-v1.5',
+                    options: {
+                        apiKey: '${NOMIC_API_KEY}'
+                    }
+                }
             }
         },
         memory: {

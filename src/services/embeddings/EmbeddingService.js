@@ -1,5 +1,5 @@
 import logger from 'loglevel';
-import OllamaConnector from '../../connectors/OllamaConnector.js';
+import EmbeddingConnectorFactory from '../../connectors/EmbeddingConnectorFactory.js';
 
 // Default Ollama embedding model
 const DEFAULT_MODEL = 'nomic-embed-text';
@@ -13,15 +13,24 @@ class EmbeddingService {
     /**
      * Creates a new EmbeddingService
      * @param {Object} options - Configuration options
+     * @param {string} options.provider - The embedding provider to use ('ollama', 'nomic')
      * @param {string} options.model - The embedding model to use
      * @param {number} options.dimension - The expected embedding dimension
+     * @param {Object} options.providerOptions - Provider-specific options
      */
     constructor(options = {}) {
+        this.provider = options.provider || 'ollama';
         this.model = options.model || DEFAULT_MODEL;
         this.dimension = options.dimension || DEFAULT_DIMENSION;
-        this.ollama = new OllamaConnector();
         
-        logger.info(`EmbeddingService initialized with model: ${this.model}, dimension: ${this.dimension}`);
+        // Create embedding connector using factory
+        this.connector = EmbeddingConnectorFactory.createConnector({
+            provider: this.provider,
+            model: this.model,
+            options: options.providerOptions || {}
+        });
+        
+        logger.info(`EmbeddingService initialized with provider: ${this.provider}, model: ${this.model}, dimension: ${this.dimension}`);
     }
     
     /**
@@ -38,7 +47,7 @@ class EmbeddingService {
             logger.debug(`Generating embedding for text (${text.length} characters)...`);
             logger.debug(`Generating embedding with model ${this.model}`);
             
-            const rawEmbedding = await this.ollama.generateEmbedding(this.model, text);
+            const rawEmbedding = await this.connector.generateEmbedding(this.model, text);
             logger.debug(`Generated raw embedding with ${rawEmbedding.length} dimensions`);
             
             // Standardize the embedding to match expected dimensions
