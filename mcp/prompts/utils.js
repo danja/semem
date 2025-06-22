@@ -314,22 +314,74 @@ function generateWorkflowSummary(results) {
 export function createSafeToolExecutor(mcpServer) {
   return async function safeToolExecutor(toolName, arguments_, context) {
     try {
-      // Check if tool exists
-      if (!mcpServer.tools || !mcpServer.tools[toolName]) {
-        throw new Error(`Tool not found: ${toolName}`);
+      logger.debug(`Attempting to execute tool: ${toolName}`, { 
+        arguments: Object.keys(arguments_ || {}),
+        mcpServerType: typeof mcpServer 
+      });
+
+      // New MCP SDK pattern - call tool through the server
+      if (mcpServer && typeof mcpServer.callTool === 'function') {
+        const result = await mcpServer.callTool({
+          name: toolName,
+          arguments: arguments_
+        });
+        
+        logger.debug(`Tool executed via callTool: ${toolName}`, { 
+          resultType: typeof result 
+        });
+        
+        // Extract content from MCP result format
+        if (result && result.content && result.content[0] && result.content[0].text) {
+          try {
+            return JSON.parse(result.content[0].text);
+          } catch (parseError) {
+            // Return as-is if not JSON
+            return result.content[0].text;
+          }
+        }
+        
+        return result;
       }
 
-      const tool = mcpServer.tools[toolName];
-      
-      // Execute the tool
-      const result = await tool.handler(arguments_);
-      
-      logger.debug(`Tool executed: ${toolName}`, { 
-        arguments: arguments_, 
-        resultType: typeof result 
-      });
-      
-      return result;
+      // Fallback: check old pattern
+      if (mcpServer.tools && mcpServer.tools[toolName]) {
+        const tool = mcpServer.tools[toolName];
+        const result = await tool.handler(arguments_);
+        
+        logger.debug(`Tool executed via old pattern: ${toolName}`, { 
+          resultType: typeof result 
+        });
+        
+        return result;
+      }
+
+      // If neither pattern works, try the workflow orchestrator
+      if (workflowOrchestrator && workflowOrchestrator.isInitialized) {
+        logger.debug(`Attempting tool execution via workflow orchestrator: ${toolName}`);
+        
+        // Map tool names to orchestrator methods
+        const methodMap = {
+          'research_ingest_documents': 'researchIngestDocuments',
+          'research_generate_insights': 'researchGenerateInsights',
+          'adaptive_query_processing': 'adaptiveQueryProcessing',
+          'hybrid_search': 'hybridSearch',
+          'capture_user_feedback': 'captureUserFeedback',
+          'incremental_learning': 'incrementalLearning'
+        };
+        
+        const methodName = methodMap[toolName];
+        if (methodName && typeof workflowOrchestrator[methodName] === 'function') {
+          const result = await workflowOrchestrator[methodName](arguments_, context);
+          
+          logger.debug(`Tool executed via workflow orchestrator: ${toolName}`, { 
+            resultType: typeof result 
+          });
+          
+          return result;
+        }
+      }
+
+      throw new Error(`Tool not found: ${toolName}`);
 
     } catch (error) {
       logger.error(`Tool execution error: ${toolName}`, error);

@@ -12,34 +12,34 @@ import { mcpDebugger } from './debug-utils.js';
  * Tool name mapping between workflow names and MCP tool names
  */
 export const TOOL_MAPPING = {
-  // Memory tools
-  'semem_store_interaction': 'mcp__semem__semem_store_interaction',
-  'semem_retrieve_memories': 'mcp__semem__semem_retrieve_memories', 
-  'semem_generate_response': 'mcp__semem__semem_generate_response',
-  'semem_generate_embedding': 'mcp__semem__semem_generate_embedding',
-  'semem_extract_concepts': 'mcp__semem__semem_extract_concepts',
+  // Memory tools (HTTP server uses simple names)
+  'semem_store_interaction': 'semem_store_interaction',
+  'semem_retrieve_memories': 'semem_retrieve_memories', 
+  'semem_generate_response': 'semem_generate_response',
+  'semem_generate_embedding': 'semem_generate_embedding',
+  'semem_extract_concepts': 'semem_extract_concepts',
   
-  // Ragno tools
-  'ragno_decompose_corpus': 'mcp__semem__ragno_decompose_corpus',
-  'ragno_search_dual': 'mcp__semem__ragno_search_dual',
-  'ragno_get_entities': 'mcp__semem__ragno_get_entities',
-  'ragno_vector_search': 'mcp__semem__ragno_vector_search',
-  'ragno_export_rdf': 'mcp__semem__ragno_export_rdf',
-  'ragno_query_sparql': 'mcp__semem__ragno_query_sparql',
-  'ragno_analyze_graph': 'mcp__semem__ragno_analyze_graph',
+  // Ragno tools (HTTP server uses simple names)
+  'ragno_decompose_corpus': 'ragno_decompose_corpus',
+  'ragno_search_dual': 'ragno_search_dual',
+  'ragno_get_entities': 'ragno_get_entities',
+  'ragno_vector_search': 'ragno_vector_search',
+  'ragno_export_rdf': 'ragno_export_rdf',
+  'ragno_query_sparql': 'ragno_query_sparql',
+  'ragno_analyze_graph': 'ragno_analyze_graph',
   
-  // System tools
-  'semem_switch_storage_backend': 'mcp__semem__semem_switch_storage_backend',
-  'semem_get_config': 'mcp__semem__semem_get_config',
-  'semem_update_config': 'mcp__semem__semem_update_config',
-  'semem_health_check': 'mcp__semem__semem_health_check',
+  // System tools (HTTP server uses simple names)
+  'semem_switch_storage_backend': 'semem_switch_storage_backend',
+  'semem_get_config': 'semem_get_config',
+  'semem_update_config': 'semem_update_config',
+  'semem_health_check': 'semem_health_check',
   
   // Alias mappings for common workflow names
-  'ragno_build_relationships': 'mcp__semem__ragno_analyze_graph',
-  'ragno_extract_entities': 'mcp__semem__ragno_get_entities',
-  'ragno_find_entity': 'mcp__semem__ragno_get_entities',
-  'ragno_get_relationships': 'mcp__semem__ragno_analyze_graph',
-  'ragno_analyze_entity': 'mcp__semem__ragno_analyze_graph',
+  'ragno_build_relationships': 'ragno_analyze_graph',
+  'ragno_extract_entities': 'ragno_get_entities',
+  'ragno_find_entity': 'ragno_get_entities',
+  'ragno_get_relationships': 'ragno_analyze_graph',
+  'ragno_analyze_entity': 'ragno_analyze_graph',
   
   // Missing tools that we'll implement
   'research_ingest_documents': 'research_ingest_documents',
@@ -59,6 +59,9 @@ export class WorkflowOrchestrator {
     this.contextCache = new Map();
     this.executionMetrics = new Map();
     this.TOOL_MAPPING = TOOL_MAPPING; // Export mapping for testing
+    this.customToolCaller = null;
+    this.isInitialized = false;
+    this.mcpServer = null;
   }
 
   /**
@@ -561,7 +564,40 @@ export class WorkflowOrchestrator {
       return await this.toolExecutors.get(toolName)(args, context);
     }
 
-    // Execute via MCP server
+    // For HTTP MCP server, use our custom tool calling mechanism
+    if (this.customToolCaller) {
+      try {
+        const result = await this.customToolCaller({
+          name: mappedToolName,
+          arguments: args
+        });
+        
+        // Parse JSON result if it's a string
+        if (typeof result === 'string') {
+          try {
+            return JSON.parse(result);
+          } catch (parseError) {
+            return result;
+          }
+        }
+        
+        // Extract content from MCP result format
+        if (result && result.content && result.content[0] && result.content[0].text) {
+          try {
+            return JSON.parse(result.content[0].text);
+          } catch (parseError) {
+            return result.content[0].text;
+          }
+        }
+        
+        return result;
+      } catch (error) {
+        console.log(`❌ Custom tool caller failed for ${mappedToolName}: ${error.message}`);
+        throw error;
+      }
+    }
+
+    // Fallback: Execute via MCP server (old pattern)
     if (!this.mcpServer.tools || !this.mcpServer.tools[mappedToolName]) {
       throw new Error(`Tool not available: ${mappedToolName}`);
     }
