@@ -2,13 +2,56 @@
 
 **Semantic Web Memory for Intelligent Agents**
 
-Semem is a Node.js toolkit for AI memory management that integrates large language models (LLMs) with Semantic Web technologies (RDF/SPARQL). It offers knowledge graph retrieval and augmentation algorithms within a conceptual model based on the [Ragno](https://github.com/danja/ragno) (knowledge graph description) and [ZPT](https://github.com/danja/zpt) (knowledge graph navigation) ontologies. It is a [Tensegrity](https://github.com/danja/tensegrity) project.
-
-**Status 2025-06-21 :** mostly in place but very, very sketchy. It has an MCP server, HTTP APIs and a crude UI with a little more and code APIs that mostly work. The description below is very AI-sloppy. A lot to do before much will be usable. But a lot of the examples at least do *something*.
-
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Node.js](https://img.shields.io/badge/node-%3E%3D20.11.0-brightgreen.svg)
 ![Status](https://img.shields.io/badge/status-active-success.svg)
+
+*or - Graph RAG on steroids for the global knowledgebase*
+
+**tl;dr** - flipping ideas (mostly) from the LLM world over to the Semantic Web for massively simplified integration, at global scale
+
+Semem is an experimental Node.js toolkit for AI memory management that integrates large language models (LLMs) with Semantic Web technologies (RDF/SPARQL). It offers knowledge graph retrieval and augmentation algorithms within a conceptual model based on the [Ragno](https://github.com/danja/ragno) (knowledge graph description) and [ZPT](https://github.com/danja/zpt) (knowledge graph navigation) ontologies. It is a [Tensegrity](https://github.com/danja/tensegrity) subproject.
+
+The intuition is that while LLMs and associated techniques have massively advanced the field of AI and offer considerable utility, the typical approach is missing the elephant in the room: **the Web** - the biggest known knowledgebase in our universe. Semantic Web technologies offer data integration at a global scale, with tried & tested conceptual models for knowledge representation. **There is a lot of low-hanging fruit.**
+
+## Status 2025-06-21 
+
+Semem is mostly functional but very, very sketchy. It has an MCP server, HTTP API, a crude browser UI and code APIs. A lot to do before much will be genuinely useful. It is in active development as of June 2025. **It is not for the fainthearted**.
+
+The codebase is registered as the npm package [semem](https://www.npmjs.com/package/semem) though there hasn't been much time spent on this angle, currently it's pretty much essential to use this repo (or MCP). 
+
+The dev process has involved pushing out in various directions with spikes, then circling back to ensure the core is still functional, then consolidation. To date it's been a one-man + various AI assistants (and a dog) operation. **Collaborators would be very welcome**.
+
+It is feature-complete as originally conceived, in the sense of *[all the right notes, but not necessarily in the right order](https://www.youtube.com/watch?v=R7GeKLE0x3s)*. There is a lot of cruft, no doubt numerous bugs. Right now it's in a **consolidation phase**.
+
+## System
+
+The SPARQL store, chat LLMs and embeddings service are all external. SPARQL uses the standard HTTP interfaces. There are also in-memory and JSON file storage subsystems but these are an artifact of dev history, though they can be useful as a fallback durin testing. LLMs use the [hyperdata-clients](https://github.com/danja/hyperdata-clients) library to simplify configuration. 
+
+The system is layered in a couple of dimensions: interfacing may be direct (SDK-style) API, via the HTTP server or MCP server. Functionality is grouped broadly into *Basic*, *Ragno* and *ZPT*. 
+
+There are fairly comprehensive demos under [examples](https://github.com/danja/semem/tree/main/examples) which exercise the different parts of the system (think manual integration tests).
+
+### Basic 
+This contains the low-level operations. It covers basic SPARQL store interactions, embeddings/*semantic search* and chat. There are also some minimal temporal/relevance-related parts that overlap with *Ragno*.
+
+Internally the system relies on [RDF-Ext](https://github.com/rdf-ext) and other [RDFJS](http://rdf.js.org/) libraries for its graph model, [FAISS](https://github.com/facebookresearch/faiss) for its primary vector-oriented functionality.
+
+### Ragno
+This layer is concerned with the **knowledgebase model** as described by the [Ragno Ontology](https://github.com/danja/ragno). On top of the model are a set of algorithms that offer various knowledge retrieval and augmentation facilities. Most are lifted from the [NodeRAG paper](https://arxiv.org/abs/2504.11544), with additions such as [HyDE](https://arxiv.org/abs/2212.10496) *Hypothetical Document Embeddings* and Vectorised [Self-Organising Maps](https://en.wikipedia.org/wiki/Self-organizing_map).
+
+### ZPT
+This layer is concerned with **knowledgegraph navigation** built on the [ZPT Ontology](https://github.com/danja/zpt) following an analogy from the film world, *Zoom, Pan, Tilt*. Algorithms have been created to handle parameterisation of filters/selection and corpus decomposition and chunking.
+
+
+
+
+
+
+---
+The description below is very AI-sloppy. 
+
+
 
 ## 🚀 Quick Start
 
