@@ -17,7 +17,8 @@
   "port": 4120,
   "graphName": "http://hyperdata.it/content",
   "chatModel": "qwen2:1.5b",
-  "embeddingModel": "nomic-embed-text",
+  "embeddingModel": "nomic-embed-text-v1.5",
+  "embeddingProvider": "nomic",
   "sparqlEndpoints": [
     {
       "label": "Hyperdata Fuseki",
@@ -68,16 +69,26 @@
       "description": "Using hyperdata-clients implementation"
     },
     {
+      "type": "nomic",
+      "apiKey": "${NOMIC_API_KEY}",
+      "embeddingModel": "nomic-embed-text-v1.5",
+      "priority": 1,
+      "capabilities": [
+        "embedding"
+      ],
+      "description": "Nomic Atlas API for cloud-based embeddings"
+    },
+    {
       "type": "ollama",
       "baseUrl": "http://localhost:11434",
       "chatModel": "qwen2:1.5b",
       "embeddingModel": "nomic-embed-text",
-      "priority": 3,
+      "priority": 2,
       "capabilities": [
         "embedding",
         "chat"
       ],
-      "description": "Used primarily for embeddings with nomic-embed-text"
+      "description": "Local Ollama for embeddings and chat - fallback option"
     }
   ]
 }

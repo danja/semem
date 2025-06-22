@@ -27,6 +27,8 @@ import InMemoryStore from '../../src/stores/InMemoryStore.js';
 import OllamaConnector from '../../src/connectors/OllamaConnector.js';
 import ClaudeConnector from '../../src/connectors/ClaudeConnector.js';
 import MistralConnector from '../../src/connectors/MistralConnector.js';
+import NomicConnector from '../../src/connectors/NomicConnector.js';
+import EmbeddingConnectorFactory from '../../src/connectors/EmbeddingConnectorFactory.js';
 import logger from 'loglevel';
 import dotenv from 'dotenv';
 
@@ -79,6 +81,11 @@ function createConnector(providerConfig) {
         case 'mistral':
             const mistralKey = process.env.MISTRAL_API_KEY;
             return new MistralConnector(mistralKey);
+        case 'nomic':
+            const nomicKey = providerConfig.apiKey?.startsWith('${') 
+                ? process.env[providerConfig.apiKey.slice(2, -1)] 
+                : providerConfig.apiKey;
+            return new NomicConnector(nomicKey, providerConfig.embeddingModel);
         default:
             throw new Error(`Unknown provider type: ${providerConfig.type}`);
     }
@@ -122,6 +129,17 @@ async function testProviderConnectivity(providerConfig) {
             logger.info('✓ Mistral API key found');
             return true;
             
+        case 'nomic':
+            const nomicKey = providerConfig.apiKey?.startsWith('${') 
+                ? process.env[providerConfig.apiKey.slice(2, -1)] 
+                : providerConfig.apiKey;
+            if (!nomicKey) {
+                logger.warn('✗ Nomic API key not found in environment');
+                return false;
+            }
+            logger.info('✓ Nomic API key found');
+            return true;
+            
         default:
             logger.warn(`✗ Unknown provider type: ${providerConfig.type}`);
             return false;
@@ -158,17 +176,42 @@ async function testProvider(providerConfig) {
         logger.info('\n--- Provider Initialization ---');
         const llmProvider = createConnector(providerConfig);
         
-        // Use Ollama for embeddings if current provider doesn't support them
-        const embeddingModel = providerConfig.embeddingModel || 'nomic-embed-text';
-        
+        // For proper testing, create a MemoryManager that respects provider capabilities
         const storage = new InMemoryStore();
         
-        memoryManager = new MemoryManager({
-            llmProvider,
-            chatModel: providerConfig.chatModel,
-            embeddingModel,
-            storage
-        });
+        if (providerConfig.capabilities?.includes('chat') && providerConfig.capabilities?.includes('embedding')) {
+            // Provider supports both chat and embeddings (like Ollama)
+            memoryManager = new MemoryManager({
+                llmProvider,
+                embeddingProvider: llmProvider,
+                chatModel: providerConfig.chatModel,
+                embeddingModel: providerConfig.embeddingModel,
+                storage
+            });
+            logger.info('Using provider for both chat and embeddings');
+        } else if (providerConfig.capabilities?.includes('chat')) {
+            // Chat-only provider (like Mistral, Claude) - don't force embeddings on it
+            memoryManager = new MemoryManager({
+                llmProvider,
+                embeddingProvider: null, // Let MemoryManager handle this
+                chatModel: providerConfig.chatModel,
+                embeddingModel: 'nomic-embed-text-v1.5',
+                storage
+            });
+            logger.info('Using provider for chat only');
+        } else if (providerConfig.capabilities?.includes('embedding')) {
+            // Embedding-only provider (like Nomic) - don't force chat on it
+            memoryManager = new MemoryManager({
+                llmProvider,
+                embeddingProvider: llmProvider,
+                chatModel: 'qwen2:1.5b',
+                embeddingModel: providerConfig.embeddingModel,
+                storage
+            });
+            logger.info('Using provider for embeddings only');
+        } else {
+            throw new Error(`Provider ${providerConfig.type} has no supported capabilities`);
+        }
         
         logger.info('✓ Provider initialized successfully');
         
@@ -197,28 +240,33 @@ async function testProvider(providerConfig) {
             }
         }
         
-        // Test embedding generation
-        logger.info('\n--- Embedding Generation Test ---');
-        try {
-            const testText = "Artificial intelligence and machine learning technologies";
-            logger.info(`Text: "${testText}"`);
-            
-            const embedding = await memoryManager.generateEmbedding(testText);
-            
-            logger.info(`✓ Embedding generated successfully`);
-            logger.info(`Dimensions: ${embedding.length}`);
-            logger.info(`Vector preview: [${embedding.slice(0, 5).map(x => x.toFixed(3)).join(', ')}, ...]`);
-            
-            results.capabilities.push('embedding');
-            results.tests.embedding = { 
-                success: true, 
-                dimensions: embedding.length,
-                provider: providerConfig.capabilities?.includes('embedding') ? providerConfig.type : 'ollama'
-            };
-            
-        } catch (error) {
-            logger.error(`✗ Embedding generation failed: ${error.message}`);
-            results.tests.embedding = { success: false, error: error.message };
+        // Test embedding generation (only for providers that support embeddings)
+        if (providerConfig.capabilities?.includes('embedding')) {
+            logger.info('\n--- Embedding Generation Test ---');
+            try {
+                const testText = "Artificial intelligence and machine learning technologies";
+                logger.info(`Text: "${testText}"`);
+                
+                const embedding = await memoryManager.generateEmbedding(testText);
+                
+                logger.info(`✓ Embedding generated successfully`);
+                logger.info(`Dimensions: ${embedding.length}`);
+                logger.info(`Vector preview: [${embedding.slice(0, 5).map(x => x.toFixed(3)).join(', ')}, ...]`);
+                
+                results.capabilities.push('embedding');
+                results.tests.embedding = { 
+                    success: true, 
+                    dimensions: embedding.length,
+                    provider: providerConfig.type
+                };
+                
+            } catch (error) {
+                logger.error(`✗ Embedding generation failed: ${error.message}`);
+                results.tests.embedding = { success: false, error: error.message };
+            }
+        } else {
+            logger.info('\n--- Embedding Generation Test ---');
+            logger.info('⚠️ Provider does not support embeddings - skipping test');
         }
         
         // Test concept extraction (requires chat capability)
@@ -247,44 +295,49 @@ async function testProvider(providerConfig) {
             }
         }
         
-        // Test memory integration
-        logger.info('\n--- Memory Integration Test ---');
-        try {
-            const prompt = "What are the benefits of renewable energy?";
-            const response = "Renewable energy provides environmental benefits by reducing carbon emissions, offers energy independence, and creates sustainable economic opportunities.";
-            
-            // Generate embedding for memory storage
-            const embedding = await memoryManager.generateEmbedding(`${prompt} ${response}`);
-            
-            // Store interaction
-            await memoryManager.addInteraction(
-                prompt,
-                response,
-                embedding,
-                ['renewable energy', 'environment', 'sustainability']
-            );
-            
-            // Test retrieval
-            const retrievedMemories = await memoryManager.retrieveRelevantInteractions("Tell me about clean energy benefits");
-            
-            logger.info(`✓ Memory integration successful`);
-            logger.info(`Stored interaction and retrieved ${retrievedMemories.length} related memories`);
-            
-            if (retrievedMemories.length > 0) {
-                const topMemory = retrievedMemories[0];
-                const similarity = topMemory.similarity?.toFixed(3) || 'N/A';
-                logger.info(`Top result similarity: ${similarity}`);
+        // Test memory integration (only for providers that support embeddings)
+        if (providerConfig.capabilities?.includes('embedding')) {
+            logger.info('\n--- Memory Integration Test ---');
+            try {
+                const prompt = "What are the benefits of renewable energy?";
+                const response = "Renewable energy provides environmental benefits by reducing carbon emissions, offers energy independence, and creates sustainable economic opportunities.";
+                
+                // Generate embedding for memory storage
+                const embedding = await memoryManager.generateEmbedding(`${prompt} ${response}`);
+                
+                // Store interaction
+                await memoryManager.addInteraction(
+                    prompt,
+                    response,
+                    embedding,
+                    ['renewable energy', 'environment', 'sustainability']
+                );
+                
+                // Test retrieval
+                const retrievedMemories = await memoryManager.retrieveRelevantInteractions("Tell me about clean energy benefits");
+                
+                logger.info(`✓ Memory integration successful`);
+                logger.info(`Stored interaction and retrieved ${retrievedMemories.length} related memories`);
+                
+                if (retrievedMemories.length > 0) {
+                    const topMemory = retrievedMemories[0];
+                    const similarity = topMemory.similarity?.toFixed(3) || 'N/A';
+                    logger.info(`Top result similarity: ${similarity}`);
+                }
+                
+                results.capabilities.push('memory_integration');
+                results.tests.memory_integration = { 
+                    success: true, 
+                    memoriesRetrieved: retrievedMemories.length
+                };
+                
+            } catch (error) {
+                logger.error(`✗ Memory integration failed: ${error.message}`);
+                results.tests.memory_integration = { success: false, error: error.message };
             }
-            
-            results.capabilities.push('memory_integration');
-            results.tests.memory_integration = { 
-                success: true, 
-                memoriesRetrieved: retrievedMemories.length
-            };
-            
-        } catch (error) {
-            logger.error(`✗ Memory integration failed: ${error.message}`);
-            results.tests.memory_integration = { success: false, error: error.message };
+        } else {
+            logger.info('\n--- Memory Integration Test ---');
+            logger.info('⚠️ Provider does not support embeddings - skipping memory integration test');
         }
         
         logger.info(`\n✅ ${providerConfig.type.toUpperCase()} provider fully tested`);

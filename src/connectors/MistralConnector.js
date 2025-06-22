@@ -150,4 +150,17 @@ export default class MistralConnector {
             throw error
         }
     }
+
+    /**
+     * Generate completion (for backward compatibility)
+     * @param {string} model - Model name to use
+     * @param {string} prompt - The prompt to complete
+     * @param {Object} options - Additional options
+     * @returns {string} - Completion text
+     */
+    async generateCompletion(model = this.defaultModel, prompt, options = {}) {
+        // Convert prompt to chat format for compatibility
+        const messages = [{ role: 'user', content: prompt }];
+        return await this.generateChat(model, messages, options);
+    }
 }

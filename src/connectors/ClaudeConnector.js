@@ -225,16 +225,21 @@ export default class ClaudeConnector {
                 requestOptions
             );
 
-            // If the response is a string, wrap it in a proper response object
-            if (typeof response === 'string') {
-                return {
-                    content: response,
-                    role: 'assistant'
-                };
-            }
-
             logger.debug('Chat response generated successfully');
-            return response;
+            
+            // Extract the content string from the response
+            // If the response is already a string, return it directly
+            if (typeof response === 'string') {
+                return response;
+            }
+            
+            // If the response is an object with content, extract the content
+            if (response && typeof response === 'object' && response.content) {
+                return response.content;
+            }
+            
+            // If the response has a different structure, try to convert to string
+            return String(response);
         } catch (error) {
             logger.error('Chat generation failed:', error);
             throw error;

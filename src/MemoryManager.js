@@ -50,7 +50,28 @@ export default class MemoryManager {
             this.cacheManager
         )
 
-        this.llmHandler = new LLMHandler(llmProvider, this.chatModel)
+        // Only initialize LLMHandler if the provider supports chat operations
+        // Check if the provider has working chat capabilities by checking provider info
+        let hasChatCapability = false;
+        
+        if (llmProvider && llmProvider.getInfo) {
+            const providerInfo = llmProvider.getInfo();
+            hasChatCapability = providerInfo.capabilities && providerInfo.capabilities.includes('chat');
+        } else if (llmProvider) {
+            // Fallback: check if provider has chat methods and doesn't throw on basic test
+            hasChatCapability = (
+                typeof llmProvider.generateChat === 'function' || 
+                (typeof llmProvider.generateCompletion === 'function' && 
+                 llmProvider.constructor.name !== 'NomicConnector')  // Explicitly exclude NomicConnector
+            );
+        }
+        
+        if (hasChatCapability) {
+            this.llmHandler = new LLMHandler(llmProvider, this.chatModel)
+        } else {
+            logger.warn('Provider does not support chat operations - LLM functionality will be limited')
+            this.llmHandler = null
+        }
         this.memStore = new MemoryStore(dimension)
         this.storage = storage || new InMemoryStore()
         this.contextManager = new ContextManager(contextOptions)
@@ -139,7 +160,15 @@ export default class MemoryManager {
     async retrieveRelevantInteractions(query, similarityThreshold = 40, excludeLastN = 0) {
         try {
             const queryEmbedding = await this.embeddingHandler.generateEmbedding(query)
-            const queryConcepts = await this.llmHandler.extractConcepts(query)
+            let queryConcepts = []
+            
+            // Only extract concepts if we have a chat-capable LLM handler
+            if (this.llmHandler) {
+                queryConcepts = await this.llmHandler.extractConcepts(query)
+            } else {
+                logger.debug('No chat provider available for concept extraction - using embedding-only search')
+            }
+            
             return this.memStore.retrieve(queryEmbedding, queryConcepts, similarityThreshold, excludeLastN)
         } catch (error) {
             logger.error('Failed to retrieve interactions:', error)
@@ -149,6 +178,10 @@ export default class MemoryManager {
 
     async generateResponse(prompt, lastInteractions = [], retrievals = [], contextWindow = 3) {
         try {
+            if (!this.llmHandler) {
+                throw new Error('No chat provider available for response generation')
+            }
+            
             const context = this.contextManager.buildContext(
                 prompt,
                 retrievals,
@@ -168,6 +201,10 @@ export default class MemoryManager {
     }
 
     async extractConcepts(text) {
+        if (!this.llmHandler) {
+            logger.debug('No chat provider available for concept extraction')
+            return []
+        }
         return await this.llmHandler.extractConcepts(text)
     }
 
@@ -175,7 +212,7 @@ export default class MemoryManager {
         // Generate embedding for the combined prompt and response
         const embedding = await this.generateEmbedding(`${prompt} ${response}`)
         
-        // Extract concepts from the combined text
+        // Extract concepts from the combined text (returns empty array if no chat provider)
         const concepts = await this.extractConcepts(`${prompt} ${response}`)
         
         // Store the interaction using addInteraction

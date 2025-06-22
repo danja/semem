@@ -61,3 +61,9 @@ curl https://semem.tensegrity.it/health
 {"status":"healthy","timestamp":"2025-06-22T10:17:25.243Z","services":{"memoryManager":true,"config":true},"sessions":0}
 ```
 Yay!
+
+Oh.
+
+I forgot that it's currently relying on Ollama locally.
+
+I'd already got support for different chat providers, but not embeddings providers, that was quasi-hardcoded to Ollama. So I've added a bit to [hyperdata-clients](https://github.com/danja/hyperdata-clients) and updated the relevant bits of Semem. Which is bound to break things. 
