@@ -528,6 +528,27 @@ Configure multiple providers in `config/config.json`:
 
 Semem implements Anthropic's [Model Context Protocol (MCP)](https://docs.anthropic.com/en/docs/agents-and-tools/mcp) for seamless LLM integration:
 
+### Using from NPM Package
+
+If you've installed Semem as an npm package, you can run the MCP server directly:
+
+```bash
+# Install globally
+npm install -g semem
+
+# Run MCP server via npx (recommended)
+npx semem-mcp
+
+# Run HTTP MCP server
+npx semem-mcp-http --port=3000
+
+# Or if installed globally
+semem-mcp
+semem-mcp-http --port=3000
+```
+
+### Using from Source
+
 ```bash
 # Start MCP server
 npm run mcp-server-new
@@ -535,6 +556,36 @@ npm run mcp-server-new
 # Connect from Claude Desktop or other MCP clients
 # Server provides 32 tools + 15 resources + 8 prompt workflows covering all Semem capabilities
 ```
+
+### Claude Desktop Configuration
+
+Add to your Claude Desktop MCP configuration:
+
+```json
+{
+  "mcpServers": {
+    "semem": {
+      "command": "npx",
+      "args": ["semem-mcp"]
+    }
+  }
+}
+```
+
+Or for HTTP transport:
+
+```json
+{
+  "mcpServers": {
+    "semem": {
+      "command": "npx", 
+      "args": ["semem-mcp-http", "--port=3000"],
+      "env": {
+        "MCP_PORT": "3000"
+      }
+    }
+  }
+}
 
 ### Available MCP Tools (32 Total)
 - **Memory Operations** (5 tools): Store, retrieve, generate responses, embeddings, concepts
