@@ -1,14 +1,12 @@
 # Semem
-
-**Semantic Web Memory for Intelligent Agents**
-
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Node.js](https://img.shields.io/badge/node-%3E%3D20.11.0-brightgreen.svg)
 ![Status](https://img.shields.io/badge/status-active-success.svg)
 
-*or - Graph RAG on steroids for the global knowledgebase*
+**Semantic Web Memory for Intelligent Agents**
+*...or, Graph RAG on steroids for the global knowledgebase*
 
-**tl;dr** - flipping ideas (mostly) from the LLM world over to the Semantic Web for massively simplified integration, at global scale
+**tl;dr - flipping ideas (mostly) from the LLM world over to the Semantic Web for massively simplified integration, at global scale**
 
 Semem is an experimental Node.js toolkit for AI memory management that integrates large language models (LLMs) with Semantic Web technologies (RDF/SPARQL). It offers knowledge graph retrieval and augmentation algorithms within a conceptual model based on the [Ragno](https://github.com/danja/ragno) (knowledge graph description) and [ZPT](https://github.com/danja/zpt) (knowledge graph navigation) ontologies. It is a [Tensegrity](https://github.com/danja/tensegrity) subproject.
 
@@ -42,9 +40,6 @@ This layer is concerned with the **knowledgebase model** as described by the [Ra
 
 ### ZPT
 This layer is concerned with **knowledgegraph navigation** built on the [ZPT Ontology](https://github.com/danja/zpt) following an analogy from the film world, *Zoom, Pan, Tilt*. Algorithms have been created to handle parameterisation of filters/selection and corpus decomposition and chunking.
-
-
-
 
 
 
