@@ -16,8 +16,10 @@ The intuition is that while LLMs and associated techniques have massively advanc
 
 ## Status 2025-06-21 
 
+*click the triangles to expand the text*
+
 <details>
-<summary>Semem is mostly functional but very, very sketchy. It has an MCP server, HTTP API, a crude browser UI and code APIs. A lot to do before much will be genuinely useful. It is in active development as of June 2025. **It is not for the fainthearted**.</summary>
+<summary>Mostly functional but very, very sketchy. It has an MCP server, HTTP API, a crude browser UI and code APIs. A lot to do before much will be genuinely useful. It is in active development as of June 2025. **It is not for the fainthearted**.</summary>
 
 The codebase is registered as the npm package [semem](https://www.npmjs.com/package/semem) though there hasn't been much time spent on this angle, currently it's pretty much essential to use this repo (or MCP). 
 
