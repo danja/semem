@@ -11,11 +11,20 @@ export default class LLMHandler {
      * @param {LLMProvider} llmProvider
      * @param {string} chatModel
      * @param {number} [temperature=0.7]
+     * @param {Object} [options={}]
      */
-    constructor(llmProvider, chatModel, temperature = 0.7) {
+    constructor(llmProvider, chatModel, temperature = 0.7, options = {}) {
         this.llmProvider = llmProvider
         this.chatModel = chatModel
         this.temperature = temperature
+        
+        // Simple fallback configuration (opt-in for backward compatibility)
+        this.options = {
+            enableFallbacks: options.enableFallbacks === true, // Default disabled for backward compatibility
+            timeoutMs: options.timeoutMs || 60000,
+            fallbackResponse: options.fallbackResponse || 'Unable to generate response due to service unavailability.',
+            ...options
+        }
     }
 
     /**
@@ -38,7 +47,8 @@ export default class LLMHandler {
         model = this.chatModel,
         temperature = this.temperature,
         maxRetries = 3,
-        baseDelay = 1000
+        baseDelay = 1000,
+        timeoutMs = this.options.timeoutMs
     } = {}) {
         try {
             logger.log(`LLMHandler.generateResponse,
@@ -53,17 +63,38 @@ export default class LLMHandler {
             )
             logger.log(`LLMHandler.generateResponse, model = ${model}`)
             
-            // Add rate limiting with exponential backoff for Claude
-            return await this.withRateLimit(async () => {
-                return await this.llmProvider.generateChat(
-                    model,
-                    messages,
-                    { temperature }
+            // Use timeout wrapper only if fallbacks are enabled, otherwise use original behavior
+            if (this.options.enableFallbacks) {
+                return await this.withTimeout(
+                    this.withRateLimit(async () => {
+                        return await this.llmProvider.generateChat(
+                            model,
+                            messages,
+                            { temperature }
+                        )
+                    }, maxRetries, baseDelay),
+                    timeoutMs
                 )
-            }, maxRetries, baseDelay)
+            } else {
+                // Original behavior for backward compatibility
+                return await this.withRateLimit(async () => {
+                    return await this.llmProvider.generateChat(
+                        model,
+                        messages,
+                        { temperature }
+                    )
+                }, maxRetries, baseDelay)
+            }
             
         } catch (error) {
             logger.error('Error generating chat response:', error)
+            
+            // Simple fallback mechanism
+            if (this.options.enableFallbacks) {
+                logger.warn('Using fallback response due to LLM service failure')
+                return this.generateFallbackResponse(prompt, context, error)
+            }
+            
             throw error
         }
     }
@@ -115,18 +146,31 @@ export default class LLMHandler {
      * @param {string} text
      * @returns {Promise<string[]>}
      */
-    async extractConcepts(text) {
+    async extractConcepts(text, options = {}) {
+        const timeoutMs = options.timeoutMs || this.options.timeoutMs
+        
         try {
             const prompt = PromptTemplates.formatConceptPrompt(this.chatModel, text)
             
-            // Use rate limiting for concept extraction too
-            const response = await this.withRateLimit(async () => {
-                return await this.llmProvider.generateCompletion(
-                    this.chatModel,
-                    prompt,
-                    { temperature: 0.2 }
-                )
-            })
+            // Use timeout wrapper only if fallbacks are enabled, otherwise use original behavior  
+            const response = this.options.enableFallbacks
+                ? await this.withTimeout(
+                    this.withRateLimit(async () => {
+                        return await this.llmProvider.generateCompletion(
+                            this.chatModel,
+                            prompt,
+                            { temperature: 0.2 }
+                        )
+                    }),
+                    timeoutMs
+                  )
+                : await this.withRateLimit(async () => {
+                    return await this.llmProvider.generateCompletion(
+                        this.chatModel,
+                        prompt,
+                        { temperature: 0.2 }
+                    )
+                  })
             
             console.log(`response = ${response}, ${JSON.stringify(response)}`)
             const match = response.match(/\[.*\]/)
@@ -144,6 +188,13 @@ export default class LLMHandler {
             }
         } catch (error) {
             logger.error('Error extracting concepts:', error)
+            
+            // Simple fallback - extract basic concepts from text
+            if (this.options.enableFallbacks) {
+                logger.warn('Using fallback concept extraction')
+                return this.extractBasicConcepts(text)
+            }
+            
             return []
         }
     }
@@ -187,5 +238,50 @@ export default class LLMHandler {
      */
     validateModel(model) {
         return typeof model === 'string' && model.length > 0
+    }
+
+    // Simple timeout wrapper
+    async withTimeout(promise, timeoutMs) {
+        return Promise.race([
+            promise,
+            new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('LLM operation timed out')), timeoutMs)
+            )
+        ])
+    }
+
+    // Simple fallback response generation
+    generateFallbackResponse(prompt, context, error) {
+        const isTimeoutError = error.message?.includes('timeout') || error.message?.includes('timed out')
+        
+        if (isTimeoutError) {
+            return `${this.options.fallbackResponse} The request took too long to process. Please try with a simpler query.`
+        }
+        
+        return this.options.fallbackResponse
+    }
+
+    // Simple fallback concept extraction using basic text analysis
+    extractBasicConcepts(text) {
+        if (!text || typeof text !== 'string') return []
+        
+        // Simple keyword extraction - remove common words and extract meaningful terms
+        const commonWords = new Set(['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'is', 'are', 'was', 'were', 'be', 'been', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should', 'may', 'might', 'can', 'this', 'that', 'these', 'those'])
+        
+        const words = text.toLowerCase()
+            .replace(/[^\w\s]/g, ' ')
+            .split(/\s+/)
+            .filter(word => word.length > 2 && !commonWords.has(word))
+        
+        // Count frequency and return top concepts
+        const frequency = {}
+        words.forEach(word => {
+            frequency[word] = (frequency[word] || 0) + 1
+        })
+        
+        return Object.entries(frequency)
+            .sort(([,a], [,b]) => b - a)
+            .slice(0, 10)
+            .map(([word]) => word)
     }
 }

@@ -106,33 +106,54 @@ export default class NavigationEndpoint {
      * Initialize dependencies
      * @param {Object} dependencies - Required components
      */
-    initialize(dependencies = {}) {
+    async initialize(dependencies = {}) {
         const { ragnoCorpus, sparqlStore, embeddingHandler, llmHandler } = dependencies;
 
-        if (!ragnoCorpus) {
-            throw new Error('NavigationEndpoint requires ragnoCorpus dependency');
+        // Validate required dependencies
+        await this.validateDependencies(dependencies);
+
+        try {
+            // Initialize components in sequence to avoid race conditions
+            logger.info('Initializing NavigationEndpoint components in sequence...');
+
+            // Initialize CorpuscleSelector first (core component)
+            logger.debug('Initializing CorpuscleSelector...');
+            this.corpuscleSelector = new CorpuscleSelector(ragnoCorpus, {
+                sparqlStore,
+                embeddingHandler,
+                enableCaching: this.config.enableCaching
+            });
+
+            // Verify CorpuscleSelector is ready before proceeding
+            if (typeof this.corpuscleSelector.initialize === 'function') {
+                await this.corpuscleSelector.initialize();
+            }
+
+            // Initialize TiltProjector (depends on handlers)
+            logger.debug('Initializing TiltProjector...');
+            this.tiltProjector = new TiltProjector({
+                embeddingHandler,
+                textAnalyzer: llmHandler,
+                graphAnalyzer: dependencies.graphAnalyzer,
+                temporalAnalyzer: dependencies.temporalAnalyzer
+            });
+
+            // Initialize Transformer last (depends on others)
+            logger.debug('Initializing CorpuscleTransformer...');
+            this.transformer = new CorpuscleTransformer({
+                enableCaching: this.config.enableCaching,
+                enableMetrics: this.config.enableMetrics
+            });
+
+            // Verify all components are ready
+            await this.verifyComponentsReady();
+
+            logger.info('NavigationEndpoint initialized successfully');
+        } catch (error) {
+            logger.error('NavigationEndpoint initialization failed:', error);
+            await this.cleanupPartialInitialization();
+            throw new Error(`NavigationEndpoint initialization failed: ${error.message}`);
         }
-
-        // Initialize navigation pipeline components
-        this.corpuscleSelector = new CorpuscleSelector(ragnoCorpus, {
-            sparqlStore,
-            embeddingHandler,
-            enableCaching: this.config.enableCaching
-        });
-
-        this.tiltProjector = new TiltProjector({
-            embeddingHandler,
-            textAnalyzer: llmHandler,
-            graphAnalyzer: dependencies.graphAnalyzer,
-            temporalAnalyzer: dependencies.temporalAnalyzer
-        });
-
-        this.transformer = new CorpuscleTransformer({
-            enableCaching: this.config.enableCaching,
-            enableMetrics: this.config.enableMetrics
-        });
-
-        logger.info('NavigationEndpoint initialized with dependencies');
     }
 
     /**
@@ -348,43 +369,111 @@ export default class NavigationEndpoint {
             api: { status: 'healthy', timestamp: new Date().toISOString() },
             corpuscleSelector: null,
             tiltProjector: null,
-            transformer: null
+            transformer: null,
+            sparqlStore: null,
+            embeddingHandler: null,
+            llmHandler: null
         };
 
-        // Check component health
+        // Check component health with timeout
+        const checkPromises = [];
+
+        // Check CorpuscleSelector
         if (this.corpuscleSelector) {
-            try {
-                const metrics = this.corpuscleSelector.getMetrics();
-                healthChecks.corpuscleSelector = {
-                    status: 'healthy',
-                    metrics: {
-                        totalSelections: metrics.totalSelections,
-                        avgSelectionTime: metrics.avgSelectionTime,
-                        cacheHitRate: metrics.cacheHitRate
-                    }
-                };
-            } catch (error) {
-                healthChecks.corpuscleSelector = {
-                    status: 'unhealthy',
-                    error: error.message
-                };
-            }
+            checkPromises.push(
+                this.performHealthCheck('corpuscleSelector', async () => {
+                    const metrics = this.corpuscleSelector.getMetrics();
+                    return {
+                        status: 'healthy',
+                        metrics: {
+                            totalSelections: metrics.totalSelections,
+                            avgSelectionTime: metrics.avgSelectionTime,
+                            cacheHitRate: metrics.cacheHitRate
+                        }
+                    };
+                })
+            );
         }
 
+        // Check Transformer
         if (this.transformer) {
-            try {
-                const health = await this.transformer.healthCheck();
-                healthChecks.transformer = {
-                    status: health.healthy ? 'healthy' : 'degraded',
-                    issues: health.issues
-                };
-            } catch (error) {
-                healthChecks.transformer = {
-                    status: 'unhealthy',
-                    error: error.message
-                };
-            }
+            checkPromises.push(
+                this.performHealthCheck('transformer', async () => {
+                    const health = await this.transformer.healthCheck();
+                    return {
+                        status: health.healthy ? 'healthy' : 'degraded',
+                        issues: health.issues
+                    };
+                })
+            );
         }
+
+        // Check TiltProjector
+        if (this.tiltProjector) {
+            checkPromises.push(
+                this.performHealthCheck('tiltProjector', async () => {
+                    // Simple check - verify it has required methods
+                    const hasRequiredMethods = typeof this.tiltProjector.project === 'function';
+                    return {
+                        status: hasRequiredMethods ? 'healthy' : 'unhealthy',
+                        capabilities: ['project']
+                    };
+                })
+            );
+        }
+
+        // Check external services via stored references
+        if (this.corpuscleSelector?.sparqlStore) {
+            checkPromises.push(
+                this.performHealthCheck('sparqlStore', async () => {
+                    const health = await this.corpuscleSelector.sparqlStore.healthCheck();
+                    return {
+                        status: health.healthy ? 'healthy' : 'unhealthy',
+                        endpoint: health.endpoint,
+                        error: health.error
+                    };
+                })
+            );
+        }
+
+        if (this.corpuscleSelector?.embeddingHandler) {
+            checkPromises.push(
+                this.performHealthCheck('embeddingHandler', async () => {
+                    // Test with simple embedding generation
+                    try {
+                        await this.corpuscleSelector.embeddingHandler.generateEmbedding('test', { enableFallbacks: false });
+                        return { status: 'healthy', provider: 'available' };
+                    } catch (error) {
+                        return { status: 'unhealthy', error: error.message };
+                    }
+                })
+            );
+        }
+
+        if (this.tiltProjector?.textAnalyzer) {
+            checkPromises.push(
+                this.performHealthCheck('llmHandler', async () => {
+                    // Test with simple concept extraction
+                    try {
+                        await this.tiltProjector.textAnalyzer.extractConcepts('test text', { timeoutMs: 5000 });
+                        return { status: 'healthy', provider: 'available' };
+                    } catch (error) {
+                        return { status: 'unhealthy', error: error.message };
+                    }
+                })
+            );
+        }
+
+        // Execute all health checks concurrently
+        const results = await Promise.allSettled(checkPromises);
+        
+        // Process results
+        results.forEach((result) => {
+            if (result.status === 'fulfilled') {
+                const { name, health } = result.value;
+                healthChecks[name] = health;
+            }
+        });
 
         const overallHealthy = Object.values(healthChecks)
             .filter(check => check !== null)
@@ -681,6 +770,136 @@ export default class NavigationEndpoint {
         logger.info('NavigationEndpoint configuration updated');
     }
 
+    /**
+     * Validate dependencies before initialization
+     */
+    async validateDependencies(dependencies) {
+        const required = ['ragnoCorpus', 'sparqlStore', 'embeddingHandler', 'llmHandler'];
+        const missing = required.filter(dep => !dependencies[dep]);
+        
+        if (missing.length > 0) {
+            throw new Error(`Missing required dependencies: ${missing.join(', ')}`);
+        }
+
+        // Check if dependencies are healthy/ready
+        const healthChecks = await Promise.allSettled([
+            this.checkDependencyHealth('sparqlStore', dependencies.sparqlStore),
+            this.checkDependencyHealth('embeddingHandler', dependencies.embeddingHandler),
+            this.checkDependencyHealth('llmHandler', dependencies.llmHandler)
+        ]);
+
+        const failures = healthChecks
+            .map((result, index) => ({ dep: ['sparqlStore', 'embeddingHandler', 'llmHandler'][index], result }))
+            .filter(({ result }) => result.status === 'rejected');
+
+        if (failures.length > 0) {
+            logger.warn('Some dependencies failed health checks:', failures.map(f => f.dep));
+            // Don't fail initialization, but log warnings
+        }
+    }
+
+    /**
+     * Check if a dependency is healthy
+     */
+    async checkDependencyHealth(name, dependency) {
+        try {
+            if (typeof dependency.healthCheck === 'function') {
+                const health = await Promise.race([
+                    dependency.healthCheck(),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('Health check timeout')), 5000))
+                ]);
+                
+                if (health && !health.healthy) {
+                    throw new Error(`${name} is not healthy: ${health.error}`);
+                }
+            }
+            return { healthy: true };
+        } catch (error) {
+            logger.warn(`Health check failed for ${name}:`, error.message);
+            throw error;
+        }
+    }
+
+    /**
+     * Perform a health check with timeout
+     */
+    async performHealthCheck(name, healthCheckFn) {
+        try {
+            const health = await Promise.race([
+                healthCheckFn(),
+                new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('Health check timeout')), 5000)
+                )
+            ]);
+            
+            return { name, health };
+        } catch (error) {
+            return { 
+                name, 
+                health: { 
+                    status: 'unhealthy', 
+                    error: error.message 
+                } 
+            };
+        }
+    }
+
+    /**
+     * Verify all components are ready after initialization
+     */
+    async verifyComponentsReady() {
+        const components = [
+            { name: 'corpuscleSelector', instance: this.corpuscleSelector },
+            { name: 'tiltProjector', instance: this.tiltProjector },
+            { name: 'transformer', instance: this.transformer }
+        ];
+
+        for (const { name, instance } of components) {
+            if (!instance) {
+                throw new Error(`Component ${name} was not initialized`);
+            }
+
+            // Check if component has a ready check method
+            if (typeof instance.isReady === 'function') {
+                const ready = await instance.isReady();
+                if (!ready) {
+                    throw new Error(`Component ${name} is not ready`);
+                }
+            }
+        }
+
+        logger.debug('All components verified ready');
+    }
+
+    /**
+     * Cleanup partial initialization on failure
+     */
+    async cleanupPartialInitialization() {
+        logger.debug('Cleaning up partial initialization...');
+
+        const components = [
+            { name: 'transformer', instance: this.transformer },
+            { name: 'tiltProjector', instance: this.tiltProjector },
+            { name: 'corpuscleSelector', instance: this.corpuscleSelector }
+        ];
+
+        for (const { name, instance } of components) {
+            if (instance && typeof instance.dispose === 'function') {
+                try {
+                    await instance.dispose();
+                    logger.debug(`Cleaned up ${name}`);
+                } catch (error) {
+                    logger.warn(`Failed to cleanup ${name}:`, error.message);
+                }
+            }
+        }
+
+        // Reset component references
+        this.corpuscleSelector = null;
+        this.tiltProjector = null;
+        this.transformer = null;
+    }
+
     async shutdown() {
         logger.info('Shutting down NavigationEndpoint');
         
@@ -696,17 +915,42 @@ export default class NavigationEndpoint {
             logger.warn(`Forced shutdown with ${this.activeRequests.size} active requests`);
         }
 
-        // Cleanup components
-        if (this.corpuscleSelector) {
-            this.corpuscleSelector.dispose();
-        }
+        // Cleanup components in reverse order of initialization
+        logger.debug('Cleaning up components...');
         
-        if (this.transformer) {
-            this.transformer.dispose();
+        const components = [
+            { name: 'transformer', instance: this.transformer },
+            { name: 'tiltProjector', instance: this.tiltProjector },
+            { name: 'corpuscleSelector', instance: this.corpuscleSelector }
+        ];
+
+        for (const { name, instance } of components) {
+            if (instance) {
+                try {
+                    if (typeof instance.dispose === 'function') {
+                        await instance.dispose();
+                        logger.debug(`Disposed ${name}`);
+                    } else if (typeof instance.shutdown === 'function') {
+                        await instance.shutdown();
+                        logger.debug(`Shutdown ${name}`);
+                    } else {
+                        logger.debug(`${name} has no cleanup method, skipping`);
+                    }
+                } catch (error) {
+                    logger.warn(`Failed to cleanup ${name}:`, error.message);
+                }
+            }
         }
 
+        // Clean up resources
+        logger.debug('Cleaning up internal resources...');
         this.rateLimitStore.clear();
         this.activeRequests.clear();
+        
+        // Reset component references
+        this.corpuscleSelector = null;
+        this.tiltProjector = null;
+        this.transformer = null;
         
         logger.info('NavigationEndpoint shutdown complete');
     }

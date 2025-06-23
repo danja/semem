@@ -120,11 +120,53 @@ export default class SPARQLStore extends BaseStore {
         this.graphName = options.graphName || 'http://example.org/mcp/memory'
         this.inTransaction = false
         this.dimension = options.dimension || 1536
+        
+        // Simple resilience configuration (opt-in)
+        this.resilience = {
+            enabled: options.enableResilience === true, // Default disabled for backward compatibility
+            maxRetries: options.maxRetries || 3,
+            timeoutMs: options.timeoutMs || 30000,
+            retryDelayMs: options.retryDelayMs || 1000,
+            enableFallbacks: options.enableFallbacks !== false,
+            ...options.resilience
+        }
     }
 
     async _executeSparqlQuery(query, endpoint) {
         const auth = Buffer.from(`${this.credentials.user}:${this.credentials.password}`).toString('base64')
         logger.log(`endpoint = ${endpoint}`)
+        
+        // Use resilience wrapper only if enabled
+        if (this.resilience.enabled) {
+            return this.executeWithResilience(async () => {
+                logger.error('[SPARQL QUERY]', endpoint) // { endpoint, query }
+                const response = await this.withTimeout(
+                    fetch(endpoint, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Basic ${auth}`,
+                            'Content-Type': 'application/sparql-query',
+                            'Accept': 'application/json'
+                        },
+                        body: query,
+                        credentials: 'include'
+                    }),
+                    this.resilience.timeoutMs
+                )
+
+                if (!response.ok) {
+                    const errorText = await response.text()
+                    logger.error('[SPARQL QUERY FAIL]', { endpoint, query, status: response.status, errorText })
+                    throw new Error(`SPARQL query failed: ${response.status} - ${errorText}`)
+                }
+
+                const json = await response.json()
+                logger.error('[SPARQL QUERY SUCCESS]', endpoint) // , { endpoint, query, json }
+                return json
+            }, 'query')
+        }
+
+        // Original implementation for backward compatibility
         try {
             logger.error('[SPARQL QUERY]', endpoint) // { endpoint, query }
             const response = await fetch(endpoint, {
@@ -156,6 +198,36 @@ export default class SPARQLStore extends BaseStore {
     async _executeSparqlUpdate(update, endpoint) {
         const auth = Buffer.from(`${this.credentials.user}:${this.credentials.password}`).toString('base64')
 
+        // Use resilience wrapper only if enabled
+        if (this.resilience.enabled) {
+            return this.executeWithResilience(async () => {
+                logger.error('[SPARQL UPDATE]', endpoint) //  { endpoint, update }
+                const response = await this.withTimeout(
+                    fetch(endpoint, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Basic ${auth}`,
+                            'Content-Type': 'application/sparql-update',
+                            'Accept': 'application/json'
+                        },
+                        body: update,
+                        credentials: 'include'
+                    }),
+                    this.resilience.timeoutMs
+                )
+
+                if (!response.ok) {
+                    const errorText = await response.text()
+                    logger.error('[SPARQL UPDATE FAIL]', { endpoint, update, status: response.status, errorText })
+                    throw new Error(`SPARQL update failed: ${response.status} - ${errorText}`)
+                }
+
+                logger.error('[SPARQL UPDATE SUCCESS]', endpoint) // { endpoint, update}
+                return response
+            }, 'update')
+        }
+
+        // Original implementation for backward compatibility
         try {
             logger.error('[SPARQL UPDATE]', endpoint) //  { endpoint, update }
             const response = await fetch(endpoint, {
@@ -1288,5 +1360,78 @@ export default class SPARQLStore extends BaseStore {
         if (normA === 0 || normB === 0) return 0
 
         return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB))
+    }
+
+    // Simple resilience mechanism with timeout and retries
+    async executeWithResilience(operation, operationType = 'operation') {
+        const { maxRetries, retryDelayMs } = this.resilience
+        let lastError = null
+
+        for (let attempt = 0; attempt < maxRetries; attempt++) {
+            try {
+                return await operation()
+            } catch (error) {
+                lastError = error
+                logger.warn(`SPARQL ${operationType} attempt ${attempt + 1}/${maxRetries} failed: ${error.message}`)
+                
+                if (attempt < maxRetries - 1) {
+                    const delay = retryDelayMs * Math.pow(2, attempt) // Exponential backoff
+                    await new Promise(resolve => setTimeout(resolve, delay))
+                }
+            }
+        }
+
+        // If all retries failed, try fallback if enabled
+        if (this.resilience.enableFallbacks && operationType === 'query') {
+            logger.warn(`SPARQL query failed after ${maxRetries} attempts, using fallback`)
+            return this.getFallbackQueryResult()
+        }
+
+        throw new Error(`SPARQL ${operationType} failed after ${maxRetries} attempts: ${lastError?.message}`)
+    }
+
+    // Simple timeout wrapper
+    async withTimeout(promise, timeoutMs) {
+        return Promise.race([
+            promise,
+            new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('SPARQL operation timed out')), timeoutMs)
+            )
+        ])
+    }
+
+    // Simple fallback for failed queries
+    getFallbackQueryResult() {
+        return {
+            results: {
+                bindings: []
+            }
+        }
+    }
+
+    // Health check for SPARQL endpoint
+    async healthCheck() {
+        try {
+            const testQuery = `
+                PREFIX ragno: <http://purl.org/stuff/ragno/>
+                SELECT (COUNT(*) as ?count) WHERE { 
+                    GRAPH <${this.graphName}> { 
+                        ?s a ragno:Entity 
+                    } 
+                } LIMIT 1`
+            
+            await this.withTimeout(
+                this._executeSparqlQuery(testQuery, this.endpoint.query),
+                5000 // 5 second timeout for health check
+            )
+            
+            return { healthy: true, endpoint: this.endpoint.query }
+        } catch (error) {
+            return { 
+                healthy: false, 
+                endpoint: this.endpoint.query, 
+                error: error.message 
+            }
+        }
     }
 }
