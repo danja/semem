@@ -212,8 +212,8 @@ export class SPARQLBrowser {
     }
 
     setupAtuinTabs() {
-        // Left panel tabs
-        const leftTabs = document.querySelectorAll('#atuin-left-pane .tab-btn');
+        // Left panel tabs (Turtle/SPARQL)
+        const leftTabs = document.querySelectorAll('#atuin-left-pane .tab');
         leftTabs.forEach(tab => {
             tab.addEventListener('click', (e) => {
                 const tabName = e.target.getAttribute('data-tab');
@@ -221,8 +221,8 @@ export class SPARQLBrowser {
             });
         });
 
-        // Right panel tabs  
-        const rightTabs = document.querySelectorAll('#atuin-right-pane .tab-btn');
+        // Right panel tabs (View/Settings)
+        const rightTabs = document.querySelectorAll('#atuin-right-pane .tab');
         rightTabs.forEach(tab => {
             tab.addEventListener('click', (e) => {
                 const tabName = e.target.getAttribute('data-tab');
@@ -234,7 +234,7 @@ export class SPARQLBrowser {
     switchLeftTab(tabName) {
         try {
             // Update active tab button
-            const leftTabs = document.querySelectorAll('#atuin-left-pane .tab-btn');
+            const leftTabs = document.querySelectorAll('#atuin-left-pane .tab');
             leftTabs.forEach(tab => tab.classList.remove('active'));
             
             const activeTab = document.querySelector(`#atuin-left-pane [data-tab="${tabName}"]`);
@@ -242,13 +242,13 @@ export class SPARQLBrowser {
                 activeTab.classList.add('active');
             }
 
-            // Show corresponding content
-            const leftContents = document.querySelectorAll('#atuin-left-pane .tab-content');
-            leftContents.forEach(content => content.classList.remove('active'));
-            
-            const activeContent = document.getElementById(`${tabName}-content`);
-            if (activeContent) {
-                activeContent.classList.add('active');
+            // Show corresponding content panel
+            if (tabName === 'turtle-editor') {
+                document.getElementById('turtle-editor-pane').style.display = 'block';
+                document.getElementById('sparql-editor-pane').style.display = 'none';
+            } else if (tabName === 'sparql-query') {
+                document.getElementById('turtle-editor-pane').style.display = 'none';
+                document.getElementById('sparql-editor-pane').style.display = 'block';
             }
             
             console.log(`Switched to left tab: ${tabName}`);
@@ -260,7 +260,7 @@ export class SPARQLBrowser {
     switchRightTab(tabName) {
         try {
             // Update active tab button
-            const rightTabs = document.querySelectorAll('#atuin-right-pane .tab-btn');
+            const rightTabs = document.querySelectorAll('#atuin-right-pane .tab');
             rightTabs.forEach(tab => tab.classList.remove('active'));
             
             const activeTab = document.querySelector(`#atuin-right-pane [data-tab="${tabName}"]`);
@@ -268,13 +268,13 @@ export class SPARQLBrowser {
                 activeTab.classList.add('active');
             }
 
-            // Show corresponding content
-            const rightContents = document.querySelectorAll('#atuin-right-pane .tab-content');
-            rightContents.forEach(content => content.classList.remove('active'));
-            
-            const activeContent = document.getElementById(`${tabName}-content`);
-            if (activeContent) {
-                activeContent.classList.add('active');
+            // Show corresponding content panel
+            if (tabName === 'view-pane') {
+                document.getElementById('view-pane').style.display = 'block';
+                document.getElementById('settings-pane').style.display = 'none';
+            } else if (tabName === 'settings-pane') {
+                document.getElementById('view-pane').style.display = 'none';
+                document.getElementById('settings-pane').style.display = 'block';
             }
             
             console.log(`Switched to right tab: ${tabName}`);
@@ -677,46 +677,46 @@ ex:austin a ex:Location ;
     }
 
     setupEventListeners() {
-        // Execute Query button
-        const executeBtn = document.getElementById('execute-query');
+        // Execute Query button (from SPARQL toolbar)
+        const executeBtn = document.getElementById('run-sparql-query');
         if (executeBtn) {
             executeBtn.addEventListener('click', () => this.executeQuery());
         }
 
-        // Load Graph button
-        const loadGraphBtn = document.getElementById('load-graph');
-        if (loadGraphBtn) {
-            loadGraphBtn.addEventListener('click', () => this.loadGraph());
+        // Store Query button (from SPARQL toolbar)
+        const storeBtn = document.getElementById('store-sparql-query');
+        if (storeBtn) {
+            storeBtn.addEventListener('click', () => this.saveQuery());
         }
 
-        // Validate RDF button
-        const validateBtn = document.getElementById('validate-rdf');
-        if (validateBtn) {
-            validateBtn.addEventListener('click', () => this.validateRDF());
+        // Clips Query button (from SPARQL toolbar)
+        const clipsBtn = document.getElementById('clips-sparql-query');
+        if (clipsBtn) {
+            clipsBtn.addEventListener('click', () => this.loadQuery());
         }
 
-        // Insert RDF button
-        const insertBtn = document.getElementById('insert-rdf');
-        if (insertBtn) {
-            insertBtn.addEventListener('click', () => this.insertRDF());
+        // File controls
+        const loadFileBtn = document.getElementById('atuin-load-file-btn');
+        if (loadFileBtn) {
+            loadFileBtn.addEventListener('click', () => {
+                document.getElementById('atuin-load-file').click();
+            });
         }
 
-        // Refresh endpoints button
-        const refreshBtn = document.getElementById('refresh-endpoints');
-        if (refreshBtn) {
-            refreshBtn.addEventListener('click', () => this.loadEndpoints());
+        const saveFileBtn = document.getElementById('atuin-save-file-btn');
+        if (saveFileBtn) {
+            saveFileBtn.addEventListener('click', () => this.saveFile());
         }
 
-        // Save Query button
-        const saveQueryBtn = document.getElementById('save-query');
-        if (saveQueryBtn) {
-            saveQueryBtn.addEventListener('click', () => this.saveQuery());
+        // Endpoint management
+        const addEndpointBtn = document.getElementById('add-sparql-endpoint');
+        if (addEndpointBtn) {
+            addEndpointBtn.addEventListener('click', () => this.addEndpoint());
         }
 
-        // Load Query button
-        const loadQueryBtn = document.getElementById('load-query');
-        if (loadQueryBtn) {
-            loadQueryBtn.addEventListener('click', () => this.loadQuery());
+        const removeEndpointBtn = document.getElementById('remove-sparql-endpoint');
+        if (removeEndpointBtn) {
+            removeEndpointBtn.addEventListener('click', () => this.removeEndpoint());
         }
     }
 
@@ -1518,6 +1518,130 @@ ex:austin a ex:Location ;
             }
         } catch (error) {
             console.error('Failed to load query:', error);
+        }
+    }
+
+    /**
+     * Save current content to file
+     */
+    saveFile() {
+        try {
+            let content = '';
+            let filename = 'sparql-content';
+            let extension = '.txt';
+
+            // Determine content based on active tab
+            const activeLeftTab = document.querySelector('#atuin-left-pane .tab.active');
+            if (activeLeftTab?.getAttribute('data-tab') === 'turtle-editor') {
+                if (this.turtleEditor && this.turtleEditor.getValue) {
+                    content = this.turtleEditor.getValue();
+                    filename = 'rdf-data';
+                    extension = '.ttl';
+                }
+            } else if (activeLeftTab?.getAttribute('data-tab') === 'sparql-query') {
+                if (this.sparqlEditor && this.sparqlEditor.getValue) {
+                    content = this.sparqlEditor.getValue();
+                    filename = 'sparql-query';
+                    extension = '.rq';
+                }
+            }
+
+            if (!content.trim()) {
+                console.warn('No content to save');
+                return;
+            }
+
+            // Create download
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename + extension;
+            a.click();
+            URL.revokeObjectURL(url);
+
+            console.log('File saved successfully');
+        } catch (error) {
+            console.error('Failed to save file:', error);
+        }
+    }
+
+    /**
+     * Add new SPARQL endpoint
+     */
+    async addEndpoint() {
+        try {
+            const urlInput = document.getElementById('sparql-endpoint-url');
+            const url = urlInput?.value?.trim();
+
+            if (!url) {
+                alert('Please enter an endpoint URL');
+                return;
+            }
+
+            // Test endpoint connection
+            try {
+                const testResponse = await fetch(url, {
+                    method: 'GET',
+                    headers: { 'Accept': 'application/sparql-results+json' }
+                });
+                
+                if (!testResponse.ok) {
+                    throw new Error(`HTTP ${testResponse.status}`);
+                }
+            } catch (error) {
+                if (!confirm(`Could not connect to endpoint. Add anyway?\n\nError: ${error.message}`)) {
+                    return;
+                }
+            }
+
+            // Add to endpoints list
+            if (!this.endpoints) this.endpoints = [];
+            
+            const newEndpoint = {
+                label: url,
+                queryEndpoint: url,
+                id: Date.now().toString()
+            };
+            
+            this.endpoints.push(newEndpoint);
+            this.updateEndpointSelect();
+            
+            // Clear input
+            if (urlInput) urlInput.value = '';
+            
+            console.log('Endpoint added successfully:', url);
+        } catch (error) {
+            console.error('Failed to add endpoint:', error);
+            alert('Failed to add endpoint: ' + error.message);
+        }
+    }
+
+    /**
+     * Remove selected SPARQL endpoint
+     */
+    removeEndpoint() {
+        try {
+            const select = document.getElementById('sparql-endpoint-select');
+            const selectedIndex = select?.selectedIndex;
+
+            if (selectedIndex === undefined || selectedIndex < 0) {
+                alert('Please select an endpoint to remove');
+                return;
+            }
+
+            if (!confirm('Are you sure you want to remove this endpoint?')) {
+                return;
+            }
+
+            // Remove from list
+            if (this.endpoints && selectedIndex < this.endpoints.length) {
+                this.endpoints.splice(selectedIndex, 1);
+                this.updateEndpointSelect();
+                console.log('Endpoint removed successfully');
+            }
+        } catch (error) {
+            console.error('Failed to remove endpoint:', error);
         }
     }
 

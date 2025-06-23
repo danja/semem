@@ -1,0 +1,175 @@
+/* Settings panel styles */
+#settings-pane {
+  overflow-y: auto;
+  height: 100%;
+  padding: 15px;
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: #aaa #f0f0f0; /* Firefox */
+}
+
+/* File control buttons */
+#load-file-btn,
+#save-file-btn {
+  padding: 6px 12px;
+  background-color: #f0f0f0;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: 8px;
+  transition: background-color 0.2s;
+}
+
+#load-file-btn:hover,
+#save-file-btn:hover {
+  background-color: #e0e0e0;
+}
+
+#load-file-btn .icon,
+#save-file-btn .icon {
+  font-size: 16px;
+}
+
+/* Message styles */
+#message-queue {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  z-index: 1000;
+  max-width: 300px;
+}
+
+.message {
+  padding: 10px 15px;
+  margin-bottom: 8px;
+  border-radius: 4px;
+  color: white;
+  opacity: 0.95;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  transition: opacity 0.5s ease-in-out;
+}
+
+.message.fade-out {
+  opacity: 0;
+}
+
+.message.info {
+  background-color: #2196F3;
+}
+
+.message.success {
+  background-color: #4CAF50;
+}
+
+.message.warning {
+  background-color: #FFC107;
+  color: #333;
+}
+
+.message.error {
+  background-color: #F44336;
+}
+
+#settings-pane::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+#settings-pane::-webkit-scrollbar-track {
+  background: #f0f0f0;
+  border-radius: 4px;
+}
+
+#settings-pane::-webkit-scrollbar-thumb {
+  background-color: #aaa;
+  border-radius: 4px;
+  border: 2px solid #f0f0f0;
+}
+
+#settings-pane::-webkit-scrollbar-thumb:hover {
+  background-color: #888;
+}
+
+.settings-group {
+  margin-bottom: 20px;
+  background-color: #f9f9f9;
+  border-radius: 5px;
+  padding: 15px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.settings-group h4 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 16px;
+  color: #444;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 8px;
+}
+
+.setting-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.setting-item label {
+  min-width: 120px;
+  font-size: 14px;
+}
+
+.setting-item input[type="range"] {
+  flex: 1;
+  max-width: 200px;
+}
+
+.setting-item select {
+  padding: 5px 10px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  background-color: white;
+}
+
+.setting-item input[type="checkbox"] {
+  margin-right: 5px;
+  transform: scale(1.2);
+}
+
+/* SPARQL Endpoint specific styles */
+.setting-item #sparql-endpoint-url,
+.setting-item #sparql-endpoint-select {
+  flex-grow: 1;
+  margin-right: 8px;
+  padding: 5px 8px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  background-color: white;
+  font-size: 14px; /* Match existing select */
+}
+
+.setting-item #add-sparql-endpoint,
+.setting-item #remove-sparql-endpoint {
+  padding: 5px 10px; /* Match existing select padding for consistency */
+  white-space: nowrap; /* Prevent button text from wrapping */
+}
+
+/* Tab styles that apply to both editor and right panel */
+.tab-bar {
+  background-color: #f0f0f0;
+  border-bottom: 1px solid #ccc;
+}
+
+.tab {
+  font-size: 14px;
+  transition: background-color 0.2s;
+}
+
+.tab:hover {
+  background-color: #e0e0e0;
+}
+
+.tab.active {
+  font-weight: 500;
+}

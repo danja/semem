@@ -1,0 +1,154 @@
+/* Tab panes in the right panel */
+#view-pane,
+#settings-pane {
+  height: calc(100% - 34px); /* Subtract tab bar height */
+  width: 100%;
+  overflow: auto;
+}
+
+#graph-container {
+  height: 100%;
+  width: 100%;
+  background-color: #f9f9f9;
+  position: relative;
+  display: flex;
+}
+
+/* Main network container */
+.vis-network {
+  width: 100%;
+  height: 100%;
+}
+
+/* Node styling */
+.vis-node {
+  font-size: 14px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+/* Subject nodes */
+.vis-node.subject {
+  background-color: #97B0F8;
+  border-color: #4466cc;
+}
+
+/* Object nodes */
+.vis-node.object {
+  background-color: #D5DDF6;
+  border-color: #97B0F8;
+}
+
+/* Literal nodes */
+.vis-node.literal {
+  background-color: #fff6a5;
+  border-color: #ffcc00;
+  border-radius: 8px;
+}
+
+/* Class nodes */
+.vis-node.class {
+  background-color: #ffb366;
+  border-color: #ff8000;
+  border-radius: 8px;
+}
+
+/* Property nodes */
+.vis-node.property {
+  background-color: #ffff99;
+  border-color: #e6e600;
+  border-radius: 8px;
+}
+
+/* Selected node highlight */
+.vis-node.vis-selected {
+  background-color: #FFF785;
+  border-color: #FFC200;
+  box-shadow: 0 0 8px #FFC200;
+}
+
+/* Edge styling */
+.vis-edge {
+  color: #0077aa;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  font-size: 12px;
+}
+
+.vis-edge.predicate {
+  width: 2px;
+}
+
+/* Edge label styling */
+.vis-edgelabel {
+  font-size: 12px;
+  background-color: rgba(255, 255, 255, 0.85);
+  padding: 2px 4px;
+  border-radius: 4px;
+  color: #0077aa;
+  font-weight: bold;
+}
+
+/* Cluster styling */
+.vis-cluster {
+  background-color: #ffce99;
+  border-color: #ff9c33;
+}
+
+.vis-cluster:hover {
+  background-color: #ffe6cc;
+  border-color: #ffb566;
+}
+
+/* Navigation controls */
+.vis-navigation {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  z-index: 100;
+}
+
+.vis-navigation button {
+  width: 32px;
+  height: 32px;
+  background-color: white;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  margin: 2px;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+.vis-navigation button:hover {
+  background-color: #f0f0f0;
+}
+
+/* Tooltip styling */
+.vis-tooltip {
+  position: absolute;
+  padding: 8px 12px;
+  background-color: white;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  font-size: 13px;
+  z-index: 900;
+  max-width: 300px;
+  word-wrap: break-word;
+  color: #333;
+}
+
+/* Hover effects */
+.vis-node:hover {
+  cursor: pointer;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.2);
+}
+
+/* Loading animation */
+.vis-loading-screen {
+  background-color: rgba(255, 255, 255, 0.8);
+}
+
+.vis-loading-text {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  font-size: 14px;
+  color: #555;
+}

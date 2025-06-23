@@ -1,0 +1,572 @@
+/* Main application styles */
+:root {
+  --primary-color: #4CAF50;
+  --secondary-color: #555;
+  --error-color: #F2DEDE;
+  --error-text: #822;
+  --success-color: #DFF0D8;
+  --warning-color: #FCF8E3;
+  --border-color: #CAD0DB;
+  --highlight-color: lightgreen;
+  --divider-color: #aaa;
+}
+
+#about {
+  text-align: right;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  line-height: 1.5;
+  color: #333;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 20px;
+  background-color: var(--secondary-color);
+  color: white;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+}
+
+.logo img {
+  width: 50px;
+  height: 50px;
+  margin-right: 10px;
+}
+
+.logo h1 {
+  font-size: 1.5rem;
+}
+
+.main-container {
+  padding: 20px;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.view-controls {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.toggle-group {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.toggle {
+  position: relative;
+  appearance: none;
+  width: 40px;
+  height: 20px;
+  background-color: #ccc;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.toggle:checked {
+  background-color: var(--primary-color);
+}
+
+.toggle::before {
+  content: "";
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background-color: white;
+  top: 2px;
+  left: 2px;
+  transition: transform 0.3s;
+}
+
+.toggle:checked::before {
+  transform: translateX(20px);
+}
+
+.cluster-controls {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.icon-button {
+  width: 30px;
+  height: 30px;
+  background-color: #f1f1f1;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.icon-button:hover {
+  background-color: #e1e1e1;
+}
+
+.btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.2s;
+}
+
+.btn-primary {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: #3e8e41;
+}
+
+.btn-default {
+  background-color: #f1f1f1;
+  color: #333;
+}
+
+.btn-default:hover {
+  background-color: #e1e1e1;
+}
+
+.btn-danger {
+  background-color: #d9534f;
+  color: white;
+}
+
+.btn-danger:hover {
+  background-color: #c9302c;
+}
+
+/* Status indicators */
+#syntax-check {
+  display: flex;
+  align-items: center;
+}
+
+.status-icon {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  margin-right: 5px;
+}
+
+.status-icon.error {
+  background-color: #d9534f;
+}
+
+.status-icon.working, 
+.status-icon.pending {
+  background-color: #f0ad4e;
+}
+
+.status-icon.passed {
+  background-color: var(--primary-color);
+}
+
+.status-icon.off {
+  background-color: #777;
+}
+
+/* Split container */
+.split-container {
+  display: flex;
+  height: 70vh;
+  border: 1px solid var(--border-color);
+  margin-bottom: 20px;
+}
+
+.split-pane {
+  flex: 1;
+  overflow: hidden;
+  height: 100%;
+}
+
+.split-divider {
+  width: 5px;
+  background-color: var(--divider-color);
+  cursor: col-resize;
+}
+
+/* Resizing state */
+.resizing {
+  cursor: col-resize;
+  user-select: none;
+}
+
+.resizing .split-pane,
+.resizing .split-divider {
+  transition: none !important;
+}
+
+/* Message queue */
+#message-queue {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  max-width: 300px;
+}
+
+.alert {
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 4px;
+  animation: fadeIn 0.3s;
+}
+
+.alert-danger {
+  background-color: var(--error-color);
+  color: var(--error-text);
+}
+
+.alert-warning {
+  background-color: var(--warning-color);
+  color: #8a6d3b;
+}
+
+.alert-success {
+  background-color: var(--success-color);
+  color: #3c763d;
+}
+
+.alert-info {
+  background-color: #d9edf7;
+  color: #31708f;
+}
+
+.badge {
+  display: inline-block;
+  padding: 2px 6px;
+  font-size: 12px;
+  font-weight: bold;
+  line-height: 1;
+  color: white;
+  background-color: #777;
+  border-radius: 10px;
+  margin-left: 5px;
+}
+
+/* Popup and dialog */
+.popup, .dialog {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.popup-content, .dialog-content {
+  background-color: white;
+  padding: 20px;
+  border-radius: 5px;
+  min-width: 300px;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.open-source-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 0;
+  width: 100%;
+}
+
+.left-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.right-info {
+  margin-left: auto;
+}
+
+.open-source-info img {
+  height: 20px;
+}
+
+.open-source-info a {
+  text-decoration: none;
+  color: inherit;
+}
+
+.open-source-info a:hover {
+  text-decoration: underline;
+}
+
+.license-badge, .github-badge {
+  transition: opacity 0.2s;
+}
+
+.license-badge:hover, .github-badge:hover {
+  opacity: 0.8;
+}
+
+/* Message Queue Styles */
+#message-queue {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column-reverse; /* New messages appear at the bottom and push older ones up */
+  align-items: flex-end;
+  gap: 10px;
+  z-index: 10000; /* Ensure it's above most other content */
+}
+
+.message {
+  padding: 10px 15px;
+  border-radius: 5px;
+  color: #fff;
+  font-size: 14px;
+  min-width: 250px;
+  max-width: 400px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  opacity: 1;
+  transition: opacity 0.5s ease-out;
+}
+
+.message.info {
+  background-color: #007bff; /* A distinct info color */
+}
+
+.message.success {
+  background-color: var(--primary-color);
+}
+
+.message.warning {
+  background-color: #ffc107; /* Bootstrap warning yellow */
+  color: #333; /* Darker text for yellow background */
+}
+
+.message.error {
+  background-color: #d9534f; /* Existing .btn-danger color */
+}
+
+/* SPARQL Results View */
+#sparql-results-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%; /* Fill the #view-pane */
+  box-sizing: border-box;
+}
+
+#sparql-results-container h3 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  padding: 10px 10px 0 10px;
+  flex-shrink: 0;
+}
+
+#sparql-results-table-wrapper {
+  flex-grow: 1;
+  overflow: auto;
+  padding: 0 10px 10px 10px;
+  box-sizing: border-box;
+}
+
+#sparql-results-container table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9em;
+}
+
+#sparql-results-container th,
+#sparql-results-container td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+  vertical-align: top;
+}
+
+#sparql-results-container th {
+  background-color: #f2f2f2;
+  font-weight: bold;
+  position: sticky;
+  top: 0; /* For sticky header */
+  z-index: 1;
+}
+
+#sparql-results-container tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+#sparql-results-container tr:hover {
+  background-color: #e2e2e2;
+}
+
+/* Turtle Results Styles for CONSTRUCT/DESCRIBE queries */
+.turtle-results {
+  padding: 15px;
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  margin-bottom: 10px;
+}
+
+.turtle-message {
+  background-color: #d1ecf1;
+  color: #0c5460;
+  padding: 10px 15px;
+  border: 1px solid #bee5eb;
+  border-radius: 4px;
+  margin-bottom: 15px;
+  font-weight: 500;
+}
+
+.turtle-content {
+  background-color: #ffffff;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  max-height: 400px;
+  overflow: auto;
+}
+
+.turtle-content pre {
+  margin: 0;
+  padding: 15px;
+  background-color: transparent;
+  border: none;
+}
+
+.turtle-code {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #333;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+/* SPARQL Clips Dialog Styles */
+#sparql-clips-list {
+  max-height: 300px;
+  overflow-y: auto;
+  margin-bottom: 15px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+}
+
+.sparql-clip-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.sparql-clip-item:last-child {
+  border-bottom: none;
+}
+
+.sparql-clip-item:hover {
+  background-color: #f5f5f5;
+}
+
+.sparql-clip-info {
+  flex-grow: 1;
+}
+
+.sparql-clip-name {
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.sparql-clip-preview {
+  font-size: 12px;
+  color: #666;
+  font-family: monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 300px;
+}
+
+.sparql-clip-actions {
+  display: flex;
+  gap: 5px;
+}
+
+.sparql-clips-empty {
+  text-align: center;
+  padding: 20px;
+  color: #666;
+  font-style: italic;
+}
+
+.btn-sm {
+  padding: 4px 8px;
+  font-size: 12px;
+}

@@ -1,0 +1,280 @@
+#editor-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%; /* Assumes parent (.split-pane) provides a constrained height */
+  overflow: hidden; /* Child panes should manage their own overflow */
+}
+
+#input-contents {
+  width: 100%;
+  /* height: 100%; Removed, flex-grow in the rule above now manages height */
+  font-family: 'Fira Code', 'Courier New', Courier, monospace;
+  font-size: 14px;
+  padding: 10px;
+  border: none;
+  resize: none;
+}
+
+
+.cm-editor {
+  height: 100%;
+  font-family: 'Fira Code', 'Courier New', Courier, monospace;
+}
+
+.cm-line {
+  padding: 0 4px;
+}
+
+.cm-gutters {
+  border-right: 1px solid var(--border-color);
+  background-color: #f7f7f7;
+}
+
+
+.cm-error-line {
+  background-color: var(--error-color);
+}
+
+.cm-error-gutter {
+  color: var(--error-text);
+  font-weight: bold;
+}
+
+
+.cm-keyword {
+  color: #708;
+}
+
+.cm-atom {
+  color: #219;
+}
+
+.cm-number {
+  color: #164;
+}
+
+.cm-def {
+  color: #00f;
+}
+
+.cm-variable {
+  color: #05a;
+}
+
+.cm-operator {
+  color: #aa22ff;
+  font-weight: bold;
+}
+
+.cm-comment {
+  color: #a50;
+  font-style: italic;
+}
+
+.cm-string {
+  color: #a11;
+}
+
+.cm-iri {
+  color: #FFA500;
+  font-weight: bold;
+}
+
+.cm-meta {
+  color: #555;
+}
+
+.cm-qualifier {
+  color: #555;
+}
+
+.cm-builtin {
+  color: #30a;
+}
+
+.cm-bracket {
+  color: #997;
+}
+
+.cm-tag {
+  color: #170;
+}
+
+.cm-attribute {
+  color: #00c;
+}
+
+
+.cm-tooltip-autocomplete {
+  border: 1px solid var(--border-color);
+  background-color: white;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.cm-tooltip-autocomplete ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.cm-tooltip-autocomplete li {
+  padding: 4px 8px;
+  cursor: pointer;
+}
+
+.cm-tooltip-autocomplete li:hover,
+.cm-tooltip-autocomplete li.selected {
+  background-color: #eee;
+}
+
+
+.cm-highlight {
+  background-color: var(--highlight-color);
+  border-radius: 2px;
+  transition: background-color 0.2s ease;
+  text-decoration: underline;
+  text-decoration-style: wavy;
+  text-decoration-color: darkgreen;
+}
+
+.cm-highlight:hover {
+  background-color: rgba(144, 238, 144, 0.7);
+}
+
+.cm-highlight-scrollbar {
+  background-color: darkgreen;
+  width: 8px !important;
+}
+
+
+.cm-predicate {
+  color: #0077aa;
+  font-weight: bold;
+}
+
+.cm-a {
+  color: #aa6600;
+  font-weight: bold;
+}
+
+.cm-prefixName {
+  color: #0055aa;
+}
+
+.cm-iri {
+  color: #FFA500;
+  font-weight: bold;
+}
+
+.cm-literal {
+  color: #a31515;
+}
+
+.cm-lang {
+  color: #9900cc;
+}
+
+.cm-datatype {
+  color: #669900;
+}
+
+.cm-boolean {
+  color: #0000ff;
+}
+
+/* Editor Pane Styles (Turtle and SPARQL) */
+#turtle-editor-pane,
+#sparql-editor-pane {
+  flex-grow: 1; /* Panes take remaining vertical space in #editor-container */
+  min-height: 0; /* Allows panes to shrink correctly in a flex container */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* Panes manage their own internal scrolling */
+  position: relative; /* Retained from original #sparql-editor-pane styles */
+}
+
+/* Ensure CodeMirror instance or textarea takes up available space within its pane */
+#turtle-editor-pane .cm-editor,
+#input-contents, /* This is the textarea for Turtle */
+#sparql-editor-pane .cm-editor,
+#sparql-contents /* This is the textarea for SPARQL */ {
+  flex-grow: 1; /* Takes up all available vertical space */
+  height: auto; /* Override fixed height if any */
+  overflow-y: auto; /* Allow scrolling within the editor */
+  box-sizing: border-box;
+}
+
+#sparql-toolbar {
+  height: 40px;
+  background-color: #f0f0f0;
+  border-top: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  box-sizing: border-box;
+  flex-shrink: 0; /* Prevent toolbar from shrinking */
+  gap: 8px; /* Add spacing between buttons */
+}
+
+/* SPARQL Endpoint Selector */
+.endpoint-selector {
+  display: flex;
+  align-items: center;
+  padding: 8px 10px;
+  background-color: #f8f8f8;
+  border-bottom: 1px solid #ddd;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.endpoint-selector label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #555;
+  white-space: nowrap;
+}
+
+.endpoint-select {
+  flex-grow: 1;
+  padding: 4px 8px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  background-color: white;
+  font-size: 13px;
+  max-width: 300px;
+}
+
+.endpoint-select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+}
+
+.endpoint-selector .btn {
+  padding: 4px 8px;
+  font-size: 12px;
+  min-width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.endpoint-selector .btn:hover {
+  transform: translateY(-1px);
+  transition: transform 0.1s ease;
+}
+
+
+@keyframes highlight-pulse {
+  0% { background-color: rgba(144, 238, 144, 0.3); }
+  50% { background-color: rgba(144, 238, 144, 0.8); }
+  100% { background-color: rgba(144, 238, 144, 0.3); }
+}
+
+.cm-highlight.pulse {
+  animation: highlight-pulse 1s ease;
+}
