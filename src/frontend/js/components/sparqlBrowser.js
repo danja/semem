@@ -50,11 +50,20 @@ export class SPARQLBrowser {
             // Setup SPARQL browser tabs
             this.setupTabs();
             
+            // Initialize syntax checker
+            this.initializeSyntaxChecker();
+            
             // Initialize graph visualizer
             await this.initializeGraphVisualizer();
             
             // Initialize SPARQL Clips Manager and UI
             await this.initializeClipsManager();
+            
+            // Pre-load SPARQL query and save to clips
+            await this.preloadSparqlQuery();
+            
+            // Load system configuration into settings
+            await this.loadSystemSettings();
             
             // Automatically load RDF data from Edit panel into Graph visualization
             await this.autoLoadGraphData();
@@ -729,75 +738,100 @@ ex:austin a ex:Location ;
     }
 
     setupLeftPanelTabs() {
-        const leftTabButtons = document.querySelectorAll('.sparql-left-panel .tab-inner-btn');
-        const leftTabContents = document.querySelectorAll('.sparql-left-content .sparql-tab-content');
+        // Left panel tabs: Turtle and SPARQL
+        const turtleTab = document.getElementById('tab-turtle');
+        const sparqlTab = document.getElementById('tab-sparql');
+        const turtlePane = document.getElementById('turtle-editor-pane');
+        const sparqlPane = document.getElementById('sparql-editor-pane');
 
-        console.log('Setting up left panel SPARQL tabs. Found', leftTabButtons.length, 'tab buttons');
-
-        leftTabButtons.forEach((button, index) => {
-            const targetTab = button.getAttribute('data-tab');
-            console.log(`Left tab ${index}: ${targetTab}`);
-            
-            button.addEventListener('click', () => {
-                console.log(`Left tab clicked: ${targetTab}`);
-                
-                // Remove active class from all left panel buttons and contents
-                leftTabButtons.forEach(btn => btn.classList.remove('active'));
-                leftTabContents.forEach(content => content.classList.remove('active'));
-                
-                // Add active class to clicked button and corresponding content
-                button.classList.add('active');
-                const targetContent = document.getElementById(targetTab);
-                if (targetContent) {
-                    targetContent.classList.add('active');
-                }
-            });
+        console.log('Setting up left panel tabs:', {
+            turtleTab: !!turtleTab,
+            sparqlTab: !!sparqlTab,
+            turtlePane: !!turtlePane,
+            sparqlPane: !!sparqlPane
         });
+
+        if (turtleTab && sparqlTab && turtlePane && sparqlPane) {
+            turtleTab.addEventListener('click', () => {
+                console.log('Turtle tab clicked');
+                turtleTab.classList.add('active');
+                sparqlTab.classList.remove('active');
+                turtlePane.style.display = 'block';
+                sparqlPane.style.display = 'none';
+            });
+
+            sparqlTab.addEventListener('click', () => {
+                console.log('SPARQL tab clicked');
+                sparqlTab.classList.add('active');
+                turtleTab.classList.remove('active');
+                sparqlPane.style.display = 'block';
+                turtlePane.style.display = 'none';
+            });
+        } else {
+            console.warn('Could not find all left panel tab elements');
+        }
     }
 
     setupRightPanelTabs() {
-        const rightTabButtons = document.querySelectorAll('.sparql-right-panel .tab-inner-btn');
-        const rightTabContents = document.querySelectorAll('.sparql-right-content .sparql-tab-content');
+        // Right panel tabs: View and Settings
+        const viewTab = document.getElementById('tab-view');
+        const settingsTab = document.getElementById('tab-settings');
+        const viewPane = document.getElementById('view-pane');
+        const settingsPane = document.getElementById('settings-pane');
 
-        console.log('Setting up right panel SPARQL tabs. Found', rightTabButtons.length, 'tab buttons');
-
-        rightTabButtons.forEach((button, index) => {
-            const targetTab = button.getAttribute('data-tab');
-            console.log(`Right tab ${index}: ${targetTab}`);
-            
-            button.addEventListener('click', () => {
-                console.log(`Right tab clicked: ${targetTab}`);
-                
-                // Remove active class from all right panel buttons and contents
-                rightTabButtons.forEach(btn => btn.classList.remove('active'));
-                rightTabContents.forEach(content => content.classList.remove('active'));
-                
-                // Add active class to clicked button and corresponding content
-                button.classList.add('active');
-                const targetContent = document.getElementById(targetTab);
-                if (targetContent) {
-                    targetContent.classList.add('active');
-                }
-                
-                // Special handling for Graph tab - trigger manual graph update
-                if (targetTab === 'sparql-graph') {
-                    console.log('=== GRAPH TAB CLICKED ===');
-                    
-                    // Only refresh if the graph is not already loaded to prevent loops
-                    if (this.graphVisualizer && this.graphVisualizer.network && this.graphVisualizer.nodes && this.graphVisualizer.nodes.length > 0) {
-                        console.log('Graph already loaded with', this.graphVisualizer.nodes.length, 'nodes - skipping refresh');
-                        
-                        // Just resize/fit the existing graph
-                        if (typeof this.graphVisualizer.resizeAndFit === 'function') {
-                            this.graphVisualizer.resizeAndFit();
-                        }
-                    } else {
-                        console.log('Graph not loaded - calling refreshGraphVisualization...');
-                        this.refreshGraphVisualization();
-                    }
-                }
-            });
+        console.log('Setting up right panel tabs:', {
+            viewTab: !!viewTab,
+            settingsTab: !!settingsTab,
+            viewPane: !!viewPane,
+            settingsPane: !!settingsPane
         });
+
+        if (viewTab && settingsTab && viewPane && settingsPane) {
+            viewTab.addEventListener('click', () => {
+                console.log('=== VIEW TAB CLICKED ===');
+                viewTab.classList.add('active');
+                settingsTab.classList.remove('active');
+                
+                // Use setProperty to override inline styles
+                viewPane.style.setProperty('display', 'block', 'important');
+                settingsPane.style.setProperty('display', 'none', 'important');
+                
+                console.log('View pane display after click:', window.getComputedStyle(viewPane).display);
+                
+                // Trigger graph refresh when view tab is selected
+                setTimeout(() => {
+                    if (this.graphVisualizer && typeof this.graphVisualizer.resizeAndFit === 'function') {
+                        this.graphVisualizer.resizeAndFit();
+                    }
+                }, 100);
+            });
+
+            settingsTab.addEventListener('click', () => {
+                console.log('=== SETTINGS TAB CLICKED ===');
+                console.log('settingsPane element:', settingsPane);
+                console.log('viewPane element:', viewPane);
+                console.log('Before - settingsPane display:', settingsPane.style.display);
+                console.log('Before - viewPane display:', viewPane.style.display);
+                console.log('Before - settingsPane computed style:', window.getComputedStyle(settingsPane).display);
+                
+                // Force visibility with !important equivalent
+                settingsTab.classList.add('active');
+                viewTab.classList.remove('active');
+                
+                // Use setAttribute to override inline styles
+                settingsPane.style.setProperty('display', 'block', 'important');
+                viewPane.style.setProperty('display', 'none', 'important');
+                
+                console.log('After - settingsPane display:', settingsPane.style.display);
+                console.log('After - viewPane display:', viewPane.style.display);
+                console.log('After - settingsPane computed style:', window.getComputedStyle(settingsPane).display);
+                console.log('Settings pane visible:', settingsPane.offsetHeight > 0);
+                console.log('Settings pane offsetWidth:', settingsPane.offsetWidth);
+                console.log('Settings pane getBoundingClientRect:', settingsPane.getBoundingClientRect());
+            });
+        } else {
+            console.warn('Could not find all right panel tab elements');
+        }
     }
     
     refreshGraphVisualization() {
@@ -1642,6 +1676,357 @@ ex:austin a ex:Location ;
             }
         } catch (error) {
             console.error('Failed to remove endpoint:', error);
+        }
+    }
+
+    /**
+     * Initialize syntax checker to show "passed" state by default
+     */
+    initializeSyntaxChecker() {
+        try {
+            // Hide all status indicators first
+            const statusElements = [
+                'atuin-syntax-check-failed',
+                'atuin-syntax-check-working', 
+                'atuin-syntax-check-pending',
+                'atuin-syntax-check-off'
+            ];
+            
+            statusElements.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.style.display = 'none';
+                }
+            });
+            
+            // Show "passed" status by default
+            const passedElement = document.getElementById('atuin-syntax-check-passed');
+            if (passedElement) {
+                passedElement.style.display = 'block';
+            }
+            
+            console.log('Syntax checker initialized to "passed" state');
+        } catch (error) {
+            console.error('Failed to initialize syntax checker:', error);
+        }
+    }
+
+    /**
+     * Pre-load SPARQL tab with a CONSTRUCT query for ragno:Concept subjects
+     */
+    async preloadSparqlQuery() {
+        try {
+            const defaultQuery = `PREFIX ragno: <http://purl.org/stuff/ragno/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+CONSTRUCT {
+    ?subject rdf:type ragno:Concept .
+    ?subject rdfs:label ?label .
+    ?subject ?prop ?value .
+}
+WHERE {
+    ?subject rdf:type ragno:Concept .
+    OPTIONAL { ?subject rdfs:label ?label }
+    OPTIONAL { ?subject ?prop ?value }
+}
+LIMIT 5`;
+
+            // Load query into SPARQL editor
+            const sparqlEditor = document.getElementById('sparql-query-editor');
+            if (sparqlEditor) {
+                if (this.sparqlEditor && this.sparqlEditor.setValue) {
+                    // Use Atuin SPARQL editor if available
+                    this.sparqlEditor.setValue(defaultQuery);
+                } else {
+                    // Fallback to basic textarea
+                    sparqlEditor.value = defaultQuery;
+                }
+                console.log('Pre-loaded SPARQL query into editor');
+            }
+
+            // Save to clips if clips manager is available
+            if (this.clipsManager && typeof this.clipsManager.saveClip === 'function') {
+                await this.clipsManager.saveClip({
+                    name: 'Find ragno:Concept subjects',
+                    query: defaultQuery,
+                    description: 'CONSTRUCT query to find 5 subjects with type ragno:Concept',
+                    timestamp: new Date().toISOString()
+                });
+                console.log('Saved default SPARQL query to clips');
+                
+                // Refresh clips UI if available
+                if (this.clipsUI && typeof this.clipsUI.loadClips === 'function') {
+                    this.clipsUI.loadClips();
+                }
+            } else {
+                console.log('Clips manager not available - query not saved to clips');
+            }
+
+        } catch (error) {
+            console.error('Failed to preload SPARQL query:', error);
+        }
+    }
+
+    /**
+     * Load system configuration values into settings panel
+     */
+    async loadSystemSettings() {
+        try {
+            console.log('Loading system settings...');
+            
+            // Fetch system configuration from API
+            const response = await fetch('/api/config');
+            if (!response.ok) {
+                throw new Error(`Failed to fetch config: ${response.status}`);
+            }
+            
+            const config = await response.json();
+            console.log('Received system config:', config);
+
+            // Load SPARQL endpoints
+            if (config.sparql?.endpoints) {
+                const endpointSelect = document.getElementById('sparql-endpoint-select');
+                const endpointUrlInput = document.getElementById('sparql-endpoint-url');
+                
+                if (endpointSelect) {
+                    // Clear existing options
+                    endpointSelect.innerHTML = '';
+                    
+                    // Add endpoints from config
+                    config.sparql.endpoints.forEach((endpoint, index) => {
+                        const option = document.createElement('option');
+                        option.value = endpoint.url || endpoint;
+                        option.textContent = endpoint.name || endpoint.url || endpoint;
+                        if (index === 0 || endpoint.default) {
+                            option.selected = true;
+                        }
+                        endpointSelect.appendChild(option);
+                    });
+                    console.log(`Loaded ${config.sparql.endpoints.length} SPARQL endpoints`);
+                }
+                
+                // Pre-fill URL input with first endpoint
+                if (endpointUrlInput && config.sparql.endpoints.length > 0) {
+                    const firstEndpoint = config.sparql.endpoints[0];
+                    endpointUrlInput.value = firstEndpoint.url || firstEndpoint;
+                }
+            }
+
+            // Load visualization settings
+            if (config.visualization) {
+                const nodeSizeSlider = document.getElementById('atuin-node-size');
+                const nodeSizeValue = document.getElementById('atuin-node-size-value');
+                const edgeWidthSlider = document.getElementById('atuin-edge-width');
+                const physicsCheckbox = document.getElementById('atuin-physics-enabled');
+
+                if (nodeSizeSlider && config.visualization.nodeSize) {
+                    nodeSizeSlider.value = config.visualization.nodeSize;
+                    if (nodeSizeValue) nodeSizeValue.textContent = config.visualization.nodeSize;
+                }
+
+                if (edgeWidthSlider && config.visualization.edgeWidth) {
+                    edgeWidthSlider.value = config.visualization.edgeWidth;
+                }
+
+                if (physicsCheckbox && typeof config.visualization.physics === 'boolean') {
+                    physicsCheckbox.checked = config.visualization.physics;
+                }
+                console.log('Loaded visualization settings');
+            }
+
+            // Load editor settings
+            if (config.editor) {
+                const fontSizeSelect = document.getElementById('atuin-font-size');
+                const autoCompleteCheckbox = document.getElementById('atuin-auto-complete');
+
+                if (fontSizeSelect && config.editor.fontSize) {
+                    fontSizeSelect.value = config.editor.fontSize;
+                }
+
+                if (autoCompleteCheckbox && typeof config.editor.autoComplete === 'boolean') {
+                    autoCompleteCheckbox.checked = config.editor.autoComplete;
+                }
+                console.log('Loaded editor settings');
+            }
+
+            // Setup event listeners for settings changes
+            this.setupSettingsEventListeners();
+
+        } catch (error) {
+            console.error('Failed to load system settings:', error);
+            // Set fallback values
+            this.setFallbackSettings();
+        }
+    }
+
+    /**
+     * Setup event listeners for settings changes
+     */
+    setupSettingsEventListeners() {
+        // Node size slider
+        const nodeSizeSlider = document.getElementById('atuin-node-size');
+        const nodeSizeValue = document.getElementById('atuin-node-size-value');
+        if (nodeSizeSlider && nodeSizeValue) {
+            nodeSizeSlider.addEventListener('input', (e) => {
+                nodeSizeValue.textContent = e.target.value;
+                this.updateVisualizationSettings();
+            });
+        }
+
+        // Edge width slider
+        const edgeWidthSlider = document.getElementById('atuin-edge-width');
+        if (edgeWidthSlider) {
+            edgeWidthSlider.addEventListener('input', () => {
+                this.updateVisualizationSettings();
+            });
+        }
+
+        // Physics checkbox
+        const physicsCheckbox = document.getElementById('atuin-physics-enabled');
+        if (physicsCheckbox) {
+            physicsCheckbox.addEventListener('change', () => {
+                this.updateVisualizationSettings();
+            });
+        }
+
+        // Font size select
+        const fontSizeSelect = document.getElementById('atuin-font-size');
+        if (fontSizeSelect) {
+            fontSizeSelect.addEventListener('change', () => {
+                this.updateEditorSettings();
+            });
+        }
+
+        // Auto-complete checkbox
+        const autoCompleteCheckbox = document.getElementById('atuin-auto-complete');
+        if (autoCompleteCheckbox) {
+            autoCompleteCheckbox.addEventListener('change', () => {
+                this.updateEditorSettings();
+            });
+        }
+
+        // SPARQL endpoint management
+        const addEndpointBtn = document.getElementById('add-sparql-endpoint');
+        const removeEndpointBtn = document.getElementById('remove-sparql-endpoint');
+        
+        if (addEndpointBtn) {
+            addEndpointBtn.addEventListener('click', () => this.addSparqlEndpoint());
+        }
+        
+        if (removeEndpointBtn) {
+            removeEndpointBtn.addEventListener('click', () => this.removeSparqlEndpoint());
+        }
+    }
+
+    /**
+     * Set fallback settings if config fetch fails
+     */
+    setFallbackSettings() {
+        console.log('Setting fallback settings...');
+        
+        // Default SPARQL endpoint
+        const endpointUrlInput = document.getElementById('sparql-endpoint-url');
+        if (endpointUrlInput && !endpointUrlInput.value) {
+            endpointUrlInput.value = 'http://localhost:3030/dataset/sparql';
+        }
+
+        // Default visualization settings
+        const nodeSizeSlider = document.getElementById('atuin-node-size');
+        const nodeSizeValue = document.getElementById('atuin-node-size-value');
+        if (nodeSizeSlider && !nodeSizeSlider.value) {
+            nodeSizeSlider.value = '20';
+            if (nodeSizeValue) nodeSizeValue.textContent = '20';
+        }
+
+        const edgeWidthSlider = document.getElementById('atuin-edge-width');
+        if (edgeWidthSlider && !edgeWidthSlider.value) {
+            edgeWidthSlider.value = '2';
+        }
+
+        const physicsCheckbox = document.getElementById('atuin-physics-enabled');
+        if (physicsCheckbox) {
+            physicsCheckbox.checked = true;
+        }
+
+        // Default editor settings
+        const fontSizeSelect = document.getElementById('atuin-font-size');
+        if (fontSizeSelect && !fontSizeSelect.value) {
+            fontSizeSelect.value = '14';
+        }
+
+        const autoCompleteCheckbox = document.getElementById('atuin-auto-complete');
+        if (autoCompleteCheckbox) {
+            autoCompleteCheckbox.checked = true;
+        }
+    }
+
+    /**
+     * Update visualization settings
+     */
+    updateVisualizationSettings() {
+        if (this.graphVisualizer && typeof this.graphVisualizer.updateSettings === 'function') {
+            const settings = {
+                nodeSize: parseInt(document.getElementById('atuin-node-size')?.value || 20),
+                edgeWidth: parseInt(document.getElementById('atuin-edge-width')?.value || 2),
+                physics: document.getElementById('atuin-physics-enabled')?.checked || true
+            };
+            this.graphVisualizer.updateSettings(settings);
+            console.log('Updated visualization settings:', settings);
+        }
+    }
+
+    /**
+     * Update editor settings
+     */
+    updateEditorSettings() {
+        const fontSize = document.getElementById('atuin-font-size')?.value || '14';
+        const autoComplete = document.getElementById('atuin-auto-complete')?.checked || true;
+        
+        // Apply font size to editors
+        const turtleEditor = document.getElementById('turtle-editor');
+        const sparqlEditor = document.getElementById('sparql-query-editor');
+        
+        if (turtleEditor) {
+            turtleEditor.style.fontSize = fontSize + 'px';
+        }
+        if (sparqlEditor) {
+            sparqlEditor.style.fontSize = fontSize + 'px';
+        }
+        
+        console.log('Updated editor settings:', { fontSize, autoComplete });
+    }
+
+    /**
+     * Add new SPARQL endpoint
+     */
+    addSparqlEndpoint() {
+        const urlInput = document.getElementById('sparql-endpoint-url');
+        const select = document.getElementById('sparql-endpoint-select');
+        
+        if (urlInput && select && urlInput.value.trim()) {
+            const option = document.createElement('option');
+            option.value = urlInput.value.trim();
+            option.textContent = urlInput.value.trim();
+            option.selected = true;
+            select.appendChild(option);
+            
+            // Clear input
+            urlInput.value = '';
+            
+            console.log('Added SPARQL endpoint:', option.value);
+        }
+    }
+
+    /**
+     * Remove selected SPARQL endpoint
+     */
+    removeSparqlEndpoint() {
+        const select = document.getElementById('sparql-endpoint-select');
+        if (select && select.selectedIndex >= 0) {
+            const removedEndpoint = select.options[select.selectedIndex].value;
+            select.remove(select.selectedIndex);
+            console.log('Removed SPARQL endpoint:', removedEndpoint);
         }
     }
 

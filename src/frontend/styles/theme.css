@@ -75,9 +75,9 @@ body {
 
 /* Container */
 .container {
-  max-width: 1400px;
+  max-width: calc(100vw - 4rem);
   margin: 0 auto;
-  padding: 0 var(--spacing-md);
+  padding: 0 2rem;
 }
 
 /* Main content area */
