@@ -6,6 +6,8 @@ import dotenv from 'dotenv';
 import OllamaConnector from '../../src/connectors/OllamaConnector.js';
 import ClaudeConnector from '../../src/connectors/ClaudeConnector.js';
 import MistralConnector from '../../src/connectors/MistralConnector.js';
+import EmbeddingConnectorFactory from '../../src/connectors/EmbeddingConnectorFactory.js';
+import Config from '../../src/Config.js';
 
 // Load environment variables
 dotenv.config();
@@ -27,6 +29,51 @@ export function createLLMConnector() {
   } else {
     console.log('Defaulting to Ollama connector...');
     return new OllamaConnector();
+  }
+}
+
+/**
+ * Create embedding connector using configuration-driven factory pattern
+ */
+export async function createEmbeddingConnector() {
+  try {
+    // Load system configuration
+    const config = new Config();
+    await config.init();
+    
+    // Get embedding provider configuration
+    const embeddingProvider = config.get('embeddingProvider') || 'ollama';
+    const embeddingModel = config.get('embeddingModel') || 'nomic-embed-text';
+    
+    console.log(`Creating embedding connector: ${embeddingProvider} (${embeddingModel})`);
+    
+    // Create embedding connector using factory
+    let providerConfig = {};
+    if (embeddingProvider === 'nomic') {
+      providerConfig = {
+        provider: 'nomic',
+        apiKey: process.env.NOMIC_API_KEY,
+        model: embeddingModel
+      };
+    } else if (embeddingProvider === 'ollama') {
+      const ollamaBaseUrl = config.get('ollama.baseUrl') || process.env.OLLAMA_HOST || 'http://localhost:11434';
+      providerConfig = {
+        provider: 'ollama',
+        baseUrl: ollamaBaseUrl,
+        model: embeddingModel
+      };
+    }
+    
+    return EmbeddingConnectorFactory.createConnector(providerConfig);
+    
+  } catch (error) {
+    console.warn('Failed to create configured embedding connector, falling back to Ollama:', error.message);
+    // Fallback to Ollama for embeddings
+    return EmbeddingConnectorFactory.createConnector({
+      provider: 'ollama',
+      baseUrl: process.env.OLLAMA_HOST || 'http://localhost:11434',
+      model: 'nomic-embed-text'
+    });
   }
 }
 

@@ -5,16 +5,16 @@
  * 1. Load configuration from config/config.json
  * 2. Connect to a SPARQL endpoint for data storage
  * 3. Insert test articles if none exist in the database
- * 4. Generate vector embeddings for article content using Ollama
+ * 4. Generate vector embeddings for article content using configured provider
  * 5. Store the embeddings back into the SPARQL store
  * 
  * The script processes articles with schema:articleBody content and creates
  * embedding vectors that can be used for semantic search and similarity matching.
  * 
  * Prerequisites:
- * - Ollama running with nomic-embed-text model
+ * - Configured embedding provider (Nomic, Ollama, etc.) with API keys in .env
  * - SPARQL endpoint (Fuseki) configured and accessible
- * - config/config.json properly configured
+ * - config/config.json properly configured with embeddingProvider setting
  */
 
 import path from 'path'
@@ -22,7 +22,7 @@ import logger from 'loglevel'
 import MemoryManager from '../../src/MemoryManager.js'
 import SPARQLStore from '../../src/stores/SPARQLStore.js'
 import Config from '../../src/Config.js'
-import OllamaConnector from '../../src/connectors/OllamaConnector.js'
+import EmbeddingConnectorFactory from '../../src/connectors/EmbeddingConnectorFactory.js'
 import { v4 as uuidv4 } from 'uuid'
 
 // Configure logging
@@ -249,15 +249,39 @@ async function main() {
         }
     )
 
-    // Create Ollama connector for embeddings
-    logger.info('🤖 Initializing Ollama connector for embeddings...')
-    const ollama = new OllamaConnector()
+    // Create embedding connector using configuration
+    logger.info('🤖 Initializing embedding connector from configuration...')
+    const embeddingProvider = config.get('embeddingProvider') || 'ollama'
+    const embeddingModel = config.get('embeddingModel') || 'nomic-embed-text'
+    
+    logger.info(`📊 Configured embedding provider: ${embeddingProvider}`)
+    logger.info(`🎯 Configured embedding model: ${embeddingModel}`)
+    
+    // Get provider-specific configuration
+    let providerConfig = {}
+    if (embeddingProvider === 'nomic') {
+        providerConfig = {
+            provider: 'nomic',
+            apiKey: process.env.NOMIC_API_KEY,
+            model: embeddingModel
+        }
+    } else if (embeddingProvider === 'ollama') {
+        providerConfig = {
+            provider: 'ollama',
+            baseUrl: 'http://localhost:11434',
+            model: embeddingModel
+        }
+    }
+    
+    const embeddingConnector = EmbeddingConnectorFactory.createConnector(providerConfig)
+    logger.info(`✅ Created ${embeddingProvider} embedding connector`)
 
-    // Initialize memory manager
-    logger.info(`🧠 Setting up MemoryManager with embedding model: ${config.get('embeddingModel')}`)
+    // Initialize memory manager with configured providers
+    logger.info(`🧠 Setting up MemoryManager with ${embeddingProvider} embedding provider`)
     memoryManager = new MemoryManager({
-        llmProvider: ollama,
-        embeddingModel: config.get('embeddingModel'),
+        llmProvider: embeddingConnector, // Use embedding connector as primary provider
+        embeddingProvider: embeddingConnector, // Also set as explicit embedding provider
+        embeddingModel: embeddingModel,
         storage: sparqlStore
     })
 

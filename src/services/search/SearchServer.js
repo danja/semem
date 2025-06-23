@@ -10,7 +10,8 @@ import APIRegistry from '../../api/common/APIRegistry.js';
 import ChatAPI from '../../api/features/ChatAPI.js';
 import MemoryManager from '../../MemoryManager.js';
 import LLMHandler from '../../handlers/LLMHandler.js';
-import OllamaConnector from '../../connectors/OllamaConnector.js';
+import EmbeddingConnectorFactory from '../../connectors/EmbeddingConnectorFactory.js';
+import Config from '../../Config.js';
 
 /**
  * Search server application
@@ -168,22 +169,64 @@ class SearchServer {
     }
 
     /**
+     * Create embedding connector using factory
+     */
+    async createEmbeddingConnector() {
+        try {
+            // Load system configuration
+            const config = new Config();
+            await config.init();
+            
+            // Get embedding provider configuration
+            const embeddingProvider = config.get('embeddingProvider') || 'ollama';
+            const embeddingModel = config.get('embeddingModel') || 'nomic-embed-text';
+            
+            logger.info(`Creating embedding connector: ${embeddingProvider} (${embeddingModel})`);
+            
+            // Create embedding connector using factory
+            let providerConfig = {};
+            if (embeddingProvider === 'nomic') {
+                providerConfig = {
+                    provider: 'nomic',
+                    apiKey: process.env.NOMIC_API_KEY,
+                    model: embeddingModel
+                };
+            } else if (embeddingProvider === 'ollama') {
+                const ollamaBaseUrl = config.get('ollama.baseUrl') || 'http://localhost:11434';
+                providerConfig = {
+                    provider: 'ollama',
+                    baseUrl: ollamaBaseUrl,
+                    model: embeddingModel
+                };
+            }
+            
+            return EmbeddingConnectorFactory.createConnector(providerConfig);
+            
+        } catch (error) {
+            logger.warn('Failed to create configured embedding connector, falling back to Ollama:', error.message);
+            // Fallback to Ollama for embeddings
+            return EmbeddingConnectorFactory.createConnector({
+                provider: 'ollama',
+                baseUrl: 'http://localhost:11434',
+                model: 'nomic-embed-text'
+            });
+        }
+    }
+
+    /**
      * Initialize chat features and register API
      */
     async initializeChatFeatures() {
         try {
-            // Create Ollama connector for LLM access
-            logger.info('Initializing Ollama connector...');
-            this.ollamaConnector = new OllamaConnector({
-                baseUrl: 'http://localhost:11434',
-                chatModel: this.chatModel,
-                embeddingModel: this.embeddingModel
-            });
+            // Create embedding connector using configuration
+            logger.info('Initializing embedding connector...');
+            const embeddingConnector = await this.createEmbeddingConnector();
 
             // Create memory manager for semantic memory
             logger.info('Initializing memory manager...');
             this.memoryManager = new MemoryManager({
-                llmProvider: this.ollamaConnector,
+                llmProvider: embeddingConnector, // Use embedding connector as LLM provider
+                embeddingProvider: embeddingConnector,
                 chatModel: this.chatModel,
                 embeddingModel: this.embeddingModel
             });
@@ -191,7 +234,7 @@ class SearchServer {
             // Create LLM handler for direct LLM requests
             logger.info('Initializing LLM handler...');
             this.llmHandler = new LLMHandler(
-                this.ollamaConnector,
+                embeddingConnector,
                 this.chatModel
             );
 

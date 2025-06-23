@@ -2,10 +2,10 @@
  * Basic Memory Storage and Retrieval Example
  * 
  * This example demonstrates core memory functionality with storage and retrieval
- * of interactions using MemoryManager with JSONStore and OllamaConnector.
+ * of interactions using MemoryManager with JSONStore and configured providers.
  * 
  * Key features demonstrated:
- * - Memory initialization with Ollama connector
+ * - Memory initialization with configured embedding provider
  * - Storage of interactions with embeddings and concepts
  * - Semantic retrieval based on similarity
  * - Response generation using memory context
@@ -14,7 +14,8 @@
 
 import MemoryManager from '../../src/MemoryManager.js';
 import JSONStore from '../../src/stores/JSONStore.js';
-import OllamaConnector from '../../src/connectors/OllamaConnector.js';
+import EmbeddingConnectorFactory from '../../src/connectors/EmbeddingConnectorFactory.js';
+import Config from '../../src/Config.js';
 import logger from 'loglevel';
 import dotenv from 'dotenv';
 
@@ -61,19 +62,49 @@ async function main() {
     let memoryManager = null;
     
     try {
+        // Initialize configuration
+        logger.info('\n=== Loading Configuration ===');
+        const config = new Config('./config/config.json');
+        await config.init();
+        
+        const embeddingProvider = config.get('embeddingProvider') || 'ollama';
+        const embeddingModel = config.get('embeddingModel') || 'nomic-embed-text';
+        const chatModel = config.get('chatModel') || 'qwen2:1.5b';
+        
+        logger.info(`Using embedding provider: ${embeddingProvider}`);
+        logger.info(`Using embedding model: ${embeddingModel}`);
+        
         // Initialize components
         logger.info('\n=== Initializing Components ===');
         const storage = new JSONStore('./examples/data/basic-memory.json');
-        const llmProvider = new OllamaConnector();
+        
+        // Create embedding connector using configuration
+        let providerConfig = {};
+        if (embeddingProvider === 'nomic') {
+            providerConfig = {
+                provider: 'nomic',
+                apiKey: process.env.NOMIC_API_KEY,
+                model: embeddingModel
+            };
+        } else if (embeddingProvider === 'ollama') {
+            providerConfig = {
+                provider: 'ollama',
+                baseUrl: 'http://localhost:11434',
+                model: embeddingModel
+            };
+        }
+        
+        const embeddingConnector = EmbeddingConnectorFactory.createConnector(providerConfig);
         
         memoryManager = new MemoryManager({
-            llmProvider,
-            chatModel: 'qwen2:1.5b',
-            embeddingModel: 'nomic-embed-text',
+            llmProvider: embeddingConnector, // Use embedding connector as primary provider
+            embeddingProvider: embeddingConnector,
+            chatModel: chatModel,
+            embeddingModel: embeddingModel,
             storage
         });
         
-        logger.info('✓ Memory manager initialized with Ollama connector');
+        logger.info(`✓ Memory manager initialized with ${embeddingProvider} connector`);
         logger.info('✓ Using JSONStore for persistence');
         
         // Set up cleanup function
@@ -169,7 +200,7 @@ async function main() {
         
         logger.info('\n=== Example Completed Successfully ===');
         logger.info('\nWhat was demonstrated:');
-        logger.info('✓ Memory initialization with Ollama connector');
+        logger.info(`✓ Memory initialization with ${embeddingProvider} connector`);
         logger.info('✓ Storage of interactions with embeddings and concepts');
         logger.info('✓ Semantic retrieval based on similarity');
         logger.info('✓ Response generation using memory context');
@@ -180,9 +211,10 @@ async function main() {
         logger.error('Stack:', error.stack);
         
         logger.info('\nTroubleshooting:');
-        logger.info('- Ensure Ollama is running: ollama serve');
-        logger.info('- Ensure models are available: ollama pull qwen2:1.5b && ollama pull nomic-embed-text');
-        logger.info('- Check network connectivity to Ollama (default: http://localhost:11434)');
+        logger.info('- Check config/config.json for proper provider configuration');
+        logger.info('- Ensure API keys are set in .env file (NOMIC_API_KEY, etc.)');
+        logger.info('- For Ollama: Ensure Ollama is running (ollama serve) and models are available');
+        logger.info('- For Nomic: Check network connectivity and API key validity');
         
         await shutdown('error');
     }

@@ -12,7 +12,7 @@ import { v4 as uuidv4 } from 'uuid';
 import rateLimit from 'express-rate-limit';
 import Config from '../Config.js';
 import MemoryManager from '../MemoryManager.js';
-import OllamaConnector from '../connectors/OllamaConnector.js';
+import EmbeddingConnectorFactory from '../connectors/EmbeddingConnectorFactory.js';
 import LLMHandler from '../handlers/LLMHandler.js';
 import EmbeddingHandler from '../handlers/EmbeddingHandler.js';
 import CacheManager from '../handlers/CacheManager.js';
@@ -96,18 +96,40 @@ class APIServer {
         const config = new Config();
         await config.init();
         
-        // Create LLM provider
-        const ollamaBaseUrl = process.env.OLLAMA_API_BASE || 'http://localhost:11434';
-        const llmProvider = new OllamaConnector(ollamaBaseUrl);
-
-        // Get models from config with fallbacks
+        // Create embedding provider using factory
+        const embeddingProvider = config.get('embeddingProvider') || 'ollama';
         const embeddingModel = process.env.EMBEDDING_MODEL || 
+                             config.get('embeddingModel') || 
                              config.get('models.embedding.model') || 
                              'nomic-embed-text';
         const chatModel = process.env.CHAT_MODEL || 
+                         config.get('chatModel') ||
                          config.get('models.chat.model') || 
-                         'qwen3:0.6b';
+                         'qwen2:1.5b';
         const dimension = config.get('memory.dimension') || 1536;
+
+        logger.info(`Creating embedding connector: ${embeddingProvider} (${embeddingModel})`);
+        
+        // Create embedding connector using factory
+        let providerConfig = {};
+        if (embeddingProvider === 'nomic') {
+            providerConfig = {
+                provider: 'nomic',
+                apiKey: process.env.NOMIC_API_KEY,
+                model: embeddingModel
+            };
+        } else if (embeddingProvider === 'ollama') {
+            const ollamaBaseUrl = config.get('ollama.baseUrl') || 
+                                process.env.OLLAMA_API_BASE || 
+                                'http://localhost:11434';
+            providerConfig = {
+                provider: 'ollama',
+                baseUrl: ollamaBaseUrl,
+                model: embeddingModel
+            };
+        }
+        
+        const llmProvider = EmbeddingConnectorFactory.createConnector(providerConfig);
 
         // Initialize cache manager
         const cacheManager = new CacheManager({
@@ -151,6 +173,7 @@ class APIServer {
         // Initialize memory manager with the configured storage
         const memoryManager = new MemoryManager({
             llmProvider,
+            embeddingProvider: llmProvider, // Use same connector for both
             chatModel,
             embeddingModel,
             dimension,

@@ -16,7 +16,7 @@ import chalk from 'chalk';
 import logger from 'loglevel';
 import Config from '../../src/Config.js';
 import SPARQLStore from '../../src/stores/SPARQLStore.js';
-import OllamaConnector from '../../src/connectors/OllamaConnector.js';
+import EmbeddingConnectorFactory from '../../src/connectors/EmbeddingConnectorFactory.js';
 import LLMHandler from '../../src/handlers/LLMHandler.js';
 import EmbeddingHandler from '../../src/handlers/EmbeddingHandler.js';
 import CacheManager from '../../src/handlers/CacheManager.js';
@@ -92,18 +92,44 @@ export default class EnrichModule {
     }
 
     async initializeLLMServices() {
-        // Check Ollama availability - REQUIRED for demonstration
-        const ollamaBaseUrl = this.config.get('ollama.baseUrl') || 'http://localhost:11434';
-        const embeddingModel = 'nomic-embed-text:latest';
-        const chatModel = 'qwen2:1.5b';
+        // Get provider configuration
+        const embeddingProvider = this.config.get('embeddingProvider') || 'ollama';
+        const embeddingModel = this.config.get('embeddingModel') || 'nomic-embed-text';
+        const chatModel = this.config.get('chatModel') || 'qwen2:1.5b';
 
-        // Test Ollama connection
-        const response = await fetch(`${ollamaBaseUrl}/api/version`);
-        if (!response.ok) {
-            throw new Error(`Ollama is required for Module 2 demonstration. Please start Ollama at ${ollamaBaseUrl}`);
+        console.log(`🤖 Using embedding provider: ${chalk.bold(embeddingProvider)}`);
+        console.log(`📄 Chat model: ${chalk.bold(chatModel)}`);
+        console.log(`🔢 Embedding model: ${chalk.bold(embeddingModel)}`);
+
+        // Create embedding connector using factory
+        let providerConfig = {};
+        if (embeddingProvider === 'nomic') {
+            providerConfig = {
+                provider: 'nomic',
+                apiKey: process.env.NOMIC_API_KEY,
+                model: embeddingModel
+            };
+        } else if (embeddingProvider === 'ollama') {
+            const ollamaBaseUrl = this.config.get('ollama.baseUrl') || 'http://localhost:11434';
+            providerConfig = {
+                provider: 'ollama',
+                baseUrl: ollamaBaseUrl,
+                model: embeddingModel
+            };
+            
+            // Test Ollama connection if using Ollama
+            try {
+                const response = await fetch(`${ollamaBaseUrl}/api/version`);
+                if (!response.ok) {
+                    throw new Error(`Ollama connection test failed`);
+                }
+                console.log(`🏃 Using Ollama at: ${chalk.bold(ollamaBaseUrl)}`);
+            } catch (error) {
+                console.log(chalk.yellow(`⚠️ Ollama connection test failed, but continuing with provider`));
+            }
         }
-        
-        const ollamaConnector = new OllamaConnector(ollamaBaseUrl, chatModel);
+
+        const embeddingConnector = EmbeddingConnectorFactory.createConnector(providerConfig);
         
         // Initialize cache manager
         const cacheManager = new CacheManager({
@@ -113,17 +139,15 @@ export default class EnrichModule {
 
         // Initialize handlers
         this.embeddingHandler = new EmbeddingHandler(
-            ollamaConnector,
+            embeddingConnector,
             embeddingModel,
             1536,
             cacheManager
         );
 
-        this.llmHandler = new LLMHandler(ollamaConnector, chatModel);
+        this.llmHandler = new LLMHandler(embeddingConnector, chatModel);
 
-        console.log(`✅ Ollama services initialized: ${chalk.bold(ollamaBaseUrl)}`);
-        console.log(`📄 Chat model: ${chalk.bold(chatModel)}`);
-        console.log(`🔢 Embedding model: ${chalk.bold(embeddingModel)}`);
+        console.log(`✅ Embedding services initialized with ${embeddingProvider}`);
     }
 
 

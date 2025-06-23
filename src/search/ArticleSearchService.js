@@ -1,7 +1,8 @@
 import fetch from 'node-fetch';
 import faiss from 'faiss-node';
 const { IndexFlatIP } = faiss;
-import OllamaConnector from '../connectors/OllamaConnector.js';
+import EmbeddingConnectorFactory from '../connectors/EmbeddingConnectorFactory.js';
+import Config from '../Config.js';
 import logger from 'loglevel';
 
 // Configure logging
@@ -19,7 +20,7 @@ const EMBEDDING_DIMENSION = 768; // nomic-embed-text dimension
 
 class ArticleSearchService {
     constructor() {
-        this.ollama = new OllamaConnector();
+        this.embeddingConnector = null;
         this.initialized = false;
         this.index = null;
         this.articles = [];
@@ -35,6 +36,9 @@ class ArticleSearchService {
         logger.info('Initializing ArticleSearchService...');
         
         try {
+            // Initialize embedding connector using configuration
+            await this.initializeEmbeddingConnector();
+            
             // Create the Faiss index
             this.index = new IndexFlatIP(EMBEDDING_DIMENSION);
             
@@ -46,6 +50,52 @@ class ArticleSearchService {
         } catch (error) {
             logger.error('Failed to initialize ArticleSearchService:', error);
             throw error;
+        }
+    }
+
+    /**
+     * Initialize embedding connector using factory
+     */
+    async initializeEmbeddingConnector() {
+        try {
+            // Load system configuration
+            const config = new Config();
+            await config.init();
+            
+            // Get embedding provider configuration
+            const embeddingProvider = config.get('embeddingProvider') || 'ollama';
+            const embeddingModel = config.get('embeddingModel') || 'nomic-embed-text';
+            
+            logger.info(`Creating embedding connector: ${embeddingProvider} (${embeddingModel})`);
+            
+            // Create embedding connector using factory
+            let providerConfig = {};
+            if (embeddingProvider === 'nomic') {
+                providerConfig = {
+                    provider: 'nomic',
+                    apiKey: process.env.NOMIC_API_KEY,
+                    model: embeddingModel
+                };
+            } else if (embeddingProvider === 'ollama') {
+                const ollamaBaseUrl = config.get('ollama.baseUrl') || 'http://localhost:11434';
+                providerConfig = {
+                    provider: 'ollama',
+                    baseUrl: ollamaBaseUrl,
+                    model: embeddingModel
+                };
+            }
+            
+            this.embeddingConnector = EmbeddingConnectorFactory.createConnector(providerConfig);
+            logger.info('Embedding connector initialized successfully');
+            
+        } catch (error) {
+            logger.warn('Failed to create configured embedding connector, falling back to Ollama:', error.message);
+            // Fallback to Ollama for embeddings
+            this.embeddingConnector = EmbeddingConnectorFactory.createConnector({
+                provider: 'ollama',
+                baseUrl: 'http://localhost:11434',
+                model: 'nomic-embed-text'
+            });
         }
     }
 
@@ -148,7 +198,7 @@ class ArticleSearchService {
      */
     async generateEmbedding(text) {
         try {
-            return await this.ollama.generateEmbedding(EMBEDDING_MODEL, text);
+            return await this.embeddingConnector.generateEmbedding(EMBEDDING_MODEL, text);
         } catch (error) {
             logger.error('Error generating embedding:', error);
             throw error;

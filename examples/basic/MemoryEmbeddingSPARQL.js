@@ -17,7 +17,7 @@
 import MemoryManager from '../../src/MemoryManager.js';
 import Config from '../../src/Config.js';
 import SPARQLStore from '../../src/stores/SPARQLStore.js';
-import OllamaConnector from '../../src/connectors/OllamaConnector.js';
+import EmbeddingConnectorFactory from '../../src/connectors/EmbeddingConnectorFactory.js';
 import logger from 'loglevel';
 import dotenv from 'dotenv';
 
@@ -120,25 +120,44 @@ async function main() {
             dimension: 1536
         });
         
-        // Initialize Ollama connector
-        const ollamaBaseUrl = config.get('ollama.baseUrl') || 'http://localhost:11434';
-        const embeddingModel = 'nomic-embed-text';
-        const chatModel = 'qwen2:1.5b';
+        // Initialize embedding connector using configuration
+        const embeddingProvider = config.get('embeddingProvider') || 'ollama';
+        const embeddingModel = config.get('embeddingModel') || 'nomic-embed-text';
+        const chatModel = config.get('chatModel') || 'qwen2:1.5b';
         
-        logger.info(`Using Ollama at: ${ollamaBaseUrl}`);
+        logger.info(`Using embedding provider: ${embeddingProvider}`);
         logger.info(`Embedding model: ${embeddingModel}`);
         logger.info(`Chat model: ${chatModel}`);
         
-        const llmProvider = new OllamaConnector(ollamaBaseUrl, chatModel);
+        // Create embedding connector using configuration
+        let providerConfig = {};
+        if (embeddingProvider === 'nomic') {
+            providerConfig = {
+                provider: 'nomic',
+                apiKey: process.env.NOMIC_API_KEY,
+                model: embeddingModel
+            };
+        } else if (embeddingProvider === 'ollama') {
+            const ollamaBaseUrl = config.get('ollama.baseUrl') || 'http://localhost:11434';
+            providerConfig = {
+                provider: 'ollama',
+                baseUrl: ollamaBaseUrl,
+                model: embeddingModel
+            };
+            logger.info(`Using Ollama at: ${ollamaBaseUrl}`);
+        }
+        
+        const embeddingConnector = EmbeddingConnectorFactory.createConnector(providerConfig);
         
         memoryManager = new MemoryManager({
-            llmProvider,
+            llmProvider: embeddingConnector, // Use embedding connector as primary provider
+            embeddingProvider: embeddingConnector,
             chatModel,
             embeddingModel,
             storage: sparqlStore
         });
         
-        logger.info('✓ SPARQL-backed memory manager initialized');
+        logger.info(`✓ SPARQL-backed memory manager initialized with ${embeddingProvider} connector`);
         
         // Set up cleanup function
         globalCleanup = async () => {

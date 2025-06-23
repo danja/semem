@@ -40,20 +40,21 @@ import { aggregateCommunities } from '../../src/ragno/aggregateCommunities.js'
 import { enrichWithEmbeddings } from '../../src/ragno/enrichWithEmbeddings.js'
 import LLMHandler from '../../src/handlers/LLMHandler.js'
 import EmbeddingHandler from '../../src/handlers/EmbeddingHandler.js'
-import OllamaConnector from '../../src/connectors/OllamaConnector.js'
+import EmbeddingConnectorFactory from '../../src/connectors/EmbeddingConnectorFactory.js'
+import Config from '../../src/Config.js'
 import loadRagnoConfig from '../../src/utils/loadRagnoConfig.js'
 
 // Configure logging
 logger.setLevel('debug')
 
-let ollamaConnector = null
+let embeddingConnector = null
 
 async function shutdown(signal) {
     logger.info(`\\n🔌 Received ${signal}, starting graceful shutdown...`)
-    if (ollamaConnector) {
+    if (embeddingConnector) {
         try {
-            // Cleanup any Ollama connections if needed
-            logger.info('🧹 Cleaning up Ollama connector...')
+            // Cleanup any embedding connections if needed
+            logger.info('🧹 Cleaning up embedding connector...')
             logger.info('✅ Cleanup complete')
             process.exit(0)
         } catch (error) {
@@ -152,33 +153,50 @@ async function main() {
     
     try {
         // Step 1: Load Configuration
-        logger.info('⚙️  Step 1: Loading Ragno configuration...')
-        const config = await loadRagnoConfig()
+        logger.info('⚙️  Step 1: Loading Ragno and system configuration...')
+        const ragnoConfig = await loadRagnoConfig()
+        const config = new Config()
+        await config.init()
         logger.info('✅ Configuration loaded successfully')
-        logger.info(`🏷️  Version: ${config.version}`)
-        logger.info(`🤖 LLM Model: ${config.decomposition.llm.model} → qwen2:1.5b (override)`)
-        logger.info(`🧠 Embedding Model: ${config.enrichment.embedding.model}`)
-        logger.info(`📏 Embedding Dimensions: ${config.enrichment.embedding.dimensions}`)
+        logger.info(`🏷️  Version: ${ragnoConfig.version}`)
+        
+        // Get provider configuration
+        const embeddingProvider = config.get('embeddingProvider') || 'ollama'
+        const embeddingModel = config.get('embeddingModel') || 'nomic-embed-text'
+        const chatModel = config.get('chatModel') || 'qwen2:1.5b'
+        
+        logger.info(`🤖 Chat Model: ${chatModel}`)
+        logger.info(`🧠 Embedding Provider: ${embeddingProvider}`)
+        logger.info(`🧠 Embedding Model: ${embeddingModel}`)
+        logger.info(`📏 Embedding Dimensions: ${ragnoConfig.enrichment.embedding.dimensions}`)
 
-        // Step 2: Initialize Ollama Connector
-        logger.info('\\n🤖 Step 2: Initializing Ollama connector...')
-        ollamaConnector = new OllamaConnector('http://localhost:11434', 'qwen2:1.5b')
-        await ollamaConnector.initialize()
-        logger.info('✅ Ollama connector initialized successfully')
+        // Step 2: Initialize Embedding Connector
+        logger.info('\\n🤖 Step 2: Initializing embedding connector...')
+        
+        // Create embedding connector using factory
+        let providerConfig = {}
+        if (embeddingProvider === 'nomic') {
+            providerConfig = {
+                provider: 'nomic',
+                apiKey: process.env.NOMIC_API_KEY,
+                model: embeddingModel
+            }
+        } else if (embeddingProvider === 'ollama') {
+            const ollamaBaseUrl = config.get('ollama.baseUrl') || 'http://localhost:11434'
+            providerConfig = {
+                provider: 'ollama',
+                baseUrl: ollamaBaseUrl,
+                model: embeddingModel
+            }
+            logger.info(`🏃 Using Ollama at: ${ollamaBaseUrl}`)
+        }
+        
+        embeddingConnector = EmbeddingConnectorFactory.createConnector(providerConfig)
+        logger.info('✅ Embedding connector initialized successfully')
 
         // Step 3: Setup Handlers
         logger.info('\\n🔧 Step 3: Setting up LLM and Embedding handlers...')
         
-        const llmProvider = {
-            generateChat: ollamaConnector.generateChat.bind(ollamaConnector),
-            generateCompletion: ollamaConnector.generateCompletion.bind(ollamaConnector),
-            generateEmbedding: ollamaConnector.generateEmbedding.bind(ollamaConnector)
-        }
-
-        const embeddingProvider = {
-            generateEmbedding: ollamaConnector.generateEmbedding.bind(ollamaConnector)
-        }
-
         const cacheManager = { 
             get: () => undefined, 
             set: () => {},
@@ -188,15 +206,15 @@ async function main() {
         }
 
         const llmHandler = new LLMHandler(
-            llmProvider,
-            'qwen2:1.5b', // Use available model
-            config.decomposition.llm.temperature
+            embeddingConnector,
+            chatModel,
+            ragnoConfig.decomposition.llm.temperature
         )
 
         const embeddingHandler = new EmbeddingHandler(
-            embeddingProvider,
-            'nomic-embed-text', // Use available model
-            config.enrichment.embedding.dimensions,
+            embeddingConnector,
+            embeddingModel,
+            ragnoConfig.enrichment.embedding.dimensions,
             cacheManager
         )
 

@@ -12,6 +12,7 @@ import Config from '../Config.js';
 import OllamaConnector from '../connectors/OllamaConnector.js';
 import ClaudeConnector from '../connectors/ClaudeConnector.js';
 import MistralConnector from '../connectors/MistralConnector.js';
+import EmbeddingConnectorFactory from '../connectors/EmbeddingConnectorFactory.js';
 import LLMHandler from '../handlers/LLMHandler.js';
 import EmbeddingHandler from '../handlers/EmbeddingHandler.js';
 import CacheManager from '../handlers/CacheManager.js';
@@ -27,6 +28,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 let config;
 let cacheManager;
 let llmProvider;
+let embeddingProvider;
 let llmHandler;
 let embeddingHandler;
 let sparqlService;
@@ -146,10 +148,51 @@ async function initializeLLMProvider() {
   }
 }
 
+// Initialize embedding provider using factory
+async function initializeEmbeddingProvider() {
+  try {
+    // Get embedding provider configuration
+    const embeddingProviderType = config.get('embeddingProvider') || 'ollama';
+    const embeddingModel = config.get('embeddingModel') || 'nomic-embed-text';
+    
+    console.log(`Creating embedding connector: ${embeddingProviderType} (${embeddingModel})`);
+    
+    // Create embedding connector using factory
+    let providerConfig = {};
+    if (embeddingProviderType === 'nomic') {
+      providerConfig = {
+        provider: 'nomic',
+        apiKey: process.env.NOMIC_API_KEY,
+        model: embeddingModel
+      };
+    } else if (embeddingProviderType === 'ollama') {
+      const ollamaBaseUrl = config.get('ollama.baseUrl') || 'http://localhost:11434';
+      providerConfig = {
+        provider: 'ollama',
+        baseUrl: ollamaBaseUrl,
+        model: embeddingModel
+      };
+    }
+    
+    embeddingProvider = EmbeddingConnectorFactory.createConnector(providerConfig);
+    console.log('Embedding provider initialized successfully');
+    
+  } catch (error) {
+    console.warn('Failed to create configured embedding connector, falling back to Ollama:', error.message);
+    // Fallback to Ollama for embeddings
+    embeddingProvider = EmbeddingConnectorFactory.createConnector({
+      provider: 'ollama',
+      baseUrl: 'http://localhost:11434',
+      model: 'nomic-embed-text'
+    });
+  }
+}
+
 // Initialize services
 async function initializeServices() {
   await initializeConfig();
   await initializeLLMProvider();
+  await initializeEmbeddingProvider();
   
   // Initialize handlers
   llmHandler = new LLMHandler(
@@ -159,9 +202,9 @@ async function initializeServices() {
   );
 
   embeddingHandler = new EmbeddingHandler(
-    llmProvider,
+    embeddingProvider,
     config.get('embeddingModel') || 'nomic-embed-text',
-    768, // Default dimension
+    1536, // Default dimension for nomic-embed-text
     cacheManager
   );
 

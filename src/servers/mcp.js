@@ -12,6 +12,7 @@ import Config from '../Config.js';
 import OllamaConnector from '../connectors/OllamaConnector.js';
 import ClaudeConnector from '../connectors/ClaudeConnector.js';
 import MistralConnector from '../connectors/MistralConnector.js';
+import EmbeddingConnectorFactory from '../connectors/EmbeddingConnectorFactory.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -42,6 +43,7 @@ const ragnoConfig = JSON.parse(await fs.readFile(ragnoConfigPath, 'utf-8'));
 
 // Initialize LLM provider based on config
 let llmProvider;
+let embeddingProvider;
 try {
   // Get all configured providers and sort by priority (lower number = higher priority)
   const providers = (config.get('llmProviders') || []).sort((a, b) => (a.priority || 999) - (b.priority || 999));
@@ -152,6 +154,44 @@ try {
   process.exit(1);
 }
 
+// Initialize embedding provider using factory
+try {
+  // Get embedding provider configuration
+  const embeddingProviderType = config.get('embeddingProvider') || 'ollama';
+  const embeddingModel = config.get('embeddingModel') || 'nomic-embed-text';
+  
+  console.log(`Creating embedding connector: ${embeddingProviderType} (${embeddingModel})`);
+  
+  // Create embedding connector using factory
+  let providerConfig = {};
+  if (embeddingProviderType === 'nomic') {
+    providerConfig = {
+      provider: 'nomic',
+      apiKey: process.env.NOMIC_API_KEY,
+      model: embeddingModel
+    };
+  } else if (embeddingProviderType === 'ollama') {
+    const ollamaBaseUrl = config.get('ollama.baseUrl') || 'http://localhost:11434';
+    providerConfig = {
+      provider: 'ollama',
+      baseUrl: ollamaBaseUrl,
+      model: embeddingModel
+    };
+  }
+  
+  embeddingProvider = EmbeddingConnectorFactory.createConnector(providerConfig);
+  console.log('Embedding provider initialized successfully');
+  
+} catch (error) {
+  console.warn('Failed to create configured embedding connector, falling back to Ollama:', error.message);
+  // Fallback to Ollama for embeddings
+  embeddingProvider = EmbeddingConnectorFactory.createConnector({
+    provider: 'ollama',
+    baseUrl: 'http://localhost:11434',
+    model: 'nomic-embed-text'
+  });
+}
+
 // Initialize handlers
 const llmHandler = new LLMHandler(
   llmProvider,
@@ -160,9 +200,9 @@ const llmHandler = new LLMHandler(
 );
 
 const embeddingHandler = new EmbeddingHandler(
-  llmProvider,
+  embeddingProvider,
   config.get('embeddingModel') || 'nomic-embed-text',
-  ragnoConfig.ragno?.enrichment?.embedding?.dimensions || 768,
+  ragnoConfig.ragno?.enrichment?.embedding?.dimensions || 1536,
   cacheManager
 );
 

@@ -3,7 +3,7 @@ import MemoryManager from '../../src/MemoryManager.js';
 import JSONStore from '../../src/stores/JSONStore.js';
 import Config from '../../src/Config.js';
 import ClaudeConnector from '../../src/connectors/ClaudeConnector.js';
-import OllamaConnector from '../../src/connectors/OllamaConnector.js';
+import EmbeddingConnectorFactory from '../../src/connectors/EmbeddingConnectorFactory.js';
 import dotenv from 'dotenv';
 
 // Load environment variables
@@ -50,8 +50,11 @@ async function main() {
     const chatModelName = 'claude-3-5-haiku-latest';
 
     // Get embedding provider and model from config
-    const embeddingProviderType = config.get('models.embedding.provider') || 'ollama';
-    const embeddingModelName = config.get('models.embedding.model') || 'nomic-embed-text';
+    const embeddingProviderType = config.get('embeddingProvider') || config.get('models.embedding.provider') || 'ollama';
+    const embeddingModelName = config.get('embeddingModel') || config.get('models.embedding.model') || 'nomic-embed-text';
+
+    logger.info(`Using embedding provider: ${embeddingProviderType}`);
+    logger.info(`Using embedding model: ${embeddingModelName}`);
 
     // Get API key mapping from config
     const apiKeyVars = config.get('API_KEYS') || {};
@@ -67,9 +70,24 @@ async function main() {
     // Create chat client using ClaudeConnector
     const chatClient = new ClaudeConnector(chatApiKey, chatModelName);
 
-    // Create embedding provider (Ollama)
-    const ollamaBaseUrl = config.get('ollama.baseUrl') || 'http://localhost:11434';
-    const embeddingProvider = new OllamaConnector(ollamaBaseUrl, embeddingModelName);
+    // Create embedding provider using factory
+    let embeddingProviderConfig = {};
+    if (embeddingProviderType === 'nomic') {
+        embeddingProviderConfig = {
+            provider: 'nomic',
+            apiKey: process.env.NOMIC_API_KEY,
+            model: embeddingModelName
+        };
+    } else if (embeddingProviderType === 'ollama') {
+        const ollamaBaseUrl = config.get('ollama.baseUrl') || 'http://localhost:11434';
+        embeddingProviderConfig = {
+            provider: 'ollama',
+            baseUrl: ollamaBaseUrl,
+            model: embeddingModelName
+        };
+    }
+    
+    const embeddingProvider = EmbeddingConnectorFactory.createConnector(embeddingProviderConfig);
 
     const storage = new JSONStore(config.get('storage.options.path'));
 

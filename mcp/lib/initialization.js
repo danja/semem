@@ -4,7 +4,7 @@
 import path from 'path';
 import MemoryManager from '../../src/MemoryManager.js';
 import Config from '../../src/Config.js';
-import { createLLMConnector, modelConfig } from './config.js';
+import { createLLMConnector, createEmbeddingConnector, modelConfig } from './config.js';
 
 // Global instances for reuse
 let memoryManager = null;
@@ -38,8 +38,12 @@ export async function initializeServices() {
     // Initialize memory manager
     console.log('Initializing memory manager...');
     
-    // Create LLM provider
+    // Create separate LLM and embedding providers
     const llmProvider = createLLMConnector();
+    const embeddingProvider = await createEmbeddingConnector();
+    
+    console.log('LLM provider created for chat operations');
+    console.log('Embedding provider created for embedding operations');
     
     // Initialize MemoryManager with proper parameters
     // Create storage backend based on config
@@ -60,6 +64,7 @@ export async function initializeServices() {
     
     memoryManager = new MemoryManager({
       llmProvider,
+      embeddingProvider,
       chatModel: modelConfig.chatModel,
       embeddingModel: modelConfig.embeddingModel,
       storage: storageBackend

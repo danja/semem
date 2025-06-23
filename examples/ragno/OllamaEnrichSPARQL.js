@@ -1,7 +1,7 @@
 import logger from 'loglevel';
 import Config from '../../src/Config.js';
 import SPARQLStore from '../../src/stores/SPARQLStore.js';
-import OllamaConnector from '../../src/connectors/OllamaConnector.js';
+import EmbeddingConnectorFactory from '../../src/connectors/EmbeddingConnectorFactory.js';
 import LLMHandler from '../../src/handlers/LLMHandler.js';
 import EmbeddingHandler from '../../src/handlers/EmbeddingHandler.js';
 import CacheManager from '../../src/handlers/CacheManager.js';
@@ -78,16 +78,34 @@ async function main() {
         dimension: 1536
     });
 
-    // Initialize Ollama connector for embeddings
-    const ollamaBaseUrl = config.get('ollama.baseUrl') || 'http://localhost:11434';
-    const embeddingModel = 'nomic-embed-text';
-    const chatModel = 'qwen2:1.5b'; // Use a commonly available small model
+    // Initialize embedding connector using configuration
+    const embeddingProvider = config.get('embeddingProvider') || 'ollama';
+    const embeddingModel = config.get('embeddingModel') || 'nomic-embed-text';
+    const chatModel = config.get('chatModel') || 'qwen2:1.5b';
 
-    logger.info(`Using Ollama at: ${ollamaBaseUrl}`);
+    logger.info(`Using embedding provider: ${embeddingProvider}`);
     logger.info(`Embedding model: ${embeddingModel}`);
     logger.info(`Chat model: ${chatModel}`);
 
-    const ollamaConnector = new OllamaConnector(ollamaBaseUrl, chatModel);
+    // Create embedding connector using factory
+    let providerConfig = {};
+    if (embeddingProvider === 'nomic') {
+        providerConfig = {
+            provider: 'nomic',
+            apiKey: process.env.NOMIC_API_KEY,
+            model: embeddingModel
+        };
+    } else if (embeddingProvider === 'ollama') {
+        const ollamaBaseUrl = config.get('ollama.baseUrl') || 'http://localhost:11434';
+        providerConfig = {
+            provider: 'ollama',
+            baseUrl: ollamaBaseUrl,
+            model: embeddingModel
+        };
+        logger.info(`Using Ollama at: ${ollamaBaseUrl}`);
+    }
+
+    const embeddingConnector = EmbeddingConnectorFactory.createConnector(providerConfig);
 
     // Initialize cache manager
     const cacheManager = new CacheManager({
@@ -97,13 +115,13 @@ async function main() {
 
     // Initialize handlers
     const embeddingHandler = new EmbeddingHandler(
-        ollamaConnector,
+        embeddingConnector,
         embeddingModel,
         1536,
         cacheManager
     );
 
-    const llmHandler = new LLMHandler(ollamaConnector, chatModel);
+    const llmHandler = new LLMHandler(embeddingConnector, chatModel);
 
     // Initialize RDF infrastructure for Ragno
     const namespaceManager = new NamespaceManager();

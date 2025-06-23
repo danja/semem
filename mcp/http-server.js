@@ -26,9 +26,7 @@ import CorpuscleSelector from '../src/zpt/selection/CorpuscleSelector.js';
 import ContentChunker from '../src/zpt/transform/ContentChunker.js';
 
 // Import LLM Connectors
-import OllamaConnector from '../src/connectors/OllamaConnector.js';
-import ClaudeConnector from '../src/connectors/ClaudeConnector.js';
-import MistralConnector from '../src/connectors/MistralConnector.js';
+import { createLLMConnector, createEmbeddingConnector } from './lib/config.js';
 
 // Import prompt system
 import { initializePromptRegistry, promptRegistry } from './prompts/registry.js';
@@ -47,24 +45,7 @@ const HOST = process.env.MCP_HOST || 'localhost';
 let memoryManager = null;
 let config = null;
 
-// Create LLM connector based on available configuration - following working examples pattern
-function createLLMConnector() {
-  // Priority: Ollama (no API key needed) > Claude > Mistral
-  if (process.env.OLLAMA_HOST || !process.env.CLAUDE_API_KEY) {
-    console.log('Creating Ollama connector (preferred for local development)...');
-    return new OllamaConnector();
-  } else if (process.env.CLAUDE_API_KEY) {
-    console.log('Creating Claude connector...');
-    return new ClaudeConnector();
-  } else if (process.env.MISTRAL_API_KEY) {
-    console.log('Creating Mistral connector...');
-    return new MistralConnector();
-  } else {
-    // Fallback to Ollama (most examples use this)
-    console.log('Defaulting to Ollama connector...');
-    return new OllamaConnector();
-  }
-}
+// Note: LLM and embedding connector creation moved to ./lib/config.js
 
 // Session management for stateful operation
 const sessions = new Map();
@@ -105,16 +86,21 @@ async function initializeSemem() {
     // Initialize memory manager
     console.log('Initializing memory manager...');
     
-    // Create LLM provider (following the working pattern)
+    // Create separate LLM and embedding providers
     const llmProvider = createLLMConnector();
+    const embeddingProvider = await createEmbeddingConnector();
     
     // Use working model names
     const chatModel = 'qwen2:1.5b';
     const embeddingModel = 'nomic-embed-text';
     
-    // Initialize MemoryManager with proper parameters
+    console.log('LLM provider created for chat operations');
+    console.log('Embedding provider created for embedding operations');
+    
+    // Initialize MemoryManager with separate providers
     memoryManager = new MemoryManager({
       llmProvider,
+      embeddingProvider,
       chatModel,
       embeddingModel,
       storage: null // Will use default in-memory storage

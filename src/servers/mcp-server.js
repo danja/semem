@@ -18,6 +18,7 @@ import SearchService from '../services/search/SearchService.js';
 import { augmentWithAttributes } from '../ragno/augmentWithAttributes.js';
 import { aggregateCommunities } from '../ragno/aggregateCommunities.js';
 import Config from '../Config.js';
+import EmbeddingConnectorFactory from '../connectors/EmbeddingConnectorFactory.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -57,10 +58,11 @@ export function createMCPServer() {
     ttl: 3600000 // 1 hour
   });
 
-  // Initialize LLM provider based on config
-  const llmProvider = initializeLLMProvider(config);
+  // Initialize LLM and embedding providers based on config
+  const llmProvider = await initializeLLMProvider(config);
+  const embeddingProvider = await initializeEmbeddingProvider(config);
   const llmHandler = new LLMHandler(llmProvider, cacheManager);
-  const embeddingHandler = new EmbeddingHandler(llmProvider, cacheManager);
+  const embeddingHandler = new EmbeddingHandler(embeddingProvider, cacheManager);
   const sparqlHelpers = new SPARQLHelpers(config.get('sparqlEndpoints'));
   const searchService = new SearchService(sparqlHelpers, embeddingHandler);
 
@@ -139,6 +141,47 @@ async function initializeLLMProvider(config) {
   }
   
   throw new Error('No valid LLM provider could be initialized');
+}
+
+/**
+ * Initialize embedding provider using factory
+ */
+async function initializeEmbeddingProvider(config) {
+  try {
+    // Get embedding provider configuration
+    const embeddingProvider = config.get('embeddingProvider') || 'ollama';
+    const embeddingModel = config.get('embeddingModel') || 'nomic-embed-text';
+    
+    console.log(`Creating embedding connector: ${embeddingProvider} (${embeddingModel})`);
+    
+    // Create embedding connector using factory
+    let providerConfig = {};
+    if (embeddingProvider === 'nomic') {
+      providerConfig = {
+        provider: 'nomic',
+        apiKey: process.env.NOMIC_API_KEY,
+        model: embeddingModel
+      };
+    } else if (embeddingProvider === 'ollama') {
+      const ollamaBaseUrl = config.get('ollama.baseUrl') || 'http://localhost:11434';
+      providerConfig = {
+        provider: 'ollama',
+        baseUrl: ollamaBaseUrl,
+        model: embeddingModel
+      };
+    }
+    
+    return EmbeddingConnectorFactory.createConnector(providerConfig);
+    
+  } catch (error) {
+    console.warn('Failed to create configured embedding connector, falling back to Ollama:', error.message);
+    // Fallback to Ollama for embeddings
+    return EmbeddingConnectorFactory.createConnector({
+      provider: 'ollama',
+      baseUrl: 'http://localhost:11434',
+      model: 'nomic-embed-text'
+    });
+  }
 }
 
 // Start server based on command line arguments
