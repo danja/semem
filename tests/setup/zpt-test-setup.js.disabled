@@ -1,0 +1,188 @@
+/**
+ * ZPT Test Setup
+ * Global setup and utilities for ZPT testing
+ */
+import { beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
+
+// Global test environment setup
+beforeAll(async () => {
+  // Set test environment variables
+  process.env.NODE_ENV = 'test';
+  process.env.LOG_LEVEL = 'error'; // Reduce noise during tests
+  
+  // Increase timeout for performance tests
+  if (process.env.npm_config_timeout) {
+    const timeout = parseInt(process.env.npm_config_timeout);
+    if (timeout > 0) {
+      console.log(`Setting test timeout to ${timeout}ms for performance tests`);
+    }
+  }
+  
+  // Setup test database/endpoints if needed
+  console.log('ZPT Test Environment initialized');
+});
+
+afterAll(async () => {
+  // Cleanup test environment
+  console.log('ZPT Test Environment cleanup completed');
+});
+
+// Test utilities
+global.testUtils = {
+  // Generate consistent test data
+  generateTestEntity: (id, overrides = {}) => ({
+    id: `http://test.example.org/entity/${id}`,
+    label: `Test Entity ${id}`,
+    subType: 'TestConcept',
+    frequency: 1,
+    centrality: 0.5,
+    isEntryPoint: false,
+    embedding: new Array(1536).fill(0.1),
+    ...overrides
+  }),
+
+  generateTestSemanticUnit: (id, overrides = {}) => ({
+    id: `http://test.example.org/unit/${id}`,
+    content: `Test semantic unit ${id} with relevant content for testing purposes.`,
+    summary: `Test Unit ${id}`,
+    tokenCount: 50,
+    importance: 0.5,
+    embedding: new Array(1536).fill(0.2),
+    ...overrides
+  }),
+
+  generateTestRelationship: (id, source, target, overrides = {}) => ({
+    id: `http://test.example.org/rel/${id}`,
+    source: `http://test.example.org/entity/${source}`,
+    target: `http://test.example.org/entity/${target}`,
+    label: 'testRelation',
+    type: 'TestRelation',
+    weight: 0.8,
+    confidence: 0.9,
+    ...overrides
+  }),
+
+  // Mock SPARQL responses
+  createMockSparqlResponse: (bindings) => ({
+    results: { bindings }
+  }),
+
+  createMockBinding: (values) => {
+    const binding = {};
+    Object.entries(values).forEach(([key, value]) => {
+      binding[key] = { value: String(value) };
+    });
+    return binding;
+  },
+
+  // Performance testing utilities
+  measureAsync: async (fn, label = 'operation') => {
+    const start = performance.now();
+    const result = await fn();
+    const duration = performance.now() - start;
+    
+    if (process.env.__ENABLE_PERFORMANCE_LOGGING__) {
+      console.log(`${label} completed in ${duration.toFixed(2)}ms`);
+    }
+    
+    return { result, duration };
+  },
+
+  // Memory measurement
+  getMemoryUsage: () => {
+    const usage = process.memoryUsage();
+    return {
+      rss: usage.rss / 1024 / 1024, // MB
+      heapUsed: usage.heapUsed / 1024 / 1024, // MB
+      heapTotal: usage.heapTotal / 1024 / 1024, // MB
+      external: usage.external / 1024 / 1024 // MB
+    };
+  },
+
+  // Test data validation
+  validateZPTResponse: (response) => {
+    expect(response).toHaveProperty('success');
+    if (response.success) {
+      expect(response).toHaveProperty('content');
+      expect(response).toHaveProperty('metadata');
+      expect(response.metadata).toHaveProperty('pipeline');
+    }
+    return response;
+  },
+
+  validateCorpuscle: (corpuscle) => {
+    expect(corpuscle).toHaveProperty('id');
+    expect(corpuscle).toHaveProperty('type');
+    expect(corpuscle).toHaveProperty('timestamp');
+    return corpuscle;
+  },
+
+  // Async test helpers
+  waitFor: (ms) => new Promise(resolve => setTimeout(resolve, ms)),
+
+  retryAsync: async (fn, maxRetries = 3, delay = 100) => {
+    for (let i = 0; i < maxRetries; i++) {
+      try {
+        return await fn();
+      } catch (error) {
+        if (i === maxRetries - 1) throw error;
+        await testUtils.waitFor(delay * Math.pow(2, i)); // Exponential backoff
+      }
+    }
+  }
+};
+
+// Performance monitoring setup
+let performanceMetrics = new Map();
+
+beforeEach(() => {
+  // Reset performance metrics for each test
+  performanceMetrics.clear();
+  
+  // Start memory monitoring
+  if (process.env.__ENABLE_PERFORMANCE_LOGGING__) {
+    global.testStartMemory = testUtils.getMemoryUsage();
+  }
+});
+
+afterEach(() => {
+  // Log performance metrics if enabled
+  if (process.env.__ENABLE_PERFORMANCE_LOGGING__ && global.testStartMemory) {
+    const endMemory = testUtils.getMemoryUsage();
+    const memoryDelta = {
+      rss: endMemory.rss - global.testStartMemory.rss,
+      heapUsed: endMemory.heapUsed - global.testStartMemory.heapUsed
+    };
+    
+    if (Math.abs(memoryDelta.heapUsed) > 10) { // Only log if significant change
+      console.log(`Memory delta: ${memoryDelta.heapUsed.toFixed(2)}MB heap, ${memoryDelta.rss.toFixed(2)}MB RSS`);
+    }
+  }
+});
+
+// Mock fetch globally for SPARQL tests
+import { vi } from 'vitest';
+
+global.setupMockFetch = () => {
+  global.fetch = vi.fn();
+  return global.fetch;
+};
+
+global.setupSuccessfulSparqlMock = (responseData) => {
+  if (!global.fetch) global.setupMockFetch();
+  
+  global.fetch.mockResolvedValue({
+    ok: true,
+    json: () => Promise.resolve(responseData || { results: { bindings: [] } }),
+    text: () => Promise.resolve('Success')
+  });
+};
+
+global.setupFailingSparqlMock = (error) => {
+  if (!global.fetch) global.setupMockFetch();
+  
+  global.fetch.mockRejectedValue(error || new Error('SPARQL endpoint unavailable'));
+};
+
+// Export for use in tests
+export { testUtils };

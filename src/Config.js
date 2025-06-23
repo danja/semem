@@ -58,7 +58,7 @@ export default class Config {
             user: "admin",
             password: "admin123",
             urlBase: "https://fuseki.hyperdata.it",
-            dataset: "hyperdata.it", 
+            dataset: "hyperdata.it",
             query: "/hyperdata.it/query",
             update: "/hyperdata.it/update",
             upload: "/hyperdata.it/upload",
@@ -92,30 +92,32 @@ export default class Config {
 
         try {
             let fileConfig = {}
-            
+
             // Load config file if requested
             if (this.configFilePath) {
                 fileConfig = this.loadConfigFile()
-                console.log('Loaded config file content:', JSON.stringify(fileConfig, null, 2))
-                
+                console.log('Loaded config file')
+                //, JSON.stringify(fileConfig, null, 2))
+
                 // Transform config file format to internal format
                 fileConfig = this.transformJsonConfig(fileConfig)
                 console.log('Transformed config:', JSON.stringify(fileConfig, null, 2))
             } else {
                 console.log('No config file path provided, using defaults')
             }
-            
-            console.log('Merging configs. Defaults:', JSON.stringify(Config.defaults, null, 2))
-            
+
+            console.log('Merging configs...')
+            // Defaults:', JSON.stringify(Config.defaults, null, 2))
+
             // Merge in order: defaults -> file config -> user config
             this.config = this.mergeConfigs(Config.defaults, fileConfig, 0)
-            
+
             console.log('After merging, config is:', JSON.stringify(this.config, null, 2))
-            
+
             this.initialized = true
             this.applyEnvironmentOverrides()
             this.validateConfig()
-            
+
             console.log('Final config after overrides and validation:', JSON.stringify(this.config, null, 2))
         } catch (error) {
             console.error('Config initialization error details:', error);
@@ -153,9 +155,9 @@ export default class Config {
                 // Absolute path as a last resort
                 '/home/danny/hyperdata/semem/config/config.json'
             ].filter(Boolean);
-            
+
             console.log('Searching for config in these locations:', possiblePaths);
-            
+
             for (const path of possiblePaths) {
                 console.log('  Checking:', path);
                 if (path && fs.existsSync(path)) {
@@ -166,10 +168,10 @@ export default class Config {
                     return JSON.parse(fileContent);
                 }
             }
-            
+
             console.warn('❌ Config file not found in any of these locations:', possiblePaths);
             return {};
-            
+
         } catch (error) {
             console.error('Error loading config file:', error);
             return {};
@@ -178,16 +180,16 @@ export default class Config {
 
     transformJsonConfig(jsonConfig) {
         const transformed = { ...jsonConfig } // Start with a copy of the original config
-        
+
         // Map server configs (preserve existing if none in jsonConfig)
         if (jsonConfig.servers) {
             transformed.servers = jsonConfig.servers
         }
-        
+
         // Map SPARQL endpoints if they exist in the format we expect
         if (jsonConfig.sparqlEndpoints && jsonConfig.sparqlEndpoints.length > 0) {
             const endpoint = jsonConfig.sparqlEndpoints[0]
-            
+
             // Handle old format with queryEndpoint
             if (endpoint.queryEndpoint) {
                 transformed.sparqlEndpoints = [{
@@ -207,12 +209,12 @@ export default class Config {
             else if (endpoint.urlBase && endpoint.query && endpoint.update) {
                 // Only update storage configuration if it uses a single endpoint string
                 // and we can safely enhance it with proper query/update URLs
-                if (jsonConfig.storage && 
-                    jsonConfig.storage.type === 'sparql' && 
-                    jsonConfig.storage.options && 
+                if (jsonConfig.storage &&
+                    jsonConfig.storage.type === 'sparql' &&
+                    jsonConfig.storage.options &&
                     jsonConfig.storage.options.endpoint &&
                     typeof jsonConfig.storage.options.endpoint === 'string') {
-                    
+
                     transformed.storage = {
                         ...jsonConfig.storage,
                         options: {
@@ -227,15 +229,15 @@ export default class Config {
                 }
             }
         }
-        
+
         // Preserve llmProviders array as-is
         if (jsonConfig.llmProviders && Array.isArray(jsonConfig.llmProviders)) {
             transformed.llmProviders = jsonConfig.llmProviders;
-            
+
             // Still set default models based on provider capabilities
             const chatProvider = jsonConfig.llmProviders.find(p => p.capabilities?.includes('chat'))
             const embeddingProvider = jsonConfig.llmProviders.find(p => p.capabilities?.includes('embedding'))
-            
+
             if (chatProvider) {
                 transformed.models = transformed.models || {}
                 transformed.models.chat = {
@@ -244,7 +246,7 @@ export default class Config {
                     options: {}
                 }
             }
-            
+
             if (embeddingProvider) {
                 transformed.models = transformed.models || {}
                 transformed.models.embedding = {
@@ -254,20 +256,20 @@ export default class Config {
                 }
             }
         }
-        
+
         // Map other top-level configs (only if they don't exist already)
         if (jsonConfig.chatModel && !transformed.models?.chat?.model) {
             transformed.models = transformed.models || {}
             transformed.models.chat = transformed.models.chat || {}
             transformed.models.chat.model = jsonConfig.chatModel
         }
-        
+
         if (jsonConfig.embeddingModel && !transformed.models?.embedding?.model) {
             transformed.models = transformed.models || {}
             transformed.models.embedding = transformed.models.embedding || {}
             transformed.models.embedding.model = jsonConfig.embeddingModel
         }
-        
+
         return transformed
     }
 
@@ -306,7 +308,7 @@ export default class Config {
                 merged[key] = value !== undefined ? value : defaults[key];
             }
         }
-        
+
         return merged;
     }
 
@@ -320,7 +322,7 @@ export default class Config {
         }
 
         // Storage validation
-        const validStorageTypes = ['memory', 'json', 'sparql']
+        const validStorageTypes = ['memory', 'json', 'sparql', 'cached-sparql']
         if (!validStorageTypes.includes(this.config.storage.type)) {
             throw new Error('Invalid storage type')
         }
@@ -347,7 +349,7 @@ export default class Config {
                 this.set(configPath.join('.'), value)
             }
         }
-        
+
         // Replace ${VAR_NAME} placeholders with environment variables
         const replaceEnvVars = (obj) => {
             if (typeof obj === 'string' && obj.includes('${')) {
@@ -365,7 +367,7 @@ export default class Config {
             }
             return obj;
         };
-        
+
         // Apply environment variable substitution to the entire config
         this.config = replaceEnvVars(this.config);
     }

@@ -20,7 +20,7 @@ The intuition is that while LLMs and associated techniques have massively advanc
 ## Status 2025-06-21 
 
 <details>
-<summary>Mostly functional but very, very sketchy. It has an MCP server, HTTP API, a crude browser UI and code APIs. A lot to do before much will be genuinely useful. It is in active development as of June 2025. <strong>It is not for the fainthearted</strong>.</summary>
+<summary>Mostly functional but very, very sketchy. It has an MCP server, HTTP API, a crude browser UI and code APIs. A lot to do before much will be genuinely useful. It is in active development as of June 2025. The codebase is big and rather chaotic, <strong>it is not for the fainthearted</strong>.</summary>
 
 The codebase is registered as the npm package [semem](https://www.npmjs.com/package/semem) though there hasn't been much time spent on this angle, currently it's pretty much essential to use this repo (or MCP). 
 
@@ -47,7 +47,9 @@ This layer is concerned with the **knowledgebase model** as described by the [Ra
 ### ZPT
 This layer is concerned with **knowledgegraph navigation** built on the [ZPT Ontology](https://github.com/danja/zpt) following an analogy from the film world, *Zoom, Pan, Tilt*. Algorithms have been created to handle parameterisation of filters/selection and corpus decomposition and chunking.
 
+## UI
 
+Semem has a browser-based UI in progress. This won't be useful for actual knowledge work any time soon (if ever) but it will have a role in checking system behaviour and experimenting. 
 
 ---
 The description below is very AI-sloppy. 
