@@ -66,4 +66,25 @@ Oh.
 
 I forgot that it's currently relying on Ollama locally.
 
-I'd already got support for different chat providers, but not embeddings providers, that was quasi-hardcoded to Ollama. So I've added a bit to [hyperdata-clients](https://github.com/danja/hyperdata-clients) and updated the relevant bits of Semem. Which is bound to break things. 
+I'd already got support for different chat providers, but not embeddings providers, that was quasi-hardcoded to Ollama. So I've added a bit to [hyperdata-clients](https://github.com/danja/hyperdata-clients) and updated the relevant bits of Semem. Which is bound to break things.
+
+PS. Things might be fixed enough.
+
+I've made a script containing just :
+```sh
+#!/bin/bash
+
+MCP_PORT=4600 MCP_HOST=127.0.0.1 node mcp/http-server.js
+```
+
+so then -
+
+```sh
+ pm2 start start-mcp.sh --name semem-mcp --watch
+ ```
+
+and it's visible from MCP Inspector locally,
+* https://semem.tensegrity.it/mcp
+* Streamable HTTP
+
+But broken. Hey ho. Next Claude Code cycle.
