@@ -379,11 +379,162 @@ export default class RDFElement {
     }
 
     /**
-     * Get element metadata
-     * @returns {Object} Element metadata
+     * Set a metadata property as an RDF triple
+     * @param {string} property - Property name
+     * @param {any} value - Property value
+     */
+    setMetadataProperty(property, value) {
+        const predicate = this.ns.properties[property] || this.ns.ex(property)
+        this.removeTriple(predicate)
+        
+        // Handle different value types
+        let object
+        if (typeof value === 'boolean') {
+            object = rdf.literal(value.toString(), this.ns.xsd.boolean)
+        } else if (typeof value === 'number') {
+            if (Number.isInteger(value)) {
+                object = rdf.literal(value.toString(), this.ns.xsd.integer)
+            } else {
+                object = rdf.literal(value.toString(), this.ns.xsd.double)
+            }
+        } else if (value instanceof Date) {
+            object = rdf.literal(value.toISOString(), this.ns.xsd.dateTime)
+        } else if (typeof value === 'string' && value.startsWith('http')) {
+            // Assume URIs should be stored as named nodes
+            object = rdf.namedNode(value)
+        } else {
+            // Default to string literal
+            object = rdf.literal(value.toString())
+        }
+        
+        this.addTriple(predicate, object)
+    }
+
+    /**
+     * Get a metadata property value
+     * @param {string} property - Property name
+     * @returns {any} Property value or undefined
+     */
+    getMetadataProperty(property) {
+        const predicate = this.ns.properties[property] || this.ns.ex(property)
+        const quads = [...this.dataset.match(this.node, predicate)]
+        
+        if (quads.length === 0) {
+            return undefined
+        }
+        
+        const object = quads[0].object
+        
+        // Convert back to appropriate JavaScript type
+        if (object.termType === 'Literal') {
+            if (object.datatype) {
+                const datatypeURI = object.datatype.value
+                if (datatypeURI === this.ns.xsd.boolean.value) {
+                    return object.value === 'true'
+                } else if (datatypeURI === this.ns.xsd.integer.value) {
+                    return parseInt(object.value)
+                } else if (datatypeURI === this.ns.xsd.double.value || datatypeURI === this.ns.xsd.float.value) {
+                    return parseFloat(object.value)
+                } else if (datatypeURI === this.ns.xsd.dateTime.value) {
+                    return new Date(object.value)
+                }
+            }
+            return object.value
+        } else if (object.termType === 'NamedNode') {
+            return object.value
+        }
+        
+        return object.value
+    }
+
+    /**
+     * Get all custom metadata properties (excluding standard properties)
+     * @returns {Object} Object with all custom metadata
+     */
+    getAllCustomMetadata() {
+        const metadata = {}
+        const standardPredicates = new Set([
+            this.ns.rdf.type.value,
+            this.ns.properties.content.value,
+            this.ns.skosProperties.prefLabel.value,
+            this.ns.skosProperties.altLabel.value,
+            this.ns.properties.isEntryPoint.value,
+            this.ns.properties.subType.value,
+            this.ns.dcProperties.created.value,
+            this.ns.dcProperties.modified.value,
+            this.ns.properties.connectsTo.value,
+            this.ns.properties.hasPPRScore.value,
+            this.ns.properties.hasSimilarityScore.value
+        ])
+        
+        for (const quad of this.getTriples()) {
+            const predicateURI = quad.predicate.value
+            
+            // Skip standard properties
+            if (standardPredicates.has(predicateURI)) {
+                continue
+            }
+            
+            // Extract property name from URI
+            let propertyName
+            if (predicateURI.startsWith(this.ns.uriBase)) {
+                propertyName = predicateURI.substring(this.ns.uriBase.length)
+            } else {
+                propertyName = predicateURI.split('/').pop() || predicateURI.split('#').pop()
+            }
+            
+            // Convert value
+            const object = quad.object
+            let value
+            if (object.termType === 'Literal') {
+                if (object.datatype) {
+                    const datatypeURI = object.datatype.value
+                    if (datatypeURI === this.ns.xsd.boolean.value) {
+                        value = object.value === 'true'
+                    } else if (datatypeURI === this.ns.xsd.integer.value) {
+                        value = parseInt(object.value)
+                    } else if (datatypeURI === this.ns.xsd.double.value || datatypeURI === this.ns.xsd.float.value) {
+                        value = parseFloat(object.value)
+                    } else if (datatypeURI === this.ns.xsd.dateTime.value) {
+                        value = new Date(object.value)
+                    } else {
+                        value = object.value
+                    }
+                } else {
+                    value = object.value
+                }
+            } else if (object.termType === 'NamedNode') {
+                value = object.value
+            } else {
+                value = object.value
+            }
+            
+            metadata[propertyName] = value
+        }
+        
+        return metadata
+    }
+
+    /**
+     * Set multiple metadata properties at once
+     * @param {Object} metadata - Object with property/value pairs
+     */
+    setAllMetadata(metadata) {
+        if (!metadata || typeof metadata !== 'object') {
+            return
+        }
+        
+        for (const [property, value] of Object.entries(metadata)) {
+            this.setMetadataProperty(property, value)
+        }
+    }
+
+    /**
+     * Get element metadata (enhanced to include custom metadata)
+     * @returns {Object} Element metadata including custom properties
      */
     getMetadata() {
-        return {
+        const standardMetadata = {
             uri: this.uri,
             types: this.getTypes().map(type => this.ns.compress(type.value)),
             prefLabel: this.getPrefLabel(),
@@ -395,6 +546,10 @@ export default class RDFElement {
             tripleCount: this.getTriples().length,
             connections: this.getConnectedElements().length
         }
+        
+        // Merge with custom metadata
+        const customMetadata = this.getAllCustomMetadata()
+        return { ...standardMetadata, ...customMetadata }
     }
 
     /**

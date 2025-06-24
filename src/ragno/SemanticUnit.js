@@ -63,6 +63,11 @@ export default class SemanticUnit extends RDFElement {
             this.setLength(options.length)
         }
 
+        // Set custom metadata if provided
+        if (options.metadata && typeof options.metadata === 'object') {
+            this.setAllMetadata(options.metadata)
+        }
+
         logger.debug(`Created ragno:Unit: ${this.uri}`)
     }
 
