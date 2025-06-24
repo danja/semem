@@ -13,21 +13,47 @@ import Config from '../../src/Config.js';
 dotenv.config();
 
 /**
- * Create LLM connector based on available configuration
- * Priority: Ollama (no API key needed) > Claude > Mistral
+ * Create LLM connector based on configuration priority from config.json
  */
-export function createLLMConnector() {
-  if (process.env.OLLAMA_HOST || !process.env.CLAUDE_API_KEY) {
-    console.log('Creating Ollama connector (preferred for local development)...');
+export async function createLLMConnector(configPath = null) {
+  try {
+    // Load system configuration to get provider priorities
+    const config = new Config(configPath);
+    await config.init();
+    
+    // Get llmProviders with priority ordering
+    const llmProviders = config.get('llmProviders') || [];
+    
+    // Sort by priority (lower number = higher priority)
+    const sortedProviders = llmProviders
+      .filter(p => p.capabilities?.includes('chat'))
+      .sort((a, b) => (a.priority || 999) - (b.priority || 999));
+    
+    console.log('Available chat providers by priority:', sortedProviders.map(p => `${p.type} (priority: ${p.priority})`));
+    
+    // Try providers in priority order
+    for (const provider of sortedProviders) {
+      console.log(`Trying LLM provider: ${provider.type} (priority: ${provider.priority})`);
+      
+      if (provider.type === 'mistral' && process.env.MISTRAL_API_KEY) {
+        console.log('✅ Creating Mistral connector (highest priority)...');
+        return new MistralConnector();
+      } else if (provider.type === 'claude' && process.env.CLAUDE_API_KEY) {
+        console.log('✅ Creating Claude connector...');
+        return new ClaudeConnector();
+      } else if (provider.type === 'ollama') {
+        console.log('✅ Creating Ollama connector (fallback)...');
+        return new OllamaConnector();
+      } else {
+        console.log(`❌ Provider ${provider.type} not available (missing API key or implementation)`);
+      }
+    }
+    
+    console.log('⚠️ No configured providers available, defaulting to Ollama');
     return new OllamaConnector();
-  } else if (process.env.CLAUDE_API_KEY) {
-    console.log('Creating Claude connector...');
-    return new ClaudeConnector();
-  } else if (process.env.MISTRAL_API_KEY) {
-    console.log('Creating Mistral connector...');
-    return new MistralConnector();
-  } else {
-    console.log('Defaulting to Ollama connector...');
+    
+  } catch (error) {
+    console.warn('Failed to load provider configuration, defaulting to Ollama:', error.message);
     return new OllamaConnector();
   }
 }
@@ -35,36 +61,52 @@ export function createLLMConnector() {
 /**
  * Create embedding connector using configuration-driven factory pattern
  */
-export async function createEmbeddingConnector() {
+export async function createEmbeddingConnector(configPath = null) {
   try {
     // Load system configuration
-    const config = new Config();
+    const config = new Config(configPath);
     await config.init();
     
-    // Get embedding provider configuration
-    const embeddingProvider = config.get('embeddingProvider') || 'ollama';
-    const embeddingModel = config.get('embeddingModel') || 'nomic-embed-text';
+    // Get llmProviders with priority ordering for embeddings
+    const llmProviders = config.get('llmProviders') || [];
     
-    console.log(`Creating embedding connector: ${embeddingProvider} (${embeddingModel})`);
+    // Sort by priority (lower number = higher priority)
+    const sortedProviders = llmProviders
+      .filter(p => p.capabilities?.includes('embedding'))
+      .sort((a, b) => (a.priority || 999) - (b.priority || 999));
     
-    // Create embedding connector using factory
-    let providerConfig = {};
-    if (embeddingProvider === 'nomic') {
-      providerConfig = {
-        provider: 'nomic',
-        apiKey: process.env.NOMIC_API_KEY,
-        model: embeddingModel
-      };
-    } else if (embeddingProvider === 'ollama') {
-      const ollamaBaseUrl = config.get('ollama.baseUrl') || process.env.OLLAMA_HOST || 'http://localhost:11434';
-      providerConfig = {
-        provider: 'ollama',
-        baseUrl: ollamaBaseUrl,
-        model: embeddingModel
-      };
+    console.log('Available embedding providers by priority:', sortedProviders.map(p => `${p.type} (priority: ${p.priority})`));
+    
+    // Try providers in priority order
+    for (const provider of sortedProviders) {
+      console.log(`Trying embedding provider: ${provider.type} (priority: ${provider.priority})`);
+      
+      if (provider.type === 'nomic' && process.env.NOMIC_API_KEY) {
+        console.log('✅ Creating Nomic embedding connector (highest priority)...');
+        return EmbeddingConnectorFactory.createConnector({
+          provider: 'nomic',
+          apiKey: process.env.NOMIC_API_KEY,
+          model: provider.embeddingModel || 'nomic-embed-text-v1.5'
+        });
+      } else if (provider.type === 'ollama') {
+        console.log('✅ Creating Ollama embedding connector (fallback)...');
+        const ollamaBaseUrl = process.env.OLLAMA_HOST || 'http://localhost:11434';
+        return EmbeddingConnectorFactory.createConnector({
+          provider: 'ollama',
+          baseUrl: ollamaBaseUrl,
+          model: provider.embeddingModel || 'nomic-embed-text'
+        });
+      } else {
+        console.log(`❌ Embedding provider ${provider.type} not available (missing API key or implementation)`);
+      }
     }
     
-    return EmbeddingConnectorFactory.createConnector(providerConfig);
+    console.log('⚠️ No configured embedding providers available, defaulting to Ollama');
+    return EmbeddingConnectorFactory.createConnector({
+      provider: 'ollama',
+      baseUrl: process.env.OLLAMA_HOST || 'http://localhost:11434',
+      model: 'nomic-embed-text'
+    });
     
   } catch (error) {
     console.warn('Failed to create configured embedding connector, falling back to Ollama:', error.message);
@@ -87,8 +129,36 @@ export const mcpConfig = {
 };
 
 /**
- * Get working model names
+ * Get working model names from configuration
  */
+export async function getModelConfig(configPath = null) {
+  try {
+    const config = new Config(configPath);
+    await config.init();
+    
+    // Get highest priority providers
+    const llmProviders = config.get('llmProviders') || [];
+    const chatProvider = llmProviders
+      .filter(p => p.capabilities?.includes('chat'))
+      .sort((a, b) => (a.priority || 999) - (b.priority || 999))[0];
+    const embeddingProvider = llmProviders
+      .filter(p => p.capabilities?.includes('embedding'))
+      .sort((a, b) => (a.priority || 999) - (b.priority || 999))[0];
+    
+    return {
+      chatModel: chatProvider?.chatModel || 'qwen2:1.5b',
+      embeddingModel: embeddingProvider?.embeddingModel || 'nomic-embed-text'
+    };
+  } catch (error) {
+    console.warn('Failed to get model config from configuration, using defaults:', error.message);
+    return {
+      chatModel: 'qwen2:1.5b',
+      embeddingModel: 'nomic-embed-text'
+    };
+  }
+}
+
+// Maintain backward compatibility - but this will need to be awaited now
 export const modelConfig = {
   chatModel: 'qwen2:1.5b',
   embeddingModel: 'nomic-embed-text'

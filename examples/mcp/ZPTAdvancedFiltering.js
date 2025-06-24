@@ -70,7 +70,7 @@ class ZPTAdvancedFilteringDemo {
   logPerformanceAnalysis(operation, duration, details = {}) {
     const emoji = duration < 500 ? '⚡' : duration < 2000 ? '🚀' : duration < 5000 ? '⏱️' : '🐌';
     console.log(chalk.magenta(`   ${emoji} ${operation}: ${duration}ms`));
-    
+
     if (details.resultCount !== undefined) {
       console.log(chalk.gray(`   📊 Results: ${details.resultCount} items`));
     }
@@ -101,7 +101,7 @@ class ZPTAdvancedFilteringDemo {
 
   explainAdvancedFiltering() {
     this.logBanner('Advanced ZPT Filtering Concepts', 'Multi-Dimensional Content Navigation');
-    
+
     console.log(chalk.cyan('\n💡 Advanced Pan Filtering:'));
     console.log(chalk.white('   ZPT pan filters work like camera controls for knowledge exploration'));
     console.log(chalk.white('   Multiple filters can be combined for precise content selection\\n'));
@@ -131,7 +131,7 @@ class ZPTAdvancedFilteringDemo {
 
   async initializeConnection() {
     this.logBanner('MCP Connection Initialization', 'Connecting for advanced ZPT filtering');
-    
+
     try {
       log.info('Creating stdio transport...');
       this.transport = new StdioClientTransport({
@@ -160,7 +160,7 @@ class ZPTAdvancedFilteringDemo {
       // Verify ZPT tools availability
       const tools = await this.client.listTools();
       const zptTools = tools.tools.filter(tool => tool.name.startsWith('zpt_'));
-      
+
       this.logSuccess(`Found ${zptTools.length} ZPT tools available for filtering`);
       zptTools.forEach(tool => {
         console.log(chalk.gray(`   🔧 ${tool.name}: ${tool.description.slice(0, 80)}...`));
@@ -176,7 +176,7 @@ class ZPTAdvancedFilteringDemo {
 
   async demonstrateTemporalFiltering() {
     this.logBanner('Temporal Filtering', 'Time-based content navigation and exploration');
-    
+
     const temporalFilters = [
       {
         title: 'Recent AI Research',
@@ -224,7 +224,7 @@ class ZPTAdvancedFilteringDemo {
     for (const filter of temporalFilters) {
       this.logFilterStep(temporalFilters.indexOf(filter) + 1, filter.title, filter.description);
       this.logFilterComposition({ temporal: filter.pan.temporal });
-      
+
       try {
         const startTime = Date.now();
         const result = await this.client.callTool({
@@ -242,13 +242,13 @@ class ZPTAdvancedFilteringDemo {
         if (result.content && result.content[0]) {
           const navigation = JSON.parse(result.content[0].text);
           this.logSuccess(`Temporal filtering completed: ${filter.title}`);
-          
+
           if (navigation.success && navigation.content) {
             const resultCount = navigation.content.results?.length || 0;
-            const timespan = filter.pan.temporal.end ? 
-              `${filter.pan.temporal.start} to ${filter.pan.temporal.end}` : 
+            const timespan = filter.pan.temporal.end ?
+              `${filter.pan.temporal.start} to ${filter.pan.temporal.end}` :
               filter.pan.temporal.relativeTime || 'specified period';
-              
+
             this.logPerformanceAnalysis('Temporal Navigation', duration, {
               resultCount,
               filterEfficiency: Math.round((resultCount / 100) * 100), // Mock efficiency
@@ -257,7 +257,7 @@ class ZPTAdvancedFilteringDemo {
 
             console.log(chalk.white(`   📅 Time span: ${timespan}`));
             console.log(chalk.white(`   🔍 Granularity: ${filter.pan.temporal.granularity || 'default'}`));
-            
+
             if (navigation.metadata?.temporalDistribution) {
               console.log(chalk.cyan(`   📊 Temporal distribution:`));
               Object.entries(navigation.metadata.temporalDistribution).forEach(([period, count]) => {
@@ -279,7 +279,7 @@ class ZPTAdvancedFilteringDemo {
 
   async demonstrateGeographicFiltering() {
     this.logBanner('Geographic Filtering', 'Location-based content exploration');
-    
+
     const geographicFilters = [
       {
         title: 'Silicon Valley Tech',
@@ -326,7 +326,7 @@ class ZPTAdvancedFilteringDemo {
     for (const filter of geographicFilters) {
       this.logFilterStep(geographicFilters.indexOf(filter) + 1, filter.title, filter.description);
       this.logFilterComposition({ geographic: filter.pan.geographic });
-      
+
       try {
         const startTime = Date.now();
         const result = await this.client.callTool({
@@ -344,10 +344,10 @@ class ZPTAdvancedFilteringDemo {
         if (result.content && result.content[0]) {
           const navigation = JSON.parse(result.content[0].text);
           this.logSuccess(`Geographic filtering completed: ${filter.title}`);
-          
+
           if (navigation.success && navigation.content) {
             const resultCount = navigation.content.results?.length || 0;
-            
+
             this.logPerformanceAnalysis('Geographic Navigation', duration, {
               resultCount,
               filterEfficiency: Math.round((resultCount / 50) * 100), // Mock efficiency
@@ -360,7 +360,7 @@ class ZPTAdvancedFilteringDemo {
             if (filter.pan.geographic.regions) {
               console.log(chalk.white(`   📍 Regions: ${filter.pan.geographic.regions.join(', ')}`));
             }
-            
+
             if (navigation.metadata?.geographicCoverage) {
               console.log(chalk.cyan(`   🌍 Geographic coverage:`));
               Object.entries(navigation.metadata.geographicCoverage).forEach(([region, percentage]) => {
@@ -382,7 +382,7 @@ class ZPTAdvancedFilteringDemo {
 
   async demonstrateEntityFiltering() {
     this.logBanner('Entity-Based Filtering', 'Focused exploration of specific entities and relationships');
-    
+
     const entityFilters = [
       {
         title: 'Tech Leaders Network',
@@ -433,7 +433,7 @@ class ZPTAdvancedFilteringDemo {
     for (const filter of entityFilters) {
       this.logFilterStep(entityFilters.indexOf(filter) + 1, filter.title, filter.description);
       this.logFilterComposition({ entity: filter.pan.entity });
-      
+
       try {
         const startTime = Date.now();
         const result = await this.client.callTool({
@@ -451,11 +451,11 @@ class ZPTAdvancedFilteringDemo {
         if (result.content && result.content[0]) {
           const navigation = JSON.parse(result.content[0].text);
           this.logSuccess(`Entity filtering completed: ${filter.title}`);
-          
+
           if (navigation.success && navigation.content) {
             const resultCount = navigation.content.results?.length || 0;
             const entityCount = filter.pan.entity.include?.length || 0;
-            
+
             this.logPerformanceAnalysis('Entity Navigation', duration, {
               resultCount,
               filterEfficiency: Math.round((resultCount / (entityCount * 10)) * 100), // Mock efficiency
@@ -468,7 +468,7 @@ class ZPTAdvancedFilteringDemo {
             if (filter.pan.entity.entityTypes) {
               console.log(chalk.white(`   🏷️  Entity types: ${filter.pan.entity.entityTypes.join(', ')}`));
             }
-            
+
             if (navigation.metadata?.entityAnalysis) {
               console.log(chalk.cyan(`   🔗 Entity relationships:`));
               console.log(chalk.gray(`     Direct connections: ${navigation.metadata.entityAnalysis.directConnections || 'N/A'}`));
@@ -489,7 +489,7 @@ class ZPTAdvancedFilteringDemo {
 
   async demonstrateMultiDimensionalFiltering() {
     this.logBanner('Multi-Dimensional Filtering', 'Combining multiple filter types for precise navigation');
-    
+
     const complexFilters = [
       {
         title: 'California AI in 2023',
@@ -570,17 +570,17 @@ class ZPTAdvancedFilteringDemo {
 
     for (const filter of complexFilters) {
       this.logFilterStep(complexFilters.indexOf(filter) + 1, filter.title, filter.description);
-      
+
       console.log(chalk.cyan('\\n🔧 Multi-dimensional filter composition:'));
       Object.entries(filter.pan).forEach(([dimension, config]) => {
         console.log(chalk.yellow(`   📊 ${dimension.toUpperCase()}:`));
         Object.entries(config).forEach(([key, value]) => {
-          const displayValue = Array.isArray(value) ? value.join(', ') : 
-                             typeof value === 'object' ? JSON.stringify(value) : value;
+          const displayValue = Array.isArray(value) ? value.join(', ') :
+            typeof value === 'object' ? JSON.stringify(value) : value;
           console.log(chalk.gray(`     ${key}: ${displayValue}`));
         });
       });
-      
+
       try {
         const startTime = Date.now();
         const result = await this.client.callTool({
@@ -598,11 +598,11 @@ class ZPTAdvancedFilteringDemo {
         if (result.content && result.content[0]) {
           const navigation = JSON.parse(result.content[0].text);
           this.logSuccess(`Multi-dimensional filtering completed: ${filter.title}`);
-          
+
           if (navigation.success && navigation.content) {
             const resultCount = navigation.content.results?.length || 0;
             const dimensionCount = Object.keys(filter.pan).length;
-            
+
             this.logPerformanceAnalysis('Multi-dimensional Navigation', duration, {
               resultCount,
               filterEfficiency: Math.round((resultCount / (dimensionCount * 20)) * 100), // Mock efficiency
@@ -611,7 +611,7 @@ class ZPTAdvancedFilteringDemo {
 
             console.log(chalk.white(`   🎯 Filter dimensions: ${dimensionCount}`));
             console.log(chalk.white(`   📊 Result precision: ${((resultCount / 1000) * 100).toFixed(1)}% of total corpus`));
-            
+
             if (navigation.metadata?.filterAnalysis) {
               console.log(chalk.cyan(`   🔍 Filter analysis:`));
               console.log(chalk.gray(`     Most selective: ${navigation.metadata.filterAnalysis.mostSelective || 'N/A'}`));
@@ -621,9 +621,9 @@ class ZPTAdvancedFilteringDemo {
           }
         }
 
-        this.performanceMetrics.combinedFilters.push({ 
-          type: 'multi-dimensional', 
-          duration, 
+        this.performanceMetrics.combinedFilters.push({
+          type: 'multi-dimensional',
+          duration,
           filter: filter.title,
           dimensions: Object.keys(filter.pan).length
         });
@@ -638,7 +638,7 @@ class ZPTAdvancedFilteringDemo {
 
   async demonstrateFilterOptimization() {
     this.logBanner('Filter Optimization', 'Performance tuning and caching strategies');
-    
+
     console.log(chalk.cyan('\\n⚡ Optimization Strategies:'));
     console.log(chalk.white('   1. Filter ordering by selectivity (most → least selective)'));
     console.log(chalk.white('   2. Caching frequently used filter combinations'));
@@ -684,12 +684,12 @@ class ZPTAdvancedFilteringDemo {
 
     for (const test of optimizationTests) {
       this.logFilterStep(optimizationTests.indexOf(test) + 1, test.title, test.description);
-      
+
       if (test.filters.version1 && test.filters.version2) {
         // Test different filter orders
         for (const [version, filters] of Object.entries(test.filters)) {
           console.log(chalk.yellow(`\\n   Testing ${version}:`));
-          
+
           try {
             const startTime = Date.now();
             const result = await this.client.callTool({
@@ -716,10 +716,10 @@ class ZPTAdvancedFilteringDemo {
               }
             }
 
-            this.performanceMetrics.optimizations.push({ 
-              test: test.title, 
-              version, 
-              duration 
+            this.performanceMetrics.optimizations.push({
+              test: test.title,
+              version,
+              duration
             });
 
           } catch (error) {
@@ -734,7 +734,7 @@ class ZPTAdvancedFilteringDemo {
 
   generatePerformanceSummary() {
     this.logBanner('Advanced Filtering Performance Summary', 'Comprehensive analysis of filtering strategies');
-    
+
     const totalDuration = Date.now() - this.startTime;
     const allFilters = [
       ...this.performanceMetrics.simpleFilters,
@@ -810,30 +810,30 @@ class ZPTAdvancedFilteringDemo {
 
   async runFullDemo() {
     try {
-      console.log(chalk.rainbow('🔍 Welcome to the ZPT Advanced Filtering Demo! 🔍'));
+      console.log(chalk.green('🔍 Welcome to the ZPT Advanced Filtering Demo! 🔍'));
       console.log(chalk.white('This demo explores complex multi-dimensional filtering patterns.\\n'));
 
       // Educational overview
       this.explainAdvancedFiltering();
-      
+
       // Initialize connection
       await this.initializeConnection();
-      
+
       // Temporal filtering
       await this.demonstrateTemporalFiltering();
-      
+
       // Geographic filtering
       await this.demonstrateGeographicFiltering();
-      
+
       // Entity-based filtering
       await this.demonstrateEntityFiltering();
-      
+
       // Multi-dimensional filtering
       await this.demonstrateMultiDimensionalFiltering();
-      
+
       // Filter optimization
       await this.demonstrateFilterOptimization();
-      
+
       // Performance summary
       this.generatePerformanceSummary();
 

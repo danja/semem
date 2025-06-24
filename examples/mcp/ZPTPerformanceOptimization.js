@@ -43,7 +43,7 @@ class ZPTPerformanceOptimizationDemo {
   logBanner(title, subtitle = null) {
     const elapsed = ((Date.now() - this.startTime) / 1000).toFixed(1);
     const memUsage = (process.memoryUsage().heapUsed / 1024 / 1024).toFixed(1);
-    
+
     console.log(chalk.red.bold(`\n${'⚡'.repeat(75)}`));
     console.log(chalk.red.bold(`⚡⚡ ${title.padEnd(69)} ⚡⚡`));
     if (subtitle) {
@@ -61,7 +61,7 @@ class ZPTPerformanceOptimizationDemo {
   logBenchmark(operation, baselineMs, optimizedMs, improvement) {
     const improvementPercent = ((baselineMs - optimizedMs) / baselineMs * 100).toFixed(1);
     const emoji = improvement > 50 ? '🚀' : improvement > 20 ? '⚡' : improvement > 0 ? '📈' : '📉';
-    
+
     console.log(chalk.magenta(`   ${emoji} ${operation}:`));
     console.log(chalk.white(`     Baseline: ${baselineMs}ms`));
     console.log(chalk.white(`     Optimized: ${optimizedMs}ms`));
@@ -79,7 +79,7 @@ class ZPTPerformanceOptimizationDemo {
   logOptimizationStrategy(strategy, result) {
     const emoji = result.success ? '✅' : '❌';
     const impact = result.impact ? ` (${result.impact}% improvement)` : '';
-    
+
     console.log(chalk.green(`   ${emoji} ${strategy}${impact}`));
     if (result.details) {
       console.log(chalk.gray(`     ${result.details}`));
@@ -90,7 +90,7 @@ class ZPTPerformanceOptimizationDemo {
     const hitRatePercent = (hitRate * 100).toFixed(1);
     const missRatePercent = (missRate * 100).toFixed(1);
     const emoji = hitRate > 0.8 ? '🎯' : hitRate > 0.5 ? '⚡' : '❄️';
-    
+
     console.log(chalk.blue(`   ${emoji} Cache Analysis - ${operation}:`));
     console.log(chalk.white(`     Hit rate: ${hitRatePercent}%`));
     console.log(chalk.white(`     Miss rate: ${missRatePercent}%`));
@@ -100,7 +100,7 @@ class ZPTPerformanceOptimizationDemo {
   measureResourceUsage() {
     const usage = process.memoryUsage();
     const cpuUsage = process.cpuUsage();
-    
+
     return {
       memory: `${(usage.heapUsed / 1024 / 1024).toFixed(1)}MB`,
       heapTotal: `${(usage.heapTotal / 1024 / 1024).toFixed(1)}MB`,
@@ -114,7 +114,7 @@ class ZPTPerformanceOptimizationDemo {
 
   explainPerformanceOptimization() {
     this.logBanner('ZPT Performance Optimization Concepts', 'Strategies for high-performance knowledge graph navigation');
-    
+
     console.log(chalk.cyan('\n⚡ Performance Optimization Strategies:'));
     console.log(chalk.white('   ZPT performance depends on parameter selection, caching, and resource usage\\n'));
 
@@ -147,7 +147,7 @@ class ZPTPerformanceOptimizationDemo {
 
   async initializeConnection() {
     this.logBanner('High-Performance MCP Connection', 'Optimized connection for performance testing');
-    
+
     try {
       log.info('Creating optimized stdio transport...');
       this.transport = new StdioClientTransport({
@@ -181,7 +181,7 @@ class ZPTPerformanceOptimizationDemo {
       // Verify ZPT tools availability and warm up connection
       const tools = await this.client.listTools();
       const zptTools = tools.tools.filter(tool => tool.name.startsWith('zpt_'));
-      
+
       console.log(chalk.green(`   ✅ Found ${zptTools.length} ZPT tools available for performance testing`));
 
     } catch (error) {
@@ -194,7 +194,7 @@ class ZPTPerformanceOptimizationDemo {
 
   async measureBaselinePerformance() {
     this.logBanner('Baseline Performance Measurement', 'Establishing performance baselines for optimization comparison');
-    
+
     const baselineTests = [
       {
         name: 'Simple Entity Query',
@@ -244,24 +244,24 @@ class ZPTPerformanceOptimizationDemo {
 
     for (const test of baselineTests) {
       this.logPerformanceStep(baselineTests.indexOf(test) + 1, test.name, 'Measuring baseline performance');
-      
+
       const iterations = 3; // Multiple runs for accuracy
       const durations = [];
-      
+
       for (let i = 0; i < iterations; i++) {
         try {
           const resourcesBefore = this.measureResourceUsage();
           const startTime = Date.now();
-          
+
           const result = await this.client.callTool({
             name: 'zpt_navigate',
             arguments: test.params
           });
-          
+
           const duration = Date.now() - startTime;
           const resourcesAfter = this.measureResourceUsage();
           durations.push(duration);
-          
+
           if (i === 0) { // Log resources for first run
             this.logResourceUsage(test.name, {
               'duration': `${duration}ms`,
@@ -286,7 +286,7 @@ class ZPTPerformanceOptimizationDemo {
         const avgDuration = durations.reduce((a, b) => a + b, 0) / durations.length;
         const minDuration = Math.min(...durations);
         const maxDuration = Math.max(...durations);
-        
+
         this.benchmarkResults.push({
           name: test.name,
           type: 'baseline',
@@ -306,7 +306,7 @@ class ZPTPerformanceOptimizationDemo {
 
   async demonstrateParameterOptimization() {
     this.logBanner('Parameter Optimization', 'Optimizing navigation parameters for better performance');
-    
+
     const optimizationStrategies = [
       {
         name: 'Token Limit Optimization',
@@ -378,7 +378,7 @@ class ZPTPerformanceOptimizationDemo {
 
     for (const strategy of optimizationStrategies) {
       this.logPerformanceStep(optimizationStrategies.indexOf(strategy) + 1, strategy.name, 'Comparing baseline vs optimized parameters');
-      
+
       // Test baseline
       let baselineDuration = 0;
       try {
@@ -409,7 +409,7 @@ class ZPTPerformanceOptimizationDemo {
 
       const improvement = ((baselineDuration - optimizedDuration) / baselineDuration * 100);
       this.logBenchmark(strategy.name, baselineDuration, optimizedDuration, improvement);
-      
+
       this.optimizationResults.push({
         strategy: strategy.name,
         baselineDuration,
@@ -423,7 +423,7 @@ class ZPTPerformanceOptimizationDemo {
 
   async demonstrateCachingStrategies() {
     this.logBanner('Caching Strategy Analysis', 'Analyzing cache performance and optimization patterns');
-    
+
     const cacheTestQueries = [
       'artificial intelligence',
       'machine learning',
@@ -443,7 +443,7 @@ class ZPTPerformanceOptimizationDemo {
 
     for (const query of cacheTestQueries) {
       const isRepeat = queryTimes[query] !== undefined;
-      
+
       try {
         const startTime = Date.now();
         const result = await this.client.callTool({
@@ -460,7 +460,7 @@ class ZPTPerformanceOptimizationDemo {
         if (isRepeat) {
           const previousTime = queryTimes[query];
           const speedup = previousTime / duration;
-          
+
           if (speedup > 1.5) { // Significant speedup indicates cache hit
             cacheHits++;
             console.log(chalk.green(`   🎯 Cache HIT: "${query}" (${duration}ms vs ${previousTime}ms, ${speedup.toFixed(1)}x faster)`));
@@ -492,7 +492,7 @@ class ZPTPerformanceOptimizationDemo {
 
   async demonstrateBatchOptimization() {
     this.logBanner('Batch Processing Optimization', 'Comparing individual vs batch query performance');
-    
+
     const queries = [
       'artificial intelligence',
       'machine learning',
@@ -503,10 +503,10 @@ class ZPTPerformanceOptimizationDemo {
 
     // Individual queries
     this.logPerformanceStep(1, 'Individual Query Processing', 'Processing queries one by one');
-    
+
     const individualTimes = [];
     let totalIndividualTime = 0;
-    
+
     for (const query of queries) {
       try {
         const startTime = Date.now();
@@ -522,9 +522,9 @@ class ZPTPerformanceOptimizationDemo {
         const duration = Date.now() - startTime;
         individualTimes.push(duration);
         totalIndividualTime += duration;
-        
+
         console.log(chalk.white(`   📊 "${query}": ${duration}ms`));
-        
+
       } catch (error) {
         console.log(chalk.red(`   ❌ Individual query failed: ${error.message}`));
       }
@@ -532,10 +532,10 @@ class ZPTPerformanceOptimizationDemo {
 
     // Batch processing simulation (using preview for efficiency)
     this.logPerformanceStep(2, 'Batch Preview Processing', 'Using preview mode for efficient batch processing');
-    
+
     const batchTimes = [];
     let totalBatchTime = 0;
-    
+
     for (const query of queries) {
       try {
         const startTime = Date.now();
@@ -549,9 +549,9 @@ class ZPTPerformanceOptimizationDemo {
         const duration = Date.now() - startTime;
         batchTimes.push(duration);
         totalBatchTime += duration;
-        
+
         console.log(chalk.white(`   📊 "${query}" (preview): ${duration}ms`));
-        
+
       } catch (error) {
         console.log(chalk.red(`   ❌ Batch preview failed: ${error.message}`));
       }
@@ -562,9 +562,9 @@ class ZPTPerformanceOptimizationDemo {
       const avgIndividual = individualTimes.reduce((a, b) => a + b, 0) / individualTimes.length;
       const avgBatch = batchTimes.reduce((a, b) => a + b, 0) / batchTimes.length;
       const batchImprovement = ((avgIndividual - avgBatch) / avgIndividual * 100);
-      
+
       this.logBenchmark('Batch vs Individual', avgIndividual, avgBatch, batchImprovement);
-      
+
       console.log(chalk.cyan('\\n📈 Batch Processing Analysis:'));
       console.log(chalk.white(`   Total individual time: ${totalIndividualTime}ms`));
       console.log(chalk.white(`   Total batch time: ${totalBatchTime}ms`));
@@ -576,7 +576,7 @@ class ZPTPerformanceOptimizationDemo {
 
   async demonstrateResourceOptimization() {
     this.logBanner('Resource Optimization Analysis', 'Monitoring and optimizing resource usage patterns');
-    
+
     const resourceTests = [
       {
         name: 'Memory Efficient Query',
@@ -623,22 +623,22 @@ class ZPTPerformanceOptimizationDemo {
 
     for (const test of resourceTests) {
       this.logPerformanceStep(resourceTests.indexOf(test) + 1, test.name, 'Measuring resource usage patterns');
-      
+
       const resourcesBefore = this.measureResourceUsage();
       const startTime = Date.now();
-      
+
       try {
         const result = await this.client.callTool({
           name: 'zpt_navigate',
           arguments: test.params
         });
-        
+
         const duration = Date.now() - startTime;
         const resourcesAfter = this.measureResourceUsage();
-        
+
         const memoryDelta = parseFloat(resourcesAfter.memory) - parseFloat(resourcesBefore.memory);
         const cpuDelta = parseFloat(resourcesAfter.cpu) - parseFloat(resourcesBefore.cpu);
-        
+
         this.logResourceUsage(test.name, {
           'duration': `${duration}ms`,
           'memory_usage': resourcesAfter.memory,
@@ -674,9 +674,9 @@ class ZPTPerformanceOptimizationDemo {
 
   generatePerformanceOptimizationSummary() {
     this.logBanner('Performance Optimization Summary', 'Comprehensive analysis and recommendations');
-    
+
     const totalDuration = Date.now() - this.startTime;
-    
+
     console.log(chalk.white('\\n📊 Overall Performance Analysis:'));
     console.log(chalk.green(`   ✅ Total demo duration: ${(totalDuration / 1000).toFixed(1)}s`));
     console.log(chalk.green(`   ✅ Benchmark tests completed: ${this.benchmarkResults.length}`));
@@ -695,12 +695,12 @@ class ZPTPerformanceOptimizationDemo {
     if (this.optimizationResults.length > 0) {
       console.log(chalk.white('\\n🚀 Optimization Results:'));
       const totalImprovements = this.optimizationResults.filter(r => r.improvement > 0);
-      const avgImprovement = totalImprovements.length > 0 ? 
+      const avgImprovement = totalImprovements.length > 0 ?
         totalImprovements.reduce((sum, r) => sum + r.improvement, 0) / totalImprovements.length : 0;
-      
+
       console.log(chalk.green(`   ✅ Successful optimizations: ${totalImprovements.length}/${this.optimizationResults.length}`));
       console.log(chalk.green(`   ✅ Average improvement: ${avgImprovement.toFixed(1)}%`));
-      
+
       this.optimizationResults.forEach(result => {
         const emoji = result.improvement > 0 ? '✅' : '❌';
         console.log(chalk.white(`   ${emoji} ${result.strategy}: ${result.improvement.toFixed(1)}% improvement`));
@@ -720,11 +720,11 @@ class ZPTPerformanceOptimizationDemo {
       console.log(chalk.white('\\n📊 Resource Usage Analysis:'));
       const avgMemoryDelta = this.resourceUsage.reduce((sum, r) => sum + r.memoryDelta, 0) / this.resourceUsage.length;
       const avgDuration = this.resourceUsage.reduce((sum, r) => sum + r.duration, 0) / this.resourceUsage.length;
-      
+
       console.log(chalk.cyan(`   💾 Average memory delta: ${avgMemoryDelta.toFixed(1)}MB`));
       console.log(chalk.cyan(`   ⏱️  Average query duration: ${avgDuration.toFixed(0)}ms`));
-      
-      const mostEfficient = this.resourceUsage.reduce((best, current) => 
+
+      const mostEfficient = this.resourceUsage.reduce((best, current) =>
         (current.duration < best.duration) ? current : best
       );
       console.log(chalk.green(`   🏆 Most efficient: ${mostEfficient.test} (${mostEfficient.duration}ms)`));
@@ -732,25 +732,25 @@ class ZPTPerformanceOptimizationDemo {
 
     // Performance recommendations
     console.log(chalk.white('\\n💡 Performance Optimization Recommendations:'));
-    
+
     console.log(chalk.yellow('   🎯 Parameter Optimization:'));
     console.log(chalk.white('     • Use entity or unit zoom for specific queries'));
     console.log(chalk.white('     • Apply most selective filters first'));
     console.log(chalk.white('     • Choose keywords tilt for fastest performance'));
     console.log(chalk.white('     • Optimize token limits based on content requirements'));
-    
+
     console.log(chalk.yellow('\\n   💾 Caching Strategies:'));
     console.log(chalk.white('     • Implement query result caching for repeated patterns'));
     console.log(chalk.white('     • Use progressive cache warming for common queries'));
     console.log(chalk.white('     • Cache validation patterns for parameter checking'));
     console.log(chalk.white('     • Implement smart cache invalidation strategies'));
-    
+
     console.log(chalk.yellow('\\n   📊 Resource Management:'));
     console.log(chalk.white('     • Monitor memory usage for large corpus operations'));
     console.log(chalk.white('     • Use preview mode for initial exploration'));
     console.log(chalk.white('     • Implement connection pooling for high-throughput scenarios'));
     console.log(chalk.white('     • Consider batch processing for multiple queries'));
-    
+
     console.log(chalk.yellow('\\n   ⚡ Advanced Optimizations:'));
     console.log(chalk.white('     • Implement query plan optimization'));
     console.log(chalk.white('     • Use materialized views for complex filters'));
@@ -778,30 +778,30 @@ class ZPTPerformanceOptimizationDemo {
 
   async runFullDemo() {
     try {
-      console.log(chalk.rainbow('⚡ Welcome to the ZPT Performance Optimization Demo! ⚡'));
+      console.log(chalk.green('⚡ Welcome to the ZPT Performance Optimization Demo! ⚡'));
       console.log(chalk.white('This demo analyzes and optimizes ZPT navigation performance.\\n'));
 
       // Educational overview
       this.explainPerformanceOptimization();
-      
+
       // Initialize optimized connection
       await this.initializeConnection();
-      
+
       // Baseline performance measurement
       await this.measureBaselinePerformance();
-      
+
       // Parameter optimization
       await this.demonstrateParameterOptimization();
-      
+
       // Caching strategies
       await this.demonstrateCachingStrategies();
-      
+
       // Batch processing
       await this.demonstrateBatchOptimization();
-      
+
       // Resource optimization
       await this.demonstrateResourceOptimization();
-      
+
       // Comprehensive summary
       this.generatePerformanceOptimizationSummary();
 

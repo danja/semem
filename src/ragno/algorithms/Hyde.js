@@ -193,23 +193,42 @@ export default class Hyde {
         const llmOptions = {
             model: options.model || 'qwen2:1.5b', // Ensure we have a default model
             maxTokens: options.maxTokens,
-            temperature: options.temperature + (index * 0.1) // Vary temperature for diversity
+            temperature: (options.temperature || 0.7) + (index * 0.1) // Vary temperature for diversity
         }
         
         logger.debug(`Generating hypothesis ${index + 1} with prompt: ${prompt.substring(0, 100)}...`)
         logger.debug(`Using model: ${llmOptions.model}`)
         
-        const response = await llmHandler.generateResponse(prompt, '', llmOptions)
+        let response
+        try {
+            response = await llmHandler.generateResponse(prompt, '', llmOptions)
+            logger.debug(`Raw LLM response type: ${typeof response}, length: ${response?.length || 'N/A'}`)
+        } catch (error) {
+            logger.error(`LLM generateResponse failed: ${error.message}`)
+            throw error
+        }
         
         if (!response || typeof response !== 'string') {
+            logger.warn(`Invalid response from LLM: ${typeof response}, response: ${JSON.stringify(response)}`)
             throw new Error(`Invalid response from LLM: ${typeof response}`)
+        }
+        
+        let confidence
+        try {
+            logger.debug(`About to calculate confidence for response type: ${typeof response}, input type: ${typeof input}`)
+            confidence = this.estimateConfidence(response, input)
+            logger.debug(`Confidence calculation successful: ${confidence}`)
+        } catch (confError) {
+            logger.error(`Confidence estimation failed: ${confError.message}`)
+            logger.error(`Response: ${response}, Input: ${input}`)
+            confidence = 0.1 // Fallback confidence
         }
         
         const hypothesis = {
             content: response,
             prompt,
             index,
-            confidence: this.estimateConfidence(response, input),
+            confidence: confidence,
             timestamp: new Date()
         }
         
@@ -247,24 +266,51 @@ Please provide a well-structured, informative response that could serve as a hyp
      * @returns {number} Confidence score between 0 and 1
      */
     estimateConfidence(hypothesis, originalInput) {
-        // Simple heuristic-based confidence estimation
-        let confidence = 0.5 // Base confidence
+        // Handle undefined or invalid hypothesis
+        if (!hypothesis || typeof hypothesis !== 'string') {
+            logger.warn(`Invalid hypothesis for confidence estimation: ${typeof hypothesis}`)
+            return 0.1 // Very low confidence for invalid content
+        }
         
-        // Length-based factors
-        if (hypothesis.length > 100) confidence += 0.1
-        if (hypothesis.length > 300) confidence += 0.1
+        // More nuanced confidence estimation with lower base and stricter criteria
+        let confidence = 0.3 // Lower base confidence
         
-        // Structure-based factors
-        if (hypothesis.includes('.') && hypothesis.includes(',')) confidence += 0.1
-        if (hypothesis.split(' ').length > 50) confidence += 0.1
+        // Length-based factors (more discriminating)
+        if (hypothesis.length > 200) confidence += 0.05
+        if (hypothesis.length > 500) confidence += 0.05
+        if (hypothesis.length > 1000) confidence += 0.05
         
-        // Content relevance (basic keyword overlap)
-        const inputWords = originalInput.toLowerCase().split(/\s+/)
+        // Structure-based factors (more demanding)
+        const sentences = hypothesis.split(/[.!?]+/).filter(s => s.trim().length > 10)
+        if (sentences.length >= 3) confidence += 0.1 // Multiple sentences
+        if (hypothesis.includes(':') && hypothesis.includes(';')) confidence += 0.05 // Complex punctuation
+        
+        // Word count and complexity
+        const words = hypothesis.split(/\s+/)
+        if (words.length > 100) confidence += 0.1
+        if (words.length > 200) confidence += 0.05
+        
+        // Content relevance (keyword overlap with better weighting)
+        const inputWords = originalInput.toLowerCase().split(/\s+/).filter(w => w.length > 3)
         const hypothesisWords = hypothesis.toLowerCase().split(/\s+/)
         const overlap = inputWords.filter(word => hypothesisWords.includes(word)).length
-        confidence += Math.min(overlap / inputWords.length, 0.2)
+        const relevanceScore = inputWords.length > 0 ? overlap / inputWords.length : 0
+        confidence += relevanceScore * 0.25 // Up to 0.25 for perfect relevance
         
-        return Math.min(confidence, 1.0)
+        // Quality indicators
+        if (hypothesis.includes('however') || hypothesis.includes('therefore') || hypothesis.includes('furthermore')) {
+            confidence += 0.05 // Sophisticated connectors
+        }
+        
+        // Penalize very short or generic responses
+        if (hypothesis.length < 100) confidence -= 0.2
+        if (words.length < 20) confidence -= 0.2
+        
+        // Add some randomness to prevent all hypotheses having identical confidence
+        const variation = (Math.random() - 0.5) * 0.1 // ±0.05 random variation
+        confidence += variation
+        
+        return Math.max(0.1, Math.min(confidence, 0.95)) // Cap between 0.1 and 0.95
     }
     
     /**
@@ -367,7 +413,7 @@ Entities:`
             object: hypothesisUnit.uri,
             metadata: {
                 type: 'hypothesis-generation',
-                confidence: hypothesisUnit.metadata.confidence,
+                confidence: hypothesisUnit.metadata?.confidence || 0.5,
                 hypothetical: true
             },
             namespaces: this.namespaces
@@ -385,7 +431,7 @@ Entities:`
                 object: entity.uri,
                 metadata: {
                     type: 'entity-mention',
-                    confidence: entity.metadata.confidence,
+                    confidence: entity.metadata?.confidence || 0.5,
                     hypothetical: true
                 },
                 namespaces: this.namespaces
@@ -406,12 +452,12 @@ Entities:`
     addHypothesisToRDF(hypothesisUnit, entities, relationships, targetDataset) {
         let triplesAdded = 0
         
+        logger.debug(`addHypothesisToRDF called with hypothesisUnit: ${hypothesisUnit ? 'defined' : 'undefined'}`)
+        logger.debug(`targetDataset: ${targetDataset ? 'defined' : 'undefined'}`)
+        
         // Export hypothesis unit to dataset
-        const hypothesisDataset = hypothesisUnit.exportToDataset()
-        for (const quad of hypothesisDataset) {
-            targetDataset.add(quad)
-            triplesAdded++
-        }
+        hypothesisUnit.exportToDataset(targetDataset)
+        triplesAdded += hypothesisUnit.getTriples().length || 0
         
         // Add ragno:maybe property to mark as hypothetical
         const hypothesisNode = rdf.namedNode(hypothesisUnit.uri)
@@ -424,21 +470,19 @@ Entities:`
         triplesAdded++
         
         // Add confidence score
+        const confidence = hypothesisUnit.metadata?.confidence || 0.5
         const confidenceQuad = rdf.quad(
             hypothesisNode,
             this.namespaces.ragno('confidence'),
-            rdf.literal(hypothesisUnit.metadata.confidence.toString(), this.namespaces.xsd('decimal'))
+            rdf.literal(confidence.toString(), this.namespaces.xsd('decimal'))
         )
         targetDataset.add(confidenceQuad)
         triplesAdded++
         
         // Export entities
         entities.forEach(entity => {
-            const entityDataset = entity.exportToDataset()
-            for (const quad of entityDataset) {
-                targetDataset.add(quad)
-                triplesAdded++
-            }
+            entity.exportToDataset(targetDataset)
+            triplesAdded += entity.getTriples().length || 0
             
             // Mark entity as hypothetical
             const entityNode = rdf.namedNode(entity.uri)
@@ -453,11 +497,8 @@ Entities:`
         
         // Export relationships
         relationships.forEach(relationship => {
-            const relationshipDataset = relationship.exportToDataset()
-            for (const quad of relationshipDataset) {
-                targetDataset.add(quad)
-                triplesAdded++
-            }
+            relationship.exportToDataset(targetDataset)
+            triplesAdded += relationship.getTriples().length || 0
             
             // Mark relationship as hypothetical
             const relationshipNode = rdf.namedNode(relationship.uri)

@@ -46,14 +46,14 @@ class ZPTIntegrationWorkflowsDemo {
   logBanner(title, subtitle = null) {
     const elapsed = ((Date.now() - this.startTime) / 1000).toFixed(1);
     const memUsage = (process.memoryUsage().heapUsed / 1024 / 1024).toFixed(1);
-    
-    console.log(chalk.rainbow(`\n${'🌟'.repeat(75)}`));
+
+    console.log(chalk.green(`\n${'🌟'.repeat(75)}`));
     console.log(chalk.magenta.bold(`🌟🌟 ${title.padEnd(69)} 🌟🌟`));
     if (subtitle) {
       console.log(chalk.magenta(`🌟🌟 ${subtitle.padEnd(69)} 🌟🌟`));
     }
     console.log(chalk.magenta.bold(`🌟🌟 ${'Time: ' + elapsed + 's | Memory: ' + memUsage + 'MB | Op: ' + ++this.operationCount}`.padEnd(69) + ' 🌟🌟'));
-    console.log(chalk.rainbow(`${'🌟'.repeat(75)}`));
+    console.log(chalk.green(`${'🌟'.repeat(75)}`));
   }
 
   logWorkflowStep(step, title, description, systems = []) {
@@ -63,7 +63,7 @@ class ZPTIntegrationWorkflowsDemo {
       zpt: '🧭'
     };
     const systemIndicators = systems.map(s => systemEmojis[s] || '⚙️').join(' ');
-    
+
     console.log(chalk.cyan.bold(`\n🔄 WORKFLOW ${step}: ${title} ${systemIndicators}`));
     console.log(chalk.cyan(`   📋 ${description}`));
   }
@@ -74,7 +74,7 @@ class ZPTIntegrationWorkflowsDemo {
       ragno: '🕸️',
       zpt: '🧭'
     };
-    
+
     console.log(chalk.yellow(`   🔄 Integration: ${systemEmojis[fromSystem]} ${fromSystem} → ${systemEmojis[toSystem]} ${toSystem}`));
     console.log(chalk.white(`     📊 Transferred: ${count} ${dataType}`));
   }
@@ -105,7 +105,7 @@ class ZPTIntegrationWorkflowsDemo {
 
   explainIntegrationWorkflows() {
     this.logBanner('ZPT Integration Workflow Concepts', 'Combining ZPT with Semem and Ragno for powerful workflows');
-    
+
     console.log(chalk.cyan('\n🌟 Integration Architecture:'));
     console.log(chalk.white('   ZPT navigation combined with semantic memory and knowledge graphs'));
     console.log(chalk.white('   creates powerful multi-modal exploration and analysis workflows\\n'));
@@ -139,7 +139,7 @@ class ZPTIntegrationWorkflowsDemo {
 
   async initializeConnection() {
     this.logBanner('Integrated MCP Connection', 'Connecting for cross-system workflow demonstration');
-    
+
     try {
       log.info('Creating transport for integrated workflows...');
       this.transport = new StdioClientTransport({
@@ -169,7 +169,7 @@ class ZPTIntegrationWorkflowsDemo {
       const sememTools = tools.tools.filter(tool => tool.name.startsWith('semem_'));
       const ragnoTools = tools.tools.filter(tool => tool.name.startsWith('ragno_'));
       const zptTools = tools.tools.filter(tool => tool.name.startsWith('zpt_'));
-      
+
       console.log(chalk.green(`   🧠 Semem tools: ${sememTools.length}`));
       console.log(chalk.green(`   🕸️ Ragno tools: ${ragnoTools.length}`));
       console.log(chalk.green(`   🧭 ZPT tools: ${zptTools.length}`));
@@ -185,10 +185,10 @@ class ZPTIntegrationWorkflowsDemo {
 
   async demonstrateMemoryGuidedNavigation() {
     this.logBanner('Memory-Guided Navigation Workflow', 'Using stored memories to guide ZPT navigation');
-    
+
     // Step 1: Store initial research context
     this.logWorkflowStep(1, 'Context Storage', 'Storing research context in semantic memory', ['semem']);
-    
+
     const researchContext = {
       prompt: "I'm researching the intersection of artificial intelligence and climate change solutions",
       response: "AI applications in climate science include predictive modeling, renewable energy optimization, carbon capture technologies, and smart grid management. Key areas of focus are machine learning for weather prediction, AI-driven energy efficiency, and automated environmental monitoring systems.",
@@ -210,7 +210,7 @@ class ZPTIntegrationWorkflowsDemo {
       if (memoryResult.content && memoryResult.content[0]) {
         const stored = JSON.parse(memoryResult.content[0].text);
         if (stored.success) {
-          this.logArtifact('memories', 1, { 
+          this.logArtifact('memories', 1, {
             'storage_time': `${memoryTime}ms`,
             'concepts': stored.concepts?.length || 0
           });
@@ -222,7 +222,7 @@ class ZPTIntegrationWorkflowsDemo {
 
     // Step 2: Retrieve related memories for navigation guidance
     this.logWorkflowStep(2, 'Memory Retrieval', 'Finding related memories to guide navigation', ['semem']);
-    
+
     let relatedMemories = [];
     try {
       const startTime = Date.now();
@@ -252,9 +252,9 @@ class ZPTIntegrationWorkflowsDemo {
 
     // Step 3: Memory-guided ZPT navigation
     this.logWorkflowStep(3, 'Memory-Guided Navigation', 'Using memory insights for targeted ZPT exploration', ['semem', 'zpt']);
-    
-    const navigationQuery = relatedMemories.length > 0 ? 
-      "AI climate solutions renewable energy optimization" : 
+
+    const navigationQuery = relatedMemories.length > 0 ?
+      "AI climate solutions renewable energy optimization" :
       "artificial intelligence climate change";
 
     try {
@@ -306,10 +306,10 @@ class ZPTIntegrationWorkflowsDemo {
 
   async demonstrateGraphEnhancedNavigation() {
     this.logBanner('Graph-Enhanced Navigation Workflow', 'Using knowledge graphs to enrich ZPT navigation');
-    
+
     // Step 1: Build knowledge graph from corpus
     this.logWorkflowStep(1, 'Knowledge Graph Construction', 'Building RDF graph for navigation enhancement', ['ragno']);
-    
+
     const corpusChunks = [
       {
         content: `Artificial intelligence is revolutionizing climate science through advanced predictive modeling. 
@@ -372,7 +372,7 @@ class ZPTIntegrationWorkflowsDemo {
 
     // Step 2: Extract key entities for navigation
     this.logWorkflowStep(2, 'Entity Extraction', 'Identifying key entities for targeted navigation', ['ragno']);
-    
+
     let keyEntities = [];
     try {
       const startTime = Date.now();
@@ -404,10 +404,10 @@ class ZPTIntegrationWorkflowsDemo {
 
     // Step 3: Graph-guided ZPT navigation
     this.logWorkflowStep(3, 'Graph-Guided Navigation', 'Using knowledge graph structure for navigation', ['ragno', 'zpt']);
-    
+
     if (keyEntities.length > 0) {
       const entityNames = keyEntities.slice(0, 5).map(e => e.name || e.id).filter(name => name);
-      
+
       try {
         const startTime = Date.now();
         const navigationResult = await this.client.callTool({
@@ -454,10 +454,10 @@ class ZPTIntegrationWorkflowsDemo {
 
   async demonstrateTripleIntegrationWorkflow() {
     this.logBanner('Triple Integration Workflow', 'Combining Semem + Ragno + ZPT for comprehensive analysis');
-    
+
     // Step 1: Initialize research with memory context
     this.logWorkflowStep(1, 'Research Initialization', 'Setting up comprehensive research context', ['semem']);
-    
+
     const researchQueries = [
       "How is AI being used in renewable energy optimization?",
       "What are the latest developments in AI-driven climate modeling?",
@@ -499,7 +499,7 @@ class ZPTIntegrationWorkflowsDemo {
 
     // Step 2: Build comprehensive knowledge graph
     this.logWorkflowStep(2, 'Comprehensive Graph Building', 'Creating detailed knowledge graph from research', ['ragno']);
-    
+
     const comprehensiveCorpus = [
       {
         content: `Google's DeepMind has developed AI systems for optimizing data center cooling, reducing energy 
@@ -560,7 +560,7 @@ class ZPTIntegrationWorkflowsDemo {
 
     // Step 3: Memory-informed, graph-guided navigation
     this.logWorkflowStep(3, 'Integrated Navigation', 'Memory + graph guided ZPT exploration', ['semem', 'ragno', 'zpt']);
-    
+
     try {
       // First, get memory context
       const memoryContext = await this.client.callTool({
@@ -641,7 +641,7 @@ class ZPTIntegrationWorkflowsDemo {
 
     // Step 4: Store insights back to memory
     this.logWorkflowStep(4, 'Insight Storage', 'Storing workflow insights for future reference', ['semem']);
-    
+
     const workflowSummary = {
       prompt: "Triple integration workflow analysis results",
       response: `Completed comprehensive AI-climate research workflow integrating semantic memory, 
@@ -674,7 +674,7 @@ class ZPTIntegrationWorkflowsDemo {
 
   extractWorkflowInsights(results) {
     const insights = [];
-    
+
     if (results.length > 0) {
       insights.push({
         description: `Identified ${results.length} relevant entities in AI-climate intersection`,
@@ -682,8 +682,8 @@ class ZPTIntegrationWorkflowsDemo {
       });
     }
 
-    const companies = results.filter(r => 
-      r.content?.toLowerCase().includes('company') || 
+    const companies = results.filter(r =>
+      r.content?.toLowerCase().includes('company') ||
       r.content?.toLowerCase().includes('corporation')
     );
     if (companies.length > 0) {
@@ -693,8 +693,8 @@ class ZPTIntegrationWorkflowsDemo {
       });
     }
 
-    const technologies = results.filter(r => 
-      r.content?.toLowerCase().includes('algorithm') || 
+    const technologies = results.filter(r =>
+      r.content?.toLowerCase().includes('algorithm') ||
       r.content?.toLowerCase().includes('optimization')
     );
     if (technologies.length > 0) {
@@ -711,9 +711,9 @@ class ZPTIntegrationWorkflowsDemo {
 
   generateIntegrationSummary() {
     this.logBanner('Integration Workflow Summary', 'Comprehensive analysis of cross-system performance');
-    
+
     const totalDuration = Date.now() - this.startTime;
-    
+
     console.log(chalk.white('\n🌟 Integration Workflow Results:'));
     console.log(chalk.green(`   ✅ Total workflow duration: ${(totalDuration / 1000).toFixed(1)}s`));
     console.log(chalk.green(`   ✅ Cross-system operations: ${this.operationCount}`));
@@ -736,25 +736,25 @@ class ZPTIntegrationWorkflowsDemo {
 
     // Best practices for integration
     console.log(chalk.white('\n💡 Integration Best Practices:'));
-    
+
     console.log(chalk.yellow('   🧠 Memory Integration:'));
     console.log(chalk.white('     • Store context before navigation for guidance'));
     console.log(chalk.white('     • Use retrieved memories to refine navigation parameters'));
     console.log(chalk.white('     • Store navigation insights for future workflows'));
     console.log(chalk.white('     • Implement memory-based parameter optimization'));
-    
+
     console.log(chalk.yellow('\n   🕸️ Knowledge Graph Integration:'));
     console.log(chalk.white('     • Build graphs from navigation results for enrichment'));
     console.log(chalk.white('     • Use entity relationships to guide navigation focus'));
     console.log(chalk.white('     • Leverage graph structure for multi-perspective exploration'));
     console.log(chalk.white('     • Export graphs for external analysis and visualization'));
-    
+
     console.log(chalk.yellow('\n   🧭 Navigation Integration:'));
     console.log(chalk.white('     • Use memory context for query refinement'));
     console.log(chalk.white('     • Apply graph entities for targeted exploration'));
     console.log(chalk.white('     • Combine multiple filter dimensions for precision'));
     console.log(chalk.white('     • Store navigation patterns for workflow optimization'));
-    
+
     console.log(chalk.yellow('\n   🌟 Workflow Optimization:'));
     console.log(chalk.white('     • Cache cross-system data transfers for efficiency'));
     console.log(chalk.white('     • Implement progressive refinement across iterations'));
@@ -790,24 +790,24 @@ class ZPTIntegrationWorkflowsDemo {
 
   async runFullDemo() {
     try {
-      console.log(chalk.rainbow('🌟 Welcome to the ZPT Integration Workflows Demo! 🌟'));
+      console.log(chalk.green('🌟 Welcome to the ZPT Integration Workflows Demo! 🌟'));
       console.log(chalk.white('This demo showcases advanced integration patterns across all systems.\\n'));
 
       // Educational overview
       this.explainIntegrationWorkflows();
-      
+
       // Initialize integrated connection
       await this.initializeConnection();
-      
+
       // Memory-guided navigation workflow
       await this.demonstrateMemoryGuidedNavigation();
-      
+
       // Graph-enhanced navigation workflow
       await this.demonstrateGraphEnhancedNavigation();
-      
+
       // Triple integration workflow
       await this.demonstrateTripleIntegrationWorkflow();
-      
+
       // Comprehensive integration summary
       this.generateIntegrationSummary();
 

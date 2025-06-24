@@ -112,7 +112,7 @@ export default class Config {
             // Merge in order: defaults -> file config -> user config
             this.config = this.mergeConfigs(Config.defaults, fileConfig, 0)
 
-            console.log('After merging, config is:', JSON.stringify(this.config, null, 2))
+            //    console.log('After merging, config is:', JSON.stringify(this.config, null, 2))
 
             this.initialized = true
             this.applyEnvironmentOverrides()

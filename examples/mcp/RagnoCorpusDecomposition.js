@@ -99,7 +99,7 @@ class RagnoCorpusDecompositionDemo {
 
   explainRagnoConcepts() {
     this.logBanner('Ragno Knowledge Graph Concepts', 'Understanding Text-to-RDF Transformation');
-    
+
     console.log(chalk.cyan('\n💡 Ragno Pipeline Overview:'));
     console.log(chalk.white('   Ragno transforms unstructured text into structured RDF knowledge graphs'));
     console.log(chalk.white('   using semantic analysis and entity relationship extraction.\\n'));
@@ -123,7 +123,7 @@ class RagnoCorpusDecompositionDemo {
 
   generateSampleCorpus() {
     this.logBanner('Sample Corpus Generation', 'Creating diverse text for knowledge graph construction');
-    
+
     this.corpusData = [
       {
         source: 'ai-research',
@@ -171,7 +171,7 @@ class RagnoCorpusDecompositionDemo {
 
   async initializeConnection() {
     this.logBanner('MCP Connection Initialization', 'Connecting to Semem MCP Server for Ragno operations');
-    
+
     try {
       log.info('Creating stdio transport...');
       this.transport = new StdioClientTransport({
@@ -200,7 +200,7 @@ class RagnoCorpusDecompositionDemo {
       // Test connection and list available Ragno tools
       const tools = await this.client.listTools();
       const ragnoTools = tools.tools.filter(tool => tool.name.startsWith('ragno_'));
-      
+
       this.logSuccess(`Found ${ragnoTools.length} Ragno tools available`);
       ragnoTools.forEach(tool => {
         console.log(chalk.gray(`   🔧 ${tool.name}: ${tool.description.slice(0, 80)}...`));
@@ -216,9 +216,9 @@ class RagnoCorpusDecompositionDemo {
 
   async demonstrateCorpusDecomposition() {
     this.logBanner('Corpus Decomposition', 'Transforming text corpus into RDF knowledge graph');
-    
+
     this.logStep(1, 'Preparing text chunks for decomposition');
-    
+
     const textChunks = this.corpusData.map((doc, index) => ({
       content: doc.content,
       source: doc.source
@@ -227,7 +227,7 @@ class RagnoCorpusDecompositionDemo {
     console.log(chalk.white(`   📊 Prepared ${textChunks.length} text chunks for processing`));
 
     this.logStep(2, 'Executing corpus decomposition with entity extraction');
-    
+
     try {
       const startTime = Date.now();
       const result = await this.client.callTool({
@@ -251,7 +251,7 @@ class RagnoCorpusDecompositionDemo {
 
         if (decomposition.success) {
           const { units, entities, relationships, dataset } = decomposition;
-          
+
           console.log(chalk.white('\n🎯 Decomposition Results:'));
           console.log(chalk.green(`   📦 Semantic Units: ${units?.length || 0}`));
           console.log(chalk.green(`   🏷️  Entities: ${entities?.length || 0}`));
@@ -297,9 +297,9 @@ class RagnoCorpusDecompositionDemo {
 
   async demonstrateEntityRetrieval() {
     this.logBanner('Entity Retrieval', 'Exploring extracted entities with filtering and pagination');
-    
+
     this.logStep(1, 'Retrieving all entities from the knowledge graph');
-    
+
     try {
       const startTime = Date.now();
       const result = await this.client.callTool({
@@ -321,7 +321,7 @@ class RagnoCorpusDecompositionDemo {
 
         if (entityData.success && entityData.entities) {
           console.log(chalk.white(`\\n📊 Retrieved ${entityData.entities.length} entities`));
-          
+
           // Group entities by type
           const entityTypes = {};
           entityData.entities.forEach(entity => {
@@ -356,9 +356,9 @@ class RagnoCorpusDecompositionDemo {
 
   async demonstrateGraphStatistics() {
     this.logBanner('Knowledge Graph Statistics', 'Analyzing graph structure and characteristics');
-    
+
     this.logStep(1, 'Retrieving comprehensive graph statistics');
-    
+
     try {
       const startTime = Date.now();
       const result = await this.client.callTool({
@@ -376,7 +376,7 @@ class RagnoCorpusDecompositionDemo {
 
         if (stats.success && stats.statistics) {
           console.log(chalk.white('\\n📊 Knowledge Graph Statistics:'));
-          
+
           if (stats.statistics.basic) {
             console.log(chalk.green('\\n📈 Basic Metrics:'));
             Object.entries(stats.statistics.basic).forEach(([metric, value]) => {
@@ -392,7 +392,7 @@ class RagnoCorpusDecompositionDemo {
                 console.log(chalk.white(`     ${type}: ${count}`));
               });
             }
-            
+
             if (stats.statistics.detailed.relationshipTypes) {
               console.log(chalk.cyan('   Relationship Types:'));
               Object.entries(stats.statistics.detailed.relationshipTypes).forEach(([type, count]) => {
@@ -417,7 +417,7 @@ class RagnoCorpusDecompositionDemo {
 
   async demonstrateRDFExport() {
     this.logBanner('RDF Export', 'Exporting knowledge graph in multiple semantic web formats');
-    
+
     const formats = [
       { name: 'turtle', description: 'Turtle (TTL) - Human-readable RDF format' },
       { name: 'ntriples', description: 'N-Triples - Simple line-based RDF format' },
@@ -426,7 +426,7 @@ class RagnoCorpusDecompositionDemo {
 
     for (const format of formats) {
       this.logStep(formats.indexOf(format) + 1, `Exporting graph as ${format.description}`);
-      
+
       try {
         const startTime = Date.now();
         const result = await this.client.callTool({
@@ -447,7 +447,7 @@ class RagnoCorpusDecompositionDemo {
           if (exportData.success && exportData.rdf) {
             console.log(chalk.white(`   📄 Export size: ${exportData.rdf.length} characters`));
             console.log(chalk.gray(`   📝 Sample: ${exportData.rdf.slice(0, 100)}...`));
-            
+
             if (exportData.statistics) {
               console.log(chalk.cyan(`   📊 Triples exported: ${exportData.statistics.tripleCount || 'N/A'}`));
             }
@@ -464,7 +464,7 @@ class RagnoCorpusDecompositionDemo {
 
   async demonstrateSPARQLQueries() {
     this.logBanner('SPARQL Querying', 'Exploring knowledge graph with semantic web queries');
-    
+
     const queries = [
       {
         name: 'Entity Count',
@@ -502,7 +502,7 @@ class RagnoCorpusDecompositionDemo {
 
     for (const query of queries) {
       this.logStep(queries.indexOf(query) + 1, `${query.name}: ${query.description}`);
-      
+
       try {
         const startTime = Date.now();
         const result = await this.client.callTool({
@@ -524,7 +524,7 @@ class RagnoCorpusDecompositionDemo {
 
           if (queryResult.success && queryResult.results) {
             console.log(chalk.white(`   📊 Results: ${queryResult.results.length || 0} rows`));
-            
+
             if (queryResult.results.length > 0) {
               console.log(chalk.cyan('   📋 Sample results:'));
               queryResult.results.slice(0, 3).forEach((row, index) => {
@@ -546,7 +546,7 @@ class RagnoCorpusDecompositionDemo {
 
   generatePerformanceSummary() {
     this.logBanner('Performance Summary', 'Ragno Corpus Decomposition Demo Results');
-    
+
     const totalDuration = Date.now() - this.startTime;
     const totalDecompositions = this.decompositionResults.length;
 
@@ -568,10 +568,10 @@ class RagnoCorpusDecompositionDemo {
     if (this.performanceMetrics.decompositions.length > 0) {
       const decompositionTimes = this.performanceMetrics.decompositions.map(d => d.duration);
       const avgDecomposition = decompositionTimes.reduce((a, b) => a + b, 0) / decompositionTimes.length;
-      
+
       console.log(chalk.white('\\n⚡ Performance Metrics:'));
       console.log(chalk.cyan(`   Corpus decomposition: ${avgDecomposition.toFixed(0)}ms`));
-      
+
       if (this.performanceMetrics.exports.length > 0) {
         const exportTimes = this.performanceMetrics.exports.map(e => e.duration);
         const avgExport = exportTimes.reduce((a, b) => a + b, 0) / exportTimes.length;
@@ -600,33 +600,33 @@ class RagnoCorpusDecompositionDemo {
 
   async runFullDemo() {
     try {
-      console.log(chalk.rainbow('🕸️  Welcome to the Ragno Corpus Decomposition Demo! 🕸️'));
+      console.log(chalk.green('🕸️  Welcome to the Ragno Corpus Decomposition Demo! 🕸️'));
       console.log(chalk.white('This demo will show you how to transform text into knowledge graphs.\\n'));
 
       // Educational overview
       this.explainRagnoConcepts();
-      
+
       // Generate sample corpus
       this.generateSampleCorpus();
-      
+
       // Initialize connection
       await this.initializeConnection();
-      
+
       // Corpus decomposition
       await this.demonstrateCorpusDecomposition();
-      
+
       // Entity retrieval
       await this.demonstrateEntityRetrieval();
-      
+
       // Graph statistics
       await this.demonstrateGraphStatistics();
-      
+
       // RDF export
       await this.demonstrateRDFExport();
-      
+
       // SPARQL queries
       await this.demonstrateSPARQLQueries();
-      
+
       // Performance summary
       this.generatePerformanceSummary();
 

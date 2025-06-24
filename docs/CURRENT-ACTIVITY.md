@@ -35,6 +35,26 @@ Need to find out which pieces of functionality aren't yet exposed - and expose t
 
 There are about 60 tools/prompts/resources, it's certain only a fraction of these are worth exposing over MCP. Many will be buggy and suboptimal for their intended use.
 
+...
+```sh
+  Using model configuration: { chatModel: 'mistral-small-latest', embeddingModel: 'nomic-embed-text-v1.5' }
+
+  The MCP service is now running with the correct remote provider configuration - Mistral for chat operations and Nomic for embeddings, exactly as specified in your config.json
+  priorities.
+```
+> call a couple of appropriate mcp tools to demonstrate
+```sh
+  claude:Task (MCP)(description: "Test MCP memory operations", prompt: "Use the semem MCP tools to demonstrate the memory system working with remote providers. First use
+                   semem:memory_store to store a test memory about \"semantic web technologies and RDF\", then use semem:memory_search to find related memories. This will verify that both
+                    the Mistral chat provider and Nomic embedding provider are working correctly through the MCP interface.")
+
+● claude:Task (MCP)(description: "Test Ragno knowledge extraction", prompt: "Use the semem MCP ragno tools to demonstrate knowledge graph functionality. Use ragno:decompose_corpus to
+                   extract entities and relationships from a short text about \"Machine learning algorithms use mathematical models to identify patterns in data.\" This will test the LLM
+                   provider integration for concept extraction and relationship identification.")
+```
+
+  echo '{"method": "tools/list"}' | npx @modelcontextprotocol/cli call mcp://localhost:3000
+  
 ## UI
 
 It should also be possible to have fun with this.

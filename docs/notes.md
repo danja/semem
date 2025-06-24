@@ -31,3 +31,6 @@ semem:semem_extract_concepts (MCP)(text: "the cat sat on the mat")
 
   Or change line 29 in UIServer.js:
   this.graphName = options.graphName || 'http://hyperdata.it/content'; // Match embedding-creator
+
+
+examples/mcp/ZPTAdvancedFiltering.js

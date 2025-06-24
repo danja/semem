@@ -389,14 +389,102 @@ MCP_PORT=3002 node mcp/http-server.js &
 ### Other MCP Clients
 The server follows the standard MCP protocol and should work with any compatible client. For HTTP/SSE transport, clients can connect directly to `http://localhost:3002/mcp`.
 
+## Complete Tool & Resource Reference
+
+### 🛠️ Tools Available (32 total)
+
+#### Core Memory Management (5 tools)
+- `semem_store_interaction` - Store interactions with embeddings and concept extraction
+- `semem_retrieve_memories` - Search for semantically similar memories using vector similarity
+- `semem_generate_embedding` - Generate vector embeddings for text using configured embedding model
+- `semem_generate_response` - Generate LLM responses with optional memory context integration
+- `semem_extract_concepts` - Extract key semantic concepts from text using LLM analysis
+
+#### Storage Management (6 tools)
+- `semem_switch_storage_backend` - Runtime switching between InMemory/JSON/SPARQL/CachedSPARQL backends
+- `semem_backup_memory` - Create backups in JSON/RDF formats with optional embedding inclusion
+- `semem_load_memory` - Load memory from backup files with merge or replace options
+- `semem_storage_stats` - Get detailed storage statistics and health information
+- `semem_migrate_storage` - Migrate data between different storage backend types
+- `semem_clear_storage` - Clear storage with confirmation requirements and optional backup
+
+#### Context Management (4 tools)
+- `semem_get_context` - Retrieve current context window information and active items
+- `semem_update_context_config` - Update context window settings (max tokens, threshold, time window)
+- `semem_prune_context` - Manually prune context based on relevance scores and age criteria
+- `semem_summarize_context` - Generate intelligent summaries of current context contents
+
+#### System Configuration (3 tools)
+- `semem_get_config` - Get current system configuration across all components
+- `semem_update_config` - Update configuration settings by section with validation
+- `semem_get_metrics` - Get detailed system metrics (memory usage, cache stats, performance)
+- `semem_health_check` - Comprehensive health check of all system components
+
+#### Knowledge Graph (Ragno) (8 tools)
+- `ragno_decompose_corpus` - Transform text corpus into RDF knowledge graph with entities and relationships
+- `ragno_search_dual` - Combined exact matching + vector similarity + PersonalizedPageRank search
+- `ragno_get_entities` - Retrieve entities from knowledge graph with advanced filtering and pagination
+- `ragno_vector_search` - HNSW-based vector similarity search on knowledge graph embeddings
+- `ragno_export_rdf` - Export knowledge graph in multiple RDF formats (Turtle, N-Triples, JSON-LD)
+- `ragno_query_sparql` - Execute SPARQL queries against the knowledge graph RDF store
+- `ragno_analyze_graph` - Comprehensive graph analysis (centrality, communities, connectivity)
+- `ragno_get_graph_stats` - Basic and detailed statistics about knowledge graph structure
+
+#### ZPT Navigation (6 tools)
+- `zpt_navigate` - 3-dimensional knowledge graph navigation using Zoom/Pan/Tilt spatial metaphors
+- `zpt_preview` - Preview ZPT navigation options and estimated results without full processing
+- `zpt_get_schema` - Get complete ZPT parameter schema and navigation documentation
+- `zpt_validate_params` - Validate ZPT parameters with detailed error reporting and suggestions
+- `zpt_get_options` - Get available parameter values for current corpus state and navigation context
+- `zpt_analyze_corpus` - Analyze corpus structure for ZPT navigation optimization and performance tuning
+
+### 📚 Resources Available (11 total)
+
+#### System Information
+- `semem://status` - Current system status and service health monitoring data
+- `semem://docs/api` - Complete API documentation with examples and integration guides
+- `semem://config/current` - Current system configuration settings across all components
+- `semem://storage/backends` - Available storage backend information and capabilities comparison
+- `semem://metrics/dashboard` - System metrics and performance monitoring dashboard data
+
+#### Knowledge Graph Resources
+- `semem://graph/schema` - RDF graph schema and ontology information for data modeling
+- `semem://ragno/ontology` - Complete Ragno ontology definition in Turtle RDF format
+- `semem://ragno/pipeline` - Complete guide to using Ragno knowledge graph pipeline
+- `semem://ragno/examples` - Knowledge graph construction and analysis examples with code
+- `semem://ragno/sparql/queries` - Pre-built SPARQL query templates for common graph operations
+
+#### Workflow Resources
+- `semem://examples/workflows` - Common workflow examples and templates for typical use cases
+
+### 🎯 Prompt Workflows Available (10 total)
+
+#### Memory Workflows (4 prompts)
+- `semem-research-analysis` - Research document analysis with semantic memory context integration
+- `semem-memory-qa` - Question-answering using semantic memory retrieval and context assembly
+- `semem-concept-exploration` - Deep concept exploration using stored knowledge relationships
+- `semem-full-pipeline` - Complete memory → graph → navigation workflow processing pipeline
+
+#### Knowledge Graph (2 prompts)
+- `ragno-corpus-to-graph` - Transform text corpus to structured RDF knowledge graph with entities
+- `ragno-entity-analysis` - Analyze and enrich entities with contextual relationships and properties
+
+#### 3D Navigation (1 prompt)
+- `zpt-navigate-explore` - Interactive 3D knowledge navigation using spatial metaphors
+
+#### Integrated Workflows (3 prompts)
+- `enhanced-research-workflow` - Intelligent document processing with SPARQL storage and incremental learning
+- `intelligent-qa-workflow` - Answer questions using hybrid search and incremental learning capabilities
+- `research-workflow` - Academic research processing pipeline with semantic analysis and storage
+
 ## Current Status
 
 ### ✅ Working Components
 - **HTTP/SSE MCP Server**: Fully functional on port 3002
 - **Stdio-to-HTTP Bridge**: Successfully converts between transports
-- **Core MCP Tools**: All Semem tools properly exposed via new MCP SDK API
+- **Core MCP Tools**: All 32 Semem tools properly exposed via new MCP SDK API
 - **Tool Registration**: Using modern `server.tool()` API instead of deprecated `setRequestHandler()`
-- **MCP Prompts System**: 8 workflow templates with full orchestration capabilities
+- **MCP Prompts System**: 10 workflow templates with full orchestration capabilities
 - **Prompt Registry**: Dynamic prompt loading and validation system
 - **Workflow Execution**: Multi-step tool coordination with error handling
 

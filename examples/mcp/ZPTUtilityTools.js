@@ -41,17 +41,17 @@ class ZPTUtilityToolsDemo {
 
   logBanner(title, subtitle = null) {
     const elapsed = ((Date.now() - this.startTime) / 1000).toFixed(1);
-    console.log(chalk.purple.bold(`\n${'▣'.repeat(75)}`));
-    console.log(chalk.purple.bold(`▣▣ ${title.padEnd(69)} ▣▣`));
+    console.log(chalk.blue(`\n${'▣'.repeat(75)}`));
+    console.log(chalk.blue(`▣▣ ${title.padEnd(69)} ▣▣`));
     if (subtitle) {
-      console.log(chalk.purple(`▣▣ ${subtitle.padEnd(69)} ▣▣`));
+      console.log(chalk.blue(`▣▣ ${subtitle.padEnd(69)} ▣▣`));
     }
-    console.log(chalk.purple.bold(`▣▣ ${'Time: ' + elapsed + 's | Operation: ' + ++this.operationCount}`.padEnd(69) + ' ▣▣'));
-    console.log(chalk.purple.bold(`${'▣'.repeat(75)}`));
+    console.log(chalk.blue(`▣▣ ${'Time: ' + elapsed + 's | Operation: ' + ++this.operationCount}`.padEnd(69) + ' ▣▣'));
+    console.log(chalk.blue(`${'▣'.repeat(75)}`));
   }
 
   logUtilityStep(step, title, description) {
-    console.log(chalk.cyan.bold(`\n🔧 UTILITY ${step}: ${title}`));
+    console.log(chalk.cyan(`\n🔧 UTILITY ${step}: ${title}`));
     console.log(chalk.cyan(`   📋 ${description}`));
   }
 
@@ -73,15 +73,15 @@ class ZPTUtilityToolsDemo {
   logValidationTest(test, result) {
     const status = result.valid ? '✅' : '❌';
     const status_color = result.valid ? chalk.green : chalk.red;
-    
+
     console.log(status_color(`   ${status} ${test}`));
-    
+
     if (!result.valid && result.errors) {
       result.errors.forEach(error => {
         console.log(chalk.red(`     🚫 ${error.field}: ${error.message}`));
       });
     }
-    
+
     if (result.warnings) {
       result.warnings.forEach(warning => {
         console.log(chalk.yellow(`     ⚠️  ${warning.field}: ${warning.message}`));
@@ -92,7 +92,7 @@ class ZPTUtilityToolsDemo {
   logPerformance(operation, duration, details = {}) {
     const emoji = duration < 200 ? '⚡' : duration < 1000 ? '🚀' : '⏱️';
     console.log(chalk.magenta(`   ${emoji} ${operation}: ${duration}ms`));
-    
+
     Object.entries(details).forEach(([key, value]) => {
       console.log(chalk.gray(`   📊 ${key}: ${value}`));
     });
@@ -117,7 +117,7 @@ class ZPTUtilityToolsDemo {
 
   explainUtilityTools() {
     this.logBanner('ZPT Utility Tools Overview', 'Supporting tools for effective ZPT navigation');
-    
+
     console.log(chalk.cyan('\n🔧 ZPT Utility Tool Categories:'));
     console.log(chalk.white('   ZPT includes support tools for validation, discovery, and optimization\\n'));
 
@@ -146,7 +146,7 @@ class ZPTUtilityToolsDemo {
 
   async initializeConnection() {
     this.logBanner('MCP Connection Initialization', 'Connecting for ZPT utility tool exploration');
-    
+
     try {
       log.info('Creating stdio transport...');
       this.transport = new StdioClientTransport({
@@ -174,10 +174,10 @@ class ZPTUtilityToolsDemo {
 
       // Verify utility tools availability
       const tools = await this.client.listTools();
-      const utilityTools = tools.tools.filter(tool => 
+      const utilityTools = tools.tools.filter(tool =>
         ['zpt_get_schema', 'zpt_validate_params', 'zpt_get_options', 'zpt_analyze_corpus'].includes(tool.name)
       );
-      
+
       this.logSuccess(`Found ${utilityTools.length}/4 ZPT utility tools available`);
       utilityTools.forEach(tool => {
         console.log(chalk.gray(`   🔧 ${tool.name}: ${tool.description.slice(0, 80)}...`));
@@ -193,9 +193,9 @@ class ZPTUtilityToolsDemo {
 
   async demonstrateSchemaExploration() {
     this.logBanner('ZPT Schema Exploration', 'Understanding parameter structure and validation rules');
-    
+
     this.logUtilityStep(1, 'Schema Retrieval', 'Getting complete ZPT parameter schema with validation rules');
-    
+
     try {
       const startTime = Date.now();
       const result = await this.client.callTool({
@@ -211,9 +211,9 @@ class ZPTUtilityToolsDemo {
 
         if (schemaData.success && schemaData.schema) {
           this.schemaAnalysis = schemaData.schema;
-          
+
           console.log(chalk.white('\n📋 Parameter Schema Overview:'));
-          
+
           // Core parameters
           if (schemaData.schema.parameters) {
             console.log(chalk.cyan('\n   🎯 Core Parameters:'));
@@ -279,7 +279,7 @@ class ZPTUtilityToolsDemo {
 
   async demonstrateParameterValidation() {
     this.logBanner('Parameter Validation', 'Testing validation rules with various parameter combinations');
-    
+
     const validationTests = [
       {
         title: 'Valid Basic Parameters',
@@ -384,10 +384,10 @@ class ZPTUtilityToolsDemo {
 
     for (const test of validationTests) {
       this.logUtilityStep(validationTests.indexOf(test) + 1, test.title, `Testing ${test.shouldPass ? 'valid' : 'invalid'} parameter set`);
-      
+
       console.log(chalk.gray('\\n   🔍 Parameters to validate:'));
       console.log(chalk.gray(`   ${JSON.stringify(test.params, null, 2)}`));
-      
+
       try {
         const startTime = Date.now();
         const result = await this.client.callTool({
@@ -400,7 +400,7 @@ class ZPTUtilityToolsDemo {
 
         if (result.content && result.content[0]) {
           const validation = JSON.parse(result.content[0].text);
-          
+
           if (validation.success && validation.validation) {
             const isValid = validation.validation.valid;
             const testResult = {
@@ -414,14 +414,14 @@ class ZPTUtilityToolsDemo {
 
             this.validationResults.push(testResult);
             this.logValidationTest(test.title, testResult);
-            
+
             // Check if result matches expectation
             if (isValid === test.shouldPass) {
               this.logSuccess(`Validation result matches expectation`);
             } else {
               console.log(chalk.yellow(`   ⚠️  Unexpected validation result: expected ${test.shouldPass}, got ${isValid}`));
             }
-            
+
             this.logPerformance('Validation', duration, {
               errors: testResult.errors.length,
               warnings: testResult.warnings.length
@@ -439,7 +439,7 @@ class ZPTUtilityToolsDemo {
     // Validation summary
     const passedTests = this.validationResults.filter(r => r.valid).length;
     const failedTests = this.validationResults.filter(r => !r.valid).length;
-    
+
     console.log(chalk.cyan(`\\n📊 Validation Summary:`));
     console.log(chalk.green(`   ✅ Passed: ${passedTests} tests`));
     console.log(chalk.red(`   ❌ Failed: ${failedTests} tests`));
@@ -450,7 +450,7 @@ class ZPTUtilityToolsDemo {
 
   async demonstrateOptionsDiscovery() {
     this.logBanner('Options Discovery', 'Exploring available parameters for corpus content');
-    
+
     const optionQueries = [
       {
         title: 'General Options Discovery',
@@ -465,7 +465,7 @@ class ZPTUtilityToolsDemo {
         context: 'query-specific'
       },
       {
-        title: 'Climate Science Context', 
+        title: 'Climate Science Context',
         description: 'Options for climate and environmental content',
         query: 'climate change renewable energy',
         context: 'domain-specific'
@@ -480,7 +480,7 @@ class ZPTUtilityToolsDemo {
 
     for (const optionQuery of optionQueries) {
       this.logUtilityStep(optionQueries.indexOf(optionQuery) + 1, optionQuery.title, optionQuery.description);
-      
+
       try {
         const startTime = Date.now();
         const result = await this.client.callTool({
@@ -511,7 +511,7 @@ class ZPTUtilityToolsDemo {
             // Pan filter options
             if (options.options.pan) {
               console.log(chalk.cyan('\\n   🎯 Available Pan Filters:'));
-              
+
               if (options.options.pan.temporal) {
                 console.log(chalk.white('     ⏰ Temporal:'));
                 if (options.options.pan.temporal.availableRange) {
@@ -573,8 +573,8 @@ class ZPTUtilityToolsDemo {
           }
         }
 
-        this.performanceMetrics.optionsQueries.push({ 
-          title: optionQuery.title, 
+        this.performanceMetrics.optionsQueries.push({
+          title: optionQuery.title,
           duration,
           context: optionQuery.context
         });
@@ -589,9 +589,9 @@ class ZPTUtilityToolsDemo {
 
   async demonstrateCorpusAnalysis() {
     this.logBanner('Corpus Analysis', 'Deep analysis of corpus structure for ZPT optimization');
-    
+
     this.logUtilityStep(1, 'Comprehensive Corpus Analysis', 'Analyzing corpus structure, performance, and optimization opportunities');
-    
+
     try {
       const startTime = Date.now();
       const result = await this.client.callTool({
@@ -611,7 +611,7 @@ class ZPTUtilityToolsDemo {
 
         if (analysis.success && analysis.analysis) {
           this.corpusAnalysis = analysis.analysis;
-          
+
           // Basic corpus statistics
           if (analysis.analysis.statistics) {
             console.log(chalk.cyan('\\n📊 Corpus Statistics:'));
@@ -623,7 +623,7 @@ class ZPTUtilityToolsDemo {
           // Content distribution
           if (analysis.analysis.contentDistribution) {
             console.log(chalk.cyan('\\n📈 Content Distribution:'));
-            
+
             if (analysis.analysis.contentDistribution.byZoomLevel) {
               console.log(chalk.white('   🔍 By Zoom Level:'));
               Object.entries(analysis.analysis.contentDistribution.byZoomLevel).forEach(([level, count]) => {
@@ -649,7 +649,7 @@ class ZPTUtilityToolsDemo {
           // Performance characteristics
           if (analysis.analysis.performance) {
             console.log(chalk.cyan('\\n⚡ Performance Characteristics:'));
-            
+
             if (analysis.analysis.performance.indexing) {
               console.log(chalk.white('   📇 Indexing:'));
               Object.entries(analysis.analysis.performance.indexing).forEach(([index, status]) => {
@@ -676,7 +676,7 @@ class ZPTUtilityToolsDemo {
           // Optimization recommendations
           if (analysis.analysis.recommendations) {
             console.log(chalk.cyan('\\n💡 Optimization Recommendations:'));
-            
+
             if (analysis.analysis.recommendations.immediate) {
               console.log(chalk.white('   🚀 Immediate Optimizations:'));
               analysis.analysis.recommendations.immediate.forEach(rec => {
@@ -702,7 +702,7 @@ class ZPTUtilityToolsDemo {
           // Navigation patterns
           if (analysis.analysis.navigationPatterns) {
             console.log(chalk.cyan('\\n🧭 Navigation Pattern Analysis:'));
-            
+
             if (analysis.analysis.navigationPatterns.mostEffective) {
               console.log(chalk.white('   🎯 Most Effective Patterns:'));
               analysis.analysis.navigationPatterns.mostEffective.forEach(pattern => {
@@ -731,7 +731,7 @@ class ZPTUtilityToolsDemo {
 
   generateUtilityToolsSummary() {
     this.logBanner('Utility Tools Performance Summary', 'Comprehensive analysis of ZPT utility tool usage');
-    
+
     const totalDuration = Date.now() - this.startTime;
     const successfulValidations = this.validationResults.filter(r => r.valid).length;
     const totalValidations = this.validationResults.length;
@@ -755,7 +755,7 @@ class ZPTUtilityToolsDemo {
         const avgDuration = metrics.reduce((sum, m) => sum + m.duration, 0) / metrics.length;
         const minDuration = Math.min(...metrics.map(m => m.duration));
         const maxDuration = Math.max(...metrics.map(m => m.duration));
-        
+
         console.log(chalk.cyan(`   ${tool}:`));
         console.log(chalk.gray(`     Average: ${avgDuration.toFixed(0)}ms`));
         console.log(chalk.gray(`     Range: ${minDuration}ms - ${maxDuration}ms`));
@@ -787,7 +787,7 @@ class ZPTUtilityToolsDemo {
     console.log(chalk.yellow('   🛡️  Implement robust error handling based on validation patterns'));
     console.log(chalk.yellow('   ⚡ Cache schema and options data for frequently used queries'));
 
-    console.log(chalk.purple.bold('\\n🎉 ZPT Utility Tools Demo Complete!'));
+    console.log(chalk.blue('\\n🎉 ZPT Utility Tools Demo Complete!'));
     console.log(chalk.white('   Next steps: Try ZPTPerformanceOptimization.js for advanced performance patterns'));
   }
 
@@ -808,27 +808,27 @@ class ZPTUtilityToolsDemo {
 
   async runFullDemo() {
     try {
-      console.log(chalk.rainbow('🔧 Welcome to the ZPT Utility Tools Demo! 🔧'));
+      console.log(chalk.green('🔧 Welcome to the ZPT Utility Tools Demo! 🔧'));
       console.log(chalk.white('This demo explores validation, discovery, and analysis tools.\\n'));
 
       // Educational overview
       this.explainUtilityTools();
-      
+
       // Initialize connection
       await this.initializeConnection();
-      
+
       // Schema exploration
       await this.demonstrateSchemaExploration();
-      
+
       // Parameter validation
       await this.demonstrateParameterValidation();
-      
+
       // Options discovery
       await this.demonstrateOptionsDiscovery();
-      
+
       // Corpus analysis
       await this.demonstrateCorpusAnalysis();
-      
+
       // Performance summary
       this.generateUtilityToolsSummary();
 

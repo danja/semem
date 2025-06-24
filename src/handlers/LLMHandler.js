@@ -25,6 +25,40 @@ export default class LLMHandler {
             fallbackResponse: options.fallbackResponse || 'Unable to generate response due to service unavailability.',
             ...options
         }
+        
+        // Detect provider interface type
+        this._hasHyperdataClientsInterface = typeof this.llmProvider.chat === 'function'
+        this._hasLegacyInterface = typeof this.llmProvider.generateChat === 'function'
+    }
+
+    /**
+     * Call chat method using the appropriate provider interface
+     */
+    async _callChat(model, messages, options = {}) {
+        if (this._hasHyperdataClientsInterface) {
+            // hyperdata-clients interface: chat(messages, options)
+            return await this.llmProvider.chat(messages, { model, ...options })
+        } else if (this._hasLegacyInterface) {
+            // Legacy interface: generateChat(model, messages, options)
+            return await this.llmProvider.generateChat(model, messages, options)
+        } else {
+            throw new Error('Provider does not support chat operations')
+        }
+    }
+
+    /**
+     * Call completion method using the appropriate provider interface
+     */
+    async _callCompletion(model, prompt, options = {}) {
+        if (this._hasHyperdataClientsInterface) {
+            // hyperdata-clients interface: complete(prompt, options)
+            return await this.llmProvider.complete(prompt, { model, ...options })
+        } else if (this._hasLegacyInterface) {
+            // Legacy interface: generateCompletion(model, prompt, options)
+            return await this.llmProvider.generateCompletion(model, prompt, options)
+        } else {
+            throw new Error('Provider does not support completion operations')
+        }
     }
 
     /**
@@ -67,22 +101,14 @@ export default class LLMHandler {
             if (this.options.enableFallbacks) {
                 return await this.withTimeout(
                     this.withRateLimit(async () => {
-                        return await this.llmProvider.generateChat(
-                            model,
-                            messages,
-                            { temperature }
-                        )
+                        return await this._callChat(model, messages, { temperature })
                     }, maxRetries, baseDelay),
                     timeoutMs
                 )
             } else {
                 // Original behavior for backward compatibility
                 return await this.withRateLimit(async () => {
-                    return await this.llmProvider.generateChat(
-                        model,
-                        messages,
-                        { temperature }
-                    )
+                    return await this._callChat(model, messages, { temperature })
                 }, maxRetries, baseDelay)
             }
             
@@ -156,7 +182,7 @@ export default class LLMHandler {
             const response = this.options.enableFallbacks
                 ? await this.withTimeout(
                     this.withRateLimit(async () => {
-                        return await this.llmProvider.generateCompletion(
+                        return await this._callCompletion(
                             this.chatModel,
                             prompt,
                             { temperature: 0.2 }
@@ -165,7 +191,7 @@ export default class LLMHandler {
                     timeoutMs
                   )
                 : await this.withRateLimit(async () => {
-                    return await this.llmProvider.generateCompletion(
+                    return await this._callCompletion(
                         this.chatModel,
                         prompt,
                         { temperature: 0.2 }

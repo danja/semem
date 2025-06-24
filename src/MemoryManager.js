@@ -61,6 +61,7 @@ export default class MemoryManager {
             // Fallback: check if provider has chat methods and doesn't throw on basic test
             hasChatCapability = (
                 typeof llmProvider.generateChat === 'function' || 
+                typeof llmProvider.chat === 'function' ||  // Support hyperdata-clients interface
                 (typeof llmProvider.generateCompletion === 'function' && 
                  llmProvider.constructor.name !== 'NomicConnector')  // Explicitly exclude NomicConnector
             );
