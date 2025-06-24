@@ -13,3 +13,5 @@ But then as I went to an example that needed chat, it threw up loads of issues a
 So to resolve this I went to an example that I knew had worked, `HyDE`, that uses responses from prompts as hypotheticals in subsequent similarity search. Long story short, it took a lot of cycles with Claude Code to get this working again *properly*.
 
 But this involved changes to core code - `Config`, `MemoryManager`... and now there are several breaking tests. Time to cycle back through them.
+
+Ok, tests fixed - they had a lot of hardcoding of strings. Next I need to cycle through the other examples to check. I need to do that anyway to see what each is actually doing. But there are 84 examples in total, I may leave it for today.

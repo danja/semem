@@ -23,7 +23,7 @@ describe('Config', () => {
     models: {
       chat: {
         provider: 'mistral',
-        model: 'open-codestral-mamba',
+        model: 'mistral-small-latest',
         options: {}
       },
       embedding: {
@@ -85,7 +85,7 @@ describe('Config', () => {
       const config = new Config();
       await config.init();
       expect(config.get('storage.type')).toBe('memory');
-      expect(config.get('models.chat.model')).toBe('open-codestral-mamba');
+      expect(config.get('models.chat.model')).toBe('mistral-small-latest');
     });
 
     it.skip('should validate during creation and throw on invalid storage type (requires file-based config)', async () => {
@@ -113,11 +113,11 @@ describe('Config', () => {
     // Skipping this test as it causes issues with the environment overrides
     it.skip('should handle environment overrides', async () => {
       process.env.SEMEM_STORAGE_TYPE = 'json';
-      
+
       // Create a config instance
       const config = new Config();
       await config.init();
-      
+
       // Check if the environment variable was applied
       expect(config.get('storage.type')).toBe('json');
     }, 10000);
@@ -130,7 +130,7 @@ describe('Config', () => {
       const config = new Config(validConfig);
       config.config = validConfig; // Simulate initialization
       config.initialized = true;
-      
+
       expect(config.initialized).toBeTruthy();
       expect(config.get('storage.type')).toBe('memory');
     });
@@ -143,7 +143,7 @@ describe('Config', () => {
         models: {
           chat: {
             provider: 'mistral',
-            model: 'open-codestral-mamba'
+            model: 'mistral-small-latest'
           },
           embedding: {
             provider: 'ollama',
@@ -157,7 +157,7 @@ describe('Config', () => {
           update: '/test-mem'
         }]
       };
-      
+
       const configFile = createTempConfigFile(invalidConfig);
       const config = new Config(configFile);
       try {
@@ -177,10 +177,10 @@ describe('Config', () => {
         models: validConfig.models,
         sparqlEndpoints: validConfig.sparqlEndpoints
       };
-      
+
       const configFile = createTempConfigFile(invalidConfig);
       const config = new Config(configFile);
-      
+
       try {
         await config.init();
         // If we get here without an error, the test should fail
@@ -207,9 +207,9 @@ describe('Config', () => {
           update: '/test-mem'
         }]
       };
-      
+
       const config = new Config(testConfig);
-      
+
       try {
         await config.init();
         // If we get here without an error, the test should fail
@@ -217,8 +217,8 @@ describe('Config', () => {
       } catch (error) {
         console.log('Error message:', error.message);
         // Check that the error contains the expected message
-        expect(error.message.includes('Invalid model configuration') || 
-               error.message.includes('Config initialization failed')).toBeTruthy();
+        expect(error.message.includes('Invalid model configuration') ||
+          error.message.includes('Config initialization failed')).toBeTruthy();
       }
     });
 
@@ -228,10 +228,10 @@ describe('Config', () => {
         models: validConfig.models,
         sparqlEndpoints: [{ label: 'test' }] // Missing required endpoint fields
       };
-      
+
       const configFile = createTempConfigFile(invalidConfig);
       const config = new Config(configFile);
-      
+
       try {
         await config.init();
         // If we get here without an error, the test should fail

@@ -7,7 +7,7 @@ import Config from '../../engine/Config.js';
 dotenv.config()
 
 const provider = this.getProperty(ns.trn.provider, 'mistral')
-const modelName = this.getProperty(ns.trn.model, 'open-codestral-mamba') // mistral-7b-instruct-v0.1
+const modelName = this.getProperty(ns.trn.model, 'mistral-small-latest') // mistral-7b-instruct-v0.1
 
 
 // Get API key mapping from config

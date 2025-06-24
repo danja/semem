@@ -68,7 +68,7 @@ class ClientConnector {
         try {
             logger.debug(`Generating chat with model ${model}`)
             logger.debug('Messages:', messages)
-            const config = { model: 'open-codestral-mamba', apiKey: process.env.MISTRAL_API_KEY }
+            const config = { model: 'mistral-small-latest', apiKey: process.env.MISTRAL_API_KEY }
             const client = await ClientFactory.createAPIClient('mistral', config)
             const response = await client.chat([
                 { role: 'user', content: prompt }

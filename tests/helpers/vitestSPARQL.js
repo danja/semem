@@ -11,16 +11,16 @@ export async function initTestGraphs(config) {
     console.warn('No SPARQL endpoints configured. Skipping test graph initialization.');
     return;
   }
-  
+
   try {
     const endpoints = config.get('sparqlEndpoints');
     console.log(`Setting up ${endpoints.length} SPARQL test graphs...`);
-    
+
     // Initialize each endpoint
     for (const endpoint of endpoints) {
       await initEndpoint(endpoint);
     }
-    
+
     console.log('SPARQL test graphs initialized successfully.');
   } catch (error) {
     console.error('Failed to initialize SPARQL test graphs:', error);
@@ -34,10 +34,10 @@ export async function initTestGraphs(config) {
  */
 async function initEndpoint(endpoint) {
   console.log(`Initializing endpoint: ${endpoint.label} at ${endpoint.urlBase}${endpoint.update}`);
-  
+
   // Clear the graph first
   await clearGraph(endpoint);
-  
+
   // Add test data (placeholder function - implement as needed)
   await addTestData(endpoint);
 }
@@ -51,24 +51,24 @@ async function clearGraph(endpoint) {
   const headers = {
     'Content-Type': 'application/sparql-update'
   };
-  
+
   // Add basic auth if credentials are provided
   if (endpoint.user && endpoint.password) {
     const auth = Buffer.from(`${endpoint.user}:${endpoint.password}`).toString('base64');
     headers['Authorization'] = `Basic ${auth}`;
   }
-  
+
   try {
     const response = await fetch(url, {
       method: 'POST',
       headers,
       body: 'CLEAR ALL'
     });
-    
+
     if (!response.ok) {
       throw new Error(`Failed to clear graph: ${response.status} ${response.statusText}`);
     }
-    
+
     console.log(`Graph cleared for ${endpoint.label}`);
   } catch (error) {
     console.error(`Error clearing graph for ${endpoint.label}:`, error);
@@ -85,13 +85,13 @@ async function addTestData(endpoint) {
   const headers = {
     'Content-Type': 'application/sparql-update'
   };
-  
+
   // Add basic auth if credentials are provided
   if (endpoint.user && endpoint.password) {
     const auth = Buffer.from(`${endpoint.user}:${endpoint.password}`).toString('base64');
     headers['Authorization'] = `Basic ${auth}`;
   }
-  
+
   // Test data - modify as needed
   const testData = `
     PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
@@ -114,18 +114,18 @@ async function addTestData(endpoint) {
         semem:embedding "[0.2, 0.3, 0.4]" .
     }
   `;
-  
+
   try {
     const response = await fetch(url, {
       method: 'POST',
       headers,
       body: testData
     });
-    
+
     if (!response.ok) {
       throw new Error(`Failed to add test data: ${response.status} ${response.statusText}`);
     }
-    
+
     console.log(`Test data added to ${endpoint.label}`);
   } catch (error) {
     console.error(`Error adding test data to ${endpoint.label}:`, error);
@@ -150,7 +150,7 @@ export async function setupSPARQLTestConfig() {
     models: {
       chat: {
         provider: 'mistral',
-        model: 'open-codestral-mamba',
+        model: 'mistral-small-latest',
         options: {}
       },
       embedding: {
@@ -172,7 +172,7 @@ export async function setupSPARQLTestConfig() {
       gspWrite: "/test-mem/data"
     }]
   });
-  
+
   await config.init();
   return config;
 }

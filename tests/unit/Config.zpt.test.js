@@ -18,7 +18,7 @@ describe('Config ZPT Extensions', () => {
   afterEach(() => {
     // Restore environment
     process.env = originalEnv;
-    
+
     // Clean up temp files
     tempConfigFiles.forEach(file => {
       try {
@@ -41,7 +41,7 @@ describe('Config ZPT Extensions', () => {
   describe('Storage Type Validation', () => {
     it('should accept cached-sparql as valid storage type', async () => {
       const configWithCachedSparql = {
-        storage: { 
+        storage: {
           type: 'cached-sparql',
           options: {
             endpoint: 'http://localhost:3030/dataset',
@@ -52,10 +52,10 @@ describe('Config ZPT Extensions', () => {
         models: {
           chat: {
             provider: 'mistral',
-            model: 'open-codestral-mamba'
+            model: 'mistral-small-latest'
           },
           embedding: {
-            provider: 'ollama', 
+            provider: 'ollama',
             model: 'nomic-embed-text'
           }
         },
@@ -71,7 +71,7 @@ describe('Config ZPT Extensions', () => {
       // This test documents the need to add it
       const configFile = createTempConfigFile(configWithCachedSparql);
       const config = new Config(configFile);
-      
+
       try {
         await config.init();
         // If this passes, cached-sparql is already supported
@@ -85,10 +85,10 @@ describe('Config ZPT Extensions', () => {
 
     it('should validate all known storage types', async () => {
       const knownStorageTypes = ['memory', 'json', 'sparql', 'cached-sparql'];
-      
+
       for (const storageType of knownStorageTypes) {
         const testConfig = {
-          storage: { 
+          storage: {
             type: storageType,
             options: storageType === 'memory' ? {} : {
               endpoint: 'http://localhost:3030/dataset',
@@ -98,7 +98,7 @@ describe('Config ZPT Extensions', () => {
           models: {
             chat: {
               provider: 'mistral',
-              model: 'open-codestral-mamba'
+              model: 'mistral-small-latest'
             },
             embedding: {
               provider: 'ollama',
@@ -137,7 +137,7 @@ describe('Config ZPT Extensions', () => {
       const zptConfig = {
         storage: { type: 'sparql' },
         models: {
-          chat: { provider: 'mistral', model: 'open-codestral-mamba' },
+          chat: { provider: 'mistral', model: 'mistral-small-latest' },
           embedding: { provider: 'ollama', model: 'nomic-embed-text' }
         },
         sparqlEndpoints: [{
@@ -175,7 +175,7 @@ describe('Config ZPT Extensions', () => {
       const basicConfig = {
         storage: { type: 'memory' },
         models: {
-          chat: { provider: 'mistral', model: 'open-codestral-mamba' },
+          chat: { provider: 'mistral', model: 'mistral-small-latest' },
           embedding: { provider: 'ollama', model: 'nomic-embed-text' }
         },
         sparqlEndpoints: [{
@@ -192,7 +192,7 @@ describe('Config ZPT Extensions', () => {
 
       // Test that defaults are sensible
       expect(config.get('storage.type')).toBe('memory');
-      
+
       // If ZPT defaults are implemented, test them
       const zptDefaults = config.get('zpt');
       if (zptDefaults) {
@@ -207,7 +207,7 @@ describe('Config ZPT Extensions', () => {
   describe('SPARQL Endpoint Configuration for ZPT', () => {
     it('should validate SPARQL endpoints for ZPT usage', async () => {
       const zptSparqlConfig = {
-        storage: { 
+        storage: {
           type: 'sparql',
           options: {
             endpoint: 'http://localhost:3030/zpt',
@@ -217,7 +217,7 @@ describe('Config ZPT Extensions', () => {
           }
         },
         models: {
-          chat: { provider: 'mistral', model: 'open-codestral-mamba' },
+          chat: { provider: 'mistral', model: 'mistral-small-latest' },
           embedding: { provider: 'ollama', model: 'nomic-embed-text' }
         },
         sparqlEndpoints: [{
@@ -252,7 +252,7 @@ describe('Config ZPT Extensions', () => {
       const multiEndpointConfig = {
         storage: { type: 'sparql' },
         models: {
-          chat: { provider: 'mistral', model: 'open-codestral-mamba' },
+          chat: { provider: 'mistral', model: 'mistral-small-latest' },
           embedding: { provider: 'ollama', model: 'nomic-embed-text' }
         },
         sparqlEndpoints: [
@@ -265,7 +265,7 @@ describe('Config ZPT Extensions', () => {
           },
           {
             label: 'ZPT Secondary',
-            urlBase: 'http://secondary.example:3030', 
+            urlBase: 'http://secondary.example:3030',
             dataset: 'zpt-secondary',
             query: '/zpt-secondary/query',
             update: '/zpt-secondary/update'
@@ -302,7 +302,7 @@ describe('Config ZPT Extensions', () => {
           }
         },
         models: {
-          chat: { provider: 'mistral', model: 'open-codestral-mamba' },
+          chat: { provider: 'mistral', model: 'mistral-small-latest' },
           embedding: { provider: 'ollama', model: 'nomic-embed-text' }
         },
         sparqlEndpoints: [{

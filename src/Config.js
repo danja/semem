@@ -21,7 +21,7 @@ export default class Config {
                 //    provider: 'ollama',
                 //  model: 'qwen2:1.5b',
                 provider: 'mistral',
-                model: 'open-codestral-mamba',
+                model: 'mistral-small-latest',
                 options: {}
             },
             embedding: {
