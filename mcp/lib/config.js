@@ -35,10 +35,10 @@ export async function createLLMConnector(configPath = null) {
     for (const provider of sortedProviders) {
       console.log(`Trying LLM provider: ${provider.type} (priority: ${provider.priority})`);
       
-      if (provider.type === 'mistral' && process.env.MISTRAL_API_KEY) {
+      if (provider.type === 'mistral' && provider.apiKey) {
         console.log('✅ Creating Mistral connector (highest priority)...');
         return new MistralConnector();
-      } else if (provider.type === 'claude' && process.env.CLAUDE_API_KEY) {
+      } else if (provider.type === 'claude' && provider.apiKey) {
         console.log('✅ Creating Claude connector...');
         return new ClaudeConnector();
       } else if (provider.type === 'ollama') {
@@ -81,11 +81,11 @@ export async function createEmbeddingConnector(configPath = null) {
     for (const provider of sortedProviders) {
       console.log(`Trying embedding provider: ${provider.type} (priority: ${provider.priority})`);
       
-      if (provider.type === 'nomic' && process.env.NOMIC_API_KEY) {
+      if (provider.type === 'nomic' && provider.apiKey) {
         console.log('✅ Creating Nomic embedding connector (highest priority)...');
         return EmbeddingConnectorFactory.createConnector({
           provider: 'nomic',
-          apiKey: process.env.NOMIC_API_KEY,
+          apiKey: provider.apiKey,
           model: provider.embeddingModel || 'nomic-embed-text-v1.5'
         });
       } else if (provider.type === 'ollama') {

@@ -72,163 +72,142 @@ function categorizePrompt(name) {
 }
 
 /**
- * Register prompt workflow tools with MCP server
- * Note: This only registers the call handlers, not the list handler
- * The tools will be added to the main memory tools list
+ * Execute a prompt-related tool
  */
-export function registerPromptTools(server) {
-  mcpDebugger.info('Registering prompt workflow tools...');
-
-  // Only register call handler - list handler is managed by memory tools
-  server.setRequestHandler(CallToolRequestSchema, async (request) => {
-    const { name, arguments: args } = request.params;
-
-    try {
-      if (name === "prompt_list") {
-        const { category } = args || {};
-        
-        const prompts = promptRegistry.listPrompts();
-        mcpDebugger.info(`Listed ${prompts.length} available prompts`);
-        
-        // Filter by category if specified
-        let filteredPrompts = prompts;
-        if (category) {
-          filteredPrompts = prompts.filter(prompt => 
-            categorizePrompt(prompt.name).toLowerCase().includes(category.toLowerCase())
-          );
-        }
-        
-        // Group prompts by category for better display
-        const categories = {};
-        filteredPrompts.forEach(prompt => {
-          const cat = categorizePrompt(prompt.name);
-          if (!categories[cat]) categories[cat] = [];
-          categories[cat].push({
-            name: prompt.name,
-            description: prompt.description,
-            arguments: prompt.arguments.length,
-            requiredArgs: prompt.arguments.filter(a => a.required).length
-          });
-        });
-
-        return {
-          content: [{
-            type: "text",
-            text: JSON.stringify({
-              success: true,
-              totalPrompts: prompts.length,
-              filteredPrompts: filteredPrompts.length,
-              categories,
-              availableCategories: ["memory", "ragno", "zpt", "integrated"]
-            }, null, 2)
-          }]
-        };
-      }
-
-      if (name === "prompt_get") {
-        const { name: promptName } = args || {};
-        
-        if (!promptName) {
-          throw new Error('Prompt name is required');
-        }
-
-        const prompt = promptRegistry.getPrompt(promptName);
-        if (!prompt) {
-          throw new Error(`Prompt not found: ${promptName}`);
-        }
-
-        mcpDebugger.info(`Retrieved prompt: ${promptName}`);
-        
-        return {
-          content: [{
-            type: "text",
-            text: JSON.stringify({
-              success: true,
-              prompt: {
-                name: prompt.name,
-                description: prompt.description,
-                category: categorizePrompt(prompt.name),
-                arguments: prompt.arguments,
-                workflow: prompt.workflow.map(step => ({
-                  tool: step.tool,
-                  arguments: step.arguments,
-                  condition: step.condition,
-                  description: step.description || `Execute ${step.tool} tool`
-                })),
-                examples: prompt.examples || []
-              }
-            }, null, 2)
-          }]
-        };
-      }
-
-      if (name === "prompt_execute") {
-        const { name: promptName, arguments: promptArgs = {} } = args || {};
-        
-        if (!promptName) {
-          throw new Error('Prompt name is required');
-        }
-
-        const prompt = promptRegistry.getPrompt(promptName);
-        if (!prompt) {
-          throw new Error(`Prompt not found: ${promptName}`);
-        }
-
-        // Validate prerequisites - TEMPORARILY DISABLED FOR TESTING
-        // const prerequisites = validateExecutionPrerequisites(prompt, server);
-        // if (!prerequisites.valid) {
-        //   throw new Error(`Prerequisites not met: ${prerequisites.errors.join(', ')}`);
-        // }
-
-        // Create tool executor
-        const toolExecutor = createSafeToolExecutor(server);
-
-        // Execute the prompt workflow
-        mcpDebugger.info(`Executing prompt: ${promptName}`, { arguments: promptArgs });
-        const result = await executePromptWorkflow(prompt, promptArgs, toolExecutor);
-
-        mcpDebugger.info(`Prompt execution completed: ${promptName}`, { 
-          success: result.success,
-          steps: result.results.length 
-        });
-
-        return {
-          content: [{
-            type: "text",
-            text: JSON.stringify({
-              success: result.success,
-              promptName: promptName,
-              executionId: result.executionId,
-              steps: result.results.length,
-              results: result.results,
-              summary: result.summary,
-              error: result.error,
-              partialCompletion: result.partialCompletion
-            }, null, 2)
-          }]
-        };
-      }
-
-      throw new Error(`Unknown prompt tool: ${name}`);
+export async function executePromptTool(toolName, args, server) {
+  try {
+    if (toolName === "prompt_list") {
+      const { category } = args || {};
       
-    } catch (error) {
-      mcpDebugger.error(`Prompt tool ${name} failed`, {
-        error: error.message,
-        stack: error.stack
+      const prompts = promptRegistry.listPrompts();
+      mcpDebugger.info(`Listed ${prompts.length} available prompts`);
+      
+      let filteredPrompts = prompts;
+      if (category) {
+        filteredPrompts = prompts.filter(prompt => 
+          categorizePrompt(prompt.name).toLowerCase().includes(category.toLowerCase())
+        );
+      }
+      
+      const categories = {};
+      filteredPrompts.forEach(prompt => {
+        const cat = categorizePrompt(prompt.name);
+        if (!categories[cat]) categories[cat] = [];
+        categories[cat].push({
+          name: prompt.name,
+          description: prompt.description,
+          arguments: prompt.arguments.length,
+          requiredArgs: prompt.arguments.filter(a => a.required).length
+        });
       });
+
+      return {
+        content: [{
+          type: "text",
+          text: JSON.stringify({
+            success: true,
+            totalPrompts: prompts.length,
+            filteredPrompts: filteredPrompts.length,
+            categories,
+            availableCategories: ["memory", "ragno", "zpt", "integrated"]
+          }, null, 2)
+        }]
+      };
+    }
+
+    if (toolName === "prompt_get") {
+      const { name: promptName } = args || {};
+      
+      if (!promptName) {
+        throw new Error('Prompt name is required');
+      }
+
+      const prompt = promptRegistry.getPrompt(promptName);
+      if (!prompt) {
+        throw new Error(`Prompt not found: ${promptName}`);
+      }
+
+      mcpDebugger.info(`Retrieved prompt: ${promptName}`);
       
       return {
         content: [{
           type: "text",
           text: JSON.stringify({
-            success: false,
-            error: error.message,
-            tool: name
+            success: true,
+            prompt: {
+              name: prompt.name,
+              description: prompt.description,
+              category: categorizePrompt(prompt.name),
+              arguments: prompt.arguments,
+              workflow: prompt.workflow.map(step => ({
+                tool: step.tool,
+                arguments: step.arguments,
+                condition: step.condition,
+                description: step.description || `Execute ${step.tool} tool`
+              })),
+              examples: prompt.examples || []
+            }
           }, null, 2)
         }]
       };
     }
-  });
 
-  mcpDebugger.info('Prompt workflow tools registered successfully');
+    if (toolName === "prompt_execute") {
+      const { name: promptName, arguments: promptArgs = {} } = args || {};
+      
+      if (!promptName) {
+        throw new Error('Prompt name is required');
+      }
+
+      const prompt = promptRegistry.getPrompt(promptName);
+      if (!prompt) {
+        throw new Error(`Prompt not found: ${promptName}`);
+      }
+
+      const toolExecutor = createSafeToolExecutor(server);
+
+      mcpDebugger.info(`Executing prompt: ${promptName}`, { arguments: promptArgs });
+      const result = await executePromptWorkflow(prompt, promptArgs, toolExecutor);
+
+      mcpDebugger.info(`Prompt execution completed: ${promptName}`, { 
+        success: result.success,
+        steps: result.results.length 
+      });
+
+      return {
+        content: [{
+          type: "text",
+          text: JSON.stringify({
+            success: result.success,
+            promptName: promptName,
+            executionId: result.executionId,
+            steps: result.results.length,
+            results: result.results,
+            summary: result.summary,
+            error: result.error,
+            partialCompletion: result.partialCompletion
+          }, null, 2)
+        }]
+      };
+    }
+
+    throw new Error(`Unknown prompt tool: ${toolName}`);
+    
+  } catch (error) {
+    mcpDebugger.error(`Prompt tool ${toolName} failed`, {
+      error: error.message,
+      stack: error.stack
+    });
+    
+    return {
+      content: [{
+        type: "text",
+        text: JSON.stringify({
+          success: false,
+          error: error.message,
+          tool: toolName
+        }, null, 2)
+      }]
+    };
+  }
 }

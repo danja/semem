@@ -9,7 +9,9 @@ import { McpServer as Server } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { 
   ListPromptsRequestSchema,
-  GetPromptRequestSchema 
+  GetPromptRequestSchema,
+  CallToolRequestSchema,
+  ListToolsRequestSchema
 } from '@modelcontextprotocol/sdk/types.js';
 
 // Import debugging utilities
@@ -23,10 +25,11 @@ import { initializeServices } from './lib/initialization.js';
 import { registerMemoryTools } from './tools/memory-tools.js';
 import { registerZPTTools } from './tools/zpt-tools.js';
 import { registerResearchWorkflowTools } from './tools/research-workflow-tools.js';
-// import { registerPromptTools } from './tools/prompt-tools.js';
+import { PROMPT_TOOLS, executePromptTool } from './tools/prompt-tools.js';
 
 // Import resource registrations  
 import { registerStatusResources } from './resources/status-resource.js';
+import { registerZPTResources } from './resources/zpt-resources.js';
 
 // Import prompt system
 import { initializePromptRegistry, promptRegistry } from './prompts/registry.js';
@@ -100,6 +103,66 @@ function registerPromptHandlers(server) {
 }
 
 /**
+ * Register centralized tool call handler (following "everything" server pattern)
+ */
+function registerToolCallHandler(server) {
+  server.setRequestHandler(CallToolRequestSchema, async (request) => {
+    const { name, arguments: args } = request.params;
+    mcpDebugger.info(`Tool call: ${name}`, args);
+    
+    try {
+      // Memory tools
+      if (name === 'semem_extract_concepts') {
+        const { text } = args;
+        if (!text || typeof text !== 'string' || !text.trim()) {
+          throw new Error('Invalid text parameter. It must be a non-empty string.');
+        }
+        
+        await initializeServices();
+        const { getMemoryManager } = await import('./lib/initialization.js');
+        const memoryManager = getMemoryManager();
+        const { SafeOperations } = await import('./lib/safe-operations.js');
+        const safeOps = new SafeOperations(memoryManager);
+        
+        const concepts = await safeOps.extractConcepts(text);
+        
+        return {
+          content: [{
+            type: "text",
+            text: JSON.stringify({
+              success: true,
+              concepts: concepts,
+              text: text,
+              conceptCount: concepts?.length || 0
+            }, null, 2)
+          }]
+        };
+      }
+      
+      // Add other tools here...
+      
+      throw new Error(`Unknown tool: ${name}`);
+      
+    } catch (error) {
+      mcpDebugger.error(`Error in tool ${name}:`, error);
+      return {
+        content: [{
+          type: "text",
+          text: JSON.stringify({
+            success: false,
+            error: error.message,
+            tool: name
+          }, null, 2)
+        }],
+        isError: true
+      };
+    }
+  });
+  
+  mcpDebugger.info('Central tool call handler registered');
+}
+
+/**
  * Create and configure MCP server
  */
 async function createServer() {
@@ -149,6 +212,12 @@ async function createServer() {
   await workflowOrchestrator.initialize(server);
   mcpDebugger.info('Enhanced workflow orchestrator initialized successfully');
 
+  // Register prompt handlers (disabled due to SDK compatibility issues)
+  // registerPromptHandlers(server);
+  
+  // Register centralized tool call handler (disabled due to SDK compatibility issues)
+  // registerToolCallHandler(server);
+
   // Register all tools using a consistent pattern
   mcpDebugger.info('Registering all tools...');
   registerMemoryTools(server);
@@ -159,6 +228,17 @@ async function createServer() {
   // Register all resources
   mcpDebugger.info('Registering status resources...');
   registerStatusResources(server);
+  registerZPTResources(server);
+  mcpDebugger.info('All resources registered.');
+
+  // Register prompt tools
+  mcpDebugger.info('Registering prompt tools...');
+  for (const tool of PROMPT_TOOLS) {
+    server.tool(tool.name, tool.description, tool.inputSchema, async (args) => {
+      return await executePromptTool(tool.name, args, server);
+    });
+  }
+  mcpDebugger.info('All prompt tools registered.');
 
   // Register all prompts
   mcpDebugger.info('Registering prompts...');

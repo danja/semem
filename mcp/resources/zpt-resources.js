@@ -330,7 +330,7 @@ function generateZPTPerformanceResource() {
     name: "ZPT Performance Optimization Guide", 
     description: "Performance optimization strategies, caching patterns, and monitoring for ZPT navigation",
     mimeType: "text/markdown",
-    content: `# ZPT Performance Optimization Guide
+    content: `# ZPT Performance & Optimization Guide
 
 ## Performance Characteristics
 
@@ -441,71 +441,37 @@ Effective ZPT performance requires balancing response time, resource usage, and 
 }
 
 /**
- * Register ZPT resources using HTTP version pattern
+ * Register ZPT resources with the MCP server
  */
 export function registerZPTResources(server) {
   mcpDebugger.info('Registering ZPT resources...');
 
-  // List resources handler
-  server.setRequestHandler(ListResourcesRequestSchema, async () => {
-    return {
-      resources: [
-        {
-          uri: ZPTResourceURI.SCHEMA,
-          name: "ZPT Parameter Schema",
-          description: "Complete JSON schema for ZPT navigation parameters with validation rules and examples",
-          mimeType: "application/json"
-        },
-        {
-          uri: ZPTResourceURI.EXAMPLES,
-          name: "ZPT Navigation Examples", 
-          description: "Comprehensive examples and patterns for ZPT knowledge graph navigation",
-          mimeType: "text/markdown"
-        },
-        {
-          uri: ZPTResourceURI.GUIDE,
-          name: "ZPT Navigation Guide",
-          description: "Complete guide to ZPT concepts, spatial metaphors, and navigation principles", 
-          mimeType: "text/markdown"
-        },
-        {
-          uri: ZPTResourceURI.PERFORMANCE,
-          name: "ZPT Performance Optimization Guide",
-          description: "Performance optimization strategies, caching patterns, and monitoring for ZPT navigation",
-          mimeType: "text/markdown"
-        }
-      ]
-    };
-  });
+  const resources = [
+    generateZPTSchemaResource(),
+    generateZPTExamplesResource(),
+    generateZPTGuideResource(),
+    generateZPTPerformanceResource()
+  ];
 
-  // Read resource handler
-  server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
-    const { uri } = request.params;
-
-    try {
-      switch (uri) {
-        case ZPTResourceURI.SCHEMA:
-          return { contents: [generateZPTSchemaResource()] };
-          
-        case ZPTResourceURI.EXAMPLES:
-          return { contents: [generateZPTExamplesResource()] };
-          
-        case ZPTResourceURI.GUIDE:
-          return { contents: [generateZPTGuideResource()] };
-          
-        case ZPTResourceURI.PERFORMANCE:
-          return { contents: [generateZPTPerformanceResource()] };
-          
-        default:
-          throw new Error(`Unknown ZPT resource: ${uri}`);
+  for (const resource of resources) {
+    server.resource(
+      resource.uri,
+      resource.name,
+      resource.description,
+      resource.mimeType,
+      async () => {
+        return {
+          contents: [{
+            uri: resource.uri,
+            mimeType: resource.mimeType,
+            text: resource.content
+          }]
+        };
       }
-    } catch (error) {
-      mcpDebugger.error(`Failed to read ZPT resource ${uri}:`, error);
-      throw error;
-    }
-  });
+    );
+  }
 
-  mcpDebugger.info('ZPT resources registered successfully');
+  mcpDebugger.info('ZPT resources registered successfully.');
 }
 
 export { ZPTResourceURI };

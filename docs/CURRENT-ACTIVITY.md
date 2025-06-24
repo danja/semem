@@ -4,13 +4,15 @@ Increased human intervention!
 
 A lot of code has been created ahead of me actually trying it out. So right now the priority is getting things into a more finished state. Debugging, rationalizing. Three avenues of exploration -
 
-1. MCP wiring is working with :
+1. MCP wiring using STDIO is working with :
 ```sh
 claude mcp add semem npx semem-mcp
 ```
 (It may also work using the npm package `semem`)
 
 so Claude code can be asked to use the tools, resources & prompts.
+
+The HTTP server is proving difficult to debug. Ok, I admit I haven't looked at the code properly myself. Claude is finding it difficult.
 
 2. The UI is only minimally functional. One key part is the SPARQL editor/visualizer. I put together [Atuin](https://github.com/danja/atuin) with exactly this kind of scenario in mind. Despite my best efforts to make it easy to reuse (as an npm package which exposes about everything) it has still been a struggle with Claude Code.
 

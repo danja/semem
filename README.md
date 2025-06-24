@@ -19,14 +19,16 @@ The intuition is that while LLMs and associated techniques have massively advanc
 
 ## Status 2025-06-21 
 
+See also : [CURRENT-ACTIVITIES.md](https://github.com/danja/semem/blob/main/docs/CURRENT-ACTIVITY.md) and [blog](https://tensegrity.it)
+
 <details>
-<summary>Mostly functional but very, very sketchy. It has an MCP server, HTTP API, a crude browser UI and code APIs. A lot to do before much will be genuinely useful. It is in active development as of June 2025. The codebase is big and rather chaotic, <strong>it is not for the fainthearted</strong>.</summary>
+<summary>Mostly functional but very, very sketchy. It has an MCP server, HTTP API, a crude browser UI and code APIs. A lot to do before much will be remotely useful. It is in active development in June 2025. The codebase is big and rather chaotic, <strong>it is not for the fainthearted</strong>.</summary>
 
-The codebase is registered as the npm package [semem](https://www.npmjs.com/package/semem) though there hasn't been much time spent on this angle, currently it's pretty much essential to use this repo (or MCP). 
+The codebase is registered as the npm package [semem](https://www.npmjs.com/package/semem) though there hasn't been much time spent on this angle, currently it's pretty much essential to use this repo. 
 
-The dev process has involved pushing out in various directions with spikes, then circling back to ensure the core is still functional, then consolidation. To date it's been a one-man + various AI assistants (and a dog) operation. <strong>Collaborators would be very welcome</strong>.
+The dev process has involved pushing out in various directions with spikes, then circling back to ensure the core is still functional, then consolidation. To date it's been a one-man + various AI assistants (and a dog) operation. Despite me trying to keep things modular so they can be worked on in isolation, it's still complex enough that Claude (and I) struggle. <strong>Collaborators would be very welcome</strong>.
 </details>
-It is feature-complete as originally conceived, in the sense of <em>[all the right notes, but not necessarily in the right order](https://www.youtube.com/watch?v=R7GeKLE0x3s)</em>. There is a lot of cruft, no doubt numerous bugs. Right now it's in a <strong>consolidation phase</strong>.
+It is feature-complete as originally conceived, in the sense of <em>[all the right notes, but not necessarily in the right order](https://www.youtube.com/watch?v=R7GeKLE0x3s)</em>. There is a lot of cruft and numerous bugs. Right now it's in a <strong>consolidation phase</strong>.
 
 ## System Overview
 

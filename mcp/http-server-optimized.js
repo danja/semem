@@ -3,15 +3,6 @@
  * Non-blocking initialization with lazy loading for better startup performance
  */
 
-import dotenv from 'dotenv';
-
-// Load environment variables first, before any other imports
-dotenv.config();
-
-// Debug: Check if API keys are loaded
-console.log('🔑 MISTRAL_API_KEY loaded:', process.env.MISTRAL_API_KEY ? 'YES' : 'NO');
-console.log('🔑 CLAUDE_API_KEY loaded:', process.env.CLAUDE_API_KEY ? 'YES' : 'NO');
-
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
@@ -23,14 +14,10 @@ import { McpServer as Server } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { mcpDebugger } from './lib/debug-utils.js';
 import { mcpConfig } from './lib/config.js';
 
-console.log('🚀 HTTP SERVER: Starting script execution...');
-
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const port = mcpConfig.port || 3000;
 let httpTerminator = null;
-
-console.log(`🚀 HTTP SERVER: Variables initialized, port: ${port}`);
 
 // Server state management
 let mcpServerInstance = null;
@@ -38,7 +25,6 @@ let transportInstance = null;
 let isInitializing = false;
 let initializationError = null;
 let initializationPromise = null;
-let isFullyInitialized = false;
 
 /**
  * Create a minimal MCP server that can start immediately
@@ -47,12 +33,7 @@ function createMinimalServer() {
   const server = new Server({
     name: mcpConfig.name || "semem-mcp-server",
     version: mcpConfig.version || "0.1.0",
-    instructions: mcpConfig.instructions || "Semem MCP Server - Initializing...",
-    capabilities: {
-      tools: {},
-      resources: {},
-      prompts: {}
-    }
+    instructions: mcpConfig.instructions || "Semem MCP Server - Initializing..."
   });
 
   // Add a status tool to show initialization state
@@ -80,7 +61,7 @@ function createMinimalServer() {
  * Lazy initialization of the full MCP server
  */
 async function initializeFullServer() {
-  if (isFullyInitialized || isInitializing) {
+  if (mcpServerInstance || isInitializing) {
     return initializationPromise;
   }
 
@@ -89,47 +70,38 @@ async function initializeFullServer() {
 
   initializationPromise = (async () => {
     try {
-      console.log('🔄 [FULL] Starting lazy initialization of full MCP server...');
       mcpDebugger.info('🔄 Starting lazy initialization of full MCP server...');
       
       // Dynamic import to avoid blocking
-      console.log('📦 [FULL] Importing createServer from index.js...');
       const { createServer } = await import('./index.js');
-      console.log('✅ [FULL] createServer imported successfully');
       
       // Initialize with timeout to prevent hanging
-      console.log('⏰ [FULL] Setting up timeout promise (30s)...');
       const timeoutPromise = new Promise((_, reject) => {
         setTimeout(() => reject(new Error('Server initialization timeout (30s)')), 30000);
       });
       
-      console.log('🏃 [FULL] Starting createServer() call...');
       const serverPromise = createServer();
-      console.log('🏁 [FULL] Waiting for createServer() to complete...');
       const fullServer = await Promise.race([serverPromise, timeoutPromise]);
-      console.log('✅ [FULL] createServer() completed successfully');
       
-      // Connect the full server to transport
+      // Replace the minimal server with the full server
       if (transportInstance) {
-        console.log('🔄 [FULL] Connecting full server to transport...');
+        // Gracefully disconnect old server
         try {
-          await fullServer.connect(transportInstance);
-          mcpServerInstance = fullServer;
-          console.log('✅ [FULL] Full server connected successfully');
-          mcpDebugger.info('✅ Full MCP server initialized and connected');
-        } catch (connectError) {
-          console.log('⚠️ [FULL] Cannot connect full server to transport:', connectError.message);
-          mcpServerInstance = fullServer;
-          mcpDebugger.info('✅ Full MCP server initialized (transport connection failed)');
+          await mcpServerInstance?.close?.();
+        } catch (e) {
+          mcpDebugger.warn('Error closing minimal server:', e.message);
         }
+        
+        // Connect new server
+        await fullServer.connect(transportInstance);
+        mcpServerInstance = fullServer;
+        
+        mcpDebugger.info('✅ Full MCP server initialized and connected');
       } else {
         mcpServerInstance = fullServer;
-        console.log('✅ [FULL] Full server set as instance (no transport yet)');
         mcpDebugger.info('✅ Full MCP server initialized (waiting for transport)');
       }
       
-      isFullyInitialized = true;
-      console.log('🎉 [FULL] Full server initialization completed!');
       return fullServer;
       
     } catch (error) {
@@ -178,56 +150,48 @@ async function handleMCPRequest(req, res, body) {
 
 async function startOptimizedServer() {
   try {
-    console.log('🚀 [START] Starting Optimized MCP HTTP Server...');
     mcpDebugger.info('🚀 Starting Optimized MCP HTTP Server...');
 
-    // Create transport first (we'll connect the server later)
-    console.log('🔧 [START] Creating transport...');
+    // Create minimal server immediately
+    const minimalServer = createMinimalServer();
+    mcpServerInstance = minimalServer;
+
+    // Create transport
     const transport = new StreamableHTTPServerTransport({
       sessionIdGenerator: () => randomUUID(),
       enableJsonResponse: false,
       onsessioninitialized: (sessionId) => {
-        console.log(`🔗 [START] MCP session initialized: ${sessionId}`);
         mcpDebugger.info(`MCP session initialized: ${sessionId}`);
       }
     });
-    console.log('✅ [START] Transport created');
     transportInstance = transport;
-    
-    // We'll initialize the server in background and connect it when ready
-    console.log('🔧 [START] Server will be initialized in background...');
+
+    // Connect minimal server to transport
+    await minimalServer.connect(transport);
     
     // Configure Express middleware
-    console.log('🔧 [START] Configuring Express middleware...');
     app.use(cors());
     app.use(express.json());
-    console.log('✅ [START] Express middleware configured');
 
     // Wire up the transport to the /mcp endpoint with lazy loading
-    console.log('🔧 [START] Setting up MCP endpoint...');
     app.post('/mcp', async (req, res) => {
       await handleMCPRequest(req, res, req.body);
     });
-    console.log('✅ [START] MCP endpoint configured');
 
     // Health check endpoint
-    console.log('🔧 [START] Setting up health endpoint...');
     app.get('/health', (req, res) => {
       res.json({
         status: 'ok',
         server_state: {
           initialized: mcpServerInstance !== null,
-          fully_initialized: isFullyInitialized,
           initializing: isInitializing,
           error: initializationError?.message || null
         },
         timestamp: new Date().toISOString()
       });
     });
-    console.log('✅ [START] Health endpoint configured');
 
     // Serve MCP Inspector static files
-    console.log('🔧 [START] Setting up static file routes...');
     const inspectorPath = path.resolve(__dirname, '../node_modules/@modelcontextprotocol/inspector/client/dist');
     app.use('/inspector', express.static(inspectorPath));
     
@@ -242,24 +206,18 @@ async function startOptimizedServer() {
     app.get('/', (req, res) => {
       res.redirect('/inspector');
     });
-    console.log('✅ [START] Static file routes configured');
 
     // Start the Express server
-    console.log('🔧 [START] Starting Express server...');
     const server = app.listen(port, () => {
-      console.log(`✅ [START] Express server listening on port ${port}`);
       mcpDebugger.info(`✅ Optimized MCP HTTP Server listening on port ${port}`);
       mcpDebugger.info(`Health check: http://localhost:${port}/health`);
       mcpDebugger.info(`MCP endpoint: http://localhost:${port}/mcp`);
       mcpDebugger.info(`Inspector: http://localhost:${port}/inspector`);
       mcpDebugger.info('🔄 Full server initialization will happen on first request or in background...');
       
-      console.log('🔄 [START] Starting background initialization...');
       // Start background initialization after server is up
       setTimeout(() => {
-        console.log('⏰ [START] Background initialization timeout triggered');
-        initializeFullServer().catch((error) => {
-          console.log('❌ [START] Background initialization failed:', error.message);
+        initializeFullServer().catch(() => {
           // Background initialization failed, but server continues running
         });
       }, 1000);
