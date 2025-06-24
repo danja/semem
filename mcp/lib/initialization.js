@@ -122,6 +122,84 @@ export function getConfig() {
 }
 
 /**
+ * Create isolated service instances for session isolation
+ * Does not use global caching to allow multiple concurrent sessions
+ */
+export async function createIsolatedServices() {
+  try {
+    console.log('🚀 [ISOLATED] Creating isolated Semem services...');
+    
+    // Initialize config first
+    console.log('📝 [ISOLATED-CONFIG] Initializing config...');
+    const configPath = process.env.SEMEM_CONFIG_PATH || path.join(process.cwd(), 'config', 'config.json');
+    console.log(`📝 [ISOLATED-CONFIG] Config file path: ${configPath}`);
+    
+    const isolatedConfig = new Config(configPath);
+    await isolatedConfig.init();
+    console.log('✅ [ISOLATED-CONFIG] Config initialized successfully');
+    
+    // Create separate LLM and embedding providers
+    console.log('🤖 [ISOLATED-LLM] Creating LLM connector...');
+    const llmProvider = await createLLMConnector(configPath);
+    console.log('✅ [ISOLATED-LLM] LLM provider created');
+    
+    console.log('🔢 [ISOLATED-EMBED] Creating embedding connector...');
+    const embeddingProvider = await createEmbeddingConnector(configPath);
+    console.log('✅ [ISOLATED-EMBED] Embedding provider created');
+    
+    // Initialize storage backend
+    console.log('💾 [ISOLATED-STORAGE] Initializing storage backend...');
+    let storageBackend = null;
+    const storageType = isolatedConfig.get('storage.type');
+    console.log(`💾 [ISOLATED-STORAGE] Storage type: ${storageType}`);
+    
+    if (storageType === 'sparql') {
+      const { default: SPARQLStore } = await import('../../src/stores/SPARQLStore.js');
+      const storageOptions = isolatedConfig.get('storage.options');
+      storageBackend = new SPARQLStore(storageOptions);
+      console.log('✅ [ISOLATED-STORAGE] SPARQLStore created');
+    } else if (storageType === 'json') {
+      const { default: JSONStore } = await import('../../src/stores/JSONStore.js');
+      const storageOptions = isolatedConfig.get('storage.options');
+      storageBackend = new JSONStore(storageOptions.path);
+      console.log('✅ [ISOLATED-STORAGE] JSONStore created');
+    } else {
+      console.log('💾 [ISOLATED-STORAGE] Using default InMemoryStore');
+    }
+    
+    // Get model configuration
+    console.log('⚙️ [ISOLATED-MODEL] Getting model configuration...');
+    const modelConfig = await getModelConfig(configPath);
+    console.log('⚙️ [ISOLATED-MODEL] Using model configuration:', modelConfig);
+    
+    // Create isolated MemoryManager
+    console.log('🧠 [ISOLATED-MEMORY] Creating MemoryManager instance...');
+    const isolatedMemoryManager = new MemoryManager({
+      llmProvider,
+      embeddingProvider,
+      chatModel: modelConfig.chatModel,
+      embeddingModel: modelConfig.embeddingModel,
+      storage: storageBackend
+    });
+    console.log('✅ [ISOLATED-MEMORY] MemoryManager instance created');
+    
+    console.log('🧠 [ISOLATED-MEMORY] Initializing memory manager...');
+    await isolatedMemoryManager.initialize();
+    console.log('✅ [ISOLATED-MEMORY] Memory manager initialized successfully');
+    
+    console.log('🎉 [ISOLATED] Isolated Semem services created successfully');
+    return { 
+      memoryManager: isolatedMemoryManager, 
+      config: isolatedConfig 
+    };
+  } catch (error) {
+    console.error('❌ [ISOLATED] Failed to create isolated Semem services:', error);
+    console.error('❌ [ISOLATED] Error stack:', error.stack);
+    throw error;
+  }
+}
+
+/**
  * Check if services are initialized
  */
 export function isInitialized() {

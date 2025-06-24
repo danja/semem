@@ -34,7 +34,6 @@ console.log(`🚀 HTTP SERVER: Variables initialized, port: ${port}`);
 
 // Server state management
 let mcpServerInstance = null;
-let transportInstance = null;
 let isInitializing = false;
 let initializationError = null;
 let initializationPromise = null;
@@ -109,24 +108,10 @@ async function initializeFullServer() {
       const fullServer = await Promise.race([serverPromise, timeoutPromise]);
       console.log('✅ [FULL] createServer() completed successfully');
       
-      // Connect the full server to transport
-      if (transportInstance) {
-        console.log('🔄 [FULL] Connecting full server to transport...');
-        try {
-          await fullServer.connect(transportInstance);
-          mcpServerInstance = fullServer;
-          console.log('✅ [FULL] Full server connected successfully');
-          mcpDebugger.info('✅ Full MCP server initialized and connected');
-        } catch (connectError) {
-          console.log('⚠️ [FULL] Cannot connect full server to transport:', connectError.message);
-          mcpServerInstance = fullServer;
-          mcpDebugger.info('✅ Full MCP server initialized (transport connection failed)');
-        }
-      } else {
-        mcpServerInstance = fullServer;
-        console.log('✅ [FULL] Full server set as instance (no transport yet)');
-        mcpDebugger.info('✅ Full MCP server initialized (waiting for transport)');
-      }
+      // Store the full server instance (transport connections happen per-session)
+      mcpServerInstance = fullServer;
+      console.log('✅ [FULL] Full server set as instance (per-session transport connections)');
+      mcpDebugger.info('✅ Full MCP server initialized (per-session transport)');
       
       isFullyInitialized = true;
       console.log('🎉 [FULL] Full server initialization completed!');
@@ -146,27 +131,59 @@ async function initializeFullServer() {
 }
 
 /**
- * Request handler that ensures server is ready
+ * Request handler that creates a new transport for each request
  */
-async function handleMCPRequest(req, res, body) {
+async function handleMCPRequest(req, res, body, sessionTransports, sessionServers) {
   try {
-    // If we don't have a full server yet, try to initialize it
-    if (!mcpServerInstance && !isInitializing) {
-      // Start initialization in background (non-blocking)
-      initializeFullServer().catch(() => {
-        // Initialization failed, but we continue with minimal server
+    // Check for existing session ID (following reference pattern)
+    const sessionId = req.headers['mcp-session-id'];
+    let transport = sessionTransports.get(sessionId);
+
+    if (sessionId && transport) {
+      // Reuse existing transport for this session
+      console.log(`🔄 [SESSION-${sessionId}] Reusing existing transport`);
+    } else if (!sessionId) {
+      // New initialization request (no session ID header)
+      console.log('🔧 [INIT] New initialization request - creating server and transport...');
+      
+      // Create a new server instance for this session
+      const { createServer } = await import('./index.js');
+      const server = await createServer();
+      console.log('✅ [INIT] Server created');
+      
+      // Create a new transport for this session
+      transport = new StreamableHTTPServerTransport({
+        sessionIdGenerator: () => randomUUID(),
+        onsessioninitialized: (sid) => {
+          console.log(`🔗 [INIT] Session initialized with ID: ${sid}`);
+          sessionTransports.set(sid, transport);
+          sessionServers.set(sid, server);
+        }
       });
+      
+      // CRITICAL: Connect server to transport BEFORE handling request
+      console.log('🔗 [INIT] Connecting server to transport...');
+      await server.connect(transport);
+      console.log('✅ [INIT] Server connected to transport');
+
+      await transport.handleRequest(req, res, body);
+      return; // Already handled
+    } else {
+      // Invalid request - session ID provided but no transport found
+      res.status(400).json({
+        jsonrpc: '2.0',
+        error: {
+          code: -32000,
+          message: 'Bad Request: Invalid session ID provided',
+        },
+        id: req?.body?.id,
+      });
+      return;
     }
     
-    // Handle request with current server (minimal or full)
-    if (transportInstance) {
-      await transportInstance.handleRequest(req, res, body);
-    } else {
-      res.status(503).json({
-        error: "Server transport not ready",
-        retry_after: 1
-      });
-    }
+    // Handle the request with the session-specific transport
+    await transport.handleRequest(req, res, body);
+    
   } catch (error) {
     mcpDebugger.error('Error handling MCP request:', error);
     res.status(500).json({
@@ -181,21 +198,15 @@ async function startOptimizedServer() {
     console.log('🚀 [START] Starting Optimized MCP HTTP Server...');
     mcpDebugger.info('🚀 Starting Optimized MCP HTTP Server...');
 
-    // Create transport first (we'll connect the server later)
-    console.log('🔧 [START] Creating transport...');
-    const transport = new StreamableHTTPServerTransport({
-      sessionIdGenerator: () => randomUUID(),
-      enableJsonResponse: false,
-      onsessioninitialized: (sessionId) => {
-        console.log(`🔗 [START] MCP session initialized: ${sessionId}`);
-        mcpDebugger.info(`MCP session initialized: ${sessionId}`);
-      }
-    });
-    console.log('✅ [START] Transport created');
-    transportInstance = transport;
+    // Session management - we'll create transport instances per request
+    console.log('🔧 [START] Setting up session management...');
+    const sessionTransports = new Map();
+    const sessionServers = new Map();
     
-    // We'll initialize the server in background and connect it when ready
-    console.log('🔧 [START] Server will be initialized in background...');
+    console.log('✅ [START] Session management configured');
+    
+    // Server instances will be created per session automatically
+    console.log('🔧 [START] Server instances will be created per session...');
     
     // Configure Express middleware
     console.log('🔧 [START] Configuring Express middleware...');
@@ -203,10 +214,10 @@ async function startOptimizedServer() {
     app.use(express.json());
     console.log('✅ [START] Express middleware configured');
 
-    // Wire up the transport to the /mcp endpoint with lazy loading
+    // Wire up the request handler to the /mcp endpoint
     console.log('🔧 [START] Setting up MCP endpoint...');
     app.post('/mcp', async (req, res) => {
-      await handleMCPRequest(req, res, req.body);
+      await handleMCPRequest(req, res, req.body, sessionTransports, sessionServers);
     });
     console.log('✅ [START] MCP endpoint configured');
 
@@ -216,10 +227,9 @@ async function startOptimizedServer() {
       res.json({
         status: 'ok',
         server_state: {
-          initialized: mcpServerInstance !== null,
-          fully_initialized: isFullyInitialized,
-          initializing: isInitializing,
-          error: initializationError?.message || null
+          active_sessions: sessionTransports.size,
+          session_based: true,
+          architecture: 'per-request-isolation'
         },
         timestamp: new Date().toISOString()
       });
@@ -254,15 +264,7 @@ async function startOptimizedServer() {
       mcpDebugger.info(`Inspector: http://localhost:${port}/inspector`);
       mcpDebugger.info('🔄 Full server initialization will happen on first request or in background...');
       
-      console.log('🔄 [START] Starting background initialization...');
-      // Start background initialization after server is up
-      setTimeout(() => {
-        console.log('⏰ [START] Background initialization timeout triggered');
-        initializeFullServer().catch((error) => {
-          console.log('❌ [START] Background initialization failed:', error.message);
-          // Background initialization failed, but server continues running
-        });
-      }, 1000);
+      console.log('🔄 [START] Ready to handle MCP sessions...');
     });
 
     httpTerminator = createHttpTerminator({ server });

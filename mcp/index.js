@@ -284,4 +284,72 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   main().catch(console.error);
 }
 
-export { createServer };
+/**
+ * Create server with isolated services for session isolation
+ */
+async function createIsolatedServer() {
+  mcpDebugger.info('Creating isolated MCP server for session');
+  
+  // Create MCP server instance using HTTP version pattern
+  const server = new Server({
+    name: mcpConfig.name,
+    version: mcpConfig.version,
+    instructions: mcpConfig.instructions,
+    capabilities: {
+      tools: {},
+      resources: {},
+      prompts: {}
+    }
+  });
+
+  // Initialize isolated services (not global ones)
+  mcpDebugger.info('Initializing isolated services...');
+  const { createIsolatedServices } = await import('./lib/initialization.js');
+  await createIsolatedServices();
+  mcpDebugger.info('Isolated services initialized successfully');
+
+  // Initialize prompt registry
+  mcpDebugger.info('Initializing prompt registry...');
+  await initializePromptRegistry();
+  mcpDebugger.info('Prompt registry initialized successfully');
+
+  // Initialize enhanced workflow orchestrator
+  mcpDebugger.info('Initializing enhanced workflow orchestrator...');
+  await workflowOrchestrator.initialize(server);
+  mcpDebugger.info('Enhanced workflow orchestrator initialized successfully');
+
+  // Register all tools using a consistent pattern
+  mcpDebugger.info('Registering all tools...');
+  registerMemoryTools(server);
+  registerZPTTools(server);
+  registerResearchWorkflowTools(server);
+  mcpDebugger.info('All tools registered.');
+
+  // Register all resources
+  mcpDebugger.info('Registering status resources...');
+  registerStatusResources(server);
+  registerZPTResources(server);
+  mcpDebugger.info('All resources registered.');
+
+  // Register prompt tools
+  mcpDebugger.info('Registering prompt tools...');
+  for (const tool of PROMPT_TOOLS) {
+    server.tool(tool.name, tool.description, tool.inputSchema, async (args) => {
+      return await executePromptTool(tool.name, args, server);
+    });
+  }
+  mcpDebugger.info('All prompt tools registered.');
+
+  // Register all prompts
+  mcpDebugger.info('Registering prompts...');
+  for (const prompt of promptRegistry.listPrompts()) {
+    const { name, ...definition } = prompt;
+    server.prompt(name, definition);
+  }
+  mcpDebugger.info('All prompts registered.');
+
+  mcpDebugger.info('Isolated MCP server creation complete');
+  return server;
+}
+
+export { createServer, createIsolatedServer };
