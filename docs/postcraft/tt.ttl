@@ -35,7 +35,7 @@
  #  :loglevel "debug" ;
     :rawDir "content/raw" ;
     :renderPath "" ; # should probably come at render time
-    :baseURI <https://hyperdata.it/content/> ;
+    :baseURI <https://tensegrity.it/content/> ;
     :graph <http://hyperdata.it/content> ;
     :creatorName "Danny" ;
     :creatorURI <http://danny.ayers.name/me> .
