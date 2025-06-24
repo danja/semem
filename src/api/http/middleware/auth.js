@@ -26,7 +26,7 @@ export const authenticateRequest = (req, res, next) => {
     try {
         // In production, this should validate against a secure database of API keys
         // For now, we use a simple check against environment variable or default value
-        const validApiKey = process.env.API_KEY || 'semem-dev-key';
+        const validApiKey = process.env.SEMEM_API_KEY || 'semem-dev-key';
         
         if (apiKey === validApiKey) {
             // Store API key info in request for potential rate limiting

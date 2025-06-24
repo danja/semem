@@ -24,6 +24,9 @@ import { requestLogger } from '../api/http/middleware/logging.js';
 import MemoryAPI from '../api/features/MemoryAPI.js';
 import ChatAPI from '../api/features/ChatAPI.js';
 import SearchAPI from '../api/features/SearchAPI.js';
+import RagnoAPI from '../api/features/RagnoAPI.js';
+import ZptAPI from '../api/features/ZptAPI.js';
+import UnifiedSearchAPI from '../api/features/UnifiedSearchAPI.js';
 
 // Load environment variables
 dotenv.config();
@@ -194,6 +197,9 @@ class APIServer {
                 if (key in this.apiContext) {
                     return this.apiContext[key];
                 }
+                if (key === 'apis') {
+                    return this.apiContext.apis;
+                }
                 throw new Error(`Unknown component: ${key}`);
             }
         };
@@ -232,14 +238,50 @@ class APIServer {
         });
         await searchApi.initialize();
 
-        // Store API handlers
+        // Initialize Ragno API
+        const ragnoApi = new RagnoAPI({
+            registry: this.apiRegistry,
+            logger: logger,
+            maxTextLength: 50000,
+            maxBatchSize: 10,
+            requestTimeout: 300000
+        });
+        await ragnoApi.initialize();
+
+        // Initialize ZPT API
+        const zptApi = new ZptAPI({
+            registry: this.apiRegistry,
+            logger: logger,
+            maxConcurrentRequests: 10,
+            requestTimeoutMs: 120000,
+            defaultMaxTokens: 4000
+        });
+        await zptApi.initialize();
+
+        // Store API handlers first
         this.apiContext.apis = {
             'memory-api': memoryApi,
             'chat-api': chatApi,
-            'search-api': searchApi
+            'search-api': searchApi,
+            'ragno-api': ragnoApi,
+            'zpt-api': zptApi
         };
 
-        return { memoryApi, chatApi, searchApi };
+        // Initialize Unified Search API (depends on other APIs being available)
+        const unifiedSearchApi = new UnifiedSearchAPI({
+            registry: this.apiRegistry,
+            logger: logger,
+            defaultLimit: 20,
+            enableParallelSearch: true,
+            enableResultRanking: true,
+            searchTimeout: 30000
+        });
+        await unifiedSearchApi.initialize();
+
+        // Update API handlers with unified search
+        this.apiContext.apis['unified-search-api'] = unifiedSearchApi;
+
+        return { memoryApi, chatApi, searchApi, ragnoApi, zptApi, unifiedSearchApi };
     }
 
     /**
@@ -262,6 +304,137 @@ class APIServer {
         // Search API routes
         apiRouter.get('/search', authenticateRequest, this.createHandler('search-api', 'search'));
         apiRouter.post('/index', authenticateRequest, this.createHandler('search-api', 'index'));
+
+        // Ragno API routes
+        apiRouter.post('/graph/decompose', authenticateRequest, this.createHandler('ragno-api', 'decompose'));
+        apiRouter.get('/graph/stats', authenticateRequest, this.createHandler('ragno-api', 'stats'));
+        apiRouter.get('/graph/entities', authenticateRequest, this.createHandler('ragno-api', 'entities'));
+        apiRouter.post('/graph/search', authenticateRequest, this.createHandler('ragno-api', 'search'));
+        apiRouter.get('/graph/export/:format', authenticateRequest, this.createHandler('ragno-api', 'export'));
+        apiRouter.post('/graph/enrich', authenticateRequest, this.createHandler('ragno-api', 'enrich'));
+        apiRouter.get('/graph/communities', authenticateRequest, this.createHandler('ragno-api', 'communities'));
+        apiRouter.post('/graph/pipeline', authenticateRequest, this.createHandler('ragno-api', 'pipeline'));
+
+        // ZPT API routes
+        apiRouter.post('/navigate', authenticateRequest, this.createHandler('zpt-api', 'navigate'));
+        apiRouter.post('/navigate/preview', authenticateRequest, this.createHandler('zpt-api', 'preview'));
+        apiRouter.get('/navigate/options', this.createHandler('zpt-api', 'options'));
+        apiRouter.get('/navigate/schema', this.createHandler('zpt-api', 'schema'));
+        apiRouter.get('/navigate/health', this.createHandler('zpt-api', 'health'));
+
+        // Unified Search API routes
+        apiRouter.post('/search/unified', authenticateRequest, this.createHandler('unified-search-api', 'unified'));
+        apiRouter.post('/search/analyze', authenticateRequest, this.createHandler('unified-search-api', 'analyze'));
+        apiRouter.get('/search/services', this.createHandler('unified-search-api', 'services'));
+        apiRouter.get('/search/strategies', this.createHandler('unified-search-api', 'strategies'));
+
+        // Service Discovery endpoint
+        apiRouter.get('/services', (req, res) => {
+            try {
+                const services = {
+                    basic: {
+                        memory: {
+                            name: 'Memory API',
+                            description: 'Semantic memory management and retrieval',
+                            endpoints: [
+                                'POST /api/memory - Store interactions',
+                                'GET /api/memory/search - Search memories',
+                                'POST /api/memory/embedding - Generate embeddings',
+                                'POST /api/memory/concepts - Extract concepts'
+                            ],
+                            status: this.apiContext.apis['memory-api']?.initialized ? 'healthy' : 'unavailable'
+                        },
+                        chat: {
+                            name: 'Chat API', 
+                            description: 'Conversational AI and completion',
+                            endpoints: [
+                                'POST /api/chat - Chat completion',
+                                'POST /api/chat/stream - Streaming chat',
+                                'POST /api/completion - Text completion'
+                            ],
+                            status: this.apiContext.apis['chat-api']?.initialized ? 'healthy' : 'unavailable'
+                        },
+                        search: {
+                            name: 'Search API',
+                            description: 'Content search and indexing',
+                            endpoints: [
+                                'GET /api/search - Search content',
+                                'POST /api/index - Index content'
+                            ],
+                            status: this.apiContext.apis['search-api']?.initialized ? 'healthy' : 'unavailable'
+                        }
+                    },
+                    advanced: {
+                        ragno: {
+                            name: 'Ragno Knowledge Graph API',
+                            description: 'Knowledge graph operations and entity management',
+                            endpoints: [
+                                'POST /api/graph/decompose - Decompose text to entities',
+                                'GET /api/graph/stats - Graph statistics',
+                                'GET /api/graph/entities - Get entities',
+                                'POST /api/graph/search - Search knowledge graph',
+                                'GET /api/graph/export/{format} - Export graph data',
+                                'POST /api/graph/enrich - Enrich graph with embeddings',
+                                'GET /api/graph/communities - Get communities',
+                                'POST /api/graph/pipeline - Full ragno pipeline'
+                            ],
+                            status: this.apiContext.apis['ragno-api']?.initialized ? 'healthy' : 'unavailable'
+                        },
+                        zpt: {
+                            name: 'ZPT Navigation API',
+                            description: 'Zero-Point Traversal corpus navigation',
+                            endpoints: [
+                                'POST /api/navigate - Main navigation',
+                                'POST /api/navigate/preview - Navigation preview',
+                                'GET /api/navigate/options - Navigation options',
+                                'GET /api/navigate/schema - Parameter schema',
+                                'GET /api/navigate/health - ZPT health check'
+                            ],
+                            status: this.apiContext.apis['zpt-api']?.initialized ? 'healthy' : 'unavailable'
+                        },
+                        unified: {
+                            name: 'Unified Search API',
+                            description: 'Cross-service intelligent search',
+                            endpoints: [
+                                'POST /api/search/unified - Unified search across all services',
+                                'POST /api/search/analyze - Analyze search query',
+                                'GET /api/search/services - Get available services',
+                                'GET /api/search/strategies - Get search strategies'
+                            ],
+                            status: this.apiContext.apis['unified-search-api']?.initialized ? 'healthy' : 'unavailable'
+                        }
+                    },
+                    system: {
+                        config: 'GET /api/config - Get system configuration',
+                        health: 'GET /api/health - System health check',
+                        metrics: 'GET /api/metrics - System metrics',
+                        services: 'GET /api/services - This service discovery endpoint'
+                    }
+                };
+
+                const summary = {
+                    totalServices: Object.keys(services.basic).length + Object.keys(services.advanced).length,
+                    healthyServices: Object.values({...services.basic, ...services.advanced})
+                        .filter(service => service.status === 'healthy').length,
+                    totalEndpoints: Object.values({...services.basic, ...services.advanced})
+                        .reduce((total, service) => total + service.endpoints.length, 0) + 4 // system endpoints
+                };
+
+                res.json({
+                    success: true,
+                    summary,
+                    services,
+                    timestamp: new Date().toISOString(),
+                    serverVersion: process.env.npm_package_version || '1.0.0'
+                });
+            } catch (error) {
+                logger.error('Service discovery error:', error);
+                res.status(500).json({
+                    success: false,
+                    error: 'Failed to retrieve service information'
+                });
+            }
+        });
 
         // Config endpoint
         apiRouter.get('/config', (req, res) => {
@@ -437,6 +610,11 @@ class APIServer {
 
                 // Get parameters from appropriate source
                 const params = req.method === 'GET' ? req.query : req.body;
+                
+                // Include route parameters if they exist
+                if (req.params && Object.keys(req.params).length > 0) {
+                    Object.assign(params, req.params);
+                }
 
                 // Execute operation
                 const result = await api.executeOperation(operation, params);
