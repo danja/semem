@@ -13,6 +13,9 @@ import rateLimit from 'express-rate-limit';
 import Config from '../Config.js';
 import MemoryManager from '../MemoryManager.js';
 import EmbeddingConnectorFactory from '../connectors/EmbeddingConnectorFactory.js';
+import OllamaConnector from '../connectors/OllamaConnector.js';
+import ClaudeConnector from '../connectors/ClaudeConnector.js';
+import MistralConnector from '../connectors/MistralConnector.js';
 import LLMHandler from '../handlers/LLMHandler.js';
 import EmbeddingHandler from '../handlers/EmbeddingHandler.js';
 import CacheManager from '../handlers/CacheManager.js';
@@ -99,40 +102,20 @@ class APIServer {
         const config = new Config();
         await config.init();
         
-        // Create embedding provider using factory
-        const embeddingProvider = config.get('embeddingProvider') || 'ollama';
-        const embeddingModel = process.env.EMBEDDING_MODEL || 
-                             config.get('embeddingModel') || 
-                             config.get('models.embedding.model') || 
-                             'nomic-embed-text';
-        const chatModel = process.env.CHAT_MODEL || 
-                         config.get('chatModel') ||
-                         config.get('models.chat.model') || 
-                         'qwen2:1.5b';
+        // Use new configuration-driven provider selection (like MCP server)
+        logger.info('Creating providers using configuration-driven selection...');
+        
+        // Create LLM connector for chat operations
+        const llmProvider = await this.createLLMConnector(config);
+        
+        // Create embedding connector for embedding operations  
+        const embeddingProvider = await this.createEmbeddingConnector(config);
+        
+        // Get model configuration
+        const modelConfig = await this.getModelConfig(config);
+        logger.info('Using model configuration:', modelConfig);
+        
         const dimension = config.get('memory.dimension') || 1536;
-
-        logger.info(`Creating embedding connector: ${embeddingProvider} (${embeddingModel})`);
-        
-        // Create embedding connector using factory
-        let providerConfig = {};
-        if (embeddingProvider === 'nomic') {
-            providerConfig = {
-                provider: 'nomic',
-                apiKey: process.env.NOMIC_API_KEY,
-                model: embeddingModel
-            };
-        } else if (embeddingProvider === 'ollama') {
-            const ollamaBaseUrl = config.get('ollama.baseUrl') || 
-                                process.env.OLLAMA_API_BASE || 
-                                'http://localhost:11434';
-            providerConfig = {
-                provider: 'ollama',
-                baseUrl: ollamaBaseUrl,
-                model: embeddingModel
-            };
-        }
-        
-        const llmProvider = EmbeddingConnectorFactory.createConnector(providerConfig);
 
         // Initialize cache manager
         const cacheManager = new CacheManager({
@@ -142,13 +125,13 @@ class APIServer {
 
         // Initialize handlers
         const embeddingHandler = new EmbeddingHandler(
-            llmProvider,
-            embeddingModel,
+            embeddingProvider,
+            modelConfig.embeddingModel,
             dimension,
             cacheManager
         );
 
-        const llmHandler = new LLMHandler(llmProvider, chatModel);
+        const llmHandler = new LLMHandler(llmProvider, modelConfig.chatModel);
 
         // Initialize storage based on config
         let storage;
@@ -176,9 +159,9 @@ class APIServer {
         // Initialize memory manager with the configured storage
         const memoryManager = new MemoryManager({
             llmProvider,
-            embeddingProvider: llmProvider, // Use same connector for both
-            chatModel,
-            embeddingModel,
+            embeddingProvider,
+            chatModel: modelConfig.chatModel,
+            embeddingModel: modelConfig.embeddingModel,
             dimension,
             storage
         });
@@ -205,6 +188,132 @@ class APIServer {
         };
 
         return { memoryManager, embeddingHandler, llmHandler };
+    }
+
+    /**
+     * Create LLM connector based on configuration priority
+     */
+    async createLLMConnector(config) {
+        try {
+            // Get llmProviders with priority ordering
+            const llmProviders = config.get('llmProviders') || [];
+            
+            // Sort by priority (lower number = higher priority)
+            const sortedProviders = llmProviders
+                .filter(p => p.capabilities?.includes('chat'))
+                .sort((a, b) => (a.priority || 999) - (b.priority || 999));
+            
+            logger.info('Available chat providers by priority:', sortedProviders.map(p => `${p.type} (priority: ${p.priority})`));
+            
+            // Try providers in priority order
+            for (const provider of sortedProviders) {
+                logger.info(`Trying LLM provider: ${provider.type} (priority: ${provider.priority})`);
+                
+                if (provider.type === 'mistral' && provider.apiKey) {
+                    logger.info('✅ Creating Mistral connector (highest priority)...');
+                    return new MistralConnector();
+                } else if (provider.type === 'claude' && provider.apiKey) {
+                    logger.info('✅ Creating Claude connector...');
+                    return new ClaudeConnector();
+                } else if (provider.type === 'ollama') {
+                    logger.info('✅ Creating Ollama connector (fallback)...');
+                    return new OllamaConnector();
+                } else {
+                    logger.info(`❌ Provider ${provider.type} not available (missing API key or implementation)`);
+                }
+            }
+            
+            logger.info('⚠️ No configured providers available, defaulting to Ollama');
+            return new OllamaConnector();
+            
+        } catch (error) {
+            logger.warn('Failed to load provider configuration, defaulting to Ollama:', error.message);
+            return new OllamaConnector();
+        }
+    }
+
+    /**
+     * Create embedding connector using configuration-driven factory pattern
+     */
+    async createEmbeddingConnector(config) {
+        try {
+            // Get llmProviders with priority ordering for embeddings
+            const llmProviders = config.get('llmProviders') || [];
+            
+            // Sort by priority (lower number = higher priority)
+            const sortedProviders = llmProviders
+                .filter(p => p.capabilities?.includes('embedding'))
+                .sort((a, b) => (a.priority || 999) - (b.priority || 999));
+            
+            logger.info('Available embedding providers by priority:', sortedProviders.map(p => `${p.type} (priority: ${p.priority})`));
+            
+            // Try providers in priority order
+            for (const provider of sortedProviders) {
+                logger.info(`Trying embedding provider: ${provider.type} (priority: ${provider.priority})`);
+                
+                if (provider.type === 'nomic' && provider.apiKey) {
+                    logger.info('✅ Creating Nomic embedding connector (highest priority)...');
+                    return EmbeddingConnectorFactory.createConnector({
+                        provider: 'nomic',
+                        apiKey: provider.apiKey,
+                        model: provider.embeddingModel || 'nomic-embed-text-v1.5'
+                    });
+                } else if (provider.type === 'ollama') {
+                    logger.info('✅ Creating Ollama embedding connector (fallback)...');
+                    const ollamaBaseUrl = process.env.OLLAMA_HOST || 'http://localhost:11434';
+                    return EmbeddingConnectorFactory.createConnector({
+                        provider: 'ollama',
+                        baseUrl: ollamaBaseUrl,
+                        model: provider.embeddingModel || 'nomic-embed-text'
+                    });
+                } else {
+                    logger.info(`❌ Embedding provider ${provider.type} not available (missing API key or implementation)`);
+                }
+            }
+            
+            logger.info('⚠️ No configured embedding providers available, defaulting to Ollama');
+            return EmbeddingConnectorFactory.createConnector({
+                provider: 'ollama',
+                baseUrl: process.env.OLLAMA_HOST || 'http://localhost:11434',
+                model: 'nomic-embed-text'
+            });
+            
+        } catch (error) {
+            logger.warn('Failed to create configured embedding connector, falling back to Ollama:', error.message);
+            // Fallback to Ollama for embeddings
+            return EmbeddingConnectorFactory.createConnector({
+                provider: 'ollama',
+                baseUrl: process.env.OLLAMA_HOST || 'http://localhost:11434',
+                model: 'nomic-embed-text'
+            });
+        }
+    }
+
+    /**
+     * Get working model names from configuration
+     */
+    async getModelConfig(config) {
+        try {
+            // Get highest priority providers
+            const llmProviders = config.get('llmProviders') || [];
+            const chatProvider = llmProviders
+                .filter(p => p.capabilities?.includes('chat'))
+                .sort((a, b) => (a.priority || 999) - (b.priority || 999))[0];
+            const embeddingProvider = llmProviders
+                .filter(p => p.capabilities?.includes('embedding'))
+                .sort((a, b) => (a.priority || 999) - (b.priority || 999))[0];
+            
+            return {
+                chatModel: chatProvider?.chatModel || 'qwen2:1.5b',
+                embeddingModel: embeddingProvider?.embeddingModel || 'nomic-embed-text'
+            };
+        } catch (error) {
+            logger.warn('Failed to get model config from configuration, using defaults:', error.message);
+            return {
+                chatModel: 'qwen2:1.5b',
+                embeddingModel: 'nomic-embed-text'
+            };
+        }
     }
 
     /**
