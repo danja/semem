@@ -101,7 +101,7 @@ export default class Config {
 
                 // Transform config file format to internal format
                 fileConfig = this.transformJsonConfig(fileConfig)
-                console.log('Transformed config:', JSON.stringify(fileConfig, null, 2))
+                //  console.log('Transformed config:', JSON.stringify(fileConfig, null, 2))
             } else {
                 console.log('No config file path provided, using defaults')
             }

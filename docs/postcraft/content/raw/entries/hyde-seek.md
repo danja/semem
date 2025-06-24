@@ -10,4 +10,6 @@ So far so good. I was able to get embeddings using the Nomic API working in one 
 
 But then as I went to an example that needed chat, it threw up loads of issues around the config setup. It tried to load the Mistral model through Ollama. Oops.
 
-So to resolve this I went to an example that I knew had worked, `HyDE`, that uses responses from prompts as hypotheticals in subsequent similarity search.  
+So to resolve this I went to an example that I knew had worked, `HyDE`, that uses responses from prompts as hypotheticals in subsequent similarity search. Long story short, it took a lot of cycles with Claude Code to get this working again *properly*.
+
+But this involved changes to core code - `Config`, `MemoryManager`... and now there are several breaking tests. Time to cycle back through them.
