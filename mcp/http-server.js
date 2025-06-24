@@ -55,12 +55,15 @@ async function startServer() {
     const server = await createServer();
 
     // Create a transport for the server
-    const transport = new StreamableHTTPServerTransport(server, {
-      path: '/mcp'
-    });
+    const transport = new StreamableHTTPServerTransport(server);
+    
+    // Connect server and transport
+    await server.connect(transport);
 
     // Attach MCP transport handler to Express app
-    app.use('/mcp', transport.createRequestHandler());
+    app.post('/mcp', (req, res) => {
+      transport.handleRequest(req, res, req.body);
+    });
 
     // Simple status endpoint
     app.get('/status', (req, res) => {

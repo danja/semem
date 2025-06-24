@@ -5,7 +5,7 @@
  * Modular ES6 implementation with enhanced debugging
  */
 
-import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import { McpServer as Server } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { 
   ListPromptsRequestSchema,
@@ -21,12 +21,12 @@ import { initializeServices } from './lib/initialization.js';
 
 // Import tool registrations
 import { registerMemoryTools } from './tools/memory-tools.js';
-import { registerMemoryToolsHttp } from './tools/memory-tools-http.js';
+import { registerZPTTools } from './tools/zpt-tools.js';
+import { registerResearchWorkflowTools } from './tools/research-workflow-tools.js';
 // import { registerPromptTools } from './tools/prompt-tools.js';
 
 // Import resource registrations  
 import { registerStatusResources } from './resources/status-resource.js';
-import { registerStatusResourcesHttp } from './resources/status-resource-http.js';
 
 // Import prompt system
 import { initializePromptRegistry, promptRegistry } from './prompts/registry.js';
@@ -106,7 +106,10 @@ async function createServer() {
   mcpDebugger.info('Creating MCP server with config', mcpConfig);
   
   // Create MCP server instance using HTTP version pattern
-  const server = new Server(mcpConfig, {
+  const server = new Server({
+    name: mcpConfig.name,
+    version: mcpConfig.version,
+    instructions: mcpConfig.instructions,
     capabilities: {
       tools: {},
       resources: {},
@@ -146,27 +149,24 @@ async function createServer() {
   await workflowOrchestrator.initialize(server);
   mcpDebugger.info('Enhanced workflow orchestrator initialized successfully');
 
-  // Register all tools using HTTP pattern
-  mcpDebugger.info('Registering memory tools...');
-  
-  // Choose which tools to register based on environment
-  if (process.env.MCP_USE_HTTP_TOOLS !== 'false') {
-    registerMemoryToolsHttp(server);
-  } else {
-    registerMemoryTools(server);
-  }
+  // Register all tools using a consistent pattern
+  mcpDebugger.info('Registering all tools...');
+  registerMemoryTools(server);
+  registerZPTTools(server);
+  registerResearchWorkflowTools(server);
+  mcpDebugger.info('All tools registered.');
 
-  // Register all resources using HTTP pattern  
+  // Register all resources
   mcpDebugger.info('Registering status resources...');
-  if (process.env.MCP_USE_HTTP_TOOLS !== 'false') {
-    registerStatusResourcesHttp(server);
-  } else {
-    registerStatusResources(server);
-  }
+  registerStatusResources(server);
 
-  // Register prompt handlers
-  mcpDebugger.info('Registering prompt handlers...');
-  registerPromptHandlers(server);
+  // Register all prompts
+  mcpDebugger.info('Registering prompts...');
+  for (const prompt of promptRegistry.listPrompts()) {
+    const { name, ...definition } = prompt;
+    server.prompt(name, definition);
+  }
+  mcpDebugger.info('All prompts registered.');
 
   mcpDebugger.info('MCP server creation complete');
   return server;

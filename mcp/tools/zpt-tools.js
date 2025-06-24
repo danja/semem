@@ -1659,313 +1659,110 @@ class ZPTNavigationService {
   }
 
   getTiltRecommendations(query) {
-    return {
-      keywords: 'Fast keyword-based representation',
-      embedding: 'Best for semantic similarity',
-      graph: 'Use for relationship exploration',
-      temporal: 'Recommended for time-based analysis'
-    };
+    // In a real implementation, this would analyze query and suggest tilts
+    return ['keywords', 'embedding', 'temporal'];
   }
 }
 
 /**
- * Register ZPT tools using HTTP version pattern
+ * Register ZPT tools with the MCP server
  */
 export function registerZPTTools(server) {
   mcpDebugger.info('Registering ZPT tools...');
 
-  // List tools handler
-  server.setRequestHandler(ListToolsRequestSchema, async () => {
-    return {
-      tools: [
-        {
-          name: ZPTToolName.NAVIGATE,
-          description: "3-dimensional knowledge graph navigation using Zoom/Pan/Tilt spatial metaphors",
-          inputSchema: {
-            type: "object",
-            properties: {
-              query: {
-                type: "string",
-                description: "Navigation query for corpus exploration"
-              },
-              zoom: {
-                type: "string",
-                enum: ["entity", "unit", "text", "community", "corpus"],
-                description: "Level of abstraction for content selection (default: entity)"
-              },
-              pan: {
-                type: "object",
-                properties: {
-                  topic: { type: "string", description: "Topic-based filtering" },
-                  temporal: {
-                    type: "object",
-                    properties: {
-                      start: { type: "string", description: "Start date for temporal filtering" },
-                      end: { type: "string", description: "End date for temporal filtering" }
-                    }
-                  },
-                  geographic: {
-                    type: "object",
-                    properties: {
-                      bbox: { 
-                        type: "array",
-                        items: { type: "number" },
-                        description: "Geographic bounding box [minLon, minLat, maxLon, maxLat]"
-                      }
-                    }
-                  },
-                  entity: {
-                    type: "array",
-                    items: { type: "string" },
-                    description: "Specific entities to focus on"
-                  }
-                },
-                description: "Content filtering parameters"
-              },
-              tilt: {
-                type: "string",
-                enum: ["keywords", "embedding", "graph", "temporal"],
-                description: "Representation style for content (default: keywords)"
-              },
-              transform: {
-                type: "object",
-                properties: {
-                  maxTokens: { 
-                    type: "number", 
-                    minimum: 100, 
-                    maximum: 16000,
-                    description: "Token budget for output (default: 4000)"
-                  },
-                  format: { 
-                    type: "string", 
-                    enum: ["json", "markdown", "structured", "conversational"],
-                    description: "Output format (default: json)"
-                  },
-                  tokenizer: { 
-                    type: "string", 
-                    enum: ["cl100k_base", "p50k_base", "claude", "llama"],
-                    description: "Tokenizer for counting (default: cl100k_base)"
-                  },
-                  chunkStrategy: { 
-                    type: "string", 
-                    enum: ["semantic", "adaptive", "fixed", "sliding"],
-                    description: "Chunking strategy (default: semantic)"
-                  },
-                  includeMetadata: { 
-                    type: "boolean",
-                    description: "Include navigation metadata (default: true)"
-                  }
-                },
-                description: "Output transformation options"
-              }
-            },
-            required: ["query"]
-          }
-        },
-        {
-          name: ZPTToolName.PREVIEW,
-          description: "Preview ZPT navigation options and estimated results without full processing",
-          inputSchema: {
-            type: "object",
-            properties: {
-              query: {
-                type: "string",
-                description: "Navigation query for preview analysis"
-              },
-              zoom: {
-                type: "string",
-                enum: ["entity", "unit", "text", "community", "corpus"],
-                description: "Optional zoom level for preview"
-              },
-              pan: {
-                type: "object",
-                properties: {
-                  topic: { type: "string" },
-                  temporal: { type: "object" },
-                  geographic: { type: "object" },
-                  entity: { type: "array", items: { type: "string" } }
-                },
-                description: "Optional filtering parameters for preview"
-              }
-            },
-            required: ["query"]
-          }
-        },
-        {
-          name: ZPTToolName.GET_SCHEMA,
-          description: "Get complete ZPT parameter schema and documentation",
-          inputSchema: {
-            type: "object",
-            properties: {}
-          }
-        },
-        {
-          name: ZPTToolName.VALIDATE_PARAMS,
-          description: "Validate ZPT parameters with detailed error reporting and suggestions",
-          inputSchema: {
-            type: "object",
-            properties: {
-              params: {
-                type: "object",
-                properties: {
-                  query: { type: "string" },
-                  zoom: { type: "string" },
-                  pan: { type: "object" },
-                  tilt: { type: "string" },
-                  transform: { type: "object" }
-                },
-                description: "ZPT parameters to validate"
-              }
-            },
-            required: ["params"]
-          }
-        },
-        {
-          name: ZPTToolName.GET_OPTIONS,
-          description: "Get available parameter values for current corpus state",
-          inputSchema: {
-            type: "object",
-            properties: {
-              context: {
-                type: "string",
-                enum: ["current", "full"],
-                description: "Context scope for options (default: current)"
-              },
-              query: {
-                type: "string",
-                description: "Optional query for contextual options"
-              }
-            }
-          }
-        },
-        {
-          name: ZPTToolName.ANALYZE_CORPUS,
-          description: "Analyze corpus structure for ZPT navigation optimization",
-          inputSchema: {
-            type: "object",
-            properties: {
-              analysisType: {
-                type: "string",
-                enum: ["structure", "performance", "recommendations"],
-                description: "Type of analysis to perform (default: structure)"
-              },
-              includeStats: {
-                type: "boolean",
-                description: "Include detailed statistics (default: true)"
-              }
-            }
-          }
-        }
-      ]
-    };
-  });
+  const service = new ZPTNavigationService();
 
-  // Call tool handler
-  server.setRequestHandler(CallToolRequestSchema, async (request) => {
-    const { name, arguments: args } = request.params;
-
-    try {
+  server.tool(
+    ZPTToolName.NAVIGATE,
+    "Navigate the knowledge space using 3D spatial metaphors (zoom, pan, tilt).",
+    ZPTNavigateSchema,
+    async (args) => {
       await initializeServices();
       const memoryManager = getMemoryManager();
       const safeOps = new SafeOperations(memoryManager);
-      const zptService = new ZPTNavigationService(memoryManager, safeOps);
-
-      if (name === ZPTToolName.NAVIGATE) {
-        const { query, zoom, pan, tilt, transform } = ZPTNavigateSchema.parse(args);
-        
-        const result = await zptService.navigate(query, zoom, pan, tilt, transform);
-        
-        return {
-          content: [{
-            type: "text",
-            text: JSON.stringify(result, null, 2)
-          }]
-        };
-      }
-
-      if (name === ZPTToolName.PREVIEW) {
-        const { query, zoom, pan } = ZPTPreviewSchema.parse(args);
-        
-        const result = await zptService.preview(query, zoom, pan);
-        
-        return {
-          content: [{
-            type: "text",
-            text: JSON.stringify(result, null, 2)
-          }]
-        };
-      }
-
-      if (name === ZPTToolName.GET_SCHEMA) {
-        const result = zptService.getSchema();
-        
-        return {
-          content: [{
-            type: "text",
-            text: JSON.stringify(result, null, 2)
-          }]
-        };
-      }
-
-      if (name === ZPTToolName.VALIDATE_PARAMS) {
-        const { params } = ZPTValidateParamsSchema.parse(args);
-        
-        const result = zptService.validateParams(params);
-        
-        return {
-          content: [{
-            type: "text",
-            text: JSON.stringify(result, null, 2)
-          }]
-        };
-      }
-
-      if (name === ZPTToolName.GET_OPTIONS) {
-        const { context, query } = ZPTGetOptionsSchema.parse(args);
-        
-        const result = await zptService.getOptions(context, query);
-        
-        return {
-          content: [{
-            type: "text",
-            text: JSON.stringify(result, null, 2)
-          }]
-        };
-      }
-
-      if (name === ZPTToolName.ANALYZE_CORPUS) {
-        const { analysisType, includeStats } = ZPTAnalyzeCorpusSchema.parse(args);
-        
-        const result = await zptService.analyzeCorpus(analysisType, includeStats);
-        
-        return {
-          content: [{
-            type: "text",
-            text: JSON.stringify(result, null, 2)
-          }]
-        };
-      }
-
-      throw new Error(`Unknown ZPT tool: ${name}`);
-
-    } catch (error) {
-      mcpDebugger.error(`ZPT tool ${name} failed:`, error);
-      
-      return {
-        content: [{
-          type: "text",
-          text: JSON.stringify({
-            success: false,
-            error: error.name || 'UNKNOWN_ERROR',
-            message: error.message,
-            tool: name
-          }, null, 2)
-        }]
-      };
+      service.memoryManager = memoryManager;
+      service.safeOps = safeOps;
+      const result = await service.navigate(args);
+      return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
     }
-  });
+  );
 
-  mcpDebugger.info('ZPT tools registered successfully');
+  server.tool(
+    ZPTToolName.PREVIEW,
+    "Get a lightweight preview of a navigation destination.",
+    ZPTPreviewSchema,
+    async ({ query, zoom, pan }) => {
+      await initializeServices();
+      const memoryManager = getMemoryManager();
+      const safeOps = new SafeOperations(memoryManager);
+      service.memoryManager = memoryManager;
+      service.safeOps = safeOps;
+      const result = await service.preview(query, zoom, pan);
+      return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+    }
+  );
+
+  server.tool(
+    ZPTToolName.GET_SCHEMA,
+    "Get the ZPT schema and available dimensions.",
+    z.object({}),
+    async () => {
+      await initializeServices();
+      const memoryManager = getMemoryManager();
+      const safeOps = new SafeOperations(memoryManager);
+      service.memoryManager = memoryManager;
+      service.safeOps = safeOps;
+      const result = await service.getSchema();
+      return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+    }
+  );
+
+  server.tool(
+    ZPTToolName.VALIDATE_PARAMS,
+    "Validate a set of ZPT navigation parameters.",
+    ZPTValidateParamsSchema,
+    async ({ params }) => {
+      await initializeServices();
+      const memoryManager = getMemoryManager();
+      const safeOps = new SafeOperations(memoryManager);
+      service.memoryManager = memoryManager;
+      service.safeOps = safeOps;
+      const result = await service.validateParams(params);
+      return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+    }
+  );
+
+  server.tool(
+    ZPTToolName.GET_OPTIONS,
+    "Get available options for ZPT navigation.",
+    ZPTGetOptionsSchema,
+    async ({ context, query }) => {
+      await initializeServices();
+      const memoryManager = getMemoryManager();
+      const safeOps = new SafeOperations(memoryManager);
+      service.memoryManager = memoryManager;
+      service.safeOps = safeOps;
+      const result = await service.getOptions(context, query);
+      return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+    }
+  );
+
+  server.tool(
+    ZPTToolName.ANALYZE_CORPUS,
+    "Analyze the corpus for ZPT navigation readiness.",
+    ZPTAnalyzeCorpusSchema,
+    async ({ analysisType, includeStats }) => {
+      await initializeServices();
+      const memoryManager = getMemoryManager();
+      const safeOps = new SafeOperations(memoryManager);
+      service.memoryManager = memoryManager;
+      service.safeOps = safeOps;
+      const result = await service.analyzeCorpus(analysisType, includeStats);
+      return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+    }
+  );
+
+  mcpDebugger.info('ZPT tools registered successfully.');
 }
 
 export { ZPTToolName, ZPTNavigationService };
