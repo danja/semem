@@ -6,9 +6,11 @@
 
    netstat -tulpn | grep 6277
 
-  netstat -tulpn | grep 9000
+  netstat -tulpn | grep 3000
 
-kill -9 [id]
+ lsof -i:3000
+
+kill -9 [pid]
 
 killall webpack
 

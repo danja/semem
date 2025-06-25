@@ -25,6 +25,9 @@ import { initializeServices } from './lib/initialization.js';
 import { registerMemoryTools } from './tools/memory-tools.js';
 import { registerZPTTools } from './tools/zpt-tools.js';
 import { registerResearchWorkflowTools } from './tools/research-workflow-tools.js';
+import { registerRagnoTools } from './tools/ragno-tools.js';
+import { registerSPARQLTools } from './tools/sparql-tools.js';
+import { registerVSOMTools } from './tools/vsom-tools.js';
 import { PROMPT_TOOLS, executePromptTool } from './tools/prompt-tools.js';
 
 // Import resource registrations  
@@ -197,10 +200,8 @@ async function createServer() {
   //   return originalSetRequestHandler.call(this, schema, wrappedHandler);
   // };
 
-  // Initialize services
-  mcpDebugger.info('Initializing services...');
-  await initializeServices();
-  mcpDebugger.info('Services initialized successfully');
+  // Services will be initialized lazily when tools are called
+  mcpDebugger.info('Services will be initialized when first tool is called...');
 
   // Initialize prompt registry
   mcpDebugger.info('Initializing prompt registry...');
@@ -223,6 +224,9 @@ async function createServer() {
   registerMemoryTools(server);
   registerZPTTools(server);
   registerResearchWorkflowTools(server);
+  registerRagnoTools(server);
+  registerSPARQLTools(server);
+  registerVSOMTools(server);
   mcpDebugger.info('All tools registered.');
 
   // Register all resources
@@ -302,11 +306,8 @@ async function createIsolatedServer() {
     }
   });
 
-  // Initialize isolated services (not global ones)
-  mcpDebugger.info('Initializing isolated services...');
-  const { createIsolatedServices } = await import('./lib/initialization.js');
-  await createIsolatedServices();
-  mcpDebugger.info('Isolated services initialized successfully');
+  // Isolated services will be initialized lazily when tools are called
+  mcpDebugger.info('Isolated services will be initialized when first tool is called...');
 
   // Initialize prompt registry
   mcpDebugger.info('Initializing prompt registry...');
@@ -323,6 +324,9 @@ async function createIsolatedServer() {
   registerMemoryTools(server);
   registerZPTTools(server);
   registerResearchWorkflowTools(server);
+  registerRagnoTools(server);
+  registerSPARQLTools(server);
+  registerVSOMTools(server);
   mcpDebugger.info('All tools registered.');
 
   // Register all resources
