@@ -14,13 +14,15 @@ so Claude code can be asked to use the tools, resources & prompts.
 
 The HTTP server is proving difficult to debug. Ok, I admit I haven't looked at the code properly myself. Claude is finding it difficult.
 
-2. The UI is only minimally functional. One key part is the SPARQL editor/visualizer. I put together [Atuin](https://github.com/danja/atuin) with exactly this kind of scenario in mind. Despite my best efforts to make it easy to reuse (as an npm package which exposes about everything) it has still been a struggle with Claude Code.
+2. The UI is only minimally functional. One key part is the SPARQL editor/visualizer. This should allow exploration of the knowledgebase via CONSTRUCT queries rendered as live graph diagrams. Impementation is virtually all straight from [atuin](https://github.com/danja/atuin) via the npm package.
 
 3. Demos
 
 The files under `examples` which exercise various components of the system are intentionally verbose in the output. Explore, explore.
 
-There are many components that seem to work in isolation, but experimentation is needed to see how they can best be used in workflows. Using MCP in a Claude Code session, Claude does quite a good job of following a sequence.
+There are many components that seem to work in isolation, but experimentation is needed to see how they can best be used in workflows. 
+
+Using MCP in a Claude Code session, Claude does quite a good job of following a sequence.
 
 (My long-term plan is to run workflows using [Transmissions](https://github.com/danja/transmissions), calling the HTTP API).
 
