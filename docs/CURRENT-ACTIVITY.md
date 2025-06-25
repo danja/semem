@@ -12,11 +12,15 @@ claude mcp add semem npx semem-mcp
 
 so Claude code can be asked to use the tools, resources & prompts.
 
+2. HTTP API
+
+See docs/http-api/usage.md
+
 The HTTP server is proving difficult to debug. Ok, I admit I haven't looked at the code properly myself. Claude is finding it difficult.
 
-2. The UI is only minimally functional. One key part is the SPARQL editor/visualizer. This should allow exploration of the knowledgebase via CONSTRUCT queries rendered as live graph diagrams. Impementation is virtually all straight from [atuin](https://github.com/danja/atuin) via the npm package.
+3. The UI is only minimally functional. One key part is the SPARQL editor/visualizer. This should allow exploration of the knowledgebase via CONSTRUCT queries rendered as live graph diagrams. Impementation is virtually all straight from [atuin](https://github.com/danja/atuin) via the npm package.
 
-3. Demos
+4. Demos
 
 The files under `examples` which exercise various components of the system are intentionally verbose in the output. Explore, explore.
 
@@ -35,9 +39,13 @@ docs/zpt/PLAN.md
 
 Most things are exposed, but the API is barely tested at all. There are demo files (quasi-integration tests) in `examples/http-api`.
 
+*src/services is redundant now after updating src/api..?*
+
 ## MCP
 
 There are about 60 tools/prompts/resources, it's certain only a fraction of these are worth exposing over MCP. Many will be buggy and suboptimal for their intended use. There is a lot under `examples/mcp` but chances are most things are broken.
+
+Source is under `mcp` (TODO : move). The mcp material under `src/servers` is probably all cruft.
 
 ...
 ```sh
