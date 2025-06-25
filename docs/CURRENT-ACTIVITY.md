@@ -31,11 +31,11 @@ docs/zpt/PLAN.md
 
 ## HTTP API
 
-Need to find out which pieces of functionality aren't yet exposed - and expose them.
+Most things are exposed, but the API is barely tested at all. There are demo files (quasi-integration tests) in `examples/http-api`.
 
 ## MCP
 
-There are about 60 tools/prompts/resources, it's certain only a fraction of these are worth exposing over MCP. Many will be buggy and suboptimal for their intended use.
+There are about 60 tools/prompts/resources, it's certain only a fraction of these are worth exposing over MCP. Many will be buggy and suboptimal for their intended use. There is a lot under `examples/mcp` but chances are most things are broken.
 
 ...
 ```sh
