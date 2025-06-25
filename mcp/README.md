@@ -119,6 +119,8 @@ Solution Found ✅
   3. Configure connection:
     - Transport: HTTP
     - URL: http://localhost:3000/mcp
+
+    
 lsof -i:3000
 
 kill -9 [pid]

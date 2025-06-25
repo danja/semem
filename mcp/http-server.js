@@ -147,8 +147,8 @@ async function handleMCPRequest(req, res, body, sessionTransports, sessionServer
       console.log('🔧 [INIT] New initialization request - creating server and transport...');
       
       // Create a new server instance for this session
-      const { createHttpServer } = await import('./http-only-server.js');
-      const server = await createHttpServer();
+      const { createServer } = await import('./index.js');
+      const server = await createServer();
       console.log('✅ [INIT] Server created');
       
       // Create a new transport for this session

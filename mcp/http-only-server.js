@@ -8,7 +8,7 @@ import { mcpDebugger } from './lib/debug-utils.js';
 import { mcpConfig } from './lib/config.js';
 
 // Import tool registrations
-import { registerMemoryTools } from './tools/memory-tools.js';
+import { registerMemoryTools } from './tools/memory-tools-simple.js';
 import { registerZPTTools } from './tools/zpt-tools.js';
 import { registerResearchWorkflowTools } from './tools/research-workflow-tools.js';
 import { registerRagnoTools } from './tools/ragno-tools.js';
@@ -47,16 +47,17 @@ export async function createHttpServer() {
   // Skip prompt registry initialization for now
   mcpDebugger.info('Skipping prompt registry initialization for HTTP server...');
 
-  // Register all tools using a consistent pattern
-  mcpDebugger.info('Registering all tools...');
+  // Register tools using FIXED pattern - only memory tools for now
+  mcpDebugger.info('Registering FIXED memory tools...');
   try {
     registerMemoryTools(server);
-    registerZPTTools(server);
-    registerResearchWorkflowTools(server);
-    registerRagnoTools(server);
-    registerSPARQLTools(server);
-    registerVSOMTools(server);
-    mcpDebugger.info('All tools registered.');
+    // TODO: Fix other tool files one by one
+    // registerZPTTools(server);
+    // registerResearchWorkflowTools(server);
+    // registerRagnoTools(server);
+    // registerSPARQLTools(server);
+    // registerVSOMTools(server);
+    mcpDebugger.info('Fixed memory tools registered.');
   } catch (error) {
     mcpDebugger.error('Tool registration failed:', error);
     throw error;
