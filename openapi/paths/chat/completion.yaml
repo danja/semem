@@ -1,0 +1,114 @@
+post:
+  tags:
+    - Chat
+  summary: Chat Completion
+  description: |
+    Generate a conversational response using the configured language model with 
+    optional semantic memory integration.
+    
+    When `useMemory` is enabled, the system:
+    1. Searches semantic memory for relevant past interactions
+    2. Includes relevant context in the prompt
+    3. Generates a response informed by historical knowledge
+    4. Optionally stores the new interaction in memory
+    
+    This enables AI agents to maintain context and continuity across conversations.
+  operationId: chatCompletion
+  security:
+    - ApiKeyAuth: []
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../../components/schemas/index.yaml#/ChatRequest'
+        examples:
+          simple_chat:
+            summary: Simple chat request
+            value:
+              prompt: "Explain the difference between supervised and unsupervised learning"
+              useMemory: true
+              temperature: 0.7
+          conversation_context:
+            summary: Chat with conversation context
+            value:
+              prompt: "Can you elaborate on the neural network example from before?"
+              conversationId: "conv_123456789"
+              useMemory: true
+              temperature: 0.5
+              maxTokens: 500
+          technical_query:
+            summary: Technical query with specific model
+            value:
+              prompt: "Write a Python function to implement gradient descent optimization"
+              model: "qwen2:1.5b"
+              temperature: 0.3
+              maxTokens: 1000
+  responses:
+    '200':
+      description: Chat response generated successfully
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/index.yaml#/ChatResponse'
+          examples:
+            with_memory:
+              summary: Response using memory context
+              value:
+                success: true
+                response: "Based on our previous discussion about machine learning, I can explain the key differences between supervised and unsupervised learning approaches..."
+                conversationId: "conv_123456789"
+                memoryIds: ["mem_abc123", "mem_def456"]
+                processingTime: 2340
+            without_memory:
+              summary: Response without memory
+              value:
+                success: true
+                response: "Supervised learning uses labeled training data to learn mappings between inputs and outputs, while unsupervised learning finds patterns in data without labeled examples..."
+                conversationId: "conv_987654321"
+                memoryIds: []
+                processingTime: 1890
+    '400':
+      description: Invalid request data
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/index.yaml#/ErrorResponse'
+          examples:
+            missing_prompt:
+              summary: Missing prompt field
+              value:
+                success: false
+                error: "Prompt is required"
+                message: "The 'prompt' field must be provided and cannot be empty"
+            invalid_temperature:
+              summary: Invalid temperature value
+              value:
+                success: false
+                error: "Invalid temperature"
+                message: "Temperature must be between 0 and 2"
+    '401':
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/index.yaml#/ErrorResponse'
+    '500':
+      description: Chat generation error
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/index.yaml#/ErrorResponse'
+          examples:
+            llm_error:
+              summary: LLM service error
+              value:
+                success: false
+                error: "Chat generation failed"
+                message: "Language model service is temporarily unavailable"
+            memory_error:
+              summary: Memory access error
+              value:
+                success: false
+                error: "Memory retrieval failed"
+                message: "Unable to access semantic memory for context"

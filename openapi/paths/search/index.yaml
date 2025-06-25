@@ -1,0 +1,110 @@
+post:
+  tags:
+    - Search
+  summary: Index Content
+  description: |
+    Index new content for future search operations.
+    
+    This endpoint allows you to add documents, web pages, or other textual
+    content to the search index. The content will be processed for:
+    - Vector embedding generation
+    - Keyword extraction and indexing
+    - Metadata extraction and storage
+    - Content type classification
+    
+    Indexed content becomes immediately searchable via the search endpoint.
+  operationId: indexContent
+  security:
+    - ApiKeyAuth: []
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../../components/schemas/index.yaml#/IndexRequest'
+        examples:
+          document:
+            summary: Index a document
+            value:
+              content: "Artificial intelligence (AI) refers to the simulation of human intelligence in machines that are programmed to think like humans and mimic their actions. The term may also be applied to any machine that exhibits traits associated with a human mind such as learning and problem-solving."
+              type: "document"
+              title: "Introduction to Artificial Intelligence"
+              metadata:
+                author: "AI Research Team"
+                source: "internal_docs"
+                tags: ["AI", "introduction", "overview"]
+                published: "2024-01-15"
+          webpage:
+            summary: Index a webpage
+            value:
+              content: "Machine learning is a method of data analysis that automates analytical model building. It is a branch of artificial intelligence based on the idea that systems can learn from data, identify patterns and make decisions with minimal human intervention."
+              type: "webpage"
+              title: "Machine Learning Fundamentals"
+              metadata:
+                url: "https://example.com/ml-fundamentals"
+                domain: "example.com"
+                scraped: "2024-01-16T10:30:00Z"
+          code:
+            summary: Index code documentation
+            value:
+              content: "The Neural Network class implements a basic feedforward neural network with backpropagation training. It supports multiple hidden layers, various activation functions, and different optimization algorithms."
+              type: "code"
+              title: "Neural Network Class Documentation"
+              metadata:
+                language: "python"
+                module: "ml.networks"
+                version: "1.2.0"
+  responses:
+    '201':
+      description: Content indexed successfully
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '../../components/schemas/index.yaml#/ApiResponse'
+              - type: object
+                properties:
+                  id:
+                    type: string
+                    description: Unique identifier for indexed content
+                  indexed:
+                    type: boolean
+                    description: Whether content was successfully indexed
+                  embedding_generated:
+                    type: boolean
+                    description: Whether vector embedding was generated
+                  keywords_extracted:
+                    type: integer
+                    description: Number of keywords extracted
+          examples:
+            success:
+              summary: Successful indexing
+              value:
+                success: true
+                id: "content_abc123"
+                indexed: true
+                embedding_generated: true
+                keywords_extracted: 15
+                processingTime: 1230
+    '400':
+      $ref: '../../components/responses/index.yaml#/BadRequestResponse'
+    '401':
+      $ref: '../../components/responses/index.yaml#/UnauthorizedResponse'
+    '413':
+      description: Content too large
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/index.yaml#/ErrorResponse'
+          examples:
+            content_too_large:
+              summary: Content exceeds size limit
+              value:
+                success: false
+                error: "Content too large"
+                message: "Content must be under 50MB"
+                code: "CONTENT_TOO_LARGE"
+    '429':
+      $ref: '../../components/responses/index.yaml#/RateLimitResponse'
+    '500':
+      $ref: '../../components/responses/index.yaml#/InternalServerErrorResponse'

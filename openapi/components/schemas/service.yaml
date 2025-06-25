@@ -1,0 +1,31 @@
+ServiceInfo:
+  type: object
+  properties:
+    name:
+      type: string
+      description: Service display name
+    description:
+      type: string
+      description: Service description
+    endpoints:
+      type: array
+      items:
+        type: string
+      description: Available endpoints for this service
+    status:
+      type: string
+      enum: [healthy, degraded, unavailable]
+      description: Current service status
+    version:
+      type: string
+      description: Service version (optional)
+    capabilities:
+      type: array
+      items:
+        type: string
+      description: Service capabilities (optional)
+  required:
+    - name
+    - description
+    - endpoints
+    - status

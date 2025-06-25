@@ -1,0 +1,154 @@
+post:
+  tags:
+    - Chat
+  summary: Text Completion
+  description: |
+    Generate text completion for a given prompt using the configured language model.
+    
+    This endpoint provides basic text completion functionality without 
+    conversational context or memory integration. Useful for:
+    - Simple text generation tasks
+    - Code completion
+    - Creative writing assistance
+    - Document drafting
+    
+    Unlike the chat endpoint, this focuses purely on text completion
+    without conversational semantics.
+  operationId: textCompletion
+  security:
+    - ApiKeyAuth: []
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            prompt:
+              type: string
+              description: Text prompt to complete
+              example: "The future of artificial intelligence will likely involve"
+            max_tokens:
+              type: integer
+              minimum: 1
+              maximum: 4096
+              default: 100
+              description: Maximum number of tokens to generate
+            temperature:
+              type: number
+              format: float
+              minimum: 0
+              maximum: 2
+              default: 0.7
+              description: Sampling temperature for randomness
+            stop:
+              oneOf:
+                - type: string
+                - type: array
+                  items:
+                    type: string
+              description: Stop sequences for completion
+            model:
+              type: string
+              description: Specific model to use for completion
+              example: "qwen2:1.5b"
+          required:
+            - prompt
+        examples:
+          simple_completion:
+            summary: Simple text completion
+            value:
+              prompt: "The benefits of renewable energy include"
+              max_tokens: 150
+              temperature: 0.7
+          code_completion:
+            summary: Code completion
+            value:
+              prompt: "def fibonacci(n):\n    if n <= 1:\n        return n\n    else:"
+              max_tokens: 200
+              temperature: 0.3
+              stop: ["\n\n", "def "]
+          creative_writing:
+            summary: Creative writing prompt
+            value:
+              prompt: "In a world where technology has advanced beyond recognition"
+              max_tokens: 300
+              temperature: 1.1
+  responses:
+    '200':
+      description: Text completion generated successfully
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '../../components/schemas/index.yaml#/ApiResponse'
+              - type: object
+                properties:
+                  completion:
+                    type: string
+                    description: Generated completion text
+                  prompt:
+                    type: string
+                    description: Original prompt
+                  model:
+                    type: string
+                    description: Model used for generation
+                  tokens_used:
+                    type: integer
+                    description: Number of tokens in completion
+                  finish_reason:
+                    type: string
+                    enum: [stop, length, error]
+                    description: Reason completion ended
+          examples:
+            renewable_energy:
+              summary: Renewable energy completion
+              value:
+                success: true
+                completion: " reduced greenhouse gas emissions, energy independence, and long-term cost savings. Solar and wind power have become increasingly cost-effective alternatives to fossil fuels."
+                prompt: "The benefits of renewable energy include"
+                model: "qwen2:1.5b"
+                tokens_used: 28
+                finish_reason: "stop"
+                processingTime: 1240
+            code_example:
+              summary: Code completion example
+              value:
+                success: true
+                completion: "\n        return fibonacci(n-1) + fibonacci(n-2)"
+                prompt: "def fibonacci(n):\n    if n <= 1:\n        return n\n    else:"
+                model: "qwen2:1.5b"
+                tokens_used: 12
+                finish_reason: "stop"
+                processingTime: 890
+    '400':
+      description: Invalid request data
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/index.yaml#/ErrorResponse'
+          examples:
+            missing_prompt:
+              summary: Missing prompt
+              value:
+                success: false
+                error: "Prompt is required"
+                message: "The 'prompt' field must be provided"
+            invalid_max_tokens:
+              summary: Invalid max_tokens value
+              value:
+                success: false
+                error: "Invalid max_tokens"
+                message: "max_tokens must be between 1 and 4096"
+    '401':
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/index.yaml#/ErrorResponse'
+    '500':
+      description: Completion generation error
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/index.yaml#/ErrorResponse'

@@ -1,0 +1,36 @@
+ApiMetrics:
+  type: object
+  properties:
+    requestCount:
+      type: integer
+      description: Total number of requests processed
+    errorCount:
+      type: integer
+      description: Total number of errors encountered
+    averageResponseTime:
+      type: number
+      format: float
+      description: Average response time in milliseconds
+    operations:
+      type: object
+      additionalProperties:
+        $ref: '#/OperationMetrics'
+      description: Metrics per operation type
+
+OperationMetrics:
+  type: object
+  properties:
+    count:
+      type: integer
+      description: Number of operations executed
+    errors:
+      type: integer
+      description: Number of operation errors
+    averageDuration:
+      type: number
+      format: float
+      description: Average operation duration in milliseconds
+    lastExecuted:
+      type: string
+      format: date-time
+      description: Timestamp of last execution

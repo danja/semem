@@ -1,0 +1,684 @@
+# Search API Schemas
+
+SearchRequest:
+  type: object
+  properties:
+    query:
+      type: string
+      minLength: 1
+      maxLength: 1000
+      description: Search query text
+      example: "machine learning algorithms"
+    limit:
+      type: integer
+      minimum: 1
+      maximum: 100
+      default: 5
+      description: Maximum number of results to return
+    offset:
+      type: integer
+      minimum: 0
+      default: 0
+      description: Number of results to skip (for pagination)
+    types:
+      type: array
+      items:
+        type: string
+        enum: [memory, content, entity, semantic, document, webpage, code]
+      description: Content types to search
+      example: ["content", "document"]
+    threshold:
+      type: number
+      format: float
+      minimum: 0
+      maximum: 1
+      default: 0.7
+      description: Similarity threshold for semantic search
+    filters:
+      $ref: '#/SearchFilters'
+    sort:
+      type: object
+      properties:
+        field:
+          type: string
+          enum: [relevance, date, title, size, type]
+          default: relevance
+          description: Field to sort by
+        order:
+          type: string
+          enum: [asc, desc]
+          default: desc
+          description: Sort order
+    highlight:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+          default: true
+          description: Enable result highlighting
+        fragmentSize:
+          type: integer
+          minimum: 50
+          maximum: 500
+          default: 150
+          description: Size of highlighted fragments
+        maxFragments:
+          type: integer
+          minimum: 1
+          maximum: 10
+          default: 3
+          description: Maximum number of fragments per result
+    facets:
+      type: array
+      items:
+        type: string
+        enum: [type, date, author, source, language, tags]
+      description: Faceted search dimensions to include
+  required:
+    - query
+
+SearchFilters:
+  type: object
+  properties:
+    dateRange:
+      type: object
+      properties:
+        start:
+          type: string
+          format: date-time
+          description: Filter content from this date
+        end:
+          type: string
+          format: date-time
+          description: Filter content to this date
+      description: Date range filter
+    contentTypes:
+      type: array
+      items:
+        type: string
+        enum: [text, html, pdf, markdown, code, json, xml]
+      description: Filter by content format types
+    languages:
+      type: array
+      items:
+        type: string
+      description: Filter by content languages
+      example: ["en", "es", "fr"]
+    sources:
+      type: array
+      items:
+        type: string
+      description: Filter by content sources
+      example: ["documentation", "tutorials", "api-docs"]
+    tags:
+      type: array
+      items:
+        type: string
+      description: Filter by content tags
+      example: ["machine-learning", "tutorial", "beginner"]
+    authors:
+      type: array
+      items:
+        type: string
+      description: Filter by content authors
+    size:
+      type: object
+      properties:
+        min:
+          type: integer
+          description: Minimum content size (characters)
+        max:
+          type: integer
+          description: Maximum content size (characters)
+      description: Content size filter
+    domains:
+      type: array
+      items:
+        type: string
+      description: Filter by web domains (for webpage content)
+      example: ["example.com", "docs.example.org"]
+    similarity:
+      type: object
+      properties:
+        reference:
+          type: string
+          description: Reference text for similarity search
+        threshold:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Minimum similarity score
+      description: Semantic similarity filter
+    metadata:
+      type: object
+      additionalProperties: true
+      description: Filter by custom metadata fields
+
+SearchResponse:
+  allOf:
+    - $ref: '../schemas/common.yaml#/ApiResponse'
+    - type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/SearchResult'
+          description: Search results
+        count:
+          type: integer
+          description: Number of results returned
+        total:
+          type: integer
+          description: Total number of matching results
+        offset:
+          type: integer
+          description: Current result offset
+        hasMore:
+          type: boolean
+          description: Whether more results are available
+        facets:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              buckets:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    key:
+                      type: string
+                    count:
+                      type: integer
+                    selected:
+                      type: boolean
+          description: Faceted search results
+        searchMetadata:
+          type: object
+          properties:
+            query:
+              type: string
+              description: Original search query
+            searchTime:
+              type: integer
+              description: Search execution time (ms)
+            indexSize:
+              type: integer
+              description: Size of searched index
+            strategy:
+              type: string
+              enum: [keyword, semantic, hybrid]
+              description: Search strategy used
+            synonymsExpanded:
+              type: array
+              items:
+                type: string
+              description: Query synonyms that were expanded
+            spellCorrections:
+              type: array
+              items:
+                type: object
+                properties:
+                  original:
+                    type: string
+                  corrected:
+                    type: string
+              description: Applied spell corrections
+
+SearchResult:
+  type: object
+  properties:
+    id:
+      type: string
+      description: Unique result identifier
+      example: "content_12345"
+    title:
+      type: string
+      description: Content title
+      example: "Introduction to Neural Networks"
+    content:
+      type: string
+      description: Content text or excerpt
+      example: "Neural networks are computational models inspired by biological neural networks..."
+    url:
+      type: string
+      format: uri
+      description: URL of the content (if applicable)
+      example: "https://example.com/neural-networks-intro"
+    type:
+      type: string
+      enum: [memory, content, entity, semantic, document, webpage, code]
+      description: Result type
+      example: "content"
+    score:
+      type: number
+      format: float
+      minimum: 0
+      maximum: 1
+      description: Relevance score
+      example: 0.89
+    similarity:
+      type: number
+      format: float
+      minimum: 0
+      maximum: 1
+      description: Semantic similarity score (for semantic search)
+      example: 0.82
+    highlights:
+      type: array
+      items:
+        type: object
+        properties:
+          field:
+            type: string
+            description: Field where match was found
+          fragment:
+            type: string
+            description: Highlighted text fragment
+          startPos:
+            type: integer
+            description: Start position in original text
+          endPos:
+            type: integer
+            description: End position in original text
+      description: Search result highlights
+    metadata:
+      type: object
+      properties:
+        author:
+          type: string
+          description: Content author
+        published:
+          type: string
+          format: date-time
+          description: Publication date
+        modified:
+          type: string
+          format: date-time
+          description: Last modification date
+        source:
+          type: string
+          description: Content source
+        language:
+          type: string
+          description: Content language
+        size:
+          type: integer
+          description: Content size in characters
+        tags:
+          type: array
+          items:
+            type: string
+          description: Content tags
+        domain:
+          type: string
+          description: Web domain (for webpage content)
+        path:
+          type: string
+          description: File path (for document content)
+        format:
+          type: string
+          description: Content format (html, pdf, markdown, etc.)
+        thumbnail:
+          type: string
+          format: uri
+          description: Thumbnail image URL (if available)
+        excerpt:
+          type: string
+          description: Content excerpt or summary
+        wordCount:
+          type: integer
+          description: Word count
+        readingTime:
+          type: integer
+          description: Estimated reading time in minutes
+      description: Additional content metadata
+    embedding:
+      type: array
+      items:
+        type: number
+        format: float
+      description: Content embedding vector (if available and requested)
+    related:
+      type: array
+      items:
+        type: object
+        properties:
+          id:
+            type: string
+          title:
+            type: string
+          similarity:
+            type: number
+            format: float
+          type:
+            type: string
+      description: Related content items
+  required:
+    - id
+    - title
+    - content
+    - type
+    - score
+
+IndexRequest:
+  type: object
+  properties:
+    content:
+      type: string
+      minLength: 1
+      maxLength: 1000000
+      description: Content text to index
+      example: "Artificial intelligence (AI) refers to the simulation of human intelligence in machines..."
+    title:
+      type: string
+      maxLength: 500
+      description: Content title
+      example: "Introduction to Artificial Intelligence"
+    type:
+      type: string
+      enum: [document, webpage, code, tutorial, reference, blog, news, research]
+      description: Content type classification
+      example: "document"
+    url:
+      type: string
+      format: uri
+      description: Source URL (if applicable)
+      example: "https://example.com/ai-intro"
+    metadata:
+      type: object
+      properties:
+        author:
+          type: string
+          description: Content author
+          example: "AI Research Team"
+        published:
+          type: string
+          format: date-time
+          description: Publication date
+        source:
+          type: string
+          description: Content source
+          example: "internal_docs"
+        language:
+          type: string
+          description: Content language
+          example: "en"
+        tags:
+          type: array
+          items:
+            type: string
+          description: Content tags
+          example: ["AI", "introduction", "overview"]
+        category:
+          type: string
+          description: Content category
+          example: "educational"
+        difficulty:
+          type: string
+          enum: [beginner, intermediate, advanced]
+          description: Content difficulty level
+        domain:
+          type: string
+          description: Knowledge domain
+          example: "computer-science"
+        format:
+          type: string
+          enum: [text, html, markdown, pdf, code, json, xml]
+          description: Content format
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 10
+          description: Indexing priority (1-10)
+        public:
+          type: boolean
+          default: true
+          description: Whether content is publicly searchable
+        expires:
+          type: string
+          format: date-time
+          description: Content expiration date
+        version:
+          type: string
+          description: Content version
+        checksum:
+          type: string
+          description: Content checksum for duplicate detection
+      additionalProperties: true
+      description: Content metadata
+    extractOptions:
+      type: object
+      properties:
+        generateEmbedding:
+          type: boolean
+          default: true
+          description: Generate vector embedding
+        extractKeywords:
+          type: boolean
+          default: true
+          description: Extract keywords
+        extractEntities:
+          type: boolean
+          default: false
+          description: Extract named entities
+        generateSummary:
+          type: boolean
+          default: false
+          description: Generate content summary
+        detectLanguage:
+          type: boolean
+          default: true
+          description: Auto-detect content language
+        analyzeSentiment:
+          type: boolean
+          default: false
+          description: Analyze content sentiment
+        chunkContent:
+          type: boolean
+          default: false
+          description: Split content into chunks
+        chunkSize:
+          type: integer
+          minimum: 100
+          maximum: 2000
+          default: 500
+          description: Chunk size (words) if chunking enabled
+      description: Content extraction and processing options
+    overwrite:
+      type: boolean
+      default: false
+      description: Overwrite existing content with same ID
+    indexingRules:
+      type: object
+      properties:
+        includeInSearch:
+          type: boolean
+          default: true
+          description: Include in search results
+        weight:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 10
+          default: 1.0
+          description: Content weight for ranking
+        boostFields:
+          type: array
+          items:
+            type: string
+          description: Fields to boost in search
+        excludeFields:
+          type: array
+          items:
+            type: string
+          description: Fields to exclude from indexing
+      description: Custom indexing rules
+  required:
+    - content
+    - type
+
+IndexResponse:
+  allOf:
+    - $ref: '../schemas/common.yaml#/ApiResponse'
+    - type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for indexed content
+          example: "content_abc123"
+        indexed:
+          type: boolean
+          description: Whether content was successfully indexed
+        embeddingGenerated:
+          type: boolean
+          description: Whether vector embedding was generated
+        keywordsExtracted:
+          type: integer
+          description: Number of keywords extracted
+        entitiesExtracted:
+          type: integer
+          description: Number of entities extracted (if enabled)
+        chunksCreated:
+          type: integer
+          description: Number of content chunks created
+        indexStats:
+          type: object
+          properties:
+            totalDocuments:
+              type: integer
+              description: Total documents in index after addition
+            indexSize:
+              type: string
+              description: Current index size (human readable)
+            lastOptimized:
+              type: string
+              format: date-time
+              description: Last index optimization
+        warnings:
+          type: array
+          items:
+            type: string
+          description: Indexing warnings (if any)
+        processingTime:
+          type: object
+          properties:
+            total:
+              type: integer
+              description: Total processing time (ms)
+            embedding:
+              type: integer
+              description: Embedding generation time (ms)
+            extraction:
+              type: integer
+              description: Feature extraction time (ms)
+            storage:
+              type: integer
+              description: Storage time (ms)
+
+SearchStats:
+  type: object
+  properties:
+    indexStats:
+      type: object
+      properties:
+        totalDocuments:
+          type: integer
+          description: Total indexed documents
+        totalTerms:
+          type: integer
+          description: Total unique terms
+        indexSize:
+          type: string
+          description: Index size (human readable)
+        lastOptimized:
+          type: string
+          format: date-time
+          description: Last optimization timestamp
+        documentTypes:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Document count by type
+    searchMetrics:
+      type: object
+      properties:
+        totalSearches:
+          type: integer
+          description: Total searches performed
+        averageSearchTime:
+          type: number
+          format: float
+          description: Average search time (ms)
+        topQueries:
+          type: array
+          items:
+            type: object
+            properties:
+              query:
+                type: string
+              count:
+                type: integer
+              avgResults:
+                type: number
+                format: float
+          description: Most frequent search queries
+        zeroResultQueries:
+          type: array
+          items:
+            type: string
+          description: Queries with no results
+    performance:
+      type: object
+      properties:
+        cacheHitRate:
+          type: number
+          format: float
+          description: Search cache hit rate (0-1)
+        averageResultCount:
+          type: number
+          format: float
+          description: Average number of results per search
+        indexingQueue:
+          type: integer
+          description: Documents waiting to be indexed
+        lastIndexing:
+          type: string
+          format: date-time
+          description: Last indexing operation
+
+ContentSuggestion:
+  type: object
+  properties:
+    id:
+      type: string
+      description: Suggestion identifier
+    type:
+      type: string
+      enum: [spelling, synonym, completion, related]
+      description: Type of suggestion
+    original:
+      type: string
+      description: Original query or term
+    suggested:
+      type: string
+      description: Suggested alternative
+    confidence:
+      type: number
+      format: float
+      minimum: 0
+      maximum: 1
+      description: Confidence in the suggestion
+    reason:
+      type: string
+      description: Reason for the suggestion
+    metadata:
+      type: object
+      additionalProperties: true
+      description: Additional suggestion metadata
+  required:
+    - type
+    - original
+    - suggested
+    - confidence

@@ -1,0 +1,217 @@
+post:
+  tags:
+    - Ragno
+  summary: Search Knowledge Graph
+  description: |
+    Search the knowledge graph using various search strategies including
+    entity search, semantic search, and dual (hybrid) search.
+    
+    Search types:
+    - **entities**: Direct entity name/URI matching
+    - **semantic**: Vector similarity search using embeddings
+    - **dual**: Combines entity and semantic search with ranking
+    
+    This enables flexible querying of the knowledge graph for information retrieval,
+    entity discovery, and semantic exploration.
+  operationId: searchKnowledgeGraph
+  security:
+    - ApiKeyAuth: []
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            query:
+              type: string
+              description: Search query text
+              example: "machine learning algorithms"
+            type:
+              type: string
+              enum: [dual, entities, semantic]
+              default: dual
+              description: Type of search to perform
+            limit:
+              type: integer
+              minimum: 1
+              maximum: 100
+              default: 10
+              description: Maximum number of results
+            threshold:
+              type: number
+              format: float
+              minimum: 0
+              maximum: 1
+              default: 0.7
+              description: Similarity threshold for semantic search
+            filters:
+              type: object
+              properties:
+                entityTypes:
+                  type: array
+                  items:
+                    type: string
+                  description: Filter by entity types
+                  example: ["Person", "Organization", "Technology"]
+                confidence:
+                  type: number
+                  format: float
+                  description: Minimum entity confidence score
+                dateRange:
+                  type: object
+                  properties:
+                    start:
+                      type: string
+                      format: date
+                    end:
+                      type: string
+                      format: date
+              description: Optional search filters
+          required:
+            - query
+        examples:
+          entity_search:
+            summary: Entity-focused search
+            value:
+              query: "OpenAI GPT"
+              type: "entities"
+              limit: 5
+              filters:
+                entityTypes: ["Organization", "Technology"]
+                confidence: 0.8
+          semantic_search:
+            summary: Semantic similarity search
+            value:
+              query: "artificial intelligence and machine learning research"
+              type: "semantic"
+              limit: 10
+              threshold: 0.75
+          dual_search:
+            summary: Hybrid entity and semantic search
+            value:
+              query: "neural network architectures"
+              type: "dual"
+              limit: 15
+              threshold: 0.7
+              filters:
+                entityTypes: ["Technology", "Concept"]
+  responses:
+    '200':
+      description: Search results from knowledge graph
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '../../components/schemas/index.yaml#/ApiResponse'
+              - type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        entity:
+                          $ref: '../../components/schemas/index.yaml#/RagnoEntity'
+                        similarity:
+                          type: number
+                          format: float
+                          description: Similarity score (for semantic search)
+                        rank:
+                          type: integer
+                          description: Result ranking
+                        matchType:
+                          type: string
+                          enum: [entity, semantic, dual]
+                          description: Type of match found
+                        relationships:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              predicate:
+                                type: string
+                              object:
+                                $ref: '../../components/schemas/index.yaml#/RagnoEntity'
+                              confidence:
+                                type: number
+                                format: float
+                          description: Related entities and relationships
+                  searchType:
+                    type: string
+                    description: Type of search performed
+                  totalResults:
+                    type: integer
+                    description: Total matching results
+                  query:
+                    type: string
+                    description: Original search query
+          examples:
+            entity_results:
+              summary: Entity search results
+              value:
+                success: true
+                results:
+                  - entity:
+                      uri: "http://ragno.ai/entities/openai_001"
+                      name: "OpenAI"
+                      type: "Organization"
+                      confidence: 0.95
+                      attributes:
+                        founded: "2015"
+                        focus: "AI Research"
+                    rank: 1
+                    matchType: "entity"
+                    relationships:
+                      - predicate: "developed"
+                        object:
+                          name: "GPT-4"
+                          type: "Technology"
+                        confidence: 0.92
+                searchType: "entities"
+                totalResults: 1
+                query: "OpenAI GPT"
+                processingTime: 234
+            semantic_results:
+              summary: Semantic search results
+              value:
+                success: true
+                results:
+                  - entity:
+                      uri: "http://ragno.ai/entities/ml_001"
+                      name: "Machine Learning"
+                      type: "Concept"
+                      confidence: 0.88
+                    similarity: 0.89
+                    rank: 1
+                    matchType: "semantic"
+                  - entity:
+                      uri: "http://ragno.ai/entities/nn_001"
+                      name: "Neural Networks"
+                      type: "Technology"
+                      confidence: 0.91
+                    similarity: 0.82
+                    rank: 2
+                    matchType: "semantic"
+                searchType: "semantic"
+                totalResults: 2
+                query: "artificial intelligence research"
+                processingTime: 445
+    '400':
+      description: Invalid search parameters
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/index.yaml#/ErrorResponse'
+    '401':
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/index.yaml#/ErrorResponse'
+    '500':
+      description: Knowledge graph search error
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/index.yaml#/ErrorResponse'

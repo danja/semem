@@ -1,0 +1,174 @@
+# Main Schema Index File
+# This file imports and references all schema definitions for the Semem API
+
+# All schema references are included directly in the main openapi.yaml file
+# This file is kept for backward compatibility and documentation purposes
+
+# To use these schemas, reference them directly from their respective files:
+# - Common: $ref: './components/schemas/common.yaml#/SchemaName'
+# - Memory: $ref: './components/schemas/memory.yaml#/SchemaName'
+# - Chat: $ref: './components/schemas/chat.yaml#/SchemaName'
+# - Search: $ref: './components/schemas/search.yaml#/SchemaName'
+# - Ragno: $ref: './components/schemas/ragno.yaml#/SchemaName'
+# - ZPT: $ref: './components/schemas/zpt.yaml#/SchemaName'
+
+# Import Unified Search API Schemas
+# Reference schemas directly using: $ref: './components/schemas/unified-search.yaml#/SchemaName'
+
+# Service and Metrics Schemas
+# Reference schemas directly using:
+# - $ref: './components/schemas/service.yaml#/SchemaName'
+# - $ref: './components/schemas/metrics.yaml#/SchemaName'
+
+# Re-export key common schemas for easy reference
+ApiResponse:
+  $ref: './common.yaml#/ApiResponse'
+
+ErrorResponse:
+  $ref: './common.yaml#/ErrorResponse'
+
+HealthStatus:
+  $ref: './common.yaml#/HealthStatus'
+
+PaginationInfo:
+  $ref: './common.yaml#/PaginationInfo'
+
+# Re-export key Memory schemas
+MemoryInteraction:
+  $ref: './memory.yaml#/MemoryInteraction'
+
+MemoryStoreRequest:
+  $ref: './memory.yaml#/MemoryStoreRequest'
+
+MemoryStoreResponse:
+  $ref: './memory.yaml#/MemoryStoreResponse'
+
+MemorySearchResponse:
+  $ref: './memory.yaml#/MemorySearchResponse'
+
+EmbeddingRequest:
+  $ref: './memory.yaml#/EmbeddingRequest'
+
+EmbeddingResponse:
+  $ref: './memory.yaml#/EmbeddingResponse'
+
+ConceptsRequest:
+  $ref: './memory.yaml#/ConceptsRequest'
+
+ConceptsResponse:
+  $ref: './memory.yaml#/ConceptsResponse'
+
+# Re-export key Chat schemas
+ChatRequest:
+  $ref: './chat.yaml#/ChatRequest'
+
+ChatResponse:
+  $ref: './chat.yaml#/ChatResponse'
+
+StreamingChatRequest:
+  $ref: './chat.yaml#/StreamingChatRequest'
+
+StreamingChatChunk:
+  $ref: './chat.yaml#/StreamingChatChunk'
+
+TextCompletionRequest:
+  $ref: './chat.yaml#/TextCompletionRequest'
+
+TextCompletionResponse:
+  $ref: './chat.yaml#/TextCompletionResponse'
+
+# Re-export key Search schemas
+SearchRequest:
+  $ref: './search.yaml#/SearchRequest'
+
+SearchResponse:
+  $ref: './search.yaml#/SearchResponse'
+
+SearchResult:
+  $ref: './search.yaml#/SearchResult'
+
+IndexRequest:
+  $ref: './search.yaml#/IndexRequest'
+
+IndexResponse:
+  $ref: './search.yaml#/IndexResponse'
+
+# Re-export key Ragno schemas
+RagnoDecomposeRequest:
+  $ref: './ragno.yaml#/RagnoDecomposeRequest'
+
+RagnoDecomposeResponse:
+  $ref: './ragno.yaml#/RagnoDecomposeResponse'
+
+RagnoEntity:
+  $ref: './ragno.yaml#/RagnoEntity'
+
+RagnoRelationship:
+  $ref: './ragno.yaml#/RagnoRelationship'
+
+SemanticUnit:
+  $ref: './ragno.yaml#/SemanticUnit'
+
+RagnoSearchRequest:
+  $ref: './ragno.yaml#/RagnoSearchRequest'
+
+RagnoSearchResponse:
+  $ref: './ragno.yaml#/RagnoSearchResponse'
+
+RagnoGraphStats:
+  $ref: './ragno.yaml#/RagnoGraphStats'
+
+# Re-export key ZPT schemas
+ZPTNavigateRequest:
+  $ref: './zpt.yaml#/ZPTNavigateRequest'
+
+ZPTNavigateResponse:
+  $ref: './zpt.yaml#/ZPTNavigateResponse'
+
+ZPTNavigationResult:
+  $ref: './zpt.yaml#/ZPTNavigationResult'
+
+ZPTPreviewRequest:
+  $ref: './zpt.yaml#/ZPTPreviewRequest'
+
+ZPTPreviewResponse:
+  $ref: './zpt.yaml#/ZPTPreviewResponse'
+
+ZPTOptions:
+  $ref: './zpt.yaml#/ZPTOptions'
+
+ZPTHealth:
+  $ref: './zpt.yaml#/ZPTHealth'
+
+# Re-export key Unified Search schemas
+UnifiedSearchRequest:
+  $ref: './unified-search.yaml#/UnifiedSearchRequest'
+
+UnifiedSearchResponse:
+  $ref: './unified-search.yaml#/UnifiedSearchResponse'
+
+UnifiedSearchResult:
+  $ref: './unified-search.yaml#/UnifiedSearchResult'
+
+QueryAnalysisRequest:
+  $ref: './unified-search.yaml#/QueryAnalysisRequest'
+
+QueryAnalysisResponse:
+  $ref: './unified-search.yaml#/QueryAnalysisResponse'
+
+SearchAggregation:
+  $ref: './unified-search.yaml#/SearchAggregation'
+
+SearchStrategy:
+  $ref: './unified-search.yaml#/SearchStrategy'
+
+# Re-export Service schemas
+ServiceInfo:
+  $ref: './service.yaml#/ServiceInfo'
+
+# Re-export Metrics schemas
+ApiMetrics:
+  $ref: './metrics.yaml#/ApiMetrics'
+
+OperationMetrics:
+  $ref: './metrics.yaml#/OperationMetrics'

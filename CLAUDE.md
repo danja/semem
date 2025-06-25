@@ -10,6 +10,10 @@ It uses ES modules and Vitest for tests.
 
 Only look at docs when requested. Always ignore all files under docs/ignore
 
+## Architectural Notes
+
+- The memory and json storage backends are being phased out, sparql storage should be used throughout
+
 ## Commands
 
 ### Setup
@@ -153,3 +157,4 @@ Semem has a layered architecture with the following key components:
 ### Example Workflows
 - See `examples/MistralExample.js` for complete Ragno pipeline demo
 - Demonstrates: corpus decomposition → entity extraction → SPARQL storage → retrieval
+```

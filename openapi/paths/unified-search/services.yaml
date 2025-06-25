@@ -1,0 +1,154 @@
+get:
+  tags:
+    - Unified Search
+  summary: Get Available Search Services
+  description: |
+    Retrieve information about available search services and their current
+    status for unified search operations.
+    
+    This endpoint provides real-time information about which Semem services
+    are available for unified search, their capabilities, and current health status.
+    Helps clients understand service availability before making unified search requests.
+  operationId: getUnifiedSearchServices
+  security: []  # No authentication required
+  responses:
+    '200':
+      description: Available search services information
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '../../components/schemas/index.yaml#/ApiResponse'
+              - type: object
+                properties:
+                  services:
+                    type: object
+                    properties:
+                      memory:
+                        type: object
+                        properties:
+                          available:
+                            type: boolean
+                          status:
+                            type: string
+                            enum: [healthy, degraded, unavailable]
+                          capabilities:
+                            type: array
+                            items:
+                              type: string
+                          description:
+                            type: string
+                      ragno:
+                        type: object
+                        properties:
+                          available:
+                            type: boolean
+                          status:
+                            type: string
+                            enum: [healthy, degraded, unavailable]
+                          capabilities:
+                            type: array
+                            items:
+                              type: string
+                          description:
+                            type: string
+                      search:
+                        type: object
+                        properties:
+                          available:
+                            type: boolean
+                          status:
+                            type: string
+                            enum: [healthy, degraded, unavailable]
+                          capabilities:
+                            type: array
+                            items:
+                              type: string
+                          description:
+                            type: string
+                      zpt:
+                        type: object
+                        properties:
+                          available:
+                            type: boolean
+                          status:
+                            type: string
+                            enum: [healthy, degraded, unavailable]
+                          capabilities:
+                            type: array
+                            items:
+                              type: string
+                          description:
+                            type: string
+                  summary:
+                    type: object
+                    properties:
+                      totalServices:
+                        type: integer
+                      availableServices:
+                        type: integer
+                      healthyServices:
+                        type: integer
+          examples:
+            all_services_available:
+              summary: All services available and healthy
+              value:
+                success: true
+                services:
+                  memory:
+                    available: true
+                    status: "healthy"
+                    capabilities: ["semantic_search", "embedding_generation", "concept_extraction"]
+                    description: "Semantic memory management and retrieval"
+                  ragno:
+                    available: true
+                    status: "healthy"
+                    capabilities: ["entity_search", "relationship_queries", "graph_analytics"]
+                    description: "Knowledge graph operations and entity management"
+                  search:
+                    available: true
+                    status: "healthy"
+                    capabilities: ["content_search", "keyword_matching", "indexing"]
+                    description: "Content search and indexing"
+                  zpt:
+                    available: true
+                    status: "healthy"
+                    capabilities: ["corpus_navigation", "multi_dimensional_search", "temporal_analysis"]
+                    description: "Zero-Point Traversal corpus navigation"
+                summary:
+                  totalServices: 4
+                  availableServices: 4
+                  healthyServices: 4
+                processingTime: 89
+            partial_availability:
+              summary: Some services unavailable
+              value:
+                success: true
+                services:
+                  memory:
+                    available: true
+                    status: "healthy"
+                    capabilities: ["semantic_search", "embedding_generation", "concept_extraction"]
+                    description: "Semantic memory management and retrieval"
+                  ragno:
+                    available: false
+                    status: "unavailable"
+                    capabilities: []
+                    description: "Knowledge graph service temporarily unavailable"
+                  search:
+                    available: true
+                    status: "degraded"
+                    capabilities: ["content_search", "keyword_matching"]
+                    description: "Content search with limited indexing capability"
+                  zpt:
+                    available: true
+                    status: "healthy"
+                    capabilities: ["corpus_navigation", "multi_dimensional_search"]
+                    description: "ZPT navigation with temporal analysis disabled"
+                summary:
+                  totalServices: 4
+                  availableServices: 3
+                  healthyServices: 2
+                processingTime: 156
+    '500':
+      $ref: '../../components/responses/index.yaml#/InternalServerErrorResponse'

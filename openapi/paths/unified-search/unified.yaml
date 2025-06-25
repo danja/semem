@@ -1,0 +1,214 @@
+post:
+  tags:
+    - Unified Search
+  summary: Unified Cross-Service Search
+  description: |
+    Perform intelligent search across all available Semem services with automatic
+    query analysis, service routing, and result aggregation.
+    
+    The unified search system:
+    1. Analyzes the query to understand intent and optimal search strategy
+    2. Routes the query to relevant services (Memory, Ragno, Search, ZPT)
+    3. Executes parallel searches across selected services
+    4. Aggregates and ranks results using configurable weights
+    5. Returns unified results with source attribution
+    
+    **Search Strategies**:
+    - `auto`: Automatic strategy selection based on query analysis
+    - `entity-focused`: Prioritizes entity-based searches (Ragno)
+    - `concept-focused`: Emphasizes semantic concept matching
+    - `graph-focused`: Focuses on knowledge graph relationships
+    - `navigation-focused`: Uses ZPT for corpus exploration
+    - `knowledge-focused`: Comprehensive knowledge retrieval
+    - `balanced`: Equal weighting across all services
+  operationId: unifiedSearch
+  security:
+    - ApiKeyAuth: []
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../../components/schemas/index.yaml#/UnifiedSearchRequest'
+        examples:
+          auto_search:
+            summary: Automatic strategy selection
+            value:
+              query: "quantum computing algorithms and their applications"
+              limit: 20
+              strategy: "auto"
+          entity_focused:
+            summary: Entity-focused search
+            value:
+              query: "OpenAI GPT models"
+              limit: 15
+              strategy: "entity-focused"
+              services: ["memory", "ragno"]
+              weights:
+                memory: 0.3
+                ragno: 0.7
+          balanced_search:
+            summary: Balanced cross-service search
+            value:
+              query: "machine learning neural networks deep learning"
+              limit: 25
+              strategy: "balanced"
+              services: ["memory", "ragno", "search", "zpt"]
+              weights:
+                memory: 0.25
+                ragno: 0.25
+                search: 0.25
+                zpt: 0.25
+          custom_weights:
+            summary: Custom service weighting
+            value:
+              query: "artificial intelligence research trends"
+              limit: 30
+              strategy: "knowledge-focused"
+              weights:
+                memory: 0.4
+                ragno: 0.3
+                search: 0.2
+                zpt: 0.1
+  responses:
+    '200':
+      description: Unified search results
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/index.yaml#/UnifiedSearchResponse'
+          examples:
+            comprehensive_results:
+              summary: Comprehensive search results
+              value:
+                success: true
+                results:
+                  - id: "mem_12345"
+                    title: "Machine Learning Fundamentals"
+                    content: "Machine learning is a subset of artificial intelligence..."
+                    similarity: 0.92
+                    type: "memory"
+                    source: "memory"
+                    weight: 0.4
+                    metadata:
+                      concepts: ["machine learning", "AI", "algorithms"]
+                      timestamp: 1640995200000
+                  - id: "ragno_67890"
+                    title: "Neural Networks Entity"
+                    content: "Neural networks are computing systems inspired by..."
+                    similarity: 0.87
+                    type: "entity"
+                    source: "ragno"
+                    weight: 0.3
+                    metadata:
+                      entityType: "Technology"
+                      confidence: 0.94
+                      relationships: 12
+                  - id: "search_54321"
+                    title: "Deep Learning Research Paper"
+                    content: "Recent advances in deep learning architectures..."
+                    similarity: 0.83
+                    type: "content"
+                    source: "search"
+                    weight: 0.2
+                    metadata:
+                      contentType: "academic"
+                      indexed: "2024-01-15"
+                  - id: "zpt_98765"
+                    title: "AI Trends Corpus Navigation"
+                    content: "Corpus analysis reveals emerging trends in AI..."
+                    similarity: 0.79
+                    type: "navigation"
+                    source: "zpt"
+                    weight: 0.1
+                    metadata:
+                      zoomLevel: "community"
+                      timeRange: "2023-2024"
+                aggregation:
+                  totalResults: 45
+                  serviceResults:
+                    memory: 12
+                    ragno: 18
+                    search: 8
+                    zpt: 7
+                  strategy: "balanced"
+                  processingTime: 2890
+            entity_focused_results:
+              summary: Entity-focused results
+              value:
+                success: true
+                results:
+                  - id: "ragno_openai_001"
+                    title: "OpenAI"
+                    content: "OpenAI is an AI research organization..."
+                    similarity: 0.96
+                    type: "entity"
+                    source: "ragno"
+                    weight: 0.7
+                    metadata:
+                      entityType: "Organization"
+                      confidence: 0.98
+                  - id: "mem_gpt_models"
+                    title: "GPT Model Evolution"
+                    content: "Discussion about GPT model improvements..."
+                    similarity: 0.89
+                    type: "memory"
+                    source: "memory"
+                    weight: 0.3
+                aggregation:
+                  totalResults: 8
+                  serviceResults:
+                    memory: 3
+                    ragno: 5
+                  strategy: "entity-focused"
+                  processingTime: 1450
+    '400':
+      description: Invalid search parameters
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/index.yaml#/ErrorResponse'
+          examples:
+            missing_query:
+              summary: Missing query parameter
+              value:
+                success: false
+                error: "Query is required"
+                message: "The 'query' field must be provided"
+            invalid_strategy:
+              summary: Invalid search strategy
+              value:
+                success: false
+                error: "Invalid strategy"
+                message: "Strategy must be one of: auto, entity-focused, concept-focused, graph-focused, navigation-focused, knowledge-focused, balanced"
+            invalid_weights:
+              summary: Invalid weight configuration
+              value:
+                success: false
+                error: "Invalid weights"
+                message: "Service weights must sum to 1.0"
+    '401':
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/index.yaml#/ErrorResponse'
+    '500':
+      description: Unified search processing error
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/index.yaml#/ErrorResponse'
+          examples:
+            service_unavailable:
+              summary: Required service unavailable
+              value:
+                success: false
+                error: "Service unavailable"
+                message: "One or more required search services are currently unavailable"
+            aggregation_error:
+              summary: Result aggregation failed
+              value:
+                success: false
+                error: "Aggregation failed"
+                message: "Unable to aggregate results from multiple services"

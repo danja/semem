@@ -1,0 +1,119 @@
+post:
+  tags:
+    - Chat
+  summary: Streaming Chat Completion
+  description: |
+    Generate a streaming conversational response using Server-Sent Events (SSE).
+    
+    This endpoint provides real-time response generation, allowing clients to 
+    display partial responses as they are generated. Useful for:
+    - Interactive chat interfaces
+    - Real-time conversation experiences
+    - Long-form content generation with progressive display
+    
+    The response is streamed as JSON chunks over an SSE connection.
+  operationId: streamingChatCompletion
+  security:
+    - ApiKeyAuth: []
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../../components/schemas/index.yaml#/ChatRequest'
+        examples:
+          streaming_chat:
+            summary: Streaming chat request
+            value:
+              prompt: "Write a detailed explanation of how neural networks learn through backpropagation"
+              useMemory: true
+              temperature: 0.7
+              maxTokens: 800
+          creative_writing:
+            summary: Creative writing with streaming
+            value:
+              prompt: "Write a short story about an AI discovering consciousness"
+              temperature: 1.2
+              maxTokens: 1500
+  responses:
+    '200':
+      description: Streaming response
+      content:
+        text/event-stream:
+          schema:
+            type: string
+            description: |
+              Server-Sent Events stream with JSON data chunks.
+              
+              Each event contains a JSON object with:
+              - `type`: Event type ('data', 'done', 'error')
+              - `content`: Partial response content (for 'data' events)
+              - `done`: Boolean indicating completion (for 'done' events)
+              - `error`: Error message (for 'error' events)
+          examples:
+            stream_data:
+              summary: Example SSE stream
+              value: |
+                data: {"type":"data","content":"Neural networks learn through a process called backpropagation, which is essentially"}
+                
+                data: {"type":"data","content":" a way to calculate how much each connection in the network"}
+                
+                data: {"type":"data","content":" contributed to the overall error and adjust accordingly."}
+                
+                data: {"type":"done","conversationId":"conv_123","memoryIds":["mem_abc"]}
+      headers:
+        Content-Type:
+          schema:
+            type: string
+            enum: [text/event-stream]
+        Cache-Control:
+          schema:
+            type: string
+            enum: [no-cache]
+        Connection:
+          schema:
+            type: string
+            enum: [keep-alive]
+    '400':
+      description: Invalid request data
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/index.yaml#/ErrorResponse'
+    '401':
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/index.yaml#/ErrorResponse'
+    '500':
+      description: Streaming error
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/index.yaml#/ErrorResponse'
+  callbacks:
+    streamData:
+      '{$request.body#/callbackUrl}':
+        post:
+          requestBody:
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                      enum: [data, done, error]
+                    content:
+                      type: string
+                      description: Partial response content
+                    done:
+                      type: boolean
+                      description: Indicates completion
+                    error:
+                      type: string
+                      description: Error message if type is 'error'
+          responses:
+            '200':
+              description: Callback received

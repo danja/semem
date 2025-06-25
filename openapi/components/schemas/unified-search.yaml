@@ -1,0 +1,825 @@
+# Unified Search API Schemas
+
+UnifiedSearchRequest:
+  type: object
+  properties:
+    query:
+      type: string
+      minLength: 1
+      maxLength: 1000
+      description: Search query text
+      example: "quantum computing algorithms and applications"
+    limit:
+      type: integer
+      minimum: 1
+      maximum: 100
+      default: 20
+      description: Maximum number of results to return
+    strategy:
+      type: string
+      enum: [auto, entity-focused, concept-focused, graph-focused, navigation-focused, knowledge-focused, balanced]
+      default: auto
+      description: Search strategy to employ
+    services:
+      type: array
+      items:
+        type: string
+        enum: [memory, ragno, search, zpt]
+      description: Services to include in unified search
+      example: ["memory", "ragno", "search"]
+    weights:
+      type: object
+      properties:
+        memory:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Weight for memory service results
+        ragno:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Weight for knowledge graph results
+        search:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Weight for content search results
+        zpt:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Weight for ZPT navigation results
+      description: Service result weights (must sum to 1.0)
+      example:
+        memory: 0.3
+        ragno: 0.3
+        search: 0.2
+        zpt: 0.2
+    aggregation:
+      type: object
+      properties:
+        method:
+          type: string
+          enum: [weighted_sum, rank_fusion, bayesian, ensemble]
+          default: weighted_sum
+          description: Result aggregation method
+        diversityBoost:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          default: 0.1
+          description: Boost for result diversity
+        timeDecay:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          default: 0.05
+          description: Time-based relevance decay factor
+        sourceSpread:
+          type: boolean
+          default: true
+          description: Ensure results from multiple sources
+      description: Result aggregation configuration
+    filters:
+      type: object
+      properties:
+        dateRange:
+          type: object
+          properties:
+            start:
+              type: string
+              format: date-time
+            end:
+              type: string
+              format: date-time
+        contentTypes:
+          type: array
+          items:
+            type: string
+            enum: [memory, entity, document, conversation, navigation]
+        confidence:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Minimum confidence threshold
+        languages:
+          type: array
+          items:
+            type: string
+        domains:
+          type: array
+          items:
+            type: string
+      description: Cross-service filters
+    options:
+      type: object
+      properties:
+        includeExplanations:
+          type: boolean
+          default: false
+          description: Include search strategy explanations
+        parallel:
+          type: boolean
+          default: true
+          description: Execute service searches in parallel
+        timeout:
+          type: integer
+          minimum: 1000
+          maximum: 60000
+          default: 30000
+          description: Maximum search timeout (ms)
+        includeMetadata:
+          type: boolean
+          default: true
+          description: Include detailed metadata in results
+        deduplicate:
+          type: boolean
+          default: true
+          description: Remove duplicate results across services
+        expandQuery:
+          type: boolean
+          default: true
+          description: Expand query with synonyms and related terms
+      description: Search execution options
+  required:
+    - query
+
+UnifiedSearchResponse:
+  allOf:
+    - $ref: '../schemas/common.yaml#/ApiResponse'
+    - type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/UnifiedSearchResult'
+          description: Unified search results
+        aggregation:
+          $ref: '#/SearchAggregation'
+        strategy:
+          $ref: '#/SearchStrategy'
+        performance:
+          $ref: '#/SearchPerformance'
+
+UnifiedSearchResult:
+  type: object
+  properties:
+    id:
+      type: string
+      description: Unique result identifier
+      example: "unified_result_123"
+    title:
+      type: string
+      description: Result title
+      example: "Quantum Computing Fundamentals"
+    content:
+      type: string
+      description: Result content or excerpt
+      example: "Quantum computing leverages quantum mechanics principles..."
+    type:
+      type: string
+      enum: [memory, entity, document, conversation, navigation, semantic]
+      description: Result content type
+    source:
+      type: string
+      enum: [memory, ragno, search, zpt]
+      description: Source service
+    score:
+      type: number
+      format: float
+      minimum: 0
+      maximum: 1
+      description: Unified relevance score
+      example: 0.92
+    sourceScore:
+      type: number
+      format: float
+      description: Original score from source service
+    weight:
+      type: number
+      format: float
+      description: Applied service weight
+    rank:
+      type: integer
+      description: Result ranking in unified results
+    confidence:
+      type: number
+      format: float
+      minimum: 0
+      maximum: 1
+      description: Confidence in result relevance
+    metadata:
+      type: object
+      properties:
+        sourceRank:
+          type: integer
+          description: Original rank in source service
+        timestamp:
+          type: string
+          format: date-time
+          description: Content timestamp
+        author:
+          type: string
+          description: Content author
+        tags:
+          type: array
+          items:
+            type: string
+          description: Content tags
+        language:
+          type: string
+          description: Content language
+        domain:
+          type: string
+          description: Content domain
+        similarity:
+          type: number
+          format: float
+          description: Semantic similarity to query
+        concepts:
+          type: array
+          items:
+            type: string
+          description: Related concepts
+        entities:
+          type: array
+          items:
+            type: string
+          description: Related entities
+      additionalProperties: true
+      description: Source-specific metadata
+    highlights:
+      type: array
+      items:
+        type: object
+        properties:
+          field:
+            type: string
+          fragment:
+            type: string
+          type:
+            type: string
+            enum: [exact, semantic, entity]
+      description: Search result highlights
+    related:
+      type: array
+      items:
+        type: object
+        properties:
+          id:
+            type: string
+          title:
+            type: string
+          source:
+            type: string
+          similarity:
+            type: number
+            format: float
+      description: Related results from other services
+    explanation:
+      type: object
+      properties:
+        why:
+          type: string
+          description: Why this result was included
+        strategy:
+          type: string
+          description: Strategy that surfaced this result
+        factors:
+          type: array
+          items:
+            type: object
+            properties:
+              factor:
+                type: string
+              weight:
+                type: number
+                format: float
+              contribution:
+                type: number
+                format: float
+          description: Ranking factors and contributions
+      description: Result explanation (if requested)
+  required:
+    - id
+    - title
+    - content
+    - type
+    - source
+    - score
+
+SearchAggregation:
+  type: object
+  properties:
+    totalResults:
+      type: integer
+      description: Total results across all services
+    serviceResults:
+      type: object
+      properties:
+        memory:
+          type: integer
+          description: Results from memory service
+        ragno:
+          type: integer
+          description: Results from knowledge graph service
+        search:
+          type: integer
+          description: Results from content search service
+        zpt:
+          type: integer
+          description: Results from ZPT navigation service
+      description: Result counts by service
+    duplicatesRemoved:
+      type: integer
+      description: Number of duplicate results removed
+    method:
+      type: string
+      enum: [weighted_sum, rank_fusion, bayesian, ensemble]
+      description: Aggregation method used
+    coverage:
+      type: object
+      properties:
+        memory:
+          type: number
+          format: float
+          description: Coverage of memory content
+        ragno:
+          type: number
+          format: float
+          description: Coverage of knowledge graph
+        search:
+          type: number
+          format: float
+          description: Coverage of indexed content
+        zpt:
+          type: number
+          format: float
+          description: Coverage of corpus navigation
+      description: Search coverage by service
+    confidence:
+      type: object
+      properties:
+        overall:
+          type: number
+          format: float
+          description: Overall result confidence
+        byService:
+          type: object
+          additionalProperties:
+            type: number
+            format: float
+          description: Confidence by service
+      description: Aggregated confidence metrics
+  required:
+    - totalResults
+    - serviceResults
+    - method
+
+SearchStrategy:
+  type: object
+  properties:
+    name:
+      type: string
+      enum: [auto, entity-focused, concept-focused, graph-focused, navigation-focused, knowledge-focused, balanced]
+      description: Strategy name
+    description:
+      type: string
+      description: Strategy description
+    useCases:
+      type: array
+      items:
+        type: string
+        description: Use cases this strategy is best suited for
+    selected:
+      type: string
+      enum: [auto, entity-focused, concept-focused, graph-focused, navigation-focused, knowledge-focused, balanced]
+      description: Selected search strategy
+    reason:
+      type: string
+      description: Reason for strategy selection
+    queryAnalysis:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [factual, conceptual, procedural, navigational, exploratory]
+          description: Detected query type
+        intent:
+          type: string
+          enum: [find, understand, compare, analyze, explore]
+          description: Detected user intent
+        complexity:
+          type: string
+          enum: [simple, moderate, complex]
+          description: Query complexity assessment
+        entities:
+          type: array
+          items:
+            type: string
+          description: Entities detected in query
+        concepts:
+          type: array
+          items:
+            type: string
+          description: Concepts detected in query
+        keywords:
+          type: array
+          items:
+            type: string
+          description: Key terms extracted
+      description: Analysis of the search query
+    optimization:
+      type: object
+      properties:
+        queryExpansion:
+          type: array
+          items:
+            type: string
+          description: Terms added for query expansion
+        synonyms:
+          type: array
+          items:
+            type: string
+          description: Synonyms considered
+        filters:
+          type: object
+          additionalProperties: true
+          description: Applied filters
+        boosting:
+          type: object
+          additionalProperties:
+            type: number
+            format: float
+          description: Applied term boosting
+      description: Query optimization applied
+    routing:
+      type: object
+      properties:
+        services:
+          type: array
+          items:
+            type: object
+            properties:
+              service:
+                type: string
+              weight:
+                type: number
+                format: float
+              reason:
+                type: string
+          description: Service routing decisions
+        parallel:
+          type: boolean
+          description: Whether services were queried in parallel
+      description: Service routing strategy
+  required:
+    - selected
+    - queryAnalysis
+
+SearchPerformance:
+  type: object
+  properties:
+    totalTime:
+      type: integer
+      description: Total search time (ms)
+    servicePerformance:
+      type: object
+      properties:
+        memory:
+          type: object
+          properties:
+            time:
+              type: integer
+              description: Search time (ms)
+            results:
+              type: integer
+              description: Results returned
+            status:
+              type: string
+              enum: [success, timeout, error, skipped]
+        ragno:
+          type: object
+          properties:
+            time:
+              type: integer
+            results:
+              type: integer
+            status:
+              type: string
+              enum: [success, timeout, error, skipped]
+        search:
+          type: object
+          properties:
+            time:
+              type: integer
+            results:
+              type: integer
+            status:
+              type: string
+              enum: [success, timeout, error, skipped]
+        zpt:
+          type: object
+          properties:
+            time:
+              type: integer
+            results:
+              type: integer
+            status:
+              type: string
+              enum: [success, timeout, error, skipped]
+      description: Performance metrics by service
+    aggregationTime:
+      type: integer
+      description: Result aggregation time (ms)
+    cacheHits:
+      type: integer
+      description: Number of cache hits
+    warnings:
+      type: array
+      items:
+        type: string
+      description: Performance warnings
+    bottlenecks:
+      type: array
+      items:
+        type: object
+        properties:
+          service:
+            type: string
+          issue:
+            type: string
+          impact:
+            type: string
+            enum: [low, medium, high]
+      description: Performance bottlenecks identified
+  required:
+    - totalTime
+    - servicePerformance
+    - aggregationTime
+
+QueryAnalysisRequest:
+  type: object
+  properties:
+    query:
+      type: string
+      minLength: 1
+      maxLength: 1000
+      description: Query to analyze
+      example: "explain quantum entanglement in neural networks"
+    context:
+      type: object
+      properties:
+        previousQueries:
+          type: array
+          items:
+            type: string
+          description: Previous queries in session
+        userProfile:
+          type: object
+          properties:
+            expertiseLevel:
+              type: string
+              enum: [beginner, intermediate, advanced]
+            domains:
+              type: array
+              items:
+                type: string
+            preferences:
+              type: object
+              additionalProperties: true
+          description: User profile information
+        sessionContext:
+          type: object
+          additionalProperties: true
+          description: Current session context
+      description: Additional context for query analysis
+    options:
+      type: object
+      properties:
+        includeEntityExtraction:
+          type: boolean
+          default: true
+        includeConceptExtraction:
+          type: boolean
+          default: true
+        includeIntentClassification:
+          type: boolean
+          default: true
+        includeStrategyRecommendation:
+          type: boolean
+          default: true
+      description: Analysis options
+  required:
+    - query
+
+QueryAnalysisResponse:
+  allOf:
+    - $ref: '../schemas/common.yaml#/ApiResponse'
+    - type: object
+      properties:
+        analysis:
+          type: object
+          properties:
+            query:
+              type: string
+              description: Original query
+            normalized:
+              type: string
+              description: Normalized query
+            type:
+              type: string
+              enum: [factual, conceptual, procedural, navigational, exploratory, comparative]
+              description: Query type classification
+            intent:
+              type: string
+              enum: [find, understand, compare, analyze, explore, create]
+              description: User intent classification
+            complexity:
+              type: string
+              enum: [simple, moderate, complex]
+              description: Query complexity
+            entities:
+              type: array
+              items:
+                type: object
+                properties:
+                  text:
+                    type: string
+                  type:
+                    type: string
+                  confidence:
+                    type: number
+                    format: float
+              description: Extracted entities
+            concepts:
+              type: array
+              items:
+                type: object
+                properties:
+                  concept:
+                    type: string
+                  confidence:
+                    type: number
+                    format: float
+                  category:
+                    type: string
+              description: Extracted concepts
+            keywords:
+              type: array
+              items:
+                type: object
+                properties:
+                  term:
+                    type: string
+                  weight:
+                    type: number
+                    format: float
+                  type:
+                    type: string
+                    enum: [noun, verb, adjective, named_entity]
+              description: Extracted keywords
+            language:
+              type: string
+              description: Detected language
+            sentiment:
+              type: object
+              properties:
+                polarity:
+                  type: string
+                  enum: [positive, negative, neutral]
+                confidence:
+                  type: number
+                  format: float
+              description: Query sentiment
+        recommendations:
+          type: object
+          properties:
+            strategy:
+              type: string
+              enum: [auto, entity-focused, concept-focused, graph-focused, navigation-focused, knowledge-focused, balanced]
+              description: Recommended search strategy
+            services:
+              type: array
+              items:
+                type: object
+                properties:
+                  service:
+                    type: string
+                  priority:
+                    type: number
+                    format: float
+                  reason:
+                    type: string
+              description: Recommended services with priorities
+            queryExpansion:
+              type: array
+              items:
+                type: string
+              description: Suggested query expansion terms
+            filters:
+              type: object
+              additionalProperties: true
+              description: Recommended filters
+            alternatives:
+              type: array
+              items:
+                type: string
+              description: Alternative query suggestions
+        confidence:
+          type: object
+          properties:
+            overall:
+              type: number
+              format: float
+              description: Overall analysis confidence
+            classification:
+              type: number
+              format: float
+              description: Classification confidence
+            entityExtraction:
+              type: number
+              format: float
+              description: Entity extraction confidence
+            conceptExtraction:
+              type: number
+              format: float
+              description: Concept extraction confidence
+          description: Confidence scores for analysis components
+
+UnifiedSearchService:
+  type: object
+  properties:
+    name:
+      type: string
+      description: Service name
+      example: "memory"
+    available:
+      type: boolean
+      description: Whether service is available
+    status:
+      type: string
+      enum: [healthy, degraded, unavailable]
+      description: Service health status
+    capabilities:
+      type: array
+      items:
+        type: string
+      description: Service capabilities
+      example: ["semantic_search", "embedding_generation", "concept_extraction"]
+    useCases:
+      type: array
+      items:
+        type: string
+      description: Use cases this service is best suited for
+      example: ["semantic_search", "document_retrieval", "question_answering"]
+    description:
+      type: string
+      description: Service description
+    version:
+      type: string
+      description: Service version
+    performance:
+      type: object
+      properties:
+        averageResponseTime:
+          type: number
+          format: float
+          description: Average response time (ms)
+        availability:
+          type: number
+          format: float
+          description: Service availability percentage
+        errorRate:
+          type: number
+          format: float
+          description: Error rate percentage
+      description: Service performance metrics
+    limits:
+      type: object
+      properties:
+        maxQuery:
+          type: integer
+          description: Maximum query length
+        maxResults:
+          type: integer
+          description: Maximum results returned
+        rateLimit:
+          type: integer
+          description: Requests per minute limit
+      description: Service limitations
+  required:
+    - name
+    - available
+    - status
+    - capabilities
+    - description
+    - useCases

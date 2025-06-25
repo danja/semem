@@ -1,0 +1,180 @@
+post:
+  tags:
+    - ZPT
+  summary: ZPT Navigation
+  description: |
+    Navigate the corpus using Zero-Point Traversal (ZPT) with zoom, pan, and tilt controls.
+    
+    ZPT provides a multi-dimensional navigation system for exploring large text corpora:
+    
+    **Zoom**: Controls the granularity level
+    - `entity`: Focus on specific entities
+    - `unit`: Semantic units level
+    - `text`: Raw text chunks
+    - `community`: Entity communities/clusters
+    - `corpus`: Entire corpus overview
+    
+    **Pan**: Defines the navigation focus area
+    - Topic-based filtering
+    - Entity-specific exploration
+    - Temporal boundaries
+    - Geographic constraints
+    
+    **Tilt**: Changes the representation perspective
+    - `embedding`: Vector space representation
+    - `keywords`: Keyword-based view
+    - `graph`: Network/relationship view
+    - `temporal`: Time-series perspective
+    
+    **Transform**: Output formatting and processing options
+  operationId: zptNavigate
+  security:
+    - ApiKeyAuth: []
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../../components/schemas/index.yaml#/ZPTNavigateRequest'
+        examples:
+          entity_focus:
+            summary: Focus on specific entity
+            value:
+              zoom: "entity"
+              pan:
+                entity: "machine learning"
+                topic: "artificial intelligence"
+              tilt: "graph"
+              transform:
+                maxTokens: 2000
+                format: "json"
+                includeMetadata: true
+          temporal_exploration:
+            summary: Time-based exploration
+            value:
+              zoom: "unit"
+              pan:
+                topic: "quantum computing"
+                temporal:
+                  start: "2020-01-01"
+                  end: "2024-12-31"
+              tilt: "temporal"
+              transform:
+                maxTokens: 3000
+                format: "markdown"
+                chunkStrategy: "semantic"
+          corpus_overview:
+            summary: High-level corpus view
+            value:
+              zoom: "corpus"
+              pan:
+                topic: "technology trends"
+              tilt: "embedding"
+              transform:
+                maxTokens: 1500
+                format: "structured"
+                includeMetadata: false
+  responses:
+    '200':
+      description: Navigation result
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/index.yaml#/ZPTNavigateResponse'
+          examples:
+            entity_navigation:
+              summary: Entity-focused navigation result
+              value:
+                success: true
+                result:
+                  zoomLevel: "entity"
+                  focusEntity: "machine learning"
+                  content:
+                    entities:
+                      - name: "Machine Learning"
+                        type: "Concept"
+                        connections: 45
+                        relevance: 0.94
+                    relationships:
+                      - from: "Machine Learning"
+                        to: "Artificial Intelligence"
+                        type: "subsetOf"
+                        strength: 0.87
+                  navigation:
+                    currentPosition: "ml_algorithms_cluster"
+                    availableDirections: ["deep_learning", "supervised_learning", "reinforcement_learning"]
+                metadata:
+                  tokenCount: 1847
+                  complexity: "medium"
+                  zoomLevel: "entity"
+                  processingTime: 2340
+            temporal_navigation:
+              summary: Temporal navigation result
+              value:
+                success: true
+                result:
+                  zoomLevel: "unit"
+                  timeRange: "2020-2024"
+                  content: |
+                    ## Quantum Computing Evolution (2020-2024)
+                    
+                    ### 2020-2021: Foundation Building
+                    - IBM quantum advantage demonstrations
+                    - Google's quantum supremacy claims
+                    
+                    ### 2022-2023: Algorithm Development
+                    - Variational quantum algorithms advancement
+                    - Error correction breakthroughs
+                    
+                    ### 2024: Commercial Applications
+                    - Quantum machine learning integration
+                    - Industry adoption acceleration
+                metadata:
+                  tokenCount: 2890
+                  complexity: "high"
+                  timeSpan: "4 years"
+                  processingTime: 3450
+    '400':
+      description: Invalid navigation parameters
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/index.yaml#/ErrorResponse'
+          examples:
+            invalid_zoom:
+              summary: Invalid zoom level
+              value:
+                success: false
+                error: "Invalid zoom level"
+                message: "Zoom must be one of: entity, unit, text, community, corpus"
+            missing_pan:
+              summary: Missing pan parameters
+              value:
+                success: false
+                error: "Invalid pan configuration"
+                message: "At least one pan parameter (topic, entity, temporal, geographic) must be specified"
+    '401':
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/index.yaml#/ErrorResponse'
+    '500':
+      description: Navigation processing error
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/index.yaml#/ErrorResponse'
+          examples:
+            corpus_unavailable:
+              summary: Corpus not available
+              value:
+                success: false
+                error: "Corpus unavailable"
+                message: "No corpus data available for navigation"
+            processing_timeout:
+              summary: Processing timeout
+              value:
+                success: false
+                error: "Navigation timeout"
+                message: "Navigation request exceeded maximum processing time"

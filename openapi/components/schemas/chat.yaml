@@ -1,0 +1,505 @@
+# Chat API Schemas
+
+ChatRequest:
+  type: object
+  properties:
+    prompt:
+      type: string
+      minLength: 1
+      maxLength: 10000
+      description: The chat prompt or message
+      example: "Explain the concept of quantum entanglement in simple terms"
+    conversationId:
+      type: string
+      format: uuid
+      description: Optional conversation identifier for context continuity
+      example: "conv_a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+    useMemory:
+      type: boolean
+      default: true
+      description: Whether to use semantic memory for context
+    temperature:
+      type: number
+      format: float
+      minimum: 0
+      maximum: 2
+      default: 0.7
+      description: Response creativity (0=deterministic, 2=very creative)
+      example: 0.7
+    maxTokens:
+      type: integer
+      minimum: 1
+      maximum: 8192
+      description: Maximum number of tokens in response
+      example: 500
+    model:
+      type: string
+      description: Specific LLM model to use
+      example: "qwen2:1.5b"
+    systemPrompt:
+      type: string
+      maxLength: 2000
+      description: System prompt to guide model behavior
+      example: "You are a helpful AI assistant specializing in scientific explanations."
+    contextWindow:
+      type: integer
+      minimum: 1
+      maximum: 10
+      default: 3
+      description: Number of past interactions to include for context
+    memoryThreshold:
+      type: number
+      format: float
+      minimum: 0
+      maximum: 100
+      default: 40
+      description: Similarity threshold for memory retrieval
+    streaming:
+      type: boolean
+      default: false
+      description: Enable streaming response (for compatible endpoints)
+    stopSequences:
+      type: array
+      items:
+        type: string
+      maxItems: 10
+      description: Stop sequences to end generation
+      example: ["\n\n", "Human:", "AI:"]
+    presencePenalty:
+      type: number
+      format: float
+      minimum: -2
+      maximum: 2
+      default: 0
+      description: Penalty for token presence
+    frequencyPenalty:
+      type: number
+      format: float
+      minimum: -2
+      maximum: 2
+      default: 0
+      description: Penalty for token frequency
+    topP:
+      type: number
+      format: float
+      minimum: 0
+      maximum: 1
+      description: Nucleus sampling parameter
+    topK:
+      type: integer
+      minimum: 1
+      description: Top-K sampling parameter
+  required:
+    - prompt
+
+ChatResponse:
+  allOf:
+    - $ref: '../schemas/common.yaml#/ApiResponse'
+    - type: object
+      properties:
+        response:
+          type: string
+          description: Generated response text
+          example: "Quantum entanglement is a phenomenon where two particles become connected in such a way that measuring one instantly affects the other, regardless of distance."
+        conversationId:
+          type: string
+          format: uuid
+          description: Conversation identifier (generated if not provided)
+        memoryIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: IDs of memory interactions used for context
+          example: ["mem_abc123", "mem_def456"]
+        tokensUsed:
+          type: integer
+          description: Number of tokens used in generation
+          example: 245
+        finishReason:
+          type: string
+          enum: [stop, length, error, timeout]
+          description: Reason generation stopped
+          example: "stop"
+        model:
+          type: string
+          description: Model used for generation
+          example: "qwen2:1.5b"
+        metadata:
+          type: object
+          properties:
+            memoryRetrievalTime:
+              type: integer
+              description: Time spent retrieving memory context (ms)
+            generationTime:
+              type: integer
+              description: Time spent generating response (ms)
+            contextTokens:
+              type: integer
+              description: Tokens used for context
+            memoryInteractions:
+              type: integer
+              description: Number of memory interactions used
+            conceptsExtracted:
+              type: array
+              items:
+                type: string
+              description: Concepts extracted from the conversation
+            temperature:
+              type: number
+              format: float
+              description: Temperature used for generation
+            seed:
+              type: integer
+              description: Random seed used (if applicable)
+
+StreamingChatRequest:
+  allOf:
+    - $ref: '#/ChatRequest'
+    - type: object
+      properties:
+        streamingOptions:
+          type: object
+          properties:
+            chunkSize:
+              type: integer
+              minimum: 1
+              maximum: 100
+              default: 1
+              description: Number of tokens per streaming chunk
+            includeMetadata:
+              type: boolean
+              default: true
+              description: Include metadata in stream events
+            heartbeatInterval:
+              type: integer
+              minimum: 1000
+              maximum: 30000
+              default: 5000
+              description: Heartbeat interval in milliseconds
+            bufferSize:
+              type: integer
+              minimum: 1
+              maximum: 1000
+              default: 50
+              description: Internal buffer size for streaming
+
+StreamingChatChunk:
+  type: object
+  properties:
+    type:
+      type: string
+      enum: [data, metadata, done, error, heartbeat]
+      description: Type of streaming event
+    content:
+      type: string
+      description: Partial response content (for 'data' events)
+      example: "Quantum entanglement"
+    done:
+      type: boolean
+      description: Indicates completion (for 'done' events)
+    error:
+      type: string
+      description: Error message (for 'error' events)
+    metadata:
+      type: object
+      description: Metadata information (for 'metadata' events)
+      properties:
+        tokensGenerated:
+          type: integer
+          description: Tokens generated so far
+        estimatedTimeRemaining:
+          type: integer
+          description: Estimated time to completion (ms)
+        conversationId:
+          type: string
+          format: uuid
+          description: Conversation identifier
+    timestamp:
+      type: string
+      format: date-time
+      description: Event timestamp
+    id:
+      type: string
+      description: Unique event identifier
+  required:
+    - type
+    - timestamp
+
+TextCompletionRequest:
+  type: object
+  properties:
+    prompt:
+      type: string
+      minLength: 1
+      maxLength: 10000
+      description: Text prompt to complete
+      example: "The future of artificial intelligence will likely involve"
+    maxTokens:
+      type: integer
+      minimum: 1
+      maximum: 4096
+      default: 100
+      description: Maximum number of tokens to generate
+    temperature:
+      type: number
+      format: float
+      minimum: 0
+      maximum: 2
+      default: 0.7
+      description: Sampling temperature for randomness
+    topP:
+      type: number
+      format: float
+      minimum: 0
+      maximum: 1
+      description: Nucleus sampling parameter
+    topK:
+      type: integer
+      minimum: 1
+      description: Top-K sampling parameter
+    stop:
+      oneOf:
+        - type: string
+        - type: array
+          items:
+            type: string
+          maxItems: 4
+      description: Stop sequences for completion
+      example: ["\n\n", "def "]
+    model:
+      type: string
+      description: Specific model to use for completion
+      example: "qwen2:1.5b"
+    presencePenalty:
+      type: number
+      format: float
+      minimum: -2
+      maximum: 2
+      default: 0
+      description: Penalty for new token presence
+    frequencyPenalty:
+      type: number
+      format: float
+      minimum: -2
+      maximum: 2
+      default: 0
+      description: Penalty for token frequency
+    logitBias:
+      type: object
+      additionalProperties:
+        type: number
+        format: float
+      description: Modify likelihood of specific tokens
+    suffix:
+      type: string
+      maxLength: 1000
+      description: Text to append after completion
+    echo:
+      type: boolean
+      default: false
+      description: Include prompt in response
+    bestOf:
+      type: integer
+      minimum: 1
+      maximum: 10
+      default: 1
+      description: Number of completions to generate and return best
+    logprobs:
+      type: integer
+      minimum: 0
+      maximum: 5
+      description: Include log probabilities for top N tokens
+  required:
+    - prompt
+
+TextCompletionResponse:
+  allOf:
+    - $ref: '../schemas/common.yaml#/ApiResponse'
+    - type: object
+      properties:
+        completion:
+          type: string
+          description: Generated completion text
+          example: " advanced neural architectures, improved reasoning capabilities, and better integration with human workflows."
+        prompt:
+          type: string
+          description: Original prompt (if echo=true)
+        model:
+          type: string
+          description: Model used for generation
+        tokensUsed:
+          type: integer
+          description: Number of tokens in completion
+        finishReason:
+          type: string
+          enum: [stop, length, error]
+          description: Reason completion ended
+        choices:
+          type: array
+          items:
+            type: object
+            properties:
+              text:
+                type: string
+                description: Completion text
+              finishReason:
+                type: string
+                enum: [stop, length, error]
+                description: Reason this choice ended
+              logprobs:
+                type: object
+                description: Log probabilities (if requested)
+                properties:
+                  tokens:
+                    type: array
+                    items:
+                      type: string
+                    description: Generated tokens
+                  tokenLogprobs:
+                    type: array
+                    items:
+                      type: number
+                      format: float
+                    description: Log probabilities for tokens
+                  topLogprobs:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties:
+                        type: number
+                        format: float
+                    description: Top log probabilities for each position
+          description: Multiple completion choices (if bestOf > 1)
+
+ConversationSummary:
+  type: object
+  properties:
+    conversationId:
+      type: string
+      format: uuid
+      description: Unique conversation identifier
+    participantCount:
+      type: integer
+      description: Number of participants in conversation
+    messageCount:
+      type: integer
+      description: Total number of messages
+    startTime:
+      type: string
+      format: date-time
+      description: Conversation start timestamp
+    lastActivity:
+      type: string
+      format: date-time
+      description: Last activity timestamp
+    summary:
+      type: string
+      description: AI-generated conversation summary
+    topics:
+      type: array
+      items:
+        type: string
+      description: Main topics discussed
+    sentiment:
+      type: string
+      enum: [positive, neutral, negative, mixed]
+      description: Overall conversation sentiment
+    keyMoments:
+      type: array
+      items:
+        type: object
+        properties:
+          timestamp:
+            type: string
+            format: date-time
+          description:
+            type: string
+          importance:
+            type: number
+            format: float
+            minimum: 0
+            maximum: 1
+      description: Key moments in the conversation
+    memoryReferences:
+      type: array
+      items:
+        type: string
+        format: uuid
+      description: Memory interactions referenced
+    totalTokens:
+      type: integer
+      description: Total tokens used in conversation
+    averageResponseTime:
+      type: number
+      format: float
+      description: Average response generation time (ms)
+
+ChatModel:
+  type: object
+  properties:
+    id:
+      type: string
+      description: Model identifier
+      example: "qwen2:1.5b"
+    name:
+      type: string
+      description: Human-readable model name
+      example: "Qwen2 1.5B"
+    provider:
+      type: string
+      description: Model provider
+      enum: [ollama, claude, mistral, openai, huggingface]
+    capabilities:
+      type: array
+      items:
+        type: string
+        enum: [chat, completion, streaming, function-calling, vision, code]
+      description: Model capabilities
+    contextWindow:
+      type: integer
+      description: Maximum context window size
+      example: 32768
+    maxTokens:
+      type: integer
+      description: Maximum tokens per response
+      example: 4096
+    pricing:
+      type: object
+      properties:
+        inputCostPer1k:
+          type: number
+          format: float
+          description: Cost per 1K input tokens
+        outputCostPer1k:
+          type: number
+          format: float
+          description: Cost per 1K output tokens
+        currency:
+          type: string
+          default: "USD"
+          description: Currency for pricing
+    metadata:
+      type: object
+      properties:
+        description:
+          type: string
+          description: Model description
+        version:
+          type: string
+          description: Model version
+        releaseDate:
+          type: string
+          format: date
+          description: Model release date
+        languages:
+          type: array
+          items:
+            type: string
+          description: Supported languages
+        benchmarks:
+          type: object
+          additionalProperties:
+            type: number
+            format: float
+          description: Performance benchmarks

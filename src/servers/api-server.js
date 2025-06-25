@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
-import logger from 'loglevel';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { setupDefaultLogging } from '../utils/LoggingConfig.js';
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -34,8 +34,7 @@ import UnifiedSearchAPI from '../api/features/UnifiedSearchAPI.js';
 // Load environment variables
 dotenv.config();
 
-// Configure logging
-logger.setLevel(process.env.LOG_LEVEL || 'info');
+// Note: Logging is now configured in the APIServer constructor
 
 // Get directory name for ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -46,6 +45,12 @@ const __dirname = path.dirname(path.dirname(path.dirname(__filename))); // Go up
  */
 class APIServer {
     constructor() {
+        // Initialize logging first
+        const loggers = setupDefaultLogging();
+        this.logger = loggers.server;
+        this.apiLogger = loggers.api;
+        this.memoryLogger = loggers.memory;
+        
         this.port = process.env.PORT || 4100; // Updated port to 4100
         this.publicDir = path.join(__dirname, '../public');
         this.distDir = path.join(__dirname, '../public/dist');
@@ -53,6 +58,8 @@ class APIServer {
         this.server = null;
         this.apiContext = {};
         this.registry = new APIRegistry();
+        
+        this.logger.info('APIServer constructor initialized');
         this.initializeMiddleware();
     }
 
@@ -90,8 +97,8 @@ class APIServer {
         });
         this.app.use('/api/', limiter);
 
-        // Request logging
-        this.app.use(requestLogger(logger));
+        // Request logging (commented out for cleaner logs)
+        // this.app.use(requestLogger(this.logger));
     }
 
     /**
@@ -103,7 +110,7 @@ class APIServer {
         await config.init();
         
         // Use new configuration-driven provider selection (like MCP server)
-        logger.info('Creating providers using configuration-driven selection...');
+        this.logger.info('Creating providers using configuration-driven selection...');
         
         // Create LLM connector for chat operations
         const llmProvider = await this.createLLMConnector(config);
@@ -113,7 +120,7 @@ class APIServer {
         
         // Get model configuration
         const modelConfig = await this.getModelConfig(config);
-        logger.info('Using model configuration:', modelConfig);
+        this.logger.info('Using model configuration:', modelConfig);
         
         const dimension = config.get('memory.dimension') || 1536;
 
@@ -145,15 +152,15 @@ class APIServer {
                 graphName: storageConfig.options.graphName,
                 dimension: dimension
             });
-            logger.info(`Initialized SPARQL store with endpoint: ${storageConfig.options.endpoint}`);
+            this.logger.info(`Initialized SPARQL store with endpoint: ${storageConfig.options.endpoint}`);
         } else if (storageConfig.type === 'json') {
             const { default: JSONStore } = await import('../stores/JSONStore.js');
             storage = new JSONStore(storageConfig.options.path);
-            logger.info(`Initialized JSON store at path: ${storageConfig.options.path}`);
+            this.logger.info(`Initialized JSON store at path: ${storageConfig.options.path}`);
         } else {
             // Default to in-memory
             storage = new InMemoryStore();
-            logger.info('Initialized in-memory store');
+            this.logger.info('Initialized in-memory store');
         }
 
         // Initialize memory manager with the configured storage
@@ -203,31 +210,31 @@ class APIServer {
                 .filter(p => p.capabilities?.includes('chat'))
                 .sort((a, b) => (a.priority || 999) - (b.priority || 999));
             
-            logger.info('Available chat providers by priority:', sortedProviders.map(p => `${p.type} (priority: ${p.priority})`));
+            this.logger.info('Available chat providers by priority:', sortedProviders.map(p => `${p.type} (priority: ${p.priority})`));
             
             // Try providers in priority order
             for (const provider of sortedProviders) {
-                logger.info(`Trying LLM provider: ${provider.type} (priority: ${provider.priority})`);
+                this.logger.info(`Trying LLM provider: ${provider.type} (priority: ${provider.priority})`);
                 
                 if (provider.type === 'mistral' && provider.apiKey) {
-                    logger.info('✅ Creating Mistral connector (highest priority)...');
+                    this.logger.info('✅ Creating Mistral connector (highest priority)...');
                     return new MistralConnector();
                 } else if (provider.type === 'claude' && provider.apiKey) {
-                    logger.info('✅ Creating Claude connector...');
+                    this.logger.info('✅ Creating Claude connector...');
                     return new ClaudeConnector();
                 } else if (provider.type === 'ollama') {
-                    logger.info('✅ Creating Ollama connector (fallback)...');
+                    this.logger.info('✅ Creating Ollama connector (fallback)...');
                     return new OllamaConnector();
                 } else {
-                    logger.info(`❌ Provider ${provider.type} not available (missing API key or implementation)`);
+                    this.logger.info(`❌ Provider ${provider.type} not available (missing API key or implementation)`);
                 }
             }
             
-            logger.info('⚠️ No configured providers available, defaulting to Ollama');
+            this.logger.info('⚠️ No configured providers available, defaulting to Ollama');
             return new OllamaConnector();
             
         } catch (error) {
-            logger.warn('Failed to load provider configuration, defaulting to Ollama:', error.message);
+            this.logger.warn('Failed to load provider configuration, defaulting to Ollama:', error.message);
             return new OllamaConnector();
         }
     }
@@ -245,21 +252,21 @@ class APIServer {
                 .filter(p => p.capabilities?.includes('embedding'))
                 .sort((a, b) => (a.priority || 999) - (b.priority || 999));
             
-            logger.info('Available embedding providers by priority:', sortedProviders.map(p => `${p.type} (priority: ${p.priority})`));
+            this.logger.info('Available embedding providers by priority:', sortedProviders.map(p => `${p.type} (priority: ${p.priority})`));
             
             // Try providers in priority order
             for (const provider of sortedProviders) {
-                logger.info(`Trying embedding provider: ${provider.type} (priority: ${provider.priority})`);
+                this.logger.info(`Trying embedding provider: ${provider.type} (priority: ${provider.priority})`);
                 
                 if (provider.type === 'nomic' && provider.apiKey) {
-                    logger.info('✅ Creating Nomic embedding connector (highest priority)...');
+                    this.logger.info('✅ Creating Nomic embedding connector (highest priority)...');
                     return EmbeddingConnectorFactory.createConnector({
                         provider: 'nomic',
                         apiKey: provider.apiKey,
                         model: provider.embeddingModel || 'nomic-embed-text-v1.5'
                     });
                 } else if (provider.type === 'ollama') {
-                    logger.info('✅ Creating Ollama embedding connector (fallback)...');
+                    this.logger.info('✅ Creating Ollama embedding connector (fallback)...');
                     const ollamaBaseUrl = process.env.OLLAMA_HOST || 'http://localhost:11434';
                     return EmbeddingConnectorFactory.createConnector({
                         provider: 'ollama',
@@ -267,11 +274,11 @@ class APIServer {
                         model: provider.embeddingModel || 'nomic-embed-text'
                     });
                 } else {
-                    logger.info(`❌ Embedding provider ${provider.type} not available (missing API key or implementation)`);
+                    this.logger.info(`❌ Embedding provider ${provider.type} not available (missing API key or implementation)`);
                 }
             }
             
-            logger.info('⚠️ No configured embedding providers available, defaulting to Ollama');
+            this.logger.info('⚠️ No configured embedding providers available, defaulting to Ollama');
             return EmbeddingConnectorFactory.createConnector({
                 provider: 'ollama',
                 baseUrl: process.env.OLLAMA_HOST || 'http://localhost:11434',
@@ -279,7 +286,7 @@ class APIServer {
             });
             
         } catch (error) {
-            logger.warn('Failed to create configured embedding connector, falling back to Ollama:', error.message);
+            this.logger.warn('Failed to create configured embedding connector, falling back to Ollama:', error.message);
             // Fallback to Ollama for embeddings
             return EmbeddingConnectorFactory.createConnector({
                 provider: 'ollama',
@@ -308,7 +315,7 @@ class APIServer {
                 embeddingModel: embeddingProvider?.embeddingModel || 'nomic-embed-text'
             };
         } catch (error) {
-            logger.warn('Failed to get model config from configuration, using defaults:', error.message);
+            this.logger.warn('Failed to get model config from configuration, using defaults:', error.message);
             return {
                 chatModel: 'qwen2:1.5b',
                 embeddingModel: 'nomic-embed-text'
@@ -323,7 +330,7 @@ class APIServer {
         // Initialize Memory API
         const memoryApi = new MemoryAPI({
             registry: this.apiRegistry,
-            logger: logger,
+            logger: this.logger,
             similarityThreshold: 0.7,
             defaultLimit: 10
         });
@@ -332,7 +339,7 @@ class APIServer {
         // Initialize Chat API
         const chatApi = new ChatAPI({
             registry: this.apiRegistry,
-            logger: logger,
+            logger: this.logger,
             similarityThreshold: 0.7,
             contextWindow: 5
         });
@@ -341,7 +348,7 @@ class APIServer {
         // Initialize Search API
         const searchApi = new SearchAPI({
             registry: this.apiRegistry,
-            logger: logger,
+            logger: this.logger,
             similarityThreshold: 0.7,
             defaultLimit: 5
         });
@@ -350,7 +357,7 @@ class APIServer {
         // Initialize Ragno API
         const ragnoApi = new RagnoAPI({
             registry: this.apiRegistry,
-            logger: logger,
+            logger: this.logger,
             maxTextLength: 50000,
             maxBatchSize: 10,
             requestTimeout: 300000
@@ -360,7 +367,7 @@ class APIServer {
         // Initialize ZPT API
         const zptApi = new ZptAPI({
             registry: this.apiRegistry,
-            logger: logger,
+            logger: this.logger,
             maxConcurrentRequests: 10,
             requestTimeoutMs: 120000,
             defaultMaxTokens: 4000
@@ -379,7 +386,7 @@ class APIServer {
         // Initialize Unified Search API (depends on other APIs being available)
         const unifiedSearchApi = new UnifiedSearchAPI({
             registry: this.apiRegistry,
-            logger: logger,
+            logger: this.logger,
             defaultLimit: 20,
             enableParallelSearch: true,
             enableResultRanking: true,
@@ -537,7 +544,7 @@ class APIServer {
                     serverVersion: process.env.npm_package_version || '1.0.0'
                 });
             } catch (error) {
-                logger.error('Service discovery error:', error);
+                this.logger.error('Service discovery error:', error);
                 res.status(500).json({
                     success: false,
                     error: 'Failed to retrieve service information'
@@ -621,14 +628,14 @@ class APIServer {
                         data: safeConfig
                     });
                 }).catch(error => {
-                    logger.error('Config initialization error:', error);
+                    this.logger.error('Config initialization error:', error);
                     res.status(500).json({
                         success: false,
                         error: 'Failed to load configuration'
                     });
                 });
             } catch (error) {
-                logger.error('Config endpoint error:', error);
+                this.logger.error('Config endpoint error:', error);
                 res.status(500).json({
                     success: false,
                     error: 'Internal server error'
@@ -680,7 +687,7 @@ class APIServer {
                     data: metrics
                 });
             } catch (error) {
-                logger.error('Error fetching metrics:', error);
+                this.logger.error('Error fetching metrics:', error);
                 next(error);
             }
         });
@@ -689,7 +696,7 @@ class APIServer {
         this.app.use('/api', apiRouter);
 
         // Serve webpack-built static files
-        logger.info(`Serving static files from: ${this.distDir}`);
+        this.logger.info(`Serving static files from: ${this.distDir}`);
         this.app.use(express.static(this.distDir));
 
         // Root route for web UI (webpack-built index.html)
@@ -703,7 +710,7 @@ class APIServer {
         });
 
         // Error handling
-        this.app.use(errorHandler(logger));
+        this.app.use(errorHandler(this.logger));
     }
 
     /**
@@ -711,11 +718,17 @@ class APIServer {
      */
     createHandler(apiName, operation) {
         return async (req, res, next) => {
+            const requestId = uuidv4();
+            this.apiLogger.info(`[${requestId}] Starting ${req.method} ${req.path} -> ${apiName}.${operation}`);
+            
             try {
                 const api = this.apiContext.apis[apiName];
                 if (!api) {
+                    this.apiLogger.error(`[${requestId}] API handler not found: ${apiName}`);
                     throw new Error(`API handler not found: ${apiName}`);
                 }
+
+                this.apiLogger.info(`[${requestId}] API handler found: ${apiName}, initialized: ${api.initialized}`);
 
                 // Get parameters from appropriate source
                 const params = req.method === 'GET' ? req.query : req.body;
@@ -725,8 +738,20 @@ class APIServer {
                     Object.assign(params, req.params);
                 }
 
+                // Detailed parameter logging (commented out for cleaner logs)
+                // this.apiLogger.info(`[${requestId}] Parameters received:`, {
+                //     method: req.method,
+                //     params: params,
+                //     paramKeys: Object.keys(params),
+                //     query: req.query,
+                //     body: req.body
+                // });
+
                 // Execute operation
+                this.apiLogger.info(`[${requestId}] Executing ${apiName}.executeOperation('${operation}', params)`);
                 const result = await api.executeOperation(operation, params);
+                
+                // this.apiLogger.info(`[${requestId}] Operation completed successfully, result type: ${typeof result}`);
 
                 // Determine status code based on operation
                 let statusCode = 200;
@@ -734,12 +759,20 @@ class APIServer {
                     statusCode = 201; // Created
                 }
 
-                res.status(statusCode).json({
+                const response = {
                     success: true,
                     ...result
-                });
+                };
+                
+                // this.apiLogger.info(`[${requestId}] Sending response with status ${statusCode}`);
+                
+                res.status(statusCode).json(response);
             } catch (error) {
-                logger.error(`Error in ${apiName}.${operation}:`, error);
+                this.apiLogger.error(`[${requestId}] Error in ${apiName}.${operation}:`, {
+                    message: error.message,
+                    stack: error.stack,
+                    name: error.name
+                });
                 next(error);
             }
         };
@@ -775,7 +808,7 @@ class APIServer {
                 });
 
                 stream.on('error', error => {
-                    logger.error(`Stream error in ${apiName}.${operation}:`, error);
+                    this.logger.error(`Stream error in ${apiName}.${operation}:`, error);
                     next(error);
                 });
 
@@ -786,7 +819,7 @@ class APIServer {
                     }
                 });
             } catch (error) {
-                logger.error(`Error in ${apiName}.${operation}:`, error);
+                this.logger.error(`Error in ${apiName}.${operation}:`, error);
                 next(error);
             }
         };
@@ -797,12 +830,12 @@ class APIServer {
      */
     setupSignalHandlers() {
         const shutdown = async (signal) => {
-            logger.info(`Received ${signal}, shutting down...`);
+            this.logger.info(`Received ${signal}, shutting down...`);
 
             // Close the HTTP server
             if (this.server) {
                 this.server.close(() => {
-                    logger.info('HTTP server shut down');
+                    this.logger.info('HTTP server shut down');
                 });
             }
 
@@ -813,7 +846,7 @@ class APIServer {
                         try {
                             await api.shutdown();
                         } catch (error) {
-                            logger.error('Error shutting down API:', error);
+                            this.logger.error('Error shutting down API:', error);
                         }
                     }
                 }
@@ -823,9 +856,9 @@ class APIServer {
             if (this.apiContext.memory && typeof this.apiContext.memory.dispose === 'function') {
                 try {
                     await this.apiContext.memory.dispose();
-                    logger.info('Memory manager disposed');
+                    this.logger.info('Memory manager disposed');
                 } catch (error) {
-                    logger.error('Error disposing memory manager:', error);
+                    this.logger.error('Error disposing memory manager:', error);
                 }
             }
 
@@ -842,7 +875,7 @@ class APIServer {
      */
     async start() {
         try {
-            logger.info('Initializing Semem API Server...');
+            this.logger.info('Initializing Semem API Server...');
 
             // Initialize components and APIs
             await this.initializeComponents();
@@ -856,12 +889,12 @@ class APIServer {
 
             // Start the server
             this.server = this.app.listen(this.port, () => {
-                logger.info(`Semem API Server is running at http://localhost:${this.port}`);
+                this.logger.info(`Semem API Server is running at http://localhost:${this.port}`);
             });
 
             return this.server;
         } catch (error) {
-            logger.error('Failed to start Semem API Server:', error);
+            this.logger.error('Failed to start Semem API Server:', error);
             process.exit(1);
         }
     }
@@ -870,6 +903,6 @@ class APIServer {
 // Create and start the server
 const apiServer = new APIServer();
 apiServer.start().catch(error => {
-    logger.error('Failed to start server:', error);
+    console.error('Failed to start server:', error);
     process.exit(1);
 });

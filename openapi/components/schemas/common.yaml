@@ -1,0 +1,661 @@
+# Common Schemas used across all APIs
+
+ApiResponse:
+  type: object
+  properties:
+    success:
+      type: boolean
+      description: Indicates if the request was successful
+      example: true
+    requestId:
+      type: string
+      format: uuid
+      description: Unique identifier for the request
+      example: "req_a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+    processingTime:
+      type: integer
+      description: Processing time in milliseconds
+      example: 234
+    timestamp:
+      type: string
+      format: date-time
+      description: Response timestamp in ISO 8601 format
+      example: "2024-01-16T10:30:45.123Z"
+    version:
+      type: string
+      description: API version used
+      example: "1.3.3"
+  required:
+    - success
+
+ErrorResponse:
+  allOf:
+    - $ref: '#/ApiResponse'
+    - type: object
+      properties:
+        success:
+          type: boolean
+          enum: [false]
+          description: Always false for error responses
+        error:
+          type: string
+          description: High-level error message
+          example: "Validation failed"
+        message:
+          type: string
+          description: Detailed error description
+          example: "The 'query' field is required and cannot be empty"
+        code:
+          type: string
+          description: Machine-readable error code
+          enum: 
+            - VALIDATION_ERROR
+            - AUTH_REQUIRED
+            - INVALID_API_KEY
+            - FORBIDDEN
+            - NOT_FOUND
+            - RATE_LIMIT_EXCEEDED
+            - INTERNAL_ERROR
+            - SERVICE_UNAVAILABLE
+            - TIMEOUT
+            - INVALID_FORMAT
+            - RESOURCE_NOT_FOUND
+            - DUPLICATE_RESOURCE
+            - INSUFFICIENT_QUOTA
+            - MAINTENANCE_MODE
+          example: "VALIDATION_ERROR"
+        details:
+          type: object
+          description: Additional error details
+          properties:
+            field:
+              type: string
+              description: Field that caused the error
+            value:
+              type: string
+              description: Invalid value provided
+            constraint:
+              type: string
+              description: Constraint that was violated
+            suggestion:
+              type: string
+              description: Suggested correction
+          additionalProperties: true
+        path:
+          type: string
+          description: API endpoint path where error occurred
+          example: "/api/memory/search"
+        method:
+          type: string
+          description: HTTP method used
+          enum: [GET, POST, PUT, DELETE, PATCH]
+          example: "GET"
+        userMessage:
+          type: string
+          description: User-friendly error message
+          example: "Please provide a search query to continue"
+        debugInfo:
+          type: object
+          description: Debug information (only in development mode)
+          properties:
+            stack:
+              type: string
+              description: Error stack trace
+            context:
+              type: object
+              additionalProperties: true
+              description: Additional context
+            component:
+              type: string
+              description: Component where error originated
+      required:
+        - error
+        - code
+
+PaginationInfo:
+  type: object
+  properties:
+    page:
+      type: integer
+      minimum: 1
+      description: Current page number (1-based)
+      example: 1
+    pageSize:
+      type: integer
+      minimum: 1
+      maximum: 100
+      description: Number of items per page
+      example: 20
+    total:
+      type: integer
+      minimum: 0
+      description: Total number of items
+      example: 150
+    totalPages:
+      type: integer
+      minimum: 0
+      description: Total number of pages
+      example: 8
+    hasNext:
+      type: boolean
+      description: Whether there are more pages
+      example: true
+    hasPrev:
+      type: boolean
+      description: Whether there are previous pages
+      example: false
+    nextPage:
+      type: integer
+      description: Next page number (if hasNext is true)
+      example: 2
+    prevPage:
+      type: integer
+      description: Previous page number (if hasPrev is true)
+    startIndex:
+      type: integer
+      description: Index of first item on current page (0-based)
+      example: 0
+    endIndex:
+      type: integer
+      description: Index of last item on current page (0-based)
+      example: 19
+  required:
+    - page
+    - pageSize
+    - total
+    - totalPages
+    - hasNext
+    - hasPrev
+
+HealthStatus:
+  type: object
+  properties:
+    status:
+      type: string
+      enum: [healthy, degraded, unhealthy]
+      description: Overall health status
+      example: "healthy"
+    timestamp:
+      type: integer
+      format: int64
+      description: Health check timestamp (Unix milliseconds)
+      example: 1640995200000
+    uptime:
+      type: number
+      format: float
+      description: Server uptime in seconds
+      example: 3600.5
+    version:
+      type: string
+      description: API version
+      example: "1.3.3"
+    environment:
+      type: string
+      enum: [development, staging, production]
+      description: Deployment environment
+      example: "development"
+    components:
+      type: object
+      additionalProperties:
+        type: object
+        properties:
+          status:
+            type: string
+            enum: [healthy, degraded, unhealthy]
+          lastCheck:
+            type: string
+            format: date-time
+          message:
+            type: string
+          responseTime:
+            type: integer
+            description: Component response time (ms)
+          details:
+            type: object
+            additionalProperties: true
+      description: Health status of individual components
+      example:
+        memory:
+          status: "healthy"
+          lastCheck: "2024-01-16T10:30:45Z"
+          responseTime: 12
+        database:
+          status: "degraded"
+          lastCheck: "2024-01-16T10:30:45Z"
+          message: "High response time"
+          responseTime: 250
+    metrics:
+      type: object
+      properties:
+        requestCount:
+          type: integer
+          description: Total requests processed
+        errorCount:
+          type: integer
+          description: Total errors encountered
+        averageResponseTime:
+          type: number
+          format: float
+          description: Average response time (ms)
+        memoryUsage:
+          type: object
+          properties:
+            used:
+              type: integer
+              description: Used memory (bytes)
+            total:
+              type: integer
+              description: Total memory (bytes)
+            percentage:
+              type: number
+              format: float
+              description: Memory usage percentage
+        cpuUsage:
+          type: number
+          format: float
+          description: CPU usage percentage
+      description: System metrics
+  required:
+    - status
+    - timestamp
+    - uptime
+    - version
+    - components
+
+Embedding:
+  type: array
+  items:
+    type: number
+    format: float
+  minItems: 1
+  maxItems: 4096
+  description: Vector embedding array
+  example: [0.1234, -0.5678, 0.9012, 0.3456, -0.7890]
+
+EntityReference:
+  type: object
+  properties:
+    id:
+      type: string
+      description: Entity identifier
+      example: "entity_123"
+    uri:
+      type: string
+      format: uri
+      description: Entity URI
+      example: "http://example.org/entities/123"
+    name:
+      type: string
+      description: Entity name
+      example: "Machine Learning"
+    type:
+      type: string
+      description: Entity type
+      example: "Concept"
+  required:
+    - id
+    - name
+
+Concept:
+  type: object
+  properties:
+    concept:
+      type: string
+      description: Concept term
+      example: "machine learning"
+    confidence:
+      type: number
+      format: float
+      minimum: 0
+      maximum: 1
+      description: Extraction confidence
+      example: 0.92
+    category:
+      type: string
+      enum: [entity, topic, skill, technology, method, domain, person, organization]
+      description: Concept category
+      example: "technology"
+    synonyms:
+      type: array
+      items:
+        type: string
+      description: Synonymous terms
+      example: ["ML", "statistical learning"]
+    weight:
+      type: number
+      format: float
+      minimum: 0
+      description: Concept importance weight
+      example: 0.8
+  required:
+    - concept
+    - confidence
+
+TimeRange:
+  type: object
+  properties:
+    start:
+      type: string
+      format: date-time
+      description: Start timestamp (ISO 8601)
+      example: "2024-01-01T00:00:00Z"
+    end:
+      type: string
+      format: date-time
+      description: End timestamp (ISO 8601)
+      example: "2024-12-31T23:59:59Z"
+    duration:
+      type: integer
+      description: Duration in seconds
+      example: 31536000
+    timezone:
+      type: string
+      description: Timezone identifier
+      example: "UTC"
+  required:
+    - start
+    - end
+
+GeographicLocation:
+  type: object
+  properties:
+    name:
+      type: string
+      description: Location name
+      example: "San Francisco, CA"
+    coordinates:
+      type: object
+      properties:
+        latitude:
+          type: number
+          format: float
+          minimum: -90
+          maximum: 90
+          description: Latitude coordinate
+          example: 37.7749
+        longitude:
+          type: number
+          format: float
+          minimum: -180
+          maximum: 180
+          description: Longitude coordinate
+          example: -122.4194
+      description: Geographic coordinates
+    boundingBox:
+      type: object
+      properties:
+        north:
+          type: number
+          format: float
+        south:
+          type: number
+          format: float
+        east:
+          type: number
+          format: float
+        west:
+          type: number
+          format: float
+      description: Bounding box coordinates
+    country:
+      type: string
+      description: Country name
+      example: "United States"
+    region:
+      type: string
+      description: Region or state
+      example: "California"
+    city:
+      type: string
+      description: City name
+      example: "San Francisco"
+  required:
+    - name
+
+FileMetadata:
+  type: object
+  properties:
+    filename:
+      type: string
+      description: Original filename
+      example: "document.pdf"
+    size:
+      type: integer
+      description: File size in bytes
+      example: 1048576
+    mimeType:
+      type: string
+      description: MIME type
+      example: "application/pdf"
+    encoding:
+      type: string
+      description: Character encoding
+      example: "UTF-8"
+    checksum:
+      type: string
+      description: File checksum (SHA-256)
+      example: "abc123def456..."
+    uploadedAt:
+      type: string
+      format: date-time
+      description: Upload timestamp
+    lastModified:
+      type: string
+      format: date-time
+      description: Last modification timestamp
+    metadata:
+      type: object
+      additionalProperties: true
+      description: Additional file-specific metadata
+  required:
+    - filename
+    - size
+    - mimeType
+
+ProcessingStatus:
+  type: object
+  properties:
+    id:
+      type: string
+      description: Processing job identifier
+      example: "job_abc123"
+    status:
+      type: string
+      enum: [pending, running, completed, failed, cancelled]
+      description: Current processing status
+      example: "running"
+    progress:
+      type: number
+      format: float
+      minimum: 0
+      maximum: 1
+      description: Processing progress (0-1)
+      example: 0.65
+    startedAt:
+      type: string
+      format: date-time
+      description: Processing start timestamp
+    estimatedCompletion:
+      type: string
+      format: date-time
+      description: Estimated completion timestamp
+    message:
+      type: string
+      description: Current status message
+      example: "Processing entities..."
+    result:
+      type: object
+      description: Processing result (when completed)
+      additionalProperties: true
+    error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+      description: Error information (when failed)
+  required:
+    - id
+    - status
+
+ConfigurationInfo:
+  type: object
+  properties:
+    version:
+      type: string
+      description: Configuration version
+      example: "1.3.3"
+    environment:
+      type: string
+      enum: [development, staging, production]
+      description: Environment name
+    features:
+      type: object
+      additionalProperties:
+        type: boolean
+      description: Feature flags
+      example:
+        advancedSearch: true
+        experimentalFeatures: false
+    limits:
+      type: object
+      properties:
+        maxQueryLength:
+          type: integer
+          description: Maximum query length
+          example: 1000
+        maxResults:
+          type: integer
+          description: Maximum results per request
+          example: 100
+        rateLimit:
+          type: integer
+          description: Requests per minute limit
+          example: 100
+        maxFileSize:
+          type: integer
+          description: Maximum file upload size (bytes)
+          example: 10485760
+      description: System limits
+    providers:
+      type: object
+      properties:
+        llm:
+          type: array
+          items:
+            type: string
+          description: Available LLM providers
+          example: ["ollama", "claude", "mistral"]
+        embedding:
+          type: array
+          items:
+            type: string
+          description: Available embedding providers
+          example: ["ollama", "nomic"]
+        storage:
+          type: array
+          items:
+            type: string
+          description: Available storage backends
+          example: ["memory", "sparql", "json"]
+      description: Available providers
+  required:
+    - version
+    - environment
+
+BatchRequest:
+  type: object
+  properties:
+    requests:
+      type: array
+      items:
+        type: object
+        properties:
+          id:
+            type: string
+            description: Request identifier
+          operation:
+            type: string
+            description: Operation to perform
+          parameters:
+            type: object
+            additionalProperties: true
+            description: Operation parameters
+        required:
+          - id
+          - operation
+          - parameters
+      minItems: 1
+      maxItems: 100
+      description: Array of batch requests
+    options:
+      type: object
+      properties:
+        parallel:
+          type: boolean
+          default: true
+          description: Execute requests in parallel
+        continueOnError:
+          type: boolean
+          default: true
+          description: Continue processing if individual requests fail
+        timeout:
+          type: integer
+          minimum: 1000
+          maximum: 300000
+          default: 30000
+          description: Batch processing timeout (ms)
+      description: Batch processing options
+  required:
+    - requests
+
+BatchResponse:
+  allOf:
+    - $ref: '#/ApiResponse'
+    - type: object
+      properties:
+        results:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                description: Original request identifier
+              success:
+                type: boolean
+                description: Whether request succeeded
+              result:
+                type: object
+                description: Request result (if successful)
+                additionalProperties: true
+              error:
+                $ref: '#/ErrorResponse'
+              processingTime:
+                type: integer
+                description: Individual request processing time (ms)
+            required:
+              - id
+              - success
+          description: Results for each batch request
+        summary:
+          type: object
+          properties:
+            total:
+              type: integer
+              description: Total requests processed
+            successful:
+              type: integer
+              description: Number of successful requests
+            failed:
+              type: integer
+              description: Number of failed requests
+            averageTime:
+              type: number
+              format: float
+              description: Average processing time per request (ms)
+          description: Batch processing summary

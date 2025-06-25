@@ -1,0 +1,104 @@
+# Memory API Examples
+MemoryStoreExample:
+  summary: Store memory interaction
+  value:
+    prompt: "What is machine learning?"
+    response: "Machine learning is a subset of artificial intelligence that enables computers to learn from data."
+    metadata:
+      topic: "AI"
+      difficulty: "beginner"
+
+MemorySearchExample:
+  summary: Search memory interactions
+  value:
+    query: "neural networks deep learning"
+    threshold: 70
+    limit: 5
+
+# Chat API Examples
+ChatCompletionExample:
+  summary: Basic chat completion
+  value:
+    prompt: "Explain the concept of recursion in programming"
+    useMemory: true
+    temperature: 0.7
+    maxTokens: 500
+
+StreamingChatExample:
+  summary: Streaming chat request
+  value:
+    prompt: "Write a comprehensive guide to machine learning algorithms"
+    temperature: 0.8
+    maxTokens: 1500
+
+# Ragno API Examples
+RagnoDecomposeExample:
+  summary: Decompose text to knowledge graph
+  value:
+    text: "OpenAI released GPT-4, a large language model that demonstrates remarkable capabilities. The model was developed by a team of researchers led by Sam Altman."
+    options:
+      extractRelationships: true
+      generateSummaries: true
+      store: true
+
+RagnoSearchExample:
+  summary: Search knowledge graph
+  value:
+    query: "artificial intelligence research organizations"
+    type: "dual"
+    limit: 10
+    threshold: 0.75
+
+# ZPT API Examples
+ZPTNavigationExample:
+  summary: ZPT corpus navigation
+  value:
+    zoom: "entity"
+    pan:
+      entity: "machine learning"
+      topic: "artificial intelligence"
+    tilt: "graph"
+    transform:
+      maxTokens: 2000
+      format: "json"
+
+# Unified Search Examples
+UnifiedSearchExample:
+  summary: Cross-service unified search
+  value:
+    query: "quantum computing algorithms and applications"
+    strategy: "balanced"
+    limit: 20
+    services: ["memory", "ragno", "search", "zpt"]
+    weights:
+      memory: 0.3
+      ragno: 0.3
+      search: 0.2
+      zpt: 0.2
+
+# Error Examples
+ValidationErrorExample:
+  summary: Validation error response
+  value:
+    success: false
+    error: "Validation failed"
+    message: "Required field 'query' is missing"
+    code: "VALIDATION_ERROR"
+    requestId: "req_123456789"
+    timestamp: "2024-01-01T12:00:00Z"
+
+AuthErrorExample:
+  summary: Authentication error
+  value:
+    success: false
+    error: "Authentication required"
+    message: "X-API-Key header is required"
+    code: "AUTH_REQUIRED"
+
+RateLimitErrorExample:
+  summary: Rate limit exceeded
+  value:
+    success: false
+    error: "Rate limit exceeded"
+    message: "Too many requests. Please try again later."
+    code: "RATE_LIMIT_EXCEEDED"

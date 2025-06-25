@@ -1,0 +1,136 @@
+openapi: 3.0.3
+info:
+  title: Semem API
+  description: |
+    Semantic Memory API for intelligent agent memory management integrating LLMs with semantic web technologies.
+    
+    Semem provides a comprehensive memory system for AI applications with multiple storage backends, 
+    LLM provider integrations, and advanced knowledge graph capabilities.
+  version: 1.3.3
+  contact:
+    name: Semem API Support
+    url: https://github.com/hyperdata/semem
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:4100/api
+    description: Local development server
+  - url: https://api.semem.ai/api
+    description: Production server
+
+security:
+  - ApiKeyAuth: []
+
+paths:
+  # System Endpoints
+  /health:
+    $ref: './paths/system/health.yaml'
+  /config:
+    $ref: './paths/system/config.yaml'
+  /services:
+    $ref: './paths/system/services.yaml'
+  /metrics:
+    $ref: './paths/system/metrics.yaml'
+  
+  # Memory API
+  /memory:
+    $ref: './paths/memory/store.yaml'
+  /memory/search:
+    $ref: './paths/memory/search.yaml'
+  /memory/embedding:
+    $ref: './paths/memory/embedding.yaml'
+  /memory/concepts:
+    $ref: './paths/memory/concepts.yaml'
+  
+  # Chat API
+  /chat:
+    $ref: './paths/chat/completion.yaml'
+  /chat/stream:
+    $ref: './paths/chat/stream.yaml'
+  /completion:
+    $ref: './paths/chat/text-completion.yaml'
+  
+  # Search API
+  /search:
+    $ref: './paths/search/search.yaml'
+  /index:
+    $ref: './paths/search/index.yaml'
+  
+  # Ragno Knowledge Graph API
+  /graph/decompose:
+    $ref: './paths/ragno/decompose.yaml'
+  /graph/stats:
+    $ref: './paths/ragno/stats.yaml'
+  /graph/entities:
+    $ref: './paths/ragno/entities.yaml'
+  /graph/search:
+    $ref: './paths/ragno/search.yaml'
+  /graph/export/{format}:
+    $ref: './paths/ragno/export.yaml'
+  /graph/enrich:
+    $ref: './paths/ragno/enrich.yaml'
+  /graph/communities:
+    $ref: './paths/ragno/communities.yaml'
+  /graph/pipeline:
+    $ref: './paths/ragno/pipeline.yaml'
+  
+  # ZPT Navigation API
+  /navigate:
+    $ref: './paths/zpt/navigate.yaml'
+  /navigate/preview:
+    $ref: './paths/zpt/preview.yaml'
+  /navigate/options:
+    $ref: './paths/zpt/options.yaml'
+  /navigate/schema:
+    $ref: './paths/zpt/schema.yaml'
+  /navigate/health:
+    $ref: './paths/zpt/health.yaml'
+  
+  # Unified Search API
+  /search/unified:
+    $ref: './paths/unified-search/unified.yaml'
+  /search/analyze:
+    $ref: './paths/unified-search/analyze.yaml'
+  /search/services:
+    $ref: './paths/unified-search/services.yaml'
+  /search/strategies:
+    $ref: './paths/unified-search/strategies.yaml'
+
+components:
+  securitySchemes:
+    $ref: './components/securitySchemes/index.yaml'
+  
+  schemas:
+    # Common schemas
+    $ref: './components/schemas/index.yaml'
+  
+  parameters:
+    $ref: './components/parameters/index.yaml'
+  
+  responses:
+    $ref: './components/responses/index.yaml'
+  
+  examples:
+    $ref: './components/examples/index.yaml'
+
+tags:
+  - name: System
+    description: System health, configuration, and metrics endpoints
+  - name: Memory
+    description: Semantic memory storage and retrieval operations
+  - name: Chat
+    description: Conversational AI and text completion endpoints
+  - name: Search
+    description: Content search and indexing operations
+  - name: Ragno
+    description: Knowledge graph operations and entity management
+  - name: ZPT
+    description: Zero-Point Traversal corpus navigation
+  - name: Unified Search
+    description: Cross-service intelligent search aggregation
+
+externalDocs:
+  description: Find more info in the Semem documentation
+  url: https://github.com/hyperdata/semem/blob/main/README.md

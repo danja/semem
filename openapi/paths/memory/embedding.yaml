@@ -1,0 +1,92 @@
+post:
+  tags:
+    - Memory
+  summary: Generate Text Embedding
+  description: |
+    Generate vector embeddings for arbitrary text using the configured embedding model.
+    
+    This endpoint provides direct access to the embedding generation capability
+    used internally by the memory system. Useful for:
+    - Custom similarity calculations
+    - Text preprocessing workflows
+    - External vector database integrations
+    - Research and development purposes
+    
+    Returns a high-dimensional vector representation of the input text.
+  operationId: generateEmbedding
+  security:
+    - ApiKeyAuth: []
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../../components/schemas/index.yaml#/EmbeddingRequest'
+        examples:
+          simple_text:
+            summary: Simple text embedding
+            value:
+              text: "artificial intelligence and machine learning"
+          with_model:
+            summary: Specify embedding model
+            value:
+              text: "quantum computing algorithms"
+              model: "nomic-embed-text-v1.5"
+          long_text:
+            summary: Longer text example
+            value:
+              text: "Neural networks are a fundamental component of modern artificial intelligence systems. They consist of interconnected nodes that process information in layers, mimicking the structure of biological neural networks found in animal brains."
+  responses:
+    '200':
+      description: Embedding generated successfully
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/index.yaml#/EmbeddingResponse'
+          examples:
+            success:
+              summary: Successful embedding generation
+              value:
+                success: true
+                embedding: [0.1234, -0.5678, 0.9012, 0.3456, -0.7890]
+                model: "nomic-embed-text"
+                dimension: 1536
+                processingTime: 234
+    '400':
+      description: Invalid request data
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/index.yaml#/ErrorResponse'
+          examples:
+            missing_text:
+              summary: Missing text field
+              value:
+                success: false
+                error: "Text is required"
+                message: "The 'text' field must be provided and cannot be empty"
+            text_too_long:
+              summary: Text exceeds limits
+              value:
+                success: false
+                error: "Text too long"
+                message: "Text must be under 10,000 characters"
+    '401':
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/index.yaml#/ErrorResponse'
+    '500':
+      description: Embedding generation error
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/index.yaml#/ErrorResponse'
+          examples:
+            model_error:
+              summary: Embedding model error
+              value:
+                success: false
+                error: "Embedding generation failed"
+                message: "Connection to embedding service failed"

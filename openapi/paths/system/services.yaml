@@ -1,0 +1,103 @@
+get:
+  tags:
+    - System
+  summary: Service Discovery
+  description: |
+    Get information about all available API services, their endpoints,
+    status, and capabilities.
+    
+    Provides a comprehensive catalog of all Semem API services for 
+    service discovery and integration purposes.
+  operationId: getServices
+  security: []  # No authentication required
+  responses:
+    '200':
+      description: Service catalog
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                enum: [true]
+              summary:
+                type: object
+                properties:
+                  totalServices:
+                    type: integer
+                  healthyServices:
+                    type: integer
+                  totalEndpoints:
+                    type: integer
+              services:
+                type: object
+                properties:
+                  basic:
+                    type: object
+                    properties:
+                      memory:
+                        $ref: '../../components/schemas/service.yaml#/ServiceInfo'
+                      chat:
+                        $ref: '../../components/schemas/service.yaml#/ServiceInfo'
+                      search:
+                        $ref: '../../components/schemas/service.yaml#/ServiceInfo'
+                  advanced:
+                    type: object
+                    properties:
+                      ragno:
+                        $ref: '../../components/schemas/service.yaml#/ServiceInfo'
+                      zpt:
+                        $ref: '../../components/schemas/service.yaml#/ServiceInfo'
+                      unified:
+                        $ref: '../../components/schemas/service.yaml#/ServiceInfo'
+                  system:
+                    type: object
+                    additionalProperties:
+                      type: string
+              timestamp:
+                type: string
+                format: date-time
+              serverVersion:
+                type: string
+          examples:
+            all_healthy:
+              summary: All services healthy
+              value:
+                success: true
+                summary:
+                  totalServices: 6
+                  healthyServices: 6
+                  totalEndpoints: 32
+                services:
+                  basic:
+                    memory:
+                      name: "Memory API"
+                      description: "Semantic memory management and retrieval"
+                      endpoints:
+                        - "POST /api/memory - Store interactions"
+                        - "GET /api/memory/search - Search memories"
+                        - "POST /api/memory/embedding - Generate embeddings"
+                        - "POST /api/memory/concepts - Extract concepts"
+                      status: "healthy"
+                    chat:
+                      name: "Chat API"
+                      description: "Conversational AI and completion"
+                      endpoints:
+                        - "POST /api/chat - Chat completion"
+                        - "POST /api/chat/stream - Streaming chat"
+                        - "POST /api/completion - Text completion"
+                      status: "healthy"
+                  advanced:
+                    ragno:
+                      name: "Ragno Knowledge Graph API"
+                      description: "Knowledge graph operations and entity management"
+                      status: "healthy"
+                timestamp: "2024-01-01T00:00:00Z"
+                serverVersion: "1.3.3"
+    '500':
+      description: Service discovery error
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/index.yaml#/ErrorResponse'

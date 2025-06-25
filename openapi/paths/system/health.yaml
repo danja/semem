@@ -1,0 +1,59 @@
+get:
+  tags:
+    - System
+  summary: Health Check
+  description: |
+    Check the health status of the Semem API server and all its components.
+    
+    Returns the overall system status, uptime, version information, and 
+    individual component health status.
+  operationId: getHealth
+  security: []  # No authentication required
+  responses:
+    '200':
+      description: Health status information
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/index.yaml#/HealthResponse'
+          examples:
+            healthy:
+              summary: All systems healthy
+              value:
+                status: healthy
+                timestamp: 1640995200000
+                uptime: 3600.5
+                version: "1.3.3"
+                components:
+                  memory:
+                    status: healthy
+                  embedding:
+                    status: healthy
+                  llm:
+                    status: healthy
+                  memory-api:
+                    status: healthy
+                  chat-api:
+                    status: healthy
+                  search-api:
+                    status: healthy
+                  ragno-api:
+                    status: healthy
+                  zpt-api:
+                    status: healthy
+                  unified-search-api:
+                    status: healthy
+            degraded:
+              summary: Some components degraded
+              value:
+                status: degraded
+                timestamp: 1640995200000
+                uptime: 3600.5
+                version: "1.3.3"
+                components:
+                  memory:
+                    status: healthy
+                  embedding:
+                    status: degraded
+                  llm:
+                    status: healthy

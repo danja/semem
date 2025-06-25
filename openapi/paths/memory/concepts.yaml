@@ -1,0 +1,116 @@
+post:
+  tags:
+    - Memory
+  summary: Extract Semantic Concepts
+  description: |
+    Extract semantic concepts from text using LLM-based analysis.
+    
+    This endpoint uses the configured language model to analyze text and 
+    identify key semantic concepts, topics, and themes. The extracted concepts
+    are used by the memory system for improved search and retrieval.
+    
+    Concept extraction helps with:
+    - Semantic indexing and search
+    - Topic modeling and categorization
+    - Content analysis and understanding
+    - Memory organization and clustering
+  operationId: extractConcepts
+  security:
+    - ApiKeyAuth: []
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../../components/schemas/index.yaml#/ConceptsRequest'
+        examples:
+          technical_text:
+            summary: Technical text analysis
+            value:
+              text: "Machine learning algorithms analyze large datasets to identify patterns and make predictions about future data points without explicit programming."
+          conversational_text:
+            summary: Conversational text
+            value:
+              text: "I'm interested in learning about quantum computing. Can you explain how qubits work and what makes them different from classical bits?"
+          narrative_text:
+            summary: Narrative text
+            value:
+              text: "The research team discovered a new approach to neural network optimization that significantly reduced training time while improving accuracy on benchmark datasets."
+  responses:
+    '200':
+      description: Concepts extracted successfully
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/index.yaml#/ConceptsResponse'
+          examples:
+            technical_concepts:
+              summary: Technical domain concepts
+              value:
+                success: true
+                concepts: 
+                  - "machine learning"
+                  - "algorithms"
+                  - "pattern recognition"
+                  - "predictive modeling"
+                  - "data analysis"
+                  - "automation"
+                text: "Machine learning algorithms analyze large datasets to identify patterns and make predictions about future data points without explicit programming."
+                processingTime: 1450
+            conversational_concepts:
+              summary: Conversational concepts
+              value:
+                success: true
+                concepts:
+                  - "quantum computing"
+                  - "qubits"
+                  - "quantum mechanics"
+                  - "classical computing"
+                  - "information processing"
+                text: "I'm interested in learning about quantum computing..."
+                processingTime: 1320
+            no_concepts:
+              summary: No clear concepts found
+              value:
+                success: true
+                concepts: []
+                text: "Hello world"
+                processingTime: 890
+    '400':
+      description: Invalid request data
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/index.yaml#/ErrorResponse'
+          examples:
+            missing_text:
+              summary: Missing text field
+              value:
+                success: false
+                error: "Text is required"
+                message: "The 'text' field must be provided and cannot be empty"
+    '401':
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/index.yaml#/ErrorResponse'
+    '500':
+      description: Concept extraction error
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/index.yaml#/ErrorResponse'
+          examples:
+            llm_error:
+              summary: LLM service error
+              value:
+                success: false
+                error: "Concept extraction failed"
+                message: "Language model service is temporarily unavailable"
+            no_llm:
+              summary: No LLM available
+              value:
+                success: false
+                error: "No chat provider available"
+                message: "LLM service required for concept extraction is not configured"

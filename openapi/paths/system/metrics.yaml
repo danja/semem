@@ -1,0 +1,79 @@
+get:
+  tags:
+    - System
+  summary: Get System Metrics
+  description: |
+    Retrieve system performance metrics including API usage statistics,
+    response times, error rates, and resource utilization.
+    
+    Requires authentication to access sensitive performance data.
+  operationId: getMetrics
+  security:
+    - ApiKeyAuth: []
+  responses:
+    '200':
+      description: System metrics
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '../../components/schemas/index.yaml#/ApiResponse'
+              - type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      timestamp:
+                        type: integer
+                        format: int64
+                        description: Metrics collection timestamp
+                      apiCount:
+                        type: integer
+                        description: Number of active API handlers
+                      memory-api:
+                        $ref: '../../components/schemas/metrics.yaml#/ApiMetrics'
+                      chat-api:
+                        $ref: '../../components/schemas/metrics.yaml#/ApiMetrics'
+                      search-api:
+                        $ref: '../../components/schemas/metrics.yaml#/ApiMetrics'
+                      ragno-api:
+                        $ref: '../../components/schemas/metrics.yaml#/ApiMetrics'
+                      zpt-api:
+                        $ref: '../../components/schemas/metrics.yaml#/ApiMetrics'
+                      unified-search-api:
+                        $ref: '../../components/schemas/metrics.yaml#/ApiMetrics'
+          examples:
+            sample_metrics:
+              summary: Sample system metrics
+              value:
+                success: true
+                data:
+                  timestamp: 1640995200000
+                  apiCount: 6
+                  memory-api:
+                    requestCount: 1250
+                    errorCount: 12
+                    averageResponseTime: 145
+                    operations:
+                      store:
+                        count: 800
+                        errors: 5
+                      search:
+                        count: 350
+                        errors: 3
+                  chat-api:
+                    requestCount: 890
+                    errorCount: 8
+                    averageResponseTime: 2340
+    '401':
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/index.yaml#/ErrorResponse'
+    '500':
+      description: Metrics collection error
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/index.yaml#/ErrorResponse'

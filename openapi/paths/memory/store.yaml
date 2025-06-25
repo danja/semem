@@ -1,0 +1,86 @@
+post:
+  tags:
+    - Memory
+  summary: Store Memory Interaction
+  description: |
+    Store a new interaction (prompt-response pair) in semantic memory.
+    
+    The system will automatically:
+    - Generate vector embeddings for the combined text
+    - Extract semantic concepts using LLM analysis
+    - Store the interaction with metadata for future retrieval
+    
+    This is the primary way to build up the AI agent's memory over time.
+  operationId: storeMemoryInteraction
+  security:
+    - ApiKeyAuth: []
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../../components/schemas/index.yaml#/MemoryStoreRequest'
+        examples:
+          simple_qa:
+            summary: Simple Q&A interaction
+            value:
+              prompt: "What is machine learning?"
+              response: "Machine learning is a subset of artificial intelligence that enables computers to learn and improve from experience without being explicitly programmed."
+          with_metadata:
+            summary: Interaction with metadata
+            value:
+              prompt: "Explain neural networks"
+              response: "Neural networks are computing systems inspired by biological neural networks. They consist of interconnected nodes organized in layers."
+              metadata:
+                title: "Neural Networks Introduction"
+                tags: ["ai", "deep-learning", "basics"]
+                difficulty: "intermediate"
+                topic: "artificial-intelligence"
+  responses:
+    '201':
+      description: Interaction stored successfully
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/index.yaml#/MemoryStoreResponse'
+          examples:
+            success:
+              summary: Successful storage
+              value:
+                success: true
+                id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                concepts: ["machine learning", "artificial intelligence", "algorithms", "data patterns"]
+                timestamp: 1640995200000
+                processingTime: 1250
+    '400':
+      description: Invalid request data
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/index.yaml#/ErrorResponse'
+          examples:
+            missing_fields:
+              summary: Missing required fields
+              value:
+                success: false
+                error: "Prompt and response are required"
+                message: "Both 'prompt' and 'response' fields must be provided"
+    '401':
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/index.yaml#/ErrorResponse'
+    '500':
+      description: Storage error
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/index.yaml#/ErrorResponse'
+          examples:
+            storage_error:
+              summary: Storage backend error
+              value:
+                success: false
+                error: "Failed to store interaction"
+                message: "SPARQL endpoint unavailable"

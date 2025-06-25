@@ -1,0 +1,149 @@
+get:
+  tags:
+    - Ragno
+  summary: Get Knowledge Graph Entities
+  description: |
+    Retrieve entities from the knowledge graph with optional filtering
+    and pagination support.
+    
+    This endpoint allows browsing and discovering entities in the knowledge
+    graph. Supports filtering by:
+    - Entity type (Person, Organization, Technology, etc.)
+    - Name patterns (partial matching)
+    - Confidence thresholds
+    - Date ranges
+    
+    Results include entity metadata, confidence scores, and relationship counts.
+  operationId: getKnowledgeGraphEntities
+  security:
+    - ApiKeyAuth: []
+  parameters:
+    - $ref: '../../components/parameters/index.yaml#/LimitParam'
+    - $ref: '../../components/parameters/index.yaml#/RagnoOffsetParam'
+    - $ref: '../../components/parameters/index.yaml#/RagnoEntityTypeParam'
+    - $ref: '../../components/parameters/index.yaml#/RagnoEntityNameParam'
+    - $ref: '../../components/parameters/index.yaml#/ConfidenceParam'
+    - $ref: '../../components/parameters/index.yaml#/DateFromParam'
+    - $ref: '../../components/parameters/index.yaml#/DateToParam'
+  responses:
+    '200':
+      description: List of knowledge graph entities
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '../../components/schemas/index.yaml#/ApiResponse'
+              - type: object
+                properties:
+                  entities:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: '../../components/schemas/index.yaml#/RagnoEntity'
+                        - type: object
+                          properties:
+                            relationshipCount:
+                              type: integer
+                              description: Number of relationships this entity has
+                            lastModified:
+                              type: string
+                              format: date-time
+                              description: Last modification timestamp
+                            aliases:
+                              type: array
+                              items:
+                                type: string
+                              description: Alternative names for this entity
+                  pagination:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                        description: Total number of entities
+                      page:
+                        type: integer
+                        description: Current page number
+                      pageSize:
+                        type: integer
+                        description: Number of items per page
+                      hasNext:
+                        type: boolean
+                        description: Whether there are more pages
+                      hasPrev:
+                        type: boolean
+                        description: Whether there are previous pages
+          examples:
+            technology_entities:
+              summary: Technology entities
+              value:
+                success: true
+                entities:
+                  - uri: "http://ragno.ai/entities/openai_001"
+                    name: "OpenAI"
+                    type: "Organization"
+                    confidence: 0.98
+                    attributes:
+                      founded: "2015"
+                      industry: "Artificial Intelligence"
+                      location: "San Francisco, CA"
+                    relationshipCount: 45
+                    lastModified: "2024-01-15T10:30:00Z"
+                    aliases: ["Open AI", "OpenAI Inc."]
+                  - uri: "http://ragno.ai/entities/gpt4_001"
+                    name: "GPT-4"
+                    type: "Technology"
+                    confidence: 0.96
+                    attributes:
+                      category: "Language Model"
+                      version: "4"
+                      release_date: "2023-03-14"
+                    relationshipCount: 28
+                    lastModified: "2024-01-16T09:15:00Z"
+                    aliases: ["GPT-4", "Generative Pre-trained Transformer 4"]
+                pagination:
+                  total: 4892
+                  page: 1
+                  pageSize: 50
+                  hasNext: true
+                  hasPrev: false
+                processingTime: 156
+            filtered_results:
+              summary: Filtered entity results
+              value:
+                success: true
+                entities:
+                  - uri: "http://ragno.ai/entities/ml_001"
+                    name: "Machine Learning"
+                    type: "Concept"
+                    confidence: 0.94
+                    attributes:
+                      domain: "Computer Science"
+                      subfield: "Artificial Intelligence"
+                    relationshipCount: 156
+                    lastModified: "2024-01-14T16:45:00Z"
+                    aliases: ["ML", "Statistical Learning"]
+                pagination:
+                  total: 23
+                  page: 1
+                  pageSize: 50
+                  hasNext: false
+                  hasPrev: false
+                processingTime: 89
+            no_results:
+              summary: No entities found
+              value:
+                success: true
+                entities: []
+                pagination:
+                  total: 0
+                  page: 1
+                  pageSize: 50
+                  hasNext: false
+                  hasPrev: false
+                processingTime: 34
+    '400':
+      $ref: '../../components/responses/index.yaml#/BadRequestResponse'
+    '401':
+      $ref: '../../components/responses/index.yaml#/UnauthorizedResponse'
+    '500':
+      $ref: '../../components/responses/index.yaml#/InternalServerErrorResponse'

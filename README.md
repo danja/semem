@@ -22,7 +22,7 @@ The intuition is that while LLMs and associated techniques have massively advanc
 See also : [CURRENT-ACTIVITIES.md](https://github.com/danja/semem/blob/main/docs/CURRENT-ACTIVITY.md) and [blog](https://tensegrity.it)
 
 <details>
-<summary>Mostly functional but very, very sketchy. It has an MCP server, HTTP API, a crude browser UI and code APIs. A lot to do before much will be remotely useful. It is in active development in June 2025. The codebase is big and rather chaotic, <strong>it is not for the fainthearted</strong>.</summary>
+<summary>Mostly functional but very, very sketchy. It has an MCP server, HTTP API, a crude browser UI and code APIs. A lot to do before much will be remotely useful. It is in active development in June 2025. The codebase is big and chaotic, <strong>it is not for the fainthearted</strong>.</summary>
 
 The codebase is registered as the npm package [semem](https://www.npmjs.com/package/semem) though there hasn't been much time spent on this angle, currently it's pretty much essential to use this repo. 
 

@@ -1,0 +1,65 @@
+get:
+  tags:
+    - Search
+  summary: Search Content
+  description: |
+    Search indexed content using semantic similarity and keyword matching.
+    
+    The search service provides content discovery across indexed documents,
+    web pages, and other textual content. It supports:
+    - Semantic similarity search using embeddings
+    - Keyword-based matching
+    - Content type filtering
+    - Relevance ranking and scoring
+    
+    Results include similarity scores and content metadata for ranking and filtering.
+  operationId: searchContent
+  security:
+    - ApiKeyAuth: []
+  parameters:
+    - $ref: '../../components/parameters/index.yaml#/QueryParam'
+    - $ref: '../../components/parameters/index.yaml#/LimitParam'
+    - $ref: '../../components/parameters/index.yaml#/SearchTypesParam'
+    - $ref: '../../components/parameters/index.yaml#/ThresholdParam'
+  responses:
+    '200':
+      description: Search results
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/index.yaml#/SearchResponse'
+          examples:
+            content_results:
+              summary: Content search results
+              value:
+                success: true
+                results:
+                  - id: "content_12345"
+                    title: "Introduction to Neural Networks"
+                    content: "Neural networks are computational models inspired by biological neural networks..."
+                    similarity: 0.89
+                    type: "content"
+                    metadata:
+                      source: "documentation"
+                      author: "AI Research Team"
+                      published: "2024-01-15"
+                      tags: ["neural networks", "deep learning", "AI"]
+                  - id: "content_67890"
+                    title: "Machine Learning Algorithms Overview"
+                    content: "This document provides an overview of fundamental machine learning algorithms..."
+                    similarity: 0.82
+                    type: "content"
+                    metadata:
+                      source: "tutorial"
+                      difficulty: "beginner"
+                      topics: ["supervised learning", "unsupervised learning"]
+                count: 2
+                processingTime: 567
+    '400':
+      $ref: '../../components/responses/index.yaml#/BadRequestResponse'
+    '401':
+      $ref: '../../components/responses/index.yaml#/UnauthorizedResponse'
+    '429':
+      $ref: '../../components/responses/index.yaml#/RateLimitResponse'
+    '500':
+      $ref: '../../components/responses/index.yaml#/InternalServerErrorResponse'

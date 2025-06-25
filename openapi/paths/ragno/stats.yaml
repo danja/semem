@@ -1,0 +1,175 @@
+get:
+  tags:
+    - Ragno
+  summary: Get Knowledge Graph Statistics
+  description: |
+    Retrieve comprehensive statistics about the knowledge graph including
+    entity counts, relationship types, graph connectivity metrics, and
+    storage information.
+    
+    Provides insights into:
+    - Total entities and relationships
+    - Entity type distribution
+    - Relationship type frequency
+    - Graph connectivity and clustering metrics
+    - Storage backend statistics
+    - Recent activity summaries
+  operationId: getKnowledgeGraphStats
+  security:
+    - ApiKeyAuth: []
+  responses:
+    '200':
+      description: Knowledge graph statistics
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '../../components/schemas/index.yaml#/ApiResponse'
+              - type: object
+                properties:
+                  stats:
+                    type: object
+                    properties:
+                      entities:
+                        type: object
+                        properties:
+                          total:
+                            type: integer
+                            description: Total number of entities
+                          byType:
+                            type: object
+                            additionalProperties:
+                              type: integer
+                            description: Entity counts by type
+                          averageConfidence:
+                            type: number
+                            format: float
+                            description: Average entity confidence score
+                      relationships:
+                        type: object
+                        properties:
+                          total:
+                            type: integer
+                            description: Total number of relationships
+                          byType:
+                            type: object
+                            additionalProperties:
+                              type: integer
+                            description: Relationship counts by type
+                          averageConfidence:
+                            type: number
+                            format: float
+                            description: Average relationship confidence
+                      graph:
+                        type: object
+                        properties:
+                          density:
+                            type: number
+                            format: float
+                            description: Graph density (0-1)
+                          components:
+                            type: integer
+                            description: Number of connected components
+                          diameter:
+                            type: integer
+                            description: Graph diameter
+                          averageDegree:
+                            type: number
+                            format: float
+                            description: Average node degree
+                      storage:
+                        type: object
+                        properties:
+                          backend:
+                            type: string
+                            description: Storage backend type
+                          size:
+                            type: string
+                            description: Storage size (human readable)
+                          lastUpdated:
+                            type: string
+                            format: date-time
+                            description: Last update timestamp
+                      activity:
+                        type: object
+                        properties:
+                          recentDecompositions:
+                            type: integer
+                            description: Decompositions in last 24h
+                          recentSearches:
+                            type: integer
+                            description: Searches in last 24h
+                          lastActivity:
+                            type: string
+                            format: date-time
+                            description: Last activity timestamp
+          examples:
+            comprehensive_stats:
+              summary: Comprehensive graph statistics
+              value:
+                success: true
+                stats:
+                  entities:
+                    total: 15847
+                    byType:
+                      Person: 3421
+                      Organization: 2156
+                      Technology: 4892
+                      Concept: 3845
+                      Location: 1533
+                    averageConfidence: 0.87
+                  relationships:
+                    total: 28934
+                    byType:
+                      developed: 1234
+                      worksAt: 2456
+                      locatedIn: 3789
+                      relatedTo: 8765
+                      subsetOf: 2156
+                      collaboratesWith: 1534
+                    averageConfidence: 0.82
+                  graph:
+                    density: 0.0034
+                    components: 23
+                    diameter: 8
+                    averageDegree: 3.65
+                  storage:
+                    backend: "sparql"
+                    size: "245.7 MB"
+                    lastUpdated: "2024-01-16T14:23:45Z"
+                  activity:
+                    recentDecompositions: 127
+                    recentSearches: 892
+                    lastActivity: "2024-01-16T14:23:45Z"
+                processingTime: 234
+            empty_graph:
+              summary: Empty or minimal graph
+              value:
+                success: true
+                stats:
+                  entities:
+                    total: 0
+                    byType: {}
+                    averageConfidence: 0
+                  relationships:
+                    total: 0
+                    byType: {}
+                    averageConfidence: 0
+                  graph:
+                    density: 0
+                    components: 0
+                    diameter: 0
+                    averageDegree: 0
+                  storage:
+                    backend: "memory"
+                    size: "0 B"
+                    lastUpdated: null
+                  activity:
+                    recentDecompositions: 0
+                    recentSearches: 0
+                    lastActivity: null
+                processingTime: 45
+    '401':
+      $ref: '../../components/responses/index.yaml#/UnauthorizedResponse'
+    '500':
+      $ref: '../../components/responses/index.yaml#/InternalServerErrorResponse'

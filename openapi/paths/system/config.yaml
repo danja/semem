@@ -1,0 +1,57 @@
+get:
+  tags:
+    - System
+  summary: Get System Configuration
+  description: |
+    Retrieve the current system configuration including storage backends,
+    model configurations, SPARQL endpoints, and LLM providers.
+    
+    Returns sanitized configuration without sensitive information like passwords.
+  operationId: getConfig
+  security: []  # No authentication required
+  responses:
+    '200':
+      description: System configuration
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/index.yaml#/ConfigResponse'
+          examples:
+            default:
+              summary: Default configuration
+              value:
+                success: true
+                data:
+                  storage:
+                    availableTypes: ["memory", "json", "sparql", "inmemory"]
+                    current: "memory"
+                  models:
+                    chat:
+                      provider: "ollama"
+                      model: "qwen2:1.5b"
+                    embedding:
+                      provider: "ollama"
+                      model: "nomic-embed-text"
+                  sparqlEndpoints:
+                    - label: "Local Fuseki"
+                      urlBase: "http://localhost:3030"
+                      dataset: "semem"
+                      queryEndpoint: "http://localhost:3030/semem/query"
+                      updateEndpoint: "http://localhost:3030/semem/update"
+                  llmProviders:
+                    - type: "ollama"
+                      implementation: "OllamaConnector"
+                      capabilities: ["chat", "embedding"]
+                      priority: 1
+                  defaultChatModel: "qwen2:1.5b"
+                  defaultEmbeddingModel: "nomic-embed-text"
+    '500':
+      description: Configuration loading error
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/index.yaml#/ErrorResponse'
+          example:
+            success: false
+            error: "Failed to load configuration"
+            message: "Configuration file not found or invalid"

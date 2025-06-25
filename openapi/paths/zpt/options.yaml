@@ -1,0 +1,142 @@
+get:
+  tags:
+    - ZPT
+  summary: Get ZPT Navigation Options
+  description: |
+    Retrieve available options for ZPT navigation parameters including
+    supported zoom levels, tilt representations, output formats, and
+    transform options.
+    
+    This endpoint provides metadata about the ZPT navigation system
+    capabilities, helping clients understand available parameters
+    and build appropriate navigation requests.
+  operationId: getZPTNavigationOptions
+  security: []  # No authentication required
+  responses:
+    '200':
+      description: Available ZPT navigation options
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '../../components/schemas/index.yaml#/ApiResponse'
+              - type: object
+                properties:
+                  options:
+                    type: object
+                    properties:
+                      zoom:
+                        type: object
+                        properties:
+                          levels:
+                            type: array
+                            items:
+                              type: string
+                            description: Available zoom levels
+                          descriptions:
+                            type: object
+                            additionalProperties:
+                              type: string
+                            description: Descriptions for each zoom level
+                      pan:
+                        type: object
+                        properties:
+                          dimensions:
+                            type: array
+                            items:
+                              type: string
+                            description: Available pan dimensions
+                          examples:
+                            type: object
+                            additionalProperties:
+                              type: object
+                            description: Example pan configurations
+                      tilt:
+                        type: object
+                        properties:
+                          representations:
+                            type: array
+                            items:
+                              type: string
+                            description: Available tilt representations
+                          descriptions:
+                            type: object
+                            additionalProperties:
+                              type: string
+                            description: Descriptions for each tilt type
+                      transform:
+                        type: object
+                        properties:
+                          formats:
+                            type: array
+                            items:
+                              type: string
+                            description: Available output formats
+                          chunkStrategies:
+                            type: array
+                            items:
+                              type: string
+                            description: Available chunking strategies
+                          tokenizers:
+                            type: array
+                            items:
+                              type: string
+                            description: Available tokenizers
+                          maxTokensRange:
+                            type: object
+                            properties:
+                              min:
+                                type: integer
+                              max:
+                                type: integer
+                              default:
+                                type: integer
+          examples:
+            complete_options:
+              summary: Complete ZPT options
+              value:
+                success: true
+                options:
+                  zoom:
+                    levels: ["entity", "unit", "text", "community", "corpus"]
+                    descriptions:
+                      entity: "Focus on specific entities and their immediate relationships"
+                      unit: "Semantic units level - coherent chunks of meaning"
+                      text: "Raw text chunks with minimal processing"
+                      community: "Entity communities and clusters"
+                      corpus: "Entire corpus overview and high-level patterns"
+                  pan:
+                    dimensions: ["topic", "entity", "temporal", "geographic"]
+                    examples:
+                      topic:
+                        description: "Filter by topic or subject matter"
+                        example: "artificial intelligence"
+                      entity:
+                        description: "Focus on specific named entity"
+                        example: "OpenAI"
+                      temporal:
+                        description: "Time-based filtering"
+                        example:
+                          start: "2023-01-01"
+                          end: "2024-12-31"
+                      geographic:
+                        description: "Geographic region filtering"
+                        example: "San Francisco Bay Area"
+                  tilt:
+                    representations: ["embedding", "keywords", "graph", "temporal"]
+                    descriptions:
+                      embedding: "Vector space representation using embeddings"
+                      keywords: "Keyword-based view with term frequencies"
+                      graph: "Network/relationship view showing connections"
+                      temporal: "Time-series perspective with chronological ordering"
+                  transform:
+                    formats: ["json", "markdown", "structured"]
+                    chunkStrategies: ["semantic", "fixed", "adaptive"]
+                    tokenizers: ["cl100k_base", "p50k_base", "claude", "llama"]
+                    maxTokensRange:
+                      min: 100
+                      max: 8192
+                      default: 4000
+                processingTime: 45
+    '500':
+      $ref: '../../components/responses/index.yaml#/InternalServerErrorResponse'

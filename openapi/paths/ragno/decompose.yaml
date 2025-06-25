@@ -1,0 +1,141 @@
+post:
+  tags:
+    - Ragno
+  summary: Decompose Text to Knowledge Graph
+  description: |
+    Decompose text or text chunks into semantic units, entities, and relationships
+    for knowledge graph construction using the Ragno system.
+    
+    This is the core operation of the Ragno knowledge graph system. It:
+    1. Analyzes text to identify semantic units (coherent chunks of meaning)
+    2. Extracts named entities and concepts
+    3. Identifies relationships between entities
+    4. Creates RDF-compliant knowledge graph structures
+    5. Optionally stores results in the configured SPARQL endpoint
+    
+    The output follows the Ragno vocabulary for semantic web compliance.
+  operationId: decomposeTextToGraph
+  security:
+    - ApiKeyAuth: []
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../../components/schemas/index.yaml#/RagnoDecomposeRequest'
+        examples:
+          simple_text:
+            summary: Single text decomposition
+            value:
+              text: "OpenAI released GPT-4, a large language model that demonstrates remarkable capabilities in natural language understanding and generation. The model was trained on diverse internet data and shows improved reasoning abilities compared to previous versions."
+              options:
+                extractRelationships: true
+                generateSummaries: true
+                store: true
+          chunked_text:
+            summary: Multiple text chunks
+            value:
+              chunks:
+                - "Machine learning is a subset of artificial intelligence that focuses on algorithms."
+                - "Neural networks are inspired by biological neural networks in animal brains."
+                - "Deep learning uses multiple layers to progressively extract features from raw input."
+              options:
+                extractRelationships: true
+                minEntityConfidence: 0.4
+                maxEntitiesPerUnit: 15
+                store: false
+          research_paper:
+            summary: Academic text processing
+            value:
+              text: "The study examined the effectiveness of transformer architectures in natural language processing tasks. Researchers from Stanford University and Google DeepMind collaborated on this comprehensive analysis, comparing BERT, GPT, and T5 models across multiple benchmarks."
+              options:
+                extractRelationships: true
+                generateSummaries: true
+                minEntityConfidence: 0.5
+                store: true
+  responses:
+    '200':
+      description: Text successfully decomposed into knowledge graph
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/index.yaml#/RagnoDecomposeResponse'
+          examples:
+            successful_decomposition:
+              summary: Successful decomposition result
+              value:
+                success: true
+                units:
+                  - id: "unit_001"
+                    text: "OpenAI released GPT-4, a large language model"
+                    summary: "GPT-4 release by OpenAI"
+                    entities: ["openai_001", "gpt4_001"]
+                entities:
+                  - uri: "http://ragno.ai/entities/openai_001"
+                    name: "OpenAI"
+                    type: "Organization"
+                    confidence: 0.95
+                    attributes:
+                      industry: "Artificial Intelligence"
+                  - uri: "http://ragno.ai/entities/gpt4_001"
+                    name: "GPT-4"
+                    type: "LanguageModel"
+                    confidence: 0.98
+                    attributes:
+                      version: "4"
+                      capabilities: ["text generation", "reasoning"]
+                relationships:
+                  - subject: "openai_001"
+                    predicate: "developed"
+                    object: "gpt4_001"
+                    confidence: 0.92
+                stats:
+                  unitsCount: 3
+                  entitiesCount: 8
+                  relationshipsCount: 5
+                  processingTime: 4560
+                stored: true
+    '400':
+      description: Invalid request data
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/index.yaml#/ErrorResponse'
+          examples:
+            no_input:
+              summary: No text or chunks provided
+              value:
+                success: false
+                error: "No input provided"
+                message: "Either 'text' or 'chunks' must be provided"
+            text_too_long:
+              summary: Text exceeds limits
+              value:
+                success: false
+                error: "Text too long"
+                message: "Input text exceeds maximum length of 50,000 characters"
+    '401':
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/index.yaml#/ErrorResponse'
+    '500':
+      description: Decomposition processing error
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/index.yaml#/ErrorResponse'
+          examples:
+            llm_error:
+              summary: LLM processing failed
+              value:
+                success: false
+                error: "Entity extraction failed"
+                message: "Language model service temporarily unavailable"
+            storage_error:
+              summary: SPARQL storage failed
+              value:
+                success: false
+                error: "Storage failed"
+                message: "Unable to store results in SPARQL endpoint"

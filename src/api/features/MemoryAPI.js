@@ -8,7 +8,7 @@ export default class MemoryAPI extends BaseAPI {
     constructor(config = {}) {
         super(config);
         this.memoryManager = null;
-        this.similarityThreshold = config.similarityThreshold || 0.7;
+        this.similarityThreshold = config.similarityThreshold || 40;
         this.defaultLimit = config.defaultLimit || 10;
     }
 
@@ -118,7 +118,11 @@ export default class MemoryAPI extends BaseAPI {
     /**
      * Retrieve interactions from memory
      */
-    async retrieveInteractions({ query, threshold, limit = this.defaultLimit }) {
+    async retrieveInteractions(params) {
+        this.logger.info('retrieveInteractions called with params:', params);
+        
+        const { query, threshold, limit = this.defaultLimit } = params || {};
+        
         if (!query) {
             throw new Error('Query is required');
         }
@@ -126,22 +130,40 @@ export default class MemoryAPI extends BaseAPI {
         try {
             const similarityThreshold = threshold || this.similarityThreshold;
             
+            // Debug: Check if memory manager is available
+            if (!this.memoryManager) {
+                throw new Error('Memory manager not initialized');
+            }
+            
+            this.logger.info('Starting search with params:', {
+                query,
+                similarityThreshold,
+                limit
+            });
+            
             const results = await this.memoryManager.retrieveRelevantInteractions(
                 query,
                 similarityThreshold,
-                0,
-                limit
+                0, // excludeLastN
+                limit // limit
             );
             
+            this.logger.info('Search results received:', {
+                resultsType: typeof results,
+                resultsLength: Array.isArray(results) ? results.length : 'not array',
+                firstResult: results?.[0] ? Object.keys(results[0]) : 'no first result'
+            });
+            
             // Format the results according to API schema
+            // Note: combineResults returns flattened interaction objects with totalScore
             const formattedResults = results.map(item => ({
-                id: item.interaction.id || uuidv4(),
-                prompt: item.interaction.prompt,
-                output: item.interaction.output,
-                concepts: item.interaction.concepts || [],
-                timestamp: item.interaction.timestamp || Date.now(),
-                accessCount: item.interaction.accessCount || 1,
-                similarity: item.similarity
+                id: item.id,
+                prompt: item.prompt,
+                output: item.output,
+                concepts: item.concepts,
+                timestamp: item.timestamp,
+                accessCount: item.accessCount,
+                similarity: item.totalScore || 0
             }));
             
             this._emitMetric('memory.search.count', 1);
@@ -151,6 +173,13 @@ export default class MemoryAPI extends BaseAPI {
             };
         } catch (error) {
             this._emitMetric('memory.search.errors', 1);
+            this.logger.error('Search error details:', {
+                message: error.message,
+                stack: error.stack,
+                query,
+                threshold: similarityThreshold,
+                limit
+            });
             throw error;
         }
     }

@@ -1,0 +1,745 @@
+# Ragno Knowledge Graph API Schemas
+
+RagnoDecomposeRequest:
+  type: object
+  properties:
+    text:
+      type: string
+      maxLength: 50000
+      description: Single text to decompose (alternative to chunks)
+      example: "OpenAI released GPT-4, a large language model that demonstrates remarkable capabilities in natural language understanding and generation."
+    chunks:
+      type: array
+      items:
+        type: string
+        maxLength: 10000
+      maxItems: 100
+      description: Array of text chunks to decompose (alternative to text)
+      example: 
+        - "Machine learning is a subset of artificial intelligence."
+        - "Neural networks are inspired by biological neural networks."
+    options:
+      $ref: '#/RagnoDecomposeOptions'
+  oneOf:
+    - required: [text]
+    - required: [chunks]
+
+RagnoDecomposeOptions:
+  type: object
+  properties:
+    extractRelationships:
+      type: boolean
+      default: true
+      description: Whether to extract relationships between entities
+    generateSummaries:
+      type: boolean
+      default: true
+      description: Whether to generate summaries for semantic units
+    minEntityConfidence:
+      type: number
+      format: float
+      minimum: 0
+      maximum: 1
+      default: 0.3
+      description: Minimum confidence threshold for entity extraction
+    maxEntitiesPerUnit:
+      type: integer
+      minimum: 1
+      maximum: 50
+      default: 10
+      description: Maximum number of entities per semantic unit
+    store:
+      type: boolean
+      default: true
+      description: Whether to store results in the knowledge graph
+    includeAttributes:
+      type: boolean
+      default: true
+      description: Whether to extract entity attributes
+    extractTemporalInfo:
+      type: boolean
+      default: false
+      description: Whether to extract temporal information
+    language:
+      type: string
+      default: "auto"
+      description: Language of the text (auto-detected if not specified)
+      example: "en"
+    customVocabulary:
+      type: array
+      items:
+        type: string
+      description: Custom vocabulary terms to prioritize
+    entityTypes:
+      type: array
+      items:
+        type: string
+        enum: [Person, Organization, Technology, Concept, Location, Event, Product, Method, Theory]
+      description: Entity types to extract (all types if not specified)
+    relationshipTypes:
+      type: array
+      items:
+        type: string
+      description: Specific relationship types to extract
+    outputFormat:
+      type: string
+      enum: [full, minimal, summary]
+      default: full
+      description: Level of detail in the response
+
+RagnoDecomposeResponse:
+  allOf:
+    - $ref: '../schemas/common.yaml#/ApiResponse'
+    - type: object
+      properties:
+        units:
+          type: array
+          items:
+            $ref: '#/SemanticUnit'
+          description: Extracted semantic units
+        entities:
+          type: array
+          items:
+            $ref: '#/RagnoEntity'
+          description: Extracted entities
+        relationships:
+          type: array
+          items:
+            $ref: '#/RagnoRelationship'
+          description: Extracted relationships
+        stats:
+          $ref: '#/RagnoDecomposeStats'
+        stored:
+          type: boolean
+          description: Whether results were stored in the knowledge graph
+        datasetId:
+          type: string
+          description: RDF dataset identifier (if stored)
+
+SemanticUnit:
+  type: object
+  properties:
+    id:
+      type: string
+      description: Unique semantic unit identifier
+      example: "unit_001"
+    text:
+      type: string
+      description: Original text content
+      example: "OpenAI released GPT-4, a large language model"
+    summary:
+      type: string
+      description: Generated summary of the unit
+      example: "GPT-4 release announcement by OpenAI"
+    entities:
+      type: array
+      items:
+        type: string
+      description: Entity IDs contained in this unit
+      example: ["openai_001", "gpt4_001"]
+    confidence:
+      type: number
+      format: float
+      minimum: 0
+      maximum: 1
+      description: Confidence score for unit coherence
+      example: 0.92
+    topics:
+      type: array
+      items:
+        type: string
+      description: Main topics of this unit
+      example: ["artificial intelligence", "product release"]
+    timestamp:
+      type: string
+      format: date-time
+      description: Extraction timestamp
+    metadata:
+      type: object
+      properties:
+        wordCount:
+          type: integer
+          description: Number of words in the unit
+        sentenceCount:
+          type: integer
+          description: Number of sentences
+        language:
+          type: string
+          description: Detected language
+        complexity:
+          type: string
+          enum: [low, medium, high]
+          description: Text complexity level
+  required:
+    - id
+    - text
+
+RagnoEntity:
+  type: object
+  properties:
+    uri:
+      type: string
+      format: uri
+      description: Unique entity URI following Ragno vocabulary
+      example: "http://ragno.ai/entities/openai_001"
+    name:
+      type: string
+      description: Entity name or label
+      example: "OpenAI"
+    type:
+      type: string
+      enum: [Person, Organization, Technology, Concept, Location, Event, Product, Method, Theory]
+      description: Entity type classification
+      example: "Organization"
+    confidence:
+      type: number
+      format: float
+      minimum: 0
+      maximum: 1
+      description: Extraction confidence score
+      example: 0.95
+    attributes:
+      type: object
+      additionalProperties: true
+      description: Entity attributes and properties
+      example:
+        founded: "2015"
+        industry: "Artificial Intelligence"
+        location: "San Francisco, CA"
+        website: "https://openai.com"
+    aliases:
+      type: array
+      items:
+        type: string
+      description: Alternative names or mentions
+      example: ["Open AI", "OpenAI Inc.", "OpenAI LP"]
+    mentions:
+      type: array
+      items:
+        type: object
+        properties:
+          unitId:
+            type: string
+            description: Semantic unit where entity was mentioned
+          position:
+            type: integer
+            description: Character position in text
+          context:
+            type: string
+            description: Surrounding context
+      description: Mentions of this entity in the text
+    categories:
+      type: array
+      items:
+        type: string
+      description: Semantic categories
+      example: ["AI Company", "Research Organization", "Technology Firm"]
+    embedding:
+      type: array
+      items:
+        type: number
+        format: float
+      description: Entity embedding vector (if available)
+    lastModified:
+      type: string
+      format: date-time
+      description: Last modification timestamp
+    source:
+      type: string
+      description: Source document or text identifier
+  required:
+    - uri
+    - name
+    - type
+    - confidence
+
+RagnoRelationship:
+  type: object
+  properties:
+    id:
+      type: string
+      description: Unique relationship identifier
+      example: "rel_001"
+    subject:
+      type: string
+      description: Subject entity URI or ID
+      example: "openai_001"
+    predicate:
+      type: string
+      description: Relationship type or predicate
+      example: "developed"
+    object:
+      type: string
+      description: Object entity URI or ID
+      example: "gpt4_001"
+    confidence:
+      type: number
+      format: float
+      minimum: 0
+      maximum: 1
+      description: Relationship confidence score
+      example: 0.92
+    evidence:
+      type: array
+      items:
+        type: object
+        properties:
+          text:
+            type: string
+            description: Text evidence for the relationship
+          unitId:
+            type: string
+            description: Semantic unit containing evidence
+          position:
+            type: integer
+            description: Position in text
+      description: Evidence supporting the relationship
+    temporal:
+      type: object
+      properties:
+        start:
+          type: string
+          format: date-time
+          description: Relationship start time (if applicable)
+        end:
+          type: string
+          format: date-time
+          description: Relationship end time (if applicable)
+        duration:
+          type: string
+          description: Relationship duration
+      description: Temporal information about the relationship
+    properties:
+      type: object
+      additionalProperties: true
+      description: Additional relationship properties
+    bidirectional:
+      type: boolean
+      default: false
+      description: Whether the relationship is bidirectional
+    weight:
+      type: number
+      format: float
+      minimum: 0
+      description: Relationship strength or weight
+  required:
+    - subject
+    - predicate
+    - object
+    - confidence
+
+RagnoDecomposeStats:
+  type: object
+  properties:
+    unitsCount:
+      type: integer
+      description: Number of semantic units extracted
+      example: 5
+    entitiesCount:
+      type: integer
+      description: Number of entities extracted
+      example: 12
+    relationshipsCount:
+      type: integer
+      description: Number of relationships extracted
+      example: 8
+    entityTypes:
+      type: object
+      additionalProperties:
+        type: integer
+      description: Count of entities by type
+      example:
+        Organization: 3
+        Technology: 4
+        Person: 2
+        Concept: 3
+    relationshipTypes:
+      type: object
+      additionalProperties:
+        type: integer
+      description: Count of relationships by type
+      example:
+        developed: 2
+        worksAt: 3
+        relatedTo: 3
+    averageConfidence:
+      type: object
+      properties:
+        entities:
+          type: number
+          format: float
+          description: Average entity confidence
+        relationships:
+          type: number
+          format: float
+          description: Average relationship confidence
+    processingTime:
+      type: object
+      properties:
+        total:
+          type: integer
+          description: Total processing time (ms)
+        entityExtraction:
+          type: integer
+          description: Entity extraction time (ms)
+        relationshipExtraction:
+          type: integer
+          description: Relationship extraction time (ms)
+        storage:
+          type: integer
+          description: Storage time (ms)
+    textAnalysis:
+      type: object
+      properties:
+        totalCharacters:
+          type: integer
+          description: Total characters processed
+        totalWords:
+          type: integer
+          description: Total words processed
+        totalSentences:
+          type: integer
+          description: Total sentences processed
+        avgWordsPerUnit:
+          type: number
+          format: float
+          description: Average words per semantic unit
+        complexity:
+          type: string
+          enum: [low, medium, high]
+          description: Overall text complexity
+
+RagnoSearchRequest:
+  type: object
+  properties:
+    query:
+      type: string
+      minLength: 1
+      maxLength: 1000
+      description: Search query text
+      example: "machine learning algorithms"
+    type:
+      type: string
+      enum: [dual, entities, semantic, relationships, graph]
+      default: dual
+      description: Type of search to perform
+    limit:
+      type: integer
+      minimum: 1
+      maximum: 100
+      default: 10
+      description: Maximum number of results
+    threshold:
+      type: number
+      format: float
+      minimum: 0
+      maximum: 1
+      default: 0.7
+      description: Similarity threshold for semantic search
+    filters:
+      $ref: '#/RagnoSearchFilters'
+    includeRelationships:
+      type: boolean
+      default: true
+      description: Include related entities and relationships in results
+    returnFormat:
+      type: string
+      enum: [detailed, compact, uris-only]
+      default: detailed
+      description: Level of detail in results
+  required:
+    - query
+
+RagnoSearchFilters:
+  type: object
+  properties:
+    entityTypes:
+      type: array
+      items:
+        type: string
+        enum: [Person, Organization, Technology, Concept, Location, Event, Product, Method, Theory]
+      description: Filter by entity types
+      example: ["Organization", "Technology"]
+    confidence:
+      type: number
+      format: float
+      minimum: 0
+      maximum: 1
+      description: Minimum entity confidence score
+      example: 0.8
+    dateRange:
+      type: object
+      properties:
+        start:
+          type: string
+          format: date
+          description: Filter entities from this date
+        end:
+          type: string
+          format: date
+          description: Filter entities to this date
+      description: Date range filter
+    attributes:
+      type: object
+      additionalProperties: true
+      description: Filter by specific entity attributes
+      example:
+        industry: "Artificial Intelligence"
+        location: "San Francisco"
+    relationshipTypes:
+      type: array
+      items:
+        type: string
+      description: Filter by relationship types
+      example: ["developed", "worksAt", "collaboratesWith"]
+    categories:
+      type: array
+      items:
+        type: string
+      description: Filter by entity categories
+    embedding:
+      type: object
+      properties:
+        vector:
+          type: array
+          items:
+            type: number
+            format: float
+          description: Search by specific embedding vector
+        distance:
+          type: string
+          enum: [cosine, euclidean, manhattan]
+          default: cosine
+          description: Distance metric for embedding search
+      description: Embedding-based search parameters
+
+RagnoSearchResponse:
+  allOf:
+    - $ref: '../schemas/common.yaml#/ApiResponse'
+    - type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/RagnoSearchResult'
+          description: Search results
+        searchType:
+          type: string
+          description: Type of search performed
+        totalResults:
+          type: integer
+          description: Total matching results (before limit)
+        query:
+          type: string
+          description: Original search query
+        metadata:
+          type: object
+          properties:
+            searchTime:
+              type: integer
+              description: Search execution time (ms)
+            indexSize:
+              type: integer
+              description: Size of searched index
+            queryEmbedding:
+              type: array
+              items:
+                type: number
+                format: float
+              description: Generated query embedding (if applicable)
+
+RagnoSearchResult:
+  type: object
+  properties:
+    entity:
+      $ref: '#/RagnoEntity'
+    similarity:
+      type: number
+      format: float
+      minimum: 0
+      maximum: 1
+      description: Similarity score to query
+    rank:
+      type: integer
+      description: Result ranking
+    matchType:
+      type: string
+      enum: [exact, semantic, fuzzy, relationship]
+      description: Type of match found
+    relationships:
+      type: array
+      items:
+        type: object
+        properties:
+          relationship:
+            $ref: '#/RagnoRelationship'
+          relatedEntity:
+            $ref: '#/RagnoEntity'
+          relevance:
+            type: number
+            format: float
+            description: Relevance to the search query
+      description: Related entities and relationships
+    highlights:
+      type: array
+      items:
+        type: object
+        properties:
+          field:
+            type: string
+            description: Field where match was found
+          snippet:
+            type: string
+            description: Highlighted text snippet
+          position:
+            type: integer
+            description: Position in field
+      description: Search result highlights
+    path:
+      type: array
+      items:
+        type: string
+      description: Graph path from query to result (for graph searches)
+  required:
+    - entity
+    - similarity
+    - rank
+    - matchType
+
+RagnoGraphStats:
+  type: object
+  properties:
+    entities:
+      type: object
+      properties:
+        total:
+          type: integer
+          description: Total number of entities
+        byType:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Entity counts by type
+        averageConfidence:
+          type: number
+          format: float
+          description: Average entity confidence score
+        withEmbeddings:
+          type: integer
+          description: Entities with embeddings
+    relationships:
+      type: object
+      properties:
+        total:
+          type: integer
+          description: Total number of relationships
+        byType:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Relationship counts by type
+        averageConfidence:
+          type: number
+          format: float
+          description: Average relationship confidence
+        bidirectional:
+          type: integer
+          description: Number of bidirectional relationships
+    graph:
+      type: object
+      properties:
+        density:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Graph density (0-1)
+        components:
+          type: integer
+          description: Number of connected components
+        diameter:
+          type: integer
+          description: Graph diameter (longest shortest path)
+        averageDegree:
+          type: number
+          format: float
+          description: Average node degree
+        clusteringCoefficient:
+          type: number
+          format: float
+          description: Global clustering coefficient
+        degreeDistribution:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Distribution of node degrees
+    storage:
+      type: object
+      properties:
+        backend:
+          type: string
+          enum: [sparql, memory, json]
+          description: Storage backend type
+        size:
+          type: string
+          description: Storage size (human readable)
+        tripleCount:
+          type: integer
+          description: Number of RDF triples (for SPARQL)
+        lastUpdated:
+          type: string
+          format: date-time
+          description: Last update timestamp
+        compressionRatio:
+          type: number
+          format: float
+          description: Storage compression ratio
+    activity:
+      type: object
+      properties:
+        recentDecompositions:
+          type: integer
+          description: Decompositions in last 24h
+        recentSearches:
+          type: integer
+          description: Searches in last 24h
+        recentModifications:
+          type: integer
+          description: Modifications in last 24h
+        lastActivity:
+          type: string
+          format: date-time
+          description: Last activity timestamp
+        mostActiveEntities:
+          type: array
+          items:
+            type: object
+            properties:
+              entityUri:
+                type: string
+              accessCount:
+                type: integer
+          description: Most frequently accessed entities
+    quality:
+      type: object
+      properties:
+        averageEntityConfidence:
+          type: number
+          format: float
+          description: Average entity confidence
+        averageRelationshipConfidence:
+          type: number
+          format: float
+          description: Average relationship confidence
+        entitiesWithAttributes:
+          type: integer
+          description: Entities with extracted attributes
+        orphanedEntities:
+          type: integer
+          description: Entities with no relationships
+        duplicateEntities:
+          type: integer
+          description: Potential duplicate entities detected
+        incompleteRelationships:
+          type: integer
+          description: Relationships missing subject or object

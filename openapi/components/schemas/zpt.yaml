@@ -1,0 +1,899 @@
+# ZPT (Zero-Point Traversal) API Schemas
+
+ZPTNavigateRequest:
+  type: object
+  properties:
+    zoom:
+      type: string
+      enum: [entity, unit, text, community, corpus]
+      description: Zoom level for navigation granularity
+      example: "entity"
+    pan:
+      $ref: '#/ZPTPanParameters'
+    tilt:
+      type: string
+      enum: [embedding, keywords, graph, temporal]
+      description: Representation perspective
+      example: "graph"
+    transform:
+      $ref: '#/ZPTTransformParameters'
+  required:
+    - zoom
+
+ZPTPanParameters:
+  type: object
+  properties:
+    topic:
+      type: string
+      maxLength: 200
+      description: Filter by topic or subject matter
+      example: "artificial intelligence"
+    entity:
+      type: string
+      maxLength: 200
+      description: Focus on specific named entity
+      example: "machine learning"
+    temporal:
+      type: object
+      properties:
+        start:
+          type: string
+          format: date
+          description: Start date for temporal filtering
+          example: "2020-01-01"
+        end:
+          type: string
+          format: date
+          description: End date for temporal filtering
+          example: "2024-12-31"
+        period:
+          type: string
+          enum: [day, week, month, quarter, year]
+          description: Temporal grouping period
+        timezone:
+          type: string
+          description: Timezone for temporal operations
+          example: "UTC"
+      description: Temporal navigation parameters
+    geographic:
+      type: string
+      maxLength: 200
+      description: Geographic region or location filter
+      example: "San Francisco Bay Area"
+    semantic:
+      type: object
+      properties:
+        concepts:
+          type: array
+          items:
+            type: string
+          maxItems: 10
+          description: Semantic concepts to focus on
+          example: ["neural networks", "deep learning"]
+        similarity:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          default: 0.7
+          description: Semantic similarity threshold
+        embedding:
+          type: array
+          items:
+            type: number
+            format: float
+          description: Direct embedding vector for navigation
+      description: Semantic navigation parameters
+    custom:
+      type: object
+      additionalProperties: true
+      description: Custom navigation parameters
+  description: Pan parameters define the navigation focus area
+
+ZPTTransformParameters:
+  type: object
+  properties:
+    maxTokens:
+      type: integer
+      minimum: 100
+      maximum: 8192
+      default: 4000
+      description: Maximum tokens in output
+    format:
+      type: string
+      enum: [json, markdown, structured, html, text]
+      default: json
+      description: Output format
+    includeMetadata:
+      type: boolean
+      default: true
+      description: Include navigation metadata
+    chunkStrategy:
+      type: string
+      enum: [semantic, fixed, adaptive, hierarchical]
+      default: semantic
+      description: Text chunking strategy
+    tokenizer:
+      type: string
+      enum: [cl100k_base, p50k_base, claude, llama, gpt2]
+      default: cl100k_base
+      description: Tokenizer to use for token counting
+    compression:
+      type: string
+      enum: [none, light, medium, aggressive]
+      default: light
+      description: Content compression level
+    aggregation:
+      type: string
+      enum: [sum, mean, max, weighted, hierarchical]
+      default: weighted
+      description: Method for aggregating content
+    perspective:
+      type: string
+      enum: [overview, detailed, analytical, narrative]
+      default: overview
+      description: Perspective for content presentation
+    filters:
+      type: object
+      properties:
+        relevanceThreshold:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          default: 0.5
+          description: Minimum relevance threshold
+        excludeTypes:
+          type: array
+          items:
+            type: string
+          description: Content types to exclude
+        includeTypes:
+          type: array
+          items:
+            type: string
+          description: Content types to include only
+        languageFilter:
+          type: array
+          items:
+            type: string
+          description: Filter by languages
+      description: Content filtering options
+  description: Transform parameters control output formatting and processing
+
+ZPTNavigateResponse:
+  allOf:
+    - $ref: '../schemas/common.yaml#/ApiResponse'
+    - type: object
+      properties:
+        result:
+          $ref: '#/ZPTNavigationResult'
+        metadata:
+          $ref: '#/ZPTNavigationMetadata'
+        navigation:
+          $ref: '#/ZPTNavigationState'
+
+ZPTNavigationResult:
+  type: object
+  properties:
+    zoomLevel:
+      type: string
+      enum: [entity, unit, text, community, corpus]
+      description: Current zoom level
+    tiltPerspective:
+      type: string
+      enum: [embedding, keywords, graph, temporal]
+      description: Current tilt perspective
+    content:
+      oneOf:
+        - $ref: '#/ZPTEntityContent'
+        - $ref: '#/ZPTUnitContent'
+        - $ref: '#/ZPTTextContent'
+        - $ref: '#/ZPTCommunityContent'
+        - $ref: '#/ZPTCorpusContent'
+      description: Navigation result content (varies by zoom level)
+    summary:
+      type: string
+      description: High-level summary of the navigation result
+    highlights:
+      type: array
+      items:
+        type: object
+        properties:
+          type:
+            type: string
+            enum: [entity, concept, relationship, pattern]
+          content:
+            type: string
+          relevance:
+            type: number
+            format: float
+          position:
+            type: string
+      description: Key highlights from the navigation
+    pathways:
+      type: array
+      items:
+        type: object
+        properties:
+          direction:
+            type: string
+            enum: [up, down, left, right, forward, backward, related]
+          description:
+            type: string
+          destination:
+            type: string
+          weight:
+            type: number
+            format: float
+      description: Available navigation pathways from current position
+  required:
+    - zoomLevel
+    - tiltPerspective
+    - content
+
+ZPTEntityContent:
+  type: object
+  properties:
+    focusEntity:
+      $ref: '../schemas/ragno.yaml#/RagnoEntity'
+    relatedEntities:
+      type: array
+      items:
+        type: object
+        properties:
+          entity:
+            $ref: '../schemas/ragno.yaml#/RagnoEntity'
+          relationship:
+            type: string
+          strength:
+            type: number
+            format: float
+      description: Related entities and their relationships
+    entityClusters:
+      type: array
+      items:
+        type: object
+        properties:
+          clusterId:
+            type: string
+          entities:
+            type: array
+            items:
+              type: string
+          coherence:
+            type: number
+            format: float
+      description: Entity clusters or groups
+    contextualInfo:
+      type: object
+      properties:
+        domain:
+          type: string
+        mentions:
+          type: integer
+        lastUpdated:
+          type: string
+          format: date-time
+        confidence:
+          type: number
+          format: float
+  required:
+    - focusEntity
+
+ZPTUnitContent:
+  type: object
+  properties:
+    semanticUnits:
+      type: array
+      items:
+        $ref: '../schemas/ragno.yaml#/SemanticUnit'
+      description: Semantic units in focus
+    unitRelationships:
+      type: array
+      items:
+        type: object
+        properties:
+          sourceUnit:
+            type: string
+          targetUnit:
+            type: string
+          relationshipType:
+            type: string
+          strength:
+            type: number
+            format: float
+      description: Relationships between semantic units
+    topics:
+      type: array
+      items:
+        type: object
+        properties:
+          topic:
+            type: string
+          weight:
+            type: number
+            format: float
+          unitIds:
+            type: array
+            items:
+              type: string
+      description: Topics covered by the units
+    coherenceMetrics:
+      type: object
+      properties:
+        averageCoherence:
+          type: number
+          format: float
+        topicalConsistency:
+          type: number
+          format: float
+        semanticDensity:
+          type: number
+          format: float
+  required:
+    - semanticUnits
+
+ZPTTextContent:
+  type: object
+  properties:
+    textChunks:
+      type: array
+      items:
+        type: object
+        properties:
+          id:
+            type: string
+          text:
+            type: string
+          startPosition:
+            type: integer
+          endPosition:
+            type: integer
+          metadata:
+            type: object
+            additionalProperties: true
+      description: Raw text chunks
+    linguistics:
+      type: object
+      properties:
+        wordCount:
+          type: integer
+        sentenceCount:
+          type: integer
+        paragraphCount:
+          type: integer
+        readabilityScore:
+          type: number
+          format: float
+        language:
+          type: string
+        complexity:
+          type: string
+          enum: [low, medium, high]
+      description: Linguistic analysis of the text
+    annotations:
+      type: array
+      items:
+        type: object
+        properties:
+          type:
+            type: string
+            enum: [entity, keyword, phrase, sentiment]
+          startPos:
+            type: integer
+          endPos:
+            type: integer
+          value:
+            type: string
+          confidence:
+            type: number
+            format: float
+      description: Text annotations and markups
+  required:
+    - textChunks
+
+ZPTCommunityContent:
+  type: object
+  properties:
+    communities:
+      type: array
+      items:
+        type: object
+        properties:
+          id:
+            type: string
+          name:
+            type: string
+          members:
+            type: array
+            items:
+              type: string
+          size:
+            type: integer
+          density:
+            type: number
+            format: float
+          centrality:
+            type: number
+            format: float
+          topics:
+            type: array
+            items:
+              type: string
+      description: Detected communities or clusters
+    communityRelationships:
+      type: array
+      items:
+        type: object
+        properties:
+          source:
+            type: string
+          target:
+            type: string
+          strength:
+            type: number
+            format: float
+          type:
+            type: string
+      description: Relationships between communities
+    hierarchies:
+      type: array
+      items:
+        type: object
+        properties:
+          level:
+            type: integer
+          communities:
+            type: array
+            items:
+              type: string
+          parentCommunity:
+            type: string
+      description: Hierarchical community structure
+  required:
+    - communities
+
+ZPTCorpusContent:
+  type: object
+  properties:
+    overview:
+      type: object
+      properties:
+        totalDocuments:
+          type: integer
+        totalEntities:
+          type: integer
+        totalRelationships:
+          type: integer
+        primaryLanguages:
+          type: array
+          items:
+            type: string
+        timeSpan:
+          type: object
+          properties:
+            earliest:
+              type: string
+              format: date-time
+            latest:
+              type: string
+              format: date-time
+        domains:
+          type: array
+          items:
+            type: string
+      description: High-level corpus overview
+    patterns:
+      type: array
+      items:
+        type: object
+        properties:
+          type:
+            type: string
+            enum: [temporal, thematic, structural, linguistic]
+          description:
+            type: string
+          strength:
+            type: number
+            format: float
+          examples:
+            type: array
+            items:
+              type: string
+      description: Detected corpus-level patterns
+    distribution:
+      type: object
+      properties:
+        entityTypes:
+          type: object
+          additionalProperties:
+            type: integer
+        relationshipTypes:
+          type: object
+          additionalProperties:
+            type: integer
+        temporalDistribution:
+          type: object
+          additionalProperties:
+            type: integer
+        topicalDistribution:
+          type: object
+          additionalProperties:
+            type: number
+            format: float
+      description: Distribution of various corpus elements
+    trends:
+      type: array
+      items:
+        type: object
+        properties:
+          trend:
+            type: string
+          direction:
+            type: string
+            enum: [increasing, decreasing, stable, cyclical]
+          strength:
+            type: number
+            format: float
+          timeframe:
+            type: string
+      description: Temporal trends in the corpus
+  required:
+    - overview
+
+ZPTNavigationMetadata:
+  type: object
+  properties:
+    tokenCount:
+      type: integer
+      description: Total tokens in the result
+    complexity:
+      type: string
+      enum: [low, medium, high]
+      description: Content complexity level
+    coverage:
+      type: number
+      format: float
+      minimum: 0
+      maximum: 1
+      description: Percentage of relevant content covered
+    confidence:
+      type: number
+      format: float
+      minimum: 0
+      maximum: 1
+      description: Confidence in navigation result
+    processingTime:
+      type: integer
+      description: Processing time in milliseconds
+    memoryUsage:
+      type: integer
+      description: Memory usage in bytes
+    cacheHits:
+      type: integer
+      description: Number of cache hits during navigation
+    indexSize:
+      type: integer
+      description: Size of the index searched
+    compressionRatio:
+      type: number
+      format: float
+      description: Content compression ratio achieved
+  required:
+    - tokenCount
+    - complexity
+    - processingTime
+
+ZPTNavigationState:
+  type: object
+  properties:
+    currentPosition:
+      type: string
+      description: Current navigation position identifier
+    availableDirections:
+      type: array
+      items:
+        type: string
+      description: Available navigation directions from current position
+    breadcrumbs:
+      type: array
+      items:
+        type: object
+        properties:
+          position:
+            type: string
+          label:
+            type: string
+          parameters:
+            type: object
+      description: Navigation history breadcrumbs
+    bookmarks:
+      type: array
+      items:
+        type: object
+        properties:
+          id:
+            type: string
+          label:
+            type: string
+          parameters:
+            type: object
+          timestamp:
+            type: string
+            format: date-time
+      description: Saved navigation positions
+    suggestions:
+      type: array
+      items:
+        type: object
+        properties:
+          action:
+            type: string
+          description:
+            type: string
+          parameters:
+            type: object
+          relevance:
+            type: number
+            format: float
+      description: Suggested navigation actions
+  required:
+    - currentPosition
+
+ZPTPreviewRequest:
+  allOf:
+    - $ref: '#/ZPTNavigateRequest'
+    - type: object
+      properties:
+        previewOptions:
+          type: object
+          properties:
+            estimateTokens:
+              type: boolean
+              default: true
+              description: Include token count estimation
+            includeComplexity:
+              type: boolean
+              default: true
+              description: Include complexity assessment
+            maxPreviewSize:
+              type: integer
+              minimum: 100
+              maximum: 1000
+              default: 500
+              description: Maximum preview content size
+            includePathways:
+              type: boolean
+              default: true
+              description: Include available pathways preview
+
+ZPTPreviewResponse:
+  allOf:
+    - $ref: '../schemas/common.yaml#/ApiResponse'
+    - type: object
+      properties:
+        preview:
+          type: object
+          properties:
+            estimatedTokens:
+              type: integer
+              description: Estimated token count for full navigation
+            complexity:
+              type: string
+              enum: [low, medium, high]
+              description: Estimated complexity
+            contentSample:
+              type: string
+              description: Sample of the navigation content
+            availablePathways:
+              type: array
+              items:
+                type: object
+                properties:
+                  direction:
+                    type: string
+                  description:
+                    type: string
+                  estimatedSize:
+                    type: integer
+              description: Preview of available navigation pathways
+            warnings:
+              type: array
+              items:
+                type: string
+              description: Potential issues or warnings
+            recommendations:
+              type: array
+              items:
+                type: string
+              description: Recommendations for optimization
+        feasibility:
+          type: object
+          properties:
+            executable:
+              type: boolean
+              description: Whether the navigation is executable
+            estimatedTime:
+              type: integer
+              description: Estimated processing time (ms)
+            resourceRequirements:
+              type: object
+              properties:
+                memory:
+                  type: integer
+                  description: Estimated memory usage (bytes)
+                cpu:
+                  type: string
+                  enum: [low, medium, high]
+                  description: Estimated CPU usage
+            limitations:
+              type: array
+              items:
+                type: string
+              description: Current limitations or constraints
+
+ZPTOptions:
+  type: object
+  properties:
+    zoom:
+      type: object
+      properties:
+        levels:
+          type: array
+          items:
+            type: string
+          description: Available zoom levels
+        descriptions:
+          type: object
+          additionalProperties:
+            type: string
+          description: Descriptions for each zoom level
+    pan:
+      type: object
+      properties:
+        dimensions:
+          type: array
+          items:
+            type: string
+          description: Available pan dimensions
+        examples:
+          type: object
+          additionalProperties:
+            type: object
+          description: Example pan configurations
+    tilt:
+      type: object
+      properties:
+        representations:
+          type: array
+          items:
+            type: string
+          description: Available tilt representations
+        descriptions:
+          type: object
+          additionalProperties:
+            type: string
+          description: Descriptions for each tilt type
+    transform:
+      type: object
+      properties:
+        formats:
+          type: array
+          items:
+            type: string
+          description: Available output formats
+        chunkStrategies:
+          type: array
+          items:
+            type: string
+          description: Available chunking strategies
+        tokenizers:
+          type: array
+          items:
+            type: string
+          description: Available tokenizers
+        maxTokensRange:
+          type: object
+          properties:
+            min:
+              type: integer
+            max:
+              type: integer
+            default:
+              type: integer
+  required:
+    - zoom
+    - pan
+    - tilt
+    - transform
+
+ZPTHealth:
+  type: object
+  properties:
+    status:
+      type: string
+      enum: [healthy, degraded, unavailable]
+      description: Overall ZPT system health
+    components:
+      type: object
+      properties:
+        corpuscleSelector:
+          type: object
+          properties:
+            status:
+              type: string
+              enum: [healthy, degraded, unavailable]
+            lastCheck:
+              type: string
+              format: date-time
+        tiltProjector:
+          type: object
+          properties:
+            status:
+              type: string
+              enum: [healthy, degraded, unavailable]
+            lastCheck:
+              type: string
+              format: date-time
+        corpuscleTransformer:
+          type: object
+          properties:
+            status:
+              type: string
+              enum: [healthy, degraded, unavailable]
+            lastCheck:
+              type: string
+              format: date-time
+      description: Status of individual ZPT components
+    capabilities:
+      type: array
+      items:
+        type: string
+      description: Currently available ZPT capabilities
+    limitations:
+      type: array
+      items:
+        type: string
+      description: Current system limitations
+    performance:
+      type: object
+      properties:
+        averageNavigationTime:
+          type: number
+          format: float
+          description: Average navigation time (ms)
+        cacheHitRate:
+          type: number
+          format: float
+          description: Cache hit rate (0-1)
+        indexSize:
+          type: integer
+          description: Current index size
+        lastOptimization:
+          type: string
+          format: date-time
+          description: Last index optimization
+    corpus:
+      type: object
+      properties:
+        available:
+          type: boolean
+          description: Whether corpus is available for navigation
+        size:
+          type: integer
+          description: Corpus size (documents)
+        lastUpdated:
+          type: string
+          format: date-time
+          description: Last corpus update
+        indexedEntities:
+          type: integer
+          description: Number of indexed entities
+        indexedRelationships:
+          type: integer
+          description: Number of indexed relationships
+  required:
+    - status
+    - components
+    - capabilities

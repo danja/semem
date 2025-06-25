@@ -1,0 +1,444 @@
+# Memory API Schemas
+
+MemoryInteraction:
+  type: object
+  properties:
+    id:
+      type: string
+      format: uuid
+      description: Unique identifier for the interaction
+      example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+    prompt:
+      type: string
+      description: The input prompt
+      example: "What is machine learning?"
+    output:
+      type: string
+      description: The response output
+      example: "Machine learning is a subset of artificial intelligence..."
+    concepts:
+      type: array
+      items:
+        type: string
+      description: Extracted semantic concepts
+      example: ["machine learning", "artificial intelligence", "algorithms"]
+    timestamp:
+      type: integer
+      format: int64
+      description: Unix timestamp of creation
+      example: 1640995200000
+    accessCount:
+      type: integer
+      description: Number of times accessed
+      example: 3
+    similarity:
+      type: number
+      format: float
+      description: Similarity score for search results (0-100)
+      minimum: 0
+      maximum: 100
+      example: 85.7
+    metadata:
+      type: object
+      additionalProperties: true
+      description: Additional metadata
+      example:
+        topic: "AI"
+        difficulty: "beginner"
+        tags: ["educational", "fundamentals"]
+    decayFactor:
+      type: number
+      format: float
+      description: Memory decay factor for forgetting curve
+      minimum: 0
+      maximum: 1
+      example: 0.95
+  required:
+    - id
+    - prompt
+    - output
+    - concepts
+    - timestamp
+
+MemoryStoreRequest:
+  type: object
+  properties:
+    prompt:
+      type: string
+      minLength: 1
+      maxLength: 10000
+      description: The input prompt to store
+      example: "What is machine learning?"
+    response:
+      type: string
+      minLength: 1
+      maxLength: 50000
+      description: The response to store
+      example: "Machine learning is a subset of AI that enables computers to learn from data without being explicitly programmed."
+    metadata:
+      type: object
+      additionalProperties: true
+      description: Optional metadata to store with the interaction
+      properties:
+        title:
+          type: string
+          description: Interaction title
+        tags:
+          type: array
+          items:
+            type: string
+          description: Tags for categorization
+        topic:
+          type: string
+          description: Main topic or subject
+        difficulty:
+          type: string
+          enum: [beginner, intermediate, advanced]
+          description: Difficulty level
+        source:
+          type: string
+          description: Source of the information
+        language:
+          type: string
+          description: Language of the content
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 10
+          description: Priority level (1-10)
+      example:
+        title: "ML Introduction"
+        tags: ["ai", "basics", "educational"]
+        topic: "artificial-intelligence"
+        difficulty: "beginner"
+        source: "tutorial"
+  required:
+    - prompt
+    - response
+
+MemoryStoreResponse:
+  allOf:
+    - $ref: '../schemas/common.yaml#/ApiResponse'
+    - type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the stored interaction
+        concepts:
+          type: array
+          items:
+            type: string
+          description: Automatically extracted concepts
+        conceptsCount:
+          type: integer
+          description: Number of concepts extracted
+        embeddingDimension:
+          type: integer
+          description: Dimension of the generated embedding
+        timestamp:
+          type: integer
+          format: int64
+          description: Storage timestamp
+
+MemorySearchRequest:
+  type: object
+  properties:
+    query:
+      type: string
+      minLength: 1
+      maxLength: 1000
+      description: Search query text
+      example: "neural networks deep learning"
+    threshold:
+      type: number
+      format: float
+      minimum: 0
+      maximum: 100
+      default: 40
+      description: Similarity threshold (0-100 scale)
+      example: 70
+    limit:
+      type: integer
+      minimum: 1
+      maximum: 100
+      default: 10
+      description: Maximum number of results
+      example: 5
+    excludeLastN:
+      type: integer
+      minimum: 0
+      default: 0
+      description: Exclude the last N interactions from results
+    filters:
+      type: object
+      properties:
+        topics:
+          type: array
+          items:
+            type: string
+          description: Filter by topics
+        tags:
+          type: array
+          items:
+            type: string
+          description: Filter by tags
+        difficulty:
+          type: array
+          items:
+            type: string
+            enum: [beginner, intermediate, advanced]
+          description: Filter by difficulty levels
+        dateFrom:
+          type: string
+          format: date-time
+          description: Filter interactions from this date
+        dateTo:
+          type: string
+          format: date-time
+          description: Filter interactions to this date
+        minSimilarity:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Minimum similarity score
+  required:
+    - query
+
+MemorySearchResponse:
+  allOf:
+    - $ref: '../schemas/common.yaml#/ApiResponse'
+    - type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/MemoryInteraction'
+          description: Array of matching memory interactions
+        count:
+          type: integer
+          description: Number of results returned
+        totalMatches:
+          type: integer
+          description: Total number of matches found
+        searchMetadata:
+          type: object
+          properties:
+            queryEmbedding:
+              type: array
+              items:
+                type: number
+                format: float
+              description: Generated query embedding (if requested)
+            extractedConcepts:
+              type: array
+              items:
+                type: string
+              description: Concepts extracted from query
+            searchStrategy:
+              type: string
+              description: Search strategy used
+            embeddingTime:
+              type: integer
+              description: Time to generate embedding (ms)
+            searchTime:
+              type: integer
+              description: Time to perform search (ms)
+
+EmbeddingRequest:
+  type: object
+  properties:
+    text:
+      type: string
+      minLength: 1
+      maxLength: 10000
+      description: Text to generate embedding for
+      example: "neural networks and deep learning"
+    model:
+      type: string
+      description: Embedding model to use (optional)
+      example: "nomic-embed-text"
+    normalize:
+      type: boolean
+      default: true
+      description: Whether to normalize the embedding vector
+    includeMetadata:
+      type: boolean
+      default: false
+      description: Include generation metadata in response
+  required:
+    - text
+
+EmbeddingResponse:
+  allOf:
+    - $ref: '../schemas/common.yaml#/ApiResponse'
+    - type: object
+      properties:
+        embedding:
+          type: array
+          items:
+            type: number
+            format: float
+          description: Vector embedding
+          example: [0.1234, -0.5678, 0.9012, 0.3456, -0.7890]
+        model:
+          type: string
+          description: Model used for embedding generation
+          example: "nomic-embed-text"
+        dimension:
+          type: integer
+          description: Embedding dimension
+          example: 1536
+        normalized:
+          type: boolean
+          description: Whether the embedding is normalized
+        metadata:
+          type: object
+          properties:
+            tokenCount:
+              type: integer
+              description: Number of tokens in input text
+            generationTime:
+              type: integer
+              description: Time to generate embedding (ms)
+            modelVersion:
+              type: string
+              description: Version of the embedding model used
+
+ConceptsRequest:
+  type: object
+  properties:
+    text:
+      type: string
+      minLength: 1
+      maxLength: 50000
+      description: Text to extract concepts from
+      example: "Machine learning algorithms analyze data patterns to make predictions"
+    maxConcepts:
+      type: integer
+      minimum: 1
+      maximum: 50
+      default: 10
+      description: Maximum number of concepts to extract
+    minConfidence:
+      type: number
+      format: float
+      minimum: 0
+      maximum: 1
+      default: 0.3
+      description: Minimum confidence score for concepts
+    includeCategories:
+      type: boolean
+      default: false
+      description: Include concept categories in response
+    language:
+      type: string
+      description: Language of the text (auto-detected if not provided)
+      example: "en"
+  required:
+    - text
+
+ConceptsResponse:
+  allOf:
+    - $ref: '../schemas/common.yaml#/ApiResponse'
+    - type: object
+      properties:
+        concepts:
+          type: array
+          items:
+            oneOf:
+              - type: string
+              - type: object
+                properties:
+                  concept:
+                    type: string
+                    description: The extracted concept
+                  confidence:
+                    type: number
+                    format: float
+                    description: Confidence score (0-1)
+                  category:
+                    type: string
+                    description: Concept category
+                    enum: [entity, topic, skill, technology, method, domain]
+                  aliases:
+                    type: array
+                    items:
+                      type: string
+                    description: Alternative terms for this concept
+          description: Extracted concepts
+          example: ["machine learning", "data analysis", "predictive modeling"]
+        text:
+          type: string
+          description: Original input text
+        metadata:
+          type: object
+          properties:
+            language:
+              type: string
+              description: Detected or specified language
+            totalCandidates:
+              type: integer
+              description: Total candidate concepts considered
+            extractionTime:
+              type: integer
+              description: Time to extract concepts (ms)
+            modelUsed:
+              type: string
+              description: LLM model used for extraction
+
+MemoryStats:
+  type: object
+  properties:
+    totalInteractions:
+      type: integer
+      description: Total number of stored interactions
+    shortTermMemory:
+      type: integer
+      description: Number of interactions in short-term memory
+    longTermMemory:
+      type: integer
+      description: Number of interactions in long-term memory
+    totalConcepts:
+      type: integer
+      description: Total unique concepts extracted
+    averageConceptsPerInteraction:
+      type: number
+      format: float
+      description: Average concepts per interaction
+    memoryUtilization:
+      type: number
+      format: float
+      minimum: 0
+      maximum: 1
+      description: Memory utilization percentage
+    lastInteractionTime:
+      type: string
+      format: date-time
+      description: Timestamp of last interaction
+    oldestInteractionTime:
+      type: string
+      format: date-time
+      description: Timestamp of oldest interaction
+    storageBackend:
+      type: string
+      description: Current storage backend type
+      enum: [memory, json, sparql, inmemory]
+    embeddingDimension:
+      type: integer
+      description: Dimension of embeddings used
+    clustering:
+      type: object
+      properties:
+        clusters:
+          type: integer
+          description: Number of interaction clusters
+        averageClusterSize:
+          type: number
+          format: float
+          description: Average interactions per cluster
+        silhouetteScore:
+          type: number
+          format: float
+          description: Clustering quality score (-1 to 1)

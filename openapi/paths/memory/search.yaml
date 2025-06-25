@@ -1,0 +1,123 @@
+get:
+  tags:
+    - Memory
+  summary: Search Memory Interactions
+  description: |
+    Search stored memory interactions using semantic similarity.
+    
+    The search process:
+    1. Generates embeddings for the query text
+    2. Extracts semantic concepts from the query
+    3. Performs vector similarity search against stored interactions
+    4. Ranks results by combined similarity and concept overlap
+    5. Returns most relevant interactions with similarity scores
+    
+    This enables contextual memory retrieval for AI conversations.
+  operationId: searchMemoryInteractions
+  security:
+    - ApiKeyAuth: []
+  parameters:
+    - name: query
+      in: query
+      required: true
+      description: Search query text
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 1000
+      example: "machine learning algorithms"
+    - name: threshold
+      in: query
+      required: false
+      description: Minimum similarity threshold (0-100 scale)
+      schema:
+        type: number
+        format: float
+        minimum: 0
+        maximum: 100
+        default: 40
+      example: 40
+    - name: limit
+      in: query
+      required: false
+      description: Maximum number of results to return
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 10
+      example: 5
+  responses:
+    '200':
+      description: Search results
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/index.yaml#/MemorySearchResponse'
+          examples:
+            found_results:
+              summary: Search with results
+              value:
+                success: true
+                results:
+                  - id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                    prompt: "What is machine learning?"
+                    output: "Machine learning is a subset of artificial intelligence..."
+                    concepts: ["machine learning", "artificial intelligence", "algorithms"]
+                    timestamp: 1640995200000
+                    accessCount: 3
+                    similarity: 85.7
+                  - id: "b2c3d4e5-f6g7-8901-bcde-f23456789012"
+                    prompt: "Explain neural networks"
+                    output: "Neural networks are computing systems..."
+                    concepts: ["neural networks", "deep learning", "nodes"]
+                    timestamp: 1640995100000
+                    accessCount: 1
+                    similarity: 72.3
+                count: 2
+                processingTime: 445
+            no_results:
+              summary: No matching results
+              value:
+                success: true
+                results: []
+                count: 0
+                processingTime: 234
+    '400':
+      description: Invalid query parameters
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/index.yaml#/ErrorResponse'
+          examples:
+            missing_query:
+              summary: Missing query parameter
+              value:
+                success: false
+                error: "Query is required"
+                message: "The 'query' parameter must be provided"
+            invalid_threshold:
+              summary: Invalid threshold value
+              value:
+                success: false
+                error: "Invalid threshold"
+                message: "Threshold must be between 0 and 100"
+    '401':
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/index.yaml#/ErrorResponse'
+    '500':
+      description: Search error
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/index.yaml#/ErrorResponse'
+          examples:
+            embedding_error:
+              summary: Embedding generation failed
+              value:
+                success: false
+                error: "Failed to generate embedding"
+                message: "Embedding service unavailable"

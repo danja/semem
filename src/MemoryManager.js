@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid'
-import logger from 'loglevel'
+import { configureLogging } from './utils/LoggingConfig.js'
 import MemoryStore from './stores/MemoryStore.js'
 import InMemoryStore from './stores/InMemoryStore.js'
 import ContextManager from './ContextManager.js'
@@ -26,6 +26,9 @@ export default class MemoryManager {
             ttl: 3600000
         }
     }) {
+        // Initialize logging for MemoryManager
+        this.logger = configureLogging('memory-manager');
+        
         if (!llmProvider) {
             throw new Error('LLM provider is required')
         }
@@ -70,7 +73,7 @@ export default class MemoryManager {
         if (hasChatCapability) {
             this.llmHandler = new LLMHandler(llmProvider, this.chatModel)
         } else {
-            logger.warn('Provider does not support chat operations - LLM functionality will be limited')
+            this.logger.warn('Provider does not support chat operations - LLM functionality will be limited')
             this.llmHandler = null
         }
         this.memStore = new MemoryStore(dimension)
@@ -79,7 +82,7 @@ export default class MemoryManager {
 
         // Start initialization but don't wait for it here
         this._initialization = this.initialize().catch(error => {
-            logger.error('Failed to initialize MemoryManager:', error);
+            this.logger.error('Failed to initialize MemoryManager:', error);
             // Re-throw the error to ensure it's not silently swallowed
             throw error;
         });
@@ -107,7 +110,7 @@ export default class MemoryManager {
 
         try {
             const [shortTerm, longTerm] = await this.storage.loadHistory()
-            logger.info(`Loading memory history: ${shortTerm.length} short-term, ${longTerm.length} long-term items`)
+            this.logger.info(`Loading memory history: ${shortTerm.length} short-term, ${longTerm.length} long-term items`)
 
             for (const interaction of shortTerm) {
                 const embedding = this.embeddingHandler.standardizeEmbedding(interaction.embedding)
@@ -121,27 +124,28 @@ export default class MemoryManager {
 
             this.memStore.longTermMemory.push(...longTerm)
             this.memStore.clusterInteractions()
-            logger.info('Memory initialization complete')
+            this.logger.info('Memory initialization complete')
             this._initialized = true;
             return this;
         } catch (error) {
-            logger.error('Memory initialization failed:', error)
+            this.logger.error('Memory initialization failed:', error)
             this._initialized = false;
             throw error
         }
     }
 
-    async addInteraction(prompt, output, embedding, concepts) {
+    async addInteraction(prompt, output, embedding, concepts, metadata = {}) {
         try {
             const interaction = {
-                id: uuidv4(),
+                id: metadata.id || uuidv4(),
                 prompt,
                 output,
                 embedding: this.embeddingHandler.standardizeEmbedding(embedding),
-                timestamp: Date.now(),
+                timestamp: metadata.timestamp || Date.now(),
                 accessCount: 1,
                 concepts,
-                decayFactor: 1.0
+                decayFactor: 1.0,
+                ...metadata
             }
 
             this.memStore.shortTermMemory.push(interaction)
@@ -151,29 +155,71 @@ export default class MemoryManager {
             this.memStore.conceptsList.push(interaction.concepts)
 
             await this.storage.saveMemoryToHistory(this.memStore)
-            logger.info('Interaction added successfully')
+            this.logger.info('Interaction added successfully')
         } catch (error) {
-            logger.error('Failed to add interaction:', error)
+            this.logger.error('Failed to add interaction:', error)
             throw error
         }
     }
 
-    async retrieveRelevantInteractions(query, similarityThreshold = 40, excludeLastN = 0) {
+    async retrieveRelevantInteractions(query, similarityThreshold = 40, excludeLastN = 0, limit = null) {
+        this.logger.info('MemoryManager.retrieveRelevantInteractions called with:', {
+            query,
+            similarityThreshold,
+            excludeLastN,
+            limit,
+            hasMemStore: !!this.memStore,
+            memStoreMemoryLength: this.memStore?.shortTermMemory?.length || 0
+        });
+        
         try {
-            const queryEmbedding = await this.embeddingHandler.generateEmbedding(query)
-            let queryConcepts = []
+            this.logger.info('Generating embedding for query...');
+            const queryEmbedding = await this.embeddingHandler.generateEmbedding(query);
+            this.logger.info('Embedding generated successfully, dimensions:', queryEmbedding?.length || 'unknown');
+            
+            let queryConcepts = [];
             
             // Only extract concepts if we have a chat-capable LLM handler
             if (this.llmHandler) {
-                queryConcepts = await this.llmHandler.extractConcepts(query)
+                this.logger.info('Extracting concepts using LLM handler...');
+                queryConcepts = await this.llmHandler.extractConcepts(query);
+                this.logger.info('Concepts extracted:', queryConcepts);
             } else {
-                logger.debug('No chat provider available for concept extraction - using embedding-only search')
+                this.logger.debug('No chat provider available for concept extraction - using embedding-only search');
             }
             
-            return this.memStore.retrieve(queryEmbedding, queryConcepts, similarityThreshold, excludeLastN)
+            this.logger.info('Calling memStore.retrieve with params:', {
+                queryEmbeddingLength: queryEmbedding?.length || 0,
+                queryConceptsLength: queryConcepts?.length || 0,
+                similarityThreshold,
+                excludeLastN
+            });
+            
+            const results = await this.memStore.retrieve(queryEmbedding, queryConcepts, similarityThreshold, excludeLastN);
+            
+            this.logger.info('MemStore.retrieve returned:', {
+                resultsType: typeof results,
+                resultsLength: Array.isArray(results) ? results.length : 'not array',
+                firstResultKeys: results?.[0] ? Object.keys(results[0]) : 'no first result'
+            });
+            
+            // Apply limit if specified
+            if (limit && typeof limit === 'number' && limit > 0) {
+                const limitedResults = results.slice(0, limit);
+                this.logger.info(`Applied limit ${limit}, final result count: ${limitedResults.length}`);
+                return limitedResults;
+            }
+            
+            this.logger.info(`Returning ${results?.length || 0} results`);
+            return results;
         } catch (error) {
-            logger.error('Failed to retrieve interactions:', error)
-            throw error
+            this.logger.error('Failed to retrieve interactions:', {
+                message: error.message,
+                stack: error.stack,
+                query,
+                similarityThreshold
+            });
+            throw error;
         }
     }
 
@@ -192,7 +238,7 @@ export default class MemoryManager {
 
             return await this.llmHandler.generateResponse(prompt, context)
         } catch (error) {
-            logger.error('Error generating response:', error)
+            this.logger.error('Error generating response:', error)
             throw error
         }
     }
@@ -203,7 +249,7 @@ export default class MemoryManager {
 
     async extractConcepts(text) {
         if (!this.llmHandler) {
-            logger.debug('No chat provider available for concept extraction')
+            this.logger.debug('No chat provider available for concept extraction')
             return []
         }
         return await this.llmHandler.extractConcepts(text)
