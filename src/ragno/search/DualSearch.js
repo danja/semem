@@ -157,8 +157,8 @@ export default class DualSearch {
             // Extract entities using LLM if available
             if (this.llmHandler) {
                 const entityExtractionPrompt = this.buildEntityExtractionPrompt(query)
-                const llmResponse = await this.llmHandler.generateCompletion(entityExtractionPrompt, {
-                    max_tokens: 200,
+                const llmResponse = await this.llmHandler.generateResponse(entityExtractionPrompt, '', {
+                    maxTokens: 200,
                     temperature: 0.1
                 })
                 

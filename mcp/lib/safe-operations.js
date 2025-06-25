@@ -20,11 +20,11 @@ export class SafeOperations {
   }
 
   /**
-   * Safely extract concepts with enhanced error handling
+   * Extract concepts with proper error handling
    */
   async extractConcepts(text) {
     if (!text || typeof text !== 'string' || !text.trim()) {
-      return []; // Return empty array for invalid text
+      throw new Error('Invalid text parameter: must be a non-empty string');
     }
     
     const concepts = await this.memoryManager.llmHandler.extractConcepts(text.trim());
@@ -39,7 +39,7 @@ export class SafeOperations {
       return this.extractJsonArrayFromResponse(concepts);
     }
     
-    return [];
+    throw new Error(`Unexpected concepts response format: ${typeof concepts}`);
   }
 
   /**
@@ -48,8 +48,7 @@ export class SafeOperations {
   extractJsonArrayFromResponse(response) {
     // Input validation
     if (!response || typeof response !== 'string') {
-      console.error('Invalid response in extractJsonArrayFromResponse:', { response, responseType: typeof response });
-      return [];
+      throw new Error(`Invalid response in extractJsonArrayFromResponse: expected string, got ${typeof response}`);
     }
     
     // Remove the [JSON] prefix if present
@@ -106,7 +105,7 @@ export class SafeOperations {
       }
     }
     
-    return [];
+    throw new Error('No valid JSON array found in LLM response');
   }
 
   /**
@@ -137,5 +136,21 @@ export class SafeOperations {
       throw new Error('Prompt is required for response generation');
     }
     return await this.memoryManager.llmHandler.generateResponse(prompt, context, options);
+  }
+
+  /**
+   * Search for similar content using embedding
+   */
+  async searchSimilar(queryEmbedding, limit = 10, threshold = 0.7) {
+    if (!queryEmbedding || !Array.isArray(queryEmbedding)) {
+      throw new Error('Invalid queryEmbedding: must be a non-empty array');
+    }
+    
+    // Use the store's search method if available for embedding-based search
+    if (this.memoryManager.store && this.memoryManager.store.search) {
+      return await this.memoryManager.store.search(queryEmbedding, limit, threshold);
+    }
+    
+    throw new Error('Store does not support embedding-based search - no search method available');
   }
 }

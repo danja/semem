@@ -37,10 +37,10 @@ export async function createLLMConnector(configPath = null) {
       
       if (provider.type === 'mistral' && provider.apiKey) {
         console.log('✅ Creating Mistral connector (highest priority)...');
-        return new MistralConnector();
+        return new MistralConnector(provider.apiKey);
       } else if (provider.type === 'claude' && provider.apiKey) {
         console.log('✅ Creating Claude connector...');
-        return new ClaudeConnector();
+        return new ClaudeConnector(provider.apiKey);
       } else if (provider.type === 'ollama') {
         console.log('✅ Creating Ollama connector (fallback)...');
         return new OllamaConnector();
@@ -129,25 +129,47 @@ export const mcpConfig = {
 };
 
 /**
- * Get working model names from configuration
+ * Find the working provider from a list of providers
+ */
+function findWorkingProvider(providers) {
+  // Try providers in priority order to find one that will work
+  for (const provider of providers) {
+    if (provider.type === 'mistral' && provider.apiKey) {
+      return provider;
+    } else if (provider.type === 'claude' && provider.apiKey) {
+      return provider;
+    } else if (provider.type === 'ollama') {
+      return provider;
+    }
+  }
+  return null;
+}
+
+/**
+ * Get working model names from configuration (follows same logic as provider selection)
  */
 export async function getModelConfig(configPath = null) {
   try {
     const config = new Config(configPath);
     await config.init();
     
-    // Get highest priority providers
     const llmProviders = config.get('llmProviders') || [];
-    const chatProvider = llmProviders
+    
+    // Find working chat provider using same logic as createLLMConnector
+    const chatProviders = llmProviders
       .filter(p => p.capabilities?.includes('chat'))
-      .sort((a, b) => (a.priority || 999) - (b.priority || 999))[0];
-    const embeddingProvider = llmProviders
+      .sort((a, b) => (a.priority || 999) - (b.priority || 999));
+    const workingChatProvider = findWorkingProvider(chatProviders);
+    
+    // Find working embedding provider
+    const embeddingProviders = llmProviders
       .filter(p => p.capabilities?.includes('embedding'))
-      .sort((a, b) => (a.priority || 999) - (b.priority || 999))[0];
+      .sort((a, b) => (a.priority || 999) - (b.priority || 999));
+    const workingEmbeddingProvider = findWorkingProvider(embeddingProviders);
     
     return {
-      chatModel: chatProvider?.chatModel || 'qwen2:1.5b',
-      embeddingModel: embeddingProvider?.embeddingModel || 'nomic-embed-text'
+      chatModel: workingChatProvider?.chatModel || 'qwen2:1.5b',
+      embeddingModel: workingEmbeddingProvider?.embeddingModel || 'nomic-embed-text'
     };
   } catch (error) {
     console.warn('Failed to get model config from configuration, using defaults:', error.message);

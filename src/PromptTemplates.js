@@ -71,7 +71,20 @@ QUESTION: ${query}`
                 return `<s>[INST] ${context ? `${context}\n\n` : ''}${query} [/INST]`
             },
             extractConcepts: (text) => {
-                return `<s>[INST] Extract and return only a JSON array of key concepts from: "${text}" [/INST]`
+                return [{
+                    role: 'user',
+                    content: `Extract key concepts from the following text and return them as a JSON array of strings. Only return the JSON array, nothing else. 
+
+Examples:
+Text: "Machine learning algorithms analyze data patterns"
+Response: ["machine learning", "algorithms", "data analysis", "patterns"]
+
+Text: "Climate change affects global weather systems"  
+Response: ["climate change", "global weather", "weather systems", "environmental impact"]
+
+Now extract concepts from this text:
+"${text}"`
+                }]
             }
         }
     };

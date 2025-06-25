@@ -403,8 +403,8 @@ Based on the relationships and context, write a 2-3 sentence summary that captur
 Summary:`
 
   try {
-    const response = await llmHandler.generateCompletion(prompt, {
-      max_tokens: 150,
+    const response = await llmHandler.generateResponse(prompt, '', {
+      maxTokens: 150,
       temperature: 0.1
     })
 

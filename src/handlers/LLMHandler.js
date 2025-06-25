@@ -97,30 +97,12 @@ export default class LLMHandler {
             )
             logger.log(`LLMHandler.generateResponse, model = ${model}`)
             
-            // Use timeout wrapper only if fallbacks are enabled, otherwise use original behavior
-            if (this.options.enableFallbacks) {
-                return await this.withTimeout(
-                    this.withRateLimit(async () => {
-                        return await this._callChat(model, messages, { temperature })
-                    }, maxRetries, baseDelay),
-                    timeoutMs
-                )
-            } else {
-                // Original behavior for backward compatibility
-                return await this.withRateLimit(async () => {
-                    return await this._callChat(model, messages, { temperature })
-                }, maxRetries, baseDelay)
-            }
+            return await this.withRateLimit(async () => {
+                return await this._callChat(model, messages, { temperature })
+            }, maxRetries, baseDelay)
             
         } catch (error) {
             logger.error('Error generating chat response:', error)
-            
-            // Simple fallback mechanism
-            if (this.options.enableFallbacks) {
-                logger.warn('Using fallback response due to LLM service failure')
-                return this.generateFallbackResponse(prompt, context, error)
-            }
-            
             throw error
         }
     }
@@ -173,55 +155,61 @@ export default class LLMHandler {
      * @returns {Promise<string[]>}
      */
     async extractConcepts(text, options = {}) {
-        const timeoutMs = options.timeoutMs || this.options.timeoutMs
-        
         try {
             const prompt = PromptTemplates.formatConceptPrompt(this.chatModel, text)
             
-            // Use timeout wrapper only if fallbacks are enabled, otherwise use original behavior  
-            const response = this.options.enableFallbacks
-                ? await this.withTimeout(
-                    this.withRateLimit(async () => {
-                        return await this._callCompletion(
-                            this.chatModel,
-                            prompt,
-                            { temperature: 0.2 }
-                        )
-                    }),
-                    timeoutMs
-                  )
-                : await this.withRateLimit(async () => {
+            // Determine if we should use chat or completion based on prompt format
+            const isMessagesFormat = Array.isArray(prompt)
+            
+            const response = await this.withRateLimit(async () => {
+                if (isMessagesFormat) {
+                    return await this._callChat(
+                        this.chatModel,
+                        prompt, // pass the full messages array
+                        { temperature: 0.2 }
+                    )
+                } else {
                     return await this._callCompletion(
                         this.chatModel,
                         prompt,
                         { temperature: 0.2 }
                     )
-                  })
+                }
+            })
             
-            console.log(`response = ${response}, ${JSON.stringify(response)}`)
+            logger.info(`LLM response for concept extraction: ${response}`)
+            
+            // Try to parse the response directly first (for clean JSON responses)
+            try {
+                const directParse = JSON.parse(response.trim())
+                if (Array.isArray(directParse)) {
+                    logger.info(`Successfully parsed ${directParse.length} concepts directly`)
+                    return directParse
+                }
+            } catch (e) {
+                // Continue to regex parsing
+            }
+            
+            // Fallback to regex-based extraction
             const match = response.match(/\[.*\]/)
             if (!match) {
                 logger.warn('No concept array found in LLM response')
-                return []
+                logger.warn('Raw response was:', response)
+                throw new Error('No JSON array found in LLM response for concept extraction')
             }
-            // console.log(`match[0] = ${match[0]}, ${JSON.stringify(match[0])}`)
+            
             try {
-                return JSON.parse(match[0])
+                const parsed = JSON.parse(match[0])
+                logger.info(`Successfully parsed ${parsed.length} concepts using regex`)
+                return parsed
             } catch (parseError) {
                 logger.error('Failed to parse concepts array:', parseError)
                 logger.error('Raw match was:', match[0])
-                return []
+                throw new Error(`Failed to parse JSON from LLM response: ${parseError.message}`)
             }
         } catch (error) {
             logger.error('Error extracting concepts:', error)
-            
-            // Simple fallback - extract basic concepts from text
-            if (this.options.enableFallbacks) {
-                logger.warn('Using fallback concept extraction')
-                return this.extractBasicConcepts(text)
-            }
-            
-            return []
+            throw error
         }
     }
 

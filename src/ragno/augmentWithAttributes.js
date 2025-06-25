@@ -416,8 +416,8 @@ Explain the significance in 2-3 sentences:`
   const prompt = prompts[attributeType] || prompts.overview
   
   try {
-    const response = await llmHandler.generateCompletion(prompt, {
-      max_tokens: 200,
+    const response = await llmHandler.generateResponse(prompt, '', {
+      maxTokens: 200,
       temperature: 0.1
     })
     

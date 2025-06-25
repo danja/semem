@@ -7,14 +7,15 @@ import { McpServer as Server } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { mcpDebugger } from './lib/debug-utils.js';
 import { mcpConfig } from './lib/config.js';
 
-// Import tool registrations
-import { registerMemoryTools } from './tools/memory-tools-simple.js';
-import { registerZPTTools } from './tools/zpt-tools.js';
-import { registerResearchWorkflowTools } from './tools/research-workflow-tools.js';
-import { registerRagnoTools } from './tools/ragno-tools.js';
-import { registerSPARQLTools } from './tools/sparql-tools.js';
-import { registerVSOMTools } from './tools/vsom-tools.js';
-import { PROMPT_TOOLS, executePromptTool } from './tools/prompt-tools.js';
+// Import centralized handlers from main server
+import { 
+  ListPromptsRequestSchema,
+  GetPromptRequestSchema,
+  CallToolRequestSchema,
+  ListToolsRequestSchema,
+  ListResourcesRequestSchema,
+  ReadResourceRequestSchema
+} from '@modelcontextprotocol/sdk/types.js';
 
 // Import resource registrations  
 import { registerStatusResources } from './resources/status-resource.js';
