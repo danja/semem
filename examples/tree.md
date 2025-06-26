@@ -1,10 +1,10 @@
 examples
 ├── basic
 │   ├── ArticleEmbedding.js - goes on for all the articles in the sore
-│   ├── ArticleSearch.js - 
-│   ├── CheckLLMProviders.js
-│   ├── ClaudeEnrichJSON.js
-│   ├── ContextManagement.js
+│   ├── ArticleSearch.js - works
+│   ├── CheckLLMProviders.js - works
+│   ├── ClaudeEnrichJSON.js - dodgy premise
+│   ├── ContextManagement.js -looks ok
 │   ├── HTTPCalls.js
 │   ├── Ingest.js
 │   ├── MemoryEmbeddingJSON.js

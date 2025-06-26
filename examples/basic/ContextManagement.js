@@ -209,10 +209,10 @@ async function testContextManager() {
 async function testMemoryContextIntegration(config) {
     logger.info('\n=== Testing Memory-Context Integration ===');
     
-    // Get Ollama configuration
-    const ollamaBaseUrl = config.get('ollama.baseUrl') || 'http://localhost:11434';
-    const chatModel = config.get('chatModel') || 'qwen2:1.5b';
-    const embeddingModel = config.get('embeddingModel') || 'nomic-embed-text';
+    // Get configuration values
+    const ollamaBaseUrl = config.get('models.embedding.options.baseUrl') || 'http://localhost:11434';
+    const chatModel = config.get('models.chat.model') || 'mistral-small-latest';
+    const embeddingModel = config.get('models.embedding.model') || 'nomic-embed-text';
     
     logger.info(`Using Ollama at: ${ollamaBaseUrl}`);
     logger.info(`Chat model: ${chatModel}`);
@@ -223,7 +223,7 @@ async function testMemoryContextIntegration(config) {
     
     const memoryManager = new MemoryManager({
         llmProvider,
-        chatModel,
+        embeddingProvider: llmProvider, // Use same provider for embeddings
         embeddingModel,
         storage,
         contextOptions: {
@@ -381,7 +381,7 @@ async function main() {
     logger.info('🚀 Starting Context Management Example');
 
     // Initialize configuration
-    const config = new Config('./config/config.json');
+    const config = new Config('../config/config.json');
     await config.init();
 
     const testResults = {
