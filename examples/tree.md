@@ -18,7 +18,7 @@ examples
 │   ├── neuroscience_cognition.md
 │   └── urban_planning.md
 ├── end-to-end
-│   ├── Analytics.js
+│   ├── Analytics.js - ok but rubbish results
 │   ├── Enrich.js
 │   ├── EnrichSimple.js
 │   ├── HyDE.js
