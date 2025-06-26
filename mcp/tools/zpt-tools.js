@@ -3,9 +3,9 @@
  * Provides intuitive knowledge graph exploration through spatial metaphors
  */
 import { z } from 'zod';
-import { 
+import {
   CallToolRequestSchema,
-  ListToolsRequestSchema 
+  ListToolsRequestSchema
 } from '@modelcontextprotocol/sdk/types.js';
 import { initializeServices, getMemoryManager } from '../lib/initialization.js';
 import { SafeOperations } from '../lib/safe-operations.js';
@@ -20,7 +20,7 @@ import ParameterNormalizer from '../../src/zpt/parameters/ParameterNormalizer.js
 // ZPT Tool Names
 const ZPTToolName = {
   NAVIGATE: 'zpt_navigate',
-  PREVIEW: 'zpt_preview', 
+  PREVIEW: 'zpt_preview',
   GET_SCHEMA: 'zpt_get_schema',
   VALIDATE_PARAMS: 'zpt_validate_params',
   GET_OPTIONS: 'zpt_get_options',
@@ -93,15 +93,15 @@ class ZPTNavigationService {
   constructor(memoryManager, safeOps) {
     this.memoryManager = memoryManager;
     this.safeOps = safeOps;
-    
+
     // Initialize ZPT components
     this.parameterValidator = new ParameterValidator();
     this.parameterNormalizer = new ParameterNormalizer();
-    
+
     // Initialize corpus selector and transformer (will be set when corpus is available)
     this.corpuscleSelector = null;
     this.corpuscleTransformer = null;
-    
+
     // Configuration
     this.config = {
       enableRealData: true,
@@ -119,7 +119,7 @@ class ZPTNavigationService {
       // Get the SPARQL store and embedding handler from memory manager
       const sparqlStore = this.memoryManager?.store;
       const embeddingHandler = this.memoryManager?.embeddingHandler;
-      
+
       if (sparqlStore && embeddingHandler) {
         // Create a mock corpus object for now - in production this would come from ragno
         const corpus = {
@@ -178,7 +178,7 @@ class ZPTNavigationService {
 
       mcpDebugger.debug('ZPT Navigation starting', { query, zoom, tilt });
       const startTime = Date.now();
-      
+
       // Try to initialize components if not already done
       if (!this.corpuscleSelector && this.config.enableRealData) {
         await this.initializeComponents();
@@ -186,7 +186,7 @@ class ZPTNavigationService {
 
       // Determine if we can use real data or need to fall back to simulation
       const useRealData = this.corpuscleSelector && this.corpuscleTransformer && this.config.enableRealData;
-      
+
       if (useRealData) {
         mcpDebugger.info('Using real ZPT data pipeline');
         return await this.navigateWithRealData(query, zoom, pan, tilt, transform, startTime);
@@ -196,13 +196,13 @@ class ZPTNavigationService {
       }
     } catch (error) {
       mcpDebugger.error('ZPT Navigation failed', error);
-      
+
       // If real data fails and fallback is enabled, try simulation
       if (this.config.fallbackToSimulation && this.corpuscleSelector) {
         mcpDebugger.warn('Real data navigation failed, falling back to simulation');
         return await this.navigateWithSimulation(query, zoom, pan, tilt, transform, Date.now());
       }
-      
+
       throw error;
     }
   }
@@ -213,25 +213,25 @@ class ZPTNavigationService {
   async navigateWithRealData(query, zoom, pan, tilt, transform, startTime) {
     try {
       const validationStart = Date.now();
-      
+
       // Ensure query is a string and handle potential undefined/null
       const safeQuery = typeof query === 'string' ? query : '';
       const currentZoom = zoom || 'entity';
-      const params = { 
-        query: safeQuery, 
-        zoom: currentZoom, 
-        pan: pan || { domains: [], keywords: [], temporal: {}, entities: [] }, 
-        tilt: tilt || 'keywords', 
-        transform: transform || {} 
+      const params = {
+        query: safeQuery,
+        zoom: currentZoom,
+        pan: pan || { domains: [], keywords: [], temporal: {}, entities: [] },
+        tilt: tilt || 'keywords',
+        transform: transform || {}
       };
-      
+
       // Ensure all pan properties exist
       params.pan = params.pan || {};
       params.pan.domains = Array.isArray(params.pan.domains) ? params.pan.domains : [];
       params.pan.keywords = Array.isArray(params.pan.keywords) ? params.pan.keywords : [];
       params.pan.temporal = params.pan.temporal || {};
       params.pan.entities = Array.isArray(params.pan.entities) ? params.pan.entities : [];
-      
+
       // For test environment, return mock data
       if (process.env.NODE_ENV === 'test') {
         // Handle error case first - ensure it's caught by the test
@@ -240,7 +240,7 @@ class ZPTNavigationService {
           err.isSPARQLError = true;
           throw err;
         }
-        
+
         // Ensure corpus selector is called for test coverage with exact parameters
         if (this.corpuscleSelector && typeof this.corpuscleSelector.select === 'function') {
           const selectorParams = {
@@ -254,10 +254,10 @@ class ZPTNavigationService {
             },
             tilt: params.tilt || 'keywords'
           };
-          
+
           await this.corpuscleSelector.select(selectorParams);
         }
-        
+
         // Base response structure
         const response = {
           success: true,
@@ -267,16 +267,16 @@ class ZPTNavigationService {
             zoom: currentZoom,
             estimatedResults: 1,
             suggestions: [],
-            corpusHealth: { 
-              valid: true, 
-              stats: { 
-                entityCount: 100, 
-                unitCount: 50, 
-                textCount: 25, 
-                microCount: 10, 
-                communityCount: 5, 
-                corpusCount: 1 
-              } 
+            corpusHealth: {
+              valid: true,
+              stats: {
+                entityCount: 100,
+                unitCount: 50,
+                textCount: 25,
+                microCount: 10,
+                communityCount: 5,
+                corpusCount: 1
+              }
             },
             filters: {
               domain: params.pan.domains || [],
@@ -285,19 +285,19 @@ class ZPTNavigationService {
               entities: params.pan.entities || []
             },
             metadata: {
-              pipeline: { 
-                selectionTime: 0, 
-                projectionTime: 0, 
-                transformationTime: 0, 
-                totalTime: 0, 
-                mode: 'test' 
+              pipeline: {
+                selectionTime: 0,
+                projectionTime: 0,
+                transformationTime: 0,
+                totalTime: 0,
+                mode: 'test'
               },
-              navigation: { 
-                query: safeQuery, 
-                zoom: currentZoom, 
-                pan: params.pan || {}, 
-                tilt: params.tilt || 'keywords', 
-                transform: params.transform || {} 
+              navigation: {
+                query: safeQuery,
+                zoom: currentZoom,
+                pan: params.pan || {},
+                tilt: params.tilt || 'keywords',
+                transform: params.transform || {}
               },
               corpuscleCount: 1,
               tokenCount: 100
@@ -313,10 +313,10 @@ class ZPTNavigationService {
         }
 
         // Handle different zoom levels
-        switch(currentZoom) {
+        switch (currentZoom) {
           case 'entity':
             response.content.data = [{
-              id: `http://example.org/entity/${safeQuery.toLowerCase().replace(/\s+/g, '-')}`,
+              id: `http://purl.org/stuff/ragno/entity/${safeQuery.toLowerCase().replace(/\s+/g, '-')}`,
               type: 'entity',
               label: safeQuery,
               description: `Information about ${safeQuery}`,
@@ -324,11 +324,11 @@ class ZPTNavigationService {
             }];
             response.content.estimatedResults = 1;
             break;
-            
+
           case 'micro':
           case 'text':
             response.content.data = [{
-              id: 'http://example.org/unit/test',
+              id: 'http://purl.org/stuff/ragno/unit/test',
               type: 'unit',
               content: `This is about ${safeQuery}.`,
               similarity: 0.92,
@@ -336,10 +336,10 @@ class ZPTNavigationService {
             }];
             response.content.estimatedResults = 1;
             break;
-            
+
           case 'community':
             response.content.data = [{
-              id: `http://example.org/community/${safeQuery.toLowerCase().replace(/\s+/g, '-')}`,
+              id: `http://purl.org/stuff/ragno/community/${safeQuery.toLowerCase().replace(/\s+/g, '-')}`,
               type: 'community',
               label: `${safeQuery} Community`,
               memberCount: 156,
@@ -348,49 +348,49 @@ class ZPTNavigationService {
             }];
             response.content.estimatedResults = 1;
             break;
-            
+
           case 'unit':
           default:
             response.content.data = [{
-              id: `http://example.org/unit/${safeQuery.toLowerCase().replace(/\s+/g, '-')}`,
+              id: `http://purl.org/stuff/ragno/unit/${safeQuery.toLowerCase().replace(/\s+/g, '-')}`,
               type: 'unit',
               content: `Content about ${safeQuery}`,
               metadata: {}
             }];
             response.content.estimatedResults = 1;
         }
-        
+
         // Apply filters if any
         if (params.pan.domains && params.pan.domains.length > 0) {
-          response.content.data = response.content.data.filter(item => 
-            item.metadata.domains && 
+          response.content.data = response.content.data.filter(item =>
+            item.metadata.domains &&
             item.metadata.domains.some(d => params.pan.domains.includes(d))
           );
           response.content.estimatedResults = response.content.data.length;
         }
-        
+
         if (params.pan.keywords && params.pan.keywords.length > 0) {
           const keywordSet = new Set(params.pan.keywords.map(k => k.toLowerCase()));
-          response.content.data = response.content.data.filter(item => 
-            item.content && 
-            params.pan.keywords.some(keyword => 
+          response.content.data = response.content.data.filter(item =>
+            item.content &&
+            params.pan.keywords.some(keyword =>
               item.content.toLowerCase().includes(keyword.toLowerCase())
             )
           );
           response.content.estimatedResults = response.content.data.length;
         }
-        
+
         if (params.pan.temporal && Object.keys(params.pan.temporal).length > 0) {
           // Simple temporal filtering - in a real implementation, this would check against item dates
-          response.content.data = response.content.data.filter(item => 
-            item.metadata.date && 
+          response.content.data = response.content.data.filter(item =>
+            item.metadata.date &&
             (!params.pan.temporal.start || item.metadata.date >= params.pan.temporal.start) &&
             (!params.pan.temporal.end || item.metadata.date <= params.pan.temporal.end)
           );
           response.content.estimatedResults = response.content.data.length;
         } else if (currentZoom === 'community') {
           response.content.data = [{
-            id: 'http://example.org/community/tech',
+            id: 'http://purl.org/stuff/ragno/community/tech',
             type: 'community',
             label: 'Technology Community',
             memberCount: 156,
@@ -431,7 +431,7 @@ class ZPTNavigationService {
         } else if (safeQuery === 'AI research') {
           // Special case for AI research test
           response.content.data = [{
-            id: 'http://example.org/unit/test',
+            id: 'http://purl.org/stuff/ragno/unit/test',
             type: 'unit',
             content: 'This is about artificial intelligence research.',
             similarity: 0.92,
@@ -445,7 +445,7 @@ class ZPTNavigationService {
         } else {
           // Default case
           response.content.data = [{
-            id: `http://example.org/${currentZoom}/test`,
+            id: `http://purl.org/stuff/ragno/${currentZoom}/test`,
             type: currentZoom,
             label: `Test ${currentZoom.charAt(0).toUpperCase() + currentZoom.slice(1)}`,
             metadata: {}
@@ -455,15 +455,15 @@ class ZPTNavigationService {
 
         return response;
       }
-      
+
       const validatedParams = this.parameterValidator.validate(params);
-      
+
       const normalizedParams = this.parameterNormalizer.normalize(validatedParams);
       const validationTime = Date.now() - validationStart;
 
       // Phase 1: Parameter validation and normalization
       const selectionStart = Date.now();
-      
+
       // Convert ZPT parameters to selection parameters
       const selectionParams = {
         query: safeQuery,
@@ -478,7 +478,7 @@ class ZPTNavigationService {
         maxResults: this.calculateCorpuscleCount(currentZoom),
         includeMetadata: true
       };
-      
+
       // Apply filters if provided in the pan parameter
       if (pan) {
         // Handle domain filter (supports both 'domain' and 'domains' for backward compatibility)
@@ -487,29 +487,29 @@ class ZPTNavigationService {
         } else if (pan.domains) {
           selectionParams.pan.domains = Array.isArray(pan.domains) ? pan.domains : [pan.domains];
         }
-        
+
         // Handle keywords filter
         if (pan.keywords) {
-          selectionParams.pan.keywords = Array.isArray(pan.keywords) 
-            ? pan.keywords 
+          selectionParams.pan.keywords = Array.isArray(pan.keywords)
+            ? pan.keywords
             : [pan.keywords];
         } else if (selectionParams.pan.keywords.length === 0 && safeQuery) {
           // If no keywords from pan, use query terms
           selectionParams.pan.keywords = safeQuery.split(' ').filter(w => w && w.length > 2);
         }
-        
+
         // Handle temporal filter
         if (pan.temporal) {
           selectionParams.pan.temporal = { ...pan.temporal };
         }
-        
+
         // Handle entities filter
         if (pan.entities) {
-          selectionParams.pan.entities = Array.isArray(pan.entities) 
-            ? pan.entities 
+          selectionParams.pan.entities = Array.isArray(pan.entities)
+            ? pan.entities
             : [pan.entities];
         }
-        
+
         // Ensure arrays are properly initialized
         if (!selectionParams.pan.domains) selectionParams.pan.domains = [];
         if (!selectionParams.pan.keywords) selectionParams.pan.keywords = [];
@@ -524,7 +524,7 @@ class ZPTNavigationService {
         selectionResult.corpuscles || [],
         normalizedParams.transform
       );
-      
+
       // Ensure we always return an array for content.data with required fields
       const content = {
         data: Array.isArray(transformResult.chunks) ? transformResult.chunks : [],
@@ -535,8 +535,8 @@ class ZPTNavigationService {
           selectionResult.metadata?.estimatedResults || 1, // Ensure at least 1
           1 // Final fallback
         ),
-        suggestions: Array.isArray(selectionResult.metadata?.suggestions) 
-          ? selectionResult.metadata.suggestions 
+        suggestions: Array.isArray(selectionResult.metadata?.suggestions)
+          ? selectionResult.metadata.suggestions
           : [],
         corpusHealth: selectionResult.metadata?.corpusHealth || { valid: true, stats: {} },
         filters: {
@@ -546,7 +546,7 @@ class ZPTNavigationService {
           entities: selectionParams.pan.entities
         }
       };
-      
+
       // Store the navigation result
       await this.storeNavigationResult(normalizedParams.query, {
         zoom: normalizedParams.zoom,
@@ -554,7 +554,7 @@ class ZPTNavigationService {
         tilt: normalizedParams.tilt,
         transform: normalizedParams.transform
       }, content);
-      
+
       return {
         success: true,
         content: content,
@@ -600,29 +600,29 @@ class ZPTNavigationService {
     try {
       // Selection phase - simulate corpus selection based on parameters
       const selectionTime = await this.simulateSelection(query, zoom, pan);
-      
+
       // Projection phase - simulate tilt-based content projection
       const projectionTime = await this.simulateProjection(zoom, tilt);
-      
+
       // Transformation phase - simulate content transformation
       const transformationTime = await this.simulateTransformation(transform);
-      
+
       const totalTime = Date.now() - startTime;
 
       // Generate simulated content based on parameters
       const content = await this.generateNavigationContent(query, zoom, pan, tilt, transform);
       content.source = 'simulated';
-      
+
       // Ensure content has expected structure
       if (!content.data) {
         content.data = [];
       }
-      
+
       // Ensure estimatedResults is set
       if (content.estimatedResults === undefined) {
         content.estimatedResults = content.data.length;
       }
-      
+
       // Store navigation result in memory
       await this.storeNavigationResult(query, { zoom, pan, tilt, transform }, content);
 
@@ -647,7 +647,7 @@ class ZPTNavigationService {
             transform
           },
           corpuscleCount: this.calculateCorpuscleCount(zoom),
-          tokenCount: transform?.tokenizer 
+          tokenCount: transform?.tokenizer
             ? await this.estimateTokenCount(content, transform.tokenizer)
             : 0 // Default to 0 if no tokenizer is provided
         }
@@ -657,22 +657,22 @@ class ZPTNavigationService {
       // For testing, ensure the error is properly structured
       if (process.env.NODE_ENV === 'test') {
         if (error.isSPARQLError) {
-          return { 
-            success: false, 
-            error: error.message, 
-            content: { 
-              data: [], 
-              success: false, 
+          return {
+            success: false,
+            error: error.message,
+            content: {
+              data: [],
+              success: false,
               error: error.message,
               zoom: 'entity',
               estimatedResults: 0,
               suggestions: [],
               corpusHealth: { valid: true, stats: {} },
               filters: {}
-            } 
+            }
           };
         }
-        
+
         // For preview errors in test mode
         if (error.message === 'Preview failed') {
           return {
@@ -692,21 +692,21 @@ class ZPTNavigationService {
           };
         }
       }
-      
+
       // For non-test or non-SPARQL errors, return a generic error
-      return { 
-        success: false, 
-        error: error.message || 'Navigation failed', 
-        content: { 
-          data: [], 
-          success: false, 
+      return {
+        success: false,
+        error: error.message || 'Navigation failed',
+        content: {
+          data: [],
+          success: false,
           error: error.message || 'Navigation failed',
           zoom: 'entity',
           estimatedResults: 0,
           suggestions: [],
           corpusHealth: { valid: true, stats: {} },
           filters: {}
-        } 
+        }
       };
     }
   }
@@ -716,14 +716,14 @@ class ZPTNavigationService {
       mcpDebugger.debug('ZPT Preview starting', { query, zoom });
 
       const startTime = Date.now();
-      
+
       // Try to initialize components if not already done
       if (!this.corpuscleSelector && this.config.enableRealData) {
         await this.initializeComponents();
       }
 
       let preview;
-      
+
       if (this.corpuscleSelector && this.config.enableRealData) {
         // Use real data for preview
         preview = await this.previewWithRealData(query, zoom, pan);
@@ -733,7 +733,7 @@ class ZPTNavigationService {
       }
 
       preview.processingTime = Date.now() - startTime;
-      
+
       return {
         success: true,
         preview
@@ -752,7 +752,7 @@ class ZPTNavigationService {
       // Ensure query is a string
       const queryStr = typeof query === 'string' ? query : '';
       const zoomLevel = typeof zoom === 'string' ? zoom : 'entity';
-      
+
       // For testing, return mock response
       if (process.env.NODE_ENV === 'test') {
         // Handle error case
@@ -761,7 +761,7 @@ class ZPTNavigationService {
           err.isPreviewError = true;
           throw err;
         }
-        
+
         // Ensure corpus selector is called for test coverage
         if (this.corpuscleSelector && typeof this.corpuscleSelector.select === 'function') {
           await this.corpuscleSelector.select({
@@ -771,7 +771,7 @@ class ZPTNavigationService {
             tilt: 'keywords'
           });
         }
-        
+
         // Create mock response with test data
         const mockResponse = {
           success: true,
@@ -829,10 +829,10 @@ class ZPTNavigationService {
             }
           }
         };
-        
+
         return mockResponse;
       }
-      
+
       // For testing, return mock response immediately
       if (process.env.NODE_ENV === 'test') {
         // Create a consistent preview response
@@ -844,7 +844,7 @@ class ZPTNavigationService {
           suggestions: [],
           corpusHealth: {
             valid: true,
-            stats: { 
+            stats: {
               entityCount: 100,
               unitCount: 50,
               textCount: 25,
@@ -876,19 +876,19 @@ class ZPTNavigationService {
 
         return previewResponse;
       }
-      
+
       // Rest of the real implementation...
       let corpusStats = { valid: true, stats: { entityCount: 100 } }; // Default valid response
       let estimatedResults = 100; // Default fallback
-      
+
       try {
         corpusStats = await this.corpuscleSelector.sparqlStore.validateCorpus();
-        
+
         // Ensure we have a number for estimatedResults
         if (corpusStats?.stats?.entityCount) {
           estimatedResults = Number(corpusStats.stats.entityCount);
         }
-        
+
         if (isNaN(estimatedResults) || estimatedResults <= 0) {
           // Fallback to a reasonable default based on zoom level
           const defaultCounts = {
@@ -905,7 +905,7 @@ class ZPTNavigationService {
         mcpDebugger.warn('Failed to validate corpus', error);
         // Use default estimatedResults from above
       }
-      
+
       // Get available zooms and content counts
       const availableZooms = ['entity', 'unit', 'text', 'community', 'corpus'];
       const contentCounts = {};
@@ -918,18 +918,18 @@ class ZPTNavigationService {
           mcpDebugger.warn(`Failed to get count for zoom level ${level}`, error);
         }
       }
-      
+
       // Estimate tokens and get suggested parameters
       let estimatedTokens = 0;
       let suggestedParams = [];
       try {
         estimatedTokens = this.estimateTokensForQuery(queryStr, zoomLevel) || 0;
-        suggestedParams = Array.isArray(this.suggestOptimalParameters(queryStr, pan || {})) ? 
+        suggestedParams = Array.isArray(this.suggestOptimalParameters(queryStr, pan || {})) ?
           this.suggestOptimalParameters(queryStr, pan || {}) : [];
       } catch (error) {
         mcpDebugger.warn('Failed to estimate tokens or get suggested params', error);
       }
-      
+
       // Return preview with statistics
       return {
         success: true,
@@ -962,7 +962,7 @@ class ZPTNavigationService {
   async previewWithSimulation(query, zoom, pan) {
     const availableZooms = ['entity', 'unit', 'text', 'community', 'corpus'];
     const contentCounts = {};
-    
+
     for (const zoomLevel of availableZooms) {
       contentCounts[zoomLevel] = this.calculateCorpuscleCount(zoomLevel);
     }
@@ -1019,7 +1019,7 @@ class ZPTNavigationService {
               geographic: {
                 type: "object",
                 properties: {
-                  bbox: { 
+                  bbox: {
                     type: "array",
                     items: { type: "number" },
                     minItems: 4,
@@ -1199,7 +1199,7 @@ class ZPTNavigationService {
       }
 
       let analysis;
-      
+
       if (this.corpuscleSelector && this.config.enableRealData) {
         analysis = await this.analyzeCorpusWithRealData(analysisType, includeStats);
       } else {
@@ -1214,7 +1214,7 @@ class ZPTNavigationService {
       };
     } catch (error) {
       mcpDebugger.error('ZPT AnalyzeCorpus failed', error);
-      
+
       // Fallback to simulation if real analysis fails
       if (this.config.fallbackToSimulation && this.corpuscleSelector) {
         mcpDebugger.warn('Real corpus analysis failed, falling back to simulation');
@@ -1227,7 +1227,7 @@ class ZPTNavigationService {
           fallbackMode: true
         };
       }
-      
+
       throw error;
     }
   }
@@ -1267,8 +1267,8 @@ class ZPTNavigationService {
           analysis.structure.performance = {
             totalSelections: this.corpuscleSelector.metrics.totalSelections,
             avgSelectionTime: this.corpuscleSelector.metrics.avgSelectionTime,
-            cacheHitRate: this.corpuscleSelector.metrics.cacheHits / 
-                         (this.corpuscleSelector.metrics.cacheHits + this.corpuscleSelector.metrics.cacheMisses) || 0
+            cacheHitRate: this.corpuscleSelector.metrics.cacheHits /
+              (this.corpuscleSelector.metrics.cacheHits + this.corpuscleSelector.metrics.cacheMisses) || 0
           };
         }
       }
@@ -1276,7 +1276,7 @@ class ZPTNavigationService {
       if (analysisType === 'performance' || analysisType === 'all') {
         // Get real performance data from selector metrics
         const metrics = this.corpuscleSelector.metrics || {};
-        
+
         analysis.performance = {
           averageSelectionTime: Math.round(metrics.avgSelectionTime) || 0,
           totalSelections: metrics.totalSelections || 0,
@@ -1290,7 +1290,7 @@ class ZPTNavigationService {
 
       if (analysisType === 'recommendations' || analysisType === 'all') {
         const recommendations = [];
-        
+
         // Data-driven recommendations based on corpus health
         if (corpusHealth.embeddingCoverage < 0.5) {
           recommendations.push({
@@ -1303,7 +1303,7 @@ class ZPTNavigationService {
 
         if (corpusHealth.connectivity < 0.1) {
           recommendations.push({
-            category: 'Graph Structure', 
+            category: 'Graph Structure',
             suggestion: 'Low graph connectivity. Consider adding more relationships between entities.',
             impact: 'medium',
             metric: `Connectivity: ${corpusHealth.connectivity.toFixed(3)}`
@@ -1342,12 +1342,12 @@ class ZPTNavigationService {
       return analysis;
     } catch (error) {
       mcpDebugger.warn('Real corpus analysis failed, using partial data', error);
-      
+
       // Return partial analysis with simulated fallback
       const fallbackAnalysis = await this.analyzeCorpusWithSimulation(analysisType, includeStats);
       fallbackAnalysis.dataSource = 'partial-real-with-simulation';
       fallbackAnalysis.analysisError = error.message;
-      
+
       return fallbackAnalysis;
     }
   }
@@ -1415,14 +1415,14 @@ class ZPTNavigationService {
     const baseTime = 100;
     const complexityFactor = pan?.entity?.length || 1;
     const zoomFactor = { entity: 1, unit: 1.5, text: 2, community: 1.2, corpus: 0.8 }[zoom] || 1;
-    
+
     return Math.floor(baseTime * complexityFactor * zoomFactor + Math.random() * 50);
   }
 
   async simulateProjection(zoom, tilt) {
     const tiltComplexity = { keywords: 0.8, embedding: 1.5, graph: 2.0, temporal: 1.2 };
     const baseTime = 80;
-    
+
     return Math.floor(baseTime * (tiltComplexity[tilt] || 1) + Math.random() * 40);
   }
 
@@ -1432,7 +1432,7 @@ class ZPTNavigationService {
     const maxTokens = transform.maxTokens || 1000;
     const tokenFactor = Math.max(0.1, Math.log(maxTokens / 1000)); // Ensure tokenFactor is never negative
     const baseTime = 120;
-    
+
     return Math.floor(baseTime * (formatComplexity[transform.format] || 1) * tokenFactor + Math.random() * 60);
   }
 
@@ -1451,12 +1451,12 @@ class ZPTNavigationService {
 
     // Ensure zoom is a valid string before using string methods
     const zoomStr = typeof zoom === 'string' ? zoom : 'entity'; // Default to 'entity' if zoom is invalid
-    
+
     const count = this.calculateCorpuscleCount(zoomStr);
 
     for (let i = 0; i < count; i++) {
       const item = {
-        id: `http://example.org/${zoomStr}/${Math.random().toString(36).substring(2, 10)}`,
+        id: `http://purl.org/stuff/ragno/${zoomStr}/${Math.random().toString(36).substring(2, 10)}`,
         label: `${zoomStr.charAt(0).toUpperCase() + zoomStr.slice(1)} Item ${i + 1}`,
         type: zoomStr,
         score: (1 - i * 0.1).toFixed(2),
@@ -1477,10 +1477,10 @@ class ZPTNavigationService {
 
     // Generate estimated results count based on zoom level and query complexity
     const estimatedResults = Math.floor(Math.random() * 1000) + 100; // Random number between 100-1100
-    
+
     // Ensure we always return a valid number for estimatedResults
     const safeEstimatedResults = isNaN(estimatedResults) || estimatedResults < 0 ? 0 : estimatedResults;
-    
+
     return {
       query: query || '',
       zoom: zoom || 'entity',
@@ -1501,7 +1501,7 @@ class ZPTNavigationService {
   getItemType(zoom) {
     const types = {
       entity: 'ragno:Entity',
-      unit: 'ragno:SemanticUnit', 
+      unit: 'ragno:SemanticUnit',
       text: 'ragno:TextElement',
       community: 'ragno:CommunityElement',
       corpus: 'ragno:CorpusElement'
@@ -1516,7 +1516,7 @@ class ZPTNavigationService {
       graph: `Graph connectivity for "${query}": connected to AI research (strength: 0.85), machine learning (0.92), cognitive science (0.73)`,
       temporal: `Temporal context for "${query}": significant developments in 2010s-2020s, peak interest 2017-2019, ongoing evolution`
     };
-    
+
     return templates[tilt] || `Content for "${query}" at ${zoom} level`;
   }
 
@@ -1557,7 +1557,7 @@ class ZPTNavigationService {
 
   estimateTokensForQuery(query, zoom) {
     // Base tokens for different zoom levels (aligned with test expectations)
-    const baseTokens = { 
+    const baseTokens = {
       micro: 800,    // Test expects 800-1200
       entity: 600,   // Test expects 400-800
       unit: 1200,    // Not explicitly tested
@@ -1565,25 +1565,25 @@ class ZPTNavigationService {
       community: 800, // Test expects 600-1000
       corpus: 300    // Not explicitly tested
     };
-    
+
     if (typeof query !== 'string' || !query.trim()) {
       return baseTokens[zoom] || 500;
     }
-    
+
     // Calculate complexity based on query length (0-200% of base)
     const wordCount = query.trim().split(/\s+/).length;
     const complexity = Math.min(wordCount / 10, 1); // Cap at 100% increase
-    
+
     // Return base tokens plus complexity adjustment (base + 0-100% of base)
     const tokens = Math.floor(baseTokens[zoom] * (1 + complexity));
-    
+
     // Ensure we stay within test-expected ranges
     const maxTokens = {
       micro: 1200,
       entity: 800,
       community: 1000
     };
-    
+
     return Math.min(tokens, maxTokens[zoom] || tokens);
   }
 
@@ -1591,26 +1591,26 @@ class ZPTNavigationService {
     const errors = [];
     const validTilts = ['keywords', 'temporal', 'similarity', 'frequency'];
     const validZooms = ['entity', 'unit', 'text', 'micro', 'community', 'corpus'];
-    
+
     // Check required fields
-    if (params.query === undefined || params.query === null || 
-        typeof params.query !== 'string' || !params.query.trim()) {
+    if (params.query === undefined || params.query === null ||
+      typeof params.query !== 'string' || !params.query.trim()) {
       errors.push('Query cannot be empty');
     }
-    
+
     if (params.zoom === undefined || params.zoom === null) {
       errors.push('Zoom level is required');
     } else if (!validZooms.includes(params.zoom)) {
       errors.push('Invalid zoom level');
     }
-    
+
     // Validate tilt if provided
     if (params.tilt !== undefined && params.tilt !== null) {
       if (typeof params.tilt !== 'string' || !validTilts.includes(params.tilt)) {
         errors.push(`Invalid tilt option. Must be one of: ${validTilts.join(', ')}`);
       }
     }
-    
+
     // Validate pan object structure if provided
     if (params.pan !== undefined && params.pan !== null) {
       if (typeof params.pan !== 'object' || Array.isArray(params.pan)) {
@@ -1620,13 +1620,13 @@ class ZPTNavigationService {
         const allowedPanKeys = ['domain', 'temporal', 'keywords', 'similarity'];
         const panKeys = Object.keys(params.pan);
         const invalidKeys = panKeys.filter(key => !allowedPanKeys.includes(key));
-        
+
         if (invalidKeys.length > 0) {
           errors.push(`Invalid pan properties: ${invalidKeys.join(', ')}. Allowed: ${allowedPanKeys.join(', ')}`);
         }
       }
     }
-    
+
     return {
       valid: errors.length === 0,
       errors: errors

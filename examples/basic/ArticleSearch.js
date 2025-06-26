@@ -37,38 +37,38 @@ class ArticleSearchService {
         this.articles = [];
         this.articleMap = new Map(); // Map from index to article URI
         this.embeddingDimension = 1536; // Default, will be adjusted based on stored data
-        
+
         // Get configuration values
         this.sparqlEndpoint = null;
         this.graphName = null;
         this.embeddingModel = null;
         this.auth = null;
-        
+
         this.setupConfiguration();
     }
-    
+
     setupConfiguration() {
         // Get SPARQL endpoint from config
         const sparqlEndpointConfig = this.config.get('sparqlEndpoints.0');
         if (!sparqlEndpointConfig) {
             throw new Error('No SPARQL endpoint configured');
         }
-        
+
         // Construct endpoint URLs
         this.sparqlEndpoint = `${sparqlEndpointConfig.urlBase}${sparqlEndpointConfig.query}`;
-        
+
         // Get graph name from config
         this.graphName = this.config.get('graphName') || this.config.get('storage.options.graphName') || 'http://danny.ayers.name/content';
-        
+
         // Get embedding model
         this.embeddingModel = this.config.get('embeddingModel') || 'nomic-embed-text';
-        
+
         // Set up authentication
         this.auth = {
             user: sparqlEndpointConfig.user,
             password: sparqlEndpointConfig.password
         };
-        
+
         logger.info(`🔧 Search service configured:`);
         logger.info(`   📊 SPARQL endpoint: ${this.sparqlEndpoint}`);
         logger.info(`   🗃️  Graph: ${this.graphName}`);
@@ -85,24 +85,24 @@ class ArticleSearchService {
         }
 
         logger.info('🚀 Initializing ArticleSearchService...');
-        logger.info('=' .repeat(50));
-        
+        logger.info('='.repeat(50));
+
         try {
             // Create the Faiss index
             logger.info(`🧠 Creating FAISS index with dimension ${this.embeddingDimension}...`);
             this.index = new IndexFlatIP(this.embeddingDimension);
             logger.info('✅ FAISS index created successfully');
-            
+
             // Load article embeddings from SPARQL store
             await this.loadEmbeddings();
-            
+
             this.initialized = true;
             logger.info('🎉 INITIALIZATION COMPLETED!');
-            logger.info('=' .repeat(50));
+            logger.info('='.repeat(50));
             logger.info(`📊 Summary:`);
             logger.info(`   ✅ Articles with embeddings: ${this.articles.length}`);
             logger.info(`   🔍 Search service ready for queries`);
-            
+
         } catch (error) {
             logger.error('❌ Failed to initialize ArticleSearchService:', error.message);
             throw error;
@@ -114,51 +114,51 @@ class ArticleSearchService {
      */
     async loadEmbeddings() {
         logger.info('📥 Loading article embeddings from SPARQL store...');
-        
+
         const query = `
             SELECT ?article ?content ?embedding WHERE {
                 GRAPH <${this.graphName}> {
                     ?article <http://schema.org/articleBody> ?content .
-                    ?article <http://example.org/embedding/vector> ?embedding .
+                    ?article <http://purl.org/stuff/ragno/hasEmbedding> ?embedding .
                 }
             }
         `;
-        
+
         logger.debug('🔍 Executing SPARQL query for embeddings...');
         logger.debug(`📋 Query: ${query}`);
-        
+
         try {
             const results = await this.executeSparqlQuery(query);
             const articles = results.results.bindings;
-            
+
             logger.info(`📚 Found ${articles.length} articles with embeddings in SPARQL store`);
-            
+
             if (articles.length === 0) {
                 logger.warn('⚠️  No articles with embeddings found!');
                 logger.warn('💡 Hint: Run ArticleEmbedding.js first to generate embeddings');
                 return;
             }
-            
+
             this.articles = [];
             this.articleMap = new Map();
-            
+
             let validEmbeddings = 0;
             let invalidEmbeddings = 0;
-            
+
             logger.info('🔄 Processing embeddings and building search index...');
-            
+
             // Process each article and add to the index
             articles.forEach((article, i) => {
                 try {
                     const uri = article.article.value;
                     const content = article.content.value;
                     const embeddingStr = article.embedding.value;
-                    
-                    logger.debug(`📄 Processing ${i+1}/${articles.length}: ${uri}`);
-                    
+
+                    logger.debug(`📄 Processing ${i + 1}/${articles.length}: ${uri}`);
+
                     // Parse the embedding vector
                     const embedding = JSON.parse(embeddingStr);
-                    
+
                     if (Array.isArray(embedding)) {
                         // Log the actual dimensions we're seeing
                         if (i === 0) {
@@ -166,18 +166,18 @@ class ArticleSearchService {
                             if (embedding.length !== this.embeddingDimension) {
                                 logger.warn(`⚠️  Stored embeddings have dimension ${embedding.length}, but expected ${this.embeddingDimension}`);
                                 logger.warn('🔄 Adjusting FAISS index to match stored embeddings...');
-                                
+
                                 // Recreate the index with the correct dimension
                                 this.index = new IndexFlatIP(embedding.length);
                                 // Update our dimension for consistency
                                 this.embeddingDimension = embedding.length;
                             }
                         }
-                        
+
                         if (embedding.length > 0) {
                             // Add embedding to the index
                             this.index.add(embedding);
-                            
+
                             // Store article data
                             const title = this.extractTitle(uri, content);
                             this.articles.push({
@@ -185,11 +185,11 @@ class ArticleSearchService {
                                 content: this.truncateContent(content),
                                 title: title
                             });
-                            
+
                             // Map the index to the article
                             this.articleMap.set(validEmbeddings, uri);
                             validEmbeddings++;
-                            
+
                             logger.debug(`   ✅ Added: "${title}"`);
                         } else {
                             logger.warn(`   ❌ Invalid embedding (empty array): ${uri}`);
@@ -204,12 +204,12 @@ class ArticleSearchService {
                     invalidEmbeddings++;
                 }
             });
-            
+
             logger.info('📊 Embedding processing completed:');
             logger.info(`   ✅ Valid embeddings: ${validEmbeddings}`);
             logger.info(`   ❌ Invalid embeddings: ${invalidEmbeddings}`);
             logger.info(`   📈 Success rate: ${((validEmbeddings / articles.length) * 100).toFixed(1)}%`);
-            
+
         } catch (error) {
             logger.error('❌ Error loading embeddings:', error.message);
             throw error;
@@ -221,9 +221,9 @@ class ArticleSearchService {
      */
     async executeSparqlQuery(query) {
         const auth = Buffer.from(`${this.auth.user}:${this.auth.password}`).toString('base64');
-        
+
         logger.debug(`🔍 Executing SPARQL query to: ${this.sparqlEndpoint}`);
-        
+
         try {
             const response = await fetch(this.sparqlEndpoint, {
                 method: 'POST',
@@ -234,13 +234,13 @@ class ArticleSearchService {
                 },
                 body: query
             });
-            
+
             if (!response.ok) {
                 const errorText = await response.text();
                 logger.error(`❌ SPARQL query failed: ${response.status} - ${errorText}`);
                 throw new Error(`SPARQL query failed: ${response.status} - ${errorText}`);
             }
-            
+
             const result = await response.json();
             logger.debug(`✅ Query successful, returned ${result.results?.bindings?.length || 0} results`);
             return result;
@@ -259,14 +259,14 @@ class ArticleSearchService {
             const startTime = Date.now();
             const embedding = await this.ollama.generateEmbedding(this.embeddingModel, text);
             const endTime = Date.now();
-            
+
             logger.debug(`✅ Embedding generated in ${endTime - startTime}ms, dimension: ${embedding.length}`);
-            
+
             // Check dimension mismatch and handle it
             if (embedding.length !== this.embeddingDimension) {
                 logger.warn(`⚠️  Dimension mismatch! Expected ${this.embeddingDimension}, got ${embedding.length}`);
                 logger.warn('🔄 This may be due to different model versions. Attempting to handle...');
-                
+
                 if (embedding.length < this.embeddingDimension) {
                     // Pad with zeros if too short
                     const paddedEmbedding = [...embedding, ...new Array(this.embeddingDimension - embedding.length).fill(0)];
@@ -279,7 +279,7 @@ class ArticleSearchService {
                     return truncatedEmbedding;
                 }
             }
-            
+
             return embedding;
         } catch (error) {
             logger.error('❌ Error generating embedding:', error.message);
@@ -295,26 +295,36 @@ class ArticleSearchService {
             logger.info('🔄 Search service not initialized, initializing now...');
             await this.initialize();
         }
-        
+
         if (!queryText || queryText.trim().length === 0) {
             logger.warn('⚠️  Empty query provided, returning no results');
             return [];
         }
-        
+
+        // Check if we have any articles loaded
+        if (this.articles.length === 0) {
+            logger.warn('⚠️  No articles with embeddings found in SPARQL store');
+            logger.warn('💡 Hint: Run ArticleEmbedding.js first to generate embeddings');
+            return [];
+        }
+
         logger.info('🔍 PERFORMING SEMANTIC SEARCH');
-        logger.info('=' .repeat(40));
+        logger.info('='.repeat(40));
         logger.info(`📝 Query: "${queryText}"`);
         logger.info(`🎯 Limit: ${limit} results`);
-        
+
         try {
             // Generate embedding for the query
             const queryEmbedding = await this.generateEmbedding(queryText);
+
+            // Ensure we don't search for more results than we have
+            const searchLimit = Math.min(limit, this.articles.length);
             
             // Search the index
-            logger.info('🔎 Searching FAISS index...');
-            const searchResults = this.index.search(queryEmbedding, limit);
+            logger.info(`🔎 Searching FAISS index (${searchLimit} of ${this.articles.length} available)...`);
+            const searchResults = this.index.search(queryEmbedding, searchLimit);
             logger.debug('🔍 Raw search results:', searchResults);
-            
+
             // Handle FAISS search results format
             let resultsArray = [];
             if (searchResults && typeof searchResults === 'object') {
@@ -328,14 +338,14 @@ class ArticleSearchService {
                     }));
                 }
             }
-            
+
             logger.info(`✅ Found ${resultsArray.length} results`);
-            
+
             // Map results to articles
             const results = resultsArray.map((result, i) => {
                 const uri = this.articleMap.get(result.id);
                 const article = this.articles.find(a => a.uri === uri);
-                
+
                 const mappedResult = {
                     rank: i + 1,
                     uri,
@@ -343,16 +353,16 @@ class ArticleSearchService {
                     content: article?.content || '',
                     score: result.score.toFixed(4)
                 };
-                
+
                 logger.info(`${i + 1}. "${mappedResult.title}" (score: ${mappedResult.score})`);
                 logger.debug(`   📄 Content: ${mappedResult.content.substring(0, 100)}...`);
-                
+
                 return mappedResult;
             });
-            
-            logger.info('=' .repeat(40));
+
+            logger.info('='.repeat(40));
             logger.info(`🎉 Search completed successfully with ${results.length} results`);
-            
+
             return results;
         } catch (error) {
             logger.error('❌ Error searching articles:', error.message);
@@ -369,7 +379,7 @@ class ArticleSearchService {
         if (firstLine.startsWith('# ')) {
             return firstLine.substring(2).trim();
         }
-        
+
         // Otherwise get filename from URI
         return this.getFilenameFromUri(uri);
     }
@@ -389,7 +399,7 @@ class ArticleSearchService {
         if (content.length <= maxLength) {
             return content;
         }
-        
+
         return content.substring(0, maxLength) + '...';
     }
 }
@@ -397,37 +407,37 @@ class ArticleSearchService {
 // Main function to demonstrate the search service
 async function main() {
     logger.info('🚀 Starting ArticleSearchService Demo');
-    logger.info('=' .repeat(60));
-    
+    logger.info('='.repeat(60));
+
     try {
         // Load configuration
         logger.info('⚙️  Loading configuration from config file...');
         const config = new Config('../config/config.json');
         await config.init();
         logger.info('✅ Configuration loaded successfully');
-        
+
         // Create search service
         const searchService = new ArticleSearchService(config);
-        
+
         // Initialize the service
         await searchService.initialize();
-        
+
         // Test queries
         const testQueries = [
             'semantic web technologies',
-            'machine learning applications', 
+            'machine learning applications',
             'vector embeddings neural networks',
             'SPARQL query language',
             'artificial intelligence'
         ];
-        
+
         logger.info('🧪 Running test queries...');
-        logger.info('=' .repeat(60));
-        
+        logger.info('='.repeat(60));
+
         for (const query of testQueries) {
             try {
                 const results = await searchService.search(query, 3);
-                
+
                 if (results.length === 0) {
                     logger.warn(`⚠️  No results found for: "${query}"`);
                 } else {
@@ -438,18 +448,18 @@ async function main() {
                         logger.info(`      🔗 ${result.uri}`);
                     });
                 }
-                
+
                 // Wait between queries
                 await new Promise(resolve => setTimeout(resolve, 1000));
-                
+
             } catch (error) {
                 logger.error(`❌ Error searching for "${query}":`, error.message);
             }
         }
-        
+
         logger.info('\n🎉 Demo completed successfully!');
         logger.info('💡 The search service is ready for use in your applications');
-        
+
     } catch (error) {
         logger.error('❌ Fatal error:', error.message);
         process.exit(1);
