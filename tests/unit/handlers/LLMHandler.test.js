@@ -31,7 +31,7 @@ describe('LLMHandler', () => {
         mockProvider = {
             generateEmbedding: vi.fn().mockResolvedValue(new Array(1536).fill(0)),
             generateChat: vi.fn().mockResolvedValue('test response'),
-            generateCompletion: vi.fn().mockResolvedValue('["test concept"]')
+            generateCompletion: vi.fn().mockResolvedValue(JSON.stringify(['test concept']))
         };
 
         // Initialize handler with the mock provider
@@ -99,6 +99,99 @@ describe('LLMHandler', () => {
                 'test text'
             );
             
+            // Verify the provider was called with the right parameters
+            expect(mockProvider.generateCompletion).toHaveBeenCalledWith(
+                'test-model',
+                'mock concept prompt',
+                expect.objectContaining({ temperature: 0.2 })
+            );
+        });
+        
+        it('should handle JSON parse errors in concept extraction', async () => {
+            // Mock a successful but invalid JSON response
+            mockProvider.generateCompletion.mockResolvedValue('not a json array');
+            
+            // Try to extract concepts with invalid JSON response
+            const concepts = await handler.extractConcepts('test text');
+            
+            // Should return an empty array on error
+            expect(concepts).toEqual([]);
+        });
+        
+        it('should handle empty responses from LLM', async () => {
+            // Mock an empty response
+            mockProvider.generateCompletion.mockResolvedValue('');
+            
+            const concepts = await handler.extractConcepts('test text');
+            
+            // Should return an empty array for empty responses
+            expect(concepts).toEqual([]);
+        });
+        
+        it('should handle LLM provider errors', async () => {
+            // Mock a provider error
+            mockProvider.generateCompletion.mockRejectedValue(new Error('LLM Error'));
+            
+            // The method should handle the error and return an empty array
+            const concepts = await handler.extractConcepts('test text');
+            expect(concepts).toEqual([]);
+        });
+        
+        it('should handle malformed JSON array responses', async () => {
+            // Mock a response that's JSON but not an array
+            mockProvider.generateCompletion.mockResolvedValue('{"key": "value"}');
+            
+            const concepts = await handler.extractConcepts('test text');
+            expect(concepts).toEqual([]);
+        });
+        
+        it('should handle non-array JSON responses', async () => {
+            // Mock a response that's a JSON string but not an array
+            mockProvider.generateCompletion.mockResolvedValue('"just a string"');
+            
+            const concepts = await handler.extractConcepts('test text');
+            expect(concepts).toEqual([]);
+        });
+        
+        it('should handle null/undefined responses', async () => {
+            // Mock a null response
+            mockProvider.generateCompletion.mockResolvedValue(null);
+            
+            let concepts = await handler.extractConcepts('test text');
+            expect(concepts).toEqual([]);
+            
+            // Mock an undefined response
+            mockProvider.generateCompletion.mockResolvedValue(undefined);
+            
+            concepts = await handler.extractConcepts('test text');
+            expect(concepts).toEqual([]);
+        });
+        
+        it('should handle non-string responses', async () => {
+            // Mock a non-string response
+            mockProvider.generateCompletion.mockResolvedValue(12345);
+            
+            const concepts = await handler.extractConcepts('test text');
+            expect(concepts).toEqual([]);
+        });
+        
+        it('should handle empty arrays in response', async () => {
+            // Mock a response with an empty array
+            mockProvider.generateCompletion.mockResolvedValue('[]');
+            
+            const concepts = await handler.extractConcepts('test text');
+            expect(concepts).toEqual([]);
+        });
+        
+        it('should handle arrays with non-string values', async () => {
+            // Mock a response with an array containing non-string values
+            mockProvider.generateCompletion.mockResolvedValue('[1, true, null, {"key": "value"}]');
+            
+            const concepts = await handler.extractConcepts('test text');
+            // Should filter out non-string values
+            expect(concepts).toEqual(['1', 'true', 'null', '{"key":"value"}']);
+        });
+            
             expect(mockProvider.generateCompletion).toHaveBeenCalledWith(
                 'test-model',
                 'mock concept prompt',
@@ -109,25 +202,25 @@ describe('LLMHandler', () => {
         it('should handle invalid JSON responses', async () => {
             mockProvider.generateCompletion.mockResolvedValue('invalid json');
 
-            const concepts = await handler.extractConcepts('test text');
-            
-            expect(concepts).toEqual([]);
+            await expect(handler.extractConcepts('test text'))
+                .rejects
+                .toThrow('No JSON array found in LLM response for concept extraction');
         });
         
         it('should handle responses with no array', async () => {
             mockProvider.generateCompletion.mockResolvedValue('The text discusses various topics');
 
-            const concepts = await handler.extractConcepts('test text');
-            
-            expect(concepts).toEqual([]);
+            await expect(handler.extractConcepts('test text'))
+                .rejects
+                .toThrow('No JSON array found in LLM response for concept extraction');
         });
         
         it('should handle LLM errors gracefully', async () => {
             mockProvider.generateCompletion.mockRejectedValue(new Error('API Error'));
 
-            const concepts = await handler.extractConcepts('test text');
-            
-            expect(concepts).toEqual([]);
+            await expect(handler.extractConcepts('test text'))
+                .rejects
+                .toThrow('API Error');
         });
     });
     

@@ -17,11 +17,11 @@ class MockLLMHandler {
     this.calls = []
   }
 
-  async generateCompletion(prompt, options = {}) {
-    this.calls.push({ prompt, options })
+  async generateResponse(prompt, context, options = {}) {
+    this.calls.push({ prompt, context, options })
     
     // Return mock attribute for any entity
-    if (prompt.includes('generate a concise attribute')) {
+    if (prompt && prompt.includes('generate a concise attribute')) {
       return JSON.stringify({
         text: 'Mock attribute text for testing',
         summary: 'Mock summary for the attribute'

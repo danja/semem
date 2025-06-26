@@ -7,6 +7,15 @@ import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
+// Mock the status-resource-http module before any imports
+vi.mock('../../mcp/resources/status-resource-http.js', () => ({
+  registerStatusResourcesHttp: vi.fn().mockResolvedValue({
+    start: vi.fn().mockResolvedValue({ success: true }),
+    stop: vi.fn().mockResolvedValue({ success: true }),
+    getStatus: vi.fn().mockResolvedValue({ status: 'ok' })
+  })
+}));
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
