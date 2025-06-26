@@ -191,15 +191,8 @@ describe('LLMHandler', () => {
             // Should filter out non-string values
             expect(concepts).toEqual(['1', 'true', 'null', '{"key":"value"}']);
         });
-            
-            expect(mockProvider.generateCompletion).toHaveBeenCalledWith(
-                'test-model',
-                'mock concept prompt',
-                { temperature: 0.2 }
-            );
-        });
-
-        it('should handle invalid JSON responses', async () => {
+        
+        it('should handle JSON parse errors in concept extraction', async () => {
             mockProvider.generateCompletion.mockResolvedValue('invalid json');
 
             await expect(handler.extractConcepts('test text'))
