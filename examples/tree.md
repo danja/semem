@@ -5,13 +5,11 @@ examples
 │   ├── CheckLLMProviders.js - works
 │   ├── ClaudeEnrichJSON.js - dodgy premise
 │   ├── ContextManagement.js -looks ok
-│   ├── HTTPCalls.js
-│   ├── Ingest.js
-│   ├── MemoryEmbeddingJSON.js
-│   ├── MemoryEmbeddingSPARQL.js
+│   ├── HTTPCalls.js - broken at server on final call, but is limited anyway
+│   ├── Ingest.js - ok
+│   ├── MemoryEmbeddingSPARQL.js - looks ok
 │   ├── README.md
-│   ├── SPARQL_CONSTRUCT_API.md
-│   └── SPARQLConstructExample.js
+
 ├── clips
 │   └── semem-inference-demo.sparql
 ├── data

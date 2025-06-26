@@ -58,11 +58,17 @@ process.on('unhandledRejection', async (reason, promise) => {
     await shutdown('unhandledRejection');
 });
 
-async function makeAPIRequest(baseUrl, endpoint, options = {}) {
+async function makeAPIRequest(baseUrl, endpoint, options = {}, config = null) {
     const url = `${baseUrl}${endpoint}`;
+    
+    // Get API key from environment or config
+    const apiKey = process.env.SEMEM_API_KEY || 
+                   config?.get('api.key') || 
+                   'semem-dev-key'; // Default dev key from auth middleware
+    
     const defaultHeaders = {
         'Content-Type': 'application/json',
-        'X-API-Key': 'semem-dev-key' // Default dev key from auth middleware
+        'X-API-Key': apiKey
     };
     
     const response = await fetch(url, {
@@ -110,17 +116,13 @@ async function main() {
     logger.info('🚀 Starting HTTP Calls Example');
 
     // Initialize configuration
-    const config = new Config('./config/config.json');
+    const config = new Config('../config/config.json');
     await config.init();
 
-    // Get server configuration
+    // Get server configuration with fallbacks
     const serverConfig = config.get('servers');
-    if (!serverConfig) {
-        throw new Error('No server configuration found. Please check your config.');
-    }
-
-    const apiPort = serverConfig.api || 4100;
-    const uiPort = serverConfig.ui || 4120;
+    const apiPort = serverConfig?.api || 4100;  // Default API port
+    const uiPort = serverConfig?.ui || 4120;     // Default UI port
     const apiBaseUrl = `http://localhost:${apiPort}`;
     const uiBaseUrl = `http://localhost:${uiPort}`;
 
@@ -150,7 +152,7 @@ async function main() {
         // Test API health in detail
         logger.info('\n=== Testing API Health ===');
         
-        const health = await makeAPIRequest(apiBaseUrl, '/api/health');
+        const health = await makeAPIRequest(apiBaseUrl, '/api/health', {}, config);
         logger.info('✓ API health check passed');
         logger.info(`Status: ${health.status}`);
         logger.info(`Uptime: ${Math.round(health.uptime)}s`);
@@ -179,7 +181,7 @@ async function main() {
         const storeResult = await makeAPIRequest(apiBaseUrl, '/api/memory', {
             method: 'POST',
             body: JSON.stringify(memoryData)
-        });
+        }, config);
         
         logger.info('✓ Memory stored successfully');
         logger.info(`ID: ${storeResult.id}`);
@@ -204,7 +206,7 @@ async function main() {
                 threshold: '0.5'
             });
             
-            const searchResult = await makeAPIRequest(apiBaseUrl, `/api/memory/search?${searchParams}`);
+            const searchResult = await makeAPIRequest(apiBaseUrl, `/api/memory/search?${searchParams}`, {}, config);
             
             logger.info(`Found ${searchResult.count} results:`);
             searchResult.results.forEach((result, idx) => {
@@ -229,7 +231,7 @@ async function main() {
                 text: embeddingText,
                 model: 'nomic-embed-text'
             })
-        });
+        }, config);
         
         logger.info('✓ Embedding generated successfully');
         logger.info(`Dimensions: ${embeddingResult.dimension}`);
@@ -247,7 +249,7 @@ async function main() {
             body: JSON.stringify({
                 text: conceptText
             })
-        });
+        }, config);
         
         logger.info('✓ Concepts extracted successfully');
         logger.info(`Concepts: [${conceptResult.concepts.join(', ')}]`);
@@ -266,7 +268,7 @@ async function main() {
                 temperature: 0.7,
                 maxTokens: 200
             })
-        });
+        }, config);
         
         logger.info('✓ Chat response generated');
         logger.info(`Response: "${chatResult.response}"`);
@@ -284,7 +286,7 @@ async function main() {
             limit: '3'
         });
         
-        const contentSearchResult = await makeAPIRequest(apiBaseUrl, `/api/search?${searchParams}`);
+        const contentSearchResult = await makeAPIRequest(apiBaseUrl, `/api/search?${searchParams}`, {}, config);
         
         logger.info('✓ Search completed');
         logger.info(`Found ${contentSearchResult.count} results:`);
@@ -298,7 +300,7 @@ async function main() {
         // Test metrics API
         logger.info('\n=== Testing Metrics API ===');
         
-        const metrics = await makeAPIRequest(apiBaseUrl, '/api/metrics');
+        const metrics = await makeAPIRequest(apiBaseUrl, '/api/metrics', {}, config);
         logger.info('✓ Metrics retrieved');
         logger.info(`Timestamp: ${new Date(metrics.data.timestamp).toISOString()}`);
         logger.info(`API Request Count: ${metrics.data.apiCount}`);
@@ -335,7 +337,7 @@ async function main() {
             await makeAPIRequest(apiBaseUrl, '/api/memory', {
                 method: 'POST',
                 body: JSON.stringify(interaction)
-            });
+            }, config);
             
             logger.info('✓ Stored successfully');
         }
@@ -344,7 +346,7 @@ async function main() {
         const finalSearch = await makeAPIRequest(apiBaseUrl, '/api/memory/search?' + new URLSearchParams({
             query: "Paris France culture",
             limit: '5'
-        }));
+        }), {}, config);
         
         logger.info(`\nFinal search found ${finalSearch.count} related memories about Paris and France`);
         
