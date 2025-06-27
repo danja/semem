@@ -1,4 +1,6 @@
-# Frontend Module
+# Browser GUI
+
+**This is incomplete and buggy**
 
 The Frontend module provides a modern, interactive web interface for the Semem semantic memory system. Built with vanilla JavaScript and modern web standards, it offers real-time visualization, conversational interfaces, and comprehensive system administration capabilities.
 

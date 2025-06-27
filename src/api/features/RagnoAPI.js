@@ -7,6 +7,7 @@ import { aggregateCommunities } from '../../ragno/aggregateCommunities.js';
 import GraphAnalytics from '../../ragno/algorithms/GraphAnalytics.js';
 import CommunityDetection from '../../ragno/algorithms/CommunityDetection.js';
 import PersonalizedPageRank from '../../ragno/algorithms/PersonalizedPageRank.js';
+import Hyde from '../../ragno/algorithms/Hyde.js';
 import DualSearch from '../../ragno/search/DualSearch.js';
 import RDFGraphManager from '../../ragno/core/RDFGraphManager.js';
 import NamespaceManager from '../../ragno/core/NamespaceManager.js';
@@ -38,6 +39,7 @@ export default class RagnoAPI extends BaseAPI {
         this.graphAnalytics = null;
         this.communityDetection = null;
         this.dualSearch = null;
+        this.hyde = null;
         
         // Metrics tracking
         this.metrics = {
@@ -96,6 +98,16 @@ export default class RagnoAPI extends BaseAPI {
                 });
             }
             
+            // Initialize Hyde algorithm
+            this.hyde = new Hyde({
+                uriBase: this.namespaceManager.getBaseUri(),
+                maxTokens: 512,
+                temperature: 0.7,
+                hypothesesPerQuery: 3,
+                extractEntities: true,
+                maxEntitiesPerHypothesis: 10
+            });
+            
             this.logger.info('RagnoAPI initialized successfully');
         } catch (error) {
             this.logger.error('Failed to initialize RagnoAPI:', error);
@@ -139,6 +151,12 @@ export default class RagnoAPI extends BaseAPI {
                     break;
                 case 'pipeline':
                     result = await this.runFullPipeline(params, requestId);
+                    break;
+                case 'hyde-generate':
+                    result = await this.generateHypotheses(params, requestId);
+                    break;
+                case 'hyde-query':
+                    result = await this.queryHypotheses(params, requestId);
                     break;
                 default:
                     throw new Error(`Unknown operation: ${operation}`);
@@ -559,6 +577,113 @@ export default class RagnoAPI extends BaseAPI {
         } catch (error) {
             this.logger.error('Full pipeline failed:', error);
             throw new Error(`Pipeline failed: ${error.message}`);
+        }
+    }
+
+    /**
+     * Generate hypotheses using HyDE algorithm
+     */
+    async generateHypotheses({ queries, options = {} }, requestId) {
+        if (!queries) {
+            throw new Error('Queries are required for hypothesis generation');
+        }
+        
+        if (!this.llmHandler) {
+            throw new Error('LLM handler not available for hypothesis generation');
+        }
+        
+        try {
+            const queryArray = Array.isArray(queries) ? queries : [queries];
+            const dataset = this.rdfManager.dataset || require('rdf-ext').dataset();
+            
+            this.logger.info(`Generating hypotheses for ${queryArray.length} queries`, { requestId });
+            
+            const results = await this.hyde.generateHypotheses(
+                queryArray,
+                this.llmHandler,
+                dataset,
+                {
+                    hypothesesPerQuery: options.hypothesesPerQuery || 3,
+                    temperature: options.temperature || 0.7,
+                    maxTokens: options.maxTokens || 512,
+                    extractEntities: options.extractEntities !== false,
+                    maxEntitiesPerHypothesis: options.maxEntitiesPerHypothesis || 10,
+                    ...options
+                }
+            );
+            
+            // Store results in SPARQL if available
+            if (this.sparqlStore && options.store !== false) {
+                try {
+                    await this.sparqlStore.storeDataset(dataset);
+                    this.logger.info('Stored hypotheses in SPARQL', { requestId });
+                } catch (error) {
+                    this.logger.warn('Failed to store hypotheses in SPARQL:', error.message);
+                }
+            }
+            
+            return {
+                success: true,
+                queries: queryArray,
+                hypotheses: results.hypotheses.map(h => this._formatSemanticUnit(h)),
+                entities: results.entities.map(e => this._formatEntity(e)),
+                relationships: results.relationships.map(r => this._formatRelationship(r)),
+                statistics: {
+                    queriesProcessed: queryArray.length,
+                    hypothesesGenerated: results.hypotheses.length,
+                    entitiesExtracted: results.entities.length,
+                    relationshipsCreated: results.relationships.length,
+                    rdfTriplesAdded: results.rdfTriples
+                },
+                processingTime: results.processingTime
+            };
+        } catch (error) {
+            this.logger.error('Hypothesis generation failed:', error);
+            throw new Error(`Hypothesis generation failed: ${error.message}`);
+        }
+    }
+
+    /**
+     * Query hypothetical content from the knowledge graph
+     */
+    async queryHypotheses({ filters = {}, limit = 50 } = {}, requestId) {
+        if (!this.sparqlEndpoint && !this.rdfManager.dataset) {
+            throw new Error('No RDF data source available for querying hypotheses');
+        }
+        
+        try {
+            let dataset;
+            if (this.rdfManager.dataset && this.rdfManager.dataset.size > 0) {
+                dataset = this.rdfManager.dataset;
+            } else if (this.sparqlEndpoint) {
+                // If no local dataset, we'd need to fetch from SPARQL
+                // For now, return empty results with a note
+                this.logger.warn('No local RDF dataset available for hypothesis querying');
+                return {
+                    success: true,
+                    hypotheses: [],
+                    count: 0,
+                    message: 'No hypothetical content available in local dataset'
+                };
+            }
+            
+            this.logger.info('Querying hypothetical content', { requestId, filters });
+            
+            const hypotheses = this.hyde.queryHypotheticalContent(dataset, filters);
+            
+            // Apply limit
+            const limitedResults = hypotheses.slice(0, limit);
+            
+            return {
+                success: true,
+                hypotheses: limitedResults,
+                count: limitedResults.length,
+                totalFound: hypotheses.length,
+                filters
+            };
+        } catch (error) {
+            this.logger.error('Hypothesis querying failed:', error);
+            throw new Error(`Hypothesis querying failed: ${error.message}`);
         }
     }
 

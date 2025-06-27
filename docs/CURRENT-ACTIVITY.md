@@ -2,6 +2,8 @@
 
 Increased human intervention!
 
+Docs : I'm in the process of pulling together up-to-date material under `docs/manual`.
+
 A lot of code has been created ahead of me actually trying it out. So right now the priority is getting things into a more finished state. Debugging, rationalizing. Three avenues of exploration -
 
 1. MCP wiring using STDIO is working with :
@@ -14,7 +16,7 @@ so Claude code can be asked to use the tools, resources & prompts.
 
 2. HTTP API
 
-See docs/http-api/usage.md
+See docs/manual/http-api-endpoints.md
 
 The HTTP server is proving difficult to debug. Ok, I admit I haven't looked at the code properly myself. Claude is finding it difficult.
 

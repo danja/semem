@@ -552,6 +552,70 @@ This document provides comprehensive status information for all available HTTP A
 * **Side Effects**: Complete knowledge graph creation and storage in SPARQL
 * **Behaviour**: Orchestrates decompose → enrich → store pipeline with error handling and progress tracking
 
+### Generate Hypotheses (HyDE)
+* **Name**: hyde-generate
+* **Purpose**: Generate hypothetical answers for queries using the HyDE algorithm
+* **Endpoint URL**: `POST /api/graph/hyde-generate`
+* **OpenAPI Schema**: `./components/schemas/ragno.yaml#/RagnoHydeGenerateRequest` and `RagnoHydeGenerateResponse`
+* **Supported HTTP Methods**: POST
+* **Inputs**: 
+  ```json
+  {
+    "queries": ["What is quantum computing?", "How does AI work?"],
+    "options": {
+      "hypothesesPerQuery": 3,
+      "temperature": 0.7,
+      "extractEntities": true,
+      "store": true
+    }
+  }
+  ```
+* **Outputs**: 
+  ```json
+  {
+    "success": true,
+    "queries": ["What is quantum computing?"],
+    "hypotheses": [...],
+    "entities": [...],
+    "relationships": [...],
+    "statistics": {
+      "queriesProcessed": 1,
+      "hypothesesGenerated": 3,
+      "entitiesExtracted": 15
+    }
+  }
+  ```
+* **Side Effects**: Stores hypothetical content in knowledge graph with ragno:maybe markers
+* **Behaviour**: Uses LLM to generate hypothetical answers, extracts entities, creates RDF with uncertainty annotations
+
+### Query Hypotheses (HyDE)
+* **Name**: hyde-query
+* **Purpose**: Query and retrieve hypothetical content from knowledge graph
+* **Endpoint URL**: `GET /api/graph/hyde-query`
+* **OpenAPI Schema**: `./components/schemas/ragno.yaml#/RagnoHydeQueryRequest` and `RagnoHydeQueryResponse`
+* **Supported HTTP Methods**: GET
+* **Inputs**: 
+  ```json
+  {
+    "filters": {
+      "confidence": "0.6"
+    },
+    "limit": 50
+  }
+  ```
+* **Outputs**: 
+  ```json
+  {
+    "success": true,
+    "hypotheses": [...],
+    "count": 25,
+    "totalFound": 47,
+    "filters": {"confidence": "0.6"}
+  }
+  ```
+* **Side Effects**: None
+* **Behaviour**: Retrieves hypothetical content marked with ragno:maybe property, applies filters
+
 ---
 
 ## ZPT Navigation API
@@ -1139,7 +1203,7 @@ Common error types:
 
 **Last Updated**: 2025-06-27  
 **API Version**: 1.0.0  
-**Total Endpoints**: 41  
+**Total Endpoints**: 43  
 **Service Health**: All services operational  
 **Storage Backend**: SPARQL (https://fuseki.hyperdata.it)  
 **LLM Providers**: Mistral (primary), Claude (secondary), Ollama (fallback)  

@@ -743,3 +743,167 @@ RagnoGraphStats:
         incompleteRelationships:
           type: integer
           description: Relationships missing subject or object
+
+# HyDE (Hypothetical Document Embeddings) Schemas
+RagnoHydeGenerateRequest:
+  type: object
+  required:
+    - queries
+  properties:
+    queries:
+      oneOf:
+        - type: string
+          description: Single query string
+          example: "What are the benefits of renewable energy?"
+        - type: array
+          items:
+            type: string
+          description: Array of query strings
+          example: ["What is quantum computing?", "How does AI work?"]
+    options:
+      type: object
+      description: Generation options
+      properties:
+        hypothesesPerQuery:
+          type: integer
+          minimum: 1
+          maximum: 10
+          default: 3
+          description: Number of hypotheses to generate per query
+        temperature:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 2.0
+          default: 0.7
+          description: LLM temperature for hypothesis generation
+        maxTokens:
+          type: integer
+          minimum: 50
+          maximum: 2048
+          default: 512
+          description: Maximum tokens per hypothesis
+        extractEntities:
+          type: boolean
+          default: true
+          description: Whether to extract entities from hypotheses
+        maxEntitiesPerHypothesis:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 10
+          description: Maximum entities to extract per hypothesis
+        store:
+          type: boolean
+          default: true
+          description: Whether to store results in SPARQL
+
+RagnoHydeGenerateResponse:
+  type: object
+  properties:
+    success:
+      type: boolean
+      description: Whether the operation succeeded
+    queries:
+      type: array
+      items:
+        type: string
+      description: Original query strings processed
+    hypotheses:
+      type: array
+      items:
+        $ref: '#/RagnoSemanticUnit'
+      description: Generated hypothetical semantic units
+    entities:
+      type: array
+      items:
+        $ref: '#/RagnoEntity'
+      description: Entities extracted from hypotheses
+    relationships:
+      type: array
+      items:
+        $ref: '#/RagnoRelationship'
+      description: Relationships created between queries, hypotheses, and entities
+    statistics:
+      type: object
+      properties:
+        queriesProcessed:
+          type: integer
+          description: Number of queries processed
+        hypothesesGenerated:
+          type: integer
+          description: Total hypotheses generated
+        entitiesExtracted:
+          type: integer
+          description: Total entities extracted
+        relationshipsCreated:
+          type: integer
+          description: Total relationships created
+        rdfTriplesAdded:
+          type: integer
+          description: RDF triples added to knowledge graph
+    processingTime:
+      type: integer
+      description: Processing time in milliseconds
+    error:
+      type: string
+      description: Error message if operation failed
+
+RagnoHydeQueryRequest:
+  type: object
+  properties:
+    filters:
+      type: object
+      description: Query filters
+      additionalProperties:
+        type: string
+      example:
+        "http://purl.org/stuff/ragno/confidence": "0.6"
+    limit:
+      type: integer
+      minimum: 1
+      maximum: 1000
+      default: 50
+      description: Maximum number of results to return
+
+RagnoHydeQueryResponse:
+  type: object
+  properties:
+    success:
+      type: boolean
+      description: Whether the query succeeded
+    hypotheses:
+      type: array
+      items:
+        type: object
+        properties:
+          uri:
+            type: string
+            format: uri
+            description: Hypothesis URI
+          properties:
+            type: object
+            additionalProperties:
+              type: array
+              items:
+                type: string
+            description: RDF properties of the hypothesis
+          hypothetical:
+            type: boolean
+            description: Always true for hypothetical content
+      description: Found hypothetical content
+    count:
+      type: integer
+      description: Number of results returned
+    totalFound:
+      type: integer
+      description: Total matching results (may be greater than count due to limit)
+    filters:
+      type: object
+      description: Applied filters
+    message:
+      type: string
+      description: Additional information about the query
+    error:
+      type: string
+      description: Error message if query failed
