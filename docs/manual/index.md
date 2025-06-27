@@ -1,6 +1,6 @@
 # Semem Manual
 
-**Semantic Web Memory for Intelligent Agents - The Manual**
+**Semantic Web Memory for Intelligent Agents**
 
 ## Introduction
 
@@ -8,8 +8,8 @@ This manual provides comprehensive documentation for Semem, a Node.js toolkit th
 
 Semem combines three core systems:
 - **🧠 Semantic Memory**: Vector embeddings and intelligent context retrieval
-- **🕸️ Knowledge Graphs**: RDF-based entity extraction using the Ragno ontology  
-- **🧭 3D Navigation**: ZPT (Zoom, Pan, Tilt) spatial knowledge exploration
+- **🕸️ Knowledge Graphs**: RDF-based entity extraction using the [Ragno Ontology](https://github.com/danja/ragno)
+- **🧭 3D Navigation**: ZPT (Zoom, Pan, Tilt) spatial knowledge exploration using the [ZPT Ontology](https://github.com/danja/zpt)
 
 The system provides multiple interfaces (direct SDK, HTTP API, MCP protocol, web UI) and supports various deployment scenarios from local development to production semantic web infrastructure.
 
