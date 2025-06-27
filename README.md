@@ -4,7 +4,7 @@
 ![Status](https://img.shields.io/badge/status-active-success.svg)
 
 ## Semantic Web Memory for Intelligent Agents
-
+ 
 *...or, Graph RAG on steroids for the global knowledgebase*
 
 **tl;dr - flipping ideas (mostly) from the LLM world over to the Semantic Web for massively simplified integration, at global scale**
