@@ -10,7 +10,7 @@
 **tl;dr - flipping ideas (mostly) from the LLM world over to the Semantic Web for massively simplified integration, at global scale**
 
 **Semem Documentation](https://danja.github.io/semem/)**
-
+ 
 *click the triangles to expand the text*
  
 <details>
