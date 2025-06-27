@@ -19,7 +19,7 @@ The intuition is that while LLMs and associated techniques have massively advanc
 
 ## Status 2025-06-21 
 
-See also : [CURRENT-ACTIVITIES.md](https://github.com/danja/semem/blob/main/docs/CURRENT-ACTIVITY.md) and [blog](https://tensegrity.it)
+See also :  the (in-progress) manual, [CURRENT-ACTIVITIES.md](https://github.com/danja/semem/blob/main/docs/CURRENT-ACTIVITY.md) and [blog](https://tensegrity.it)
 
 <details>
 <summary>Mostly functional but very, very sketchy. It has an MCP server, HTTP API, a crude browser UI and code APIs. A lot to do before much will be remotely useful. It is in active development in June 2025. The codebase is big and chaotic, <strong>it is not for the fainthearted</strong>.</summary>

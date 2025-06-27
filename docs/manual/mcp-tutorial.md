@@ -1,5 +1,7 @@
 # Semem MCP Tutorial: Complete User Guide
 
+**Untested!**
+
 **A comprehensive workflow-focused guide for using Semem with MCP-enabled systems**
 
 ## Table of Contents
