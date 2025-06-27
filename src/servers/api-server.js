@@ -29,6 +29,7 @@ import ChatAPI from '../api/features/ChatAPI.js';
 import SearchAPI from '../api/features/SearchAPI.js';
 import RagnoAPI from '../api/features/RagnoAPI.js';
 import ZptAPI from '../api/features/ZptAPI.js';
+import VSOMAPI from '../api/features/VSOMAPI.js';
 import UnifiedSearchAPI from '../api/features/UnifiedSearchAPI.js';
 
 // Load environment variables
@@ -376,13 +377,25 @@ class APIServer {
         });
         await zptApi.initialize();
 
+        // Initialize VSOM API
+        const dimension = 1536; // Default embedding dimension
+        const vsomApi = new VSOMAPI({
+            registry: this.apiRegistry,
+            logger: this.logger,
+            maxInstancesPerSession: 5,
+            defaultMapSize: [20, 20],
+            defaultEmbeddingDim: dimension
+        });
+        await vsomApi.initialize();
+
         // Store API handlers first
         this.apiContext.apis = {
             'memory-api': memoryApi,
             'chat-api': chatApi,
             'search-api': searchApi,
             'ragno-api': ragnoApi,
-            'zpt-api': zptApi
+            'zpt-api': zptApi,
+            'vsom-api': vsomApi
         };
 
         // Initialize Unified Search API (depends on other APIs being available)
@@ -399,7 +412,7 @@ class APIServer {
         // Update API handlers with unified search
         this.apiContext.apis['unified-search-api'] = unifiedSearchApi;
 
-        return { memoryApi, chatApi, searchApi, ragnoApi, zptApi, unifiedSearchApi };
+        return { memoryApi, chatApi, searchApi, ragnoApi, zptApi, vsomApi, unifiedSearchApi };
     }
 
     /**
@@ -439,6 +452,19 @@ class APIServer {
         apiRouter.get('/navigate/options', this.createHandler('zpt-api', 'options'));
         apiRouter.get('/navigate/schema', this.createHandler('zpt-api', 'schema'));
         apiRouter.get('/navigate/health', this.createHandler('zpt-api', 'health'));
+
+        // VSOM API routes
+        apiRouter.post('/vsom/create', authenticateRequest, this.createHandler('vsom-api', 'create'));
+        apiRouter.post('/vsom/load-data', authenticateRequest, this.createHandler('vsom-api', 'load-data'));
+        apiRouter.post('/vsom/generate-sample-data', authenticateRequest, this.createHandler('vsom-api', 'generate-sample-data'));
+        apiRouter.post('/vsom/train', authenticateRequest, this.createHandler('vsom-api', 'train'));
+        apiRouter.post('/vsom/stop-training', authenticateRequest, this.createHandler('vsom-api', 'stop-training'));
+        apiRouter.get('/vsom/grid', authenticateRequest, this.createHandler('vsom-api', 'grid'));
+        apiRouter.get('/vsom/features', authenticateRequest, this.createHandler('vsom-api', 'features'));
+        apiRouter.post('/vsom/cluster', authenticateRequest, this.createHandler('vsom-api', 'cluster'));
+        apiRouter.get('/vsom/training-status', authenticateRequest, this.createHandler('vsom-api', 'training-status'));
+        apiRouter.get('/vsom/instances', authenticateRequest, this.createHandler('vsom-api', 'instances'));
+        apiRouter.delete('/vsom/instances/:instanceId', authenticateRequest, this.createHandler('vsom-api', 'delete'));
 
         // Unified Search API routes
         apiRouter.post('/search/unified', authenticateRequest, this.createHandler('unified-search-api', 'unified'));
@@ -509,6 +535,24 @@ class APIServer {
                                 'GET /api/navigate/health - ZPT health check'
                             ],
                             status: this.apiContext.apis['zpt-api']?.initialized ? 'healthy' : 'unavailable'
+                        },
+                        vsom: {
+                            name: 'VSOM Visualization API',
+                            description: 'Vector Self-Organizing Map for knowledge graph visualization',
+                            endpoints: [
+                                'POST /api/vsom/create - Create SOM instance',
+                                'POST /api/vsom/load-data - Load entity data',
+                                'POST /api/vsom/generate-sample-data - Generate sample data',
+                                'POST /api/vsom/train - Train SOM',
+                                'POST /api/vsom/stop-training - Stop training',
+                                'GET /api/vsom/grid - Get grid state',
+                                'GET /api/vsom/features - Get feature maps',
+                                'POST /api/vsom/cluster - Perform clustering',
+                                'GET /api/vsom/training-status - Get training status',
+                                'GET /api/vsom/instances - List instances',
+                                'DELETE /api/vsom/instances/{id} - Delete instance'
+                            ],
+                            status: this.apiContext.apis['vsom-api']?.initialized ? 'healthy' : 'unavailable'
                         },
                         unified: {
                             name: 'Unified Search API',
