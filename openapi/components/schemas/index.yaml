@@ -11,6 +11,7 @@
 # - Search: $ref: './components/schemas/search.yaml#/SchemaName'
 # - Ragno: $ref: './components/schemas/ragno.yaml#/SchemaName'
 # - ZPT: $ref: './components/schemas/zpt.yaml#/SchemaName'
+# - VSOM: $ref: './components/schemas/vsom.yaml#/SchemaName'
 
 # Import Unified Search API Schemas
 # Reference schemas directly using: $ref: './components/schemas/unified-search.yaml#/SchemaName'
@@ -172,3 +173,34 @@ ApiMetrics:
 
 OperationMetrics:
   $ref: './metrics.yaml#/OperationMetrics'
+
+# Re-export key VSOM schemas
+VSOMInstance:
+  $ref: './vsom.yaml#/VSOMInstance'
+
+VSOMCreateRequest:
+  $ref: './vsom.yaml#/VSOMCreateRequest'
+
+VSOMCreateResponse:
+  $ref: './vsom.yaml#/VSOMCreateResponse'
+
+VSOMLoadDataRequest:
+  $ref: './vsom.yaml#/VSOMLoadDataRequest'
+
+VSOMLoadDataResponse:
+  $ref: './vsom.yaml#/VSOMLoadDataResponse'
+
+VSOMTrainRequest:
+  $ref: './vsom.yaml#/VSOMTrainRequest'
+
+VSOMTrainResponse:
+  $ref: './vsom.yaml#/VSOMTrainResponse'
+
+VSOMGridStateResponse:
+  $ref: './vsom.yaml#/VSOMGridStateResponse'
+
+VSOMClusteringResponse:
+  $ref: './vsom.yaml#/VSOMClusteringResponse'
+
+VSOMInstancesListResponse:
+  $ref: './vsom.yaml#/VSOMInstancesListResponse'

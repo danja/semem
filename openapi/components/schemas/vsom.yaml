@@ -1,0 +1,897 @@
+# VSOM API Schemas
+# Vector Self-Organizing Map API for knowledge graph visualization
+
+VSOMInstance:
+  type: object
+  properties:
+    instanceId:
+      type: string
+      description: Unique identifier for the VSOM instance
+      example: "vsom_1640995200000_abc123def"
+    config:
+      $ref: '#/VSOMConfig'
+    status:
+      type: string
+      enum: [created, data_loaded, trained, training, failed]
+      description: Current status of the VSOM instance
+      example: "created"
+    created:
+      type: string
+      format: date-time
+      description: Instance creation timestamp
+      example: "2024-01-16T10:30:45.123Z"
+    dataLoaded:
+      type: boolean
+      description: Whether data has been loaded into the instance
+      example: false
+    entitiesCount:
+      type: integer
+      minimum: 0
+      description: Number of entities loaded into the instance
+      example: 0
+    trainingResults:
+      $ref: '#/VSOMTrainingResults'
+  required:
+    - instanceId
+    - config
+    - status
+    - created
+
+VSOMConfig:
+  type: object
+  properties:
+    mapSize:
+      type: array
+      items:
+        type: integer
+        minimum: 3
+        maximum: 100
+      minItems: 2
+      maxItems: 2
+      description: Size of the SOM grid [width, height]
+      example: [20, 20]
+    topology:
+      type: string
+      enum: [rectangular, hexagonal]
+      default: rectangular
+      description: Grid topology type
+      example: "rectangular"
+    embeddingDimension:
+      type: integer
+      minimum: 100
+      maximum: 2000
+      description: Dimension of input embeddings
+      example: 1536
+    maxIterations:
+      type: integer
+      minimum: 1
+      maximum: 10000
+      default: 1000
+      description: Maximum training iterations
+      example: 1000
+    initialLearningRate:
+      type: number
+      format: float
+      minimum: 0.001
+      maximum: 1.0
+      default: 0.1
+      description: Initial learning rate for training
+      example: 0.1
+    finalLearningRate:
+      type: number
+      format: float
+      minimum: 0.0001
+      maximum: 0.1
+      default: 0.01
+      description: Final learning rate for training
+      example: 0.01
+    clusterThreshold:
+      type: number
+      format: float
+      minimum: 0.1
+      maximum: 1.0
+      default: 0.8
+      description: Threshold for clustering similarity
+      example: 0.8
+    minClusterSize:
+      type: integer
+      minimum: 1
+      maximum: 50
+      default: 3
+      description: Minimum size for valid clusters
+      example: 3
+  required:
+    - mapSize
+    - embeddingDimension
+
+VSOMCreateRequest:
+  type: object
+  properties:
+    mapSize:
+      type: array
+      items:
+        type: integer
+        minimum: 3
+        maximum: 100
+      minItems: 2
+      maxItems: 2
+      description: Size of the SOM grid [width, height]
+      example: [20, 20]
+    topology:
+      type: string
+      enum: [rectangular, hexagonal]
+      default: rectangular
+      description: Grid topology type
+    embeddingDimension:
+      type: integer
+      minimum: 100
+      maximum: 2000
+      description: Dimension of input embeddings
+      example: 1536
+    maxIterations:
+      type: integer
+      minimum: 1
+      maximum: 10000
+      default: 1000
+      description: Maximum training iterations
+    initialLearningRate:
+      type: number
+      format: float
+      minimum: 0.001
+      maximum: 1.0
+      default: 0.1
+      description: Initial learning rate
+    finalLearningRate:
+      type: number
+      format: float
+      minimum: 0.0001
+      maximum: 0.1
+      default: 0.01
+      description: Final learning rate
+    clusterThreshold:
+      type: number
+      format: float
+      minimum: 0.1
+      maximum: 1.0
+      default: 0.8
+      description: Clustering threshold
+    minClusterSize:
+      type: integer
+      minimum: 1
+      maximum: 50
+      default: 3
+      description: Minimum cluster size
+
+VSOMCreateResponse:
+  allOf:
+    - $ref: '../schemas/common.yaml#/ApiResponse'
+    - type: object
+      properties:
+        instanceId:
+          type: string
+          description: Created VSOM instance identifier
+        config:
+          $ref: '#/VSOMConfig'
+        status:
+          type: string
+          enum: [created]
+          description: Instance status after creation
+        created:
+          type: string
+          format: date-time
+          description: Creation timestamp
+
+VSOMLoadDataRequest:
+  type: object
+  properties:
+    instanceId:
+      type: string
+      description: VSOM instance identifier
+      example: "vsom_1640995200000_abc123def"
+    dataType:
+      type: string
+      enum: [entities, sparql, sample]
+      description: Type of data to load
+      example: "entities"
+    data:
+      oneOf:
+        - $ref: '#/VSOMEntityData'
+        - $ref: '#/VSOMSparqlData'
+        - $ref: '#/VSOMSampleData'
+      description: Data to load based on dataType
+  required:
+    - instanceId
+    - dataType
+
+VSOMEntityData:
+  type: object
+  properties:
+    entities:
+      type: array
+      items:
+        $ref: '#/VSOMEntity'
+      minItems: 1
+      maxItems: 10000
+      description: Array of entities to load
+  required:
+    - entities
+
+VSOMEntity:
+  type: object
+  properties:
+    uri:
+      type: string
+      format: uri
+      description: Entity URI identifier
+      example: "http://example.org/entity/123"
+    name:
+      type: string
+      description: Entity display name
+      example: "Machine Learning"
+    type:
+      type: string
+      description: Entity type
+      example: "concept"
+    content:
+      type: string
+      description: Entity textual content
+      example: "Machine learning is a subset of artificial intelligence"
+    embedding:
+      type: array
+      items:
+        type: number
+        format: float
+      description: Pre-computed embedding vector (optional)
+    metadata:
+      type: object
+      additionalProperties: true
+      description: Additional entity metadata
+  required:
+    - uri
+
+VSOMSparqlData:
+  type: object
+  properties:
+    endpoint:
+      type: string
+      format: uri
+      description: SPARQL endpoint URL
+      example: "https://fuseki.hyperdata.it/dataset/query"
+    query:
+      type: string
+      description: SPARQL query to fetch entities
+      example: "SELECT * WHERE { ?s ?p ?o } LIMIT 100"
+    embeddingProperty:
+      type: string
+      default: "ragno:embedding"
+      description: RDF property containing embeddings
+  required:
+    - endpoint
+    - query
+
+VSOMSampleData:
+  type: object
+  properties:
+    count:
+      type: integer
+      minimum: 10
+      maximum: 1000
+      default: 50
+      description: Number of sample entities to generate
+
+VSOMLoadDataResponse:
+  allOf:
+    - $ref: '../schemas/common.yaml#/ApiResponse'
+    - type: object
+      properties:
+        instanceId:
+          type: string
+          description: VSOM instance identifier
+        dataType:
+          type: string
+          description: Type of data loaded
+        entitiesLoaded:
+          type: integer
+          description: Number of entities successfully loaded
+        dataPreview:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                description: Entity identifier
+              name:
+                type: string
+                description: Entity name
+              embeddingDim:
+                type: integer
+                description: Embedding dimension
+          description: Preview of loaded entities
+
+VSOMGenerateSampleDataRequest:
+  type: object
+  properties:
+    count:
+      type: integer
+      minimum: 10
+      maximum: 1000
+      default: 50
+      description: Number of sample entities to generate
+
+VSOMGenerateSampleDataResponse:
+  allOf:
+    - $ref: '../schemas/common.yaml#/ApiResponse'
+    - type: object
+      properties:
+        entities:
+          type: array
+          items:
+            $ref: '#/VSOMEntity'
+          description: Generated sample entities
+        count:
+          type: integer
+          description: Number of entities generated
+        format:
+          type: string
+          enum: [entities]
+          description: Data format
+        embeddingDimension:
+          type: integer
+          description: Embedding dimension used
+
+VSOMTrainRequest:
+  type: object
+  properties:
+    instanceId:
+      type: string
+      description: VSOM instance identifier
+      example: "vsom_1640995200000_abc123def"
+    epochs:
+      type: integer
+      minimum: 1
+      maximum: 1000
+      default: 100
+      description: Number of training epochs
+    batchSize:
+      type: integer
+      minimum: 1
+      maximum: 100
+      default: 10
+      description: Training batch size
+  required:
+    - instanceId
+
+VSOMTrainResponse:
+  allOf:
+    - $ref: '../schemas/common.yaml#/ApiResponse'
+    - type: object
+      properties:
+        instanceId:
+          type: string
+          description: VSOM instance identifier
+        trainingResults:
+          $ref: '#/VSOMTrainingResults'
+        status:
+          type: string
+          enum: [completed]
+          description: Training status
+
+VSOMTrainingResults:
+  type: object
+  properties:
+    epochs:
+      type: integer
+      description: Number of epochs completed
+      example: 100
+    finalError:
+      type: number
+      format: float
+      description: Final training error
+      example: 0.15
+    convergenceIteration:
+      type: integer
+      description: Iteration where convergence was achieved
+      example: 85
+    trainingTime:
+      type: integer
+      description: Total training time in milliseconds
+      example: 45000
+    learningRateSchedule:
+      type: object
+      properties:
+        initial:
+          type: number
+          format: float
+        final:
+          type: number
+          format: float
+        decay:
+          type: string
+          description: Learning rate decay function used
+      description: Learning rate schedule used
+
+VSOMTrainingStatus:
+  type: object
+  properties:
+    instanceId:
+      type: string
+      description: VSOM instance identifier
+    isTraining:
+      type: boolean
+      description: Whether training is currently active
+      example: false
+    progress:
+      type: object
+      properties:
+        currentIteration:
+          type: integer
+          description: Current training iteration
+        totalIterations:
+          type: integer
+          description: Total iterations planned
+        trainingError:
+          type: number
+          format: float
+          description: Current training error
+        learningRate:
+          type: number
+          format: float
+          description: Current learning rate
+        progress:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Training progress percentage
+        startTime:
+          type: integer
+          format: int64
+          description: Training start timestamp
+        estimatedCompletion:
+          type: integer
+          format: int64
+          description: Estimated completion timestamp
+        status:
+          type: string
+          enum: [training, completed, stopped, failed]
+          description: Training status
+      description: Training progress information (if training)
+    message:
+      type: string
+      description: Status message
+      example: "No training in progress"
+
+VSOMGridStateRequest:
+  type: object
+  properties:
+    instanceId:
+      type: string
+      description: VSOM instance identifier
+      example: "vsom_1640995200000_abc123def"
+    includeWeights:
+      type: boolean
+      default: false
+      description: Include node weight vectors in response
+  required:
+    - instanceId
+
+VSOMGridStateResponse:
+  allOf:
+    - $ref: '../schemas/common.yaml#/ApiResponse'
+    - type: object
+      properties:
+        instanceId:
+          type: string
+          description: VSOM instance identifier
+        gridState:
+          $ref: '#/VSOMGrid'
+        mappings:
+          type: array
+          items:
+            $ref: '#/VSOMNodeMapping'
+          description: Entity-to-node mappings
+        metadata:
+          type: object
+          properties:
+            gridSize:
+              type: array
+              items:
+                type: integer
+              description: Grid dimensions
+            totalNodes:
+              type: integer
+              description: Total number of nodes
+            mappedEntities:
+              type: integer
+              description: Number of entities mapped to nodes
+          description: Grid metadata
+
+VSOMGrid:
+  type: object
+  properties:
+    nodes:
+      type: array
+      items:
+        $ref: '#/VSOMNode'
+      description: Grid nodes with positions and properties
+    topology:
+      type: string
+      enum: [rectangular, hexagonal]
+      description: Grid topology
+    dimensions:
+      type: array
+      items:
+        type: integer
+      minItems: 2
+      maxItems: 2
+      description: Grid dimensions [width, height]
+
+VSOMNode:
+  type: object
+  properties:
+    index:
+      type: integer
+      description: Node index in grid
+      example: 42
+    coordinates:
+      type: array
+      items:
+        type: integer
+      minItems: 2
+      maxItems: 2
+      description: Node coordinates [x, y]
+      example: [2, 4]
+    weights:
+      type: array
+      items:
+        type: number
+        format: float
+      description: Node weight vector (if requested)
+    activationLevel:
+      type: number
+      format: float
+      minimum: 0
+      maximum: 1
+      description: Node activation level
+      example: 0.75
+    entityCount:
+      type: integer
+      minimum: 0
+      description: Number of entities mapped to this node
+      example: 3
+
+VSOMNodeMapping:
+  type: object
+  properties:
+    entityId:
+      type: string
+      description: Entity identifier
+      example: "http://example.org/entity/123"
+    entityName:
+      type: string
+      description: Entity name
+      example: "Machine Learning"
+    nodeIndex:
+      type: integer
+      description: Mapped node index
+      example: 42
+    nodeCoordinates:
+      type: array
+      items:
+        type: integer
+      minItems: 2
+      maxItems: 2
+      description: Node coordinates [x, y]
+      example: [2, 4]
+    distance:
+      type: number
+      format: float
+      description: Distance between entity and node
+      example: 0.15
+    winnerCount:
+      type: integer
+      description: How many times this node won for this entity
+      example: 12
+
+VSOMFeatureMapsRequest:
+  type: object
+  properties:
+    instanceId:
+      type: string
+      description: VSOM instance identifier
+      example: "vsom_1640995200000_abc123def"
+    mapType:
+      type: string
+      enum: [umatrix, component, distance]
+      default: umatrix
+      description: Type of feature map to generate
+    dimension:
+      type: integer
+      minimum: 0
+      description: Dimension index for component maps
+  required:
+    - instanceId
+
+VSOMFeatureMapsResponse:
+  allOf:
+    - $ref: '../schemas/common.yaml#/ApiResponse'
+    - type: object
+      properties:
+        instanceId:
+          type: string
+          description: VSOM instance identifier
+        mapType:
+          type: string
+          description: Type of feature map generated
+        featureMap:
+          type: array
+          items:
+            $ref: '#/VSOMFeatureMapNode'
+          description: Feature map data
+        statistics:
+          type: object
+          properties:
+            minValue:
+              type: number
+              format: float
+              description: Minimum value in the map
+            maxValue:
+              type: number
+              format: float
+              description: Maximum value in the map
+            meanValue:
+              type: number
+              format: float
+              description: Mean value in the map
+            totalDimensions:
+              type: integer
+              description: Total embedding dimensions
+            currentDimension:
+              type: integer
+              description: Current dimension being visualized
+          description: Feature map statistics
+
+VSOMFeatureMapNode:
+  type: object
+  properties:
+    nodeIndex:
+      type: integer
+      description: Node index
+    coordinates:
+      type: array
+      items:
+        type: integer
+      minItems: 2
+      maxItems: 2
+      description: Node coordinates [x, y]
+    value:
+      type: number
+      format: float
+      description: Feature map value at this node
+    neighborhoodSize:
+      type: number
+      format: float
+      description: Neighborhood influence size
+      example: 1.5
+
+VSOMClusteringRequest:
+  type: object
+  properties:
+    instanceId:
+      type: string
+      description: VSOM instance identifier
+      example: "vsom_1640995200000_abc123def"
+    algorithm:
+      type: string
+      enum: [umatrix, kmeans, hierarchical]
+      default: umatrix
+      description: Clustering algorithm to use
+    threshold:
+      type: number
+      format: float
+      minimum: 0.1
+      maximum: 1.0
+      description: Clustering threshold (algorithm-specific)
+    minClusterSize:
+      type: integer
+      minimum: 1
+      maximum: 50
+      default: 3
+      description: Minimum cluster size
+  required:
+    - instanceId
+
+VSOMClusteringResponse:
+  allOf:
+    - $ref: '../schemas/common.yaml#/ApiResponse'
+    - type: object
+      properties:
+        instanceId:
+          type: string
+          description: VSOM instance identifier
+        clusters:
+          type: array
+          items:
+            $ref: '#/VSOMCluster'
+          description: Discovered clusters
+        algorithm:
+          type: string
+          description: Clustering algorithm used
+        statistics:
+          type: object
+          properties:
+            totalClusters:
+              type: integer
+              description: Number of clusters found
+            totalEntities:
+              type: integer
+              description: Total entities clustered
+            averageClusterSize:
+              type: number
+              format: float
+              description: Average entities per cluster
+            silhouetteScore:
+              type: number
+              format: float
+              minimum: -1
+              maximum: 1
+              description: Clustering quality score
+          description: Clustering statistics
+
+VSOMCluster:
+  type: object
+  properties:
+    id:
+      type: integer
+      description: Cluster identifier
+      example: 0
+    center:
+      type: array
+      items:
+        type: integer
+      minItems: 2
+      maxItems: 2
+      description: Cluster center coordinates [x, y]
+      example: [10, 15]
+    size:
+      type: integer
+      description: Number of entities in cluster
+      example: 15
+    entities:
+      type: array
+      items:
+        $ref: '#/VSOMClusterEntity'
+      description: Entities in this cluster
+    quality:
+      type: number
+      format: float
+      minimum: 0
+      maximum: 1
+      description: Cluster quality metric
+      example: 0.82
+    cohesion:
+      type: number
+      format: float
+      description: Cluster internal cohesion
+      example: 0.75
+    separation:
+      type: number
+      format: float
+      description: Cluster separation from others
+      example: 0.68
+
+VSOMClusterEntity:
+  type: object
+  properties:
+    entityId:
+      type: string
+      description: Entity identifier
+    entityName:
+      type: string
+      description: Entity name
+    nodeCoordinates:
+      type: array
+      items:
+        type: integer
+      minItems: 2
+      maxItems: 2
+      description: Node coordinates [x, y]
+    distanceToCenter:
+      type: number
+      format: float
+      description: Distance from cluster center
+    membershipStrength:
+      type: number
+      format: float
+      minimum: 0
+      maximum: 1
+      description: Cluster membership strength
+
+VSOMInstancesListResponse:
+  allOf:
+    - $ref: '../schemas/common.yaml#/ApiResponse'
+    - type: object
+      properties:
+        instances:
+          type: array
+          items:
+            $ref: '#/VSOMInstanceSummary'
+          description: List of VSOM instances
+        count:
+          type: integer
+          description: Number of instances
+
+VSOMInstanceSummary:
+  type: object
+  properties:
+    instanceId:
+      type: string
+      description: Instance identifier
+    config:
+      type: object
+      properties:
+        mapSize:
+          type: array
+          items:
+            type: integer
+          description: Grid dimensions
+        topology:
+          type: string
+          description: Grid topology
+        embeddingDimension:
+          type: integer
+          description: Embedding dimension
+      description: Instance configuration summary
+    status:
+      type: string
+      enum: [created, data_loaded, trained, training, failed]
+      description: Current instance status
+    created:
+      type: string
+      format: date-time
+      description: Creation timestamp
+    dataLoaded:
+      type: boolean
+      description: Whether data is loaded
+    entitiesCount:
+      type: integer
+      description: Number of entities loaded
+
+VSOMDeleteInstanceRequest:
+  type: object
+  properties:
+    instanceId:
+      type: string
+      description: VSOM instance identifier to delete
+      example: "vsom_1640995200000_abc123def"
+  required:
+    - instanceId
+
+VSOMDeleteInstanceResponse:
+  allOf:
+    - $ref: '../schemas/common.yaml#/ApiResponse'
+    - type: object
+      properties:
+        instanceId:
+          type: string
+          description: Deleted instance identifier
+        deleted:
+          type: boolean
+          description: Whether deletion was successful
+
+VSOMMetrics:
+  type: object
+  properties:
+    totalInstances:
+      type: integer
+      description: Total VSOM instances
+    activeTraining:
+      type: integer
+      description: Instances currently training
+    completedTraining:
+      type: integer
+      description: Instances with completed training
+    totalEntitiesProcessed:
+      type: integer
+      description: Total entities across all instances

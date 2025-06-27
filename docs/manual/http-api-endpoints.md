@@ -7,6 +7,7 @@ This document provides comprehensive status information for all available HTTP A
 * **Name** - Short reference name for the endpoint
 * **Purpose** - What the call is used for
 * **Endpoint URL** - How it is called (HTTP method and path)
+* **OpenAPI Schema** - location
 * **Supported HTTP Methods** - GET, POST, PUT, DELETE
 * **Inputs** - Arguments to pass to the endpoint
 * **Outputs** - Returned values and response structure
@@ -21,6 +22,7 @@ This document provides comprehensive status information for all available HTTP A
 * **Name**: health
 * **Purpose**: Check overall system health and component status
 * **Endpoint URL**: `GET /api/health`
+* **OpenAPI Schema**: `./components/schemas/common.yaml#/HealthStatus`
 * **Supported HTTP Methods**: GET
 * **Inputs**: None
 * **Outputs**: 
@@ -39,7 +41,8 @@ This document provides comprehensive status information for all available HTTP A
       "search-api": {"status": "healthy"},
       "ragno-api": {"status": "healthy"},
       "zpt-api": {"status": "healthy"},
-      "unified-search-api": {"status": "healthy"}
+      "unified-search-api": {"status": "healthy"},
+      "vsom-api": {"status": "healthy"}
     }
   }
   ```
@@ -50,6 +53,7 @@ This document provides comprehensive status information for all available HTTP A
 * **Name**: config
 * **Purpose**: Retrieve sanitized system configuration information
 * **Endpoint URL**: `GET /api/config`
+* **OpenAPI Schema**: `./components/schemas/common.yaml#/ConfigurationInfo`
 * **Supported HTTP Methods**: GET
 * **Inputs**: None
 * **Outputs**: 
@@ -71,6 +75,7 @@ This document provides comprehensive status information for all available HTTP A
 * **Name**: metrics
 * **Purpose**: Get performance metrics and usage statistics
 * **Endpoint URL**: `GET /api/metrics`
+* **OpenAPI Schema**: `./components/schemas/metrics.yaml#/ApiMetrics`
 * **Supported HTTP Methods**: GET
 * **Inputs**: None (requires authentication)
 * **Outputs**: 
@@ -92,6 +97,7 @@ This document provides comprehensive status information for all available HTTP A
 * **Name**: services
 * **Purpose**: List all available API services and their endpoints
 * **Endpoint URL**: `GET /api/services`
+* **OpenAPI Schema**: `./components/schemas/service.yaml#/ServiceInfo`
 * **Supported HTTP Methods**: GET
 * **Inputs**: None
 * **Outputs**: 
@@ -101,7 +107,7 @@ This document provides comprehensive status information for all available HTTP A
     "summary": {"totalServices": 6, "healthyServices": 6, "totalEndpoints": 30},
     "services": {
       "basic": {"memory": {...}, "chat": {...}, "search": {...}},
-      "advanced": {"ragno": {...}, "zpt": {...}, "unified": {...}},
+      "advanced": {"ragno": {...}, "zpt": {...}, "unified": {...}, "vsom": {...}},
       "system": {...}
     }
   }
@@ -117,6 +123,7 @@ This document provides comprehensive status information for all available HTTP A
 * **Name**: store-memory
 * **Purpose**: Store a prompt-response interaction in semantic memory
 * **Endpoint URL**: `POST /api/memory`
+* **OpenAPI Schema**: `./components/schemas/memory.yaml#/MemoryStoreRequest` and `MemoryStoreResponse`
 * **Supported HTTP Methods**: POST
 * **Inputs**: 
   ```json
@@ -142,6 +149,7 @@ This document provides comprehensive status information for all available HTTP A
 * **Name**: search-memory
 * **Purpose**: Search stored memories using semantic similarity
 * **Endpoint URL**: `GET /api/memory/search`
+* **OpenAPI Schema**: `./components/schemas/memory.yaml#/MemorySearchRequest` and `MemorySearchResponse`
 * **Supported HTTP Methods**: GET
 * **Inputs**: 
   - `query` (required): Search query text
@@ -170,6 +178,7 @@ This document provides comprehensive status information for all available HTTP A
 * **Name**: embedding
 * **Purpose**: Generate vector embedding for input text
 * **Endpoint URL**: `POST /api/memory/embedding`
+* **OpenAPI Schema**: `./components/schemas/memory.yaml#/EmbeddingRequest` and `EmbeddingResponse`
 * **Supported HTTP Methods**: POST
 * **Inputs**: 
   ```json
@@ -193,6 +202,7 @@ This document provides comprehensive status information for all available HTTP A
 * **Name**: concepts
 * **Purpose**: Extract semantic concepts from input text using LLM
 * **Endpoint URL**: `POST /api/memory/concepts`
+* **OpenAPI Schema**: `./components/schemas/memory.yaml#/ConceptsRequest` and `ConceptsResponse`
 * **Supported HTTP Methods**: POST
 * **Inputs**: 
   ```json
@@ -219,6 +229,7 @@ This document provides comprehensive status information for all available HTTP A
 * **Name**: chat
 * **Purpose**: Generate contextual chat responses with memory integration
 * **Endpoint URL**: `POST /api/chat`
+* **OpenAPI Schema**: `./components/schemas/chat.yaml#/ChatRequest` and `ChatResponse`
 * **Supported HTTP Methods**: POST
 * **Inputs**: 
   ```json
@@ -244,6 +255,7 @@ This document provides comprehensive status information for all available HTTP A
 * **Name**: chat-stream
 * **Purpose**: Generate streaming chat responses for real-time interaction
 * **Endpoint URL**: `POST /api/chat/stream`
+* **OpenAPI Schema**: `./components/schemas/chat.yaml#/StreamingChatRequest` and `StreamingChatChunk`
 * **Supported HTTP Methods**: POST
 * **Inputs**: Same as chat completion
 * **Outputs**: Server-Sent Events stream with chunks:
@@ -258,6 +270,7 @@ This document provides comprehensive status information for all available HTTP A
 * **Name**: completion
 * **Purpose**: Simple text completion without memory integration
 * **Endpoint URL**: `POST /api/completion`
+* **OpenAPI Schema**: `./components/schemas/chat.yaml#/TextCompletionRequest` and `TextCompletionResponse`
 * **Supported HTTP Methods**: POST
 * **Inputs**: 
   ```json
@@ -285,6 +298,7 @@ This document provides comprehensive status information for all available HTTP A
 * **Name**: search
 * **Purpose**: Search indexed content and memories
 * **Endpoint URL**: `GET /api/search`
+* **OpenAPI Schema**: `./components/schemas/search.yaml#/SearchRequest` and `SearchResponse`
 * **Supported HTTP Methods**: GET
 * **Inputs**: 
   - `query` (required): Search query
@@ -306,6 +320,7 @@ This document provides comprehensive status information for all available HTTP A
 * **Name**: index
 * **Purpose**: Index content for searchability
 * **Endpoint URL**: `POST /api/index`
+* **OpenAPI Schema**: `./components/schemas/search.yaml#/IndexRequest` and `IndexResponse`
 * **Supported HTTP Methods**: POST
 * **Inputs**: 
   ```json
@@ -333,6 +348,7 @@ This document provides comprehensive status information for all available HTTP A
 * **Name**: decompose
 * **Purpose**: Decompose unstructured text into knowledge graph entities and relationships
 * **Endpoint URL**: `POST /api/graph/decompose`
+* **OpenAPI Schema**: `./components/schemas/ragno.yaml#/RagnoDecomposeRequest` and `RagnoDecomposeResponse`
 * **Supported HTTP Methods**: POST
 * **Inputs**: 
   ```json
@@ -364,6 +380,7 @@ This document provides comprehensive status information for all available HTTP A
 * **Name**: graph-stats
 * **Purpose**: Get comprehensive statistics about the knowledge graph
 * **Endpoint URL**: `GET /api/graph/stats`
+* **OpenAPI Schema**: `./components/schemas/ragno.yaml#/RagnoGraphStats`
 * **Supported HTTP Methods**: GET
 * **Inputs**: None
 * **Outputs**: 
@@ -386,6 +403,7 @@ This document provides comprehensive status information for all available HTTP A
 * **Name**: entities
 * **Purpose**: Retrieve entities from the knowledge graph with filtering
 * **Endpoint URL**: `GET /api/graph/entities`
+* **OpenAPI Schema**: `./components/schemas/ragno.yaml#/RagnoEntity`
 * **Supported HTTP Methods**: GET
 * **Inputs**: 
   - `limit` (optional): Max entities to return
@@ -412,6 +430,7 @@ This document provides comprehensive status information for all available HTTP A
 * **Name**: graph-search
 * **Purpose**: Search entities and relationships using various strategies
 * **Endpoint URL**: `POST /api/graph/search`
+* **OpenAPI Schema**: `./components/schemas/ragno.yaml#/RagnoSearchRequest` and `RagnoSearchResponse`
 * **Supported HTTP Methods**: POST
 * **Inputs**: 
   ```json
@@ -438,6 +457,7 @@ This document provides comprehensive status information for all available HTTP A
 * **Name**: export
 * **Purpose**: Export knowledge graph in various formats
 * **Endpoint URL**: `GET /api/graph/export/{format}`
+* **OpenAPI Schema**: `./components/schemas/ragno.yaml#/RagnoExportResponse`
 * **Supported HTTP Methods**: GET
 * **Inputs**: 
   - `format` (path): Export format (json, turtle, jsonld, ntriples)
@@ -451,6 +471,7 @@ This document provides comprehensive status information for all available HTTP A
 * **Name**: enrich
 * **Purpose**: Enhance graph with embeddings, attributes, and community detection
 * **Endpoint URL**: `POST /api/graph/enrich`
+* **OpenAPI Schema**: `./components/schemas/ragno.yaml#/RagnoEnrichRequest` and `RagnoEnrichResponse`
 * **Supported HTTP Methods**: POST
 * **Inputs**: 
   ```json
@@ -478,6 +499,7 @@ This document provides comprehensive status information for all available HTTP A
 * **Name**: communities
 * **Purpose**: Retrieve detected communities from the knowledge graph
 * **Endpoint URL**: `GET /api/graph/communities`
+* **OpenAPI Schema**: `./components/schemas/ragno.yaml#/RagnoCommunity`
 * **Supported HTTP Methods**: GET
 * **Inputs**: 
   - `algorithm` (optional): Community detection algorithm
@@ -503,6 +525,7 @@ This document provides comprehensive status information for all available HTTP A
 * **Name**: pipeline
 * **Purpose**: Execute complete Ragno pipeline from text to enriched knowledge graph
 * **Endpoint URL**: `POST /api/graph/pipeline`
+* **OpenAPI Schema**: `./components/schemas/ragno.yaml#/RagnoPipelineRequest` and `RagnoPipelineResponse`
 * **Supported HTTP Methods**: POST
 * **Inputs**: 
   ```json
@@ -537,6 +560,7 @@ This document provides comprehensive status information for all available HTTP A
 * **Name**: navigate
 * **Purpose**: Navigate knowledge space using ZPT (Zero-Point Traversal) system
 * **Endpoint URL**: `POST /api/navigate`
+* **OpenAPI Schema**: `./components/schemas/zpt.yaml#/ZPTNavigateRequest` and `ZPTNavigateResponse`
 * **Supported HTTP Methods**: POST
 * **Inputs**: 
   ```json
@@ -566,6 +590,7 @@ This document provides comprehensive status information for all available HTTP A
 * **Name**: navigate-preview
 * **Purpose**: Get lightweight preview of navigation destination
 * **Endpoint URL**: `POST /api/navigate/preview`
+* **OpenAPI Schema**: `./components/schemas/zpt.yaml#/ZPTPreviewRequest` and `ZPTPreviewResponse`
 * **Supported HTTP Methods**: POST
 * **Inputs**: 
   ```json
@@ -592,6 +617,7 @@ This document provides comprehensive status information for all available HTTP A
 * **Name**: navigate-options
 * **Purpose**: Get available navigation options and parameters
 * **Endpoint URL**: `GET /api/navigate/options`
+* **OpenAPI Schema**: `./components/schemas/zpt.yaml#/ZPTOptions`
 * **Supported HTTP Methods**: GET
 * **Inputs**: 
   - `context` (optional): Scope for context-specific options
@@ -614,6 +640,7 @@ This document provides comprehensive status information for all available HTTP A
 * **Name**: navigate-schema
 * **Purpose**: Get ZPT parameter schema and validation rules
 * **Endpoint URL**: `GET /api/navigate/schema`
+* **OpenAPI Schema**: `./components/schemas/zpt.yaml#/ZPTSchema`
 * **Supported HTTP Methods**: GET
 * **Inputs**: None
 * **Outputs**: 
@@ -635,6 +662,7 @@ This document provides comprehensive status information for all available HTTP A
 * **Name**: navigate-health
 * **Purpose**: Check ZPT system health and component status
 * **Endpoint URL**: `GET /api/navigate/health`
+* **OpenAPI Schema**: `./components/schemas/zpt.yaml#/ZPTHealth`
 * **Supported HTTP Methods**: GET
 * **Inputs**: None
 * **Outputs**: 
@@ -660,6 +688,7 @@ This document provides comprehensive status information for all available HTTP A
 * **Name**: unified-search
 * **Purpose**: Intelligent search across all available services with automatic strategy selection
 * **Endpoint URL**: `POST /api/search/unified`
+* **OpenAPI Schema**: `./components/schemas/unified-search.yaml#/UnifiedSearchRequest` and `UnifiedSearchResponse`
 * **Supported HTTP Methods**: POST
 * **Inputs**: 
   ```json
@@ -693,6 +722,7 @@ This document provides comprehensive status information for all available HTTP A
 * **Name**: analyze-query
 * **Purpose**: Analyze search query to determine optimal search strategy
 * **Endpoint URL**: `POST /api/search/analyze`
+* **OpenAPI Schema**: `./components/schemas/unified-search.yaml#/QueryAnalysisRequest` and `QueryAnalysisResponse`
 * **Supported HTTP Methods**: POST
 * **Inputs**: 
   ```json
@@ -719,6 +749,7 @@ This document provides comprehensive status information for all available HTTP A
 * **Name**: search-services
 * **Purpose**: List search services available for unified search
 * **Endpoint URL**: `GET /api/search/services`
+* **OpenAPI Schema**: `./components/schemas/unified-search.yaml#/SearchServices`
 * **Supported HTTP Methods**: GET
 * **Inputs**: None
 * **Outputs**: 
@@ -740,6 +771,7 @@ This document provides comprehensive status information for all available HTTP A
 * **Name**: search-strategies
 * **Purpose**: List available search strategies and their characteristics
 * **Endpoint URL**: `GET /api/search/strategies`
+* **OpenAPI Schema**: `./components/schemas/unified-search.yaml#/SearchStrategy`
 * **Supported HTTP Methods**: GET
 * **Inputs**: None
 * **Outputs**: 
@@ -755,6 +787,323 @@ This document provides comprehensive status information for all available HTTP A
   ```
 * **Side Effects**: None
 * **Behaviour**: Returns static configuration of available search orchestration strategies
+
+---
+
+## VSOM (Vector Self-Organizing Map) API
+
+### Create VSOM Instance
+* **Name**: create-vsom
+* **Purpose**: Create a new Vector Self-Organizing Map instance for knowledge graph visualization
+* **Endpoint URL**: `POST /api/vsom/create`
+* **OpenAPI Schema**: `./components/schemas/vsom.yaml#/VSOMCreateRequest` and `VSOMCreateResponse`
+* **Supported HTTP Methods**: POST
+* **Inputs**: 
+  ```json
+  {
+    "mapSize": [20, 20],
+    "topology": "rectangular",
+    "embeddingDimension": 1536,
+    "maxIterations": 1000,
+    "initialLearningRate": 0.1,
+    "finalLearningRate": 0.01,
+    "clusterThreshold": 0.8,
+    "minClusterSize": 3
+  }
+  ```
+* **Outputs**: 
+  ```json
+  {
+    "success": true,
+    "instanceId": "vsom_1640995200000_abc123def",
+    "config": {...},
+    "status": "created",
+    "created": "2024-01-16T10:30:45.123Z"
+  }
+  ```
+* **Side Effects**: Creates new VSOM instance in memory with specified configuration
+* **Behaviour**: Uses VSOMService.createInstance() to initialize new VSOM algorithm instance with grid topology
+
+### Load Data into VSOM
+* **Name**: load-vsom-data
+* **Purpose**: Load entity data into a VSOM instance for training and visualization
+* **Endpoint URL**: `POST /api/vsom/load-data`
+* **OpenAPI Schema**: `./components/schemas/vsom.yaml#/VSOMLoadDataRequest` and `VSOMLoadDataResponse`
+* **Supported HTTP Methods**: POST
+* **Inputs**: 
+  ```json
+  {
+    "instanceId": "vsom_1640995200000_abc123def",
+    "dataType": "entities",
+    "data": {
+      "entities": [
+        {
+          "uri": "http://example.org/entity/123",
+          "name": "Machine Learning",
+          "content": "Machine learning is a subset of AI",
+          "embedding": [0.1, 0.2, ...]
+        }
+      ]
+    }
+  }
+  ```
+* **Outputs**: 
+  ```json
+  {
+    "success": true,
+    "instanceId": "vsom_1640995200000_abc123def",
+    "dataType": "entities",
+    "entitiesLoaded": 50,
+    "dataPreview": [...]
+  }
+  ```
+* **Side Effects**: Loads entity embeddings into VSOM instance, generates embeddings if not provided
+* **Behaviour**: Uses EmbeddingHandler.generateEmbedding() for missing embeddings, VSOM.loadFromEntities() for data loading
+
+### Generate Sample Data
+* **Name**: generate-vsom-samples
+* **Purpose**: Generate sample entity data for VSOM testing and demonstration
+* **Endpoint URL**: `POST /api/vsom/generate-sample-data`
+* **OpenAPI Schema**: `./components/schemas/vsom.yaml#/VSOMGenerateSampleDataRequest` and `VSOMGenerateSampleDataResponse`
+* **Supported HTTP Methods**: POST
+* **Inputs**: 
+  ```json
+  {
+    "count": 50
+  }
+  ```
+* **Outputs**: 
+  ```json
+  {
+    "success": true,
+    "entities": [...],
+    "count": 50,
+    "format": "entities",
+    "embeddingDimension": 1536
+  }
+  ```
+* **Side Effects**: None
+* **Behaviour**: Generates sample entities with topics and uses EmbeddingHandler to create embeddings
+
+### Train VSOM
+* **Name**: train-vsom
+* **Purpose**: Train the VSOM with loaded data using competitive learning algorithm
+* **Endpoint URL**: `POST /api/vsom/train`
+* **OpenAPI Schema**: `./components/schemas/vsom.yaml#/VSOMTrainRequest` and `VSOMTrainResponse`
+* **Supported HTTP Methods**: POST
+* **Inputs**: 
+  ```json
+  {
+    "instanceId": "vsom_1640995200000_abc123def",
+    "epochs": 100,
+    "batchSize": 10
+  }
+  ```
+* **Outputs**: 
+  ```json
+  {
+    "success": true,
+    "instanceId": "vsom_1640995200000_abc123def",
+    "trainingResults": {
+      "epochs": 100,
+      "finalError": 0.15,
+      "convergenceIteration": 85,
+      "trainingTime": 45000
+    },
+    "status": "completed"
+  }
+  ```
+* **Side Effects**: Updates VSOM node weights, creates entity-to-node mappings
+* **Behaviour**: Uses VSOM.train() with learning rate decay and convergence detection
+
+### Get VSOM Grid State
+* **Name**: vsom-grid-state
+* **Purpose**: Retrieve current grid state and entity mappings for visualization
+* **Endpoint URL**: `GET /api/vsom/grid`
+* **OpenAPI Schema**: `./components/schemas/vsom.yaml#/VSOMGridStateRequest` and `VSOMGridStateResponse`
+* **Supported HTTP Methods**: GET
+* **Inputs**: 
+  - `instanceId` (required): VSOM instance identifier
+  - `includeWeights` (optional): Include node weight vectors
+* **Outputs**: 
+  ```json
+  {
+    "success": true,
+    "instanceId": "vsom_1640995200000_abc123def",
+    "gridState": {
+      "nodes": [...],
+      "topology": "rectangular",
+      "dimensions": [20, 20]
+    },
+    "mappings": [...],
+    "metadata": {...}
+  }
+  ```
+* **Side Effects**: None
+* **Behaviour**: Uses VSOM.exportVisualization() and getNodeMappings() for grid and mapping data
+
+### Get Feature Maps
+* **Name**: vsom-feature-maps
+* **Purpose**: Generate feature maps (U-Matrix, component planes) for pattern visualization
+* **Endpoint URL**: `GET /api/vsom/features`
+* **OpenAPI Schema**: `./components/schemas/vsom.yaml#/VSOMFeatureMapsRequest` and `VSOMFeatureMapsResponse`
+* **Supported HTTP Methods**: GET
+* **Inputs**: 
+  - `instanceId` (required): VSOM instance identifier
+  - `mapType` (optional): Type of feature map (umatrix, component, distance)
+  - `dimension` (optional): Dimension for component maps
+* **Outputs**: 
+  ```json
+  {
+    "success": true,
+    "instanceId": "vsom_1640995200000_abc123def",
+    "mapType": "umatrix",
+    "featureMap": [...],
+    "statistics": {
+      "minValue": 0.1,
+      "maxValue": 0.9,
+      "meanValue": 0.45
+    }
+  }
+  ```
+* **Side Effects**: None
+* **Behaviour**: Uses VSOM internal calculations to generate distance matrices and component visualizations
+
+### Perform Clustering
+* **Name**: vsom-clustering
+* **Purpose**: Perform clustering analysis on trained VSOM to identify entity groups
+* **Endpoint URL**: `POST /api/vsom/cluster`
+* **OpenAPI Schema**: `./components/schemas/vsom.yaml#/VSOMClusteringRequest` and `VSOMClusteringResponse`
+* **Supported HTTP Methods**: POST
+* **Inputs**: 
+  ```json
+  {
+    "instanceId": "vsom_1640995200000_abc123def",
+    "algorithm": "umatrix",
+    "threshold": 0.8,
+    "minClusterSize": 3
+  }
+  ```
+* **Outputs**: 
+  ```json
+  {
+    "success": true,
+    "instanceId": "vsom_1640995200000_abc123def",
+    "clusters": [
+      {
+        "id": 0,
+        "center": [10, 15],
+        "size": 15,
+        "entities": [...],
+        "quality": 0.82
+      }
+    ],
+    "algorithm": "umatrix",
+    "statistics": {...}
+  }
+  ```
+* **Side Effects**: None
+* **Behaviour**: Uses VSOM.getClusters() with distance-based clustering algorithms
+
+### Get Training Status
+* **Name**: vsom-training-status
+* **Purpose**: Monitor training progress and status for VSOM instances
+* **Endpoint URL**: `GET /api/vsom/training-status`
+* **OpenAPI Schema**: `./components/schemas/vsom.yaml#/VSOMTrainingStatus`
+* **Supported HTTP Methods**: GET
+* **Inputs**: 
+  - `instanceId` (optional): Specific instance ID, or all instances if omitted
+* **Outputs**: 
+  ```json
+  {
+    "success": true,
+    "instanceId": "vsom_1640995200000_abc123def",
+    "isTraining": false,
+    "progress": {
+      "currentIteration": 100,
+      "totalIterations": 100,
+      "progress": 100,
+      "status": "completed"
+    },
+    "message": "Training completed"
+  }
+  ```
+* **Side Effects**: None
+* **Behaviour**: Returns current training state from VSOMService progress tracking
+
+### List VSOM Instances
+* **Name**: list-vsom-instances
+* **Purpose**: List all VSOM instances with their status and configuration
+* **Endpoint URL**: `GET /api/vsom/instances`
+* **OpenAPI Schema**: `./components/schemas/vsom.yaml#/VSOMInstancesListResponse`
+* **Supported HTTP Methods**: GET
+* **Inputs**: None
+* **Outputs**: 
+  ```json
+  {
+    "success": true,
+    "instances": [
+      {
+        "instanceId": "vsom_1640995200000_abc123def",
+        "config": {...},
+        "status": "trained",
+        "created": "2024-01-16T10:30:45.123Z",
+        "dataLoaded": true,
+        "entitiesCount": 50
+      }
+    ],
+    "count": 1
+  }
+  ```
+* **Side Effects**: None
+* **Behaviour**: Returns summary information for all VSOM instances from VSOMService
+
+### Delete VSOM Instance
+* **Name**: delete-vsom-instance
+* **Purpose**: Delete a VSOM instance and free associated resources
+* **Endpoint URL**: `DELETE /api/vsom/delete`
+* **OpenAPI Schema**: `./components/schemas/vsom.yaml#/VSOMDeleteInstanceRequest` and `VSOMDeleteInstanceResponse`
+* **Supported HTTP Methods**: DELETE
+* **Inputs**: 
+  ```json
+  {
+    "instanceId": "vsom_1640995200000_abc123def"
+  }
+  ```
+* **Outputs**: 
+  ```json
+  {
+    "success": true,
+    "instanceId": "vsom_1640995200000_abc123def",
+    "deleted": true
+  }
+  ```
+* **Side Effects**: Removes VSOM instance from memory, stops any ongoing training
+* **Behaviour**: Uses VSOMService.deleteInstance() to clean up instance and associated data
+
+### Stop VSOM Training
+* **Name**: stop-vsom-training
+* **Purpose**: Stop ongoing VSOM training process
+* **Endpoint URL**: `POST /api/vsom/stop-training`
+* **OpenAPI Schema**: `./components/schemas/vsom.yaml#/VSOMTrainRequest` (instanceId only)
+* **Supported HTTP Methods**: POST
+* **Inputs**: 
+  ```json
+  {
+    "instanceId": "vsom_1640995200000_abc123def"
+  }
+  ```
+* **Outputs**: 
+  ```json
+  {
+    "success": true,
+    "instanceId": "vsom_1640995200000_abc123def",
+    "stopped": true,
+    "status": "stopped"
+  }
+  ```
+* **Side Effects**: Interrupts training process, preserves current state
+* **Behaviour**: Uses VSOMService.stopTraining() to gracefully halt training algorithm
 
 ---
 
@@ -790,7 +1139,7 @@ Common error types:
 
 **Last Updated**: 2025-06-27  
 **API Version**: 1.0.0  
-**Total Endpoints**: 30  
+**Total Endpoints**: 41  
 **Service Health**: All services operational  
 **Storage Backend**: SPARQL (https://fuseki.hyperdata.it)  
 **LLM Providers**: Mistral (primary), Claude (secondary), Ollama (fallback)  
