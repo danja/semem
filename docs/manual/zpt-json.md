@@ -1,5 +1,7 @@
 # ZPT Subsystem: Comprehensive Technical Analysis
 
+**This may no longer be valid**
+
 ## Overview
 
 The ZPT (Zoom, Pan, Tilt) subsystem is a sophisticated 3-dimensional navigation system for intelligent knowledge graph exploration within Semem. It provides a unified interface for traversing and extracting information from complex knowledge structures using intuitive spatial metaphors borrowed from camera and mapping systems.

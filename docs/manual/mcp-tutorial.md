@@ -1,1407 +1,665 @@
 # Semem MCP Tutorial: Complete User Guide
 
-**A comprehensive step-by-step tutorial for using Semem with MCP-enabled systems**
+**A comprehensive workflow-focused guide for using Semem with MCP-enabled systems**
 
 ## Table of Contents
 
 1. [Introduction](#introduction)
-2. [Prerequisites](#prerequisites)
-3. [Quick Start](#quick-start)
-4. [Understanding Semem's MCP Capabilities](#understanding-semems-mcp-capabilities)
-5. [Basic Memory Operations](#basic-memory-operations)
-6. [Knowledge Graph Construction](#knowledge-graph-construction)
-7. [Advanced Workflow Orchestration](#advanced-workflow-orchestration)
-8. [3D Navigation and Analysis](#3d-navigation-and-analysis)
-9. [Integrated Multi-System Workflows](#integrated-multi-system-workflows)
+2. [Quick Start](#quick-start)
+3. [Understanding Semem's Capabilities](#understanding-semems-capabilities)
+4. [Core Workflow Patterns](#core-workflow-patterns)
+5. [Memory Management Workflows](#memory-management-workflows)
+6. [Knowledge Graph Construction Workflows](#knowledge-graph-construction-workflows)
+7. [3D Navigation Workflows](#3d-navigation-workflows)
+8. [Integrated Multi-System Workflows](#integrated-multi-system-workflows)
+9. [SPARQL Store Integration](#sparql-store-integration)
 10. [Real-World Use Cases](#real-world-use-cases)
 11. [Troubleshooting](#troubleshooting)
-12. [Advanced Configuration](#advanced-configuration)
 
 ---
 
 ## Introduction
 
-Semem is a powerful Node.js toolkit that combines semantic memory management, knowledge graph construction, and 3D spatial navigation into a unified system accessible through the Model Context Protocol (MCP). This tutorial will guide you through using Semem's capabilities in any MCP-enabled environment, from Claude Desktop to custom AI applications.
-
-### What You'll Learn
-
-- How to set up and connect to Semem's MCP server
-- Using 32+ tools for memory, knowledge graphs, and navigation
-- Executing 8 pre-built workflow prompts for complex operations
-- Building your own workflows combining multiple Semem systems
-- Real-world applications and best practices
-
-### Key Capabilities Overview
+Semem is a semantic memory management platform that combines three powerful systems through the Model Context Protocol (MCP):
 
 **🧠 Semantic Memory**: Intelligent storage and retrieval with vector embeddings  
-**🕸️ Knowledge Graphs**: RDF-based entity extraction and relationship modeling  
-**🎯 3D Navigation**: Spatial analysis and multi-dimensional content exploration  
-**🔌 Workflow Orchestration**: Pre-built prompts for complex multi-step operations
+**🕸️ Knowledge Graphs**: RDF-based entity extraction and relationship modeling using the Ragno ontology  
+**🧭 3D Navigation**: ZPT (Zoom, Pan, Tilt) spatial analysis for multi-dimensional content exploration
 
----
+### What Makes Semem Unique
 
-## Prerequisites
-
-### System Requirements
-
-- **Node.js**: Version 20.11.0 or higher
-- **Memory**: 4GB+ RAM recommended for large documents
-- **Storage**: 1GB+ free space for embeddings and knowledge graphs
-
-### Required Services
-
-1. **Ollama** (recommended for local processing):
-   ```bash
-   # Install Ollama from https://ollama.ai
-   ollama pull qwen2:1.5b         # For chat/text generation
-   ollama pull nomic-embed-text   # For embeddings (1536 dimensions)
-   ```
-
-2. **Optional - SPARQL Endpoint** (for advanced features):
-   ```bash
-   # Using Docker
-   docker run -d --name fuseki -p 3030:3030 stain/jena-fuseki
-   ```
-
-### MCP-Enabled Client
-
-Choose one of:
-- **Claude Desktop** (most popular)
-- **Continue.dev** VS Code extension
-- **Custom MCP client** using the SDK
-- **Any application** supporting MCP JSON-RPC 2.0
+- **Workflow-Centric Design**: Pre-built patterns for common research and analysis tasks
+- **SPARQL-First Storage**: Native RDF storage with external SPARQL endpoint support
+- **Unified Access**: All capabilities accessible through a single MCP interface
+- **43 HTTP API Endpoints**: Complete programmatic access alongside MCP tools
+- **External Data Integration**: SPARQL stores can be populated independently, then analyzed with Semem
 
 ---
 
 ## Quick Start
 
-### Step 1: Install and Setup Semem
+### Installation and Setup
 
 ```bash
-# Clone the repository
+# Clone and install
 git clone https://github.com/danja/semem.git
 cd semem
-
-# Install dependencies
 npm install
 
 # Configure environment
 cp example.env .env
 # Edit .env with your API keys if using cloud LLMs
-```
 
-### Step 2: Start the MCP Server
-
-```bash
-# Start the MCP server
+# Start MCP server
 npm run mcp-server-new
-
-# Server will start on stdio transport
-# You should see: "✅ Semem MCP server running on stdio transport"
 ```
 
-### Step 3: Connect Your MCP Client
+### Connect Your MCP Client
 
 #### For Claude Code
-
-Run:
-```sh
+```bash
 claude mcp add semem node mcp/index.js
+claude  # Start Claude
 ```
-Then start Claude.
-
-To check operation, try the prompt :
-> use extract_concepts on "the cat sat on the mat"
-
- semem:prompt_list()
-  semem:prompt_get(name: "research-workflow")
-
- mcp__semem__prompt_execute with name="research-workflow"
-
- mcp__semem__prompt_execute with name="research-workflow" on the content of docs/mcp/dotarag-paper.md
-
-~/hyperdata/semem/mcp/index.js
-
 
 #### For Claude Desktop
-
-Add to your Claude Desktop configuration file:
-
-**macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`  
-**Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
-
+Add to your Claude Desktop configuration:
 ```json
 {
   "mcpServers": {
     "semem": {
       "command": "node",
-      "args": ["/path/to/semem/mcp/index.js"],
-      "env": {
-        "NODE_ENV": "production"
-      }
+      "args": ["/path/to/semem/mcp/index.js"]
     }
   }
 }
 ```
 
-#### For Other MCP Clients
+### Verify Connection
 
-Connect to the stdio transport or use the HTTP server:
-
-```bash
-# For HTTP transport (alternative)
-MCP_PORT=3002 node mcp/http-server.js
-# Connect to: http://localhost:3002/mcp
-```
-
-### Step 4: Verify Connection
-
-Once connected, you should see Semem's tools available in your MCP client:
-
-- **35+ tools** including memory, knowledge graph, and navigation operations
-- **8 prompt workflows** for complex multi-step operations
-- **15 resources** for documentation and system status
+Once connected, you should see:
+- **35+ MCP tools** for memory, knowledge graphs, and navigation
+- **15 resources** for documentation and system status  
+- **8 workflow prompts** for complex operations
 
 ---
 
-## Understanding Semem's MCP Capabilities
+## Understanding Semem's Capabilities
 
-### Tool Categories
+### Core System Components
 
-Semem provides tools organized into logical categories:
+#### 🧠 Semantic Memory (5 tools)
+Store and retrieve conversations, documents, and knowledge with vector embeddings for semantic similarity search.
 
-#### 🧠 **Memory Management Tools** (5 tools)
-- `semem_store_interaction` - Store conversations with embeddings
-- `semem_retrieve_memories` - Search similar memories
-- `semem_generate_response` - Context-aware response generation
-- `semem_generate_embedding` - Vector embedding generation
-- `semem_extract_concepts` - Concept extraction from text
+#### 🕸️ Ragno Knowledge Graph (13 tools)  
+Transform text into structured RDF knowledge graphs following the Ragno ontology. Extract entities, relationships, and semantic units with full SPARQL compatibility.
 
-#### 🕸️ **Knowledge Graph Tools** (8 tools)
-- `ragno_decompose_corpus` - Convert text to RDF entities
-- `ragno_create_entity` - Create individual entities
-- `ragno_sparql_query` - Query the knowledge graph
-- `ragno_analyze_graph` - Graph analytics and metrics
-- And more...
+#### 🧭 ZPT 3D Navigation (6 tools)
+Navigate knowledge spaces using camera-like controls:
+- **Zoom**: Level of detail (entity, unit, text, community, corpus)
+- **Pan**: Content filtering (temporal, geographic, topical) 
+- **Tilt**: Representation style (keywords, embedding, graph, temporal)
 
-#### 🎯 **3D Navigation Tools** (6 tools)
-- `zpt_select_corpuscles` - Multi-dimensional content selection
-- `zpt_chunk_content` - Advanced content chunking
-- `zpt_validate_filters` - Filter validation
-- And more...
+#### 📊 System Management (11+ tools)
+Storage backends, configuration, metrics, backup/restore, and health monitoring.
 
-#### 🚀 **Workflow Orchestration** (3 prompt tools)
-- `prompt_list` - List available workflow templates
-- `prompt_get` - Get detailed workflow information
-- `prompt_execute` - Execute multi-step workflows
+### SPARQL Store Independence
 
-#### 📊 **System Management** (6+ tools)
-- Storage backend switching
-- Backup and restore operations
-- Performance monitoring
-- Configuration management
+**Important**: Semem's SPARQL store can be populated and managed independently of Semem itself. You can:
 
-### Pre-Built Workflow Prompts
+- Use external tools to populate a SPARQL endpoint with RDF data
+- Point Semem at an existing SPARQL store containing domain knowledge
+- Apply Semem's analysis capabilities to any RDF dataset
+- Combine Semem-generated knowledge graphs with external ontologies
 
-Semem includes 8 sophisticated prompt templates that orchestrate multiple tools:
-
-#### **Memory Workflows**
-1. **`semem-research-analysis`** - Analyze research documents with semantic context
-2. **`semem-memory-qa`** - Answer questions using semantic memory
-3. **`semem-concept-exploration`** - Deep exploration of concept relationships
-
-#### **Knowledge Graph Workflows**  
-4. **`ragno-corpus-to-graph`** - Build knowledge graphs from text
-5. **`ragno-entity-analysis`** - Analyze entities with contextual relationships
-
-#### **3D Navigation Workflows**
-6. **`zpt-navigate-explore`** - Interactive 3D knowledge space navigation
-
-#### **Integrated Workflows**
-7. **`semem-full-pipeline`** - Complete memory → graph → navigation pipeline
-8. **`research-workflow`** - Academic research document processing
+This separation allows Semem to function as an analysis layer over existing semantic web infrastructure.
 
 ---
 
-## Basic Memory Operations
+## Core Workflow Patterns
 
-### Storing Your First Memory
+### Pattern 1: Document Analysis and Storage
 
-Let's start with basic memory operations. Use the `semem_store_interaction` tool:
+**Workflow**: Document → Memory Storage → Concept Extraction → Knowledge Graph → Analysis
 
-```json
-{
-  "tool": "semem_store_interaction",
-  "arguments": {
-    "prompt": "What are the key principles of sustainable software development?",
-    "response": "Sustainable software development focuses on: 1) Long-term maintainability through clean code practices, 2) Resource efficiency to minimize computational overhead, 3) Scalable architecture that grows with requirements, 4) Environmental consciousness in deployment choices, 5) Documentation and knowledge sharing for team continuity.",
-    "metadata": {
-      "topic": "software_engineering",
-      "source": "expert_interview",
-      "date": "2024-01-15"
-    }
-  }
-}
-```
+**Use When**: Processing research papers, reports, or documentation for future reference and analysis.
 
-**Expected Response:**
-```json
-{
-  "success": true,
-  "interactionId": "uuid-12345",
-  "embedding": "[1536-dimensional vector]",
-  "concepts": ["sustainable development", "software engineering", "maintainability"],
-  "message": "Interaction stored successfully with embeddings and concepts"
-}
-```
+**Tools Chain**:
+1. `semem_store_interaction` - Store document with embeddings
+2. `semem_extract_concepts` - Extract key concepts  
+3. `ragno_decompose_corpus` - Build knowledge graph
+4. `ragno_analyze_graph` - Understand relationships
 
-### Retrieving Related Memories
+### Pattern 2: Knowledge Discovery and Exploration
 
-Search for related memories using `semem_retrieve_memories`:
+**Workflow**: Query → Memory Search → Graph Navigation → Insight Generation
 
-```json
-{
-  "tool": "semem_retrieve_memories",
-  "arguments": {
-    "query": "software maintainability practices",
-    "threshold": 0.7,
-    "limit": 5
-  }
-}
-```
+**Use When**: Exploring existing knowledge to find connections, patterns, or answer research questions.
 
-**Expected Response:**
-```json
-{
-  "success": true,
-  "memories": [
-    {
-      "id": "uuid-12345",
-      "prompt": "What are the key principles of sustainable software development?",
-      "response": "Sustainable software development focuses on...",
-      "similarity": 0.89,
-      "concepts": ["sustainable development", "software engineering"]
-    }
-  ],
-  "count": 1
-}
-```
+**Tools Chain**:
+1. `semem_retrieve_memories` - Find related content
+2. `ragno_search_graph` - Graph-based search
+3. `zpt_navigate` - 3D spatial exploration
+4. `semem_generate_response` - Synthesize insights
 
-### Generating Context-Aware Responses
+### Pattern 3: Corpus Analysis and Visualization
 
-Use `semem_generate_response` for responses enriched with memory context:
+**Workflow**: Text Corpus → Knowledge Graph → Community Detection → Navigation Interface
 
-```json
-{
-  "tool": "semem_generate_response",
-  "arguments": {
-    "prompt": "How can I improve the maintainability of legacy code?",
-    "contextLimit": 3,
-    "includeMemories": true
-  }
-}
-```
+**Use When**: Analyzing large document collections to understand structure, themes, and relationships.
 
-This tool will:
-1. Search your memory for relevant context
-2. Assemble the most similar memories
-3. Generate a response using both the prompt and retrieved context
-4. Return a comprehensive, context-aware answer
+**Tools Chain**:
+1. `ragno_decompose_corpus` - Process entire corpus
+2. `ragno_aggregate_communities` - Find topical clusters
+3. `zpt_analyze_corpus` - Prepare for navigation
+4. `zpt_navigate` - Interactive exploration
 
 ---
 
-## Knowledge Graph Construction
+## Memory Management Workflows
 
-### Building Your First Knowledge Graph
+### Basic Memory Operations
 
-Use Ragno tools to build structured knowledge graphs from text documents.
-
-#### Step 1: Decompose Text into RDF Entities
-
-```json
-{
-  "tool": "ragno_decompose_corpus",
-  "arguments": {
-    "textChunks": [
-      {
-        "content": "Apple Inc. is a multinational technology company founded by Steve Jobs, Steve Wozniak, and Ronald Wayne in 1976.",
-        "source": "company_profile"
-      },
-      {
-        "content": "The iPhone was first released in 2007 and revolutionized the smartphone industry with its touchscreen interface.",
-        "source": "product_history"
-      }
-    ],
-    "options": {
-      "extractRelationships": true,
-      "generateSummaries": true,
-      "minEntityConfidence": 0.8
-    }
-  }
-}
+#### Storing Information
+Use `semem_store_interaction` to create searchable memories:
+```
+Store the conversation: "What are sustainable development principles?" 
+Response: "Sustainable development balances economic growth with environmental protection..."
 ```
 
-**Expected Response:**
-```json
-{
-  "success": true,
-  "entities": [
-    {
-      "uri": "http://example.org/entity/apple_inc",
-      "name": "Apple Inc.",
-      "type": "Organization",
-      "confidence": 0.95,
-      "mentions": 1
-    },
-    {
-      "uri": "http://example.org/entity/steve_jobs",
-      "name": "Steve Jobs",
-      "type": "Person",
-      "confidence": 0.92,
-      "mentions": 1
-    }
-  ],
-  "relationships": [
-    {
-      "subject": "http://example.org/entity/steve_jobs",
-      "predicate": "founded",
-      "object": "http://example.org/entity/apple_inc",
-      "confidence": 0.88
-    }
-  ],
-  "summary": "Knowledge graph created with 5 entities and 3 relationships"
-}
+#### Semantic Search
+Use `semem_retrieve_memories` for contextual retrieval:
+```
+Search for memories about "environmental sustainability" with threshold 0.7
 ```
 
-#### Step 2: Query Your Knowledge Graph
-
-Use `ragno_sparql_query` to explore the created graph:
-
-```json
-{
-  "tool": "ragno_sparql_query",
-  "arguments": {
-    "query": "SELECT ?person ?company WHERE { ?person <founded> ?company . }",
-    "options": {
-      "limit": 10,
-      "format": "json"
-    }
-  }
-}
+#### Context-Aware Responses
+Use `semem_generate_response` for intelligent replies:
+```
+Generate response to "How can cities become more sustainable?" using stored memories
 ```
 
-#### Step 3: Analyze Graph Structure
+### Research Document Workflow
 
-Get comprehensive analytics with `ragno_analyze_graph`:
+**Use Case**: Academic researcher analyzing multiple papers
 
-```json
-{
-  "tool": "ragno_analyze_graph",
-  "arguments": {
-    "analysisTypes": ["statistics", "centrality", "communities"],
-    "options": {
-      "topK": 10,
-      "includeDetails": true
-    }
-  }
-}
-```
+**Workflow Steps**:
+1. **Batch Storage**: Store multiple research papers using `semem_store_interaction`
+2. **Concept Mapping**: Extract concepts from each paper using `semem_extract_concepts`
+3. **Cross-Reference**: Find related content using `semem_retrieve_memories`
+4. **Synthesis**: Generate comprehensive analysis using `semem_generate_response`
 
-This provides insights into:
-- **Graph statistics**: Node/edge counts, density, clustering
-- **Centrality analysis**: Most important entities
-- **Community detection**: Natural groupings in your data
+**Benefits**:
+- Automatic similarity detection between papers
+- Concept-based organization of research
+- Contextual synthesis of findings
+- Persistent memory for long-term projects
+
+### Educational Content Workflow
+
+**Use Case**: Educator building curriculum connections
+
+**Workflow Steps**:
+1. **Content Storage**: Store educational materials and explanations
+2. **Prerequisite Mapping**: Use memory search to find foundational concepts
+3. **Progression Paths**: Identify learning sequences through concept relationships
+4. **Adaptive Responses**: Generate explanations tailored to student level
 
 ---
 
-## Advanced Workflow Orchestration
+## Knowledge Graph Construction Workflows
 
-### Using Pre-Built Prompt Workflows
+### Text to Knowledge Graph Pipeline
 
-The most powerful feature of Semem is its workflow orchestration through prompt templates.
+#### Single Document Processing
+**Workflow**: Document → Entities → Relationships → RDF Graph
 
-#### Discovering Available Workflows
-
-```json
-{
-  "tool": "prompt_list",
-  "arguments": {
-    "category": "memory"
-  }
-}
+```
+Use ragno_decompose_corpus with:
+- Text: "Apple Inc. founded by Steve Jobs revolutionized computing with the iPhone"
+- Options: extractRelationships=true, generateSummaries=true
 ```
 
-**Response shows all available workflow templates grouped by category.**
+**Results**:
+- Entities: Apple Inc. (Organization), Steve Jobs (Person), iPhone (Product)
+- Relationships: Steve Jobs → founded → Apple Inc., Apple Inc. → created → iPhone
+- RDF triples stored in SPARQL endpoint
 
-#### Example 1: Research Document Analysis
+#### Multi-Document Corpus
+**Workflow**: Document Collection → Unified Graph → Community Analysis
 
-The `semem-research-analysis` workflow provides comprehensive document analysis:
-
-```json
-{
-  "tool": "prompt_execute",
-  "arguments": {
-    "name": "semem-research-analysis",
-    "arguments": {
-      "document_text": "Machine learning has revolutionized artificial intelligence through deep learning architectures. Transformer models, introduced in 'Attention Is All You Need', have become the foundation for modern language models like GPT and BERT. These models demonstrate remarkable capabilities in natural language understanding and generation.",
-      "analysis_depth": "deep",
-      "context_threshold": 0.8
-    }
-  }
-}
+```
+Process corpus with ragno_decompose_corpus:
+- Multiple documents about technology companies
+- Extract cross-document entity relationships
+- Identify business ecosystem patterns
 ```
 
-**This workflow automatically:**
-1. **Stores** the document in semantic memory
-2. **Extracts** key concepts and entities
-3. **Retrieves** related documents from memory
-4. **Analyzes** relationships and connections
-5. **Generates** comprehensive insights
+### Entity-Centric Analysis
 
-**Expected Response:**
-```json
-{
-  "success": true,
-  "promptName": "semem-research-analysis",
-  "executionId": "exec-789",
-  "steps": 4,
-  "results": [
-    {
-      "tool": "semem_store_interaction",
-      "result": true,
-      "output": "Document stored with ID: doc-456"
-    },
-    {
-      "tool": "semem_extract_concepts",
-      "result": true,
-      "output": "Extracted 8 concepts including 'machine learning', 'transformers'"
-    }
-  ],
-  "summary": {
-    "keyInsights": "Document focuses on transformer architectures...",
-    "relatedDocuments": 3,
-    "conceptsExtracted": 8,
-    "executionTime": "2.3s"
-  }
-}
+#### Finding Key Entities
+Use `ragno_get_entities` to discover important entities:
+```
+Retrieve entities with minimum frequency 3, type "Person", limit 50
 ```
 
-#### Example 2: Knowledge Graph from Text Corpus
-
-The `ragno-corpus-to-graph` workflow builds complete knowledge graphs:
-
-```json
-{
-  "tool": "prompt_execute",
-  "arguments": {
-    "name": "ragno-corpus-to-graph",
-    "arguments": {
-      "corpus_chunks": [
-        "Tesla Inc. is an electric vehicle and clean energy company founded by Elon Musk.",
-        "The Model S was Tesla's first mass-produced electric sedan, launched in 2012.",
-        "SpaceX, also founded by Elon Musk, focuses on space exploration and satellite internet."
-      ],
-      "entity_confidence": 0.8,
-      "extract_relationships": true
-    }
-  }
-}
+#### Entity Relationship Mapping
+Use `ragno_search_graph` for entity exploration:
+```
+Search for entities related to "artificial intelligence" with dual search
 ```
 
-**This workflow:**
-1. **Processes** each text chunk
-2. **Extracts** entities and relationships
-3. **Builds** RDF knowledge graph
-4. **Validates** entity confidence scores
-5. **Exports** in multiple formats
-
-#### Example 3: Complete Research Pipeline
-
-The most comprehensive workflow combines all systems:
-
-```json
-{
-  "tool": "prompt_execute",
-  "arguments": {
-    "name": "research-workflow",
-    "arguments": {
-      "research_documents": [
-        "Quantum computing leverages quantum mechanical phenomena to solve complex problems...",
-        "Recent advances in quantum algorithms show promise for cryptography and optimization..."
-      ],
-      "domain_focus": "quantum_computing",
-      "analysis_goals": ["concept_extraction", "relationship_mapping", "trend_analysis"]
-    }
-  }
-}
+#### Graph Analytics
+Use `ragno_analyze_graph` for comprehensive analysis:
+```
+Analyze graph with centrality, communities, and statistics
 ```
 
-**This orchestrates:**
-- **Memory storage** and retrieval across documents
-- **Knowledge graph** construction with entity relationships  
-- **3D navigation** for spatial analysis
-- **Integrated insights** combining all perspectives
+### SPARQL Integration Workflows
+
+#### Direct SPARQL Queries
+Use `ragno_query_sparql` for precise data extraction:
+```
+Query: "SELECT ?person ?company WHERE { ?person <founded> ?company }"
+```
+
+#### External Data Integration
+**Workflow**: External SPARQL Store → Semem Analysis
+
+1. **Populate External Store**: Use external tools to load domain ontologies or datasets
+2. **Configure Semem**: Point storage backend to external SPARQL endpoint  
+3. **Apply Analysis**: Use Ragno tools to analyze existing RDF data
+4. **Enhance Data**: Add embeddings and semantic analysis to existing graphs
 
 ---
 
-## 3D Navigation and Analysis
+## 3D Navigation Workflows
 
-### Understanding ZPT (Zoom, Pan, Tilt)
+### Understanding ZPT Navigation
 
-ZPT provides a cinematic approach to knowledge navigation, treating content as a 3D space you can explore.
+ZPT treats knowledge as a 3-dimensional space you can explore cinematically:
 
-#### Basic Content Selection
+#### Zoom Levels
+- **Entity**: Focus on individual entities and their properties
+- **Unit**: Balanced view of semantic units with related entities
+- **Text**: Broader view including detailed textual content  
+- **Community**: Topic-level clusters and domain overviews
+- **Corpus**: Highest level patterns across entire knowledge base
 
-```json
-{
-  "tool": "zpt_select_corpuscles",
-  "arguments": {
-    "zoom": "entity",
-    "tilt": "embedding", 
-    "selectionType": "embedding",
-    "criteria": {
-      "query": "artificial intelligence applications",
-      "threshold": 0.75
-    },
-    "limit": 20
-  }
-}
+#### Pan (Filtering)
+- **Temporal**: Filter by time periods or chronological progression
+- **Geographic**: Focus on location-specific content
+- **Topical**: Filter by subject areas or themes
+- **Entity-Based**: Focus on specific organizations, people, or concepts
+
+#### Tilt (Representation)
+- **Keywords**: Term-based representation (fastest)
+- **Embedding**: Vector-based semantic similarity
+- **Graph**: Relationship-based network representation
+- **Temporal**: Time-based sequential representation
+
+### Basic Navigation Patterns
+
+#### Quick Entity Overview
+```
+Navigate "artificial intelligence" with:
+- Zoom: entity
+- Tilt: keywords  
+- Limit: 2000 tokens
 ```
 
-**Parameters Explained:**
-- **Zoom**: Level of detail (`document`, `paragraph`, `sentence`, `entity`)
-- **Tilt**: Perspective (`temporal`, `spatial`, `embedding`, `frequency`)
-- **Selection**: How to choose content (`keyword`, `embedding`, `graph`, `hybrid`)
-
-#### Advanced Content Chunking
-
-```json
-{
-  "tool": "zpt_chunk_content",
-  "arguments": {
-    "content": "Large document text here...",
-    "chunkingStrategy": "semantic",
-    "chunkSize": 500,
-    "overlap": 50,
-    "preserveStructure": true
-  }
-}
+#### Relationship Exploration
+```
+Navigate "machine learning algorithms" with:
+- Zoom: unit
+- Tilt: graph
+- Format: structured
 ```
 
-#### Interactive Navigation Workflow
-
-Use the `zpt-navigate-explore` prompt for guided 3D exploration:
-
-```json
-{
-  "tool": "prompt_execute",
-  "arguments": {
-    "name": "zpt-navigate-explore",
-    "arguments": {
-      "query": "blockchain technology applications",
-      "zoom_level": 5,
-      "tilt_style": "auto",
-      "filters": {
-        "type": "concept",
-        "relevance": 0.7,
-        "timeframe": "recent"
-      }
-    }
-  }
-}
+#### Temporal Analysis
 ```
+Navigate "climate change research" with:
+- Zoom: community
+- Tilt: temporal
+- Pan: date range 2020-2024
+```
+
+### Advanced Navigation Workflows
+
+#### Research Domain Exploration
+**Use Case**: Understanding a new research field
+
+**Workflow Steps**:
+1. **Preview Scope**: Use `zpt_preview` to understand content availability
+2. **Parameter Validation**: Use `zpt_validate_params` to verify navigation settings
+3. **Navigate Overview**: Start with corpus-level zoom for field overview
+4. **Drill Down**: Progressive zoom to entity level for specific topics
+5. **Relationship Analysis**: Use graph tilt to understand connections
+
+#### Content Discovery Pipeline
+**Use Case**: Finding relevant information in large corpora
+
+**Workflow Steps**:
+1. **Corpus Analysis**: Use `zpt_analyze_corpus` to understand structure
+2. **Options Discovery**: Use `zpt_get_options` to see available navigation paths
+3. **Multi-Dimensional Search**: Combine temporal, geographic, and topical filters
+4. **Interactive Exploration**: Use preview-then-navigate pattern for efficiency
 
 ---
 
 ## Integrated Multi-System Workflows
 
-### The Power of Integration
+### Memory + Knowledge Graph Integration
 
-Semem's strength lies in combining memory, knowledge graphs, and navigation into unified workflows.
+**Workflow**: Document Storage → Graph Construction → Memory-Enhanced Queries
 
-#### Full Pipeline Workflow
+**Steps**:
+1. **Store in Memory**: Use `semem_store_interaction` for semantic search capability
+2. **Build Graph**: Use `ragno_decompose_corpus` for structured relationships
+3. **Enhanced Search**: Use both `semem_retrieve_memories` and `ragno_search_graph`
+4. **Synthesize**: Combine memory context with graph relationships for comprehensive analysis
 
-The `semem-full-pipeline` prompt demonstrates complete integration:
+**Benefits**:
+- Memory provides semantic similarity and context
+- Graph provides structured relationships and reasoning
+- Combined approach offers both associative and logical reasoning
 
-```json
-{
-  "tool": "prompt_execute",
-  "arguments": {
-    "name": "semem-full-pipeline",
-    "arguments": {
-      "input_data": "Artificial intelligence is transforming healthcare through predictive analytics, diagnostic assistance, and personalized treatment recommendations. Machine learning algorithms can analyze medical images, predict patient outcomes, and optimize treatment protocols.",
-      "pipeline_stages": ["memory", "graph", "navigation"],
-      "output_formats": ["json", "rdf", "summary"]
-    }
-  }
-}
+### ZPT + Knowledge Graph Exploration
+
+**Workflow**: Graph Construction → Navigation Preparation → Interactive Exploration
+
+**Steps**:
+1. **Build Graph**: Create knowledge graph from corpus
+2. **Analyze Structure**: Use `ragno_analyze_graph` to understand communities
+3. **Prepare Navigation**: Use `zpt_analyze_corpus` for optimization
+4. **Explore Spatially**: Use ZPT navigation for intuitive discovery
+
+### Full Pipeline Integration
+
+**Workflow**: Document → Memory → Graph → Navigation → Insights
+
+**Example: Legal Document Analysis**
+
+**Steps**:
+1. **Memory Storage**: Store legal documents with metadata
+2. **Entity Extraction**: Extract legal entities (cases, statutes, parties)
+3. **Relationship Mapping**: Build citation and precedent relationships
+4. **Spatial Analysis**: Navigate legal reasoning patterns
+5. **Case Law Discovery**: Find relevant precedents through multi-system search
+
+---
+
+## SPARQL Store Integration
+
+### External SPARQL Store Setup
+
+Semem can work with any SPARQL-compatible endpoint:
+
+#### Popular SPARQL Stores
+- **Apache Jena Fuseki**: Full-featured, production-ready
+- **Virtuoso**: High-performance commercial/open source
+- **GraphDB**: Semantic database with reasoning
+- **Blazegraph**: High-performance graph database
+
+#### Configuration
+Set storage backend to use external SPARQL endpoint:
+```
+Configure storage: backend="sparql", endpoint="https://your-sparql-store.com/query"
 ```
 
-**This comprehensive workflow:**
+### External Data Workflows
 
-1. **Memory Stage:**
-   - Stores text in semantic memory
-   - Generates embeddings
-   - Extracts concepts
+#### Workflow 1: Analyze Existing Knowledge Base
+**Scenario**: Company has existing RDF data in SPARQL store
 
-2. **Graph Stage:**
-   - Creates RDF entities (AI, healthcare, machine learning)
-   - Builds relationships (AI → transforms → healthcare)
-   - Validates entity confidence
+**Steps**:
+1. **Connect**: Point Semem at existing SPARQL endpoint
+2. **Analyze**: Use `ragno_get_graph_stats` to understand existing data
+3. **Enhance**: Add embeddings using `ragno_enrich_embeddings`  
+4. **Navigate**: Use ZPT tools to explore existing knowledge spatially
 
-3. **Navigation Stage:**
-   - Applies ZPT analysis
-   - Creates spatial representations
-   - Enables 3D exploration
+#### Workflow 2: Enrich External Ontology
+**Scenario**: Enhance domain ontology with new documents
 
-4. **Integration:**
-   - Links memory embeddings to graph entities
-   - Provides multi-perspective analysis
-   - Generates comprehensive insights
+**Steps**:
+1. **Load External Data**: Import domain ontology into SPARQL store
+2. **Process Documents**: Use Ragno tools to create entities from new content
+3. **Link Data**: Connect new entities to existing ontology concepts
+4. **Validate**: Use graph analytics to ensure consistency
 
-### Custom Workflow Combinations
+#### Workflow 3: Multi-Source Integration
+**Scenario**: Combine multiple knowledge sources
 
-You can chain individual tools to create custom workflows:
+**Steps**:
+1. **Establish Store**: Set up central SPARQL endpoint
+2. **Load Sources**: Import data from multiple external sources
+3. **Apply Semem**: Use entity extraction and relationship detection
+4. **Resolve Conflicts**: Use confidence scoring and validation
+5. **Navigate Result**: Explore integrated knowledge space
 
-```json
-// Step 1: Store research document
-{
-  "tool": "semem_store_interaction",
-  "arguments": {
-    "prompt": "Research question about climate change",
-    "response": "Detailed climate research findings..."
-  }
-}
+### Data Export and Backup
 
-// Step 2: Build knowledge graph from same content
-{
-  "tool": "ragno_decompose_corpus", 
-  "arguments": {
-    "textChunks": [{"content": "Detailed climate research findings..."}]
-  }
-}
+#### Export Workflows
+Use `ragno_export_sparql` to create portable datasets:
+```
+Export format options:
+- Turtle (.ttl) - Human-readable RDF
+- N-Triples (.nt) - Machine-processable format
+- JSON-LD - Web-compatible JSON format
+- RDF/XML - Standard XML serialization
+```
 
-// Step 3: Navigate and explore relationships
-{
-  "tool": "zpt_select_corpuscles",
-  "arguments": {
-    "zoom": "entity",
-    "criteria": {"query": "climate change impacts"}
-  }
-}
-
-// Step 4: Generate insights combining all perspectives
-{
-  "tool": "semem_generate_response",
-  "arguments": {
-    "prompt": "What are the key insights from this climate research?",
-    "includeMemories": true,
-    "contextLimit": 5
-  }
-}
+#### Backup Strategies
+```
+Memory backup: semem_backup_memory (JSON format with embeddings)
+Graph backup: ragno_export_sparql (RDF format for SPARQL stores)
+System backup: Complete configuration and data export
 ```
 
 ---
 
 ## Real-World Use Cases
 
-### Use Case 1: Academic Research Assistant
+### Academic Research Pipeline
 
-**Scenario**: A researcher analyzing papers about renewable energy technologies.
+**Scenario**: Researcher analyzing 50+ papers on renewable energy
 
 **Workflow**:
-```json
-{
-  "tool": "prompt_execute",
-  "arguments": {
-    "name": "research-workflow",
-    "arguments": {
-      "research_documents": [
-        "Solar panel efficiency has improved significantly with perovskite technologies...",
-        "Wind energy storage solutions using advanced battery systems...",
-        "Hydroelectric power integration with smart grid technologies..."
-      ],
-      "domain_focus": "renewable_energy",
-      "analysis_goals": ["technology_trends", "efficiency_metrics", "integration_challenges"]
-    }
-  }
-}
-```
+1. **Batch Import**: Load papers into both memory and knowledge graph
+2. **Concept Mapping**: Extract and connect technical concepts across papers
+3. **Author Networks**: Build collaboration and citation relationships
+4. **Trend Analysis**: Use temporal navigation to identify research progression
+5. **Gap Analysis**: Find under-researched areas through graph analysis
 
-**Benefits**:
-- Automatically extracts key technologies and concepts
-- Builds knowledge graph of relationships between technologies
-- Identifies research trends and gaps
-- Provides comprehensive literature analysis
+**Tools Used**: 
+- `ragno_decompose_corpus` for paper processing
+- `ragno_aggregate_communities` for research area clustering
+- `zpt_navigate` with temporal tilt for trend analysis
+- `semem_generate_response` for synthesis
 
-### Use Case 2: Corporate Knowledge Management
+### Corporate Knowledge Management
 
-**Scenario**: A company wants to make internal documentation searchable and connected.
+**Scenario**: Fortune 500 company organizing internal documentation
 
-**Setup Process**:
+**Workflow**:
+1. **Document Import**: Process policies, procedures, and reports
+2. **Department Mapping**: Extract organizational entities and relationships
+3. **Expertise Location**: Connect people to topics through document authorship
+4. **Compliance Tracking**: Use temporal analysis for policy evolution
+5. **Decision Support**: Provide context-aware answers to employee questions
 
-1. **Batch Upload Documents**:
-```json
-{
-  "tool": "ragno_decompose_corpus",
-  "arguments": {
-    "textChunks": [
-      {"content": "Product roadmap Q1 2024...", "source": "product_team"},
-      {"content": "Security protocols and procedures...", "source": "security_team"},
-      {"content": "Customer support best practices...", "source": "support_team"}
-    ],
-    "options": {
-      "extractRelationships": true,
-      "generateSummaries": true
-    }
-  }
-}
-```
+**Architecture**:
+- External SPARQL store for persistent company knowledge
+- Semem analysis layer for intelligent querying
+- Multiple document ingestion pipelines
+- Role-based access through API endpoints
 
-2. **Enable Semantic Search**:
-```json
-{
-  "tool": "semem_retrieve_memories",
-  "arguments": {
-    "query": "security authentication procedures",
-    "threshold": 0.7,
-    "limit": 10
-  }
-}
-```
+### Legal Research System
 
-3. **Navigate Information Spaces**:
-```json
-{
-  "tool": "prompt_execute",
-  "arguments": {
-    "name": "zpt-navigate-explore",
-    "arguments": {
-      "query": "customer support escalation",
-      "filters": {"department": "support", "priority": "high"}
-    }
-  }
-}
-```
+**Scenario**: Law firm analyzing case precedents and legal relationships
 
-### Use Case 3: Educational Content Analysis
+**Workflow**:
+1. **Case Database**: Import case law into SPARQL store with metadata
+2. **Citation Analysis**: Extract and model legal citations as relationships
+3. **Precedent Networks**: Build networks of legal precedent relationships
+4. **Topic Evolution**: Track legal principle development over time
+5. **Case Research**: Multi-dimensional search for relevant precedents
 
-**Scenario**: An educator analyzing curriculum relationships and student learning paths.
+**Key Features**:
+- Entity extraction for legal concepts (parties, statutes, principles)
+- Temporal navigation for legal evolution analysis
+- Graph analytics for influence and centrality analysis
+- Memory system for contextual legal research
 
-**Implementation**:
-```json
-{
-  "tool": "prompt_execute",
-  "arguments": {
-    "name": "semem-concept-exploration",
-    "arguments": {
-      "concept": "machine learning fundamentals",
-      "exploration_depth": 3,
-      "include_relationships": true
-    }
-  }
-}
-```
+### Scientific Literature Analysis
 
-**Results**:
-- Maps prerequisite relationships between concepts
-- Identifies learning progression pathways
-- Suggests related topics and extensions
-- Provides adaptive learning recommendations
+**Scenario**: Medical researchers tracking COVID-19 research evolution
 
-### Use Case 4: Legal Document Analysis
+**Workflow**:
+1. **Literature Ingestion**: Continuous import of research papers
+2. **Methodology Tracking**: Extract and connect research methodologies
+3. **Finding Networks**: Connect research findings and contradictions
+4. **Geographic Analysis**: Map research activity by location
+5. **Knowledge Synthesis**: Generate systematic reviews from graph analysis
 
-**Scenario**: Law firm analyzing case precedents and legal relationships.
-
-**Approach**:
-```json
-{
-  "tool": "prompt_execute",
-  "arguments": {
-    "name": "semem-full-pipeline",
-    "arguments": {
-      "input_data": "Supreme Court ruling on privacy rights in digital communications...",
-      "pipeline_stages": ["memory", "graph"],
-      "output_formats": ["json", "legal_summary"]
-    }
-  }
-}
-```
-
-**Capabilities**:
-- Extracts legal entities (cases, statutes, precedents)
-- Maps citation relationships
-- Identifies legal principle connections
-- Enables precedent research and analysis
+**Advanced Features**:
+- Real-time literature monitoring
+- Contradiction detection through relationship analysis
+- Geographic visualization of research activity
+- Automated systematic review generation
 
 ---
 
 ## Troubleshooting
 
-### Common Connection Issues
+### Connection Issues
 
-#### Problem: MCP Server Won't Start
-
+#### MCP Server Won't Start
 **Symptoms**: Server fails to initialize or exits immediately
 
-**Solutions**:
-1. Check Node.js version: `node --version` (requires 20.11.0+)
-2. Verify Ollama is running: `ollama list`
-3. Check configuration: Ensure `config/config.json` is valid
-4. Review logs: Look for specific error messages
+**Common Solutions**:
+- Verify Node.js version (requires 20.11.0+)
+- Check Ollama is running: `ollama list`
+- Validate configuration files
+- Review logs for specific errors
 
-```bash
-# Debug mode
-LOG_LEVEL=debug node mcp/index.js
-```
+#### Client Connection Failures
+**Symptoms**: "Connection failed" or timeout errors
 
-#### Problem: Client Can't Connect
+**Debugging Steps**:
+- Confirm server shows "✅ Semem MCP server running"
+- Verify file paths in client configuration
+- Check permissions on script files
+- Try HTTP transport as alternative
 
-**Symptoms**: MCP client shows "Connection failed" or timeout errors
-
-**Solutions**:
-1. Verify server is running: Should show "✅ Semem MCP server running"
-2. Check file paths in client configuration
-3. Ensure proper permissions on script files
-4. Try alternative transport (HTTP instead of stdio)
-
-#### Problem: Tools Not Appearing
-
-**Symptoms**: Connected but no tools visible in client
+#### Tools Not Appearing
+**Symptoms**: Connected but no tools visible
 
 **Solutions**:
-1. Restart Claude Desktop completely
-2. Verify MCP configuration syntax
-3. Check server logs for tool registration errors
-4. Test with simple tool call to verify connection
+- Restart MCP client completely
+- Verify configuration syntax
+- Check server logs for registration errors
+- Test with simple status tool
 
-### Performance Issues
+### Performance Optimization
 
-#### Problem: Slow Response Times
+#### Slow Response Times
+**Common Causes and Solutions**:
 
-**Symptoms**: Tools take longer than 30 seconds to respond
+**Large Document Processing**:
+- Reduce chunk sizes in `ragno_decompose_corpus`
+- Use higher entity confidence thresholds
+- Process documents in smaller batches
 
-**Solutions**:
-1. **Reduce embedding dimensions**: Use smaller models
-2. **Limit context size**: Reduce `contextLimit` in queries
-3. **Optimize SPARQL queries**: Add LIMIT clauses
-4. **Use local models**: Prefer Ollama over API calls
+**Memory Search Performance**:
+- Increase similarity thresholds (0.8+ for precision)
+- Reduce result limits for faster responses  
+- Use specific concept queries rather than broad searches
 
-```json
-{
-  "tool": "semem_retrieve_memories",
-  "arguments": {
-    "query": "your search",
-    "limit": 5,        // Reduced from default 10
-    "threshold": 0.8   // Higher threshold = fewer results
-  }
-}
-```
+**SPARQL Query Optimization**:
+- Add LIMIT clauses to prevent large result sets
+- Use indexed properties for filtering
+- Optimize query patterns for your endpoint
 
-#### Problem: Memory Usage Growing
-
+#### Memory Usage Growth
 **Symptoms**: Server memory usage increases over time
 
 **Solutions**:
-1. **Clear cache periodically**: Restart server regularly
-2. **Use smaller chunk sizes**: Reduce document size limits
-3. **Configure garbage collection**: Set Node.js flags
-
-```bash
-# Start with memory optimization
-node --max-old-space-size=4096 mcp/index.js
-```
+- Restart server periodically for cache clearing
+- Configure smaller chunk sizes and limits
+- Use streaming processing for large datasets
+- Monitor with `semem_get_metrics` tool
 
 ### Tool-Specific Issues
 
-#### Problem: Knowledge Graph Construction Fails
-
-**Symptoms**: `ragno_decompose_corpus` returns empty results
-
-**Solutions**:
-1. **Check entity confidence**: Lower `minEntityConfidence` threshold
-2. **Verify text quality**: Ensure meaningful content
-3. **Adjust chunk size**: Text might be too small/large
-
-```json
-{
-  "tool": "ragno_decompose_corpus",
-  "arguments": {
-    "textChunks": [...],
-    "options": {
-      "minEntityConfidence": 0.5,  // Lowered from 0.8
-      "maxEntitiesPerUnit": 30     // Increased limit
-    }
-  }
-}
-```
-
-#### Problem: Prompt Workflows Fail Partially
-
-**Symptoms**: Workflow completes some steps but fails others
-
-**Check the response for**:
-- `partialCompletion: true` indicates some steps succeeded
-- `results` array shows which steps failed
-- Error messages in individual step results
-
-**Recovery strategies**:
-1. **Retry with adjusted parameters**
-2. **Execute individual tools** to isolate issues
-3. **Check prerequisites** (models, endpoints)
-
-### Debug Tools and Resources
-
-#### System Status Check
-
-```json
-{
-  "tool": "semem_get_status",
-  "arguments": {}
-}
-```
-
-This provides comprehensive system information:
-- Memory manager status
-- Model availability
-- Storage backend health
-- Performance metrics
-
-#### Configuration Verification
-
-```json
-{
-  "tool": "semem_get_config",
-  "arguments": {}
-}
-```
-
-Shows current configuration including:
-- Storage settings
-- Model endpoints
-- Feature flags
-- Performance tuning
-
----
-
-## Advanced Configuration
-
-### Custom Storage Backends
-
-#### JSON Storage (Simple)
-
-```json
-{
-  "storage": {
-    "type": "json",
-    "options": {
-      "filePath": "./data/my_memories.json",
-      "autoSave": true,
-      "backupInterval": 3600
-    }
-  }
-}
-```
-
-#### SPARQL Storage (Advanced)
-
-```json
-{
-  "storage": {
-    "type": "sparql",
-    "options": {
-      "endpoint": "http://localhost:3030/dataset/query",
-      "graphName": "http://my-domain.org/knowledge",
-      "user": "admin",
-      "password": "secure_password",
-      "timeout": 10000
-    }
-  }
-}
-```
-
-### LLM Provider Configuration
-
-#### Multiple Providers Setup
-
-```json
-{
-  "llmProviders": [
-    {
-      "type": "ollama",
-      "baseUrl": "http://localhost:11434",
-      "chatModel": "qwen2:1.5b",
-      "embeddingModel": "nomic-embed-text",
-      "priority": 1,
-      "capabilities": ["chat", "embedding"]
-    },
-    {
-      "type": "claude",
-      "apiKey": "${CLAUDE_API_KEY}",
-      "chatModel": "claude-3-sonnet-20240229",
-      "priority": 2,
-      "capabilities": ["chat"]
-    }
-  ]
-}
-```
-
-### Performance Tuning
-
-#### Memory Optimization
-
-```json
-{
-  "memory": {
-    "dimension": 1536,          // Embedding dimensions
-    "similarityThreshold": 0.7, // Default similarity cutoff
-    "contextWindow": 5,         // Number of context items
-    "cacheSize": 1000,         // Maximum cached items
-    "decayRate": 0.0001        // Memory importance decay
-  }
-}
-```
-
-#### ZPT Navigation Tuning
-
-```json
-{
-  "zpt": {
-    "defaultChunkSize": 500,
-    "maxChunkOverlap": 50,
-    "embeddingBatchSize": 32,
-    "cacheEnabled": true,
-    "parallelProcessing": true
-  }
-}
-```
-
-### Security Configuration
-
-#### Access Control
-
-```json
-{
-  "security": {
-    "enableAuth": true,
-    "allowedOrigins": ["http://localhost:3000"],
-    "rateLimiting": {
-      "enabled": true,
-      "maxRequests": 100,
-      "windowMs": 60000
-    },
-    "apiKeys": {
-      "required": false,
-      "keys": ["${API_KEY_1}", "${API_KEY_2}"]
-    }
-  }
-}
-```
-
-#### Data Privacy
-
-```json
-{
-  "privacy": {
-    "anonymizePersonalData": true,
-    "retentionPeriod": "365d",
-    "encryptSensitiveData": true,
-    "auditLogging": true
-  }
-}
-```
-
----
-
-## Getting Help and Support
-
-### Documentation Resources
-
-- **API Reference**: `/docs/api/` - Complete tool and resource documentation
-- **Architecture Guide**: `/docs/architecture.md` - System design and components
-- **Algorithm Documentation**: `/docs/ragno/` - Advanced algorithms and research
-
-### Community and Support
-
-- **GitHub Issues**: Report bugs and request features
-- **Discussion Forums**: Community support and use cases
-- **Example Repository**: Real-world implementation examples
-
-### Contributing
-
-Semem is open source and welcomes contributions:
-
-1. **Bug Reports**: Clear reproduction steps and system information
-2. **Feature Requests**: Use cases and implementation suggestions  
-3. **Code Contributions**: Follow existing patterns and include tests
-4. **Documentation**: Improve tutorials and API documentation
-
----
-
-## Enhanced Workflows (Version 2.0)
-
-Semem now includes next-generation enhanced workflows that provide intelligent document processing with SPARQL storage, hybrid search, and incremental learning capabilities.
-
-### Running Enhanced Workflows
-
-#### Starting the Enhanced MCP Server
-
-```bash
-# From the semem root directory
-cd /flow/hyperdata/semem
-node mcp/index.js
-```
-
-You should see confirmation that the enhanced workflow orchestrator is initialized:
-```
-✅ Enhanced workflow orchestrator initialized successfully
-✅ Semem MCP server running on stdio transport
-```
-
-#### Connecting via Claude Code
-
-```bash
-# Add semem to Claude Code (if not already done)
-claude mcp add semem node mcp/index.js
-
-# Start Claude Code
-claude
-```
-
-#### Available Enhanced Workflows
-
-The enhanced workflow system includes two powerful v2.0 workflows:
-
-1. **`enhanced-research-workflow`** - Intelligent document processing with SPARQL storage
-2. **`intelligent-qa-workflow`** - Adaptive question answering with learning
-
-List available workflows:
-```
-> mcp__semem__prompt_list
-```
-
-### Enhanced Research Workflow
-
-Process research documents with advanced analysis, SPARQL storage, and insight generation:
-
-```javascript
-{
-  "tool": "mcp__semem__prompt_execute",
-  "arguments": {
-    "name": "enhanced-research-workflow",
-    "arguments": {
-      "research_documents": [
-        "Transformer models have revolutionized natural language processing through their attention mechanism, allowing for better context understanding and parallel processing compared to sequential models like RNNs.",
-        "Large language models built on transformer architecture demonstrate emergent capabilities in reasoning, code generation, and complex problem solving as they scale to billions of parameters."
-      ],
-      "domain_focus": "AI/ML", 
-      "analysis_goals": [
-        "concept_extraction",
-        "relationship_mapping", 
-        "insight_generation",
-        "trend_analysis"
-      ],
-      "user_context": {
-        "userId": "researcher_001",
-        "expertise_level": "expert",
-        "preferences": {
-          "focus_areas": ["transformers", "attention_mechanisms", "scaling"],
-          "output_detail": "comprehensive"
-        }
-      }
-    }
-  }
-}
-```
-
-**Enhanced Features:**
-- **SPARQL-First Storage**: Documents stored in RDF format with embeddings
-- **Hybrid Search**: Combines vector similarity + SPARQL queries + dual search
-- **Domain-Focused Analysis**: Specialized processing based on research domain
-- **User Personalization**: Adapts to expertise level and preferences
-- **Comprehensive Insights**: Multi-perspective analysis with confidence scoring
-
-### Intelligent Q&A Workflow
-
-Answer questions using adaptive search strategies and incremental learning:
-
-```javascript
-{
-  "tool": "mcp__semem__prompt_execute",
-  "arguments": {
-    "name": "intelligent-qa-workflow",
-    "arguments": {
-      "question": "How do transformer attention mechanisms compare to RNN memory systems in terms of computational efficiency?",
-      "user_context": {
-        "userId": "student_001", 
-        "expertise_level": "intermediate",
-        "domain_interests": ["machine_learning", "neural_networks"]
-      },
-      "search_config": {
-        "searchDepth": "comprehensive",
-        "confidenceThreshold": 0.8,
-        "maxSources": 15
-      },
-      "response_style": {
-        "detail_level": "balanced",
-        "include_sources": true,
-        "include_confidence": true,
-        "include_alternatives": true
-      }
-    }
-  }
-}
-```
-
-**Enhanced Features:**
-- **Adaptive Query Processing**: Context-aware search optimization
-- **User History Integration**: Learns from previous interactions
-- **Confidence Assessment**: Reliability scoring for answers
-- **Multi-Perspective Analysis**: Includes alternative viewpoints
-- **Incremental Learning**: Improves responses based on feedback
-
-### Enhanced Tool Access
-
-You can also access individual enhanced tools directly:
-
-```bash
-# Enhanced document ingestion
-> research_ingest_documents with documents=["Climate change research shows accelerating trends"] domain="climate_science"
-
-# Hybrid search capabilities
-> hybrid_search with query="machine learning applications" threshold=0.7 limit=10
-
-# Adaptive query processing
-> adaptive_query_processing with query="neural network architectures" userContext={"expertise_level": "expert"}
-
-# User feedback integration
-> capture_user_feedback with queryId="12345" feedback={"type": "positive", "score": 0.9}
-```
-
-### Enhanced Workflow Results
-
-Enhanced workflows return comprehensive results with rich metadata:
-
-```json
-{
-  "success": true,
-  "promptName": "enhanced-research-workflow",
-  "executionId": "enhanced_exec_1703123456789_abc123",
-  "outputs": {
-    "concepts": ["transformer", "attention_mechanism", "neural_networks"],
-    "entities": [
-      {"name": "transformer_model", "type": "concept"},
-      {"name": "attention_mechanism", "type": "method"}
-    ],
-    "insights": "Comprehensive analysis of transformer architecture benefits...",
-    "summary": "Executive summary of research findings...",
-    "searchCapabilities": "Hybrid search results combining vector and SPARQL",
-    "executionMetrics": {
-      "documentsProcessed": 2,
-      "entitiesExtracted": 15,
-      "relationshipsFound": 8,
-      "processingTime": "45.2 seconds",
-      "storageBackend": "CachedSPARQL",
-      "embeddingsGenerated": 1536
-    }
-  },
-  "features": {
-    "adaptiveLearning": true,
-    "hybridSearch": true,
-    "sparqlIntegration": true,
-    "userPersonalization": true
-  }
-}
-```
-
-### Validation and Testing
-
-Verify the enhanced workflow system is functioning correctly:
-
-```bash
-# Run comprehensive validation test
-node mcp/test/enhanced-workflow-validation.js
-```
-
-Expected output:
-```
-🚀 Starting Enhanced Workflow Validation Tests...
-📊 Test Report
-==================================================
-Total Tests: 18
-Passed: 17
-Failed: 1
-Success Rate: 94.4%
-🎉 Enhanced workflow system is functional.
-```
-
-### Enhanced vs Standard Workflows
-
-| Feature | Standard Workflows (v1.0) | Enhanced Workflows (v2.0) |
-|---------|---------------------------|---------------------------|
-| Storage | JSON/Memory | SPARQL with embeddings |
-| Search | Basic vector similarity | Hybrid vector + SPARQL + dual |
-| Learning | Static responses | Adaptive with user feedback |
-| Performance | Standard execution | Optimized with caching |
-| Personalization | None | User context awareness |
-| Confidence | Basic | Comprehensive scoring |
-| Metadata | Limited | Rich execution metrics |
-
-### Configuration Options
-
-Enhanced workflows support advanced configuration:
-
-```javascript
-{
-  "storage_config": {
-    "backend": "CachedSPARQL",
-    "enableEmbeddings": true,
-    "cacheSize": 10000,
-    "graphName": "http://semem.org/research-workflow"
-  },
-  "search_config": {
-    "searchDepth": "comprehensive",
-    "includeRelated": true,
-    "confidenceThreshold": 0.7,
-    "maxSources": 15
-  },
-  "response_style": {
-    "detail_level": "balanced",
-    "include_sources": true,
-    "include_confidence": true,
-    "include_alternatives": false
-  }
-}
-```
+#### Knowledge Graph Construction Problems
+**Empty Results from ragno_decompose_corpus**:
+- Lower entity confidence threshold (0.5 instead of 0.8)
+- Verify text contains meaningful content
+- Check chunk size isn't too small/large
+- Ensure LLM endpoint is responding
+
+#### Memory Search Issues
+**No Results from semem_retrieve_memories**:
+- Lower similarity threshold (0.5-0.6 for broader search)
+- Verify embeddings are generated correctly
+- Check memory storage has content
+- Try broader query terms
+
+#### Navigation Problems
+**ZPT Tools Return Empty Results**:
+- Verify corpus has been processed and analyzed
+- Check filters aren't too restrictive
+- Use `zpt_get_options` to see available content
+- Try different zoom/tilt combinations
+
+### SPARQL Store Issues
+
+#### Connection Problems
+**Can't Connect to SPARQL Endpoint**:
+- Verify endpoint URL and credentials
+- Check network connectivity and firewall rules
+- Test endpoint directly with simple query
+- Verify SPARQL store is running and accessible
+
+#### Data Inconsistency
+**Graph Data Appears Incomplete**:
+- Check entity confidence thresholds
+- Verify relationship extraction is enabled
+- Monitor for processing errors in logs
+- Use `ragno_get_graph_stats` to verify data
+
+#### Performance Issues
+**Slow SPARQL Queries**:
+- Add appropriate indexes to your SPARQL store
+- Optimize query patterns and filters
+- Consider using CachedSPARQL storage backend
+- Monitor query performance with store tools
 
 ---
 
 ## Conclusion
 
-This tutorial has covered the comprehensive capabilities of Semem's MCP integration, from basic memory operations to sophisticated enhanced workflows with SPARQL integration and intelligent learning. The combination of semantic memory, knowledge graphs, 3D navigation, and enhanced v2.0 workflows provides unprecedented flexibility for intelligent information processing and analysis.
+Semem provides a comprehensive platform for intelligent knowledge management through its three integrated systems. The MCP interface makes these powerful capabilities accessible in any MCP-enabled environment, while the HTTP API endpoints provide programmatic access for custom applications.
 
-### Key Takeaways
+### Key Success Patterns
 
-- **Start Simple**: Begin with basic memory operations before advancing to enhanced workflows
-- **Use Enhanced Templates**: Leverage v2.0 workflows for SPARQL storage and hybrid search
-- **Combine Systems**: The real power comes from integrating memory, graphs, navigation, and learning
-- **Leverage User Context**: Enhanced workflows adapt to your expertise and preferences
-- **Monitor Performance**: Use built-in metrics and validation tools to optimize usage
-- **Embrace Learning**: Enhanced workflows improve over time with user feedback
+1. **Start with Clear Goals**: Define what you want to achieve before choosing tools
+2. **Use Appropriate Storage**: Match storage backend to your persistence needs
+3. **Leverage Integration**: Combine memory, graphs, and navigation for comprehensive analysis
+4. **Optimize Incrementally**: Start with default settings, then tune based on performance
+5. **Monitor and Validate**: Use built-in metrics and validation tools
 
 ### Next Steps
 
-1. **Experiment** with enhanced workflows in your domain
-2. **Build Custom Enhanced Workflows** using the v2.0 orchestrator
-3. **Integrate SPARQL Storage** for persistent knowledge management
-4. **Utilize Hybrid Search** for comprehensive information retrieval
-5. **Provide User Feedback** to improve system responses over time
-6. **Monitor Execution Metrics** to optimize workflow performance
-7. **Contribute** improvements and new enhanced capabilities
-8. **Share** your enhanced workflow use cases with the community
+- **Experiment** with different workflow patterns in your domain
+- **Integrate External Data** using SPARQL store capabilities  
+- **Build Custom Workflows** combining multiple systems
+- **Optimize Performance** using monitoring and tuning tools
+- **Contribute** improvements and share use cases with the community
 
-Semem's enhanced workflow system transforms individual AI tools into a comprehensive, intelligent knowledge processing platform. Through MCP integration with SPARQL storage, hybrid search, and adaptive learning, these capabilities enable new possibilities for intelligent information management, analysis, and continuous improvement.
+Semem transforms individual AI capabilities into a unified platform for intelligent knowledge processing, analysis, and discovery. Through thoughtful workflow design and proper configuration, it enables sophisticated research and analysis capabilities that adapt to your specific needs and domains.
 
 ---
 
-*For the latest updates and additional resources, visit the [Semem documentation](../README.md) and [GitHub repository](https://github.com/danja/semem).*
+*For detailed API reference and additional resources, visit the [Semem documentation](../README.md) and explore the comprehensive [HTTP API endpoints](./http-api-endpoints.md) for programmatic access.*
