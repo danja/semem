@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Home</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Home</h1>
+
+    
+
+
+
+    
+
+
+    <h3> </h3>
+
+
+
+
+
+
+
+
+
+
+    
+
+
+
+
+    <section>
+        <article><h1>Semem</h1>
+<p><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License">
+<img src="https://img.shields.io/badge/node-%3E%3D20.11.0-brightgreen.svg" alt="Node.js">
+<img src="https://img.shields.io/badge/status-active-success.svg" alt="Status"></p>
+<h2>Semantic Web Memory for Intelligent Agents</h2>
+<p><em>...or, Graph RAG on steroids for the global knowledgebase</em></p>
+<p><strong>tl;dr - flipping ideas (mostly) from the LLM world over to the Semantic Web for massively simplified integration, at global scale</strong></p>
+<p><em>click the triangles to expand the text</em></p>
+<details>
+<summary>Semem is an experimental Node.js toolkit for AI memory management</summary> that integrates large language models (LLMs) with Semantic Web technologies (RDF/SPARQL). It offers knowledge graph retrieval and augmentation algorithms within a conceptual model based on the [Ragno](https://github.com/danja/ragno) (knowledge graph description) and [ZPT](https://github.com/danja/zpt) (knowledge graph navigation) ontologies. It is a [Tensegrity](https://github.com/danja/tensegrity) subproject.
+<p>The intuition is that while LLMs and associated techniques have massively advanced the field of AI and offer considerable utility, the typical approach is missing the elephant in the room: <strong>the Web</strong> - the biggest known knowledgebase in our universe. Semantic Web technologies offer data integration at a global scale, with tried &amp; tested conceptual models for knowledge representation. <strong>There is a lot of low-hanging fruit.</strong></p>
+</details>
+<h2>Status 2025-06-21</h2>
+<p>See also :  the (in-progress) manual, <a href="https://github.com/danja/semem/blob/main/docs/CURRENT-ACTIVITY.md">CURRENT-ACTIVITIES.md</a> and <a href="https://tensegrity.it">blog</a></p>
+<details>
+<summary>Mostly functional but very, very sketchy. It has an MCP server, HTTP API, a crude browser UI and code APIs. A lot to do before much will be remotely useful. It is in active development in June 2025. The codebase is big and chaotic, <strong>it is not for the fainthearted</strong>.</summary>
+<p>The codebase is registered as the npm package <a href="https://www.npmjs.com/package/semem">semem</a> though there hasn't been much time spent on this angle, currently it's pretty much essential to use this repo.</p>
+<p>The dev process has involved pushing out in various directions with spikes, then circling back to ensure the core is still functional, then consolidation. To date it's been a one-man + various AI assistants (and a dog) operation. Despite me trying to keep things modular so they can be worked on in isolation, it's still complex enough that Claude (and I) struggle. <strong>Collaborators would be very welcome</strong>.</p>
+</details>
+It is feature-complete as originally conceived, in the sense of <em>[all the right notes, but not necessarily in the right order](https://www.youtube.com/watch?v=R7GeKLE0x3s)</em>. There is a lot of cruft and numerous bugs. Right now it's in a <strong>consolidation phase</strong>.
+<h2>System Overview</h2>
+<p>The SPARQL store, chat LLMs and embeddings service are all external. SPARQL uses the standard HTTP interfaces. There are also in-memory and JSON file storage subsystems but these are an artifact of dev history, though they can be useful as a fallback durin testing. LLMs use the <a href="https://github.com/danja/hyperdata-clients">hyperdata-clients</a> library to simplify configuration.</p>
+<p>The system is layered in a couple of dimensions: interfacing may be direct (SDK-style) API, via the HTTP server or MCP server. Functionality is grouped by purpose broadly into <em>Basic</em>, <em>Ragno</em> and <em>ZPT</em>.</p>
+<p>There are fairly comprehensive demos under <a href="https://github.com/danja/semem/tree/main/examples">examples</a> which exercise the different parts of the system (think manual integration tests).</p>
+<h3>Basic</h3>
+<p>This contains the low-level operations. It covers basic SPARQL store interactions, embeddings/<em>semantic search</em> and chat. There are also some minimal temporal/relevance-related parts that overlap with <em>Ragno</em>.</p>
+<p>Internally the system relies on <a href="https://github.com/rdf-ext">RDF-Ext</a> and other <a href="http://rdf.js.org/">RDFJS</a> libraries for its graph model, <a href="https://github.com/facebookresearch/faiss">FAISS</a> for its primary vector-oriented functionality.</p>
+<h3>Ragno</h3>
+<p>This layer is concerned with the <strong>knowledgebase model</strong> as described by the <a href="https://github.com/danja/ragno">Ragno Ontology</a>. On top of the model are a set of algorithms that offer various knowledge retrieval and augmentation facilities. Most are lifted from the <a href="https://arxiv.org/abs/2504.11544">NodeRAG paper</a>, with additions such as <a href="https://arxiv.org/abs/2212.10496">HyDE</a> <em>Hypothetical Document Embeddings</em> and Vectorised <a href="https://en.wikipedia.org/wiki/Self-organizing_map">Self-Organising Maps</a>.</p>
+<h3>ZPT</h3>
+<p>This layer is concerned with <strong>knowledgegraph navigation</strong> built on the <a href="https://github.com/danja/zpt">ZPT Ontology</a> following an analogy from the film world, <em>Zoom, Pan, Tilt</em>. Algorithms have been created to handle parameterisation of filters/selection and corpus decomposition and chunking.</p>
+<h2>UI</h2>
+<p>Semem has a browser-based UI in progress. This won't be useful for actual knowledge work any time soon (if ever) but it will have a role in checking system behaviour and experimenting.</p>
+<hr>
+<p>The description below is very AI-sloppy.</p>
+<h2>🚀 Quick Start</h2>
+<h3>Prerequisites</h3>
+<ul>
+<li>Node.js 20.11.0 or higher</li>
+<li>npm (comes with Node.js)</li>
+</ul>
+<h3>Installation</h3>
+<ol>
+<li>
+<p>Clone the repository:</p>
+<pre class="prettyprint source lang-bash"><code>git clone https://github.com/danja/semem.git
+cd semem
+</code></pre>
+</li>
+<li>
+<p>Install dependencies:</p>
+<pre class="prettyprint source lang-bash"><code>npm install
+</code></pre>
+</li>
+</ol>
+<h3>Starting the Application</h3>
+<h4>Option 1: Start all services (recommended)</h4>
+<pre class="prettyprint source lang-bash"><code>npm start
+</code></pre>
+<p>This will start both the API server and UI server with a single command.</p>
+<h4>Option 2: Start services individually</h4>
+<pre class="prettyprint source lang-bash"><code># Start API server
+npm run start:api
+
+# In a new terminal, start the UI server
+npm run start:ui
+</code></pre>
+<h4>Development Mode</h4>
+<p>For development with hot-reloading:</p>
+<pre class="prettyprint source lang-bash"><code>npm run dev
+</code></pre>
+<h3>Accessing the UI</h3>
+<p>Once the servers are running, open your browser and navigate to:</p>
+<pre class="prettyprint source"><code>http://localhost:3000
+</code></pre>
+<h2>🖥️ UI Features</h2>
+<h3>Interactive Console</h3>
+<p>Access the developer console by clicking the tab on the right side of the screen. The console provides:</p>
+<ul>
+<li>Real-time log viewing</li>
+<li>Log level filtering (Error, Warn, Info, Debug, Trace)</li>
+<li>Search functionality</li>
+<li>Pause/Resume logging</li>
+<li>Copy logs to clipboard</li>
+</ul>
+<h3>VSOM Visualization</h3>
+<p>Explore high-dimensional data with the Vector Self-Organizing Map visualization:</p>
+<ol>
+<li>Navigate to the VSOM tab</li>
+<li>Load or train a SOM model</li>
+<li>Interact with the visualization</li>
+<li>Explore feature maps and clustering</li>
+</ol>
+<h3>SPARQL Browser</h3>
+<p>Query and explore your knowledge graph using the built-in SPARQL browser.</p>
+<h2>🚀 Key Features</h2>
+<ul>
+<li><strong>🧠 Semantic Memory</strong>: Intelligent context retrieval and memory organization with vector embeddings and SPARQL</li>
+<li><strong>🕸️ Knowledge Graph Processing</strong>: End-to-end Ragno pipeline for entity extraction and relationship modeling</li>
+<li><strong>🎯 Zoom, Pan Tilt (ZPT)</strong>: Knowledge navigation and processing, cinematic analogy</li>
+<li><strong>🔌 Model Context Protocol (MCP)</strong>: JSON-RPC 2.0 API for seamless LLM and agent integration with workflow orchestration</li>
+<li><strong>🚀 MCP Prompts</strong>: 8 pre-built workflow templates for complex multi-step operations</li>
+<li><strong>🔍 Advanced Algorithms</strong>: HyDE, VSOM, graph analytics, community detection, and Personal PageRank</li>
+<li><strong>📊 Interactive Visualizations</strong>: VSOM (Vector Self-Organizing Maps) for high-dimensional data exploration</li>
+<li><strong>🔗 Multi-Provider LLM Support</strong>: Ollama, Claude, Mistral, and other providers via unified connector system</li>
+<li><strong>📊 Multiple Storage Backends</strong>: In-memory, JSON, and SPARQL/RDF with caching optimization</li>
+</ul>
+<h2>📊 Data Visualization</h2>
+<p>Semem includes an advanced VSOM (Vector Self-Organizing Map) visualization system for exploring high-dimensional data:</p>
+<h3>Key Features</h3>
+<ul>
+<li>Interactive SOM grid visualization with zoom/pan</li>
+<li>Real-time training visualization</li>
+<li>Feature map exploration (U-Matrix, component planes)</li>
+<li>Interactive clustering of SOM nodes</li>
+<li>Responsive design for all screen sizes</li>
+</ul>
+<h3>Getting Started</h3>
+<ol>
+<li>Navigate to the VSOM tab in the Semem UI</li>
+<li>Load or train a SOM model</li>
+<li>Explore the visualization and interact with nodes</li>
+<li>Use the feature maps to understand data relationships</li>
+</ol>
+<p>For more details, see the <a href="docs/features/vsom/README.md">VSOM Documentation</a>.</p>
+<h2>📁 Project Structure</h2>
+<pre class="prettyprint source"><code>semem/
+├── src/                    # Core library code
+│   ├── handlers/          # LLM and embedding handlers
+│   ├── stores/            # Storage backends (JSON, SPARQL, etc.)
+│   ├── connectors/        # LLM provider connectors
+│   ├── servers/           # HTTP server implementations
+│   ├── ragno/             # Knowledge graph algorithms
+│   └── zpt/               # Zero-Point Traversal system
+├── examples/              # Organized examples by category
+│   ├── basic/            # Core functionality examples
+│   ├── ragno/            # Knowledge graph examples
+│   ├── mcp/              # MCP integration examples
+│   ├── zpt/              # ZPT processing examples
+│   └── pending/          # Work-in-progress examples
+├── mcp/                   # MCP server implementation
+├── config/               # Configuration files
+└── docs/                 # Comprehensive documentation
+</code></pre>
+<h2>🌐 Server Architecture</h2>
+<p>Semem provides a complete HTTP server infrastructure for deploying AI memory and knowledge graph services. The server system consists of four main components located in <code>src/servers/</code>:</p>
+<h3>Core Server Components</h3>
+<h4>🔥 <strong>API Server</strong> (<code>api-server.js</code>)</h4>
+<p>The main REST API server providing HTTP endpoints for all Semem functionality:</p>
+<ul>
+<li><strong>Memory Operations</strong>: Store, search, and retrieve semantic memories</li>
+<li><strong>Chat Interface</strong>: Conversational AI with context awareness</li>
+<li><strong>Embedding Services</strong>: Vector embedding generation and management</li>
+<li><strong>Configuration Management</strong>: Dynamic provider and storage configuration</li>
+<li><strong>Health Monitoring</strong>: System status and metrics endpoints</li>
+</ul>
+<p><strong>Key Endpoints:</strong></p>
+<pre class="prettyprint source"><code>POST /api/memory          # Store new memories
+GET  /api/memory/search   # Search existing memories
+POST /api/chat            # Chat with context
+POST /api/chat/stream     # Streaming chat responses
+GET  /api/health          # System health check
+GET  /api/config          # Server configuration
+</code></pre>
+<h4>🎛️ <strong>UI Server</strong> (<code>ui-server.js</code>)</h4>
+<p>Web interface server for interactive access to Semem capabilities:</p>
+<ul>
+<li><strong>Provider Selection</strong>: Choose from configured LLM providers</li>
+<li><strong>Memory Browser</strong>: Visual interface for memory exploration</li>
+<li><strong>Chat Interface</strong>: Web-based conversational UI</li>
+<li><strong>Configuration UI</strong>: Visual configuration management</li>
+</ul>
+<h4>🚀 <strong>Server Manager</strong> (<code>server-manager.js</code>)</h4>
+<p>Process management system for coordinating multiple server instances:</p>
+<ul>
+<li><strong>Process Lifecycle</strong>: Start, monitor, and gracefully stop servers</li>
+<li><strong>Port Management</strong>: Automatic port conflict resolution</li>
+<li><strong>Health Monitoring</strong>: Real-time process status tracking</li>
+<li><strong>Signal Handling</strong>: Graceful shutdown coordination</li>
+<li><strong>Logging</strong>: Centralized output management with timestamps</li>
+</ul>
+<h4>🎯 <strong>Start All</strong> (<code>start-all.js</code>)</h4>
+<p>Orchestration script for launching the complete server ecosystem:</p>
+<ul>
+<li><strong>Configuration Loading</strong>: Unified config system integration</li>
+<li><strong>Multi-Server Startup</strong>: Coordinated API and UI server launch</li>
+<li><strong>Interactive Control</strong>: Keyboard shortcuts for shutdown (Ctrl+C, 'q')</li>
+<li><strong>Error Handling</strong>: Robust startup failure recovery</li>
+</ul>
+<h3>Quick Server Deployment</h3>
+<pre class="prettyprint source lang-bash"><code># Start all servers (recommended)
+./start.sh
+# OR
+npm run start-servers
+
+# Individual server startup
+node src/servers/api-server.js    # API only (port 4100)
+node src/servers/ui-server.js     # UI only (port 4120)
+
+# Stop all servers
+./stop.sh
+# OR
+npm run stop-servers
+</code></pre>
+<h3>Server Configuration</h3>
+<p>Servers are configured via <code>config/config.json</code>:</p>
+<pre class="prettyprint source lang-json"><code>{
+  &quot;servers&quot;: {
+    &quot;api&quot;: 4100,      # API server port
+    &quot;ui&quot;: 4120,       # UI server port
+    &quot;redirect&quot;: 4110, # Optional redirect port
+    &quot;redirectTarget&quot;: 4120
+  },
+  &quot;storage&quot;: {
+    &quot;type&quot;: &quot;sparql&quot;,  # or &quot;json&quot;, &quot;memory&quot;
+    &quot;options&quot;: { /* storage-specific config */ }
+  },
+  &quot;llmProviders&quot;: [
+    { /* provider configurations */ }
+  ]
+}
+</code></pre>
+<h3>Development and Production</h3>
+<p><strong>Development Mode:</strong></p>
+<pre class="prettyprint source lang-bash"><code># Start with hot reload and debug logging
+LOG_LEVEL=debug ./start.sh
+
+# Watch mode with automatic restarts
+npm run dev
+</code></pre>
+<p><strong>Production Deployment:</strong></p>
+<pre class="prettyprint source lang-bash"><code># Set production environment
+NODE_ENV=production ./start.sh
+
+# With process management (PM2)
+pm2 start src/servers/start-all.js --name semem-servers
+</code></pre>
+<h3>Server Monitoring</h3>
+<p>The server infrastructure includes comprehensive monitoring:</p>
+<ul>
+<li><strong>Health Checks</strong>: <code>/api/health</code> endpoint with component status</li>
+<li><strong>Metrics</strong>: <code>/api/metrics</code> endpoint with performance data</li>
+<li><strong>Process Monitoring</strong>: Real-time process status in server manager</li>
+<li><strong>Graceful Shutdown</strong>: Proper cleanup on SIGTERM/SIGINT signals</li>
+</ul>
+<h2>⚡ Quick Start</h2>
+<h3>Installation</h3>
+<pre class="prettyprint source lang-bash"><code># Clone and install
+git clone https://github.com/your-org/semem.git
+cd semem
+npm install
+
+# Configure environment
+cp example.env .env
+# Edit .env with your API keys and settings
+</code></pre>
+<h3>Prerequisites</h3>
+<ol>
+<li>
+<p><strong>Ollama</strong> (recommended for local processing):</p>
+<pre class="prettyprint source lang-bash"><code># Install required models
+ollama pull qwen2:1.5b         # For chat/text generation
+ollama pull nomic-embed-text   # For embeddings
+</code></pre>
+</li>
+<li>
+<p><strong>Optional - SPARQL Endpoint</strong> (for advanced features):</p>
+<pre class="prettyprint source lang-bash"><code># Using Docker
+docker run -d --name fuseki -p 3030:3030 stain/jena-fuseki
+</code></pre>
+</li>
+</ol>
+<h3>Running Servers</h3>
+<pre class="prettyprint source lang-bash"><code># Start HTTP API and UI servers
+./start.sh
+
+# Access web interface
+open http://localhost:4120
+
+# Test API endpoints
+curl http://localhost:4100/api/health
+</code></pre>
+<blockquote>
+<p>📖 See <a href="#-server-architecture">Server Architecture</a> section for detailed server documentation.</p>
+</blockquote>
+<h3>Running Examples</h3>
+<pre class="prettyprint source lang-bash"><code># Basic memory operations
+node examples/basic/MemoryEmbeddingJSON.js
+
+# Knowledge graph processing  
+node examples/ragno/RagnoPipelineDemo.js
+
+# MCP server integration (32 tools + 15 resources + 8 prompt workflows)
+npm run mcp-server-new     # Start MCP server
+node examples/mcp/SememCoreDemo.js           # Core memory operations
+node examples/mcp/RagnoCorpusDecomposition.js # Knowledge graphs
+node examples/mcp/ZPTBasicNavigation.js      # 3D navigation
+
+# Complete ZPT suite (5 comprehensive demos)
+node examples/mcp/ZPTBasicNavigation.js      # Navigation fundamentals
+node examples/mcp/ZPTAdvancedFiltering.js    # Multi-dimensional filtering
+node examples/mcp/ZPTUtilityTools.js         # Schema and validation
+node examples/mcp/ZPTPerformanceOptimization.js # Performance tuning
+node examples/mcp/ZPTIntegrationWorkflows.js # Cross-system integration
+
+# MCP Prompts workflows (NEW!)
+# Start MCP server first: npm run mcp-server-new
+# Then use Claude Desktop or other MCP clients to execute:
+# - semem-research-analysis: Analyze research documents
+# - semem-memory-qa: Q&A with semantic memory
+# - ragno-corpus-to-graph: Build knowledge graphs from text
+# - semem-full-pipeline: Complete memory+graph+navigation workflows
+</code></pre>
+<h2>🧠 Core Components</h2>
+<h3>Semantic Memory</h3>
+<ul>
+<li><strong>Vector embeddings</strong> for semantic similarity</li>
+<li><strong>Context window management</strong> with intelligent chunking</li>
+<li><strong>Multi-backend storage</strong> (JSON, SPARQL, in-memory)</li>
+<li><strong>Intelligent retrieval</strong> with relevance scoring</li>
+</ul>
+<h3>Knowledge Graph (Ragno)</h3>
+<ul>
+<li><strong>Corpus decomposition</strong> into semantic units and entities</li>
+<li><strong>Relationship extraction</strong> and RDF modeling</li>
+<li><strong>Community detection</strong> using Leiden algorithm</li>
+<li><strong>Graph analytics</strong> (centrality, k-core, PageRank)</li>
+</ul>
+<h3>Zero-Point Traversal (ZPT)</h3>
+<ul>
+<li><strong>Zoom/Pan/Tilt navigation</strong> paradigm</li>
+<li><strong>Content chunking</strong> strategies (semantic, fixed, adaptive)</li>
+<li><strong>Corpuscle selection</strong> algorithms</li>
+<li><strong>Transformation pipelines</strong> for content processing</li>
+</ul>
+<h3>Model Context Protocol (MCP)</h3>
+<ul>
+<li><strong>32 comprehensive tools</strong> covering all Semem capabilities</li>
+<li><strong>15 specialized resources</strong> for documentation and data access</li>
+<li><strong>8 MCP Prompts</strong> for workflow orchestration and multi-step operations</li>
+<li><strong>Complete ZPT integration</strong> with 6 navigation tools</li>
+<li><strong>Cross-system workflows</strong> combining Memory + Ragno + ZPT</li>
+<li><strong>Standardized API</strong> for LLM integration with schema validation</li>
+</ul>
+<h3>MCP Prompts - Workflow Orchestration</h3>
+<p>Transform complex multi-step operations into simple, guided workflows:</p>
+<p><strong>Memory Workflows:</strong></p>
+<ul>
+<li><code>semem-research-analysis</code> - Research document analysis with semantic memory context</li>
+<li><code>semem-memory-qa</code> - Q&amp;A using semantic memory retrieval and context assembly</li>
+<li><code>semem-concept-exploration</code> - Deep concept exploration through memory relationships</li>
+</ul>
+<p><strong>Knowledge Graph Construction:</strong></p>
+<ul>
+<li><code>ragno-corpus-to-graph</code> - Transform text corpus to structured RDF knowledge graph</li>
+<li><code>ragno-entity-analysis</code> - Analyze and enrich entities with contextual relationships</li>
+</ul>
+<p><strong>3D Navigation:</strong></p>
+<ul>
+<li><code>zpt-navigate-explore</code> - Interactive 3D knowledge space navigation and analysis</li>
+</ul>
+<p><strong>Integrated Workflows:</strong></p>
+<ul>
+<li><code>semem-full-pipeline</code> - Complete memory → graph → navigation processing pipeline</li>
+<li><code>research-workflow</code> - Academic research document processing and insight generation</li>
+</ul>
+<p><strong>Key Features:</strong></p>
+<ul>
+<li><strong>Multi-step Coordination</strong>: Chain multiple tools with context passing</li>
+<li><strong>Dynamic Arguments</strong>: Type validation, defaults, and requirement checking</li>
+<li><strong>Conditional Execution</strong>: Skip workflow steps based on conditions</li>
+<li><strong>Error Recovery</strong>: Graceful handling of failures with partial results</li>
+<li><strong>Execution Tracking</strong>: Unique execution IDs and detailed step results</li>
+</ul>
+<h2>🤖 Advanced Algorithms</h2>
+<h3>HyDE (Hypothetical Document Embeddings)</h3>
+<p>Enhances retrieval by generating hypothetical answers using LLMs, with uncertainty modeling via <code>ragno:maybe</code> properties.</p>
+<pre class="prettyprint source lang-bash"><code>node examples/ragno/Hyde.js
+</code></pre>
+<h3>VSOM (Vectorized Self-Organizing Maps)</h3>
+<p>Provides entity clustering and semantic organization with support for multiple topologies.</p>
+<pre class="prettyprint source lang-bash"><code>node examples/ragno/VSOM.js
+</code></pre>
+<h3>Graph Analytics Suite</h3>
+<ul>
+<li><strong>K-core decomposition</strong> for dense cluster identification</li>
+<li><strong>Betweenness centrality</strong> for bridge node discovery</li>
+<li><strong>Community detection</strong> (Leiden algorithm)</li>
+<li><strong>Personalized PageRank</strong> for semantic traversal</li>
+</ul>
+<pre class="prettyprint source lang-bash"><code>node examples/ragno/AnalyseGraph.js
+node examples/ragno/Communities.js
+node examples/ragno/PPR.js
+</code></pre>
+<h2>📚 Examples Documentation</h2>
+<p>The <code>examples/</code> directory contains comprehensive demonstrations organized by functionality:</p>
+<ul>
+<li><strong>🧠 Basic Examples</strong> (<code>examples/basic/</code>): Core memory operations, embedding generation, search</li>
+<li><strong>🕸️ Ragno Examples</strong> (<code>examples/ragno/</code>): Knowledge graph processing, entity extraction, RDF</li>
+<li><strong>🔌 MCP Examples</strong> (<code>examples/mcp/</code>): <strong>Complete MCP integration with 32 tools + 15 resources + 8 prompt workflows</strong>
+<ul>
+<li><strong>ZPT Suite</strong>: 5 comprehensive demos covering all ZPT navigation capabilities ✅ COMPLETE</li>
+<li><strong>Memory Integration</strong>: Core semantic memory with context management</li>
+<li><strong>Knowledge Graphs</strong>: Ragno corpus decomposition and RDF processing</li>
+<li><strong>Cross-System Workflows</strong>: Advanced integration patterns</li>
+<li><strong>🚀 MCP Prompts</strong>: 8 workflow templates for orchestrating complex multi-step operations ✅ NEW!</li>
+</ul>
+</li>
+<li><strong>🎯 ZPT Examples</strong> (<code>examples/zpt/</code>): Content processing and navigation</li>
+</ul>
+<p>See <a href="examples/README.md">examples/README.md</a> and <a href="examples/mcp/README.md">examples/mcp/README.md</a> for detailed documentation and usage instructions.</p>
+<h2>🔧 Configuration</h2>
+<h3>Storage Backends</h3>
+<p><strong>JSON Storage</strong> (simple persistence):</p>
+<pre class="prettyprint source lang-json"><code>{
+  &quot;storage&quot;: {
+    &quot;type&quot;: &quot;json&quot;,
+    &quot;options&quot;: {
+      &quot;filePath&quot;: &quot;./data/memories.json&quot;
+    }
+  }
+}
+</code></pre>
+<p><strong>SPARQL Storage</strong> (semantic web integration):</p>
+<pre class="prettyprint source lang-json"><code>{
+  &quot;storage&quot;: {
+    &quot;type&quot;: &quot;sparql&quot;,
+    &quot;options&quot;: {
+      &quot;endpoint&quot;: &quot;https://fuseki.hyperdata.it/semem&quot;,
+      &quot;graphName&quot;: &quot;http://example.org/graph&quot;,
+      &quot;user&quot;: &quot;admin&quot;,
+      &quot;password&quot;: &quot;admin123&quot;
+    }
+  }
+}
+</code></pre>
+<h3>LLM Providers</h3>
+<p>Configure multiple providers in <code>config/config.json</code>:</p>
+<pre class="prettyprint source lang-json"><code>{
+  &quot;llmProviders&quot;: [
+    {
+      &quot;type&quot;: &quot;ollama&quot;,
+      &quot;baseUrl&quot;: &quot;http://localhost:11434&quot;,
+      &quot;chatModel&quot;: &quot;qwen2:1.5b&quot;,
+      &quot;embeddingModel&quot;: &quot;nomic-embed-text&quot;,
+      &quot;capabilities&quot;: [&quot;chat&quot;, &quot;embedding&quot;]
+    },
+    {
+      &quot;type&quot;: &quot;claude&quot;,
+      &quot;apiKey&quot;: &quot;${CLAUDE_API_KEY}&quot;,
+      &quot;chatModel&quot;: &quot;claude-3-sonnet-20240229&quot;,
+      &quot;capabilities&quot;: [&quot;chat&quot;]
+    }
+  ]
+}
+</code></pre>
+<h2>🔌 MCP Integration</h2>
+<p>Semem implements Anthropic's <a href="https://docs.anthropic.com/en/docs/agents-and-tools/mcp">Model Context Protocol (MCP)</a> for seamless LLM integration:</p>
+<h3>Using from NPM Package</h3>
+<p>If you've installed Semem as an npm package, you can run the MCP server directly:</p>
+<pre class="prettyprint source lang-bash"><code># Install globally
+npm install -g semem
+
+# Run MCP server via npx (recommended)
+npx semem-mcp
+
+# Run HTTP MCP server
+npx semem-mcp-http --port=3000
+
+# Or if installed globally
+semem-mcp
+semem-mcp-http --port=3000
+</code></pre>
+<h3>Using from Source</h3>
+<pre class="prettyprint source lang-bash"><code># Start MCP server
+npm run mcp-server-new
+
+# Connect from Claude Desktop or other MCP clients
+# Server provides 32 tools + 15 resources + 8 prompt workflows covering all Semem capabilities
+</code></pre>
+<h3>Claude Desktop Configuration</h3>
+<p>Add to your Claude Desktop MCP configuration:</p>
+<pre class="prettyprint source lang-json"><code>{
+  &quot;mcpServers&quot;: {
+    &quot;semem&quot;: {
+      &quot;command&quot;: &quot;npx&quot;,
+      &quot;args&quot;: [&quot;semem-mcp&quot;]
+    }
+  }
+}
+</code></pre>
+<p>Or for HTTP transport:</p>
+<pre class="prettyprint source lang-json"><code>{
+  &quot;mcpServers&quot;: {
+    &quot;semem&quot;: {
+      &quot;command&quot;: &quot;npx&quot;, 
+      &quot;args&quot;: [&quot;semem-mcp-http&quot;, &quot;--port=3000&quot;],
+      &quot;env&quot;: {
+        &quot;MCP_PORT&quot;: &quot;3000&quot;
+      }
+    }
+  }
+}
+
+### Available MCP Tools (32 Total)
+- **Memory Operations** (5 tools): Store, retrieve, generate responses, embeddings, concepts
+- **Storage Management** (6 tools): Backend switching, backup/restore, migration, statistics
+- **Context Management** (4 tools): Context windows, configuration, pruning, summarization
+- **System Monitoring** (4 tools): Configuration, metrics, health checks, system status
+- **Knowledge Graphs** (8 tools): Ragno corpus decomposition, entity extraction, SPARQL, analytics
+- **ZPT Navigation** (6 tools): 3D navigation, filtering, validation, schema, optimization
+
+### Available MCP Prompts (8 Workflows)
+- **Memory Workflows** (3): Research analysis, memory Q&A, concept exploration
+- **Knowledge Graph** (2): Corpus-to-graph, entity analysis  
+- **3D Navigation** (1): Interactive exploration
+- **Integrated** (2): Full pipeline, research workflow
+
+### Available MCP Resources (15 Total)
+- **System Resources** (7): Status, API docs, schemas, configuration, metrics
+- **Ragno Resources** (4): Ontology, pipeline guide, examples, SPARQL templates
+- **ZPT Resources** (4): Navigation schema, examples, concepts guide, performance optimization
+
+## 🧪 Testing
+
+```bash
+# Run core tests
+npm test
+
+# Run LLM-dependent tests
+npm run test:llms
+
+# Generate coverage report
+npm run test:coverage
+
+# Run with specific test file
+npm test -- tests/unit/Config.spec.js
+</code></pre>
+<h2>🛠️ Development</h2>
+<h3>Project Scripts</h3>
+<pre class="prettyprint source lang-bash"><code># Development
+npm run dev                # Start dev server with hot reload
+npm run build:watch       # Build and watch for changes
+
+# Testing
+npm test                   # Run unit tests
+npm run test:coverage     # Generate coverage report
+
+# Documentation
+npm run docs              # Generate JSDoc documentation
+
+# HTTP Servers
+./start.sh                # Start all servers (API + UI)
+./stop.sh                 # Stop all servers
+node src/servers/api-server.js    # Start API server only
+node src/servers/ui-server.js     # Start UI server only
+
+# MCP Server
+npm run mcp-server-new    # Start new MCP server
+npm run mcp-example       # Run MCP client example
+</code></pre>
+<h3>Adding New Examples</h3>
+<ol>
+<li>Place in appropriate category directory (<code>basic/</code>, <code>ragno/</code>, <code>mcp/</code>, <code>zpt/</code>)</li>
+<li>Follow naming convention: <code>PascalCase.js</code></li>
+<li>Include comprehensive documentation</li>
+<li>Add error handling and cleanup</li>
+<li>Update examples/README.md</li>
+</ol>
+<h2>📖 Documentation</h2>
+<ul>
+<li><strong><a href="examples/README.md">Examples Documentation</a></strong>: Comprehensive examples guide</li>
+<li><strong><a href="docs/api/README.md">API Documentation</a></strong>: REST API and SDK reference</li>
+<li><strong><a href="docs/mcp/README.md">MCP Documentation</a></strong>: Model Context Protocol integration</li>
+<li><strong><a href="mcp/prompts/resources/prompt-guide.md">MCP Prompts Guide</a></strong>: Complete workflow orchestration guide</li>
+<li><strong><a href="mcp/prompts/resources/examples.md">MCP Prompts Examples</a></strong>: Real-world usage patterns</li>
+<li><strong><a href="docs/architecture.md">Architecture Guide</a></strong>: System design and components</li>
+<li><strong><a href="docs/ragno/README.md">Algorithm Documentation</a></strong>: Advanced algorithms guide</li>
+</ul>
+<h2>🔍 Troubleshooting</h2>
+<h3>Common Issues</h3>
+<p><strong>Ollama Connection:</strong></p>
+<pre class="prettyprint source lang-bash"><code># Check Ollama status
+ollama list
+curl http://localhost:11434/api/tags
+</code></pre>
+<p><strong>SPARQL Endpoint:</strong></p>
+<pre class="prettyprint source lang-bash"><code># Test connectivity
+curl -X POST http://localhost:3030/dataset/query \
+  -H &quot;Content-Type: application/sparql-query&quot; \
+  -d &quot;SELECT * WHERE { ?s ?p ?o } LIMIT 1&quot;
+</code></pre>
+<p><strong>Memory Issues:</strong></p>
+<pre class="prettyprint source lang-bash"><code># Increase Node.js memory limit
+export NODE_OPTIONS=&quot;--max-old-space-size=4096&quot;
+</code></pre>
+<h3>Debug Mode</h3>
+<p>Enable detailed logging:</p>
+<pre class="prettyprint source lang-bash"><code>LOG_LEVEL=debug node examples/basic/MemoryEmbeddingJSON.js
+</code></pre>
+<h2>🤝 Contributing</h2>
+<ol>
+<li>Fork the repository</li>
+<li>Create a feature branch</li>
+<li>Add tests for new functionality</li>
+<li>Update documentation</li>
+<li>Submit a pull request</li>
+</ol>
+<h3>Code Style</h3>
+<ul>
+<li>Use ES modules</li>
+<li>Follow existing patterns</li>
+<li>Include JSDoc comments</li>
+<li>Add comprehensive error handling</li>
+</ul>
+<h2>📄 License</h2>
+<p>MIT License - see <a href="LICENSE">LICENSE</a> for details.</p>
+<h2>🔗 Links</h2>
+<ul>
+<li><strong>Documentation</strong>: <a href="docs/">docs/</a></li>
+<li><strong>Examples</strong>: <a href="examples/">examples/</a></li>
+<li><strong>MCP Server</strong>: <a href="mcp/">mcp/</a></li>
+<li><strong>Issue Tracker</strong>: <a href="https://github.com/your-org/semem/issues">GitHub Issues</a></li>
+</ul>
+<hr>
+<p><strong>Semem</strong> - Intelligent semantic memory for the AI age.</p></article>
+    </section>
+
+
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="APIServer.html">APIServer</a></li><li><a href="BaseVisualization.html">BaseVisualization</a></li><li><a href="ChatManager.html">ChatManager</a></li><li><a href="ClientConnector.html">ClientConnector</a></li><li><a href="Clustering.html">Clustering</a></li><li><a href="CommunityElement.html">CommunityElement</a></li><li><a href="EmbeddingCreator.html">EmbeddingCreator</a></li><li><a href="EmbeddingService.html">EmbeddingService</a></li><li><a href="FeatureMaps.html">FeatureMaps</a></li><li><a href="GraphAPI.html">GraphAPI</a></li><li><a href="MCPClient.html">MCPClient</a></li><li><a href="MemoryAdvancedSearch.html">MemoryAdvancedSearch</a></li><li><a href="MemoryClustersViz.html">MemoryClustersViz</a></li><li><a href="MemoryGraphViz.html">MemoryGraphViz</a></li><li><a href="MemoryTimelineViz.html">MemoryTimelineViz</a></li><li><a href="MemoryVisualizationManager.html">MemoryVisualizationManager</a></li><li><a href="Processor.html">Processor</a></li><li><a href="RagnoAPIServer.html">RagnoAPIServer</a></li><li><a href="SOMGrid.html">SOMGrid</a></li><li><a href="SPARQLService.html">SPARQLService</a></li><li><a href="SearchAPIEnhanced.html">SearchAPIEnhanced</a></li><li><a href="SearchServer.html">SearchServer</a></li><li><a href="SearchService.html">SearchService</a></li><li><a href="TabManager.html">TabManager</a></li><li><a href="TrainingViz.html">TrainingViz</a></li><li><a href="UIServer.html">UIServer</a></li><li><a href="VSOMController.html">VSOMController</a></li><li><a href="VSOMService.html">VSOMService</a></li><li><a href="VSOMVisualization.html">VSOMVisualization</a></li><li><a href="module.html#.exports">exports</a></li><li><a href="module.exports_module.exports.html">exports</a></li></ul><h3>Global</h3><ul><li><a href="global.html#_analyzeQuery">_analyzeQuery</a></li><li><a href="global.html#_buildContext">_buildContext</a></li><li><a href="global.html#_buildFilterClauses">_buildFilterClauses</a></li><li><a href="global.html#_calculateCosineSimilarity">_calculateCosineSimilarity</a></li><li><a href="global.html#_calculateFinalScore">_calculateFinalScore</a></li><li><a href="global.html#_callChat">_callChat</a></li><li><a href="global.html#_callCompletion">_callCompletion</a></li><li><a href="global.html#_createConversation">_createConversation</a></li><li><a href="global.html#_createCorpusInterface">_createCorpusInterface</a></li><li><a href="global.html#_determineStrategy">_determineStrategy</a></li><li><a href="global.html#_emitMetric">_emitMetric</a></li><li><a href="global.html#_estimateServiceRelevance">_estimateServiceRelevance</a></li><li><a href="global.html#_estimateTokens">_estimateTokens</a></li><li><a href="global.html#_executeNavigationFallback">_executeNavigationFallback</a></li><li><a href="global.html#_executeParallelSearches">_executeParallelSearches</a></li><li><a href="global.html#_executeSequentialSearches">_executeSequentialSearches</a></li><li><a href="global.html#_executeServiceSearch">_executeServiceSearch</a></li><li><a href="global.html#_formatEntity">_formatEntity</a></li><li><a href="global.html#_formatRelationship">_formatRelationship</a></li><li><a href="global.html#_formatSemanticUnit">_formatSemanticUnit</a></li><li><a href="global.html#_getConversation">_getConversation</a></li><li><a href="global.html#_initializeZPTComponents">_initializeZPTComponents</a></li><li><a href="global.html#_normalizeResults">_normalizeResults</a></li><li><a href="global.html#_parseJsonValue">_parseJsonValue</a></li><li><a href="global.html#_parseQueryResults">_parseQueryResults</a></li><li><a href="global.html#_rankAndMergeResults">_rankAndMergeResults</a></li><li><a href="global.html#_sanitizeParams">_sanitizeParams</a></li><li><a href="global.html#_searchEntities">_searchEntities</a></li><li><a href="global.html#_searchSemantic">_searchSemantic</a></li><li><a href="global.html#_selectServices">_selectServices</a></li><li><a href="global.html#_serializeTriples">_serializeTriples</a></li><li><a href="global.html#_simpleMergeResults">_simpleMergeResults</a></li><li><a href="global.html#_triplesToJSON">_triplesToJSON</a></li><li><a href="global.html#_updateAverage">_updateAverage</a></li><li><a href="global.html#_validateParams">_validateParams</a></li><li><a href="global.html#adaptiveChunking">adaptiveChunking</a></li><li><a href="global.html#addAltLabel">addAltLabel</a></li><li><a href="global.html#addAlternativeName">addAlternativeName</a></li><li><a href="global.html#addAttribute">addAttribute</a></li><li><a href="global.html#addChunkOverlap">addChunkOverlap</a></li><li><a href="global.html#addChunkRelationships">addChunkRelationships</a></li><li><a href="global.html#addContent">addContent</a></li><li><a href="global.html#addEntityConnection">addEntityConnection</a></li><li><a href="global.html#addEntityMention">addEntityMention</a></li><li><a href="global.html#addEvidence">addEvidence</a></li><li><a href="global.html#addHypothesisToRDF">addHypothesisToRDF</a></li><li><a href="global.html#addInstructions">addInstructions</a></li><li><a href="global.html#addKeyword">addKeyword</a></li><li><a href="global.html#addLabel">addLabel</a></li><li><a href="global.html#addNamespace">addNamespace</a></li><li><a href="global.html#addNode">addNode</a></li><li><a href="global.html#addNodeToIndex">addNodeToIndex</a></li><li><a href="global.html#addNodesBatch">addNodesBatch</a></li><li><a href="global.html#addNodesToIndex">addNodesToIndex</a></li><li><a href="global.html#addProvenance">addProvenance</a></li><li><a href="global.html#addRelationshipTo">addRelationshipTo</a></li><li><a href="global.html#addSource">addSource</a></li><li><a href="global.html#addToContext">addToContext</a></li><li><a href="global.html#addTriple">addTriple</a></li><li><a href="global.html#addType">addType</a></li><li><a href="global.html#addUnitConnection">addUnitConnection</a></li><li><a href="global.html#addZoom">addZoom</a></li><li><a href="global.html#advancedEstimation">advancedEstimation</a></li><li><a href="global.html#aggregateCommunities">aggregateCommunities</a></li><li><a href="global.html#aggregationPhase">aggregationPhase</a></li><li><a href="global.html#analyzeConfidenceDistribution">analyzeConfidenceDistribution</a></li><li><a href="global.html#analyzeContentType">analyzeContentType</a></li><li><a href="global.html#analyzeQuery">analyzeQuery</a></li><li><a href="global.html#analyzeTextStructure">analyzeTextStructure</a></li><li><a href="global.html#applyContentAdjustments">applyContentAdjustments</a></li><li><a href="global.html#applyDiversityFilter">applyDiversityFilter</a></li><li><a href="global.html#applyEntityFilter">applyEntityFilter</a></li><li><a href="global.html#applyEntityFilters">applyEntityFilters</a></li><li><a href="global.html#applyFilters">applyFilters</a></li><li><a href="global.html#applyGeographicFilter">applyGeographicFilter</a></li><li><a href="global.html#applyPrivacyFilters">applyPrivacyFilters</a></li><li><a href="global.html#applyTemporalFilter">applyTemporalFilter</a></li><li><a href="global.html#applyTokenizerAdjustments">applyTokenizerAdjustments</a></li><li><a href="global.html#applyTopicFilter">applyTopicFilter</a></li><li><a href="global.html#attemptRecovery">attemptRecovery</a></li><li><a href="global.html#augmentWithAttributes">augmentWithAttributes</a></li><li><a href="global.html#balanceChunkSizes">balanceChunkSizes</a></li><li><a href="global.html#batchCountTokens">batchCountTokens</a></li><li><a href="global.html#buildAggregationQuery">buildAggregationQuery</a></li><li><a href="global.html#buildBatchConceptInsert">buildBatchConceptInsert</a></li><li><a href="global.html#buildBatchFrequencyUpdate">buildBatchFrequencyUpdate</a></li><li><a href="global.html#buildBatchRelationshipUpdate">buildBatchRelationshipUpdate</a></li><li><a href="global.html#buildCacheKey">buildCacheKey</a></li><li><a href="global.html#buildCommunities">buildCommunities</a></li><li><a href="global.html#buildCompletenessFunction">buildCompletenessFunction</a></li><li><a href="global.html#buildConnectivityFunction">buildConnectivityFunction</a></li><li><a href="global.html#buildConstraints">buildConstraints</a></li><li><a href="global.html#buildContext">buildContext</a></li><li><a href="global.html#buildCriteria">buildCriteria</a></li><li><a href="global.html#buildDiversityFunction">buildDiversityFunction</a></li><li><a href="global.html#buildEntityDetailsQuery">buildEntityDetailsQuery</a></li><li><a href="global.html#buildEntityExtractionPrompt">buildEntityExtractionPrompt</a></li><li><a href="global.html#buildEntityFilter">buildEntityFilter</a></li><li><a href="global.html#buildEntityRule">buildEntityRule</a></li><li><a href="global.html#buildExactMatchQuery">buildExactMatchQuery</a></li><li><a href="global.html#buildFilters">buildFilters</a></li><li><a href="global.html#buildFormattingContext">buildFormattingContext</a></li><li><a href="global.html#buildGeographicFilter">buildGeographicFilter</a></li><li><a href="global.html#buildGeographicRule">buildGeographicRule</a></li><li><a href="global.html#buildGraphFromRDF">buildGraphFromRDF</a></li><li><a href="global.html#buildGraphTraversalQuery">buildGraphTraversalQuery</a></li><li><a href="global.html#buildLimit">buildLimit</a></li><li><a href="global.html#buildOptimizationRules">buildOptimizationRules</a></li><li><a href="global.html#buildOrderBy">buildOrderBy</a></li><li><a href="global.html#buildPrimaryRules">buildPrimaryRules</a></li><li><a href="global.html#buildQuery">buildQuery</a></li><li><a href="global.html#buildRecencyFunction">buildRecencyFunction</a></li><li><a href="global.html#buildRelevanceFunction">buildRelevanceFunction</a></li><li><a href="global.html#buildScoringRules">buildScoringRules</a></li><li><a href="global.html#buildSecondaryRules">buildSecondaryRules</a></li><li><a href="global.html#buildSelectClause">buildSelectClause</a></li><li><a href="global.html#buildSelectionResult">buildSelectionResult</a></li><li><a href="global.html#buildSimilarityQuery">buildSimilarityQuery</a></li><li><a href="global.html#buildTemporalFilter">buildTemporalFilter</a></li><li><a href="global.html#buildTemporalRule">buildTemporalRule</a></li><li><a href="global.html#buildTopicFilter">buildTopicFilter</a></li><li><a href="global.html#buildTopicRule">buildTopicRule</a></li><li><a href="global.html#buildTransformationContext">buildTransformationContext</a></li><li><a href="global.html#buildTransitionMatrix">buildTransitionMatrix</a></li><li><a href="global.html#buildTypeFilter">buildTypeFilter</a></li><li><a href="global.html#calculateAttributeConfidence">calculateAttributeConfidence</a></li><li><a href="global.html#calculateCacheHitRate">calculateCacheHitRate</a></li><li><a href="global.html#calculateCentroid">calculateCentroid</a></li><li><a href="global.html#calculateChunkSize">calculateChunkSize</a></li><li><a href="global.html#calculateClusterCentroid">calculateClusterCentroid</a></li><li><a href="global.html#calculateCommunityCohesion">calculateCommunityCohesion</a></li><li><a href="global.html#calculateComplexity">calculateComplexity</a></li><li><a href="global.html#calculateConfidence">calculateConfidence</a></li><li><a href="global.html#calculateContentSimilarity">calculateContentSimilarity</a></li><li><a href="global.html#calculateCosineSimilarity">calculateCosineSimilarity</a></li><li><a href="global.html#calculateDistance">calculateDistance</a></li><li><a href="global.html#calculateHexagonalDistance">calculateHexagonalDistance</a></li><li><a href="global.html#calculateLearningRate">calculateLearningRate</a></li><li><a href="global.html#calculateMapDistance">calculateMapDistance</a></li><li><a href="global.html#calculateModularity">calculateModularity</a></li><li><a href="global.html#calculateModularityGain">calculateModularityGain</a></li><li><a href="global.html#calculateNeighborhoodRadius">calculateNeighborhoodRadius</a></li><li><a href="global.html#calculateNodeSimilarity">calculateNodeSimilarity</a></li><li><a href="global.html#calculateQualityMetrics">calculateQualityMetrics</a></li><li><a href="global.html#calculateQuantizationError">calculateQuantizationError</a></li><li><a href="global.html#calculateQueryConfidence">calculateQueryConfidence</a></li><li><a href="global.html#calculateRectangularDistance">calculateRectangularDistance</a></li><li><a href="global.html#calculateSummaryConfidence">calculateSummaryConfidence</a></li><li><a href="global.html#calculateTopographicError">calculateTopographicError</a></li><li><a href="global.html#checkAPIHealth">checkAPIHealth</a></li><li><a href="global.html#checkContextLimits">checkContextLimits</a></li><li><a href="global.html#checkConvergence">checkConvergence</a></li><li><a href="global.html#checkDependencyHealth">checkDependencyHealth</a></li><li><a href="global.html#checkRateLimit">checkRateLimit</a></li><li><a href="global.html#chunk">chunk</a></li><li><a href="global.html#chunkCorpuscles">chunkCorpuscles</a></li><li><a href="global.html#chunkHierarchicalText">chunkHierarchicalText</a></li><li><a href="global.html#classifyError">classifyError</a></li><li><a href="global.html#cleanupPartialInitialization">cleanupPartialInitialization</a></li><li><a href="global.html#clear">clear</a></li><li><a href="global.html#clearCache">clearCache</a></li><li><a href="global.html#clearCaches">clearCaches</a></li><li><a href="global.html#clearVectorIndex">clearVectorIndex</a></li><li><a href="global.html#clone">clone</a></li><li><a href="global.html#clusterHypotheticalEntities">clusterHypotheticalEntities</a></li><li><a href="global.html#combineResults">combineResults</a></li><li><a href="global.html#combineSearchResults">combineSearchResults</a></li><li><a href="global.html#compileTrainingResults">compileTrainingResults</a></li><li><a href="global.html#compose">compose</a></li><li><a href="global.html#compress">compress</a></li><li><a href="global.html#compressMetadata">compressMetadata</a></li><li><a href="global.html#computeBetweennessCentrality">computeBetweennessCentrality</a></li><li><a href="global.html#computeCommunityStatistics">computeCommunityStatistics</a></li><li><a href="global.html#computeGraphStatistics">computeGraphStatistics</a></li><li><a href="global.html#computeKCore">computeKCore</a></li><li><a href="global.html#computeLeidenClustering">computeLeidenClustering</a></li><li><a href="global.html#computeSimilarityLinks">computeSimilarityLinks</a></li><li><a href="global.html#conditional">conditional</a></li><li><a href="global.html#connectElements">connectElements</a></li><li><a href="global.html#connectTo">connectTo</a></li><li><a href="global.html#connects">connects</a></li><li><a href="global.html#convertToCSV">convertToCSV</a></li><li><a href="global.html#coordinatesToIndex">coordinatesToIndex</a></li><li><a href="global.html#cosineDistance">cosineDistance</a></li><li><a href="global.html#countRules">countRules</a></li><li><a href="global.html#countTokens">countTokens</a></li><li><a href="global.html#create">create</a></li><li><a href="global.html#createAdaptiveChunk">createAdaptiveChunk</a></li><li><a href="global.html#createAttribute">createAttribute</a></li><li><a href="global.html#createAttributeRelationships">createAttributeRelationships</a></li><li><a href="global.html#createBidirectional">createBidirectional</a></li><li><a href="global.html#createCacheKey">createCacheKey</a></li><li><a href="global.html#createColorScale">createColorScale</a></li><li><a href="global.html#createCompactRepresentation">createCompactRepresentation</a></li><li><a href="global.html#createConnector">createConnector</a></li><li><a href="global.html#createDirectEntityFilter">createDirectEntityFilter</a></li><li><a href="global.html#createEmptyResult">createEmptyResult</a></li><li><a href="global.html#createEmptyResults">createEmptyResults</a></li><li><a href="global.html#createEntity">createEntity</a></li><li><a href="global.html#createExactTemporalFilter">createExactTemporalFilter</a></li><li><a href="global.html#createExactTopicFilter">createExactTopicFilter</a></li><li><a href="global.html#createHypothesisPrompt">createHypothesisPrompt</a></li><li><a href="global.html#createHypothesisRelationships">createHypothesisRelationships</a></li><li><a href="global.html#createHypothesisUnit">createHypothesisUnit</a></li><li><a href="global.html#createInterCommunityRelationships">createInterCommunityRelationships</a></li><li><a href="global.html#createInterUnitRelationships">createInterUnitRelationships</a></li><li><a href="global.html#createLegend">createLegend</a></li><li><a href="global.html#createNamedNode">createNamedNode</a></li><li><a href="global.html#createNeighborhoodFunction">createNeighborhoodFunction</a></li><li><a href="global.html#createOverview">createOverview</a></li><li><a href="global.html#createParameterHash">createParameterHash</a></li><li><a href="global.html#createPointGeographicFilter">createPointGeographicFilter</a></li><li><a href="global.html#createRelationship">createRelationship</a></li><li><a href="global.html#createResponsiveSVG">createResponsiveSVG</a></li><li><a href="global.html#createSOMInstance">createSOMInstance</a></li><li><a href="global.html#createSemanticChunk">createSemanticChunk</a></li><li><a href="global.html#createTooltip">createTooltip</a></li><li><a href="global.html#createUnit">createUnit</a></li><li><a href="global.html#cubeToOffset">cubeToOffset</a></li><li><a href="global.html#debounce">debounce</a></li><li><a href="global.html#decode">decode</a></li><li><a href="global.html#decomposeCorpus">decomposeCorpus</a></li><li><a href="global.html#decomposeText">decomposeText</a></li><li><a href="global.html#deleteInstance">deleteInstance</a></li><li><a href="global.html#detectCommunities">detectCommunities</a></li><li><a href="global.html#detectTopicDomain">detectTopicDomain</a></li><li><a href="global.html#determineCorpuscleType">determineCorpuscleType</a></li><li><a href="global.html#determineResponseType">determineResponseType</a></li><li><a href="global.html#displayError">displayError</a></li><li><a href="global.html#dispose">dispose</a></li><li><a href="global.html#encode">encode</a></li><li><a href="global.html#encodeStructured">encodeStructured</a></li><li><a href="global.html#enhanceClustersWithCentrality">enhanceClustersWithCentrality</a></li><li><a href="global.html#enhanceSearchResults">enhanceSearchResults</a></li><li><a href="global.html#enrichGraph">enrichGraph</a></li><li><a href="global.html#enrichWithEmbeddings">enrichWithEmbeddings</a></li><li><a href="global.html#ensureInitialized">ensureInitialized</a></li><li><a href="global.html#escapeString">escapeString</a></li><li><a href="global.html#estimateConfidence">estimateConfidence</a></li><li><a href="global.html#estimateCost">estimateCost</a></li><li><a href="global.html#estimateMemoryUsage">estimateMemoryUsage</a></li><li><a href="global.html#estimateResults">estimateResults</a></li><li><a href="global.html#estimateSegmentSize">estimateSegmentSize</a></li><li><a href="global.html#estimateSelectivity">estimateSelectivity</a></li><li><a href="global.html#estimateTokenCount">estimateTokenCount</a></li><li><a href="global.html#estimateTokensPerResult">estimateTokensPerResult</a></li><li><a href="global.html#estimateTopicSelectivity">estimateTopicSelectivity</a></li><li><a href="global.html#euclideanDistance">euclideanDistance</a></li><li><a href="global.html#execute">execute</a></li><li><a href="global.html#executeNavigationPipeline">executeNavigationPipeline</a></li><li><a href="global.html#executeOperation">executeOperation</a></li><li><a href="global.html#executeQuery">executeQuery</a></li><li><a href="global.html#executeSPARQLQuery">executeSPARQLQuery</a></li><li><a href="global.html#executeStageWithTimeout">executeStageWithTimeout</a></li><li><a href="global.html#executeWithTimeout">executeWithTimeout</a></li><li><a href="global.html#expandCluster">expandCluster</a></li><li><a href="global.html#expandQueryTerms">expandQueryTerms</a></li><li><a href="global.html#exportAllResultsToRDF">exportAllResultsToRDF</a></li><li><a href="global.html#exportCommunitiesToRDF">exportCommunitiesToRDF</a></li><li><a href="global.html#exportEnrichmentResults">exportEnrichmentResults</a></li><li><a href="global.html#exportGraph">exportGraph</a></li><li><a href="global.html#exportResultsToRDF">exportResultsToRDF</a></li><li><a href="global.html#exportToDataset">exportToDataset</a></li><li><a href="global.html#exportToRDF">exportToRDF</a></li><li><a href="global.html#exportVisualization">exportVisualization</a></li><li><a href="global.html#extractBasicInfo">extractBasicInfo</a></li><li><a href="global.html#extractClientInfo">extractClientInfo</a></li><li><a href="global.html#extractClientIp">extractClientIp</a></li><li><a href="global.html#extractCommunityKeywords">extractCommunityKeywords</a></li><li><a href="global.html#extractConcepts">extractConcepts</a></li><li><a href="global.html#extractContent">extractContent</a></li><li><a href="global.html#extractContentString">extractContentString</a></li><li><a href="global.html#extractEntitiesFromDataset">extractEntitiesFromDataset</a></li><li><a href="global.html#extractEntitiesFromHypothesis">extractEntitiesFromHypothesis</a></li><li><a href="global.html#extractEntitiesFromUnit">extractEntitiesFromUnit</a></li><li><a href="global.html#extractEntityData">extractEntityData</a></li><li><a href="global.html#extractKeywords">extractKeywords</a></li><li><a href="global.html#extractLimit">extractLimit</a></li><li><a href="global.html#extractMetadata">extractMetadata</a></li><li><a href="global.html#extractNamespace">extractNamespace</a></li><li><a href="global.html#extractNavigationMetadata">extractNavigationMetadata</a></li><li><a href="global.html#extractPerformanceMetadata">extractPerformanceMetadata</a></li><li><a href="global.html#extractProvenanceMetadata">extractProvenanceMetadata</a></li><li><a href="global.html#extractQualityMetadata">extractQualityMetadata</a></li><li><a href="global.html#extractRelationships">extractRelationships</a></li><li><a href="global.html#extractSemanticUnits">extractSemanticUnits</a></li><li><a href="global.html#extractSubgraph">extractSubgraph</a></li><li><a href="global.html#extractTechnicalMetadata">extractTechnicalMetadata</a></li><li><a href="global.html#extractTextContent">extractTextContent</a></li><li><a href="global.html#fetchWithTimeout">fetchWithTimeout</a></li><li><a href="global.html#filterCorpuscles">filterCorpuscles</a></li><li><a href="global.html#filterSmallCommunities">filterSmallCommunities</a></li><li><a href="global.html#findBestMatchingUnits">findBestMatchingUnits</a></li><li><a href="global.html#findConnectedComponents">findConnectedComponents</a></li><li><a href="global.html#findCrossTypeNodes">findCrossTypeNodes</a></li><li><a href="global.html#findEntityCluster">findEntityCluster</a></li><li><a href="global.html#findNextBoundary">findNextBoundary</a></li><li><a href="global.html#findSemanticBoundaries">findSemanticBoundaries</a></li><li><a href="global.html#findSimilarElements">findSimilarElements</a></li><li><a href="global.html#findSimilarNodes">findSimilarNodes</a></li><li><a href="global.html#findSingleBMU">findSingleBMU</a></li><li><a href="global.html#fixedSizeChunking">fixedSizeChunking</a></li><li><a href="global.html#flushSyncQueue">flushSyncQueue</a></li><li><a href="global.html#format">format</a></li><li><a href="global.html#formatAsAnalytical">formatAsAnalytical</a></li><li><a href="global.html#formatAsConversational">formatAsConversational</a></li><li><a href="global.html#formatAsJSON">formatAsJSON</a></li><li><a href="global.html#formatAsMarkdown">formatAsMarkdown</a></li><li><a href="global.html#formatAsStructured">formatAsStructured</a></li><li><a href="global.html#formatContentAsMarkdown">formatContentAsMarkdown</a></li><li><a href="global.html#formatContentNaturally">formatContentNaturally</a></li><li><a href="global.html#formatErrorResponse">formatErrorResponse</a></li><li><a href="global.html#formatGroupSummary">formatGroupSummary</a></li><li><a href="global.html#formatHealthResponse">formatHealthResponse</a></li><li><a href="global.html#formatMetadataAsMarkdown">formatMetadataAsMarkdown</a></li><li><a href="global.html#formatMetricsResponse">formatMetricsResponse</a></li><li><a href="global.html#formatNavigationParameters">formatNavigationParameters</a></li><li><a href="global.html#formatNavigationResponse">formatNavigationResponse</a></li><li><a href="global.html#formatOptionsResponse">formatOptionsResponse</a></li><li><a href="global.html#formatPreviewResponse">formatPreviewResponse</a></li><li><a href="global.html#formatSI">formatSI</a></li><li><a href="global.html#formatSchemaResponse">formatSchemaResponse</a></li><li><a href="global.html#formatSingleInteraction">formatSingleInteraction</a></li><li><a href="global.html#formatSuccessResponse">formatSuccessResponse</a></li><li><a href="global.html#fromSimpleObject">fromSimpleObject</a></li><li><a href="global.html#gatherCommunityContext">gatherCommunityContext</a></li><li><a href="global.html#gatherEntityContext">gatherEntityContext</a></li><li><a href="global.html#gaussianRandom">gaussianRandom</a></li><li><a href="global.html#generateCacheKey">generateCacheKey</a></li><li><a href="global.html#generateChat">generateChat</a></li><li><a href="global.html#generateChatResponse">generateChatResponse</a></li><li><a href="global.html#generateChatStream">generateChatStream</a></li><li><a href="global.html#generateClusters">generateClusters</a></li><li><a href="global.html#generateCommunitySummary">generateCommunitySummary</a></li><li><a href="global.html#generateCompletion">generateCompletion</a></li><li><a href="global.html#generateEmbedding">generateEmbedding</a></li><li><a href="global.html#generateEntityAttribute">generateEntityAttribute</a></li><li><a href="global.html#generateErrorSuggestions">generateErrorSuggestions</a></li><li><a href="global.html#generateFuzzyPatterns">generateFuzzyPatterns</a></li><li><a href="global.html#generateHypotheses">generateHypotheses</a></li><li><a href="global.html#generateNodeAssignments">generateNodeAssignments</a></li><li><a href="global.html#generateNodeEmbedding">generateNodeEmbedding</a></li><li><a href="global.html#generateResponse">generateResponse</a></li><li><a href="global.html#generateSampleData">generateSampleData</a></li><li><a href="global.html#generateSampleEntities">generateSampleEntities</a></li><li><a href="global.html#generateSingleHypothesis">generateSingleHypothesis</a></li><li><a href="global.html#generateURI">generateURI</a></li><li><a href="global.html#generateUnitSummary">generateUnitSummary</a></li><li><a href="global.html#get">get</a></li><li><a href="global.html#getAPIRouteHandlers">getAPIRouteHandlers</a></li><li><a href="global.html#getAggregationConfig">getAggregationConfig</a></li><li><a href="global.html#getAggregationFields">getAggregationFields</a></li><li><a href="global.html#getAggregationGroupBy">getAggregationGroupBy</a></li><li><a href="global.html#getAggregationMetrics">getAggregationMetrics</a></li><li><a href="global.html#getAll">getAll</a></li><li><a href="global.html#getAllCustomMetadata">getAllCustomMetadata</a></li><li><a href="global.html#getAllNamespaces">getAllNamespaces</a></li><li><a href="global.html#getAllStatistics">getAllStatistics</a></li><li><a href="global.html#getAllTypes">getAllTypes</a></li><li><a href="global.html#getAlternativeNames">getAlternativeNames</a></li><li><a href="global.html#getAttributes">getAttributes</a></li><li><a href="global.html#getAvailableFormats">getAvailableFormats</a></li><li><a href="global.html#getAvailableInstructions">getAvailableInstructions</a></li><li><a href="global.html#getAvailableModels">getAvailableModels</a></li><li><a href="global.html#getAvailableServices">getAvailableServices</a></li><li><a href="global.html#getAvailableStrategies">getAvailableStrategies</a></li><li><a href="global.html#getAvailableTokenizers">getAvailableTokenizers</a></li><li><a href="global.html#getBaseFields">getBaseFields</a></li><li><a href="global.html#getCacheStats">getCacheStats</a></li><li><a href="global.html#getCachedResult">getCachedResult</a></li><li><a href="global.html#getCategory">getCategory</a></li><li><a href="global.html#getClusters">getClusters</a></li><li><a href="global.html#getCommunities">getCommunities</a></li><li><a href="global.html#getConfidence">getConfidence</a></li><li><a href="global.html#getConnectedElements">getConnectedElements</a></li><li><a href="global.html#getConnectedUnits">getConnectedUnits</a></li><li><a href="global.html#getContent">getContent</a></li><li><a href="global.html#getContextRecommendation">getContextRecommendation</a></li><li><a href="global.html#getCorpus">getCorpus</a></li><li><a href="global.html#getDefaultConfig">getDefaultConfig</a></li><li><a href="global.html#getDefaultWeights">getDefaultWeights</a></li><li><a href="global.html#getDefaults">getDefaults</a></li><li><a href="global.html#getEmbedding">getEmbedding</a></li><li><a href="global.html#getEndpointInfo">getEndpointInfo</a></li><li><a href="global.html#getEntities">getEntities</a></li><li><a href="global.html#getEntity">getEntity</a></li><li><a href="global.html#getErrorStats">getErrorStats</a></li><li><a href="global.html#getEvidence">getEvidence</a></li><li><a href="global.html#getFeatureMaps">getFeatureMaps</a></li><li><a href="global.html#getFilterDocumentation">getFilterDocumentation</a></li><li><a href="global.html#getFirstSeen">getFirstSeen</a></li><li><a href="global.html#getFormatInfo">getFormatInfo</a></li><li><a href="global.html#getFrequency">getFrequency</a></li><li><a href="global.html#getGraphStats">getGraphStats</a></li><li><a href="global.html#getGridState">getGridState</a></li><li><a href="global.html#getHealth">getHealth</a></li><li><a href="global.html#getHexagonalVisualCoords">getHexagonalVisualCoords</a></li><li><a href="global.html#getInfo">getInfo</a></li><li><a href="global.html#getInstructionInfo">getInstructionInfo</a></li><li><a href="global.html#getJSONLDContext">getJSONLDContext</a></li><li><a href="global.html#getKeywords">getKeywords</a></li><li><a href="global.html#getLanguage">getLanguage</a></li><li><a href="global.html#getLastAccessed">getLastAccessed</a></li><li><a href="global.html#getLength">getLength</a></li><li><a href="global.html#getMentionedEntities">getMentionedEntities</a></li><li><a href="global.html#getMetadata">getMetadata</a></li><li><a href="global.html#getMetadataProperty">getMetadataProperty</a></li><li><a href="global.html#getMetrics">getMetrics</a></li><li><a href="global.html#getModelInfo">getModelInfo</a></li><li><a href="global.html#getName">getName</a></li><li><a href="global.html#getNamespace">getNamespace</a></li><li><a href="global.html#getNeighbors">getNeighbors</a></li><li><a href="global.html#getNodeMappings">getNodeMappings</a></li><li><a href="global.html#getNodeMetadata">getNodeMetadata</a></li><li><a href="global.html#getNodeType">getNodeType</a></li><li><a href="global.html#getNodeWeights">getNodeWeights</a></li><li><a href="global.html#getNodesByType">getNodesByType</a></li><li><a href="global.html#getOntologyInfo">getOntologyInfo</a></li><li><a href="global.html#getOptimalResultLimit">getOptimalResultLimit</a></li><li><a href="global.html#getOptions">getOptions</a></li><li><a href="global.html#getOtherEntity">getOtherEntity</a></li><li><a href="global.html#getPPRScore">getPPRScore</a></li><li><a href="global.html#getParameterSummary">getParameterSummary</a></li><li><a href="global.html#getParserInfo">getParserInfo</a></li><li><a href="global.html#getPerformanceStats">getPerformanceStats</a></li><li><a href="global.html#getPosition">getPosition</a></li><li><a href="global.html#getPrefLabel">getPrefLabel</a></li><li><a href="global.html#getPreferredLabel">getPreferredLabel</a></li><li><a href="global.html#getPrefixes">getPrefixes</a></li><li><a href="global.html#getPrefixesAsObject">getPrefixesAsObject</a></li><li><a href="global.html#getPrimaryTypes">getPrimaryTypes</a></li><li><a href="global.html#getProjectionDocumentation">getProjectionDocumentation</a></li><li><a href="global.html#getProvenance">getProvenance</a></li><li><a href="global.html#getQueryStats">getQueryStats</a></li><li><a href="global.html#getRagnoLocalName">getRagnoLocalName</a></li><li><a href="global.html#getRecommendations">getRecommendations</a></li><li><a href="global.html#getRecommendedTilt">getRecommendedTilt</a></li><li><a href="global.html#getRelationshipType">getRelationshipType</a></li><li><a href="global.html#getRelationships">getRelationships</a></li><li><a href="global.html#getRouteHandlers">getRouteHandlers</a></li><li><a href="global.html#getRuleSelectivity">getRuleSelectivity</a></li><li><a href="global.html#getSPARQLPrefixes">getSPARQLPrefixes</a></li><li><a href="global.html#getSchema">getSchema</a></li><li><a href="global.html#getSearchStrategies">getSearchStrategies</a></li><li><a href="global.html#getSelectionStrategy">getSelectionStrategy</a></li><li><a href="global.html#getSimilarityScore">getSimilarityScore</a></li><li><a href="global.html#getSourceDocument">getSourceDocument</a></li><li><a href="global.html#getSourceEntity">getSourceEntity</a></li><li><a href="global.html#getStatistics">getStatistics</a></li><li><a href="global.html#getStats">getStats</a></li><li><a href="global.html#getStatus">getStatus</a></li><li><a href="global.html#getStrategyInfo">getStrategyInfo</a></li><li><a href="global.html#getSubType">getSubType</a></li><li><a href="global.html#getSummary">getSummary</a></li><li><a href="global.html#getSupportedProviders">getSupportedProviders</a></li><li><a href="global.html#getTargetEntity">getTargetEntity</a></li><li><a href="global.html#getTargetTypes">getTargetTypes</a></li><li><a href="global.html#getTemporal">getTemporal</a></li><li><a href="global.html#getText">getText</a></li><li><a href="global.html#getTiltFields">getTiltFields</a></li><li><a href="global.html#getTiltOutputFormat">getTiltOutputFormat</a></li><li><a href="global.html#getTiltProcessingType">getTiltProcessingType</a></li><li><a href="global.html#getTokenizerInfo">getTokenizerInfo</a></li><li><a href="global.html#getTopKNodes">getTopKNodes</a></li><li><a href="global.html#getTopology">getTopology</a></li><li><a href="global.html#getTopologyInfo">getTopologyInfo</a></li><li><a href="global.html#getTrainingStatus">getTrainingStatus</a></li><li><a href="global.html#getTriples">getTriples</a></li><li><a href="global.html#getTriplesWithPredicate">getTriplesWithPredicate</a></li><li><a href="global.html#getTurtlePrefixes">getTurtlePrefixes</a></li><li><a href="global.html#getTypes">getTypes</a></li><li><a href="global.html#getURI">getURI</a></li><li><a href="global.html#getUnits">getUnits</a></li><li><a href="global.html#getVisualizationCoordinates">getVisualizationCoordinates</a></li><li><a href="global.html#getWeight">getWeight</a></li><li><a href="global.html#getZoomDescriptions">getZoomDescriptions</a></li><li><a href="global.html#getZoomGranularity">getZoomGranularity</a></li><li><a href="global.html#getZoomLevelDocumentation">getZoomLevelDocumentation</a></li><li><a href="global.html#getZoomMapping">getZoomMapping</a></li><li><a href="global.html#groupNodesByType">groupNodesByType</a></li><li><a href="global.html#handleDualSearch">handleDualSearch</a></li><li><a href="global.html#handleEntityDetails">handleEntityDetails</a></li><li><a href="global.html#handleError">handleError</a></li><li><a href="global.html#handleExactSearch">handleExactSearch</a></li><li><a href="global.html#handleGraphStats">handleGraphStats</a></li><li><a href="global.html#handleHealth">handleHealth</a></li><li><a href="global.html#handleMetrics">handleMetrics</a></li><li><a href="global.html#handleNavigate">handleNavigate</a></li><li><a href="global.html#handleOptions">handleOptions</a></li><li><a href="global.html#handlePreview">handlePreview</a></li><li><a href="global.html#handleRequest">handleRequest</a></li><li><a href="global.html#handleSchema">handleSchema</a></li><li><a href="global.html#handleSearchStats">handleSearchStats</a></li><li><a href="global.html#handleSearchStatus">handleSearchStatus</a></li><li><a href="global.html#handleSimilaritySearch">handleSimilaritySearch</a></li><li><a href="global.html#handleTraversalSearch">handleTraversalSearch</a></li><li><a href="global.html#hasFilters">hasFilters</a></li><li><a href="global.html#hasNode">hasNode</a></li><li><a href="global.html#hasRelationshipWith">hasRelationshipWith</a></li><li><a href="global.html#hasStructure">hasStructure</a></li><li><a href="global.html#hasType">hasType</a></li><li><a href="global.html#hashObject">hashObject</a></li><li><a href="global.html#hierarchicalChunking">hierarchicalChunking</a></li><li><a href="global.html#identifyImportantEntities">identifyImportantEntities</a></li><li><a href="global.html#identifyRetrievableNodes">identifyRetrievableNodes</a></li><li><a href="global.html#incrementFrequency">incrementFrequency</a></li><li><a href="global.html#indexContent">indexContent</a></li><li><a href="global.html#indexToCoordinates">indexToCoordinates</a></li><li><a href="global.html#init">init</a></li><li><a href="global.html#initChatForms">initChatForms</a></li><li><a href="global.html#initMCPClient">initMCPClient</a></li><li><a href="global.html#initRangeInputs">initRangeInputs</a></li><li><a href="global.html#initSettingsForm">initSettingsForm</a></li><li><a href="global.html#initTabs">initTabs</a></li><li><a href="global.html#initialize">initialize</a></li><li><a href="global.html#initializeApp">initializeApp</a></li><li><a href="global.html#initializeAtuin">initializeAtuin</a></li><li><a href="global.html#initializeBoundaryDetectors">initializeBoundaryDetectors</a></li><li><a href="global.html#initializeChunkingStrategies">initializeChunkingStrategies</a></li><li><a href="global.html#initializeCompressionLevels">initializeCompressionLevels</a></li><li><a href="global.html#initializeDefaultRules">initializeDefaultRules</a></li><li><a href="global.html#initializeDefaults">initializeDefaults</a></li><li><a href="global.html#initializeDomainPatterns">initializeDomainPatterns</a></li><li><a href="global.html#initializeEncodingStrategies">initializeEncodingStrategies</a></li><li><a href="global.html#initializeEndpoints">initializeEndpoints</a></li><li><a href="global.html#initializeErrorCodes">initializeErrorCodes</a></li><li><a href="global.html#initializeErrorTypes">initializeErrorTypes</a></li><li><a href="global.html#initializeFilterStrategies">initializeFilterStrategies</a></li><li><a href="global.html#initializeFormats">initializeFormats</a></li><li><a href="global.html#initializeFormatters">initializeFormatters</a></li><li><a href="global.html#initializeInstructions">initializeInstructions</a></li><li><a href="global.html#initializeLLMProvider">initializeLLMProvider</a></li><li><a href="global.html#initializeLinearWeights">initializeLinearWeights</a></li><li><a href="global.html#initializeMetadataSchemas">initializeMetadataSchemas</a></li><li><a href="global.html#initializeModelMappings">initializeModelMappings</a></li><li><a href="global.html#initializeNamespaces">initializeNamespaces</a></li><li><a href="global.html#initializeOutputFormats">initializeOutputFormats</a></li><li><a href="global.html#initializePCAWeights">initializePCAWeights</a></li><li><a href="global.html#initializePipeline">initializePipeline</a></li><li><a href="global.html#initializeProjectionStrategies">initializeProjectionStrategies</a></li><li><a href="global.html#initializeQueryTemplates">initializeQueryTemplates</a></li><li><a href="global.html#initializeRandomWeights">initializeRandomWeights</a></li><li><a href="global.html#initializeRecoveryStrategies">initializeRecoveryStrategies</a></li><li><a href="global.html#initializeSchemas">initializeSchemas</a></li><li><a href="global.html#initializeSelectionStrategies">initializeSelectionStrategies</a></li><li><a href="global.html#initializeTemplates">initializeTemplates</a></li><li><a href="global.html#initializeTokenizers">initializeTokenizers</a></li><li><a href="global.html#initializeValidators">initializeValidators</a></li><li><a href="global.html#initializeWeights">initializeWeights</a></li><li><a href="global.html#initializeZoomMappings">initializeZoomMappings</a></li><li><a href="global.html#integrateWithGraphAnalytics">integrateWithGraphAnalytics</a></li><li><a href="global.html#integrateWithHyde">integrateWithHyde</a></li><li><a href="global.html#involves">involves</a></li><li><a href="global.html#isAvailable">isAvailable</a></li><li><a href="global.html#isCode">isCode</a></li><li><a href="global.html#isEntryPoint">isEntryPoint</a></li><li><a href="global.html#isProviderSupported">isProviderSupported</a></li><li><a href="global.html#isRagnoClass">isRagnoClass</a></li><li><a href="global.html#isRagnoProperty">isRagnoProperty</a></li><li><a href="global.html#isRagnoURI">isRagnoURI</a></li><li><a href="global.html#isRelevantAt">isRelevantAt</a></li><li><a href="global.html#isStopWord">isStopWord</a></li><li><a href="global.html#isValidCoordinate">isValidCoordinate</a></li><li><a href="global.html#listInstances">listInstances</a></li><li><a href="global.html#loadChatProviders">loadChatProviders</a></li><li><a href="global.html#loadConfigFromServer">loadConfigFromServer</a></li><li><a href="global.html#loadData">loadData</a></li><li><a href="global.html#loadFromEntities">loadFromEntities</a></li><li><a href="global.html#loadFromRagno">loadFromRagno</a></li><li><a href="global.html#loadFromSPARQL">loadFromSPARQL</a></li><li><a href="global.html#loadFromVectorIndex">loadFromVectorIndex</a></li><li><a href="global.html#loadIndex">loadIndex</a></li><li><a href="global.html#loadSettings">loadSettings</a></li><li><a href="global.html#loadVectorIndex">loadVectorIndex</a></li><li><a href="global.html#localMovingPhase">localMovingPhase</a></li><li><a href="global.html#logTrainingProgress">logTrainingProgress</a></li><li><a href="global.html#manhattanDistance">manhattanDistance</a></li><li><a href="global.html#matchEndpoint">matchEndpoint</a></li><li><a href="global.html#matchesFilters">matchesFilters</a></li><li><a href="global.html#mergeSmallChunks">mergeSmallChunks</a></li><li><a href="global.html#navigate">navigate</a></li><li><a href="global.html#normalize">normalize</a></li><li><a href="global.html#normalizeContent">normalizeContent</a></li><li><a href="global.html#normalizeCoordinates">normalizeCoordinates</a></li><li><a href="global.html#normalizeEntityFilter">normalizeEntityFilter</a></li><li><a href="global.html#normalizeError">normalizeError</a></li><li><a href="global.html#normalizeGeographicFilter">normalizeGeographicFilter</a></li><li><a href="global.html#normalizePan">normalizePan</a></li><li><a href="global.html#normalizePath">normalizePath</a></li><li><a href="global.html#normalizeTemporalFilter">normalizeTemporalFilter</a></li><li><a href="global.html#normalizeTilt">normalizeTilt</a></li><li><a href="global.html#normalizeTopicFilter">normalizeTopicFilter</a></li><li><a href="global.html#normalizeTransform">normalizeTransform</a></li><li><a href="global.html#normalizeZoom">normalizeZoom</a></li><li><a href="global.html#offsetToCube">offsetToCube</a></li><li><a href="global.html#optimizeCriteria">optimizeCriteria</a></li><li><a href="global.html#optimizeIndex">optimizeIndex</a></li><li><a href="global.html#optimizeTokenUsage">optimizeTokenUsage</a></li><li><a href="global.html#optimizeVectorIndex">optimizeVectorIndex</a></li><li><a href="global.html#parse">parse</a></li><li><a href="global.html#parseBody">parseBody</a></li><li><a href="global.html#parseComponents">parseComponents</a></li><li><a href="global.html#parseCookies">parseCookies</a></li><li><a href="global.html#parseEntityExtractionResponse">parseEntityExtractionResponse</a></li><li><a href="global.html#parseFormBody">parseFormBody</a></li><li><a href="global.html#parseHeaders">parseHeaders</a></li><li><a href="global.html#parseJsonBody">parseJsonBody</a></li><li><a href="global.html#parseJsonResponse">parseJsonResponse</a></li><li><a href="global.html#parseMultipartBody">parseMultipartBody</a></li><li><a href="global.html#parseMultipartPart">parseMultipartPart</a></li><li><a href="global.html#parseQueryParams">parseQueryParams</a></li><li><a href="global.html#parseQueryResults">parseQueryResults</a></li><li><a href="global.html#performClustering">performClustering</a></li><li><a href="global.html#performExactMatch">performExactMatch</a></li><li><a href="global.html#performHealthCheck">performHealthCheck</a></li><li><a href="global.html#performPPRTraversal">performPPRTraversal</a></li><li><a href="global.html#performVectorSimilarity">performVectorSimilarity</a></li><li><a href="global.html#populateSettingsFromConfig">populateSettingsFromConfig</a></li><li><a href="global.html#postProcessChunks">postProcessChunks</a></li><li><a href="global.html#postProcessCorpuscles">postProcessCorpuscles</a></li><li><a href="global.html#preciseTokenCount">preciseTokenCount</a></li><li><a href="global.html#preview">preview</a></li><li><a href="global.html#processConcepts">processConcepts</a></li><li><a href="global.html#processEntityData">processEntityData</a></li><li><a href="global.html#processQuery">processQuery</a></li><li><a href="global.html#processRelationships">processRelationships</a></li><li><a href="global.html#processResults">processResults</a></li><li><a href="global.html#processSPARQLResults">processSPARQLResults</a></li><li><a href="global.html#processSparqlData">processSparqlData</a></li><li><a href="global.html#project">project</a></li><li><a href="global.html#projectToEmbedding">projectToEmbedding</a></li><li><a href="global.html#projectToGraph">projectToGraph</a></li><li><a href="global.html#projectToKeywords">projectToKeywords</a></li><li><a href="global.html#projectToTemporal">projectToTemporal</a></li><li><a href="global.html#pruneContext">pruneContext</a></li><li><a href="global.html#query">query</a></li><li><a href="global.html#queryByZoomLevel">queryByZoomLevel</a></li><li><a href="global.html#queryHypotheses">queryHypotheses</a></li><li><a href="global.html#queryHypotheticalContent">queryHypotheticalContent</a></li><li><a href="global.html#queueSync">queueSync</a></li><li><a href="global.html#rankBySimilarity">rankBySimilarity</a></li><li><a href="global.html#readRawBody">readRawBody</a></li><li><a href="global.html#recordIteration">recordIteration</a></li><li><a href="global.html#recoverFromValidationError">recoverFromValidationError</a></li><li><a href="global.html#recursive">recursive</a></li><li><a href="global.html#refinementPhase">refinementPhase</a></li><li><a href="global.html#register">register</a></li><li><a href="global.html#registerBatch">registerBatch</a></li><li><a href="global.html#removeNamespace">removeNamespace</a></li><li><a href="global.html#removeNode">removeNode</a></li><li><a href="global.html#removeNodeFromIndex">removeNodeFromIndex</a></li><li><a href="global.html#removeTriple">removeTriple</a></li><li><a href="global.html#reset">reset</a></li><li><a href="global.html#resetStatistics">resetStatistics</a></li><li><a href="global.html#resetStats">resetStats</a></li><li><a href="global.html#resolve">resolve</a></li><li><a href="global.html#resolveSyntax">resolveSyntax</a></li><li><a href="global.html#retrieveInteractions">retrieveInteractions</a></li><li><a href="global.html#runDeepPPR">runDeepPPR</a></li><li><a href="global.html#runEntityClustering">runEntityClustering</a></li><li><a href="global.html#runFullAnalysis">runFullAnalysis</a></li><li><a href="global.html#runFullPipeline">runFullPipeline</a></li><li><a href="global.html#runHydeGeneration">runHydeGeneration</a></li><li><a href="global.html#runPPR">runPPR</a></li><li><a href="global.html#runSemanticSearch">runSemanticSearch</a></li><li><a href="global.html#runShallowPPR">runShallowPPR</a></li><li><a href="global.html#runTargetedAnalysis">runTargetedAnalysis</a></li><li><a href="global.html#runVSOMAnalysis">runVSOMAnalysis</a></li><li><a href="global.html#sanitizeData">sanitizeData</a></li><li><a href="global.html#sanitizeErrorMessage">sanitizeErrorMessage</a></li><li><a href="global.html#saveIndex">saveIndex</a></li><li><a href="global.html#saveVectorIndex">saveVectorIndex</a></li><li><a href="global.html#scoreByGraph">scoreByGraph</a></li><li><a href="global.html#scoreByKeywords">scoreByKeywords</a></li><li><a href="global.html#search">search</a></li><li><a href="global.html#searchByTypes">searchByTypes</a></li><li><a href="global.html#searchContent">searchContent</a></li><li><a href="global.html#searchExact">searchExact</a></li><li><a href="global.html#searchGraph">searchGraph</a></li><li><a href="global.html#searchSimilarity">searchSimilarity</a></li><li><a href="global.html#searchTraversal">searchTraversal</a></li><li><a href="global.html#seededRandom">seededRandom</a></li><li><a href="global.html#select">select</a></li><li><a href="global.html#selectByEmbedding">selectByEmbedding</a></li><li><a href="global.html#selectByGraph">selectByGraph</a></li><li><a href="global.html#selectByKeywords">selectByKeywords</a></li><li><a href="global.html#selectByTemporal">selectByTemporal</a></li><li><a href="global.html#selectOptimalStrategy">selectOptimalStrategy</a></li><li><a href="global.html#semanticChunking">semanticChunking</a></li><li><a href="global.html#sendError">sendError</a></li><li><a href="global.html#sendSuccess">sendSuccess</a></li><li><a href="global.html#setAllMetadata">setAllMetadata</a></li><li><a href="global.html#setCategory">setCategory</a></li><li><a href="global.html#setConfidence">setConfidence</a></li><li><a href="global.html#setContent">setContent</a></li><li><a href="global.html#setCorpus">setCorpus</a></li><li><a href="global.html#setEmbedding">setEmbedding</a></li><li><a href="global.html#setEmbeddingHandler">setEmbeddingHandler</a></li><li><a href="global.html#setEntity">setEntity</a></li><li><a href="global.html#setEntryPoint">setEntryPoint</a></li><li><a href="global.html#setFirstSeen">setFirstSeen</a></li><li><a href="global.html#setFrequency">setFrequency</a></li><li><a href="global.html#setLLMHandler">setLLMHandler</a></li><li><a href="global.html#setLanguage">setLanguage</a></li><li><a href="global.html#setLastAccessed">setLastAccessed</a></li><li><a href="global.html#setLength">setLength</a></li><li><a href="global.html#setMetadataProperty">setMetadataProperty</a></li><li><a href="global.html#setName">setName</a></li><li><a href="global.html#setNodeWeights">setNodeWeights</a></li><li><a href="global.html#setPPRScore">setPPRScore</a></li><li><a href="global.html#setPosition">setPosition</a></li><li><a href="global.html#setPrefLabel">setPrefLabel</a></li><li><a href="global.html#setProvenance">setProvenance</a></li><li><a href="global.html#setRelationshipType">setRelationshipType</a></li><li><a href="global.html#setSPARQLEndpoint">setSPARQLEndpoint</a></li><li><a href="global.html#setSimilarityScore">setSimilarityScore</a></li><li><a href="global.html#setSourceDocument">setSourceDocument</a></li><li><a href="global.html#setSourceEntity">setSourceEntity</a></li><li><a href="global.html#setSubType">setSubType</a></li><li><a href="global.html#setSummary">setSummary</a></li><li><a href="global.html#setTargetEntity">setTargetEntity</a></li><li><a href="global.html#setTemperature">setTemperature</a></li><li><a href="global.html#setTemporal">setTemporal</a></li><li><a href="global.html#setText">setText</a></li><li><a href="global.html#setVectorIndex">setVectorIndex</a></li><li><a href="global.html#setWeight">setWeight</a></li><li><a href="global.html#setupDebug">setupDebug</a></li><li><a href="global.html#setupErrorHandling">setupErrorHandling</a></li><li><a href="global.html#setupFailsafeTimeout">setupFailsafeTimeout</a></li><li><a href="global.html#showLoading">showLoading</a></li><li><a href="global.html#shuffleArray">shuffleArray</a></li><li><a href="global.html#shutdown">shutdown</a></li><li><a href="global.html#shutdownAll">shutdownAll</a></li><li><a href="global.html#simpleHash">simpleHash</a></li><li><a href="global.html#splitLargeSection">splitLargeSection</a></li><li><a href="global.html#stopTraining">stopTraining</a></li><li><a href="global.html#store">store</a></li><li><a href="global.html#storeCommunity">storeCommunity</a></li><li><a href="global.html#storeEmbeddingInRDF">storeEmbeddingInRDF</a></li><li><a href="global.html#storeEntity">storeEntity</a></li><li><a href="global.html#storeInteraction">storeInteraction</a></li><li><a href="global.html#storeRelationship">storeRelationship</a></li><li><a href="global.html#storeSemanticUnit">storeSemanticUnit</a></li><li><a href="global.html#streamChatResponse">streamChatResponse</a></li><li><a href="global.html#summarizeContext">summarizeContext</a></li><li><a href="global.html#summarizeFilters">summarizeFilters</a></li><li><a href="global.html#supportsTilt">supportsTilt</a></li><li><a href="global.html#toNTriples">toNTriples</a></li><li><a href="global.html#toSimpleObject">toSimpleObject</a></li><li><a href="global.html#toTurtle">toTurtle</a></li><li><a href="global.html#tokenAwareChunking">tokenAwareChunking</a></li><li><a href="global.html#toroidalDistance">toroidalDistance</a></li><li><a href="global.html#touch">touch</a></li><li><a href="global.html#trackActiveRequest">trackActiveRequest</a></li><li><a href="global.html#train">train</a></li><li><a href="global.html#trainSOM">trainSOM</a></li><li><a href="global.html#trainingStep">trainingStep</a></li><li><a href="global.html#transform">transform</a></li><li><a href="global.html#traverseGraph">traverseGraph</a></li><li><a href="global.html#unifiedSearch">unifiedSearch</a></li><li><a href="global.html#unregister">unregister</a></li><li><a href="global.html#updateConfig">updateConfig</a></li><li><a href="global.html#updateGraph">updateGraph</a></li><li><a href="global.html#updateMetrics">updateMetrics</a></li><li><a href="global.html#updateModified">updateModified</a></li><li><a href="global.html#updateRequestStats">updateRequestStats</a></li><li><a href="global.html#updateSearchStatistics">updateSearchStatistics</a></li><li><a href="global.html#updateWeights">updateWeights</a></li><li><a href="global.html#validate">validate</a></li><li><a href="global.html#validateCompatibility">validateCompatibility</a></li><li><a href="global.html#validateConfig">validateConfig</a></li><li><a href="global.html#validateConfiguration">validateConfiguration</a></li><li><a href="global.html#validateContentType">validateContentType</a></li><li><a href="global.html#validateCorpus">validateCorpus</a></li><li><a href="global.html#validateCriteria">validateCriteria</a></li><li><a href="global.html#validateDependencies">validateDependencies</a></li><li><a href="global.html#validateGeographic">validateGeographic</a></li><li><a href="global.html#validateInput">validateInput</a></li><li><a href="global.html#validateJsonStructure">validateJsonStructure</a></li><li><a href="global.html#validateMetadata">validateMetadata</a></li><li><a href="global.html#validateModel">validateModel</a></li><li><a href="global.html#validateNormalized">validateNormalized</a></li><li><a href="global.html#validateOptions">validateOptions</a></li><li><a href="global.html#validatePan">validatePan</a></li><li><a href="global.html#validateQuery">validateQuery</a></li><li><a href="global.html#validateRagnoURI">validateRagnoURI</a></li><li><a href="global.html#validateRequest">validateRequest</a></li><li><a href="global.html#validateSearchRequest">validateSearchRequest</a></li><li><a href="global.html#validateTemporal">validateTemporal</a></li><li><a href="global.html#validateTilt">validateTilt</a></li><li><a href="global.html#validateTransform">validateTransform</a></li><li><a href="global.html#validateZoom">validateZoom</a></li><li><a href="global.html#verifyComponentsReady">verifyComponentsReady</a></li><li><a href="global.html#withRateLimit">withRateLimit</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.4</a> on Fri Jun 27 2025 12:44:33 GMT+0200 (Central European Summer Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
