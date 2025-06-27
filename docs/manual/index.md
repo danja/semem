@@ -19,6 +19,10 @@ The system provides multiple interfaces (direct SDK, HTTP API, MCP protocol, web
 
 **[config.md](config.md)** - Complete system configuration guide covering config.json and .env setup, storage backends (memory, JSON, SPARQL), LLM provider configuration (Mistral, Claude, Ollama, Nomic), server deployment (SDK, HTTP API, MCP, UI), and production deployment patterns.
 
+### Command-Line Demos
+
+**[examples](../../examples/README.md)**
+
 ### Integration and Protocols
 
 **[mcp-tutorial.md](mcp-tutorial.md)** - Comprehensive workflow-focused guide for using Semem through the Model Context Protocol (MCP), covering 35+ tools, 15 resources, memory management workflows, knowledge graph construction, 3D navigation, and real-world use cases for academic research, business intelligence, and content analysis.
@@ -65,11 +69,6 @@ Semem's layered architecture enables flexible deployment and integration:
 
 ## See Also
 
-### Technical Documentation
-- **[JSDoc API Reference](../api/)** - Auto-generated code documentation
-- **[Examples Repository](../../examples/)** - Comprehensive usage examples
-- **[Architecture Guide](../architecture.md)** - System design documentation
-
 ### Research and References
 - **[Ragno Ontology](https://github.com/danja/ragno)** - Knowledge graph modeling framework
 - **[ZPT Ontology](https://github.com/danja/zpt)** - 3D navigation concepts
@@ -83,4 +82,4 @@ Semem's layered architecture enables flexible deployment and integration:
 
 ---
 
-*Semem Manual - Comprehensive documentation for semantic web memory and intelligent agent systems*
+*Semem the Manual*

@@ -97,8 +97,10 @@
     "docs": "jsdoc -c jsdoc.config.json",
     "docs:watch": "nodemon --watch src --watch docs --ext js,md --exec 'npm run docs'",
     "docs:serve": "npm run docs && npx http-server docs-generated -p 8080 -o",
-    "ghp": "npm run docs && npx gh-pages -d docs-generated -m 'Update documentation'",
-    "clean": "rm -rf dist coverage docs-generated"
+    "docs:build": "npm run docs && npm run docs:prepare",
+    "docs:prepare": "mkdir -p _site && cp -r docs/manual _site/ && cp -r docs-generated _site/api && node scripts/build-docs-site.js",
+    "ghp": "npm run docs:build && npx gh-pages -d _site -m 'Update documentation [skip ci]'",
+    "clean": "rm -rf dist coverage docs-generated _site"
   },
   "repository": {
     "type": "git",
