@@ -2,7 +2,8 @@
   "storage": {
     "type": "sparql",
     "options": {
-      "endpoint": "https://fuseki.hyperdata.it/hyperdata.it",
+      "query": "https://fuseki.hyperdata.it/hyperdata.it/query",
+      "update": "https://fuseki.hyperdata.it/hyperdata.it/update",
       "graphName": "http://hyperdata.it/content",
       "user": "admin",
       "password": "admin123"

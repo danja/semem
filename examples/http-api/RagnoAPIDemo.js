@@ -6,14 +6,14 @@
  * search, export, and enrichment capabilities.
  * 
  * Key features demonstrated:
- * - Text decomposition into knowledge graph via HTTP POST /api/ragno/decompose
- * - Graph statistics and analytics via HTTP GET /api/ragno/stats
- * - Entity retrieval and filtering via HTTP GET /api/ragno/entities
- * - Knowledge graph search via HTTP GET /api/ragno/search
- * - Graph data export via HTTP GET /api/ragno/export
- * - Graph enrichment via HTTP POST /api/ragno/enrich
- * - Community detection via HTTP GET /api/ragno/communities
- * - Full pipeline execution via HTTP POST /api/ragno/pipeline
+ * - Text decomposition into knowledge graph via HTTP POST /api/graph/decompose
+ * - Graph statistics and analytics via HTTP GET /api/graph/stats
+ * - Entity retrieval and filtering via HTTP GET /api/graph/entities
+ * - Knowledge graph search via HTTP GET /api/graph/search
+ * - Graph data export via HTTP GET /api/graph/export
+ * - Graph enrichment via HTTP POST /api/graph/enrich
+ * - Community detection via HTTP GET /api/graph/communities
+ * - Full pipeline execution via HTTP POST /api/graph/pipeline
  * - Error handling and response validation
  * - Progress tracking with colored output
  */
@@ -124,7 +124,7 @@ async function demonstrateTextDecomposition() {
     let decompositionWorking = true;
     
     try {
-        const testResult = await makeRequest('/ragno/decompose', {
+        const testResult = await makeRequest('/api/graph/decompose', {
             method: 'POST',
             body: JSON.stringify({ 
                 text: testText.text,
@@ -150,7 +150,7 @@ async function demonstrateTextDecomposition() {
                 logger.info(chalk.gray(`   Text: "${demo.text.substring(0, 100)}..."`));
                 
                 try {
-                    const result = await makeRequest('/ragno/decompose', {
+                    const result = await makeRequest('/api/graph/decompose', {
                         method: 'POST',
                         body: JSON.stringify({ 
                             text: demo.text,
@@ -228,7 +228,7 @@ async function demonstrateGraphStatistics() {
     logger.info(chalk.yellow('\n📊 === Graph Statistics Demo ==='));
     
     try {
-        const result = await makeRequest('/ragno/stats');
+        const result = await makeRequest('/api/graph/stats');
         
         if (result.success && result.statistics) {
             logger.info(chalk.green('✅ Graph statistics retrieved successfully'));
@@ -289,7 +289,7 @@ async function demonstrateEntityRetrieval() {
             if (query.type) params.append('type', query.type);
             if (query.name) params.append('name', query.name);
             
-            const result = await makeRequest(`/ragno/entities?${params.toString()}`);
+            const result = await makeRequest(`/api/graph/entities?${params.toString()}`);
             
             if (result.success && result.entities) {
                 logger.info(chalk.green(`   ✅ Found ${result.entities.length} entities`));
@@ -348,7 +348,7 @@ async function demonstrateGraphSearch() {
                 threshold: 0.6
             });
             
-            const result = await makeRequest(`/ragno/search?${params.toString()}`);
+            const result = await makeRequest(`/api/graph/search?${params.toString()}`);
             
             if (result.success && result.results !== undefined) {
                 logger.info(chalk.green(`   ✅ Search completed - found ${result.results.length} results`));
@@ -425,7 +425,7 @@ async function demonstrateGraphExport() {
                 typeof value === 'object' ? [[key, JSON.stringify(value)]] : [[key, value]]
             ));
             
-            const result = await makeRequest(`/ragno/export?${params.toString()}`);
+            const result = await makeRequest(`/api/graph/export?${params.toString()}`);
             
             if (result.success && result.data) {
                 logger.info(chalk.green(`   ✅ Export completed successfully`));
@@ -503,7 +503,7 @@ async function demonstrateGraphEnrichment() {
         logger.info(chalk.gray(`   Communities: ${options.communities ? 'Yes' : 'No'}`));
         
         try {
-            const result = await makeRequest('/ragno/enrich', {
+            const result = await makeRequest('/api/graph/enrich', {
                 method: 'POST',
                 body: JSON.stringify({ options })
             });

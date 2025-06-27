@@ -13,9 +13,11 @@ import Config from '../../src/Config.js';
 import SPARQLStore from '../../src/stores/SPARQLStore.js';
 import OllamaConnector from '../../src/connectors/OllamaConnector.js';
 import ClaudeConnector from '../../src/connectors/ClaudeConnector.js';
+import MistralConnector from '../../src/connectors/MistralConnector.js';
 import LLMHandler from '../../src/handlers/LLMHandler.js';
 import EmbeddingHandler from '../../src/handlers/EmbeddingHandler.js';
 import CacheManager from '../../src/handlers/CacheManager.js';
+import ParseHelper from '../../src/utils/ParseHelper.js';
 
 export default class EnrichSimpleModule {
     constructor(config = null) {
@@ -128,7 +130,17 @@ export default class EnrichSimpleModule {
         
         let llmConnector;
         
-        if (provider === 'claude') {
+        if (provider === 'mistral') {
+            const apiKey = process.env.MISTRAL_API_KEY;
+            if (!apiKey) {
+                console.log('⚠️  MISTRAL_API_KEY not found, falling back to Ollama');
+                llmConnector = new OllamaConnector('http://localhost:11434', 'qwen2:1.5b');
+            } else {
+                console.log(`✅ Using Mistral API with model: ${model}`);
+                llmConnector = new MistralConnector(apiKey, 'https://api.mistral.ai/v1', model);
+                await llmConnector.initialize();
+            }
+        } else if (provider === 'claude') {
             const apiKey = process.env.CLAUDE_API_KEY;
             if (!apiKey) {
                 console.log('⚠️  CLAUDE_API_KEY not found, falling back to Ollama');
@@ -244,29 +256,28 @@ Key entities:`;
 
                 const response = await Promise.race([extractionPromise, timeoutPromise]);
                 
-                // Parse response
+                // Parse response using ParseHelper
                 let entities = [];
                 try {
-                    // Clean response - remove markdown code blocks if present
-                    let cleanResponse = response.trim();
-                    const jsonMatch = cleanResponse.match(/```(?:json)?\n?([\s\S]*?)\n?```/);
-                    if (jsonMatch) {
-                        cleanResponse = jsonMatch[1];
-                    }
-                    
-                    entities = JSON.parse(cleanResponse);
-                    if (!Array.isArray(entities)) {
-                        entities = [entities];
+                    const cleanedResponse = ParseHelper.resolveSyntax(response);
+                    if (cleanedResponse === false) {
+                        console.log(`    ⚠️  ParseHelper could not resolve syntax, falling back to text extraction`);
+                        // Fallback: extract quoted strings
+                        const quotes = response.match(/"([^"]+)"/g);
+                        if (quotes) {
+                            entities = quotes.map(q => q.slice(1, -1)).slice(0, 3);
+                        } else {
+                            entities = [doc.title]; // Last resort: use document title
+                        }
+                    } else {
+                        entities = JSON.parse(cleanedResponse);
+                        if (!Array.isArray(entities)) {
+                            entities = [entities];
+                        }
                     }
                 } catch (parseError) {
-                    console.log(`    ⚠️  JSON parse failed, extracting from text: ${parseError.message}`);
-                    // Fallback: extract quoted strings
-                    const quotes = response.match(/"([^"]+)"/g);
-                    if (quotes) {
-                        entities = quotes.map(q => q.slice(1, -1)).slice(0, 3);
-                    } else {
-                        entities = [doc.title]; // Last resort: use document title
-                    }
+                    console.log(`    ⚠️  JSON parse failed, using document title: ${parseError.message}`);
+                    entities = [doc.title]; // Last resort: use document title
                 }
 
                 // Store entities with metadata

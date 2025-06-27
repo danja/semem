@@ -5,11 +5,11 @@
  * navigation through HTTP requests. Shows navigation, previews, schema discovery, and options.
  * 
  * Key features demonstrated:
- * - Knowledge graph navigation via HTTP POST /api/zpt/navigate
- * - Navigation previews via HTTP POST /api/zpt/preview
- * - Schema and parameter discovery via HTTP GET /api/zpt/schema
- * - Available options and capabilities via HTTP GET /api/zpt/options
- * - ZPT system health via HTTP GET /api/zpt/health
+ * - Knowledge graph navigation via HTTP POST /api/navigate
+ * - Navigation previews via HTTP POST /api/navigate/preview
+ * - Schema and parameter discovery via HTTP GET /api/navigate/schema
+ * - Available options and capabilities via HTTP GET /api/navigate/options
+ * - ZPT system health via HTTP GET /api/navigate/health
  * - Multi-dimensional navigation (zoom, pan, tilt)
  * - Configurable output transformations
  * - Error handling and response validation
@@ -176,7 +176,7 @@ async function demonstrateSchemaDiscovery() {
     logger.info(chalk.yellow('\n📋 === ZPT Schema Discovery Demo ==='));
     
     try {
-        const result = await makeRequest('/zpt/schema');
+        const result = await makeRequest('/api/navigate/schema');
         
         if (result.success && result.schema) {
             logger.info(chalk.green('✅ ZPT schema retrieved successfully'));
@@ -227,7 +227,7 @@ async function demonstrateOptionsDiscovery() {
     logger.info(chalk.yellow('\n⚙️  === ZPT Options Discovery Demo ==='));
     
     try {
-        const result = await makeRequest('/zpt/options');
+        const result = await makeRequest('/api/navigate/options');
         
         if (result.success && result.options) {
             logger.info(chalk.green('✅ ZPT options retrieved successfully'));
@@ -298,7 +298,7 @@ async function demonstrateZPTHealth() {
     logger.info(chalk.yellow('\n🏥 === ZPT Health Check Demo ==='));
     
     try {
-        const result = await makeRequest('/zpt/health');
+        const result = await makeRequest('/api/navigate/health');
         
         if (result.success && result.health) {
             const health = result.health;
@@ -358,7 +358,7 @@ async function demonstrateNavigationPreviews() {
     logger.info(chalk.gray(`   Description: ${testScenario.description}`));
     
     try {
-        const testResult = await makeRequest('/zpt/preview', {
+        const testResult = await makeRequest('/api/navigate/preview', {
             method: 'POST',
             body: JSON.stringify(testScenario.parameters)
         });
@@ -379,7 +379,7 @@ async function demonstrateNavigationPreviews() {
                 }
                 
                 try {
-                    const result = await makeRequest('/zpt/preview', {
+                    const result = await makeRequest('/api/navigate/preview', {
                         method: 'POST',
                         body: JSON.stringify(scenario.parameters)
                     });
@@ -451,7 +451,7 @@ async function demonstrateNavigation() {
     logger.info(chalk.gray(`   Expected: ${testScenario.expectedResult}`));
     
     try {
-        const testResult = await makeRequest('/zpt/navigate', {
+        const testResult = await makeRequest('/api/navigate', {
             method: 'POST',
             body: JSON.stringify(testScenario.parameters)
         });
@@ -476,7 +476,7 @@ async function demonstrateNavigation() {
                 logger.info(chalk.gray(`   🔄 Transform: ${params.transform.maxTokens} tokens, ${params.transform.format} format`));
                 
                 try {
-                    const result = await makeRequest('/zpt/navigate', {
+                    const result = await makeRequest('/api/navigate', {
                         method: 'POST',
                         body: JSON.stringify(params)
                     });

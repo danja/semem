@@ -13,6 +13,7 @@ import Relationship from './Relationship.js'
 import RDFGraphManager from './core/RDFGraphManager.js'
 import NamespaceManager from './core/NamespaceManager.js'
 import SPARQLHelpers from '../utils/SPARQLHelpers.js'
+import ParseHelper from '../utils/ParseHelper.js'
 import { logger } from '../Utils.js'
 
 /**
@@ -219,8 +220,15 @@ Semantic units:`
       temperature: 0.1
     })
 
-    // Parse LLM response
-    const units = JSON.parse(response.trim())
+    // Parse LLM response using ParseHelper
+    const cleanedResponse = ParseHelper.resolveSyntax(response)
+    if (cleanedResponse === false) {
+      logger.warn('ParseHelper could not resolve syntax, using original response')
+      const units = JSON.parse(response.trim())
+      return Array.isArray(units) ? units : [text]
+    }
+    
+    const units = JSON.parse(cleanedResponse)
     return Array.isArray(units) ? units : [text] // Fallback to original text
 
   } catch (error) {
@@ -285,14 +293,14 @@ Entities:`
       temperature: 0.1
     });
 
-    // Extract JSON from response if it's wrapped in markdown code blocks
-    let jsonResponse = response.trim();
-    const jsonMatch = jsonResponse.match(/```(?:json)?\n([\s\S]*?)\n```/);
-    if (jsonMatch && jsonMatch[1]) {
-      jsonResponse = jsonMatch[1];
+    // Use ParseHelper to clean the response
+    const cleanedResponse = ParseHelper.resolveSyntax(response)
+    if (cleanedResponse === false) {
+      logger.warn('ParseHelper could not resolve syntax for entity extraction')
+      throw new Error('Failed to parse entity extraction response')
     }
 
-    const entities = JSON.parse(jsonResponse)
+    const entities = JSON.parse(cleanedResponse)
 
     // Filter and validate entities
     return Array.isArray(entities) ? entities.filter(entity =>
@@ -357,14 +365,14 @@ Relationships:`
         temperature: 0.1
       });
 
-      // Extract JSON from response if it's wrapped in markdown code blocks
-      let jsonResponse = response.trim();
-      const jsonMatch = jsonResponse.match(/```(?:json)?\n([\s\S]*?)\n```/);
-      if (jsonMatch && jsonMatch[1]) {
-        jsonResponse = jsonMatch[1];
+      // Use ParseHelper to clean the response
+      const cleanedResponse = ParseHelper.resolveSyntax(response)
+      if (cleanedResponse === false) {
+        logger.warn('ParseHelper could not resolve syntax for relationship extraction')
+        continue // Skip this unit and continue with the next one
       }
 
-      const unitRelationships = JSON.parse(jsonResponse)
+      const unitRelationships = JSON.parse(cleanedResponse)
 
       if (Array.isArray(unitRelationships)) {
         for (const rel of unitRelationships) {

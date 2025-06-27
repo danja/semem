@@ -5,8 +5,8 @@
  * through HTTP requests. Shows semantic search, content indexing, and query processing.
  * 
  * Key features demonstrated:
- * - Content search via HTTP GET /api/search/search
- * - Content indexing via HTTP POST /api/search/index
+ * - Content search via HTTP GET /api/search
+ * - Content indexing via HTTP POST /api/index
  * - Semantic similarity search with configurable thresholds
  * - Content type filtering and metadata handling
  * - Memory manager fallback when dedicated search service unavailable
@@ -155,7 +155,7 @@ async function demonstrateContentIndexing() {
         logger.info(chalk.gray(`   Content length: ${content.content.length} characters`));
         
         try {
-            const result = await makeRequest('/search/index', {
+            const result = await makeRequest('/api/index', {
                 method: 'POST',
                 body: JSON.stringify(content)
             });
@@ -193,7 +193,7 @@ async function demonstrateContentSearch() {
     logger.info(chalk.gray(`   Description: ${testQuery.description}`));
     
     try {
-        const testResult = await makeRequest(`/search/search?query=${encodeURIComponent(testQuery.query)}&limit=3&threshold=${testQuery.threshold}`);
+        const testResult = await makeRequest(`/api/search?query=${encodeURIComponent(testQuery.query)}&limit=3&threshold=${testQuery.threshold}`);
         
         if (testResult.results !== undefined) {
             logger.info(chalk.green(`   ✅ Search is working! Found ${testResult.results.length} results`));
@@ -209,7 +209,7 @@ async function demonstrateContentSearch() {
                 logger.info(chalk.gray(`   Similarity threshold: ${search.threshold}`));
                 
                 try {
-                    const result = await makeRequest(`/search/search?query=${encodeURIComponent(search.query)}&limit=5&threshold=${search.threshold}`);
+                    const result = await makeRequest(`/api/search?query=${encodeURIComponent(search.query)}&limit=5&threshold=${search.threshold}`);
                     
                     if (result.results !== undefined) {
                         logger.info(chalk.green(`   ✅ Found ${result.results.length} relevant results`));
@@ -328,7 +328,7 @@ async function demonstrateAdvancedSearch() {
                 params.append('threshold', search.threshold);
             }
             
-            const result = await makeRequest(`/search/search?${params.toString()}`);
+            const result = await makeRequest(`/api/search?${params.toString()}`);
             
             if (result.results !== undefined) {
                 logger.info(chalk.green(`   ✅ Search completed - found ${result.results.length} results`));

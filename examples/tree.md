@@ -19,7 +19,7 @@ examples
 │   └── urban_planning.md
 ├── end-to-end
 │   ├── Analytics.js - ok but rubbish results
-│   ├── Enrich.js
+│   ├── Enrich.js - ragno timeout
 │   ├── EnrichSimple.js
 │   ├── HyDE.js
 │   ├── Ingest.js

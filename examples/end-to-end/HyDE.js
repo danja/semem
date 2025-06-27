@@ -26,6 +26,7 @@ import { dirname, join } from 'path';
 import Config from '../../src/Config.js';
 import OllamaConnector from '../../src/connectors/OllamaConnector.js';
 import ClaudeConnector from '../../src/connectors/ClaudeConnector.js';
+import MistralConnector from '../../src/connectors/MistralConnector.js';
 import EmbeddingHandler from '../../src/handlers/EmbeddingHandler.js';
 import LLMHandler from '../../src/handlers/LLMHandler.js';
 import CacheManager from '../../src/handlers/CacheManager.js';
@@ -320,7 +321,17 @@ async function createLLMHandler(config) {
     
     let llmConnector;
     
-    if (provider === 'claude') {
+    if (provider === 'mistral') {
+        const apiKey = process.env.MISTRAL_API_KEY;
+        if (!apiKey) {
+            console.log('⚠️  MISTRAL_API_KEY not found, falling back to Ollama');
+            llmConnector = new OllamaConnector('http://localhost:11434', 'qwen2:1.5b');
+        } else {
+            console.log(`✅ Using Mistral API with model: ${model}`);
+            llmConnector = new MistralConnector(apiKey, 'https://api.mistral.ai/v1', model);
+            await llmConnector.initialize();
+        }
+    } else if (provider === 'claude') {
         const apiKey = process.env.CLAUDE_API_KEY;
         if (!apiKey) {
             console.log('⚠️  CLAUDE_API_KEY not found, falling back to Ollama');

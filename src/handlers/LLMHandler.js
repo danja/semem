@@ -1,5 +1,6 @@
 import logger from 'loglevel'
 import PromptTemplates from '../PromptTemplates.js'
+import ParseHelper from '../utils/ParseHelper.js'
 
 /**
  * @typedef {Object} LLMProvider - Language model provider interface
@@ -179,33 +180,43 @@ export default class LLMHandler {
             
             logger.info(`LLM response for concept extraction: ${response}`)
             
-            // Try to parse the response directly first (for clean JSON responses)
-            try {
-                const directParse = JSON.parse(response.trim())
-                if (Array.isArray(directParse)) {
-                    logger.info(`Successfully parsed ${directParse.length} concepts directly`)
-                    return directParse
+            // Use ParseHelper to resolve syntax
+            const cleanedResponse = ParseHelper.resolveSyntax(response)
+            if (cleanedResponse === false) {
+                logger.warn('ParseHelper could not resolve syntax, falling back to regex extraction')
+                
+                // Fallback to regex-based extraction
+                const match = response.match(/\[.*\]/)
+                if (!match) {
+                    logger.warn('No concept array found in LLM response')
+                    logger.warn('Raw response was:', response)
+                    throw new Error('No JSON array found in LLM response for concept extraction')
                 }
-            } catch (e) {
-                // Continue to regex parsing
+                
+                try {
+                    const parsed = JSON.parse(match[0])
+                    logger.info(`Successfully parsed ${parsed.length} concepts using regex fallback`)
+                    return parsed
+                } catch (parseError) {
+                    logger.error('Failed to parse concepts array:', parseError)
+                    logger.error('Raw match was:', match[0])
+                    throw new Error(`Failed to parse JSON from LLM response: ${parseError.message}`)
+                }
             }
             
-            // Fallback to regex-based extraction
-            const match = response.match(/\[.*\]/)
-            if (!match) {
-                logger.warn('No concept array found in LLM response')
-                logger.warn('Raw response was:', response)
-                throw new Error('No JSON array found in LLM response for concept extraction')
-            }
-            
+            // Parse the cleaned response
             try {
-                const parsed = JSON.parse(match[0])
-                logger.info(`Successfully parsed ${parsed.length} concepts using regex`)
-                return parsed
+                const parsed = JSON.parse(cleanedResponse)
+                if (Array.isArray(parsed)) {
+                    logger.info(`Successfully parsed ${parsed.length} concepts using ParseHelper`)
+                    return parsed
+                } else {
+                    throw new Error('Parsed result is not an array')
+                }
             } catch (parseError) {
-                logger.error('Failed to parse concepts array:', parseError)
-                logger.error('Raw match was:', match[0])
-                throw new Error(`Failed to parse JSON from LLM response: ${parseError.message}`)
+                logger.error('Failed to parse cleaned response:', parseError)
+                logger.error('Cleaned response was:', cleanedResponse)
+                throw new Error(`Failed to parse JSON from cleaned response: ${parseError.message}`)
             }
         } catch (error) {
             logger.error('Error extracting concepts:', error)

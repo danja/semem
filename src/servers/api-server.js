@@ -38,7 +38,7 @@ dotenv.config();
 
 // Get directory name for ES modules
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(path.dirname(path.dirname(__filename))); // Go up two levels to project root
+const __dirname = path.dirname(path.dirname(path.dirname(__filename))); // Go up three levels to project root
 
 /**
  * APIServer class that encapsulates the entire API server functionality
@@ -105,8 +105,9 @@ class APIServer {
      * Initialize API components
      */
     async initializeComponents() {
-        // Load configuration
-        const config = new Config();
+        // Load configuration from config.json explicitly
+        const configPath = path.join(__dirname, 'config/config.json');
+        const config = new Config(configPath);
         await config.init();
         
         // Use new configuration-driven provider selection (like MCP server)
@@ -142,21 +143,22 @@ class APIServer {
 
         // Initialize storage based on config
         let storage;
-        const storageConfig = config.get('storage');
+        const storageType = config.get('storage.type');
+        this.logger.info(`💾 [STORAGE] Storage type: ${storageType}`);
         
-        if (storageConfig.type === 'sparql') {
+        if (storageType === 'sparql') {
+            this.logger.info('💾 [STORAGE] Importing SPARQLStore...');
             const { default: SPARQLStore } = await import('../stores/SPARQLStore.js');
-            storage = new SPARQLStore(storageConfig.options.endpoint, {
-                user: storageConfig.options.user,
-                password: storageConfig.options.password,
-                graphName: storageConfig.options.graphName,
-                dimension: dimension
-            });
-            this.logger.info(`Initialized SPARQL store with endpoint: ${storageConfig.options.endpoint}`);
-        } else if (storageConfig.type === 'json') {
+            this.logger.info('💾 [STORAGE] Getting storage options...');
+            const storageOptions = config.get('storage.options');
+            this.logger.info('💾 [STORAGE] Creating SPARQLStore instance with options:', storageOptions);
+            storage = new SPARQLStore(storageOptions);
+            this.logger.info('✅ [STORAGE] SPARQLStore created');
+        } else if (storageType === 'json') {
             const { default: JSONStore } = await import('../stores/JSONStore.js');
-            storage = new JSONStore(storageConfig.options.path);
-            this.logger.info(`Initialized JSON store at path: ${storageConfig.options.path}`);
+            const storageOptions = config.get('storage.options');
+            storage = new JSONStore(storageOptions.path);
+            this.logger.info(`Initialized JSON store at path: ${storageOptions.path}`);
         } else {
             // Default to in-memory
             storage = new InMemoryStore();

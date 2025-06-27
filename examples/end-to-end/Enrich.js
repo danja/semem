@@ -17,6 +17,9 @@ import logger from 'loglevel';
 import Config from '../../src/Config.js';
 import SPARQLStore from '../../src/stores/SPARQLStore.js';
 import EmbeddingConnectorFactory from '../../src/connectors/EmbeddingConnectorFactory.js';
+import OllamaConnector from '../../src/connectors/OllamaConnector.js';
+import ClaudeConnector from '../../src/connectors/ClaudeConnector.js';
+import MistralConnector from '../../src/connectors/MistralConnector.js';
 import LLMHandler from '../../src/handlers/LLMHandler.js';
 import EmbeddingHandler from '../../src/handlers/EmbeddingHandler.js';
 import CacheManager from '../../src/handlers/CacheManager.js';
@@ -95,9 +98,14 @@ export default class EnrichModule {
         // Get provider configuration
         const embeddingProvider = this.config.get('embeddingProvider') || 'ollama';
         const embeddingModel = this.config.get('embeddingModel') || 'nomic-embed-text';
-        const chatModel = this.config.get('chatModel') || 'qwen2:1.5b';
+        
+        // Get chat configuration from the models.chat config structure
+        const chatConfig = this.config.get('models.chat');
+        const chatProvider = chatConfig?.provider || 'ollama';
+        const chatModel = chatConfig?.model || 'qwen2:1.5b';
 
         console.log(`🤖 Using embedding provider: ${chalk.bold(embeddingProvider)}`);
+        console.log(`💬 Using chat provider: ${chalk.bold(chatProvider)}`);
         console.log(`📄 Chat model: ${chalk.bold(chatModel)}`);
         console.log(`🔢 Embedding model: ${chalk.bold(embeddingModel)}`);
 
@@ -131,13 +139,39 @@ export default class EnrichModule {
 
         const embeddingConnector = EmbeddingConnectorFactory.createConnector(providerConfig);
         
+        // Create separate chat connector based on chat provider
+        let chatConnector;
+        if (chatProvider === 'mistral') {
+            const apiKey = process.env.MISTRAL_API_KEY;
+            if (!apiKey) {
+                console.log(chalk.yellow('⚠️  MISTRAL_API_KEY not found, falling back to Ollama'));
+                chatConnector = new OllamaConnector('http://localhost:11434', 'qwen2:1.5b');
+            } else {
+                console.log(`✅ Using Mistral API with model: ${chatModel}`);
+                chatConnector = new MistralConnector(apiKey, 'https://api.mistral.ai/v1', chatModel);
+                await chatConnector.initialize();
+            }
+        } else if (chatProvider === 'claude') {
+            const apiKey = process.env.CLAUDE_API_KEY;
+            if (!apiKey) {
+                console.log(chalk.yellow('⚠️  CLAUDE_API_KEY not found, falling back to Ollama'));
+                chatConnector = new OllamaConnector('http://localhost:11434', 'qwen2:1.5b');
+            } else {
+                chatConnector = new ClaudeConnector(apiKey, chatModel);
+            }
+        } else {
+            // Default to Ollama for chat
+            const ollamaBaseUrl = this.config.get('ollama.baseUrl') || 'http://localhost:11434';
+            chatConnector = new OllamaConnector(ollamaBaseUrl, chatModel);
+        }
+        
         // Initialize cache manager
         const cacheManager = new CacheManager({
             maxSize: 1000,
             ttl: 3600000 // 1 hour
         });
 
-        // Initialize handlers
+        // Initialize handlers with separate connectors
         this.embeddingHandler = new EmbeddingHandler(
             embeddingConnector,
             embeddingModel,
@@ -145,9 +179,10 @@ export default class EnrichModule {
             cacheManager
         );
 
-        this.llmHandler = new LLMHandler(embeddingConnector, chatModel);
+        this.llmHandler = new LLMHandler(chatConnector, chatModel);
 
         console.log(`✅ Embedding services initialized with ${embeddingProvider}`);
+        console.log(`✅ Chat services initialized with ${chatProvider}`);
     }
 
 

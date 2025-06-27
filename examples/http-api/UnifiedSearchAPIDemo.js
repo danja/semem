@@ -6,10 +6,10 @@
  * query routing, service selection, result ranking, and search strategy optimization.
  * 
  * Key features demonstrated:
- * - Unified search across all services via HTTP POST /api/unified-search/unified
- * - Query analysis and strategy recommendation via HTTP POST /api/unified-search/analyze
- * - Available services discovery via HTTP GET /api/unified-search/services
- * - Search strategies information via HTTP GET /api/unified-search/strategies
+ * - Unified search across all services via HTTP POST /api/search/unified
+ * - Query analysis and strategy recommendation via HTTP POST /api/search/analyze
+ * - Available services discovery via HTTP GET /api/search/services
+ * - Search strategies information via HTTP GET /api/search/strategies
  * - Intelligent query routing and service selection
  * - Result ranking and merging from multiple sources
  * - Parallel and sequential search execution
@@ -139,7 +139,7 @@ async function demonstrateServicesDiscovery() {
     logger.info(chalk.yellow('\n🔍 === Available Services Discovery Demo ==='));
     
     try {
-        const result = await makeRequest('/unified-search/services');
+        const result = await makeRequest('/api/search/services');
         
         if (result.success && result.services) {
             logger.info(chalk.green('✅ Available services retrieved successfully'));
@@ -175,7 +175,7 @@ async function demonstrateStrategiesDiscovery() {
     logger.info(chalk.yellow('\n🎯 === Search Strategies Discovery Demo ==='));
     
     try {
-        const result = await makeRequest('/unified-search/strategies');
+        const result = await makeRequest('/api/search/strategies');
         
         if (result.success && result.strategies) {
             logger.info(chalk.green('✅ Search strategies retrieved successfully'));
@@ -231,7 +231,7 @@ async function demonstrateQueryAnalysis() {
         logger.info(chalk.gray(`   Query: "${query}"`));
         
         try {
-            const result = await makeRequest('/unified-search/analyze', {
+            const result = await makeRequest('/api/search/analyze', {
                 method: 'POST',
                 body: JSON.stringify({ query })
             });
@@ -291,7 +291,7 @@ async function demonstrateUnifiedSearch() {
     logger.info(chalk.gray(`   Description: ${testQuery.description}`));
     
     try {
-        const testResult = await makeRequest('/unified-search/unified', {
+        const testResult = await makeRequest('/api/search/unified', {
             method: 'POST',
             body: JSON.stringify({ 
                 query: testQuery.query,
@@ -314,7 +314,7 @@ async function demonstrateUnifiedSearch() {
                 logger.info(chalk.gray(`   Expected services: [${searchQuery.expectedServices.join(', ')}]`));
                 
                 try {
-                    const result = await makeRequest('/unified-search/unified', {
+                    const result = await makeRequest('/api/search/unified', {
                         method: 'POST',
                         body: JSON.stringify({
                             query: searchQuery.query,
@@ -415,7 +415,7 @@ async function demonstrateSearchStrategies() {
         logger.info(chalk.gray(`   Query: "${testQuery}"`));
         
         try {
-            const result = await makeRequest('/unified-search/unified', {
+            const result = await makeRequest('/api/search/unified', {
                 method: 'POST',
                 body: JSON.stringify({
                     query: testQuery,
