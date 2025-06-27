@@ -2,16 +2,11 @@
   "source": {
     "include": [
       "./src/",
-      "./docs/api/README.md",
-      "./docs/connectors/README.md",
       "./docs/handlers/README.md",
-      "./docs/ragno/README.md",
       "./docs/stores/README.md",
-      "./docs/frontend/README.md",
       "./docs/services/README.md",
       "./docs/utils/README.md",
       "./docs/types/README.md",
-      "./docs/README.md",
       "./README.md"
     ],
     "includePattern": "\\.js$",
