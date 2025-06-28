@@ -100,7 +100,7 @@ export default class RagnoAPI extends BaseAPI {
             
             // Initialize Hyde algorithm
             this.hyde = new Hyde({
-                uriBase: this.namespaceManager.getBaseUri(),
+                uriBase: this.namespaceManager.uriBase,
                 maxTokens: 512,
                 temperature: 0.7,
                 hypothesesPerQuery: 3,

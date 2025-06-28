@@ -140,11 +140,20 @@ class SearchService {
         }
 
         try {
+            // Check if we have any embeddings in the index
+            if (this.index.ntotal() === 0) {
+                logger.warn('No embeddings available in search index - returning empty results');
+                return [];
+            }
+
             // Generate embedding for the query
             const queryEmbedding = await this.embeddingService.generateEmbedding(queryText);
 
+            // Ensure we don't request more results than we have embeddings
+            const actualLimit = Math.min(limit, this.index.ntotal());
+
             // Search the index
-            const searchResults = this.index.search(queryEmbedding, limit);
+            const searchResults = this.index.search(queryEmbedding, actualLimit);
 
             // Faiss-node returns an object with labels and distances
             const results = [];

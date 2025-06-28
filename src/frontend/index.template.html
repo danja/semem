@@ -26,6 +26,7 @@
                 <button class="tab-btn" data-tab="concepts" role="tab" aria-selected="false" aria-controls="concepts-tab" id="tab-concepts">Concepts</button>
                 <button class="tab-btn" data-tab="index" role="tab" aria-selected="false" aria-controls="index-tab" id="tab-index">Index</button>
                 <button class="tab-btn" data-tab="settings" role="tab" aria-selected="false" aria-controls="settings-tab" id="tab-settings">Settings</button>
+                <button class="tab-btn" data-tab="stats" role="tab" aria-selected="false" aria-controls="stats-tab" id="tab-stats">Stats</button>
                 <button class="tab-btn" data-tab="mcp-client" role="tab" aria-selected="false" aria-controls="mcp-client-tab" id="tab-mcp-client">MCP Client</button>
                 <button class="tab-btn" data-tab="sparql-browser" role="tab" aria-selected="false" aria-controls="sparql-browser-tab" id="tab-sparql-browser">SPARQL Browser</button>
             </nav>
@@ -927,6 +928,124 @@
                         <button type="submit" class="btn primary-btn">Save Settings</button>
                     </div>
                 </form>
+            </section>
+
+            <!-- Stats Tab -->
+            <section id="stats-tab" class="tab-content" role="tabpanel" aria-labelledby="tab-stats" tabindex="0" hidden>
+                <h2>Storage Statistics</h2>
+                
+                <div class="stats-container">
+                    <div class="stats-refresh">
+                        <button id="refresh-stats-btn" class="btn primary-btn">Refresh Statistics</button>
+                        <span id="stats-last-updated" class="last-updated"></span>
+                    </div>
+                    
+                    <div class="stats-grid">
+                        <!-- General Statistics -->
+                        <div class="stats-section">
+                            <h3>General</h3>
+                            <div class="stats-cards">
+                                <div class="stat-card">
+                                    <div class="stat-label">Storage Type</div>
+                                    <div class="stat-value" id="stat-storage-type">-</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-label">Total Items</div>
+                                    <div class="stat-value" id="stat-total-items">-</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-label">Storage Size</div>
+                                    <div class="stat-value" id="stat-storage-size">-</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Memory Statistics -->
+                        <div class="stats-section">
+                            <h3>Memory Items</h3>
+                            <div class="stats-cards">
+                                <div class="stat-card">
+                                    <div class="stat-label">Prompts</div>
+                                    <div class="stat-value" id="stat-memory-prompts">-</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-label">Responses</div>
+                                    <div class="stat-value" id="stat-memory-responses">-</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-label">With Embeddings</div>
+                                    <div class="stat-value" id="stat-memory-embeddings">-</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- RDF/SPARQL Statistics (if using SPARQL storage) -->
+                        <div class="stats-section" id="sparql-stats-section" style="display: none;">
+                            <h3>RDF/SPARQL</h3>
+                            <div class="stats-cards">
+                                <div class="stat-card">
+                                    <div class="stat-label">Total Triples</div>
+                                    <div class="stat-value" id="stat-rdf-triples">-</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-label">Named Graphs</div>
+                                    <div class="stat-value" id="stat-rdf-graphs">-</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-label">Entities</div>
+                                    <div class="stat-value" id="stat-rdf-entities">-</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-label">Relationships</div>
+                                    <div class="stat-value" id="stat-rdf-relationships">-</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Search Index Statistics -->
+                        <div class="stats-section">
+                            <h3>Search Index</h3>
+                            <div class="stats-cards">
+                                <div class="stat-card">
+                                    <div class="stat-label">Indexed Items</div>
+                                    <div class="stat-value" id="stat-search-indexed">-</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-label">Vector Dimension</div>
+                                    <div class="stat-value" id="stat-search-dimension">-</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-label">Index Type</div>
+                                    <div class="stat-value" id="stat-search-type">-</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Recent Activity -->
+                        <div class="stats-section">
+                            <h3>Recent Activity</h3>
+                            <div class="stats-table-container">
+                                <table class="stats-table" id="recent-activity-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Type</th>
+                                            <th>Count</th>
+                                            <th>Last Updated</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td colspan="3" class="no-data">Loading...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="stats-error" class="error-message hidden"></div>
+                    <div id="stats-loading" class="loading-indicator hidden">Loading statistics...</div>
+                </div>
             </section>
 
             <!-- MCP Client Tab -->
