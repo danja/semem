@@ -1,5 +1,5 @@
 /**
- * ArticleSearchService.js - Semantic Article Search System
+ * ArticleSearch.js - Semantic Article Search System
  * 
  * This script demonstrates how to:
  * 1. Load configuration from config/config.json
@@ -16,22 +16,27 @@
  * - SPARQL endpoint (Fuseki) with article embeddings
  * - config/config.json properly configured
  * - Articles with embeddings already stored (run ArticleEmbedding.js first)
+ * 
+ * Usage:
+ * - node ArticleSearch.js                                    # Use default graph
+ * - node ArticleSearch.js --graph http://purl.org/stuff/beerqa  # Use custom graph
+ * - node ArticleSearch.js --help                             # Show usage info
  */
 
 import fetch from 'node-fetch';
 import faiss from 'faiss-node';
 const { IndexFlatIP } = faiss;
-import OllamaConnector from '../../src/connectors/OllamaConnector.js';
 import Config from '../../src/Config.js';
+import EmbeddingConnectorFactory from '../../src/connectors/EmbeddingConnectorFactory.js';
 import logger from 'loglevel';
 
 // Configure logging
 logger.setLevel('debug') // Set to debug for more verbose output
 
 class ArticleSearchService {
-    constructor(config) {
+    constructor(config, options = {}) {
         this.config = config;
-        this.ollama = new OllamaConnector();
+        this.embeddingConnector = null; // Will be initialized in setupConfiguration
         this.initialized = false;
         this.index = null;
         this.articles = [];
@@ -40,7 +45,8 @@ class ArticleSearchService {
 
         // Get configuration values
         this.sparqlEndpoint = null;
-        this.graphName = null;
+        this.graphName = options.graphName || null; // Allow override via options
+        this.embeddingProvider = null;
         this.embeddingModel = null;
         this.auth = null;
 
@@ -57,11 +63,32 @@ class ArticleSearchService {
         // Construct endpoint URLs
         this.sparqlEndpoint = `${sparqlEndpointConfig.urlBase}${sparqlEndpointConfig.query}`;
 
-        // Get graph name from config
-        this.graphName = this.config.get('graphName') || this.config.get('storage.options.graphName') || 'http://danny.ayers.name/content';
+        // Get graph name from config (unless overridden in constructor)
+        if (!this.graphName) {
+            this.graphName = this.config.get('graphName') || this.config.get('storage.options.graphName') || 'http://danny.ayers.name/content';
+        }
 
-        // Get embedding model
+        // Get embedding configuration
+        this.embeddingProvider = this.config.get('embeddingProvider') || 'ollama';
         this.embeddingModel = this.config.get('embeddingModel') || 'nomic-embed-text';
+
+        // Create embedding connector using configuration (like BeerEmbedding.js)
+        let providerConfig = {};
+        if (this.embeddingProvider === 'nomic') {
+            providerConfig = {
+                provider: 'nomic',
+                apiKey: process.env.NOMIC_API_KEY,
+                model: this.embeddingModel
+            };
+        } else if (this.embeddingProvider === 'ollama') {
+            providerConfig = {
+                provider: 'ollama',
+                baseUrl: 'http://localhost:11434',
+                model: this.embeddingModel
+            };
+        }
+        
+        this.embeddingConnector = EmbeddingConnectorFactory.createConnector(providerConfig);
 
         // Set up authentication
         this.auth = {
@@ -72,7 +99,8 @@ class ArticleSearchService {
         logger.info(`🔧 Search service configured:`);
         logger.info(`   📊 SPARQL endpoint: ${this.sparqlEndpoint}`);
         logger.info(`   🗃️  Graph: ${this.graphName}`);
-        logger.info(`   🤖 Embedding model: ${this.embeddingModel}`);
+        logger.info(`   🤖 Embedding provider: ${this.embeddingProvider}`);
+        logger.info(`   🎯 Embedding model: ${this.embeddingModel}`);
     }
 
     /**
@@ -115,11 +143,17 @@ class ArticleSearchService {
     async loadEmbeddings() {
         logger.info('📥 Loading article embeddings from SPARQL store...');
 
+        // Use appropriate content predicate based on graph
+        const contentPredicate = this.graphName === 'http://purl.org/stuff/beerqa' ? 
+            'ragno:content' : 
+            '<http://schema.org/articleBody>';
+
         const query = `
+            PREFIX ragno: <http://purl.org/stuff/ragno/>
             SELECT ?article ?content ?embedding WHERE {
                 GRAPH <${this.graphName}> {
-                    ?article <http://schema.org/articleBody> ?content .
-                    ?article <http://purl.org/stuff/ragno/hasEmbedding> ?embedding .
+                    ?article ${contentPredicate} ?content .
+                    ?article ragno:hasEmbedding ?embedding .
                 }
             }
         `;
@@ -257,7 +291,7 @@ class ArticleSearchService {
         logger.debug(`🤖 Generating embedding for query: "${text.substring(0, 50)}..."`);
         try {
             const startTime = Date.now();
-            const embedding = await this.ollama.generateEmbedding(this.embeddingModel, text);
+            const embedding = await this.embeddingConnector.generateEmbedding(this.embeddingModel, text);
             const endTime = Date.now();
 
             logger.debug(`✅ Embedding generated in ${endTime - startTime}ms, dimension: ${embedding.length}`);
@@ -404,32 +438,103 @@ class ArticleSearchService {
     }
 }
 
+/**
+ * Parse command line arguments
+ */
+function parseArgs() {
+    const args = process.argv.slice(2);
+    const options = {
+        graphName: null,
+        help: false
+    };
+
+    for (let i = 0; i < args.length; i++) {
+        const arg = args[i];
+        
+        switch (arg) {
+            case '--graph':
+                options.graphName = args[++i];
+                break;
+            case '--help':
+            case '-h':
+                options.help = true;
+                break;
+            default:
+                console.log(`Unknown option: ${arg}`);
+                process.exit(1);
+        }
+    }
+
+    return options;
+}
+
+/**
+ * Show usage information
+ */
+function showUsage() {
+    console.log('Usage: node ArticleSearch.js [options]');
+    console.log('');
+    console.log('Options:');
+    console.log('  --graph <uri>    Named graph URI to search (default: from config)');
+    console.log('  --help, -h       Show this help message');
+    console.log('');
+    console.log('Examples:');
+    console.log('  node ArticleSearch.js');
+    console.log('  node ArticleSearch.js --graph http://purl.org/stuff/beerqa');
+    console.log('  node ArticleSearch.js --graph http://danny.ayers.name/content');
+    console.log('');
+}
+
 // Main function to demonstrate the search service
 async function main() {
+    const options = parseArgs();
+
+    if (options.help) {
+        showUsage();
+        process.exit(0);
+    }
+
     logger.info('🚀 Starting ArticleSearchService Demo');
     logger.info('='.repeat(60));
 
     try {
         // Load configuration
         logger.info('⚙️  Loading configuration from config file...');
-        const config = new Config('../config/config.json');
+        const config = new Config('config/config.json');
         await config.init();
         logger.info('✅ Configuration loaded successfully');
 
-        // Create search service
-        const searchService = new ArticleSearchService(config);
+        // Create search service with optional graph override
+        const searchOptions = {};
+        if (options.graphName) {
+            searchOptions.graphName = options.graphName;
+            logger.info(`🎯 Using custom graph: ${options.graphName}`);
+        }
+        
+        const searchService = new ArticleSearchService(config, searchOptions);
 
         // Initialize the service
         await searchService.initialize();
 
-        // Test queries
-        const testQueries = [
-            'semantic web technologies',
-            'machine learning applications',
-            'vector embeddings neural networks',
-            'SPARQL query language',
-            'artificial intelligence'
-        ];
+        // Test queries - adapt based on graph content
+        let testQueries;
+        if (options.graphName === 'http://purl.org/stuff/beerqa') {
+            testQueries = [
+                'beer brewing process',
+                'different types of beer',
+                'alcohol content in beer',
+                'beer ingredients and recipes',
+                'beer history and culture'
+            ];
+        } else {
+            testQueries = [
+                'semantic web technologies',
+                'machine learning applications',
+                'vector embeddings neural networks',
+                'SPARQL query language',
+                'artificial intelligence'
+            ];
+        }
 
         logger.info('🧪 Running test queries...');
         logger.info('='.repeat(60));

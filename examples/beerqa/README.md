@@ -1,4 +1,19 @@
-# BeerQA ETL System
+# BeerQA 
+
+```sh
+# clean
+node examples/beerqa/ClearGraph.js 
+
+# load sample of BeerQA dataset into store
+node examples/beerqa/BeerETLDemo.js
+
+# create embedding for the loaded data
+node examples/beerqa/BeerEmbedding.js 
+
+# run similarity search
+node examples/basic/ArticleSearch.js --graph http://purl.org/stuff/beerqa
+
+```
 
 This system provides Extract, Transform, Load (ETL) functionality for the BeerQA dataset, converting question-answer data into RDF representations using the Ragno vocabulary.
 
