@@ -1,7 +1,8 @@
 /**
- * ZPT (Zero-Point Traversal) Barrel File
+ * ZPT (Zoom-Pan-Tilt) Barrel File
  * 
- * Exports all ZPT navigation and transformation components
+ * Exports all ZPT navigation and transformation components including
+ * the new RDF-based ontology integration for formal semantics.
  */
 
 // Selection Components
@@ -28,3 +29,17 @@ export { default as NavigationEndpoint } from './api/NavigationEndpoint.js';
 export { default as RequestParser } from './api/RequestParser.js';
 export { default as ResponseFormatter } from './api/ResponseFormatter.js';
 export { default as ErrorHandler } from './api/ErrorHandler.js';
+
+// RDF Ontology Integration
+export { ZPTDataFactory, zptDataFactory } from './ontology/ZPTDataFactory.js';
+export { ZPTQueryBuilder } from './ontology/ZPTQueries.js';
+export { 
+    ZPT, 
+    RAGNO, 
+    ZPT_TERMS, 
+    RAGNO_TERMS, 
+    ZPT_STRING_MAPPINGS,
+    ZPT_URI_MAPPINGS,
+    NamespaceUtils,
+    getSPARQLPrefixes 
+} from './ontology/ZPTNamespaces.js';
