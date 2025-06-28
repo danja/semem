@@ -1,5 +1,14 @@
 # Current Activity
 
+Still moving fast. I think I'd better trim this down to an overview, shift the details over to [blog](https://tensegrity.it). After this -
+
+Pulling together continues. To that end I've set up a couple more examples under `examples/beerqa` that populate the store with data from the [BeerQA](https://github.com/beerqa/IRRR/blob/main/scripts/download_qa_data.sh) dataset. That's intended for domain-independent QA so is a reasonable fit for getting this thing going. Right now the data is pretty much just bunged in, though embeddings & similarity search are already working.
+
+One key part that wasn't actually in place before was the proper mapping of the ZPT navigation to RDF, it was all effectively hidden in programmatic code. Have made a spike on the code, untested as yet, and the queries & application yet to do.
+
+
+---
+
 Increased human intervention!
 
 Docs : I'm in the process of pulling together up-to-date material under `docs/manual`.
