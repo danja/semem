@@ -78,6 +78,19 @@ All HTTP API services have been successfully demonstrated with comprehensive exa
   - Error handling with graceful degradation
   - Performance monitoring and progress tracking
 
+### 7. StatsAPIDemo.js - Real-time Storage Statistics
+**Status**: ✅ **Complete and Showcased**
+- **Endpoints**: `/api/stats`
+- **Features Demonstrated**:
+  - Real-time storage statistics monitoring with auto-refresh
+  - Beautiful colored dashboard with progress indicators
+  - SPARQL store statistics for ragno: and zpt: vocabularies
+  - Search index metrics and performance data
+  - Storage type detection and capacity estimates
+  - Response time monitoring and system health
+  - Interactive progress bars and visual feedback
+  - Comprehensive error handling with troubleshooting tips
+
 ## 🎨 Demo Features
 
 All demos follow a consistent, high-quality pattern with:
@@ -125,6 +138,9 @@ node examples/http-api/UnifiedSearchAPIDemo.js
 
 # Search API - content search and indexing
 node examples/http-api/SearchAPIDemo.js
+
+# Stats API - real-time storage statistics
+node examples/http-api/StatsAPIDemo.js
 ```
 
 ### Running All Demos
@@ -190,7 +206,7 @@ All demos use standard Node.js modules:
 
 ## 🎉 Achievement Summary
 
-**Mission Accomplished!** All 6 HTTP API services now have comprehensive, fully functional demonstrations that:
+**Mission Accomplished!** All 7 HTTP API services now have comprehensive, fully functional demonstrations that:
 
 - 🎯 **Showcase Features**: Complete coverage of all API capabilities
 - 🌈 **Look Great**: Beautiful, colorful terminal output with progress tracking

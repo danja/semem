@@ -53,8 +53,8 @@ class APIServer {
         this.memoryLogger = loggers.memory;
         
         this.port = process.env.PORT || 4100; // Updated port to 4100
-        this.publicDir = path.join(__dirname, '../public');
-        this.distDir = path.join(__dirname, '../public/dist');
+        this.publicDir = path.join(__dirname, 'public');
+        this.distDir = path.join(__dirname, 'public/dist');
         this.app = express();
         this.server = null;
         this.apiContext = {};
@@ -108,23 +108,23 @@ class APIServer {
     async initializeComponents() {
         // Load configuration from config.json explicitly
         const configPath = path.join(__dirname, 'config/config.json');
-        const config = new Config(configPath);
-        await config.init();
+        this.config = new Config(configPath);
+        await this.config.init();
         
         // Use new configuration-driven provider selection (like MCP server)
         this.logger.info('Creating providers using configuration-driven selection...');
         
         // Create LLM connector for chat operations
-        const llmProvider = await this.createLLMConnector(config);
+        const llmProvider = await this.createLLMConnector(this.config);
         
         // Create embedding connector for embedding operations  
-        const embeddingProvider = await this.createEmbeddingConnector(config);
+        const embeddingProvider = await this.createEmbeddingConnector(this.config);
         
         // Get model configuration
-        const modelConfig = await this.getModelConfig(config);
+        const modelConfig = await this.getModelConfig(this.config);
         this.logger.info('Using model configuration:', modelConfig);
         
-        const dimension = config.get('memory.dimension') || 1536;
+        const dimension = this.config.get('memory.dimension') || 1536;
 
         // Initialize cache manager
         const cacheManager = new CacheManager({
@@ -144,20 +144,20 @@ class APIServer {
 
         // Initialize storage based on config
         let storage;
-        const storageType = config.get('storage.type');
+        const storageType = this.config.get('storage.type');
         this.logger.info(`💾 [STORAGE] Storage type: ${storageType}`);
         
         if (storageType === 'sparql') {
             this.logger.info('💾 [STORAGE] Importing SPARQLStore...');
             const { default: SPARQLStore } = await import('../stores/SPARQLStore.js');
             this.logger.info('💾 [STORAGE] Getting storage options...');
-            const storageOptions = config.get('storage.options');
+            const storageOptions = this.config.get('storage.options');
             this.logger.info('💾 [STORAGE] Creating SPARQLStore instance with options:', storageOptions);
             storage = new SPARQLStore(storageOptions);
             this.logger.info('✅ [STORAGE] SPARQLStore created');
         } else if (storageType === 'json') {
             const { default: JSONStore } = await import('../stores/JSONStore.js');
-            const storageOptions = config.get('storage.options');
+            const storageOptions = this.config.get('storage.options');
             storage = new JSONStore(storageOptions.path);
             this.logger.info(`Initialized JSON store at path: ${storageOptions.path}`);
         } else {
@@ -738,6 +738,50 @@ class APIServer {
             }
         });
 
+        // Storage statistics endpoint - focused on SPARQL/RDF content
+        apiRouter.get('/stats', async (req, res, next) => {
+            try {
+                const stats = {
+                    timestamp: Date.now(),
+                    lastUpdated: new Date().toISOString()
+                };
+
+                // Get SPARQL store statistics (main focus)
+                if (this.apiContext.memory && this.apiContext.memory.storage) {
+                    const storageType = this.apiContext.memory.storage.constructor.name;
+                    stats.storage = { type: storageType };
+
+                    if (storageType === 'SPARQLStore') {
+                        const sparqlStats = await this.getSPARQLStatistics();
+                        stats.sparql = sparqlStats;
+                    }
+                }
+
+                // Get basic search index info if available
+                try {
+                    const searchService = this.apiContext.registry?.get('search');
+                    if (searchService && searchService.index) {
+                        stats.search = {
+                            indexedItems: searchService.index.ntotal ? searchService.index.ntotal() : 0,
+                            indexType: 'faiss',
+                            dimension: searchService.dimension || 1536
+                        };
+                    }
+                } catch (error) {
+                    // Search service not available or no index
+                    stats.search = { indexedItems: 0, available: false };
+                }
+
+                res.json({
+                    success: true,
+                    data: stats
+                });
+            } catch (error) {
+                this.logger.error('Error fetching storage statistics:', error);
+                next(error);
+            }
+        });
+
         // Mount API router
         this.app.use('/api', apiRouter);
 
@@ -914,6 +958,158 @@ class APIServer {
         // Register signal handlers
         process.on('SIGTERM', () => shutdown('SIGTERM'));
         process.on('SIGINT', () => shutdown('SIGINT'));
+    }
+
+    /**
+     * Get SPARQL store statistics focusing on ragno: and zpt: vocabularies
+     */
+    async getSPARQLStatistics() {
+        const stats = {};
+        
+        try {
+            const sparqlStore = this.apiContext.memory.storage;
+            const endpoint = sparqlStore.endpoint;
+            
+            if (!endpoint) {
+                return { error: 'No SPARQL endpoint available' };
+            }
+
+            // SPARQL queries to get vocabulary-specific statistics
+            const queries = {
+                // Total triples
+                totalTriples: `SELECT (COUNT(*) as ?count) WHERE { ?s ?p ?o }`,
+                
+                // Named graphs
+                namedGraphs: `SELECT (COUNT(DISTINCT ?g) as ?count) WHERE { GRAPH ?g { ?s ?p ?o } }`,
+                
+                // Ragno entities
+                ragnoEntities: `
+                    PREFIX ragno: <http://purl.org/stuff/ragno/>
+                    SELECT (COUNT(DISTINCT ?entity) as ?count) 
+                    WHERE { 
+                        ?entity a ?type . 
+                        FILTER(STRSTARTS(STR(?type), "http://purl.org/stuff/ragno/"))
+                    }`,
+                
+                // Ragno relationships  
+                ragnoRelationships: `
+                    PREFIX ragno: <http://purl.org/stuff/ragno/>
+                    SELECT (COUNT(DISTINCT ?rel) as ?count) 
+                    WHERE { 
+                        ?rel a ragno:Relationship 
+                    }`,
+                
+                // ZPT resources
+                zptResources: `
+                    PREFIX zpt: <http://hyperdata.it/xmlns/zpt/>
+                    SELECT (COUNT(DISTINCT ?resource) as ?count) 
+                    WHERE { 
+                        ?resource ?prop ?value . 
+                        FILTER(STRSTARTS(STR(?prop), "http://hyperdata.it/xmlns/zpt/"))
+                    }`,
+                
+                // Resources with embeddings
+                resourcesWithEmbeddings: `
+                    PREFIX ragno: <http://purl.org/stuff/ragno/>
+                    SELECT (COUNT(DISTINCT ?resource) as ?count) 
+                    WHERE { 
+                        ?resource ragno:embedding ?embedding 
+                    }`,
+                
+                // Memory items (conversations)
+                memoryItems: `
+                    PREFIX schema: <http://schema.org/>
+                    SELECT (COUNT(DISTINCT ?item) as ?count) 
+                    WHERE { 
+                        ?item schema:text ?text 
+                    }`
+            };
+
+            // Get credentials from config
+            const storageOptions = this.config.get('storage.options');
+            const credentials = storageOptions && storageOptions.user && storageOptions.password 
+                ? { user: storageOptions.user, password: storageOptions.password }
+                : null;
+
+            // Execute queries
+            for (const [key, query] of Object.entries(queries)) {
+                try {
+                    const result = await this.executeSPARQLQuery(endpoint, query, credentials);
+                    if (result && result.results && result.results.bindings && result.results.bindings[0]) {
+                        stats[key] = parseInt(result.results.bindings[0].count.value) || 0;
+                    } else {
+                        stats[key] = 0;
+                    }
+                } catch (error) {
+                    this.logger.warn(`Failed to get ${key} statistics:`, error.message);
+                    stats[key] = 0;
+                }
+            }
+
+            // Get recent activity (last 24 hours)
+            try {
+                const recentActivityQuery = `
+                    PREFIX dcterms: <http://purl.org/dc/terms/>
+                    PREFIX ragno: <http://purl.org/stuff/ragno/>
+                    SELECT ?type (COUNT(*) as ?count) (MAX(?created) as ?lastUpdated)
+                    WHERE {
+                        ?item a ?type ;
+                              dcterms:created ?created .
+                        FILTER(?created > "${new Date(Date.now() - 24*60*60*1000).toISOString()}"^^<http://www.w3.org/2001/XMLSchema#dateTime>)
+                    }
+                    GROUP BY ?type
+                    ORDER BY DESC(?count)
+                `;
+                
+                const activityResult = await this.executeSPARQLQuery(endpoint, recentActivityQuery, credentials);
+                stats.recentActivity = [];
+                
+                if (activityResult && activityResult.results && activityResult.results.bindings) {
+                    stats.recentActivity = activityResult.results.bindings.map(binding => ({
+                        type: binding.type.value.split('/').pop(), // Get local name
+                        count: parseInt(binding.count.value),
+                        lastUpdated: binding.lastUpdated.value
+                    }));
+                }
+            } catch (error) {
+                this.logger.warn('Failed to get recent activity:', error.message);
+                stats.recentActivity = [];
+            }
+
+        } catch (error) {
+            this.logger.error('Error getting SPARQL statistics:', error);
+            stats.error = error.message;
+        }
+
+        return stats;
+    }
+
+    /**
+     * Execute a SPARQL query
+     */
+    async executeSPARQLQuery(endpoint, query, credentials = null) {
+        const headers = {
+            'Content-Type': 'application/sparql-query',
+            'Accept': 'application/sparql-results+json'
+        };
+
+        // Add authentication header if credentials are provided
+        if (credentials && credentials.user && credentials.password) {
+            const auth = btoa(`${credentials.user}:${credentials.password}`);
+            headers['Authorization'] = `Basic ${auth}`;
+        }
+
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers,
+            body: query
+        });
+
+        if (!response.ok) {
+            throw new Error(`SPARQL query failed: ${response.statusText}`);
+        }
+
+        return await response.json();
     }
 
     /**

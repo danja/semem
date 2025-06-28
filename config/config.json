@@ -5,8 +5,8 @@
       "query": "https://fuseki.hyperdata.it/hyperdata.it/query",
       "update": "https://fuseki.hyperdata.it/hyperdata.it/update",
       "graphName": "http://hyperdata.it/content",
-      "user": "admin",
-      "password": "admin123"
+      "user": "${SPARQL_USER}",
+      "password": "${SPARQL_PASSWORD}"
     }
   },
   "servers": {
@@ -23,8 +23,8 @@
   "sparqlEndpoints": [
     {
       "label": "Hyperdata Fuseki",
-      "user": "admin",
-      "password": "admin123",
+      "user": "${SPARQL_USER}",
+      "password": "${SPARQL_PASSWORD}",
       "urlBase": "https://fuseki.hyperdata.it",
       "dataset": "hyperdata.it",
       "query": "/hyperdata.it/query",
@@ -35,8 +35,8 @@
     },
     {
       "label": "Tbox Fuseki",
-      "user": "admin",
-      "password": "admin123",
+      "user": "${SPARQL_USER}",
+      "password": "${SPARQL_PASSWORD}",
       "urlBase": "http://localhost:4030",
       "dataset": "hyperdata.it",
       "query": "/hyperdata.it/query",

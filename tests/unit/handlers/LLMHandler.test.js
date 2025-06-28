@@ -143,9 +143,10 @@ describe('LLMHandler', () => {
             mockProvider.generateCompletion.mockResolvedValue('{"key": "value"}');
             
             // The method should throw an error for non-array JSON
+            // ParseHelper will successfully extract the JSON, but LLMHandler will detect it's not an array
             await expect(handler.extractConcepts('test text'))
                 .rejects
-                .toThrow('No JSON array found in LLM response for concept extraction');
+                .toThrow('Failed to parse JSON from cleaned response: Parsed result is not an array');
         });
         
         it('should handle non-array JSON responses', async () => {

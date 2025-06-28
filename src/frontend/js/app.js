@@ -9,6 +9,7 @@ import { initMCPClient } from './components/mcpClient.js';
 import { initChatForms, loadChatProviders } from './components/chat.js';
 import { initMemoryVisualization } from './components/memoryVisualization.js';
 import { init as initVSOM } from './features/vsom/index.js';
+import statsComponent from './components/stats.js';
 import Console from './components/Console/Console.js';
 import Help from './components/Help/Help.js';
 import { logger, replaceConsole } from './utils/logger.js';
@@ -87,6 +88,13 @@ export async function initializeApp() {
         initMemoryVisualization();
         initVSOM();
         await initMCPClient();
+        
+        // Initialize stats component (defer to allow tabs to be ready)
+        setTimeout(() => {
+            statsComponent.initialize().catch(error => {
+                console.warn('Failed to initialize stats component:', error);
+            });
+        }, 100);
         await initSPARQLBrowser();
 
         // Initialize console and help after a short delay
