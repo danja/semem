@@ -37,6 +37,9 @@ function displayConfiguration(etl) {
     console.log(`   ${chalk.cyan('Graph URI:')} ${chalk.white(etl.options.graphURI)}`);
     console.log(`   ${chalk.cyan('Base URI:')} ${chalk.white(etl.options.baseURI)}`);
     console.log(`   ${chalk.cyan('Batch Size:')} ${chalk.white(etl.options.batchSize)}`);
+    console.log(`   ${chalk.cyan('Number of Batches:')} ${chalk.white(etl.options.nBatches !== null ? etl.options.nBatches : 'All')}`);
+    console.log(`   ${chalk.cyan('Total Records:')} ${chalk.white(etl.options.nBatches !== null ? etl.options.nBatches * etl.options.batchSize : 'All')}`);
+    console.log(`   ${chalk.cyan('Rate Limit:')} ${chalk.white(etl.options.rateLimit + 'ms')}`);
     console.log(`   ${chalk.cyan('Include Context:')} ${chalk.white(etl.options.includeContext ? 'Yes' : 'No')}`);
     console.log('');
 }
@@ -116,13 +119,15 @@ async function runBeerETLDemo() {
             graphURI: 'http://purl.org/stuff/beerqa',
             baseURI: 'http://purl.org/stuff/beerqa/',
             batchSize: 10, // Small batches for demo
+            nBatches: 2, // Only process 2 batches (20 corpuscles total) for demo
+            rateLimit: 500, // 500ms delay between SPARQL updates for demo
             includeContext: true
         });
 
         displayConfiguration(etl);
 
         console.log(chalk.bold.yellow('🚀 Starting BeerQA ETL Process...'));
-        console.log(chalk.dim('This may take several minutes for the full dataset...'));
+        console.log(chalk.dim(`Processing ${etl.options.nBatches !== null ? etl.options.nBatches + ' batches (' + (etl.options.nBatches * etl.options.batchSize) + ' records)' : 'full dataset'} - this may take a few minutes...`));
         console.log('');
 
         // Run the ETL process

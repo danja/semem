@@ -70,6 +70,26 @@ const etl = new BeerETL({
 node examples/beerqa/BeerETLDemo.js
 ```
 
+The demo is configured to process only **2 batches of 10 corpuscles each** (20 records total) for quick testing. To process the full dataset, modify the configuration in `BeerETLDemo.js`:
+
+```javascript
+// Demo configuration (default)
+const etl = new BeerETL({
+    batchSize: 10,
+    nBatches: 2,      // Only 2 batches for demo
+    rateLimit: 500,   // 500ms delay between updates
+    // ... other options
+});
+
+// Full dataset configuration  
+const etl = new BeerETL({
+    batchSize: 100,
+    nBatches: null,   // Process all batches
+    rateLimit: 100,   // Faster processing for full dataset
+    // ... other options
+});
+```
+
 ## Configuration Options
 
 ### BeerETL Options
@@ -82,6 +102,8 @@ node examples/beerqa/BeerETLDemo.js
 | `graphURI` | `http://purl.org/stuff/beerqa` | Target named graph URI |
 | `baseURI` | `http://purl.org/stuff/beerqa/` | Base URI for generated entities |
 | `batchSize` | `100` | Records processed per batch |
+| `nBatches` | `null` | Number of batches to process (null = all) |
+| `rateLimit` | `100` | Delay between SPARQL updates in milliseconds |
 | `includeContext` | `true` | Include context passages in RDF |
 
 ### SPARQLHelper Options
@@ -226,7 +248,14 @@ graph TD
 ### Processing Speed
 - **Extraction**: ~10,000 records/second
 - **Transformation**: ~1,000 records/second (includes RDF generation)
-- **Loading**: Depends on SPARQL endpoint performance and batch size
+- **Loading**: Depends on SPARQL endpoint performance, batch size, and rate limiting
+
+### Rate Limiting
+The `rateLimit` option controls the delay between SPARQL update requests to prevent overwhelming the server:
+- **0ms**: No delay (fastest, but may cause server overload)
+- **100ms**: Default balanced setting
+- **500ms**: Conservative setting for shared/remote servers  
+- **1000ms+**: Very conservative for slow or heavily loaded servers
 
 ### Memory Usage
 - **Base Usage**: ~50MB for core libraries
@@ -271,6 +300,15 @@ graph TD
    - Reduce batch size
    - Process data in smaller chunks
    - Increase Node.js memory limit: `node --max-old-space-size=4096`
+
+5. **Server Overload/Rate Limiting**
+   ```
+   Error: HTTP 429: Too Many Requests
+   Error: Connection timeout
+   ```
+   - Increase `rateLimit` option (e.g., 500ms or 1000ms)
+   - Reduce batch size to decrease load per request
+   - Check server capacity and concurrent connection limits
 
 ### Debug Mode
 

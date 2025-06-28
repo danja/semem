@@ -21,6 +21,8 @@ export default class BeerETL {
     constructor(options = {}) {
         this.options = {
             batchSize: options.batchSize || 100,
+            nBatches: options.nBatches || null, // Default null = process all batches
+            rateLimit: options.rateLimit !== undefined ? options.rateLimit : 100, // Default 100ms delay
             sparqlEndpoint: options.sparqlEndpoint || 'http://localhost:3030/beerqa/update',
             sparqlAuth: options.sparqlAuth || { user: 'admin', password: 'admin123' },
             graphURI: options.graphURI || 'http://purl.org/stuff/beerqa',
@@ -47,7 +49,7 @@ export default class BeerETL {
             auth: this.options.sparqlAuth,
             timeout: 60000,
             continueOnError: false,
-            delay: 100 // Small delay between requests
+            delay: this.options.rateLimit // Configurable delay between requests
         });
 
         // Statistics tracking
@@ -154,9 +156,17 @@ export default class BeerETL {
         const corpuscles = [];
         let processedCount = 0;
         
-        logger.info(`Transforming ${records.length} BeerQA records to RDF corpuscles`);
+        // Limit records if nBatches is specified
+        let recordsToProcess = records;
+        if (this.options.nBatches !== null) {
+            const maxRecords = this.options.nBatches * this.options.batchSize;
+            recordsToProcess = records.slice(0, maxRecords);
+            logger.info(`Limiting processing to ${this.options.nBatches} batches (${maxRecords} records max)`);
+        }
         
-        for (const record of records) {
+        logger.info(`Transforming ${recordsToProcess.length} BeerQA records to RDF corpuscles`);
+        
+        for (const record of recordsToProcess) {
             try {
                 const corpuscle = await this.createCorpuscle(record);
                 corpuscles.push(corpuscle);
@@ -165,7 +175,7 @@ export default class BeerETL {
                 this.stats.processedRecords = processedCount;
                 
                 if (processedCount % 1000 === 0) {
-                    logger.info(`Processed ${processedCount}/${records.length} records`);
+                    logger.info(`Processed ${processedCount}/${recordsToProcess.length} records`);
                 }
                 
             } catch (error) {
@@ -313,7 +323,17 @@ export default class BeerETL {
         // Clear existing data in the graph
         await this.clearGraph();
         
-        const batches = this.createBatches(corpuscles, this.options.batchSize);
+        const allBatches = this.createBatches(corpuscles, this.options.batchSize);
+        
+        // Limit batches if nBatches is specified
+        const batches = this.options.nBatches !== null ? 
+            allBatches.slice(0, this.options.nBatches) : 
+            allBatches;
+            
+        if (this.options.nBatches !== null && allBatches.length > this.options.nBatches) {
+            logger.info(`Limiting to ${this.options.nBatches} batches out of ${allBatches.length} total batches`);
+        }
+        
         const results = [];
         
         for (let i = 0; i < batches.length; i++) {
@@ -330,6 +350,12 @@ export default class BeerETL {
                 if (!result.success) {
                     logger.error(`Batch ${i + 1} failed:`, result.error);
                     this.stats.errors.push(`Batch ${i + 1}: ${result.error}`);
+                }
+                
+                // Apply rate limiting between batches
+                if (this.options.rateLimit > 0 && i < batches.length - 1) {
+                    logger.debug(`Rate limiting: waiting ${this.options.rateLimit}ms before next batch`);
+                    await new Promise(resolve => setTimeout(resolve, this.options.rateLimit));
                 }
                 
             } catch (error) {
