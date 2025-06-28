@@ -9,6 +9,10 @@ import ParameterNormalizer from '../../zpt/parameters/ParameterNormalizer.js';
 import ZoomLevelMapper from '../../zpt/selection/ZoomLevelMapper.js';
 import PanDomainFilter from '../../zpt/selection/PanDomainFilter.js';
 
+// ZPT Ontology Integration
+import { NamespaceUtils, getSPARQLPrefixes } from '../../zpt/ontology/ZPTNamespaces.js';
+import { ZPTDataFactory } from '../../zpt/ontology/ZPTDataFactory.js';
+
 /**
  * ZPT API handler for Zero-Point Traversal navigation operations
  * Integrates ZPT services into the main API server following BaseAPI patterns
@@ -39,6 +43,10 @@ export default class ZptAPI extends BaseAPI {
         this.normalizer = new ParameterNormalizer();
         this.zoomMapper = null;
         this.panFilter = null;
+        
+        // ZPT Ontology Integration
+        this.zptDataFactory = null;
+        this.navigationGraph = config.navigationGraph || 'http://purl.org/stuff/navigation';
         
         // Request tracking
         this.activeRequests = new Map();
@@ -88,7 +96,12 @@ export default class ZptAPI extends BaseAPI {
             // Initialize ZPT components
             await this._initializeZPTComponents();
             
-            this.logger.info('ZptAPI initialized successfully');
+            // Initialize ZPT ontology integration
+            this.zptDataFactory = new ZPTDataFactory({
+                navigationGraph: this.navigationGraph
+            });
+            
+            this.logger.info('ZptAPI initialized successfully with ontology integration');
         } catch (error) {
             this.logger.error('Failed to initialize ZptAPI:', error);
             throw error;
@@ -117,7 +130,9 @@ export default class ZptAPI extends BaseAPI {
                 sparqlStore: this.sparqlStore,
                 embeddingHandler: this.embeddingHandler,
                 maxResults: 1000,
-                enableCaching: true
+                enableCaching: true,
+                enableZPTStorage: true,
+                navigationGraph: this.navigationGraph
             });
         }
         
@@ -188,6 +203,34 @@ export default class ZptAPI extends BaseAPI {
                     break;
                 case 'health':
                     result = await this.getHealth(params, requestId);
+                    break;
+                // ZPT Ontology Integration operations
+                case 'convertParams':
+                    result = await this.convertParams(params, requestId);
+                    break;
+                case 'storeSession':
+                    result = await this.storeSession(params, requestId);
+                    break;
+                case 'getSessions':
+                    result = await this.getSessions(params, requestId);
+                    break;
+                case 'getSession':
+                    result = await this.getSession(params, requestId);
+                    break;
+                case 'getViews':
+                    result = await this.getViews(params, requestId);
+                    break;
+                case 'getView':
+                    result = await this.getView(params, requestId);
+                    break;
+                case 'analyzeNavigation':
+                    result = await this.analyzeNavigation(params, requestId);
+                    break;
+                case 'getOntologyTerms':
+                    result = await this.getOntologyTerms(params, requestId);
+                    break;
+                case 'validateOntology':
+                    result = await this.validateOntology(params, requestId);
                     break;
                 default:
                     throw new Error(`Unknown operation: ${operation}`);
@@ -621,5 +664,553 @@ export default class ZptAPI extends BaseAPI {
         this.activeRequests.clear();
         
         await super.shutdown();
+    }
+
+    // ========================
+    // ZPT Ontology Integration Methods
+    // ========================
+
+    /**
+     * Convert string-based navigation parameters to ZPT ontology URIs
+     */
+    async convertParams(params, requestId) {
+        this.logger.info(`Converting parameters to ZPT URIs`, { requestId });
+        
+        try {
+            const converted = {};
+            
+            // Convert zoom level
+            if (params.zoom) {
+                const zoomURI = NamespaceUtils.resolveStringToURI('zoom', params.zoom);
+                if (zoomURI) {
+                    converted.zoomURI = zoomURI.value;
+                }
+            }
+            
+            // Convert tilt representation
+            if (params.tilt) {
+                const tiltURI = NamespaceUtils.resolveStringToURI('tilt', params.tilt);
+                if (tiltURI) {
+                    converted.tiltURI = tiltURI.value;
+                }
+            }
+            
+            // Convert pan domains
+            if (params.pan?.domains) {
+                converted.panURIs = params.pan.domains
+                    .map(domain => NamespaceUtils.resolveStringToURI('pan', domain))
+                    .filter(uri => uri !== null)
+                    .map(uri => uri.value);
+            }
+            
+            return {
+                originalParams: params,
+                convertedParams: converted,
+                conversionCount: Object.keys(converted).length
+            };
+        } catch (error) {
+            this.logger.error('Parameter conversion failed:', error);
+            throw new Error(`Parameter conversion failed: ${error.message}`);
+        }
+    }
+
+    /**
+     * Store a navigation session with RDF metadata
+     */
+    async storeSession(params, requestId) {
+        this.logger.info(`Storing navigation session`, { requestId });
+        
+        if (!this.zptDataFactory) {
+            throw new Error('ZPT Data Factory not available');
+        }
+        
+        try {
+            const sessionConfig = {
+                agentURI: params.agentURI || `http://example.org/agents/api_user_${requestId}`,
+                startTime: new Date(params.startTime || Date.now()),
+                purpose: params.purpose || 'API navigation session',
+                userAgent: params.userAgent || 'Semem ZPT API',
+                sessionType: params.sessionType || 'api'
+            };
+            
+            const session = this.zptDataFactory.createNavigationSession(sessionConfig);
+            
+            // Store in SPARQL if available
+            if (this.sparqlStore && params.storeInSPARQL !== false) {
+                await this._storeRDFInSPARQL(session.quads, 'navigation session');
+            }
+            
+            return {
+                sessionURI: session.uri.value,
+                quadsGenerated: session.quads.length,
+                storedInSPARQL: !!this.sparqlStore,
+                metadata: sessionConfig
+            };
+        } catch (error) {
+            this.logger.error('Session storage failed:', error);
+            throw new Error(`Session storage failed: ${error.message}`);
+        }
+    }
+
+    /**
+     * Get list of navigation sessions
+     */
+    async getSessions(params, requestId) {
+        this.logger.info(`Retrieving navigation sessions`, { requestId });
+        
+        if (!this.sparqlStore) {
+            throw new Error('SPARQL store required for session retrieval');
+        }
+        
+        try {
+            const query = getSPARQLPrefixes(['zpt', 'prov']) + `
+                SELECT ?session ?purpose ?startTime ?agent WHERE {
+                    GRAPH <${this.navigationGraph}> {
+                        ?session a zpt:NavigationSession ;
+                            zpt:hasPurpose ?purpose ;
+                            prov:startedAtTime ?startTime ;
+                            prov:wasAssociatedWith ?agent .
+                    }
+                }
+                ORDER BY DESC(?startTime)
+                LIMIT ${params.limit || 20}
+            `;
+            
+            const result = await this._executeSPARQLQuery(query);
+            const sessions = this._parseSPARQLResults(result);
+            
+            return {
+                sessions: sessions.map(s => ({
+                    sessionURI: s.session,
+                    purpose: s.purpose,
+                    startTime: s.startTime,
+                    agentURI: s.agent
+                })),
+                totalCount: sessions.length
+            };
+        } catch (error) {
+            this.logger.error('Session retrieval failed:', error);
+            throw new Error(`Session retrieval failed: ${error.message}`);
+        }
+    }
+
+    /**
+     * Get specific navigation session details
+     */
+    async getSession(params, requestId) {
+        this.logger.info(`Retrieving session details`, { requestId, sessionId: params.sessionId });
+        
+        if (!this.sparqlStore) {
+            throw new Error('SPARQL store required for session retrieval');
+        }
+        
+        if (!params.sessionId) {
+            throw new Error('Session ID is required');
+        }
+        
+        try {
+            const query = getSPARQLPrefixes(['zpt', 'prov']) + `
+                SELECT ?property ?value WHERE {
+                    GRAPH <${this.navigationGraph}> {
+                        <${params.sessionId}> ?property ?value .
+                    }
+                }
+            `;
+            
+            const result = await this._executeSPARQLQuery(query);
+            const properties = this._parseSPARQLResults(result);
+            
+            // Get associated views
+            const viewsQuery = getSPARQLPrefixes(['zpt']) + `
+                SELECT ?view ?query ?timestamp WHERE {
+                    GRAPH <${this.navigationGraph}> {
+                        ?view a zpt:NavigationView ;
+                            zpt:partOfSession <${params.sessionId}> ;
+                            zpt:answersQuery ?query ;
+                            zpt:navigationTimestamp ?timestamp .
+                    }
+                }
+                ORDER BY ?timestamp
+            `;
+            
+            const viewsResult = await this._executeSPARQLQuery(viewsQuery);
+            const views = this._parseSPARQLResults(viewsResult);
+            
+            return {
+                sessionURI: params.sessionId,
+                properties: properties.reduce((acc, p) => {
+                    acc[p.property.split('/').pop()] = p.value;
+                    return acc;
+                }, {}),
+                associatedViews: views.map(v => ({
+                    viewURI: v.view,
+                    query: v.query,
+                    timestamp: v.timestamp
+                })),
+                viewCount: views.length
+            };
+        } catch (error) {
+            this.logger.error('Session detail retrieval failed:', error);
+            throw new Error(`Session detail retrieval failed: ${error.message}`);
+        }
+    }
+
+    /**
+     * Get list of navigation views
+     */
+    async getViews(params, requestId) {
+        this.logger.info(`Retrieving navigation views`, { requestId });
+        
+        if (!this.sparqlStore) {
+            throw new Error('SPARQL store required for view retrieval');
+        }
+        
+        try {
+            const query = getSPARQLPrefixes(['zpt']) + `
+                SELECT ?view ?query ?session ?timestamp WHERE {
+                    GRAPH <${this.navigationGraph}> {
+                        ?view a zpt:NavigationView ;
+                            zpt:answersQuery ?query ;
+                            zpt:partOfSession ?session ;
+                            zpt:navigationTimestamp ?timestamp .
+                    }
+                }
+                ORDER BY DESC(?timestamp)
+                LIMIT ${params.limit || 20}
+            `;
+            
+            const result = await this._executeSPARQLQuery(query);
+            const views = this._parseSPARQLResults(result);
+            
+            return {
+                views: views.map(v => ({
+                    viewURI: v.view,
+                    query: v.query,
+                    sessionURI: v.session,
+                    timestamp: v.timestamp
+                })),
+                totalCount: views.length
+            };
+        } catch (error) {
+            this.logger.error('View retrieval failed:', error);
+            throw new Error(`View retrieval failed: ${error.message}`);
+        }
+    }
+
+    /**
+     * Get specific navigation view details
+     */
+    async getView(params, requestId) {
+        this.logger.info(`Retrieving view details`, { requestId, viewId: params.viewId });
+        
+        if (!this.sparqlStore) {
+            throw new Error('SPARQL store required for view retrieval');
+        }
+        
+        if (!params.viewId) {
+            throw new Error('View ID is required');
+        }
+        
+        try {
+            const query = getSPARQLPrefixes(['zpt']) + `
+                SELECT ?property ?value WHERE {
+                    GRAPH <${this.navigationGraph}> {
+                        <${params.viewId}> ?property ?value .
+                    }
+                }
+            `;
+            
+            const result = await this._executeSPARQLQuery(query);
+            const properties = this._parseSPARQLResults(result);
+            
+            return {
+                viewURI: params.viewId,
+                properties: properties.reduce((acc, p) => {
+                    acc[p.property.split('/').pop()] = p.value;
+                    return acc;
+                }, {}),
+                propertyCount: properties.length
+            };
+        } catch (error) {
+            this.logger.error('View detail retrieval failed:', error);
+            throw new Error(`View detail retrieval failed: ${error.message}`);
+        }
+    }
+
+    /**
+     * Analyze navigation patterns and effectiveness
+     */
+    async analyzeNavigation(params, requestId) {
+        this.logger.info(`Analyzing navigation patterns`, { requestId });
+        
+        if (!this.sparqlStore) {
+            throw new Error('SPARQL store required for navigation analysis');
+        }
+        
+        try {
+            // Get navigation statistics
+            const statsQuery = getSPARQLPrefixes(['zpt']) + `
+                SELECT 
+                    (COUNT(DISTINCT ?session) as ?sessionCount)
+                    (COUNT(DISTINCT ?view) as ?viewCount)
+                    (AVG(STRLEN(?query)) as ?avgQueryLength)
+                WHERE {
+                    GRAPH <${this.navigationGraph}> {
+                        ?session a zpt:NavigationSession .
+                        ?view a zpt:NavigationView ;
+                            zpt:partOfSession ?session ;
+                            zpt:answersQuery ?query .
+                    }
+                }
+            `;
+            
+            const statsResult = await this._executeSPARQLQuery(statsQuery);
+            const stats = this._parseSPARQLResults(statsResult)[0] || {};
+            
+            // Get zoom level distribution
+            const zoomQuery = getSPARQLPrefixes(['zpt']) + `
+                SELECT ?zoomLevel (COUNT(*) as ?count) WHERE {
+                    GRAPH <${this.navigationGraph}> {
+                        ?view a zpt:NavigationView ;
+                            zpt:hasZoomState ?zoomState .
+                        ?zoomState zpt:atZoomLevel ?zoomLevel .
+                    }
+                }
+                GROUP BY ?zoomLevel
+                ORDER BY DESC(?count)
+            `;
+            
+            const zoomResult = await this._executeSPARQLQuery(zoomQuery);
+            const zoomDistribution = this._parseSPARQLResults(zoomResult);
+            
+            return {
+                navigationStats: {
+                    totalSessions: parseInt(stats.sessionCount || 0),
+                    totalViews: parseInt(stats.viewCount || 0),
+                    averageQueryLength: parseFloat(stats.avgQueryLength || 0).toFixed(1)
+                },
+                zoomLevelDistribution: zoomDistribution.map(z => ({
+                    zoomLevel: z.zoomLevel.split('/').pop(),
+                    count: parseInt(z.count),
+                    uri: z.zoomLevel
+                })),
+                analysisTimestamp: new Date().toISOString()
+            };
+        } catch (error) {
+            this.logger.error('Navigation analysis failed:', error);
+            throw new Error(`Navigation analysis failed: ${error.message}`);
+        }
+    }
+
+    /**
+     * Get available ZPT ontology terms
+     */
+    async getOntologyTerms(params, requestId) {
+        this.logger.info(`Retrieving ZPT ontology terms`, { requestId });
+        
+        try {
+            const ontologyTerms = {
+                zoomLevels: [
+                    { string: 'entity', uri: 'http://purl.org/stuff/zpt/EntityLevel', description: 'Individual concepts and named entities' },
+                    { string: 'unit', uri: 'http://purl.org/stuff/zpt/UnitLevel', description: 'Semantic units and text passages' },
+                    { string: 'text', uri: 'http://purl.org/stuff/zpt/TextLevel', description: 'Raw text elements and fragments' },
+                    { string: 'community', uri: 'http://purl.org/stuff/zpt/CommunityLevel', description: 'Topic clusters and concept groups' },
+                    { string: 'corpus', uri: 'http://purl.org/stuff/zpt/CorpusLevel', description: 'Entire corpus view' },
+                    { string: 'micro', uri: 'http://purl.org/stuff/zpt/MicroLevel', description: 'Sub-entity components' }
+                ],
+                tiltProjections: [
+                    { string: 'keywords', uri: 'http://purl.org/stuff/zpt/KeywordProjection', description: 'Keyword-based analysis and matching' },
+                    { string: 'embedding', uri: 'http://purl.org/stuff/zpt/EmbeddingProjection', description: 'Vector similarity using embeddings' },
+                    { string: 'graph', uri: 'http://purl.org/stuff/zpt/GraphProjection', description: 'Graph structure and connectivity analysis' },
+                    { string: 'temporal', uri: 'http://purl.org/stuff/zpt/TemporalProjection', description: 'Time-based organization and sequencing' }
+                ],
+                panDomains: [
+                    { string: 'topic', uri: 'http://purl.org/stuff/zpt/TopicDomain', description: 'Subject/topic constraints' },
+                    { string: 'entity', uri: 'http://purl.org/stuff/zpt/EntityDomain', description: 'Entity-based filtering' },
+                    { string: 'temporal', uri: 'http://purl.org/stuff/zpt/TemporalDomain', description: 'Time period constraints' },
+                    { string: 'geographic', uri: 'http://purl.org/stuff/zpt/GeospatialDomain', description: 'Location-based filtering' }
+                ],
+                namespaces: {
+                    zpt: 'http://purl.org/stuff/zpt/',
+                    prov: 'http://www.w3.org/ns/prov#',
+                    ragno: 'http://purl.org/stuff/ragno/'
+                }
+            };
+            
+            return {
+                ontologyTerms,
+                totalTerms: ontologyTerms.zoomLevels.length + ontologyTerms.tiltProjections.length + ontologyTerms.panDomains.length
+            };
+        } catch (error) {
+            this.logger.error('Ontology terms retrieval failed:', error);
+            throw new Error(`Ontology terms retrieval failed: ${error.message}`);
+        }
+    }
+
+    /**
+     * Validate parameters against ZPT ontology
+     */
+    async validateOntology(params, requestId) {
+        this.logger.info(`Validating ontology parameters`, { requestId });
+        
+        try {
+            const validation = {
+                valid: true,
+                errors: [],
+                warnings: [],
+                convertedParams: {}
+            };
+            
+            // Validate zoom parameter
+            if (params.zoom) {
+                const zoomURI = NamespaceUtils.resolveStringToURI('zoom', params.zoom);
+                if (zoomURI) {
+                    validation.convertedParams.zoomURI = zoomURI.value;
+                } else {
+                    validation.valid = false;
+                    validation.errors.push(`Invalid zoom level: ${params.zoom}`);
+                }
+            }
+            
+            // Validate tilt parameter
+            if (params.tilt) {
+                const tiltURI = NamespaceUtils.resolveStringToURI('tilt', params.tilt);
+                if (tiltURI) {
+                    validation.convertedParams.tiltURI = tiltURI.value;
+                } else {
+                    validation.valid = false;
+                    validation.errors.push(`Invalid tilt projection: ${params.tilt}`);
+                }
+            }
+            
+            // Validate pan domains
+            if (params.pan?.domains) {
+                const panURIs = [];
+                const invalidDomains = [];
+                
+                params.pan.domains.forEach(domain => {
+                    const domainURI = NamespaceUtils.resolveStringToURI('pan', domain);
+                    if (domainURI) {
+                        panURIs.push(domainURI.value);
+                    } else {
+                        invalidDomains.push(domain);
+                    }
+                });
+                
+                if (panURIs.length > 0) {
+                    validation.convertedParams.panURIs = panURIs;
+                }
+                
+                if (invalidDomains.length > 0) {
+                    validation.warnings.push(`Unknown pan domains: ${invalidDomains.join(', ')}`);
+                }
+            }
+            
+            return {
+                validation,
+                isValid: validation.valid,
+                errorCount: validation.errors.length,
+                warningCount: validation.warnings.length
+            };
+        } catch (error) {
+            this.logger.error('Ontology validation failed:', error);
+            throw new Error(`Ontology validation failed: ${error.message}`);
+        }
+    }
+
+    // ========================
+    // Helper Methods for RDF Operations
+    // ========================
+
+    /**
+     * Store RDF quads in SPARQL endpoint
+     */
+    async _storeRDFInSPARQL(quads, description) {
+        if (!this.sparqlStore) {
+            throw new Error('SPARQL store not available');
+        }
+        
+        try {
+            const triples = quads.map(quad => {
+                const obj = this._formatRDFObject(quad.object);
+                return `        <${quad.subject.value}> <${quad.predicate.value}> ${obj} .`;
+            }).join('\n');
+            
+            const insertQuery = getSPARQLPrefixes(['zpt', 'prov']) + `
+                INSERT DATA {
+                    GRAPH <${this.navigationGraph}> {
+${triples}
+                    }
+                }
+            `;
+            
+            await this._executeSPARQLUpdate(insertQuery);
+            this.logger.info(`Stored ${quads.length} RDF quads for ${description}`);
+        } catch (error) {
+            this.logger.error(`Failed to store RDF quads for ${description}:`, error);
+            throw error;
+        }
+    }
+
+    /**
+     * Format RDF object for SPARQL
+     */
+    _formatRDFObject(object) {
+        if (object.termType === 'Literal') {
+            let formatted = `"${object.value.replace(/"/g, '\\"')}"`;
+            if (object.datatype) {
+                formatted += `^^<${object.datatype.value}>`;
+            } else if (object.language) {
+                formatted += `@${object.language}`;
+            }
+            return formatted;
+        } else {
+            return `<${object.value}>`;
+        }
+    }
+
+    /**
+     * Execute SPARQL query
+     */
+    async _executeSPARQLQuery(query) {
+        if (!this.sparqlStore || !this.sparqlStore._executeSparqlQuery) {
+            throw new Error('SPARQL query execution not available');
+        }
+        
+        return await this.sparqlStore._executeSparqlQuery(
+            query,
+            this.sparqlStore.endpoint.query
+        );
+    }
+
+    /**
+     * Execute SPARQL update
+     */
+    async _executeSPARQLUpdate(update) {
+        if (!this.sparqlStore || !this.sparqlStore._executeSparqlUpdate) {
+            throw new Error('SPARQL update execution not available');
+        }
+        
+        return await this.sparqlStore._executeSparqlUpdate(
+            update,
+            this.sparqlStore.endpoint.update
+        );
+    }
+
+    /**
+     * Parse SPARQL results to simple objects
+     */
+    _parseSPARQLResults(result) {
+        if (!result.results || !result.results.bindings) {
+            return [];
+        }
+        
+        return result.results.bindings.map(binding => {
+            const obj = {};
+            for (const [key, value] of Object.entries(binding)) {
+                obj[key] = value.value;
+            }
+            return obj;
+        });
     }
 }

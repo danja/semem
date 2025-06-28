@@ -75,6 +75,7 @@ export class ZPTDataFactory {
         const sessionURI = this.generateURI('session');
         const startTime = options.startTime || new Date();
         const agentURI = options.agentURI ? this.datasetFactory.namedNode(options.agentURI) : null;
+        const purpose = options.purpose || 'Navigation session';
         
         const quads = [];
         const graphNode = this.datasetFactory.namedNode(this.navigationGraph);
@@ -87,6 +88,23 @@ export class ZPTDataFactory {
             graphNode
         ));
 
+        // Store purpose as ZPT property
+        quads.push(this.datasetFactory.quad(
+            sessionURI,
+            ZPT.hasPurpose,
+            this.datasetFactory.literal(purpose),
+            graphNode
+        ));
+
+        // Store timestamp as ZPT property
+        quads.push(this.datasetFactory.quad(
+            sessionURI,
+            ZPT.navigationTimestamp,
+            this.datasetFactory.literal(startTime.toISOString(), XSD.dateTime),
+            graphNode
+        ));
+
+        // Also store PROV properties for compatibility
         quads.push(this.datasetFactory.quad(
             sessionURI,
             PROV.startedAtTime,
@@ -108,7 +126,8 @@ export class ZPTDataFactory {
             uri: sessionURI,
             quads: quads,
             startTime: startTime,
-            agentURI: agentURI
+            agentURI: agentURI,
+            purpose: purpose
         };
     }
 

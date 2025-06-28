@@ -104,7 +104,7 @@ class ZPTNavigationDemo {
 
         // Create navigation session
         const session = this.dataFactory.createNavigationSession({
-            agentURI: 'http://example.org/agents/demo_user',
+            agentURI: 'http://purl.org/stuff/agents/demo_user',
             startTime: new Date()
         });
 
@@ -148,8 +148,8 @@ class ZPTNavigationDemo {
         const zptParams = {
             zoomLevel: NamespaceUtils.resolveStringToURI('zoom', stringParams.zoom),
             tiltProjection: NamespaceUtils.resolveStringToURI('tilt', stringParams.tilt),
-            panDomains: stringParams.pan.domains.map(domain => 
-                NamespaceUtils.resolveStringToURI('pan', domain) || 
+            panDomains: stringParams.pan.domains.map(domain =>
+                NamespaceUtils.resolveStringToURI('pan', domain) ||
                 `http://example.org/domains/${domain}`
             )
         };
@@ -238,12 +238,12 @@ class ZPTNavigationDemo {
         for (const demo of demoQueries) {
             console.log(chalk.white(`\n🔍 ${demo.name}:`));
             console.log(chalk.gray(demo.query.substring(0, 200) + '...'));
-            
+
             try {
                 const result = await this.sparqlStore._executeSparqlQuery(demo.query);
                 const bindings = result.results?.bindings || [];
                 console.log(chalk.green(`  ✅ Query executed successfully - ${bindings.length} results`));
-                
+
                 if (bindings.length > 0) {
                     console.log(chalk.gray(`  📄 First result:`));
                     const firstResult = bindings[0];

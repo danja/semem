@@ -452,6 +452,17 @@ class APIServer {
         apiRouter.get('/navigate/options', this.createHandler('zpt-api', 'options'));
         apiRouter.get('/navigate/schema', this.createHandler('zpt-api', 'schema'));
         apiRouter.get('/navigate/health', this.createHandler('zpt-api', 'health'));
+        
+        // ZPT Ontology Integration routes
+        apiRouter.post('/navigate/convert-params', authenticateRequest, this.createHandler('zpt-api', 'convertParams'));
+        apiRouter.post('/navigate/store-session', authenticateRequest, this.createHandler('zpt-api', 'storeSession'));
+        apiRouter.get('/navigate/sessions', authenticateRequest, this.createHandler('zpt-api', 'getSessions'));
+        apiRouter.get('/navigate/sessions/:sessionId', authenticateRequest, this.createHandler('zpt-api', 'getSession'));
+        apiRouter.get('/navigate/views', authenticateRequest, this.createHandler('zpt-api', 'getViews'));
+        apiRouter.get('/navigate/views/:viewId', authenticateRequest, this.createHandler('zpt-api', 'getView'));
+        apiRouter.post('/navigate/analyze', authenticateRequest, this.createHandler('zpt-api', 'analyzeNavigation'));
+        apiRouter.get('/navigate/ontology/terms', this.createHandler('zpt-api', 'getOntologyTerms'));
+        apiRouter.post('/navigate/validate-ontology', this.createHandler('zpt-api', 'validateOntology'));
 
         // VSOM API routes
         apiRouter.post('/vsom/create', authenticateRequest, this.createHandler('vsom-api', 'create'));
@@ -526,13 +537,22 @@ class APIServer {
                         },
                         zpt: {
                             name: 'ZPT Navigation API',
-                            description: 'Zero-Point Traversal corpus navigation',
+                            description: 'Zero-Point Traversal corpus navigation with ontology integration',
                             endpoints: [
                                 'POST /api/navigate - Main navigation',
                                 'POST /api/navigate/preview - Navigation preview',
                                 'GET /api/navigate/options - Navigation options',
                                 'GET /api/navigate/schema - Parameter schema',
-                                'GET /api/navigate/health - ZPT health check'
+                                'GET /api/navigate/health - ZPT health check',
+                                'POST /api/navigate/convert-params - Convert string params to URIs',
+                                'POST /api/navigate/store-session - Store navigation session',
+                                'GET /api/navigate/sessions - List navigation sessions',
+                                'GET /api/navigate/sessions/{id} - Get navigation session',
+                                'GET /api/navigate/views - List navigation views',
+                                'GET /api/navigate/views/{id} - Get navigation view',
+                                'POST /api/navigate/analyze - Analyze navigation patterns',
+                                'GET /api/navigate/ontology/terms - Get ZPT ontology terms',
+                                'POST /api/navigate/validate-ontology - Validate ontology parameters'
                             ],
                             status: this.apiContext.apis['zpt-api']?.initialized ? 'healthy' : 'unavailable'
                         },
@@ -999,13 +1019,20 @@ class APIServer {
                         ?rel a ragno:Relationship 
                     }`,
                 
-                // ZPT resources
-                zptResources: `
-                    PREFIX zpt: <http://hyperdata.it/xmlns/zpt/>
-                    SELECT (COUNT(DISTINCT ?resource) as ?count) 
+                // ZPT navigation sessions
+                zptNavigationSessions: `
+                    PREFIX zpt: <http://purl.org/stuff/zpt/>
+                    SELECT (COUNT(DISTINCT ?session) as ?count) 
                     WHERE { 
-                        ?resource ?prop ?value . 
-                        FILTER(STRSTARTS(STR(?prop), "http://hyperdata.it/xmlns/zpt/"))
+                        ?session a zpt:NavigationSession 
+                    }`,
+                
+                // ZPT navigation views
+                zptNavigationViews: `
+                    PREFIX zpt: <http://purl.org/stuff/zpt/>
+                    SELECT (COUNT(DISTINCT ?view) as ?count) 
+                    WHERE { 
+                        ?view a zpt:NavigationView 
                     }`,
                 
                 // Resources with embeddings

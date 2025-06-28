@@ -317,6 +317,36 @@ Zoom, Pan, Tilt system for intelligent content navigation and processing.
 - Performance optimization
 - API integration patterns
 
+### 🌐 ZPT Ontology Examples (`examples/zpt-onto/`)
+
+Formal ZPT ontology integration with RDF semantics and SPARQL storage.
+
+| Example | Description | Prerequisites |
+|---------|-------------|---------------|
+| **07-ZPTOntologyIntegrationDemo.js** ⭐ **NEW** | Comprehensive ontology integration demo | None (standalone) |
+| **06-QuickZPTValidationDemo.js** | Fast validation of ZPT system components | SPARQL endpoint |
+| **05-RealZPTNavigationDemo.js** | Complete workflow with BeerQA data | SPARQL endpoint, BeerQA data |
+| **04-ComprehensiveZPTDemo.js** | Full integration demonstration | SPARQL endpoint, BeerQA data |
+| **03-SimpleZPTDemo.js** | Direct SPARQL approach | SPARQL endpoint |
+| **02-ZPTNavigationWithRealData.js** | Advanced navigation patterns | SPARQL endpoint |
+| **01-DataExploration.js** | Corpus data examination | SPARQL endpoint |
+
+**Key Features Demonstrated:**
+- String-to-URI parameter conversion using ZPT ontology terms
+- RDF navigation session and view creation with formal semantics
+- ZPT metadata storage using SPARQL INSERT operations
+- Cross-zoom navigation patterns (entity/unit/text/community levels)
+- PROV-O provenance tracking for complete audit trails
+- Navigation pattern analysis and optimization insights
+- Cross-graph integration (ZPT navigation + Ragno corpus data)
+
+**Ontology Integration Benefits:**
+- Formal semantics for navigation parameters using `http://purl.org/stuff/zpt/` ontology
+- Interoperability with other semantic web tools through standards compliance
+- Complete audit trail of navigation decisions using W3C PROV-O
+- Enhanced query capabilities through SPARQL pattern matching
+- Extensibility for domain-specific navigation vocabularies
+
 ## Running Examples
 
 ### Environment Setup

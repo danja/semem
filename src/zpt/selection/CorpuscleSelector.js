@@ -1,11 +1,16 @@
 /**
  * Main orchestrator for parameter-based corpuscle selection from Ragno corpus
+ * Now includes ZPT ontology integration for RDF navigation storage
  */
 import ParameterValidator from '../parameters/ParameterValidator.js';
 import ParameterNormalizer from '../parameters/ParameterNormalizer.js';
 import FilterBuilder from '../parameters/FilterBuilder.js';
 import SelectionCriteria from '../parameters/SelectionCriteria.js';
 import { logger } from '../../Utils.js';
+
+// Import ZPT ontology integration
+import { NamespaceUtils, getSPARQLPrefixes } from '../ontology/ZPTNamespaces.js';
+import { ZPTDataFactory } from '../ontology/ZPTDataFactory.js';
 
 export default class CorpuscleSelector {
     constructor(ragnoCorpus, options = {}) {
@@ -25,8 +30,17 @@ export default class CorpuscleSelector {
             timeoutMs: options.timeoutMs || 30000,
             enableCaching: options.enableCaching !== false,
             debugMode: options.debugMode || false,
+            enableZPTStorage: options.enableZPTStorage !== false, // Enable ZPT RDF storage by default
+            navigationGraph: options.navigationGraph || 'http://purl.org/stuff/navigation',
             ...options
         };
+
+        // Initialize ZPT ontology integration
+        if (this.config.enableZPTStorage) {
+            this.zptDataFactory = new ZPTDataFactory({
+                navigationGraph: this.config.navigationGraph
+            });
+        }
 
         // Performance tracking
         this.metrics = {
@@ -122,6 +136,11 @@ export default class CorpuscleSelector {
 
             // Update metrics
             this.updateMetrics(Date.now() - startTime);
+
+            // Store navigation metadata in ZPT RDF if enabled
+            if (this.config.enableZPTStorage) {
+                await this.storeNavigationData(normalizedParams, result);
+            }
 
             logger.info('Corpuscle selection completed', {
                 resultCount: result.corpuscles.length,
@@ -403,6 +422,215 @@ export default class CorpuscleSelector {
         }
 
         return filtered;
+    }
+
+    /**
+     * Store navigation data as ZPT RDF metadata
+     */
+    async storeNavigationData(normalizedParams, selectionResult) {
+        if (!this.config.enableZPTStorage || !this.zptDataFactory) {
+            return;
+        }
+
+        try {
+            // Convert parameters to ZPT URIs
+            const zptParams = this.convertParametersToZPTURIs(normalizedParams);
+
+            // Create navigation session
+            const sessionConfig = {
+                agentURI: 'http://example.org/agents/corpuscle_selector',
+                startTime: new Date(),
+                purpose: `Corpuscle selection using ${zptParams.tiltURI || normalizedParams.tilt.representation} analysis`
+            };
+
+            const session = this.zptDataFactory.createNavigationSession(sessionConfig);
+
+            // Create navigation view with selected corpuscles
+            const viewConfig = {
+                query: normalizedParams.pan?.topic?.value || 'corpus selection',
+                zoom: zptParams.zoomURI || this.getDefaultZoomURI(normalizedParams.zoom.level),
+                tilt: zptParams.tiltURI || this.getDefaultTiltURI(normalizedParams.tilt.representation),
+                pan: { domains: zptParams.panURIs || [] },
+                sessionURI: session.uri.value,
+                selectedCorpuscles: selectionResult.corpuscles.map(c => c.uri).filter(Boolean)
+            };
+
+            const view = this.zptDataFactory.createNavigationView(viewConfig);
+
+            // Store in SPARQL if available
+            if (this.sparqlStore) {
+                await this.storeZPTDataInSPARQL(session, view);
+            }
+
+            // Add ZPT metadata to selection result
+            selectionResult.zptMetadata = {
+                sessionURI: session.uri.value,
+                viewURI: view.uri.value,
+                zptParameters: zptParams,
+                stored: !!this.sparqlStore
+            };
+
+            logger.info('ZPT navigation data stored', {
+                sessionURI: session.uri.value,
+                viewURI: view.uri.value,
+                selectedCorpuscles: viewConfig.selectedCorpuscles.length
+            });
+
+        } catch (error) {
+            logger.warn('Failed to store ZPT navigation data', { error });
+            // Don't throw - selection should succeed even if ZPT storage fails
+        }
+    }
+
+    /**
+     * Convert normalized parameters to ZPT URIs
+     */
+    convertParametersToZPTURIs(normalizedParams) {
+        const zptParams = {};
+
+        // Convert zoom level
+        if (normalizedParams.zoom?.level) {
+            const zoomURI = NamespaceUtils.resolveStringToURI('zoom', normalizedParams.zoom.level);
+            if (zoomURI) {
+                zptParams.zoomURI = zoomURI.value;
+            }
+        }
+
+        // Convert tilt representation
+        if (normalizedParams.tilt?.representation) {
+            const tiltURI = NamespaceUtils.resolveStringToURI('tilt', normalizedParams.tilt.representation);
+            if (tiltURI) {
+                zptParams.tiltURI = tiltURI.value;
+            }
+        }
+
+        // Convert pan domains (if available)
+        if (normalizedParams.pan?.domains) {
+            zptParams.panURIs = normalizedParams.pan.domains
+                .map(domain => NamespaceUtils.resolveStringToURI('pan', domain))
+                .filter(uri => uri !== null)
+                .map(uri => uri.value);
+        }
+
+        return zptParams;
+    }
+
+    /**
+     * Get default zoom URI for fallback cases
+     */
+    getDefaultZoomURI(zoomLevel) {
+        const zoomURI = NamespaceUtils.resolveStringToURI('zoom', zoomLevel);
+        return zoomURI ? zoomURI.value : 'http://purl.org/stuff/zpt/EntityLevel';
+    }
+
+    /**
+     * Get default tilt URI for fallback cases
+     */
+    getDefaultTiltURI(tiltRepresentation) {
+        const tiltURI = NamespaceUtils.resolveStringToURI('tilt', tiltRepresentation);
+        return tiltURI ? tiltURI.value : 'http://purl.org/stuff/zpt/KeywordProjection';
+    }
+
+    /**
+     * Store ZPT session and view data in SPARQL
+     */
+    async storeZPTDataInSPARQL(session, view) {
+        if (!this.sparqlStore) {
+            return;
+        }
+
+        try {
+            // Generate SPARQL INSERT for session
+            const sessionTriples = this.generateTriplesFromQuads(session.quads);
+            const sessionInsert = getSPARQLPrefixes(['zpt', 'prov']) + `
+INSERT DATA {
+    GRAPH <${this.config.navigationGraph}> {
+${sessionTriples}
+    }
+}`;
+
+            // Generate SPARQL INSERT for view
+            const viewTriples = this.generateTriplesFromQuads(view.quads);
+            const viewInsert = getSPARQLPrefixes(['zpt']) + `
+INSERT DATA {
+    GRAPH <${this.config.navigationGraph}> {
+${viewTriples}
+    }
+}`;
+
+            // Execute SPARQL updates
+            await this.executeSPARQLUpdate(sessionInsert, 'Store ZPT navigation session');
+            await this.executeSPARQLUpdate(viewInsert, 'Store ZPT navigation view');
+
+        } catch (error) {
+            logger.error('Failed to store ZPT data in SPARQL', { error });
+            throw error;
+        }
+    }
+
+    /**
+     * Execute SPARQL UPDATE operation
+     */
+    async executeSPARQLUpdate(sparql, description) {
+        if (!this.sparqlStore) {
+            throw new Error('SPARQL store not available');
+        }
+
+        try {
+            logger.debug(`Executing SPARQL update: ${description}`);
+            
+            // Use the SPARQL store's update method
+            if (typeof this.sparqlStore.update === 'function') {
+                await this.sparqlStore.update(sparql);
+            } else {
+                // Fallback to direct endpoint call
+                const response = await fetch(this.sparqlStore.endpoint.update, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/sparql-update',
+                        'Authorization': this.sparqlStore.auth
+                    },
+                    body: sparql
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+            }
+
+            logger.debug(`SPARQL update successful: ${description}`);
+
+        } catch (error) {
+            logger.error(`SPARQL update failed: ${description}`, { error });
+            throw error;
+        }
+    }
+
+    /**
+     * Generate SPARQL triples from RDF quads
+     */
+    generateTriplesFromQuads(quads) {
+        return quads.map(quad => {
+            const obj = this.formatRDFObject(quad.object);
+            return `        <${quad.subject.value}> <${quad.predicate.value}> ${obj} .`;
+        }).join('\n');
+    }
+
+    /**
+     * Format RDF object for SPARQL
+     */
+    formatRDFObject(object) {
+        if (object.termType === 'Literal') {
+            let formatted = `"${object.value.replace(/"/g, '\\"')}"`;
+            if (object.datatype) {
+                formatted += `^^<${object.datatype.value}>`;
+            } else if (object.language) {
+                formatted += `@${object.language}`;
+            }
+            return formatted;
+        } else {
+            return `<${object.value}>`;
+        }
     }
 
     /**

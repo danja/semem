@@ -133,6 +133,7 @@ export const ZPT_TERMS = {
     navigatedBy: ZPT.navigatedBy,
     partOfSession: ZPT.partOfSession,
     previousView: ZPT.previousView,
+    hasPurpose: ZPT.hasPurpose,
     
     // Query Integration Properties
     answersQuery: ZPT.answersQuery,

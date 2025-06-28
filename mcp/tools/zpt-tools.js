@@ -17,6 +17,10 @@ import CorpuscleTransformer from '../../src/zpt/transform/CorpuscleTransformer.j
 import ParameterValidator from '../../src/zpt/parameters/ParameterValidator.js';
 import ParameterNormalizer from '../../src/zpt/parameters/ParameterNormalizer.js';
 
+// Import ZPT ontology integration
+import { NamespaceUtils } from '../../src/zpt/ontology/ZPTNamespaces.js';
+import { ZPTDataFactory } from '../../src/zpt/ontology/ZPTDataFactory.js';
+
 // ZPT Tool Names
 const ZPTToolName = {
   NAVIGATE: 'zpt_navigate',
@@ -98,6 +102,11 @@ class ZPTNavigationService {
     this.parameterValidator = new ParameterValidator();
     this.parameterNormalizer = new ParameterNormalizer();
 
+    // Initialize ZPT ontology integration
+    this.zptDataFactory = new ZPTDataFactory({
+      navigationGraph: 'http://purl.org/stuff/navigation'
+    });
+
     // Initialize corpus selector and transformer (will be set when corpus is available)
     this.corpuscleSelector = null;
     this.corpuscleTransformer = null;
@@ -107,8 +116,94 @@ class ZPTNavigationService {
       enableRealData: true,
       fallbackToSimulation: true,
       maxSelectionTime: 30000,
-      maxTransformationTime: 45000
+      maxTransformationTime: 45000,
+      useZPTOntology: true // Enable ZPT URI usage
     };
+  }
+
+  /**
+   * Convert string-based ZPT parameters to formal URIs
+   */
+  convertParametersToURIs(params) {
+    if (!this.config.useZPTOntology) {
+      return params; // Return original if ZPT ontology is disabled
+    }
+
+    const convertedParams = { ...params };
+
+    // Convert zoom parameter
+    if (typeof params.zoom === 'string') {
+      const zoomURI = NamespaceUtils.resolveStringToURI('zoom', params.zoom);
+      if (zoomURI) {
+        convertedParams.zoomURI = zoomURI.value;
+        convertedParams.zoomString = params.zoom; // Keep original for backward compatibility
+      }
+    }
+
+    // Convert tilt parameter
+    if (typeof params.tilt === 'string') {
+      const tiltURI = NamespaceUtils.resolveStringToURI('tilt', params.tilt);
+      if (tiltURI) {
+        convertedParams.tiltURI = tiltURI.value;
+        convertedParams.tiltString = params.tilt; // Keep original for backward compatibility
+      }
+    }
+
+    // Convert pan domain parameters
+    if (params.pan && Array.isArray(params.pan.domains)) {
+      convertedParams.pan = { ...params.pan };
+      convertedParams.pan.domainURIs = params.pan.domains
+        .map(domain => NamespaceUtils.resolveStringToURI('pan', domain))
+        .filter(uri => uri !== null)
+        .map(uri => uri.value);
+      convertedParams.pan.domainStrings = params.pan.domains; // Keep originals
+    }
+
+    return convertedParams;
+  }
+
+  /**
+   * Create ZPT navigation metadata and store in RDF
+   */
+  async createNavigationSession(query, convertedParams) {
+    if (!this.config.useZPTOntology) {
+      return null; // Skip if ZPT ontology is disabled
+    }
+
+    try {
+      // Create navigation session
+      const sessionConfig = {
+        agentURI: 'http://example.org/agents/mcp_zpt_navigator',
+        startTime: new Date(),
+        purpose: `MCP ZPT navigation for query: ${query}`
+      };
+
+      const session = this.zptDataFactory.createNavigationSession(sessionConfig);
+
+      // Create navigation view
+      const viewConfig = {
+        query: query,
+        zoom: convertedParams.zoomURI || convertedParams.zoom,
+        tilt: convertedParams.tiltURI || convertedParams.tilt,
+        pan: { 
+          domains: convertedParams.pan?.domainURIs || convertedParams.pan?.domains || []
+        },
+        sessionURI: session.uri.value,
+        selectedCorpuscles: [] // Will be populated after selection
+      };
+
+      const view = this.zptDataFactory.createNavigationView(viewConfig);
+
+      return {
+        session,
+        view,
+        sessionURI: session.uri.value,
+        viewURI: view.uri.value
+      };
+    } catch (error) {
+      mcpDebugger.warn('Failed to create ZPT navigation metadata', error);
+      return null;
+    }
   }
 
   /**
@@ -178,6 +273,22 @@ class ZPTNavigationService {
 
       mcpDebugger.debug('ZPT Navigation starting', { query, zoom, tilt });
       const startTime = Date.now();
+
+      // Convert string parameters to ZPT URIs
+      const convertedParams = this.convertParametersToURIs(params);
+      mcpDebugger.debug('Parameters converted to ZPT URIs', { 
+        original: params, 
+        converted: convertedParams 
+      });
+
+      // Create ZPT navigation session
+      const zptSession = await this.createNavigationSession(query, convertedParams);
+      if (zptSession) {
+        mcpDebugger.info('Created ZPT navigation session', {
+          sessionURI: zptSession.sessionURI,
+          viewURI: zptSession.viewURI
+        });
+      }
 
       // Try to initialize components if not already done
       if (!this.corpuscleSelector && this.config.enableRealData) {
