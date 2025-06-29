@@ -17,7 +17,9 @@ The system provides multiple interfaces (direct SDK, HTTP API, MCP protocol, web
 
 ### Demonstrator
 
-The code under `examples/beerqa` implements a question-answering workflow that combines Semantic Web technologies (RDF/SPARQL), vector embeddings, and large language models to provide contextually-augmented answers. It uses SDK facilities directly through a series of individual node scripts (*less to go wrong*). 
+**[beerqa.md](beerqa.md)** 
+
+*tl;dr* the code under `examples/beerqa` implements a question-answering workflow that combines Semantic Web technologies (RDF/SPARQL), vector embeddings, and large language models to provide contextually-augmented answers. It uses SDK facilities directly through a series of individual node scripts (*less to go wrong*). 
 
 ### Core Configuration and Setup
 
