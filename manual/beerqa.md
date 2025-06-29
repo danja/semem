@@ -1,12 +1,16 @@
 # BeerQA Workflow 
 
+**Status 2025-06-29 :** the workflow is functional but the approach will need adjusting before it'll signs of usefulness
+
 ## Overview
 
-The code under `examples/beerqa` demonstrates a question-answering system that combines semantic web technologies (RDF/SPARQL), vector embeddings, and large language models to provide contextually-augmented answers. The system processes questions through seven sequential stages, building knowledge graphs from Wikipedia data and using Zoom, Pan, Tilt (ZPT) navigation to discover relevant information.
+The code under `examples/beerqa` demonstrates an experimental question-answering system that combines semantic web technologies (RDF/SPARQL), vector embeddings, and large language models to provide contextually-augmented answers. The system processes questions through seven sequential stages, building knowledge graphs from Wikipedia data and using Zoom, Pan, Tilt (ZPT) navigation to discover relevant information.
 
 The name comes from the dataset introduced in the paper [Answering Open-Domain Questions of Varying Reasoning Steps from Text](https://arxiv.org/abs/2010.12527)
 
-*The BeerQA paper trains a model for domain-independent question answering. The idea here is to see how far we can get using a non-specialized model augmented with Semem facilities. The training data was used to provide examplars of the data structures required in the knowledgebase - direct and generated using the augmentation tools.  This is a kind of meta-level training, out of band for the LLMs (though LLMs will be used internally). Where the system in the paper uses a vast amount of content in training a model, this is circumvented here by extracting key concepts from the question and using them to inform Wikipedia search queries (note the use of the HyDE algorthim to generate hypotheticals if the question doesn't yield concepts directly). So the conceptual model has been figured out and coded up, and can now be applied to questions from the BeerQA test data.*
+*The BeerQA paper trains a model for domain-independent question answering. The idea here is to see how far we can get* using a non-specialized model augmented with Semem facilities. The training data was used to provide examplars of the data structures required in the knowledgebase - direct and generated using the augmentation tools.  This is a kind of meta-level training, out of band for the LLMs (though LLMs will be used internally). Where the system in the paper uses a vast amount of content in training a model, this is circumvented here by extracting key concepts from the question and using them to inform Wikipedia search queries (note the use of the HyDE algorithm to generate hypotheticals if the question doesn't yield concepts directly). So the conceptual model has been figured out and coded up, and can now be applied to questions from the BeerQA test data.*
+
+\* *with the current config & data the system may start giving no results around step 5, answers may not be found...*
 
 ## Architecture
 
@@ -131,7 +135,7 @@ cosineSimilarity = dotProduct / (norm(vectorA) * norm(vectorB))
 
 ### Stage 5: Page Ingestion
 
-**Command**: `examples/wikipedia/IngestPages.js`
+**Command**: `node examples/wikipedia/IngestPages.js`
 
 **Purpose**: Fetches Wikipedia page content and converts to markdown with embeddings
 
@@ -160,7 +164,7 @@ cosineSimilarity = dotProduct / (norm(vectorA) * norm(vectorB))
 
 ### Stage 6: ZPT Navigation
 
-**Command**: `examples/beerqa/Navigate.js`
+**Command**: `node examples/beerqa/Navigate.js`
 
 **Purpose**: Uses Zoom, Pan, Tilt navigation to discover corpuscles best suited for answering questions
 
@@ -200,7 +204,7 @@ cosineSimilarity = dotProduct / (norm(vectorA) * norm(vectorB))
 
 ### Stage 7: Final Answer Generation
 
-**Command**: `examples/beerqa/GetResult.js`
+**Command**: `node examples/beerqa/GetResult.js`
 
 **Purpose**: Generates final answers using context-augmented LLM completion
 

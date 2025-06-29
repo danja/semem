@@ -2,6 +2,8 @@
 
 **Semantic Web Memory for Intelligent Agents**
 
+*TODO : Doc for the HyDE algorithm*
+
 ## Introduction
 
 This manual provides comprehensive documentation for Semem, a Node.js toolkit that integrates large language models (LLMs) with Semantic Web technologies (RDF/SPARQL) for intelligent memory management and knowledge graph processing. The manual bridges the high-level overview in the [README](../../README.md) with detailed technical documentation, serving as the primary reference for users, developers, and researchers working with Semem.
