@@ -147,7 +147,7 @@ WHERE {
 
             // Add Basic Authentication if provided
             if (this.options.auth) {
-                const credentials = btoa(`${this.options.auth.user}:${this.options.auth.password}`);
+                const credentials = Buffer.from(`${this.options.auth.user}:${this.options.auth.password}`).toString('base64');
                 headers['Authorization'] = `Basic ${credentials}`;
             }
 
@@ -189,6 +189,82 @@ WHERE {
         } catch (error) {
             const responseTime = Date.now() - startTime;
             logger.error('SPARQL UPDATE request failed:', error.message);
+            
+            return {
+                success: false,
+                error: error.message,
+                responseTime
+            };
+        }
+    }
+
+    /**
+     * Execute SPARQL SELECT query
+     * 
+     * @param {string} query - SPARQL SELECT query
+     * @returns {Promise<Object>} - Response object with results
+     */
+    async executeSelect(query) {
+        const startTime = Date.now();
+        
+        try {
+            logger.info('Executing SPARQL SELECT query...');
+            logger.debug('Query:', query);
+
+            // Convert update endpoint to query endpoint
+            const queryEndpoint = this.updateEndpoint.replace('/update', '/query');
+
+            // Prepare headers
+            const headers = {
+                'Content-Type': 'application/sparql-query',
+                'Accept': 'application/sparql-results+json',
+                ...this.options.headers
+            };
+
+            // Add Basic Authentication if provided
+            if (this.options.auth) {
+                const credentials = Buffer.from(`${this.options.auth.user}:${this.options.auth.password}`).toString('base64');
+                headers['Authorization'] = `Basic ${credentials}`;
+            }
+
+            // Execute HTTP POST request
+            const response = await fetch(queryEndpoint, {
+                method: 'POST',
+                headers,
+                body: query,
+                timeout: this.options.timeout
+            });
+
+            const responseTime = Date.now() - startTime;
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                logger.error(`SPARQL SELECT failed (${response.status}): ${response.statusText}`);
+                logger.error('Error response:', errorText);
+                
+                return {
+                    success: false,
+                    status: response.status,
+                    statusText: response.statusText,
+                    error: errorText,
+                    responseTime
+                };
+            }
+
+            const data = await response.json();
+            logger.info(`SPARQL SELECT completed successfully (${responseTime}ms)`);
+            
+            return {
+                success: true,
+                status: response.status,
+                statusText: response.statusText,
+                data: data,
+                responseTime
+            };
+
+        } catch (error) {
+            const responseTime = Date.now() - startTime;
+            logger.error('SPARQL SELECT error:', error.message);
             
             return {
                 success: false,

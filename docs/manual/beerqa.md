@@ -1,33 +1,289 @@
-The BeerQA paper trains a model for domain-independent question answering. The idea here is to see how far we can get using a non-specialized model augmented with Semem facilities. The training data will be used to provide examplars of the data structures required in the knowledgebase - direct and generated using the augmentation tools.  This is a kind of meta-level training, out of band for the LLMs (though LLMs will be used internally).
-Using the pattern established, it will be applied to questions from the BeerQA test data.
+# BeerQA Workflow Manual
 
+## Overview
 
+BeerQA is a question-answering system that combines semantic web technologies (RDF/SPARQL), vector embeddings, and large language models to provide contextually-augmented answers. The system processes questions through seven sequential stages, building knowledge graphs from Wikipedia data and using Zoom, Pan, Tilt (ZPT) navigation to discover relevant information.
 
-Two classes are required to fulfil the roles of an initial Wikipedia search result ingester and a data augmenter.
-The first, in src/aux/wikipedia/Search.js will include two primary methods, search(query, options) and ingest(searchObject).
- Search will use a fetch call to the Wikipedia API of the the form :
-`https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=queryText`
-This call should return page titles, snippets of text, and other metadata relating to the search query. The options field will contain just one field `delay`, a value in milliseconds which will be used to act as a rate limiter. Its default value should be 100. The search(queryText, options) method will return the JSON object as returned by Wikipedia together with the initial query. Using the pattern of examples/beerqa/BeerETLDemo.js and examples/beerqa/BeerETL.js create RDF objects corresponding to the pages list which will be instances of ragno:Unit. The titles with corresponding page URIs will act as instances of ragno:Entity with the text snippets as instances of ragno:TextElement associated with them with a provenance field. These will be posted to the SPARQL store.
-The second class, in src/aux/wikipedia/UnitsToCorpuscles.js will do a SPARQL query to list ragno:Unit instances that are not yet associated with a ragno:Corpuscle. For each of the Units, an instance of ragno:Corpuscle will be created together with a ragno:Relationship associating the Unit with the Corpuscle. An embedding will be created from the text snippet and stored as a ragno:Attribute of the ragno:Corpuscle.     
+## Architecture
 
-Create examples/beerqa/AugmentQuestion.js which will operate on a question that was placed in the store by examples/beerqa/BeerTestQuestions.js . For now just get the first question found. An embedding will be created of the question text and associated with the question's corpuscle. The Extract Concepts operation will also be applied to the question and the results saved back to the corpuscle.  
+The workflow operates on two primary RDF graphs:
+- **BeerQA Graph** (`http://purl.org/stuff/beerqa/test`): Contains questions, their embeddings, and relationships
+- **Wikipedia Graph** (`http://purl.org/stuff/wikipedia/test`): Contains Wikipedia-derived corpuscles and content
 
-Create examples/beerqa/QuestionResearch.js which will do a SPARQL query to retrieve the question corpuscle. Each extracted concept will then be passed to src/aux/wikipedia/Search.js and src/aux/wikipedia/UnitsToCorpuscles.js to augment the store.
+All RDF resources use the Ragno vocabulary (`http://purl.org/stuff/ragno/`) for consistent semantic modeling.
 
-If no concepts are found then the Hyde algorithm should be run to generate a hypothetical answer to the question Then extract concepts should be applied to the hypothetical as a substitue. If no concepts are found, repeat the process at most twice more. If concepts are still not found then report failure for this stage. 
+## Workflow Stages
 
---- limit reached
+### Stage 1: Question Initialization
 
-We should now be able to do a similarity search between the initial question corpuscle and the corpuscles generated from the search result snippets, as well as matching of extracte concepts. From this the URIs of related Wikipedia pages should be available. These should be added to the question corpuscle with the property ragno:maybeRelated . Implement the functionality of this stage in examples/beerqa/DiscoverTargets.js
+**File**: `examples/beerqa/BeerTestQuestions.js`
 
-Next we need examples/wikipedia/IngestPages.js which will query for the ragno:maybeRelated page URIs for the given question. This will do a fetch on the URIs and send the results through src/aux/markup/HTML2MD.js The existing corpuscles with the URIs will have statements added to associate them with new ragno:TextElement instances, which will be the markdown version of the Wikipedia pages. Embeddings will be created of the Wikipedia content and associated with the corpuscle.
+**Purpose**: Creates initial question corpuscles in the knowledge graph
 
-Now ZPT tools will be used to navigate to corpuscles with the best chance of answering the question. Operations here will be implemented in examples/beerqa/Navigate.js . These corpuscles will be associated with the question corpuscle by means of ragno:Relationship entities added to the store.
+**Operations**:
+- Generates `ragno:Corpuscle` instances for test questions
+- Associates questions with `rdfs:label` containing question text
+- Stores questions in the BeerQA graph
 
-Finally src/ContextManager.js will be used to combine the question corpuscle with augmentation from the related corpuscles, formulated as a question and passed to the configured LLM for completion, with the final result passed back to the user. This will happen in examples/beerqa/GetResult.js 
+**RDF Resources Created**:
+```turtle
+<question-uri> a ragno:Corpuscle ;
+               rdfs:label "How many letters did Tesla send to Morgan?" .
+```
 
-// maybe later : src/ragno/decomposeCorpus.js
+**Potential Issues**:
+- Questions must be well-formed and specific
+- No validation of question quality or answerability
 
+### Stage 2: Question Augmentation
 
+**File**: `examples/beerqa/AugmentQuestion.js`
 
+**Purpose**: Enhances questions with vector embeddings and extracted concepts
 
+**Operations**:
+- Retrieves questions from BeerQA graph via SPARQL SELECT
+- Generates 1536-dimensional embeddings using `nomic-embed-text` model
+- Extracts semantic concepts using LLM analysis
+- Updates question corpuscles with embedding and concept data
+
+**RDF Resources Added**:
+```turtle
+<question-uri> ragno:hasEmbedding "[-0.123, 0.456, ...]"^^xsd:string ;
+               ragno:hasConcept "Tesla", "Morgan", "correspondence" .
+```
+
+**Potential Issues**:
+- Embedding generation requires service availability
+- Concept extraction quality depends on LLM model performance
+- Large embedding vectors increase storage requirements
+
+### Stage 3: Concept Research
+
+**File**: `examples/beerqa/QuestionResearch.js`
+
+**Purpose**: Researches extracted concepts via Wikipedia search, with HyDE fallback for missing concepts
+
+**Operations**:
+- Queries questions with concepts from BeerQA graph
+- For each concept, performs Wikipedia API search
+- If no concepts exist, generates hypothetical documents using HyDE algorithm
+- Extracts concepts from hypothetical documents (up to 3 retry attempts)
+- Creates Wikipedia search units and converts to corpuscles
+- Establishes `ragno:maybeRelated` relationships between questions and Wikipedia results
+
+**RDF Resources Created**:
+```turtle
+<wikipedia-unit> a ragno:Unit ;
+                 ragno:hasSourceURI <wikipedia-page-uri> ;
+                 skos:prefLabel "Tesla" .
+
+<question-uri> ragno:maybeRelated <wikipedia-corpuscle> .
+```
+
+**HyDE Algorithm**:
+- Generates detailed hypothetical answers to questions
+- Extracts concepts from hypothetical content as substitutes
+- Provides fallback when direct concept extraction fails
+
+**Potential Issues**:
+- Wikipedia API rate limiting (1 request per second)
+- HyDE may generate inaccurate hypothetical content
+- Concept extraction failure after 3 retries results in stage failure
+- Search results may not be relevant to actual questions
+
+### Stage 4: Target Discovery
+
+**File**: `examples/beerqa/DiscoverTargets.js`
+
+**Purpose**: Identifies Wikipedia targets related to questions through similarity search and concept matching
+
+**Operations**:
+- Performs cosine similarity search between question embeddings and Wikipedia corpuscle embeddings
+- Matches question concepts with Wikipedia corpuscle concepts  
+- Scores targets using weighted combination (70% similarity, 30% concept overlap)
+- Creates `ragno:Relationship` entities linking questions to discovered targets
+
+**Similarity Calculation**:
+```javascript
+cosineSimilarity = dotProduct / (norm(vectorA) * norm(vectorB))
+```
+
+**RDF Resources Created**:
+```turtle
+<relationship-uri> a ragno:Relationship ;
+                   ragno:hasSourceEntity <question-uri> ;
+                   ragno:hasTargetEntity <wikipedia-corpuscle> ;
+                   ragno:relationshipType "similarityBased" ;
+                   ragno:weight 0.85 ;
+                   ragno:sourceCorpus "Wikipedia" .
+```
+
+**Potential Issues**:
+- Requires pre-existing embeddings for both questions and Wikipedia corpuscles
+- Similarity thresholds are hardcoded and may need adjustment
+- High computational cost for large corpuscle collections
+- False positives in similarity matching
+
+### Stage 5: Page Ingestion
+
+**File**: `examples/wikipedia/IngestPages.js`
+
+**Purpose**: Fetches Wikipedia page content and converts to markdown with embeddings
+
+**Operations**:
+- Queries for Wikipedia corpuscles with `ragno:maybeRelated` relationships
+- Fetches full Wikipedia page content via Wikipedia API
+- Converts HTML to markdown using `HTML2MD.js`
+- Truncates content to 50,000 characters to manage size
+- Generates embeddings for markdown content
+- Updates corpuscles with `ragno:TextElement` containing markdown content
+
+**RDF Resources Updated**:
+```turtle
+<wikipedia-corpuscle> ragno:hasTextElement <text-element> .
+
+<text-element> ragno:content "Wikipedia article content in markdown..." ;
+               ragno:contentType "text/markdown" ;
+               ragno:hasEmbedding "[embedding-vector]" .
+```
+
+**Potential Issues**:
+- Content truncation may lose important information
+- HTML-to-markdown conversion may introduce formatting artifacts
+- Large page content increases storage and processing requirements
+- Wikipedia API availability and rate limiting
+
+### Stage 6: ZPT Navigation
+
+**File**: `examples/beerqa/Navigate.js`
+
+**Purpose**: Uses Zoom, Pan, Tilt navigation to discover corpuscles best suited for answering questions
+
+**Operations**:
+- Applies ZPT navigation with zoom/tilt/pan parameters:
+  - **Zoom**: `entity` level for focused corpuscle discovery
+  - **Tilt**: `embedding` projection for semantic similarity
+  - **Pan**: Filters corpuscles by content availability and relevance
+- Scores corpuscles using multiple factors:
+  - Embedding similarity (60% weight)
+  - Concept overlap (30% weight)  
+  - Content length bonus (10% weight)
+- Creates high-weight `ragno:Relationship` entities for top-scoring corpuscles
+
+**ZPT Navigation Process**:
+1. Query corpus of available corpuscles
+2. Apply semantic filters based on question context
+3. Calculate composite relevance scores
+4. Select top candidates above threshold (0.4)
+5. Create weighted relationships to question
+
+**RDF Resources Created**:
+```turtle
+<zpt-relationship> a ragno:Relationship ;
+                   ragno:hasSourceEntity <question-uri> ;
+                   ragno:hasTargetEntity <discovered-corpuscle> ;
+                   ragno:relationshipType "zptNavigation" ;
+                   ragno:weight 0.75 ;
+                   ragno:sourceCorpus "ZPT" .
+```
+
+**Potential Issues**:
+- ZPT parameters are manually configured and may not be optimal
+- Scoring algorithm weights are hardcoded
+- Requires substantial content and embedding data to be effective
+- May miss relevant corpuscles due to threshold settings
+
+### Stage 7: Final Answer Generation
+
+**File**: `examples/beerqa/GetResult.js`
+
+**Purpose**: Generates final answers using context-augmented LLM completion
+
+**Operations**:
+- Retrieves questions with their associated relationships
+- Fetches content for all related entities (both BeerQA and Wikipedia graphs)
+- Uses `ContextManager` to build augmented context from related corpuscles
+- Generates LLM responses using question + context via `LLMHandler`
+- Returns structured answers with metadata about sources and success
+
+**Context Building Process**:
+1. Collect content from related entities based on relationship weights
+2. Format content by type (markdown, titles, etc.)
+3. Sort by relationship weight for optimal context ordering
+4. Build augmented prompt using `ContextManager.buildContext()`
+5. Generate response with system prompt emphasizing context usage
+
+**Answer Structure**:
+```json
+{
+  "questionURI": "question-identifier",
+  "questionText": "Original question",
+  "answer": "Generated response text",
+  "contextSourceCount": 5,
+  "contextSources": ["Wikipedia", "BeerQA"],
+  "relationshipCount": 8,
+  "success": true
+}
+```
+
+**Potential Issues**:
+- Context window limitations may truncate important information
+- LLM model availability and performance dependencies
+- Quality depends on previous stages' relationship discovery
+- No fact-checking or answer validation
+
+## Supporting Infrastructure
+
+### SPARQLHelper Class
+
+**File**: `examples/beerqa/SPARQLHelper.js`
+
+Provides SPARQL query/update operations with authentication and error handling. Supports both UPDATE and SELECT operations against Fuseki endpoints.
+
+### Wikipedia Integration
+
+**Files**: 
+- `src/aux/wikipedia/Search.js` - Wikipedia API search functionality
+- `src/aux/wikipedia/UnitsToCorpuscles.js` - Converts search results to RDF corpuscles
+- `src/aux/markup/HTML2MD.js` - HTML to markdown conversion
+
+### Debugging and Maintenance
+
+**Files**:
+- `examples/beerqa/CheckTeslaContent.js` - Verifies corpuscle content availability
+- `examples/beerqa/DebugContext.js` - Debugs context retrieval for questions
+- `examples/beerqa/FixTeslaRelationship.js` - Repairs missing content/relationships
+
+## System Requirements
+
+- **SPARQL Endpoint**: Apache Fuseki with authentication
+- **Ollama Service**: For embeddings (`nomic-embed-text`) and chat completion (`qwen2:1.5b`)
+- **Node.js**: Version 20.11.0+ with ES modules support
+- **Network Access**: Wikipedia API connectivity
+
+## Performance Characteristics
+
+- **Processing Time**: 30-60 seconds per question through full pipeline
+- **Storage**: ~2-5KB RDF data per question, 10-50KB per Wikipedia corpuscle
+- **Memory**: Embedding vectors require ~6KB each (1536 dimensions × 4 bytes)
+- **Network**: Wikipedia API calls limited to 1 request/second
+
+## Known Limitations
+
+1. **Scalability**: Sequential processing limits throughput
+2. **Quality Control**: No validation of intermediate results
+3. **Error Recovery**: Pipeline failures require manual intervention
+4. **Content Truncation**: Large Wikipedia articles are automatically truncated
+5. **Model Dependencies**: Tied to specific Ollama models and versions
+6. **Static Configuration**: Parameters hardcoded rather than configurable
+7. **Language Support**: English Wikipedia and models only
+
+## Future Improvements
+
+- Parallel processing for multiple questions
+- Configurable similarity thresholds and scoring weights
+- Answer quality assessment and validation
+- Support for additional content sources beyond Wikipedia
+- Automated error recovery and retry mechanisms
+- Performance monitoring and optimization
