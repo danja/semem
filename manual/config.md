@@ -2,6 +2,8 @@
 
 **Complete setup guide for config.json and .env configuration**
 
+See also [provider-config.md](provider-config.md) 
+
 ## Table of Contents
 
 1. [Overview](#overview)
