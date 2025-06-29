@@ -1,7 +1,7 @@
 /**
  * HTTP ZPT API Demo
  * 
- * This example demonstrates the ZPT (Zero-Point Traversal) API endpoints for knowledge graph
+ * This example demonstrates the ZPT (Zoom, Pan, Tilt) API endpoints for knowledge graph
  * navigation through HTTP requests. Shows navigation, previews, schema discovery, and options.
  * 
  * Key features demonstrated:
@@ -48,7 +48,7 @@ const NAVIGATION_SCENARIOS = [
     {
         description: "Unit-level navigation with embeddings",
         parameters: {
-            zoom: 'unit', 
+            zoom: 'unit',
             tilt: 'embedding',
             transform: {
                 maxTokens: 4000,
@@ -148,7 +148,7 @@ async function makeRequest(endpoint, options = {}) {
     };
 
     logger.info(chalk.blue(`📡 Making ${options.method || 'GET'} request to: ${endpoint}`));
-    
+
     try {
         const response = await fetch(url, {
             ...options,
@@ -156,7 +156,7 @@ async function makeRequest(endpoint, options = {}) {
         });
 
         const data = await response.json();
-        
+
         if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${data.error || data.message || 'Unknown error'}`);
         }
@@ -174,32 +174,32 @@ async function makeRequest(endpoint, options = {}) {
  */
 async function demonstrateSchemaDiscovery() {
     logger.info(chalk.yellow('\n📋 === ZPT Schema Discovery Demo ==='));
-    
+
     try {
         const result = await makeRequest('/api/navigate/schema');
-        
+
         if (result.success && result.schema) {
             logger.info(chalk.green('✅ ZPT schema retrieved successfully'));
-            
+
             logger.info(chalk.cyan('\n📚 Parameter Schema:'));
             Object.entries(result.schema.properties || {}).forEach(([param, def]) => {
                 logger.info(chalk.gray(`   🔧 ${param}: ${def.type} - ${def.description || 'No description'}`));
             });
-            
+
             if (result.examples) {
                 logger.info(chalk.cyan('\n📝 Example Configurations:'));
                 Object.entries(result.examples).forEach(([type, example]) => {
                     logger.info(chalk.gray(`   💡 ${type}: ${JSON.stringify(example, null, 2).substring(0, 200)}...`));
                 });
             }
-            
+
             if (result.documentation) {
                 logger.info(chalk.cyan('\n📖 Parameter Documentation:'));
                 Object.entries(result.documentation).forEach(([param, doc]) => {
                     logger.info(chalk.gray(`   📘 ${param}: ${doc}`));
                 });
             }
-            
+
             if (result.defaults) {
                 logger.info(chalk.cyan('\n⚙️  Default Values:'));
                 Object.entries(result.defaults).forEach(([param, value]) => {
@@ -211,7 +211,7 @@ async function demonstrateSchemaDiscovery() {
         }
     } catch (error) {
         logger.error(chalk.red(`❌ Schema discovery failed: ${error.message}`));
-        
+
         logger.info(chalk.cyan('\n📚 ZPT Schema Overview (when working):'));
         logger.info(chalk.gray('   • Parameter validation and type checking'));
         logger.info(chalk.gray('   • Example configurations for different use cases'));
@@ -225,50 +225,50 @@ async function demonstrateSchemaDiscovery() {
  */
 async function demonstrateOptionsDiscovery() {
     logger.info(chalk.yellow('\n⚙️  === ZPT Options Discovery Demo ==='));
-    
+
     try {
         const result = await makeRequest('/api/navigate/options');
-        
+
         if (result.success && result.options) {
             logger.info(chalk.green('✅ ZPT options retrieved successfully'));
-            
+
             const options = result.options;
-            
+
             if (options.zoomLevels) {
                 logger.info(chalk.cyan('\n🔍 Available Zoom Levels:'));
                 options.zoomLevels.forEach((level, idx) => {
                     logger.info(chalk.gray(`   ${idx + 1}. ${level}`));
                 });
             }
-            
+
             if (options.tiltRepresentations) {
                 logger.info(chalk.cyan('\n🎭 Tilt Representations:'));
                 options.tiltRepresentations.forEach((tilt, idx) => {
                     logger.info(chalk.gray(`   ${idx + 1}. ${tilt}`));
                 });
             }
-            
+
             if (options.outputFormats) {
                 logger.info(chalk.cyan('\n📄 Output Formats:'));
                 options.outputFormats.forEach((format, idx) => {
                     logger.info(chalk.gray(`   ${idx + 1}. ${format}`));
                 });
             }
-            
+
             if (options.maxTokenLimits) {
                 logger.info(chalk.cyan('\n🎯 Token Limits by Model:'));
                 Object.entries(options.maxTokenLimits).forEach(([model, limit]) => {
                     logger.info(chalk.gray(`   🤖 ${model}: ${limit.toLocaleString()} tokens`));
                 });
             }
-            
+
             if (options.panDomains) {
                 logger.info(chalk.cyan('\n🗺️  Pan Domain Filters:'));
                 Object.entries(options.panDomains).forEach(([domain, description]) => {
                     logger.info(chalk.gray(`   🌐 ${domain}: ${description}`));
                 });
             }
-            
+
             if (options.transformOptions) {
                 logger.info(chalk.cyan('\n🔄 Transform Options:'));
                 Object.entries(options.transformOptions).forEach(([option, values]) => {
@@ -280,7 +280,7 @@ async function demonstrateOptionsDiscovery() {
         }
     } catch (error) {
         logger.error(chalk.red(`❌ Options discovery failed: ${error.message}`));
-        
+
         logger.info(chalk.cyan('\n📚 ZPT Options Overview (when working):'));
         logger.info(chalk.gray('   • Available zoom levels (entity, unit, text, community, corpus)'));
         logger.info(chalk.gray('   • Tilt representations (embedding, keywords, graph, temporal)'));
@@ -296,24 +296,24 @@ async function demonstrateOptionsDiscovery() {
  */
 async function demonstrateZPTHealth() {
     logger.info(chalk.yellow('\n🏥 === ZPT Health Check Demo ==='));
-    
+
     try {
         const result = await makeRequest('/api/navigate/health');
-        
+
         if (result.success && result.health) {
             const health = result.health;
-            
+
             logger.info(chalk.green(`✅ ZPT system is ${health.status}`));
-            
+
             if (health.components) {
                 logger.info(chalk.cyan('\n🔧 System Components:'));
                 Object.entries(health.components).forEach(([component, info]) => {
-                    const status = info.status === 'healthy' ? '✅' : 
-                                 info.status === 'degraded' ? '⚠️' : '❌';
+                    const status = info.status === 'healthy' ? '✅' :
+                        info.status === 'degraded' ? '⚠️' : '❌';
                     logger.info(chalk.gray(`   ${status} ${component}: ${info.status}`));
                 });
             }
-            
+
             if (health.capabilities) {
                 logger.info(chalk.cyan('\n🎯 System Capabilities:'));
                 Object.entries(health.capabilities).forEach(([capability, available]) => {
@@ -321,21 +321,21 @@ async function demonstrateZPTHealth() {
                     logger.info(chalk.gray(`   ${status} ${capability}: ${available ? 'Available' : 'Unavailable'}`));
                 });
             }
-            
+
             if (health.metrics) {
                 logger.info(chalk.cyan('\n📊 System Metrics:'));
                 Object.entries(health.metrics).forEach(([metric, value]) => {
                     logger.info(chalk.gray(`   📈 ${metric}: ${value}`));
                 });
             }
-            
+
             logger.info(chalk.gray(`\n🔄 Active requests: ${health.activeRequests || 0}`));
         } else {
             logger.warn(chalk.yellow('⚠️  Health check completed but no details available'));
         }
     } catch (error) {
         logger.error(chalk.red(`❌ ZPT health check failed: ${error.message}`));
-        
+
         logger.info(chalk.cyan('\n📚 ZPT Health Features (when working):'));
         logger.info(chalk.gray('   • Component health monitoring'));
         logger.info(chalk.gray('   • Capability availability checking'));
@@ -349,27 +349,27 @@ async function demonstrateZPTHealth() {
  */
 async function demonstrateNavigationPreviews() {
     logger.info(chalk.yellow('\n👁️  === Navigation Preview Demo ==='));
-    
+
     let previewWorking = true;
-    
+
     // Test preview with first scenario
     const testScenario = PREVIEW_SCENARIOS[0];
     logger.info(chalk.cyan(`\n🧪 Testing preview functionality:`));
     logger.info(chalk.gray(`   Description: ${testScenario.description}`));
-    
+
     try {
         const testResult = await makeRequest('/api/navigate/preview', {
             method: 'POST',
             body: JSON.stringify(testScenario.parameters)
         });
-        
+
         if (testResult.success) {
             logger.info(chalk.green(`   ✅ Preview is working!`));
-            
+
             // Continue with all preview scenarios
             for (let i = 1; i < PREVIEW_SCENARIOS.length; i++) {
                 const scenario = PREVIEW_SCENARIOS[i];
-                
+
                 logger.info(chalk.cyan(`\n👁️  Preview ${i + 1}/${PREVIEW_SCENARIOS.length}:`));
                 logger.info(chalk.gray(`   Description: ${scenario.description}`));
                 logger.info(chalk.gray(`   Zoom: ${scenario.parameters.zoom}`));
@@ -377,16 +377,16 @@ async function demonstrateNavigationPreviews() {
                 if (scenario.parameters.pan) {
                     logger.info(chalk.gray(`   Pan: ${JSON.stringify(scenario.parameters.pan)}`));
                 }
-                
+
                 try {
                     const result = await makeRequest('/api/navigate/preview', {
                         method: 'POST',
                         body: JSON.stringify(scenario.parameters)
                     });
-                    
+
                     if (result.success) {
                         logger.info(chalk.green(`   ✅ Preview completed successfully`));
-                        
+
                         if (result.summary) {
                             logger.info(chalk.gray(`   📊 Summary:`));
                             logger.info(chalk.gray(`      • Corpuscles: ${result.summary.corpuscleCount || 0}`));
@@ -394,20 +394,20 @@ async function demonstrateNavigationPreviews() {
                             logger.info(chalk.gray(`      • Complexity: ${result.summary.complexity || 'unknown'}`));
                             logger.info(chalk.gray(`      • Selection time: ${result.summary.selectionTime || 0}ms`));
                         }
-                        
+
                         if (result.corpuscles && result.corpuscles.length > 0) {
                             logger.info(chalk.gray(`   🔍 Sample corpuscles (${result.corpuscles.length}):`));
                             result.corpuscles.slice(0, 2).forEach((corpuscle, idx) => {
                                 logger.info(chalk.gray(`      ${idx + 1}. ${JSON.stringify(corpuscle).substring(0, 80)}...`));
                             });
                         }
-                        
+
                         logger.info(chalk.gray(`   ⏱️  Processing time: ${result.processingTime || 'N/A'}ms`));
                     }
                 } catch (previewError) {
                     logger.warn(chalk.yellow(`   ⚠️  Preview failed: ${previewError.message}`));
                 }
-                
+
                 await new Promise(resolve => setTimeout(resolve, 700));
             }
         }
@@ -415,14 +415,14 @@ async function demonstrateNavigationPreviews() {
         previewWorking = false;
         logger.warn(chalk.yellow('⚠️  Navigation preview functionality is currently experiencing issues'));
         logger.info(chalk.gray(`   🔍 Error: ${error.message}`));
-        
+
         logger.info(chalk.cyan('\n📚 Navigation Preview Overview (when working):'));
         logger.info(chalk.gray('   • Quick exploration of navigation results'));
         logger.info(chalk.gray('   • Corpuscle counting and token estimation'));
         logger.info(chalk.gray('   • Selection performance metrics'));
         logger.info(chalk.gray('   • Complexity analysis of navigation space'));
         logger.info(chalk.gray('   • Sample content preview without full processing'));
-        
+
         logger.info(chalk.cyan('\n🔧 Expected preview scenarios:'));
         PREVIEW_SCENARIOS.forEach((scenario, index) => {
             logger.info(chalk.gray(`   ${index + 1}. ${scenario.description}`));
@@ -430,7 +430,7 @@ async function demonstrateNavigationPreviews() {
             logger.info(chalk.gray(`      → Would show corpuscle count and complexity estimate`));
         });
     }
-    
+
     if (!previewWorking) {
         logger.info(chalk.yellow('\n💡 Note: Preview requires properly configured corpus and navigation components'));
     }
@@ -441,32 +441,32 @@ async function demonstrateNavigationPreviews() {
  */
 async function demonstrateNavigation() {
     logger.info(chalk.yellow('\n🧭 === ZPT Navigation Demo ==='));
-    
+
     let navigationWorking = true;
-    
+
     // Test navigation with first scenario
     const testScenario = NAVIGATION_SCENARIOS[0];
     logger.info(chalk.cyan(`\n🧪 Testing navigation functionality:`));
     logger.info(chalk.gray(`   Description: ${testScenario.description}`));
     logger.info(chalk.gray(`   Expected: ${testScenario.expectedResult}`));
-    
+
     try {
         const testResult = await makeRequest('/api/navigate', {
             method: 'POST',
             body: JSON.stringify(testScenario.parameters)
         });
-        
+
         if (testResult.success) {
             logger.info(chalk.green(`   ✅ Navigation is working!`));
-            
+
             // Continue with all navigation scenarios
             for (let i = 1; i < NAVIGATION_SCENARIOS.length; i++) {
                 const scenario = NAVIGATION_SCENARIOS[i];
-                
+
                 logger.info(chalk.cyan(`\n🧭 Navigation ${i + 1}/${NAVIGATION_SCENARIOS.length}:`));
                 logger.info(chalk.gray(`   Description: ${scenario.description}`));
                 logger.info(chalk.gray(`   Expected: ${scenario.expectedResult}`));
-                
+
                 const params = scenario.parameters;
                 logger.info(chalk.gray(`   🔍 Zoom: ${params.zoom}`));
                 logger.info(chalk.gray(`   🎭 Tilt: ${params.tilt}`));
@@ -474,23 +474,23 @@ async function demonstrateNavigation() {
                     logger.info(chalk.gray(`   🗺️  Pan: ${JSON.stringify(params.pan)}`));
                 }
                 logger.info(chalk.gray(`   🔄 Transform: ${params.transform.maxTokens} tokens, ${params.transform.format} format`));
-                
+
                 try {
                     const result = await makeRequest('/api/navigate', {
                         method: 'POST',
                         body: JSON.stringify(params)
                     });
-                    
+
                     if (result.success) {
                         logger.info(chalk.green(`   ✅ Navigation completed successfully`));
-                        
+
                         if (result.content) {
-                            const contentPreview = typeof result.content === 'string' ? 
-                                result.content.substring(0, 100) : 
+                            const contentPreview = typeof result.content === 'string' ?
+                                result.content.substring(0, 100) :
                                 JSON.stringify(result.content).substring(0, 100);
                             logger.info(chalk.gray(`   📄 Content preview: "${contentPreview}..."`));
                         }
-                        
+
                         if (result.metadata) {
                             logger.info(chalk.gray(`   📊 Metadata:`));
                             if (result.metadata.pipeline) {
@@ -504,17 +504,17 @@ async function demonstrateNavigation() {
                                 logger.info(chalk.gray(`      ⚠️  Fallback implementation used`));
                             }
                         }
-                        
+
                         if (result.diagnostics) {
                             logger.info(chalk.gray(`   🔬 Diagnostics: ${result.diagnostics.implementation || 'standard'} implementation`));
                         }
-                        
+
                         logger.info(chalk.gray(`   ⏱️  Total processing time: ${result.processingTime || 'N/A'}ms`));
                     }
                 } catch (navError) {
                     logger.warn(chalk.yellow(`   ⚠️  Navigation failed: ${navError.message}`));
                 }
-                
+
                 await new Promise(resolve => setTimeout(resolve, 1000));
             }
         }
@@ -522,7 +522,7 @@ async function demonstrateNavigation() {
         navigationWorking = false;
         logger.warn(chalk.yellow('⚠️  ZPT navigation functionality is currently experiencing issues'));
         logger.info(chalk.gray(`   🔍 Error: ${error.message}`));
-        
+
         logger.info(chalk.cyan('\n📚 ZPT Navigation Overview (when working):'));
         logger.info(chalk.gray('   • Multi-dimensional knowledge graph traversal'));
         logger.info(chalk.gray('   • Zoom levels: entity → unit → text → community → corpus'));
@@ -530,7 +530,7 @@ async function demonstrateNavigation() {
         logger.info(chalk.gray('   • Tilt representations: embedding, keywords, graph, temporal'));
         logger.info(chalk.gray('   • Configurable output transformation and formatting'));
         logger.info(chalk.gray('   • Performance monitoring and diagnostics'));
-        
+
         logger.info(chalk.cyan('\n🔧 Expected navigation scenarios:'));
         NAVIGATION_SCENARIOS.forEach((scenario, index) => {
             logger.info(chalk.gray(`   ${index + 1}. ${scenario.description}`));
@@ -538,7 +538,7 @@ async function demonstrateNavigation() {
             logger.info(chalk.gray(`      → ${scenario.expectedResult}`));
         });
     }
-    
+
     if (!navigationWorking) {
         logger.info(chalk.yellow('\n💡 Note: Navigation requires corpus data, SPARQL endpoint, and LLM/embedding handlers'));
     }
@@ -549,15 +549,15 @@ async function demonstrateNavigation() {
  */
 async function checkAPIHealth() {
     logger.info(chalk.yellow('\n🏥 === API Health Check ==='));
-    
+
     try {
         const result = await makeRequest('/health');
-        
+
         if (result.status === 'healthy') {
             logger.info(chalk.green('✅ API server is healthy'));
             logger.info(chalk.gray(`   🚀 Uptime: ${Math.floor(result.uptime)}s`));
             logger.info(chalk.gray(`   📦 Version: ${result.version}`));
-            
+
             if (result.components) {
                 const zptComponents = ['llm', 'embedding', 'zpt-api'];
                 logger.info(chalk.gray('   🔧 ZPT-related components:'));
@@ -584,26 +584,26 @@ async function runZptAPIDemo() {
     logger.info(chalk.magenta('\n🎯 === HTTP ZPT API Comprehensive Demo ==='));
     logger.info(chalk.cyan(`📡 API Base URL: ${API_BASE}`));
     logger.info(chalk.cyan(`🔑 Using API Key: ${API_KEY.substring(0, 8)}...`));
-    
+
     try {
         // Step 1: Health check
         await checkAPIHealth();
-        
+
         // Step 2: Schema discovery
         await demonstrateSchemaDiscovery();
-        
+
         // Step 3: Options discovery
         await demonstrateOptionsDiscovery();
-        
+
         // Step 4: ZPT system health
         await demonstrateZPTHealth();
-        
+
         // Step 5: Navigation previews
         await demonstrateNavigationPreviews();
-        
+
         // Step 6: Full navigation
         await demonstrateNavigation();
-        
+
         logger.info(chalk.magenta('\n🎉 === Demo Complete ==='));
         logger.info(chalk.green('✅ All ZPT API operations demonstrated successfully!'));
         logger.info(chalk.cyan('\n📚 Summary of demonstrated features:'));
@@ -616,7 +616,7 @@ async function runZptAPIDemo() {
         logger.info(chalk.gray('   • Configurable output transformation'));
         logger.info(chalk.gray('   • Performance diagnostics and fallback handling'));
         logger.info(chalk.gray('   • Comprehensive error handling and progress tracking'));
-        
+
     } catch (error) {
         logger.error(chalk.red('\n💥 Demo failed with error:'));
         logger.error(chalk.red(error.message));

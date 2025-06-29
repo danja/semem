@@ -18,6 +18,16 @@ If no concepts are found then the Hyde algorithm should be run to generate a hyp
 
 --- limit reached
 
-We should now be able to do a similarity search between the initial question corpuscle and the corpuscles generated from the search result snippets, as well as matching of extract concepts. From this the URIs of related Wikipedia pages should be available. Implement the functionality of this stage in examples/beerqa/DiscoverTargets.js
+We should now be able to do a similarity search between the initial question corpuscle and the corpuscles generated from the search result snippets, as well as matching of extracte concepts. From this the URIs of related Wikipedia pages should be available. These should be added to the question corpuscle with the property ragno:maybeRelated . Implement the functionality of this stage in examples/beerqa/DiscoverTargets.js
 
-examples/wikipedia/IngestPage.js
+Next we need examples/wikipedia/IngestPages.js which will query for the ragno:maybeRelated page URIs for the given question. This will do a fetch on the URIs and send the results through src/aux/markup/HTML2MD.js The existing corpuscles with the URIs will have statements added to associate them with new ragno:TextElement instances, which will be the markdown version of the Wikipedia pages. Embeddings will be created of the Wikipedia content and associated with the corpuscle.
+
+Now ZPT tools will be used to navigate to corpuscles with the best chance of answering the question. Operations here will be implemented in examples/beerqa/Navigate.js . These corpuscles will be associated with the question corpuscle by means of ragno:Relationship entities added to the store.
+
+Finally src/ContextManager.js will be used to combine the question corpuscle with augmentation from the related corpuscles, formulated as a question and passed to the configured LLM for completion, with the final result passed back to the user. This will happen in examples/beerqa/GetResult.js 
+
+// maybe later : src/ragno/decomposeCorpus.js
+
+
+
+
