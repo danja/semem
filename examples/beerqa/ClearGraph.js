@@ -10,8 +10,10 @@
 
 import logger from 'loglevel';
 import chalk from 'chalk';
-import Config from '../../src/Config.js';
+import { createRequire } from 'module';
 import SPARQLHelper from './SPARQLHelper.js';
+
+const require = createRequire(import.meta.url);
 
 // Configure logging
 logger.setLevel('info');
@@ -36,13 +38,13 @@ function showUsage() {
     console.log(`  ${chalk.cyan('node ClearGraph.js')} [options]`);
     console.log('');
     console.log(chalk.bold.white('Options:'));
-    console.log(`  ${chalk.cyan('--graph <uri>')}      Graph URI to clear (default: http://purl.org/stuff/beerqa)`);
+    console.log(`  ${chalk.cyan('--graph <uri>')}      Graph URI to clear (default: http://purl.org/stuff/beerqa/test)`);
     console.log(`  ${chalk.cyan('--confirm')}          Skip confirmation prompt`);
     console.log(`  ${chalk.cyan('--help, -h')}         Show this help message`);
     console.log('');
     console.log(chalk.bold.white('Configuration:'));
-    console.log('  SPARQL endpoint and credentials are loaded from config/config.json');
-    console.log('  (same configuration as used by BeerETL and other Semem tools)');
+    console.log('  Uses same SPARQL endpoint and credentials as other BeerQA scripts');
+    console.log('  (https://fuseki.hyperdata.it/hyperdata.it/update with admin credentials)');
     console.log('');
     console.log(chalk.bold.white('Examples:'));
     console.log(`  ${chalk.gray('# Clear BeerQA graph (default)')}`);
@@ -59,7 +61,7 @@ function showUsage() {
 function parseArgs() {
     const args = process.argv.slice(2);
     const options = {
-        graphURI: 'http://purl.org/stuff/beerqa',
+        graphURI: 'http://purl.org/stuff/beerqa/test',
         confirm: false,
         help: false
     };
@@ -125,7 +127,7 @@ async function countTriples(queryEndpoint, auth, graphURI) {
             headers: {
                 'Content-Type': 'application/sparql-query',
                 'Accept': 'application/sparql-results+json',
-                'Authorization': `Basic ${btoa(`${auth.user}:${auth.password}`)}`
+                'Authorization': `Basic ${Buffer.from(`${auth.user}:${auth.password}`).toString('base64')}`
             },
             body: countQuery
         });
@@ -149,33 +151,29 @@ async function countTriples(queryEndpoint, auth, graphURI) {
  */
 async function clearGraph(options) {
     try {
-        // Load Semem configuration
-        console.log(chalk.yellow('⚙️  Loading Semem configuration...'));
-        const config = new Config('config/config.json');
-        await config.init();
-        console.log(chalk.green('✅ Configuration loaded successfully'));
-
-        // Get SPARQL endpoint from config (like BeerETLDemo.js)
-        const sparqlEndpoint = config.get('sparqlEndpoints.0');
-        if (!sparqlEndpoint) {
-            throw new Error('No SPARQL endpoint configured in config/config.json');
-        }
+        // Use same configuration pattern as other BeerQA scripts
+        console.log(chalk.yellow('⚙️  Loading configuration...'));
+        
+        const config = {
+            sparqlEndpoint: 'https://fuseki.hyperdata.it/hyperdata.it/update',
+            sparqlAuth: { user: 'admin', password: 'admin123' },
+            timeout: 60000
+        };
 
         const endpoint = {
-            query: `${sparqlEndpoint.urlBase}${sparqlEndpoint.query}`,
-            update: `${sparqlEndpoint.urlBase}${sparqlEndpoint.update}`
+            query: config.sparqlEndpoint.replace('/update', '/query'),
+            update: config.sparqlEndpoint
         };
 
-        const auth = {
-            user: sparqlEndpoint.user,
-            password: sparqlEndpoint.password
-        };
+        const auth = config.sparqlAuth;
 
         // Initialize SPARQL helper
         const sparqlHelper = new SPARQLHelper(endpoint.update, {
             auth: auth,
-            timeout: 60000
+            timeout: config.timeout
         });
+        
+        console.log(chalk.green('✅ Configuration loaded successfully'));
 
         // Display configuration
         console.log(chalk.bold.yellow('🔧 Configuration:'));
@@ -215,7 +213,7 @@ async function clearGraph(options) {
         console.log(chalk.yellow('🗑️  Clearing graph...'));
         const startTime = Date.now();
         
-        const clearQuery = sparqlHelper.createClearGraphQuery(options.graphURI);
+        const clearQuery = `CLEAR GRAPH <${options.graphURI}>`;
         const result = await sparqlHelper.executeUpdate(clearQuery);
         
         const duration = Date.now() - startTime;
