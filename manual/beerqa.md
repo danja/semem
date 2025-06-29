@@ -6,8 +6,7 @@ The code under `examples/beerqa` demonstrates a question-answering system that c
 
 The name comes from the dataset introduced in the paper [Answering Open-Domain Questions of Varying Reasoning Steps from Text](https://arxiv.org/abs/2010.12527)
 
-*The BeerQA paper trains a model for domain-independent question answering. The idea here is to see how far we can get using a non-specialized model augmented with Semem facilities. The training data will be used to provide examplars of the data structures required in the knowledgebase - direct and generated using the augmentation tools.  This is a kind of meta-level training, out of band for the LLMs (though LLMs will be used internally).
-Using the pattern established, it will be applied to questions from the BeerQA test data.*
+*The BeerQA paper trains a model for domain-independent question answering. The idea here is to see how far we can get using a non-specialized model augmented with Semem facilities. The training data was used to provide examplars of the data structures required in the knowledgebase - direct and generated using the augmentation tools.  This is a kind of meta-level training, out of band for the LLMs (though LLMs will be used internally). Where the system in the paper uses a vast amount of content in training a model, this is circumvented here by extracting key concepts from the question and using them to inform Wikipedia search queries (note the use of the HyDE algorthim to generate hypotheticals if the question doesn't yield concepts directly). So the conceptual model has been figured out and coded up, and can now be applied to questions from the BeerQA test data.*
 
 ## Architecture
 
