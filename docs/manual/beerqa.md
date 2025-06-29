@@ -20,4 +20,4 @@ If no concepts are found then the Hyde algorithm should be run to generate a hyp
 
 We should now be able to do a similarity search between the initial question corpuscle and the corpuscles generated from the search result snippets, as well as matching of extract concepts. From this the URIs of related Wikipedia pages should be available. Implement the functionality of this stage in examples/beerqa/DiscoverTargets.js
 
-examples/wikipedia/IngestPage.md
+examples/wikipedia/IngestPage.js

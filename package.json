@@ -77,7 +77,6 @@
     "test:integration": "vitest run --config vitest.config.js tests/integration",
     "test:watch": "vitest --config vitest.config.js",
     "test:coverage": "vitest run --config vitest.config.js --coverage",
-    
     "test:e2e": "playwright test tests/ui/",
     "test:e2e:ui": "playwright test --ui tests/ui/",
     "test:e2e:debug": "playwright test --debug tests/ui/",
@@ -85,7 +84,6 @@
     "test:e2e:update-snapshots": "playwright test --update-snapshots tests/ui/",
     "test:e2e:install": "playwright install",
     "test:e2e:install-deps": "playwright install-deps",
-    
     "test:all": "npm run test && npm run test:e2e",
     "build": "npm run types:build && npm run build:frontend",
     "build:frontend": "webpack --mode=production",
@@ -198,6 +196,7 @@
     "rdf-ext": "^2.5.2",
     "rdf-parse": "^4.0.0",
     "swagger-ui-express": "^5.0.1",
+    "turndown": "^7.2.0",
     "uuid": "^11.1.0",
     "yargs": "^17.7.2",
     "zod": "^3.25.63",
