@@ -20,7 +20,7 @@ All RDF resources use the Ragno vocabulary (`http://purl.org/stuff/ragno/`) for 
 
 ### Stage 1: Question Initialization
 
-**File**: `examples/beerqa/BeerTestQuestions.js`
+**Command**: `node examples/beerqa/BeerTestQuestions.js`
 
 **Purpose**: Creates initial question corpuscles in the knowledge graph
 
@@ -41,7 +41,7 @@ All RDF resources use the Ragno vocabulary (`http://purl.org/stuff/ragno/`) for 
 
 ### Stage 2: Question Augmentation
 
-**File**: `examples/beerqa/AugmentQuestion.js`
+**Command**: `node examples/beerqa/AugmentQuestion.js`
 
 **Purpose**: Enhances questions with vector embeddings and extracted concepts
 
@@ -64,7 +64,7 @@ All RDF resources use the Ragno vocabulary (`http://purl.org/stuff/ragno/`) for 
 
 ### Stage 3: Concept Research
 
-**File**: `examples/beerqa/QuestionResearch.js`
+**Command**: `node examples/beerqa/QuestionResearch.js`
 
 **Purpose**: Researches extracted concepts via Wikipedia search, with HyDE fallback for missing concepts
 
@@ -98,7 +98,7 @@ All RDF resources use the Ragno vocabulary (`http://purl.org/stuff/ragno/`) for 
 
 ### Stage 4: Target Discovery
 
-**File**: `examples/beerqa/DiscoverTargets.js`
+**Command**: `node examples/beerqa/DiscoverTargets.js`
 
 **Purpose**: Identifies Wikipedia targets related to questions through similarity search and concept matching
 
@@ -131,7 +131,7 @@ cosineSimilarity = dotProduct / (norm(vectorA) * norm(vectorB))
 
 ### Stage 5: Page Ingestion
 
-**File**: `examples/wikipedia/IngestPages.js`
+**Command**: `examples/wikipedia/IngestPages.js`
 
 **Purpose**: Fetches Wikipedia page content and converts to markdown with embeddings
 
@@ -160,7 +160,7 @@ cosineSimilarity = dotProduct / (norm(vectorA) * norm(vectorB))
 
 ### Stage 6: ZPT Navigation
 
-**File**: `examples/beerqa/Navigate.js`
+**Command**: `examples/beerqa/Navigate.js`
 
 **Purpose**: Uses Zoom, Pan, Tilt navigation to discover corpuscles best suited for answering questions
 
@@ -200,7 +200,7 @@ cosineSimilarity = dotProduct / (norm(vectorA) * norm(vectorB))
 
 ### Stage 7: Final Answer Generation
 
-**File**: `examples/beerqa/GetResult.js`
+**Command**: `examples/beerqa/GetResult.js`
 
 **Purpose**: Generates final answers using context-augmented LLM completion
 
