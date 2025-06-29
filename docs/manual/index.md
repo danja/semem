@@ -2,6 +2,8 @@
 
 **Semantic Web Memory for Intelligent Agents**
 
+**Status 2025-06-29 :** mostly working, many loose ends, not ready for use in the wild yet
+
 *TODO : Doc for the HyDE algorithm*
 
 ## Introduction
