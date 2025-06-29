@@ -1,8 +1,13 @@
-# BeerQA Workflow Manual
+# BeerQA Workflow 
 
 ## Overview
 
-BeerQA is a question-answering system that combines semantic web technologies (RDF/SPARQL), vector embeddings, and large language models to provide contextually-augmented answers. The system processes questions through seven sequential stages, building knowledge graphs from Wikipedia data and using Zoom, Pan, Tilt (ZPT) navigation to discover relevant information.
+The code under `examples/beerqa` demonstrates a question-answering system that combines semantic web technologies (RDF/SPARQL), vector embeddings, and large language models to provide contextually-augmented answers. The system processes questions through seven sequential stages, building knowledge graphs from Wikipedia data and using Zoom, Pan, Tilt (ZPT) navigation to discover relevant information.
+
+The name comes from the dataset introduced in the paper [Answering Open-Domain Questions of Varying Reasoning Steps from Text](https://arxiv.org/abs/2010.12527)
+
+*The BeerQA paper trains a model for domain-independent question answering. The idea here is to see how far we can get using a non-specialized model augmented with Semem facilities. The training data will be used to provide examplars of the data structures required in the knowledgebase - direct and generated using the augmentation tools.  This is a kind of meta-level training, out of band for the LLMs (though LLMs will be used internally).
+Using the pattern established, it will be applied to questions from the BeerQA test data.*
 
 ## Architecture
 
