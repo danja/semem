@@ -14,6 +14,9 @@ import chalk from 'chalk';
 import fetch from 'node-fetch';
 import Config from '../../src/Config.js';
 import LLMHandler from '../../src/handlers/LLMHandler.js';
+import OllamaConnector from '../../src/connectors/OllamaConnector.js';
+import ClaudeConnector from '../../src/connectors/ClaudeConnector.js';
+import MistralConnector from '../../src/connectors/MistralConnector.js';
 import WikipediaSearch from '../../src/aux/wikipedia/Search.js';
 import UnitsToCorpuscles from '../../src/aux/wikipedia/UnitsToCorpuscles.js';
 
@@ -256,17 +259,73 @@ class BeerQAQuestionResearch {
     }
 
     /**
+     * Create LLM connector based on configuration priority (from api-server.js)
+     */
+    async createLLMConnector(config) {
+        try {
+            // Get llmProviders with priority ordering
+            const llmProviders = config.get('llmProviders') || [];
+            
+            // Sort by priority (lower number = higher priority)
+            const sortedProviders = llmProviders
+                .filter(p => p.capabilities?.includes('chat'))
+                .sort((a, b) => (a.priority || 999) - (b.priority || 999));
+            
+            // Try providers in priority order
+            for (const provider of sortedProviders) {
+                if (provider.type === 'mistral' && provider.apiKey) {
+                    return new MistralConnector();
+                } else if (provider.type === 'claude' && provider.apiKey) {
+                    return new ClaudeConnector();
+                } else if (provider.type === 'ollama') {
+                    return new OllamaConnector();
+                }
+            }
+            
+            // Default to Ollama
+            return new OllamaConnector();
+            
+        } catch (error) {
+            logger.warn('Failed to load provider configuration, defaulting to Ollama:', error.message);
+            return new OllamaConnector();
+        }
+    }
+
+    /**
+     * Get model configuration (from api-server.js)
+     */
+    async getModelConfig(config) {
+        try {
+            const llmModel = config.get('llm.model') || 'qwen2:1.5b';
+            
+            return {
+                chatModel: llmModel
+            };
+        } catch (error) {
+            logger.warn('Failed to get model config, using defaults:', error.message);
+            return {
+                chatModel: 'qwen2:1.5b'
+            };
+        }
+    }
+
+    /**
      * Initialize LLM handler and HyDE generator
      */
     async initialize() {
         try {
-            const config = new Config();
+            // Load configuration from config.json like in api-server.js
+            const configPath = path.join(process.cwd(), 'config/config.json');
+            const config = new Config(configPath);
             await config.init();
 
             // Initialize LLM handler for HyDE
             try {
-                this.llmHandler = new LLMHandler(config);
-                await this.llmHandler.initialize();
+                // Use the new configuration pattern from api-server.js
+                const llmProvider = await this.createLLMConnector(config);
+                const modelConfig = await this.getModelConfig(config);
+                
+                this.llmHandler = new LLMHandler(llmProvider, modelConfig.chatModel);
                 this.hydeGenerator = new HyDEGenerator(this.llmHandler);
                 logger.info('LLM handler and HyDE generator initialized successfully');
             } catch (error) {

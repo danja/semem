@@ -16,6 +16,8 @@ import Config from '../../src/Config.js';
 import ContextManager from '../../src/ContextManager.js';
 import LLMHandler from '../../src/handlers/LLMHandler.js';
 import OllamaConnector from '../../src/connectors/OllamaConnector.js';
+import ClaudeConnector from '../../src/connectors/ClaudeConnector.js';
+import MistralConnector from '../../src/connectors/MistralConnector.js';
 import SPARQLHelper from './SPARQLHelper.js';
 
 // Configure logging
@@ -427,29 +429,82 @@ function displaySummary(allResults) {
 }
 
 /**
- * Initialize LLM handler
+ * Create LLM connector based on configuration priority (from api-server.js)
+ */
+async function createLLMConnector(config) {
+    try {
+        // Get llmProviders with priority ordering
+        const llmProviders = config.get('llmProviders') || [];
+        
+        // Sort by priority (lower number = higher priority)
+        const sortedProviders = llmProviders
+            .filter(p => p.capabilities?.includes('chat'))
+            .sort((a, b) => (a.priority || 999) - (b.priority || 999));
+        
+        console.log(`   Available chat providers by priority: ${sortedProviders.map(p => `${p.type} (priority: ${p.priority})`).join(', ')}`);
+        
+        // Try providers in priority order
+        for (const provider of sortedProviders) {
+            console.log(`   Trying LLM provider: ${provider.type} (priority: ${provider.priority})`);
+            
+            if (provider.type === 'mistral' && provider.apiKey) {
+                console.log('   ✅ Creating Mistral connector (highest priority)...');
+                return new MistralConnector();
+            } else if (provider.type === 'claude' && provider.apiKey) {
+                console.log('   ✅ Creating Claude connector...');
+                return new ClaudeConnector();
+            } else if (provider.type === 'ollama') {
+                console.log('   ✅ Creating Ollama connector (fallback)...');
+                return new OllamaConnector();
+            } else {
+                console.log(`   ❌ Provider ${provider.type} not available (missing API key or implementation)`);
+            }
+        }
+        
+        console.log('   ⚠️ No configured providers available, defaulting to Ollama');
+        return new OllamaConnector();
+        
+    } catch (error) {
+        console.log(`   ⚠️ Failed to load provider configuration, defaulting to Ollama: ${error.message}`);
+        return new OllamaConnector();
+    }
+}
+
+/**
+ * Get working model names from configuration (from api-server.js)
+ */
+async function getModelConfig(config) {
+    try {
+        // Get highest priority providers
+        const llmProviders = config.get('llmProviders') || [];
+        const chatProvider = llmProviders
+            .filter(p => p.capabilities?.includes('chat'))
+            .sort((a, b) => (a.priority || 999) - (b.priority || 999))[0];
+        
+        return {
+            chatModel: chatProvider?.chatModel || 'qwen2:1.5b'
+        };
+    } catch (error) {
+        console.log(`   ⚠️ Failed to get model config from configuration, using defaults: ${error.message}`);
+        return {
+            chatModel: 'qwen2:1.5b'
+        };
+    }
+}
+
+/**
+ * Initialize LLM handler using configuration-driven approach (updated from api-server.js)
  */
 async function initializeLLMHandler(config) {
     try {
         console.log(chalk.bold.white('🤖 Initializing LLM handler...'));
         
-        const ollamaBaseUrl = config.ollamaBaseUrl || 'http://localhost:11434';
+        const llmProvider = await createLLMConnector(config);
+        const modelConfig = await getModelConfig(config);
         
-        // Test Ollama connection
-        const response = await fetch(`${ollamaBaseUrl}/api/version`);
-        if (!response.ok) {
-            throw new Error(`Ollama not available at ${ollamaBaseUrl}`);
-        }
+        const llmHandler = new LLMHandler(llmProvider, modelConfig.chatModel);
         
-        const ollamaConnector = new OllamaConnector(ollamaBaseUrl, config.llmModel);
-        
-        const llmHandler = new LLMHandler(
-            ollamaConnector,
-            config.llmModel,
-            config.temperature
-        );
-        
-        console.log(`   ${chalk.green('✓')} LLM handler initialized with model: ${config.llmModel}`);
+        console.log(`   ${chalk.green('✓')} LLM handler initialized with model: ${modelConfig.chatModel}`);
         return llmHandler;
         
     } catch (error) {
@@ -465,32 +520,35 @@ async function getResults() {
     displayHeader();
     
     try {
-        // Configuration
-        const config = {
+        // Initialize configuration using the modern pattern (from api-server.js)
+        const configPath = path.join(process.cwd(), 'config/config.json');
+        const config = new Config(configPath);
+        await config.init();
+        
+        // Runtime configuration
+        const runtimeConfig = {
             sparqlEndpoint: 'https://fuseki.hyperdata.it/hyperdata.it/update',
             sparqlAuth: { user: 'admin', password: 'admin123' },
             beerqaGraphURI: 'http://purl.org/stuff/beerqa/test',
             wikipediaGraphURI: 'http://purl.org/stuff/wikipedia/test',
             maxContextTokens: 4000,
             maxContextSize: 5,
-            llmModel: 'qwen2:1.5b',
-            ollamaBaseUrl: 'http://localhost:11434',
             temperature: 0.7,
             timeout: 30000
         };
         
-        displayConfiguration(config);
+        displayConfiguration(runtimeConfig);
         
         // Initialize SPARQL helper
-        const sparqlHelper = new SPARQLHelper(config.sparqlEndpoint, {
-            auth: config.sparqlAuth,
-            timeout: config.timeout
+        const sparqlHelper = new SPARQLHelper(runtimeConfig.sparqlEndpoint, {
+            auth: runtimeConfig.sparqlAuth,
+            timeout: runtimeConfig.timeout
         });
         
         // Initialize context manager
         const contextManager = new ContextManager({
-            maxTokens: config.maxContextTokens,
-            maxContextSize: config.maxContextSize,
+            maxTokens: runtimeConfig.maxContextTokens,
+            maxContextSize: runtimeConfig.maxContextSize,
             relevanceThreshold: 0.3
         });
         
@@ -500,7 +558,7 @@ async function getResults() {
         const llmHandler = await initializeLLMHandler(config);
         
         // Get questions with relationships
-        const questions = await getQuestionsWithRelationships(sparqlHelper, config.beerqaGraphURI);
+        const questions = await getQuestionsWithRelationships(sparqlHelper, runtimeConfig.beerqaGraphURI);
         
         if (questions.length === 0) {
             console.log(chalk.yellow('⚠️  No questions with relationships found. Run Navigate.js first.'));
@@ -520,12 +578,12 @@ async function getResults() {
             
             const result = await processQuestion(
                 sparqlHelper,
-                config.beerqaGraphURI,
-                config.wikipediaGraphURI,
+                runtimeConfig.beerqaGraphURI,
+                runtimeConfig.wikipediaGraphURI,
                 question,
                 contextManager,
                 llmHandler,
-                config
+                runtimeConfig
             );
             
             allResults.push(result);

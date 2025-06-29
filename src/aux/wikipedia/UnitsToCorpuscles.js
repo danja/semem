@@ -6,12 +6,14 @@
  * from text snippets stored as ragno:Attribute instances.
  */
 
+import path from 'path';
 import fetch from 'node-fetch';
 import crypto from 'crypto';
 import logger from 'loglevel';
 import SPARQLHelper from '../../../examples/beerqa/SPARQLHelper.js';
 import Config from '../../Config.js';
 import EmbeddingHandler from '../../handlers/EmbeddingHandler.js';
+import EmbeddingConnectorFactory from '../../connectors/EmbeddingConnectorFactory.js';
 
 export default class UnitsToCorpuscles {
     /**
@@ -68,15 +70,79 @@ export default class UnitsToCorpuscles {
     }
 
     /**
+     * Create embedding connector using configuration-driven factory pattern (from api-server.js)
+     */
+    async createEmbeddingConnector(config) {
+        try {
+            const embeddingProviders = config.get('embeddingProviders') || [];
+            const sortedProviders = embeddingProviders
+                .sort((a, b) => (a.priority || 999) - (b.priority || 999));
+            
+            for (const provider of sortedProviders) {
+                if (provider.type === 'ollama') {
+                    return EmbeddingConnectorFactory.createConnector({
+                        provider: 'ollama',
+                        model: provider.model || 'nomic-embed-text',
+                        options: { baseUrl: provider.baseUrl || 'http://localhost:11434' }
+                    });
+                }
+            }
+            
+            // Default to Ollama
+            return EmbeddingConnectorFactory.createConnector({
+                provider: 'ollama',
+                model: 'nomic-embed-text',
+                options: { baseUrl: 'http://localhost:11434' }
+            });
+            
+        } catch (error) {
+            logger.warn('Failed to create embedding connector, using default:', error.message);
+            return EmbeddingConnectorFactory.createConnector({
+                provider: 'ollama',
+                model: 'nomic-embed-text',
+                options: { baseUrl: 'http://localhost:11434' }
+            });
+        }
+    }
+
+    /**
+     * Get model configuration (from api-server.js)
+     */
+    async getModelConfig(config) {
+        try {
+            const embeddingModel = config.get('embedding.model') || 'nomic-embed-text';
+            
+            return {
+                embeddingModel: embeddingModel
+            };
+        } catch (error) {
+            logger.warn('Failed to get model config, using defaults:', error.message);
+            return {
+                embeddingModel: 'nomic-embed-text'
+            };
+        }
+    }
+
+    /**
      * Initialize embedding handler
      */
     async initializeEmbeddingHandler() {
         try {
-            const config = new Config();
+            // Load configuration from config.json like in api-server.js
+            const configPath = path.join(process.cwd(), 'config/config.json');
+            const config = new Config(configPath);
             await config.init();
+
+            // Use the new configuration pattern from api-server.js
+            const embeddingProvider = await this.createEmbeddingConnector(config);
+            const modelConfig = await this.getModelConfig(config);
+            const dimension = config.get('memory.dimension') || 1536;
             
-            this.embeddingHandler = new EmbeddingHandler(config);
-            await this.embeddingHandler.initialize();
+            this.embeddingHandler = new EmbeddingHandler(
+                embeddingProvider,
+                modelConfig.embeddingModel,
+                dimension
+            );
             
             logger.info('Embedding handler initialized successfully');
         } catch (error) {

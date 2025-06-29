@@ -11,9 +11,6 @@ import path from 'path';
 import logger from 'loglevel';
 import chalk from 'chalk';
 import fetch from 'node-fetch';
-import Config from '../../src/Config.js';
-import EmbeddingHandler from '../../src/handlers/EmbeddingHandler.js';
-import OllamaConnector from '../../src/connectors/OllamaConnector.js';
 import SPARQLHelper from './SPARQLHelper.js';
 
 // Configure logging
@@ -85,15 +82,19 @@ WHERE {
         ?corpuscle a ragno:Corpuscle ;
                   rdfs:label ?questionText .
         
-        OPTIONAL { ?corpuscle ragno:embedding ?embedding }
+        OPTIONAL {
+            ?corpuscle ragno:hasAttribute ?embAttr .
+            ?embAttr ragno:attributeType "vector-embedding" ;
+                     ragno:attributeValue ?embedding .
+        }
         
         OPTIONAL {
-            ?corpuscle ragno:hasAttribute ?attr .
-            ?attr ragno:attributeType "concept" ;
-                  ragno:attributeValue ?conceptValue .
+            ?corpuscle ragno:hasAttribute ?conceptAttr .
+            ?conceptAttr ragno:attributeType "concept" ;
+                        ragno:attributeValue ?conceptValue .
             
-            OPTIONAL { ?attr ragno:attributeConfidence ?conceptConfidence }
-            OPTIONAL { ?attr ragno:attributeSubType ?conceptType }
+            OPTIONAL { ?conceptAttr ragno:confidence ?conceptConfidence }
+            OPTIONAL { ?conceptAttr ragno:conceptType ?conceptType }
         }
     }
 }
@@ -291,7 +292,7 @@ ORDER BY ?corpuscle ?conceptValue
 /**
  * Find similar Wikipedia corpuscles using embedding similarity
  */
-function findSimilarCorpuscles(questionCorpuscle, wikipediaCorpuscles, threshold = 0.7, maxResults = 10) {
+function findSimilarCorpuscles(questionCorpuscle, wikipediaCorpuscles, threshold = 0.3, maxResults = 15) {
     if (!questionCorpuscle.embedding) {
         return [];
     }
@@ -316,9 +317,53 @@ function findSimilarCorpuscles(questionCorpuscle, wikipediaCorpuscles, threshold
 }
 
 /**
+ * Calculate string similarity using Levenshtein distance
+ */
+function calculateStringSimilarity(str1, str2) {
+    const longer = str1.length > str2.length ? str1 : str2;
+    const shorter = str1.length > str2.length ? str2 : str1;
+    
+    if (longer.length === 0) return 1.0;
+    
+    const editDistance = levenshteinDistance(longer, shorter);
+    return (longer.length - editDistance) / longer.length;
+}
+
+/**
+ * Calculate Levenshtein distance between two strings
+ */
+function levenshteinDistance(str1, str2) {
+    const matrix = [];
+    
+    for (let i = 0; i <= str2.length; i++) {
+        matrix[i] = [i];
+    }
+    
+    for (let j = 0; j <= str1.length; j++) {
+        matrix[0][j] = j;
+    }
+    
+    for (let i = 1; i <= str2.length; i++) {
+        for (let j = 1; j <= str1.length; j++) {
+            if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
+                matrix[i][j] = matrix[i - 1][j - 1];
+            } else {
+                matrix[i][j] = Math.min(
+                    matrix[i - 1][j - 1] + 1, // substitution
+                    matrix[i][j - 1] + 1,     // insertion
+                    matrix[i - 1][j] + 1      // deletion
+                );
+            }
+        }
+    }
+    
+    return matrix[str2.length][str1.length];
+}
+
+/**
  * Find Wikipedia corpuscles with matching concepts
  */
-function findMatchingConcepts(questionCorpuscle, wikipediaConcepts, threshold = 0.8) {
+function findMatchingConcepts(questionCorpuscle, wikipediaConcepts, threshold = 0.4) {
     if (questionCorpuscle.concepts.length === 0) {
         return [];
     }
@@ -331,8 +376,11 @@ function findMatchingConcepts(questionCorpuscle, wikipediaConcepts, threshold = 
         
         for (const questionConcept of questionCorpuscle.concepts) {
             for (const wikiConcept of wikiConceptList) {
+                const qLower = questionConcept.value.toLowerCase();
+                const wLower = wikiConcept.value.toLowerCase();
+                
                 // Exact match
-                if (questionConcept.value.toLowerCase() === wikiConcept.value.toLowerCase()) {
+                if (qLower === wLower) {
                     bestMatch = Math.max(bestMatch, 1.0);
                     matchedConcepts.push({
                         question: questionConcept,
@@ -341,14 +389,26 @@ function findMatchingConcepts(questionCorpuscle, wikipediaConcepts, threshold = 
                     });
                 }
                 // Partial match (one contains the other)
-                else if (questionConcept.value.toLowerCase().includes(wikiConcept.value.toLowerCase()) ||
-                         wikiConcept.value.toLowerCase().includes(questionConcept.value.toLowerCase())) {
-                    bestMatch = Math.max(bestMatch, 0.8);
+                else if (qLower.includes(wLower) || wLower.includes(qLower)) {
+                    bestMatch = Math.max(bestMatch, 0.7);  // Lowered from 0.8
                     matchedConcepts.push({
                         question: questionConcept,
                         wikipedia: wikiConcept,
                         matchType: 'partial'
                     });
+                }
+                // Fuzzy similarity match (for related terms)
+                else {
+                    const similarity = calculateStringSimilarity(qLower, wLower);
+                    if (similarity >= 0.5) {  // At least 50% similar
+                        bestMatch = Math.max(bestMatch, similarity * 0.6); // Scale similarity to max 0.6
+                        matchedConcepts.push({
+                            question: questionConcept,
+                            wikipedia: wikiConcept,
+                            matchType: 'fuzzy',
+                            similarity: similarity
+                        });
+                    }
                 }
             }
         }
@@ -467,10 +527,10 @@ async function discoverTargets() {
             sparqlEndpoint: 'https://fuseki.hyperdata.it/hyperdata.it/update',
             sparqlAuth: { user: 'admin', password: 'admin123' },
             beerqaGraphURI: 'http://purl.org/stuff/beerqa/test',
-            wikipediaGraphURI: 'http://purl.org/stuff/wikipedia/test',
-            similarityThreshold: 0.7,
-            conceptMatchThreshold: 0.8,
-            maxRelatedTargets: 10,
+            wikipediaGraphURI: 'http://purl.org/stuff/wikipedia/test',  // Back to test graph where embeddings exist
+            similarityThreshold: 0.3,        // Lowered from 0.7 to catch weaker similarities
+            conceptMatchThreshold: 0.4,      // Lowered from 0.8 to catch partial concept matches
+            maxRelatedTargets: 15,            // Increased from 10 to capture more potential matches
             timeout: 30000
         };
         
