@@ -118,7 +118,7 @@ export default class Config {
             this.applyEnvironmentOverrides()
             this.validateConfig()
 
-            console.log('Final config after overrides and validation:', JSON.stringify(this.config, null, 2))
+            // console.log('Final config after overrides and validation:', JSON.stringify(this.config, null, 2))
         } catch (error) {
             console.error('Config initialization error details:', error);
             console.error('Error stack:', error.stack);

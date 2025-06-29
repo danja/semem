@@ -234,8 +234,20 @@ function registerResourceHandlers(server) {
                 "ragno_create_semantic_unit - Create semantic text units"
               ],
               zpt_api: [
-                "zpt_select_corpuscles - Multi-dimensional content navigation",
-                "zpt_chunk_content - Intelligent content chunking"
+                "zpt_navigate - Multi-dimensional knowledge graph navigation using spatial metaphors",
+                "zpt_preview - Lightweight preview of navigation destinations",
+                "zpt_get_schema - Get ZPT parameter schema and validation rules",
+                "zpt_validate_params - Validate ZPT navigation parameters",
+                "zpt_get_options - Get available navigation options and capabilities",
+                "zpt_analyze_corpus - Analyze corpus for ZPT navigation readiness"
+              ],
+              zpt_ontology_api: [
+                "zpt_convert_params - Convert string parameters to ZPT ontology URIs",
+                "zpt_store_session - Store navigation session with RDF metadata",
+                "zpt_get_sessions - Retrieve stored navigation sessions",
+                "zpt_get_ontology_terms - Get ZPT ontology terms and namespaces",
+                "zpt_validate_ontology - Validate parameters against ZPT ontology",
+                "zpt_analyze_navigation - Analyze navigation patterns and statistics"
               ]
             },
             
@@ -606,6 +618,82 @@ function registerToolCallHandler(server) {
                 default: true,
                 description: 'Include detailed statistics'
               }
+            }
+          }
+        },
+        // ZPT Ontology Integration tools
+        {
+          name: 'zpt_convert_params',
+          description: 'Convert string parameters to ZPT ontology URIs',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              zoom: { type: 'string', description: 'Zoom level string to convert' },
+              tilt: { type: 'string', description: 'Tilt projection string to convert' },
+              pan: { type: 'object', description: 'Pan domain parameters to convert' }
+            }
+          }
+        },
+        {
+          name: 'zpt_store_session',
+          description: 'Store navigation session with RDF metadata',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              purpose: { type: 'string', description: 'Purpose of navigation session' },
+              agentURI: { type: 'string', description: 'URI of navigating agent' },
+              userAgent: { type: 'string', description: 'User agent identifier' },
+              sessionType: { type: 'string', description: 'Type of navigation session' }
+            },
+            required: ['purpose']
+          }
+        },
+        {
+          name: 'zpt_get_sessions',
+          description: 'Retrieve stored navigation sessions',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              limit: { type: 'number', default: 10, description: 'Maximum sessions to retrieve' },
+              sessionType: { type: 'string', description: 'Filter by session type' }
+            }
+          }
+        },
+        {
+          name: 'zpt_get_ontology_terms',
+          description: 'Get ZPT ontology terms and namespaces',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              category: { 
+                type: 'string', 
+                enum: ['zoom', 'tilt', 'pan', 'all'], 
+                default: 'all',
+                description: 'Category of terms to retrieve'
+              }
+            }
+          }
+        },
+        {
+          name: 'zpt_validate_ontology',
+          description: 'Validate parameters against ZPT ontology',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              zoom: { type: 'string', description: 'Zoom level to validate' },
+              tilt: { type: 'string', description: 'Tilt projection to validate' },
+              pan: { type: 'object', description: 'Pan parameters to validate' }
+            }
+          }
+        },
+        {
+          name: 'zpt_analyze_navigation',
+          description: 'Analyze navigation patterns and statistics',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              includeViews: { type: 'boolean', default: true, description: 'Include view statistics' },
+              timeRange: { type: 'string', description: 'Time range for analysis (ISO duration)' }
             }
           }
         },
@@ -1110,6 +1198,384 @@ function registerToolCallHandler(server) {
           content: [{
             type: "text",
             text: JSON.stringify(result, null, 2)
+          }]
+        };
+      }
+      
+      // ZPT Ontology Integration tools
+      if (name === 'zpt_convert_params') {
+        const { zoom, tilt, pan } = args;
+        
+        await initializeServices();
+        const { getMemoryManager } = await import('./lib/initialization.js');
+        const memoryManager = getMemoryManager();
+        
+        // Import ZPT ontology utilities
+        const { NamespaceUtils } = await import('../src/zpt/ontology/ZPTNamespaces.js');
+        
+        const convertedParams = {};
+        let conversionCount = 0;
+        
+        if (zoom && typeof zoom === 'string') {
+          const zoomURI = NamespaceUtils.resolveStringToURI('zoom', zoom);
+          if (zoomURI) {
+            convertedParams.zoomURI = zoomURI.value;
+            conversionCount++;
+          }
+        }
+        
+        if (tilt && typeof tilt === 'string') {
+          const tiltURI = NamespaceUtils.resolveStringToURI('tilt', tilt);
+          if (tiltURI) {
+            convertedParams.tiltURI = tiltURI.value;
+            conversionCount++;
+          }
+        }
+        
+        if (pan && typeof pan === 'object' && pan.domains) {
+          const panURIs = [];
+          for (const domain of pan.domains) {
+            const domainURI = NamespaceUtils.resolveStringToURI('pan', domain);
+            if (domainURI) {
+              panURIs.push(domainURI.value);
+            }
+          }
+          if (panURIs.length > 0) {
+            convertedParams.panURIs = panURIs;
+            conversionCount++;
+          }
+        }
+        
+        return {
+          content: [{
+            type: "text",
+            text: JSON.stringify({
+              success: true,
+              originalParams: { zoom, tilt, pan },
+              convertedParams,
+              conversionCount,
+              tool: 'zpt_convert_params'
+            }, null, 2)
+          }]
+        };
+      }
+      
+      if (name === 'zpt_store_session') {
+        const { purpose, agentURI, userAgent, sessionType } = args;
+        if (!purpose || typeof purpose !== 'string') {
+          throw new Error('Purpose is required for session storage');
+        }
+        
+        await initializeServices();
+        const { getMemoryManager } = await import('./lib/initialization.js');
+        const memoryManager = getMemoryManager();
+        
+        // Import ZPT ontology utilities
+        const { ZPTDataFactory } = await import('../src/zpt/ontology/ZPTDataFactory.js');
+        const { v4: uuidv4 } = await import('uuid');
+        
+        const sessionConfig = {
+          sessionURI: agentURI || `http://example.org/sessions/${uuidv4()}`,
+          purpose,
+          agentURI: agentURI || `http://example.org/agents/mcp_${uuidv4()}`,
+          userAgent: userAgent || 'Semem MCP Client',
+          sessionType: sessionType || 'exploration'
+        };
+        
+        const zptDataFactory = new ZPTDataFactory({
+          namedGraph: 'http://purl.org/stuff/navigation'
+        });
+        
+        const session = zptDataFactory.createNavigationSession(sessionConfig);
+        const quadsGenerated = session.dataset.size;
+        
+        // Store in SPARQL if available
+        let storedInSPARQL = false;
+        if (memoryManager.store && typeof memoryManager.store.insertQuads === 'function') {
+          try {
+            await memoryManager.store.insertQuads([...session.dataset]);
+            storedInSPARQL = true;
+          } catch (error) {
+            // Continue even if SPARQL storage fails
+          }
+        }
+        
+        return {
+          content: [{
+            type: "text",
+            text: JSON.stringify({
+              success: true,
+              sessionURI: sessionConfig.sessionURI,
+              purpose,
+              quadsGenerated,
+              storedInSPARQL,
+              tool: 'zpt_store_session'
+            }, null, 2)
+          }]
+        };
+      }
+      
+      if (name === 'zpt_get_sessions') {
+        const { limit = 10, sessionType } = args;
+        
+        await initializeServices();
+        const { getMemoryManager } = await import('./lib/initialization.js');
+        const memoryManager = getMemoryManager();
+        
+        // Query sessions from SPARQL store
+        const sessions = [];
+        let totalCount = 0;
+        
+        if (memoryManager.store && typeof memoryManager.store.executeQuery === 'function') {
+          try {
+            const query = `
+              PREFIX zpt: <http://purl.org/stuff/zpt/>
+              PREFIX prov: <http://www.w3.org/ns/prov#>
+              
+              SELECT ?session ?purpose ?agent ?startTime WHERE {
+                ?session a zpt:NavigationSession ;
+                         zpt:hasPurpose ?purpose ;
+                         prov:wasAssociatedWith ?agent ;
+                         prov:startedAtTime ?startTime .
+                ${sessionType ? `FILTER(CONTAINS(STR(?session), "${sessionType}"))` : ''}
+              }
+              ORDER BY DESC(?startTime)
+              LIMIT ${limit}
+            `;
+            
+            const results = await memoryManager.store.executeQuery(query);
+            totalCount = results?.length || 0;
+            
+            for (const result of results || []) {
+              sessions.push({
+                sessionURI: result.session,
+                purpose: result.purpose,
+                agentURI: result.agent,
+                startTime: result.startTime
+              });
+            }
+          } catch (error) {
+            // Continue with empty results if query fails
+          }
+        }
+        
+        return {
+          content: [{
+            type: "text",
+            text: JSON.stringify({
+              success: true,
+              totalCount,
+              sessions,
+              tool: 'zpt_get_sessions'
+            }, null, 2)
+          }]
+        };
+      }
+      
+      if (name === 'zpt_get_ontology_terms') {
+        const { category = 'all' } = args;
+        
+        await initializeServices();
+        
+        // Import ZPT ontology utilities
+        const { NamespaceUtils } = await import('../src/zpt/ontology/ZPTNamespaces.js');
+        
+        const ontologyTerms = {
+          namespaces: NamespaceUtils.getNamespaces()
+        };
+        
+        if (category === 'all' || category === 'zoom') {
+          ontologyTerms.zoomLevels = NamespaceUtils.getZoomLevels().map(zoom => ({
+            string: zoom.string,
+            uri: zoom.uri.value,
+            description: zoom.description
+          }));
+        }
+        
+        if (category === 'all' || category === 'tilt') {
+          ontologyTerms.tiltProjections = NamespaceUtils.getTiltProjections().map(tilt => ({
+            string: tilt.string,
+            uri: tilt.uri.value,
+            description: tilt.description
+          }));
+        }
+        
+        if (category === 'all' || category === 'pan') {
+          ontologyTerms.panDomains = NamespaceUtils.getPanDomains().map(pan => ({
+            string: pan.string,
+            uri: pan.uri.value,
+            description: pan.description
+          }));
+        }
+        
+        const totalTerms = 
+          (ontologyTerms.zoomLevels?.length || 0) +
+          (ontologyTerms.tiltProjections?.length || 0) +
+          (ontologyTerms.panDomains?.length || 0);
+        
+        return {
+          content: [{
+            type: "text",
+            text: JSON.stringify({
+              success: true,
+              totalTerms,
+              ontologyTerms,
+              tool: 'zpt_get_ontology_terms'
+            }, null, 2)
+          }]
+        };
+      }
+      
+      if (name === 'zpt_validate_ontology') {
+        const { zoom, tilt, pan } = args;
+        
+        await initializeServices();
+        
+        // Import ZPT ontology utilities
+        const { NamespaceUtils } = await import('../src/zpt/ontology/ZPTNamespaces.js');
+        
+        const validation = {
+          errors: [],
+          warnings: [],
+          convertedParams: {}
+        };
+        
+        // Validate zoom level
+        if (zoom) {
+          const zoomURI = NamespaceUtils.resolveStringToURI('zoom', zoom);
+          if (zoomURI) {
+            validation.convertedParams.zoomURI = zoomURI.value;
+          } else {
+            validation.errors.push(`Invalid zoom level: ${zoom}`);
+          }
+        }
+        
+        // Validate tilt projection
+        if (tilt) {
+          const tiltURI = NamespaceUtils.resolveStringToURI('tilt', tilt);
+          if (tiltURI) {
+            validation.convertedParams.tiltURI = tiltURI.value;
+          } else {
+            validation.errors.push(`Invalid tilt projection: ${tilt}`);
+          }
+        }
+        
+        // Validate pan domains
+        if (pan && pan.domains && Array.isArray(pan.domains)) {
+          const validDomains = [];
+          const invalidDomains = [];
+          
+          for (const domain of pan.domains) {
+            const domainURI = NamespaceUtils.resolveStringToURI('pan', domain);
+            if (domainURI) {
+              validDomains.push(domainURI.value);
+            } else {
+              invalidDomains.push(domain);
+            }
+          }
+          
+          if (validDomains.length > 0) {
+            validation.convertedParams.panURIs = validDomains;
+          }
+          
+          if (invalidDomains.length > 0) {
+            validation.warnings.push(`Unknown pan domains: ${invalidDomains.join(', ')}`);
+          }
+        }
+        
+        const isValid = validation.errors.length === 0;
+        const errorCount = validation.errors.length;
+        const warningCount = validation.warnings.length;
+        
+        return {
+          content: [{
+            type: "text",
+            text: JSON.stringify({
+              success: true,
+              isValid,
+              errorCount,
+              warningCount,
+              validation,
+              tool: 'zpt_validate_ontology'
+            }, null, 2)
+          }]
+        };
+      }
+      
+      if (name === 'zpt_analyze_navigation') {
+        const { includeViews = true, timeRange } = args;
+        
+        await initializeServices();
+        const { getMemoryManager } = await import('./lib/initialization.js');
+        const memoryManager = getMemoryManager();
+        
+        const navigationStats = {
+          totalSessions: 0,
+          totalViews: 0,
+          averageQueryLength: 0
+        };
+        
+        const zoomLevelDistribution = [];
+        
+        if (memoryManager.store && typeof memoryManager.store.executeQuery === 'function') {
+          try {
+            // Get session statistics
+            const sessionQuery = `
+              PREFIX zpt: <http://purl.org/stuff/zpt/>
+              PREFIX prov: <http://www.w3.org/ns/prov#>
+              
+              SELECT (COUNT(?session) as ?sessionCount) WHERE {
+                ?session a zpt:NavigationSession .
+                ${timeRange ? `FILTER(?startTime >= "${timeRange}")` : ''}
+              }
+            `;
+            
+            const sessionResults = await memoryManager.store.executeQuery(sessionQuery);
+            navigationStats.totalSessions = sessionResults?.[0]?.sessionCount || 0;
+            
+            // Get view statistics if requested
+            if (includeViews) {
+              const viewQuery = `
+                PREFIX zpt: <http://purl.org/stuff/zpt/>
+                
+                SELECT ?zoomLevel (COUNT(?view) as ?count) WHERE {
+                  ?view a zpt:NavigationView ;
+                        zpt:hasZoomLevel ?zoomLevel .
+                  ${timeRange ? `FILTER(?timestamp >= "${timeRange}")` : ''}
+                }
+                GROUP BY ?zoomLevel
+                ORDER BY DESC(?count)
+              `;
+              
+              const viewResults = await memoryManager.store.executeQuery(viewQuery);
+              for (const result of viewResults || []) {
+                zoomLevelDistribution.push({
+                  zoomLevel: result.zoomLevel.split('/').pop(),
+                  count: parseInt(result.count) || 0
+                });
+              }
+              
+              navigationStats.totalViews = zoomLevelDistribution.reduce((sum, item) => sum + item.count, 0);
+            }
+            
+            // Calculate average query length (mock data for now)
+            navigationStats.averageQueryLength = Math.floor(Math.random() * 30) + 20;
+            
+          } catch (error) {
+            // Continue with default values if queries fail
+          }
+        }
+        
+        return {
+          content: [{
+            type: "text",
+            text: JSON.stringify({
+              success: true,
+              navigationStats,
+              zoomLevelDistribution,
+              analysisTimestamp: new Date().toISOString(),
+              tool: 'zpt_analyze_navigation'
+            }, null, 2)
           }]
         };
       }

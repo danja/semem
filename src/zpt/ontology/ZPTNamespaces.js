@@ -461,6 +461,111 @@ export const NamespaceUtils = {
             errors,
             warnings
         };
+    },
+    
+    /**
+     * Get namespace mappings for API responses
+     * @returns {Object} Namespace prefix to URI mappings
+     */
+    getNamespaces() {
+        return SPARQL_PREFIXES;
+    },
+    
+    /**
+     * Get zoom levels with descriptions for API responses
+     * @returns {Array} Array of zoom level objects with string, uri, and description
+     */
+    getZoomLevels() {
+        return [
+            {
+                string: 'entity',
+                uri: ZPT_TERMS.EntityLevel,
+                description: 'Individual concepts and named entities'
+            },
+            {
+                string: 'unit',
+                uri: ZPT_TERMS.UnitLevel,
+                description: 'Semantic units and text passages'
+            },
+            {
+                string: 'text',
+                uri: ZPT_TERMS.TextLevel,
+                description: 'Raw text elements and fragments'
+            },
+            {
+                string: 'community',
+                uri: ZPT_TERMS.CommunityLevel,
+                description: 'Topic clusters and concept groups'
+            },
+            {
+                string: 'corpus',
+                uri: ZPT_TERMS.CorpusLevel,
+                description: 'Entire corpus view'
+            },
+            {
+                string: 'micro',
+                uri: ZPT_TERMS.TextLevel, // Alias for text level
+                description: 'Sub-entity components'
+            }
+        ];
+    },
+    
+    /**
+     * Get tilt projections with descriptions for API responses
+     * @returns {Array} Array of tilt projection objects with string, uri, and description
+     */
+    getTiltProjections() {
+        return [
+            {
+                string: 'keywords',
+                uri: ZPT_TERMS.KeywordProjection,
+                description: 'Keyword-based analysis and matching'
+            },
+            {
+                string: 'embedding',
+                uri: ZPT_TERMS.EmbeddingProjection,
+                description: 'Vector similarity using embeddings'
+            },
+            {
+                string: 'graph',
+                uri: ZPT_TERMS.GraphProjection,
+                description: 'Graph structure and connectivity analysis'
+            },
+            {
+                string: 'temporal',
+                uri: ZPT_TERMS.TemporalProjection,
+                description: 'Time-based organization and sequencing'
+            }
+        ];
+    },
+    
+    /**
+     * Get pan domains with descriptions for API responses
+     * @returns {Array} Array of pan domain objects with string, uri, and description
+     */
+    getPanDomains() {
+        return [
+            {
+                string: 'topic',
+                uri: ZPT_TERMS.TopicDomain,
+                description: 'Subject/topic constraints'
+            },
+            {
+                string: 'entity',
+                uri: ZPT_TERMS.EntityDomain,
+                description: 'Entity-based filtering'
+            },
+            {
+                string: 'temporal',
+                uri: ZPT_TERMS.TemporalDomain,
+                description: 'Time period constraints'
+            },
+            {
+                string: 'geographic',
+                uri: ZPT_TERMS.GeospatialDomain,
+                description: 'Location-based filtering'
+            }
+        ];
     }
 };
 

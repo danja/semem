@@ -42,13 +42,21 @@ This MCP (Model Context Protocol) server provides access to Semem core, Ragno kn
 - `vsom_list_instances` - Manage multiple VSOM instances
 - `vsom_generate_sample_data` - Create test data for experimentation
 
-### 🗺️ ZPT (Zoom, Pan, Tilt) Navigation Tools (6 tools)
+### 🗺️ ZPT (Zoom, Pan, Tilt) Navigation Tools (12 tools)
 - `zpt_navigate` - 3-dimensional knowledge navigation using spatial metaphors
 - `zpt_preview` - Preview navigation options without full processing
 - `zpt_get_schema` - Get complete ZPT parameter schema
 - `zpt_validate_params` - Validate parameters with detailed error reporting
 - `zpt_get_options` - Get available parameter values for current context
 - `zpt_analyze_corpus` - Analyze corpus structure for navigation optimization
+
+#### 🌐 ZPT Ontology Integration Tools (6 tools) - **NEW!**
+- `zpt_convert_params` - Convert string parameters to ZPT ontology URIs
+- `zpt_store_session` - Store navigation session with RDF metadata and provenance
+- `zpt_get_sessions` - Retrieve stored navigation sessions from SPARQL
+- `zpt_get_ontology_terms` - Get ZPT ontology terms, namespaces, and descriptions
+- `zpt_validate_ontology` - Validate parameters against formal ZPT ontology
+- `zpt_analyze_navigation` - Analyze navigation patterns and usage statistics
 
 ### 🔬 Research Workflow Tools (6 tools)
 - `research_ingest_documents` - Ingest research documents with SPARQL persistence
@@ -63,7 +71,7 @@ This MCP (Model Context Protocol) server provides access to Semem core, Ragno kn
 - `semem://graph/schema` - RDF graph schema and ontology documentation  
 - `semem://docs/api` - Complete API documentation
 
-**Total: 45+ MCP Tools Available**
+**Total: 51+ MCP Tools Available**
 
 ## Usage
 
@@ -160,6 +168,54 @@ The server requires:
 }
 ```
 
+#### ZPT Navigation with Spatial Metaphors
+```json
+{
+  "name": "zpt_navigate",
+  "arguments": {
+    "query": "artificial intelligence applications",
+    "zoom": "entity",
+    "tilt": "embedding",
+    "pan": {"domains": ["technology", "research"]}
+  }
+}
+```
+
+#### ZPT Ontology Integration - Convert Parameters to URIs
+```json
+{
+  "name": "zpt_convert_params",
+  "arguments": {
+    "zoom": "entity",
+    "tilt": "embedding", 
+    "pan": {"domains": ["ai", "science"]}
+  }
+}
+```
+
+#### ZPT Ontology Integration - Store Navigation Session
+```json
+{
+  "name": "zpt_store_session",
+  "arguments": {
+    "purpose": "Research exploration of AI applications",
+    "agentURI": "http://example.org/agents/researcher_001",
+    "userAgent": "Claude Desktop Research Session",
+    "sessionType": "exploration"
+  }
+}
+```
+
+#### ZPT Ontology Integration - Get Ontology Terms
+```json
+{
+  "name": "zpt_get_ontology_terms",
+  "arguments": {
+    "category": "all"
+  }
+}
+```
+
 ## Integration
 
 ### Claude Desktop
@@ -240,6 +296,23 @@ Vector Self-Organizing Maps for advanced entity clustering and visualization:
 - **Visualization**: Generate grid data and feature maps for visualization
 - **Topology Analysis**: Analyze map quality, distortions, and neighborhood structure
 
+### 🌐 ZPT Ontology Integration Features - **NEW!**
+Formal semantic web compliance with ZPT ontology integration for knowledge navigation:
+
+- **String-to-URI Conversion**: Seamlessly convert user-friendly strings to formal ZPT ontology URIs
+- **Navigation Session Management**: Store navigation sessions as RDF with W3C PROV-O provenance tracking
+- **Ontology Term Discovery**: Access complete ZPT ontology with descriptions and namespace mappings  
+- **Parameter Validation**: Validate navigation parameters against formal ontology definitions
+- **Usage Analytics**: Analyze navigation patterns and generate usage statistics from RDF metadata
+- **SPARQL Integration**: Full integration with existing SPARQL storage for RDF persistence
+
+#### Key Capabilities:
+- **14 Ontology Terms**: 6 zoom levels, 4 tilt projections, 4 pan domains with formal semantics
+- **9 Namespace Mappings**: Complete integration with ZPT, Ragno, RDF, RDFS, OWL, XSD, SKOS, PROV-O, and DC Terms
+- **RDF Metadata Storage**: Navigation sessions stored as linked data with temporal provenance
+- **Backward Compatibility**: Works alongside existing string-based ZPT tools without breaking changes
+- **Semantic Web Standards**: Full W3C RDF/SPARQL compliance for interoperability
+
 ## Architecture
 
 The MCP server acts as a bridge between the MCP protocol and the comprehensive Semem ecosystem:
@@ -271,9 +344,12 @@ MCP Client → MCP Server → Memory Management (Semem Core)
 - **Comprehensive Coverage**: Full Semem ecosystem now accessible
 
 ### 🔧 Recent Major Updates
+- **Added ZPT Ontology Integration**: 6 new tools for semantic web compliance and formal navigation
 - **Added Ragno Tools**: Complete knowledge graph construction and analysis
 - **Added SPARQL Tools**: Advanced graph operations and management
 - **Added VSOM Tools**: Entity clustering and visualization capabilities
+- **Enhanced Parameter Validation**: Formal ontology-based validation with detailed error reporting
+- **RDF Metadata Storage**: Navigation sessions stored as linked data with provenance tracking
 - **Removed Obsolete Files**: Cleaned up legacy and test files
 - **Updated Registration**: All new tools properly integrated
 
@@ -295,11 +371,12 @@ MCP Client → MCP Server → Memory Management (Semem Core)
 - 5 Memory management tools
 - 6 ZPT navigation tools
 
-**Added tools**: 25 total
+**Added tools**: 31 total
 - 8 Ragno knowledge graph tools
 - 8 Advanced SPARQL operation tools  
 - 9 VSOM clustering tools
+- 6 ZPT ontology integration tools (NEW!)
 
-**Current total**: 45+ MCP tools covering the complete Semem ecosystem
+**Current total**: 51+ MCP tools covering the complete Semem ecosystem
 
-This comprehensive expansion means AI agents now have access to the full power of Semem's semantic memory management, knowledge graph construction, advanced graph operations, entity clustering, and spatial navigation capabilities.
+This comprehensive expansion means AI agents now have access to the full power of Semem's semantic memory management, knowledge graph construction, advanced graph operations, entity clustering, spatial navigation capabilities, and formal semantic web integration with ontology-driven navigation.
