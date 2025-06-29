@@ -15,6 +15,10 @@ The system provides multiple interfaces (direct SDK, HTTP API, MCP protocol, web
 
 ## Contents
 
+### Demonstrator
+
+The code under `examples/beerqa` implements a question-answering workflow that combines semantic web technologies (RDF/SPARQL), vector embeddings, and large language models to provide contextually-augmented answers. It uses SDK facilities directly through a series of individual node scripts (*less to go wrong*). 
+
 ### Core Configuration and Setup
 
 **[config.md](config.md)** - Complete system configuration guide covering config.json and .env setup, storage backends (memory, JSON, SPARQL), LLM provider configuration (Mistral, Claude, Ollama, Nomic), server deployment (SDK, HTTP API, MCP, UI), and production deployment patterns.
