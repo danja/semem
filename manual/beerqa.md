@@ -1,5 +1,7 @@
 # BeerQA Workflow 
 
+More sophisticated version : [beerqa-2.md](beerqa-2.md)
+
 **Status 2025-06-29 :** the workflow is functional but the approach will need adjusting before it'll signs of usefulness
 
 ## Overview
