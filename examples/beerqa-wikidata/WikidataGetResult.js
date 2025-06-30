@@ -136,7 +136,7 @@ ORDER BY ?question DESC(?weight)`;
 /**
  * Retrieve enhanced context for entities from multiple sources
  */
-async function getEnhancedEntityContext(entityURIs, sparqlHelper, config) {
+async function getEnhancedEntityContext(entityURIs, question, sparqlHelper, config) {
     const contextSources = {
         wikipedia: [],
         wikidata: [],
@@ -208,8 +208,18 @@ SELECT ?entity ?label ?wikidataId ?description WHERE {
         }
     }
 
-    // Get BeerQA context (if any entities are from BeerQA)
-    if (entityURIs.length > 0) {
+    // Get BeerQA context - include both target entities and the source question
+    const beerqaURIs = entityURIs.filter(uri => uri.includes('beerqa'));
+    const allBeerQAURIs = [...beerqaURIs];
+    
+    // Also include the source question URI 
+    if (question && question.uri) {
+        allBeerQAURIs.push(question.uri);
+    }
+    
+    if (allBeerQAURIs.length > 0) {
+        console.log(chalk.dim(`   🔍 Querying ${allBeerQAURIs.length} BeerQA URIs`));
+        
         const beerqaQuery = `
 PREFIX ragno: <http://purl.org/stuff/ragno/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -221,7 +231,7 @@ SELECT ?entity ?label ?content WHERE {
         
         OPTIONAL { ?entity ragno:content ?content }
         
-        FILTER(?entity IN (${entityURIs.map(uri => `<${uri}>`).join(', ')}))
+        FILTER(?entity IN (${allBeerQAURIs.map(uri => `<${uri}>`).join(', ')}))
     }
 }`;
 
@@ -362,7 +372,7 @@ async function processQuestionForAnswer(question, sparqlHelper, llmHandler, conf
         console.log(chalk.white(`   📊 Context sources: ${entityURIs.length} entities, ${question.relationships.length} relationships`));
         
         // Retrieve enhanced context from multiple sources
-        const contextSources = await getEnhancedEntityContext(entityURIs, sparqlHelper, config);
+        const contextSources = await getEnhancedEntityContext(entityURIs, question, sparqlHelper, config);
         
         console.log(chalk.gray(`   🔍 Context retrieved: ${contextSources.wikidata.length} Wikidata + ${contextSources.wikipedia.length} Wikipedia + ${contextSources.beerqa.length} BeerQA`));
         
