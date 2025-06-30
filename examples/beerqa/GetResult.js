@@ -164,19 +164,16 @@ WHERE {
     // Query Wikipedia content
     const wikipediaQuery = `
 PREFIX ragno: <http://purl.org/stuff/ragno/>
-PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 
 SELECT ?entity ?title ?content ?contentType
 WHERE {
     GRAPH <${wikipediaGraphURI}> {
         ?entity a ragno:Corpuscle ;
-               ragno:hasTextElement ?textElement .
-        
-        ?textElement skos:prefLabel ?title .
+               rdfs:label ?title .
         
         OPTIONAL {
-            ?textElement ragno:content ?content ;
-                        ragno:contentType ?contentType .
+            ?entity ragno:content ?content .
         }
         
         FILTER(?entity IN (${entityURIs.map(uri => `<${uri}>`).join(', ')}))

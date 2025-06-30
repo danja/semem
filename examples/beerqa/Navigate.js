@@ -188,18 +188,16 @@ ORDER BY ?corpuscle`
             graph: wikipediaGraphURI,
             query: `
 PREFIX ragno: <http://purl.org/stuff/ragno/>
-PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 
 SELECT ?corpuscle ?content ?embedding ?conceptValue ?conceptType
 WHERE {
     GRAPH <${wikipediaGraphURI}> {
         ?corpuscle a ragno:Corpuscle ;
-                  ragno:hasTextElement ?textElement .
-        
-        ?textElement skos:prefLabel ?content .
+                  rdfs:label ?content .
         
         OPTIONAL { 
-            ?textElement ragno:hasAttribute ?embeddingAttr .
+            ?corpuscle ragno:hasAttribute ?embeddingAttr .
             {
                 ?embeddingAttr a ragno:VectorEmbedding ;
                               ragno:attributeValue ?embedding .
