@@ -173,7 +173,13 @@ SELECT ?entity ?label ?content WHERE {
 
     // Get Wikidata context
     if (entityURIs.length > 0) {
-        const wikidataQuery = `
+        // Filter for only Wikidata URIs
+        const wikidataURIs = entityURIs.filter(uri => uri.includes('wikidata'));
+        
+        if (wikidataURIs.length > 0) {
+            console.log(chalk.dim(`   🔍 Querying ${wikidataURIs.length} Wikidata URIs: ${wikidataURIs.slice(0, 2).join(', ')}`));
+            
+            const wikidataQuery = `
 PREFIX ragno: <http://purl.org/stuff/ragno/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 
@@ -185,19 +191,20 @@ SELECT ?entity ?label ?wikidataId ?description WHERE {
         OPTIONAL { ?entity ragno:wikidataId ?wikidataId }
         OPTIONAL { ?entity rdfs:comment ?description }
         
-        FILTER(?entity IN (${entityURIs.map(uri => `<${uri}>`).join(', ')}))
+        FILTER(?entity IN (${wikidataURIs.map(uri => `<${uri}>`).join(', ')}))
     }
 }`;
 
-        const wikidataResult = await sparqlHelper.executeSelect(wikidataQuery);
-        if (wikidataResult.success) {
-            contextSources.wikidata = wikidataResult.data.results.bindings.map(binding => ({
-                uri: binding.entity.value,
-                label: binding.label.value,
-                wikidataId: binding.wikidataId?.value || '',
-                description: binding.description?.value || '',
-                source: 'Wikidata'
-            }));
+            const wikidataResult = await sparqlHelper.executeSelect(wikidataQuery);
+            if (wikidataResult.success) {
+                contextSources.wikidata = wikidataResult.data.results.bindings.map(binding => ({
+                    uri: binding.entity.value,
+                    label: binding.label.value,
+                    wikidataId: binding.wikidataId?.value || '',
+                    description: binding.description?.value || '',
+                    source: 'Wikidata'
+                }));
+            }
         }
     }
 
@@ -357,6 +364,13 @@ async function processQuestionForAnswer(question, sparqlHelper, llmHandler, conf
         // Retrieve enhanced context from multiple sources
         const contextSources = await getEnhancedEntityContext(entityURIs, sparqlHelper, config);
         
+        console.log(chalk.gray(`   🔍 Context retrieved: ${contextSources.wikidata.length} Wikidata + ${contextSources.wikipedia.length} Wikipedia + ${contextSources.beerqa.length} BeerQA`));
+        
+        // Debug: Log some entity URIs to check what we're looking for
+        if (entityURIs.length > 0) {
+            console.log(chalk.dim(`   🔍 Sample entity URIs: ${entityURIs.slice(0, 3).join(', ')}`));
+        }
+        
         // Build comprehensive context
         const context = buildEnhancedContext(question, question.relationships, contextSources, config);
         
@@ -367,6 +381,11 @@ async function processQuestionForAnswer(question, sparqlHelper, llmHandler, conf
             console.log(chalk.green(`   ✓ Answer generated successfully`));
             console.log(chalk.green(`   ✓ Context length: ${answerResult.contextLength} characters`));
             console.log(chalk.green(`   ✓ Sources: Wikidata(${answerResult.hasWikidataContext}), Wikipedia(${answerResult.hasWikipediaContext}), BeerQA(${answerResult.hasBeerqaContext})`));
+            
+            // Display the full answer immediately
+            console.log(chalk.bold.white('\n📝 ENHANCED ANSWER:'));
+            console.log(chalk.white(answerResult.answer));
+            console.log('');
             
             return {
                 success: true,
@@ -429,22 +448,14 @@ function displayEnhancedResults(results) {
         console.log(chalk.white(`   Total Wikipedia entities: ${totalWikipediaEntities}`));
         console.log('');
 
-        // Show sample answers
-        console.log(chalk.bold.yellow('🎯 Sample Enhanced Answers:'));
+        // Show summary of all answers  
+        console.log(chalk.bold.yellow('🎯 Enhanced Answers Summary:'));
         console.log('');
         
-        successful.slice(0, 2).forEach((result, i) => {
-            console.log(chalk.bold.blue(`${i + 1}. Question: "${result.question.text}"`));
-            console.log(chalk.white('   Answer:'));
-            
-            // Truncate very long answers for display
-            const displayAnswer = result.answer.length > 400 ? 
-                result.answer.substring(0, 400) + '...' : result.answer;
-            
-            console.log(chalk.gray(`   ${displayAnswer}`));
-            console.log('');
-            
-            console.log(chalk.green(`   Sources: ${result.stats.wikidataEntities} Wikidata + ${result.stats.wikipediaEntities} Wikipedia + ${result.stats.beerqaEntities} BeerQA`));
+        successful.forEach((result, i) => {
+            console.log(chalk.bold.blue(`${i + 1}. "${result.question.text}"`));
+            console.log(chalk.green(`   Sources: ${result.stats.wikidataEntities} Wikidata + ${result.stats.wikipediaEntities} Wikipedia + ${result.stats.beerqaEntities} BeerQA entities`));
+            console.log(chalk.gray(`   Context: ${result.stats.contextLength} chars, ${result.stats.relationshipCount} relationships`));
             console.log('');
         });
     }

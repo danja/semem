@@ -21,8 +21,7 @@ import chalk from 'chalk';
 import { fileURLToPath } from 'url';
 import Config from '../../src/Config.js';
 import EmbeddingHandler from '../../src/handlers/EmbeddingHandler.js';
-import OllamaConnector from '../../src/connectors/OllamaConnector.js';
-import CacheManager from '../../src/handlers/CacheManager.js';
+import EmbeddingConnectorFactory from '../../src/connectors/EmbeddingConnectorFactory.js';
 import { ZPTDataFactory } from '../../src/zpt/ontology/ZPTDataFactory.js';
 import { NamespaceUtils, getSPARQLPrefixes } from '../../src/zpt/ontology/ZPTNamespaces.js';
 import WikidataResearch from './WikidataResearch.js';
@@ -175,24 +174,84 @@ LIMIT 200`;
 }
 
 /**
+ * Create embedding connector using configuration-driven factory pattern
+ */
+async function createEmbeddingConnector(config) {
+    try {
+        const embeddingProviders = config.get('embeddingProviders') || [];
+        const sortedProviders = embeddingProviders
+            .sort((a, b) => (a.priority || 999) - (b.priority || 999));
+        
+        for (const provider of sortedProviders) {
+            if (provider.type === 'ollama') {
+                return EmbeddingConnectorFactory.createConnector({
+                    provider: 'ollama',
+                    model: provider.embeddingModel || 'nomic-embed-text',
+                    options: { baseUrl: provider.baseUrl || 'http://localhost:11434' }
+                });
+            }
+        }
+        
+        // Default to Ollama
+        return EmbeddingConnectorFactory.createConnector({
+            provider: 'ollama',
+            model: 'nomic-embed-text',
+            options: { baseUrl: 'http://localhost:11434' }
+        });
+        
+    } catch (error) {
+        logger.warn('Failed to create embedding connector, using default:', error.message);
+        return EmbeddingConnectorFactory.createConnector({
+            provider: 'ollama',
+            model: 'nomic-embed-text',
+            options: { baseUrl: 'http://localhost:11434' }
+        });
+    }
+}
+
+/**
+ * Get working model names from configuration
+ */
+async function getModelConfig(config) {
+    try {
+        // Get highest priority providers
+        const embeddingProviders = config.get('embeddingProviders') || [];
+        const embeddingProvider = embeddingProviders
+            .sort((a, b) => (a.priority || 999) - (b.priority || 999))[0];
+        
+        return {
+            embeddingModel: embeddingProvider?.embeddingModel || 'nomic-embed-text'
+        };
+    } catch (error) {
+        logger.warn('Failed to get model config from configuration, using defaults:', error.message);
+        return {
+            embeddingModel: 'nomic-embed-text'
+        };
+    }
+}
+
+/**
  * Initialize embedding handler for similarity calculations
  */
 async function initializeEmbeddingHandler() {
     try {
         console.log(chalk.bold.white('🔧 Initializing embedding handler...'));
         
-        const connector = new OllamaConnector({
-            baseUrl: 'http://localhost:11434',
-            model: 'nomic-embed-text'
-        });
+        // Load configuration
+        const configPath = path.join(process.cwd(), 'config/config.json');
+        const config = new Config(configPath);
+        await config.init();
 
-        // Initialize cache manager with proper configuration
-        const cacheManager = new CacheManager({
-            maxSize: 1000,
-            ttl: 3600000 // 1 hour
-        });
+        // Create embedding connector using configuration
+        const embeddingProvider = await createEmbeddingConnector(config);
+        const modelConfig = await getModelConfig(config);
+        const dimension = config.get('memory.dimension') || 1536;
 
-        const embeddingHandler = new EmbeddingHandler(connector, { cacheManager });
+        const embeddingHandler = new EmbeddingHandler(
+            embeddingProvider,
+            modelConfig.embeddingModel,
+            dimension
+        );
 
         console.log(chalk.green('   ✓ Embedding handler initialized'));
         return embeddingHandler;
@@ -236,7 +295,7 @@ async function performWikidataResearch(question, wikidataResearch) {
 /**
  * Find related entities using enhanced semantic similarity
  */
-async function findRelatedEntitiesEnhanced(questionURI, corpus, embeddingHandler, config) {
+async function findRelatedEntitiesEnhanced(questionURI, corpus, embeddingHandler, config, sparqlHelper) {
     console.log(chalk.bold.white('🔍 Finding related entities with enhanced similarity...'));
 
     if (!embeddingHandler) {
@@ -282,6 +341,11 @@ SELECT ?questionText WHERE {
                 
                 if (entityEmbedding) {
                     const similarity = embeddingHandler.calculateCosineSimilarity(questionEmbedding, entityEmbedding);
+                    
+                    // Debug logging for similarity scores
+                    if (similarities.length < 3) { // Log first few for debugging
+                        console.log(chalk.gray(`   Debug: ${entity.label?.substring(0, 30) || 'Unknown'} similarity: ${similarity.toFixed(4)}`));
+                    }
                     
                     if (similarity >= config.similarityThreshold) {
                         similarities.push({
@@ -414,27 +478,39 @@ async function processEnhancedQuestionNavigation(sparqlHelper, config, question,
         }
 
         // Step 2: Find related entities using enhanced similarity
+        console.log(chalk.gray(`   🔍 Enhanced corpus breakdown: ${enhancedCorpus.filter(e => e.source?.includes('wikidata')).length} Wikidata + ${enhancedCorpus.filter(e => e.source === 'wikipedia').length} Wikipedia`));
+        
         const relatedEntities = await findRelatedEntitiesEnhanced(
             question.uri, 
             enhancedCorpus, 
             embeddingHandler, 
-            config
+            config,
+            sparqlHelper
         );
+
+        // Ensure Wikidata entities are included even if similarity is low
+        const wikidataEntities = enhancedCorpus.filter(e => e.source?.includes('wikidata'));
+        const combinedEntities = [
+            ...relatedEntities,
+            ...wikidataEntities.slice(0, Math.max(0, config.maxRelatedCorpuscles - relatedEntities.length))
+        ];
+
+        console.log(chalk.gray(`   🔗 Including entities: ${relatedEntities.length} similar + ${combinedEntities.length - relatedEntities.length} Wikidata = ${combinedEntities.length} total`));
 
         // Step 3: Create enhanced relationships
         const relationships = await createEnhancedRelationships(
             sparqlHelper, 
             question.uri, 
-            relatedEntities, 
+            combinedEntities, 
             config
         );
 
         // Summary statistics
-        const wikidataCount = relatedEntities.filter(e => e.source?.includes('wikidata')).length;
-        const wikipediaCount = relatedEntities.filter(e => e.source === 'wikipedia').length;
+        const wikidataCount = combinedEntities.filter(e => e.source?.includes('wikidata')).length;
+        const wikipediaCount = combinedEntities.filter(e => e.source === 'wikipedia').length;
         
         console.log(chalk.green(`   ✓ Navigation completed:`));
-        console.log(chalk.green(`     - Related entities: ${relatedEntities.length}`));
+        console.log(chalk.green(`     - Related entities: ${combinedEntities.length}`));
         console.log(chalk.green(`     - Wikipedia sources: ${wikipediaCount}`));
         console.log(chalk.green(`     - Wikidata sources: ${wikidataCount}`));
         console.log(chalk.green(`     - Fresh concepts: ${researchData.concepts.length}`));
@@ -443,11 +519,11 @@ async function processEnhancedQuestionNavigation(sparqlHelper, config, question,
         return {
             success: true,
             question: question,
-            relatedEntities: relatedEntities,
+            relatedEntities: combinedEntities,
             relationships: relationships,
             researchData: researchData,
             stats: {
-                totalRelated: relatedEntities.length,
+                totalRelated: combinedEntities.length,
                 wikipediaCount: wikipediaCount,
                 wikidataCount: wikidataCount,
                 conceptsFound: researchData.concepts.length
@@ -532,7 +608,7 @@ async function navigateQuestionsEnhanced() {
             wikipediaGraphURI: 'http://purl.org/stuff/wikipedia/research',
             wikidataGraphURI: 'http://purl.org/stuff/wikidata/research',
             navigationGraphURI: 'http://purl.org/stuff/navigation/enhanced',
-            similarityThreshold: 0.3,
+            similarityThreshold: 0.1,
             maxRelatedCorpuscles: 8, // Increased for enhanced corpus
             enableWikidataEnhancement: true,
             timeout: 30000
