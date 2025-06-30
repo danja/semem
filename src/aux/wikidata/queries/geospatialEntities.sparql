@@ -1,0 +1,46 @@
+# Geospatial Entities Query Template
+# Finds entities with geographic coordinates and location properties
+# Parameters:
+#   {ENTITY_ID} - Wikidata entity ID
+#   {LANGUAGE} - language code (default: en)
+#   {RADIUS_KM} - search radius in kilometers (optional)
+
+SELECT DISTINCT ?entity ?entityLabel ?coordinate ?locationType ?locationLabel WHERE {
+  {
+    # Direct coordinates of the entity
+    wd:{ENTITY_ID} wdt:P625 ?coordinate .
+    BIND(wd:{ENTITY_ID} AS ?entity)
+    BIND("self" AS ?locationType)
+  }
+  UNION
+  {
+    # Location hierarchy (located in)
+    wd:{ENTITY_ID} wdt:P131+ ?location .
+    ?location wdt:P625 ?coordinate .
+    BIND(?location AS ?entity)
+    BIND("container" AS ?locationType)
+  }
+  UNION
+  {
+    # Entities located in this location
+    ?entity wdt:P131 wd:{ENTITY_ID} .
+    ?entity wdt:P625 ?coordinate .
+    BIND("contained" AS ?locationType)
+  }
+  UNION
+  {
+    # Headquarters/capital locations
+    {
+      wd:{ENTITY_ID} wdt:P159 ?entity .  # headquarters
+    } UNION {
+      wd:{ENTITY_ID} wdt:P36 ?entity .   # capital
+    }
+    ?entity wdt:P625 ?coordinate .
+    BIND("administrative" AS ?locationType)
+  }
+  
+  SERVICE wikibase:label { 
+    bd:serviceParam wikibase:language "[AUTO_LANGUAGE],{LANGUAGE}". 
+  }
+}
+LIMIT 50

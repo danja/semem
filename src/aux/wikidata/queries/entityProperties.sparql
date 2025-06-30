@@ -1,0 +1,20 @@
+# Entity Properties Query Template
+# Retrieves properties and values for a specific Wikidata entity
+# Parameters:
+#   {ENTITY_ID} - Wikidata entity ID (e.g., Q146)
+#   {LANGUAGE} - language code (default: en)
+#   {LIMIT} - maximum properties (default: 50)
+
+SELECT ?property ?propertyLabel ?value ?valueLabel ?valueType WHERE {
+  wd:{ENTITY_ID} ?property ?value .
+  ?prop wikibase:directClaim ?property .
+  
+  OPTIONAL {
+    ?value wdt:P31 ?valueType .
+  }
+  
+  SERVICE wikibase:label { 
+    bd:serviceParam wikibase:language "[AUTO_LANGUAGE],{LANGUAGE}". 
+  }
+}
+LIMIT {LIMIT}

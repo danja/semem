@@ -1,0 +1,18 @@
+# Wikipedia Article to Wikidata Entity Mapping
+# Maps Wikipedia article titles to corresponding Wikidata entities
+# Parameters:
+#   {WIKIPEDIA_TITLE} - Wikipedia article title
+#   {LANGUAGE} - language code (default: en)
+
+SELECT DISTINCT ?item ?itemLabel ?itemDescription ?wikipediaTitle WHERE {
+  ?article schema:about ?item ;
+           schema:isPartOf <https://{LANGUAGE}.wikipedia.org/> ;
+           schema:name ?wikipediaTitle .
+  
+  FILTER(CONTAINS(LCASE(?wikipediaTitle), LCASE("{WIKIPEDIA_TITLE}")))
+  
+  SERVICE wikibase:label { 
+    bd:serviceParam wikibase:language "[AUTO_LANGUAGE],{LANGUAGE}". 
+  }
+}
+LIMIT 20

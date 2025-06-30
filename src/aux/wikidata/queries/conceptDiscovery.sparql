@@ -1,0 +1,44 @@
+# Concept Discovery Query Template
+# Finds entities related to a set of concept terms
+# Parameters:
+#   {CONCEPT_TERMS} - space-separated concept terms
+#   {LANGUAGE} - language code (default: en)
+#   {LIMIT} - maximum results (default: 15)
+
+SELECT DISTINCT ?item ?itemLabel ?itemDescription ?conceptMatch ?relevanceScore WHERE {
+  {
+    # Direct label matching
+    ?item rdfs:label ?itemLabel .
+    FILTER(LANG(?itemLabel) = "{LANGUAGE}")
+    FILTER(CONTAINS(LCASE(?itemLabel), LCASE("{CONCEPT_TERMS}")))
+    BIND("direct-label" AS ?conceptMatch)
+    BIND(3.0 AS ?relevanceScore)
+  }
+  UNION
+  {
+    # Alias matching
+    ?item skos:altLabel ?alias .
+    FILTER(LANG(?alias) = "{LANGUAGE}")
+    FILTER(CONTAINS(LCASE(?alias), LCASE("{CONCEPT_TERMS}")))
+    BIND("alias" AS ?conceptMatch)
+    BIND(2.0 AS ?relevanceScore)
+  }
+  UNION
+  {
+    # Description matching
+    ?item schema:description ?itemDescription .
+    FILTER(LANG(?itemDescription) = "{LANGUAGE}")
+    FILTER(CONTAINS(LCASE(?itemDescription), LCASE("{CONCEPT_TERMS}")))
+    BIND("description" AS ?conceptMatch)
+    BIND(1.0 AS ?relevanceScore)
+  }
+  
+  # Ensure we have a type (is an entity)
+  ?item wdt:P31 ?type .
+  
+  SERVICE wikibase:label { 
+    bd:serviceParam wikibase:language "[AUTO_LANGUAGE],{LANGUAGE}". 
+  }
+}
+ORDER BY DESC(?relevanceScore) ?itemLabel
+LIMIT {LIMIT}

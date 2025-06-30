@@ -1,0 +1,23 @@
+# Entity Search Query Template
+# Searches for Wikidata entities by label/alias with scoring
+# Parameters: 
+#   {SEARCH_TERM} - text to search for
+#   {LANGUAGE} - language code (default: en)
+#   {LIMIT} - maximum results (default: 10)
+
+SELECT DISTINCT ?item ?itemLabel ?itemDescription ?score WHERE {
+  SERVICE wikibase:mwapi {
+    bd:serviceParam wikibase:api "EntitySearch" .
+    bd:serviceParam wikibase:endpoint "www.wikidata.org" .
+    bd:serviceParam mwapi:search "{SEARCH_TERM}" .
+    bd:serviceParam mwapi:language "{LANGUAGE}" .
+    bd:serviceParam mwapi:limit "{LIMIT}" .
+    ?item wikibase:apiOutputItem mwapi:item .
+    ?score wikibase:apiOutput "@score" .
+  }
+  
+  SERVICE wikibase:label { 
+    bd:serviceParam wikibase:language "[AUTO_LANGUAGE],{LANGUAGE}". 
+  }
+}
+ORDER BY DESC(?score)

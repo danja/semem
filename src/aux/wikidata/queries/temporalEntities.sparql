@@ -1,0 +1,37 @@
+# Temporal Entities Query Template
+# Finds entities with temporal constraints (dates, periods)
+# Parameters:
+#   {ENTITY_ID} - Wikidata entity ID
+#   {START_DATE} - start date filter (optional, format: "2000-01-01"^^xsd:date)
+#   {END_DATE} - end date filter (optional, format: "2023-12-31"^^xsd:date)
+#   {LANGUAGE} - language code (default: en)
+
+SELECT DISTINCT ?entity ?entityLabel ?dateProperty ?datePropertyLabel ?dateValue ?dateType WHERE {
+  {
+    # Direct temporal properties of the entity
+    wd:{ENTITY_ID} ?dateProperty ?dateValue .
+    
+    # Filter for date properties
+    ?dateProperty wikibase:propertyType wikibase:Time .
+    BIND("direct" AS ?dateType)
+  }
+  UNION
+  {
+    # Related entities with temporal properties
+    ?entity ?relationProperty wd:{ENTITY_ID} .
+    ?entity ?dateProperty ?dateValue .
+    
+    # Filter for date properties
+    ?dateProperty wikibase:propertyType wikibase:Time .
+    BIND("related" AS ?dateType)
+  }
+  
+  # Optional date range filtering
+  # FILTER(?dateValue >= "{START_DATE}"^^xsd:dateTime && ?dateValue <= "{END_DATE}"^^xsd:dateTime)
+  
+  SERVICE wikibase:label { 
+    bd:serviceParam wikibase:language "[AUTO_LANGUAGE],{LANGUAGE}". 
+  }
+}
+ORDER BY ?dateValue
+LIMIT 30

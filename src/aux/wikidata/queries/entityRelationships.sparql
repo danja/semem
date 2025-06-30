@@ -1,0 +1,34 @@
+# Entity Relationships Query Template
+# Discovers all direct relationships for an entity (both incoming and outgoing)
+# Parameters:
+#   {ENTITY_ID} - Wikidata entity ID
+#   {LANGUAGE} - language code (default: en)
+#   {LIMIT} - maximum relationships (default: 30)
+
+SELECT DISTINCT ?related ?relatedLabel ?property ?propertyLabel ?direction WHERE {
+  {
+    # Outgoing relationships
+    wd:{ENTITY_ID} ?property ?related .
+    BIND("outgoing" AS ?direction)
+    
+    # Ensure related is an entity (has a type)
+    ?related wdt:P31 ?relatedType .
+  }
+  UNION
+  {
+    # Incoming relationships
+    ?related ?property wd:{ENTITY_ID} .
+    BIND("incoming" AS ?direction)
+    
+    # Ensure related is an entity (has a type)
+    ?related wdt:P31 ?relatedType .
+  }
+  
+  # Get property information
+  ?prop wikibase:directClaim ?property .
+  
+  SERVICE wikibase:label { 
+    bd:serviceParam wikibase:language "[AUTO_LANGUAGE],{LANGUAGE}". 
+  }
+}
+LIMIT {LIMIT}

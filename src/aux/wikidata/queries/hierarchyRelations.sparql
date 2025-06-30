@@ -1,0 +1,43 @@
+# Hierarchy Relations Query Template
+# Explores instance-of and subclass-of relationships
+# Parameters:
+#   {ENTITY_ID} - root Wikidata entity ID
+#   {LANGUAGE} - language code (default: en)
+#   {MAX_DEPTH} - maximum traversal depth (default: 3)
+
+SELECT DISTINCT ?related ?relatedLabel ?relationship ?relationshipLabel ?depth WHERE {
+  {
+    # Instance-of relationships (outgoing)
+    wd:{ENTITY_ID} wdt:P31+ ?related .
+    BIND("instanceOf" AS ?relationship)
+    BIND(1 AS ?depth)
+  }
+  UNION
+  {
+    # Subclass-of relationships (outgoing)
+    wd:{ENTITY_ID} wdt:P279+ ?related .
+    BIND("subclassOf" AS ?relationship)
+    BIND(1 AS ?depth)
+  }
+  UNION
+  {
+    # Instances of this entity (incoming)
+    ?related wdt:P31 wd:{ENTITY_ID} .
+    BIND("hasInstance" AS ?relationship)
+    BIND(1 AS ?depth)
+  }
+  UNION
+  {
+    # Subclasses of this entity (incoming)
+    ?related wdt:P279 wd:{ENTITY_ID} .
+    BIND("hasSubclass" AS ?relationship)
+    BIND(1 AS ?depth)
+  }
+  
+  FILTER(?related != wd:{ENTITY_ID})
+  
+  SERVICE wikibase:label { 
+    bd:serviceParam wikibase:language "[AUTO_LANGUAGE],{LANGUAGE}". 
+  }
+}
+LIMIT 50

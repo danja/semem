@@ -1,0 +1,41 @@
+# Semantic Similarity Query Template
+# Finds entities semantically similar to a given entity through shared properties
+# Parameters:
+#   {ENTITY_ID} - reference Wikidata entity ID
+#   {LANGUAGE} - language code (default: en)
+#   {MIN_SHARED_PROPERTIES} - minimum shared properties (default: 2)
+#   {LIMIT} - maximum results (default: 20)
+
+SELECT ?similar ?similarLabel ?sharedProperties ?commonTypes WHERE {
+  {
+    SELECT ?similar (COUNT(DISTINCT ?property) AS ?sharedProperties) 
+           (GROUP_CONCAT(DISTINCT ?commonType; SEPARATOR=", ") AS ?commonTypes) WHERE {
+      # Find entities with shared property values
+      wd:{ENTITY_ID} ?property ?value .
+      ?similar ?property ?value .
+      
+      # Exclude self
+      FILTER(?similar != wd:{ENTITY_ID})
+      
+      # Ensure similar entity has a type
+      ?similar wdt:P31 ?type .
+      
+      # Find common types
+      OPTIONAL {
+        wd:{ENTITY_ID} wdt:P31 ?commonType .
+        ?similar wdt:P31 ?commonType .
+      }
+      
+      # Exclude some generic properties that create noise
+      FILTER(?property NOT IN (wdt:P31, wdt:P279, wdt:P361, wdt:P17))
+    }
+    GROUP BY ?similar
+    HAVING(?sharedProperties >= {MIN_SHARED_PROPERTIES})
+  }
+  
+  SERVICE wikibase:label { 
+    bd:serviceParam wikibase:language "[AUTO_LANGUAGE],{LANGUAGE}". 
+  }
+}
+ORDER BY DESC(?sharedProperties)
+LIMIT {LIMIT}

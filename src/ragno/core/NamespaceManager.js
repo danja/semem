@@ -8,6 +8,7 @@
  * Key Features:
  * - Complete ragno ontology namespace definitions
  * - SKOS, PROV-O, and Dublin Core integration
+ * - Wikidata vocabularies and property mappings
  * - URI validation and generation
  * - Prefix management for serialization
  * - Namespace resolution utilities
@@ -31,6 +32,12 @@ export default class NamespaceManager {
         this.dcterms = namespace('http://purl.org/dc/terms/')
         this.foaf = namespace('http://xmlns.com/foaf/0.1/')
         
+        // Wikidata vocabularies
+        this.wd = namespace('http://www.wikidata.org/entity/')
+        this.wdt = namespace('http://www.wikidata.org/prop/direct/')
+        this.wikibase = namespace('http://wikiba.se/ontology#')
+        this.schema = namespace('https://schema.org/')
+        
         // Ragno ontology
         this.ragno = namespace('http://purl.org/stuff/ragno/')
         
@@ -47,6 +54,10 @@ export default class NamespaceManager {
             ['prov', 'http://www.w3.org/ns/prov#'],
             ['dcterms', 'http://purl.org/dc/terms/'],
             ['foaf', 'http://xmlns.com/foaf/0.1/'],
+            ['wd', 'http://www.wikidata.org/entity/'],
+            ['wdt', 'http://www.wikidata.org/prop/direct/'],
+            ['wikibase', 'http://wikiba.se/ontology#'],
+            ['schema', 'https://schema.org/'],
             ['ragno', 'http://purl.org/stuff/ragno/'],
             ['ex', this.uriBase]
         ])
@@ -139,6 +150,43 @@ export default class NamespaceManager {
             subject: this.dcterms.subject,
             language: this.dcterms.language
         }
+        
+        // Wikidata properties commonly used in integration
+        this.wikidataProperties = {
+            // Wikibase ontology properties
+            directClaim: this.wikibase.directClaim,
+            claim: this.wikibase.claim,
+            statementProperty: this.wikibase.statementProperty,
+            statementValue: this.wikibase.statementValue,
+            rank: this.wikibase.rank,
+            badge: this.wikibase.badge,
+            
+            // Schema.org properties for Wikipedia links
+            about: this.schema.about,
+            isPartOf: this.schema.isPartOf,
+            name: this.schema.name,
+            url: this.schema.url,
+            
+            // Common Wikidata direct properties
+            instanceOf: this.wdt.P31,           // instance of
+            subclassOf: this.wdt.P279,          // subclass of
+            partOf: this.wdt.P361,              // part of
+            hasPart: this.wdt.P527,             // has part
+            locatedIn: this.wdt.P131,           // located in administrative territorial entity
+            country: this.wdt.P17,              // country
+            coordinates: this.wdt.P625,         // coordinate location
+            image: this.wdt.P18,                // image
+            birthDate: this.wdt.P569,           // date of birth
+            deathDate: this.wdt.P570,           // date of death
+            startTime: this.wdt.P580,           // start time
+            endTime: this.wdt.P582,             // end time
+            headquarters: this.wdt.P159,        // headquarters location
+            capital: this.wdt.P36,              // capital
+            author: this.wdt.P50,               // author
+            publicationDate: this.wdt.P577,    // publication date
+            genre: this.wdt.P136,               // genre
+            originCountry: this.wdt.P495       // country of origin
+        }
     }
     
     /**
@@ -155,9 +203,34 @@ export default class NamespaceManager {
             prov: this.prov,
             dcterms: this.dcterms,
             foaf: this.foaf,
+            wd: this.wd,
+            wdt: this.wdt,
+            wikibase: this.wikibase,
+            schema: this.schema,
             ragno: this.ragno,
             ex: this.ex
         }
+    }
+    
+    /**
+     * Get Wikidata-specific namespaces for SPARQL queries
+     * @returns {Object} Wikidata namespaces
+     */
+    getWikidataNamespaces() {
+        return {
+            wd: this.wd,
+            wdt: this.wdt,
+            wikibase: this.wikibase,
+            schema: this.schema
+        }
+    }
+    
+    /**
+     * Get commonly used Wikidata properties
+     * @returns {Object} Wikidata property mappings
+     */
+    getWikidataProperties() {
+        return { ...this.wikidataProperties }
     }
     
     /**
