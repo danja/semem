@@ -331,6 +331,8 @@ INSTRUCTIONS:
 - Provide specific details and examples when available
 - Mention source attribution when relevant (e.g., "According to Wikidata..." or "Wikipedia indicates...")
 - If the context is insufficient, clearly state what additional information would be helpful
+- If information is incomplete, generate 2-3 specific follow-up questions that would help complete the answer
+- Format follow-up questions as: "FOLLOW-UP QUESTIONS: 1. Question 2. Question 3. Question"
 
 CONTEXT:
 ${context}
@@ -614,3 +616,14 @@ async function generateEnhancedAnswers() {
 if (import.meta.url === `file://${process.argv[1]}`) {
     generateEnhancedAnswers();
 }
+
+// Export functions for use in other modules
+export { 
+    getQuestionsWithEnhancedRelationships,
+    getEnhancedEntityContext,
+    buildEnhancedContext,
+    generateEnhancedAnswer,
+    processQuestionForAnswer,
+    initializeLLMHandler,
+    generateEnhancedAnswers
+};
