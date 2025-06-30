@@ -2,9 +2,10 @@
   "storage": {
     "type": "sparql",
     "options": {
-      "query": "https://fuseki.hyperdata.it/hyperdata.it/query",
-      "update": "https://fuseki.hyperdata.it/hyperdata.it/update",
-      "graphName": "http://hyperdata.it/content",
+      "query": "http://localhost:3030/semem/query",
+      "update": "http://localhost:3030/semem/update",
+      "data": "http://localhost:3030/semem/data",
+      "graphName": "http://tensegrity.it/semem",
       "user": "${SPARQL_USER}",
       "password": "${SPARQL_PASSWORD}"
     }
@@ -16,7 +17,7 @@
     "redirectTarget": 4120
   },
   "port": 4120,
-  "graphName": "http://hyperdata.it/content",
+  "graphName": "http://tensegrity.it/semem",
   "chatModel": "qwen2:1.5b",
   "embeddingModel": "nomic-embed-text-v1.5",
   "embeddingProvider": "nomic",
