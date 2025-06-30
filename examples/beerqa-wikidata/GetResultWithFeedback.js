@@ -302,25 +302,25 @@ class IterativeQuestionProcessor {
                 };
                 
                 // Perform Wikidata research
-                const researchResult = await this.wikidataResearch.processQuestion(researchQuestion);
+                const researchResult = await this.wikidataResearch.executeResearch(researchQuestion.text);
                 
                 if (researchResult.success) {
                     // Mark question as researched
                     await this.questionGenerator.markQuestionResearched(followUp.uri, {
-                        entityCount: researchResult.entities?.length || 0,
+                        entityCount: researchResult.ragnoEntities?.length || 0,
                         conceptCount: researchResult.concepts?.length || 0
                     });
                     
                     // Add research results to context
-                    if (researchResult.entities && researchResult.entities.length > 0) {
+                    if (researchResult.ragnoEntities && researchResult.ragnoEntities.length > 0) {
                         additionalContext += `\nResearch for "${followUp.text}":\n`;
-                        researchResult.entities.slice(0, 3).forEach(entity => {
+                        researchResult.ragnoEntities.slice(0, 3).forEach(entity => {
                             additionalContext += `• ${entity.originalEntity?.label || 'Unknown'}: ${entity.originalEntity?.description || 'No description'}\n`;
                         });
-                        totalEntities += researchResult.entities.length;
+                        totalEntities += researchResult.ragnoEntities.length;
                     }
                     
-                    console.log(chalk.green(`      ✓ Found ${researchResult.entities?.length || 0} entities`));
+                    console.log(chalk.green(`      ✓ Found ${researchResult.ragnoEntities?.length || 0} entities`));
                 } else {
                     console.log(chalk.yellow(`      ⚠️  Research failed: ${researchResult.error || 'Unknown error'}`));
                 }
