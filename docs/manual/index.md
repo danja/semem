@@ -19,6 +19,8 @@ The system provides multiple interfaces (direct SDK, HTTP API, MCP protocol, web
 
 ## Contents
 
+**[algorithms.md](algorithms.md)**
+
 ### Demonstrators
 
 Examples are categorised in the `examples` dir. Most should work, though there are a lot, revisions to the core code causes breakage and it takes me a while to get around to checking things.
