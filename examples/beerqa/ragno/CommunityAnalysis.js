@@ -46,12 +46,18 @@ function displayHeader() {
  * CommunityAnalysis class for detecting and analyzing communities
  */
 class CommunityAnalysis {
-    constructor(options = {}) {
+    constructor(config, options = {}) {
+        // Use Config.js for SPARQL configuration
+        const storageOptions = config.get('storage.options');
+        
         this.options = {
-            sparqlEndpoint: options.sparqlEndpoint || 'https://fuseki.hyperdata.it/hyperdata.it/update',
-            sparqlAuth: options.sparqlAuth || { user: 'admin', password: 'admin123' },
+            sparqlEndpoint: options.sparqlEndpoint || storageOptions.update,
+            sparqlAuth: options.sparqlAuth || { 
+                user: storageOptions.user, 
+                password: storageOptions.password 
+            },
             beerqaGraphURI: options.beerqaGraphURI || 'http://purl.org/stuff/beerqa/test',
-            wikipediaGraphURI: options.wikipediaGraphURI || 'http://purl.org/stuff/wikipedia/test',
+            wikipediaGraphURI: options.wikipediaGraphURI || 'http://purl.org/stuff/wikipedia/research',
             timeout: options.timeout || 30000,
             
             // Community detection options
@@ -71,7 +77,7 @@ class CommunityAnalysis {
         };
 
         // Initialize components
-        this.corpuscleRanking = new CorpuscleRanking(this.options);
+        this.corpuscleRanking = new CorpuscleRanking(config, this.options);
         this.communityDetection = new CommunityDetection({
             algorithm: this.options.algorithm,
             resolution: this.options.resolution,
@@ -574,11 +580,13 @@ async function analyzeCommunities() {
     displayHeader();
     
     try {
-        const config = {
-            sparqlEndpoint: 'https://fuseki.hyperdata.it/hyperdata.it/update',
-            sparqlAuth: { user: 'admin', password: 'admin123' },
+        // Initialize Config.js for proper configuration management
+        const config = new Config('../../../config/config.json');
+        await config.init();
+        
+        const options = {
             beerqaGraphURI: 'http://purl.org/stuff/beerqa/test',
-            wikipediaGraphURI: 'http://purl.org/stuff/wikipedia/test',
+            wikipediaGraphURI: 'http://purl.org/stuff/wikipedia/research',
             timeout: 30000,
             
             // Community detection configuration
@@ -596,15 +604,15 @@ async function analyzeCommunities() {
         };
 
         console.log(chalk.bold.yellow('🔧 Configuration:'));
-        console.log(`   ${chalk.cyan('SPARQL Endpoint:')} ${chalk.white(config.sparqlEndpoint)}`);
-        console.log(`   ${chalk.cyan('Algorithm:')} ${chalk.white(config.algorithm)}`);
-        console.log(`   ${chalk.cyan('Min Community Size:')} ${chalk.white(config.minCommunitySize)}`);
-        console.log(`   ${chalk.cyan('Max Communities:')} ${chalk.white(config.maxCommunities)}`);
-        console.log(`   ${chalk.cyan('Generate Summaries:')} ${chalk.white(config.generateSummaries ? 'Yes' : 'No')}`);
-        console.log(`   ${chalk.cyan('Export to SPARQL:')} ${chalk.white(config.exportToSPARQL ? 'Yes' : 'No')}`);
+        console.log(`   ${chalk.cyan('SPARQL Endpoint:')} ${chalk.white(config.get('storage.options.update'))}`);
+        console.log(`   ${chalk.cyan('Algorithm:')} ${chalk.white(options.algorithm)}`);
+        console.log(`   ${chalk.cyan('Min Community Size:')} ${chalk.white(options.minCommunitySize)}`);
+        console.log(`   ${chalk.cyan('Max Communities:')} ${chalk.white(options.maxCommunities)}`);
+        console.log(`   ${chalk.cyan('Generate Summaries:')} ${chalk.white(options.generateSummaries ? 'Yes' : 'No')}`);
+        console.log(`   ${chalk.cyan('Export to SPARQL:')} ${chalk.white(options.exportToSPARQL ? 'Yes' : 'No')}`);
         console.log('');
 
-        const analyzer = new CommunityAnalysis(config);
+        const analyzer = new CommunityAnalysis(config, options);
         const result = await analyzer.runCommunityAnalysis();
 
         if (result.success) {

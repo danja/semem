@@ -132,10 +132,16 @@ function displayErrors(errors) {
  * BeerQA Question Augmentation class
  */
 class BeerQAQuestionAugmentation {
-    constructor(options = {}) {
+    constructor(config, options = {}) {
+        // Use Config.js for SPARQL configuration
+        const storageOptions = config.get('storage.options');
+        
         this.options = {
-            sparqlEndpoint: options.sparqlEndpoint || 'https://fuseki.hyperdata.it/hyperdata.it/update',
-            sparqlAuth: options.sparqlAuth || { user: 'admin', password: 'admin123' },
+            sparqlEndpoint: options.sparqlEndpoint || storageOptions.update,
+            sparqlAuth: options.sparqlAuth || { 
+                user: storageOptions.user, 
+                password: storageOptions.password 
+            },
             graphURI: options.graphURI || 'http://purl.org/stuff/beerqa/test',
             baseURI: options.baseURI || 'http://purl.org/stuff/beerqa/test/',
             generateEmbeddings: options.generateEmbeddings !== false, // Default true
@@ -592,16 +598,27 @@ LIMIT 1`;
 async function runBeerQAQuestionAugmentation() {
     displayHeader();
 
-    const config = {
-        sparqlEndpoint: 'https://fuseki.hyperdata.it/hyperdata.it/update',
-        sparqlAuth: { user: 'admin', password: 'admin123' },
+    // Initialize Config.js for proper configuration management
+    const config = new Config('../../config/config.json');
+    await config.init();
+    
+    const options = {
         graphURI: 'http://purl.org/stuff/beerqa/test',
         baseURI: 'http://purl.org/stuff/beerqa/test/',
         generateEmbeddings: true,
         extractConcepts: true
     };
 
-    displayConfiguration(config);
+    // Display configuration with actual SPARQL endpoint from config
+    const displayConfig = {
+        sparqlEndpoint: config.get('storage.options.update'),
+        sparqlAuth: { 
+            user: config.get('storage.options.user'), 
+            password: config.get('storage.options.password') 
+        },
+        ...options
+    };
+    displayConfiguration(displayConfig);
 
     try {
         console.log(chalk.bold.yellow('🚀 Starting Question Augmentation Process...'));
@@ -609,7 +626,7 @@ async function runBeerQAQuestionAugmentation() {
         console.log('');
 
         // Initialize augmentation system
-        const augmentation = new BeerQAQuestionAugmentation(config);
+        const augmentation = new BeerQAQuestionAugmentation(config, options);
         await augmentation.initialize();
 
         // Run augmentation

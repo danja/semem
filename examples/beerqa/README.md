@@ -1,18 +1,43 @@
-# BeerQA 
+# BeerQA Enhanced Workflow
 
-```sh
+**Status**: Enhanced v2 workflow with NodeRAG formal relationship infrastructure
+
+📖 **Full Documentation**: See [docs/manual/beerqa-2.md](../../docs/manual/beerqa-2.md) for complete enhanced workflow guide.
+
+## Quick Start (Enhanced v2 Workflow)
+
+```bash
+# Complete enhanced workflow
+cd examples/beerqa
+
+# Stage 1: Foundation Data
+node BeerTestQuestions.js        # Load 100 questions
+node AugmentQuestion.js          # Add embeddings + concepts  
+node QuestionResearch.js         # Research concepts → Wikipedia
+
+# Stage 2: Formal Infrastructure  
+cd ragno
+node RelationshipBuilder.js     # Create formal relationships
+
+# Stage 3: Graph Analytics
+node CorpuscleRanking.js        # Rank by structural importance
+node CommunityAnalysis.js       # Detect communities
+
+# Stage 4: Enhanced Results
+cd ..
+node GetResult.js               # Generate final answers
+```
+
+## Legacy ETL Workflow
+
+```bash
 # clean
-node examples/beerqa/ClearGraph.js 
+node ClearGraph.js 
 
 # load sample of BeerQA dataset into store
-node examples/beerqa/BeerETLDemo.js
+node BeerETL.js
 
-# create embedding for the loaded data
-node examples/beerqa/BeerEmbedding.js 
-
-# run similarity search
-node examples/basic/ArticleSearch.js --graph http://purl.org/stuff/beerqa
-
+# Enhanced workflow (see documentation)
 ```
 
 This system provides Extract, Transform, Load (ETL) functionality for the BeerQA dataset, converting question-answer data into RDF representations using the Ragno vocabulary.

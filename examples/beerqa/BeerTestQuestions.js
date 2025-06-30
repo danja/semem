@@ -11,6 +11,7 @@
 import path from 'path';
 import logger from 'loglevel';
 import chalk from 'chalk';
+import Config from '../../src/Config.js';
 import BeerETL from './BeerETL.js';
 
 // Configure logging
@@ -233,11 +234,20 @@ async function runBeerTestQuestionsETL() {
     displayHeader();
 
     try {
-        // Initialize BeerTestQuestionsETL with configuration
+        // Initialize Config.js for proper configuration management
+        const config = new Config('../../config/config.json');
+        await config.init();
+        
+        const storageOptions = config.get('storage.options');
+        
+        // Initialize BeerTestQuestionsETL with configuration from Config.js
         const etl = new BeerTestQuestionsETL({
-            dataPath: path.resolve('data/beerqa/beerqa_test_questions_v1.0.json'),
-            sparqlEndpoint: 'https://fuseki.hyperdata.it/hyperdata.it/update',
-            sparqlAuth: { user: 'admin', password: 'admin123' },
+            dataPath: path.resolve('../../data/beerqa/beerqa_test_questions_v1.0.json'),
+            sparqlEndpoint: storageOptions.update,
+            sparqlAuth: { 
+                user: storageOptions.user, 
+                password: storageOptions.password 
+            },
             graphURI: 'http://purl.org/stuff/beerqa/test',
             baseURI: 'http://purl.org/stuff/beerqa/test/',
             batchSize: 25, // Smaller batches for demo

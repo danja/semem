@@ -521,16 +521,18 @@ async function getResults() {
     
     try {
         // Initialize configuration using the modern pattern (from api-server.js)
-        const configPath = path.join(process.cwd(), 'config/config.json');
+        const configPath = path.join(process.cwd(), '../../config/config.json');
         const config = new Config(configPath);
         await config.init();
         
-        // Runtime configuration
+        // Runtime configuration using Config.js
+        const storageOptions = config.get('storage.options');
+        
         const runtimeConfig = {
-            sparqlEndpoint: 'https://fuseki.hyperdata.it/hyperdata.it/update',
-            sparqlAuth: { user: 'admin', password: 'admin123' },
+            sparqlEndpoint: storageOptions.update,
+            sparqlAuth: { user: storageOptions.user, password: storageOptions.password },
             beerqaGraphURI: 'http://purl.org/stuff/beerqa/test',
-            wikipediaGraphURI: 'http://purl.org/stuff/wikipedia/test',
+            wikipediaGraphURI: 'http://purl.org/stuff/wikipedia/research',
             maxContextTokens: 4000,
             maxContextSize: 5,
             temperature: 0.7,

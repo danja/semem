@@ -42,12 +42,18 @@ function displayHeader() {
  * RelationshipBuilder class for creating formal relationship infrastructure
  */
 class RelationshipBuilder {
-    constructor(options = {}) {
+    constructor(config, options = {}) {
+        // Use Config.js for SPARQL configuration
+        const storageOptions = config.get('storage.options');
+        
         this.options = {
-            sparqlEndpoint: options.sparqlEndpoint || 'https://fuseki.hyperdata.it/hyperdata.it/update',
-            sparqlAuth: options.sparqlAuth || { user: 'admin', password: 'admin123' },
+            sparqlEndpoint: options.sparqlEndpoint || storageOptions.update,
+            sparqlAuth: options.sparqlAuth || { 
+                user: storageOptions.user, 
+                password: storageOptions.password 
+            },
             beerqaGraphURI: options.beerqaGraphURI || 'http://purl.org/stuff/beerqa/test',
-            wikipediaGraphURI: options.wikipediaGraphURI || 'http://purl.org/stuff/wikipedia/test',
+            wikipediaGraphURI: options.wikipediaGraphURI || 'http://purl.org/stuff/wikipedia/research',
             timeout: options.timeout || 60000,
             
             // Relationship creation strategies
@@ -606,7 +612,7 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 PREFIX dcterms: <http://purl.org/dc/terms/>
 
 INSERT DATA {
-    GRAPH <${this.options.wikipediaGraphURI}> {
+    GRAPH <${this.options.beerqaGraphURI}> {
         ${triples.join('\n        ')}
     }
 }`;
@@ -895,11 +901,13 @@ async function buildRelationshipInfrastructure() {
     displayHeader();
     
     try {
-        const config = {
-            sparqlEndpoint: 'https://fuseki.hyperdata.it/hyperdata.it/update',
-            sparqlAuth: { user: 'admin', password: 'admin123' },
+        // Initialize Config.js for proper configuration management
+        const config = new Config('../../../config/config.json');
+        await config.init();
+        
+        const options = {
             beerqaGraphURI: 'http://purl.org/stuff/beerqa/test',
-            wikipediaGraphURI: 'http://purl.org/stuff/wikipedia/test',
+            wikipediaGraphURI: 'http://purl.org/stuff/wikipedia/research',
             timeout: 60000,
             
             // Relationship creation strategies
@@ -925,17 +933,18 @@ async function buildRelationshipInfrastructure() {
         };
 
         console.log(chalk.bold.yellow('🔧 Configuration:'));
-        console.log(`   ${chalk.cyan('SPARQL Endpoint:')} ${chalk.white(config.sparqlEndpoint)}`);
-        console.log(`   ${chalk.cyan('Similarity Threshold:')} ${chalk.white(config.similarityThreshold)}`);
-        console.log(`   ${chalk.cyan('Entity Match Threshold:')} ${chalk.white(config.entityMatchThreshold)}`);
-        console.log(`   ${chalk.cyan('Max Relationships per Question:')} ${chalk.white(config.maxRelationshipsPerQuestion)}`);
-        console.log(`   ${chalk.cyan('Enable Similarity Relationships:')} ${chalk.white(config.enableSimilarityRelationships ? 'Yes' : 'No')}`);
-        console.log(`   ${chalk.cyan('Enable Entity Relationships:')} ${chalk.white(config.enableEntityRelationships ? 'Yes' : 'No')}`);
-        console.log(`   ${chalk.cyan('Enable Semantic Relationships:')} ${chalk.white(config.enableSemanticRelationships ? 'Yes' : 'No')}`);
-        console.log(`   ${chalk.cyan('Enable Community Bridges:')} ${chalk.white(config.enableCommunityBridges ? 'Yes' : 'No')}`);
+        console.log(`   ${chalk.cyan('SPARQL Update Endpoint:')} ${chalk.white(config.get('storage.options.update'))}`);
+        console.log(`   ${chalk.cyan('SPARQL User:')} ${chalk.white(config.get('storage.options.user'))}`);
+        console.log(`   ${chalk.cyan('Similarity Threshold:')} ${chalk.white(options.similarityThreshold)}`);
+        console.log(`   ${chalk.cyan('Entity Match Threshold:')} ${chalk.white(options.entityMatchThreshold)}`);
+        console.log(`   ${chalk.cyan('Max Relationships per Question:')} ${chalk.white(options.maxRelationshipsPerQuestion)}`);
+        console.log(`   ${chalk.cyan('Enable Similarity Relationships:')} ${chalk.white(options.enableSimilarityRelationships ? 'Yes' : 'No')}`);
+        console.log(`   ${chalk.cyan('Enable Entity Relationships:')} ${chalk.white(options.enableEntityRelationships ? 'Yes' : 'No')}`);
+        console.log(`   ${chalk.cyan('Enable Semantic Relationships:')} ${chalk.white(options.enableSemanticRelationships ? 'Yes' : 'No')}`);
+        console.log(`   ${chalk.cyan('Enable Community Bridges:')} ${chalk.white(options.enableCommunityBridges ? 'Yes' : 'No')}`);
         console.log('');
 
-        const builder = new RelationshipBuilder(config);
+        const builder = new RelationshipBuilder(config, options);
         const result = await builder.buildRelationshipInfrastructure();
 
         if (result.success) {

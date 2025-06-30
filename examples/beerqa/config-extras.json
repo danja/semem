@@ -1,0 +1,20 @@
+{
+  "graphs": {
+    "beerqa": "http://purl.org/stuff/beerqa/test",
+    "wikipedia": "http://purl.org/stuff/wikipedia/research",
+    "navigation": "http://purl.org/stuff/navigation/beerqa",
+    "communities": "http://purl.org/stuff/communities/beerqa"
+  },
+  "thresholds": {
+    "similarity": 0.3,
+    "strongSimilarity": 0.7,
+    "conceptMatch": 0.5,
+    "communitySize": 3
+  },
+  "limits": {
+    "maxRelatedCorpuscles": 10,
+    "maxCommunities": 20,
+    "maxResults": 50
+  },
+  "description": "Centralized configuration for BeerQA workflow graph URIs and parameters"
+}

@@ -43,12 +43,18 @@ function displayHeader() {
  * CorpuscleRanking class for analyzing corpuscle importance
  */
 class CorpuscleRanking {
-    constructor(options = {}) {
+    constructor(config, options = {}) {
+        // Use Config.js for SPARQL configuration
+        const storageOptions = config.get('storage.options');
+        
         this.options = {
-            sparqlEndpoint: options.sparqlEndpoint || 'https://fuseki.hyperdata.it/hyperdata.it/update',
-            sparqlAuth: options.sparqlAuth || { user: 'admin', password: 'admin123' },
+            sparqlEndpoint: options.sparqlEndpoint || storageOptions.update,
+            sparqlAuth: options.sparqlAuth || { 
+                user: storageOptions.user, 
+                password: storageOptions.password 
+            },
             beerqaGraphURI: options.beerqaGraphURI || 'http://purl.org/stuff/beerqa/test',
-            wikipediaGraphURI: options.wikipediaGraphURI || 'http://purl.org/stuff/wikipedia/test',
+            wikipediaGraphURI: options.wikipediaGraphURI || 'http://purl.org/stuff/wikipedia/research',
             timeout: options.timeout || 30000,
             
             // Algorithm options
@@ -64,7 +70,6 @@ class CorpuscleRanking {
         };
 
         // Initialize components
-        this.graphBuilder = new GraphBuilder(this.options);
         this.graphAnalytics = new GraphAnalytics({
             logProgress: false,
             maxIterations: 1000,
@@ -664,11 +669,13 @@ async function rankCorpuscles() {
     displayHeader();
     
     try {
-        const config = {
-            sparqlEndpoint: 'https://fuseki.hyperdata.it/hyperdata.it/update',
-            sparqlAuth: { user: 'admin', password: 'admin123' },
+        // Initialize Config.js for proper configuration management
+        const config = new Config('../../../config/config.json');
+        await config.init();
+        
+        const options = {
             beerqaGraphURI: 'http://purl.org/stuff/beerqa/test',
-            wikipediaGraphURI: 'http://purl.org/stuff/wikipedia/test',
+            wikipediaGraphURI: 'http://purl.org/stuff/wikipedia/research',
             timeout: 30000,
             
             enableKCore: true,
@@ -679,13 +686,13 @@ async function rankCorpuscles() {
         };
 
         console.log(chalk.bold.yellow('🔧 Configuration:'));
-        console.log(`   ${chalk.cyan('SPARQL Endpoint:')} ${chalk.white(config.sparqlEndpoint)}`);
-        console.log(`   ${chalk.cyan('Similarity Threshold:')} ${chalk.white(config.similarityThreshold)}`);
-        console.log(`   ${chalk.cyan('Top-K Results:')} ${chalk.white(config.topKResults)}`);
-        console.log(`   ${chalk.cyan('Export to SPARQL:')} ${chalk.white(config.exportToSPARQL ? 'Yes' : 'No')}`);
+        console.log(`   ${chalk.cyan('SPARQL Endpoint:')} ${chalk.white(config.get('storage.options.update'))}`);
+        console.log(`   ${chalk.cyan('Similarity Threshold:')} ${chalk.white(options.similarityThreshold)}`);
+        console.log(`   ${chalk.cyan('Top-K Results:')} ${chalk.white(options.topKResults)}`);
+        console.log(`   ${chalk.cyan('Export to SPARQL:')} ${chalk.white(options.exportToSPARQL ? 'Yes' : 'No')}`);
         console.log('');
 
-        const ranker = new CorpuscleRanking(config);
+        const ranker = new CorpuscleRanking(config, options);
         const result = await ranker.runCorpuscleRanking();
 
         if (result.success) {

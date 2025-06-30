@@ -204,10 +204,16 @@ Paragraph:`;
  * BeerQA Question Research class
  */
 class BeerQAQuestionResearch {
-    constructor(options = {}) {
+    constructor(config, options = {}) {
+        // Use Config.js for SPARQL configuration
+        const storageOptions = config.get('storage.options');
+        
         this.options = {
-            sparqlEndpoint: options.sparqlEndpoint || 'https://fuseki.hyperdata.it/hyperdata.it/update',
-            sparqlAuth: options.sparqlAuth || { user: 'admin', password: 'admin123' },
+            sparqlEndpoint: options.sparqlEndpoint || storageOptions.update,
+            sparqlAuth: options.sparqlAuth || { 
+                user: storageOptions.user, 
+                password: storageOptions.password 
+            },
             beerqaGraphURI: options.beerqaGraphURI || 'http://purl.org/stuff/beerqa/test',
             wikipediaGraphURI: options.wikipediaGraphURI || 'http://purl.org/stuff/wikipedia/research',
             searchDelay: options.searchDelay || 300, // 300ms between Wikipedia searches
@@ -798,9 +804,11 @@ LIMIT ${limit}`;
 async function runBeerQAQuestionResearch() {
     displayHeader();
 
-    const config = {
-        sparqlEndpoint: 'https://fuseki.hyperdata.it/hyperdata.it/update',
-        sparqlAuth: { user: 'admin', password: 'admin123' },
+    // Initialize Config.js for proper configuration management
+    const config = new Config('../../config/config.json');
+    await config.init();
+    
+    const options = {
         beerqaGraphURI: 'http://purl.org/stuff/beerqa/test',
         wikipediaGraphURI: 'http://purl.org/stuff/wikipedia/research',
         searchDelay: 300,
@@ -808,7 +816,16 @@ async function runBeerQAQuestionResearch() {
         generateEmbeddings: true
     };
 
-    displayConfiguration(config);
+    // Display configuration with actual SPARQL endpoint from config  
+    const displayConfig = {
+        sparqlEndpoint: config.get('storage.options.update'),
+        sparqlAuth: { 
+            user: config.get('storage.options.user'), 
+            password: config.get('storage.options.password') 
+        },
+        ...options
+    };
+    displayConfiguration(displayConfig);
 
     try {
         console.log(chalk.bold.yellow('🚀 Starting Question Research Process...'));
@@ -816,7 +833,7 @@ async function runBeerQAQuestionResearch() {
         console.log('');
 
         // Initialize research system
-        const research = new BeerQAQuestionResearch(config);
+        const research = new BeerQAQuestionResearch(config, options);
         await research.initialize();
 
         // Run research

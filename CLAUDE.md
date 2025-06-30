@@ -14,6 +14,14 @@ Only look at docs when requested. Always ignore all files under docs/ignore
 
 - The memory and json storage backends are being phased out, sparql storage should be used throughout
 
+## Documentation Guidelines
+
+- Progress reports and plans should be saved as md files under docs/postcraft/content/raw/entries/ 
+- Naming scheme follows format: `YYYY-MM-DD_claude_title.md`
+- Main title should start with "# Claude :"
+- Document should be rendered in the style of a development worklog
+- If the document exceeds a page or two, or if the primary topic of activity changes, create a new document
+
 ## Commands
 
 ### Setup
@@ -119,6 +127,43 @@ Semem has a layered architecture with the following key components:
 
 ## Common Issues and Solutions
 
+### Configuration patterns
+- Read `docs/manual/config.md` for general setup
+- Read `docs/manual/provider-config.md` for details of embedding and llm chat completion services
+
+### LLM Connector and Model Configuration (from api-server.js)
+The semem system uses a priority-based LLM provider configuration pattern:
+
+**Config.js Access Pattern:**
+```javascript
+const llmProviders = config.get('llmProviders') || [];
+```
+
+**Provider Selection:**
+1. Filter by capabilities: `providers.filter(p => p.capabilities?.includes('chat'))`
+2. Sort by priority: `sort((a, b) => (a.priority || 999) - (b.priority || 999))`
+3. Try providers in order, fallback to Ollama
+
+**Connector Creation Functions:**
+- `createLLMConnector(config)` - for chat providers (MistralConnector, ClaudeConnector, OllamaConnector)
+- `createEmbeddingConnector(config)` - for embedding providers via EmbeddingConnectorFactory
+- `getModelConfig(config)` - extracts model names from highest priority providers
+
+**Model Name Resolution:**
+- Chat: `chatProvider?.chatModel || 'qwen2:1.5b'`
+- Embedding: `embeddingProvider?.embeddingModel || 'nomic-embed-text'`
+
+**Handler Initialization:**
+```javascript
+const modelConfig = await getModelConfig(config);
+const llmHandler = new LLMHandler(llmProvider, modelConfig.chatModel);
+```
+
+**Priority Examples in config.json:**
+- Mistral: priority 1 (highest)
+- Claude: priority 2  
+- Ollama: priority 2 (fallback, no API key required)
+
 ### LLMHandler Method Names
 - Use `generateResponse(prompt, context, options)` for chat completion
 - Use `extractConcepts(text)` for concept extraction
@@ -142,6 +187,7 @@ Semem has a layered architecture with the following key components:
 - All Ragno elements export to RDF dataset via `exportToDataset(dataset)`
 
 ### Ollama Models
+- Used as a fallback when remote services aren't available
 - Embedding model: `nomic-embed-text` (1536 dimensions)
 - Chat model: `qwen2:1.5b` (commonly available, fast)
 - Verify models are installed: `ollama list`
@@ -154,7 +200,5 @@ Semem has a layered architecture with the following key components:
   - Sample data: `{"type":"sample","count":50}` (generates test entities)
 - Backend API endpoints: `/api/vsom/load-data` and `/api/vsom/generate-sample-data`
 
-### Example Workflows
-- See `examples/MistralExample.js` for complete Ragno pipeline demo
-- Demonstrates: corpus decomposition → entity extraction → SPARQL storage → retrieval
-```
+
+
