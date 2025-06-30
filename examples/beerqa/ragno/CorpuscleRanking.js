@@ -27,6 +27,7 @@ import SPARQLHelper from '../SPARQLHelper.js';
 // Configure logging
 logger.setLevel('info');
 
+
 /**
  * Display header
  */
@@ -44,28 +45,31 @@ function displayHeader() {
  */
 class CorpuscleRanking {
     constructor(config, options = {}) {
+
+        this.GRAPH_NODES_MAX = 1000
+
         // Use Config.js for SPARQL configuration
         const storageOptions = config.get('storage.options');
-        
+
         this.options = {
             sparqlEndpoint: options.sparqlEndpoint || storageOptions.update,
-            sparqlAuth: options.sparqlAuth || { 
-                user: storageOptions.user, 
-                password: storageOptions.password 
+            sparqlAuth: options.sparqlAuth || {
+                user: storageOptions.user,
+                password: storageOptions.password
             },
             beerqaGraphURI: options.beerqaGraphURI || 'http://purl.org/stuff/beerqa/test',
             wikipediaGraphURI: options.wikipediaGraphURI || 'http://purl.org/stuff/wikipedia/research',
             timeout: options.timeout || 30000,
-            
+
             // Algorithm options
             enableKCore: options.enableKCore !== false,
             enableCentrality: options.enableCentrality !== false,
             similarityThreshold: options.similarityThreshold || 0.3,
             topKResults: options.topKResults || 20,
-            
+
             // Export options
             exportToSPARQL: options.exportToSPARQL !== false,
-            
+
             ...options
         };
 
@@ -106,7 +110,7 @@ class CorpuscleRanking {
             // Phase 1: Build corpuscle relationship graph
             console.log(chalk.white('📊 Building corpuscle relationship graph...'));
             const graphData = await this.buildCorpuscleGraph();
-            
+
             if (graphData.nodeCount === 0) {
                 console.log(chalk.yellow('⚠️  No corpuscles found - no ranking to perform'));
                 return { success: false, message: 'No corpuscles found' };
@@ -128,7 +132,7 @@ class CorpuscleRanking {
 
             // Calculate final statistics
             this.stats.processingTime = Date.now() - startTime;
-            
+
             console.log(chalk.green('✅ Corpuscle ranking completed successfully'));
             this.displayResults(rankings);
 
@@ -152,7 +156,7 @@ class CorpuscleRanking {
      */
     async buildCorpuscleGraph() {
         console.log(chalk.gray('   Extracting corpuscles and their relationships...'));
-        
+
         // Query for corpuscles with embeddings (indicating importance)
         const corpuscleQuery = `
 PREFIX ragno: <http://purl.org/stuff/ragno/>
@@ -178,7 +182,7 @@ ORDER BY ?corpuscle
 `;
 
         const corpuscleResult = await this.sparqlHelper.executeSelect(corpuscleQuery);
-        
+
         if (!corpuscleResult.success) {
             throw new Error(`Failed to extract corpuscles: ${corpuscleResult.error}`);
         }
@@ -205,7 +209,7 @@ ORDER BY ?corpuscle
                 source: source,
                 properties: new Map()
             });
-            
+
             graph.adjacency.set(corpuscleURI, new Set());
             graph.inDegree.set(corpuscleURI, 0);
             graph.outDegree.set(corpuscleURI, 0);
@@ -241,7 +245,7 @@ WHERE {
 `;
 
         const relationshipResult = await this.sparqlHelper.executeSelect(relationshipQuery);
-        
+
         if (relationshipResult.success) {
             for (const binding of relationshipResult.data.results.bindings) {
                 const sourceURI = binding.sourceCorpuscle.value;
@@ -251,7 +255,7 @@ WHERE {
 
                 if (graph.nodes.has(sourceURI) && graph.nodes.has(targetURI)) {
                     const edgeKey = `${sourceURI}->${targetURI}`;
-                    
+
                     graph.edges.set(edgeKey, {
                         source: sourceURI,
                         target: targetURI,
@@ -263,11 +267,11 @@ WHERE {
                     // Update adjacency
                     graph.adjacency.get(sourceURI).add(targetURI);
                     graph.adjacency.get(targetURI).add(sourceURI); // Treat as undirected
-                    
+
                     // Update degrees
                     graph.outDegree.set(sourceURI, graph.outDegree.get(sourceURI) + 1);
                     graph.inDegree.set(targetURI, graph.inDegree.get(targetURI) + 1);
-                    
+
                     this.stats.relationshipsFound++;
                 }
             }
@@ -302,13 +306,13 @@ WHERE {
     {
         GRAPH <${this.options.beerqaGraphURI}> {
             ?corpuscle ragno:hasAttribute ?attr .
-            ?attr ragno:attributeType "vector-embedding" ;
+            ?attr a ragno:VectorEmbedding ;
                   ragno:attributeValue ?embedding .
         }
     } UNION {
         GRAPH <${this.options.wikipediaGraphURI}> {
             ?corpuscle ragno:hasAttribute ?attr .
-            ?attr ragno:attributeType "vector-embedding" ;
+            ?attr a ragno:VectorEmbedding ;
                   ragno:attributeValue ?embedding .
         }
     }
@@ -316,10 +320,10 @@ WHERE {
 `;
 
         const embeddingResult = await this.sparqlHelper.executeSelect(embeddingQuery);
-        
+
         if (!embeddingResult.success || embeddingResult.data.results.bindings.length === 0) {
             console.log(chalk.gray('   ⚠️  No embeddings found - creating simple connection graph'));
-            
+
             // Create simple all-to-all connections with unit weight
             const corpuscles = Array.from(graph.nodes.keys());
             for (let i = 0; i < corpuscles.length; i++) {
@@ -327,7 +331,7 @@ WHERE {
                     const sourceURI = corpuscles[i];
                     const targetURI = corpuscles[j];
                     const edgeKey = `${sourceURI}->${targetURI}`;
-                    
+
                     graph.edges.set(edgeKey, {
                         source: sourceURI,
                         target: targetURI,
@@ -345,14 +349,14 @@ WHERE {
                     }
                     graph.adjacency.get(sourceURI).add(targetURI);
                     graph.adjacency.get(targetURI).add(sourceURI);
-                    
+
                     this.stats.syntheticEdgesCreated++;
                 }
             }
         } else {
             // Create edges based on embedding similarity
             const embeddings = new Map();
-            
+
             for (const binding of embeddingResult.data.results.bindings) {
                 const corpuscleURI = binding.corpuscle.value;
                 try {
@@ -375,12 +379,12 @@ WHERE {
                     const targetURI = corpuscles[j];
                     const embedding1 = embeddings.get(sourceURI);
                     const embedding2 = embeddings.get(targetURI);
-                    
+
                     const similarity = this.calculateCosineSimilarity(embedding1, embedding2);
-                    
+
                     if (similarity >= this.options.similarityThreshold) {
                         const edgeKey = `${sourceURI}->${targetURI}`;
-                        
+
                         graph.edges.set(edgeKey, {
                             source: sourceURI,
                             target: targetURI,
@@ -398,7 +402,7 @@ WHERE {
                         }
                         graph.adjacency.get(sourceURI).add(targetURI);
                         graph.adjacency.get(targetURI).add(sourceURI);
-                        
+
                         this.stats.syntheticEdgesCreated++;
                     }
                 }
@@ -416,22 +420,22 @@ WHERE {
      */
     calculateCosineSimilarity(a, b) {
         if (!a || !b || a.length !== b.length) return 0;
-        
+
         let dotProduct = 0;
         let normA = 0;
         let normB = 0;
-        
+
         for (let i = 0; i < a.length; i++) {
             dotProduct += a[i] * b[i];
             normA += a[i] * a[i];
             normB += b[i] * b[i];
         }
-        
+
         normA = Math.sqrt(normA);
         normB = Math.sqrt(normB);
-        
+
         if (normA === 0 || normB === 0) return 0;
-        
+
         return dotProduct / (normA * normB);
     }
 
@@ -442,7 +446,7 @@ WHERE {
      */
     async analyzeCorpuscleGraph(graphData) {
         const { graph } = graphData;
-        
+
         const analysisResults = {
             nodeCount: graph.nodes.size,
             edgeCount: graph.edges.size,
@@ -465,7 +469,7 @@ WHERE {
         }
 
         // Run betweenness centrality if enabled and graph is small enough
-        if (this.options.enableCentrality && graph.nodes.size <= 100) {
+        if (this.options.enableCentrality && graph.nodes.size <= this.GRAPH_NODES_MAX) {
             console.log(chalk.gray('   Running betweenness centrality...'));
             try {
                 analysisResults.centrality = this.graphAnalytics.computeBetweennessCentrality(graph);
@@ -492,7 +496,7 @@ WHERE {
      */
     processCorpuscleRankings(analysisResults) {
         console.log(chalk.gray('   Processing analysis results into rankings...'));
-        
+
         const rankings = [];
         const corpuscleScores = new Map();
 
@@ -539,12 +543,12 @@ WHERE {
 
         this.stats.rankingsGenerated = rankings.length;
         console.log(chalk.gray(`   ✓ Generated ${rankings.length} corpuscle rankings`));
-        
+
         // Return top-K results if requested
         if (this.options.topKResults > 0) {
             return rankings.slice(0, this.options.topKResults);
         }
-        
+
         return rankings;
     }
 
@@ -554,7 +558,7 @@ WHERE {
      */
     async exportRankingsToSPARQL(rankings) {
         console.log(chalk.gray(`   Exporting ${rankings.length} rankings to SPARQL store...`));
-        
+
         const timestamp = new Date().toISOString();
         const batchSize = 10;
         let exported = 0;
@@ -566,7 +570,7 @@ WHERE {
 
                 for (const ranking of batch) {
                     const attributeURI = `${ranking.nodeUri}_corpuscle_ranking_${Date.now()}_${Math.random().toString(36).substring(7)}`;
-                    
+
                     triples.push(`<${attributeURI}> rdf:type ragno:Attribute .`);
                     triples.push(`<${attributeURI}> rdfs:label "corpuscle-importance-ranking" .`);
                     triples.push(`<${attributeURI}> ragno:attributeType "corpuscle-importance-ranking" .`);
@@ -576,7 +580,7 @@ WHERE {
                     triples.push(`<${attributeURI}> ragno:centralityScore "${ranking.centralityScore.toFixed(6)}" .`);
                     triples.push(`<${attributeURI}> dcterms:created "${timestamp}"^^xsd:dateTime .`);
                     triples.push(`<${attributeURI}> prov:wasGeneratedBy "corpuscle-ranking-analysis" .`);
-                    
+
                     triples.push(`<${ranking.nodeUri}> ragno:hasAttribute <${attributeURI}> .`);
                     triples.push(`<${attributeURI}> ragno:describesCorpuscle <${ranking.nodeUri}> .`);
                 }
@@ -596,7 +600,7 @@ INSERT DATA {
 }`;
 
                 const result = await this.sparqlHelper.executeUpdate(updateQuery);
-                
+
                 if (result.success) {
                     exported += batch.length;
                     console.log(chalk.gray(`   ✓ Exported batch ${Math.ceil((i + batchSize) / batchSize)}/${Math.ceil(rankings.length / batchSize)} (${exported}/${rankings.length})`));
@@ -633,21 +637,21 @@ INSERT DATA {
         console.log(`   ${chalk.cyan('K-core Results:')} ${chalk.white(this.stats.kCoreResults)}`);
         console.log(`   ${chalk.cyan('Centrality Results:')} ${chalk.white(this.stats.centralityResults)}`);
         console.log(`   ${chalk.cyan('Processing Time:')} ${chalk.white((this.stats.processingTime / 1000).toFixed(2))}s`);
-        
+
         if (this.stats.errors.length > 0) {
             console.log(`   ${chalk.cyan('Errors:')} ${chalk.red(this.stats.errors.length)}`);
             this.stats.errors.forEach(error => {
                 console.log(`     ${chalk.red('•')} ${error}`);
             });
         }
-        
+
         console.log('');
-        
+
         // Display top rankings
         if (rankings.length > 0) {
             console.log(chalk.bold.white('🏆 Top Corpuscle Rankings:'));
             const topRankings = rankings.slice(0, Math.min(10, rankings.length));
-            
+
             for (let i = 0; i < topRankings.length; i++) {
                 const ranking = topRankings[i];
                 const shortUri = ranking.nodeUri.split('/').pop();
@@ -657,7 +661,7 @@ INSERT DATA {
                 console.log(`      ${chalk.gray('Centrality:')} ${chalk.white(ranking.centralityScore.toFixed(4))}`);
             }
         }
-        
+
         console.log('');
     }
 }
@@ -667,17 +671,17 @@ INSERT DATA {
  */
 async function rankCorpuscles() {
     displayHeader();
-    
+
     try {
         // Initialize Config.js for proper configuration management
-        const config = new Config('../../../config/config.json');
+        const config = new Config('config/config.json');
         await config.init();
-        
+
         const options = {
             beerqaGraphURI: 'http://purl.org/stuff/beerqa/test',
             wikipediaGraphURI: 'http://purl.org/stuff/wikipedia/research',
             timeout: 30000,
-            
+
             enableKCore: true,
             enableCentrality: true,
             similarityThreshold: 0.3,
@@ -701,7 +705,7 @@ async function rankCorpuscles() {
         } else {
             console.log(chalk.yellow('⚠️  Corpuscle ranking completed with issues:', result.message));
         }
-        
+
         return result;
 
     } catch (error) {

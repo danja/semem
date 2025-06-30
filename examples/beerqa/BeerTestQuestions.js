@@ -235,14 +235,14 @@ async function runBeerTestQuestionsETL() {
 
     try {
         // Initialize Config.js for proper configuration management
-        const config = new Config('../../config/config.json');
+        const config = new Config('config/config.json');
         await config.init();
         
         const storageOptions = config.get('storage.options');
         
         // Initialize BeerTestQuestionsETL with configuration from Config.js
         const etl = new BeerTestQuestionsETL({
-            dataPath: path.resolve('../../data/beerqa/beerqa_test_questions_v1.0.json'),
+            dataPath: path.resolve('data/beerqa/beerqa_test_questions_v1.0.json'),
             sparqlEndpoint: storageOptions.update,
             sparqlAuth: { 
                 user: storageOptions.user, 

@@ -19,11 +19,13 @@ The system provides multiple interfaces (direct SDK, HTTP API, MCP protocol, web
 
 ## Contents
 
-### Demonstrator
+### Demonstrators
 
-**[beerqa.md](beerqa.md)** 
+Examples are categorised in the `examples` dir. Most should work, though there are a lot, revisions to the core code causes breakage and it takes me a while to get around to checking things.
 
-*tl;dr* the code under `examples/beerqa` implements a question-answering workflow that combines Semantic Web technologies (RDF/SPARQL), vector embeddings, and large language models to provide contextually-augmented answers. It uses SDK facilities directly through a series of individual node scripts (*less to go wrong*). 
+**[beerqa.md](beerqa.md) [beerqa-2.md](beerqa-2.md)** 
+
+*tl;dr* the code under `examples/beerqa` implements a question-answering workflow that combines Semantic Web technologies (RDF/SPARQL), vector embeddings, and large language models to provide contextually-augmented answers. It uses SDK facilities directly through a series of individual node scripts (*less to go wrong*). There's an enhanced version in-progress, see [beerqa-2.md](beerqa-2.md).
 
 ### Core Configuration and Setup
 

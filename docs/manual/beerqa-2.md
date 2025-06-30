@@ -2,6 +2,16 @@
 
 **Status 2025-06-30:** Enhanced workflow integrating NodeRAG formal relationship infrastructure with improved configuration management and graph analytics capabilities.
 
+**tl;dr** :
+* `node examples/beerqa/BeerTestQuestions.js`
+* `node examples/beerqa/AugmentQuestion.js`
+* `node examples/beerqa/QuestionResearch.js`
+* `node examples/beerqa/ragno/RelationshipBuilder.js`
+* `node examples/beerqa/ragno/CorpuscleRanking.js`
+* `node examples/beerqa/ragno/CommunityAnalysis.js`
+* `node examples/beerqa/Navigate.js`
+* `node examples/beerqa/GetResult.js`
+
 ## Overview
 
 The enhanced BeerQA workflow builds upon the original 7-stage pipeline by adding formal NodeRAG relationship infrastructure, graph analytics, and improved configuration patterns. This version creates `ragno:Relationship` entities that enable advanced graph operations like community detection, corpuscle ranking, and structured answer generation.
@@ -17,13 +27,13 @@ The enhanced workflow operates on three primary RDF graphs:
 
 All scripts now use centralized Config.js patterns and the config-extras.json file for consistent graph URI management.
 
+**Scripts should be run frmo the root dir of the project, some include paths.**
+
 ## Enhanced Workflow Stages
 
 ### Stage 1: Foundation Data Creation
-**Keywords**: `ingest`, `initialize`, `load`
 
 #### 1.1 Question Initialization
-**Keywords**: `ingest`, `load`, `initialize`
 **Command**: `node examples/beerqa/BeerTestQuestions.js`
 
 **Operations**:
@@ -41,7 +51,6 @@ const storageOptions = config.get('storage.options');
 **Expected Results**: 100 question corpuscles loaded
 
 #### 1.2 Question Augmentation  
-**Keywords**: `augment`, `enrich`, `embed`, `extract`
 **Command**: `node examples/beerqa/AugmentQuestion.js`
 
 **Operations**:
@@ -52,7 +61,6 @@ const storageOptions = config.get('storage.options');
 **Expected Results**: Questions enriched with embeddings and concepts (typically 1-3 concepts per question)
 
 #### 1.3 Wikipedia Research
-**Keywords**: `research`, `search`, `ingest`, `discover`
 **Command**: `node examples/beerqa/QuestionResearch.js`
 
 **Operations**:
@@ -63,11 +71,11 @@ const storageOptions = config.get('storage.options');
 
 **Expected Results**: 5-10 Wikipedia corpuscles per processed question
 
+**Keywords**: `ingest`, `initialize`, `load`, `augment`, `enrich`, `embed`, `extract`, `research`, `search`, `ingest`, `discover`
+
 ### Stage 2: Formal Relationship Infrastructure
-**Keywords**: `link`, `connect`, `relate`, `analyze`
 
 #### 2.1 Relationship Builder
-**Keywords**: `link`, `connect`, `relate`, `score`
 **Command**: `node examples/beerqa/ragno/RelationshipBuilder.js`
 
 **Purpose**: Creates formal `ragno:Relationship` entities between questions and Wikipedia content
@@ -101,18 +109,20 @@ const storageOptions = config.get('storage.options');
 - Graph URI alignment critical (BeerQA vs Wikipedia graphs)
 - Performance scales with number of questions × Wikipedia corpuscles
 
+**Keywords**: `link`, `connect`, `relate`, `analyze`, `score`
+
 ### Stage 3: Graph Analytics
-**Keywords**: `analyze`, `rank`, `cluster`, `measure`
 
 #### 3.1 Corpuscle Ranking
-**Keywords**: `analyze`, `rank`, `score`, `measure`
 **Command**: `node examples/beerqa/ragno/CorpuscleRanking.js`
+
+Note that given the complexity of the centrality algorithm, this is disabled if there are more than 1000 nodes to address, this is set early in the code with ` this.GRAPH_NODES_MAX = 1000`.
 
 **Purpose**: Analyzes graph structure to rank corpuscles by importance
 
 **Operations**:
 - **K-core Decomposition**: Identifies structurally important nodes
-- **Centrality Analysis**: Calculates betweenness centrality (graphs < 100 nodes)
+- **Centrality Analysis**: Calculates betweenness centrality (graphs < 1000 nodes)
 - **Composite Scoring**: Weighted combination (K-core: 60%, Centrality: 40%)
 - **SPARQL Export**: Stores rankings as ragno:Attribute entities
 
@@ -125,12 +135,13 @@ const storageOptions = config.get('storage.options');
 **Expected Results**: Ranked list of most structurally important corpuscles
 
 **Potential Issues**:
-- Centrality skipped for large graphs (>100 nodes) due to computational cost
+- Centrality skipped for large graphs (>1000 nodes) due to computational cost
 - Requires existing relationship infrastructure
 - Graph connectivity affects algorithm effectiveness
 
+**Keywords**: `analyze`, `rank`, `score`, `measure`
+
 #### 3.2 Community Analysis
-**Keywords**: `cluster`, `group`, `detect`, `summarize`
 **Command**: `node examples/beerqa/ragno/CommunityAnalysis.js`
 
 **Purpose**: Detects communities in the knowledge graph using Leiden algorithm
@@ -154,11 +165,11 @@ const storageOptions = config.get('storage.options');
 - LLM summarization requires working chat provider
 - Community quality depends on relationship infrastructure quality
 
+**Keywords**: `cluster`, `group`, `detect`, `summarize`, `analyze`, `rank`, `cluster`, `measure`
+
 ### Stage 4: Enhanced Navigation and Results
-**Keywords**: `navigate`, `retrieve`, `generate`, `answer`
 
 #### 4.1 ZPT Navigation (Enhanced)
-**Keywords**: `navigate`, `traverse`, `discover`, `filter`
 **Command**: `node examples/beerqa/Navigate.js`
 
 **Purpose**: Semantic navigation using formal relationship infrastructure
@@ -176,8 +187,9 @@ const storageOptions = config.get('storage.options');
 
 **Expected Results**: Enhanced relationship network for improved answer quality
 
+**Keywords**: `navigate`, `traverse`, `discover`, `filter`
+
 #### 4.2 Final Results (Enhanced)
-**Keywords**: `retrieve`, `contextualize`, `generate`, `answer`
 **Command**: `node examples/beerqa/GetResult.js`
 
 **Purpose**: Context-augmented answer generation using formal relationships
@@ -197,11 +209,11 @@ const storageOptions = config.get('storage.options');
 
 **Expected Results**: Structured answers with relationship-based context and source attribution
 
+**Keywords**: `retrieve`, `contextualize`, `generate`, `answer`, `navigate`, `retrieve`, `generate`, `answer`
+
 ## Configuration Management
-**Keywords**: `configure`, `setup`, `manage`
 
 ### Config.js Integration
-**Keywords**: `configure`, `initialize`, `setup`
 
 All enhanced scripts use consistent Config.js patterns:
 
@@ -217,8 +229,9 @@ const sparqlHelper = new SPARQLHelper(storageOptions.update, {
 });
 ```
 
+**Keywords**: `configure`, `initialize`, `setup`
+
 ### Graph URI Configuration
-**Keywords**: `configure`, `manage`, `align`
 
 The `config-extras.json` file provides centralized graph URI management:
 
@@ -237,8 +250,9 @@ The `config-extras.json` file provides centralized graph URI management:
 }
 ```
 
+**Keywords**: `configure`, `manage`, `align`
+
 ### LLM Provider Configuration
-**Keywords**: `configure`, `select`, `prioritize`
 
 Uses priority-based provider selection from config.json:
 
@@ -256,11 +270,11 @@ Uses priority-based provider selection from config.json:
 }
 ```
 
+**Keywords**: `configure`, `select`, `prioritize`, `configure`, `setup`, `manage`
+
 ## Execution Sequence
-**Keywords**: `execute`, `run`, `workflow`
 
 ### Complete Workflow
-**Keywords**: `execute`, `sequence`, `pipeline`
 ```bash
 # Stage 1: Foundation Data
 cd examples/beerqa
@@ -281,38 +295,42 @@ cd ..
 node GetResult.js               # Generate final answers
 ```
 
+**Keywords**: `execute`, `sequence`, `pipeline`
+
 ### Incremental Testing
-**Keywords**: `test`, `debug`, `validate`
 ```bash
 # Test specific components
 node examples/beerqa/ragno/RelationshipBuilder.js  # Relationships only
 node examples/beerqa/GetResult.js                  # Final results only
 ```
 
+**Keywords**: `test`, `debug`, `validate`, `execute`, `run`, `workflow`
+
 ## Performance Characteristics
-**Keywords**: `measure`, `benchmark`, `optimize`
 
 ### Enhanced Workflow Timings
-**Keywords**: `measure`, `timing`, `performance`
 - **RelationshipBuilder**: 30-60 seconds (depends on question/Wikipedia corpus size)
 - **CorpuscleRanking**: 1-2 seconds (100 corpuscles, 600 relationships)
 - **CommunityAnalysis**: 5-10 seconds (includes LLM summarization)
 - **GetResult**: 10-20 seconds per question (with formal relationships)
 
+**Keywords**: `measure`, `timing`, `performance`
+
 ### Storage Requirements
-**Keywords**: `store`, `persist`, `scale`
 - **Formal Relationships**: ~500-1000 bytes per relationship
 - **Graph Analytics**: ~200-500 bytes per ranking/community annotation
 - **Total Enhancement**: ~2-5x base workflow storage
 
+**Keywords**: `store`, `persist`, `scale`
+
 ### Memory Usage
-**Keywords**: `memory`, `scale`, `optimize`
 - **Graph Analytics**: O(n²) for centrality, O(n) for K-core
 - **Relationship Building**: Linear in question × corpuscle count
 - **Community Detection**: Depends on graph connectivity
 
+**Keywords**: `memory`, `scale`, `optimize`, `measure`, `benchmark`, `optimize`
+
 ## Known Issues and Troubleshooting
-**Keywords**: `debug`, `troubleshoot`, `fix`
 
 ### Configuration Issues
 **Keywords**: `configure`, `debug`, `fix`
@@ -378,46 +396,50 @@ ollama pull nomic-embed-text
 **Problem**: Graph URI mismatches
 **Solution**: Use config-extras.json for consistent URI management across all scripts
 
+**Keywords**: `debug`, `troubleshoot`, `fix`, `configure`, `debug`, `fix`, `model`, `availability`, `setup`, `analyze`, `debug`, `tune`, `link`, `debug`, `validate`, `sparql`, `storage`, `debug`
+
 ## Quality Assessment
-**Keywords**: `assess`, `validate`, `measure`
 
 ### Relationship Quality Indicators
-**Keywords**: `assess`, `measure`, `validate`
 - **Coverage**: Most questions should have 5-20 relationships
 - **Diversity**: Mix of similarity, entity, and semantic relationship types
 - **Weights**: Reasonable distribution (0.1-1.0 range)
 
-### Analytics Quality Indicators
-**Keywords**: `analyze`, `measure`, `validate`  
+**Keywords**: `assess`, `measure`, `validate`
+
+### Analytics Quality Indicators  
 - **K-core Distribution**: Should span multiple core values (1-6+)
 - **Community Sizes**: Communities should have 3+ members
 - **Ranking Diversity**: Top rankings shouldn't be dominated by single type
 
+**Keywords**: `analyze`, `measure`, `validate`
+
 ### Answer Quality Indicators
-**Keywords**: `answer`, `validate`, `assess`
 - **Context Sources**: Questions should have 3+ context sources
 - **Relationship Usage**: Answers should utilize formal relationships
 - **Source Attribution**: Responses should reference Wikipedia sources
 
+**Keywords**: `answer`, `validate`, `assess`, `assess`, `validate`, `measure`
+
 ## Future Enhancements
-**Keywords**: `enhance`, `improve`, `extend`
 
 ### Planned Improvements
-**Keywords**: `improve`, `optimize`, `extend`
 - **Batch Processing**: Parallel question processing
 - **Quality Metrics**: Automated relationship and answer quality assessment
 - **Configuration UI**: Web interface for parameter tuning
 - **Performance Monitoring**: Detailed timing and quality metrics
 
+**Keywords**: `improve`, `optimize`, `extend`
+
 ### Integration Opportunities
-**Keywords**: `integrate`, `extend`, `connect`
 - **External Knowledge Sources**: Beyond Wikipedia integration
 - **Advanced Analytics**: PageRank, community evolution analysis
 - **Answer Validation**: Cross-reference with multiple sources
 - **Interactive Navigation**: User-guided ZPT parameter adjustment
 
+**Keywords**: `integrate`, `extend`, `connect`, `enhance`, `improve`, `extend`
+
 ## System Requirements
-**Keywords**: `requirements`, `setup`, `dependencies`
 
 - **Node.js**: 20.11.0+ with ES modules
 - **SPARQL Endpoint**: Apache Fuseki with authentication
@@ -425,3 +447,5 @@ ollama pull nomic-embed-text
 - **Memory**: 2-4GB RAM for graph analytics on 100+ corpuscles
 - **Storage**: 10-50MB for complete enhanced workflow data
 - **Network**: Wikipedia API access (rate limited to 1 req/sec)
+
+**Keywords**: `requirements`, `setup`, `dependencies`

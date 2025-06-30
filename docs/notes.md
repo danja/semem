@@ -1,6 +1,4 @@
-can you create a user-friendly doc listing the algorithms available in Semem. There are all the noderag-derived ones, plus vsom and hyde, maybe some for zpt and ragno too. Include
-   a tags annotation for each as before. Same the file at docs/manual/algorithms.md
-
+ The UI (mostly under src/frontend) is set up to have a tab showing the application of the vsom algorithm. It doesn't yet show anything. Now 
    
 
 

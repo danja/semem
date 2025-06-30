@@ -64,6 +64,7 @@ export default class NamespaceManager {
             CommunityElement: this.ragno.CommunityElement,
             TextElement: this.ragno.TextElement,
             IndexElement: this.ragno.IndexElement,
+            VectorEmbedding: this.ragno.VectorEmbedding,
             
             // Collection classes
             Corpus: this.ragno.Corpus,

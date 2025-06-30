@@ -444,7 +444,7 @@ LIMIT 1`;
             
             triples.push(`${embeddingURI} rdf:type ragno:Attribute .`);
             triples.push(`${embeddingURI} rdfs:label ${SPARQLHelper.createLiteral('question-embedding')} .`);
-            triples.push(`${embeddingURI} ragno:attributeType ${SPARQLHelper.createLiteral('vector-embedding')} .`);
+            triples.push(`${embeddingURI} a ragno:VectorEmbedding .`);
             triples.push(`${embeddingURI} ragno:attributeValue ${SPARQLHelper.createLiteral(JSON.stringify(embedding))} .`);
             triples.push(`${embeddingURI} ragno:embeddingDimensions ${SPARQLHelper.createLiteral(embedding.length.toString(), 'http://www.w3.org/2001/XMLSchema#integer')} .`);
             triples.push(`${embeddingURI} dcterms:created ${SPARQLHelper.createLiteral(timestamp, 'http://www.w3.org/2001/XMLSchema#dateTime')} .`);
@@ -599,7 +599,7 @@ async function runBeerQAQuestionAugmentation() {
     displayHeader();
 
     // Initialize Config.js for proper configuration management
-    const config = new Config('../../config/config.json');
+    const config = new Config('config/config.json');
     await config.init();
     
     const options = {
@@ -665,11 +665,11 @@ async function runBeerQAQuestionAugmentation() {
                 console.log(`   • ${chalk.white('Extracted Concepts:')} ${chalk.cyan(result.conceptCount + ' concepts')}`);
             }
             console.log(`   • ${chalk.white('Additional Triples:')} ${chalk.cyan(result.triplesAdded)}`);
-            console.log(`   • ${chalk.white('Stored in graph:')} ${chalk.cyan(config.graphURI)}`);
+            console.log(`   • ${chalk.white('Stored in graph:')} ${chalk.cyan(options.graphURI)}`);
             console.log('');
             console.log(chalk.bold.cyan('Next Steps:'));
-            console.log(`   • Query the augmented data at: ${chalk.white(config.sparqlEndpoint.replace('/update', '/query'))}`);
-            console.log(`   • Find embeddings: ${chalk.white('SELECT * WHERE { ?s ragno:attributeType "vector-embedding" } LIMIT 10')}`);
+            console.log(`   • Query the augmented data at: ${chalk.white(displayConfig.sparqlEndpoint.replace('/update', '/query'))}`);
+            console.log(`   • Find embeddings: ${chalk.white('SELECT * WHERE { ?s a ragno:VectorEmbedding } LIMIT 10')}`);
             console.log(`   • Find concepts: ${chalk.white('SELECT * WHERE { ?s ragno:attributeType "concept" } LIMIT 10')}`);
             console.log(`   • View augmented corpuscles: ${chalk.white('SELECT * WHERE { ?s ragno:augmented true } LIMIT 10')}`);
             console.log('');
@@ -691,7 +691,7 @@ async function runBeerQAQuestionAugmentation() {
         console.log('');
         console.log(chalk.bold.yellow('💡 Troubleshooting Tips:'));
         console.log(`   • Ensure test questions exist: ${chalk.cyan('node examples/beerqa/BeerTestQuestions.js')}`);
-        console.log(`   • Check SPARQL endpoint is accessible: ${chalk.cyan(config.sparqlEndpoint)}`);
+        console.log(`   • Check SPARQL endpoint is accessible: ${chalk.cyan(config.get('storage.options.update'))}`);
         console.log(`   • Verify authentication credentials`);
         console.log(`   • Check that Ollama/embedding service is running`);
         console.log(`   • Ensure LLM service is available for concept extraction`);

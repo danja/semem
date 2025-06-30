@@ -66,8 +66,15 @@ WHERE {
         ?question a ragno:Corpuscle ;
                  rdfs:label ?questionText .
         
-        # Must have embedding for similarity search
-        ?question ragno:embedding ?embedding .
+        # Must have embedding for similarity search (backward compatible)
+        ?question ragno:hasAttribute ?embeddingAttr .
+        {
+            ?embeddingAttr a ragno:VectorEmbedding ;
+                          ragno:attributeValue ?embedding .
+        } UNION {
+            ?embeddingAttr ragno:attributeType "vector-embedding" ;
+                          ragno:attributeValue ?embedding .
+        }
         
         # Must have concepts for semantic navigation
         ?question ragno:hasAttribute ?attr .
@@ -155,7 +162,16 @@ WHERE {
         ?corpuscle a ragno:Corpuscle ;
                   rdfs:label ?content .
         
-        OPTIONAL { ?corpuscle ragno:embedding ?embedding }
+        OPTIONAL { 
+            ?corpuscle ragno:hasAttribute ?embeddingAttr .
+            {
+                ?embeddingAttr a ragno:VectorEmbedding ;
+                              ragno:attributeValue ?embedding .
+            } UNION {
+                ?embeddingAttr ragno:attributeType "vector-embedding" ;
+                              ragno:attributeValue ?embedding .
+            }
+        }
         
         OPTIONAL {
             ?corpuscle ragno:hasAttribute ?attr .
@@ -182,7 +198,16 @@ WHERE {
         
         ?textElement skos:prefLabel ?content .
         
-        OPTIONAL { ?textElement ragno:embedding ?embedding }
+        OPTIONAL { 
+            ?textElement ragno:hasAttribute ?embeddingAttr .
+            {
+                ?embeddingAttr a ragno:VectorEmbedding ;
+                              ragno:attributeValue ?embedding .
+            } UNION {
+                ?embeddingAttr ragno:attributeType "vector-embedding" ;
+                              ragno:attributeValue ?embedding .
+            }
+        }
         
         OPTIONAL {
             ?corpuscle ragno:hasAttribute ?attr .
@@ -584,12 +609,21 @@ async function navigateQuestions() {
     displayHeader();
     
     try {
-        // Configuration
+        // Load Config.js for proper SPARQL configuration
+        const configPath = path.join(process.cwd(), 'config/config.json');
+        const configObj = new Config(configPath);
+        await configObj.init();
+        const storageOptions = configObj.get('storage.options');
+        
+        // Configuration using Config.js
         const config = {
-            sparqlEndpoint: 'https://fuseki.hyperdata.it/hyperdata.it/update',
-            sparqlAuth: { user: 'admin', password: 'admin123' },
+            sparqlEndpoint: storageOptions.update,
+            sparqlAuth: { 
+                user: storageOptions.user || 'admin', 
+                password: storageOptions.password || 'admin123' 
+            },
             beerqaGraphURI: 'http://purl.org/stuff/beerqa/test',
-            wikipediaGraphURI: 'http://purl.org/stuff/wikipedia/test',
+            wikipediaGraphURI: 'http://purl.org/stuff/wikipedia/research',
             navigationGraphURI: 'http://purl.org/stuff/navigation',
             similarityThreshold: 0.3,
             maxRelatedCorpuscles: 6,

@@ -8,6 +8,10 @@
  * augmented questions for the LLM, and returns the final answers to users.
  */
 
+// Load environment variables FIRST
+import dotenv from 'dotenv';
+dotenv.config();
+
 import path from 'path';
 import logger from 'loglevel';
 import chalk from 'chalk';
@@ -54,7 +58,7 @@ function displayConfiguration(config) {
  */
 async function getQuestionsWithRelationships(sparqlHelper, beerqaGraphURI) {
     console.log(chalk.bold.white('📋 Finding questions with relationships...'));
-    
+
     const query = `
 PREFIX ragno: <http://purl.org/stuff/ragno/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -81,17 +85,17 @@ ORDER BY ?question DESC(?weight)
 `;
 
     const result = await sparqlHelper.executeSelect(query);
-    
+
     if (!result.success) {
         throw new Error(`Failed to retrieve questions with relationships: ${result.error}`);
     }
-    
+
     // Group results by question
     const questionsMap = new Map();
-    
+
     for (const binding of result.data.results.bindings) {
         const questionURI = binding.question.value;
-        
+
         if (!questionsMap.has(questionURI)) {
             questionsMap.set(questionURI, {
                 uri: questionURI,
@@ -99,7 +103,7 @@ ORDER BY ?question DESC(?weight)
                 relationships: []
             });
         }
-        
+
         questionsMap.get(questionURI).relationships.push({
             uri: binding.relationship.value,
             targetEntity: binding.targetEntity.value,
@@ -108,15 +112,15 @@ ORDER BY ?question DESC(?weight)
             sourceCorpus: binding.sourceCorpus?.value || 'unknown'
         });
     }
-    
+
     const questions = Array.from(questionsMap.values());
-    
+
     console.log(`   ${chalk.green('✓')} Found ${questions.length} questions with relationships`);
-    
+
     const totalRelationships = questions.reduce((sum, q) => sum + q.relationships.length, 0);
     console.log(`   ${chalk.green('✓')} Total relationships: ${totalRelationships}`);
     console.log('');
-    
+
     return questions;
 }
 
@@ -125,11 +129,11 @@ ORDER BY ?question DESC(?weight)
  */
 async function getRelatedEntityContent(sparqlHelper, beerqaGraphURI, wikipediaGraphURI, entityURIs) {
     if (entityURIs.length === 0) return new Map();
-    
+
     console.log(chalk.gray(`     Fetching content for ${entityURIs.length} related entities...`));
-    
+
     const entityContent = new Map();
-    
+
     // Query BeerQA content
     const beerqaQuery = `
 PREFIX ragno: <http://purl.org/stuff/ragno/>
@@ -146,7 +150,7 @@ WHERE {
 }`;
 
     const beerqaResult = await sparqlHelper.executeSelect(beerqaQuery);
-    
+
     if (beerqaResult.success) {
         for (const binding of beerqaResult.data.results.bindings) {
             entityContent.set(binding.entity.value, {
@@ -156,7 +160,7 @@ WHERE {
             });
         }
     }
-    
+
     // Query Wikipedia content
     const wikipediaQuery = `
 PREFIX ragno: <http://purl.org/stuff/ragno/>
@@ -180,16 +184,16 @@ WHERE {
 }`;
 
     const wikipediaResult = await sparqlHelper.executeSelect(wikipediaQuery);
-    
+
     if (wikipediaResult.success) {
         for (const binding of wikipediaResult.data.results.bindings) {
             const existing = entityContent.get(binding.entity.value);
-            
+
             if (!existing) {
                 // Use markdown content if available, otherwise title
                 const content = binding.content?.value || binding.title.value;
                 const contentType = binding.contentType?.value || 'title';
-                
+
                 entityContent.set(binding.entity.value, {
                     content: content,
                     source: 'Wikipedia',
@@ -199,9 +203,9 @@ WHERE {
             }
         }
     }
-    
+
     console.log(chalk.gray(`     ✓ Retrieved content for ${entityContent.size} entities`));
-    
+
     return entityContent;
 }
 
@@ -210,17 +214,17 @@ WHERE {
  */
 function buildAugmentedContext(contextManager, question, relationships, entityContent, options = {}) {
     console.log(chalk.gray(`     Building augmented context...`));
-    
+
     // Prepare interactions from related entities
     const retrievals = [];
-    
+
     for (const rel of relationships) {
         const content = entityContent.get(rel.targetEntity);
-        
+
         if (content) {
             // Format content based on type
             let formattedContent = content.content;
-            
+
             if (content.type === 'text/markdown') {
                 // Truncate long markdown content
                 if (formattedContent.length > 2000) {
@@ -229,7 +233,7 @@ function buildAugmentedContext(contextManager, question, relationships, entityCo
             } else if (content.type === 'title') {
                 formattedContent = `${content.title}: ${content.content}`;
             }
-            
+
             // Create interaction format for ContextManager
             const interaction = {
                 prompt: `Related information about ${content.title || 'topic'}`,
@@ -238,17 +242,17 @@ function buildAugmentedContext(contextManager, question, relationships, entityCo
                 source: content.source,
                 relationshipType: rel.relationshipType
             };
-            
+
             retrievals.push({
                 interaction: interaction,
                 similarity: rel.weight // Use relationship weight as similarity
             });
         }
     }
-    
+
     // Sort by weight/similarity for better context ordering
     retrievals.sort((a, b) => b.similarity - a.similarity);
-    
+
     // Build context using ContextManager
     const context = contextManager.buildContext(
         question.questionText,
@@ -258,9 +262,9 @@ function buildAugmentedContext(contextManager, question, relationships, entityCo
             systemContext: options.systemContext || 'Answer the question using the provided context information.'
         }
     );
-    
+
     console.log(chalk.gray(`     ✓ Built context with ${retrievals.length} related pieces`));
-    
+
     return {
         context: context,
         sourceCount: retrievals.length,
@@ -273,7 +277,7 @@ function buildAugmentedContext(contextManager, question, relationships, entityCo
  */
 async function generateAnswer(llmHandler, question, contextInfo, options = {}) {
     console.log(chalk.gray(`     Generating LLM response...`));
-    
+
     const systemPrompt = `You are an expert assistant answering questions using provided context information.
 
 Instructions:
@@ -295,19 +299,19 @@ Context sources available: ${contextInfo.sources.join(', ')}`;
                 maxRetries: 3
             }
         );
-        
+
         console.log(chalk.gray(`     ✓ Generated response (${response.length} chars)`));
-        
+
         return {
             answer: response,
             contextSources: contextInfo.sources,
             contextSourceCount: contextInfo.sourceCount,
             success: true
         };
-        
+
     } catch (error) {
         console.log(chalk.red(`     ❌ Failed to generate response: ${error.message}`));
-        
+
         return {
             answer: 'I apologize, but I was unable to generate a response due to a technical issue. Please try again.',
             contextSources: contextInfo.sources,
@@ -325,17 +329,17 @@ async function processQuestion(sparqlHelper, beerqaGraphURI, wikipediaGraphURI, 
     console.log(chalk.bold.white(`❓ Question: ${question.questionText}`));
     console.log(`   ${chalk.cyan('Question URI:')} ${chalk.dim(question.uri)}`);
     console.log(`   ${chalk.cyan('Related Entities:')} ${chalk.white(question.relationships.length)}`);
-    
+
     // Display relationship summary
     const relationshipSummary = question.relationships.reduce((acc, rel) => {
         acc[rel.sourceCorpus] = (acc[rel.sourceCorpus] || 0) + 1;
         return acc;
     }, {});
-    
+
     for (const [source, count] of Object.entries(relationshipSummary)) {
         console.log(`     ${chalk.gray(source)}: ${chalk.white(count)} relationships`);
     }
-    
+
     // Get content for related entities
     const entityURIs = question.relationships.map(rel => rel.targetEntity);
     const entityContent = await getRelatedEntityContent(
@@ -344,7 +348,7 @@ async function processQuestion(sparqlHelper, beerqaGraphURI, wikipediaGraphURI, 
         wikipediaGraphURI,
         entityURIs
     );
-    
+
     // Build augmented context
     const contextInfo = buildAugmentedContext(
         contextManager,
@@ -355,31 +359,31 @@ async function processQuestion(sparqlHelper, beerqaGraphURI, wikipediaGraphURI, 
             systemContext: 'Use the related information to provide a comprehensive answer to the question.'
         }
     );
-    
+
     // Generate final answer
     const result = await generateAnswer(llmHandler, question, contextInfo, {
         temperature: config.temperature
     });
-    
+
     // Display results
     console.log('');
     console.log(chalk.bold.green('📋 ANSWER:'));
     console.log(chalk.white(result.answer));
     console.log('');
-    
+
     console.log(chalk.bold.cyan('📊 Answer Metadata:'));
     console.log(`   ${chalk.cyan('Context Sources:')} ${chalk.white(result.contextSources.join(', '))}`);
     console.log(`   ${chalk.cyan('Source Count:')} ${chalk.white(result.contextSourceCount)}`);
     console.log(`   ${chalk.cyan('Success:')} ${result.success ? chalk.green('Yes') : chalk.red('No')}`);
-    
+
     if (!result.success) {
         console.log(`   ${chalk.cyan('Error:')} ${chalk.red(result.error)}`);
     }
-    
+
     console.log('');
     console.log('='.repeat(80));
     console.log('');
-    
+
     return {
         questionURI: question.uri,
         questionText: question.questionText,
@@ -409,22 +413,22 @@ function displaySummary(allResults) {
         totalContextSources: 0,
         totalAnswerLength: 0
     });
-    
+
     console.log(chalk.bold.white('📊 Final Results Summary:'));
     console.log(`   ${chalk.cyan('Questions Processed:')} ${chalk.white(totals.questions)}`);
     console.log(`   ${chalk.cyan('Successful Answers:')} ${chalk.green(totals.successfulAnswers)}/${totals.questions}`);
     console.log(`   ${chalk.cyan('Total Relationships Used:')} ${chalk.white(totals.totalRelationships)}`);
     console.log(`   ${chalk.cyan('Total Context Sources:')} ${chalk.white(totals.totalContextSources)}`);
-    
+
     if (totals.questions > 0) {
         console.log(`   ${chalk.cyan('Avg Relationships per Question:')} ${chalk.white((totals.totalRelationships / totals.questions).toFixed(1))}`);
         console.log(`   ${chalk.cyan('Avg Context Sources per Question:')} ${chalk.white((totals.totalContextSources / totals.questions).toFixed(1))}`);
         console.log(`   ${chalk.cyan('Avg Answer Length:')} ${chalk.white(Math.round(totals.totalAnswerLength / totals.questions))} chars`);
-        
+
         const successRate = (totals.successfulAnswers / totals.questions * 100).toFixed(1);
         console.log(`   ${chalk.cyan('Success Rate:')} ${chalk.white(successRate + '%')}`);
     }
-    
+
     console.log('');
 }
 
@@ -435,22 +439,22 @@ async function createLLMConnector(config) {
     try {
         // Get llmProviders with priority ordering
         const llmProviders = config.get('llmProviders') || [];
-        
+
         // Sort by priority (lower number = higher priority)
         const sortedProviders = llmProviders
             .filter(p => p.capabilities?.includes('chat'))
             .sort((a, b) => (a.priority || 999) - (b.priority || 999));
-        
+
         console.log(`   Available chat providers by priority: ${sortedProviders.map(p => `${p.type} (priority: ${p.priority})`).join(', ')}`);
-        
+
         // Try providers in priority order
         for (const provider of sortedProviders) {
             console.log(`   Trying LLM provider: ${provider.type} (priority: ${provider.priority})`);
-            
-            if (provider.type === 'mistral' && provider.apiKey) {
+
+            if (provider.type === 'mistral' && process.env.MISTRAL_API_KEY) {
                 console.log('   ✅ Creating Mistral connector (highest priority)...');
-                return new MistralConnector();
-            } else if (provider.type === 'claude' && provider.apiKey) {
+                return new MistralConnector(process.env.MISTRAL_API_KEY);
+            } else if (provider.type === 'claude' && process.env.CLAUDE_API_KEY) {
                 console.log('   ✅ Creating Claude connector...');
                 return new ClaudeConnector();
             } else if (provider.type === 'ollama') {
@@ -460,10 +464,10 @@ async function createLLMConnector(config) {
                 console.log(`   ❌ Provider ${provider.type} not available (missing API key or implementation)`);
             }
         }
-        
+
         console.log('   ⚠️ No configured providers available, defaulting to Ollama');
         return new OllamaConnector();
-        
+
     } catch (error) {
         console.log(`   ⚠️ Failed to load provider configuration, defaulting to Ollama: ${error.message}`);
         return new OllamaConnector();
@@ -480,7 +484,7 @@ async function getModelConfig(config) {
         const chatProvider = llmProviders
             .filter(p => p.capabilities?.includes('chat'))
             .sort((a, b) => (a.priority || 999) - (b.priority || 999))[0];
-        
+
         return {
             chatModel: chatProvider?.chatModel || 'qwen2:1.5b'
         };
@@ -498,15 +502,15 @@ async function getModelConfig(config) {
 async function initializeLLMHandler(config) {
     try {
         console.log(chalk.bold.white('🤖 Initializing LLM handler...'));
-        
+
         const llmProvider = await createLLMConnector(config);
         const modelConfig = await getModelConfig(config);
-        
+
         const llmHandler = new LLMHandler(llmProvider, modelConfig.chatModel);
-        
+
         console.log(`   ${chalk.green('✓')} LLM handler initialized with model: ${modelConfig.chatModel}`);
         return llmHandler;
-        
+
     } catch (error) {
         console.log(chalk.red(`❌ Failed to initialize LLM handler: ${error.message}`));
         throw error;
@@ -518,16 +522,16 @@ async function initializeLLMHandler(config) {
  */
 async function getResults() {
     displayHeader();
-    
+
     try {
         // Initialize configuration using the modern pattern (from api-server.js)
-        const configPath = path.join(process.cwd(), '../../config/config.json');
+        const configPath = path.join(process.cwd(), 'config/config.json');
         const config = new Config(configPath);
         await config.init();
-        
+
         // Runtime configuration using Config.js
         const storageOptions = config.get('storage.options');
-        
+
         const runtimeConfig = {
             sparqlEndpoint: storageOptions.update,
             sparqlAuth: { user: storageOptions.user, password: storageOptions.password },
@@ -538,46 +542,46 @@ async function getResults() {
             temperature: 0.7,
             timeout: 30000
         };
-        
+
         displayConfiguration(runtimeConfig);
-        
+
         // Initialize SPARQL helper
         const sparqlHelper = new SPARQLHelper(runtimeConfig.sparqlEndpoint, {
             auth: runtimeConfig.sparqlAuth,
             timeout: runtimeConfig.timeout
         });
-        
+
         // Initialize context manager
         const contextManager = new ContextManager({
             maxTokens: runtimeConfig.maxContextTokens,
             maxContextSize: runtimeConfig.maxContextSize,
             relevanceThreshold: 0.3
         });
-        
+
         console.log(`   ${chalk.green('✓')} Context manager initialized`);
-        
+
         // Initialize LLM handler
         const llmHandler = await initializeLLMHandler(config);
-        
+
         // Get questions with relationships
         const questions = await getQuestionsWithRelationships(sparqlHelper, runtimeConfig.beerqaGraphURI);
-        
+
         if (questions.length === 0) {
             console.log(chalk.yellow('⚠️  No questions with relationships found. Run Navigate.js first.'));
             return;
         }
-        
+
         console.log(chalk.bold.white('🎯 Generating final answers...'));
         console.log('');
-        
+
         // Process each question
         const allResults = [];
-        
+
         for (let i = 0; i < questions.length; i++) {
             const question = questions[i];
-            
+
             console.log(chalk.bold.blue(`Processing ${i + 1}/${questions.length}:`));
-            
+
             const result = await processQuestion(
                 sparqlHelper,
                 runtimeConfig.beerqaGraphURI,
@@ -587,13 +591,13 @@ async function getResults() {
                 llmHandler,
                 runtimeConfig
             );
-            
+
             allResults.push(result);
         }
-        
+
         displaySummary(allResults);
         console.log(chalk.green('🎉 Final answer generation completed successfully!'));
-        
+
     } catch (error) {
         console.log(chalk.red('❌ Answer generation failed:', error.message));
         if (error.stack) {

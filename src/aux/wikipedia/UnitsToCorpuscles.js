@@ -442,7 +442,7 @@ ORDER BY ?unit`;
         if (corpuscle.embedding) {
             triples.push(`${attributeURI} rdf:type ragno:Attribute .`);
             triples.push(`${attributeURI} rdfs:label ${SPARQLHelper.createLiteral('text-embedding')} .`);
-            triples.push(`${attributeURI} ragno:attributeType ${SPARQLHelper.createLiteral('vector-embedding')} .`);
+            triples.push(`${attributeURI} a ragno:VectorEmbedding .`);
             triples.push(`${attributeURI} ragno:attributeValue ${SPARQLHelper.createLiteral(JSON.stringify(corpuscle.embedding))} .`);
             triples.push(`${attributeURI} ragno:embeddingDimensions ${SPARQLHelper.createLiteral(corpuscle.embedding.length.toString(), 'http://www.w3.org/2001/XMLSchema#integer')} .`);
             triples.push(`${attributeURI} dcterms:created ${SPARQLHelper.createLiteral(new Date().toISOString(), 'http://www.w3.org/2001/XMLSchema#dateTime')} .`);
@@ -529,7 +529,7 @@ WHERE {
     
     ?unit rdfs:label ?unitLabel .
     
-    BIND(EXISTS { ?corpuscle ragno:hasAttribute ?attr . ?attr ragno:attributeType "vector-embedding" } AS ?hasEmbedding)
+    BIND(EXISTS { ?corpuscle ragno:hasAttribute ?attr . ?attr a ragno:VectorEmbedding } AS ?hasEmbedding)
 }
 ORDER BY DESC(?corpuscle)
 LIMIT ${limit}`;

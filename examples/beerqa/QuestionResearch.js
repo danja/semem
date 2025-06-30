@@ -805,7 +805,7 @@ async function runBeerQAQuestionResearch() {
     displayHeader();
 
     // Initialize Config.js for proper configuration management
-    const config = new Config('../../config/config.json');
+    const config = new Config('config/config.json');
     await config.init();
     
     const options = {
@@ -893,13 +893,13 @@ async function runBeerQAQuestionResearch() {
             console.log(`   • ${chalk.white('Concepts Researched:')} ${chalk.cyan(result.statistics.conceptsResearched)}`);
             console.log(`   • ${chalk.white('Wikipedia Units Created:')} ${chalk.cyan(result.statistics.unitsCreated)}`);
             console.log(`   • ${chalk.white('Corpuscles Created:')} ${chalk.cyan(result.statistics.corpusclesCreated)}`);
-            console.log(`   • ${chalk.white('Stored in graph:')} ${chalk.cyan(config.wikipediaGraphURI)}`);
+            console.log(`   • ${chalk.white('Stored in graph:')} ${chalk.cyan(options.wikipediaGraphURI)}`);
             console.log('');
             console.log(chalk.bold.cyan('Next Steps:'));
-            console.log(`   • Query the research data at: ${chalk.white(config.sparqlEndpoint.replace('/update', '/query'))}`);
-            console.log(`   • Explore Wikipedia units: ${chalk.white('SELECT * WHERE { GRAPH <' + config.wikipediaGraphURI + '> { ?s a ragno:Unit } } LIMIT 10')}`);
-            console.log(`   • Find research corpuscles: ${chalk.white('SELECT * WHERE { GRAPH <' + config.wikipediaGraphURI + '> { ?s a ragno:Corpuscle } } LIMIT 10')}`);
-            console.log(`   • Compare with original question: ${chalk.white('SELECT * WHERE { GRAPH <' + config.beerqaGraphURI + '> { ?s ragno:augmented true } } LIMIT 10')}`);
+            console.log(`   • Query the research data at: ${chalk.white(displayConfig.sparqlEndpoint.replace('/update', '/query'))}`);
+            console.log(`   • Explore Wikipedia units: ${chalk.white('SELECT * WHERE { GRAPH <' + options.wikipediaGraphURI + '> { ?s a ragno:Unit } } LIMIT 10')}`);
+            console.log(`   • Find research corpuscles: ${chalk.white('SELECT * WHERE { GRAPH <' + options.wikipediaGraphURI + '> { ?s a ragno:Corpuscle } } LIMIT 10')}`);
+            console.log(`   • Compare with original question: ${chalk.white('SELECT * WHERE { GRAPH <' + options.beerqaGraphURI + '> { ?s ragno:augmented true } } LIMIT 10')}`);
             console.log('');
 
         } else {
@@ -919,7 +919,7 @@ async function runBeerQAQuestionResearch() {
         console.log('');
         console.log(chalk.bold.yellow('💡 Troubleshooting Tips:'));
         console.log(`   • Ensure augmented questions exist: ${chalk.cyan('node examples/beerqa/AugmentQuestion.js')}`);
-        console.log(`   • Check SPARQL endpoint is accessible: ${chalk.cyan(config.sparqlEndpoint)}`);
+        console.log(`   • Check SPARQL endpoint is accessible: ${chalk.cyan(config.get('storage.options.update'))}`);
         console.log(`   • Verify authentication credentials`);
         console.log(`   • Check network connectivity to Wikipedia API`);
         console.log(`   • Ensure sufficient storage space for research data`);

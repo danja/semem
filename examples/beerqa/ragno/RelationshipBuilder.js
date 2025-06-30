@@ -902,7 +902,7 @@ async function buildRelationshipInfrastructure() {
     
     try {
         // Initialize Config.js for proper configuration management
-        const config = new Config('../../../config/config.json');
+        const config = new Config('config/config.json');
         await config.init();
         
         const options = {
