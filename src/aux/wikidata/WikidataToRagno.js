@@ -129,7 +129,7 @@ export default class WikidataToRagno {
             
             // Cross-reference to original Wikidata entity
             if (conversionOptions.includeRelationships) {
-                triples.push(`<${entityURI}> owl:sameAs <${wikidataEntity.uri}> .`);
+                triples.push(`<${entityURI}> <http://www.w3.org/2002/07/owl#sameAs> <${wikidataEntity.uri}> .`);
             }
 
             // Entity type based on confidence or search type
