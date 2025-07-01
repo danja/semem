@@ -76,23 +76,29 @@ function parseArgs() {
 }
 
 /**
- * Retrieve corpuscles and relationships for ranking
+ * Retrieve corpuscles and relationships for ranking including embeddings
  */
 async function retrieveGraphData(sparqlHelper, config, limit) {
-    console.log(chalk.cyan('📖 Retrieving graph data for ranking...'));
+    console.log(chalk.cyan('📖 Retrieving graph data with embeddings for ranking...'));
     
-    // Get corpuscles
+    // Get corpuscles with embeddings
     const corpuscleQuery = `
 PREFIX ragno: <http://purl.org/stuff/ragno/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 
-SELECT ?corpuscle ?label ?type
+SELECT ?corpuscle ?label ?type ?embedding
 WHERE {
     {
         GRAPH <${config.beerqaGraphURI}> {
             ?corpuscle a ragno:Corpuscle ;
                        rdfs:label ?label ;
                        ragno:corpuscleType ?type .
+            
+            OPTIONAL {
+                ?corpuscle ragno:hasAttribute ?embAttr .
+                ?embAttr ragno:attributeType "embedding" ;
+                        ragno:attributeValue ?embedding .
+            }
         }
     }
     UNION
@@ -101,6 +107,12 @@ WHERE {
             ?corpuscle a ragno:Corpuscle ;
                        rdfs:label ?label ;
                        ragno:corpuscleType ?type .
+            
+            OPTIONAL {
+                ?corpuscle ragno:hasAttribute ?embAttr .
+                ?embAttr ragno:attributeType "embedding" ;
+                        ragno:attributeValue ?embedding .
+            }
         }
     }
 }
@@ -131,7 +143,8 @@ WHERE {
         const corpuscles = corpuscleResult.data.results.bindings.map(binding => ({
             uri: binding.corpuscle.value,
             label: binding.label.value,
-            type: binding.type.value
+            type: binding.type.value,
+            embedding: binding.embedding ? binding.embedding.value.split(',').map(x => parseFloat(x)) : null
         }));
         
         const relationships = relationshipResult.data.results.bindings.map(binding => ({
@@ -152,36 +165,97 @@ WHERE {
 }
 
 /**
- * Calculate PageRank scores for corpuscles
+ * Calculate cosine similarity between two vectors
+ */
+function cosineSimilarity(vecA, vecB) {
+    if (!vecA || !vecB || vecA.length !== vecB.length) return 0;
+    
+    let dotProduct = 0;
+    let normA = 0;
+    let normB = 0;
+    
+    for (let i = 0; i < vecA.length; i++) {
+        dotProduct += vecA[i] * vecB[i];
+        normA += vecA[i] * vecA[i];
+        normB += vecB[i] * vecB[i];
+    }
+    
+    const magnitude = Math.sqrt(normA) * Math.sqrt(normB);
+    return magnitude === 0 ? 0 : dotProduct / magnitude;
+}
+
+/**
+ * Calculate PageRank scores using embedding-based similarity
  */
 function calculatePageRank(corpuscles, relationships, iterations = 20, dampingFactor = 0.85) {
-    console.log(chalk.cyan('🧮 Calculating PageRank scores...'));
-    
-    // Build adjacency matrix
-    const corpuscleIndex = new Map();
-    corpuscles.forEach((corpuscle, index) => {
-        corpuscleIndex.set(corpuscle.uri, index);
-    });
+    console.log(chalk.cyan('🧮 Calculating PageRank scores using embedding-based similarity...'));
     
     const n = corpuscles.length;
     const adjacencyMatrix = Array(n).fill().map(() => Array(n).fill(0));
     const outDegree = Array(n).fill(0);
     
-    // Build matrix from relationships
+    // Count how many corpuscles have embeddings
+    const corpusclesWithEmbeddings = corpuscles.filter(c => c.embedding !== null);
+    console.log(chalk.gray(`   → Found ${corpusclesWithEmbeddings.length}/${n} corpuscles with embeddings`));
+    
+    if (corpusclesWithEmbeddings.length < 2) {
+        console.log(chalk.yellow('   ⚠️  Insufficient embeddings, falling back to uniform scoring'));
+        return Array(n).fill(1.0 / n);
+    }
+    
+    // Build adjacency matrix using embedding similarity
+    console.log(chalk.gray('   → Building adjacency matrix using cosine similarity of embeddings...'));
+    let edgeCount = 0;
+    const similarityThreshold = 0.3; // Minimum similarity to create an edge
+    
+    for (let i = 0; i < n; i++) {
+        for (let j = 0; j < n; j++) {
+            if (i !== j && corpuscles[i].embedding && corpuscles[j].embedding) {
+                const similarity = cosineSimilarity(corpuscles[i].embedding, corpuscles[j].embedding);
+                
+                if (similarity > similarityThreshold) {
+                    adjacencyMatrix[i][j] = similarity;
+                    outDegree[i]++;
+                    edgeCount++;
+                }
+            }
+        }
+    }
+    
+    console.log(chalk.gray(`   → Created ${edgeCount} edges using embedding similarity (threshold: ${similarityThreshold})`));
+    
+    // Add relationship-based edges as bonus connections
+    let relationshipEdges = 0;
+    const corpuscleIndex = new Map();
+    corpuscles.forEach((corpuscle, index) => {
+        corpuscleIndex.set(corpuscle.uri, index);
+    });
+    
+    console.log(chalk.gray('   → Adding relationship-based edges using string matching...'));
     relationships.forEach(rel => {
         const sourceIndex = corpuscleIndex.get(rel.sourceCorpuscle);
-        // Find corpuscles that contain the subject and object entities
         corpuscles.forEach((corpuscle, targetIndex) => {
             if (sourceIndex !== undefined && sourceIndex !== targetIndex) {
-                // Simple heuristic: if corpuscle label contains entity, create link
+                // String matching as secondary signal
                 if (corpuscle.label.toLowerCase().includes(rel.subject.toLowerCase()) ||
                     corpuscle.label.toLowerCase().includes(rel.object.toLowerCase())) {
-                    adjacencyMatrix[sourceIndex][targetIndex] = rel.confidence;
-                    outDegree[sourceIndex]++;
+                    // Add relationship strength to existing embedding-based connection
+                    const relationshipWeight = rel.confidence * 0.2; // Lower weight than embeddings
+                    adjacencyMatrix[sourceIndex][targetIndex] += relationshipWeight;
+                    if (adjacencyMatrix[sourceIndex][targetIndex] === relationshipWeight) {
+                        outDegree[sourceIndex]++; // Only increment if this created a new edge
+                    }
+                    relationshipEdges++;
                 }
             }
         });
     });
+    
+    console.log(chalk.gray(`   → Added ${relationshipEdges} relationship-based edge weights from ${relationships.length} relationships`));
+    
+    // Check out-degrees before normalization
+    const totalOutDegree = outDegree.reduce((sum, deg) => sum + deg, 0);
+    console.log(chalk.gray(`   → Total out-degree: ${totalOutDegree}, Nodes with connections: ${outDegree.filter(d => d > 0).length}/${n}`));
     
     // Normalize adjacency matrix
     for (let i = 0; i < n; i++) {

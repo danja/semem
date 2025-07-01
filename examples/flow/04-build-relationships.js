@@ -98,8 +98,15 @@ async function initializeLLMHandler(config) {
     }
 
     const llmHandler = new LLMHandler(llmConnector, chatProvider.chatModel);
+    
+    // Extract rate limiting configuration
+    const rateLimitDelay = chatProvider.rateLimit?.delayMs || 0;
+    if (rateLimitDelay > 0) {
+        console.log(chalk.yellow(`   ⏱️  Rate limiting: ${rateLimitDelay}ms delay between calls`));
+    }
+    
     console.log(chalk.green(`   ✅ LLM handler: ${chatProvider.type}`));
-    return llmHandler;
+    return { llmHandler, rateLimitDelay, providerType: chatProvider.type };
 }
 
 /**
@@ -185,7 +192,7 @@ ${limit ? `LIMIT ${limit * 10}` : ''}`;
 /**
  * Build relationships between entities using LLM analysis
  */
-async function buildRelationships(corpuscles, llmHandler, sparqlHelper, config) {
+async function buildRelationships(corpuscles, llmHandler, rateLimitDelay, providerType, sparqlHelper, config) {
     console.log(chalk.cyan('🔗 Building relationships between entities...'));
     
     const relationshipStats = {
@@ -218,6 +225,12 @@ async function buildRelationships(corpuscles, llmHandler, sparqlHelper, config) 
                 
                 for (const [entity1, entity2] of entityPairs) {
                     try {
+                        // Apply rate limiting delay if configured
+                        if (rateLimitDelay > 0) {
+                            console.log(chalk.gray(`         ⏱️  Rate limit delay: ${rateLimitDelay}ms`));
+                            await new Promise(resolve => setTimeout(resolve, rateLimitDelay));
+                        }
+                        
                         // Use LLM to determine relationship
                         const relationshipPrompt = `Analyze the relationship between "${entity1.label}" and "${entity2.label}" in the context: "${corpuscle.label}"
 
@@ -381,7 +394,7 @@ async function main() {
         console.log(chalk.green('   ✓ Configuration loaded'));
         
         // Initialize components
-        const llmHandler = await initializeLLMHandler(config);
+        const { llmHandler, rateLimitDelay, providerType } = await initializeLLMHandler(config);
         const sparqlHelper = new SPARQLHelper(
             config.get('sparqlUpdateEndpoint') || 'http://localhost:3030/semem/update',
             {
@@ -401,7 +414,7 @@ async function main() {
         }
         
         // Build relationships
-        const relationshipStats = await buildRelationships(corpuscles, llmHandler, sparqlHelper, workflowConfig);
+        const relationshipStats = await buildRelationships(corpuscles, llmHandler, rateLimitDelay, providerType, sparqlHelper, workflowConfig);
         
         // Display summary
         const duration = Date.now() - startTime;

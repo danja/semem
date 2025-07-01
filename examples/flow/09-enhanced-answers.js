@@ -205,6 +205,13 @@ async function generateEnhancedAnswers(questions, llmHandler, sparqlHelper, conf
             
             if (workflowResult.success) {
                 const answer = workflowResult.data.enhancedAnswer || workflowResult.data.standardAnswer;
+                
+                if (!answer) {
+                    console.log(chalk.red(`      ❌ No answer generated in workflow result`));
+                    answerStats.errors++;
+                    continue;
+                }
+                
                 const answerLength = answer.length;
                 
                 answerStats.successfulAnswers++;
@@ -295,7 +302,8 @@ async function processSingleQuestion(questionText, llmHandler, sparqlHelper, con
         }
         
     } catch (error) {
-        console.log(chalk.red(`❌ Error: ${error.message}`));
+        console.log(chalk.red(`❌ Processing error: ${error.message}`));
+        console.log(chalk.red(`❌ Stack trace: ${error.stack}`));
         return { success: false, error: error.message };
     }
 }
@@ -310,14 +318,17 @@ async function storeEnhancedAnswer(question, answer, workflowResult, sparqlHelpe
     
     const triples = [];
     
+    // Ensure workflowResult.data exists
+    const data = workflowResult.data || {};
+    
     // Enhanced answer attribute
     triples.push(`<${question.uri}> ragno:hasAttribute <${answerAttrURI}> .`);
     triples.push(`<${answerAttrURI}> a ragno:Attribute ;`);
     triples.push(`    ragno:attributeType "enhanced-answer" ;`);
     triples.push(`    ragno:attributeValue "${escapeRDFString(answer)}" ;`);
     triples.push(`    ragno:answerLength ${answer.length} ;`);
-    triples.push(`    ragno:wikidataEntitiesUsed ${workflowResult.data.wikidataEntitiesFound || 0} ;`);
-    triples.push(`    ragno:corpusclesUsed ${workflowResult.data.corpusclesUsed || 0} ;`);
+    triples.push(`    ragno:wikidataEntitiesUsed ${data.wikidataEntitiesFound || 0} ;`);
+    triples.push(`    ragno:corpusclesUsed ${data.corpusclesUsed || 0} ;`);
     triples.push(`    dcterms:created "${timestamp}"^^xsd:dateTime .`);
     
     // Flow stage tracking
@@ -450,7 +461,21 @@ async function main() {
 
 // Handle uncaught errors
 process.on('unhandledRejection', (reason, promise) => {
+    console.error(chalk.red('❌ Unhandled Promise Rejection:'));
+    console.error(chalk.red(`   Reason: ${reason}`));
+    console.error(chalk.red(`   Promise: ${promise}`));
+    if (reason && reason.stack) {
+        console.error(chalk.red(`   Stack: ${reason.stack}`));
+    }
     logger.error('Unhandled Rejection at:', promise, 'reason:', reason);
+    process.exit(1);
+});
+
+process.on('uncaughtException', (error) => {
+    console.error(chalk.red('❌ Uncaught Exception:'));
+    console.error(chalk.red(`   Error: ${error.message}`));
+    console.error(chalk.red(`   Stack: ${error.stack}`));
+    logger.error('Uncaught Exception:', error);
     process.exit(1);
 });
 

@@ -49,7 +49,10 @@ function displayHeader() {
  */
 function parseArgs() {
     const args = process.argv.slice(2);
-    const options = { limit: null };
+    const options = { 
+        limit: null,
+        maxEntities: 15
+    };
     
     for (let i = 0; i < args.length; i++) {
         const arg = args[i];
@@ -57,13 +60,17 @@ function parseArgs() {
             case '--limit':
                 options.limit = parseInt(args[++i], 10);
                 break;
+            case '--max-entities':
+                options.maxEntities = parseInt(args[++i], 10);
+                break;
             case '--help':
             case '-h':
                 console.log(chalk.bold.white('Usage: node 08-wikidata-research.js [options]'));
                 console.log('');
                 console.log(chalk.white('Options:'));
-                console.log('  --limit N       Limit number of questions to process (default: all)');
-                console.log('  --help, -h      Show this help');
+                console.log('  --limit N           Limit number of questions to process (default: all)');
+                console.log('  --max-entities N    Maximum Wikidata entities per question (default: 15)');
+                console.log('  --help, -h          Show this help');
                 console.log('');
                 process.exit(0);
                 break;
@@ -158,8 +165,9 @@ ${limit ? `LIMIT ${limit}` : ''}`;
 /**
  * Conduct Wikidata research for questions
  */
-async function conductWikidataResearch(questions, llmHandler, sparqlHelper, config) {
+async function conductWikidataResearch(questions, llmHandler, sparqlHelper, config, maxEntities = 15) {
     console.log(chalk.cyan('🌐 Conducting Wikidata research...'));
+    console.log(chalk.gray(`   → Maximum entities per question: ${maxEntities}`));
     
     const wikidataResearcher = new WikidataResearcher();
     
@@ -188,7 +196,7 @@ async function conductWikidataResearch(questions, llmHandler, sparqlHelper, conf
                 { question: question.content },
                 resources,
                 {
-                    maxWikidataSearchResults: 15,  // Enhanced entities per question
+                    maxWikidataSearchResults: maxEntities,  // Configurable entities per question
                     storeResults: true,
                     storageGraph: config.wikidataGraphURI,
                     sourceQuestion: question.uri
@@ -201,7 +209,7 @@ async function conductWikidataResearch(questions, llmHandler, sparqlHelper, conf
                 researchStats.researchSessions++;
                 
                 console.log(chalk.green(`      ✓ Found ${researchResult.ragnoEntities.length} Wikidata entities`));
-                console.log(chalk.gray(`      📝 Concepts: ${researchResult.concepts.join(', ')}`));
+                console.log(chalk.gray(`      📝 Concepts: ${(researchResult.concepts || []).join(', ')}`));
                 
                 // Mark question as Wikidata researched
                 await markQuestionWikidataResearched(question, researchResult, sparqlHelper, config);
@@ -247,7 +255,7 @@ async function markQuestionWikidataResearched(question, researchResult, sparqlHe
     triples.push(`<${wikidataMetaURI}> a ragno:Attribute ;`);
     triples.push(`    ragno:attributeType "wikidata-research-metadata" ;`);
     triples.push(`    ragno:entitiesFound ${researchResult.ragnoEntities.length} ;`);
-    triples.push(`    ragno:conceptsUsed "${researchResult.concepts.join(', ')}" ;`);
+    triples.push(`    ragno:conceptsUsed "${(researchResult.concepts || []).join(', ')}" ;`);
     triples.push(`    ragno:researchDuration ${researchResult.metadata.researchDuration} ;`);
     triples.push(`    dcterms:created "${timestamp}"^^xsd:dateTime .`);
     
@@ -341,7 +349,7 @@ async function main() {
         }
         
         // Conduct Wikidata research
-        const researchStats = await conductWikidataResearch(questions, llmHandler, sparqlHelper, workflowConfig);
+        const researchStats = await conductWikidataResearch(questions, llmHandler, sparqlHelper, workflowConfig, args.maxEntities);
         
         // Display summary
         const duration = Date.now() - startTime;

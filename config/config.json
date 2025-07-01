@@ -57,6 +57,10 @@
       "capabilities": [
         "chat"
       ],
+      "rateLimit": {
+        "delayMs": 1000,
+        "description": "Delay between API calls to avoid rate limiting"
+      },
       "description": "Using hyperdata-clients implementation"
     },
     {
@@ -68,6 +72,10 @@
       "capabilities": [
         "chat"
       ],
+      "rateLimit": {
+        "delayMs": 500,
+        "description": "Delay between API calls to avoid rate limiting"
+      },
       "description": "Using hyperdata-clients implementation"
     },
     {

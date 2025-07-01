@@ -86,12 +86,12 @@ function parseArgs() {
 async function retrieveGraphData(sparqlHelper, config, limit) {
     console.log(chalk.cyan('📖 Retrieving graph data for community analysis...'));
     
-    // Get corpuscles with ranking scores
+    // Get corpuscles with ranking scores and embeddings (distinct corpuscles only)
     const corpuscleQuery = `
 PREFIX ragno: <http://purl.org/stuff/ragno/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 
-SELECT ?corpuscle ?label ?type ?ranking
+SELECT DISTINCT ?corpuscle ?label ?type (MAX(?ranking) AS ?maxRanking) ?embedding
 WHERE {
     {
         GRAPH <${config.beerqaGraphURI}> {
@@ -104,6 +104,12 @@ WHERE {
                 ?rankAttr ragno:attributeType ?rankType ;
                          ragno:attributeValue ?ranking .
                 FILTER(STRSTARTS(?rankType, "ranking-"))
+            }
+            
+            OPTIONAL {
+                ?corpuscle ragno:hasAttribute ?embAttr .
+                ?embAttr ragno:attributeType "embedding" ;
+                        ragno:attributeValue ?embedding .
             }
         }
     }
@@ -120,9 +126,16 @@ WHERE {
                          ragno:attributeValue ?ranking .
                 FILTER(STRSTARTS(?rankType, "ranking-"))
             }
+            
+            OPTIONAL {
+                ?corpuscle ragno:hasAttribute ?embAttr .
+                ?embAttr ragno:attributeType "embedding" ;
+                        ragno:attributeValue ?embedding .
+            }
         }
     }
 }
+GROUP BY ?corpuscle ?label ?type ?embedding
 ${limit ? `LIMIT ${limit}` : ''}`;
 
     const corpuscleResult = await sparqlHelper.executeSelect(corpuscleQuery);
@@ -149,7 +162,8 @@ WHERE {
             uri: binding.corpuscle.value,
             label: binding.label.value,
             type: binding.type.value,
-            ranking: binding.ranking ? parseFloat(binding.ranking.value) : 0.0
+            ranking: binding.maxRanking ? parseFloat(binding.maxRanking.value) : 0.0,
+            embedding: binding.embedding ? binding.embedding.value.split(',').map(x => parseFloat(x)) : null
         }));
         
         const relationships = relationshipResult.data.results.bindings.map(binding => ({
@@ -169,10 +183,108 @@ WHERE {
 }
 
 /**
- * Build adjacency matrix from relationships
+ * Calculate cosine similarity between two vectors
+ */
+function cosineSimilarity(vecA, vecB) {
+    if (!vecA || !vecB || vecA.length !== vecB.length) return 0;
+    
+    let dotProduct = 0;
+    let normA = 0;
+    let normB = 0;
+    
+    for (let i = 0; i < vecA.length; i++) {
+        dotProduct += vecA[i] * vecB[i];
+        normA += vecA[i] * vecA[i];
+        normB += vecB[i] * vecB[i];
+    }
+    
+    const magnitude = Math.sqrt(normA) * Math.sqrt(normB);
+    return magnitude === 0 ? 0 : dotProduct / magnitude;
+}
+
+/**
+ * Build adjacency matrix using embedding-based similarity
  */
 function buildAdjacencyMatrix(corpuscles, relationships) {
-    console.log(chalk.cyan('🔗 Building adjacency matrix...'));
+    console.log(chalk.cyan('🔗 Building adjacency matrix using embedding similarity...'));
+    
+    const n = corpuscles.length;
+    const adjacencyMatrix = Array(n).fill().map(() => Array(n).fill(0));
+    let edgesCreated = 0;
+    
+    // Count how many corpuscles have embeddings
+    const corpusclesWithEmbeddings = corpuscles.filter(c => c.embedding !== null);
+    console.log(chalk.gray(`   → Found ${corpusclesWithEmbeddings.length}/${n} corpuscles with embeddings`));
+    
+    if (corpusclesWithEmbeddings.length < 2) {
+        console.log(chalk.yellow('   ⚠️  Insufficient embeddings, falling back to relationship-based connections'));
+        return buildRelationshipBasedMatrix(corpuscles, relationships);
+    }
+    
+    // Build adjacency matrix using embedding similarity
+    const similarityThreshold = 0.3; // Minimum similarity to create an edge
+    console.log(chalk.gray(`   → Building adjacency matrix using cosine similarity (threshold: ${similarityThreshold})`));
+    
+    for (let i = 0; i < n; i++) {
+        for (let j = i + 1; j < n; j++) {
+            if (corpuscles[i].embedding && corpuscles[j].embedding) {
+                const similarity = cosineSimilarity(corpuscles[i].embedding, corpuscles[j].embedding);
+                
+                if (similarity > similarityThreshold) {
+                    adjacencyMatrix[i][j] = similarity;
+                    adjacencyMatrix[j][i] = similarity;
+                    edgesCreated++;
+                }
+            }
+        }
+    }
+    
+    console.log(chalk.green(`   ✓ Adjacency matrix built with ${edgesCreated} embedding-based edges`));
+    
+    // Add relationship-based edges as bonus connections
+    console.log(chalk.gray('   → Adding relationship-based edge weights using string matching...'));
+    let relationshipEdges = 0;
+    
+    const corpuscleIndex = new Map();
+    corpuscles.forEach((corpuscle, index) => {
+        corpuscleIndex.set(corpuscle.uri, index);
+    });
+    
+    relationships.forEach(rel => {
+        const sourceIndex = corpuscleIndex.get(rel.sourceCorpuscle);
+        
+        corpuscles.forEach((corpuscle, targetIndex) => {
+            if (sourceIndex !== undefined && sourceIndex !== targetIndex) {
+                // String matching as secondary signal
+                if (corpuscle.label.toLowerCase().includes(rel.subject.toLowerCase()) ||
+                    corpuscle.label.toLowerCase().includes(rel.object.toLowerCase())) {
+                    // Add relationship strength to existing embedding-based connection
+                    const relationshipWeight = rel.confidence * 0.2; // Lower weight than embeddings
+                    adjacencyMatrix[sourceIndex][targetIndex] += relationshipWeight;
+                    adjacencyMatrix[targetIndex][sourceIndex] += relationshipWeight;
+                    relationshipEdges++;
+                }
+            }
+        });
+    });
+    
+    console.log(chalk.gray(`   → Added ${relationshipEdges} relationship-based edge weights from ${relationships.length} relationships`));
+    
+    // Log connectivity statistics
+    const connectedNodes = adjacencyMatrix.map((row, i) => 
+        row.some((weight, j) => i !== j && weight > 0) ? 1 : 0
+    ).reduce((sum, connected) => sum + connected, 0);
+    
+    console.log(chalk.gray(`   → Connected nodes: ${connectedNodes}/${n}`));
+    
+    return adjacencyMatrix;
+}
+
+/**
+ * Fallback: Build adjacency matrix from relationships using string matching
+ */
+function buildRelationshipBasedMatrix(corpuscles, relationships) {
+    console.log(chalk.yellow('   ⚠️  Using string matching for adjacency matrix (no embeddings available)'));
     
     const corpuscleIndex = new Map();
     corpuscles.forEach((corpuscle, index) => {
@@ -181,22 +293,22 @@ function buildAdjacencyMatrix(corpuscles, relationships) {
     
     const n = corpuscles.length;
     const adjacencyMatrix = Array(n).fill().map(() => Array(n).fill(0));
+    let edgesCreated = 0;
     
-    // Build matrix from relationships
+    // Build matrix from relationships using string matching
     relationships.forEach(rel => {
         const sourceIndex = corpuscleIndex.get(rel.sourceCorpuscle);
         
-        // Find corpuscles that contain the subject and object entities
         corpuscles.forEach((corpuscle, targetIndex) => {
             if (sourceIndex !== undefined && sourceIndex !== targetIndex) {
-                // Create edge if corpuscle contains related entities
                 if (corpuscle.label.toLowerCase().includes(rel.subject.toLowerCase()) ||
                     corpuscle.label.toLowerCase().includes(rel.object.toLowerCase())) {
                     const weight = rel.confidence;
-                    adjacencyMatrix[sourceIndex][targetIndex] = Math.max(
-                        adjacencyMatrix[sourceIndex][targetIndex], 
-                        weight
-                    );
+                    const currentWeight = adjacencyMatrix[sourceIndex][targetIndex];
+                    if (currentWeight === 0) {
+                        edgesCreated++;
+                    }
+                    adjacencyMatrix[sourceIndex][targetIndex] = Math.max(currentWeight, weight);
                     adjacencyMatrix[targetIndex][sourceIndex] = Math.max(
                         adjacencyMatrix[targetIndex][sourceIndex], 
                         weight
@@ -206,7 +318,7 @@ function buildAdjacencyMatrix(corpuscles, relationships) {
         });
     });
     
-    console.log(chalk.green('   ✓ Adjacency matrix built'));
+    console.log(chalk.green(`   ✓ Adjacency matrix built with ${edgesCreated} relationship-based edges`));
     return adjacencyMatrix;
 }
 

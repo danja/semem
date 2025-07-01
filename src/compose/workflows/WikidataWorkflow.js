@@ -94,7 +94,8 @@ export default class WikidataWorkflow extends BaseWorkflow {
                         entitiesFound: researchResult.ragnoEntities.length,
                         researchDuration: researchResult.metadata.researchDuration,
                         conceptsUsed: researchResult.concepts,
-                        entities: researchResult.ragnoEntities
+                        entities: researchResult.ragnoEntities,
+                        researchQueries: researchResult.concepts || [] // Add the missing property
                     };
                     
                     // Step 3: Generate enhanced answer with Wikidata findings
