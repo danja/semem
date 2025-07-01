@@ -8,6 +8,10 @@
 * `node examples/flow/run-pipeline.js --stages 8-10 --mode comprehensive` (Final stages only)
 * `node examples/flow/10-iterative-feedback.js --question "What is quantum computing?" --mode comprehensive` (Single question feedback)
 
+**Ask Arbitrary Questions** (after processing your knowledge base):
+* `node examples/flow/09-enhanced-answers.js --question "Your question here?"` (Comprehensive answers with Wikidata)
+* `node examples/flow/10-iterative-feedback.js --question "Your question here?"` (Most thorough with feedback loops)
+
 ## Overview
 
 The Flow Components system is a complete refactoring of the original BeerQA and Wikidata workflows into a clean, modular architecture. It transforms complex example scripts into reusable components with standardized APIs, comprehensive testing, and TypeScript support.
