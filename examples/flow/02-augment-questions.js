@@ -108,7 +108,12 @@ async function initializeHandlers(config) {
         'http://localhost:11434',
         embeddingProvider?.embeddingModel || 'nomic-embed-text'
     );
-    const embeddingHandler = new EmbeddingHandler(embeddingConnector);
+    const dimension = config.get('memory.dimension') || 1536;
+    const embeddingHandler = new EmbeddingHandler(
+        embeddingConnector,
+        embeddingProvider?.embeddingModel || 'nomic-embed-text',
+        dimension
+    );
     console.log(chalk.green(`   ✅ Embedding handler: ${embeddingProvider?.embeddingModel || 'nomic-embed-text'}`));
 
     return { llmHandler, embeddingHandler };

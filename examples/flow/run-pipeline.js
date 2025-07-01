@@ -76,7 +76,7 @@ function displayHelp() {
     console.log('');
     console.log(chalk.white('Options:'));
     console.log('  --stages STAGES     Stages to run: "all", "1-5", "8-10", "1,3,5" (default: all)');
-    console.log('  --limit N           Limit number of questions processed per stage (default: all)');
+    console.log('  --limit N           Limit number of questions processed per stage (default: 100)');
     console.log('  --mode MODE         Feedback mode for stage 10: fast, standard, comprehensive (default: standard)');
     console.log('  --question "text"   Process single question through pipeline (default: use stored questions)');
     console.log('  --help, -h          Show this help');

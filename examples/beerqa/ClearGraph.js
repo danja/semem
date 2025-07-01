@@ -10,7 +10,9 @@
 
 import logger from 'loglevel';
 import chalk from 'chalk';
+import fetch from 'node-fetch';
 import { createRequire } from 'module';
+import Config from '../../src/Config.js';
 import SPARQLHelper from './SPARQLHelper.js';
 
 const require = createRequire(import.meta.url);
@@ -38,17 +40,29 @@ function showUsage() {
     console.log(`  ${chalk.cyan('node ClearGraph.js')} [options]`);
     console.log('');
     console.log(chalk.bold.white('Options:'));
-    console.log(`  ${chalk.cyan('--graph <uri>')}      Graph URI to clear (default: http://purl.org/stuff/beerqa/test)`);
+    console.log(`  ${chalk.cyan('--graph <uri>')}      Graph URI to clear (default: Flow component graphs)`);
+    console.log(`  ${chalk.cyan('--all-flow')}         Clear all Flow component graphs (beerqa + wikipedia + wikidata)`);
+    console.log(`  ${chalk.cyan('--beerqa')}           Clear BeerQA test graph only`);
+    console.log(`  ${chalk.cyan('--wikipedia')}        Clear Wikipedia research graph only`);
+    console.log(`  ${chalk.cyan('--wikidata')}         Clear Wikidata research graph only`);
     console.log(`  ${chalk.cyan('--confirm')}          Skip confirmation prompt`);
     console.log(`  ${chalk.cyan('--help, -h')}         Show this help message`);
     console.log('');
     console.log(chalk.bold.white('Configuration:'));
-    console.log('  Uses same SPARQL endpoint and credentials as other BeerQA scripts');
-    console.log('  (https://fuseki.hyperdata.it/hyperdata.it/update with admin credentials)');
+    console.log('  Uses SPARQL endpoint and credentials from config/config.json');
+    console.log('  Compatible with examples/flow/ component system');
+    console.log('');
+    console.log(chalk.bold.white('Default Flow Graphs:'));
+    console.log(`  ${chalk.cyan('BeerQA:')} http://purl.org/stuff/beerqa/test`);
+    console.log(`  ${chalk.cyan('Wikipedia:')} http://purl.org/stuff/wikipedia/research`);
+    console.log(`  ${chalk.cyan('Wikidata:')} http://purl.org/stuff/wikidata/research`);
     console.log('');
     console.log(chalk.bold.white('Examples:'));
-    console.log(`  ${chalk.gray('# Clear BeerQA graph (default)')}`);
-    console.log(`  ${chalk.cyan('node ClearGraph.js --confirm')}`);
+    console.log(`  ${chalk.gray('# Clear all Flow component graphs (default)')}`);
+    console.log(`  ${chalk.cyan('node ClearGraph.js --all-flow --confirm')}`);
+    console.log('');
+    console.log(`  ${chalk.gray('# Clear only BeerQA test questions')}`);
+    console.log(`  ${chalk.cyan('node ClearGraph.js --beerqa --confirm')}`);
     console.log('');
     console.log(`  ${chalk.gray('# Clear custom graph')}`);
     console.log(`  ${chalk.cyan('node ClearGraph.js --graph http://example.org/mygraph --confirm')}`);
@@ -61,9 +75,17 @@ function showUsage() {
 function parseArgs() {
     const args = process.argv.slice(2);
     const options = {
-        graphURI: 'http://purl.org/stuff/beerqa/test',
+        mode: 'all-flow', // Default to clearing all Flow graphs
+        graphURI: null,
         confirm: false,
         help: false
+    };
+
+    // Flow component graph URIs (matching examples/flow/01-load-questions.js)
+    const flowGraphs = {
+        beerqa: 'http://purl.org/stuff/beerqa/test',
+        wikipedia: 'http://purl.org/stuff/wikipedia/research',
+        wikidata: 'http://purl.org/stuff/wikidata/research'
     };
 
     for (let i = 0; i < args.length; i++) {
@@ -71,7 +93,23 @@ function parseArgs() {
         
         switch (arg) {
             case '--graph':
+                options.mode = 'custom';
                 options.graphURI = args[++i];
+                break;
+            case '--all-flow':
+                options.mode = 'all-flow';
+                break;
+            case '--beerqa':
+                options.mode = 'beerqa';
+                options.graphURI = flowGraphs.beerqa;
+                break;
+            case '--wikipedia':
+                options.mode = 'wikipedia';
+                options.graphURI = flowGraphs.wikipedia;
+                break;
+            case '--wikidata':
+                options.mode = 'wikidata';
+                options.graphURI = flowGraphs.wikidata;
                 break;
             case '--confirm':
                 options.confirm = true;
@@ -86,13 +124,20 @@ function parseArgs() {
         }
     }
 
+    // Set default graphs for all-flow mode
+    if (options.mode === 'all-flow') {
+        options.graphURIs = Object.values(flowGraphs);
+    } else if (options.graphURI) {
+        options.graphURIs = [options.graphURI];
+    }
+
     return options;
 }
 
 /**
  * Prompt user for confirmation
  */
-async function promptConfirmation(graphURI) {
+async function promptConfirmation(graphURIs) {
     return new Promise((resolve) => {
         const readline = require('readline');
         const rl = readline.createInterface({
@@ -100,8 +145,10 @@ async function promptConfirmation(graphURI) {
             output: process.stdout
         });
 
-        console.log(chalk.bold.yellow('⚠️  WARNING: This will permanently delete ALL data in the graph!'));
-        console.log(`   ${chalk.cyan('Graph URI:')} ${chalk.white(graphURI)}`);
+        console.log(chalk.bold.yellow('⚠️  WARNING: This will permanently delete ALL data from the following graphs!'));
+        graphURIs.forEach(uri => {
+            console.log(`   ${chalk.cyan('•')} ${chalk.white(uri)}`);
+        });
         console.log('');
         
         rl.question(chalk.bold.red('Are you sure you want to continue? Type "yes" to confirm: '), (answer) => {
@@ -147,61 +194,81 @@ async function countTriples(queryEndpoint, auth, graphURI) {
 }
 
 /**
- * Clear the specified graph
+ * Clear the specified graphs
  */
 async function clearGraph(options) {
     try {
-        // Use same configuration pattern as other BeerQA scripts
-        console.log(chalk.yellow('⚙️  Loading configuration...'));
+        // Use Config.js for configuration management (matching Flow components)
+        console.log(chalk.yellow('⚙️  Loading configuration from config/config.json...'));
         
-        const config = {
-            sparqlEndpoint: 'https://fuseki.hyperdata.it/hyperdata.it/update',
-            sparqlAuth: { user: 'admin', password: 'admin123' },
+        const config = new Config('./config/config.json');
+        await config.init();
+        
+        const storageOptions = config.get('storage.options');
+        const sparqlConfig = {
+            sparqlEndpoint: storageOptions.update,
+            sparqlAuth: { 
+                user: storageOptions.user, 
+                password: storageOptions.password 
+            },
             timeout: 60000
         };
 
         const endpoint = {
-            query: config.sparqlEndpoint.replace('/update', '/query'),
-            update: config.sparqlEndpoint
+            query: sparqlConfig.sparqlEndpoint.replace('/update', '/query'),
+            update: sparqlConfig.sparqlEndpoint
         };
 
-        const auth = config.sparqlAuth;
+        const auth = sparqlConfig.sparqlAuth;
 
         // Initialize SPARQL helper
         const sparqlHelper = new SPARQLHelper(endpoint.update, {
             auth: auth,
-            timeout: config.timeout
+            timeout: sparqlConfig.timeout
         });
         
         console.log(chalk.green('✅ Configuration loaded successfully'));
 
         // Display configuration
         console.log(chalk.bold.yellow('🔧 Configuration:'));
-        console.log(`   ${chalk.cyan('Graph URI:')} ${chalk.white(options.graphURI)}`);
+        console.log(`   ${chalk.cyan('Mode:')} ${chalk.white(options.mode)}`);
+        console.log(`   ${chalk.cyan('Graphs to clear:')} ${chalk.white(options.graphURIs.length)}`);
+        options.graphURIs.forEach(uri => {
+            console.log(`     ${chalk.cyan('•')} ${chalk.white(uri)}`);
+        });
         console.log(`   ${chalk.cyan('SPARQL Query Endpoint:')} ${chalk.white(endpoint.query)}`);
         console.log(`   ${chalk.cyan('SPARQL Update Endpoint:')} ${chalk.white(endpoint.update)}`);
         console.log(`   ${chalk.cyan('Authentication:')} ${chalk.white(auth.user + ':' + '*'.repeat(auth.password.length))}`);
         console.log('');
 
-        // Count existing triples
+        // Count existing triples for all graphs
         console.log(chalk.yellow('🔍 Checking graph contents...'));
-        const tripleCount = await countTriples(endpoint.query, auth, options.graphURI);
+        let totalTriples = 0;
+        const graphStats = [];
         
-        if (tripleCount !== null) {
-            console.log(`   ${chalk.cyan('Current triples:')} ${chalk.white(tripleCount.toLocaleString())}`);
-            
-            if (tripleCount === 0) {
-                console.log(chalk.green('✅ Graph is already empty - nothing to clear!'));
-                return { success: true, message: 'Graph was already empty' };
+        for (const graphURI of options.graphURIs) {
+            const tripleCount = await countTriples(endpoint.query, auth, graphURI);
+            if (tripleCount !== null) {
+                totalTriples += tripleCount;
+                graphStats.push({ uri: graphURI, count: tripleCount });
+                console.log(`   ${chalk.cyan('•')} ${chalk.white(graphURI)}: ${chalk.white(tripleCount.toLocaleString())} triples`);
+            } else {
+                graphStats.push({ uri: graphURI, count: null });
+                console.log(`   ${chalk.cyan('•')} ${chalk.white(graphURI)}: ${chalk.yellow('Could not count (may not exist)')}`);
             }
-        } else {
-            console.log(`   ${chalk.yellow('⚠️  Could not count triples (graph may not exist)')}`);
         }
+        
+        console.log(`   ${chalk.cyan('Total triples:')} ${chalk.white(totalTriples.toLocaleString())}`);
         console.log('');
+        
+        if (totalTriples === 0) {
+            console.log(chalk.green('✅ All graphs are already empty - nothing to clear!'));
+            return { success: true, message: 'All graphs were already empty' };
+        }
 
         // Confirmation prompt (unless --confirm flag is used)
         if (!options.confirm) {
-            const confirmed = await promptConfirmation(options.graphURI);
+            const confirmed = await promptConfirmation(options.graphURIs);
             if (!confirmed) {
                 console.log(chalk.yellow('❌ Operation cancelled by user'));
                 return { success: false, message: 'Cancelled by user' };
@@ -209,35 +276,54 @@ async function clearGraph(options) {
             console.log('');
         }
 
-        // Execute clear operation
-        console.log(chalk.yellow('🗑️  Clearing graph...'));
+        // Execute clear operations for all graphs
+        console.log(chalk.yellow('🗑️  Clearing graphs...'));
         const startTime = Date.now();
+        let clearedCount = 0;
+        const results = [];
         
-        const clearQuery = `CLEAR GRAPH <${options.graphURI}>`;
-        const result = await sparqlHelper.executeUpdate(clearQuery);
+        for (const graphURI of options.graphURIs) {
+            console.log(chalk.cyan(`   Clearing: ${graphURI}`));
+            const clearQuery = `CLEAR GRAPH <${graphURI}>`;
+            const result = await sparqlHelper.executeUpdate(clearQuery);
+            
+            if (result.success) {
+                console.log(chalk.green(`   ✅ Cleared successfully`));
+                clearedCount++;
+                results.push({ uri: graphURI, success: true });
+            } else {
+                console.log(chalk.red(`   ❌ Failed: ${result.error}`));
+                results.push({ uri: graphURI, success: false, error: result.error });
+            }
+        }
         
         const duration = Date.now() - startTime;
 
-        if (result.success) {
-            console.log(chalk.bold.green(`✅ Graph cleared successfully in ${duration}ms!`));
+        if (clearedCount === options.graphURIs.length) {
+            console.log(chalk.bold.green(`✅ All ${clearedCount} graphs cleared successfully in ${duration}ms!`));
             
-            // Verify the clear operation
-            console.log(chalk.yellow('🔍 Verifying graph is empty...'));
-            const remainingCount = await countTriples(endpoint.query, auth, options.graphURI);
+            // Verify the clear operations
+            console.log(chalk.yellow('🔍 Verifying graphs are empty...'));
+            let allEmpty = true;
             
-            if (remainingCount !== null) {
-                if (remainingCount === 0) {
-                    console.log(chalk.green('✅ Verification passed - graph is now empty'));
+            for (const graphURI of options.graphURIs) {
+                const remainingCount = await countTriples(endpoint.query, auth, graphURI);
+                if (remainingCount !== null && remainingCount > 0) {
+                    console.log(chalk.red(`   ❌ ${graphURI}: ${remainingCount} triples remain`));
+                    allEmpty = false;
                 } else {
-                    console.log(chalk.red(`❌ Verification failed - ${remainingCount} triples remain`));
+                    console.log(chalk.green(`   ✅ ${graphURI}: empty`));
                 }
             }
             
-            return { success: true, message: 'Graph cleared successfully', duration };
+            if (allEmpty) {
+                console.log(chalk.green('✅ Verification passed - all graphs are now empty'));
+            }
+            
+            return { success: true, message: `${clearedCount} graphs cleared successfully`, duration, results };
         } else {
-            console.log(chalk.bold.red('❌ Failed to clear graph!'));
-            console.log(chalk.red('Error:', result.error));
-            return { success: false, error: result.error };
+            console.log(chalk.bold.yellow(`⚠️  Partially completed: ${clearedCount}/${options.graphURIs.length} graphs cleared`));
+            return { success: false, message: 'Some graphs failed to clear', results };
         }
 
     } catch (error) {
@@ -248,7 +334,7 @@ async function clearGraph(options) {
         console.log(chalk.bold.yellow('💡 Troubleshooting Tips:'));
         console.log(`   • Verify the SPARQL endpoint is accessible`);
         console.log(`   • Check authentication credentials in config/config.json`);
-        console.log(`   • Ensure the graph URI is correct: ${chalk.cyan(options.graphURI)}`);
+        console.log(`   • Ensure the graph URIs are correct`);
         console.log(`   • Verify network connectivity`);
         
         return { success: false, error: error.message };
@@ -273,7 +359,14 @@ async function main() {
     if (result.success) {
         console.log('');
         console.log(chalk.bold.green('🎉 Clear operation completed successfully!'));
-        console.log(chalk.white(`The graph ${options.graphURI} is now empty and ready for new data.`));
+        if (options.mode === 'all-flow') {
+            console.log(chalk.white('All Flow component graphs are now empty and ready for new data.'));
+            console.log(chalk.gray('You can now run: node examples/flow/run-pipeline.js --limit 10'));
+        } else if (options.graphURIs.length === 1) {
+            console.log(chalk.white(`The graph ${options.graphURIs[0]} is now empty and ready for new data.`));
+        } else {
+            console.log(chalk.white(`${options.graphURIs.length} graphs are now empty and ready for new data.`));
+        }
     } else {
         console.log('');
         console.log(chalk.bold.red('❌ Clear operation failed!'));

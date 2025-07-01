@@ -49,7 +49,7 @@ function displayHeader() {
  */
 function parseArgs() {
     const args = process.argv.slice(2);
-    const options = { limit: null };
+    const options = { limit: 100 }; // Default to 100 questions like the original BeerTestQuestions.js
     
     for (let i = 0; i < args.length; i++) {
         const arg = args[i];
@@ -62,7 +62,7 @@ function parseArgs() {
                 console.log(chalk.bold.white('Usage: node 01-load-questions.js [options]'));
                 console.log('');
                 console.log(chalk.white('Options:'));
-                console.log('  --limit N       Limit number of questions to load (default: all)');
+                console.log('  --limit N       Limit number of questions to load (default: 100)');
                 console.log('  --help, -h      Show this help');
                 console.log('');
                 process.exit(0);
@@ -127,10 +127,10 @@ function loadTestQuestions(options) {
     // Extract just the question text from the data structure
     questions = questions.map(item => typeof item === 'string' ? item : item.question);
     
-    // Apply limit if specified
+    // Apply limit (default 100 for reasonable testing)
     if (options.limit && options.limit > 0) {
         questions = questions.slice(0, options.limit);
-        console.log(chalk.white(`   📊 Limited to ${options.limit} questions`));
+        console.log(chalk.white(`   📊 Limited to ${options.limit} questions (default: 100)`));
     }
     
     console.log(chalk.green(`   ✓ Loaded ${questions.length} questions`));

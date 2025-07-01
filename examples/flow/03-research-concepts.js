@@ -89,7 +89,12 @@ async function initializeEmbeddingHandler(config) {
         'http://localhost:11434',
         embeddingProvider?.embeddingModel || 'nomic-embed-text'
     );
-    const embeddingHandler = new EmbeddingHandler(embeddingConnector);
+    const dimension = config.get('memory.dimension') || 1536;
+    const embeddingHandler = new EmbeddingHandler(
+        embeddingConnector,
+        embeddingProvider?.embeddingModel || 'nomic-embed-text',
+        dimension
+    );
     
     console.log(chalk.green(`   ✅ Embedding handler: ${embeddingProvider?.embeddingModel || 'nomic-embed-text'}`));
     return embeddingHandler;
@@ -162,12 +167,20 @@ ${limit ? `LIMIT ${limit * 5}` : ''}`;
 /**
  * Research concepts via Wikipedia
  */
-async function researchConcepts(questions, embeddingHandler, sparqlHelper, config) {
+async function researchConcepts(questions, embeddingHandler, sparqlHelper, config, systemConfig) {
     console.log(chalk.cyan('🔍 Researching concepts via Wikipedia...'));
     
-    const wikipediaSearch = new WikipediaSearch();
-    const unitsToCorpuscles = new UnitsToCorpuscles();
+    // Initialize Wikipedia search with correct SPARQL endpoint configuration
+    const wikipediaSearchOptions = {
+        sparqlEndpoint: systemConfig.get('sparqlUpdateEndpoint') || 'http://localhost:3030/semem/update',
+        sparqlAuth: systemConfig.get('sparqlAuth') || { user: 'admin', password: 'admin123' },
+        graphURI: config.wikipediaGraphURI,
+        timeout: 30000
+    };
     
+    const wikipediaSearch = new WikipediaSearch(wikipediaSearchOptions);
+    const unitsToCorpuscles = new UnitsToCorpuscles();
+
     const researchStats = {
         questionsProcessed: 0,
         conceptsResearched: 0,
@@ -184,31 +197,23 @@ async function researchConcepts(questions, embeddingHandler, sparqlHelper, confi
         console.log(chalk.gray(`      Concepts: ${question.concepts.join(', ')}`));
         
         try {
-            const allCorpuscles = [];
-            
             // Research each concept
             for (const concept of question.concepts) {
                 try {
                     console.log(chalk.gray(`      Researching: "${concept}"`));
                     
                     // Search Wikipedia
-                    const searchResults = await wikipediaSearch.searchWikipedia(concept, { maxResults: 3 });
+                    const searchResults = await wikipediaSearch.search(concept, { maxResults: 3 });
                     
-                    if (searchResults.length > 0) {
-                        // Convert to corpuscles
-                        const corpuscles = await unitsToCorpuscles.convertUnitsToCorpuscles(
-                            searchResults,
-                            {
-                                addEmbeddings: true,
-                                embeddingHandler: embeddingHandler,
-                                sourceQuestion: question.uri,
-                                sourceConcept: concept
-                            }
-                        );
+                    if (searchResults.results && searchResults.results.length > 0) {
+                        // Ingest search results to create Units
+                        console.log(chalk.gray(`         → Ingesting ${searchResults.results.length} Wikipedia results`));
+                        const ingestResult = await wikipediaSearch.ingest(searchResults);
                         
-                        if (corpuscles.length > 0) {
-                            allCorpuscles.push(...corpuscles);
-                            console.log(chalk.green(`         ✓ Found ${corpuscles.length} Wikipedia articles`));
+                        if (ingestResult.success) {
+                            console.log(chalk.green(`         ✓ Ingested ${searchResults.results.length} Wikipedia articles as Units`));
+                        } else {
+                            console.log(chalk.red(`         ❌ Failed to ingest results: ${ingestResult.error}`));
                         }
                     }
                     
@@ -223,12 +228,7 @@ async function researchConcepts(questions, embeddingHandler, sparqlHelper, confi
                 }
             }
             
-            // Store corpuscles if found
-            if (allCorpuscles.length > 0) {
-                await storeWikipediaCorpuscles(allCorpuscles, question, sparqlHelper, config);
-                researchStats.corpusclesCreated += allCorpuscles.length;
-                console.log(chalk.green(`      ✅ Stored ${allCorpuscles.length} Wikipedia corpuscles`));
-            }
+            // Units will be converted to Corpuscles at the end of all research
             
             // Mark question as researched
             await markQuestionResearched(question, sparqlHelper, config);
@@ -238,6 +238,32 @@ async function researchConcepts(questions, embeddingHandler, sparqlHelper, confi
         } catch (error) {
             console.log(chalk.red(`      ❌ Question research failed: ${error.message}`));
             researchStats.errors++;
+        }
+    }
+    
+    // Convert Units to Corpuscles after all research is complete
+    if (researchStats.conceptsResearched > 0) {
+        console.log(chalk.cyan('🔄 Converting Wikipedia Units to Corpuscles...'));
+        try {
+            const unitsToCorpusclesOptions = {
+                sparqlEndpoint: systemConfig.get('sparqlUpdateEndpoint') || 'http://localhost:3030/semem/update',
+                sparqlAuth: systemConfig.get('sparqlAuth') || { user: 'admin', password: 'admin123' },
+                graphURI: config.wikipediaGraphURI,
+                generateEmbeddings: true
+            };
+            
+            const unitsToCorpuscles = new UnitsToCorpuscles(unitsToCorpusclesOptions);
+            
+            const corpuscleResult = await unitsToCorpuscles.process();
+            
+            if (corpuscleResult.success) {
+                researchStats.corpusclesCreated = corpuscleResult.statistics.generatedCorpuscles;
+                console.log(chalk.green(`   ✅ Created ${corpuscleResult.statistics.generatedCorpuscles} Wikipedia corpuscles from Units`));
+            } else {
+                console.log(chalk.red(`   ❌ Failed to convert Units to Corpuscles: ${corpuscleResult.error}`));
+            }
+        } catch (error) {
+            console.log(chalk.red(`   ❌ Units to Corpuscles conversion failed: ${error.message}`));
         }
     }
     
@@ -425,7 +451,7 @@ async function main() {
         }
         
         // Research concepts
-        const researchStats = await researchConcepts(questions, embeddingHandler, sparqlHelper, workflowConfig);
+        const researchStats = await researchConcepts(questions, embeddingHandler, sparqlHelper, workflowConfig, config);
         
         // Display summary
         const duration = Date.now() - startTime;
