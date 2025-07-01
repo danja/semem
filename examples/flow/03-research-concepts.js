@@ -18,7 +18,7 @@ import dotenv from 'dotenv';
 // Import Flow components
 import Config from '../../src/Config.js';
 import EmbeddingHandler from '../../src/handlers/EmbeddingHandler.js';
-import OllamaEmbeddingConnector from '../../src/connectors/OllamaEmbeddingConnector.js';
+import NomicConnector from '../../src/connectors/NomicConnector.js';
 import SPARQLHelper from '../beerqa/SPARQLHelper.js';
 
 // Import Wikipedia research components
@@ -85,7 +85,7 @@ async function initializeEmbeddingHandler(config) {
         .filter(p => p.capabilities?.includes('embedding'))
         .sort((a, b) => (a.priority || 999) - (b.priority || 999))[0];
 
-    const embeddingConnector = new OllamaEmbeddingConnector(
+    const embeddingConnector = new NomicConnector(
         'http://localhost:11434',
         embeddingProvider?.embeddingModel || 'nomic-embed-text'
     );

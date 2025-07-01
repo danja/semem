@@ -31,6 +31,7 @@ The following are workflows applied to sample questions from the [BeerQA](https:
 * **[beerqa-2.md](beerqa-2.md)** 
 * **[beerqa-wikidata.md](beerqa-wikidata.md)** 
 * **[beerqa-feedback.md](beerqa-feedback.md)**
+* **[flow.md](flow.md)** - **🆕 Flow Components System** - Complete refactored workflow using standardized component APIs, comprehensive type definitions, and a modular 10-stage pipeline that implements the full BeerQA iterative feedback workflow with clean, reusable components.
 
 ### Core Configuration and Setup
 

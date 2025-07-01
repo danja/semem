@@ -122,7 +122,10 @@ function loadTestQuestions(options) {
     }
     
     const questionsData = JSON.parse(fs.readFileSync(questionsPath, 'utf8'));
-    let questions = questionsData.questions || questionsData;
+    let questions = questionsData.data || questionsData.questions || questionsData;
+    
+    // Extract just the question text from the data structure
+    questions = questions.map(item => typeof item === 'string' ? item : item.question);
     
     // Apply limit if specified
     if (options.limit && options.limit > 0) {

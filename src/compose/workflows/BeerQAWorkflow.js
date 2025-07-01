@@ -11,6 +11,7 @@
 
 import BaseWorkflow from './BaseWorkflow.js';
 import logger from 'loglevel';
+import crypto from 'crypto';
 
 export default class BeerQAWorkflow extends BaseWorkflow {
     constructor() {
@@ -292,7 +293,7 @@ ANSWER:`;
      * @private
      */
     _generateQuestionURI(questionText, config) {
-        const hash = require('crypto')
+        const hash = crypto
             .createHash('sha256')
             .update(questionText)
             .digest('hex')

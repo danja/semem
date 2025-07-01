@@ -22,7 +22,7 @@ import EmbeddingHandler from '../../src/handlers/EmbeddingHandler.js';
 import OllamaConnector from '../../src/connectors/OllamaConnector.js';
 import ClaudeConnector from '../../src/connectors/ClaudeConnector.js';
 import MistralConnector from '../../src/connectors/MistralConnector.js';
-import OllamaEmbeddingConnector from '../../src/connectors/OllamaEmbeddingConnector.js';
+import NomicConnector from '../../src/connectors/NomicConnector.js';
 import SPARQLHelper from '../beerqa/SPARQLHelper.js';
 
 // Load environment variables
@@ -104,7 +104,7 @@ async function initializeHandlers(config) {
         .filter(p => p.capabilities?.includes('embedding'))
         .sort((a, b) => (a.priority || 999) - (b.priority || 999))[0];
 
-    const embeddingConnector = new OllamaEmbeddingConnector(
+    const embeddingConnector = new NomicConnector(
         'http://localhost:11434',
         embeddingProvider?.embeddingModel || 'nomic-embed-text'
     );

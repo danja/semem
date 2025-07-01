@@ -23,10 +23,10 @@ const __dirname = path.dirname(__filename);
  */
 function displayHeader() {
     console.log('');
-    console.log(chalk.bold.rainbow('╔══════════════════════════════════════════════════════════════╗'));
-    console.log(chalk.bold.rainbow('║') + chalk.bold.white('                🚀 FLOW PIPELINE RUNNER                      ') + chalk.bold.rainbow('║'));
-    console.log(chalk.bold.rainbow('║') + chalk.gray('           Complete 10-stage iterative workflow             ') + chalk.bold.rainbow('║'));
-    console.log(chalk.bold.rainbow('╚══════════════════════════════════════════════════════════════╝'));
+    console.log(chalk.bold.magenta('╔══════════════════════════════════════════════════════════════╗'));
+    console.log(chalk.bold.magenta('║') + chalk.bold.white('                🚀 FLOW PIPELINE RUNNER                      ') + chalk.bold.magenta('║'));
+    console.log(chalk.bold.magenta('║') + chalk.gray('           Complete 10-stage iterative workflow             ') + chalk.bold.magenta('║'));
+    console.log(chalk.bold.magenta('╚══════════════════════════════════════════════════════════════╝'));
     console.log('');
 }
 
@@ -277,9 +277,9 @@ async function executeStage(stageNumber, options) {
  */
 function displayPipelineSummary(stages, results, totalDuration, options) {
     console.log('');
-    console.log(chalk.bold.rainbow('╔══════════════════════════════════════════════════════════════╗'));
-    console.log(chalk.bold.rainbow('║') + chalk.bold.white('                    📊 PIPELINE SUMMARY                      ') + chalk.bold.rainbow('║'));
-    console.log(chalk.bold.rainbow('╚══════════════════════════════════════════════════════════════╝'));
+    console.log(chalk.bold.cyan('╔══════════════════════════════════════════════════════════════╗'));
+    console.log(chalk.bold.cyan('║') + chalk.bold.white('                    📊 PIPELINE SUMMARY                      ') + chalk.bold.cyan('║'));
+    console.log(chalk.bold.cyan('╚══════════════════════════════════════════════════════════════╝'));
     console.log('');
     
     console.log(chalk.bold.white('Pipeline Configuration:'));
