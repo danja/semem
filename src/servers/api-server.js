@@ -31,6 +31,8 @@ import RagnoAPI from '../api/features/RagnoAPI.js';
 import ZptAPI from '../api/features/ZptAPI.js';
 import VSOMAPI from '../api/features/VSOMAPI.js';
 import UnifiedSearchAPI from '../api/features/UnifiedSearchAPI.js';
+import WikidataAPI from '../api/features/WikidataAPI.js';
+import WikipediaAPI from '../api/features/WikipediaAPI.js';
 
 // Load environment variables
 dotenv.config();
@@ -388,6 +390,29 @@ class APIServer {
         });
         await vsomApi.initialize();
 
+        // Initialize Wikidata API
+        const wikidataApi = new WikidataAPI({
+            registry: this.apiRegistry,
+            logger: this.logger,
+            maxEntitiesPerConcept: 3,
+            maxSearchResults: 15,
+            minConfidence: 0.4,
+            requestTimeout: 30000,
+            defaultGraphURI: 'http://purl.org/stuff/wikidata'
+        });
+        await wikidataApi.initialize();
+
+        // Initialize Wikipedia API
+        const wikipediaApi = new WikipediaAPI({
+            registry: this.apiRegistry,
+            logger: this.logger,
+            defaultLimit: 10,
+            maxLimit: 50,
+            requestTimeout: 30000,
+            defaultGraphURI: 'http://purl.org/stuff/wikipedia'
+        });
+        await wikipediaApi.initialize();
+
         // Store API handlers first
         this.apiContext.apis = {
             'memory-api': memoryApi,
@@ -395,7 +420,9 @@ class APIServer {
             'search-api': searchApi,
             'ragno-api': ragnoApi,
             'zpt-api': zptApi,
-            'vsom-api': vsomApi
+            'vsom-api': vsomApi,
+            'wikidata-api': wikidataApi,
+            'wikipedia-api': wikipediaApi
         };
 
         // Initialize Unified Search API (depends on other APIs being available)
@@ -412,7 +439,7 @@ class APIServer {
         // Update API handlers with unified search
         this.apiContext.apis['unified-search-api'] = unifiedSearchApi;
 
-        return { memoryApi, chatApi, searchApi, ragnoApi, zptApi, vsomApi, unifiedSearchApi };
+        return { memoryApi, chatApi, searchApi, ragnoApi, zptApi, vsomApi, wikidataApi, wikipediaApi, unifiedSearchApi };
     }
 
     /**
@@ -476,6 +503,20 @@ class APIServer {
         apiRouter.get('/vsom/training-status', authenticateRequest, this.createHandler('vsom-api', 'training-status'));
         apiRouter.get('/vsom/instances', authenticateRequest, this.createHandler('vsom-api', 'instances'));
         apiRouter.delete('/vsom/instances/:instanceId', authenticateRequest, this.createHandler('vsom-api', 'delete'));
+
+        // Wikidata API routes
+        apiRouter.post('/wikidata/research', authenticateRequest, this.createHandler('wikidata-api', 'research-concepts'));
+        apiRouter.post('/wikidata/entity', authenticateRequest, this.createHandler('wikidata-api', 'entity-lookup'));
+        apiRouter.get('/wikidata/search', authenticateRequest, this.createHandler('wikidata-api', 'entity-search'));
+        apiRouter.post('/wikidata/sparql', authenticateRequest, this.createHandler('wikidata-api', 'sparql-query'));
+        apiRouter.post('/wikidata/concepts', authenticateRequest, this.createHandler('wikidata-api', 'concept-discovery'));
+
+        // Wikipedia API routes
+        apiRouter.get('/wikipedia/search', authenticateRequest, this.createHandler('wikipedia-api', 'search'));
+        apiRouter.get('/wikipedia/article', authenticateRequest, this.createHandler('wikipedia-api', 'article'));
+        apiRouter.post('/wikipedia/batch-search', authenticateRequest, this.createHandler('wikipedia-api', 'batch-search'));
+        apiRouter.post('/wikipedia/ingest', authenticateRequest, this.createHandler('wikipedia-api', 'ingest'));
+        apiRouter.get('/wikipedia/categories', authenticateRequest, this.createHandler('wikipedia-api', 'categories'));
 
         // Unified Search API routes
         apiRouter.post('/search/unified', authenticateRequest, this.createHandler('unified-search-api', 'unified'));
@@ -573,6 +614,30 @@ class APIServer {
                                 'DELETE /api/vsom/instances/{id} - Delete instance'
                             ],
                             status: this.apiContext.apis['vsom-api']?.initialized ? 'healthy' : 'unavailable'
+                        },
+                        wikidata: {
+                            name: 'Wikidata API',
+                            description: 'Wikidata knowledge graph research and entity lookup',
+                            endpoints: [
+                                'POST /api/wikidata/research - Research concepts using Wikidata',
+                                'POST /api/wikidata/entity - Look up specific entities',
+                                'GET /api/wikidata/search - Search for entities',
+                                'POST /api/wikidata/sparql - Execute SPARQL queries',
+                                'POST /api/wikidata/concepts - Extract and research concepts from text'
+                            ],
+                            status: this.apiContext.apis['wikidata-api']?.initialized ? 'healthy' : 'unavailable'
+                        },
+                        wikipedia: {
+                            name: 'Wikipedia API',
+                            description: 'Wikipedia article search and content retrieval',
+                            endpoints: [
+                                'GET /api/wikipedia/search - Search Wikipedia articles',
+                                'GET /api/wikipedia/article - Get specific articles',
+                                'POST /api/wikipedia/batch-search - Batch search multiple queries',
+                                'POST /api/wikipedia/ingest - Ingest articles to knowledge graph',
+                                'GET /api/wikipedia/categories - Search by category'
+                            ],
+                            status: this.apiContext.apis['wikipedia-api']?.initialized ? 'healthy' : 'unavailable'
                         },
                         unified: {
                             name: 'Unified Search API',

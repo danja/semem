@@ -496,6 +496,26 @@ function registerToolCallHandler(server) {
             required: ['prompt']
           }
         },
+        {
+          name: 'semem:answer',
+          description: 'Answer a question using iterative feedback and the complete Semem knowledge processing pipeline',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              question: { 
+                type: 'string', 
+                description: 'The question to answer'
+              },
+              mode: {
+                type: 'string',
+                enum: ['basic', 'standard', 'comprehensive'],
+                default: 'standard',
+                description: 'Answer quality mode: basic (2 iterations), standard (3 iterations), comprehensive (5 iterations)'
+              }
+            },
+            required: ['question']
+          }
+        },
         // ZPT tools
         {
           name: 'zpt_navigate',
@@ -1066,6 +1086,150 @@ function registerToolCallHandler(server) {
             }, null, 2)
           }]
         };
+      }
+      
+      if (name === 'semem:answer') {
+        const { question, mode = 'standard' } = args;
+        if (!question || typeof question !== 'string' || !question.trim()) {
+          throw new Error('Invalid question parameter. It must be a non-empty string.');
+        }
+        
+        // Import answer processing function
+        const { processQuestionWithFeedback } = await import('./answer/Answer.js');
+        
+        // Initialize configuration
+        await initializeServices();
+        const { getMemoryManager } = await import('./lib/initialization.js');
+        const memoryManager = getMemoryManager();
+        
+        // Use the same initialization pattern as the standalone Answer.js
+        const Config = (await import('../src/Config.js')).default;
+        const config = new Config('./config/config.json');
+        await config.init();
+        
+        const workflowConfig = {
+          beerqaGraphURI: 'http://purl.org/stuff/beerqa/test',
+          wikipediaGraphURI: 'http://purl.org/stuff/wikipedia/research',
+          wikidataGraphURI: 'http://purl.org/stuff/wikidata/research'
+        };
+        
+        // Initialize LLM handler
+        const LLMHandler = (await import('../src/handlers/LLMHandler.js')).default;
+        const OllamaConnector = (await import('../src/connectors/OllamaConnector.js')).default;
+        const ClaudeConnector = (await import('../src/connectors/ClaudeConnector.js')).default;
+        const MistralConnector = (await import('../src/connectors/MistralConnector.js')).default;
+        
+        const llmProviders = config.get('llmProviders') || [];
+        const chatProvider = llmProviders
+            .filter(p => p.capabilities?.includes('chat'))
+            .sort((a, b) => (a.priority || 999) - (b.priority || 999))[0];
+
+        if (!chatProvider) {
+            throw new Error('No chat LLM provider configured');
+        }
+
+        let llmConnector;
+        if (chatProvider.type === 'mistral' && process.env.MISTRAL_API_KEY) {
+            llmConnector = new MistralConnector(process.env.MISTRAL_API_KEY);
+        } else if (chatProvider.type === 'claude' && process.env.CLAUDE_API_KEY) {
+            llmConnector = new ClaudeConnector(process.env.CLAUDE_API_KEY);
+        } else {
+            llmConnector = new OllamaConnector('http://localhost:11434', 'qwen2:1.5b');
+            chatProvider.chatModel = 'qwen2:1.5b';
+        }
+
+        const llmHandler = new LLMHandler(llmConnector, chatProvider.chatModel);
+        
+        const SPARQLHelper = (await import('../examples/beerqa/SPARQLHelper.js')).default;
+        const sparqlHelper = new SPARQLHelper(
+            config.get('sparqlUpdateEndpoint') || 'http://localhost:3030/semem/update',
+            {
+                auth: config.get('sparqlAuth') || { user: 'admin', password: 'admin123' },
+                timeout: 30000
+            }
+        );
+        
+        // Process question with iterative feedback
+        const FeedbackWorkflow = (await import('../src/compose/workflows/FeedbackWorkflow.js')).default;
+        const feedbackWorkflow = new FeedbackWorkflow();
+        
+        const resources = {
+            llmHandler,
+            sparqlHelper,
+            config: workflowConfig
+        };
+        
+        const feedbackOptions = {
+            basic: {
+                maxIterations: 2,
+                feedbackThreshold: 0.3,
+                enableWikidataResearch: false,
+                feedbackMode: 'basic'
+            },
+            standard: {
+                maxIterations: 3,
+                feedbackThreshold: 0.5,
+                enableWikidataResearch: true,
+                feedbackMode: 'iterative'
+            },
+            comprehensive: {
+                maxIterations: 5,
+                feedbackThreshold: 0.7,
+                enableWikidataResearch: true,
+                feedbackMode: 'comprehensive'
+            }
+        }[mode] || {
+            maxIterations: 3,
+            feedbackThreshold: 0.5,
+            enableWikidataResearch: true,
+            feedbackMode: 'iterative'
+        };
+        
+        const feedbackResult = await feedbackWorkflow.execute(
+            { 
+                question: { text: question },
+                enableIterativeFeedback: true,
+                enableWikidataResearch: feedbackOptions.enableWikidataResearch
+            },
+            resources,
+            feedbackOptions
+        );
+        
+        if (feedbackResult.success) {
+            const data = feedbackResult.data;
+            
+            return {
+                content: [{
+                    type: "text",
+                    text: JSON.stringify({
+                        success: true,
+                        question: question,
+                        answer: data.finalAnswer,
+                        metadata: {
+                            iterations: data.workflow.iterationsPerformed,
+                            initialAnswer: data.initialAnswer,
+                            completenessImprovement: data.completenessImprovement,
+                            followUpQuestions: data.totalResearchQuestions,
+                            entitiesDiscovered: data.totalEntitiesDiscovered,
+                            mode: mode,
+                            duration: data.workflow.totalDuration || 0
+                        }
+                    }, null, 2)
+                }]
+            };
+        } else {
+            return {
+                content: [{
+                    type: "text",
+                    text: JSON.stringify({
+                        success: false,
+                        question: question,
+                        error: feedbackResult.error || 'Feedback workflow failed'
+                    }, null, 2)
+                }],
+                isError: true
+            };
+        }
       }
       
       // ZPT Navigation tools
