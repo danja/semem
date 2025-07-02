@@ -170,6 +170,7 @@
     "@langchain/openai": "^0.3.14",
     "@modelcontextprotocol/inspector": "^0.14.3",
     "@modelcontextprotocol/sdk": "^1.13.1",
+    "@opendocsg/pdf2md": "^0.2.1",
     "@rdfjs/namespace": "^2.0.1",
     "atuin": "^0.2.0",
     "body-parser": "^1.20.2",
