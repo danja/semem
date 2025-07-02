@@ -1,5 +1,4 @@
-import pkg from '@opendocsg/pdf2md';
-const { pdf2md } = pkg;
+import pdf2md from '@opendocsg/pdf2md';
 import { readFileSync } from 'fs';
 import { v4 as uuidv4 } from 'uuid';
 import logger from 'loglevel';
@@ -39,9 +38,11 @@ export default class PDFConverter {
 
       const processingTime = Date.now() - startTime;
       
-      if (!result || !result.text) {
+      if (!result || typeof result !== 'string') {
         throw new Error(`PDFConverter: Failed to extract text from PDF: ${filePath}`);
       }
+
+      const text = result;
 
       // Extract metadata
       const metadata = {
@@ -52,14 +53,14 @@ export default class PDFConverter {
         timestamp: new Date().toISOString(),
         format: 'pdf',
         converter: 'pdf2md',
-        pages: this.estimatePageCount(result.text),
+        pages: this.estimatePageCount(text),
         ...options.metadata
       };
 
       logger.debug(`PDFConverter: Converted ${filePath} (${buffer.length} bytes) in ${processingTime}ms`);
 
       return {
-        markdown: result.text,
+        markdown: text,
         metadata,
         success: true
       };
@@ -97,9 +98,11 @@ export default class PDFConverter {
 
       const processingTime = Date.now() - startTime;
       
-      if (!result || !result.text) {
+      if (!result || typeof result !== 'string') {
         throw new Error('PDFConverter: Failed to extract text from PDF buffer');
       }
+
+      const text = result;
 
       // Extract metadata
       const metadata = {
@@ -109,14 +112,14 @@ export default class PDFConverter {
         timestamp: new Date().toISOString(),
         format: 'pdf',
         converter: 'pdf2md',
-        pages: this.estimatePageCount(result.text),
+        pages: this.estimatePageCount(text),
         ...options.metadata
       };
 
       logger.debug(`PDFConverter: Converted PDF buffer (${buffer.length} bytes) in ${processingTime}ms`);
 
       return {
-        markdown: result.text,
+        markdown: text,
         metadata,
         success: true
       };

@@ -54,9 +54,11 @@ export default class Chunker {
       // Use ZPT ContentChunker for initial chunking
       const chunkingResult = await this.contentChunker.chunk(markdown, {
         strategy: chunkingOptions.strategy,
-        chunkSize: chunkingOptions.maxChunkSize,
+        maxChunkSize: chunkingOptions.maxChunkSize,
         minChunkSize: chunkingOptions.minChunkSize,
-        overlapSize: chunkingOptions.overlapSize
+        overlapSize: chunkingOptions.overlapSize,
+        preserveStructure: true,
+        semanticBoundaries: true
       });
 
       const chunks = chunkingResult.chunks;
