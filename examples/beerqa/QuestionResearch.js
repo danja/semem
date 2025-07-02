@@ -208,6 +208,9 @@ class BeerQAQuestionResearch {
         // Use Config.js for SPARQL configuration
         const storageOptions = config.get('storage.options');
         
+        // Get performance configuration for Wikipedia
+        const performanceConfig = config.get('performance.wikipedia') || {};
+        
         this.options = {
             sparqlEndpoint: options.sparqlEndpoint || storageOptions.update,
             sparqlAuth: options.sparqlAuth || { 
@@ -216,21 +219,25 @@ class BeerQAQuestionResearch {
             },
             beerqaGraphURI: options.beerqaGraphURI || 'http://purl.org/stuff/beerqa/test',
             wikipediaGraphURI: options.wikipediaGraphURI || 'http://purl.org/stuff/wikipedia/research',
-            searchDelay: options.searchDelay || 300, // 300ms between Wikipedia searches
-            maxResultsPerConcept: options.maxResultsPerConcept || 3,
+            searchDelay: options.searchDelay || performanceConfig.rateLimit || 300, // Use performance config
+            maxResultsPerConcept: options.maxResultsPerConcept || performanceConfig.searchResultsLimit || 3,
             generateEmbeddings: options.generateEmbeddings !== false, // Default true
-            timeout: options.timeout || 60000,
+            timeout: options.timeout || performanceConfig.timeout || 60000,
             ...options
         };
 
-        // Initialize Wikipedia components
+        // Initialize Wikipedia components with performance-optimized configuration
         this.wikipediaSearch = new WikipediaSearch({
             sparqlEndpoint: this.options.sparqlEndpoint,
             sparqlAuth: this.options.sparqlAuth,
             graphURI: this.options.wikipediaGraphURI,
             baseURI: this.options.wikipediaGraphURI.replace(/\/$/, '') + '/',
-            timeout: this.options.timeout
+            timeout: this.options.timeout,
+            defaultSearchLimit: performanceConfig.searchResultsLimit || 10,
+            rateLimit: performanceConfig.rateLimit || 300
         });
+        
+        console.log(`🚀 BeerQA using performance config: ${performanceConfig.searchResultsLimit || 10} results, ${performanceConfig.rateLimit || 300}ms rate limit`);
 
         this.unitsToCorpuscles = new UnitsToCorpuscles({
             sparqlEndpoint: this.options.sparqlEndpoint,

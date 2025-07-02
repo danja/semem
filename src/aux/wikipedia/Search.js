@@ -23,6 +23,8 @@ export default class WikipediaSearch {
             ragnoBaseURI: options.ragnoBaseURI || 'http://purl.org/stuff/ragno/',
             wikipediaAPIBase: options.wikipediaAPIBase || 'https://en.wikipedia.org/w/api.php',
             timeout: options.timeout || 30000,
+            defaultSearchLimit: options.defaultSearchLimit || 10,
+            rateLimit: options.rateLimit || 100,
             ...options
         };
 
@@ -66,8 +68,8 @@ export default class WikipediaSearch {
      */
     async search(queryText, options = {}) {
         const searchOptions = {
-            delay: 100, // Default 100ms rate limiting
-            limit: 10,  // Default 10 results
+            delay: options.delay || this.options.rateLimit || 100, // Use configured rate limiting
+            limit: options.limit || this.options.defaultSearchLimit || 10,  // Use configured search limit
             ...options
         };
 

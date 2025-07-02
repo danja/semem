@@ -100,5 +100,37 @@
       ],
       "description": "Local Ollama for embeddings and chat - fallback option"
     }
-  ]
+  ],
+  "performance": {
+    "wikidata": {
+      "rateLimit": 200,
+      "maxEntitiesPerConcept": 5,
+      "maxWikidataSearchResults": 5,
+      "minConfidence": 0.7,
+      "batchSize": 5,
+      "parallelRequests": 3,
+      "timeout": 15000
+    },
+    "wikipedia": {
+      "rateLimit": 100,
+      "defaultLimit": 20,
+      "maxLimit": 75,
+      "batchSize": 25,
+      "timeout": 10000,
+      "searchResultsLimit": 2
+    },
+    "ingestion": {
+      "earlyTerminationThreshold": 0.8,
+      "maxPagesPerQuery": 50,
+      "useRelevanceFiltering": true,
+      "skipLowConfidenceEntities": true
+    }
+  },
+  "relevanceFiltering": {
+    "enabled": true,
+    "minTextSimilarity": 0.6,
+    "popularityWeight": 0.2,
+    "typeRelevanceWeight": 0.3,
+    "skipExpandedSearch": false
+  }
 }

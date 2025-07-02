@@ -195,6 +195,9 @@ class APIServer {
                 if (key === 'apis') {
                     return this.apiContext.apis;
                 }
+                if (key === 'config') {
+                    return this.config;
+                }
                 throw new Error(`Unknown component: ${key}`);
             }
         };
@@ -390,25 +393,30 @@ class APIServer {
         });
         await vsomApi.initialize();
 
-        // Initialize Wikidata API
+        // Get performance configuration
+        const performanceConfig = this.config.get('performance') || {};
+        const wikidataPerf = performanceConfig.wikidata || {};
+        const wikipediaPerf = performanceConfig.wikipedia || {};
+        
+        // Initialize Wikidata API with performance config
         const wikidataApi = new WikidataAPI({
             registry: this.apiRegistry,
             logger: this.logger,
-            maxEntitiesPerConcept: 3,
-            maxSearchResults: 15,
-            minConfidence: 0.4,
-            requestTimeout: 30000,
+            maxEntitiesPerConcept: wikidataPerf.maxEntitiesPerConcept || 3,
+            maxSearchResults: wikidataPerf.maxWikidataSearchResults || 15,
+            minConfidence: wikidataPerf.minConfidence || 0.4,
+            requestTimeout: wikidataPerf.timeout || 30000,
             defaultGraphURI: 'http://purl.org/stuff/wikidata'
         });
         await wikidataApi.initialize();
 
-        // Initialize Wikipedia API
+        // Initialize Wikipedia API with performance config
         const wikipediaApi = new WikipediaAPI({
             registry: this.apiRegistry,
             logger: this.logger,
-            defaultLimit: 10,
-            maxLimit: 50,
-            requestTimeout: 30000,
+            defaultLimit: wikipediaPerf.defaultLimit || 10,
+            maxLimit: wikipediaPerf.maxLimit || 50,
+            requestTimeout: wikipediaPerf.timeout || 30000,
             defaultGraphURI: 'http://purl.org/stuff/wikipedia'
         });
         await wikipediaApi.initialize();

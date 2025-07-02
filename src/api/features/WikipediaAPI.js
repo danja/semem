@@ -39,12 +39,17 @@ export default class WikipediaAPI extends BaseAPI {
         try {
             this.memoryManager = registry.get('memory');
             
+            // Get performance config for Wikipedia
+            const performanceConfig = registry.get('config')?.get('performance.wikipedia') || {};
+            
             // Initialize Wikipedia search service
             this.wikipediaSearch = new WikipediaSearch({
                 sparqlEndpoint: registry.get('config')?.get('sparqlUpdateEndpoint') || 'http://localhost:3030/semem/update',
                 sparqlAuth: registry.get('config')?.get('sparqlAuth') || { user: 'admin', password: 'admin123' },
                 graphURI: this.defaultGraphURI,
-                timeout: this.requestTimeout
+                timeout: this.requestTimeout,
+                defaultSearchLimit: performanceConfig.searchResultsLimit || 10,
+                rateLimit: performanceConfig.rateLimit || 100
             });
             
             this.logger.info('WikipediaAPI initialized successfully');

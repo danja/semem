@@ -10,10 +10,15 @@
  */
 
 import path from 'path';
+import { fileURLToPath } from 'url';
 import logger from 'loglevel';
 import chalk from 'chalk';
+import Config from '../../src/Config.js';
 import WikipediaSearch from '../../src/aux/wikipedia/Search.js';
 import UnitsToCorpuscles from '../../src/aux/wikipedia/UnitsToCorpuscles.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Configure logging
 logger.setLevel('info');
@@ -157,16 +162,28 @@ function displayErrors(errors) {
 async function runWikipediaDemo() {
     displayHeader();
 
-    // Configuration
+    // Load configuration from Config.js
+    const configPath = path.resolve(path.dirname(path.dirname(__dirname)), 'config', 'config.json');
+    const systemConfig = new Config(configPath);
+    await systemConfig.init();
+    
+    // Get performance configuration
+    const performanceConfig = systemConfig.get('performance.wikipedia') || {};
+    
+    // Configuration with performance optimizations
     const config = {
-        sparqlEndpoint: 'https://fuseki.hyperdata.it/hyperdata.it/update',
-        sparqlAuth: { user: 'admin', password: 'admin123' },
+        sparqlEndpoint: systemConfig.get('sparqlUpdateEndpoint') || 'https://fuseki.hyperdata.it/hyperdata.it/update',
+        sparqlAuth: systemConfig.get('sparqlAuth') || { user: 'admin', password: 'admin123' },
         graphURI: 'http://purl.org/stuff/wikipedia',
         baseURI: 'http://purl.org/stuff/wikipedia/',
-        searchDelay: 200, // 200ms between requests
+        searchDelay: performanceConfig.rateLimit || 200, // Use performance config
         generateEmbeddings: true,
-        searchLimit: 5 // Limit for demo
+        searchLimit: performanceConfig.searchResultsLimit || 5, // Use performance config
+        defaultSearchLimit: performanceConfig.searchResultsLimit || 10,
+        rateLimit: performanceConfig.rateLimit || 200
     };
+    
+    console.log(chalk.gray(`🚀 Demo using performance config: ${config.searchLimit} results, ${config.searchDelay}ms rate limit`));
 
     displayConfiguration(config);
 

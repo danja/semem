@@ -170,13 +170,20 @@ ${limit ? `LIMIT ${limit * 5}` : ''}`;
 async function researchConcepts(questions, embeddingHandler, sparqlHelper, config, systemConfig) {
     console.log(chalk.cyan('🔍 Researching concepts via Wikipedia...'));
     
-    // Initialize Wikipedia search with correct SPARQL endpoint configuration
+    // Get performance configuration for Wikipedia
+    const performanceConfig = systemConfig.get('performance.wikipedia') || {};
+    
+    // Initialize Wikipedia search with performance-optimized configuration
     const wikipediaSearchOptions = {
         sparqlEndpoint: systemConfig.get('sparqlUpdateEndpoint') || 'http://localhost:3030/semem/update',
         sparqlAuth: systemConfig.get('sparqlAuth') || { user: 'admin', password: 'admin123' },
         graphURI: config.wikipediaGraphURI,
-        timeout: 30000
+        timeout: performanceConfig.timeout || 30000,
+        defaultSearchLimit: performanceConfig.searchResultsLimit || 10,
+        rateLimit: performanceConfig.rateLimit || 100
     };
+    
+    console.log(chalk.gray(`   🚀 Using performance config: ${performanceConfig.searchResultsLimit || 10} results, ${performanceConfig.rateLimit || 100}ms rate limit`));
     
     const wikipediaSearch = new WikipediaSearch(wikipediaSearchOptions);
     const unitsToCorpuscles = new UnitsToCorpuscles();
