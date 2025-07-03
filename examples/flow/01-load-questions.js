@@ -49,8 +49,8 @@ function displayHeader() {
  */
 function parseArgs() {
     const args = process.argv.slice(2);
-    const options = { limit: 100 }; // Default to 100 questions like the original BeerTestQuestions.js
-    
+    const options = { limit: 10 }; // Number of questions
+
     for (let i = 0; i < args.length; i++) {
         const arg = args[i];
         switch (arg) {
@@ -69,7 +69,7 @@ function parseArgs() {
                 break;
         }
     }
-    
+
     return options;
 }
 
@@ -91,7 +91,7 @@ async function initializeLLMHandler(config) {
     console.log(chalk.white(`   🎯 Selected provider: ${chatProvider.type} (priority ${chatProvider.priority})`));
 
     let llmConnector;
-    
+
     if (chatProvider.type === 'mistral' && process.env.MISTRAL_API_KEY) {
         console.log(chalk.green('   ✓ Using Mistral API'));
         llmConnector = new MistralConnector(process.env.MISTRAL_API_KEY);
@@ -114,25 +114,25 @@ async function initializeLLMHandler(config) {
  */
 function loadTestQuestions(options) {
     console.log(chalk.cyan('📖 Loading test questions...'));
-    
+
     const questionsPath = path.resolve(__dirname, '../../data/beerqa/beerqa_test_questions_v1.0.json');
-    
+
     if (!fs.existsSync(questionsPath)) {
         throw new Error(`Questions file not found: ${questionsPath}`);
     }
-    
+
     const questionsData = JSON.parse(fs.readFileSync(questionsPath, 'utf8'));
     let questions = questionsData.data || questionsData.questions || questionsData;
-    
+
     // Extract just the question text from the data structure
     questions = questions.map(item => typeof item === 'string' ? item : item.question);
-    
+
     // Apply limit (default 100 for reasonable testing)
     if (options.limit && options.limit > 0) {
         questions = questions.slice(0, options.limit);
         console.log(chalk.white(`   📊 Limited to ${options.limit} questions (default: 100)`));
     }
-    
+
     console.log(chalk.green(`   ✓ Loaded ${questions.length} questions`));
     return questions;
 }
@@ -142,17 +142,17 @@ function loadTestQuestions(options) {
  */
 async function createQuestionCorpuscles(questions, sparqlHelper, config) {
     console.log(chalk.cyan('🏗️  Creating question corpuscles...'));
-    
+
     const graphURI = config.beerqaGraphURI;
     const timestamp = new Date().toISOString();
-    
+
     const triples = [];
     const questionURIs = [];
-    
+
     questions.forEach((question, index) => {
         const questionURI = `${graphURI}/question/${Date.now()}_${index}`;
         questionURIs.push(questionURI);
-        
+
         // Basic corpuscle structure
         triples.push(`<${questionURI}> a ragno:Corpuscle ;`);
         triples.push(`    rdfs:label "${escapeRDFString(question)}" ;`);
@@ -161,7 +161,7 @@ async function createQuestionCorpuscles(questions, sparqlHelper, config) {
         triples.push(`    dcterms:created "${timestamp}"^^xsd:dateTime ;`);
         triples.push(`    ragno:processingStage "initialized" ;`);
         triples.push(`    ragno:questionIndex ${index} .`);
-        
+
         // Flow component metadata
         triples.push(`<${questionURI}> ragno:hasAttribute <${questionURI}/attr/flow_stage> .`);
         triples.push(`<${questionURI}/attr/flow_stage> a ragno:Attribute ;`);
@@ -169,7 +169,7 @@ async function createQuestionCorpuscles(questions, sparqlHelper, config) {
         triples.push(`    ragno:attributeValue "01-load-questions" ;`);
         triples.push(`    dcterms:created "${timestamp}"^^xsd:dateTime .`);
     });
-    
+
     if (triples.length > 0) {
         const insertQuery = `
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
@@ -185,7 +185,7 @@ INSERT DATA {
 }`;
 
         const result = await sparqlHelper.executeUpdate(insertQuery);
-        
+
         if (result.success) {
             console.log(chalk.green(`   ✅ Stored ${questions.length} question corpuscles`));
             console.log(chalk.white(`   📊 Graph: ${graphURI}`));
@@ -195,7 +195,7 @@ INSERT DATA {
             throw new Error(`SPARQL storage failed: ${result.error}`);
         }
     }
-    
+
     return { success: true, questionURIs: [], count: 0 };
 }
 
@@ -233,24 +233,24 @@ function displaySummary(result, duration) {
 async function main() {
     try {
         const startTime = Date.now();
-        
+
         displayHeader();
-        
+
         const args = parseArgs();
-        
+
         // Initialize configuration
         console.log(chalk.cyan('🔧 Initializing configuration...'));
         const config = new Config('./config/config.json');
         await config.init();
-        
+
         const workflowConfig = {
             beerqaGraphURI: 'http://purl.org/stuff/beerqa/test',
             wikipediaGraphURI: 'http://purl.org/stuff/wikipedia/research',
             wikidataGraphURI: 'http://purl.org/stuff/wikidata/research'
         };
-        
+
         console.log(chalk.green('   ✓ Configuration loaded'));
-        
+
         // Initialize components
         const llmHandler = await initializeLLMHandler(config);
         const sparqlHelper = new SPARQLHelper(
@@ -260,22 +260,22 @@ async function main() {
                 timeout: 30000
             }
         );
-        
+
         console.log(chalk.green('   ✓ Components initialized'));
-        
+
         // Load test questions
         const questions = loadTestQuestions(args);
-        
+
         // Create question corpuscles
         const result = await createQuestionCorpuscles(questions, sparqlHelper, workflowConfig);
-        
+
         // Display summary
         const duration = Date.now() - startTime;
         displaySummary(result, duration);
-        
+
         console.log(chalk.bold.green('🎉 Stage 1: Question loading completed successfully!'));
         console.log('');
-        
+
     } catch (error) {
         console.error(chalk.red('❌ Stage 1 failed:'), error.message);
         process.exit(1);

@@ -271,39 +271,54 @@ export default class ContentChunker {
         const targetSize = options.chunkSize || this.config.defaultChunkSize;
         const chunks = [];
         
-        let currentChunk = '';
         let chunkStart = 0;
         let chunkId = 0;
+        let lastGoodBoundary = 0;
 
         for (const boundary of boundaries) {
-            const segment = content.slice(chunkStart, boundary.position);
+            const potentialChunkEnd = boundary.position + boundary.length;
+            const chunkContent = content.slice(chunkStart, potentialChunkEnd);
             
-            if (currentChunk.length + segment.length <= targetSize || currentChunk.length === 0) {
-                // Add to current chunk
-                currentChunk += segment;
+            if (chunkContent.length <= targetSize) {
+                // This boundary is still within size limit, continue
+                lastGoodBoundary = potentialChunkEnd;
             } else {
-                // Finalize current chunk and start new one
-                if (currentChunk.length > 0) {
+                // This boundary would exceed size limit
+                if (lastGoodBoundary > chunkStart) {
+                    // Create chunk up to last good boundary
+                    const finalChunkContent = content.slice(chunkStart, lastGoodBoundary);
                     chunks.push(this.createSemanticChunk(
-                        currentChunk, 
-                        chunkStart, 
-                        chunkStart + currentChunk.length, 
+                        finalChunkContent,
+                        chunkStart,
+                        lastGoodBoundary,
                         chunkId++,
                         boundary
                     ));
+                    chunkStart = lastGoodBoundary;
+                    lastGoodBoundary = potentialChunkEnd;
+                } else {
+                    // Even this single boundary segment is too large, force split
+                    const forceChunkContent = content.slice(chunkStart, potentialChunkEnd);
+                    chunks.push(this.createSemanticChunk(
+                        forceChunkContent,
+                        chunkStart,
+                        potentialChunkEnd,
+                        chunkId++,
+                        boundary
+                    ));
+                    chunkStart = potentialChunkEnd;
+                    lastGoodBoundary = potentialChunkEnd;
                 }
-                
-                currentChunk = segment;
-                chunkStart = boundary.position - segment.length;
             }
         }
 
         // Handle remaining content
-        if (currentChunk.length > 0) {
+        if (chunkStart < content.length) {
+            const remainingContent = content.slice(chunkStart);
             chunks.push(this.createSemanticChunk(
-                currentChunk,
+                remainingContent,
                 chunkStart,
-                chunkStart + currentChunk.length,
+                content.length,
                 chunkId++
             ));
         }

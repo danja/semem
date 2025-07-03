@@ -190,6 +190,13 @@ export default class Ingester {
     const sourceUri = chunkingResult.sourceUri;
 
     return `
+      PREFIX ragno: <http://purl.org/stuff/ragno/>
+      PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+      PREFIX dcterms: <http://purl.org/dc/terms/>
+      PREFIX semem: <http://purl.org/stuff/semem/>
+      PREFIX prov: <http://www.w3.org/ns/prov#>
+      PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+      
       INSERT DATA {
         GRAPH <${graphName}> {
           <${sourceUri}> a ragno:Corpus ;
@@ -214,6 +221,11 @@ export default class Ingester {
    */
   createCorpusInsertQuery(corpus, activity, graphName) {
     return `
+      PREFIX ragno: <http://purl.org/stuff/ragno/>
+      PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+      PREFIX dcterms: <http://purl.org/dc/terms/>
+      PREFIX prov: <http://www.w3.org/ns/prov#>
+      
       INSERT DATA {
         GRAPH <${graphName}> {
           <${corpus.uri}> a ragno:Corpus ;
@@ -241,6 +253,11 @@ export default class Ingester {
       .join('\n            ');
 
     return `
+      PREFIX ragno: <http://purl.org/stuff/ragno/>
+      PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+      PREFIX dcterms: <http://purl.org/dc/terms/>
+      PREFIX prov: <http://www.w3.org/ns/prov#>
+      
       INSERT DATA {
         GRAPH <${graphName}> {
           <${community.uri}> a ragno:Community ;
@@ -279,6 +296,12 @@ export default class Ingester {
     }).join('\n');
 
     return `
+      PREFIX ragno: <http://purl.org/stuff/ragno/>
+      PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+      PREFIX dcterms: <http://purl.org/dc/terms/>
+      PREFIX semem: <http://purl.org/stuff/semem/>
+      PREFIX prov: <http://www.w3.org/ns/prov#>
+      
       INSERT DATA {
         GRAPH <${graphName}> {
           ${chunkTriples}
@@ -300,6 +323,10 @@ export default class Ingester {
     const generatedTriples = activity.generated.map(uri => `<${activity.uri}> prov:generated <${uri}> .`).join('\n            ');
 
     return `
+      PREFIX prov: <http://www.w3.org/ns/prov#>
+      PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+      PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+      
       INSERT DATA {
         GRAPH <${graphName}> {
           <${activity.uri}> a prov:Activity ;

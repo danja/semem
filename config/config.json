@@ -16,6 +16,9 @@
     "redirect": 4110,
     "redirectTarget": 4120
   },
+  "api": {
+    "key": "${SEMEM_API_KEY}"
+  },
   "port": 4120,
   "graphName": "http://tensegrity.it/semem",
   "chatModel": "qwen2:1.5b",

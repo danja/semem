@@ -1,15 +1,19 @@
 #!/usr/bin/env node
 
+// Load environment variables FIRST before any other imports
+import dotenv from 'dotenv';
+dotenv.config();
+
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { setupDefaultLogging } from '../utils/LoggingConfig.js';
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import helmet from 'helmet';
 import compression from 'compression';
 import { v4 as uuidv4 } from 'uuid';
 import rateLimit from 'express-rate-limit';
+import multer from 'multer';
 import Config from '../Config.js';
 import MemoryManager from '../MemoryManager.js';
 import EmbeddingConnectorFactory from '../connectors/EmbeddingConnectorFactory.js';
@@ -21,7 +25,7 @@ import EmbeddingHandler from '../handlers/EmbeddingHandler.js';
 import CacheManager from '../handlers/CacheManager.js';
 import APIRegistry from '../api/common/APIRegistry.js';
 import InMemoryStore from '../stores/InMemoryStore.js';
-import { authenticateRequest } from '../api/http/middleware/auth.js';
+import { createAuthenticateRequest } from '../api/http/middleware/auth.js';
 import { errorHandler, NotFoundError } from '../api/http/middleware/error.js';
 import { requestLogger } from '../api/http/middleware/logging.js';
 import MemoryAPI from '../api/features/MemoryAPI.js';
@@ -33,9 +37,8 @@ import VSOMAPI from '../api/features/VSOMAPI.js';
 import UnifiedSearchAPI from '../api/features/UnifiedSearchAPI.js';
 import WikidataAPI from '../api/features/WikidataAPI.js';
 import WikipediaAPI from '../api/features/WikipediaAPI.js';
+import DocumentAPI from '../api/features/DocumentAPI.js';
 
-// Load environment variables
-dotenv.config();
 
 // Note: Logging is now configured in the APIServer constructor
 
@@ -90,6 +93,29 @@ class APIServer {
         this.app.use(compression());
         this.app.use(express.json({ limit: '1mb' }));
 
+        // File upload middleware
+        const upload = multer({
+            storage: multer.memoryStorage(),
+            limits: {
+                fileSize: 10 * 1024 * 1024, // 10MB limit
+                files: 1 // Single file upload
+            },
+            fileFilter: (req, file, cb) => {
+                const allowedMimeTypes = [
+                    'application/pdf',
+                    'text/html',
+                    'text/plain',
+                    'application/octet-stream'
+                ];
+                if (allowedMimeTypes.includes(file.mimetype)) {
+                    cb(null, true);
+                } else {
+                    cb(new Error(`Unsupported file type: ${file.mimetype}`), false);
+                }
+            }
+        });
+        this.upload = upload;
+
         // Rate limiting
         const limiter = rateLimit({
             windowMs: 15 * 60 * 1000,
@@ -112,6 +138,9 @@ class APIServer {
         const configPath = path.join(__dirname, 'config/config.json');
         this.config = new Config(configPath);
         await this.config.init();
+        
+        // Create config-aware authentication middleware
+        this.authenticateRequest = createAuthenticateRequest(this.config);
         
         // Use new configuration-driven provider selection (like MCP server)
         this.logger.info('Creating providers using configuration-driven selection...');
@@ -183,6 +212,8 @@ class APIServer {
             memory: memoryManager,
             embedding: embeddingHandler,
             llm: llmHandler,
+            storage: storage,
+            sparqlStore: storage, // Alias for backwards compatibility
             apis: {}
         };
 
@@ -421,6 +452,16 @@ class APIServer {
         });
         await wikipediaApi.initialize();
 
+        // Initialize Document API
+        const documentApi = new DocumentAPI({
+            registry: this.apiRegistry,
+            logger: this.logger,
+            tempDir: '/tmp/semem-documents',
+            maxFileSize: 10 * 1024 * 1024, // 10MB
+            allowedMimeTypes: ['application/pdf', 'text/html', 'text/plain', 'application/octet-stream']
+        });
+        await documentApi.initialize();
+
         // Store API handlers first
         this.apiContext.apis = {
             'memory-api': memoryApi,
@@ -430,7 +471,8 @@ class APIServer {
             'zpt-api': zptApi,
             'vsom-api': vsomApi,
             'wikidata-api': wikidataApi,
-            'wikipedia-api': wikipediaApi
+            'wikipedia-api': wikipediaApi,
+            'document-api': documentApi
         };
 
         // Initialize Unified Search API (depends on other APIs being available)
@@ -447,7 +489,7 @@ class APIServer {
         // Update API handlers with unified search
         this.apiContext.apis['unified-search-api'] = unifiedSearchApi;
 
-        return { memoryApi, chatApi, searchApi, ragnoApi, zptApi, vsomApi, wikidataApi, wikipediaApi, unifiedSearchApi };
+        return { memoryApi, chatApi, searchApi, ragnoApi, zptApi, vsomApi, wikidataApi, wikipediaApi, documentApi, unifiedSearchApi };
     }
 
     /**
@@ -457,78 +499,88 @@ class APIServer {
         const apiRouter = express.Router();
 
         // Memory API routes
-        apiRouter.post('/memory', authenticateRequest, this.createHandler('memory-api', 'store'));
-        apiRouter.get('/memory/search', authenticateRequest, this.createHandler('memory-api', 'search'));
-        apiRouter.post('/memory/embedding', authenticateRequest, this.createHandler('memory-api', 'embedding'));
-        apiRouter.post('/memory/concepts', authenticateRequest, this.createHandler('memory-api', 'concepts'));
+        apiRouter.post('/memory', this.authenticateRequest, this.createHandler('memory-api', 'store'));
+        apiRouter.get('/memory/search', this.authenticateRequest, this.createHandler('memory-api', 'search'));
+        apiRouter.post('/memory/embedding', this.authenticateRequest, this.createHandler('memory-api', 'embedding'));
+        apiRouter.post('/memory/concepts', this.authenticateRequest, this.createHandler('memory-api', 'concepts'));
 
         // Chat API routes
-        apiRouter.post('/chat', authenticateRequest, this.createHandler('chat-api', 'chat'));
-        apiRouter.post('/chat/stream', authenticateRequest, this.createStreamHandler('chat-api', 'stream'));
-        apiRouter.post('/completion', authenticateRequest, this.createHandler('chat-api', 'completion'));
+        apiRouter.post('/chat', this.authenticateRequest, this.createHandler('chat-api', 'chat'));
+        apiRouter.post('/chat/stream', this.authenticateRequest, this.createStreamHandler('chat-api', 'stream'));
+        apiRouter.post('/completion', this.authenticateRequest, this.createHandler('chat-api', 'completion'));
 
         // Search API routes
-        apiRouter.get('/search', authenticateRequest, this.createHandler('search-api', 'search'));
-        apiRouter.post('/index', authenticateRequest, this.createHandler('search-api', 'index'));
+        apiRouter.get('/search', this.authenticateRequest, this.createHandler('search-api', 'search'));
+        apiRouter.post('/index', this.authenticateRequest, this.createHandler('search-api', 'index'));
 
         // Ragno API routes
-        apiRouter.post('/graph/decompose', authenticateRequest, this.createHandler('ragno-api', 'decompose'));
-        apiRouter.get('/graph/stats', authenticateRequest, this.createHandler('ragno-api', 'stats'));
-        apiRouter.get('/graph/entities', authenticateRequest, this.createHandler('ragno-api', 'entities'));
-        apiRouter.post('/graph/search', authenticateRequest, this.createHandler('ragno-api', 'search'));
-        apiRouter.get('/graph/export/:format', authenticateRequest, this.createHandler('ragno-api', 'export'));
-        apiRouter.post('/graph/enrich', authenticateRequest, this.createHandler('ragno-api', 'enrich'));
-        apiRouter.get('/graph/communities', authenticateRequest, this.createHandler('ragno-api', 'communities'));
-        apiRouter.post('/graph/pipeline', authenticateRequest, this.createHandler('ragno-api', 'pipeline'));
+        apiRouter.post('/graph/decompose', this.authenticateRequest, this.createHandler('ragno-api', 'decompose'));
+        apiRouter.get('/graph/stats', this.authenticateRequest, this.createHandler('ragno-api', 'stats'));
+        apiRouter.get('/graph/entities', this.authenticateRequest, this.createHandler('ragno-api', 'entities'));
+        apiRouter.post('/graph/search', this.authenticateRequest, this.createHandler('ragno-api', 'search'));
+        apiRouter.get('/graph/export/:format', this.authenticateRequest, this.createHandler('ragno-api', 'export'));
+        apiRouter.post('/graph/enrich', this.authenticateRequest, this.createHandler('ragno-api', 'enrich'));
+        apiRouter.get('/graph/communities', this.authenticateRequest, this.createHandler('ragno-api', 'communities'));
+        apiRouter.post('/graph/pipeline', this.authenticateRequest, this.createHandler('ragno-api', 'pipeline'));
 
         // ZPT API routes
-        apiRouter.post('/navigate', authenticateRequest, this.createHandler('zpt-api', 'navigate'));
-        apiRouter.post('/navigate/preview', authenticateRequest, this.createHandler('zpt-api', 'preview'));
+        apiRouter.post('/navigate', this.authenticateRequest, this.createHandler('zpt-api', 'navigate'));
+        apiRouter.post('/navigate/preview', this.authenticateRequest, this.createHandler('zpt-api', 'preview'));
         apiRouter.get('/navigate/options', this.createHandler('zpt-api', 'options'));
         apiRouter.get('/navigate/schema', this.createHandler('zpt-api', 'schema'));
         apiRouter.get('/navigate/health', this.createHandler('zpt-api', 'health'));
         
         // ZPT Ontology Integration routes
-        apiRouter.post('/navigate/convert-params', authenticateRequest, this.createHandler('zpt-api', 'convertParams'));
-        apiRouter.post('/navigate/store-session', authenticateRequest, this.createHandler('zpt-api', 'storeSession'));
-        apiRouter.get('/navigate/sessions', authenticateRequest, this.createHandler('zpt-api', 'getSessions'));
-        apiRouter.get('/navigate/sessions/:sessionId', authenticateRequest, this.createHandler('zpt-api', 'getSession'));
-        apiRouter.get('/navigate/views', authenticateRequest, this.createHandler('zpt-api', 'getViews'));
-        apiRouter.get('/navigate/views/:viewId', authenticateRequest, this.createHandler('zpt-api', 'getView'));
-        apiRouter.post('/navigate/analyze', authenticateRequest, this.createHandler('zpt-api', 'analyzeNavigation'));
+        apiRouter.post('/navigate/convert-params', this.authenticateRequest, this.createHandler('zpt-api', 'convertParams'));
+        apiRouter.post('/navigate/store-session', this.authenticateRequest, this.createHandler('zpt-api', 'storeSession'));
+        apiRouter.get('/navigate/sessions', this.authenticateRequest, this.createHandler('zpt-api', 'getSessions'));
+        apiRouter.get('/navigate/sessions/:sessionId', this.authenticateRequest, this.createHandler('zpt-api', 'getSession'));
+        apiRouter.get('/navigate/views', this.authenticateRequest, this.createHandler('zpt-api', 'getViews'));
+        apiRouter.get('/navigate/views/:viewId', this.authenticateRequest, this.createHandler('zpt-api', 'getView'));
+        apiRouter.post('/navigate/analyze', this.authenticateRequest, this.createHandler('zpt-api', 'analyzeNavigation'));
         apiRouter.get('/navigate/ontology/terms', this.createHandler('zpt-api', 'getOntologyTerms'));
         apiRouter.post('/navigate/validate-ontology', this.createHandler('zpt-api', 'validateOntology'));
 
         // VSOM API routes
-        apiRouter.post('/vsom/create', authenticateRequest, this.createHandler('vsom-api', 'create'));
-        apiRouter.post('/vsom/load-data', authenticateRequest, this.createHandler('vsom-api', 'load-data'));
-        apiRouter.post('/vsom/generate-sample-data', authenticateRequest, this.createHandler('vsom-api', 'generate-sample-data'));
-        apiRouter.post('/vsom/train', authenticateRequest, this.createHandler('vsom-api', 'train'));
-        apiRouter.post('/vsom/stop-training', authenticateRequest, this.createHandler('vsom-api', 'stop-training'));
-        apiRouter.get('/vsom/grid', authenticateRequest, this.createHandler('vsom-api', 'grid'));
-        apiRouter.get('/vsom/features', authenticateRequest, this.createHandler('vsom-api', 'features'));
-        apiRouter.post('/vsom/cluster', authenticateRequest, this.createHandler('vsom-api', 'cluster'));
-        apiRouter.get('/vsom/training-status', authenticateRequest, this.createHandler('vsom-api', 'training-status'));
-        apiRouter.get('/vsom/instances', authenticateRequest, this.createHandler('vsom-api', 'instances'));
-        apiRouter.delete('/vsom/instances/:instanceId', authenticateRequest, this.createHandler('vsom-api', 'delete'));
+        apiRouter.post('/vsom/create', this.authenticateRequest, this.createHandler('vsom-api', 'create'));
+        apiRouter.post('/vsom/load-data', this.authenticateRequest, this.createHandler('vsom-api', 'load-data'));
+        apiRouter.post('/vsom/generate-sample-data', this.authenticateRequest, this.createHandler('vsom-api', 'generate-sample-data'));
+        apiRouter.post('/vsom/train', this.authenticateRequest, this.createHandler('vsom-api', 'train'));
+        apiRouter.post('/vsom/stop-training', this.authenticateRequest, this.createHandler('vsom-api', 'stop-training'));
+        apiRouter.get('/vsom/grid', this.authenticateRequest, this.createHandler('vsom-api', 'grid'));
+        apiRouter.get('/vsom/features', this.authenticateRequest, this.createHandler('vsom-api', 'features'));
+        apiRouter.post('/vsom/cluster', this.authenticateRequest, this.createHandler('vsom-api', 'cluster'));
+        apiRouter.get('/vsom/training-status', this.authenticateRequest, this.createHandler('vsom-api', 'training-status'));
+        apiRouter.get('/vsom/instances', this.authenticateRequest, this.createHandler('vsom-api', 'instances'));
+        apiRouter.delete('/vsom/instances/:instanceId', this.authenticateRequest, this.createHandler('vsom-api', 'delete'));
 
         // Wikidata API routes
-        apiRouter.post('/wikidata/research', authenticateRequest, this.createHandler('wikidata-api', 'research-concepts'));
-        apiRouter.post('/wikidata/entity', authenticateRequest, this.createHandler('wikidata-api', 'entity-lookup'));
-        apiRouter.get('/wikidata/search', authenticateRequest, this.createHandler('wikidata-api', 'entity-search'));
-        apiRouter.post('/wikidata/sparql', authenticateRequest, this.createHandler('wikidata-api', 'sparql-query'));
-        apiRouter.post('/wikidata/concepts', authenticateRequest, this.createHandler('wikidata-api', 'concept-discovery'));
+        apiRouter.post('/wikidata/research', this.authenticateRequest, this.createHandler('wikidata-api', 'research-concepts'));
+        apiRouter.post('/wikidata/entity', this.authenticateRequest, this.createHandler('wikidata-api', 'entity-lookup'));
+        apiRouter.get('/wikidata/search', this.authenticateRequest, this.createHandler('wikidata-api', 'entity-search'));
+        apiRouter.post('/wikidata/sparql', this.authenticateRequest, this.createHandler('wikidata-api', 'sparql-query'));
+        apiRouter.post('/wikidata/concepts', this.authenticateRequest, this.createHandler('wikidata-api', 'concept-discovery'));
 
         // Wikipedia API routes
-        apiRouter.get('/wikipedia/search', authenticateRequest, this.createHandler('wikipedia-api', 'search'));
-        apiRouter.get('/wikipedia/article', authenticateRequest, this.createHandler('wikipedia-api', 'article'));
-        apiRouter.post('/wikipedia/batch-search', authenticateRequest, this.createHandler('wikipedia-api', 'batch-search'));
-        apiRouter.post('/wikipedia/ingest', authenticateRequest, this.createHandler('wikipedia-api', 'ingest'));
-        apiRouter.get('/wikipedia/categories', authenticateRequest, this.createHandler('wikipedia-api', 'categories'));
+        apiRouter.get('/wikipedia/search', this.authenticateRequest, this.createHandler('wikipedia-api', 'search'));
+        apiRouter.get('/wikipedia/article', this.authenticateRequest, this.createHandler('wikipedia-api', 'article'));
+        apiRouter.post('/wikipedia/batch-search', this.authenticateRequest, this.createHandler('wikipedia-api', 'batch-search'));
+        apiRouter.post('/wikipedia/ingest', this.authenticateRequest, this.createHandler('wikipedia-api', 'ingest'));
+        apiRouter.get('/wikipedia/categories', this.authenticateRequest, this.createHandler('wikipedia-api', 'categories'));
+
+        // Document API routes
+        apiRouter.post('/documents/upload', this.authenticateRequest, this.upload.single('file'), this.createDocumentHandler('document-api', 'upload'));
+        apiRouter.post('/documents/convert', this.authenticateRequest, this.createHandler('document-api', 'convert'));
+        apiRouter.post('/documents/chunk', this.authenticateRequest, this.createHandler('document-api', 'chunk'));
+        apiRouter.post('/documents/ingest', this.authenticateRequest, this.createHandler('document-api', 'ingest'));
+        apiRouter.get('/documents', this.authenticateRequest, this.createHandler('document-api', 'list'));
+        apiRouter.get('/documents/:id', this.authenticateRequest, this.createHandler('document-api', 'get'));
+        apiRouter.delete('/documents/:id', this.authenticateRequest, this.createHandler('document-api', 'delete'));
+        apiRouter.get('/documents/:id/status', this.authenticateRequest, this.createHandler('document-api', 'status'));
 
         // Unified Search API routes
-        apiRouter.post('/search/unified', authenticateRequest, this.createHandler('unified-search-api', 'unified'));
-        apiRouter.post('/search/analyze', authenticateRequest, this.createHandler('unified-search-api', 'analyze'));
+        apiRouter.post('/search/unified', this.authenticateRequest, this.createHandler('unified-search-api', 'unified'));
+        apiRouter.post('/search/analyze', this.authenticateRequest, this.createHandler('unified-search-api', 'analyze'));
         apiRouter.get('/search/services', this.createHandler('unified-search-api', 'services'));
         apiRouter.get('/search/strategies', this.createHandler('unified-search-api', 'strategies'));
 
@@ -566,6 +618,21 @@ class APIServer {
                                 'POST /api/index - Index content'
                             ],
                             status: this.apiContext.apis['search-api']?.initialized ? 'healthy' : 'unavailable'
+                        },
+                        document: {
+                            name: 'Document API',
+                            description: 'Document processing, conversion, chunking, and ingestion',
+                            endpoints: [
+                                'POST /api/documents/upload - Upload and process documents',
+                                'POST /api/documents/convert - Convert documents to markdown',
+                                'POST /api/documents/chunk - Chunk documents into semantic units',
+                                'POST /api/documents/ingest - Ingest chunks into SPARQL store',
+                                'GET /api/documents - List processed documents',
+                                'GET /api/documents/{id} - Get document details',
+                                'DELETE /api/documents/{id} - Delete document',
+                                'GET /api/documents/{id}/status - Get processing status'
+                            ],
+                            status: this.apiContext.apis['document-api']?.initialized ? 'healthy' : 'unavailable'
                         }
                     },
                     advanced: {
@@ -807,7 +874,7 @@ class APIServer {
         });
 
         // Metrics endpoint
-        apiRouter.get('/metrics', authenticateRequest, async (req, res, next) => {
+        apiRouter.get('/metrics', this.authenticateRequest, async (req, res, next) => {
             try {
                 const metrics = {
                     timestamp: Date.now(),
@@ -949,6 +1016,70 @@ class APIServer {
                 
                 // this.apiLogger.info(`[${requestId}] Sending response with status ${statusCode}`);
                 
+                res.status(statusCode).json(response);
+            } catch (error) {
+                this.apiLogger.error(`[${requestId}] Error in ${apiName}.${operation}:`, {
+                    message: error.message,
+                    stack: error.stack,
+                    name: error.name
+                });
+                next(error);
+            }
+        };
+    }
+
+    /**
+     * Helper function to create document upload handlers
+     */
+    createDocumentHandler(apiName, operation) {
+        return async (req, res, next) => {
+            const requestId = uuidv4();
+            this.apiLogger.info(`[${requestId}] Starting ${req.method} ${req.path} -> ${apiName}.${operation} (file upload)`);
+            
+            try {
+                const api = this.apiContext.apis[apiName];
+                if (!api) {
+                    this.apiLogger.error(`[${requestId}] API handler not found: ${apiName}`);
+                    throw new Error(`API handler not found: ${apiName}`);
+                }
+
+                // Get parameters from body and route params
+                const params = { ...req.body };
+                
+                // Include route parameters if they exist
+                if (req.params && Object.keys(req.params).length > 0) {
+                    Object.assign(params, req.params);
+                }
+
+                // Parse options if provided as JSON string
+                if (params.options && typeof params.options === 'string') {
+                    try {
+                        params.options = JSON.parse(params.options);
+                    } catch (error) {
+                        this.apiLogger.warn(`[${requestId}] Failed to parse options JSON:`, error.message);
+                    }
+                }
+
+                this.apiLogger.info(`[${requestId}] File upload info:`, {
+                    hasFile: !!req.file,
+                    filename: req.file?.originalname,
+                    size: req.file?.size,
+                    mimetype: req.file?.mimetype
+                });
+
+                // Execute operation with files
+                this.apiLogger.info(`[${requestId}] Executing ${apiName}.executeOperation('${operation}', params, files)`);
+                const result = await api.executeOperation(operation, params, { file: req.file });
+                
+                // Determine status code - uploads are created
+                const statusCode = 201;
+
+                const response = {
+                    success: true,
+                    ...result
+                };
+                
+                this.apiLogger.info(`[${requestId}] Document operation completed successfully`);
                 res.status(statusCode).json(response);
             } catch (error) {
                 this.apiLogger.error(`[${requestId}] Error in ${apiName}.${operation}:`, {
