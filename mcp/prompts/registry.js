@@ -296,6 +296,42 @@ class PromptRegistry {
         ]
       },
       {
+        name: 'semem-ask',
+        description: 'Ask a question that will be stored in Document QA format and optionally processed through the pipeline',
+        arguments: [
+          {
+            name: 'question',
+            description: 'Question to ask and store in Document QA format',
+            required: true,
+            type: 'string'
+          },
+          {
+            name: 'namespace',
+            description: 'Base namespace for question URI',
+            required: false,
+            type: 'string',
+            default: 'http://example.org/docqa/'
+          },
+          {
+            name: 'autoProcess',
+            description: 'Automatically process the question through the Document QA pipeline',
+            required: false,
+            type: 'boolean',
+            default: false
+          }
+        ],
+        workflow: [
+          {
+            tool: 'semem_ask',
+            arguments: {
+              question: '${question}',
+              namespace: '${namespace}',
+              autoProcess: '${autoProcess}'
+            }
+          }
+        ]
+      },
+      {
         name: 'semem-concept-exploration',
         description: 'Deep concept exploration using stored knowledge',
         arguments: [

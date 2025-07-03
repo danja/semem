@@ -11,6 +11,17 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 import { initializeServices, getMemoryManager } from '../lib/initialization.js';
 import { SafeOperations } from '../lib/safe-operations.js';
+import Config from '../../src/Config.js';
+import SPARQLHelper from '../../examples/beerqa/SPARQLHelper.js';
+import EmbeddingHandler from '../../src/handlers/EmbeddingHandler.js';
+import EmbeddingConnectorFactory from '../../src/connectors/EmbeddingConnectorFactory.js';
+import LLMHandler from '../../src/handlers/LLMHandler.js';
+import OllamaConnector from '../../src/connectors/OllamaConnector.js';
+import ClaudeConnector from '../../src/connectors/ClaudeConnector.js';
+import MistralConnector from '../../src/connectors/MistralConnector.js';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 
 // Define schemas for memory tools
 const ExtractConceptsSchema = z.object({
@@ -39,6 +50,12 @@ const GenerateResponseSchema = z.object({
   maxTokens: z.number().optional().default(1000).describe("Maximum tokens in response")
 });
 
+const AskQuestionSchema = z.object({
+  question: z.string().describe("Question to ask and store in Document QA format"),
+  namespace: z.string().optional().default("http://example.org/docqa/").describe("Base namespace for question URI"),
+  autoProcess: z.boolean().optional().default(false).describe("Automatically process the question through the Document QA pipeline")
+});
+
 // Memory tools list
 const MEMORY_TOOLS = [
   {
@@ -65,6 +82,11 @@ const MEMORY_TOOLS = [
     name: "semem_generate_response",
     description: "Generate a response using the LLM with optional context",
     inputSchema: zodToJsonSchema(GenerateResponseSchema)
+  },
+  {
+    name: "semem_ask",
+    description: "Ask a question that will be stored in Document QA format and optionally processed through the pipeline",
+    inputSchema: zodToJsonSchema(AskQuestionSchema)
   }
 ];
 
@@ -134,6 +156,8 @@ async function handleMemoryTool(name, args) {
         return await handleRetrieveMemories(args);
       case 'semem_generate_response':
         return await handleGenerateResponse(args);
+      case 'semem_ask':
+        return await handleAskQuestion(args);
       default:
         throw new Error(`Unknown memory tool: ${name}`);
     }
@@ -304,4 +328,212 @@ async function handleGenerateResponse(args) {
       }, null, 2)
     }]
   };
+}
+
+/**
+ * Handle ask question tool - stores questions in Document QA format
+ */
+async function handleAskQuestion(args) {
+  const validatedArgs = AskQuestionSchema.parse(args);
+  const { question, namespace = "http://example.org/docqa/", autoProcess = false } = validatedArgs;
+
+  try {
+    // Initialize configuration
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = dirname(__filename);
+    const projectRoot = join(__dirname, '../..');
+    const configPath = join(projectRoot, 'config/config.json');
+    const config = new Config(configPath);
+    await config.init();
+
+    config.namespace = namespace;
+    config.graphName = config.get('storage.options.graphName') || 'http://tensegrity.it/semem';
+
+    // Initialize SPARQL helper
+    const sparqlHelper = new SPARQLHelper(
+      config.get('storage.options.update') || 'http://localhost:3030/semem/update',
+      {
+        auth: { user: 'admin', password: 'admin123' },
+        timeout: 30000
+      }
+    );
+
+    // Initialize embedding and LLM handlers
+    const embeddingHandler = await initializeEmbeddingHandler(config);
+    const llmHandler = await initializeLLMHandler(config);
+
+    // Generate unique question ID and URI
+    const questionId = Date.now();
+    const questionUri = `${namespace}question/${questionId}`;
+
+    // Generate embedding for the question
+    const embedding = await embeddingHandler.generateEmbedding(question);
+    
+    // Extract concepts from the question
+    const concepts = await llmHandler.extractConcepts(question);
+
+    // Store question in Document QA format (ragno:Corpuscle)
+    await storeQuestionInDocQAFormat(questionUri, question, embedding, concepts, sparqlHelper, config);
+
+    const result = {
+      success: true,
+      message: `Question stored successfully in Document QA format`,
+      questionUri: questionUri,
+      question: question.substring(0, 100) + (question.length > 100 ? '...' : ''),
+      embeddingDimensions: embedding.length,
+      conceptsExtracted: concepts.length,
+      concepts: concepts.slice(0, 5), // Show first 5 concepts
+      autoProcess: autoProcess
+    };
+
+    // If autoProcess is enabled, trigger the Document QA pipeline
+    if (autoProcess) {
+      try {
+        result.pipelineStatus = "Pipeline processing not yet implemented - question stored for manual processing";
+      } catch (pipelineError) {
+        result.pipelineError = pipelineError.message;
+      }
+    }
+
+    return {
+      content: [{
+        type: "text",
+        text: JSON.stringify(result, null, 2)
+      }]
+    };
+
+  } catch (error) {
+    console.error(`❌ [MCP] Error in semem_ask:`, error);
+    return {
+      content: [{
+        type: "text",
+        text: JSON.stringify({
+          success: false,
+          error: error.message,
+          question: question.substring(0, 50) + '...'
+        }, null, 2)
+      }],
+      isError: true
+    };
+  }
+}
+
+/**
+ * Initialize embedding handler (following working examples pattern)
+ */
+async function initializeEmbeddingHandler(config) {
+  const embeddingConnector = await EmbeddingConnectorFactory.createConnector(config);
+  const dimension = config.get('memory.dimension') || 768;
+  
+  const llmProviders = config.get('llmProviders') || [];
+  const embeddingProvider = llmProviders
+    .filter(p => p.capabilities?.includes('embedding'))
+    .sort((a, b) => (a.priority || 999) - (b.priority || 999))[0];
+  
+  const embeddingModel = embeddingProvider?.embeddingModel || 'nomic-embed-text';
+
+  return new EmbeddingHandler(embeddingConnector, embeddingModel, dimension);
+}
+
+/**
+ * Initialize LLM handler (following working examples pattern)
+ */
+async function initializeLLMHandler(config) {
+  const llmProviders = config.get('llmProviders') || [];
+  const chatProvider = llmProviders
+    .filter(p => p.capabilities?.includes('chat'))
+    .sort((a, b) => (a.priority || 999) - (b.priority || 999))[0];
+
+  if (!chatProvider) {
+    throw new Error('No chat LLM provider configured');
+  }
+
+  let llmConnector;
+  
+  if (chatProvider.type === 'mistral' && process.env.MISTRAL_API_KEY) {
+    llmConnector = new MistralConnector(process.env.MISTRAL_API_KEY);
+  } else if (chatProvider.type === 'claude' && process.env.CLAUDE_API_KEY) {
+    llmConnector = new ClaudeConnector(process.env.CLAUDE_API_KEY);
+  } else {
+    llmConnector = new OllamaConnector('http://localhost:11434', 'qwen2:1.5b');
+    chatProvider.chatModel = 'qwen2:1.5b';
+  }
+
+  return new LLMHandler(llmConnector, chatProvider.chatModel);
+}
+
+/**
+ * Store question in Document QA format (ragno:Corpuscle with proper attributes)
+ */
+async function storeQuestionInDocQAFormat(questionUri, questionText, embedding, concepts, sparqlHelper, config) {
+  const timestamp = new Date().toISOString();
+  const triples = [];
+  
+  // Main question corpuscle (following Document QA Stage 2 pattern)
+  triples.push(`<${questionUri}> a ragno:Corpuscle ;`);
+  triples.push(`    rdfs:label "${escapeRDFString(questionText)}" ;`);
+  triples.push(`    ragno:content "${escapeRDFString(questionText)}" ;`);
+  triples.push(`    ragno:corpuscleType "question" ;`);
+  triples.push(`    dcterms:created "${timestamp}"^^xsd:dateTime ;`);
+  triples.push(`    ragno:processingStage "processed" ;`);
+  triples.push(`    ragno:questionLength ${questionText.length} ;`);
+  triples.push(`    ragno:source "mcp-bridge" .`);
+  
+  // Embedding attribute
+  const embeddingAttrUri = `${questionUri}/attr/embedding`;
+  triples.push(`<${questionUri}> ragno:hasAttribute <${embeddingAttrUri}> .`);
+  triples.push(`<${embeddingAttrUri}> a ragno:Attribute ;`);
+  triples.push(`    ragno:attributeType "embedding" ;`);
+  triples.push(`    ragno:attributeValue "${JSON.stringify(embedding)}" ;`);
+  triples.push(`    ragno:embeddingDimensions ${embedding.length} ;`);
+  triples.push(`    dcterms:created "${timestamp}"^^xsd:dateTime .`);
+  
+  // Concepts attributes
+  concepts.forEach((concept, index) => {
+    const conceptAttrUri = `${questionUri}/attr/concept_${index}`;
+    triples.push(`<${questionUri}> ragno:hasAttribute <${conceptAttrUri}> .`);
+    triples.push(`<${conceptAttrUri}> a ragno:Attribute ;`);
+    triples.push(`    ragno:attributeType "concept" ;`);
+    triples.push(`    ragno:attributeValue "${escapeRDFString(concept)}" ;`);
+    triples.push(`    dcterms:created "${timestamp}"^^xsd:dateTime .`);
+  });
+  
+  // MCP bridge tracking
+  const mcpAttrUri = `${questionUri}/attr/mcp_bridge`;
+  triples.push(`<${questionUri}> ragno:hasAttribute <${mcpAttrUri}> .`);
+  triples.push(`<${mcpAttrUri}> a ragno:Attribute ;`);
+  triples.push(`    ragno:attributeType "mcp-bridge" ;`);
+  triples.push(`    ragno:attributeValue "semem_ask" ;`);
+  triples.push(`    dcterms:created "${timestamp}"^^xsd:dateTime .`);
+  
+  const insertQuery = `
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX ragno: <http://purl.org/stuff/ragno/>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+INSERT DATA {
+    GRAPH <${config.graphName}> {
+        ${triples.join('\n        ')}
+    }
+}`;
+
+  const result = await sparqlHelper.executeUpdate(insertQuery);
+  
+  if (!result.success) {
+    throw new Error(`SPARQL storage failed: ${result.error}`);
+  }
+}
+
+/**
+ * Escape special characters in RDF strings
+ */
+function escapeRDFString(str) {
+  return str
+    .replace(/\\/g, '\\\\')
+    .replace(/"/g, '\\"')
+    .replace(/\n/g, '\\n')
+    .replace(/\r/g, '\\r')
+    .replace(/\t/g, '\\t');
 }

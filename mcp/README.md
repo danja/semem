@@ -101,7 +101,10 @@ npx @modelcontextprotocol/inspector node mcp/http-server.js
 # Start with stdio transport (for use with MCP clients)
 node mcp/index.js
 ```
-
+API Error: 400 {"type":"error","error":{"type":"invalid_request_error","message":"tools.25.custom.name: String should match pattern 
+     '^[a-zA-Z0-9_-]{1,128}$'"}}
+     I just tried ` claude mcp add semem /flow/hyperdata/semem/bin/mcp.js` and semem_answer and semem_ask are still not of the list. Check how  semem-memory-qa is being registered and exposed, that is visible. 
+/semem:semem-memory-qa question:"How does Wikidata support FAIR principles?"
 or, eg.
 ```sh
 claude mcp add semem npx semem-mcp

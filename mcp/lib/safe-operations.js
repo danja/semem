@@ -146,9 +146,9 @@ export class SafeOperations {
       throw new Error('Invalid queryEmbedding: must be a non-empty array');
     }
     
-    // Use the store's search method if available for embedding-based search
-    if (this.memoryManager.store && this.memoryManager.store.search) {
-      return await this.memoryManager.store.search(queryEmbedding, limit, threshold);
+    // Use the storage's search method if available for embedding-based search
+    if (this.memoryManager.storage && this.memoryManager.storage.search) {
+      return await this.memoryManager.storage.search(queryEmbedding, limit, threshold);
     }
     
     throw new Error('Store does not support embedding-based search - no search method available');

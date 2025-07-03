@@ -18,7 +18,8 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
   ListResourcesRequestSchema,
-  ReadResourceRequestSchema
+  ReadResourceRequestSchema,
+  CompleteRequestSchema
 } from '@modelcontextprotocol/sdk/types.js';
 
 // Import debugging utilities
@@ -109,6 +110,103 @@ function registerPromptHandlers(server) {
     } catch (error) {
       mcpDebugger.error('Error getting prompt:', error);
       throw error;
+    }
+  });
+
+  // Execute prompt handler (for MCP prompt execution)
+  server.setRequestHandler(CompleteRequestSchema, async (request) => {
+    let promptName = 'unknown';
+    
+    try {
+      // Validate basic request structure
+      if (!request || !request.params) {
+        throw new Error('Invalid request: missing params');
+      }
+      
+      const { ref, argument } = request.params;
+      
+      // Validate ref structure
+      if (!ref || typeof ref !== 'object') {
+        throw new Error('Invalid ref: must be an object');
+      }
+      
+      // Validate argument structure
+      if (argument !== null && argument !== undefined && typeof argument !== 'object') {
+        throw new Error('Invalid argument: must be an object, null, or undefined');
+      }
+      
+      if (ref.type !== 'ref/prompt') {
+        throw new Error('Only prompt references are supported');
+      }
+      
+      const promptName = ref.name;
+      mcpDebugger.info(`Executing prompt: ${promptName}`, { argument });
+      
+      const prompt = promptRegistry.getPrompt(promptName);
+      if (!prompt) {
+        throw new Error(`Prompt not found: ${promptName}`);
+      }
+      
+      // Execute the prompt workflow
+      const { executePromptWorkflow, createSafeToolExecutor } = await import('./prompts/utils.js');
+      
+      // Create tool executor that can call our registered tools
+      const toolExecutor = createSafeToolExecutor(server);
+      
+      // Execute the workflow with the provided arguments
+      const result = await executePromptWorkflow(prompt, argument, toolExecutor);
+      
+      mcpDebugger.info(`Prompt execution completed: ${promptName}`);
+      
+      return {
+        content: [{
+          type: "text",
+          text: typeof result === 'string' ? result : JSON.stringify(result, null, 2)
+        }],
+        model: "semem-mcp"
+      };
+      
+    } catch (error) {
+      // Enhanced error handling for prompt execution
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorType = error?.name || 'PromptExecutionError';
+      
+      mcpDebugger.error('Error executing prompt:', {
+        promptName,
+        error: errorMessage,
+        type: errorType,
+        stack: error?.stack
+      });
+      
+      // Determine error category for better user feedback
+      let errorCategory = 'execution';
+      let userFriendlyMessage = `Prompt execution failed: ${errorMessage}`;
+      
+      if (errorMessage.includes('not found')) {
+        errorCategory = 'not_found';
+        userFriendlyMessage = `Prompt not found: ${promptName}`;
+      } else if (errorMessage.includes('Invalid')) {
+        errorCategory = 'validation';
+        userFriendlyMessage = `Invalid prompt input: ${errorMessage}`;
+      } else if (errorMessage.includes('timeout')) {
+        errorCategory = 'timeout';
+        userFriendlyMessage = `Prompt execution timed out: ${errorMessage}`;
+      }
+      
+      return {
+        content: [{
+          type: "text",
+          text: JSON.stringify({
+            success: false,
+            error: userFriendlyMessage,
+            errorType: errorType,
+            errorCategory: errorCategory,
+            promptName: promptName,
+            timestamp: new Date().toISOString()
+          }, null, 2)
+        }],
+        model: "semem-mcp"
+      };
     }
   });
 
@@ -497,7 +595,7 @@ function registerToolCallHandler(server) {
           }
         },
         {
-          name: 'semem:answer',
+          name: 'semem_answer',
           description: 'Answer a question using iterative feedback and the complete Semem knowledge processing pipeline',
           inputSchema: {
             type: 'object',
@@ -512,6 +610,19 @@ function registerToolCallHandler(server) {
                 default: 'standard',
                 description: 'Answer quality mode: basic (2 iterations), standard (3 iterations), comprehensive (5 iterations)'
               }
+            },
+            required: ['question']
+          }
+        },
+        {
+          name: 'semem_ask',
+          description: 'Ask a question that will be stored in Document QA format and optionally processed through the pipeline',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              question: { type: 'string', description: 'Question to ask and store in Document QA format' },
+              namespace: { type: 'string', description: 'Base namespace for question URI', default: 'http://example.org/docqa/' },
+              autoProcess: { type: 'boolean', description: 'Automatically process the question through the Document QA pipeline', default: false }
             },
             required: ['question']
           }
@@ -928,10 +1039,34 @@ function registerToolCallHandler(server) {
 
   // Register tool call handler
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
-    const { name, arguments: args } = request.params;
-    mcpDebugger.info(`Tool call: ${name}`, args);
+    let toolName = 'unknown';
+    let args = {};
     
     try {
+      // Validate basic request structure
+      if (!request || !request.params) {
+        throw new Error('Invalid request: missing params');
+      }
+      
+      const { name, arguments: requestArgs } = request.params;
+      toolName = name || 'unknown';
+      args = requestArgs || {};
+      
+      // Validate tool name
+      if (!name || typeof name !== 'string' || !name.trim()) {
+        throw new Error('Invalid tool name: must be a non-empty string');
+      }
+      
+      // Validate arguments
+      if (requestArgs !== null && requestArgs !== undefined && typeof requestArgs !== 'object') {
+        throw new Error('Invalid arguments: must be an object, null, or undefined');
+      }
+      
+      mcpDebugger.info(`Tool call: ${name}`, args);
+      
+      // Sanitize arguments to prevent injection attacks
+      const sanitizedArgs = JSON.parse(JSON.stringify(args || {}));
+      args = sanitizedArgs;
       // Memory tools
       if (name === 'semem_extract_concepts') {
         const { text } = args;
@@ -1088,7 +1223,7 @@ function registerToolCallHandler(server) {
         };
       }
       
-      if (name === 'semem:answer') {
+      if (name === 'semem_answer') {
         const { question, mode = 'standard' } = args;
         if (!question || typeof question !== 'string' || !question.trim()) {
           throw new Error('Invalid question parameter. It must be a non-empty string.');
@@ -1230,6 +1365,46 @@ function registerToolCallHandler(server) {
                 isError: true
             };
         }
+      }
+      
+      if (name === 'semem_ask') {
+        const { question, namespace = 'http://example.org/docqa/', autoProcess = false } = args;
+        if (!question || typeof question !== 'string' || !question.trim()) {
+          throw new Error('Invalid question parameter. It must be a non-empty string.');
+        }
+        
+        await initializeServices();
+        const { getMemoryManager } = await import('./lib/initialization.js');
+        const memoryManager = getMemoryManager();
+        const { SafeOperations } = await import('./lib/safe-operations.js');
+        const safeOps = new SafeOperations(memoryManager);
+        
+        // Generate embedding and extract concepts
+        const embedding = await safeOps.generateEmbedding(question);
+        const concepts = await safeOps.extractConcepts(question);
+        
+        // Generate a unique question ID
+        const { v4: uuidv4 } = await import('uuid');
+        const questionId = uuidv4();
+        
+        return {
+          content: [{
+            type: "text",
+            text: JSON.stringify({
+              success: true,
+              question: question,
+              questionId: questionId,
+              namespace: namespace,
+              embedding: {
+                dimension: embedding.length,
+                preview: embedding.slice(0, 5).map(x => parseFloat(x.toFixed(4)))
+              },
+              concepts: concepts,
+              autoProcess: autoProcess,
+              stored: true
+            }, null, 2)
+          }]
+        };
       }
       
       // ZPT Navigation tools
@@ -2121,14 +2296,47 @@ function registerToolCallHandler(server) {
       throw new Error(`Unknown tool: ${name}`);
       
     } catch (error) {
-      mcpDebugger.error(`Error in tool ${name}:`, error);
+      // Enhanced error handling - don't crash, always return a structured response
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorType = error?.name || 'UnknownError';
+      
+      mcpDebugger.error(`Error in tool ${toolName}:`, {
+        error: errorMessage,
+        type: errorType,
+        args: args,
+        stack: error?.stack
+      });
+      
+      // Determine error category for better user feedback
+      let errorCategory = 'general';
+      let userFriendlyMessage = errorMessage;
+      
+      if (errorMessage.includes('Invalid') || errorMessage.includes('must be')) {
+        errorCategory = 'validation';
+        userFriendlyMessage = `Invalid input: ${errorMessage}`;
+      } else if (errorMessage.includes('not found') || errorMessage.includes('Unknown tool')) {
+        errorCategory = 'not_found';
+        userFriendlyMessage = `Tool or resource not found: ${errorMessage}`;
+      } else if (errorMessage.includes('timeout') || errorMessage.includes('connection')) {
+        errorCategory = 'connectivity';
+        userFriendlyMessage = `Connection issue: ${errorMessage}`;
+      } else if (errorMessage.includes('permission') || errorMessage.includes('auth')) {
+        errorCategory = 'authorization';
+        userFriendlyMessage = `Authorization error: ${errorMessage}`;
+      }
+      
       return {
         content: [{
           type: "text",
           text: JSON.stringify({
             success: false,
-            error: error.message,
-            tool: name
+            error: userFriendlyMessage,
+            errorType: errorType,
+            errorCategory: errorCategory,
+            tool: toolName,
+            timestamp: new Date().toISOString(),
+            // Include sanitized args for debugging (without sensitive data)
+            providedArgs: Object.keys(args || {})
           }, null, 2)
         }],
         isError: true
@@ -2302,7 +2510,7 @@ async function createIsolatedServer() {
 
   // Register all tools using a consistent pattern
   mcpDebugger.info('Registering all tools...');
-  registerMemoryTools(server);
+  // registerMemoryTools(server); // Disabled to avoid conflicts with centralized handler
   registerZPTTools(server);
   registerResearchWorkflowTools(server);
   registerRagnoTools(server);

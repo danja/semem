@@ -19,7 +19,7 @@
   "port": 4120,
   "graphName": "http://tensegrity.it/semem",
   "chatModel": "qwen2:1.5b",
-  "embeddingModel": "nomic-embed-text-v1.5",
+  "embeddingModel": "nomic-embed-text:v1.5",
   "embeddingProvider": "nomic",
   "sparqlEndpoints": [
     {
@@ -81,7 +81,7 @@
     {
       "type": "nomic",
       "apiKey": "${NOMIC_API_KEY}",
-      "embeddingModel": "nomic-embed-text-v1.5",
+      "embeddingModel": "nomic-embed-text:v1.5",
       "priority": 1,
       "capabilities": [
         "embedding"

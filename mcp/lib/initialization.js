@@ -64,6 +64,14 @@ export async function initializeServices() {
       const { default: SPARQLStore } = await import('../../src/stores/SPARQLStore.js');
       console.log('💾 [STORAGE] Getting storage options...');
       const storageOptions = config.get('storage.options');
+      console.log('💾 [STORAGE] Storage options:', JSON.stringify(storageOptions, null, 2));
+      
+      // Ensure we use the main graph, not the MCP default
+      if (!storageOptions.graphName) {
+        storageOptions.graphName = config.get('graphName') || 'http://tensegrity.it/semem';
+        console.log('💾 [STORAGE] Using fallback graphName:', storageOptions.graphName);
+      }
+      
       console.log('💾 [STORAGE] Creating SPARQLStore instance...');
       storageBackend = new SPARQLStore(storageOptions);
       console.log('✅ [STORAGE] SPARQLStore created');
