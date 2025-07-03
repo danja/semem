@@ -1,3 +1,94 @@
+Full Provenance Chain:
+
+  1. Document Source: eLife paper "Wikidata as a knowledge graph for the life sciences" by Andra Waagmeester et al.
+  2. Document Processing: Paper was chunked and stored in MCP memory graph as ragno:TextElements
+  3. Semantic Memory: semem_retrieve_memories found relevant chunks about medical/biomedical datasets
+  4. Answer Generation: semem_answer used these chunks as context to generate the comprehensive response
+  5. Knowledge Integration: The answer combined document content with LLM knowledge to produce the detailed list
+
+  Key Document Chunks Used:
+  - Chunks from life sciences paper describing Wikidata's biomedical repositories
+  - Content mentioning "genomics, proteomics, genetic variants, pathways, chemical compounds, and diseases"
+  - References to FAIR principles and biomedical knowledge curation
+
+  RDF Provenance Trail:
+  Question: http://example.org/docqa/question/[timestamp]
+  ├── Source: "mcp-bridge"
+  ├── Processing: semem semantic memory pipeline
+  ├── Context: Document chunks in http://example.org/mcp/memory
+  │   └── Content: "Wikidata as a knowledge graph for the life sciences"
+  │   └── Authors: Andra Waagmeester, Gregory Stupp, Sebastian Burgstaller-Muehlbacher et al.
+  └── Answer: Generated using document context + LLM knowledge
+
+  The answer was grounded in actual research literature about Wikidata's biomedical applications, not just LLM training data.
+
+  curl -X POST -H "Content-Type: application/sparql-query" -d "                                                                                │
+│   PREFIX ragno: <http://purl.org/stuff/ragno/>                                                                                                 │
+│   PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>                                                                                         │
+│   PREFIX dcterms: <http://purl.org/dc/terms/>                                                                                                  │
+│                                                                                                                                                │
+│   SELECT ?question ?questionText ?created ?source ?processingStage                                                                             │
+│   WHERE {                                                                                                                                      │
+│       GRAPH <http://tensegrity.it/semem> {                                                                                                     │
+│           ?question a ragno:Corpuscle ;                                                                                                        │
+│                    rdfs:label ?questionText .                                                                                                  │
+│                                                                                                                                                │
+│           OPTIONAL { ?question dcterms:created ?created }                                                                                      │
+│           OPTIONAL { ?question ragno:source ?source }                                                                                          │
+│           OPTIONAL { ?question ragno:processingStage ?processingStage }                                                                        │
+│       }                                                                                                                                        │
+│   }                                                                                                                                            │
+│   ORDER BY DESC(?created)                                                                                                                      │
+│   LIMIT 10                                                                                                                                     │
+│   " "http://localhost:3030/semem/query"                                                                                                        │
+│   Query semem graph for recent questions 
+---
+Document QA Pipeline Workflow Steps
+
+  Stage 1: Document Ingestion (01-ingest-documents.js)
+
+  1. PDF Processing: Convert PDFs to markdown using @opendocsg/pdf2md
+  2. Text Chunking: Split documents into 800-1200 character chunks using fixed-size strategy
+  3. Embedding Generation: Pre-compute embeddings for all chunks during ingestion
+  4. RDF Storage: Store chunks in SPARQL with Ragno ontology compliance and hash-based URIs
+  5. Provenance Tracking: Add full PROV-O metadata for each chunk
+
+  Stage 2: Question Processing (02-process-questions.js)
+
+  1. Question Input: Accept questions from command line, JSON file, MCP memory, or demo defaults
+  2. Embedding Generation: Create vector embeddings for each question
+  3. Concept Extraction: Use LLM to extract semantic concepts from questions
+  4. Question Storage: Store questions as ragno:Corpuscle with metadata in SPARQL
+  5. Multi-Source Handling: Process questions from MCP bridge alongside manual inputs
+
+  Stage 3: Context Retrieval (03-retrieve-context.js)
+
+  1. SPARQL Query: Retrieve chunks with pre-computed embeddings using filters
+  2. Similarity Calculation: Compute cosine similarity between question and chunk embeddings (70% weight)
+  3. Keyword Matching: Analyze keyword overlap between question and chunks (30% weight)
+  4. Relevance Scoring: Combine semantic and keyword scores with configurable thresholds
+  5. Ranking & Filtering: Sort by relevance and apply chunk limits with batch processing for large datasets
+
+  Stage 4: Answer Generation (04-generate-answers.js)
+
+  1. Context Assembly: Combine relevant chunks into structured context for LLM
+  2. Prompt Engineering: Create context-aware prompts with retrieved document chunks
+  3. LLM Inference: Generate answers using multi-provider support (Mistral, Claude, Ollama)
+  4. Style Application: Apply answer formatting (brief, comprehensive, detailed)
+  5. Citation Tracking: Include source chunk references with relevance scores
+
+  Complete Pipeline (run-document-qa.js)
+
+  - Unified Execution: Run all 4 stages sequentially with single command
+  - Parameter Propagation: Pass configuration options through entire pipeline
+  - MCP Integration: Automatically process questions from MCP bridge
+  - Performance Optimization: Apply batch limits and filtering for large datasets
+
+  The pipeline transforms raw PDFs into a semantic knowledge base that can answer questions with cited sources from the document content.
+
+---
+ /semem:semem-memory-qa question:"How does Wikidata support FAIR principles?" 
+
 semem:semem_answer (MCP)(question: "How does Wikidata support FAIR principles?", mode: "standard")
   ⎿  {                                                          
        "success": true,
@@ -13,7 +104,7 @@ semem:semem_answer (MCP)(question: "How does Wikidata support FAIR principles?",
 
   The system demonstrates how Wikidata enables effective data discovery, access, integration, and reuse across scientific and knowledge
   domains.
-
+---
 
 Steps Executed by /semem:semem-memory-qa question:"How does Wikidata support FAIR principles?"
 
@@ -80,3 +171,6 @@ Steps Executed by /semem:semem-memory-qa question:"How does Wikidata support FAI
 
   This pipeline demonstrates semantic memory retrieval where past interactions inform current responses, creating a knowledge-building system
    that improves over time.
+
+
+    /semem:semem-memory-qa question:"How does Wikidata support FAIR principles?" 
