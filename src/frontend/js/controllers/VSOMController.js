@@ -11,6 +11,7 @@ class VSOMController {
     this.vsom = null;
     this.currentTab = 'som-grid';
     this.initialized = false;
+    this.currentInstanceId = null;
     
     // Bind methods
     this.init = this.init.bind(this);
@@ -35,10 +36,10 @@ class VSOMController {
     
     this.logger.debug('Initializing VSOMController');
     
-    // Initialize the VSOM visualization
-    const container = document.getElementById('vsom-container');
+    // Initialize the VSOM visualization - use existing sub-containers
+    const container = document.getElementById('som-grid-container');
     if (!container) {
-      this.logger.error('VSOM container element not found');
+      this.logger.error('SOM grid container element not found');
       return;
     }
     
@@ -329,29 +330,41 @@ class VSOMController {
         throw new Error('Invalid JSON format: ' + parseError.message);
       }
       
-      // Handle sample data generation
-      if (data.type === 'sample') {
-        const count = data.count || 50;
-        const sampleData = await vsomService.generateSampleData(count);
-        data = {
-          type: 'entities',
-          entities: sampleData
-        };
-      }
+      // For now, create mock data for testing visualization
+      let processedData;
       
-      // Load data into VSOM
-      const result = await vsomService.loadData(data);
+      if (data.type === 'sample') {
+        // Generate simple mock data for testing
+        const count = data.count || 50;
+        processedData = this.generateMockSOMData(count);
+      } else {
+        // For other data types, we'll implement later
+        throw new Error('Only sample data is currently supported for VSOM visualization testing');
+      }
+
+      // For now, mock a successful result to test the visualization
+      const result = {
+        success: true,
+        message: `Loaded ${processedData.nodes.length} nodes into VSOM grid`,
+        data: processedData
+      };
       
       this.hideLoading();
       
       // Show success message
       const successMsg = `Data loaded successfully! ${result.message || ''}`;
-      alert(successMsg);
+      this.logger.info(successMsg);
       
-      // Refresh the current view
-      if (this.currentTab === 'som-grid') {
-        this.loadSOMGrid();
+      // Store the data for visualization
+      this.vsomData = result.data;
+      
+      // Update the visualization with the loaded data
+      if (this.vsom && result.data) {
+        await this.vsom.update(result.data);
       }
+      
+      // Update UI elements
+      this.updateDataInfo(result.data);
       
     } catch (error) {
       this.logger.error('Failed to load data:', error);
@@ -376,6 +389,65 @@ class VSOMController {
     }
     
     this.hideLoading();
+  }
+
+  /**
+   * Generate mock SOM data for testing visualization
+   * @param {number} count - Number of nodes to generate
+   * @returns {Object} Mock SOM data with nodes
+   */
+  generateMockSOMData(count) {
+    const nodes = [];
+    const gridSize = Math.ceil(Math.sqrt(count));
+    
+    for (let i = 0; i < count; i++) {
+      const x = i % gridSize;
+      const y = Math.floor(i / gridSize);
+      
+      nodes.push({
+        id: `node-${i}`,
+        x: x,
+        y: y,
+        activation: Math.random(),
+        weight: Math.random(),
+        bmuCount: Math.floor(Math.random() * 10),
+        metadata: {
+          topic: `Topic ${i % 10}`,
+          content: `Sample content for node ${i}`
+        }
+      });
+    }
+    
+    return {
+      nodes: nodes,
+      gridSize: gridSize,
+      metadata: {
+        nodeCount: count,
+        generated: new Date().toISOString()
+      }
+    };
+  }
+
+  /**
+   * Update data info display
+   * @param {Object} data - VSOM data
+   */
+  updateDataInfo(data) {
+    const entityCountEl = document.getElementById('som-entity-count');
+    const gridSizeEl = document.getElementById('som-grid-size');
+    const trainedStatusEl = document.getElementById('som-trained-status');
+    
+    if (entityCountEl && data.nodes) {
+      entityCountEl.textContent = data.nodes.length;
+    }
+    
+    if (gridSizeEl && data.gridSize) {
+      gridSizeEl.textContent = `${data.gridSize}x${data.gridSize}`;
+    }
+    
+    if (trainedStatusEl) {
+      trainedStatusEl.textContent = 'No (Mock Data)';
+    }
   }
 }
 

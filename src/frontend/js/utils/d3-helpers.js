@@ -172,6 +172,29 @@ export function addZoom(selection, options = {}) {
 }
 
 /**
+ * Add tooltip to a D3 selection
+ * @param {Object} selection - D3 selection to add tooltip to
+ * @param {Function} contentFunction - Function that returns tooltip content for a data item
+ * @returns {Object} The original selection for chaining
+ */
+export function addTooltip(selection, contentFunction) {
+  const tooltip = createTooltip();
+  
+  selection.on('mouseover', (event, d) => {
+    const content = contentFunction(d);
+    const [x, y] = d3.pointer(event, document.body);
+    tooltip.show(content, [x, y]);
+  }).on('mouseout', () => {
+    tooltip.hide();
+  }).on('mousemove', (event) => {
+    const [x, y] = d3.pointer(event, document.body);
+    tooltip.move([x, y]);
+  });
+  
+  return selection;
+}
+
+/**
  * Create a legend for a color scale
  * @param {Object} svg - D3 SVG selection
  * @param {Object} colorScale - D3 color scale
@@ -267,6 +290,7 @@ export function createLegend(svg, colorScale, options = {}) {
 export default {
   createResponsiveSVG,
   createTooltip,
+  addTooltip,
   createColorScale,
   formatSI,
   debounce,

@@ -16,11 +16,22 @@ export class VSOMService {
     this.logger.setLevel(this.defaultOptions.logLevel);
     this.logger.debug('Initializing VSOM service', { options: this.defaultOptions });
     
-    // Initialize default headers
+    // Initialize default headers with API key
     this.headers = {
       'Content-Type': 'application/json',
-      'Accept': 'application/json'
+      'Accept': 'application/json',
+      'X-API-Key': this.getApiKey()
     };
+  }
+
+  /**
+   * Get API key from environment/config
+   * @private
+   */
+  getApiKey() {
+    // For development, use a default key that matches the server
+    // In production, this should come from secure config
+    return 'your-api-key'; // This matches the default in the server
   }
 
   /**
@@ -152,6 +163,15 @@ export class VSOMService {
   async stopTraining() {
     this.logger.debug('Stopping training');
     return this._request('POST', '/stop-training');
+  }
+
+  /**
+   * Create a new VSOM instance
+   * @param {Object} options - Instance options
+   */
+  async createInstance(options = {}) {
+    this.logger.debug('Creating VSOM instance', { options });
+    return this._request('POST', '/create', options);
   }
 
   /**

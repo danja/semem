@@ -1,7 +1,7 @@
 import log from 'loglevel';
 import * as d3 from 'd3';
 import { BaseVisualization } from '../BaseVisualization.js';
-import { createResponsiveSVG, createTooltip, createColorScale } from '../../../utils/d3-helpers.js';
+import { createResponsiveSVG, createTooltip, addTooltip, createColorScale } from '../../../utils/d3-helpers.js';
 
 /**
  * SOM Grid Visualization Component
@@ -65,7 +65,7 @@ export class SOMGrid extends BaseVisualization {
    */
   setupScales() {
     this.logger.debug('Setting up scales');
-    this.colorScale = createColorScale([0, 1], this.options.colorScheme);
+    this.colorScale = createColorScale(this.options.colorScheme, [0, 1]);
   }
 
   /**
