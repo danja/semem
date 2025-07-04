@@ -355,7 +355,7 @@ class BeerQAQuestionResearch {
     /**
      * Find question corpuscle (with or without extracted concepts)
      */
-    async findQuestionCorpuscle() {
+    async findQuestionCorpuscle(limit = 1) {
         const queryEndpoint = this.options.sparqlEndpoint.replace('/update', '/query');
         
         // First try to find a question with existing concepts
@@ -386,7 +386,7 @@ WHERE {
 }
 GROUP BY ?corpuscle ?questionText ?source ?questionId ?question
 ORDER BY ?corpuscle
-LIMIT 1`;
+LIMIT ${limit}`;
 
         // Fallback query for questions without concepts
         const queryWithoutConcepts = `
@@ -405,7 +405,7 @@ WHERE {
                ragno:hasQuestion ?question .
 }
 ORDER BY ?corpuscle
-LIMIT 1`;
+LIMIT ${limit}`;
 
         try {
             // First try to find a question with existing concepts
@@ -427,31 +427,34 @@ LIMIT 1`;
             let results = await response.json();
             
             if (results.results.bindings.length > 0) {
-                // Found question with existing concepts
-                const binding = results.results.bindings[0];
+                // Found questions with existing concepts
+                const questions = [];
                 
-                // Parse concepts from concatenated strings
-                const conceptValues = binding.concepts.value.split('|||');
-                const conceptTypes = binding.conceptTypes ? binding.conceptTypes.value.split('|||') : [];
-                const conceptConfidences = binding.conceptConfidences ? binding.conceptConfidences.value.split('|||') : [];
-                
-                const concepts = conceptValues.map((value, index) => ({
-                    value: value,
-                    type: conceptTypes[index] || null,
-                    confidence: conceptConfidences[index] ? parseFloat(conceptConfidences[index]) : null
-                }));
+                for (const binding of results.results.bindings) {
+                    // Parse concepts from concatenated strings
+                    const conceptValues = binding.concepts.value.split('|||');
+                    const conceptTypes = binding.conceptTypes ? binding.conceptTypes.value.split('|||') : [];
+                    const conceptConfidences = binding.conceptConfidences ? binding.conceptConfidences.value.split('|||') : [];
+                    
+                    const concepts = conceptValues.map((value, index) => ({
+                        value: value,
+                        type: conceptTypes[index] || null,
+                        confidence: conceptConfidences[index] ? parseFloat(conceptConfidences[index]) : null
+                    }));
 
-                logger.info(`Found question with ${concepts.length} existing concepts`);
+                    questions.push({
+                        corpuscle: binding.corpuscle.value,
+                        questionText: binding.questionText.value,
+                        source: binding.source.value,
+                        questionId: binding.questionId.value,
+                        question: binding.question.value,
+                        concepts: concepts,
+                        conceptsSource: 'existing'
+                    });
+                }
 
-                return {
-                    corpuscle: binding.corpuscle.value,
-                    questionText: binding.questionText.value,
-                    source: binding.source.value,
-                    questionId: binding.questionId.value,
-                    question: binding.question.value,
-                    concepts: concepts,
-                    conceptsSource: 'existing'
-                };
+                logger.info(`Found ${questions.length} questions with existing concepts`);
+                return questions;
             }
 
             // No existing concepts found, try to find any question without concepts
@@ -476,18 +479,21 @@ LIMIT 1`;
                 throw new Error('No test question corpuscles found. Run BeerTestQuestions.js first.');
             }
 
-            const binding = results.results.bindings[0];
-            logger.info('Found question without concepts, will use HyDE to extract concepts');
+            const questions = [];
+            for (const binding of results.results.bindings) {
+                questions.push({
+                    corpuscle: binding.corpuscle.value,
+                    questionText: binding.questionText.value,
+                    source: binding.source.value,
+                    questionId: binding.questionId.value,
+                    question: binding.question.value,
+                    concepts: [],
+                    conceptsSource: 'none'
+                });
+            }
 
-            return {
-                corpuscle: binding.corpuscle.value,
-                questionText: binding.questionText.value,
-                source: binding.source.value,
-                questionId: binding.questionId.value,
-                question: binding.question.value,
-                concepts: [],
-                conceptsSource: 'none'
-            };
+            logger.info(`Found ${questions.length} questions without concepts, will use HyDE to extract concepts`);
+            return questions;
 
         } catch (error) {
             logger.error('Failed to find question corpuscle:', error);
@@ -673,44 +679,62 @@ LIMIT 1`;
     /**
      * Main research process
      */
-    async research() {
+    async research(questionLimit = 10) {
         try {
             this.stats.startTime = new Date();
             logger.info('Starting BeerQA question research process');
 
-            // Find question corpuscle (with or without concepts)
-            logger.info('Finding question corpuscle...');
-            const question = await this.findQuestionCorpuscle();
+            // Find questions (with or without concepts)
+            logger.info(`Finding up to ${questionLimit} question corpuscles...`);
+            const questions = await this.findQuestionCorpuscle(questionLimit);
             
-            let concepts = question.concepts;
-            let conceptsSource = question.conceptsSource;
-
-            // If no concepts found, use HyDE to extract them
-            if (concepts.length === 0) {
-                logger.info('No existing concepts found, using HyDE to extract concepts...');
-                concepts = await this.extractConceptsViaHyDE(question.questionText);
-                conceptsSource = 'hyde';
-                
-                if (concepts.length === 0) {
-                    return {
-                        success: false,
-                        error: 'Failed to extract concepts via HyDE after all attempts',
-                        question: question,
-                        statistics: this.getStatistics()
-                    };
-                }
+            if (!Array.isArray(questions) || questions.length === 0) {
+                throw new Error('No questions found');
             }
 
-            logger.info(`Found question: "${question.questionText.substring(0, 50)}..." with ${concepts.length} concepts (source: ${conceptsSource})`);
+            logger.info(`Processing ${questions.length} questions`);
+            
+            const processedQuestions = [];
+            const allResearchResults = [];
 
-            // Update question object with final concepts
-            question.concepts = concepts;
-            question.conceptsSource = conceptsSource;
+            // Process each question
+            for (let i = 0; i < questions.length; i++) {
+                const question = questions[i];
+                logger.info(`\n--- Processing Question ${i + 1}/${questions.length} ---`);
+                logger.info(`Question: "${question.questionText.substring(0, 80)}..."`);
+                
+                let concepts = question.concepts;
+                let conceptsSource = question.conceptsSource;
 
-            // Research concepts via Wikipedia
-            const researchResults = await this.researchConcepts(concepts);
+                // If no concepts found, use HyDE to extract them
+                if (concepts.length === 0) {
+                    logger.info('No existing concepts found, using HyDE to extract concepts...');
+                    concepts = await this.extractConceptsViaHyDE(question.questionText);
+                    conceptsSource = 'hyde';
+                    
+                    if (concepts.length === 0) {
+                        logger.warn(`Failed to extract concepts for question ${i + 1}, skipping...`);
+                        this.stats.errors.push(`Failed to extract concepts for question: ${question.questionText.substring(0, 50)}...`);
+                        continue;
+                    }
+                }
 
-            // Transform Wikipedia units to corpuscles
+                logger.info(`Found ${concepts.length} concepts (source: ${conceptsSource})`);
+
+                // Update question object with final concepts
+                question.concepts = concepts;
+                question.conceptsSource = conceptsSource;
+                processedQuestions.push(question);
+
+                // Research concepts via Wikipedia for this question
+                const researchResults = await this.researchConcepts(concepts);
+                allResearchResults.push(...researchResults);
+
+                logger.info(`Completed research for question ${i + 1}: ${researchResults.length} concept research results`);
+            }
+
+            // Transform all Wikipedia units to corpuscles (once at the end)
+            logger.info('Transforming all Wikipedia units to corpuscles...');
             const transformResult = await this.transformUnitsToCorpuscles();
 
             this.stats.endTime = new Date();
@@ -718,8 +742,10 @@ LIMIT 1`;
 
             return {
                 success: true,
-                question: question,
-                researchResults: researchResults,
+                questionsProcessed: processedQuestions.length,
+                totalQuestionsFound: questions.length,
+                questions: processedQuestions,
+                researchResults: allResearchResults,
                 transformResult: transformResult,
                 statistics: this.getStatistics()
             };
@@ -843,18 +869,25 @@ async function runBeerQAQuestionResearch() {
         const research = new BeerQAQuestionResearch(config, options);
         await research.initialize();
 
-        // Run research
-        const result = await research.research();
+        // Run research (process up to 10 questions for demo)
+        const result = await research.research(10);
 
         if (result.success) {
             console.log(chalk.bold.green('✅ Question Research Completed Successfully!'));
             console.log('');
 
-            // Display question info
-            displayQuestionInfo(result.question);
+            // Display summary of processed questions
+            console.log(chalk.bold.white('📊 Questions Processed:'));
+            console.log(`   ${chalk.cyan('Total Questions Found:')} ${chalk.white(result.totalQuestionsFound)}`);
+            console.log(`   ${chalk.cyan('Questions Processed:')} ${chalk.white(result.questionsProcessed)}`);
+            console.log('');
 
-            // Display concepts
-            displayConcepts(result.question.concepts, result.question.conceptsSource);
+            // Display first question info as example
+            if (result.questions && result.questions.length > 0) {
+                console.log(chalk.bold.white('📝 Sample Question (first processed):'));
+                displayQuestionInfo(result.questions[0]);
+                displayConcepts(result.questions[0].concepts, result.questions[0].conceptsSource);
+            }
 
             // Display research summary
             displayResearchSummary(result.statistics);
@@ -897,6 +930,7 @@ async function runBeerQAQuestionResearch() {
             // Summary
             console.log(chalk.bold.green('🎉 Question Research Demo Completed Successfully!'));
             console.log(chalk.white('The BeerQA question concepts have been researched and augmented:'));
+            console.log(`   • ${chalk.white('Questions Processed:')} ${chalk.cyan(result.questionsProcessed + '/' + result.totalQuestionsFound)}`);
             console.log(`   • ${chalk.white('Concepts Researched:')} ${chalk.cyan(result.statistics.conceptsResearched)}`);
             console.log(`   • ${chalk.white('Wikipedia Units Created:')} ${chalk.cyan(result.statistics.unitsCreated)}`);
             console.log(`   • ${chalk.white('Corpuscles Created:')} ${chalk.cyan(result.statistics.corpusclesCreated)}`);

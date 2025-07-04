@@ -1,3 +1,40 @@
+BEERQA run
+
+Processing 1/10:
+❓ Question: What are chares?
+   Question URI: http://purl.org/stuff/beerqa/test/corpuscle/2de665d74cad75ed1d272a388fe4068d5778762b
+   Related Entities: 28
+     unknown: 28 relationships
+     Fetching content for 28 related entities...
+Executing SPARQL SELECT query...
+SPARQL SELECT completed successfully (12ms)
+Executing SPARQL SELECT query...
+SPARQL SELECT completed successfully (18ms)
+     ✓ Retrieved content for 25 entities
+     Building augmented context...
+     ✓ Built context with 28 related pieces
+     Generating LLM response...
+     ✓ Generated response (247 chars)
+
+📋 ANSWER:
+Based on the provided context, "Chares" is related to "Char" and "Char siu". However, the context does not provide specific information about what "Chares" are. Therefore, I cannot provide a detailed answer to this question with the given context.
+---
+Sample Wikipedia Research Results:
+   1. Geometric Langlands correspondence
+      Search Query: correspondence
+      Has Corpuscle: Yes
+      Corpuscle: Geometric Langlands correspondence
+
+   2. Clueless
+      Search Query: Cher
+      Has Corpuscle: Yes
+      Corpuscle: Clueless
+---
+
+  const beerConcepts = ['brewing', 'fermentation', 'alcohol', 'flavor', 'aroma', 'bitterness', 'sweetness'];
+
+---
+
 Full Provenance Chain:
 
   1. Document Source: eLife paper "Wikidata as a knowledge graph for the life sciences" by Andra Waagmeester et al.

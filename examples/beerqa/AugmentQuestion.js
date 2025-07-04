@@ -329,9 +329,9 @@ class BeerQAQuestionAugmentation {
     }
 
     /**
-     * Find first test question from the store
+     * Find test questions from the store
      */
-    async findFirstTestQuestion() {
+    async findTestQuestions(limit = 1) {
         const queryEndpoint = this.options.sparqlEndpoint.replace('/update', '/query');
         
         const query = `
@@ -350,7 +350,7 @@ WHERE {
                ragno:hasQuestion ?question .
 }
 ORDER BY ?corpuscle
-LIMIT 1`;
+LIMIT ${limit}`;
 
         try {
             const response = await fetch(queryEndpoint, {
@@ -373,14 +373,18 @@ LIMIT 1`;
                 throw new Error('No test questions found in the store. Run BeerTestQuestions.js first.');
             }
 
-            const binding = results.results.bindings[0];
-            return {
-                corpuscle: binding.corpuscle.value,
-                questionText: binding.questionText.value,
-                source: binding.source.value,
-                questionId: binding.questionId.value,
-                question: binding.question.value
-            };
+            const questions = [];
+            for (const binding of results.results.bindings) {
+                questions.push({
+                    corpuscle: binding.corpuscle.value,
+                    questionText: binding.questionText.value,
+                    source: binding.source.value,
+                    questionId: binding.questionId.value,
+                    question: binding.question.value
+                });
+            }
+
+            return questions;
 
         } catch (error) {
             logger.error('Failed to find test question:', error);
@@ -526,42 +530,87 @@ LIMIT 1`;
     /**
      * Main augmentation process
      */
-    async augmentQuestion() {
+    async augmentQuestions(questionLimit = 10) {
         try {
             this.stats.startTime = new Date();
             logger.info('Starting BeerQA question augmentation process');
 
-            // Find first test question
-            logger.info('Finding first test question from store...');
-            const question = await this.findFirstTestQuestion();
-            logger.info(`Found question: "${question.questionText.substring(0, 50)}..."`);
+            // Find test questions
+            logger.info(`Finding up to ${questionLimit} test questions from store...`);
+            const questions = await this.findTestQuestions(questionLimit);
+            
+            if (!Array.isArray(questions) || questions.length === 0) {
+                throw new Error('No questions found');
+            }
 
-            // Generate embedding
-            const embedding = await this.generateEmbedding(question.questionText);
+            logger.info(`Processing ${questions.length} questions`);
 
-            // Extract concepts
-            const concepts = await this.extractConcepts(question.questionText);
+            const processedQuestions = [];
+            let totalTriples = 0;
+            let successfulQuestions = 0;
 
-            // Generate triples for augmentation data
-            const triples = this.generateAugmentationTriples(question, embedding, concepts);
+            // Process each question
+            for (let i = 0; i < questions.length; i++) {
+                const question = questions[i];
+                logger.info(`\n--- Processing Question ${i + 1}/${questions.length} ---`);
+                logger.info(`Question: "${question.questionText.substring(0, 80)}..."`);
 
-            // Store to SPARQL store
-            const stored = await this.storeAugmentationData(triples);
+                try {
+                    // Generate embedding
+                    const embedding = await this.generateEmbedding(question.questionText);
 
-            this.stats.questionsProcessed = 1;
+                    // Extract concepts
+                    const concepts = await this.extractConcepts(question.questionText);
+
+                    // Generate triples for augmentation data
+                    const triples = this.generateAugmentationTriples(question, embedding, concepts);
+
+                    // Store to SPARQL store
+                    const stored = await this.storeAugmentationData(triples);
+
+                    if (stored) {
+                        successfulQuestions++;
+                        totalTriples += triples.length;
+                        
+                        processedQuestions.push({
+                            question: question,
+                            embedding: embedding,
+                            concepts: concepts,
+                            embeddingGenerated: !!embedding,
+                            conceptsExtracted: !!concepts,
+                            embeddingDimensions: embedding ? embedding.length : 0,
+                            conceptCount: concepts ? concepts.length : 0,
+                            triplesAdded: triples.length,
+                            success: true
+                        });
+
+                        logger.info(`✅ Successfully processed question ${i + 1}: ${triples.length} triples added`);
+                    } else {
+                        throw new Error('Failed to store augmentation data');
+                    }
+
+                } catch (error) {
+                    logger.error(`❌ Failed to process question ${i + 1}: ${error.message}`);
+                    this.stats.errors.push(`Question ${i + 1}: ${error.message}`);
+                    
+                    processedQuestions.push({
+                        question: question,
+                        success: false,
+                        error: error.message
+                    });
+                }
+            }
+
+            this.stats.questionsProcessed = successfulQuestions;
             this.stats.endTime = new Date();
             this.stats.processingTime = this.stats.endTime - this.stats.startTime;
 
             return {
-                success: stored,
-                question: question,
-                embedding: embedding,
-                concepts: concepts,
-                embeddingGenerated: !!embedding,
-                conceptsExtracted: !!concepts,
-                embeddingDimensions: embedding ? embedding.length : 0,
-                conceptCount: concepts ? concepts.length : 0,
-                triplesAdded: triples.length,
+                success: successfulQuestions > 0,
+                questionsProcessed: successfulQuestions,
+                totalQuestionsFound: questions.length,
+                questions: processedQuestions,
+                totalTriples: totalTriples,
                 processingTime: `${(this.stats.processingTime / 1000).toFixed(2)}s`,
                 statistics: this.getStatistics()
             };
@@ -629,22 +678,39 @@ async function runBeerQAQuestionAugmentation() {
         const augmentation = new BeerQAQuestionAugmentation(config, options);
         await augmentation.initialize();
 
-        // Run augmentation
-        const result = await augmentation.augmentQuestion();
+        // Run augmentation (process up to 10 questions for demo)
+        const result = await augmentation.augmentQuestions(10);
 
         if (result.success) {
             console.log(chalk.bold.green('✅ Question Augmentation Completed Successfully!'));
             console.log('');
 
-            // Display question info
-            displayQuestionInfo(result.question);
+            // Display summary of processed questions
+            console.log(chalk.bold.white('📊 Questions Processed:'));
+            console.log(`   ${chalk.cyan('Total Questions Found:')} ${chalk.white(result.totalQuestionsFound)}`);
+            console.log(`   ${chalk.cyan('Questions Processed:')} ${chalk.white(result.questionsProcessed)}`);
+            console.log(`   ${chalk.cyan('Total Triples Added:')} ${chalk.white(result.totalTriples)}`);
+            console.log('');
 
-            // Display augmentation results
-            displayAugmentationResults(result);
+            // Display first successful question info as example
+            const firstSuccessful = result.questions.find(q => q.success);
+            if (firstSuccessful) {
+                console.log(chalk.bold.white('📝 Sample Question (first processed):'));
+                displayQuestionInfo(firstSuccessful.question);
+                
+                displayAugmentationResults({
+                    embeddingGenerated: firstSuccessful.embeddingGenerated,
+                    embeddingDimensions: firstSuccessful.embeddingDimensions,
+                    conceptsExtracted: firstSuccessful.conceptsExtracted,
+                    conceptCount: firstSuccessful.conceptCount,
+                    triplesAdded: firstSuccessful.triplesAdded,
+                    processingTime: result.processingTime
+                });
 
-            // Display extracted concepts
-            if (result.concepts) {
-                displayConcepts(result.concepts);
+                // Display extracted concepts
+                if (firstSuccessful.concepts) {
+                    displayConcepts(firstSuccessful.concepts);
+                }
             }
 
             // Display any errors
@@ -657,14 +723,9 @@ async function runBeerQAQuestionAugmentation() {
 
             // Summary
             console.log(chalk.bold.green('🎉 Question Augmentation Demo Completed Successfully!'));
-            console.log(chalk.white('The BeerQA test question has been augmented with:'));
-            if (result.embeddingGenerated) {
-                console.log(`   • ${chalk.white('Vector Embedding:')} ${chalk.cyan(result.embeddingDimensions + ' dimensions')}`);
-            }
-            if (result.conceptsExtracted) {
-                console.log(`   • ${chalk.white('Extracted Concepts:')} ${chalk.cyan(result.conceptCount + ' concepts')}`);
-            }
-            console.log(`   • ${chalk.white('Additional Triples:')} ${chalk.cyan(result.triplesAdded)}`);
+            console.log(chalk.white('The BeerQA test questions have been augmented with:'));
+            console.log(`   • ${chalk.white('Questions Processed:')} ${chalk.cyan(result.questionsProcessed + '/' + result.totalQuestionsFound)}`);
+            console.log(`   • ${chalk.white('Total Triples Added:')} ${chalk.cyan(result.totalTriples)}`);
             console.log(`   • ${chalk.white('Stored in graph:')} ${chalk.cyan(options.graphURI)}`);
             console.log('');
             console.log(chalk.bold.cyan('Next Steps:'));

@@ -21,6 +21,7 @@ import path from 'path';
 import logger from 'loglevel';
 import chalk from 'chalk';
 import Config from '../../../src/Config.js';
+import MemoryManager from '../../../src/MemoryManager.js';
 import SPARQLHelper from '../SPARQLHelper.js';
 
 // Configure logging
@@ -89,6 +90,9 @@ class RelationshipBuilder {
             timeout: this.options.timeout
         });
 
+        // Initialize MemoryManager for proper concept extraction
+        this.memoryManager = null; // Will be initialized in initialize() method
+
         this.stats = {
             questionsProcessed: 0,
             wikipediaCorpusclesProcessed: 0,
@@ -105,6 +109,35 @@ class RelationshipBuilder {
     }
 
     /**
+     * Initialize MemoryManager for concept extraction
+     */
+    async initialize() {
+        try {
+            console.log(chalk.gray('   Initializing MemoryManager for concept extraction...'));
+            
+            // Initialize MemoryManager with the same config
+            this.memoryManager = new MemoryManager({
+                storage: {
+                    type: 'sparql',
+                    options: {
+                        update: this.options.sparqlEndpoint,
+                        user: this.options.sparqlAuth.user,
+                        password: this.options.sparqlAuth.password
+                    }
+                }
+            });
+            
+            await this.memoryManager.init();
+            console.log(chalk.gray('   ✓ MemoryManager initialized successfully'));
+            
+        } catch (error) {
+            console.log(chalk.yellow(`   ⚠️ Failed to initialize MemoryManager: ${error.message}`));
+            console.log(chalk.yellow('   ⚠️ Will fall back to basic concept extraction'));
+            this.memoryManager = null;
+        }
+    }
+
+    /**
      * Build comprehensive relationship infrastructure
      * @returns {Object} Relationship building results
      */
@@ -113,6 +146,9 @@ class RelationshipBuilder {
         console.log(chalk.bold.white('🔄 Starting relationship infrastructure building...'));
 
         try {
+            // Phase 0: Initialize MemoryManager
+            await this.initialize();
+
             // Phase 1: Load questions and Wikipedia corpuscles
             console.log(chalk.white('📊 Phase 1: Loading questions and Wikipedia corpuscles...'));
             const questionData = await this.loadQuestionData();
@@ -155,6 +191,11 @@ class RelationshipBuilder {
 
             // Calculate final statistics
             this.stats.processingTime = Date.now() - startTime;
+            
+            // Cleanup MemoryManager
+            if (this.memoryManager) {
+                await this.memoryManager.dispose();
+            }
             
             console.log(chalk.green('✅ Relationship infrastructure building completed successfully'));
             this.displayResults();
@@ -475,15 +516,18 @@ ORDER BY ?corpuscle
 
         for (const question of questionSample) {
             // Use question concepts and keywords for semantic matching
-            const questionConcepts = this.extractConcepts(question.questionText);
+            const questionConcepts = await this.extractConcepts(question.questionText);
             
             for (const wikipediaCorpuscle of wikipediaData) {
-                const corpuscleConcepts = this.extractConcepts(wikipediaCorpuscle.corpuscleText);
+                const corpuscleConcepts = await this.extractConcepts(wikipediaCorpuscle.corpuscleText);
                 
                 // Calculate concept similarity
                 const conceptSimilarity = this.calculateConceptSimilarity(questionConcepts, corpuscleConcepts);
                 
-                if (conceptSimilarity >= this.options.similarityThreshold) {
+                // Use a lower threshold for semantic relationships since concept matching is more specific
+                const semanticThreshold = Math.max(0.05, this.options.similarityThreshold * 0.5);
+                
+                if (conceptSimilarity >= semanticThreshold) {
                     const relationshipURI = `${question.questionURI}_semantic_${wikipediaCorpuscle.corpuscleURI.split('/').pop()}`;
                     
                     relationships.push({
@@ -649,10 +693,11 @@ INSERT DATA {
         // Simple validation: check for duplicate relationships
         const validationQuery = `
 PREFIX ragno: <http://purl.org/stuff/ragno/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 
 SELECT ?relationship ?source ?target ?weight ?type
 WHERE {
-    GRAPH <${this.options.wikipediaGraphURI}> {
+    GRAPH <${this.options.beerqaGraphURI}> {
         ?relationship rdf:type ragno:Relationship ;
                      ragno:hasSourceEntity ?source ;
                      ragno:hasTargetEntity ?target ;
@@ -731,28 +776,73 @@ ORDER BY ?source ?target
     }
 
     /**
-     * Extract concepts from text (keywords and phrases)
+     * Extract concepts from text using MemoryManager or fallback method
      * @param {string} text - Text to analyze
      * @returns {Array} Extracted concepts
      */
-    extractConcepts(text) {
+    async extractConcepts(text) {
+        // Try using MemoryManager's extractConcepts if available
+        if (this.memoryManager) {
+            try {
+                const concepts = await this.memoryManager.extractConcepts(text);
+                if (concepts && Array.isArray(concepts) && concepts.length > 0) {
+                    // Convert concept objects to strings if needed
+                    return concepts.map(c => typeof c === 'string' ? c : (c.name || c.text || JSON.stringify(c)));
+                }
+            } catch (error) {
+                console.log(chalk.yellow(`   ⚠️ MemoryManager concept extraction failed: ${error.message}`));
+            }
+        }
+        
+        // Fallback to basic concept extraction
+        return this.extractConceptsFallback(text);
+    }
+
+    /**
+     * Fallback concept extraction method
+     * @param {string} text - Text to analyze
+     * @returns {Array} Extracted concepts
+     */
+    extractConceptsFallback(text) {
         const concepts = [];
         const lowerText = text.toLowerCase();
         
-        // Domain-specific concept extraction
-        const beerConcepts = ['brewing', 'fermentation', 'alcohol', 'flavor', 'aroma', 'bitterness', 'sweetness'];
-        const processConcepts = ['production', 'method', 'technique', 'process', 'quality', 'recipe'];
-        const typeConcepts = ['style', 'variety', 'type', 'kind', 'category'];
+        // Expanded domain-specific concept extraction
+        const beerConcepts = ['beer', 'ale', 'lager', 'stout', 'porter', 'ipa', 'brewing', 'fermentation', 'alcohol', 'flavor', 'aroma', 'bitterness', 'sweetness', 'brewery', 'malt', 'hops', 'yeast'];
+        const processConcepts = ['production', 'method', 'technique', 'process', 'quality', 'recipe', 'manufacturing', 'making', 'create', 'produce'];
+        const typeConcepts = ['style', 'variety', 'type', 'kind', 'category', 'classification', 'genus', 'species', 'family'];
+        const generalConcepts = ['company', 'organization', 'business', 'industry', 'country', 'nation', 'state', 'city', 'location', 'place', 'time', 'year', 'date', 'history', 'historical'];
+        const actionConcepts = ['founded', 'established', 'created', 'built', 'developed', 'invented', 'discovered', 'named', 'called', 'known'];
+        const descriptiveConcepts = ['large', 'small', 'big', 'major', 'main', 'primary', 'first', 'last', 'best', 'famous', 'popular', 'common', 'rare'];
         
-        const allConcepts = [...beerConcepts, ...processConcepts, ...typeConcepts];
+        const allConcepts = [...beerConcepts, ...processConcepts, ...typeConcepts, ...generalConcepts, ...actionConcepts, ...descriptiveConcepts];
         
+        // Extract predefined concepts
         for (const concept of allConcepts) {
             if (lowerText.includes(concept)) {
                 concepts.push(concept);
             }
         }
         
-        return concepts;
+        // Extract capitalized words (likely proper nouns/entities)
+        const words = text.split(/\s+/);
+        for (const word of words) {
+            const cleaned = word.replace(/[^\w]/g, '');
+            if (cleaned.length > 2 && /^[A-Z]/.test(cleaned)) {
+                concepts.push(cleaned.toLowerCase());
+            }
+        }
+        
+        // Extract common question words and structures
+        const questionWords = ['what', 'where', 'when', 'who', 'why', 'how', 'which', 'whose'];
+        for (const qword of questionWords) {
+            if (lowerText.includes(qword)) {
+                concepts.push(qword);
+            }
+        }
+        
+        // Remove duplicates and return
+        return [...new Set(concepts)];
     }
 
     /**
@@ -840,7 +930,7 @@ ORDER BY ?source ?target
 PREFIX ragno: <http://purl.org/stuff/ragno/>
 
 ASK {
-    GRAPH <${this.options.wikipediaGraphURI}> {
+    GRAPH <${this.options.beerqaGraphURI}> {
         ?relationship ragno:hasSourceEntity <${questionURI}> .
     }
 }`;
