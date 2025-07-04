@@ -1275,7 +1275,7 @@ function registerToolCallHandler(server) {
 
         const llmHandler = new LLMHandler(llmConnector, chatProvider.chatModel);
         
-        const SPARQLHelper = (await import('../examples/beerqa/SPARQLHelper.js')).default;
+        const SPARQLHelper = (await import('../src/services/sparql/SPARQLHelper.js')).default;
         const sparqlHelper = new SPARQLHelper(
             config.get('sparqlUpdateEndpoint') || 'http://localhost:3030/semem/update',
             {

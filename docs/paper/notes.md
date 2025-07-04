@@ -34,6 +34,26 @@ Sample Wikipedia Research Results:
   const beerConcepts = ['brewing', 'fermentation', 'alcohol', 'flavor', 'aroma', 'bitterness', 'sweetness'];
 
 ---
+Sample Question (first processed):
+📝 Selected Question:
+   Question: What are chares?
+   Corpuscle URI: http://purl.org/stuff/beerqa/test/corpuscle/2de665d74cad75ed1d272a388fe4068d5778762b
+   Source: beerqa_test_questions_v1.0
+   Question ID: 2de665d74cad75ed1d272a388fe4068d5778762b
+
+📊 Augmentation Results:
+   Embedding Generated: Yes
+   Embedding Dimensions: 1536
+   Concepts Extracted: Yes
+   Number of Concepts: 1
+   Triples Added: 21
+   Processing Time: 31.52s
+
+🧠 Extracted Concepts:
+   1. what
+  
+  ---
+  
 
 Full Provenance Chain:
 

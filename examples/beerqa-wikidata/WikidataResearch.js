@@ -20,7 +20,7 @@ import LLMHandler from '../../src/handlers/LLMHandler.js';
 import WikidataSearch from '../../src/aux/wikidata/WikidataSearch.js';
 import WikidataToRagno from '../../src/aux/wikidata/WikidataToRagno.js';
 import QueryTemplateManager from '../../src/aux/wikidata/QueryTemplateManager.js';
-import SPARQLHelper from './SPARQLHelper.js';
+import SPARQLHelper from '../../src/services/sparql/SPARQLHelper.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

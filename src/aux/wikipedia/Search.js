@@ -8,7 +8,7 @@
 
 import fetch from 'node-fetch';
 import logger from 'loglevel';
-import SPARQLHelper from '../../../examples/beerqa/SPARQLHelper.js';
+import SPARQLHelper from '../../services/sparql/SPARQLHelper.js';
 
 export default class WikipediaSearch {
     /**

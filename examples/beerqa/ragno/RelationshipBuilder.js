@@ -22,7 +22,7 @@ import logger from 'loglevel';
 import chalk from 'chalk';
 import Config from '../../../src/Config.js';
 import MemoryManager from '../../../src/MemoryManager.js';
-import SPARQLHelper from '../SPARQLHelper.js';
+import SPARQLHelper from '../../../src/services/sparql/SPARQLHelper.js';
 
 // Configure logging
 logger.setLevel('info');

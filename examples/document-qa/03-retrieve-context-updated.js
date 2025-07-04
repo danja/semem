@@ -15,7 +15,7 @@ import path from 'path';
 import logger from 'loglevel';
 import chalk from 'chalk';
 import Config from '../../src/Config.js';
-import SPARQLHelper from './SPARQLHelper.js';
+import SPARQLHelper from '../../src/services/sparql/SPARQLHelper.js';
 import { getDefaultQueryService } from '../../src/services/sparql/index.js';
 
 // Configure logging

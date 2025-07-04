@@ -22,7 +22,7 @@ import LLMHandler from '../../src/handlers/LLMHandler.js';
 import OllamaConnector from '../../src/connectors/OllamaConnector.js';
 import ClaudeConnector from '../../src/connectors/ClaudeConnector.js';
 import MistralConnector from '../../src/connectors/MistralConnector.js';
-import SPARQLHelper from './SPARQLHelper.js';
+import SPARQLHelper from '../../src/services/sparql/SPARQLHelper.js';
 import { getDefaultQueryService } from '../../src/services/sparql/index.js';
 
 // Configure logging

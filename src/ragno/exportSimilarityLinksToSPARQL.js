@@ -1,5 +1,5 @@
 // Ragno: Export similarity links to SPARQL triple store
-import SPARQLHelpers from '../utils/SPARQLHelpers.js';
+import SPARQLHelpers from '../services/sparql/SPARQLHelper.js';
 
 /**
  * exportSimilarityLinksToSPARQL(similarityLinks, endpoint, auth)

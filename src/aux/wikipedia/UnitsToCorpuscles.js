@@ -10,7 +10,7 @@ import path from 'path';
 import fetch from 'node-fetch';
 import crypto from 'crypto';
 import logger from 'loglevel';
-import SPARQLHelper from '../../../examples/beerqa/SPARQLHelper.js';
+import SPARQLHelper from '../../services/sparql/SPARQLHelper.js';
 import Config from '../../Config.js';
 import EmbeddingHandler from '../../handlers/EmbeddingHandler.js';
 import EmbeddingConnectorFactory from '../../connectors/EmbeddingConnectorFactory.js';

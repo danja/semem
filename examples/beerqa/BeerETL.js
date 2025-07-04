@@ -10,7 +10,7 @@ import path from 'path';
 import rdfExt from 'rdf-ext';
 import { DataFactory } from 'rdf-ext';
 import logger from 'loglevel';
-import SPARQLHelper from './SPARQLHelper.js';
+import SPARQLHelper from '../../src/services/sparql/SPARQLHelper.js';
 
 const { namedNode, literal, quad } = DataFactory;
 

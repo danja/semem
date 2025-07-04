@@ -11,7 +11,7 @@ import Hyde from '../../ragno/algorithms/Hyde.js';
 import DualSearch from '../../ragno/search/DualSearch.js';
 import RDFGraphManager from '../../ragno/core/RDFGraphManager.js';
 import NamespaceManager from '../../ragno/core/NamespaceManager.js';
-import SPARQLHelpers from '../../utils/SPARQLHelpers.js';
+import SPARQLHelpers from '../../services/sparql/SPARQLHelper.js';
 
 /**
  * Ragno API handler for knowledge graph operations

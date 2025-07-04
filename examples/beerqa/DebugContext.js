@@ -5,7 +5,7 @@
  */
 
 import chalk from 'chalk';
-import SPARQLHelper from './SPARQLHelper.js';
+import SPARQLHelper from '../../src/services/sparql/SPARQLHelper.js';
 
 async function debugContext() {
     console.log(chalk.bold.blue('🔍 Debugging context retrieval...'));

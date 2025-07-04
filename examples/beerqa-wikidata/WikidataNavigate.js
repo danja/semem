@@ -25,7 +25,7 @@ import EmbeddingConnectorFactory from '../../src/connectors/EmbeddingConnectorFa
 import { ZPTDataFactory } from '../../src/zpt/ontology/ZPTDataFactory.js';
 import { NamespaceUtils, getSPARQLPrefixes } from '../../src/zpt/ontology/ZPTNamespaces.js';
 import WikidataResearch from './WikidataResearch.js';
-import SPARQLHelper from './SPARQLHelper.js';
+import SPARQLHelper from '../../src/services/sparql/SPARQLHelper.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

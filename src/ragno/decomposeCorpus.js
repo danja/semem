@@ -12,7 +12,7 @@ import Entity from './Entity.js'
 import Relationship from './Relationship.js'
 import RDFGraphManager from './core/RDFGraphManager.js'
 import NamespaceManager from './core/NamespaceManager.js'
-import SPARQLHelpers from '../utils/SPARQLHelpers.js'
+import SPARQLHelpers from '../services/sparql/SPARQLHelper.js'
 import ParseHelper from '../utils/ParseHelper.js'
 import { logger } from '../Utils.js'
 

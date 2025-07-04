@@ -4,13 +4,13 @@ import exportCommunityAttributesToSPARQL from '../../../src/ragno/exportCommunit
 import exportSimilarityLinksToSPARQL from '../../../src/ragno/exportSimilarityLinksToSPARQL.js'
 
 // Mock SPARQLHelpers with proper default export
-vi.mock('../../../src/utils/SPARQLHelpers.js', () => ({
+vi.mock('../../../src/services/sparql/SPARQLHelper.js', () => ({
   default: {
     executeSPARQLUpdate: vi.fn().mockResolvedValue({ ok: true })
   }
 }))
 
-import SPARQLHelpers from '../../../src/utils/SPARQLHelpers.js'
+import SPARQLHelpers from '../../../src/services/sparql/SPARQLHelper.js'
 
 describe('Ragno SPARQL Export Functions', () => {
   const mockEndpoint = 'http://localhost:3030/test/update'

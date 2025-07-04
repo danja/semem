@@ -1,5 +1,5 @@
 // Ragno: Export Attribute nodes to SPARQL triple store
-import SPARQLHelpers from '../utils/SPARQLHelpers.js';
+import SPARQLHelpers from '../services/sparql/SPARQLHelper.js';
 
 /**
  * exportAttributesToSPARQL(attributes, endpoint, auth)

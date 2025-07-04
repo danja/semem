@@ -19,7 +19,7 @@ import OllamaConnector from '../../src/connectors/OllamaConnector.js';
 import CacheManager from '../../src/handlers/CacheManager.js';
 import { ZPTDataFactory } from '../../src/zpt/ontology/ZPTDataFactory.js';
 import { NamespaceUtils, getSPARQLPrefixes } from '../../src/zpt/ontology/ZPTNamespaces.js';
-import SPARQLHelper from './SPARQLHelper.js';
+import SPARQLHelper from '../../src/services/sparql/SPARQLHelper.js';
 import { getDefaultQueryService } from '../../src/services/sparql/index.js';
 
 // Configure logging

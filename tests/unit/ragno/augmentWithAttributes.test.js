@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { augmentWithAttributes } from '../../../src/ragno/augmentWithAttributes.js'
 
 // Mock dependencies
-vi.mock('../../../src/utils/SPARQLHelpers.js', () => ({
+vi.mock('../../../src/services/sparql/SPARQLHelper.js', () => ({
   default: {
     executeSPARQLUpdate: vi.fn().mockResolvedValue({ ok: true }),
     executeSPARQLQuery: vi.fn().mockResolvedValue({

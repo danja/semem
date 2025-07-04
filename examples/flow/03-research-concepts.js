@@ -19,7 +19,7 @@ import dotenv from 'dotenv';
 import Config from '../../src/Config.js';
 import EmbeddingHandler from '../../src/handlers/EmbeddingHandler.js';
 import NomicConnector from '../../src/connectors/NomicConnector.js';
-import SPARQLHelper from '../beerqa/SPARQLHelper.js';
+import SPARQLHelper from '../../src/services/sparql/SPARQLHelper.js';
 
 // Import Wikipedia research components
 import WikipediaSearch from '../../src/aux/wikipedia/Search.js';

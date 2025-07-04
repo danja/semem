@@ -18,7 +18,7 @@ import EmbeddingHandler from '../../src/handlers/EmbeddingHandler.js';
 import OllamaConnector from '../../src/connectors/OllamaConnector.js';
 import CacheManager from '../../src/handlers/CacheManager.js';
 import HTML2MD from '../../src/aux/markup/HTML2MD.js';
-import SPARQLHelper from '../beerqa/SPARQLHelper.js';
+import SPARQLHelper from '../../src/services/sparql/SPARQLHelper.js';
 
 // Configure logging
 logger.setLevel('info');

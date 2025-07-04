@@ -294,7 +294,7 @@ export function mockExternalModules() {
   }))
   
   // Mock the SPARQLHelpers
-  vi.mock('../../src/utils/SPARQLHelpers.js', () => ({
+  vi.mock('../../src/services/sparql/SPARQLHelper.js', () => ({
     default: MockSPARQLHelpers
   }))
 }

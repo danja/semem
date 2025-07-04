@@ -13,10 +13,7 @@ import logger from 'loglevel';
 import chalk from 'chalk';
 import fetch from 'node-fetch';
 import Config from '../../src/Config.js';
-import LLMHandler from '../../src/handlers/LLMHandler.js';
-import OllamaConnector from '../../src/connectors/OllamaConnector.js';
-import ClaudeConnector from '../../src/connectors/ClaudeConnector.js';
-import MistralConnector from '../../src/connectors/MistralConnector.js';
+import MemoryManager from '../../src/MemoryManager.js';
 import WikipediaSearch from '../../src/aux/wikipedia/Search.js';
 import UnitsToCorpuscles from '../../src/aux/wikipedia/UnitsToCorpuscles.js';
 
@@ -66,7 +63,7 @@ function displayQuestionInfo(question) {
  * Display extracted concepts
  */
 function displayConcepts(concepts, conceptsSource = 'unknown') {
-    const sourceLabel = conceptsSource === 'hyde' ? '(from HyDE)' : 
+    const sourceLabel = conceptsSource === 'memorymanager' ? '(from MemoryManager)' : 
                        conceptsSource === 'existing' ? '(existing)' : '';
     
     console.log(chalk.bold.white(`🧠 Concepts to Research ${sourceLabel}:`));
@@ -79,8 +76,8 @@ function displayConcepts(concepts, conceptsSource = 'unknown') {
         if (concept.confidence) {
             console.log(`      ${chalk.gray('Confidence:')} ${chalk.white((concept.confidence * 100).toFixed(1) + '%')}`);
         }
-        if (concept.source === 'hyde' && concept.attempt) {
-            console.log(`      ${chalk.gray('HyDE Attempt:')} ${chalk.white(concept.attempt)}`);
+        if (concept.source) {
+            console.log(`      ${chalk.gray('Source:')} ${chalk.white(concept.source)}`);
         }
     }
     
@@ -96,13 +93,7 @@ function displayConcepts(concepts, conceptsSource = 'unknown') {
 function displayResearchSummary(results) {
     console.log(chalk.bold.white('📊 Research Results Summary:'));
     console.log(`   ${chalk.cyan('Concepts Researched:')} ${chalk.white(results.conceptsResearched)}`);
-    
-    if (results.hydeAttempts > 0) {
-        console.log(`   ${chalk.cyan('HyDE Attempts:')} ${chalk.white(results.hydeAttempts)}`);
-        console.log(`   ${chalk.cyan('HyDE Successes:')} ${chalk.white(results.hydeSuccesses)}`);
-        console.log(`   ${chalk.cyan('Concepts from HyDE:')} ${chalk.white(results.conceptsFromHyde)}`);
-    }
-    
+    console.log(`   ${chalk.cyan('Concepts Extracted:')} ${chalk.white(results.conceptsExtracted)}`);
     console.log(`   ${chalk.cyan('Total Wikipedia Searches:')} ${chalk.white(results.totalSearches)}`);
     console.log(`   ${chalk.cyan('Total Wikipedia Results:')} ${chalk.white(results.totalWikipediaResults)}`);
     console.log(`   ${chalk.cyan('Wikipedia Units Created:')} ${chalk.white(results.unitsCreated)}`);
@@ -135,70 +126,6 @@ function displayErrors(errors) {
     console.log('');
 }
 
-/**
- * HyDE implementation for hypothetical document generation
- */
-class HyDEGenerator {
-    constructor(llmHandler) {
-        this.llmHandler = llmHandler;
-    }
-
-    /**
-     * Generate hypothetical document for a given question
-     */
-    async generateHypotheticalDocument(question, domain = null) {
-        const domainContext = domain ? ` in the context of ${domain}` : '';
-        
-        const prompt = `Write a detailed, informative paragraph that would contain comprehensive information to answer the following question${domainContext}:
-
-Question: ${question}
-
-Write as if you are an expert providing a thorough answer with specific details, examples, and relevant concepts. The paragraph should be 3-4 sentences long and contain the type of information someone would find in an authoritative source.
-
-Paragraph:`;
-
-        try {
-            const response = await this.llmHandler.generateResponse(
-                prompt,
-                '', // no additional context needed
-                {
-                    temperature: 0.7
-                }
-            );
-            
-            // Clean up the response
-            let hypotheticalDoc = response.trim();
-            
-            // Remove any leading/trailing quotes or artifacts
-            hypotheticalDoc = hypotheticalDoc.replace(/^["']|["']$/g, '');
-            
-            // Ensure it ends with proper punctuation
-            if (!/[.!?]$/.test(hypotheticalDoc)) {
-                hypotheticalDoc += '.';
-            }
-            
-            return hypotheticalDoc;
-            
-        } catch (error) {
-            logger.warn(`Failed to generate hypothetical document: ${error.message}`);
-            // Fallback: return expanded query
-            return `This document discusses ${question} and provides comprehensive information about the topic, including relevant details, examples, and implications.`;
-        }
-    }
-
-    /**
-     * Extract concepts from hypothetical document
-     */
-    async extractConceptsFromDocument(document) {
-        try {
-            const concepts = await this.llmHandler.extractConcepts(document);
-            return concepts || [];
-        } catch (error) {
-            logger.warn(`Failed to extract concepts from document: ${error.message}`);
-            return [];
-        }
-    }
-}
 
 /**
  * BeerQA Question Research class
@@ -248,9 +175,8 @@ class BeerQAQuestionResearch {
             timeout: this.options.timeout
         });
 
-        // Initialize LLM handler and HyDE generator (will be set during initialization)
-        this.llmHandler = null;
-        this.hydeGenerator = null;
+        // Initialize MemoryManager for concept extraction
+        this.memoryManager = null;
 
         // Statistics tracking
         this.stats = {
@@ -262,9 +188,7 @@ class BeerQAQuestionResearch {
             relationshipsCreated: 0,
             successfulSearches: 0,
             failedSearches: 0,
-            hydeAttempts: 0,
-            hydeSuccesses: 0,
-            conceptsFromHyde: 0,
+            conceptsExtracted: 0,
             errors: [],
             startTime: null,
             endTime: null
@@ -286,44 +210,61 @@ class BeerQAQuestionResearch {
             
             // Try providers in priority order
             for (const provider of sortedProviders) {
-                if (provider.type === 'mistral' && provider.apiKey) {
-                    return new MistralConnector();
-                } else if (provider.type === 'claude' && provider.apiKey) {
+                if (provider.type === 'mistral' && process.env.MISTRAL_API_KEY) {
+                    const MistralConnector = (await import('../../src/connectors/MistralConnector.js')).default;
+                    return new MistralConnector(process.env.MISTRAL_API_KEY);
+                } else if (provider.type === 'claude' && process.env.CLAUDE_API_KEY) {
+                    const ClaudeConnector = (await import('../../src/connectors/ClaudeConnector.js')).default;
                     return new ClaudeConnector();
                 } else if (provider.type === 'ollama') {
+                    const OllamaConnector = (await import('../../src/connectors/OllamaConnector.js')).default;
                     return new OllamaConnector();
                 }
             }
             
             // Default to Ollama
+            const OllamaConnector = (await import('../../src/connectors/OllamaConnector.js')).default;
             return new OllamaConnector();
             
         } catch (error) {
             logger.warn('Failed to load provider configuration, defaulting to Ollama:', error.message);
+            const OllamaConnector = (await import('../../src/connectors/OllamaConnector.js')).default;
             return new OllamaConnector();
         }
     }
 
     /**
-     * Get model configuration (from api-server.js)
+     * Get model configuration from provider (from api-server.js)
      */
     async getModelConfig(config) {
         try {
-            const llmModel = config.get('llm.model') || 'qwen2:1.5b';
+            // Get highest priority providers
+            const llmProviders = config.get('llmProviders') || [];
+            const embeddingProviders = config.get('embeddingProviders') || llmProviders;
+            
+            const chatProvider = llmProviders
+                .filter(p => p.capabilities?.includes('chat'))
+                .sort((a, b) => (a.priority || 999) - (b.priority || 999))[0];
+                
+            const embeddingProvider = embeddingProviders
+                .filter(p => p.capabilities?.includes('embedding'))
+                .sort((a, b) => (a.priority || 999) - (b.priority || 999))[0];
             
             return {
-                chatModel: llmModel
+                chatModel: chatProvider?.chatModel || 'qwen2:1.5b',
+                embeddingModel: embeddingProvider?.embeddingModel || 'nomic-embed-text'
             };
         } catch (error) {
             logger.warn('Failed to get model config, using defaults:', error.message);
             return {
-                chatModel: 'qwen2:1.5b'
+                chatModel: 'qwen2:1.5b',
+                embeddingModel: 'nomic-embed-text'
             };
         }
     }
 
     /**
-     * Initialize LLM handler and HyDE generator
+     * Initialize MemoryManager for concept extraction
      */
     async initialize() {
         try {
@@ -332,18 +273,33 @@ class BeerQAQuestionResearch {
             const config = new Config(configPath);
             await config.init();
 
-            // Initialize LLM handler for HyDE
+            // Initialize MemoryManager for concept extraction
             try {
-                // Use the new configuration pattern from api-server.js
+                // Create LLM provider
                 const llmProvider = await this.createLLMConnector(config);
                 const modelConfig = await this.getModelConfig(config);
                 
-                this.llmHandler = new LLMHandler(llmProvider, modelConfig.chatModel);
-                this.hydeGenerator = new HyDEGenerator(this.llmHandler);
-                logger.info('LLM handler and HyDE generator initialized successfully');
+                // Create storage instance (SPARQLStore)
+                const { default: SPARQLStore } = await import('../../src/stores/SPARQLStore.js');
+                const storage = new SPARQLStore({
+                    query: this.options.sparqlEndpoint.replace('/update', '/query'),
+                    update: this.options.sparqlEndpoint,
+                    user: this.options.sparqlAuth.user,
+                    password: this.options.sparqlAuth.password
+                });
+                
+                this.memoryManager = new MemoryManager({
+                    llmProvider: llmProvider,
+                    chatModel: modelConfig.chatModel,
+                    embeddingModel: modelConfig.embeddingModel,
+                    storage: storage
+                });
+                
+                logger.info('MemoryManager initialized successfully for concept extraction');
             } catch (error) {
-                logger.warn('Failed to initialize LLM handler:', error.message);
-                logger.warn('HyDE concept extraction will not be available');
+                logger.warn('Failed to initialize MemoryManager:', error.message);
+                logger.warn('Concept extraction will not be available');
+                this.memoryManager = null;
             }
 
         } catch (error) {
@@ -353,43 +309,13 @@ class BeerQAQuestionResearch {
     }
 
     /**
-     * Find question corpuscle (with or without extracted concepts)
+     * Find questions without extracted concepts
      */
-    async findQuestionCorpuscle(limit = 1) {
+    async findQuestionsWithoutConcepts(limit = 10) {
         const queryEndpoint = this.options.sparqlEndpoint.replace('/update', '/query');
         
-        // First try to find a question with existing concepts
-        const queryWithConcepts = `
-PREFIX ragno: <http://purl.org/stuff/ragno/>
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX dcterms: <http://purl.org/dc/terms/>
-
-SELECT ?corpuscle ?questionText ?source ?questionId ?question 
-       (GROUP_CONCAT(DISTINCT ?conceptValue; separator="|||") AS ?concepts)
-       (GROUP_CONCAT(DISTINCT ?conceptType; separator="|||") AS ?conceptTypes)
-       (GROUP_CONCAT(DISTINCT ?conceptConf; separator="|||") AS ?conceptConfidences)
-FROM <${this.options.beerqaGraphURI}>
-WHERE {
-    ?corpuscle a ragno:Corpuscle ;
-               rdfs:label ?questionText ;
-               ragno:corpuscleType "test-question" ;
-               dcterms:source ?source ;
-               dcterms:identifier ?questionId ;
-               ragno:hasQuestion ?question ;
-               ragno:hasAttribute ?conceptAttr .
-    
-    ?conceptAttr ragno:attributeType "concept" ;
-                 ragno:attributeValue ?conceptValue .
-    
-    OPTIONAL { ?conceptAttr ragno:conceptType ?conceptType }
-    OPTIONAL { ?conceptAttr ragno:confidence ?conceptConf }
-}
-GROUP BY ?corpuscle ?questionText ?source ?questionId ?question
-ORDER BY ?corpuscle
-LIMIT ${limit}`;
-
-        // Fallback query for questions without concepts
-        const queryWithoutConcepts = `
+        // Find questions that don't have concept attributes
+        const query = `
 PREFIX ragno: <http://purl.org/stuff/ragno/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX dcterms: <http://purl.org/dc/terms/>
@@ -403,80 +329,36 @@ WHERE {
                dcterms:source ?source ;
                dcterms:identifier ?questionId ;
                ragno:hasQuestion ?question .
+    
+    # Exclude questions that already have concept attributes
+    FILTER NOT EXISTS {
+        ?corpuscle ragno:hasAttribute ?conceptAttr .
+        ?conceptAttr ragno:attributeType "concept" .
+    }
 }
 ORDER BY ?corpuscle
 LIMIT ${limit}`;
 
         try {
-            // First try to find a question with existing concepts
-            logger.info('Looking for question with existing concepts...');
-            let response = await fetch(queryEndpoint, {
+            const response = await fetch(queryEndpoint, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/sparql-query',
                     'Accept': 'application/sparql-results+json',
                     'Authorization': `Basic ${btoa(`${this.options.sparqlAuth.user}:${this.options.sparqlAuth.password}`)}`
                 },
-                body: queryWithConcepts
+                body: query
             });
 
             if (!response.ok) {
                 throw new Error(`Query failed: ${response.status} ${response.statusText}`);
             }
 
-            let results = await response.json();
-            
-            if (results.results.bindings.length > 0) {
-                // Found questions with existing concepts
-                const questions = [];
-                
-                for (const binding of results.results.bindings) {
-                    // Parse concepts from concatenated strings
-                    const conceptValues = binding.concepts.value.split('|||');
-                    const conceptTypes = binding.conceptTypes ? binding.conceptTypes.value.split('|||') : [];
-                    const conceptConfidences = binding.conceptConfidences ? binding.conceptConfidences.value.split('|||') : [];
-                    
-                    const concepts = conceptValues.map((value, index) => ({
-                        value: value,
-                        type: conceptTypes[index] || null,
-                        confidence: conceptConfidences[index] ? parseFloat(conceptConfidences[index]) : null
-                    }));
-
-                    questions.push({
-                        corpuscle: binding.corpuscle.value,
-                        questionText: binding.questionText.value,
-                        source: binding.source.value,
-                        questionId: binding.questionId.value,
-                        question: binding.question.value,
-                        concepts: concepts,
-                        conceptsSource: 'existing'
-                    });
-                }
-
-                logger.info(`Found ${questions.length} questions with existing concepts`);
-                return questions;
-            }
-
-            // No existing concepts found, try to find any question without concepts
-            logger.info('No questions with concepts found, looking for any test question...');
-            response = await fetch(queryEndpoint, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/sparql-query',
-                    'Accept': 'application/sparql-results+json',
-                    'Authorization': `Basic ${btoa(`${this.options.sparqlAuth.user}:${this.options.sparqlAuth.password}`)}`
-                },
-                body: queryWithoutConcepts
-            });
-
-            if (!response.ok) {
-                throw new Error(`Fallback query failed: ${response.status} ${response.statusText}`);
-            }
-
-            results = await response.json();
+            const results = await response.json();
             
             if (results.results.bindings.length === 0) {
-                throw new Error('No test question corpuscles found. Run BeerTestQuestions.js first.');
+                logger.info('No questions without concepts found. All questions already have concepts extracted.');
+                return [];
             }
 
             const questions = [];
@@ -492,73 +374,124 @@ LIMIT ${limit}`;
                 });
             }
 
-            logger.info(`Found ${questions.length} questions without concepts, will use HyDE to extract concepts`);
+            logger.info(`Found ${questions.length} questions without concepts`);
             return questions;
 
         } catch (error) {
-            logger.error('Failed to find question corpuscle:', error);
+            logger.error('Failed to find questions without concepts:', error);
             throw error;
         }
     }
 
     /**
-     * Extract concepts using HyDE (up to 3 attempts)
+     * Extract concepts using MemoryManager
      */
-    async extractConceptsViaHyDE(questionText, maxAttempts = 3) {
-        if (!this.hydeGenerator) {
-            logger.warn('HyDE generator not available, cannot extract concepts');
+    async extractConcepts(questionText) {
+        if (!this.memoryManager) {
+            logger.warn('MemoryManager not available, cannot extract concepts');
             return [];
         }
 
-        let allConcepts = [];
-        
-        for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-            this.stats.hydeAttempts++;
-            logger.info(`HyDE attempt ${attempt}/${maxAttempts}: Generating hypothetical document...`);
+        try {
+            logger.info('Extracting concepts using MemoryManager...');
+            const concepts = await this.memoryManager.extractConcepts(questionText);
             
-            try {
-                // Generate hypothetical document
-                const hypotheticalDoc = await this.hydeGenerator.generateHypotheticalDocument(questionText);
-                logger.info(`Generated hypothetical document (${hypotheticalDoc.length} chars)`);
-                logger.debug(`Hypothetical document: "${hypotheticalDoc.substring(0, 100)}..."`);
+            if (concepts && Array.isArray(concepts) && concepts.length > 0) {
+                this.stats.conceptsExtracted++;
                 
-                // Extract concepts from the hypothetical document
-                const concepts = await this.hydeGenerator.extractConceptsFromDocument(hypotheticalDoc);
+                // Normalize concepts to consistent format
+                const normalizedConcepts = concepts.map((concept, index) => ({
+                    value: typeof concept === 'string' ? concept : (concept.name || concept.text || concept.value || JSON.stringify(concept)),
+                    type: typeof concept === 'object' ? (concept.type || 'extracted') : 'extracted',
+                    confidence: typeof concept === 'object' ? (concept.confidence || 0.8) : 0.8,
+                    source: 'memorymanager'
+                }));
                 
-                if (concepts && concepts.length > 0) {
-                    this.stats.hydeSuccesses++;
-                    this.stats.conceptsFromHyde += concepts.length;
-                    
-                    // Add metadata to concepts
-                    const enrichedConcepts = concepts.map((concept, index) => ({
-                        value: typeof concept === 'string' ? concept : concept.name || concept.text || concept,
-                        type: typeof concept === 'object' ? (concept.type || 'hyde-extracted') : 'hyde-extracted',
-                        confidence: typeof concept === 'object' ? concept.confidence || 0.8 : 0.8,
-                        source: 'hyde',
-                        attempt: attempt,
-                        hypotheticalDoc: hypotheticalDoc
-                    }));
-                    
-                    allConcepts.push(...enrichedConcepts);
-                    logger.info(`✅ HyDE attempt ${attempt} extracted ${concepts.length} concepts`);
-                } else {
-                    logger.warn(`⚠️  HyDE attempt ${attempt} extracted no concepts`);
-                }
-                
-            } catch (error) {
-                logger.error(`❌ HyDE attempt ${attempt} failed:`, error.message);
-                this.stats.errors.push(`HyDE attempt ${attempt}: ${error.message}`);
+                logger.info(`✅ Extracted ${normalizedConcepts.length} concepts using MemoryManager`);
+                return normalizedConcepts;
+            } else {
+                logger.warn('⚠️  MemoryManager extracted no concepts');
+                return [];
             }
+        } catch (error) {
+            logger.error(`❌ Concept extraction failed: ${error.message}`);
+            this.stats.errors.push(`Concept extraction: ${error.message}`);
+            return [];
+        }
+    }
+
+    /**
+     * Store extracted concepts to the question corpuscle
+     */
+    async storeConceptsToCorpuscle(questionId, baseURI, concepts) {
+        if (concepts.length === 0) return true;
+
+        const timestamp = new Date().toISOString();
+        const triples = [];
+
+        // Create concept attributes
+        for (let i = 0; i < concepts.length; i++) {
+            const concept = concepts[i];
+            const conceptURI = `<${baseURI}attribute/${questionId}_concept_${i}>`;
+            const corpuscleURI = `<${baseURI}corpuscle/${questionId}>`;
+            
+            triples.push(`${conceptURI} rdf:type ragno:Attribute .`);
+            triples.push(`${conceptURI} rdfs:label "extracted-concept" .`);
+            triples.push(`${conceptURI} ragno:attributeType "concept" .`);
+            triples.push(`${conceptURI} ragno:attributeValue "${concept.value.replace(/"/g, '\\"')}" .`);
+            
+            if (concept.type) {
+                triples.push(`${conceptURI} ragno:conceptType "${concept.type}" .`);
+            }
+            if (concept.confidence) {
+                triples.push(`${conceptURI} ragno:confidence "${concept.confidence}"^^xsd:float .`);
+            }
+            
+            triples.push(`${conceptURI} ragno:conceptIndex "${i}"^^xsd:integer .`);
+            triples.push(`${conceptURI} dcterms:created "${timestamp}"^^xsd:dateTime .`);
+            triples.push(`${conceptURI} prov:wasGeneratedBy "memorymanager-concept-extraction" .`);
+            
+            // Link to corpuscle
+            triples.push(`${corpuscleURI} ragno:hasAttribute ${conceptURI} .`);
+            triples.push(`${conceptURI} ragno:describesCorpuscle ${corpuscleURI} .`);
         }
 
-        if (allConcepts.length === 0) {
-            logger.error('❌ Failed to extract concepts via HyDE after all attempts');
-            this.stats.errors.push('HyDE concept extraction failed after all attempts');
-        } else {
-            logger.info(`✅ HyDE extraction completed: ${allConcepts.length} total concepts from ${this.stats.hydeSuccesses} successful attempts`);
-        }
+        // Create SPARQL update query
+        const updateQuery = `
+PREFIX ragno: <http://purl.org/stuff/ragno/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX prov: <http://www.w3.org/ns/prov#>
 
-        return allConcepts;
+INSERT DATA {
+    GRAPH <${this.options.beerqaGraphURI}> {
+        ${triples.join('\n        ')}
+    }
+}`;
+
+        try {
+            const response = await fetch(this.options.sparqlEndpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/sparql-update',
+                    'Authorization': `Basic ${btoa(`${this.options.sparqlAuth.user}:${this.options.sparqlAuth.password}`)}`
+                },
+                body: updateQuery
+            });
+
+            if (!response.ok) {
+                throw new Error(`SPARQL UPDATE failed: ${response.status} ${response.statusText}`);
+            }
+
+            logger.info(`✅ Stored ${concepts.length} concepts to corpuscle`);
+            return true;
+        } catch (error) {
+            logger.error(`❌ Failed to store concepts: ${error.message}`);
+            this.stats.errors.push(`Concept storage: ${error.message}`);
+            return false;
+        }
     }
 
     /**
@@ -677,19 +610,27 @@ LIMIT ${limit}`;
     }
 
     /**
-     * Main research process
+     * Main research process - extract concepts and research via Wikipedia
      */
     async research(questionLimit = 10) {
         try {
             this.stats.startTime = new Date();
-            logger.info('Starting BeerQA question research process');
+            logger.info('Starting BeerQA question concept extraction and research');
 
-            // Find questions (with or without concepts)
-            logger.info(`Finding up to ${questionLimit} question corpuscles...`);
-            const questions = await this.findQuestionCorpuscle(questionLimit);
+            // Find questions without concepts
+            logger.info(`Finding up to ${questionLimit} questions without concepts...`);
+            const questions = await this.findQuestionsWithoutConcepts(questionLimit);
             
             if (!Array.isArray(questions) || questions.length === 0) {
-                throw new Error('No questions found');
+                logger.info('No questions without concepts found. All questions already have concepts extracted.');
+                return {
+                    success: true,
+                    questionsProcessed: 0,
+                    totalQuestionsFound: 0,
+                    questions: [],
+                    researchResults: [],
+                    statistics: this.getStatistics()
+                };
             }
 
             logger.info(`Processing ${questions.length} questions`);
@@ -703,27 +644,26 @@ LIMIT ${limit}`;
                 logger.info(`\n--- Processing Question ${i + 1}/${questions.length} ---`);
                 logger.info(`Question: "${question.questionText.substring(0, 80)}..."`);
                 
-                let concepts = question.concepts;
-                let conceptsSource = question.conceptsSource;
-
-                // If no concepts found, use HyDE to extract them
+                // Extract concepts using MemoryManager
+                const concepts = await this.extractConcepts(question.questionText);
+                
                 if (concepts.length === 0) {
-                    logger.info('No existing concepts found, using HyDE to extract concepts...');
-                    concepts = await this.extractConceptsViaHyDE(question.questionText);
-                    conceptsSource = 'hyde';
-                    
-                    if (concepts.length === 0) {
-                        logger.warn(`Failed to extract concepts for question ${i + 1}, skipping...`);
-                        this.stats.errors.push(`Failed to extract concepts for question: ${question.questionText.substring(0, 50)}...`);
-                        continue;
-                    }
+                    logger.warn(`No concepts extracted for question ${i + 1}, skipping research...`);
+                    this.stats.errors.push(`No concepts extracted for question: ${question.questionText.substring(0, 50)}...`);
+                    continue;
                 }
 
-                logger.info(`Found ${concepts.length} concepts (source: ${conceptsSource})`);
+                logger.info(`Extracted ${concepts.length} concepts`);
 
-                // Update question object with final concepts
+                // Store concepts back to the corpuscle
+                const baseURI = this.options.beerqaGraphURI.endsWith('/') ? 
+                    this.options.beerqaGraphURI : this.options.beerqaGraphURI + '/';
+                
+                await this.storeConceptsToCorpuscle(question.questionId, baseURI, concepts);
+
+                // Update question object with extracted concepts
                 question.concepts = concepts;
-                question.conceptsSource = conceptsSource;
+                question.conceptsSource = 'memorymanager';
                 processedQuestions.push(question);
 
                 // Research concepts via Wikipedia for this question
@@ -734,23 +674,52 @@ LIMIT ${limit}`;
             }
 
             // Transform all Wikipedia units to corpuscles (once at the end)
-            logger.info('Transforming all Wikipedia units to corpuscles...');
-            const transformResult = await this.transformUnitsToCorpuscles();
+            if (allResearchResults.length > 0) {
+                logger.info('Transforming all Wikipedia units to corpuscles...');
+                const transformResult = await this.transformUnitsToCorpuscles();
+                
+                // Cleanup MemoryManager
+                if (this.memoryManager) {
+                    await this.memoryManager.dispose();
+                }
 
-            this.stats.endTime = new Date();
-            this.stats.processingTime = this.stats.endTime - this.stats.startTime;
+                this.stats.endTime = new Date();
+                this.stats.processingTime = this.stats.endTime - this.stats.startTime;
 
-            return {
-                success: true,
-                questionsProcessed: processedQuestions.length,
-                totalQuestionsFound: questions.length,
-                questions: processedQuestions,
-                researchResults: allResearchResults,
-                transformResult: transformResult,
-                statistics: this.getStatistics()
-            };
+                return {
+                    success: true,
+                    questionsProcessed: processedQuestions.length,
+                    totalQuestionsFound: questions.length,
+                    questions: processedQuestions,
+                    researchResults: allResearchResults,
+                    transformResult: transformResult,
+                    statistics: this.getStatistics()
+                };
+            } else {
+                // Cleanup MemoryManager
+                if (this.memoryManager) {
+                    await this.memoryManager.dispose();
+                }
+
+                this.stats.endTime = new Date();
+                this.stats.processingTime = this.stats.endTime - this.stats.startTime;
+
+                return {
+                    success: true,
+                    questionsProcessed: processedQuestions.length,
+                    totalQuestionsFound: questions.length,
+                    questions: processedQuestions,
+                    researchResults: allResearchResults,
+                    statistics: this.getStatistics()
+                };
+            }
 
         } catch (error) {
+            // Cleanup MemoryManager
+            if (this.memoryManager) {
+                await this.memoryManager.dispose();
+            }
+
             logger.error('Question research failed:', error);
             this.stats.errors.push(error.message);
             this.stats.endTime = new Date();

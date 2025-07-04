@@ -20,7 +20,7 @@ import dotenv from 'dotenv';
 import Config from '../../src/Config.js';
 import EmbeddingHandler from '../../src/handlers/EmbeddingHandler.js';
 import EmbeddingConnectorFactory from '../../src/connectors/EmbeddingConnectorFactory.js';
-import SPARQLHelper from '../beerqa/SPARQLHelper.js';
+import SPARQLHelper from '../../src/services/sparql/SPARQLHelper.js';
 
 // Load environment variables
 const __filename = fileURLToPath(import.meta.url);

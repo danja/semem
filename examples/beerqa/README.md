@@ -7,16 +7,13 @@
 ## Quick Start (Enhanced v2 Workflow)
 
 ```bash
-# Complete enhanced workflow
-cd examples/beerqa
-
 # Stage 1: Foundation Data
 node examples/beerqa/BeerTestQuestions.js        # Load 10 questions
 node examples/beerqa/AugmentQuestion.js          # Add embeddings + concepts  
 node examples/beerqa/QuestionResearch.js         # Research concepts → Wikipedia
+node examples/beerqa/HydeAugment.js
 
 # Stage 2: Formal Infrastructure  
-cd ragno
 node examples/beerqa/ragno/RelationshipBuilder.js     # Create formal relationships
 
 # Stage 3: Graph Analytics

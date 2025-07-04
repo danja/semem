@@ -26,7 +26,7 @@ import WikidataResearcher from '../../src/aux/wikidata/WikidataResearcher.js';
 import WikidataNavigator from '../../src/aux/wikidata/WikidataNavigator.js';
 
 // Import helper from examples (for SPARQL operations)
-import SPARQLHelper from '../beerqa/SPARQLHelper.js';
+import SPARQLHelper from '../../src/services/sparql/SPARQLHelper.js';
 
 // Load environment variables
 const __filename = fileURLToPath(import.meta.url);

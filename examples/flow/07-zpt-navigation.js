@@ -17,7 +17,7 @@ import dotenv from 'dotenv';
 
 // Import Flow components
 import Config from '../../src/Config.js';
-import SPARQLHelper from '../beerqa/SPARQLHelper.js';
+import SPARQLHelper from '../../src/services/sparql/SPARQLHelper.js';
 
 // Load environment variables
 const __filename = fileURLToPath(import.meta.url);

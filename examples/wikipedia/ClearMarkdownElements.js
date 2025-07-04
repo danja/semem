@@ -5,7 +5,7 @@
  */
 
 import chalk from 'chalk';
-import SPARQLHelper from '../beerqa/SPARQLHelper.js';
+import SPARQLHelper from '../../src/services/sparql/SPARQLHelper.js';
 
 async function clearMarkdownElements() {
     console.log(chalk.bold.blue('🧹 Clearing existing markdown TextElements...'));

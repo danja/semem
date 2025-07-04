@@ -18,7 +18,7 @@ import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import Config from '../../src/Config.js';
 import LLMHandler from '../../src/handlers/LLMHandler.js';
-import SPARQLHelper from './SPARQLHelper.js';
+import SPARQLHelper from '../../src/services/sparql/SPARQLHelper.js';
 import FeedbackAnalyzer from './FeedbackAnalyzer.js';
 import QuestionGenerator from './QuestionGenerator.js';
 import WikidataResearch from './WikidataResearch.js';

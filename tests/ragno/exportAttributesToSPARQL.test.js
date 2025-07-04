@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import exportAttributesToSPARQL from '../../src/ragno/exportAttributesToSPARQL.js';
 
 // Mock SPARQLHelpers
-vi.mock('../../src/utils/SPARQLHelpers.js', () => ({
+vi.mock('../../src/services/sparql/SPARQLHelper.js', () => ({
   default: {
     executeSPARQLUpdate: vi.fn(async (endpoint, query, auth) => {
       return { ok: true };
@@ -10,7 +10,7 @@ vi.mock('../../src/utils/SPARQLHelpers.js', () => ({
   }
 }));
 
-import SPARQLHelpers from '../../src/utils/SPARQLHelpers.js';
+import SPARQLHelpers from '../../src/services/sparql/SPARQLHelper.js';
 
 describe('exportAttributesToSPARQL', () => {
   it('calls SPARQLHelpers.executeSPARQLUpdate for each attribute', async () => {

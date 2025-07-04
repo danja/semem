@@ -12,7 +12,7 @@ import {
 import { initializeServices, getMemoryManager } from '../lib/initialization.js';
 import { SafeOperations } from '../lib/safe-operations.js';
 import Config from '../../src/Config.js';
-import SPARQLHelper from '../../examples/beerqa/SPARQLHelper.js';
+import SPARQLHelper from '../../src/services/sparql/SPARQLHelper.js';
 import EmbeddingHandler from '../../src/handlers/EmbeddingHandler.js';
 import EmbeddingConnectorFactory from '../../src/connectors/EmbeddingConnectorFactory.js';
 import LLMHandler from '../../src/handlers/LLMHandler.js';

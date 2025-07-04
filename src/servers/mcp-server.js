@@ -13,7 +13,7 @@ import path from 'path';
 import LLMHandler from '../handlers/LLMHandler.js';
 import EmbeddingHandler from '../handlers/EmbeddingHandler.js';
 import CacheManager from '../handlers/CacheManager.js';
-import SPARQLHelpers from '../utils/SPARQLHelpers.js';
+import SPARQLHelpers from '../services/sparql/SPARQLHelper.js';
 import SearchService from '../services/search/SearchService.js';
 import { augmentWithAttributes } from '../ragno/augmentWithAttributes.js';
 import { aggregateCommunities } from '../ragno/aggregateCommunities.js';

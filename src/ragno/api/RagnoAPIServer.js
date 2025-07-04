@@ -569,7 +569,7 @@ export class RagnoAPIServer {
     
     try {
       // Simple SPARQL query to test connection
-      const { SPARQLHelpers } = await import('../../utils/SPARQLHelpers.js')
+      const { SPARQLHelpers } = await import('../../services/sparql/SPARQLHelper.js')
       await SPARQLHelpers.executeSPARQLQuery(
         this.options.sparqlEndpoint,
         'SELECT (COUNT(*) as ?count) WHERE { ?s ?p ?o } LIMIT 1'

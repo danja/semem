@@ -7,7 +7,7 @@
 import chalk from 'chalk';
 import fetch from 'node-fetch';
 import HTML2MD from '../../src/aux/markup/HTML2MD.js';
-import SPARQLHelper from '../beerqa/SPARQLHelper.js';
+import SPARQLHelper from '../../src/services/sparql/SPARQLHelper.js';
 
 /**
  * Extract Wikipedia page ID from various Wikipedia URL formats

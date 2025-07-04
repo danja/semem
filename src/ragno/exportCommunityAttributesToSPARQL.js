@@ -1,5 +1,5 @@
 // Ragno: Export Community Attribute nodes to SPARQL triple store
-import SPARQLHelpers from '../utils/SPARQLHelpers.js';
+import SPARQLHelpers from '../services/sparql/SPARQLHelper.js';
 
 /**
  * exportCommunityAttributesToSPARQL(attributes, endpoint, auth)
