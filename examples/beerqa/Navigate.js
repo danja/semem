@@ -20,6 +20,7 @@ import CacheManager from '../../src/handlers/CacheManager.js';
 import { ZPTDataFactory } from '../../src/zpt/ontology/ZPTDataFactory.js';
 import { NamespaceUtils, getSPARQLPrefixes } from '../../src/zpt/ontology/ZPTNamespaces.js';
 import SPARQLHelper from './SPARQLHelper.js';
+import { getDefaultQueryService } from '../../src/services/sparql/index.js';
 
 // Configure logging
 logger.setLevel('info');
@@ -56,37 +57,11 @@ function displayConfiguration(config) {
 async function getNavigableQuestions(sparqlHelper, beerqaGraphURI) {
     console.log(chalk.bold.white('📋 Finding navigable questions...'));
     
-    const query = `
-PREFIX ragno: <http://purl.org/stuff/ragno/>
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-
-SELECT ?question ?questionText ?embedding ?conceptValue ?conceptType ?conceptConfidence
-WHERE {
-    GRAPH <${beerqaGraphURI}> {
-        ?question a ragno:Corpuscle ;
-                 rdfs:label ?questionText .
-        
-        # Must have embedding for similarity search (backward compatible)
-        ?question ragno:hasAttribute ?embeddingAttr .
-        {
-            ?embeddingAttr a ragno:VectorEmbedding ;
-                          ragno:attributeValue ?embedding .
-        } UNION {
-            ?embeddingAttr ragno:attributeType "vector-embedding" ;
-                          ragno:attributeValue ?embedding .
-        }
-        
-        # Must have concepts for semantic navigation
-        ?question ragno:hasAttribute ?attr .
-        ?attr ragno:attributeType "concept" ;
-              ragno:attributeValue ?conceptValue .
-        
-        OPTIONAL { ?attr ragno:attributeConfidence ?conceptConfidence }
-        OPTIONAL { ?attr ragno:attributeSubType ?conceptType }
-    }
-}
-ORDER BY ?question
-`;
+    const queryService = getDefaultQueryService();
+    const query = await queryService.getQuery('navigation-questions', {
+        graphURI: beerqaGraphURI,
+        additionalFilters: ''
+    });
 
     const result = await sparqlHelper.executeSelect(query);
     
@@ -148,74 +123,24 @@ ORDER BY ?question
 async function getNavigationCorpus(sparqlHelper, beerqaGraphURI, wikipediaGraphURI) {
     console.log(chalk.bold.white('📚 Loading navigation corpus...'));
     
+    const queryService = getDefaultQueryService();
+    
     const queries = [
         {
             name: 'BeerQA',
             graph: beerqaGraphURI,
-            query: `
-PREFIX ragno: <http://purl.org/stuff/ragno/>
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-
-SELECT ?corpuscle ?content ?embedding ?conceptValue ?conceptType
-WHERE {
-    GRAPH <${beerqaGraphURI}> {
-        ?corpuscle a ragno:Corpuscle ;
-                  rdfs:label ?content .
-        
-        OPTIONAL { 
-            ?corpuscle ragno:hasAttribute ?embeddingAttr .
-            {
-                ?embeddingAttr a ragno:VectorEmbedding ;
-                              ragno:attributeValue ?embedding .
-            } UNION {
-                ?embeddingAttr ragno:attributeType "vector-embedding" ;
-                              ragno:attributeValue ?embedding .
-            }
-        }
-        
-        OPTIONAL {
-            ?corpuscle ragno:hasAttribute ?attr .
-            ?attr ragno:attributeType "concept" ;
-                  ragno:attributeValue ?conceptValue .
-            OPTIONAL { ?attr ragno:attributeSubType ?conceptType }
-        }
-    }
-}
-ORDER BY ?corpuscle`
+            query: await queryService.getQuery('corpus-loading', {
+                graphURI: beerqaGraphURI,
+                additionalFilters: ''
+            })
         },
         {
             name: 'Wikipedia',
             graph: wikipediaGraphURI,
-            query: `
-PREFIX ragno: <http://purl.org/stuff/ragno/>
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-
-SELECT ?corpuscle ?content ?embedding ?conceptValue ?conceptType
-WHERE {
-    GRAPH <${wikipediaGraphURI}> {
-        ?corpuscle a ragno:Corpuscle ;
-                  rdfs:label ?content .
-        
-        OPTIONAL { 
-            ?corpuscle ragno:hasAttribute ?embeddingAttr .
-            {
-                ?embeddingAttr a ragno:VectorEmbedding ;
-                              ragno:attributeValue ?embedding .
-            } UNION {
-                ?embeddingAttr ragno:attributeType "vector-embedding" ;
-                              ragno:attributeValue ?embedding .
-            }
-        }
-        
-        OPTIONAL {
-            ?corpuscle ragno:hasAttribute ?attr .
-            ?attr ragno:attributeType "concept" ;
-                  ragno:attributeValue ?conceptValue .
-            OPTIONAL { ?attr ragno:attributeSubType ?conceptType }
-        }
-    }
-}
-ORDER BY ?corpuscle`
+            query: await queryService.getQuery('corpus-loading', {
+                graphURI: wikipediaGraphURI,
+                additionalFilters: ''
+            })
         }
     ];
     
@@ -426,14 +351,20 @@ async function createQuestionAnswerRelationship(sparqlHelper, beerqaGraphURI, qu
                             ragno:sourceCorpus "${corpuscle.source}" ;
                             ragno:created "${new Date().toISOString()}" .`;
     
-    const insertQuery = `
-PREFIX ragno: <http://purl.org/stuff/ragno/>
-
-INSERT DATA {
-    GRAPH <${beerqaGraphURI}> {
-        ${triples}
-    }
-}`;
+    const queryService = getDefaultQueryService();
+    const insertQuery = await queryService.getQuery('relationship-creation', {
+        graphURI: beerqaGraphURI,
+        relationshipURI: relationshipURI,
+        sourceEntity: questionURI,
+        targetEntity: corpuscle.uri,
+        relationshipType: relationshipType,
+        weight: weight,
+        description: description,
+        navigationScore: weight,
+        conceptMatches: conceptsText,
+        sourceCorpus: corpuscle.source,
+        timestamp: new Date().toISOString()
+    });
     
     const result = await sparqlHelper.executeUpdate(insertQuery);
     
@@ -608,8 +539,7 @@ async function navigateQuestions() {
     
     try {
         // Load Config.js for proper SPARQL configuration
-        const configPath = path.join(process.cwd(), 'config/config.json');
-        const configObj = new Config(configPath);
+        const configObj = new Config('./config/config.json');
         await configObj.init();
         const storageOptions = configObj.get('storage.options');
         

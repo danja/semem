@@ -1,0 +1,25 @@
+SELECT ?chunk ?content ?title ?embedding ?sourceUri ?size ?index
+WHERE {
+    GRAPH <${graphURI}> {
+        ?chunk a ragno:Element ;
+              ragno:content ?content ;
+              skos:prefLabel ?title ;
+              ragno:embedding ?embedding .
+        
+        # Extract metadata from stored chunks
+        OPTIONAL { ?chunk ragno:size ?size }
+        OPTIONAL { ?chunk ragno:index ?index }
+        OPTIONAL { ?chunk ragno:sourceUri ?sourceUri }
+        OPTIONAL { ?chunk ragno:sourceFile ?sourceFile }
+        
+        # Filter for document chunks (those with metadata indicating they're chunks)
+        FILTER(EXISTS { ?chunk ragno:index ?anyIndex })
+        
+        # Only chunks with non-empty embeddings (pre-computed during ingestion)
+        FILTER(?embedding != "[]")
+        
+        ${additionalFilters}
+    }
+}
+ORDER BY ?sourceUri ?index
+${limitClause}

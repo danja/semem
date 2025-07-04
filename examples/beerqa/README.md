@@ -11,31 +11,31 @@
 cd examples/beerqa
 
 # Stage 1: Foundation Data
-node BeerTestQuestions.js        # Load 100 questions
-node AugmentQuestion.js          # Add embeddings + concepts  
-node QuestionResearch.js         # Research concepts → Wikipedia
+node examples/beerqa/BeerTestQuestions.js        # Load 10 questions
+node examples/beerqa/AugmentQuestion.js          # Add embeddings + concepts  
+node examples/beerqa/QuestionResearch.js         # Research concepts → Wikipedia
 
 # Stage 2: Formal Infrastructure  
 cd ragno
-node RelationshipBuilder.js     # Create formal relationships
+node examples/beerqa/ragno/RelationshipBuilder.js     # Create formal relationships
 
 # Stage 3: Graph Analytics
-node CorpuscleRanking.js        # Rank by structural importance
-node CommunityAnalysis.js       # Detect communities
+node examples/beerqa/ragno/CorpuscleRanking.js        # Rank by structural importance
+node examples/beerqa/ragno/CommunityAnalysis.js       # Detect communities
 
 # Stage 4: Enhanced Results
 cd ..
-node GetResult.js               # Generate final answers
+node examples/beerqa/GetResult.js               # Generate final answers
 ```
 
 ## Legacy ETL Workflow
 
 ```bash
 # clean
-node ClearGraph.js 
+node examples/beerqa/ClearGraph.js 
 
 # load sample of BeerQA dataset into store
-node BeerETL.js
+node examples/beerqa/BeerETL.js
 
 # Enhanced workflow (see documentation)
 ```
@@ -110,7 +110,7 @@ const etl = new BeerETL({
 node examples/beerqa/BeerETLDemo.js
 ```
 
-The demo is configured to process only **2 batches of 10 corpuscles each** (20 records total) for quick testing. To process the full dataset, modify the configuration in `BeerETLDemo.js`:
+The demo is configured to process only **2 batches of 5 corpuscles each** (10 records total) for quick testing. To process the full dataset, modify the configuration in `BeerETLDemo.js`:
 
 ```javascript
 // Demo configuration (default)

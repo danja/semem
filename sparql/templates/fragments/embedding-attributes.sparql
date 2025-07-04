@@ -1,0 +1,9 @@
+# Embedding attribute pattern (backward compatible)
+?entity ragno:hasAttribute ?embeddingAttr .
+{
+    ?embeddingAttr a ragno:VectorEmbedding ;
+                  ragno:attributeValue ?embedding .
+} UNION {
+    ?embeddingAttr ragno:attributeType "vector-embedding" ;
+                  ragno:attributeValue ?embedding .
+}

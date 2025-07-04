@@ -1,0 +1,17 @@
+INSERT DATA {
+    GRAPH <${graphURI}> {
+        <${searchResultURI}> rdf:type ragno:Attribute .
+        <${searchResultURI}> rdfs:label "ppr-search-result" .
+        <${searchResultURI}> ragno:attributeType "ppr-search-result" .
+        <${searchResultURI}> ragno:attributeValue "${enhancedScore}" .
+        <${searchResultURI}> ragno:pprScore "${pprScore}" .
+        <${searchResultURI}> ragno:resultRank "${rank}"^^xsd:integer .
+        <${searchResultURI}> ragno:targetNode <${targetNodeURI}> .
+        <${searchResultURI}> dcterms:created "${timestamp}"^^xsd:dateTime .
+        <${searchResultURI}> prov:wasGeneratedBy "ppr-semantic-search" .
+        
+        # Link to question
+        <${questionURI}> ragno:hasAttribute <${searchResultURI}> .
+        <${searchResultURI}> ragno:describesCorpuscle <${questionURI}> .
+    }
+}

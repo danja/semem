@@ -1,0 +1,13 @@
+SELECT ?entity ?content ?title ?contentType
+WHERE {
+    GRAPH <${graphURI}> {
+        ?entity a ragno:Corpuscle ;
+               rdfs:label ?content .
+        
+        OPTIONAL { ?entity rdfs:label ?title }
+        OPTIONAL { ?entity ragno:content ?content }
+        OPTIONAL { ?entity ragno:contentType ?contentType }
+        
+        FILTER(?entity IN (${entityList}))
+    }
+}

@@ -1,0 +1,10 @@
+SELECT (COUNT(?chunk) as ?totalChunks)
+WHERE {
+    GRAPH <${graphURI}> {
+        ?chunk a ragno:Element ;
+              ragno:embedding ?embedding .
+        
+        FILTER(EXISTS { ?chunk ragno:index ?anyIndex })
+        FILTER(?embedding != "[]")
+    }
+}

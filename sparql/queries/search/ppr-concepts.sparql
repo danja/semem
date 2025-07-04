@@ -1,0 +1,19 @@
+SELECT ?question ?questionText ?concept ?conceptText ?relationshipType
+WHERE {
+    GRAPH <${graphURI}> {
+        ?question a ragno:Corpuscle ;
+                 rdfs:label ?questionText ;
+                 ragno:corpuscleType "test-question" .
+        
+        ${questionFilter}
+        
+        OPTIONAL {
+            ?relationship a ragno:Relationship ;
+                         ragno:hasSourceEntity ?question ;
+                         ragno:hasTargetEntity ?concept ;
+                         ragno:relationshipType ?relationshipType .
+            ?concept rdfs:label ?conceptText .
+        }
+    }
+}
+ORDER BY ?question ?concept

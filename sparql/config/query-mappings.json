@@ -1,0 +1,19 @@
+{
+  "questions-with-relationships": "retrieval/questions-with-relationships.sparql",
+  "entity-content-retrieval": "retrieval/entity-content-retrieval.sparql",
+  "navigation-questions": "retrieval/navigation-questions.sparql",
+  "corpus-loading": "retrieval/corpus-loading.sparql",
+  "processed-questions": "retrieval/processed-questions.sparql",
+  "document-chunks": "retrieval/document-chunks.sparql",
+  "enhanced-questions-wikidata": "retrieval/enhanced-questions-wikidata.sparql",
+  "test-questions": "retrieval/test-questions.sparql",
+  "insert-data": "management/insert-data.sparql",
+  "clear-graph": "management/clear-graph.sparql",
+  "relationship-creation": "management/relationship-creation.sparql",
+  "context-results-storage": "management/context-results-storage.sparql",
+  "ppr-concepts": "search/ppr-concepts.sparql",
+  "importance-rankings": "search/importance-rankings.sparql",
+  "ppr-results-export": "search/ppr-results-export.sparql",
+  "document-chunks-count": "search/document-chunks-count.sparql",
+  "knowledge-graph-construct": "visualization/knowledge-graph-construct.sparql"
+}

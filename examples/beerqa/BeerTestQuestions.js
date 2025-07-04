@@ -122,7 +122,7 @@ class BeerTestQuestionsETL extends BeerETL {
             includeContext: false,
             ...options
         };
-        
+
         super(testOptions);
     }
 
@@ -132,26 +132,26 @@ class BeerTestQuestionsETL extends BeerETL {
      */
     async transformToCorpuscles(data) {
         logger.info(`Transforming ${data.length} test questions to RDF corpuscles...`);
-        
+
         const corpuscles = [];
         this.stats.totalRecords = data.length;
 
         for (let i = 0; i < data.length; i++) {
             try {
                 const record = data[i];
-                
+
                 // Create corpuscle for test question
                 const corpuscle = await this.createTestQuestionCorpuscle(record, i);
                 corpuscles.push(corpuscle);
-                
+
                 this.stats.processedRecords++;
                 this.stats.generatedCorpuscles++;
-                
+
                 // Log progress periodically
                 if ((i + 1) % 100 === 0) {
                     logger.info(`Processed ${i + 1}/${data.length} test questions...`);
                 }
-                
+
             } catch (error) {
                 logger.error(`Error transforming record ${i}:`, error);
                 this.stats.errors.push(`Record ${i}: ${error.message}`);
@@ -169,7 +169,7 @@ class BeerTestQuestionsETL extends BeerETL {
         // Generate URIs using the same pattern as BeerETL
         const corpuscleURI = `${this.options.baseURI}corpuscle/${record.id}`;
         const questionURI = `${this.options.baseURI}question/${record.id}`;
-        
+
         // Create main corpuscle using the same structure as BeerETL
         const corpuscle = {
             uri: corpuscleURI,
@@ -188,9 +188,9 @@ class BeerTestQuestionsETL extends BeerETL {
 
         // Generate RDF triples using the same approach as BeerETL
         corpuscle.triples = this.generateTestQuestionTriples(corpuscle, record);
-        
+
         this.stats.generatedTriples += corpuscle.triples.length;
-        
+
         return corpuscle;
     }
 
@@ -200,29 +200,29 @@ class BeerTestQuestionsETL extends BeerETL {
     generateTestQuestionTriples(corpuscle, record) {
         const triples = [];
         const corpuscleURI = `<${corpuscle.uri}>`;
-        
+
         // Core corpuscle properties - using same format as BeerETL
         triples.push(`${corpuscleURI} rdf:type ragno:Corpuscle .`);
         triples.push(`${corpuscleURI} rdfs:label "${record.question.replace(/"/g, '\\"')}" .`);
         triples.push(`${corpuscleURI} ragno:content "${corpuscle.content.replace(/"/g, '\\"')}" .`);
         triples.push(`${corpuscleURI} ragno:corpuscleType "${corpuscle.type}" .`);
-        
+
         // Metadata properties
         triples.push(`${corpuscleURI} dcterms:identifier "${record.id}" .`);
         triples.push(`${corpuscleURI} dcterms:source "${corpuscle.metadata.source}" .`);
         triples.push(`${corpuscleURI} dcterms:created "${new Date().toISOString()}"^^<http://www.w3.org/2001/XMLSchema#dateTime> .`);
-        
+
         // Question-specific properties
         const questionURI = `<${corpuscle.metadata.questionURI}>`;
         triples.push(`${questionURI} rdf:type ragno:Question .`);
         triples.push(`${questionURI} rdfs:label "${record.question.replace(/"/g, '\\"')}" .`);
         triples.push(`${corpuscleURI} ragno:hasQuestion ${questionURI} .`);
-        
+
         // Quantitative properties (test questions have no answers/context)
         triples.push(`${corpuscleURI} ragno:answerCount "0"^^<http://www.w3.org/2001/XMLSchema#integer> .`);
         triples.push(`${corpuscleURI} ragno:contextCount "0"^^<http://www.w3.org/2001/XMLSchema#integer> .`);
         triples.push(`${corpuscleURI} ragno:contentLength "${record.question.length}"^^<http://www.w3.org/2001/XMLSchema#integer> .`);
-        
+
         return triples;
     }
 }
@@ -237,21 +237,21 @@ async function runBeerTestQuestionsETL() {
         // Initialize Config.js for proper configuration management
         const config = new Config('config/config.json');
         await config.init();
-        
+
         const storageOptions = config.get('storage.options');
-        
+
         // Initialize BeerTestQuestionsETL with configuration from Config.js
         const etl = new BeerTestQuestionsETL({
             dataPath: path.resolve('data/beerqa/beerqa_test_questions_v1.0.json'),
             sparqlEndpoint: storageOptions.update,
-            sparqlAuth: { 
-                user: storageOptions.user, 
-                password: storageOptions.password 
+            sparqlAuth: {
+                user: storageOptions.user,
+                password: storageOptions.password
             },
             graphURI: 'http://purl.org/stuff/beerqa/test',
             baseURI: 'http://purl.org/stuff/beerqa/test/',
-            batchSize: 25, // Smaller batches for demo
-            nBatches: 4, // Only process 4 batches (100 test questions total) for demo
+            batchSize: 5, // Smaller batches for demo
+            nBatches: 2, // Only process 4 batches (100 test questions total) for demo
             rateLimit: 300, // 300ms delay between SPARQL updates for demo
             includeContext: false // Test questions don't have context
         });
@@ -295,7 +295,7 @@ async function runBeerTestQuestionsETL() {
                     ORDER BY ?corpuscle
                     LIMIT 5
                 `;
-                
+
                 const response = await fetch(queryEndpoint, {
                     method: 'POST',
                     headers: {
@@ -305,11 +305,11 @@ async function runBeerTestQuestionsETL() {
                     },
                     body: testQuestionQuery
                 });
-                
+
                 if (!response.ok) {
                     throw new Error(`Query failed: ${response.status} ${response.statusText}`);
                 }
-                
+
                 const sampleResults = await response.json();
                 displaySampleResults(sampleResults);
             } catch (queryError) {

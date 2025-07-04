@@ -1,0 +1,23 @@
+INSERT DATA {
+    GRAPH <${graphURI}> {
+        # Context retrieval attributes
+        <${questionURI}> ragno:hasAttribute <${contextAttrURI}> .
+        <${contextAttrURI}> a ragno:Attribute ;
+            ragno:attributeType "context-retrieval" ;
+            ragno:chunksFound ${chunksFound} ;
+            dcterms:created "${timestamp}"^^xsd:dateTime .
+        
+        # Individual chunk references
+        ${chunkTriples}
+        
+        # Flow stage tracking
+        <${questionURI}> ragno:hasAttribute <${flowAttrURI}> .
+        <${flowAttrURI}> a ragno:Attribute ;
+            ragno:attributeType "flow-stage" ;
+            ragno:attributeValue "${flowStage}" ;
+            dcterms:created "${timestamp}"^^xsd:dateTime .
+            
+        # Update processing stage
+        <${questionURI}> ragno:processingStage "${processingStage}" .
+    }
+}

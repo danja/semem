@@ -1,0 +1,28 @@
+SELECT ?question ?questionText ?embedding ?conceptValue ?conceptType ?conceptConfidence
+WHERE {
+    GRAPH <${graphURI}> {
+        ?question a ragno:Corpuscle ;
+                 rdfs:label ?questionText .
+        
+        # Must have embedding for similarity search (backward compatible)
+        ?question ragno:hasAttribute ?embeddingAttr .
+        {
+            ?embeddingAttr a ragno:VectorEmbedding ;
+                          ragno:attributeValue ?embedding .
+        } UNION {
+            ?embeddingAttr ragno:attributeType "vector-embedding" ;
+                          ragno:attributeValue ?embedding .
+        }
+        
+        # Must have concepts for semantic navigation
+        ?question ragno:hasAttribute ?attr .
+        ?attr ragno:attributeType "concept" ;
+              ragno:attributeValue ?conceptValue .
+        
+        OPTIONAL { ?attr ragno:attributeConfidence ?conceptConfidence }
+        OPTIONAL { ?attr ragno:attributeSubType ?conceptType }
+        
+        ${additionalFilters}
+    }
+}
+ORDER BY ?question

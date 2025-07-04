@@ -1,0 +1,14 @@
+INSERT DATA {
+    GRAPH <${graphURI}> {
+        <${relationshipURI}> a ragno:Relationship ;
+                            ragno:hasSourceEntity <${sourceEntity}> ;
+                            ragno:hasTargetEntity <${targetEntity}> ;
+                            ragno:relationshipType "${relationshipType}" ;
+                            ragno:weight ${weight} ;
+                            ragno:description "${description}" ;
+                            ragno:navigationScore ${navigationScore} ;
+                            ragno:conceptMatches "${conceptMatches}" ;
+                            ragno:sourceCorpus "${sourceCorpus}" ;
+                            ragno:created "${timestamp}" .
+    }
+}

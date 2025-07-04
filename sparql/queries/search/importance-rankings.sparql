@@ -1,0 +1,9 @@
+SELECT ?corpuscle ?compositeScore ?rank
+WHERE {
+    GRAPH <${graphURI}> {
+        ?corpuscle ragno:hasAttribute ?ranking .
+        ?ranking ragno:attributeType "corpuscle-importance-ranking" ;
+                ragno:attributeValue ?compositeScore ;
+                ragno:rank ?rank .
+    }
+}

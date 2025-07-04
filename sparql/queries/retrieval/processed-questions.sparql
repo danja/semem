@@ -1,0 +1,25 @@
+SELECT ?question ?label ?content ?embedding
+WHERE {
+    GRAPH <${graphURI}> {
+        ?question a ragno:Corpuscle ;
+                 ragno:corpuscleType "question" ;
+                 rdfs:label ?label ;
+                 ragno:content ?content ;
+                 ragno:processingStage "processed" .
+        
+        # Get embedding
+        ?question ragno:hasAttribute ?embeddingAttr .
+        ?embeddingAttr ragno:attributeType "embedding" ;
+                      ragno:attributeValue ?embedding .
+        
+        # Only get questions that haven't had context retrieved yet
+        MINUS {
+            ?question ragno:hasAttribute ?attr .
+            ?attr ragno:attributeType "flow-stage" ;
+                 ragno:attributeValue "03-retrieve-context" .
+        }
+        
+        ${additionalFilters}
+    }
+}
+${limitClause}

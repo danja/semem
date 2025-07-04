@@ -1,0 +1,28 @@
+SELECT ?corpuscle ?content ?embedding ?conceptValue ?conceptType
+WHERE {
+    GRAPH <${graphURI}> {
+        ?corpuscle a ragno:Corpuscle ;
+                  rdfs:label ?content .
+        
+        OPTIONAL { 
+            ?corpuscle ragno:hasAttribute ?embeddingAttr .
+            {
+                ?embeddingAttr a ragno:VectorEmbedding ;
+                              ragno:attributeValue ?embedding .
+            } UNION {
+                ?embeddingAttr ragno:attributeType "vector-embedding" ;
+                              ragno:attributeValue ?embedding .
+            }
+        }
+        
+        OPTIONAL {
+            ?corpuscle ragno:hasAttribute ?attr .
+            ?attr ragno:attributeType "concept" ;
+                  ragno:attributeValue ?conceptValue .
+            OPTIONAL { ?attr ragno:attributeSubType ?conceptType }
+        }
+        
+        ${additionalFilters}
+    }
+}
+ORDER BY ?corpuscle

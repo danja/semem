@@ -1,0 +1,12 @@
+SELECT ?corpuscle ?questionText ?source ?questionId ?question
+FROM <${graphURI}>
+WHERE {
+    ?corpuscle a ragno:Corpuscle ;
+               rdfs:label ?questionText ;
+               ragno:corpuscleType "test-question" ;
+               dcterms:source ?source ;
+               dcterms:identifier ?questionId ;
+               ragno:hasQuestion ?question .
+}
+ORDER BY ?corpuscle
+${limitClause}

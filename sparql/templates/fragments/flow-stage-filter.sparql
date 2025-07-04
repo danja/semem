@@ -1,0 +1,6 @@
+# Flow stage exclusion filter
+MINUS {
+    ?entity ragno:hasAttribute ?attr .
+    ?attr ragno:attributeType "flow-stage" ;
+         ragno:attributeValue "${excludeStage}" .
+}

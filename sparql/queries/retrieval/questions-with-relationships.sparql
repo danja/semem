@@ -1,0 +1,18 @@
+SELECT ?question ?questionText ?relationship ?targetEntity ?relationshipType ?weight ?sourceCorpus
+WHERE {
+    GRAPH <${graphURI}> {
+        ?question a ragno:Corpuscle ;
+                 rdfs:label ?questionText .
+        
+        ?relationship a ragno:Relationship ;
+                     ragno:hasSourceEntity ?question ;
+                     ragno:hasTargetEntity ?targetEntity ;
+                     ragno:relationshipType ?relationshipType ;
+                     ragno:weight ?weight .
+        
+        OPTIONAL { ?relationship ragno:sourceCorpus ?sourceCorpus }
+        
+        FILTER(?question != ?targetEntity)
+    }
+}
+ORDER BY ?question DESC(?weight)

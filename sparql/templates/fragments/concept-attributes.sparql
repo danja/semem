@@ -1,0 +1,6 @@
+# Concept attribute pattern
+?entity ragno:hasAttribute ?attr .
+?attr ragno:attributeType "concept" ;
+      ragno:attributeValue ?conceptValue .
+OPTIONAL { ?attr ragno:attributeConfidence ?conceptConfidence }
+OPTIONAL { ?attr ragno:attributeSubType ?conceptType }

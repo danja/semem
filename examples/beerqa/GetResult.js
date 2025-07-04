@@ -23,6 +23,7 @@ import OllamaConnector from '../../src/connectors/OllamaConnector.js';
 import ClaudeConnector from '../../src/connectors/ClaudeConnector.js';
 import MistralConnector from '../../src/connectors/MistralConnector.js';
 import SPARQLHelper from './SPARQLHelper.js';
+import { getDefaultQueryService } from '../../src/services/sparql/index.js';
 
 // Configure logging
 logger.setLevel('info');
@@ -59,30 +60,10 @@ function displayConfiguration(config) {
 async function getQuestionsWithRelationships(sparqlHelper, beerqaGraphURI) {
     console.log(chalk.bold.white('📋 Finding questions with relationships...'));
 
-    const query = `
-PREFIX ragno: <http://purl.org/stuff/ragno/>
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-
-SELECT ?question ?questionText ?relationship ?targetEntity ?relationshipType ?weight ?sourceCorpus
-WHERE {
-    GRAPH <${beerqaGraphURI}> {
-        ?question a ragno:Corpuscle ;
-                 rdfs:label ?questionText .
-        
-        ?relationship a ragno:Relationship ;
-                     ragno:hasSourceEntity ?question ;
-                     ragno:hasTargetEntity ?targetEntity ;
-                     ragno:relationshipType ?relationshipType ;
-                     ragno:weight ?weight .
-        
-        OPTIONAL { ?relationship ragno:sourceCorpus ?sourceCorpus }
-        
-        # Exclude self-references for cleaner context
-        FILTER(?question != ?targetEntity)
-    }
-}
-ORDER BY ?question DESC(?weight)
-`;
+    const queryService = getDefaultQueryService();
+    const query = await queryService.getQuery('questions-with-relationships', {
+        graphURI: beerqaGraphURI
+    });
 
     const result = await sparqlHelper.executeSelect(query);
 
@@ -135,19 +116,11 @@ async function getRelatedEntityContent(sparqlHelper, beerqaGraphURI, wikipediaGr
     const entityContent = new Map();
 
     // Query BeerQA content
-    const beerqaQuery = `
-PREFIX ragno: <http://purl.org/stuff/ragno/>
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-
-SELECT ?entity ?content
-WHERE {
-    GRAPH <${beerqaGraphURI}> {
-        ?entity a ragno:Corpuscle ;
-               rdfs:label ?content .
-        
-        FILTER(?entity IN (${entityURIs.map(uri => `<${uri}>`).join(', ')}))
-    }
-}`;
+    const queryService = getDefaultQueryService();
+    const beerqaQuery = await queryService.getQuery('entity-content-retrieval', {
+        graphURI: beerqaGraphURI,
+        entityList: queryService.formatEntityList(entityURIs)
+    });
 
     const beerqaResult = await sparqlHelper.executeSelect(beerqaQuery);
 
@@ -162,23 +135,10 @@ WHERE {
     }
 
     // Query Wikipedia content
-    const wikipediaQuery = `
-PREFIX ragno: <http://purl.org/stuff/ragno/>
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-
-SELECT ?entity ?title ?content ?contentType
-WHERE {
-    GRAPH <${wikipediaGraphURI}> {
-        ?entity a ragno:Corpuscle ;
-               rdfs:label ?title .
-        
-        OPTIONAL {
-            ?entity ragno:content ?content .
-        }
-        
-        FILTER(?entity IN (${entityURIs.map(uri => `<${uri}>`).join(', ')}))
-    }
-}`;
+    const wikipediaQuery = await queryService.getQuery('entity-content-retrieval', {
+        graphURI: wikipediaGraphURI,
+        entityList: queryService.formatEntityList(entityURIs)
+    });
 
     const wikipediaResult = await sparqlHelper.executeSelect(wikipediaQuery);
 
@@ -522,8 +482,7 @@ async function getResults() {
 
     try {
         // Initialize configuration using the modern pattern (from api-server.js)
-        const configPath = path.join(process.cwd(), 'config/config.json');
-        const config = new Config(configPath);
+        const config = new Config('./config/config.json');
         await config.init();
 
         // Runtime configuration using Config.js
