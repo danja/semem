@@ -120,53 +120,75 @@ async function getRelatedEntityContent(sparqlHelper, beerqaGraphURI, wikipediaGr
 
     const entityContent = new Map();
 
-    // Query BeerQA content
+    // Separate entities by graph based on URI patterns
+    const beerqaEntities = entityURIs.filter(uri => uri.includes('/beerqa/'));
+    const wikipediaEntities = entityURIs.filter(uri => uri.includes('/wikipedia/'));
+
+    logger.debug(chalk.magenta(`🔍 DEBUG: Entity separation - BeerQA: ${beerqaEntities.length}, Wikipedia: ${wikipediaEntities.length}`));
+
     const queryService = getDefaultQueryService();
-    const beerqaQuery = await queryService.getQuery('entity-content-retrieval', {
-        graphURI: beerqaGraphURI,
-        entityList: queryService.formatEntityList(entityURIs)
-    });
 
-    const beerqaResult = await sparqlHelper.executeSelect(beerqaQuery);
+    // Query BeerQA content for BeerQA entities
+    if (beerqaEntities.length > 0) {
+        logger.debug(chalk.magenta(`📋 Querying ${beerqaEntities.length} BeerQA entities from graph: ${beerqaGraphURI}`));
+        const beerqaQuery = await queryService.getQuery('entity-content-retrieval', {
+            graphURI: beerqaGraphURI,
+            entityList: queryService.formatEntityList(beerqaEntities)
+        });
 
-    if (beerqaResult.success) {
-        for (const binding of beerqaResult.data.results.bindings) {
-            entityContent.set(binding.entity.value, {
-                content: binding.content.value,
-                source: 'BeerQA',
-                type: 'question'
-            });
-        }
-    }
+        const beerqaResult = await sparqlHelper.executeSelect(beerqaQuery);
 
-    // Query Wikipedia content
-    const wikipediaQuery = await queryService.getQuery('entity-content-retrieval', {
-        graphURI: wikipediaGraphURI,
-        entityList: queryService.formatEntityList(entityURIs)
-    });
-
-    const wikipediaResult = await sparqlHelper.executeSelect(wikipediaQuery);
-
-    if (wikipediaResult.success) {
-        for (const binding of wikipediaResult.data.results.bindings) {
-            const existing = entityContent.get(binding.entity.value);
-
-            if (!existing) {
-                // Use markdown content if available, otherwise title
-                const content = binding.content?.value || binding.title.value;
-                const contentType = binding.contentType?.value || 'title';
-
+        if (beerqaResult.success) {
+            for (const binding of beerqaResult.data.results.bindings) {
+                const content = binding.content?.value || binding.title?.value || 'No content available';
                 entityContent.set(binding.entity.value, {
                     content: content,
-                    source: 'Wikipedia',
-                    type: contentType,
-                    title: binding.title.value
+                    source: 'BeerQA',
+                    type: 'question',
+                    title: binding.title?.value || 'BeerQA Entity'
                 });
+                logger.debug(chalk.magenta(`  ✓ BeerQA: ${binding.entity.value.split('/').pop()} -> "${content.substring(0, 100)}..."`));
             }
+        } else {
+            logger.debug(chalk.red(`  ❌ BeerQA query failed: ${beerqaResult.error}`));
         }
     }
 
-    console.log(chalk.gray(`     ✓ Retrieved content for ${entityContent.size} entities`));
+    // Query Wikipedia content for Wikipedia entities
+    if (wikipediaEntities.length > 0) {
+        logger.debug(chalk.magenta(`📋 Querying ${wikipediaEntities.length} Wikipedia entities from graph: ${wikipediaGraphURI}`));
+        const wikipediaQuery = await queryService.getQuery('entity-content-retrieval', {
+            graphURI: wikipediaGraphURI,
+            entityList: queryService.formatEntityList(wikipediaEntities)
+        });
+
+        const wikipediaResult = await sparqlHelper.executeSelect(wikipediaQuery);
+
+        if (wikipediaResult.success) {
+            for (const binding of wikipediaResult.data.results.bindings) {
+                // Use content if available, otherwise title, otherwise label
+                const fullContent = binding.content?.value || binding.title?.value || binding.label?.value || 'No content available';
+                const contentType = binding.contentType?.value || 'text';
+                const title = binding.title?.value || binding.label?.value || 'Unknown Title';
+
+                // Debug: Log what fields we're getting from SPARQL
+                logger.debug(chalk.cyan(`    SPARQL fields: content=${!!binding.content?.value}, title=${!!binding.title?.value}, label=${!!binding.label?.value}`));
+                logger.debug(chalk.cyan(`    Content preview: "${fullContent.substring(0, 100)}..."`));
+
+                entityContent.set(binding.entity.value, {
+                    content: fullContent,
+                    source: 'Wikipedia',
+                    type: contentType,
+                    title: title
+                });
+                logger.debug(chalk.magenta(`  ✓ Wikipedia: ${title} -> "${fullContent.substring(0, 100)}..."`));
+            }
+        } else {
+            logger.debug(chalk.red(`  ❌ Wikipedia query failed: ${wikipediaResult.error}`));
+        }
+    }
+
+    console.log(chalk.gray(`     ✓ Retrieved content for ${entityContent.size}/${entityURIs.length} entities (BeerQA: ${beerqaEntities.length}, Wikipedia: ${wikipediaEntities.length})`));
 
     return entityContent;
 }

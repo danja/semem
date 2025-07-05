@@ -1,11 +1,15 @@
 SELECT ?entity ?content ?title ?contentType
 WHERE {
     GRAPH <${graphURI}> {
-        ?entity a ragno:Corpuscle ;
-               rdfs:label ?content .
+        ?entity a ragno:Corpuscle .
         
+        # Get the title from label
         OPTIONAL { ?entity rdfs:label ?title }
+        
+        # Get the actual content (this should be the full text)
         OPTIONAL { ?entity ragno:content ?content }
+        
+        # Get content type if available
         OPTIONAL { ?entity ragno:contentType ?contentType }
         
         FILTER(?entity IN (${entityList}))
