@@ -18,7 +18,7 @@ node examples/beerqa/QuestionResearch.js         # Research concepts → Wikiped
 node examples/beerqa/HydeAugment.js             # Augment with hypotheticals - doesn't get triggered on questions 
 
 # Stage 2: Formal Infrastructure  
-node examples/beerqa/ragno/RelationshipBuilder.js     # Create formal relationships
+node examples/beerqa/ragno/RelationshipBuilder.js     # Create formal ragno:Relationship infrastructure
 
 # Stage 3: Graph Analytics
 node examples/beerqa/ragno/CorpuscleRanking.js        # Rank by structural importance
@@ -28,6 +28,53 @@ node examples/beerqa/ragno/CommunityAnalysis.js       # Detect communities - not
 cd ..
 node examples/beerqa/GetResult.js               # Generate final answers
 ```
+
+## Stage 2: Formal Infrastructure Details
+
+The **RelationshipBuilder** creates semantic bridges between BeerQA questions and Wikipedia content through 5 phases:
+
+### Phase 1: Data Loading
+- Loads questions from BeerQA graph (limit: 5 questions)
+- Loads Wikipedia corpuscles (limit: 100 corpuscles)  
+- Uses config limits to control processing scope
+
+### Phase 2: Similarity-Based Relationships
+- **Method**: Embedding cosine similarity using existing embeddings
+- **Input**: Pre-computed embeddings from AugmentQuestion.js
+- **Algorithm**: Cosine similarity between question & Wikipedia embedding vectors
+- **Output**: `ragno:Relationship` nodes with `embedding-similarity` type
+
+### Phase 3: Entity-Based Relationships  
+- **Method**: SPARQL pattern matching + embedding validation
+- **Input**: `ragno:hasAttribute` patterns from both graphs
+- **Algorithm**: Finds shared entities via SPARQL, validates with embedding similarity (0.7 threshold)
+- **Output**: `ragno:Relationship` nodes with `shared-entity` type
+
+### Phase 4: Semantic Relationships
+- **Method**: LLM concept extraction + Jaccard similarity
+- **Input**: Text content from questions and Wikipedia
+- **Algorithm**: Extract concepts using LLM, calculate concept overlap using Jaccard index
+- **Output**: `ragno:Relationship` nodes with `concept-similarity` type
+
+### Phase 5: Community Bridge Relationships
+- **Method**: Embedding clustering for cross-topic connections
+- **Input**: All content embeddings generated on-demand
+- **Algorithm**: Finds moderate similarity (0.3-0.6) indicating cross-topic relevance
+- **Output**: `ragno:Relationship` nodes with `cross-topic-bridge` type
+
+### Generated Relationship Structure
+Each relationship creates RDF triples:
+```turtle
+<relationshipURI> a ragno:Relationship ;
+    ragno:hasSourceEntity <questionURI> ;
+    ragno:hasTargetEntity <wikipediaURI> ;
+    ragno:relationshipType "similarity-type" ;
+    ragno:weight "0.85" ;
+    ragno:confidence "0.85" ;
+    ragno:method "algorithm-used" .
+```
+
+This formal infrastructure enables intelligent navigation and context-aware question answering in later stages.
 
 ## Legacy ETL Workflow
 

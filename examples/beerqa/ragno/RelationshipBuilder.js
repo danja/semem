@@ -224,9 +224,9 @@ class RelationshipBuilder {
                 await this.createSimilarityRelationships(questionData, wikipediaData);
             }
 
-            // Phase 3: Create entity-based relationships
+            // Phase 3: Create entity-based relationships using NER
             if (this.options.enableEntityRelationships) {
-                console.log(chalk.white('🏷️ Phase 3: Creating entity-based relationships...'));
+                console.log(chalk.white('🏷️ Phase 3: Creating entity-based relationships using named entities...'));
                 await this.createEntityBasedRelationships(questionData, wikipediaData);
             }
 
@@ -297,7 +297,9 @@ WHERE {
                  ragno:corpuscleType "test-question" .
         
         OPTIONAL {
-            ?question ragno:hasEmbedding ?embedding .
+            ?question ragno:hasAttribute ?embeddingAttr .
+            ?embeddingAttr a ragno:VectorEmbedding ;
+                          ragno:attributeValue ?embedding .
         }
     }
 }
@@ -344,7 +346,11 @@ WHERE {
                   rdfs:label ?corpuscleText .
         
         OPTIONAL { ?corpuscle ragno:corpuscleType ?corpuscleType }
-        OPTIONAL { ?corpuscle ragno:hasEmbedding ?embedding }
+        OPTIONAL { 
+            ?corpuscle ragno:hasAttribute ?embeddingAttr .
+            ?embeddingAttr a ragno:VectorEmbedding ;
+                          ragno:attributeValue ?embedding .
+        }
         
         # Filter out test questions - we want Wikipedia content only
         FILTER(!BOUND(?corpuscleType) || ?corpuscleType != "test-question")
@@ -393,7 +399,7 @@ LIMIT ${totalWikipediaLimit}
                 let similarity = 0;
                 let method = 'text-similarity';
 
-                // Try embedding-based similarity first
+                // Use embedding-based similarity only
                 if (question.embedding && wikipediaCorpuscle.embedding) {
                     similarity = this.calculateCosineSimilarity(
                         question.embedding, 
@@ -402,13 +408,8 @@ LIMIT ${totalWikipediaLimit}
                     method = 'embedding-similarity';
                     embeddingBased++;
                 } else {
-                    // Fallback to text-based similarity
-                    similarity = this.calculateTextSimilarity(
-                        question.questionText,
-                        wikipediaCorpuscle.corpuscleText
-                    );
-                    method = 'text-similarity';
-                    textBased++;
+                    // Skip if no embeddings available - no fallback
+                    continue;
                 }
 
                 if (similarity >= this.options.similarityThreshold) {
@@ -454,7 +455,7 @@ LIMIT ${totalWikipediaLimit}
         await this.exportRelationships(relationships, 'similarity');
         this.stats.similarityRelationshipsCreated = created;
         
-        console.log(chalk.gray(`   ✓ Created ${created} similarity relationships (${embeddingBased} embedding-based, ${textBased} text-based)`));
+        console.log(chalk.gray(`   ✓ Similarity relationships complete: Created ${created} embedding-based relationships`));
     }
 
     /**
@@ -503,22 +504,16 @@ LIMIT ${totalWikipediaLimit}
     }
 
     /**
-     * Create entity-based relationships using named entity recognition
-     * @param {Array} questionData - Question data
+     * Create entity-based relationships using SPARQL pattern matching
+     * @param {Array} questionData - Question data  
      * @param {Array} wikipediaData - Wikipedia data
      */
     async createEntityBasedRelationships(questionData, wikipediaData) {
-        console.log(chalk.gray('   Creating embedding-based semantic relationships...'));
-        console.log(chalk.gray(`   Limits: ${this.options.maxQuestionsToProcess} questions, ${this.options.maxWikipediaCorpusclesPerQuestion} Wikipedia/question, ${this.options.maxTriplesToGenerate} total triples`));
+        console.log(chalk.gray('   Creating entity-based relationships using SPARQL pattern matching...'));
+        console.log(chalk.gray(`   Limits: ${this.options.maxQuestionsToProcess} questions, ${this.options.maxTriplesToGenerate} total triples`));
         
         const relationships = [];
         let created = 0;
-
-        // Initialize embedding handler for semantic similarity
-        if (!this.embeddingHandler) {
-            console.log(chalk.yellow('   ⚠️ No embedding handler available, skipping semantic relationships'));
-            return relationships;
-        }
 
         for (const question of questionData) {
             console.log(chalk.gray(`   Processing question: ${question.questionText.substring(0, 50)}...`));
@@ -530,65 +525,159 @@ LIMIT ${totalWikipediaLimit}
             }
             
             try {
-                // Generate embedding for question
-                const questionEmbedding = await this.embeddingHandler.generateEmbedding(question.questionText);
+                // Find shared entities using SPARQL pattern matching
+                const sharedEntities = await this.findSharedEntitiesSPARQL(question, wikipediaData);
                 
-                // Limit Wikipedia corpuscles per question
-                const limitedWikipediaData = wikipediaData.slice(0, this.options.maxWikipediaCorpusclesPerQuestion);
-                let questionRelationships = 0;
-                
-                for (const wikipediaCorpuscle of limitedWikipediaData) {
-                    // Check limits
-                    if (created >= this.options.maxTriplesToGenerate) {
-                        console.log(chalk.yellow(`   ⚠️ Reached maximum triples limit (${this.options.maxTriplesToGenerate}), stopping`));
-                        break;
-                    }
+                for (const entityMatch of sharedEntities) {
+                    if (created >= this.options.maxTriplesToGenerate) break;
                     
-                    try {
-                        // Generate embedding for Wikipedia content
-                        const contentEmbedding = await this.embeddingHandler.generateEmbedding(
-                            wikipediaCorpuscle.corpuscleText.substring(0, 500) // Truncate for performance
-                        );
-                        
-                        // Calculate semantic similarity using cosine similarity
-                        const semanticSimilarity = this.calculateCosineSimilarity(questionEmbedding, contentEmbedding);
-                        
-                        // Only create relationships for semantically relevant content
-                        if (semanticSimilarity >= this.options.semanticSimilarityThreshold) {
-                            const relationshipURI = `${question.questionURI}_semantic_${wikipediaCorpuscle.corpuscleURI.split('/').pop()}`;
-                            
-                            relationships.push({
-                                relationshipURI: relationshipURI,
-                                sourceURI: question.questionURI,
-                                targetURI: wikipediaCorpuscle.corpuscleURI,
-                                relationshipType: 'semantic-similarity',
-                                weight: semanticSimilarity,
-                                confidence: semanticSimilarity,
-                                method: 'embedding-cosine-similarity',
-                                metadata: {
-                                    semanticSimilarity: semanticSimilarity,
-                                    questionText: question.questionText.substring(0, 100),
-                                    wikipediaTitle: wikipediaCorpuscle.title || 'Unknown'
-                                }
-                            });
-                            
-                            created++;
-                            questionRelationships++;
+                    const relationshipURI = `${question.questionURI}_entity_${entityMatch.wikipediaURI.split('/').pop()}`;
+                    
+                    relationships.push({
+                        relationshipURI: relationshipURI,
+                        sourceURI: question.questionURI,
+                        targetURI: entityMatch.wikipediaURI,
+                        relationshipType: 'shared-entity',
+                        weight: entityMatch.entityCount / 10.0, // Normalize by number of shared entities
+                        confidence: entityMatch.entityCount / 10.0,
+                        method: 'sparql-entity-matching',
+                        metadata: {
+                            sharedEntities: entityMatch.entities,
+                            entityCount: entityMatch.entityCount,
+                            questionText: question.questionText.substring(0, 100)
                         }
-                    } catch (error) {
-                        console.log(chalk.yellow(`   ⚠️ Failed to process Wikipedia content: ${error.message}`));
-                    }
+                    });
+                    
+                    created++;
                 }
                 
-                console.log(chalk.gray(`   ✓ Question processed: ${questionRelationships} relationships created (${created} total)`));
+                console.log(chalk.gray(`   ✓ Question processed: ${sharedEntities.length} entity relationships`));
                 
             } catch (error) {
                 console.log(chalk.yellow(`   ⚠️ Failed to process question "${question.questionText}": ${error.message}`));
             }
         }
 
-        console.log(chalk.green(`   ✓ Created ${created} semantic relationships`));
+        await this.exportRelationships(relationships, 'entity');
+        this.stats.entityRelationshipsCreated = created;
+        
+        console.log(chalk.green(`   ✓ Entity relationships complete: Created ${created} SPARQL pattern-matched relationships`));
         return relationships;
+    }
+
+    /**
+     * Find shared entities between question and Wikipedia corpuscles using SPARQL pattern matching
+     * @param {Object} question - Question data
+     * @param {Array} wikipediaData - Wikipedia data 
+     * @returns {Array} Shared entity matches
+     */
+    async findSharedEntitiesSPARQL(question, wikipediaData) {
+        try {
+            // Query for entities/attributes associated with the question
+            const questionEntitiesQuery = `
+PREFIX ragno: <http://purl.org/stuff/ragno/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+SELECT ?entity ?entityLabel ?attributeValue
+WHERE {
+    GRAPH <${this.options.beerqaGraphURI}> {
+        <${question.questionURI}> ragno:hasAttribute ?attr .
+        ?attr ragno:attributeValue ?attributeValue .
+        OPTIONAL {
+            ?attr ragno:describesEntity ?entity .
+            ?entity rdfs:label ?entityLabel .
+        }
+    }
+}`;
+
+            const questionResult = await this.sparqlHelper.executeSelect(questionEntitiesQuery);
+            if (!questionResult.success || !questionResult.data.results.bindings.length) {
+                return [];
+            }
+
+            const questionEntities = questionResult.data.results.bindings.map(binding => ({
+                entity: binding.entity?.value,
+                label: binding.entityLabel?.value,
+                value: binding.attributeValue?.value
+            }));
+
+            const sharedMatches = [];
+
+            // For each Wikipedia corpuscle, find shared entities using SPARQL pattern matching
+            for (const wikipedia of wikipediaData.slice(0, this.options.maxWikipediaCorpusclesPerQuestion)) {
+                const wikipediaEntitiesQuery = `
+PREFIX ragno: <http://purl.org/stuff/ragno/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+SELECT ?entity ?entityLabel ?attributeValue
+WHERE {
+    GRAPH <${this.options.wikipediaGraphURI}> {
+        <${wikipedia.corpuscleURI}> ragno:hasAttribute ?attr .
+        ?attr ragno:attributeValue ?attributeValue .
+        OPTIONAL {
+            ?attr ragno:describesEntity ?entity .
+            ?entity rdfs:label ?entityLabel .
+        }
+    }
+}`;
+
+                const wikipediaResult = await this.sparqlHelper.executeSelect(wikipediaEntitiesQuery);
+                if (!wikipediaResult.success) continue;
+
+                const wikipediaEntities = wikipediaResult.data.results.bindings.map(binding => ({
+                    entity: binding.entity?.value,
+                    label: binding.entityLabel?.value,
+                    value: binding.attributeValue?.value
+                }));
+
+                // Find shared entities using embedding similarity
+                const sharedEntities = [];
+                for (const qEntity of questionEntities) {
+                    for (const wEntity of wikipediaEntities) {
+                        // Use embedding similarity for entity matching if available
+                        if (this.embeddingHandler && qEntity.value && wEntity.value) {
+                            try {
+                                // Truncate entity values to prevent HTTP 413 errors
+                                const qText = String(qEntity.value).substring(0, 200); // Max 200 chars
+                                const wText = String(wEntity.value).substring(0, 200); // Max 200 chars
+                                
+                                if (qText.length < 3 || wText.length < 3) continue; // Skip very short text
+                                
+                                const qEmbedding = await this.embeddingHandler.generateEmbedding(qText);
+                                const wEmbedding = await this.embeddingHandler.generateEmbedding(wText);
+                                const similarity = this.calculateCosineSimilarity(qEmbedding, wEmbedding);
+                                
+                                if (similarity >= 0.7) { // High similarity threshold for entity matching
+                                    sharedEntities.push({
+                                        questionEntity: qEntity,
+                                        wikipediaEntity: wEntity,
+                                        similarity: similarity
+                                    });
+                                }
+                            } catch (error) {
+                                // Skip embedding comparison if it fails
+                                console.log(chalk.yellow(`   ⚠️ Entity embedding failed: ${error.message.substring(0, 100)}`));
+                                continue;
+                            }
+                        }
+                    }
+                }
+
+                if (sharedEntities.length > 0) {
+                    sharedMatches.push({
+                        wikipediaURI: wikipedia.corpuscleURI,
+                        entities: sharedEntities,
+                        entityCount: sharedEntities.length
+                    });
+                }
+            }
+
+            return sharedMatches;
+
+        } catch (error) {
+            console.log(chalk.yellow(`   ⚠️ SPARQL entity matching failed: ${error.message}`));
+            return [];
+        }
     }
 
     /**
@@ -622,7 +711,7 @@ LIMIT ${totalWikipediaLimit}
      * @param {Array} wikipediaData - Wikipedia data
      */
     async createSemanticRelationships(questionData, wikipediaData) {
-        console.log(chalk.gray('   Creating semantic relationships...'));
+        console.log(chalk.gray('   Creating semantic relationships using LLM concept analysis...'));
         
         const relationships = [];
         let created = 0;
@@ -671,7 +760,7 @@ LIMIT ${totalWikipediaLimit}
         await this.exportRelationships(relationships, 'semantic');
         this.stats.semanticRelationshipsCreated = created;
         
-        console.log(chalk.gray(`   ✓ Created ${created} semantic relationships`));
+        console.log(chalk.gray(`   ✓ Semantic relationships complete: Created ${created} concept-based relationships`));
     }
 
     /**
@@ -680,53 +769,113 @@ LIMIT ${totalWikipediaLimit}
      * @param {Array} wikipediaData - Wikipedia data
      */
     async createCommunityBridgeRelationships(questionData, wikipediaData) {
-        console.log(chalk.gray('   Creating community bridge relationships...'));
+        console.log(chalk.gray('   Creating community bridge relationships using embedding clustering...'));
         
-        // This creates weaker relationships to ensure connectivity
         const relationships = [];
         let created = 0;
 
-        for (const question of questionData) {
-            // Find questions without strong relationships
-            const hasStrongRelationships = await this.hasExistingRelationships(question.questionURI);
-            
-            if (!hasStrongRelationships || created < this.options.minRelationshipsPerQuestion) {
-                // Create bridge relationships to ensure minimum connectivity
-                const bridgeTargets = wikipediaData
-                    .slice(0, this.options.maxWeakRelationships)
-                    .map(corpus => ({
-                        targetURI: corpus.corpuscleURI,
-                        similarity: 0.2 + Math.random() * 0.1, // Weak but present
-                        relationshipType: 'community-bridge'
-                    }));
+        if (!this.embeddingHandler) {
+            console.log(chalk.yellow('   ⚠️ No embedding handler available, skipping community bridges'));
+            return relationships;
+        }
 
-                for (const bridge of bridgeTargets) {
-                    const relationshipURI = `${question.questionURI}_bridge_${bridge.targetURI.split('/').pop()}`;
+        try {
+            // Create embeddings for all content to find cross-topic connections
+            const allEmbeddings = [];
+            
+            // Add question embeddings
+            for (const question of questionData) {
+                try {
+                    // Truncate question text to prevent HTTP 413 errors
+                    const questionText = question.questionText.substring(0, 300); // Max 300 chars
+                    const embedding = await this.embeddingHandler.generateEmbedding(questionText);
+                    allEmbeddings.push({
+                        type: 'question',
+                        uri: question.questionURI,
+                        embedding: embedding,
+                        text: questionText
+                    });
+                } catch (error) {
+                    console.log(chalk.yellow(`   ⚠️ Question embedding failed: ${error.message.substring(0, 100)}`));
+                    continue;
+                }
+            }
+            
+            // Add Wikipedia embeddings (sample for performance)
+            const wikipediaSample = wikipediaData.slice(0, Math.min(20, wikipediaData.length));
+            for (const wikipedia of wikipediaSample) {
+                try {
+                    // Truncate Wikipedia text to prevent HTTP 413 errors
+                    const wikipediaText = wikipedia.corpuscleText.substring(0, 300); // Max 300 chars
+                    if (wikipediaText.length < 10) continue; // Skip very short content
+                    
+                    const embedding = await this.embeddingHandler.generateEmbedding(wikipediaText);
+                    allEmbeddings.push({
+                        type: 'wikipedia',
+                        uri: wikipedia.corpuscleURI,
+                        embedding: embedding,
+                        text: wikipedia.corpuscleText.substring(0, 100)
+                    });
+                } catch (error) {
+                    console.log(chalk.yellow(`   ⚠️ Wikipedia embedding failed: ${error.message.substring(0, 100)}`));
+                    continue;
+                }
+            }
+
+            // Find cross-topic bridges using embedding similarity in lower dimensional space
+            for (const questionItem of allEmbeddings.filter(item => item.type === 'question')) {
+                const bridgeConnections = [];
+                
+                for (const wikipediaItem of allEmbeddings.filter(item => item.type === 'wikipedia')) {
+                    const similarity = this.calculateCosineSimilarity(questionItem.embedding, wikipediaItem.embedding);
+                    
+                    // Look for moderate similarity (0.3-0.6) that indicates cross-topic relevance
+                    if (similarity >= 0.3 && similarity <= 0.6) {
+                        bridgeConnections.push({
+                            wikipediaURI: wikipediaItem.uri,
+                            similarity: similarity,
+                            wikipediaText: wikipediaItem.text
+                        });
+                    }
+                }
+                
+                // Sort by similarity and take top bridges
+                bridgeConnections.sort((a, b) => b.similarity - a.similarity);
+                const topBridges = bridgeConnections.slice(0, 3); // Max 3 bridges per question
+                
+                for (const bridge of topBridges) {
+                    if (created >= this.options.maxTriplesToGenerate) break;
+                    
+                    const relationshipURI = `${questionItem.uri}_bridge_${bridge.wikipediaURI.split('/').pop()}`;
                     
                     relationships.push({
                         relationshipURI: relationshipURI,
-                        sourceURI: question.questionURI,
-                        targetURI: bridge.targetURI,
-                        relationshipType: bridge.relationshipType,
+                        sourceURI: questionItem.uri,
+                        targetURI: bridge.wikipediaURI,
+                        relationshipType: 'cross-topic-bridge',
                         weight: bridge.similarity,
                         confidence: bridge.similarity,
-                        method: 'community-bridge',
+                        method: 'embedding-clustering',
                         metadata: {
-                            purpose: 'ensure-connectivity'
+                            bridgeType: 'cross-topic',
+                            similarity: bridge.similarity,
+                            questionText: questionItem.text.substring(0, 100),
+                            wikipediaText: bridge.wikipediaText
                         }
                     });
                     created++;
                 }
             }
 
-            console.log(chalk.gray(`   ✓ Question ${questionData.indexOf(question) + 1}/${questionData.length}: bridge analysis complete`));
+        } catch (error) {
+            console.log(chalk.yellow(`   ⚠️ Community bridge creation failed: ${error.message}`));
         }
 
         // Export relationships to SPARQL
         await this.exportRelationships(relationships, 'community-bridge');
         this.stats.communityBridgeRelationshipsCreated = created;
         
-        console.log(chalk.gray(`   ✓ Created ${created} community bridge relationships`));
+        console.log(chalk.gray(`   ✓ Community bridges complete: Created ${created} cross-topic relationships`));
     }
 
     /**
