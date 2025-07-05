@@ -127,6 +127,14 @@
       "maxPagesPerQuery": 50,
       "useRelevanceFiltering": true,
       "skipLowConfidenceEntities": true
+    },
+    "relationships": {
+      "maxQuestionsToProcess": 5,
+      "maxWikipediaCorpusclesPerQuestion": 20,
+      "maxTriplesToGenerate": 100,
+      "semanticSimilarityThreshold": 0.4,
+      "enableBatching": true,
+      "batchSize": 10
     }
   },
   "relevanceFiltering": {

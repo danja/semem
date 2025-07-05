@@ -44,8 +44,12 @@ function displayHeader() {
  */
 class RelationshipBuilder {
     constructor(config, options = {}) {
+        // Store config reference for later use
+        this.config = config;
+        
         // Use Config.js for SPARQL configuration
         const storageOptions = config.get('storage.options');
+        const relationshipConfig = config.get('performance.relationships') || {};
         
         this.options = {
             sparqlEndpoint: options.sparqlEndpoint || storageOptions.update,
@@ -56,6 +60,14 @@ class RelationshipBuilder {
             beerqaGraphURI: options.beerqaGraphURI || 'http://purl.org/stuff/beerqa/test',
             wikipediaGraphURI: options.wikipediaGraphURI || 'http://purl.org/stuff/wikipedia/research',
             timeout: options.timeout || 60000,
+            
+            // Performance limits from config
+            maxQuestionsToProcess: options.maxQuestionsToProcess || relationshipConfig.maxQuestionsToProcess || 5,
+            maxWikipediaCorpusclesPerQuestion: options.maxWikipediaCorpusclesPerQuestion || relationshipConfig.maxWikipediaCorpusclesPerQuestion || 20,
+            maxTriplesToGenerate: options.maxTriplesToGenerate || relationshipConfig.maxTriplesToGenerate || 100,
+            semanticSimilarityThreshold: options.semanticSimilarityThreshold || relationshipConfig.semanticSimilarityThreshold || 0.4,
+            enableBatching: options.enableBatching !== undefined ? options.enableBatching : relationshipConfig.enableBatching !== false,
+            batchSize: options.batchSize || relationshipConfig.batchSize || 10,
             
             // Relationship creation strategies
             enableSimilarityRelationships: options.enableSimilarityRelationships !== false,
@@ -92,6 +104,9 @@ class RelationshipBuilder {
 
         // Initialize MemoryManager for proper concept extraction
         this.memoryManager = null; // Will be initialized in initialize() method
+        
+        // Initialize embedding handler for semantic similarity
+        this.embeddingHandler = null; // Will be initialized in initialize() method
 
         this.stats = {
             questionsProcessed: 0,
@@ -134,6 +149,50 @@ class RelationshipBuilder {
             console.log(chalk.yellow(`   ⚠️ Failed to initialize MemoryManager: ${error.message}`));
             console.log(chalk.yellow('   ⚠️ Will fall back to basic concept extraction'));
             this.memoryManager = null;
+        }
+        
+        // Initialize embedding handler for semantic similarity
+        try {
+            console.log(chalk.gray('   Initializing embedding handler for semantic similarity...'));
+            
+            // Get embedding providers from config (prioritized)
+            const llmProviders = this.config.get('llmProviders') || [];
+            const embeddingProviders = llmProviders
+                .filter(p => p.capabilities?.includes('embedding'))
+                .sort((a, b) => (a.priority || 999) - (b.priority || 999));
+            
+            if (embeddingProviders.length === 0) {
+                throw new Error('No embedding providers configured');
+            }
+            
+            const provider = embeddingProviders[0]; // Use highest priority
+            console.log(chalk.gray(`   Using embedding provider: ${provider.type} (priority: ${provider.priority})`));
+            
+            const EmbeddingConnectorFactory = await import('../../../src/connectors/EmbeddingConnectorFactory.js');
+            const embeddingConnector = EmbeddingConnectorFactory.default.createConnector({
+                provider: provider.type,
+                model: provider.embeddingModel,
+                options: { 
+                    baseUrl: provider.baseUrl,
+                    apiKey: provider.apiKey
+                }
+            });
+            
+            const EmbeddingHandler = await import('../../../src/handlers/EmbeddingHandler.js');
+            const dimension = 1536; // nomic-embed-text dimension
+            
+            this.embeddingHandler = new EmbeddingHandler.default(
+                embeddingConnector, 
+                provider.embeddingModel,
+                dimension
+            );
+            
+            console.log(chalk.gray(`   ✓ Embedding handler initialized successfully with ${provider.type}/${provider.embeddingModel}`));
+            
+        } catch (error) {
+            console.log(chalk.yellow(`   ⚠️ Failed to initialize embedding handler: ${error.message}`));
+            console.log(chalk.yellow('   ⚠️ Will fall back to non-semantic relationship creation'));
+            this.embeddingHandler = null;
         }
     }
 
@@ -243,6 +302,7 @@ WHERE {
     }
 }
 ORDER BY ?question
+LIMIT ${this.options.maxQuestionsToProcess}
 `;
 
         const result = await this.sparqlHelper.executeSelect(questionQuery);
@@ -270,6 +330,9 @@ ORDER BY ?question
     async loadWikipediaData() {
         console.log(chalk.gray('   Loading Wikipedia corpuscles...'));
         
+        // Calculate total Wikipedia limit based on per-question limit
+        const totalWikipediaLimit = this.options.maxQuestionsToProcess * this.options.maxWikipediaCorpusclesPerQuestion;
+        
         const wikipediaQuery = `
 PREFIX ragno: <http://purl.org/stuff/ragno/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -288,6 +351,7 @@ WHERE {
     }
 }
 ORDER BY ?corpuscle
+LIMIT ${totalWikipediaLimit}
 `;
 
         const result = await this.sparqlHelper.executeSelect(wikipediaQuery);
@@ -444,59 +508,112 @@ ORDER BY ?corpuscle
      * @param {Array} wikipediaData - Wikipedia data
      */
     async createEntityBasedRelationships(questionData, wikipediaData) {
-        console.log(chalk.gray('   Creating entity-based relationships...'));
+        console.log(chalk.gray('   Creating embedding-based semantic relationships...'));
+        console.log(chalk.gray(`   Limits: ${this.options.maxQuestionsToProcess} questions, ${this.options.maxWikipediaCorpusclesPerQuestion} Wikipedia/question, ${this.options.maxTriplesToGenerate} total triples`));
         
         const relationships = [];
         let created = 0;
 
-        for (const question of questionData) {
-            // Extract entities from question text (simple keyword matching)
-            const questionEntities = this.extractSimpleEntities(question.questionText);
-            
-            if (questionEntities.length === 0) continue;
-
-            for (const wikipediaCorpuscle of wikipediaData) {
-                const corpuscleEntities = this.extractSimpleEntities(wikipediaCorpuscle.corpuscleText);
-                
-                // Calculate entity overlap
-                const commonEntities = questionEntities.filter(qEntity => 
-                    corpuscleEntities.some(cEntity => 
-                        this.fuzzyMatch(qEntity, cEntity, this.options.entityMatchThreshold)
-                    )
-                );
-
-                if (commonEntities.length > 0) {
-                    const entityOverlap = commonEntities.length / Math.max(questionEntities.length, corpuscleEntities.length);
-                    
-                    if (entityOverlap >= this.options.entityMatchThreshold) {
-                        const relationshipURI = `${question.questionURI}_entity_${wikipediaCorpuscle.corpuscleURI.split('/').pop()}`;
-                        
-                        relationships.push({
-                            relationshipURI: relationshipURI,
-                            sourceURI: question.questionURI,
-                            targetURI: wikipediaCorpuscle.corpuscleURI,
-                            relationshipType: 'entity-overlap',
-                            weight: entityOverlap,
-                            confidence: entityOverlap,
-                            method: 'entity-extraction',
-                            metadata: {
-                                commonEntities: commonEntities,
-                                entityOverlapRatio: entityOverlap
-                            }
-                        });
-                        created++;
-                    }
-                }
-            }
-
-            console.log(chalk.gray(`   ✓ Question ${questionData.indexOf(question) + 1}/${questionData.length}: entity analysis complete`));
+        // Initialize embedding handler for semantic similarity
+        if (!this.embeddingHandler) {
+            console.log(chalk.yellow('   ⚠️ No embedding handler available, skipping semantic relationships'));
+            return relationships;
         }
 
-        // Export relationships to SPARQL
-        await this.exportRelationships(relationships, 'entity');
-        this.stats.entityRelationshipsCreated = created;
+        for (const question of questionData) {
+            console.log(chalk.gray(`   Processing question: ${question.questionText.substring(0, 50)}...`));
+            
+            // Check triple limit
+            if (created >= this.options.maxTriplesToGenerate) {
+                console.log(chalk.yellow(`   ⚠️ Reached maximum triples limit (${this.options.maxTriplesToGenerate}), stopping`));
+                break;
+            }
+            
+            try {
+                // Generate embedding for question
+                const questionEmbedding = await this.embeddingHandler.generateEmbedding(question.questionText);
+                
+                // Limit Wikipedia corpuscles per question
+                const limitedWikipediaData = wikipediaData.slice(0, this.options.maxWikipediaCorpusclesPerQuestion);
+                let questionRelationships = 0;
+                
+                for (const wikipediaCorpuscle of limitedWikipediaData) {
+                    // Check limits
+                    if (created >= this.options.maxTriplesToGenerate) {
+                        console.log(chalk.yellow(`   ⚠️ Reached maximum triples limit (${this.options.maxTriplesToGenerate}), stopping`));
+                        break;
+                    }
+                    
+                    try {
+                        // Generate embedding for Wikipedia content
+                        const contentEmbedding = await this.embeddingHandler.generateEmbedding(
+                            wikipediaCorpuscle.corpuscleText.substring(0, 500) // Truncate for performance
+                        );
+                        
+                        // Calculate semantic similarity using cosine similarity
+                        const semanticSimilarity = this.calculateCosineSimilarity(questionEmbedding, contentEmbedding);
+                        
+                        // Only create relationships for semantically relevant content
+                        if (semanticSimilarity >= this.options.semanticSimilarityThreshold) {
+                            const relationshipURI = `${question.questionURI}_semantic_${wikipediaCorpuscle.corpuscleURI.split('/').pop()}`;
+                            
+                            relationships.push({
+                                relationshipURI: relationshipURI,
+                                sourceURI: question.questionURI,
+                                targetURI: wikipediaCorpuscle.corpuscleURI,
+                                relationshipType: 'semantic-similarity',
+                                weight: semanticSimilarity,
+                                confidence: semanticSimilarity,
+                                method: 'embedding-cosine-similarity',
+                                metadata: {
+                                    semanticSimilarity: semanticSimilarity,
+                                    questionText: question.questionText.substring(0, 100),
+                                    wikipediaTitle: wikipediaCorpuscle.title || 'Unknown'
+                                }
+                            });
+                            
+                            created++;
+                            questionRelationships++;
+                        }
+                    } catch (error) {
+                        console.log(chalk.yellow(`   ⚠️ Failed to process Wikipedia content: ${error.message}`));
+                    }
+                }
+                
+                console.log(chalk.gray(`   ✓ Question processed: ${questionRelationships} relationships created (${created} total)`));
+                
+            } catch (error) {
+                console.log(chalk.yellow(`   ⚠️ Failed to process question "${question.questionText}": ${error.message}`));
+            }
+        }
+
+        console.log(chalk.green(`   ✓ Created ${created} semantic relationships`));
+        return relationships;
+    }
+
+    /**
+     * Calculate cosine similarity between two embedding vectors
+     */
+    calculateCosineSimilarity(vec1, vec2) {
+        if (!vec1 || !vec2 || vec1.length !== vec2.length) {
+            return 0;
+        }
         
-        console.log(chalk.gray(`   ✓ Created ${created} entity-based relationships`));
+        let dotProduct = 0;
+        let norm1 = 0;
+        let norm2 = 0;
+        
+        for (let i = 0; i < vec1.length; i++) {
+            dotProduct += vec1[i] * vec2[i];
+            norm1 += vec1[i] * vec1[i];
+            norm2 += vec2[i] * vec2[i];
+        }
+        
+        if (norm1 === 0 || norm2 === 0) {
+            return 0;
+        }
+        
+        return dotProduct / (Math.sqrt(norm1) * Math.sqrt(norm2));
     }
 
     /**
@@ -747,33 +864,6 @@ ORDER BY ?source ?target
         return dotProduct / (magnitudeA * magnitudeB);
     }
 
-    /**
-     * Extract simple entities (capitalized words, proper nouns)
-     * @param {string} text - Text to analyze
-     * @returns {Array} Extracted entities
-     */
-    extractSimpleEntities(text) {
-        // Simple entity extraction: capitalized words, beer terms, etc.
-        const entities = [];
-        const words = text.split(/\s+/);
-        
-        for (const word of words) {
-            const cleaned = word.replace(/[^\w]/g, '');
-            if (cleaned.length > 2 && /^[A-Z]/.test(cleaned)) {
-                entities.push(cleaned.toLowerCase());
-            }
-        }
-        
-        // Add beer-specific terms
-        const beerTerms = ['beer', 'ale', 'lager', 'stout', 'porter', 'ipa', 'brewery', 'brewing', 'malt', 'hops'];
-        for (const term of beerTerms) {
-            if (text.toLowerCase().includes(term)) {
-                entities.push(term);
-            }
-        }
-        
-        return [...new Set(entities)]; // Remove duplicates
-    }
 
     /**
      * Extract concepts from text using MemoryManager or fallback method
@@ -860,65 +950,6 @@ ORDER BY ?source ?target
         return intersection.length / union.length; // Jaccard similarity
     }
 
-    /**
-     * Fuzzy match between two strings
-     * @param {string} str1 - First string
-     * @param {string} str2 - Second string
-     * @param {number} threshold - Match threshold
-     * @returns {boolean} Whether strings match
-     */
-    fuzzyMatch(str1, str2, threshold) {
-        const similarity = this.calculateStringSimilarity(str1, str2);
-        return similarity >= threshold;
-    }
-
-    /**
-     * Calculate string similarity using simple edit distance
-     * @param {string} str1 - First string
-     * @param {string} str2 - Second string
-     * @returns {number} Similarity score
-     */
-    calculateStringSimilarity(str1, str2) {
-        const maxLength = Math.max(str1.length, str2.length);
-        if (maxLength === 0) return 1;
-        
-        const distance = this.levenshteinDistance(str1, str2);
-        return 1 - (distance / maxLength);
-    }
-
-    /**
-     * Calculate Levenshtein distance between two strings
-     * @param {string} str1 - First string
-     * @param {string} str2 - Second string
-     * @returns {number} Edit distance
-     */
-    levenshteinDistance(str1, str2) {
-        const matrix = [];
-        
-        for (let i = 0; i <= str2.length; i++) {
-            matrix[i] = [i];
-        }
-        
-        for (let j = 0; j <= str1.length; j++) {
-            matrix[0][j] = j;
-        }
-        
-        for (let i = 1; i <= str2.length; i++) {
-            for (let j = 1; j <= str1.length; j++) {
-                if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
-                    matrix[i][j] = matrix[i - 1][j - 1];
-                } else {
-                    matrix[i][j] = Math.min(
-                        matrix[i - 1][j - 1] + 1,
-                        matrix[i][j - 1] + 1,
-                        matrix[i - 1][j] + 1
-                    );
-                }
-            }
-        }
-        
-        return matrix[str2.length][str1.length];
-    }
 
     /**
      * Check if question has existing relationships

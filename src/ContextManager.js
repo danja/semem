@@ -105,10 +105,11 @@ export default class ContextManager {
         }
 
         const summaryLines = interactions
-            .slice(0, 3) // Limit examples per group
+            .slice(0, 5) // Increased from 3 to 5 examples per group
             .map(i => {
                 if (!i?.prompt || !i?.output) return null
-                const truncatedOutput = i.output.substring(0, 50)
+                // Increased truncation limit from 50 to 200 characters to preserve more context
+                const truncatedOutput = i.output.substring(0, 200)
                 return `- ${i.prompt} → ${truncatedOutput}${truncatedOutput.length < i.output.length ? '...' : ''}`
             })
             .filter(Boolean)

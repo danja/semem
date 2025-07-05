@@ -28,6 +28,31 @@ import MistralConnector from '../../src/connectors/MistralConnector.js';
 import SPARQLHelper from '../../src/services/sparql/SPARQLHelper.js';
 import { getDefaultQueryService } from '../../src/services/sparql/index.js';
 
+/**
+ * Calculate cosine similarity between two embedding vectors
+ */
+function calculateCosineSimilarity(vec1, vec2) {
+    if (!vec1 || !vec2 || vec1.length !== vec2.length) {
+        return 0;
+    }
+    
+    let dotProduct = 0;
+    let norm1 = 0;
+    let norm2 = 0;
+    
+    for (let i = 0; i < vec1.length; i++) {
+        dotProduct += vec1[i] * vec2[i];
+        norm1 += vec1[i] * vec1[i];
+        norm2 += vec2[i] * vec2[i];
+    }
+    
+    if (norm1 === 0 || norm2 === 0) {
+        return 0;
+    }
+    
+    return dotProduct / (Math.sqrt(norm1) * Math.sqrt(norm2));
+}
+
 // Configure logging - respect LOG_LEVEL environment variable
 const logLevel = process.env.LOG_LEVEL || 'info';
 logger.setLevel(logLevel);
@@ -283,7 +308,9 @@ Context sources available: ${contextInfo.sources.join(', ')}`;
 
     // Debug: Log the complete context being sent to LLM
     logger.debug(chalk.magenta('🤖 DEBUG: Full LLM Input:'));
-    logger.debug(chalk.magenta('  Question:'), chalk.yellow(`"${question.questionText}"`));
+    logger.debug(chalk.magenta('  Question URI:'), chalk.yellow(question.uri));
+    logger.debug(chalk.magenta('  Question Text:'), chalk.yellow(`"${question.questionText}"`));
+    logger.debug(chalk.magenta('  Question Object:'), chalk.gray(JSON.stringify(question, null, 2)));
     logger.debug(chalk.magenta('  System Prompt:'), chalk.cyan(systemPrompt));
     logger.debug(chalk.magenta('  Context Length:'), chalk.white(`${contextInfo.context.length} characters`));
     logger.debug(chalk.magenta('  Context Content:'));
@@ -348,21 +375,166 @@ async function processQuestion(sparqlHelper, beerqaGraphURI, wikipediaGraphURI, 
         console.log(`     ${chalk.gray(source)}: ${chalk.white(count)} relationships`);
     }
 
-    // Get content for related entities
-    const entityURIs = question.relationships.map(rel => rel.targetEntity);
-    const entityContent = await getRelatedEntityContent(
+    // Filter relationships using embedding-based semantic similarity  
+    const semanticThreshold = 0.3; // Minimum cosine similarity to consider relevant
+    const maxRelationships = 10;   // Maximum relationships per question
+    
+    console.log(`     ${chalk.gray('Computing embedding-based semantic relevance for')} ${question.relationships.length} relationships...`);
+    
+    // Get content for all entities first
+    const allEntityURIs = question.relationships.map(rel => rel.targetEntity);
+    console.log(`     ${chalk.gray('Step 1: Getting content for')} ${allEntityURIs.length} entities...`);
+    
+    const allEntityContent = await getRelatedEntityContent(
         sparqlHelper,
         beerqaGraphURI,
         wikipediaGraphURI,
-        entityURIs
+        allEntityURIs
     );
+    
+    console.log(`     ${chalk.gray('Step 2: Content retrieved, initializing embedding handler...')}`);
+    
+    // Initialize embedding handler using the exact same pattern as AugmentQuestion.js
+    let embeddingHandler = null;
+    try {
+        // Use Ollama as the embedding provider (same as AugmentQuestion.js)
+        const EmbeddingConnectorFactory = await import('../../src/connectors/EmbeddingConnectorFactory.js');
+        const embeddingConnector = EmbeddingConnectorFactory.default.createConnector({
+            provider: 'ollama',
+            model: 'nomic-embed-text',
+            options: { baseUrl: 'http://localhost:11434' }
+        });
+        
+        const EmbeddingHandler = await import('../../src/handlers/EmbeddingHandler.js');
+        const dimension = 1536; // nomic-embed-text dimension
+        
+        embeddingHandler = new EmbeddingHandler.default(
+            embeddingConnector, 
+            'nomic-embed-text',
+            dimension
+        );
+        console.log(`     ${chalk.green('✓')} Embedding handler initialized (model: nomic-embed-text, dimension: ${dimension})`);
+    } catch (error) {
+        console.log(`     ${chalk.yellow('⚠️')} Failed to initialize embedding handler: ${error.message}`);
+    }
+    
+    let filteredRelationships = [];
+    let filteredEntityContent = new Map();
+    let semanticScores = []; // Declare at proper scope
+    
+    if (!embeddingHandler) {
+        console.log(`     ${chalk.yellow('⚠️')} No embedding handler available, using relationship weights instead`);
+        // Fallback to weight-based filtering
+        filteredRelationships = question.relationships
+            .sort((a, b) => b.weight - a.weight)
+            .slice(0, maxRelationships);
+        
+        for (const rel of filteredRelationships) {
+            if (allEntityContent.has(rel.targetEntity)) {
+                filteredEntityContent.set(rel.targetEntity, allEntityContent.get(rel.targetEntity));
+            }
+        }
+    } else {
+        console.log(`     ${chalk.gray('Step 3: Generating question embedding...')}`);
+        
+        // Generate embeddings for question and entity content with timeout
+        try {
+            const questionEmbedding = await Promise.race([
+                embeddingHandler.generateEmbedding(question.questionText),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Question embedding timeout')), 15000))
+            ]);
+            
+            console.log(`     ${chalk.gray('Step 4: Question embedding generated, processing')} ${allEntityContent.size} entities...`);
+            let processedCount = 0;
+            
+            for (const rel of question.relationships) {
+                const entityContent = allEntityContent.get(rel.targetEntity);
+                if (entityContent && entityContent.content) {
+                    try {
+                        // Generate embedding for entity content with timeout (only process first 3 for speed)
+                        if (processedCount >= 3) break; // Limit for testing
+                        
+                        console.log(`     ${chalk.gray(`Processing ${++processedCount}: ${entityContent.title}`)}`);
+                        
+                        const contentEmbedding = await Promise.race([
+                            embeddingHandler.generateEmbedding(entityContent.content.substring(0, 300)), // Truncate long content
+                            new Promise((_, reject) => setTimeout(() => reject(new Error('Content embedding timeout')), 8000))
+                        ]);
+                        
+                        // Calculate cosine similarity
+                        const cosineSimilarity = calculateCosineSimilarity(questionEmbedding, contentEmbedding);
+                        
+                        semanticScores.push({
+                            relationship: rel,
+                            semanticScore: cosineSimilarity,
+                            entityTitle: entityContent.title
+                        });
+                        
+                        console.log(`     ${chalk.green('✓')} ${entityContent.title}: similarity ${cosineSimilarity.toFixed(3)}`);
+                        
+                    } catch (error) {
+                        console.log(`     ${chalk.yellow('⚠️')} Failed to generate embedding for ${entityContent.title}: ${error.message}`);
+                        // Continue processing other entities
+                    }
+                }
+            }
+        } catch (error) {
+            console.log(`     ${chalk.red('❌')} Question embedding failed: ${error.message}`);
+            // Fall back to weight-based filtering
+            console.log(`     ${chalk.yellow('⚠️')} Falling back to weight-based filtering`);
+            filteredRelationships = question.relationships
+                .sort((a, b) => b.weight - a.weight)
+                .slice(0, maxRelationships);
+            
+            for (const rel of filteredRelationships) {
+                if (allEntityContent.has(rel.targetEntity)) {
+                    filteredEntityContent.set(rel.targetEntity, allEntityContent.get(rel.targetEntity));
+                }
+            }
+            return; // Exit early with fallback
+        }
+        
+        console.log(`     ${chalk.gray('Step 5: All embeddings generated, filtering results...')}`);
+        
+        if (semanticScores.length === 0) {
+            console.log(`     ${chalk.yellow('⚠️')} No semantic scores generated, falling back to weight-based filtering`);
+            filteredRelationships = question.relationships
+                .sort((a, b) => b.weight - a.weight)
+                .slice(0, maxRelationships);
+        }
+        
+        // Filter and sort by semantic relevance
+        filteredRelationships = semanticScores
+            .filter(item => item.semanticScore >= semanticThreshold)
+            .sort((a, b) => b.semanticScore - a.semanticScore)
+            .slice(0, maxRelationships)
+            .map(item => item.relationship);
+        
+        console.log(`     ${chalk.gray('Embedding-based filtering:')} ${question.relationships.length} → ${filteredRelationships.length} relationships (threshold: ${semanticThreshold})`);
+        
+        // Log the filtered entities with their similarity scores
+        const filteredEntities = semanticScores
+            .filter(item => item.semanticScore >= semanticThreshold)
+            .slice(0, maxRelationships);
+        
+        for (const item of filteredEntities) {
+            console.log(`     ${chalk.green('✓')} ${item.entityTitle} (similarity: ${item.semanticScore.toFixed(3)})`);
+        }
+        
+        // Use the filtered content
+        for (const rel of filteredRelationships) {
+            if (allEntityContent.has(rel.targetEntity)) {
+                filteredEntityContent.set(rel.targetEntity, allEntityContent.get(rel.targetEntity));
+            }
+        }
+    }
 
-    // Build augmented context
+    // Build augmented context using filtered relationships and content
     const contextInfo = buildAugmentedContext(
         contextManager,
         question,
-        question.relationships,
-        entityContent,
+        filteredRelationships,
+        filteredEntityContent,
         {
             systemContext: 'Use the related information to provide a comprehensive answer to the question.'
         }
