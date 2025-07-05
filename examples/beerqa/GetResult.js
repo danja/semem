@@ -6,6 +6,9 @@
  * This script uses ContextManager.js to combine question corpuscles with
  * related corpuscles (found through ZPT navigation), formulates them as
  * augmented questions for the LLM, and returns the final answers to users.
+ *
+ * DEBUG: To see context passed to LLM, run with:
+ *   LOG_LEVEL=debug node examples/beerqa/GetResult.js
  */
 
 // Load environment variables FIRST
@@ -25,8 +28,10 @@ import MistralConnector from '../../src/connectors/MistralConnector.js';
 import SPARQLHelper from '../../src/services/sparql/SPARQLHelper.js';
 import { getDefaultQueryService } from '../../src/services/sparql/index.js';
 
-// Configure logging
-logger.setLevel('info');
+// Configure logging - respect LOG_LEVEL environment variable
+const logLevel = process.env.LOG_LEVEL || 'info';
+logger.setLevel(logLevel);
+console.log(`Log level set to: ${logLevel}`);
 
 /**
  * Display a beautiful header
@@ -222,6 +227,14 @@ function buildAugmentedContext(contextManager, question, relationships, entityCo
 
     console.log(chalk.gray(`     ✓ Built context with ${retrievals.length} related pieces`));
 
+    // Debug: Log the context pieces for inspection
+    logger.debug(chalk.magenta('🔍 DEBUG: Context pieces being used:'));
+    for (let i = 0; i < retrievals.length; i++) {
+        const retrieval = retrievals[i];
+        logger.debug(chalk.magenta(`  [${i + 1}] Source: ${retrieval.interaction.source}, Similarity: ${retrieval.similarity.toFixed(3)}`));
+        logger.debug(chalk.magenta(`      Content: ${retrieval.interaction.output.substring(0, 200)}${retrieval.interaction.output.length > 200 ? '...' : ''}`));
+    }
+
     return {
         context: context,
         sourceCount: retrievals.length,
@@ -246,6 +259,16 @@ Instructions:
 
 Context sources available: ${contextInfo.sources.join(', ')}`;
 
+    // Debug: Log the complete context being sent to LLM
+    logger.debug(chalk.magenta('🤖 DEBUG: Full LLM Input:'));
+    logger.debug(chalk.magenta('  Question:'), chalk.yellow(`"${question.questionText}"`));
+    logger.debug(chalk.magenta('  System Prompt:'), chalk.cyan(systemPrompt));
+    logger.debug(chalk.magenta('  Context Length:'), chalk.white(`${contextInfo.context.length} characters`));
+    logger.debug(chalk.magenta('  Context Content:'));
+    logger.debug(chalk.gray('--- CONTEXT START ---'));
+    logger.debug(chalk.white(contextInfo.context));
+    logger.debug(chalk.gray('--- CONTEXT END ---'));
+
     try {
         const response = await llmHandler.generateResponse(
             question.questionText,
@@ -258,6 +281,12 @@ Context sources available: ${contextInfo.sources.join(', ')}`;
         );
 
         console.log(chalk.gray(`     ✓ Generated response (${response.length} chars)`));
+        
+        // Debug: Log the LLM response
+        logger.debug(chalk.magenta('📝 DEBUG: LLM Response:'));
+        logger.debug(chalk.gray('--- RESPONSE START ---'));
+        logger.debug(chalk.green(response));
+        logger.debug(chalk.gray('--- RESPONSE END ---'));
 
         return {
             answer: response,

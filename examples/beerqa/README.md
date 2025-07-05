@@ -15,14 +15,14 @@ node examples/beerqa/BeerTestQuestions.js        # Load 10 questions
 node examples/beerqa/BeerTestQuestions.js        # Load 10 questions
 node examples/beerqa/AugmentQuestion.js          # Add embeddings + concepts  
 node examples/beerqa/QuestionResearch.js         # Research concepts → Wikipedia
-node examples/beerqa/HydeAugment.js
+node examples/beerqa/HydeAugment.js             # Augment with hypotheticals - doesn't get triggered on questions 
 
 # Stage 2: Formal Infrastructure  
 node examples/beerqa/ragno/RelationshipBuilder.js     # Create formal relationships
 
 # Stage 3: Graph Analytics
 node examples/beerqa/ragno/CorpuscleRanking.js        # Rank by structural importance
-node examples/beerqa/ragno/CommunityAnalysis.js       # Detect communities
+node examples/beerqa/ragno/CommunityAnalysis.js       # Detect communities - not much use on questions alone?
 
 # Stage 4: Enhanced Results
 cd ..
