@@ -7,6 +7,10 @@
 ## Quick Start (Enhanced v2 Workflow)
 
 ```bash
+# Stage 0: Initialize
+node examples/beerqa/ClearGraph.js               # Reset
+node examples/beerqa/BeerTestQuestions.js        # Load 10 questions
+
 # Stage 1: Foundation Data
 node examples/beerqa/BeerTestQuestions.js        # Load 10 questions
 node examples/beerqa/AugmentQuestion.js          # Add embeddings + concepts  

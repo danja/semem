@@ -17,13 +17,17 @@
  * - Supports domain/topic filtering for focused analysis
  */
 
+// Load environment variables
+import dotenv from 'dotenv';
+dotenv.config();
+
 import path from 'path';
 import logger from 'loglevel';
 import chalk from 'chalk';
 import Config from '../../../src/Config.js';
 import RagnoAlgorithms from '../../../src/ragno/algorithms/index.js';
 import { GraphBuilder } from './GraphBuilder.js';
-import SPARQLHelper from '../SPARQLHelper.js';
+import SPARQLHelper from '../../../src/services/sparql/SPARQLHelper.js';
 
 // Configure logging
 logger.setLevel('info');
@@ -44,24 +48,30 @@ function displayHeader() {
  * EntityRanking class for analyzing and ranking entities by importance
  */
 class EntityRanking {
-    constructor(options = {}) {
+    constructor(config, options = {}) {
+        // Get SPARQL configuration from Config instance
+        const storageOptions = config.get('storage.options');
+        
         this.options = {
-            sparqlEndpoint: options.sparqlEndpoint || 'https://fuseki.hyperdata.it/hyperdata.it/update',
-            sparqlAuth: options.sparqlAuth || { user: 'admin', password: 'admin123' },
+            sparqlEndpoint: storageOptions.update,
+            sparqlAuth: { 
+                user: storageOptions.user, 
+                password: storageOptions.password 
+            },
             beerqaGraphURI: options.beerqaGraphURI || 'http://purl.org/stuff/beerqa/test',
             wikipediaGraphURI: options.wikipediaGraphURI || 'http://purl.org/stuff/wikipedia/test',
             timeout: options.timeout || 30000,
-            
+
             // Algorithm options
             maxGraphSize: options.maxGraphSize || 1000,
             enableKCore: options.enableKCore !== false,
             enableCentrality: options.enableCentrality !== false,
             topKResults: options.topKResults || 20,
-            
+
             // Export options
             exportToSPARQL: options.exportToSPARQL !== false,
             updateExisting: options.updateExisting !== false,
-            
+
             ...options
         };
 
@@ -101,7 +111,7 @@ class EntityRanking {
             // Phase 1: Build graph from SPARQL data
             console.log(chalk.white('📊 Building graph from SPARQL store...'));
             const graphResult = await this.graphBuilder.buildCompleteGraph();
-            
+
             if (graphResult.dataset.size === 0) {
                 console.log(chalk.yellow('⚠️  Empty dataset - no ranking to perform'));
                 return { success: false, message: 'Empty dataset' };
@@ -125,7 +135,7 @@ class EntityRanking {
 
             // Calculate final statistics
             this.stats.processingTime = Date.now() - startTime;
-            
+
             console.log(chalk.green('✅ Entity ranking completed successfully'));
             this.displayResults(rankings);
 
@@ -150,14 +160,14 @@ class EntityRanking {
      */
     processAnalysisResults(analysisResults) {
         console.log(chalk.gray('   Processing K-core and centrality results...'));
-        
+
         const rankings = [];
         const entityScores = new Map();
 
         // Process K-core results
         if (this.options.enableKCore && analysisResults.kCore?.coreNumbers) {
             console.log(chalk.gray(`   ✓ Processing ${analysisResults.kCore.coreNumbers.size} K-core results`));
-            
+
             for (const [nodeUri, coreNumber] of analysisResults.kCore.coreNumbers) {
                 if (!entityScores.has(nodeUri)) {
                     entityScores.set(nodeUri, { kCore: 0, centrality: 0, composite: 0 });
@@ -170,7 +180,7 @@ class EntityRanking {
         // Process centrality results (if available for smaller graphs)
         if (this.options.enableCentrality && analysisResults.centrality?.centrality) {
             console.log(chalk.gray(`   ✓ Processing ${analysisResults.centrality.centrality.size} centrality results`));
-            
+
             for (const [nodeUri, centralityScore] of analysisResults.centrality.centrality) {
                 if (!entityScores.has(nodeUri)) {
                     entityScores.set(nodeUri, { kCore: 0, centrality: 0, composite: 0 });
@@ -205,12 +215,12 @@ class EntityRanking {
         this.stats.rankingsGenerated = rankings.length;
 
         console.log(chalk.gray(`   ✓ Generated ${rankings.length} entity rankings`));
-        
+
         // Return top-K results if requested
         if (this.options.topKResults > 0) {
             return rankings.slice(0, this.options.topKResults);
         }
-        
+
         return rankings;
     }
 
@@ -220,7 +230,7 @@ class EntityRanking {
      */
     async exportRankingsToSPARQL(rankings) {
         console.log(chalk.gray(`   Exporting ${rankings.length} rankings to SPARQL store...`));
-        
+
         const timestamp = new Date().toISOString();
         const batchSize = 10;
         let exported = 0;
@@ -233,7 +243,7 @@ class EntityRanking {
 
                 for (const ranking of batch) {
                     const attributeURI = `${ranking.nodeUri}_importance_ranking_${Date.now()}_${Math.random().toString(36).substring(7)}`;
-                    
+
                     // Create ranking attribute triples
                     triples.push(`<${attributeURI}> rdf:type ragno:Attribute .`);
                     triples.push(`<${attributeURI}> rdfs:label "importance-ranking" .`);
@@ -244,7 +254,7 @@ class EntityRanking {
                     triples.push(`<${attributeURI}> ragno:centralityScore "${ranking.centralityScore.toFixed(6)}" .`);
                     triples.push(`<${attributeURI}> dcterms:created "${timestamp}"^^xsd:dateTime .`);
                     triples.push(`<${attributeURI}> prov:wasGeneratedBy "entity-ranking-analysis" .`);
-                    
+
                     // Link to the entity
                     triples.push(`<${ranking.nodeUri}> ragno:hasAttribute <${attributeURI}> .`);
                     triples.push(`<${attributeURI}> ragno:describesCorpuscle <${ranking.nodeUri}> .`);
@@ -266,7 +276,7 @@ INSERT DATA {
 }`;
 
                 const result = await this.sparqlHelper.executeUpdate(updateQuery);
-                
+
                 if (result.success) {
                     exported += batch.length;
                     console.log(chalk.gray(`   ✓ Exported batch ${Math.ceil((i + batchSize) / batchSize)}/${Math.ceil(rankings.length / batchSize)} (${exported}/${rankings.length})`));
@@ -295,7 +305,7 @@ INSERT DATA {
      */
     async queryExistingRankings() {
         console.log(chalk.white('🔍 Querying existing rankings...'));
-        
+
         const query = `
 PREFIX ragno: <http://purl.org/stuff/ragno/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -316,7 +326,7 @@ ORDER BY ?rank
 `;
 
         const result = await this.sparqlHelper.executeSelect(query);
-        
+
         if (!result.success) {
             console.log(chalk.yellow(`⚠️  Could not query existing rankings: ${result.error}`));
             return [];
@@ -347,21 +357,21 @@ ORDER BY ?rank
         console.log(`   ${chalk.cyan('K-core Results:')} ${chalk.white(this.stats.kCoreResults)}`);
         console.log(`   ${chalk.cyan('Centrality Results:')} ${chalk.white(this.stats.centralityResults)}`);
         console.log(`   ${chalk.cyan('Processing Time:')} ${chalk.white((this.stats.processingTime / 1000).toFixed(2))}s`);
-        
+
         if (this.stats.errors.length > 0) {
             console.log(`   ${chalk.cyan('Errors:')} ${chalk.red(this.stats.errors.length)}`);
             this.stats.errors.forEach(error => {
                 console.log(`     ${chalk.red('•')} ${error}`);
             });
         }
-        
+
         console.log('');
-        
+
         // Display top rankings
         if (rankings.length > 0) {
             console.log(chalk.bold.white('🏆 Top Entity Rankings:'));
             const topRankings = rankings.slice(0, Math.min(10, rankings.length));
-            
+
             for (let i = 0; i < topRankings.length; i++) {
                 const ranking = topRankings[i];
                 const shortUri = ranking.nodeUri.split('/').pop();
@@ -371,7 +381,7 @@ ORDER BY ?rank
                 console.log(`      ${chalk.gray('Centrality:')} ${chalk.white(ranking.centralityScore.toFixed(4))}`);
             }
         }
-        
+
         console.log('');
     }
 }
@@ -381,37 +391,48 @@ ORDER BY ?rank
  */
 async function rankEntities() {
     displayHeader();
-    
+
     try {
-        // Configuration
-        const config = {
-            sparqlEndpoint: 'https://fuseki.hyperdata.it/hyperdata.it/update',
-            sparqlAuth: { user: 'admin', password: 'admin123' },
+        // Initialize Config.js for proper configuration management
+        const config = new Config('config/config.json');
+        await config.init();
+        
+        const options = {
             beerqaGraphURI: 'http://purl.org/stuff/beerqa/test',
             wikipediaGraphURI: 'http://purl.org/stuff/wikipedia/test',
             timeout: 30000,
-            
+
             // Algorithm configuration
             maxGraphSize: 1000,
             enableKCore: true,
             enableCentrality: true, // Will be skipped if graph is too large
             topKResults: 20,
-            
+
             // Export configuration
             exportToSPARQL: true,
             updateExisting: false
         };
 
+        // Display configuration with actual SPARQL endpoint from config
+        const displayConfig = {
+            sparqlEndpoint: config.get('storage.options.update'),
+            sparqlAuth: { 
+                user: config.get('storage.options.user'), 
+                password: config.get('storage.options.password') 
+            },
+            ...options
+        };
+
         console.log(chalk.bold.yellow('🔧 Configuration:'));
-        console.log(`   ${chalk.cyan('SPARQL Endpoint:')} ${chalk.white(config.sparqlEndpoint)}`);
-        console.log(`   ${chalk.cyan('Wikipedia Graph:')} ${chalk.white(config.wikipediaGraphURI)}`);
-        console.log(`   ${chalk.cyan('Max Graph Size:')} ${chalk.white(config.maxGraphSize)}`);
-        console.log(`   ${chalk.cyan('Top-K Results:')} ${chalk.white(config.topKResults)}`);
-        console.log(`   ${chalk.cyan('Export to SPARQL:')} ${chalk.white(config.exportToSPARQL ? 'Yes' : 'No')}`);
+        console.log(`   ${chalk.cyan('SPARQL Endpoint:')} ${chalk.white(displayConfig.sparqlEndpoint)}`);
+        console.log(`   ${chalk.cyan('Wikipedia Graph:')} ${chalk.white(displayConfig.wikipediaGraphURI)}`);
+        console.log(`   ${chalk.cyan('Max Graph Size:')} ${chalk.white(displayConfig.maxGraphSize)}`);
+        console.log(`   ${chalk.cyan('Top-K Results:')} ${chalk.white(displayConfig.topKResults)}`);
+        console.log(`   ${chalk.cyan('Export to SPARQL:')} ${chalk.white(displayConfig.exportToSPARQL ? 'Yes' : 'No')}`);
         console.log('');
 
         // Run entity ranking
-        const ranker = new EntityRanking(config);
+        const ranker = new EntityRanking(config, options);
         const result = await ranker.runEntityRanking();
 
         if (result.success) {
@@ -420,7 +441,7 @@ async function rankEntities() {
         } else {
             console.log(chalk.yellow('⚠️  Entity ranking completed with issues:', result.message));
         }
-        
+
         return result;
 
     } catch (error) {

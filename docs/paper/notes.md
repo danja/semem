@@ -1,3 +1,11 @@
+Replace hardcoded credentials in critical files:
+    - src/Config.js
+    - src/api/http/middleware/_auth-middleware.js
+    - src/api/http/server/WebSocketServer.js
+  2. Update all 66 files to use environment variables instead
+
+  ---
+
 BEERQA run
 
 Processing 1/10:
@@ -53,7 +61,7 @@ Sample Question (first processed):
    1. what
   
   ---
-  
+
 
 Full Provenance Chain:
 

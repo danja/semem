@@ -13,7 +13,7 @@ import chalk from 'chalk';
 import fetch from 'node-fetch';
 import { createRequire } from 'module';
 import Config from '../../src/Config.js';
-import SPARQLHelper from './SPARQLHelper.js';
+import SPARQLHelper from '../../src/services/sparql/SPARQLHelper.js';
 
 const require = createRequire(import.meta.url);
 
@@ -90,7 +90,7 @@ function parseArgs() {
 
     for (let i = 0; i < args.length; i++) {
         const arg = args[i];
-        
+
         switch (arg) {
             case '--graph':
                 options.mode = 'custom';
@@ -150,7 +150,7 @@ async function promptConfirmation(graphURIs) {
             console.log(`   ${chalk.cyan('•')} ${chalk.white(uri)}`);
         });
         console.log('');
-        
+
         rl.question(chalk.bold.red('Are you sure you want to continue? Type "yes" to confirm: '), (answer) => {
             rl.close();
             resolve(answer.toLowerCase() === 'yes');
@@ -186,7 +186,7 @@ async function countTriples(queryEndpoint, auth, graphURI) {
         const result = await response.json();
         const count = parseInt(result.results.bindings[0]?.count?.value || '0');
         return count;
-        
+
     } catch (error) {
         logger.warn('Could not count triples:', error.message);
         return null;
@@ -200,16 +200,16 @@ async function clearGraph(options) {
     try {
         // Use Config.js for configuration management (matching Flow components)
         console.log(chalk.yellow('⚙️  Loading configuration from config/config.json...'));
-        
+
         const config = new Config('./config/config.json');
         await config.init();
-        
+
         const storageOptions = config.get('storage.options');
         const sparqlConfig = {
             sparqlEndpoint: storageOptions.update,
-            sparqlAuth: { 
-                user: storageOptions.user, 
-                password: storageOptions.password 
+            sparqlAuth: {
+                user: storageOptions.user,
+                password: storageOptions.password
             },
             timeout: 60000
         };
@@ -226,7 +226,7 @@ async function clearGraph(options) {
             auth: auth,
             timeout: sparqlConfig.timeout
         });
-        
+
         console.log(chalk.green('✅ Configuration loaded successfully'));
 
         // Display configuration
@@ -245,7 +245,7 @@ async function clearGraph(options) {
         console.log(chalk.yellow('🔍 Checking graph contents...'));
         let totalTriples = 0;
         const graphStats = [];
-        
+
         for (const graphURI of options.graphURIs) {
             const tripleCount = await countTriples(endpoint.query, auth, graphURI);
             if (tripleCount !== null) {
@@ -257,10 +257,10 @@ async function clearGraph(options) {
                 console.log(`   ${chalk.cyan('•')} ${chalk.white(graphURI)}: ${chalk.yellow('Could not count (may not exist)')}`);
             }
         }
-        
+
         console.log(`   ${chalk.cyan('Total triples:')} ${chalk.white(totalTriples.toLocaleString())}`);
         console.log('');
-        
+
         if (totalTriples === 0) {
             console.log(chalk.green('✅ All graphs are already empty - nothing to clear!'));
             return { success: true, message: 'All graphs were already empty' };
@@ -281,12 +281,12 @@ async function clearGraph(options) {
         const startTime = Date.now();
         let clearedCount = 0;
         const results = [];
-        
+
         for (const graphURI of options.graphURIs) {
             console.log(chalk.cyan(`   Clearing: ${graphURI}`));
             const clearQuery = `CLEAR GRAPH <${graphURI}>`;
             const result = await sparqlHelper.executeUpdate(clearQuery);
-            
+
             if (result.success) {
                 console.log(chalk.green(`   ✅ Cleared successfully`));
                 clearedCount++;
@@ -296,16 +296,16 @@ async function clearGraph(options) {
                 results.push({ uri: graphURI, success: false, error: result.error });
             }
         }
-        
+
         const duration = Date.now() - startTime;
 
         if (clearedCount === options.graphURIs.length) {
             console.log(chalk.bold.green(`✅ All ${clearedCount} graphs cleared successfully in ${duration}ms!`));
-            
+
             // Verify the clear operations
             console.log(chalk.yellow('🔍 Verifying graphs are empty...'));
             let allEmpty = true;
-            
+
             for (const graphURI of options.graphURIs) {
                 const remainingCount = await countTriples(endpoint.query, auth, graphURI);
                 if (remainingCount !== null && remainingCount > 0) {
@@ -315,11 +315,11 @@ async function clearGraph(options) {
                     console.log(chalk.green(`   ✅ ${graphURI}: empty`));
                 }
             }
-            
+
             if (allEmpty) {
                 console.log(chalk.green('✅ Verification passed - all graphs are now empty'));
             }
-            
+
             return { success: true, message: `${clearedCount} graphs cleared successfully`, duration, results };
         } else {
             console.log(chalk.bold.yellow(`⚠️  Partially completed: ${clearedCount}/${options.graphURIs.length} graphs cleared`));
@@ -329,14 +329,14 @@ async function clearGraph(options) {
     } catch (error) {
         console.log(chalk.bold.red('💥 Clear operation failed!'));
         console.log(chalk.red('Error:', error.message));
-        
+
         console.log('');
         console.log(chalk.bold.yellow('💡 Troubleshooting Tips:'));
         console.log(`   • Verify the SPARQL endpoint is accessible`);
         console.log(`   • Check authentication credentials in config/config.json`);
         console.log(`   • Ensure the graph URIs are correct`);
         console.log(`   • Verify network connectivity`);
-        
+
         return { success: false, error: error.message };
     }
 }
@@ -355,7 +355,7 @@ async function main() {
     }
 
     const result = await clearGraph(options);
-    
+
     if (result.success) {
         console.log('');
         console.log(chalk.bold.green('🎉 Clear operation completed successfully!'));

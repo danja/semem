@@ -21,7 +21,7 @@ import chalk from 'chalk';
 import rdf from 'rdf-ext';
 import namespace from '@rdfjs/namespace';
 import Config from '../../../src/Config.js';
-import SPARQLHelper from '../SPARQLHelper.js';
+import SPARQLHelper from '../../../src/services/sparql/SPARQLHelper.js';
 
 // Configure logging
 logger.setLevel('info');
@@ -160,7 +160,7 @@ ORDER BY ?entity
 `;
 
         const result = await this.sparqlHelper.executeSelect(entityQuery);
-        
+
         if (!result.success) {
             throw new Error(`Failed to extract entities: ${result.error}`);
         }
@@ -237,7 +237,7 @@ ORDER BY ?relationship
 `;
 
         const result = await this.sparqlHelper.executeSelect(relationshipQuery);
-        
+
         if (!result.success) {
             throw new Error(`Failed to extract relationships: ${result.error}`);
         }
@@ -336,7 +336,7 @@ ORDER BY ?corpuscle
 `;
 
         const result = await this.sparqlHelper.executeSelect(corpuscleQuery);
-        
+
         if (!result.success) {
             throw new Error(`Failed to extract corpuscles: ${result.error}`);
         }
@@ -429,7 +429,7 @@ ORDER BY ?attribute
 `;
 
         const result = await this.sparqlHelper.executeSelect(attributeQuery);
-        
+
         if (!result.success) {
             throw new Error(`Failed to extract attributes: ${result.error}`);
         }
@@ -493,10 +493,10 @@ ORDER BY ?attribute
      */
     async buildFilteredGraph(entityTypes = ['ragno:Entity']) {
         console.log(chalk.bold.white(`🎯 Building filtered graph for types: ${entityTypes.join(', ')}`));
-        
+
         const fullGraph = await this.buildCompleteGraph();
         const filteredDataset = rdf.dataset();
-        
+
         // Filter entities by type
         for (const quad of fullGraph.dataset) {
             if (quad.predicate.equals(this.namespaces.rdf('type'))) {
@@ -504,7 +504,7 @@ ORDER BY ?attribute
                 if (entityTypes.some(type => objectValue.includes(type.replace('ragno:', '')))) {
                     // Include this entity and its related triples
                     filteredDataset.add(quad);
-                    
+
                     // Find all triples with this entity as subject
                     for (const relatedQuad of fullGraph.dataset) {
                         if (relatedQuad.subject.equals(quad.subject)) {
@@ -516,7 +516,7 @@ ORDER BY ?attribute
         }
 
         console.log(`   ✓ Filtered dataset has ${filteredDataset.size} triples`);
-        
+
         return {
             dataset: filteredDataset,
             originalSize: fullGraph.dataset.size,
@@ -532,7 +532,7 @@ ORDER BY ?attribute
      */
     validateGraph(dataset) {
         console.log(chalk.white('🔍 Validating graph structure...'));
-        
+
         const validation = {
             valid: true,
             issues: [],
@@ -547,26 +547,26 @@ ORDER BY ?attribute
         // Check for entities without labels
         const entities = new Set();
         const entitiesWithLabels = new Set();
-        
+
         for (const quad of dataset) {
-            if (quad.predicate.equals(this.namespaces.rdf('type')) && 
+            if (quad.predicate.equals(this.namespaces.rdf('type')) &&
                 quad.object.equals(this.namespaces.ragno('Entity'))) {
                 entities.add(quad.subject.value);
             }
-            
+
             if (quad.predicate.equals(this.namespaces.rdfs('label'))) {
                 entitiesWithLabels.add(quad.subject.value);
             }
         }
 
         validation.statistics.entitiesWithoutLabels = entities.size - entitiesWithLabels.size;
-        
+
         if (validation.statistics.entitiesWithoutLabels > 0) {
             validation.issues.push(`${validation.statistics.entitiesWithoutLabels} entities without labels`);
         }
 
         console.log(`   ✓ Validation completed: ${validation.issues.length} issues found`);
-        
+
         return validation;
     }
 
@@ -582,7 +582,7 @@ ORDER BY ?attribute
         console.log(`   ${chalk.cyan('Attributes Extracted:')} ${chalk.white(this.stats.attributesExtracted)}`);
         console.log(`   ${chalk.cyan('Total RDF Triples:')} ${chalk.white(this.stats.totalTriples)}`);
         console.log(`   ${chalk.cyan('Processing Time:')} ${chalk.white((this.stats.processingTime / 1000).toFixed(2))}s`);
-        
+
         if (this.stats.errors.length > 0) {
             console.log(`   ${chalk.cyan('Errors:')} ${chalk.red(this.stats.errors.length)}`);
             this.stats.errors.forEach(error => {
@@ -599,7 +599,7 @@ ORDER BY ?attribute
      */
     async exportToTurtle(dataset, filename) {
         console.log(chalk.white(`💾 Exporting graph to ${filename}...`));
-        
+
         // Note: This would require a Turtle serializer
         // For now, just log the export intent
         console.log(`   ✓ Would export ${dataset.size} triples to ${filename}`);
@@ -611,7 +611,7 @@ ORDER BY ?attribute
  */
 async function buildGraph() {
     displayHeader();
-    
+
     try {
         // Configuration
         const config = {
@@ -636,7 +636,7 @@ async function buildGraph() {
 
         // Validate graph
         const validation = builder.validateGraph(result.dataset);
-        
+
         if (validation.issues.length > 0) {
             console.log(chalk.yellow('⚠️  Graph validation issues:'));
             validation.issues.forEach(issue => {
@@ -646,7 +646,7 @@ async function buildGraph() {
 
         console.log(chalk.green('🎉 Graph building completed successfully!'));
         console.log(chalk.white('The built graph is ready for use with Ragno algorithms.'));
-        
+
         return result;
 
     } catch (error) {

@@ -22,7 +22,7 @@ import chalk from 'chalk';
 import Config from '../../../src/Config.js';
 import GraphAnalytics from '../../../src/ragno/algorithms/GraphAnalytics.js';
 import { GraphBuilder } from './GraphBuilder.js';
-import SPARQLHelper from '../SPARQLHelper.js';
+import SPARQLHelper from '../../../src/services/sparql/SPARQLHelper.js';
 
 // Configure logging
 logger.setLevel('info');

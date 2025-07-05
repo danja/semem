@@ -22,7 +22,7 @@ import chalk from 'chalk';
 import Config from '../../../src/Config.js';
 import PersonalizedPageRank from '../../../src/ragno/algorithms/PersonalizedPageRank.js';
 import { CorpuscleRanking } from './CorpuscleRanking.js';
-import SPARQLHelper from '../SPARQLHelper.js';
+import SPARQLHelper from '../../../src/services/sparql/SPARQLHelper.js';
 
 // Configure logging
 logger.setLevel('info');
@@ -50,23 +50,23 @@ class SemanticSearch {
             beerqaGraphURI: options.beerqaGraphURI || 'http://purl.org/stuff/beerqa/test',
             wikipediaGraphURI: options.wikipediaGraphURI || 'http://purl.org/stuff/wikipedia/test',
             timeout: options.timeout || 30000,
-            
+
             // PPR algorithm options
             alpha: options.alpha || 0.15, // Damping factor
             shallowIterations: options.shallowIterations || 2,
             deepIterations: options.deepIterations || 10,
             convergenceThreshold: options.convergenceThreshold || 1e-6,
-            
+
             // Search options
             topKPerType: options.topKPerType || 5,
             preferredTypes: options.preferredTypes || ['ragno:Corpuscle', 'ragno:Entity'],
             boostImportanceRankings: options.boostImportanceRankings !== false,
             minPPRScore: options.minPPRScore || 0.001,
-            
+
             // Integration options
             combineWithSimilarity: options.combineWithSimilarity !== false,
             exportResults: options.exportResults !== false,
-            
+
             ...options
         };
 
@@ -110,7 +110,7 @@ class SemanticSearch {
             // Phase 1: Build corpuscle graph (reuse from CorpuscleRanking)
             console.log(chalk.white('📊 Building corpuscle relationship graph...'));
             const graphData = await this.corpuscleRanking.buildCorpuscleGraph();
-            
+
             if (graphData.nodeCount === 0) {
                 console.log(chalk.yellow('⚠️  No corpuscles found - no search to perform'));
                 return { success: false, message: 'No corpuscles found' };
@@ -141,7 +141,7 @@ class SemanticSearch {
 
             // Calculate final statistics
             this.stats.processingTime = Date.now() - startTime;
-            
+
             console.log(chalk.green('✅ Semantic search completed successfully'));
             this.displayResults(enhancedResults);
 
@@ -166,7 +166,7 @@ class SemanticSearch {
      */
     async extractQuestionConcepts(questionIds = null) {
         console.log(chalk.gray('   Extracting question concepts for PPR seeds...'));
-        
+
         let questionFilter = '';
         if (questionIds && questionIds.length > 0) {
             const idFilters = questionIds.map(id => `<${id}>`).join(' ');
@@ -199,18 +199,18 @@ ORDER BY ?question ?concept
 `;
 
         const result = await this.sparqlHelper.executeSelect(conceptQuery);
-        
+
         if (!result.success) {
             throw new Error(`Failed to extract question concepts: ${result.error}`);
         }
 
         // Group concepts by question
         const questionMap = new Map();
-        
+
         for (const binding of result.data.results.bindings) {
             const questionURI = binding.question.value;
             const questionText = binding.questionText.value;
-            
+
             if (!questionMap.has(questionURI)) {
                 questionMap.set(questionURI, {
                     questionURI: questionURI,
@@ -218,7 +218,7 @@ ORDER BY ?question ?concept
                     concepts: []
                 });
             }
-            
+
             // Add concept if available
             if (binding.concept?.value) {
                 const concept = {
@@ -226,7 +226,7 @@ ORDER BY ?question ?concept
                     conceptText: binding.conceptText?.value || '',
                     relationshipType: binding.relationshipType?.value || 'related'
                 };
-                
+
                 // Avoid duplicates
                 const existingConcept = questionMap.get(questionURI).concepts.find(
                     c => c.conceptURI === concept.conceptURI
@@ -240,9 +240,9 @@ ORDER BY ?question ?concept
         const questionData = Array.from(questionMap.values());
         this.stats.questionsProcessed = questionData.length;
         this.stats.conceptsExtracted = questionData.reduce((sum, q) => sum + q.concepts.length, 0);
-        
+
         console.log(chalk.gray(`   ✓ Found ${questionData.length} questions with ${this.stats.conceptsExtracted} total concepts`));
-        
+
         return questionData;
     }
 
@@ -254,21 +254,21 @@ ORDER BY ?question ?concept
      */
     async runPPRSearch(graph, questionData) {
         console.log(chalk.gray(`   Running PPR for ${questionData.length} questions...`));
-        
+
         const searchResults = [];
 
         for (let i = 0; i < questionData.length; i++) {
             const question = questionData[i];
-            
+
             try {
                 // Create seed nodes from question concepts
                 const seedNodes = new Map();
-                
+
                 // Add the question itself as a seed
                 if (graph.nodes.has(question.questionURI)) {
                     seedNodes.set(question.questionURI, 0.5);
                 }
-                
+
                 // Add related concepts as seeds with lower weights
                 const conceptWeight = question.concepts.length > 0 ? 0.5 / question.concepts.length : 0;
                 for (const concept of question.concepts) {
@@ -287,15 +287,15 @@ ORDER BY ?question ?concept
 
                 // Run PPR with shallow iterations first
                 const shallowPPR = this.ppr.runPPR(
-                    graph, 
-                    entryPoints, 
+                    graph,
+                    entryPoints,
                     { maxIterations: this.options.shallowIterations }
                 );
 
                 // Run deep PPR for better results
                 const deepPPR = this.ppr.runPPR(
-                    graph, 
-                    entryPoints, 
+                    graph,
+                    entryPoints,
                     { maxIterations: this.options.deepIterations }
                 );
 
@@ -355,7 +355,7 @@ ORDER BY ?question ?concept
      */
     async enhanceSearchResults(searchResults) {
         console.log(chalk.gray('   Enhancing results with type preferences and rankings...'));
-        
+
         // Query for existing importance rankings if boost is enabled
         let importanceRankings = new Map();
         if (this.options.boostImportanceRankings) {
@@ -390,21 +390,21 @@ WHERE {
         for (const questionResult of searchResults) {
             // Group results by type
             const typeGroups = new Map();
-            
+
             for (const result of questionResult.results) {
                 const nodeType = result.nodeType;
                 if (!typeGroups.has(nodeType)) {
                     typeGroups.set(nodeType, []);
                 }
-                
+
                 // Calculate enhanced score
                 let enhancedScore = result.pprScore;
-                
+
                 // Apply type preference boost
                 if (this.options.preferredTypes.includes(nodeType)) {
                     enhancedScore *= 1.5;
                 }
-                
+
                 // Apply importance ranking boost
                 if (importanceRankings.has(result.nodeURI)) {
                     const ranking = importanceRankings.get(result.nodeURI);
@@ -423,11 +423,11 @@ WHERE {
             for (const [nodeType, results] of typeGroups) {
                 // Sort by enhanced score
                 results.sort((a, b) => b.enhancedScore - a.enhancedScore);
-                
+
                 // Take top-K for this type
                 const topK = results.slice(0, this.options.topKPerType);
                 finalResults.push(...topK);
-                
+
                 this.stats.typeFilteredResults += topK.length;
             }
 
@@ -451,18 +451,18 @@ WHERE {
      */
     async exportSearchResults(enhancedResults) {
         console.log(chalk.gray(`   Exporting search results for ${enhancedResults.length} questions...`));
-        
+
         const timestamp = new Date().toISOString();
         let exported = 0;
 
         try {
             for (const questionResult of enhancedResults) {
                 const triples = [];
-                
+
                 for (let i = 0; i < Math.min(questionResult.enhancedResults.length, 10); i++) {
                     const result = questionResult.enhancedResults[i];
                     const searchResultURI = `${questionResult.questionURI}_ppr_result_${i + 1}_${Date.now()}`;
-                    
+
                     // Create search result attribute
                     triples.push(`<${searchResultURI}> rdf:type ragno:Attribute .`);
                     triples.push(`<${searchResultURI}> rdfs:label "ppr-search-result" .`);
@@ -473,7 +473,7 @@ WHERE {
                     triples.push(`<${searchResultURI}> ragno:targetNode <${result.nodeURI}> .`);
                     triples.push(`<${searchResultURI}> dcterms:created "${timestamp}"^^xsd:dateTime .`);
                     triples.push(`<${searchResultURI}> prov:wasGeneratedBy "ppr-semantic-search" .`);
-                    
+
                     // Link to question
                     triples.push(`<${questionResult.questionURI}> ragno:hasAttribute <${searchResultURI}> .`);
                     triples.push(`<${searchResultURI}> ragno:describesCorpuscle <${questionResult.questionURI}> .`);
@@ -495,7 +495,7 @@ INSERT DATA {
 }`;
 
                 const result = await this.sparqlHelper.executeUpdate(updateQuery);
-                
+
                 if (result.success) {
                     exported++;
                     console.log(chalk.gray(`   ✓ Exported results for question ${exported}/${enhancedResults.length}`));
@@ -532,40 +532,40 @@ INSERT DATA {
         console.log(`   ${chalk.cyan('Boosted Results:')} ${chalk.white(this.stats.boostedResults)}`);
         console.log(`   ${chalk.cyan('Exported Results:')} ${chalk.white(this.stats.exportedResults)}`);
         console.log(`   ${chalk.cyan('Processing Time:')} ${chalk.white((this.stats.processingTime / 1000).toFixed(2))}s`);
-        
+
         if (this.stats.errors.length > 0) {
             console.log(`   ${chalk.cyan('Errors:')} ${chalk.red(this.stats.errors.length)}`);
             this.stats.errors.forEach(error => {
                 console.log(`     ${chalk.red('•')} ${error}`);
             });
         }
-        
+
         console.log('');
-        
+
         // Display sample results
         if (enhancedResults.length > 0) {
             console.log(chalk.bold.white('🔍 Sample Search Results:'));
-            
+
             for (let i = 0; i < Math.min(enhancedResults.length, 3); i++) {
                 const questionResult = enhancedResults[i];
-                const shortQuestion = questionResult.questionText.length > 60 
+                const shortQuestion = questionResult.questionText.length > 60
                     ? questionResult.questionText.substring(0, 60) + '...'
                     : questionResult.questionText;
-                    
+
                 console.log(`   ${chalk.bold.cyan(`${i + 1}.`)} ${chalk.white(shortQuestion)}`);
                 console.log(`      ${chalk.gray('Seeds:')} ${chalk.white(questionResult.seedCount)} ${chalk.gray('Results:')} ${chalk.white(questionResult.enhancedResults.length)}`);
-                
+
                 // Show top 3 results
                 for (let j = 0; j < Math.min(questionResult.enhancedResults.length, 3); j++) {
                     const result = questionResult.enhancedResults[j];
-                    const shortLabel = result.nodeLabel.length > 40 
+                    const shortLabel = result.nodeLabel.length > 40
                         ? result.nodeLabel.substring(0, 40) + '...'
                         : result.nodeLabel;
                     console.log(`        ${chalk.cyan(`${j + 1}:`)} ${chalk.white(shortLabel)} ${chalk.gray(`(${result.enhancedScore.toFixed(4)})`)}`);
                 }
             }
         }
-        
+
         console.log('');
     }
 }
@@ -575,7 +575,7 @@ INSERT DATA {
  */
 async function runSemanticSearch() {
     displayHeader();
-    
+
     try {
         const config = {
             sparqlEndpoint: 'https://fuseki.hyperdata.it/hyperdata.it/update',
@@ -583,19 +583,19 @@ async function runSemanticSearch() {
             beerqaGraphURI: 'http://purl.org/stuff/beerqa/test',
             wikipediaGraphURI: 'http://purl.org/stuff/wikipedia/test',
             timeout: 30000,
-            
+
             // PPR configuration
             alpha: 0.15,
             shallowIterations: 2,
             deepIterations: 10,
             convergenceThreshold: 1e-6,
-            
+
             // Search configuration
             topKPerType: 5,
             preferredTypes: ['ragno:Corpuscle'],
             boostImportanceRankings: true,
             minPPRScore: 0.001,
-            
+
             // Export configuration
             exportResults: true
         };
@@ -618,7 +618,7 @@ async function runSemanticSearch() {
         } else {
             console.log(chalk.yellow('⚠️  Semantic search completed with issues:', result.message));
         }
-        
+
         return result;
 
     } catch (error) {

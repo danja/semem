@@ -21,7 +21,7 @@ import logger from 'loglevel';
 import chalk from 'chalk';
 import Config from '../../../src/Config.js';
 import MemoryManager from '../../../src/MemoryManager.js';
-import SPARQLHelper from '../SPARQLHelper.js';
+import SPARQLHelper from '../../../src/services/sparql/SPARQLHelper.js';
 
 // Configure logging
 logger.setLevel('info');
@@ -49,17 +49,17 @@ class SyntheticCorpuscleGenerator {
             beerqaGraphURI: options.beerqaGraphURI || 'http://purl.org/stuff/beerqa/test',
             wikipediaGraphURI: options.wikipediaGraphURI || 'http://purl.org/stuff/wikipedia/test',
             timeout: options.timeout || 30000,
-            
+
             // Content generation options
             numberOfCorpuscles: options.numberOfCorpuscles || 50,
             contentLength: options.contentLength || 500,
             generateEmbeddings: options.generateEmbeddings !== false,
             topicDiversity: options.topicDiversity || 10,
-            
+
             // LLM options
             llmProvider: options.llmProvider || 'ollama',
             embeddingModel: options.embeddingModel || 'nomic-embed-text',
-            
+
             ...options
         };
 
@@ -160,7 +160,7 @@ class SyntheticCorpuscleGenerator {
 
             // Calculate final statistics
             this.stats.processingTime = Date.now() - startTime;
-            
+
             console.log(chalk.green('✅ Synthetic corpuscle generation completed successfully'));
             this.displayResults();
 
@@ -184,16 +184,16 @@ class SyntheticCorpuscleGenerator {
     async initializeLLMServices() {
         try {
             console.log(chalk.gray('   Initializing LLM services...'));
-            
+
             const config = new Config();
             await config.initialize();
-            
+
             const memoryManager = new MemoryManager(config);
             await memoryManager.initialize();
-            
+
             console.log(chalk.gray('   ✓ LLM services initialized'));
             return memoryManager;
-            
+
         } catch (error) {
             console.log(chalk.yellow(`   ⚠️  Could not initialize LLM services: ${error.message}`));
             return null;
@@ -206,17 +206,17 @@ class SyntheticCorpuscleGenerator {
      */
     async generateTopicBasedContent() {
         console.log(chalk.gray('   Generating topic-based synthetic content...'));
-        
+
         const syntheticContent = [];
         const corpusclesPerTopic = Math.ceil(this.options.numberOfCorpuscles / this.contentTopics.length);
 
         for (let topicIndex = 0; topicIndex < this.contentTopics.length; topicIndex++) {
             const topic = this.contentTopics[topicIndex];
-            
+
             for (let i = 0; i < corpusclesPerTopic && syntheticContent.length < this.options.numberOfCorpuscles; i++) {
                 const corpuscleContent = this.generateTopicContent(topic, i + 1);
                 const corpuscleURI = `http://purl.org/stuff/wikipedia/test/corpuscle/synthetic_${topic.topic.toLowerCase().replace(/\s+/g, '_')}_${i + 1}`;
-                
+
                 syntheticContent.push({
                     corpuscleURI: corpuscleURI,
                     corpuscleText: corpuscleContent,
@@ -246,18 +246,18 @@ class SyntheticCorpuscleGenerator {
     generateTopicContent(topic, index) {
         const variations = [
             `${topic.content} This field encompasses research into ${topic.keywords.join(', ')} and their applications in modern contexts. Understanding these concepts is essential for advancing knowledge in this domain.`,
-            
+
             `Research in ${topic.topic.toLowerCase()} has revealed important insights about ${topic.keywords[0]} and ${topic.keywords[1]}. ${topic.content} Current studies focus on the relationship between ${topic.keywords[2] || topic.keywords[0]} and practical applications.`,
-            
+
             `The study of ${topic.keywords.join(' and ')} has contributed significantly to our understanding of ${topic.topic.toLowerCase()}. ${topic.content} Modern approaches to this field continue to evolve with new research methodologies.`,
-            
+
             `${topic.content} Experts in ${topic.topic.toLowerCase()} examine how ${topic.keywords[0]} influences ${topic.keywords[1] || 'related phenomena'}. This research area combines theoretical knowledge with practical applications in ${topic.keywords[2] || 'various contexts'}.`,
-            
+
             `In the field of ${topic.topic.toLowerCase()}, researchers investigate the complex relationships between ${topic.keywords.slice(0, 3).join(', ')}. ${topic.content} These studies provide valuable insights for both academic and practical purposes.`
         ];
 
         const selectedVariation = variations[index % variations.length];
-        
+
         // Add some randomization to make each corpuscle unique
         const additionalInfo = [
             'This knowledge forms the foundation for advanced research and development.',
@@ -268,7 +268,7 @@ class SyntheticCorpuscleGenerator {
         ];
 
         const additional = additionalInfo[index % additionalInfo.length];
-        
+
         return `${selectedVariation} ${additional}`.substring(0, this.options.contentLength);
     }
 
@@ -279,19 +279,19 @@ class SyntheticCorpuscleGenerator {
      */
     async generateContentEmbeddings(syntheticContent, memoryManager) {
         console.log(chalk.gray('   Generating embeddings for synthetic content...'));
-        
+
         for (let i = 0; i < syntheticContent.length; i++) {
             const content = syntheticContent[i];
-            
+
             try {
                 const embedding = await memoryManager.embeddingHandler.generateEmbedding(content.corpuscleText);
                 content.embedding = embedding;
                 this.stats.embeddingsGenerated++;
-                
+
                 if ((i + 1) % 10 === 0) {
                     console.log(chalk.gray(`   ✓ Generated embeddings for ${i + 1}/${syntheticContent.length} corpuscles`));
                 }
-                
+
             } catch (error) {
                 console.log(chalk.yellow(`   ⚠️  Failed to generate embedding for corpuscle ${i + 1}: ${error.message}`));
                 this.stats.errors.push(`Embedding generation failed for corpuscle ${i + 1}: ${error.message}`);
@@ -307,7 +307,7 @@ class SyntheticCorpuscleGenerator {
      */
     async exportSyntheticCorpuscles(syntheticContent) {
         console.log(chalk.gray(`   Exporting ${syntheticContent.length} synthetic corpuscles...`));
-        
+
         const timestamp = new Date().toISOString();
         const batchSize = 10;
         let exported = 0;
@@ -326,7 +326,7 @@ class SyntheticCorpuscleGenerator {
                     triples.push(`<${content.corpuscleURI}> ragno:keywords "${content.keywords.join(', ')}" .`);
                     triples.push(`<${content.corpuscleURI}> dcterms:created "${timestamp}"^^xsd:dateTime .`);
                     triples.push(`<${content.corpuscleURI}> prov:wasGeneratedBy "synthetic-corpuscle-generator" .`);
-                    
+
                     // Add embedding if available
                     if (content.embedding) {
                         triples.push(`<${content.corpuscleURI}> ragno:hasEmbedding "${JSON.stringify(content.embedding)}" .`);
@@ -348,7 +348,7 @@ INSERT DATA {
 }`;
 
                 const result = await this.sparqlHelper.executeUpdate(updateQuery);
-                
+
                 if (result.success) {
                     exported += batch.length;
                     console.log(chalk.gray(`   ✓ Exported batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(syntheticContent.length / batchSize)} (${exported}/${syntheticContent.length})`));
@@ -379,16 +379,16 @@ INSERT DATA {
         console.log(`   ${chalk.cyan('Embeddings Generated:')} ${chalk.white(this.stats.embeddingsGenerated)}`);
         console.log(`   ${chalk.cyan('Topics Created:')} ${chalk.white(this.stats.topicsCreated)}`);
         console.log(`   ${chalk.cyan('Processing Time:')} ${chalk.white((this.stats.processingTime / 1000).toFixed(2))}s`);
-        
+
         if (this.stats.errors.length > 0) {
             console.log(`   ${chalk.cyan('Errors:')} ${chalk.red(this.stats.errors.length)}`);
             this.stats.errors.forEach(error => {
                 console.log(`     ${chalk.red('•')} ${error}`);
             });
         }
-        
+
         console.log('');
-        
+
         // Display topic distribution
         if (this.stats.topicsCreated > 0) {
             console.log(chalk.bold.white('📚 Topic Distribution:'));
@@ -397,7 +397,7 @@ INSERT DATA {
                 console.log(`   ${chalk.cyan(`${index + 1}.`)} ${chalk.white(topic.topic)}: ${chalk.white(Math.min(corpusclesPerTopic, this.options.numberOfCorpuscles - index * corpusclesPerTopic))} corpuscles`);
             });
         }
-        
+
         console.log('');
     }
 }
@@ -407,7 +407,7 @@ INSERT DATA {
  */
 async function generateSyntheticCorpuscles() {
     displayHeader();
-    
+
     try {
         const config = {
             sparqlEndpoint: 'https://fuseki.hyperdata.it/hyperdata.it/update',
@@ -415,13 +415,13 @@ async function generateSyntheticCorpuscles() {
             beerqaGraphURI: 'http://purl.org/stuff/beerqa/test',
             wikipediaGraphURI: 'http://purl.org/stuff/wikipedia/test',
             timeout: 30000,
-            
+
             // Content generation options
             numberOfCorpuscles: 50,
             contentLength: 500,
             generateEmbeddings: true,
             topicDiversity: 10,
-            
+
             // LLM options
             llmProvider: 'ollama',
             embeddingModel: 'nomic-embed-text'
@@ -447,7 +447,7 @@ async function generateSyntheticCorpuscles() {
         } else {
             console.log(chalk.yellow('⚠️  Synthetic corpuscle generation completed with issues'));
         }
-        
+
         return result;
 
     } catch (error) {

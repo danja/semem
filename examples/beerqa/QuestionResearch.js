@@ -309,6 +309,90 @@ class BeerQAQuestionResearch {
     }
 
     /**
+     * Find questions with extracted concepts for Wikipedia research
+     */
+    async findQuestionsWithConcepts(limit = 10) {
+        const queryEndpoint = this.options.sparqlEndpoint.replace('/update', '/query');
+        
+        // Find questions that have concept attributes
+        const query = `
+PREFIX ragno: <http://purl.org/stuff/ragno/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+
+SELECT ?corpuscle ?questionText ?source ?questionId ?question 
+       (GROUP_CONCAT(?conceptValue; separator="|") as ?conceptValues)
+FROM <${this.options.beerqaGraphURI}>
+WHERE {
+    ?corpuscle a ragno:Corpuscle ;
+               rdfs:label ?questionText ;
+               ragno:corpuscleType "test-question" ;
+               dcterms:source ?source ;
+               dcterms:identifier ?questionId ;
+               ragno:hasQuestion ?question ;
+               ragno:hasAttribute ?conceptAttr .
+    
+    ?conceptAttr ragno:attributeType "concept" ;
+                 ragno:attributeValue ?conceptValue .
+}
+GROUP BY ?corpuscle ?questionText ?source ?questionId ?question
+ORDER BY ?corpuscle
+LIMIT ${limit}`;
+
+        try {
+            const response = await fetch(queryEndpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/sparql-query',
+                    'Accept': 'application/sparql-results+json',
+                    'Authorization': `Basic ${btoa(`${this.options.sparqlAuth.user}:${this.options.sparqlAuth.password}`)}`
+                },
+                body: query
+            });
+
+            if (!response.ok) {
+                throw new Error(`Query failed: ${response.status} ${response.statusText}`);
+            }
+
+            const results = await response.json();
+            
+            if (results.results.bindings.length === 0) {
+                logger.info('No questions with concepts found. Run AugmentQuestion.js first to extract concepts.');
+                return [];
+            }
+
+            const questions = [];
+            for (const binding of results.results.bindings) {
+                // Parse concepts from concatenated values
+                const conceptValues = binding.conceptValues?.value || '';
+                const concepts = conceptValues.split('|').filter(v => v.trim()).map((value, index) => ({
+                    value: value.trim(),
+                    type: 'extracted',
+                    confidence: 0.8,
+                    source: 'existing'
+                }));
+
+                questions.push({
+                    corpuscle: binding.corpuscle.value,
+                    questionText: binding.questionText.value,
+                    source: binding.source.value,
+                    questionId: binding.questionId.value,
+                    question: binding.question.value,
+                    concepts: concepts,
+                    conceptsSource: 'existing'
+                });
+            }
+
+            logger.info(`Found ${questions.length} questions with concepts (total concepts: ${questions.reduce((sum, q) => sum + q.concepts.length, 0)})`);
+            return questions;
+
+        } catch (error) {
+            logger.error('Failed to find questions with concepts:', error);
+            throw error;
+        }
+    }
+
+    /**
      * Find questions without extracted concepts
      */
     async findQuestionsWithoutConcepts(limit = 10) {
@@ -498,16 +582,17 @@ INSERT DATA {
      * Research concepts via Wikipedia search
      */
     async researchConcepts(concepts) {
-        logger.info(`Starting research for ${concepts.length} concepts...`);
+        logger.info(`📚 Starting Wikipedia research for ${concepts.length} concepts...`);
         
         const researchResults = [];
         
         for (let i = 0; i < concepts.length; i++) {
             const concept = concepts[i];
-            logger.info(`Researching concept ${i + 1}/${concepts.length}: "${concept.value}"`);
+            logger.info(`🔍 [${i + 1}/${concepts.length}] Searching Wikipedia for: "${concept.value}"`);
             
             try {
                 // Search Wikipedia for the concept
+                logger.info(`📡 Making Wikipedia API call for "${concept.value}" (limit: ${this.options.maxResultsPerConcept})`);
                 const searchResult = await this.wikipediaSearch.search(concept.value, {
                     delay: this.options.searchDelay,
                     limit: this.options.maxResultsPerConcept
@@ -515,6 +600,8 @@ INSERT DATA {
                 
                 this.stats.totalSearches++;
                 this.stats.totalWikipediaResults += searchResult.results.length;
+                
+                logger.info(`📊 Wikipedia search completed: ${searchResult.results.length} results found for "${concept.value}"`);
                 
                 if (searchResult.results.length > 0) {
                     // Ingest search results as units
@@ -610,19 +697,19 @@ INSERT DATA {
     }
 
     /**
-     * Main research process - extract concepts and research via Wikipedia
+     * Main research process - research existing concepts via Wikipedia
      */
     async research(questionLimit = 10) {
         try {
             this.stats.startTime = new Date();
-            logger.info('Starting BeerQA question concept extraction and research');
+            logger.info('Starting BeerQA question Wikipedia research for existing concepts');
 
-            // Find questions without concepts
-            logger.info(`Finding up to ${questionLimit} questions without concepts...`);
-            const questions = await this.findQuestionsWithoutConcepts(questionLimit);
+            // Find questions with existing concepts
+            logger.info(`Finding up to ${questionLimit} questions with extracted concepts...`);
+            const questions = await this.findQuestionsWithConcepts(questionLimit);
             
             if (!Array.isArray(questions) || questions.length === 0) {
-                logger.info('No questions without concepts found. All questions already have concepts extracted.');
+                logger.info('No questions with concepts found. Run AugmentQuestion.js first to extract concepts.');
                 return {
                     success: true,
                     questionsProcessed: 0,
@@ -633,7 +720,7 @@ INSERT DATA {
                 };
             }
 
-            logger.info(`Processing ${questions.length} questions`);
+            logger.info(`Processing ${questions.length} questions with ${questions.reduce((sum, q) => sum + q.concepts.length, 0)} total concepts`);
             
             const processedQuestions = [];
             const allResearchResults = [];
@@ -643,34 +730,24 @@ INSERT DATA {
                 const question = questions[i];
                 logger.info(`\n--- Processing Question ${i + 1}/${questions.length} ---`);
                 logger.info(`Question: "${question.questionText.substring(0, 80)}..."`);
-                
-                // Extract concepts using MemoryManager
-                const concepts = await this.extractConcepts(question.questionText);
+                logger.info(`Found ${question.concepts.length} existing concepts: ${question.concepts.map(c => `"${c.value}"`).join(', ')}`);
+
+                // Use existing concepts for Wikipedia research
+                const concepts = question.concepts;
                 
                 if (concepts.length === 0) {
-                    logger.warn(`No concepts extracted for question ${i + 1}, skipping research...`);
-                    this.stats.errors.push(`No concepts extracted for question: ${question.questionText.substring(0, 50)}...`);
+                    logger.warn(`No concepts found for question ${i + 1}, skipping Wikipedia search...`);
                     continue;
                 }
 
-                logger.info(`Extracted ${concepts.length} concepts`);
-
-                // Store concepts back to the corpuscle
-                const baseURI = this.options.beerqaGraphURI.endsWith('/') ? 
-                    this.options.beerqaGraphURI : this.options.beerqaGraphURI + '/';
-                
-                await this.storeConceptsToCorpuscle(question.questionId, baseURI, concepts);
-
-                // Update question object with extracted concepts
-                question.concepts = concepts;
-                question.conceptsSource = 'memorymanager';
                 processedQuestions.push(question);
 
-                // Research concepts via Wikipedia for this question
+                // Research concepts via Wikipedia for this question (always at least one search since we have concepts)
+                logger.info(`🔍 Starting Wikipedia research for ${concepts.length} concepts...`);
                 const researchResults = await this.researchConcepts(concepts);
                 allResearchResults.push(...researchResults);
 
-                logger.info(`Completed research for question ${i + 1}: ${researchResults.length} concept research results`);
+                logger.info(`✅ Completed Wikipedia research for question ${i + 1}: ${researchResults.length} concept research results`);
             }
 
             // Transform all Wikipedia units to corpuscles (once at the end)

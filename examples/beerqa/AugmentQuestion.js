@@ -8,6 +8,9 @@
  * and stores the results back to the corpuscle in the SPARQL store.
  */
 
+import dotenv from 'dotenv';
+dotenv.config();
+
 import path from 'path';
 import logger from 'loglevel';
 import chalk from 'chalk';
@@ -99,7 +102,7 @@ function displayConcepts(concepts) {
             console.log(`      ${chalk.gray('Confidence:')} ${chalk.white(concept.confidence)}`);
         }
     }
-    
+
     if (concepts.length > 5) {
         console.log(`   ${chalk.dim(`... and ${concepts.length - 5} more concepts`)}`);
     }
@@ -135,12 +138,12 @@ class BeerQAQuestionAugmentation {
     constructor(config, options = {}) {
         // Use Config.js for SPARQL configuration
         const storageOptions = config.get('storage.options');
-        
+
         this.options = {
             sparqlEndpoint: options.sparqlEndpoint || storageOptions.update,
-            sparqlAuth: options.sparqlAuth || { 
-                user: storageOptions.user, 
-                password: storageOptions.password 
+            sparqlAuth: options.sparqlAuth || {
+                user: storageOptions.user,
+                password: storageOptions.password
             },
             graphURI: options.graphURI || 'http://purl.org/stuff/beerqa/test',
             baseURI: options.baseURI || 'http://purl.org/stuff/beerqa/test/',
@@ -187,26 +190,26 @@ class BeerQAQuestionAugmentation {
         try {
             // Get llmProviders with priority ordering
             const llmProviders = config.get('llmProviders') || [];
-            
+
             // Sort by priority (lower number = higher priority)
             const sortedProviders = llmProviders
                 .filter(p => p.capabilities?.includes('chat'))
                 .sort((a, b) => (a.priority || 999) - (b.priority || 999));
-            
+
             // Try providers in priority order
             for (const provider of sortedProviders) {
                 if (provider.type === 'mistral' && provider.apiKey) {
-                    return new MistralConnector();
+                    return new MistralConnector(provider.apiKey, undefined, provider.chatModel);
                 } else if (provider.type === 'claude' && provider.apiKey) {
-                    return new ClaudeConnector();
+                    return new ClaudeConnector(provider.apiKey, provider.chatModel);
                 } else if (provider.type === 'ollama') {
                     return new OllamaConnector();
                 }
             }
-            
+
             // Default to Ollama
             return new OllamaConnector();
-            
+
         } catch (error) {
             logger.warn('Failed to load provider configuration, defaulting to Ollama:', error.message);
             return new OllamaConnector();
@@ -221,7 +224,7 @@ class BeerQAQuestionAugmentation {
             const embeddingProviders = config.get('embeddingProviders') || [];
             const sortedProviders = embeddingProviders
                 .sort((a, b) => (a.priority || 999) - (b.priority || 999));
-            
+
             for (const provider of sortedProviders) {
                 if (provider.type === 'ollama') {
                     return EmbeddingConnectorFactory.createConnector({
@@ -231,14 +234,14 @@ class BeerQAQuestionAugmentation {
                     });
                 }
             }
-            
+
             // Default to Ollama
             return EmbeddingConnectorFactory.createConnector({
                 provider: 'ollama',
                 model: 'nomic-embed-text',
                 options: { baseUrl: 'http://localhost:11434' }
             });
-            
+
         } catch (error) {
             logger.warn('Failed to create embedding connector, using default:', error.message);
             return EmbeddingConnectorFactory.createConnector({
@@ -254,11 +257,17 @@ class BeerQAQuestionAugmentation {
      */
     async getModelConfig(config) {
         try {
-            const llmModel = config.get('llm.model') || 'qwen2:1.5b';
-            const embeddingModel = config.get('embedding.model') || 'nomic-embed-text';
+            // Get the highest priority LLM provider's chat model
+            const llmProviders = config.get('llmProviders') || [];
+            const sortedProviders = llmProviders
+                .filter(p => p.capabilities?.includes('chat'))
+                .sort((a, b) => (a.priority || 999) - (b.priority || 999));
             
+            const chatModel = sortedProviders[0]?.chatModel || 'qwen2:1.5b';
+            const embeddingModel = config.get('embedding.model') || 'nomic-embed-text';
+
             return {
-                chatModel: llmModel,
+                chatModel: chatModel,
                 embeddingModel: embeddingModel
             };
         } catch (error) {
@@ -287,7 +296,7 @@ class BeerQAQuestionAugmentation {
                     const embeddingProvider = await this.createEmbeddingConnector(config);
                     const modelConfig = await this.getModelConfig(config);
                     const dimension = config.get('memory.dimension') || 1536;
-                    
+
                     this.embeddingHandler = new EmbeddingHandler(
                         embeddingProvider,
                         modelConfig.embeddingModel,
@@ -307,7 +316,7 @@ class BeerQAQuestionAugmentation {
                     // Use the new configuration pattern from api-server.js
                     const llmProvider = await this.createLLMConnector(config);
                     const modelConfig = await this.getModelConfig(config);
-                    
+
                     this.llmHandler = new LLMHandler(llmProvider, modelConfig.chatModel);
                     logger.info('LLM handler initialized successfully');
                 } catch (error) {
@@ -333,7 +342,7 @@ class BeerQAQuestionAugmentation {
      */
     async findTestQuestions(limit = 1) {
         const queryEndpoint = this.options.sparqlEndpoint.replace('/update', '/query');
-        
+
         const query = `
 PREFIX ragno: <http://purl.org/stuff/ragno/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -368,7 +377,7 @@ LIMIT ${limit}`;
             }
 
             const results = await response.json();
-            
+
             if (!results.results.bindings.length) {
                 throw new Error('No test questions found in the store. Run BeerTestQuestions.js first.');
             }
@@ -445,7 +454,7 @@ LIMIT ${limit}`;
         // Embedding attribute
         if (embedding) {
             const embeddingURI = `<${this.options.baseURI}attribute/${question.questionId}_embedding>`;
-            
+
             triples.push(`${embeddingURI} rdf:type ragno:Attribute .`);
             triples.push(`${embeddingURI} rdfs:label ${SPARQLHelper.createLiteral('question-embedding')} .`);
             triples.push(`${embeddingURI} a ragno:VectorEmbedding .`);
@@ -453,7 +462,7 @@ LIMIT ${limit}`;
             triples.push(`${embeddingURI} ragno:embeddingDimensions ${SPARQLHelper.createLiteral(embedding.length.toString(), 'http://www.w3.org/2001/XMLSchema#integer')} .`);
             triples.push(`${embeddingURI} dcterms:created ${SPARQLHelper.createLiteral(timestamp, 'http://www.w3.org/2001/XMLSchema#dateTime')} .`);
             triples.push(`${embeddingURI} prov:wasGeneratedBy ${SPARQLHelper.createLiteral('embedding-handler')} .`);
-            
+
             // Associate embedding with corpuscle
             triples.push(`${corpuscleURI} ragno:hasAttribute ${embeddingURI} .`);
             triples.push(`${embeddingURI} ragno:describesCorpuscle ${corpuscleURI} .`);
@@ -464,11 +473,11 @@ LIMIT ${limit}`;
             for (let i = 0; i < concepts.length; i++) {
                 const concept = concepts[i];
                 const conceptURI = `<${this.options.baseURI}attribute/${question.questionId}_concept_${i}>`;
-                
+
                 triples.push(`${conceptURI} rdf:type ragno:Attribute .`);
                 triples.push(`${conceptURI} rdfs:label ${SPARQLHelper.createLiteral('extracted-concept')} .`);
                 triples.push(`${conceptURI} ragno:attributeType ${SPARQLHelper.createLiteral('concept')} .`);
-                
+
                 // Handle both string and object concepts
                 if (typeof concept === 'string') {
                     triples.push(`${conceptURI} ragno:attributeValue ${SPARQLHelper.createLiteral(concept)} .`);
@@ -481,11 +490,11 @@ LIMIT ${limit}`;
                         triples.push(`${conceptURI} ragno:confidence ${SPARQLHelper.createLiteral(concept.confidence.toString(), 'http://www.w3.org/2001/XMLSchema#float')} .`);
                     }
                 }
-                
+
                 triples.push(`${conceptURI} ragno:conceptIndex ${SPARQLHelper.createLiteral(i.toString(), 'http://www.w3.org/2001/XMLSchema#integer')} .`);
                 triples.push(`${conceptURI} dcterms:created ${SPARQLHelper.createLiteral(timestamp, 'http://www.w3.org/2001/XMLSchema#dateTime')} .`);
                 triples.push(`${conceptURI} prov:wasGeneratedBy ${SPARQLHelper.createLiteral('llm-concept-extraction')} .`);
-                
+
                 // Associate concept with corpuscle
                 triples.push(`${corpuscleURI} ragno:hasAttribute ${conceptURI} .`);
                 triples.push(`${conceptURI} ragno:describesCorpuscle ${corpuscleURI} .`);
@@ -506,12 +515,12 @@ LIMIT ${limit}`;
     async storeAugmentationData(triples) {
         try {
             logger.info(`Storing ${triples.length} augmentation triples to SPARQL store...`);
-            
+
             const triplesString = triples.join('\n        ');
             const query = this.sparqlHelper.createInsertDataQuery(this.options.graphURI, triplesString);
-            
+
             const result = await this.sparqlHelper.executeUpdate(query);
-            
+
             if (result.success) {
                 logger.info('Augmentation data stored successfully');
                 this.stats.triplesGenerated += triples.length;
@@ -519,7 +528,7 @@ LIMIT ${limit}`;
             } else {
                 throw new Error(result.error);
             }
-            
+
         } catch (error) {
             logger.error('Failed to store augmentation data:', error);
             this.stats.errors.push(`SPARQL storage: ${error.message}`);
@@ -538,7 +547,7 @@ LIMIT ${limit}`;
             // Find test questions
             logger.info(`Finding up to ${questionLimit} test questions from store...`);
             const questions = await this.findTestQuestions(questionLimit);
-            
+
             if (!Array.isArray(questions) || questions.length === 0) {
                 throw new Error('No questions found');
             }
@@ -571,7 +580,7 @@ LIMIT ${limit}`;
                     if (stored) {
                         successfulQuestions++;
                         totalTriples += triples.length;
-                        
+
                         processedQuestions.push({
                             question: question,
                             embedding: embedding,
@@ -592,7 +601,7 @@ LIMIT ${limit}`;
                 } catch (error) {
                     logger.error(`❌ Failed to process question ${i + 1}: ${error.message}`);
                     this.stats.errors.push(`Question ${i + 1}: ${error.message}`);
-                    
+
                     processedQuestions.push({
                         question: question,
                         success: false,
@@ -650,7 +659,7 @@ async function runBeerQAQuestionAugmentation() {
     // Initialize Config.js for proper configuration management
     const config = new Config('config/config.json');
     await config.init();
-    
+
     const options = {
         graphURI: 'http://purl.org/stuff/beerqa/test',
         baseURI: 'http://purl.org/stuff/beerqa/test/',
@@ -661,9 +670,9 @@ async function runBeerQAQuestionAugmentation() {
     // Display configuration with actual SPARQL endpoint from config
     const displayConfig = {
         sparqlEndpoint: config.get('storage.options.update'),
-        sparqlAuth: { 
-            user: config.get('storage.options.user'), 
-            password: config.get('storage.options.password') 
+        sparqlAuth: {
+            user: config.get('storage.options.user'),
+            password: config.get('storage.options.password')
         },
         ...options
     };
@@ -697,7 +706,7 @@ async function runBeerQAQuestionAugmentation() {
             if (firstSuccessful) {
                 console.log(chalk.bold.white('📝 Sample Question (first processed):'));
                 displayQuestionInfo(firstSuccessful.question);
-                
+
                 displayAugmentationResults({
                     embeddingGenerated: firstSuccessful.embeddingGenerated,
                     embeddingDimensions: firstSuccessful.embeddingDimensions,

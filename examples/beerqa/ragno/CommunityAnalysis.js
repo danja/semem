@@ -34,7 +34,7 @@ import OllamaConnector from '../../../src/connectors/OllamaConnector.js';
 import ClaudeConnector from '../../../src/connectors/ClaudeConnector.js';
 import MistralConnector from '../../../src/connectors/MistralConnector.js';
 import { CorpuscleRanking } from './CorpuscleRanking.js';
-import SPARQLHelper from '../SPARQLHelper.js';
+import SPARQLHelper from '../../../src/services/sparql/SPARQLHelper.js';
 
 // Configure logging
 logger.setLevel('info');
@@ -276,7 +276,7 @@ class CommunityAnalysis {
                     // Handle both Set and Array formats
                     const memberSize = members?.size || members?.length || 0;
                     const memberArray = Array.isArray(members) ? members : Array.from(members || []);
-                    
+
                     if (memberSize >= this.options.minCommunitySize) {
                         communities.push({
                             id: `community_${communityId}`,
@@ -321,7 +321,7 @@ class CommunityAnalysis {
                 // The community members are coming back as individual characters instead of URIs
                 // This indicates an issue in the community detection algorithm itself
                 // For now, let's work around this by getting the actual corpuscle content directly
-                
+
                 // Get all corpuscle content from both graphs for the summary
                 const allContentQuery = `
 PREFIX ragno: <http://purl.org/stuff/ragno/>
@@ -341,7 +341,7 @@ SELECT ?label WHERE {
     }
 }
 LIMIT 10`;
-                
+
                 const memberContent = [];
                 try {
                     const result = await this.sparqlHelper.executeSelect(allContentQuery);
@@ -358,7 +358,7 @@ LIMIT 10`;
                     } else {
                         console.log(chalk.gray(`   ⚠️  No content found for community summary`));
                     }
-                    
+
                     // If no content found via SPARQL, provide a default message
                     if (memberContent.length === 0) {
                         memberContent.push('Community detected but content extraction failed due to URI formatting issues in community detection algorithm');
