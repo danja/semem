@@ -15,7 +15,7 @@ examples/beerqa/QuestionResearch.js
       ex:embedding "[0.1, 0.2, 0.3, ...]" .
 
   Units can be transformed into ragno:Corpuscle instances with embeddings for enhanced semantic search capabilities.
-  
+
  Converting Wikipedia Units to Corpuscles with Embeddings
 
   The UnitsToCorpuscles class (src/aux/wikipedia/UnitsToCorpuscles.js:167-182) is:
@@ -38,6 +38,28 @@ Replace hardcoded credentials in critical files:
     - src/api/http/middleware/_auth-middleware.js
     - src/api/http/server/WebSocketServer.js
   2. Update all 66 files to use environment variables instead
+
+  ---
+
+examples/beerqa/ragno/RelationshipBuilder.js
+
+    SPARQL-Intensive Step: Entity-Based Relationships (Lines 511-566)
+
+  The step that "takes quite a time" and uses "SPARQL a lot per question" is Phase 3: Entity-Based Relationship Creation (lines 511-566).
+
+  What happens:
+
+  1. For each question (up to 5 by default):
+    - First SPARQL query: Find entities/attributes associated with the question (lines 577-591)
+    - For each Wikipedia corpuscle (up to 20 per question):
+        - Second SPARQL query: Find entities/attributes for that Wikipedia corpuscle (lines 608-622)
+      - Embedding comparison: Generate embeddings for each entity pair and calculate similarity (lines 640-648)
+
+  Why it's slow:
+  - Nested loops: 5 questions × 20 Wikipedia corpuscles = 100 iterations
+  - 2 SPARQL queries per iteration = 200+ SPARQL calls total
+  - Embedding generation: Each entity comparison requires generating 2 embeddings via LLM API
+  - High similarity threshold: 0.7 threshold for entity matching requires precise computation
 
   ---
 

@@ -88,7 +88,7 @@ class CorpuscleRanking {
         this.stats = {
             corpusclesAnalyzed: 0,
             relationshipsFound: 0,
-            syntheticEdgesCreated: 0,
+            relationshipTypes: new Set(),
             kCoreResults: 0,
             centralityResults: 0,
             rankingsGenerated: 0,
@@ -107,6 +107,18 @@ class CorpuscleRanking {
         console.log(chalk.bold.white('🔄 Starting corpuscle ranking analysis...'));
 
         try {
+            // Phase 0: Validate data prerequisites
+            console.log(chalk.white('🔍 Validating data prerequisites...'));
+            const validationResult = await this.validateDataPrerequisites();
+            if (!validationResult.canProceed) {
+                return {
+                    success: false,
+                    message: 'Data prerequisites not met',
+                    recommendations: validationResult.recommendations,
+                    validationDetails: validationResult
+                };
+            }
+
             // Phase 1: Build corpuscle relationship graph
             console.log(chalk.white('📊 Building corpuscle relationship graph...'));
             const graphData = await this.buildCorpuscleGraph();
@@ -116,9 +128,23 @@ class CorpuscleRanking {
                 return { success: false, message: 'No corpuscles found' };
             }
 
+            if (graphData.error) {
+                return {
+                    success: false,
+                    message: graphData.error,
+                    recommendations: graphData.recommendations || []
+                };
+            }
+
             // Phase 2: Run graph analytics
             console.log(chalk.white('🧮 Running graph analytics on corpuscle network...'));
             const analysisResults = await this.analyzeCorpuscleGraph(graphData);
+            
+            // Phase 2.5: Add content-based ranking for sparse graphs
+            if (graphData.graph?.qualityMetrics?.sparsityWarning) {
+                console.log(chalk.white('📝 Adding content-based ranking for sparse graph...'));
+                await this.addContentBasedRanking(graphData.graph, analysisResults);
+            }
 
             // Phase 3: Process ranking results
             console.log(chalk.white('📈 Processing corpuscle rankings...'));
@@ -278,11 +304,42 @@ WHERE {
         }
 
         console.log(chalk.gray(`   ✓ Found ${this.stats.relationshipsFound} existing relationships`));
+        
+        // Store relationship data for quality analysis
+        const relationshipData = [];
+        if (relationshipResult.success) {
+            for (const binding of relationshipResult.data.results.bindings) {
+                const weight = binding.weight?.value ? parseFloat(binding.weight.value) : 1.0;
+                const relType = binding.relType?.value || 'unknown';
+                relationshipData.push({ weight, type: relType });
+                this.stats.relationshipTypes.add(relType);
+            }
+        }
+        
+        // Store for later analysis
+        graph.relationshipData = relationshipData;
 
-        // If no relationships exist, create synthetic edges based on content similarity
+        // Check for meaningful relationships - no synthetic edges
         if (this.stats.relationshipsFound === 0) {
-            console.log(chalk.gray('   Creating synthetic edges from content similarity...'));
-            await this.createSyntheticEdges(graph);
+            console.log(chalk.yellow('   ⚠️  No relationships found in data - ranking not meaningful'));
+            console.log(chalk.yellow('   ⚠️  Run RelationshipBuilder.js first to create semantic relationships'));
+            return {
+                graph: graph,
+                nodeCount: graph.nodes.size,
+                edgeCount: 0,
+                error: 'No relationships found - ranking requires real semantic relationships',
+                recommendations: [
+                    'Run RelationshipBuilder.js to create semantic relationships between questions and Wikipedia content',
+                    'Verify Wikipedia content was ingested via QuestionResearch.js',
+                    'Check that embeddings exist for similarity calculations',
+                    'Ensure both BeerQA questions and Wikipedia corpuscles exist in the data'
+                ]
+            };
+        }
+
+        // Analyze relationship quality if relationships exist
+        if (this.stats.relationshipsFound > 0) {
+            this.analyzeRelationshipQuality(graph);
         }
 
         return {
@@ -293,123 +350,176 @@ WHERE {
     }
 
     /**
-     * Create synthetic edges between corpuscles for graph analysis
-     * @param {Object} graph - Graph structure to modify
+     * Validate data prerequisites for meaningful ranking
+     * @returns {Object} Validation results
      */
-    async createSyntheticEdges(graph) {
-        // Query for corpuscles with embeddings to calculate similarity
-        const embeddingQuery = `
-PREFIX ragno: <http://purl.org/stuff/ragno/>
-
-SELECT ?corpuscle ?embedding
-WHERE {
-    {
-        GRAPH <${this.options.beerqaGraphURI}> {
-            ?corpuscle ragno:hasAttribute ?attr .
-            ?attr a ragno:VectorEmbedding ;
-                  ragno:attributeValue ?embedding .
+    async validateDataPrerequisites() {
+        console.log(chalk.gray('   Checking data prerequisites...'));
+        
+        const checks = [
+            {
+                name: 'BeerQA questions',
+                query: `SELECT (COUNT(*) as ?count) WHERE {
+                    GRAPH <${this.options.beerqaGraphURI}> {
+                        ?s a ragno:Corpuscle ;
+                           ragno:corpuscleType "test-question" .
+                    }
+                }`,
+                minimum: 1
+            },
+            {
+                name: 'Wikipedia corpuscles',
+                query: `SELECT (COUNT(*) as ?count) WHERE {
+                    GRAPH <${this.options.wikipediaGraphURI}> {
+                        ?s a ragno:Corpuscle .
+                    }
+                }`,
+                minimum: 1
+            },
+            {
+                name: 'Relationships',
+                query: `SELECT (COUNT(*) as ?count) WHERE {
+                    {
+                        GRAPH <${this.options.beerqaGraphURI}> {
+                            ?s a ragno:Relationship .
+                        }
+                    } UNION {
+                        GRAPH <${this.options.wikipediaGraphURI}> {
+                            ?s a ragno:Relationship .
+                        }
+                    }
+                }`,
+                minimum: 1
+            },
+            {
+                name: 'Embeddings',
+                query: `SELECT (COUNT(*) as ?count) WHERE {
+                    {
+                        GRAPH <${this.options.beerqaGraphURI}> {
+                            ?s ragno:hasAttribute ?attr .
+                            ?attr a ragno:VectorEmbedding .
+                        }
+                    } UNION {
+                        GRAPH <${this.options.wikipediaGraphURI}> {
+                            ?s ragno:hasAttribute ?attr .
+                            ?attr a ragno:VectorEmbedding .
+                        }
+                    }
+                }`,
+                minimum: 0 // Optional but helpful
+            }
+        ];
+        
+        const results = {};
+        let canProceed = true;
+        const recommendations = [];
+        
+        for (const check of checks) {
+            try {
+                const result = await this.sparqlHelper.executeSelect(check.query);
+                const count = parseInt(result.data?.results?.bindings[0]?.count?.value || '0');
+                results[check.name] = count;
+                
+                console.log(chalk.gray(`   ${check.name}: ${count}`));
+                
+                if (count < check.minimum) {
+                    canProceed = false;
+                    if (check.name === 'BeerQA questions') {
+                        recommendations.push('Run BeerTestQuestions.js to create test questions');
+                    } else if (check.name === 'Wikipedia corpuscles') {
+                        recommendations.push('Run QuestionResearch.js to ingest Wikipedia content');
+                    } else if (check.name === 'Relationships') {
+                        recommendations.push('Run RelationshipBuilder.js to create semantic relationships');
+                    }
+                }
+            } catch (error) {
+                console.log(chalk.red(`   ❌ Failed to check ${check.name}: ${error.message}`));
+                results[check.name] = 0;
+                canProceed = false;
+            }
         }
-    } UNION {
-        GRAPH <${this.options.wikipediaGraphURI}> {
-            ?corpuscle ragno:hasAttribute ?attr .
-            ?attr a ragno:VectorEmbedding ;
-                  ragno:attributeValue ?embedding .
+        
+        if (!canProceed) {
+            recommendations.push('Verify SPARQL endpoint is accessible and contains the expected data');
         }
+        
+        if (!canProceed) {
+            console.log(chalk.red('   ❌ Prerequisites not met - cannot perform meaningful ranking'));
+            console.log(chalk.yellow('   💡 Recommendations:'));
+            recommendations.forEach(rec => {
+                console.log(chalk.yellow(`     • ${rec}`));
+            });
+        }
+        
+        return {
+            canProceed,
+            results,
+            recommendations,
+            summary: `Found ${results['BeerQA questions'] || 0} questions, ${results['Wikipedia corpuscles'] || 0} Wikipedia corpuscles, ${results['Relationships'] || 0} relationships`
+        };
     }
-}
-`;
 
-        const embeddingResult = await this.sparqlHelper.executeSelect(embeddingQuery);
-
-        if (!embeddingResult.success || embeddingResult.data.results.bindings.length === 0) {
-            console.log(chalk.gray('   ⚠️  No embeddings found - creating simple connection graph'));
-
-            // Create simple all-to-all connections with unit weight
-            const corpuscles = Array.from(graph.nodes.keys());
-            for (let i = 0; i < corpuscles.length; i++) {
-                for (let j = i + 1; j < corpuscles.length; j++) {
-                    const sourceURI = corpuscles[i];
-                    const targetURI = corpuscles[j];
-                    const edgeKey = `${sourceURI}->${targetURI}`;
-
-                    graph.edges.set(edgeKey, {
-                        source: sourceURI,
-                        target: targetURI,
-                        weight: 1.0,
-                        relationshipType: 'synthetic',
-                        properties: new Map()
-                    });
-
-                    // Update adjacency (bidirectional)
-                    if (!graph.adjacency.has(sourceURI)) {
-                        graph.adjacency.set(sourceURI, new Set());
-                    }
-                    if (!graph.adjacency.has(targetURI)) {
-                        graph.adjacency.set(targetURI, new Set());
-                    }
-                    graph.adjacency.get(sourceURI).add(targetURI);
-                    graph.adjacency.get(targetURI).add(sourceURI);
-
-                    this.stats.syntheticEdgesCreated++;
-                }
-            }
-        } else {
-            // Create edges based on embedding similarity
-            const embeddings = new Map();
-
-            for (const binding of embeddingResult.data.results.bindings) {
-                const corpuscleURI = binding.corpuscle.value;
-                try {
-                    const embedding = JSON.parse(binding.embedding.value);
-                    if (Array.isArray(embedding) && embedding.length > 0) {
-                        embeddings.set(corpuscleURI, embedding);
-                    }
-                } catch (error) {
-                    console.log(chalk.yellow(`   ⚠️  Invalid embedding for ${corpuscleURI}`));
-                }
-            }
-
-            console.log(chalk.gray(`   ✓ Found ${embeddings.size} valid embeddings`));
-
-            // Calculate pairwise similarities and create edges
-            const corpuscles = Array.from(embeddings.keys());
-            for (let i = 0; i < corpuscles.length; i++) {
-                for (let j = i + 1; j < corpuscles.length; j++) {
-                    const sourceURI = corpuscles[i];
-                    const targetURI = corpuscles[j];
-                    const embedding1 = embeddings.get(sourceURI);
-                    const embedding2 = embeddings.get(targetURI);
-
-                    const similarity = this.calculateCosineSimilarity(embedding1, embedding2);
-
-                    if (similarity >= this.options.similarityThreshold) {
-                        const edgeKey = `${sourceURI}->${targetURI}`;
-
-                        graph.edges.set(edgeKey, {
-                            source: sourceURI,
-                            target: targetURI,
-                            weight: similarity,
-                            relationshipType: 'similarity',
-                            properties: new Map()
-                        });
-
-                        // Update adjacency (bidirectional)
-                        if (!graph.adjacency.has(sourceURI)) {
-                            graph.adjacency.set(sourceURI, new Set());
-                        }
-                        if (!graph.adjacency.has(targetURI)) {
-                            graph.adjacency.set(targetURI, new Set());
-                        }
-                        graph.adjacency.get(sourceURI).add(targetURI);
-                        graph.adjacency.get(targetURI).add(sourceURI);
-
-                        this.stats.syntheticEdgesCreated++;
-                    }
-                }
-            }
+    /**
+     * Analyze relationship quality and diversity
+     * @param {Object} graph - Graph structure with relationship data
+     */
+    analyzeRelationshipQuality(graph) {
+        console.log(chalk.gray('   Analyzing relationship quality...'));
+        
+        const relationshipData = graph.relationshipData || [];
+        
+        if (relationshipData.length === 0) {
+            console.log(chalk.yellow('   ⚠️  No relationship data available for quality analysis'));
+            return;
         }
-
-        console.log(chalk.gray(`   ✓ Created ${this.stats.syntheticEdgesCreated} synthetic edges`));
+        
+        // Analyze weight distribution
+        const weights = relationshipData.map(r => r.weight);
+        const weightStats = {
+            min: Math.min(...weights),
+            max: Math.max(...weights),
+            mean: weights.reduce((a, b) => a + b, 0) / weights.length,
+            median: weights.sort((a, b) => a - b)[Math.floor(weights.length / 2)]
+        };
+        
+        // Analyze relationship types
+        const typeDistribution = {};
+        relationshipData.forEach(r => {
+            typeDistribution[r.type] = (typeDistribution[r.type] || 0) + 1;
+        });
+        
+        // Report analysis
+        console.log(chalk.gray(`   ✓ Relationship types (${this.stats.relationshipTypes.size}): ${[...this.stats.relationshipTypes].join(', ')}`));
+        console.log(chalk.gray(`   ✓ Weight range: ${weightStats.min.toFixed(3)} - ${weightStats.max.toFixed(3)} (mean: ${weightStats.mean.toFixed(3)})`));
+        
+        // Quality warnings
+        if (this.stats.relationshipTypes.size === 1) {
+            console.log(chalk.yellow('   ⚠️  Only one relationship type found - consider running multiple relationship creation strategies'));
+        }
+        
+        if (weightStats.max - weightStats.min < 0.1) {
+            console.log(chalk.yellow('   ⚠️  Low weight variance - relationships may not be well-differentiated'));
+        }
+        
+        // Check for graph sparsity
+        const nodeCount = graph.nodes.size;
+        const edgeCount = graph.edges.size;
+        const maxPossibleEdges = (nodeCount * (nodeCount - 1)) / 2;
+        const density = edgeCount / maxPossibleEdges;
+        
+        console.log(chalk.gray(`   ✓ Graph density: ${(density * 100).toFixed(2)}% (${edgeCount}/${maxPossibleEdges} possible edges)`));
+        
+        if (density < 0.1) {
+            console.log(chalk.yellow('   ⚠️  Sparse graph detected - rankings may not be highly differentiated'));
+        }
+        
+        // Store quality metrics
+        graph.qualityMetrics = {
+            weightStats,
+            typeDistribution,
+            density,
+            sparsityWarning: density < 0.1
+        };
     }
 
     /**
@@ -520,18 +630,36 @@ WHERE {
             }
         }
 
+        // Include content-based metrics if available (for sparse graphs)
+        const contentMetrics = analysisResults.contentMetrics;
+        const hasContentMetrics = contentMetrics && contentMetrics.size > 0;
+        
         // Calculate composite scores and create rankings
         for (const [nodeUri, scores] of corpuscleScores) {
-            // Weighted composite score (K-core: 60%, Centrality: 40%)
-            const compositeScore = (scores.kCore * 0.6) + (scores.centrality * 0.4);
+            let compositeScore;
+            let contentScore = 0;
+            
+            if (hasContentMetrics && contentMetrics.has(nodeUri)) {
+                const content = contentMetrics.get(nodeUri);
+                contentScore = content.contentScore / 100; // Normalize
+                // For sparse graphs: Structure 40%, Centrality 30%, Content 30%
+                compositeScore = (scores.kCore * 0.4) + (scores.centrality * 0.3) + (contentScore * 0.3);
+            } else {
+                // Standard weighting: K-core 60%, Centrality 40%
+                compositeScore = (scores.kCore * 0.6) + (scores.centrality * 0.4);
+            }
+            
             scores.composite = compositeScore;
+            scores.content = contentScore;
 
             rankings.push({
                 nodeUri: nodeUri,
                 kCoreScore: scores.kCore,
                 centralityScore: scores.centrality,
+                contentScore: contentScore,
                 compositeScore: compositeScore,
-                rank: 0 // Will be assigned after sorting
+                rank: 0, // Will be assigned after sorting
+                explanation: null // Will be generated after sorting
             });
         }
 
@@ -539,6 +667,7 @@ WHERE {
         rankings.sort((a, b) => b.compositeScore - a.compositeScore);
         rankings.forEach((ranking, index) => {
             ranking.rank = index + 1;
+            ranking.explanation = this.generateRankingExplanation(ranking, analysisResults);
         });
 
         this.stats.rankingsGenerated = rankings.length;
@@ -550,6 +679,127 @@ WHERE {
         }
 
         return rankings;
+    }
+
+    /**
+     * Generate explanation for a ranking result
+     * @param {Object} ranking - Ranking data
+     * @param {Object} analysisResults - Analysis results with graph data
+     * @returns {string} Human-readable explanation
+     */
+    generateRankingExplanation(ranking, analysisResults) {
+        const graph = analysisResults.graph || {};
+        const node = graph.nodes?.get(ranking.nodeUri);
+        const connections = graph.adjacency?.get(ranking.nodeUri)?.size || 0;
+        
+        const nodeType = node?.source || 'unknown';
+        const nodeLabel = node?.label || ranking.nodeUri.split('/').pop();
+        
+        let explanation = `${nodeType} corpuscle with ${connections} connections`;
+        
+        // Add k-core explanation
+        if (ranking.kCoreScore > 0) {
+            explanation += `, k-core ${ranking.kCoreScore.toFixed(1)}`;
+            if (ranking.kCoreScore >= 3) {
+                explanation += ' (highly connected)';
+            } else if (ranking.kCoreScore >= 2) {
+                explanation += ' (moderately connected)';
+            } else {
+                explanation += ' (lightly connected)';
+            }
+        }
+        
+        // Add centrality explanation
+        if (ranking.centralityScore > 0) {
+            const centralityLevel = ranking.centralityScore > 0.1 ? 'high' : 
+                                  ranking.centralityScore > 0.01 ? 'moderate' : 'low';
+            explanation += `, ${centralityLevel} betweenness centrality`;
+        }
+        
+        // Add quality context if available
+        if (graph.qualityMetrics?.sparsityWarning) {
+            explanation += ' (sparse graph - rankings may be less differentiated)';
+        }
+        
+        return explanation;
+    }
+
+    /**
+     * Add content-based ranking metrics for sparse graphs
+     * @param {Object} graph - Graph structure
+     * @param {Object} analysisResults - Analysis results to augment
+     */
+    async addContentBasedRanking(graph, analysisResults) {
+        console.log(chalk.gray('   Computing content-based metrics for sparse graph...'));
+        
+        try {
+            // Query for corpuscles with text content
+            const contentQuery = `
+PREFIX ragno: <http://purl.org/stuff/ragno/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+SELECT ?corpuscle ?label ?source
+WHERE {
+    {
+        GRAPH <${this.options.beerqaGraphURI}> {
+            ?corpuscle a ragno:Corpuscle ;
+                      rdfs:label ?label .
+            BIND("beerqa" as ?source)
+        }
+    } UNION {
+        GRAPH <${this.options.wikipediaGraphURI}> {
+            ?corpuscle a ragno:Corpuscle ;
+                      rdfs:label ?label .
+            BIND("wikipedia" as ?source)
+        }
+    }
+}
+`;
+            
+            const result = await this.sparqlHelper.executeSelect(contentQuery);
+            
+            if (!result.success) {
+                console.log(chalk.yellow('   ⚠️  Failed to load content for content-based ranking'));
+                return;
+            }
+            
+            // Calculate content-based metrics
+            const contentMetrics = new Map();
+            
+            for (const binding of result.data.results.bindings) {
+                const corpuscleURI = binding.corpuscle.value;
+                const label = binding.label.value;
+                const source = binding.source.value;
+                
+                // Simple content metrics
+                const textLength = label.length;
+                const wordCount = label.split(/\s+/).length;
+                const uniqueWords = new Set(label.toLowerCase().split(/\s+/)).size;
+                const lexicalDiversity = uniqueWords / wordCount;
+                
+                // Source-based importance (questions might be more important than general content)
+                const sourceWeight = source === 'beerqa' ? 1.2 : 1.0;
+                
+                // Composite content score
+                const contentScore = (textLength * 0.3 + wordCount * 0.4 + lexicalDiversity * 0.3) * sourceWeight;
+                
+                contentMetrics.set(corpuscleURI, {
+                    contentScore: contentScore,
+                    textLength: textLength,
+                    wordCount: wordCount,
+                    lexicalDiversity: lexicalDiversity,
+                    source: source
+                });
+            }
+            
+            // Store content metrics in analysis results
+            analysisResults.contentMetrics = contentMetrics;
+            
+            console.log(chalk.gray(`   ✓ Computed content metrics for ${contentMetrics.size} corpuscles`));
+            
+        } catch (error) {
+            console.log(chalk.yellow(`   ⚠️  Content-based ranking failed: ${error.message}`));
+        }
     }
 
     /**
@@ -631,12 +881,21 @@ INSERT DATA {
         console.log(chalk.bold.white('📊 Corpuscle Ranking Results:'));
         console.log(`   ${chalk.cyan('Corpuscles Analyzed:')} ${chalk.white(this.stats.corpusclesAnalyzed)}`);
         console.log(`   ${chalk.cyan('Existing Relationships:')} ${chalk.white(this.stats.relationshipsFound)}`);
-        console.log(`   ${chalk.cyan('Synthetic Edges Created:')} ${chalk.white(this.stats.syntheticEdgesCreated)}`);
+        console.log(`   ${chalk.cyan('Relationship Types:')} ${chalk.white(this.stats.relationshipTypes.size)} (${[...this.stats.relationshipTypes].join(', ')})`);
         console.log(`   ${chalk.cyan('Rankings Generated:')} ${chalk.white(this.stats.rankingsGenerated)}`);
         console.log(`   ${chalk.cyan('Rankings Exported:')} ${chalk.white(this.stats.rankingsExported)}`);
         console.log(`   ${chalk.cyan('K-core Results:')} ${chalk.white(this.stats.kCoreResults)}`);
         console.log(`   ${chalk.cyan('Centrality Results:')} ${chalk.white(this.stats.centralityResults)}`);
         console.log(`   ${chalk.cyan('Processing Time:')} ${chalk.white((this.stats.processingTime / 1000).toFixed(2))}s`);
+        
+        // Add data quality summary
+        if (this.stats.relationshipsFound === 0) {
+            console.log(`   ${chalk.red('Data Quality:')} ${chalk.red('No relationships found - ranking not performed')}`);
+        } else if (this.stats.relationshipTypes.size === 1) {
+            console.log(`   ${chalk.yellow('Data Quality:')} ${chalk.yellow('Single relationship type - limited ranking diversity')}`);
+        } else {
+            console.log(`   ${chalk.green('Data Quality:')} ${chalk.green('Multiple relationship types - good ranking diversity')}`);
+        }
 
         if (this.stats.errors.length > 0) {
             console.log(`   ${chalk.cyan('Errors:')} ${chalk.red(this.stats.errors.length)}`);
@@ -655,10 +914,16 @@ INSERT DATA {
             for (let i = 0; i < topRankings.length; i++) {
                 const ranking = topRankings[i];
                 const shortUri = ranking.nodeUri.split('/').pop();
-                console.log(`   ${chalk.bold.cyan(`${i + 1}.`)} ${chalk.white(shortUri)} `);
-                console.log(`      ${chalk.gray('Composite:')} ${chalk.white(ranking.compositeScore.toFixed(4))} `);
-                console.log(`      ${chalk.gray('K-core:')} ${chalk.white(ranking.kCoreScore.toFixed(4))} `);
+                console.log(`   ${chalk.bold.cyan(`${i + 1}.`)} ${chalk.white(shortUri)}`);
+                console.log(`      ${chalk.gray('Composite:')} ${chalk.white(ranking.compositeScore.toFixed(4))}`);
+                console.log(`      ${chalk.gray('K-core:')} ${chalk.white(ranking.kCoreScore.toFixed(4))}`);
                 console.log(`      ${chalk.gray('Centrality:')} ${chalk.white(ranking.centralityScore.toFixed(4))}`);
+                if (ranking.contentScore && ranking.contentScore > 0) {
+                    console.log(`      ${chalk.gray('Content:')} ${chalk.white(ranking.contentScore.toFixed(4))}`);
+                }
+                if (ranking.explanation) {
+                    console.log(`      ${chalk.gray('Analysis:')} ${chalk.white(ranking.explanation)}`);
+                }
             }
         }
 
@@ -703,7 +968,14 @@ async function rankCorpuscles() {
             console.log(chalk.green('🎉 Corpuscle ranking completed successfully!'));
             console.log(chalk.white('Rankings have been stored in the SPARQL store.'));
         } else {
-            console.log(chalk.yellow('⚠️  Corpuscle ranking completed with issues:', result.message));
+            console.log(chalk.red('❌ Corpuscle ranking failed:', result.message));
+            if (result.recommendations && result.recommendations.length > 0) {
+                console.log('');
+                console.log(chalk.bold.yellow('💡 Recommendations to fix the issues:'));
+                result.recommendations.forEach(rec => {
+                    console.log(chalk.yellow(`  • ${rec}`));
+                });
+            }
         }
 
         return result;
