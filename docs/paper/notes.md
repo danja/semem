@@ -1,4 +1,6 @@
 node examples/beerqa-wikidata/WikidataResearch.js "What nationality is the actress who stars in Manhood with Nestor Carbonell and John Ritter?"
+
+ node examples/beerqa-wikidata/WikidataGetResult.js "What nationality is the actress who stars in Manhood with Nestor Carbonell and John Ritter?"
 ---
 
 examples/beerqa/QuestionResearch.js

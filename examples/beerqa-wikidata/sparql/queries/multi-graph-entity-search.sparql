@@ -1,0 +1,34 @@
+SELECT ?entity ?label ?content ?source ?entityType WHERE {
+    {
+        GRAPH <${beerqaGraphURI}> {
+            ?entity a ragno:Corpuscle ;
+                   rdfs:label ?label .
+            OPTIONAL { ?entity ragno:content ?content }
+            BIND("BeerQA" AS ?source)
+            BIND("ragno:Corpuscle" AS ?entityType)
+        }
+    }
+    UNION
+    {
+        GRAPH <${wikipediaGraphURI}> {
+            ?entity a ragno:Corpuscle ;
+                   rdfs:label ?label .
+            OPTIONAL { ?entity ragno:content ?content }
+            BIND("Wikipedia" AS ?source)
+            BIND("ragno:Corpuscle" AS ?entityType)
+        }
+    }
+    UNION
+    {
+        GRAPH <${wikidataGraphURI}> {
+            ?entity a ragno:Entity ;
+                   rdfs:label ?label .
+            OPTIONAL { ?entity rdfs:comment ?content }
+            BIND("Wikidata" AS ?source)
+            BIND("ragno:Entity" AS ?entityType)
+        }
+    }
+    
+    ${searchFilter}
+}
+${limitClause}

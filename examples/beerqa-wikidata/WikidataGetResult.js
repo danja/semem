@@ -15,6 +15,12 @@
  * - Enhanced relationship traversal
  * - Context-aware answer generation
  * - Source attribution in responses
+ * - Single question filtering support
+ * 
+ * Usage:
+ * node WikidataGetResult.js                    # Process all questions
+ * node WikidataGetResult.js "beer"             # Process questions containing "beer"
+ * node WikidataGetResult.js "machine learning" # Process questions about machine learning
  */
 
 import path from 'path';
@@ -26,6 +32,14 @@ import Config from '../../src/Config.js';
 import ContextManager from '../../src/ContextManager.js';
 import LLMHandler from '../../src/handlers/LLMHandler.js';
 import SPARQLHelper from '../../src/services/sparql/SPARQLHelper.js';
+import { 
+    createBeerQAQueryService, 
+    createSPARQLHelper, 
+    GRAPH_URIS,
+    formatQuestionFilter,
+    formatEntityList,
+    executeSelectQuery
+} from './sparqlUtils.js';
 
 // Load environment variables
 const __filename = fileURLToPath(import.meta.url);
@@ -66,8 +80,12 @@ function displayConfiguration(config) {
 /**
  * Get questions with enhanced relationships from navigation
  */
-async function getQuestionsWithEnhancedRelationships(sparqlHelper, config) {
+async function getQuestionsWithEnhancedRelationships(sparqlHelper, config, questionFilter = null) {
     console.log(chalk.bold.white('📋 Finding questions with enhanced relationships...'));
+    
+    if (questionFilter) {
+        console.log(chalk.cyan(`   🎯 Filtering for questions matching or containing: "${questionFilter}"`));
+    }
 
     const query = `
 PREFIX ragno: <http://purl.org/stuff/ragno/>
@@ -95,9 +113,12 @@ WHERE {
         FILTER(CONTAINS(?relationshipType, "wikidata") || CONTAINS(?relationshipType, "wikipedia"))
     }
     
-    # FILTER FOR SPECIFIC QUESTION - UNCOMMENT AND MODIFY AS NEEDED:
-    # FILTER(CONTAINS(LCASE(?questionText), "your search term here"))
-    # Example: FILTER(CONTAINS(LCASE(?questionText), "machine learning"))
+    ${questionFilter ? `FILTER(LCASE(?questionText) = "${questionFilter.toLowerCase()}" || CONTAINS(LCASE(?questionText), "${questionFilter.toLowerCase()}"))` : ''}
+    
+    # MANUAL FILTER OPTIONS (uncomment one if not using command line):
+    # FILTER(CONTAINS(LCASE(?questionText), "beer"))
+    # FILTER(CONTAINS(LCASE(?questionText), "fermentation"))
+    # FILTER(?questionText = "What is the difference between ale and lager?")
 }
 ORDER BY ?question DESC(?weight)`;
 
@@ -133,6 +154,13 @@ ORDER BY ?question DESC(?weight)`;
 
     const questions = Array.from(questionsMap.values());
     console.log(chalk.green(`   ✓ Found ${questions.length} questions with enhanced relationships`));
+    
+    if (questionFilter && questions.length > 0) {
+        console.log(chalk.gray(`   📝 Matched questions:`));
+        questions.forEach((q, i) => {
+            console.log(chalk.gray(`      ${i + 1}. "${q.text}"`));
+        });
+    }
     
     return questions;
 }
@@ -576,11 +604,18 @@ async function generateEnhancedAnswers() {
         // Initialize LLM handler
         const llmHandler = await initializeLLMHandler(configObj);
         
+        // Check for command line question filter
+        const questionFilter = process.argv[2];
+        
         // Get questions with enhanced relationships
-        const questions = await getQuestionsWithEnhancedRelationships(sparqlHelper, config);
+        const questions = await getQuestionsWithEnhancedRelationships(sparqlHelper, config, questionFilter);
         
         if (questions.length === 0) {
-            console.log(chalk.yellow('⚠️  No questions with enhanced relationships found. Run WikidataNavigate.js first.'));
+            if (questionFilter) {
+                console.log(chalk.yellow(`⚠️  No questions found containing "${questionFilter}". Try a different search term.`));
+            } else {
+                console.log(chalk.yellow('⚠️  No questions with enhanced relationships found. Run WikidataNavigate.js first.'));
+            }
             return;
         }
         

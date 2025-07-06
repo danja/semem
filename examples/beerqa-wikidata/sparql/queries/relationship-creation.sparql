@@ -1,0 +1,12 @@
+INSERT DATA {
+    GRAPH <${navigationGraphURI}> {
+        <${relationshipURI}> a ragno:Relationship ;
+                           ragno:hasSourceEntity <${sourceEntityURI}> ;
+                           ragno:hasTargetEntity <${targetEntityURI}> ;
+                           ragno:relationshipType "${relationshipType}" ;
+                           ragno:weight ${weight} ;
+                           ragno:sourceCorpus "${sourceCorpus}" ;
+                           dcterms:created "${timestamp}"^^xsd:dateTime .
+        ${optionalTriples}
+    }
+}
