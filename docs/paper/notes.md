@@ -1,3 +1,38 @@
+
+---
+
+examples/beerqa/QuestionResearch.js
+
+  <http://purl.org/stuff/wikipedia/unit/wp_123456>
+      a ragno:Unit, ragno:Element, skos:Concept ;
+      rdfs:label "Semantic Web Overview" ;
+      ragno:content "The Semantic Web is an extension..." ;
+      ragno:subType "Overview" ;
+      ragno:isEntryPoint true ;
+      ragno:hasEntity <http://purl.org/stuff/wikipedia/entity/semantic-web> ;
+      ragno:hasSourceDocument <https://en.wikipedia.org/wiki/Semantic_Web> ;
+      dcterms:created "2025-07-06T10:30:00Z"^^xsd:dateTime ;
+      ex:embedding "[0.1, 0.2, 0.3, ...]" .
+
+  Units can be transformed into ragno:Corpuscle instances with embeddings for enhanced semantic search capabilities.
+  
+ Converting Wikipedia Units to Corpuscles with Embeddings
+
+  The UnitsToCorpuscles class (src/aux/wikipedia/UnitsToCorpuscles.js:167-182) is:
+
+  1. Finding orphaned units: It queries the SPARQL store to find ragno:Unit instances that don't have associated ragno:Corpuscle instances
+  2. Processing in batches: It processes the 120 units in batches of 50 to manage memory and performance
+  3. Creating corpuscles: For each unit, it creates:
+    - A new ragno:Corpuscle instance
+    - A relationship linking the corpuscle to the original unit
+    - An attribute containing the embedding vector (if embedding generation is enabled)
+  4. Generating embeddings: If enabled, it generates vector embeddings from the text content stored in the units
+  5. Inserting into SPARQL: It stores all the new corpuscles, relationships, and embeddings in the Wikipedia graph
+
+  This transformation is part of the BeerQA knowledge enhancement pipeline, where Wikipedia search results (stored as units) are converted into corpuscles with
+  embeddings for better semantic search and retrieval capabilities.
+
+---
 Replace hardcoded credentials in critical files:
     - src/Config.js
     - src/api/http/middleware/_auth-middleware.js
