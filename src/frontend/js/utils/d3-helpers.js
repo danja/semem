@@ -1,6 +1,7 @@
 /**
  * D3.js helper utilities for visualizations
  */
+import * as d3 from 'd3';
 
 /**
  * Create a responsive SVG element

@@ -11,7 +11,10 @@ import VSOM from '../../ragno/algorithms/VSOM.js';
 
 export default class VSOMAPI extends BaseAPI {
     constructor(options = {}) {
-        super('vsom-api', options);
+        super(options);
+        
+        // Assign registry from options
+        this.registry = options.registry;
         
         this.defaultOptions = {
             maxInstancesPerSession: 5,
@@ -106,6 +109,8 @@ export default class VSOMAPI extends BaseAPI {
                     return await this.listInstances(params);
                 case 'delete':
                     return await this.deleteInstance(params);
+                case 'load-docqa':
+                    return await this.loadDocQAData(params);
                 default:
                     throw new Error(`Unknown VSOM operation: ${operation}`);
             }
@@ -480,6 +485,155 @@ export default class VSOMAPI extends BaseAPI {
         // For now, return empty array - would need SPARQL query execution
         this.logger.warn('SPARQL data loading not yet implemented');
         return [];
+    }
+
+    /**
+     * Load Document-QA data from SPARQL store
+     */
+    async loadDocQAData(params = {}) {
+        const { 
+            graphUri = 'http://tensegrity.it/semem',
+            limit = 100,
+            processingStage = null,
+            conceptFilter = null
+        } = params;
+
+        // Get SPARQL store from memory manager
+        const memoryManager = this.registry.get('memory');
+        if (!memoryManager || !memoryManager.storage) {
+            throw new Error('Memory manager or storage not available. Ensure the server is properly configured.');
+        }
+
+        const sparqlStore = memoryManager.storage;
+        
+        // Check if this is actually a SPARQL store that can execute queries
+        if (!sparqlStore.executeSelect || typeof sparqlStore.executeSelect !== 'function') {
+            throw new Error('Document-QA data loading requires SPARQL storage. Current storage type does not support SPARQL queries. Please configure the server to use "sparql" storage type.');
+        }
+        
+        // Build SPARQL query for document-qa data
+        let query = `
+            PREFIX ragno: <http://purl.org/stuff/ragno/>
+            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            PREFIX dcterms: <http://purl.org/dc/terms/>
+            
+            SELECT ?question ?questionText ?embedding ?concept ?processingStage ?created ?questionLength
+            WHERE {
+                GRAPH <${graphUri}> {
+                    # Get questions with embeddings
+                    ?question a ragno:Corpuscle ;
+                             ragno:corpuscleType "question" ;
+                             rdfs:label ?questionText ;
+                             ragno:hasAttribute ?embeddingAttr .
+                    
+                    ?embeddingAttr ragno:attributeType "embedding" ;
+                                  ragno:attributeValue ?embedding .
+                    
+                    # Get associated concepts
+                    OPTIONAL {
+                        ?question ragno:hasAttribute ?conceptAttr .
+                        ?conceptAttr ragno:attributeType "concept" ;
+                                    ragno:attributeValue ?concept .
+                    }
+                    
+                    # Get processing stage
+                    OPTIONAL {
+                        ?question ragno:processingStage ?processingStage .
+                    }
+                    
+                    # Get question length
+                    OPTIONAL {
+                        ?question ragno:questionLength ?questionLength .
+                    }
+                    
+                    # Get creation time
+                    OPTIONAL {
+                        ?question dcterms:created ?created .
+                    }
+                    
+                    # Filter out empty embeddings
+                    FILTER(?embedding != "[]")
+        `;
+
+        // Add optional filters
+        if (processingStage) {
+            query += `\n                    FILTER(?processingStage = "${processingStage}")`;
+        }
+
+        if (conceptFilter) {
+            query += `\n                    FILTER(CONTAINS(LCASE(?concept), "${conceptFilter.toLowerCase()}"))`;
+        }
+
+        query += `
+                }
+            }
+            ORDER BY ?question
+            LIMIT ${limit}
+        `;
+
+        this.logger.debug('Executing Document-QA SPARQL query:', { graphUri, limit, processingStage, conceptFilter });
+
+        // Execute query
+        const result = await sparqlStore.executeSelect(query);
+        
+        if (!result.success) {
+            throw new Error(`Failed to query document-QA data: ${result.error}`);
+        }
+
+        // Transform results to VSOM format
+        const entities = this.transformDocQAToVSOM(result.data.results.bindings);
+
+        this.logger.info(`Loaded ${entities.length} document-QA questions for VSOM visualization`);
+
+        return {
+            entities,
+            metadata: {
+                totalQuestions: entities.length,
+                graphUri,
+                processingStage,
+                conceptFilter,
+                extractedAt: new Date().toISOString()
+            }
+        };
+    }
+
+    /**
+     * Transform document-QA SPARQL results to VSOM entity format
+     */
+    transformDocQAToVSOM(bindings) {
+        const entityMap = new Map();
+        
+        bindings.forEach(binding => {
+            const uri = binding.question.value;
+            const questionText = binding.questionText.value;
+            const embedding = JSON.parse(binding.embedding.value);
+            
+            if (!entityMap.has(uri)) {
+                entityMap.set(uri, {
+                    uri,
+                    content: questionText,
+                    type: "question",
+                    embedding,
+                    concepts: [],
+                    metadata: {
+                        processingStage: binding.processingStage?.value || "unknown",
+                        questionLength: binding.questionLength?.value ? 
+                            parseInt(binding.questionLength.value) : questionText.length,
+                        created: binding.created?.value
+                    }
+                });
+            }
+            
+            // Add concepts
+            if (binding.concept?.value) {
+                const entity = entityMap.get(uri);
+                if (!entity.concepts.includes(binding.concept.value)) {
+                    entity.concepts.push(binding.concept.value);
+                }
+            }
+        });
+        
+        return Array.from(entityMap.values());
     }
 
     /**

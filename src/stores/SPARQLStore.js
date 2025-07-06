@@ -1439,4 +1439,9 @@ export default class SPARQLStore extends BaseStore {
     async executeUpdate(updateQuery) {
         return await this._executeSparqlUpdate(updateQuery, this.endpoint.update);
     }
+
+    // Public interface for executing SPARQL SELECT queries
+    async executeSelect(selectQuery) {
+        return await this._executeSparqlQuery(selectQuery, this.endpoint.query);
+    }
 }

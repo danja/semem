@@ -544,6 +544,7 @@ class APIServer {
         // VSOM API routes
         apiRouter.post('/vsom/create', this.authenticateRequest, this.createHandler('vsom-api', 'create'));
         apiRouter.post('/vsom/load-data', this.authenticateRequest, this.createHandler('vsom-api', 'load-data'));
+        apiRouter.post('/vsom/load-docqa', this.authenticateRequest, this.createHandler('vsom-api', 'load-docqa'));
         apiRouter.post('/vsom/generate-sample-data', this.authenticateRequest, this.createHandler('vsom-api', 'generate-sample-data'));
         apiRouter.post('/vsom/train', this.authenticateRequest, this.createHandler('vsom-api', 'train'));
         apiRouter.post('/vsom/stop-training', this.authenticateRequest, this.createHandler('vsom-api', 'stop-training'));
@@ -678,6 +679,7 @@ class APIServer {
                             endpoints: [
                                 'POST /api/vsom/create - Create SOM instance',
                                 'POST /api/vsom/load-data - Load entity data',
+                                'POST /api/vsom/load-docqa - Load Document-QA data',
                                 'POST /api/vsom/generate-sample-data - Generate sample data',
                                 'POST /api/vsom/train - Train SOM',
                                 'POST /api/vsom/stop-training - Stop training',

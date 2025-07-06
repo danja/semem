@@ -51,6 +51,8 @@ Performs enhanced semantic navigation across multiple knowledge sources:
 node examples/beerqa-wikidata/WikidataNavigate.js
 ```
 
+takes ages
+
 **Process:**
 1. **Corpus Enhancement** - Combines Wikipedia + Wikidata entities
 2. **Similarity Analysis** - Finds related entities using embeddings

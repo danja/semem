@@ -56,13 +56,13 @@ node examples/document-qa/04-generate-answers.js --style comprehensive
 **Usage**:
 ```bash
 # Process default documents
-node 01-ingest-documents.js
+node examples/document-qa/01-ingest-documents.js
 
 # Process specific documents
-node 01-ingest-documents.js --docs "research/*.pdf" --limit 5
+node examples/document-qa/01-ingest-documents.js --docs "../../docs/paper/references/*.pdf" --limit 5
 
 # Custom namespace
-node 01-ingest-documents.js --namespace "http://example.org/myproject/"
+node examples/document-qa/01-ingest-documents.js --namespace "http://example.org/myproject/"
 ```
 
 **Output**: Document chunks stored in SPARQL with ~69 chunks per document averaging 1,196 characters each.

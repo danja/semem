@@ -12,8 +12,20 @@ function init() {
   try {
     logger.info('Initializing VSOM feature');
     
-    // The controller will auto-initialize when the DOM is ready
-    // or immediately if the DOM is already loaded
+    // Set up lazy initialization when VSOM tab is clicked
+    const vsomTabBtn = document.getElementById('tab-vsom');
+    if (vsomTabBtn) {
+      vsomTabBtn.addEventListener('click', () => {
+        // Initialize controller when tab is first accessed
+        if (!vsomController.initialized) {
+          setTimeout(() => vsomController.init(), 100);
+        }
+      });
+      logger.info('VSOM feature setup complete - will initialize on tab access');
+    } else {
+      logger.warn('VSOM tab button not found, falling back to immediate initialization');
+      vsomController.init();
+    }
     
     logger.info('VSOM feature initialized');
   } catch (error) {

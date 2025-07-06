@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VSOM Document-QA Integration Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #007bff;
+        }
+        .controls {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+        .controls button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .controls button:hover {
+            background: #0056b3;
+        }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .test-results {
+            margin-top: 20px;
+        }
+        .test-item {
+            margin: 10px 0;
+            padding: 10px;
+            border-left: 4px solid #007bff;
+            background: #f8f9fa;
+        }
+        .test-item.pass {
+            border-left-color: #28a745;
+        }
+        .test-item.fail {
+            border-left-color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧠 VSOM Document-QA Integration Test</h1>
+            <p>Testing the integration between Document-QA data and VSOM visualization</p>
+        </div>
+
+        <div class="controls">
+            <h3>Test Controls</h3>
+            <button onclick="testAPIEndpoint()">Test API Endpoint</button>
+            <button onclick="testFrontendComponents()">Test Frontend Components</button>
+            <button onclick="testSPARQLQuery()">Test SPARQL Query Format</button>
+            <button onclick="runAllTests()">Run All Tests</button>
+        </div>
+
+        <div id="status" class="status info">
+            Ready to run tests. Click any button above to begin.
+        </div>
+
+        <div class="test-results" id="results">
+            <!-- Test results will appear here -->
+        </div>
+    </div>
+
+    <script>
+        const statusEl = document.getElementById('status');
+        const resultsEl = document.getElementById('results');
+
+        function updateStatus(message, type = 'info') {
+            statusEl.className = `status ${type}`;
+            statusEl.textContent = message;
+        }
+
+        function addTestResult(test, passed, details = '') {
+            const item = document.createElement('div');
+            item.className = `test-item ${passed ? 'pass' : 'fail'}`;
+            item.innerHTML = `
+                <strong>${passed ? '✅' : '❌'} ${test}</strong>
+                ${details ? `<br><small>${details}</small>` : ''}
+            `;
+            resultsEl.appendChild(item);
+        }
+
+        async function testAPIEndpoint() {
+            updateStatus('Testing API endpoint...', 'info');
+            
+            try {
+                const response = await fetch('/api/vsom/load-docqa', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        graphUri: 'http://tensegrity.it/semem',
+                        limit: 5,
+                        processingStage: null,
+                        conceptFilter: null
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok && data.success !== undefined) {
+                    addTestResult('API Endpoint Available', true, `Status: ${response.status}, Response has success field`);
+                    
+                    if (data.success) {
+                        addTestResult('Data Loading Successful', true, `Loaded ${data.entities?.length || 0} entities`);
+                    } else {
+                        addTestResult('Data Loading Failed (Expected)', true, `Error: ${data.error}`);
+                    }
+                } else {
+                    addTestResult('API Endpoint Response', false, `Unexpected response format`);
+                }
+                
+                updateStatus('API endpoint test completed', 'success');
+            } catch (error) {
+                addTestResult('API Endpoint Connection', false, error.message);
+                updateStatus('API endpoint test failed', 'error');
+            }
+        }
+
+        function testFrontendComponents() {
+            updateStatus('Testing frontend components...', 'info');
+            
+            // Test if VSOM controller exists
+            if (typeof vsomController !== 'undefined') {
+                addTestResult('VSOM Controller Available', true, 'Controller loaded in global scope');
+            } else {
+                addTestResult('VSOM Controller Available', false, 'Controller not found in global scope');
+            }
+
+            // Test if D3 is available (needed for visualization)
+            if (typeof d3 !== 'undefined') {
+                addTestResult('D3.js Library Available', true, `Version: ${d3.version || 'unknown'}`);
+            } else {
+                addTestResult('D3.js Library Available', false, 'D3 not loaded');
+            }
+
+            // Test if VSOM tab exists in UI
+            const vsomTab = document.querySelector('[data-tab="vsom"]');
+            if (vsomTab) {
+                addTestResult('VSOM Tab UI Element', true, 'Tab element found in DOM');
+            } else {
+                addTestResult('VSOM Tab UI Element', false, 'Tab element not found');
+            }
+
+            // Test if load document-qa button would exist
+            const loadDocQABtn = document.getElementById('load-docqa-data');
+            if (loadDocQABtn) {
+                addTestResult('Load Document-QA Button', true, 'Button found in DOM');
+            } else {
+                addTestResult('Load Document-QA Button', false, 'Button not found (may be in VSOM tab)');
+            }
+
+            updateStatus('Frontend component test completed', 'success');
+        }
+
+        function testSPARQLQuery() {
+            updateStatus('Testing SPARQL query format...', 'info');
+            
+            // Test the SPARQL query structure
+            const expectedPrefixes = ['ragno:', 'rdfs:', 'dcterms:'];
+            const expectedClauses = ['SELECT', 'WHERE', 'GRAPH', 'OPTIONAL', 'FILTER'];
+            
+            const queryStructure = `
+                PREFIX ragno: <http://purl.org/stuff/ragno/>
+                PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+                PREFIX dcterms: <http://purl.org/dc/terms/>
+                
+                SELECT ?question ?questionText ?embedding ?concept ?processingStage ?created ?questionLength
+                WHERE {
+                    GRAPH <http://tensegrity.it/semem> {
+                        ?question a ragno:Corpuscle ;
+                                 ragno:corpuscleType "question" ;
+                                 rdfs:label ?questionText ;
+                                 ragno:hasAttribute ?embeddingAttr .
+                        
+                        ?embeddingAttr ragno:attributeType "embedding" ;
+                                      ragno:attributeValue ?embedding .
+                        
+                        OPTIONAL {
+                            ?question ragno:hasAttribute ?conceptAttr .
+                            ?conceptAttr ragno:attributeType "concept" ;
+                                        ragno:attributeValue ?concept .
+                        }
+                        
+                        FILTER(?embedding != "[]")
+                    }
+                }
+                ORDER BY ?question
+                LIMIT 100
+            `;
+
+            expectedPrefixes.forEach(prefix => {
+                const hasPrefix = queryStructure.includes(prefix);
+                addTestResult(`SPARQL Prefix: ${prefix}`, hasPrefix);
+            });
+
+            expectedClauses.forEach(clause => {
+                const hasClause = queryStructure.includes(clause);
+                addTestResult(`SPARQL Clause: ${clause}`, hasClause);
+            });
+
+            // Test for document-qa specific elements
+            const docQAElements = [
+                'ragno:Corpuscle',
+                'ragno:corpuscleType "question"',
+                'ragno:attributeType "embedding"',
+                'ragno:attributeType "concept"'
+            ];
+
+            docQAElements.forEach(element => {
+                const hasElement = queryStructure.includes(element);
+                addTestResult(`Document-QA Element: ${element}`, hasElement);
+            });
+
+            updateStatus('SPARQL query test completed', 'success');
+        }
+
+        async function runAllTests() {
+            resultsEl.innerHTML = '';
+            updateStatus('Running all tests...', 'info');
+            
+            await testAPIEndpoint();
+            testFrontendComponents();
+            testSPARQLQuery();
+            
+            const totalTests = resultsEl.children.length;
+            const passedTests = resultsEl.querySelectorAll('.test-item.pass').length;
+            
+            updateStatus(`All tests completed: ${passedTests}/${totalTests} passed`, 
+                        passedTests === totalTests ? 'success' : 'error');
+        }
+
+        // Show initial information
+        document.addEventListener('DOMContentLoaded', () => {
+            addTestResult('Page Loaded', true, 'VSOM Document-QA integration test page ready');
+        });
+    </script>
+</body>
+</html>

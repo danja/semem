@@ -1,7 +1,7 @@
 import log from 'loglevel';
 import * as d3 from 'd3';
 import { BaseVisualization } from '../BaseVisualization.js';
-import { createResponsiveSVG, createTooltip, addTooltip, createColorScale } from '../../../utils/d3-helpers.js';
+import { createResponsiveSVG, createTooltip, addTooltip } from '../../../utils/d3-helpers.js';
 
 /**
  * SOM Grid Visualization Component
@@ -65,7 +65,13 @@ export class SOMGrid extends BaseVisualization {
    */
   setupScales() {
     this.logger.debug('Setting up scales');
-    this.colorScale = createColorScale(this.options.colorScheme, [0, 1]);
+    // Create color scale directly using d3 instead of external helper
+    const scheme = this.options.colorScheme || 'interpolateViridis';
+    if (d3[scheme]) {
+      this.colorScale = d3.scaleSequential(d3[scheme]).domain([0, 1]);
+    } else {
+      this.colorScale = d3.scaleSequential(d3.interpolateViridis).domain([0, 1]);
+    }
   }
 
   /**
@@ -180,7 +186,8 @@ export class SOMGrid extends BaseVisualization {
       weight: node.weight || 0,
       activation: node.activation || 0,
       bmuCount: node.bmuCount || 0,
-      metadata: node.metadata || {}
+      metadata: node.metadata || {},
+      entity: node.entity || null  // Store entity data for document-qa
     }));
     
     // Process links (if any)
@@ -246,13 +253,8 @@ export class SOMGrid extends BaseVisualization {
       .style('opacity', 0)
       .remove();
     
-    // Add tooltips
-    addTooltip(nodeSelection, d => `
-      <div><strong>Node (${d.x}, ${d.y})</strong></div>
-      <div>Activation: ${d.activation.toFixed(3)}</div>
-      <div>BMU Count: ${d.bmuCount}</div>
-      <div>Weight: ${d.weight.toFixed(3)}</div>
-    `);
+    // Add tooltips with document-qa support
+    addTooltip(nodeSelection, d => this.createTooltipContent(d));
   }
 
   /**
@@ -282,7 +284,119 @@ export class SOMGrid extends BaseVisualization {
   updateLabels() {
     this.logger.debug('Updating labels');
     
-    // Add or update labels if enabled
+    if (!this.options.showLabels) return;
+    
+    const { nodes } = this.svgElements;
+    const nodeSize = this.options.nodeSize;
+    
+    // Bind data for labels
+    const labelSelection = nodes.selectAll('.node-label')
+      .data(this.nodes, d => d.id);
+    
+    // Enter
+    const labelEnter = labelSelection.enter()
+      .append('text')
+      .attr('class', 'node-label')
+      .attr('text-anchor', 'middle')
+      .attr('dominant-baseline', 'central')
+      .style('font-size', '8px')
+      .style('font-weight', 'bold')
+      .style('fill', 'white')
+      .style('pointer-events', 'none')
+      .style('text-shadow', '1px 1px 1px rgba(0,0,0,0.8)');
+    
+    // Update
+    labelSelection.merge(labelEnter)
+      .attr('x', d => d.x * (nodeSize + this.options.padding) + nodeSize / 2)
+      .attr('y', d => d.y * (nodeSize + this.options.padding) + nodeSize / 2)
+      .text(d => this.getNodeLabel(d));
+    
+    // Exit
+    labelSelection.exit().remove();
+  }
+  
+  /**
+   * Get appropriate label for a node
+   * @param {Object} node - Node data
+   * @returns {string} Label text
+   */
+  getNodeLabel(node) {
+    // For document-qa entities, use the primary concept
+    if (node.entity && node.entity.concepts && node.entity.concepts.length > 0) {
+      const concept = node.entity.concepts[0];
+      return concept.length > 8 ? concept.substring(0, 8) + '...' : concept;
+    }
+    
+    // For general metadata
+    if (node.metadata && node.metadata.topic) {
+      const topic = node.metadata.topic;
+      return topic.length > 8 ? topic.substring(0, 8) + '...' : topic;
+    }
+    
+    // Default to node position
+    return `${node.x},${node.y}`;
+  }
+  
+  /**
+   * Create tooltip content for a node
+   * @param {Object} node - Node data
+   * @returns {string} HTML tooltip content
+   */
+  createTooltipContent(node) {
+    let content = `<div><strong>Node (${node.x}, ${node.y})</strong></div>`;
+    
+    // Add document-qa specific information if available
+    if (node.entity) {
+      content += `
+        <div style="margin-top: 8px;">
+          <strong>Question:</strong><br>
+          <div style="max-width: 300px; font-size: 11px; line-height: 1.3;">
+            ${node.entity.content || 'No content'}
+          </div>
+        </div>
+      `;
+      
+      if (node.entity.concepts && node.entity.concepts.length > 0) {
+        const conceptTags = node.entity.concepts
+          .slice(0, 5)
+          .map(c => `<span style="background: #007bff; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; margin: 1px;">${c}</span>`)
+          .join(' ');
+        
+        content += `
+          <div style="margin-top: 8px;">
+            <strong>Concepts:</strong><br>
+            <div style="margin-top: 4px;">${conceptTags}</div>
+          </div>
+        `;
+      }
+      
+      if (node.entity.metadata) {
+        content += `
+          <div style="margin-top: 8px; font-size: 11px; color: #666;">
+            <div><strong>Stage:</strong> ${node.entity.metadata.processingStage || 'Unknown'}</div>
+            <div><strong>Length:</strong> ${node.entity.metadata.questionLength || 'Unknown'} chars</div>
+            ${node.entity.metadata.created ? `<div><strong>Created:</strong> ${new Date(node.entity.metadata.created).toLocaleDateString()}</div>` : ''}
+          </div>
+        `;
+      }
+    } else {
+      // Default node information
+      content += `
+        <div>Activation: ${node.activation.toFixed(3)}</div>
+        <div>BMU Count: ${node.bmuCount}</div>
+        <div>Weight: ${node.weight.toFixed(3)}</div>
+      `;
+      
+      if (node.metadata && Object.keys(node.metadata).length > 0) {
+        content += `<div style="margin-top: 8px;"><strong>Metadata:</strong><br>`;
+        Object.entries(node.metadata).forEach(([key, value]) => {
+          content += `<div style="font-size: 11px;">${key}: ${value}</div>`;
+        });
+        content += `</div>`;
+      }
+    }
+    
+    return content;
   }
 
   /**

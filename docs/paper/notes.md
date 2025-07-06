@@ -1,3 +1,5 @@
+following docs/VSOM-UI-DOC-QA.md when I go to http://localhost:4100/#vsom in as browser, I don't see a "Load Document-QA Data" button 
+
 node examples/beerqa-wikidata/WikidataResearch.js "What nationality is the actress who stars in Manhood with Nestor Carbonell and John Ritter?"
 
  node examples/beerqa-wikidata/WikidataGetResult.js "What nationality is the actress who stars in Manhood with Nestor Carbonell and John Ritter?"

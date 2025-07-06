@@ -1,4 +1,5 @@
 import log from 'loglevel';
+import * as d3 from 'd3';
 
 /**
  * Base class for all VSOM visualizations
@@ -74,6 +75,15 @@ export class BaseVisualization {
       return;
     }
     this.logger.debug('Updating visualization with data:', data);
+  }
+
+  /**
+   * Update visualization options
+   * @param {Object} newOptions - New options to merge
+   */
+  updateOptions(newOptions) {
+    this.logger.debug('Updating options:', newOptions);
+    this.options = { ...this.options, ...newOptions };
   }
 
   /**
