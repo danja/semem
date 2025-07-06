@@ -94,6 +94,10 @@ WHERE {
         # Filter for enhanced relationships
         FILTER(CONTAINS(?relationshipType, "wikidata") || CONTAINS(?relationshipType, "wikipedia"))
     }
+    
+    # FILTER FOR SPECIFIC QUESTION - UNCOMMENT AND MODIFY AS NEEDED:
+    # FILTER(CONTAINS(LCASE(?questionText), "your search term here"))
+    # Example: FILTER(CONTAINS(LCASE(?questionText), "machine learning"))
 }
 ORDER BY ?question DESC(?weight)`;
 
