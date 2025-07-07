@@ -1,0 +1,7 @@
+SELECT ?textElement ?hasChunks ?content {
+  GRAPH <${graphURI}> {
+    ?textElement a ragno:TextElement .
+    OPTIONAL { ?textElement semem:hasChunks ?hasChunks }
+    OPTIONAL { ?textElement ragno:hasContent ?content }
+  }
+} LIMIT 10

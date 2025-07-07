@@ -1,0 +1,19 @@
+INSERT DATA {
+  GRAPH <${graphURI}> {
+    # Mark the TextElement as having chunks
+    <${textElementURI}> semem:hasChunks true .
+    
+    # Create the ordered list for chunks
+    <${chunkListURI}> a olo:OrderedList ;
+                      olo:length ${chunkCount} ;
+                      dcterms:title "Chunks for ${textElementTitle}" ;
+                      prov:wasDerivedFrom <${textElementURI}> .
+    
+    # Associate the ordered list with the TextElement
+    <${textElementURI}> semem:hasChunkList <${chunkListURI}> .
+    
+    ${chunkTriples}
+    
+    ${slotTriples}
+  }
+}

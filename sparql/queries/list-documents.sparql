@@ -1,0 +1,6 @@
+SELECT ?unit ?sourceFile {
+  GRAPH <${graphURI}> {
+    ?unit a ragno:Unit ;
+          semem:sourceFile ?sourceFile .
+  }
+}

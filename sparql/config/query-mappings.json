@@ -15,5 +15,10 @@
   "importance-rankings": "search/importance-rankings.sparql",
   "ppr-results-export": "search/ppr-results-export.sparql",
   "document-chunks-count": "search/document-chunks-count.sparql",
-  "knowledge-graph-construct": "visualization/knowledge-graph-construct.sparql"
+  "knowledge-graph-construct": "visualization/knowledge-graph-construct.sparql",
+  "check-document-exists": "check-document-exists.sparql",
+  "list-documents": "list-documents.sparql",
+  "find-unprocessed-text-elements": "find-unprocessed-text-elements.sparql",
+  "store-chunks-with-olo": "store-chunks-with-olo.sparql",
+  "list-text-elements": "list-text-elements.sparql"
 }

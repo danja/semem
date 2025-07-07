@@ -9,6 +9,7 @@ import Config from '../../src/Config.js';
 import SPARQLStore from '../../src/stores/SPARQLStore.js';
 import PDFConverter from '../../src/services/document/PDFConverter.js';
 import { URIMinter } from '../../src/utils/URIMinter.js';
+import { SPARQLQueryService } from '../../src/services/sparql/index.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -16,10 +17,15 @@ class LoadPDFs {
     constructor() {
         this.config = null;
         this.store = null;
+        this.queryService = null;
     }
 
     async init() {
-        this.config = new Config(join(__dirname, '../../config/config.json'));
+        // Config path relative to project root
+        const configPath = process.cwd().endsWith('/examples/document') 
+            ? '../../config/config.json' 
+            : 'config/config.json';
+        this.config = new Config(configPath);
         await this.config.init();
         
         // Use the configured storage options directly
@@ -30,6 +36,58 @@ class LoadPDFs {
         }
         
         this.store = new SPARQLStore(storageConfig.options);
+        this.queryService = new SPARQLQueryService();
+    }
+
+    async listStoredDocuments(targetGraph) {
+        try {
+            const query = await this.queryService.getQuery('list-documents', {
+                graphURI: targetGraph
+            });
+            
+            const storageConfig = this.config.get('storage.options');
+            const response = await fetch(storageConfig.query, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/sparql-query',
+                    'Accept': 'application/sparql-results+json',
+                    'Authorization': `Basic ${Buffer.from(`${storageConfig.user}:${storageConfig.password}`).toString('base64')}`
+                },
+                body: query
+            });
+            
+            const result = await response.json();
+            return result.results?.bindings || [];
+        } catch (error) {
+            console.warn(`Warning: Could not list documents: ${error.message}`);
+            return [];
+        }
+    }
+
+    async checkDocumentExists(filePath, targetGraph) {
+        try {
+            const query = await this.queryService.getQuery('check-document-exists', {
+                graphURI: targetGraph,
+                sourceFile: filePath
+            });
+            
+            const storageConfig = this.config.get('storage.options');
+            const response = await fetch(storageConfig.query, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/sparql-query',
+                    'Accept': 'application/sparql-results+json',
+                    'Authorization': `Basic ${Buffer.from(`${storageConfig.user}:${storageConfig.password}`).toString('base64')}`
+                },
+                body: query
+            });
+            
+            const result = await response.json();
+            return result.boolean === true;
+        } catch (error) {
+            console.warn(`Warning: Could not check if document exists: ${error.message}`);
+            return false; // Assume it doesn't exist if we can't check
+        }
     }
 
     async processPDF(filePath, cacheDir, targetGraph) {
@@ -37,6 +95,15 @@ class LoadPDFs {
         const cacheFile = join(cacheDir, `${filename}.md`);
         
         console.log(`Processing ${filePath}...`);
+        
+        // Check if document already exists in SPARQL store
+        console.log(`  🔍 Checking if document already exists...`);
+        const exists = await this.checkDocumentExists(filePath, targetGraph);
+        if (exists) {
+            console.log(`  ⏭️  Document already exists in SPARQL store, skipping: ${filePath}`);
+            return { unitURI: null, textURI: null, metadata: { skipped: true, reason: 'already exists' } };
+        }
+        console.log(`  ✅ Document not found in store, proceeding with processing...`);
         
         let markdown, metadata;
         
@@ -111,6 +178,7 @@ class LoadPDFs {
                             this.config.get('graphName') || 
                             'http://purl.org/stuff/semem/documents';
         
+        
         if (!existsSync(cacheDir)) {
             mkdirSync(cacheDir, { recursive: true });
             console.log(`Created cache directory: ${cacheDir}`);
@@ -145,11 +213,29 @@ class LoadPDFs {
             }
         }
         
-        console.log(`\nProcessed ${results.length} files successfully.`);
+        const successfulResults = results.filter(r => !r.metadata?.skipped);
+        const skippedResults = results.filter(r => r.metadata?.skipped);
+        
+        console.log(`\nProcessed ${successfulResults.length} files successfully.`);
+        if (skippedResults.length > 0) {
+            console.log(`Skipped ${skippedResults.length} files (already exist in SPARQL store).`);
+        }
         console.log(`Graph: ${targetGraph}`);
         console.log(`Cache directory: ${cacheDir}`);
         
         return results;
+    }
+
+    async cleanup() {
+        // Close any open connections
+        if (this.store && typeof this.store.close === 'function') {
+            await this.store.close();
+        }
+        
+        // Clear any timers or intervals
+        if (this.queryService && typeof this.queryService.cleanup === 'function') {
+            await this.queryService.cleanup();
+        }
     }
 }
 
@@ -158,11 +244,11 @@ async function main() {
         options: {
             docs: {
                 type: 'string',
-                default: '../../data/pdfs/*.pdf'
+                default: 'data/pdfs/*.pdf'
             },
             cache: {
                 type: 'string', 
-                default: '../../data/cache'
+                default: 'data/cache'
             },
             limit: {
                 type: 'string',
@@ -182,34 +268,45 @@ async function main() {
         console.log(`
 LoadPDFs.js - Load PDF files, convert to markdown, and store in SPARQL
 
-Usage: node LoadPDFs.js [options]
+Usage: node examples/document/LoadPDFs.js [options]
 
 Options:
-  --docs <pattern>   Source pattern for documents (default: ../../data/pdfs/*.pdf)
-  --cache <dir>      Cache directory for markdown files (default: ../../data/cache)
+  --docs <pattern>   Source pattern for documents (default: data/pdfs/*.pdf)
+  --cache <dir>      Cache directory for markdown files (default: data/cache)
   --limit <number>   Limit number of documents to process (default: 0, no limit)
   --graph <uri>      Target graph URI (default: from config)
   --help, -h         Show this help message
 
 Examples:
-  node LoadPDFs.js
-  node LoadPDFs.js --docs "../pdfs/*.pdf" --limit 5
-  node LoadPDFs.js --graph "http://example.org/my-docs"
+  node examples/document/LoadPDFs.js
+  node examples/document/LoadPDFs.js --docs "data/pdfs/*.pdf" --limit 5
+  node examples/document/LoadPDFs.js --graph "http://example.org/my-docs"
         `);
         return;
     }
 
     const loader = new LoadPDFs();
-    await loader.init();
     
-    const options = {
-        docs: args.docs,
-        cache: args.cache,
-        limit: parseInt(args.limit),
-        graph: args.graph
-    };
-    
-    await loader.run(options);
+    try {
+        await loader.init();
+        
+        const options = {
+            docs: args.docs,
+            cache: args.cache,
+            limit: parseInt(args.limit),
+            graph: args.graph
+        };
+        
+        await loader.run(options);
+    } finally {
+        // Always cleanup, even if there was an error
+        await loader.cleanup();
+        
+        // Force exit after a short delay to ensure cleanup completes
+        setTimeout(() => {
+            process.exit(0);
+        }, 100);
+    }
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
