@@ -6,7 +6,7 @@ import { join, dirname, basename, extname } from 'path';
 import { fileURLToPath } from 'url';
 import crypto from 'crypto';
 import Config from '../../src/Config.js';
-import SPARQLStore from '../../src/stores/SPARQLStore.js';
+import SPARQLHelper from '../../src/services/sparql/SPARQLHelper.js';
 import PDFConverter from '../../src/services/document/PDFConverter.js';
 import { URIMinter } from '../../src/utils/URIMinter.js';
 import { SPARQLQueryService } from '../../src/services/sparql/index.js';
@@ -16,7 +16,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 class LoadPDFs {
     constructor() {
         this.config = null;
-        this.store = null;
+        this.sparqlHelper = null;
         this.queryService = null;
     }
 
@@ -35,7 +35,10 @@ class LoadPDFs {
             throw new Error('LoadPDFs requires SPARQL storage configuration');
         }
         
-        this.store = new SPARQLStore(storageConfig.options);
+        this.sparqlHelper = new SPARQLHelper(storageConfig.options.update, {
+            user: storageConfig.options.user,
+            password: storageConfig.options.password
+        });
         this.queryService = new SPARQLQueryService();
     }
 
@@ -162,9 +165,38 @@ class LoadPDFs {
         // Store basic document data without embeddings or concept extraction
         
         console.log(`  Storing to SPARQL graph: ${targetGraph}`);
-        await this.store.store(unitData);
-        await this.store.store(textData);
         
+        // Create SPARQL update query to store Unit and TextElement
+        const updateQuery = `
+            PREFIX ragno: <http://purl.org/stuff/ragno/>
+            PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+            PREFIX dcterms: <http://purl.org/dc/terms/>
+            PREFIX prov: <http://www.w3.org/ns/prov#>
+            PREFIX semem: <http://semem.hyperdata.it/>
+
+            INSERT DATA {
+                GRAPH <${targetGraph}> {
+                    # Store ragno:Unit
+                    <${unitURI}> a ragno:Unit ;
+                        rdfs:label """${unitData.metadata.label.replace(/"/g, '\\"')}""" ;
+                        dcterms:created "${unitData.metadata.created}"^^xsd:dateTime ;
+                        semem:sourceFile "${unitData.metadata.sourceFile}" ;
+                        ragno:hasTextElement <${textURI}> .
+                    
+                    # Store ragno:TextElement
+                    <${textURI}> a ragno:TextElement ;
+                        rdfs:label """${textData.metadata.label.replace(/"/g, '\\"')}""" ;
+                        dcterms:created "${textData.metadata.created}"^^xsd:dateTime ;
+                        ragno:content """${markdown.replace(/"/g, '\\"')}""" ;
+                        dcterms:extent ${textData.metadata.size} ;
+                        prov:wasDerivedFrom <${unitURI}> .
+                }
+            }
+        `;
+        
+        await this.sparqlHelper.executeUpdate(updateQuery);
         console.log(`  ✓ Processed ${filePath}`);
         return { unitURI, textURI, metadata };
     }
@@ -228,8 +260,8 @@ class LoadPDFs {
 
     async cleanup() {
         // Close any open connections
-        if (this.store && typeof this.store.close === 'function') {
-            await this.store.close();
+        if (this.sparqlHelper && typeof this.sparqlHelper.close === 'function') {
+            await this.sparqlHelper.close();
         }
         
         // Clear any timers or intervals

@@ -1,12 +1,14 @@
 SELECT ?textElement ?content ?sourceUnit {
   GRAPH <${graphURI}> {
     ?textElement a ragno:TextElement ;
-                 ragno:hasContent ?content ;
+                 ragno:content ?content ;
                  prov:wasDerivedFrom ?sourceUnit .
     
     FILTER NOT EXISTS {
       ?textElement semem:hasChunks true .
     }
+    
+    FILTER (STRLEN(?content) > ${minContentLength})
   }
 }
 LIMIT ${limit}

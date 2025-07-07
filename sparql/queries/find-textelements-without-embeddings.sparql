@@ -1,0 +1,18 @@
+PREFIX ragno: <http://purl.org/stuff/ragno/>
+PREFIX olo: <http://purl.org/ontology/olo/core#>
+
+SELECT ?textElement ?content {
+  GRAPH <${graphURI}> {
+    ?textElement a ragno:TextElement ;
+                 ragno:content ?content .
+    
+    FILTER NOT EXISTS {
+      ?textElement ragno:embedding ?embedding .
+    }
+    
+    # Only process chunks (which have olo:index) to avoid original documents that are too large
+    OPTIONAL { ?textElement olo:index ?index }
+    FILTER (BOUND(?index))
+  }
+}
+LIMIT ${limit}

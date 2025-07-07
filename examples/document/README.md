@@ -55,8 +55,8 @@ node examples/document/LoadPDFs.js --help
 <http://purl.org/stuff/instance/text-abcd1234> a ragno:TextElement ;
     rdfs:label "Research Paper Title markdown" ;
     dcterms:created "2025-07-07T13:30:00Z" ;
-    ragno:hasContent "# Research Paper Content..." ;
-    ragno:size 12470 ;
+    ragno:content "# Research Paper Content..." ;
+    dcterms:extent 12470 ;
     prov:wasDerivedFrom <http://purl.org/stuff/instance/unit-abcd1234> .
 ```
 
@@ -64,11 +64,49 @@ node examples/document/LoadPDFs.js --help
 
 Processes `ragno:TextElement` instances that haven't been chunked yet, creating semantic chunks with proper OLO (Ordered Lists Ontology) indexing.
 
+### MakeEmbeddings.js
+
+Finds `ragno:TextElement` instances that don't have embeddings and creates vector embeddings for their content using the configured embedding provider. This includes both original document TextElements and chunk TextElements created by ChunkDocuments.js.
+
+**Features:**
+- Finds `ragno:TextElement` instances without `ragno:embedding` property (both documents and chunks)
+- Uses configurable embedding providers (Ollama, Nomic, etc.)
+- Stores embeddings as comma-separated strings in SPARQL store
+- Based on `examples/basic/MemoryEmbeddingSPARQL.js` patterns
+- Follows semem configuration system for embedding providers
+
+**Usage:**
+```bash
+# Process all TextElements that need embeddings (default, run from project root)
+node examples/document/MakeEmbeddings.js
+
+# Process up to 5 TextElements
+node examples/document/MakeEmbeddings.js --limit 5
+
+# Use custom SPARQL graph
+node examples/document/MakeEmbeddings.js --graph "http://example.org/my-documents"
+
+# Show help
+node examples/document/MakeEmbeddings.js --help
+```
+
+**Command Line Options:**
+- `--limit <number>` - Maximum number of TextElements to process (default: 0, no limit)
+- `--graph <uri>` - Target graph URI (default: from config)
+
+**RDF Structure Created:**
+```turtle
+# TextElement with embedding
+<http://purl.org/stuff/instance/text-abcd1234> a ragno:TextElement ;
+    ragno:content "Document content here..." ;
+    ragno:embedding "0.1234,-0.5678,0.9012,..." .
+```
+
 **Features:**
 - Finds unprocessed `ragno:TextElement` instances
 - Uses `src/services/document/Chunker.js` for semantic chunking
 - Creates OLO-compliant ordered lists with slots and indexing
-- Stores chunks as `ragno:SemanticUnit` instances
+- Stores chunks as both `ragno:Unit` and `ragno:TextElement` instances (so they can receive embeddings)
 - Maintains references back to source TextElements
 - Marks processed TextElements with `semem:hasChunks` flag
 
@@ -106,11 +144,11 @@ node examples/document/ChunkDocuments.js --help
              <http://purl.org/stuff/instance/slot-2>,
              <http://purl.org/stuff/instance/slot-3> .
 
-# Individual chunks as SemanticUnits
-<http://purl.org/stuff/instance/chunk-1234> a ragno:SemanticUnit ;
-    ragno:hasContent "First chunk content..." ;
-    ragno:size 456 ;
-    ragno:index 1 ;
+# Individual chunks as both Units and TextElements (for embeddings)
+<http://purl.org/stuff/instance/chunk-1234> a ragno:Unit, ragno:TextElement ;
+    ragno:content "First chunk content..." ;
+    dcterms:extent 456 ;
+    olo:index 1 ;
     prov:wasDerivedFrom <http://purl.org/stuff/instance/text-abcd1234> ;
     dcterms:created "2025-07-07T13:30:00Z" .
 
@@ -144,7 +182,7 @@ WHERE {
               semem:sourceFile ?sourceFile ;
               ragno:hasTextElement ?textElement .
     
-    ?textElement ragno:size ?textSize .
+    ?textElement dcterms:extent ?textSize .
     
     OPTIONAL { 
       ?textElement semem:hasChunks ?hasChunks 
@@ -198,7 +236,7 @@ WHERE {
       SELECT ?chunkList (AVG(?chunkSize) AS ?avgChunkSize) WHERE {
         ?slot olo:ordered_list ?chunkList ;
               olo:item ?chunk .
-        ?chunk ragno:size ?chunkSize .
+        ?chunk dcterms:extent ?chunkSize .
       }
       GROUP BY ?chunkList
     }
@@ -215,20 +253,62 @@ ORDER BY ?textElement
 | http://purl.org/stuff/instance/text-def456   | http://purl.org/stuff/instance/chunklist-uvw234 | 3           | 1247.7       | http://purl.org/stuff/instance/chunk-010    | http://purl.org/stuff/instance/chunk-012    |
 ```
 
+### Embedding Status Query (for MakeEmbeddings.js results)
+
+Query to show TextElements and their embedding status:
+
+```sparql
+PREFIX ragno: <http://purl.org/stuff/ragno/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+
+SELECT ?textElement ?sourceUnit ?contentLength ?hasEmbedding ?embeddingLength
+WHERE {
+  GRAPH <http://tensegrity.it/semem> {
+    ?textElement a ragno:TextElement ;
+                 ragno:content ?content ;
+                 prov:wasDerivedFrom ?sourceUnit .
+    
+    BIND(STRLEN(?content) AS ?contentLength)
+    
+    OPTIONAL { 
+      ?textElement ragno:embedding ?embedding .
+      BIND(true AS ?hasEmbedding)
+      BIND(SIZE(SPLIT(?embedding, ",")) AS ?embeddingLength)
+    }
+    
+    FILTER (!BOUND(?hasEmbedding) || ?hasEmbedding = true)
+  }
+}
+ORDER BY DESC(?hasEmbedding) ?textElement
+```
+
+**Expected Output:**
+```
+| textElement                                   | sourceUnit                                   | contentLength | hasEmbedding | embeddingLength |
+|-----------------------------------------------|----------------------------------------------|---------------|--------------|-----------------|
+| http://purl.org/stuff/instance/text-abc123   | http://purl.org/stuff/instance/unit-xyz789  | 12470         | true         | 1536           |
+| http://purl.org/stuff/instance/text-def456   | http://purl.org/stuff/instance/unit-uvw234  | 8920          | true         | 1536           |
+| http://purl.org/stuff/instance/text-ghi789   | http://purl.org/stuff/instance/unit-rst567  | 5643          |              |                |
+```
+
 ## Workflow
 
 The typical workflow for processing documents is:
 
 1. **Load Documents**: Use `node examples/document/LoadPDFs.js` to convert PDFs to RDF and store as `ragno:Unit` and `ragno:TextElement` instances
-2. **Chunk Documents**: Use `node examples/document/ChunkDocuments.js` to process `ragno:TextElement` instances and create semantic chunks with OLO indexing
-3. **Query Results**: Use the provided SPARQL queries to analyze the processed documents and chunks
+2. **Chunk Documents**: Use `node examples/document/ChunkDocuments.js` to process `ragno:TextElement` instances and create semantic chunks with OLO indexing (chunks are stored as both `ragno:SemanticUnit` and `ragno:TextElement`)
+3. **Create Embeddings**: Use `node examples/document/MakeEmbeddings.js` to generate vector embeddings for all `ragno:TextElement` instances (both original documents and chunks)
+4. **Query Results**: Use the provided SPARQL queries to analyze the processed documents, embeddings, and chunks
 
 ## Configuration
 
-Both scripts use the semem configuration system:
+All scripts use the semem configuration system:
 - Configuration file: `config/config.json`
 - Environment variables: `.env` file for credentials
 - SPARQL endpoints: Configured in the config file with environment variable substitution
+- Embedding providers: Configurable (Ollama, Nomic) with model selection and API keys
 
 ## Dependencies
 

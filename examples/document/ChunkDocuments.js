@@ -82,11 +82,12 @@ class ChunkDocuments {
         }
     }
 
-    async findUnprocessedTextElements(targetGraph, limit = 10) {
+    async findUnprocessedTextElements(targetGraph, limit = 0, minContentLength = 2000) {
         try {
             const query = await this.queryService.getQuery('find-unprocessed-text-elements', {
                 graphURI: targetGraph,
-                limit: limit
+                limit: limit || 1000000,  // Use a very high limit if 0 (no limit)
+                minContentLength: minContentLength
             });
             
             const storageConfig = this.config.get('storage.options');
@@ -137,12 +138,12 @@ class ChunkDocuments {
                 const chunkURI = chunk.uri;
                 const slotURI = URIMinter.mintURI('http://purl.org/stuff/instance/', 'slot', `${textElementURI}-${index}`);
                 
-                // Chunk as ragno:SemanticUnit
+                // Chunk as both ragno:Unit and ragno:TextElement for embeddings
                 chunkTriples.push(`
-    <${chunkURI}> a ragno:SemanticUnit ;
-                  ragno:hasContent """${chunk.content.replace(/"/g, '\\"')}""" ;
-                  ragno:size ${chunk.size} ;
-                  ragno:index ${chunk.index} ;
+    <${chunkURI}> a ragno:Unit, ragno:TextElement ;
+                  ragno:content """${chunk.content.replace(/"/g, '\\"')}""" ;
+                  dcterms:extent ${chunk.size} ;
+                  olo:index ${chunk.index} ;
                   prov:wasDerivedFrom <${textElementURI}> ;
                   dcterms:created "${new Date().toISOString()}"^^xsd:dateTime .`);
                 
@@ -194,17 +195,17 @@ class ChunkDocuments {
     }
 
     async run(options) {
-        const { limit, graph } = options;
+        const { limit, graph, minContentLength } = options;
         
         const targetGraph = graph || this.config.get('storage.options.graphName') || 
                             this.config.get('graphName') || 
                             'http://purl.org/stuff/semem/documents';
         
         console.log(`🔍 Finding unprocessed TextElements in graph: ${targetGraph}`);
-        console.log(`📏 Limit: ${limit}`);
+        console.log(`📏 Limit: ${limit === 0 ? 'No limit (process all)' : limit}`);
+        console.log(`📐 Min content length: ${minContentLength} characters`);
         
-        
-        const unprocessedElements = await this.findUnprocessedTextElements(targetGraph, limit);
+        const unprocessedElements = await this.findUnprocessedTextElements(targetGraph, limit, minContentLength);
         console.log(`📋 Found ${unprocessedElements.length} unprocessed TextElements`);
         
         if (unprocessedElements.length === 0) {
@@ -253,10 +254,14 @@ async function main() {
         options: {
             limit: {
                 type: 'string',
-                default: '10'
+                default: '0'
             },
             graph: {
                 type: 'string'
+            },
+            minContentLength: {
+                type: 'string',
+                default: '2000'
             },
             help: {
                 type: 'boolean',
@@ -272,19 +277,22 @@ ChunkDocuments.js - Process ragno:TextElement instances that haven't been chunke
 Usage: node examples/document/ChunkDocuments.js [options]
 
 Options:
-  --limit <number>   Maximum number of TextElements to process (default: 10)
-  --graph <uri>      Target graph URI (default: from config)
-  --help, -h         Show this help message
+  --limit <number>        Maximum number of TextElements to process (default: 0, no limit)
+  --graph <uri>           Target graph URI (default: from config)
+  --minContentLength <n>  Minimum content length for processing (default: 2000 chars)
+  --help, -h              Show this help message
 
 Description:
   This script finds ragno:TextElement instances that don't have the semem:hasChunks flag,
   processes them using the document Chunker service, and stores the resulting chunks
-  with proper OLO (Ordered Lists Ontology) indexing. Each chunk is stored as a 
-  ragno:SemanticUnit with references back to the source TextElement.
+  with proper OLO (Ordered Lists Ontology) indexing. Each chunk is stored as both a 
+  ragno:Unit and ragno:TextElement (so they can receive embeddings) with 
+  references back to the source TextElement.
 
 Examples:
-  node examples/document/ChunkDocuments.js                                    # Process up to 10 TextElements
+  node examples/document/ChunkDocuments.js                                    # Process all TextElements >2000 chars
   node examples/document/ChunkDocuments.js --limit 5                         # Process up to 5 TextElements  
+  node examples/document/ChunkDocuments.js --minContentLength 1000           # Process all TextElements >1000 chars
   node examples/document/ChunkDocuments.js --graph "http://example.org/docs" # Use specific graph
         `);
         return;
@@ -296,8 +304,9 @@ Examples:
         await chunker.init();
         
         const options = {
-            limit: parseInt(args.limit) || 10,
-            graph: args.graph
+            limit: parseInt(args.limit) || 0,
+            graph: args.graph,
+            minContentLength: args.minContentLength !== undefined ? parseInt(args.minContentLength) : 2000
         };
         
         await chunker.run(options);
