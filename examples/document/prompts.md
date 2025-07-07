@@ -1,0 +1,1 @@
+Create a script based on part of `examples/document-qa/01-ingest-documents.js` that will only do the document chunking part that uses `src/services/document/Chunker.js`. The chunks will be stored with the help of the utilities in `src/services/sparql`.

@@ -14,6 +14,10 @@ Only look at docs when requested. Always ignore all files under docs/ignore
 
 - The memory and json storage backends are being phased out, sparql storage should be used throughout
 
+## Development Guidelines
+
+- scripts should be run from the server root
+
 ## Documentation Guidelines
 
 - Progress reports and plans should be saved as md files under docs/postcraft/content/raw/entries/ 
@@ -376,4 +380,3 @@ const llmHandler = new LLMHandler(llmProvider, modelConfig.chatModel);
   - Gemini's context window can handle entire codebases that would overflow Claude's context
   - When checking implementations, be specific about what you're looking for to get accurate results
   
-

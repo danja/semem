@@ -1,0 +1,26 @@
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix dc:      <http://purl.org/dc/elements/1.1/> .
+@prefix olo:     <http://purl.org/ontology/olo/core#> .
+@prefix mo:      <http://purl.org/ontology/mo/> .
+@prefix ex:      <http://example.org/> .
+ 
+ex:FunkyPlaylist a olo:OrderedList ;
+   dc:title "Funky Playlist"^^xsd:string ;
+   dc:description "A playlist full of funky legends"^^xsd:string ;
+   dc:creator <http://foaf.me/zazi#me> ;
+      olo:length 2 ;
+      olo:slot [   
+         olo:index 1 ;
+         olo:item ex:SexMachine
+      ] ;
+      olo:slot [
+         olo:index 2 ;
+         olo:item ex:GoodFoot
+      ] .
+ 
+ex:SexMachine a mo:Track ;
+   dc:title "Sex Machine"^^xsd:string ;
+   dc:creator <http://dbpedia.org/resource/James_Brown> .
+ 
+ex:GoodFoot a mo:Track ;
+   dc:title "Good Foot"^^xsd:string .	
