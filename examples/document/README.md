@@ -6,6 +6,19 @@ This directory contains scripts for processing PDF documents and creating semant
 
 ## Scripts Overview
 
+### ClearGraph.js
+
+Clears all data from the configured SPARQL graph, useful for resetting the store before processing new documents.
+
+**Usage:**
+```bash
+# Clear the default graph from config
+node examples/document/ClearGraph.js
+
+# Show help
+node examples/document/ClearGraph.js --help
+```
+
 ### LoadPDFs.js
 
 Loads PDF files from a directory, converts them to markdown, and stores them in a SPARQL store as RDF data following the Ragno ontology.
@@ -64,44 +77,6 @@ node examples/document/LoadPDFs.js --help
 
 Processes `ragno:TextElement` instances that haven't been chunked yet, creating semantic chunks with proper OLO (Ordered Lists Ontology) indexing.
 
-### MakeEmbeddings.js
-
-Finds `ragno:TextElement` instances that don't have embeddings and creates vector embeddings for their content using the configured embedding provider. This includes both original document TextElements and chunk TextElements created by ChunkDocuments.js.
-
-**Features:**
-- Finds `ragno:TextElement` instances without `ragno:embedding` property (both documents and chunks)
-- Uses configurable embedding providers (Ollama, Nomic, etc.)
-- Stores embeddings as comma-separated strings in SPARQL store
-- Based on `examples/basic/MemoryEmbeddingSPARQL.js` patterns
-- Follows semem configuration system for embedding providers
-
-**Usage:**
-```bash
-# Process all TextElements that need embeddings (default, run from project root)
-node examples/document/MakeEmbeddings.js
-
-# Process up to 5 TextElements
-node examples/document/MakeEmbeddings.js --limit 5
-
-# Use custom SPARQL graph
-node examples/document/MakeEmbeddings.js --graph "http://example.org/my-documents"
-
-# Show help
-node examples/document/MakeEmbeddings.js --help
-```
-
-**Command Line Options:**
-- `--limit <number>` - Maximum number of TextElements to process (default: 0, no limit)
-- `--graph <uri>` - Target graph URI (default: from config)
-
-**RDF Structure Created:**
-```turtle
-# TextElement with embedding
-<http://purl.org/stuff/instance/text-abcd1234> a ragno:TextElement ;
-    ragno:content "Document content here..." ;
-    ragno:embedding "0.1234,-0.5678,0.9012,..." .
-```
-
 **Features:**
 - Finds unprocessed `ragno:TextElement` instances
 - Uses `src/services/document/Chunker.js` for semantic chunking
@@ -158,6 +133,98 @@ node examples/document/ChunkDocuments.js --help
     olo:item <http://purl.org/stuff/instance/chunk-1234> ;
     olo:ordered_list <http://purl.org/stuff/instance/chunklist-efgh5678> ;
     olo:next <http://purl.org/stuff/instance/slot-2> .
+```
+
+### MakeEmbeddings.js
+
+Finds `ragno:TextElement` instances that don't have embeddings and creates vector embeddings for their content using the configured embedding provider. This includes both original document TextElements and chunk TextElements created by ChunkDocuments.js.
+
+**Features:**
+- Finds `ragno:TextElement` instances without `ragno:embedding` property (both documents and chunks)
+- Uses configurable embedding providers (Ollama, Nomic, etc.)
+- Stores embeddings as comma-separated strings in SPARQL store
+- Based on `examples/basic/MemoryEmbeddingSPARQL.js` patterns
+- Follows semem configuration system for embedding providers
+
+**Usage:**
+```bash
+# Process all TextElements that need embeddings (default, run from project root)
+node examples/document/MakeEmbeddings.js
+
+# Process up to 5 TextElements
+node examples/document/MakeEmbeddings.js --limit 5
+
+# Use custom SPARQL graph
+node examples/document/MakeEmbeddings.js --graph "http://example.org/my-documents"
+
+# Show help
+node examples/document/MakeEmbeddings.js --help
+```
+
+**Command Line Options:**
+- `--limit <number>` - Maximum number of TextElements to process (default: 0, no limit)
+- `--graph <uri>` - Target graph URI (default: from config)
+
+**RDF Structure Created:**
+```turtle
+# TextElement with embedding
+<http://purl.org/stuff/instance/text-abcd1234> a ragno:TextElement ;
+    ragno:content "Document content here..." ;
+    ragno:embedding "0.1234,-0.5678,0.9012,..." .
+```
+
+### ExtractConcepts.js
+
+Finds `ragno:TextElement` instances (chunks) that don't have concepts extracted yet, uses the configured LLM to extract concepts from their content, and stores the results as `ragno:Unit` instances with concept labels and `ragno:Corpuscle` collections.
+
+**Features:**
+- Finds `ragno:TextElement` instances without concepts extracted (only processes chunks, not original documents)
+- Uses configured LLM providers (Mistral, Claude, Ollama) with proper priority ordering
+- Extracts concepts using LLM and stores them as `ragno:Unit` instances
+- Creates `ragno:Corpuscle` collections that group all concepts from each TextElement
+- Marks processed TextElements with `semem:hasConcepts` flag
+- Follows proper LLM provider configuration patterns from `docs/manual/provider-config.md`
+
+**Usage:**
+```bash
+# Process all TextElements that need concept extraction (default, run from project root)
+node examples/document/ExtractConcepts.js
+
+# Process up to 5 TextElements
+node examples/document/ExtractConcepts.js --limit 5
+
+# Use custom SPARQL graph
+node examples/document/ExtractConcepts.js --graph "http://example.org/my-documents"
+
+# Show help
+node examples/document/ExtractConcepts.js --help
+```
+
+**Command Line Options:**
+- `--limit <number>` - Maximum number of TextElements to process (default: 0, no limit)
+- `--graph <uri>` - Target graph URI (default: from config)
+
+**RDF Structure Created:**
+```turtle
+# Mark TextElement as having concepts extracted
+<http://purl.org/stuff/instance/chunk-abcd1234> semem:hasConcepts true ;
+    semem:hasCorpuscle <http://purl.org/stuff/instance/corpuscle-xyz789> .
+
+# Corpuscle collection grouping concepts
+<http://purl.org/stuff/instance/corpuscle-xyz789> a ragno:Corpuscle ;
+    rdfs:label "Concepts from chunk-abcd1234" ;
+    dcterms:created "2025-07-07T13:30:00Z" ;
+    prov:wasDerivedFrom <http://purl.org/stuff/instance/chunk-abcd1234> ;
+    skos:member <http://purl.org/stuff/instance/concept-001>,
+                <http://purl.org/stuff/instance/concept-002>,
+                <http://purl.org/stuff/instance/concept-003> .
+
+# Individual concept units
+<http://purl.org/stuff/instance/concept-001> a ragno:Unit ;
+    rdfs:label "machine learning" ;
+    dcterms:created "2025-07-07T13:30:00Z" ;
+    prov:wasDerivedFrom <http://purl.org/stuff/instance/chunk-abcd1234> ;
+    ragno:inCorpuscle <http://purl.org/stuff/instance/corpuscle-xyz789> .
 ```
 
 ## Sample SPARQL Queries
@@ -293,14 +360,70 @@ ORDER BY DESC(?hasEmbedding) ?textElement
 | http://purl.org/stuff/instance/text-ghi789   | http://purl.org/stuff/instance/unit-rst567  | 5643          |              |                |
 ```
 
+### Concept Extraction Query (for ExtractConcepts.js results)
+
+Query to show extracted concepts and their corpuscle groupings:
+
+```sparql
+PREFIX ragno: <http://purl.org/stuff/ragno/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX semem: <http://semem.hyperdata.it/>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+
+SELECT ?textElement ?corpuscle ?conceptCount ?concepts
+WHERE {
+  GRAPH <http://tensegrity.it/semem> {
+    ?textElement semem:hasConcepts true ;
+                 semem:hasCorpuscle ?corpuscle .
+    
+    ?corpuscle a ragno:Corpuscle ;
+               rdfs:label ?corpuscleLabel .
+    
+    # Count concepts in corpuscle
+    {
+      SELECT ?corpuscle (COUNT(?concept) AS ?conceptCount) 
+             (GROUP_CONCAT(?conceptLabel; separator=", ") AS ?concepts) WHERE {
+        ?corpuscle skos:member ?concept .
+        ?concept a ragno:Unit ;
+                 rdfs:label ?conceptLabel .
+      }
+      GROUP BY ?corpuscle
+    }
+  }
+}
+ORDER BY ?textElement
+```
+
+**Expected Output:**
+```
+| textElement                                           | corpuscle                                             | conceptCount | concepts                                    |
+|-------------------------------------------------------|-------------------------------------------------------|--------------|---------------------------------------------|
+| http://purl.org/stuff/instance/chunk-abc123_1_xyz789 | http://purl.org/stuff/instance/corpuscle-def456      | 7            | machine learning, neural networks, AI      |
+| http://purl.org/stuff/instance/chunk-abc123_2_uvw234 | http://purl.org/stuff/instance/corpuscle-ghi789      | 4            | deep learning, transformers, attention     |
+```
+
 ## Workflow
 
 The typical workflow for processing documents is:
 
-1. **Load Documents**: Use `node examples/document/LoadPDFs.js` to convert PDFs to RDF and store as `ragno:Unit` and `ragno:TextElement` instances
-2. **Chunk Documents**: Use `node examples/document/ChunkDocuments.js` to process `ragno:TextElement` instances and create semantic chunks with OLO indexing (chunks are stored as both `ragno:SemanticUnit` and `ragno:TextElement`)
-3. **Create Embeddings**: Use `node examples/document/MakeEmbeddings.js` to generate vector embeddings for all `ragno:TextElement` instances (both original documents and chunks)
-4. **Query Results**: Use the provided SPARQL queries to analyze the processed documents, embeddings, and chunks
+1. **Clear Graph** (optional): Use `node examples/document/ClearGraph.js` to clear any existing data from the target graph
+2. **Load Documents**: Use `node examples/document/LoadPDFs.js` to convert PDFs to RDF and store as `ragno:Unit` and `ragno:TextElement` instances
+3. **Chunk Documents**: Use `node examples/document/ChunkDocuments.js` to process `ragno:TextElement` instances and create semantic chunks with OLO indexing (chunks are stored as both `ragno:Unit` and `ragno:TextElement`)
+4. **Create Embeddings**: Use `node examples/document/MakeEmbeddings.js` to generate vector embeddings for all `ragno:TextElement` instances (both original documents and chunks)
+5. **Extract Concepts**: Use `node examples/document/ExtractConcepts.js` to extract semantic concepts from chunk TextElements using configured LLM providers
+6. **Query Results**: Use the provided SPARQL queries to analyze the processed documents, embeddings, chunks, and extracted concepts
+
+**Example Complete Workflow:**
+```bash
+# Run from project root directory
+node examples/document/ClearGraph.js
+node examples/document/LoadPDFs.js --limit 5
+node examples/document/ChunkDocuments.js --limit 20
+node examples/document/MakeEmbeddings.js --limit 50
+node examples/document/ExtractConcepts.js --limit 10
+```
 
 ## Configuration
 
