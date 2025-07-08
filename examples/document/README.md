@@ -12,6 +12,7 @@ node examples/document/MakeEmbeddings.js --limit 50
 node examples/document/ExtractConcepts.js --limit 10
 node examples/document/Decompose.js --limit 10
 node examples/document/SOM.js --limit 20 --map-size 8x8
+node examples/document/EnhanceCorpuscles.js --limit 50 --similarity-threshold 0.7
 ```
 
 **Important**: All scripts should be run from the project root directory, not from within the `examples/document/` directory.
@@ -678,6 +679,128 @@ ORDER BY ?clusterIndex DESC(?weight)
 | http://purl.org/stuff/instance/som_rel_1           | http://purl.org/stuff/instance/corpuscle-def123 | http://purl.org/stuff/instance/corpuscle-ghi789 | 0.654321 | 1            |
 ```
 
+### EnhanceCorpuscles.js
+
+Analyzes existing corpuscles from the document processing pipeline using graph analytics algorithms to add enhanced relationships and features. Creates new enhanced corpuscles based on structural importance and semantic clustering derived from K-core decomposition and centrality analysis.
+
+**Features:**
+- Queries existing corpuscles with embeddings and concepts from document pipeline
+- Builds graph from concept relationships and semantic similarity between corpuscle embeddings
+- Applies K-core decomposition and betweenness centrality analysis via GraphAnalytics.js
+- Creates enhanced corpuscles with structural importance metrics (k-core levels, centrality scores)
+- Generates new relationships based on graph analysis and community detection
+- Exports enhanced corpus back to SPARQL store following Ragno ontology patterns
+- Uses config-defined graph URI for seamless integration with document workflow
+
+**Usage:**
+```bash
+# Process all corpuscles with default settings (run from project root)
+node examples/document/EnhanceCorpuscles.js
+
+# Process up to 50 corpuscles with custom similarity threshold
+node examples/document/EnhanceCorpuscles.js --limit 50 --similarity-threshold 0.7
+
+# Use custom SPARQL graph
+node examples/document/EnhanceCorpuscles.js --graph "http://example.org/my-documents"
+
+# Disable specific algorithms
+node examples/document/EnhanceCorpuscles.js --no-centrality --no-community-detection
+
+# Show help
+node examples/document/EnhanceCorpuscles.js --help
+```
+
+**Command Line Options:**
+- `--limit <number>` - Maximum number of corpuscles to process (default: 0, no limit)
+- `--graph <uri>` - Target graph URI (default: from config)
+- `--similarity-threshold <number>` - Minimum cosine similarity for concept relationships (default: 0.6)
+- `--min-corpuscle-connections <number>` - Minimum connections required for analysis (default: 2)
+- `--max-graph-nodes <number>` - Maximum nodes in concept graph (default: 1000)
+- `--no-k-core` - Disable K-core decomposition analysis
+- `--no-centrality` - Disable betweenness centrality analysis
+- `--no-community-detection` - Disable community detection algorithms
+- `--no-export` - Skip exporting results to SPARQL store
+- `--no-enhanced-corpuscles` - Skip creating new enhanced corpuscles
+
+**Prerequisites:**
+- Corpuscles must exist with embeddings (run ExtractConcepts.js first)
+- Source chunks must have embeddings via `prov:wasDerivedFrom` relationships
+- Sufficient corpuscles (minimum 2) with concepts for meaningful graph analysis
+
+**Pipeline Integration:**
+- Expects data from: LoadPDFs.js → ChunkDocuments.js → MakeEmbeddings.js → ExtractConcepts.js
+- Can be run after: Decompose.js and SOM.js (complementary graph analysis)
+- Produces: Enhanced corpuscles with graph-based features and relationships
+
+**RDF Structure Created:**
+```turtle
+# Enhanced corpuscle with graph analytics features
+<http://purl.org/stuff/instance/enhanced_corpuscle_concept_machine_learning> a ragno:Corpuscle ;
+    rdfs:label "Enhanced: machine learning" ;
+    dcterms:created "2025-07-08T13:30:00Z" ;
+    ragno:enhancementType "concept-based" ;
+    ragno:kCoreLevel 3 ;
+    ragno:centralityScore 0.0234567 ;
+    ragno:conceptFrequency 5 ;
+    ragno:avgSimilarity 0.7123456 ;
+    prov:wasDerivedFrom <http://purl.org/stuff/instance/corpuscle-original123> ;
+    skos:member <http://purl.org/stuff/instance/concept-machine-learning> .
+
+# Concept relationships based on embedding similarity
+<http://purl.org/stuff/instance/concept_rel_0> a ragno:Relationship ;
+    ragno:hasSource <http://purl.org/stuff/instance/concept-machine-learning> ;
+    ragno:hasTarget <http://purl.org/stuff/instance/concept-neural-networks> ;
+    ragno:relationshipType "concept-similarity" ;
+    ragno:weight 0.8234567 ;
+    ragno:similarity 0.8234567 ;
+    dcterms:created "2025-07-08T13:30:00Z" .
+
+# Graph analysis metadata
+<http://purl.org/stuff/instance/graph_analysis_1625754600000> a ragno:AnalysisResult ;
+    ragno:analysisType "graph-enhancement" ;
+    ragno:totalCorpuscles 34 ;
+    ragno:totalConcepts 11 ;
+    ragno:totalRelationships 1122 ;
+    ragno:enhancedCorpuscles 9 ;
+    ragno:maxKCore 3 ;
+    ragno:avgCentrality 0.0156789 ;
+    dcterms:created "2025-07-08T13:30:00Z" .
+```
+
+### Enhanced Corpuscle Analysis Query (for EnhanceCorpuscles.js results)
+
+Query to show enhanced corpuscles with their graph analytics features:
+
+```sparql
+PREFIX ragno: <http://purl.org/stuff/ragno/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+
+SELECT ?enhancedCorpuscle ?label ?enhancementType ?kCoreLevel ?centralityScore ?conceptFrequency ?avgSimilarity ?originalCorpuscle
+WHERE {
+    GRAPH <http://tensegrity.it/semem> {
+        ?enhancedCorpuscle a ragno:Corpuscle ;
+                          rdfs:label ?label ;
+                          ragno:enhancementType ?enhancementType ;
+                          ragno:kCoreLevel ?kCoreLevel ;
+                          ragno:centralityScore ?centralityScore ;
+                          ragno:conceptFrequency ?conceptFrequency ;
+                          ragno:avgSimilarity ?avgSimilarity ;
+                          prov:wasDerivedFrom ?originalCorpuscle .
+    }
+}
+ORDER BY DESC(?kCoreLevel) DESC(?centralityScore)
+```
+
+**Expected Output:**
+```
+| enhancedCorpuscle                                               | label                           | enhancementType | kCoreLevel | centralityScore | conceptFrequency | avgSimilarity | originalCorpuscle                               |
+|-----------------------------------------------------------------|---------------------------------|-----------------|------------|-----------------|------------------|--------------|-------------------------------------------------|
+| http://purl.org/stuff/instance/enhanced_corpuscle_concept_ml   | "Enhanced: machine learning"    | "concept-based" | 3          | 0.0234567       | 5                | 0.7123456     | http://purl.org/stuff/instance/corpuscle-abc123 |
+| http://purl.org/stuff/instance/enhanced_corpuscle_concept_ai   | "Enhanced: artificial intelligence" | "concept-based" | 2          | 0.0198765       | 3                | 0.6987654     | http://purl.org/stuff/instance/corpuscle-def456 |
+```
+
 ## Workflow
 
 The typical workflow for processing documents is:
@@ -689,7 +812,8 @@ The typical workflow for processing documents is:
 5. **Extract Concepts**: Use `node examples/document/ExtractConcepts.js` to extract semantic concepts from chunk TextElements using configured LLM providers
 6. **Semantic Decomposition**: Use `node examples/document/Decompose.js` to apply semantic decomposition to processed chunks, creating entities, relationships, and semantic units
 7. **SOM Clustering**: Use `node examples/document/SOM.js` to apply Self-Organizing Map clustering to corpuscles, creating concept-based clusters and relationships without using LLM or embedding tools
-8. **Query Results**: Use the provided SPARQL queries to analyze the processed documents, embeddings, chunks, concepts, semantic decomposition, and SOM clusters
+8. **Enhance Corpuscles**: Use `node examples/document/EnhanceCorpuscles.js` to analyze corpuscles using graph analytics, adding structural importance features and creating enhanced corpuscles based on K-core decomposition and centrality analysis
+9. **Query Results**: Use the provided SPARQL queries to analyze the processed documents, embeddings, chunks, concepts, semantic decomposition, SOM clusters, and enhanced corpuscles
 
 
 ## Configuration
