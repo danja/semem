@@ -227,6 +227,146 @@ node examples/document/ExtractConcepts.js --help
     ragno:inCorpuscle <http://purl.org/stuff/instance/corpuscle-xyz789> .
 ```
 
+### Decompose.js
+
+Finds `ragno:TextElement` instances (chunks) that have embeddings and concepts extracted, applies `decomposeCorpus` to create semantic units, entities, and relationships, and stores the results in SPARQL following the Ragno ontology.
+
+**Features:**
+- Finds processed `ragno:TextElement` instances that have both embeddings and concepts extracted
+- Uses configured LLM providers (Mistral, Claude, Ollama) with proper priority ordering
+- Applies `src/ragno/decomposeCorpus.js` to create semantic decomposition
+- Creates `ragno:SemanticUnit`, `ragno:Entity`, and `ragno:Relationship` instances
+- Builds knowledge graph with entity relationships across document chunks
+- Marks processed TextElements with `semem:hasSemanticUnits` flag
+- Stores all results in RDF dataset following Ragno ontology patterns
+
+**Usage:**
+```bash
+# Process all chunks ready for decomposition (default, run from project root)
+node examples/document/Decompose.js
+
+# Process up to 5 chunks
+node examples/document/Decompose.js --limit 5
+
+# Use custom SPARQL graph
+node examples/document/Decompose.js --graph "http://example.org/my-documents"
+
+# Show help
+node examples/document/Decompose.js --help
+```
+
+**Command Line Options:**
+- `--limit <number>` - Maximum number of chunks to process (default: 0, no limit)
+- `--graph <uri>` - Target graph URI (default: from config)
+
+**Prerequisites:**
+- Chunks must have embeddings (run MakeEmbeddings.js first)
+- Chunks must have concepts extracted (run ExtractConcepts.js first)
+
+**RDF Structure Created:**
+```turtle
+# Mark TextElement as having semantic units
+<http://purl.org/stuff/instance/chunk-abcd1234> semem:hasSemanticUnits true .
+
+# Semantic units created from chunks
+<http://purl.org/stuff/instance/unit_0_0> a ragno:SemanticUnit ;
+    rdfs:label "First semantic unit" ;
+    ragno:content "Independent semantic content..." ;
+    ragno:summary "Summary of the unit" ;
+    prov:wasDerivedFrom <http://purl.org/stuff/instance/chunk-abcd1234> ;
+    ragno:hasEntityMention <http://purl.org/stuff/instance/entity-xyz> .
+
+# Entities extracted from semantic units
+<http://purl.org/stuff/instance/entity-xyz> a ragno:Entity ;
+    rdfs:label "machine learning" ;
+    ragno:subType "concept" ;
+    ragno:isEntryPoint true ;
+    ragno:frequency 3 .
+
+# Relationships between entities
+<http://purl.org/stuff/instance/rel_0> a ragno:Relationship ;
+    ragno:hasSource <http://purl.org/stuff/instance/entity-xyz> ;
+    ragno:hasTarget <http://purl.org/stuff/instance/entity-abc> ;
+    ragno:relationshipType "related" ;
+    ragno:weight 0.8 ;
+    ragno:content "Relationship description" .
+```
+
+### SOM.js
+
+Finds `ragno:Corpuscle` instances created by ExtractConcepts.js, extracts concept-based features (TF-IDF, diversity, structural), applies VSOM (Vectorized Self-Organizing Map) clustering to create semantic neighborhoods, and stores cluster assignments and relationships back to SPARQL.
+
+**Features:**
+- Creates cluster-based features without using LLM or embedding tools
+- Extracts TF-IDF-style concept frequency vectors from corpuscle concepts
+- Calculates concept diversity and structural features (concept length, uniqueness)
+- Applies hexagonal VSOM topology for natural clustering
+- Creates pairwise relationships between corpuscles in same clusters
+- Stores cluster assignments, SOM positions, and feature metadata
+- Follows Ragno ontology patterns for cluster and relationship modeling
+
+**Usage:**
+```bash
+# Process all corpuscles with default 10x10 SOM (run from project root)
+node examples/document/SOM.js
+
+# Process up to 20 corpuscles with 8x8 SOM
+node examples/document/SOM.js --limit 20 --map-size 8x8
+
+# Use custom SPARQL graph
+node examples/document/SOM.js --graph "http://example.org/my-documents"
+
+# Show help
+node examples/document/SOM.js --help
+```
+
+**Command Line Options:**
+- `--limit <number>` - Maximum number of corpuscles to process (default: 0, no limit)
+- `--graph <uri>` - Target graph URI (default: from config)
+- `--map-size <WxH>` - SOM map dimensions (default: 10x10)
+
+**Prerequisites:**
+- Corpuscles must exist (run ExtractConcepts.js first)
+- At least 2 corpuscles with 2+ concepts each for meaningful clustering
+
+**RDF Structure Created:**
+```turtle
+# Cluster assignment for corpuscle
+<http://purl.org/stuff/instance/corpuscle-xyz789> ragno:cluster <http://purl.org/stuff/instance/som_cluster_0> ;
+    ragno:clusterDistance 0.123456 ;
+    ragno:clusterIndex 0 ;
+    ragno:somPosition "2,3" ;
+    ragno:conceptDiversity 0.856234 ;
+    ragno:avgConceptLength 12.45 ;
+    ragno:uniqueConceptRatio 0.789123 .
+
+# Cluster instance (created by VSOM)
+<http://purl.org/stuff/instance/som_cluster_0> a ragno:Cluster ;
+    ragno:clusterSize 5 ;
+    ragno:averageDistance 0.234567 ;
+    ragno:mapPosition "2,3" ;
+    dcterms:created "2025-07-08T13:30:00Z" .
+
+# Relationships between corpuscles in same cluster
+<http://purl.org/stuff/instance/som_rel_0> a ragno:Relationship ;
+    ragno:hasSource <http://purl.org/stuff/instance/corpuscle-xyz789> ;
+    ragno:hasTarget <http://purl.org/stuff/instance/corpuscle-abc456> ;
+    ragno:relationshipType "som-cluster-member" ;
+    ragno:weight 0.876543 ;
+    ragno:clusterIndex 0 ;
+    dcterms:created "2025-07-08T13:30:00Z" .
+
+# Global SOM analysis metadata
+<http://purl.org/stuff/instance/som_analysis_1625754600000> a ragno:AnalysisResult ;
+    ragno:analysisType "som-clustering" ;
+    ragno:totalCorpuscles 25 ;
+    ragno:totalClusters 6 ;
+    ragno:clusteredCorpuscles 22 ;
+    ragno:avgClusterSize 3.67 ;
+    ragno:relationshipsCreated 45 ;
+    dcterms:created "2025-07-08T13:30:00Z" .
+```
+
 ## Sample SPARQL Queries
 
 ### Document Statistics Query (for LoadPDFs.js results)
@@ -404,6 +544,128 @@ ORDER BY ?textElement
 | http://purl.org/stuff/instance/chunk-abc123_2_uvw234 | http://purl.org/stuff/instance/corpuscle-ghi789      | 4            | deep learning, transformers, attention     |
 ```
 
+### Semantic Decomposition Query (for Decompose.js results)
+
+Query to show semantic decomposition results including units, entities, and relationships:
+
+```sparql
+PREFIX ragno: <http://purl.org/stuff/ragno/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX semem: <http://semem.hyperdata.it/>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+
+SELECT ?textElement ?semanticUnits ?entities ?relationships
+WHERE {
+  GRAPH <http://tensegrity.it/semem> {
+    ?textElement semem:hasSemanticUnits true .
+    
+    # Count semantic units derived from this text element
+    {
+      SELECT ?textElement (COUNT(?unit) AS ?semanticUnits) WHERE {
+        ?unit a ragno:SemanticUnit ;
+              prov:wasDerivedFrom ?textElement .
+      }
+      GROUP BY ?textElement
+    }
+    
+    # Count entities mentioned in units from this text element
+    {
+      SELECT ?textElement (COUNT(DISTINCT ?entity) AS ?entities) WHERE {
+        ?unit a ragno:SemanticUnit ;
+              prov:wasDerivedFrom ?textElement ;
+              ragno:hasEntityMention ?entity .
+      }
+      GROUP BY ?textElement
+    }
+    
+    # Count relationships involving entities from this text element
+    {
+      SELECT ?textElement (COUNT(?relationship) AS ?relationships) WHERE {
+        ?unit a ragno:SemanticUnit ;
+              prov:wasDerivedFrom ?textElement ;
+              ragno:hasEntityMention ?entity .
+        ?relationship a ragno:Relationship ;
+                      ragno:hasSource ?entity .
+      }
+      GROUP BY ?textElement
+    }
+  }
+}
+ORDER BY ?textElement
+```
+
+**Expected Output:**
+```
+| textElement                                           | semanticUnits | entities | relationships |
+|-------------------------------------------------------|---------------|----------|---------------|
+| http://purl.org/stuff/instance/chunk-abc123_1_xyz789 | 3             | 8        | 5             |
+| http://purl.org/stuff/instance/chunk-abc123_2_uvw234 | 2             | 6        | 3             |
+```
+
+### SOM Clustering Query (for SOM.js results)
+
+Query to show corpuscle cluster assignments and analysis from SOM clustering:
+
+```sparql
+PREFIX ragno: <http://purl.org/stuff/ragno/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+
+SELECT ?corpuscle ?corpuscleLabel ?cluster ?clusterIndex ?clusterDistance ?somPosition ?conceptDiversity
+WHERE {
+    GRAPH <http://tensegrity.it/semem> {
+        ?corpuscle a ragno:Corpuscle ;
+                   rdfs:label ?corpuscleLabel ;
+                   ragno:cluster ?cluster ;
+                   ragno:clusterIndex ?clusterIndex ;
+                   ragno:clusterDistance ?clusterDistance ;
+                   ragno:somPosition ?somPosition ;
+                   ragno:conceptDiversity ?conceptDiversity .
+    }
+}
+ORDER BY ?clusterIndex ?clusterDistance
+```
+
+**Expected Output:**
+```
+| corpuscle                                           | corpuscleLabel                | cluster                                       | clusterIndex | clusterDistance | somPosition | conceptDiversity |
+|-----------------------------------------------------|-------------------------------|-----------------------------------------------|--------------|-----------------|-------------|------------------|
+| http://purl.org/stuff/instance/corpuscle-xyz789    | "Concepts from chunk-abc123"  | http://purl.org/stuff/instance/som_cluster_0  | 0            | 0.123456        | "2,3"       | 0.856234         |
+| http://purl.org/stuff/instance/corpuscle-abc456    | "Concepts from chunk-def456"  | http://purl.org/stuff/instance/som_cluster_0  | 0            | 0.187654        | "2,4"       | 0.734567         |
+```
+
+### SOM Cluster Relationships Query (for SOM.js results)
+
+Query to show relationships created between corpuscles in the same SOM clusters:
+
+```sparql
+PREFIX ragno: <http://purl.org/stuff/ragno/>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+
+SELECT ?relationship ?sourceCorpuscle ?targetCorpuscle ?weight ?clusterIndex
+WHERE {
+    GRAPH <http://tensegrity.it/semem> {
+        ?relationship a ragno:Relationship ;
+                     ragno:relationshipType "som-cluster-member" ;
+                     ragno:hasSource ?sourceCorpuscle ;
+                     ragno:hasTarget ?targetCorpuscle ;
+                     ragno:weight ?weight ;
+                     ragno:clusterIndex ?clusterIndex .
+    }
+}
+ORDER BY ?clusterIndex DESC(?weight)
+```
+
+**Expected Output:**
+```
+| relationship                                        | sourceCorpuscle                                 | targetCorpuscle                                 | weight   | clusterIndex |
+|-----------------------------------------------------|-------------------------------------------------|-------------------------------------------------|----------|--------------|
+| http://purl.org/stuff/instance/som_rel_0           | http://purl.org/stuff/instance/corpuscle-xyz789 | http://purl.org/stuff/instance/corpuscle-abc456 | 0.876543 | 0            |
+| http://purl.org/stuff/instance/som_rel_1           | http://purl.org/stuff/instance/corpuscle-def123 | http://purl.org/stuff/instance/corpuscle-ghi789 | 0.654321 | 1            |
+```
+
 ## Workflow
 
 The typical workflow for processing documents is:
@@ -413,7 +675,9 @@ The typical workflow for processing documents is:
 3. **Chunk Documents**: Use `node examples/document/ChunkDocuments.js` to process `ragno:TextElement` instances and create semantic chunks with OLO indexing (chunks are stored as both `ragno:Unit` and `ragno:TextElement`)
 4. **Create Embeddings**: Use `node examples/document/MakeEmbeddings.js` to generate vector embeddings for all `ragno:TextElement` instances (both original documents and chunks)
 5. **Extract Concepts**: Use `node examples/document/ExtractConcepts.js` to extract semantic concepts from chunk TextElements using configured LLM providers
-6. **Query Results**: Use the provided SPARQL queries to analyze the processed documents, embeddings, chunks, and extracted concepts
+6. **Semantic Decomposition**: Use `node examples/document/Decompose.js` to apply semantic decomposition to processed chunks, creating entities, relationships, and semantic units
+7. **SOM Clustering**: Use `node examples/document/SOM.js` to apply Self-Organizing Map clustering to corpuscles, creating concept-based clusters and relationships without using LLM or embedding tools
+8. **Query Results**: Use the provided SPARQL queries to analyze the processed documents, embeddings, chunks, concepts, semantic decomposition, and SOM clusters
 
 **Example Complete Workflow:**
 ```bash
@@ -423,6 +687,8 @@ node examples/document/LoadPDFs.js --limit 5
 node examples/document/ChunkDocuments.js --limit 20
 node examples/document/MakeEmbeddings.js --limit 50
 node examples/document/ExtractConcepts.js --limit 10
+node examples/document/Decompose.js --limit 10
+node examples/document/SOM.js --limit 20 --map-size 8x8
 ```
 
 ## Configuration
