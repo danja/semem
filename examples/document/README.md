@@ -2,6 +2,18 @@
 
 This directory contains scripts for processing PDF documents and creating semantic chunks for the Semem knowledge management system.
 
+**Example Complete Workflow:**
+```bash
+# Run from project root directory
+node examples/document/ClearGraph.js
+node examples/document/LoadPDFs.js --limit 5
+node examples/document/ChunkDocuments.js --limit 20
+node examples/document/MakeEmbeddings.js --limit 50
+node examples/document/ExtractConcepts.js --limit 10
+node examples/document/Decompose.js --limit 10
+node examples/document/SOM.js --limit 20 --map-size 8x8
+```
+
 **Important**: All scripts should be run from the project root directory, not from within the `examples/document/` directory.
 
 ## Scripts Overview
@@ -679,17 +691,6 @@ The typical workflow for processing documents is:
 7. **SOM Clustering**: Use `node examples/document/SOM.js` to apply Self-Organizing Map clustering to corpuscles, creating concept-based clusters and relationships without using LLM or embedding tools
 8. **Query Results**: Use the provided SPARQL queries to analyze the processed documents, embeddings, chunks, concepts, semantic decomposition, and SOM clusters
 
-**Example Complete Workflow:**
-```bash
-# Run from project root directory
-node examples/document/ClearGraph.js
-node examples/document/LoadPDFs.js --limit 5
-node examples/document/ChunkDocuments.js --limit 20
-node examples/document/MakeEmbeddings.js --limit 50
-node examples/document/ExtractConcepts.js --limit 10
-node examples/document/Decompose.js --limit 10
-node examples/document/SOM.js --limit 20 --map-size 8x8
-```
 
 ## Configuration
 
