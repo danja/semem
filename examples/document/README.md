@@ -2,20 +2,25 @@
 
 This directory contains scripts for processing PDF documents and creating semantic chunks for the Semem knowledge management system.
 
-**Example Complete Workflow:**
+**Example Workflow:**
+
+*Run from project root directory*
 ```bash
-# Run from project root directory
+# Initialise Corpus
 node examples/document/ClearGraph.js
-node examples/document/LoadPDFs.js --limit 5
-node examples/document/ChunkDocuments.js --limit 20
-node examples/document/MakeEmbeddings.js --limit 50
-node examples/document/ExtractConcepts.js --limit 10
-node examples/document/Decompose.js --limit 10
-node examples/document/SOM.js --limit 20 --map-size 8x8
-node examples/document/EnhanceCorpuscles.js --limit 50 --similarity-threshold 0.7
+node examples/document/LoadPDFs.js 
+
+# Basic Processing
+node examples/document/ChunkDocuments.js 
+node examples/document/MakeEmbeddings.js 
+
+# Enhance Graph
+node examples/document/ExtractConcepts.js 
+node examples/document/Decompose.js 
+node examples/document/SOM.js 
+node examples/document/EnhanceCorpuscles.js
 ```
 
-**Important**: All scripts should be run from the project root directory, not from within the `examples/document/` directory.
 
 ## Scripts Overview
 
