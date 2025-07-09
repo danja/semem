@@ -40,3 +40,32 @@ semem:semem_extract_concepts (MCP)(text: "the cat sat on the mat")
 
 
 examples/mcp/ZPTAdvancedFiltering.js
+
+Executing SPARQL UPDATE: http://localhost:3030/semem/update
+SPARQL UPDATE completed successfully (179ms)
+✅ Successfully stored concept data in SPARQL store
+   ✅ Successfully processed with 19 concept corpuscles
+   📝 Concepts: leather, crafting, armor, books, item frames...
+
+📊 Enhanced Concept Extraction Summary:
+   ✅ Successfully processed: 194 TextElements
+   ❌ Failed: 0 TextElements
+   🧠 Total concepts extracted: 5943
+   📦 Total corpuscles created: 6137
+   🔗 Collection corpuscles: 194
+   🎯 Graph: http://tensegrity.it/semem
+
+🎉 ENHANCED CONCEPT EXTRACTION COMPLETED!
+======================================================================
+📊 Additional Statistics:
+   🔗 Individual concept corpuscles: 5943
+   📦 Collection corpuscles: 194
+   🧠 Average concepts per TextElement: 30.63
+
+📝 Sample Results:
+   1. e4e5c93c523b84d8_2_b08db61af1d9848b: 30 concepts
+      Concepts: knowledge extraction, text collections, news articles...
+   2. e4e5c93c523b84d8_3_ed398e95908eb0f4: 14 concepts
+      Concepts: retriever model, Ingerophrynus gollum, question answering model...
+   3. e4e5c93c523b84d8_4_a203d2239c7aa3ac: 21 concepts
+      Concepts: unified version of the English Wikipedia, statistical shortcuts, BeerQA...
