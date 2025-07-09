@@ -1,0 +1,3 @@
+create src/ragno/CreateConcepts.js that will encapsulate the core functionality of examples/document/ExtractConcepts.js refactored to use sparql/templates and docs/manual/sparql-service.md . 
+it will additionally create instances of ragno:Corpuscle corresponding to the concepts. It should then create embeddings for the text values of the concepts, these should be associated with the corpuscles.
+examples/document/ExtractConcepts.js should then be refactored to the minimum necessary for user interaction with the work being done by src/ragno/CreateConcepts.js

@@ -38,7 +38,9 @@ PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX prov: <http://www.w3.org/ns/prov#>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX semem: <http://semem.hyperdata.it/>
 
 INSERT DATA {
     GRAPH <${graph}> {
@@ -65,6 +67,9 @@ PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX prov: <http://www.w3.org/ns/prov#>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX semem: <http://semem.hyperdata.it/>
 
 INSERT {
     GRAPH <${graph}> {
@@ -90,6 +95,9 @@ PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX prov: <http://www.w3.org/ns/prov#>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX semem: <http://semem.hyperdata.it/>
 
 DELETE {
     GRAPH <${graph}> {
