@@ -24,6 +24,7 @@
   "chatModel": "qwen2:1.5b",
   "embeddingModel": "nomic-embed-text:v1.5",
   "embeddingProvider": "nomic",
+  "templatesPath": "prompts/templates",
   "sparqlEndpoints": [
     {
       "label": "Hyperdata Fuseki",

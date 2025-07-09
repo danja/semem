@@ -34,6 +34,9 @@ export default class PromptManager {
         // Template loader for external files
         this.templateLoader = new TemplateLoader(this.options.templatesPath);
         
+        // Update options to reflect the actual path being used
+        this.options.templatesPath = this.templateLoader.templatesPath;
+        
         // Format handlers
         this.formatters = new Map();
         this.initializeFormatters();

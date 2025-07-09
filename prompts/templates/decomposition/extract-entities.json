@@ -1,0 +1,21 @@
+{
+  "name": "decomposition-extract-entities",
+  "description": "Extracts key entities from a semantic unit.",
+  "version": "1.0",
+  "category": "decomposition",
+  "format": "completion",
+  "content": "Extract the key entities (people, places, organizations, concepts) from this text. For each entity, provide name, type, relevance score (0-1), and whether it's an entry point (important/central entity).\n\nText: \"${unitText}\"\n\nReturn as JSON array:\n[{\"name\": \"entity1\", \"type\": \"person\", \"relevance\": 0.9, \"isEntryPoint\": true, \"confidence\": 0.8}]\n\nEntities:",
+  "arguments": [
+    {
+      "name": "unitText",
+      "type": "string",
+      "required": true
+    }
+  ],
+  "modelVariants": {
+    "mistral": {
+      "format": "chat",
+      "content": "You are an expert entity extractor. From the following text, extract the key entities and return them as a JSON array with fields: name, type, relevance, isEntryPoint, and confidence.\n\nText: \"${unitText}\""
+    }
+  }
+}

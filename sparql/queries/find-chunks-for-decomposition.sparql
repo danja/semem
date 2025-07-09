@@ -1,0 +1,20 @@
+SELECT ?textElement ?content ?sourceUnit {
+  GRAPH <${graphURI}> {
+    ?textElement a ragno:TextElement ;
+                 ragno:content ?content ;
+                 prov:wasDerivedFrom ?sourceUnit .
+    
+    # Only process chunks (which have olo:index) to avoid original documents that are too large
+    OPTIONAL { ?textElement olo:index ?index }
+    FILTER (BOUND(?index))
+    
+    # Must have concepts (from ExtractConcepts.js)
+    ?textElement semem:hasConcepts true .
+    
+    # Must NOT have semantic units yet
+    FILTER NOT EXISTS {
+      ?textElement semem:hasSemanticUnits true .
+    }
+  }
+}
+LIMIT ${limit}

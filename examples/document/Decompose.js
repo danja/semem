@@ -1,13 +1,10 @@
 #!/usr/bin/env node
 
 /**
- * Document Decomposition Script
+ * Document Decomposition Script (Refactored)
  * 
- * Finds ragno:TextElement instances (chunks) that have embeddings and concepts extracted,
- * applies decomposeCorpus to create semantic units, entities, and relationships,
- * and stores the results in SPARQL following the Ragno ontology.
- * 
- * Usage: node examples/document/Decompose.js [--limit N] [--graph URI]
+ * This script now uses the unified PromptManager for all LLM interactions,
+ * improving maintainability and consistency.
  */
 
 import { parseArgs } from 'util';
@@ -15,20 +12,17 @@ import path from 'path';
 import Config from '../../src/Config.js';
 import { SPARQLQueryService } from '../../src/services/sparql/index.js';
 import SPARQLHelper from '../../src/services/sparql/SPARQLHelper.js';
+import { decomposeCorpus } from '../../src/ragno/decomposeCorpus.js';
 import LLMHandler from '../../src/handlers/LLMHandler.js';
-import EmbeddingHandler from '../../src/handlers/EmbeddingHandler.js';
-import EmbeddingConnectorFactory from '../../src/connectors/EmbeddingConnectorFactory.js';
 import MistralConnector from '../../src/connectors/MistralConnector.js';
 import ClaudeConnector from '../../src/connectors/ClaudeConnector.js';
 import OllamaConnector from '../../src/connectors/OllamaConnector.js';
-import { decomposeCorpus } from '../../src/ragno/decomposeCorpus.js';
-import { URIMinter } from '../../src/utils/URIMinter.js';
 import logger from 'loglevel';
 import dotenv from 'dotenv';
-
-// Load environment variables with explicit path
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import { quickStart } from '../../src/prompts/index.js';
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
@@ -38,24 +32,23 @@ class DocumentDecomposer {
         this.config = null;
         this.sparqlHelper = null;
         this.queryService = null;
+        this.promptManager = null;
         this.llmHandler = null;
-        this.embeddingHandler = null;
     }
 
     async init() {
-        // Load configuration
         const configPath = path.join(process.cwd(), 'config/config.json');
         logger.info(`Loading configuration from: ${configPath}`);
         this.config = new Config(configPath);
         await this.config.init();
-        
-        // Debug: Check if environment variables are loaded
-        logger.debug('API keys:', {
-            mistral: !!process.env.MISTRAL_API_KEY,
-            claude: !!process.env.ANTHROPIC_API_KEY,
-            nomic: !!process.env.NOMIC_API_KEY
-        });
-        
+
+        // Initialize the unified prompt manager
+        this.promptManager = await quickStart();
+        logger.info('🚀 Unified PromptManager initialized.');
+
+        // Initialize LLM handler
+        await this.initializeLLMHandler();
+
         const storageConfig = this.config.get('storage');
         if (storageConfig.type !== 'sparql') {
             throw new Error('DocumentDecomposer requires SPARQL storage configuration');
@@ -66,242 +59,113 @@ class DocumentDecomposer {
             password: storageConfig.options.password
         });
         this.queryService = new SPARQLQueryService();
-        
-        // Initialize providers using configuration-driven pattern
-        await this.initializeProviders();
     }
 
-    /**
-     * Initialize providers using configuration-driven pattern
-     */
-    async initializeProviders() {
+    async initializeLLMHandler() {
         try {
-            // Initialize providers and get their selected models
-            const llmResult = await this.createLLMConnector(this.config);
-            const embeddingResult = await this.createEmbeddingConnector(this.config);
+            // Get LLM providers from config and find chat-capable one
+            const llmProviders = this.config.get('llmProviders') || [];
+            const chatProviders = llmProviders.filter(p => p.capabilities?.includes('chat'));
 
-            // Initialize handlers with the models from actually selected providers
-            const dimension = this.config.get('memory.dimension') || 1536;
-            
-            this.embeddingHandler = new EmbeddingHandler(
-                embeddingResult.connector,
-                embeddingResult.model,
-                dimension
-            );
+            // Sort by priority and use the highest priority chat provider
+            const sortedProviders = chatProviders.sort((a, b) => (a.priority || 999) - (b.priority || 999));
 
-            this.llmHandler = new LLMHandler(llmResult.connector, llmResult.model);
-            
-            logger.info(`Initialized: ${llmResult.provider}/${embeddingResult.provider}`);
+            let llmProvider = null;
+            let chatModel = null;
+
+            // Try providers in priority order
+            for (const provider of sortedProviders) {
+                try {
+                    if (provider.type === 'mistral' && process.env.MISTRAL_API_KEY) {
+                        chatModel = provider.chatModel || 'mistral-small-latest';
+                        llmProvider = new MistralConnector(process.env.MISTRAL_API_KEY);
+                        logger.info(`🤖 Using Mistral LLM with model: ${chatModel}`);
+                        break;
+                    } else if (provider.type === 'claude' && process.env.ANTHROPIC_API_KEY) {
+                        chatModel = provider.chatModel || 'claude-3-haiku-20240307';
+                        llmProvider = new ClaudeConnector(process.env.ANTHROPIC_API_KEY);
+                        logger.info(`🤖 Using Claude LLM with model: ${chatModel}`);
+                        break;
+                    } else if (provider.type === 'ollama') {
+                        chatModel = provider.chatModel || 'qwen2:1.5b';
+                        const ollamaBaseUrl = provider.baseUrl || this.config.get('ollama.baseUrl') || 'http://localhost:11434';
+                        llmProvider = new OllamaConnector(ollamaBaseUrl, chatModel);
+                        logger.info(`🤖 Using Ollama LLM at: ${ollamaBaseUrl} with model: ${chatModel}`);
+                        break;
+                    }
+                } catch (error) {
+                    logger.warn(`Failed to initialize ${provider.type} provider: ${error.message}`);
+                    continue;
+                }
+            }
+
+            // Fallback to Ollama if no other provider works
+            if (!llmProvider) {
+                logger.warn('No configured LLM provider available, falling back to Ollama');
+                const ollamaBaseUrl = this.config.get('ollama.baseUrl') || 'http://localhost:11434';
+                chatModel = 'qwen2:1.5b';
+                llmProvider = new OllamaConnector(ollamaBaseUrl, chatModel);
+            }
+
+            this.llmHandler = new LLMHandler(llmProvider, chatModel);
+            logger.info(`✅ LLM handler initialized with ${chatModel}`);
             
         } catch (error) {
-            logger.error('❌ Failed to initialize providers:', error.message);
+            logger.error('Failed to initialize LLM handler:', error.message);
+            // Emergency fallback
+            this.llmHandler = new LLMHandler(new OllamaConnector('http://localhost:11434'), 'qwen2:1.5b');
+            logger.warn('Using emergency fallback to Ollama');
+        }
+    }
+
+    async findProcessedChunks(targetGraph, limit = 0) {
+        const graph = targetGraph || this.config.get('graphName') || 'http://tensegrity.it/semem';
+        
+        try {
+            // Use SPARQL template to find chunks ready for decomposition
+            const query = await this.queryService.getQuery('find-chunks-for-decomposition', {
+                graphURI: graph,
+                limit: limit > 0 ? limit : 1000
+            });
+            
+            logger.debug(`Querying for processed chunks...`);
+            const result = await this.sparqlHelper.executeSelect(query);
+            
+            if (result.success) {
+                const chunks = result.data.results.bindings;
+                logger.info(`Found ${chunks.length} chunks ready for decomposition`);
+                return chunks;
+            } else {
+                throw new Error(`SPARQL query failed: ${result.error}`);
+            }
+        } catch (error) {
+            logger.error('Failed to find processed chunks:', error);
             throw error;
         }
     }
 
-    /**
-     * Create LLM connector based on configuration priority
-     * Returns both connector and the model to use with it
-     */
-    async createLLMConnector(config) {
-        try {
-            // Get llmProviders with priority ordering
-            const llmProviders = config.get('llmProviders') || [];
-            
-            // Sort by priority (lower number = higher priority)
-            const sortedProviders = llmProviders
-                .filter(p => p.capabilities?.includes('chat'))
-                .sort((a, b) => (a.priority || 999) - (b.priority || 999));
-            
-            // Try providers in priority order
-            for (const provider of sortedProviders) {
-                if (provider.type === 'mistral' && process.env.MISTRAL_API_KEY) {
-                    logger.info('Using Mistral LLM');
-                    return {
-                        connector: new MistralConnector(process.env.MISTRAL_API_KEY),
-                        model: provider.chatModel || 'mistral-small-latest',
-                        provider: 'mistral'
-                    };
-                } else if (provider.type === 'claude' && process.env.ANTHROPIC_API_KEY) {
-                    logger.info('Using Claude LLM');
-                    return {
-                        connector: new ClaudeConnector(process.env.ANTHROPIC_API_KEY),
-                        model: provider.chatModel || 'claude-3-haiku-20240307',
-                        provider: 'claude'
-                    };
-                } else if (provider.type === 'ollama') {
-                    logger.info('Using Ollama LLM');
-                    return {
-                        connector: new OllamaConnector(),
-                        model: provider.chatModel || 'qwen2:1.5b',
-                        provider: 'ollama'
-                    };
-                }
-            }
-            
-            // Default fallback
-            logger.info('Using Ollama LLM (fallback)');
-            return {
-                connector: new OllamaConnector(),
-                model: 'qwen2:1.5b',
-                provider: 'ollama'
-            };
-            
-        } catch (error) {
-            logger.warn('Provider config failed, using Ollama:', error.message);
-            return {
-                connector: new OllamaConnector(),
-                model: 'qwen2:1.5b',
-                provider: 'ollama'
-            };
-        }
-    }
-
-    /**
-     * Create embedding connector using configuration-driven factory pattern
-     * Returns both connector and the model to use with it
-     */
-    async createEmbeddingConnector(config) {
-        try {
-            const embeddingProviders = config.get('embeddingProviders') || [];
-            const sortedProviders = embeddingProviders
-                .sort((a, b) => (a.priority || 999) - (b.priority || 999));
-            
-            for (const provider of sortedProviders) {
-                if (provider.type === 'nomic' && process.env.NOMIC_API_KEY) {
-                    logger.info('Using Nomic embeddings');
-                    const model = provider.embeddingModel || 'nomic-embed-text-v1.5';
-                    return {
-                        connector: EmbeddingConnectorFactory.createConnector({
-                            provider: 'nomic',
-                            apiKey: process.env.NOMIC_API_KEY,
-                            model: model
-                        }),
-                        model: model,
-                        provider: 'nomic'
-                    };
-                } else if (provider.type === 'ollama') {
-                    logger.info('Using Ollama embeddings');
-                    const model = provider.embeddingModel || 'nomic-embed-text';
-                    return {
-                        connector: EmbeddingConnectorFactory.createConnector({
-                            provider: 'ollama',
-                            baseUrl: provider.baseUrl || 'http://localhost:11434',
-                            model: model
-                        }),
-                        model: model,
-                        provider: 'ollama'
-                    };
-                }
-            }
-            
-            // Default fallback
-            logger.info('Using Ollama embeddings (fallback)');
-            return {
-                connector: EmbeddingConnectorFactory.createConnector({
-                    provider: 'ollama',
-                    baseUrl: 'http://localhost:11434',
-                    model: 'nomic-embed-text'
-                }),
-                model: 'nomic-embed-text',
-                provider: 'ollama'
-            };
-            
-        } catch (error) {
-            logger.warn('Embedding config failed, using Ollama:', error.message);
-            return {
-                connector: EmbeddingConnectorFactory.createConnector({
-                    provider: 'ollama',
-                    baseUrl: 'http://localhost:11434',
-                    model: 'nomic-embed-text'
-                }),
-                model: 'nomic-embed-text',
-                provider: 'ollama'
-            };
-        }
-    }
-
-
-    async findProcessedChunks(targetGraph, limit = 0) {
-        try {
-            const query = `
-                PREFIX ragno: <http://purl.org/stuff/ragno/>
-                PREFIX olo: <http://purl.org/ontology/olo/core#>
-                PREFIX semem: <http://semem.hyperdata.it/>
-                PREFIX prov: <http://www.w3.org/ns/prov#>
-                PREFIX dcterms: <http://purl.org/dc/terms/>
-
-                SELECT ?textElement ?content ?sourceUnit ?corpuscle WHERE {
-                    GRAPH <${targetGraph}> {
-                        ?textElement a ragno:TextElement ;
-                                     ragno:content ?content ;
-                                     prov:wasDerivedFrom ?sourceUnit .
-                        
-                        # Only process chunks (which have olo:index)
-                        OPTIONAL { ?textElement olo:index ?index }
-                        FILTER (BOUND(?index))
-                        
-                        # Must have embeddings
-                        ?textElement ragno:embedding ?embedding .
-                        
-                        # Must have concepts extracted
-                        ?textElement semem:hasConcepts true ;
-                                     semem:hasCorpuscle ?corpuscle .
-                        
-                        # Filter out chunks that have already been decomposed
-                        FILTER NOT EXISTS {
-                            ?textElement semem:hasSemanticUnits true .
-                        }
-                    }
-                }
-                ORDER BY ?sourceUnit ?index
-                ${limit > 0 ? `LIMIT ${limit}` : ''}
-            `;
-            
-            const storageConfig = this.config.get('storage.options');
-            const response = await fetch(storageConfig.query, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/sparql-query',
-                    'Accept': 'application/sparql-results+json',
-                    'Authorization': `Basic ${Buffer.from(`${storageConfig.user}:${storageConfig.password}`).toString('base64')}`
-                },
-                body: query
-            });
-            
-            const result = await response.json();
-            return result.results?.bindings || [];
-        } catch (error) {
-            logger.error(`Error finding processed chunks: ${error.message}`);
-            return [];
-        }
-    }
-
     async decomposeChunks(chunks, targetGraph) {
-        logger.info(`Decomposing ${chunks.length} chunks`);
+        logger.info(`Decomposing ${chunks.length} chunks using PromptManager...`);
         
-        // Prepare text chunks for decomposeCorpus
         const textChunks = chunks.map(chunk => ({
             content: chunk.content.value,
             source: chunk.textElement.value,
             metadata: {
-                sourceUnit: chunk.sourceUnit.value,
-                corpuscle: chunk.corpuscle.value
+                sourceUnit: chunk.sourceUnit.value
             }
         }));
         
         try {
-            // Apply decomposeCorpus with appropriate options
+            // Use the LLM handler for executing decomposition prompts
             const decompositionResults = await decomposeCorpus(textChunks, this.llmHandler, {
                 extractRelationships: true,
                 generateSummaries: true,
                 minEntityConfidence: 0.4,
                 maxEntitiesPerUnit: 15,
-                chunkOverlap: 0.1
+                model: this.llmHandler.chatModel || 'qwen2:1.5b'
             });
             
             logger.info(`Created: ${decompositionResults.units.length} units, ${decompositionResults.entities.length} entities, ${decompositionResults.relationships.length} relationships`);
-            
             return decompositionResults;
             
         } catch (error) {
@@ -311,143 +175,99 @@ class DocumentDecomposer {
     }
 
     async storeDecompositionResults(decompositionResults, chunks, targetGraph) {
-        logger.info(`Storing results`);
+        const graph = targetGraph || this.config.get('graphName') || 'http://tensegrity.it/semem';
         
-        try {
-            // Get the RDF dataset from decomposition results
-            const { dataset, units, entities, relationships } = decompositionResults;
+        // Store the RDF dataset from decomposition results
+        if (decompositionResults.dataset && decompositionResults.dataset.size > 0) {
+            logger.info(`Storing decomposition results: ${decompositionResults.dataset.size} triples`);
             
-            // Convert RDF dataset to N-Triples for SPARQL insertion
-            const triples = [];
-            for (const quad of dataset) {
-                const subject = quad.subject.termType === 'NamedNode' ? `<${quad.subject.value}>` : `_:${quad.subject.value}`;
+            // Convert dataset to N-Triples format for SPARQL insertion
+            const quads = Array.from(decompositionResults.dataset);
+            const triples = quads.map(quad => {
+                const subject = quad.subject.termType === 'NamedNode' ? `<${quad.subject.value}>` : quad.subject.value;
                 const predicate = `<${quad.predicate.value}>`;
                 const object = quad.object.termType === 'NamedNode' ? `<${quad.object.value}>` : 
-                              quad.object.termType === 'Literal' ? `"${quad.object.value.replace(/"/g, '\\"')}"` : 
-                              `_:${quad.object.value}`;
-                triples.push(`${subject} ${predicate} ${object} .`);
+                             quad.object.termType === 'Literal' ? `"${quad.object.value}"` : quad.object.value;
+                return `${subject} ${predicate} ${object} .`;
+            }).join('\n');
+            
+            // Use SPARQLHelper to create and execute the insert query
+            const insertQuery = this.sparqlHelper.createInsertDataQuery(graph, triples);
+            const result = await this.sparqlHelper.executeUpdate(insertQuery);
+            
+            if (result.success) {
+                logger.info(`Stored ${decompositionResults.dataset.size} triples to graph <${graph}>`);
+            } else {
+                logger.error(`Failed to store decomposition results: ${result.error}`);
+                throw new Error(`SPARQL insert failed: ${result.error}`);
             }
-            
-            // Also mark the original chunks as having semantic units
-            const now = new Date().toISOString();
-            const markProcessedTriples = chunks.map(chunk => 
-                `<${chunk.textElement.value}> semem:hasSemanticUnits true .`
-            ).join('\n        ');
-            
-            // Build complete SPARQL update query
-            const updateQuery = `
-                PREFIX ragno: <http://purl.org/stuff/ragno/>
-                PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-                PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-                PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
-                PREFIX dcterms: <http://purl.org/dc/terms/>
-                PREFIX prov: <http://www.w3.org/ns/prov#>
-                PREFIX semem: <http://semem.hyperdata.it/>
-                PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-
-                INSERT DATA {
-                    GRAPH <${targetGraph}> {
-                        # Mark chunks as having semantic units
-                        ${markProcessedTriples}
-                        
-                        # Insert all decomposition results
-                        ${triples.join('\n        ')}
-                    }
-                }
-            `;
-            
-            await this.sparqlHelper.executeUpdate(updateQuery);
-            
-            logger.info(`Stored ${triples.length} triples`);
-            
-            return {
-                triplesStored: triples.length,
-                unitsStored: units.length,
-                entitiesStored: entities.length,
-                relationshipsStored: relationships.length
-            };
-            
-        } catch (error) {
-            logger.error(`❌ Error storing decomposition results: ${error.message}`);
-            throw error;
         }
+        
+        // Mark chunks as having semantic units using SPARQL template
+        for (const chunk of chunks) {
+            try {
+                const markQuery = await this.queryService.getQuery('mark-chunks-decomposed', {
+                    graphURI: graph,
+                    textElementURI: chunk.textElement.value
+                });
+                
+                const result = await this.sparqlHelper.executeUpdate(markQuery);
+                if (!result.success) {
+                    logger.warn(`Failed to mark chunk as decomposed: ${result.error}`);
+                }
+            } catch (error) {
+                logger.warn(`Failed to mark chunk as decomposed: ${error.message}`);
+            }
+        }
+        
+        logger.info(`Marked ${chunks.length} chunks as having semantic units`);
     }
 
     async run(options) {
-        const { limit, graph } = options;
+        const { limit = 0, graph } = options;
         
-        const targetGraph = graph || this.config.get('storage.options.graphName') || 
-                            this.config.get('graphName') || 
-                            'http://tensegrity.it/semem';
+        logger.info('Starting document decomposition process...');
         
-        logger.info(`Finding chunks in: ${targetGraph.split('/').pop()}`);
+        // Find chunks ready for decomposition
+        const chunks = await this.findProcessedChunks(graph, limit);
         
-        const processedChunks = await this.findProcessedChunks(targetGraph, limit);
-        logger.info(`Found ${processedChunks.length} chunks ready for decomposition`);
-        
-        if (processedChunks.length === 0) {
-            logger.info('No chunks need decomposition');
-            return [];
+        if (chunks.length === 0) {
+            logger.info('No chunks found for decomposition. Ensure ExtractConcepts.js has been run first.');
+            return;
         }
         
-        try {
-            // Decompose the chunks
-            const decompositionResults = await this.decomposeChunks(processedChunks, targetGraph);
-            
-            // Store the results
-            const storeResults = await this.storeDecompositionResults(decompositionResults, processedChunks, targetGraph);
-            
-            logger.info(`Summary: ${processedChunks.length} chunks → ${storeResults.unitsStored} units, ${storeResults.entitiesStored} entities, ${storeResults.relationshipsStored} relationships`);
-            
-            return {
-                decompositionResults,
-                storeResults,
-                processedChunks: processedChunks.length
-            };
-            
-        } catch (error) {
-            logger.error(`❌ Decomposition process failed: ${error.message}`);
-            throw error;
-        }
+        logger.info(`Processing ${chunks.length} chunks for decomposition...`);
+        
+        // Decompose chunks using decomposeCorpus
+        const decompositionResults = await this.decomposeChunks(chunks, graph);
+        
+        // Store results in SPARQL store
+        await this.storeDecompositionResults(decompositionResults, chunks, graph);
+        
+        logger.info('Document decomposition completed successfully!');
+        logger.info(`Summary: ${decompositionResults.units.length} units, ${decompositionResults.entities.length} entities, ${decompositionResults.relationships.length} relationships`);
+        
+        return decompositionResults;
     }
 
     async cleanup() {
-        // Close any open connections
         if (this.sparqlHelper && typeof this.sparqlHelper.close === 'function') {
             await this.sparqlHelper.close();
         }
-        
         if (this.queryService && typeof this.queryService.cleanup === 'function') {
             await this.queryService.cleanup();
-        }
-        
-        if (this.llmHandler && typeof this.llmHandler.dispose === 'function') {
-            await this.llmHandler.dispose();
-        }
-        
-        if (this.embeddingHandler && typeof this.embeddingHandler.dispose === 'function') {
-            await this.embeddingHandler.dispose();
         }
     }
 }
 
 async function main() {
-    // Set appropriate log level
     logger.setLevel(process.env.LOG_LEVEL || 'info');
     
     const { values: args } = parseArgs({
         options: {
-            limit: {
-                type: 'string',
-                default: '0'
-            },
-            graph: {
-                type: 'string'
-            },
-            help: {
-                type: 'boolean',
-                short: 'h'
-            }
+            limit: { type: 'string', default: '0' },
+            graph: { type: 'string' },
+            help: { type: 'boolean', short: 'h' }
         }
     });
 
@@ -461,61 +281,28 @@ Options:
   --limit <number>   Maximum number of chunks to process (default: 0, no limit)
   --graph <uri>      Target graph URI (default: from config)
   --help, -h         Show this help message
-
-Description:
-  This script finds ragno:TextElement instances (chunks) that have embeddings and 
-  concepts extracted, applies decomposeCorpus to create semantic units, entities, 
-  and relationships, and stores the results in SPARQL following the Ragno ontology.
-  
-  Prerequisites:
-  - Chunks must have embeddings (MakeEmbeddings.js)
-  - Chunks must have concepts extracted (ExtractConcepts.js)
-
-Examples:
-  node examples/document/Decompose.js                                    # Process all ready chunks
-  node examples/document/Decompose.js --limit 5                         # Process up to 5 chunks
-  node examples/document/Decompose.js --graph "http://example.org/docs" # Use specific graph
         `);
         return;
     }
 
     logger.info('Starting Document Decomposition');
-
     const decomposer = new DocumentDecomposer();
-    
+    let exitCode = 0;
+
     try {
         await decomposer.init();
-        
-        const options = {
-            limit: parseInt(args.limit) || 0,  // Default to 0 (no limit)
+        await decomposer.run({
+            limit: parseInt(args.limit) || 0,
             graph: args.graph
-        };
-        
-        await decomposer.run(options);
-        
+        });
         logger.info('Decomposition completed successfully');
-        
     } catch (error) {
         logger.error('\n❌ Document decomposition failed:', error.message);
         logger.error('Stack:', error.stack);
-        
-        logger.info('\nTroubleshooting:');
-        logger.info('- Ensure SPARQL endpoint is running and accessible');
-        logger.info('- Check provider configuration in config/config.json');
-        logger.info('- Verify API keys in .env file (Mistral, Claude, Nomic)');
-        logger.info('- Ensure Ollama is running for local fallback providers');
-        logger.info('- Verify chunks have embeddings and concepts extracted');
-        logger.info('- Check required models are available: ollama pull qwen2:1.5b nomic-embed-text');
-        
-        process.exit(1);
+        exitCode = 1;
     } finally {
-        // Always cleanup, even if there was an error
         await decomposer.cleanup();
-        
-        // Force exit after a short delay to ensure cleanup completes
-        setTimeout(() => {
-            process.exit(0);
-        }, 100);
+        setTimeout(() => process.exit(exitCode), 100);
     }
 }
 

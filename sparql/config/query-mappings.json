@@ -23,5 +23,7 @@
   "store-chunks-with-olo": "store-chunks-with-olo.sparql",
   "list-text-elements": "list-text-elements.sparql",
   "find-textelements-without-embeddings": "find-textelements-without-embeddings.sparql",
-  "store-textelement-embedding": "store-textelement-embedding.sparql"
+  "store-textelement-embedding": "store-textelement-embedding.sparql",
+  "find-chunks-for-decomposition": "find-chunks-for-decomposition.sparql",
+  "mark-chunks-decomposed": "mark-chunks-decomposed.sparql"
 }

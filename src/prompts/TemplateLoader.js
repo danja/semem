@@ -18,7 +18,15 @@ const __dirname = path.dirname(__filename);
 export class TemplateLoader {
     constructor(templatesPath = null) {
         // Default to prompts/templates/ directory in project root
-        this.templatesPath = templatesPath || path.resolve(__dirname, '../../prompts/templates');
+        if (templatesPath) {
+            // If templatesPath is relative, resolve it from the project root
+            this.templatesPath = path.isAbsolute(templatesPath) 
+                ? templatesPath 
+                : path.resolve(process.cwd(), templatesPath);
+        } else {
+            // Default fallback
+            this.templatesPath = path.resolve(__dirname, '../../prompts/templates');
+        }
         this.templateCache = new Map();
         this.lastLoadTime = new Map();
         this.watchFiles = new Set();

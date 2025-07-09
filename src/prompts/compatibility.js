@@ -15,11 +15,12 @@ let globalPromptManager = null;
 /**
  * Get or create global prompt manager
  */
-function getPromptManager() {
+function getPromptManager(options = {}) {
     if (!globalPromptManager) {
         globalPromptManager = new PromptManager({
             enableLegacySupport: true,
-            cacheTemplates: true
+            cacheTemplates: true,
+            ...options
         });
     }
     return globalPromptManager;

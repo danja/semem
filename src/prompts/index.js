@@ -7,6 +7,7 @@
 
 // Core unified system
 import PromptManagerClass from './PromptManager.js';
+import logger from 'loglevel';
 import {
     PromptContext,
     PromptTemplate,
@@ -64,7 +65,7 @@ export { MCPPrompts as MCPPromptsCompat } from './compatibility.js';
  */
 export async function initializePromptSystem(options = {}) {
     const { getPromptManager } = await import('./compatibility.js');
-    const manager = getPromptManager();
+    const manager = getPromptManager(options);
     
     // Configure manager
     if (options.enableLegacySupport !== undefined) {
@@ -102,11 +103,36 @@ export function createPromptManager(options = {}) {
  * Quick start function for common use cases
  */
 export async function quickStart(config = {}) {
+    // Load system config if not provided
+    if (!config.templatesPath) {
+        try {
+            const { default: Config } = await import('../Config.js');
+            const systemConfig = new Config('config/config.json');
+            await systemConfig.init();
+            config.templatesPath = systemConfig.get('templatesPath') || 'prompts/templates';
+        } catch (error) {
+            logger.warn('Failed to load system config, using default templates path:', error.message);
+            config.templatesPath = 'prompts/templates';
+        }
+    }
+    
     const manager = await initializePromptSystem(config);
     
     // Load existing templates through migration (quietly)
     const { runFullMigration } = await import('./migrate-existing.js');
     await runFullMigration(true); // quiet mode
+    
+    // Load templates from template files
+    try {
+        const externalTemplates = await manager.templateLoader.loadAllTemplates();
+        logger.info(`Loading ${externalTemplates.size} external templates`);
+        
+        for (const [name, template] of externalTemplates) {
+            manager.registerTemplate(template);
+        }
+    } catch (error) {
+        logger.warn('Failed to load external templates:', error.message);
+    }
     
     // Register common templates
     const commonTemplates = [

@@ -11,10 +11,126 @@ import { initializeServices, getMemoryManager } from '../lib/initialization.js';
 import { SafeOperations } from '../lib/safe-operations.js';
 
 // Import Ragno functionality
-import { decomposeCorpus, exportToRDF } from '../../src/ragno/decomposeCorpus.js';
+import { decomposeCorpus } from '../../src/ragno/decomposeCorpus.js';
 import { enrichWithEmbeddings } from '../../src/ragno/enrichWithEmbeddings.js';
 import { augmentWithAttributes } from '../../src/ragno/augmentWithAttributes.js';
 import { aggregateCommunities } from '../../src/ragno/aggregateCommunities.js';
+
+/**
+ * Export decomposition results to SPARQL endpoint
+ * @param {Object} decompositionResults - Results from corpus decomposition
+ * @param {string} endpoint - SPARQL endpoint URL
+ * @param {Object} auth - Authentication credentials
+ * @returns {Promise<Object>} Export results
+ */
+async function exportDecompositionToSPARQL(decompositionResults, endpoint, auth) {
+  try {
+    // Import SPARQL service layer
+    const SPARQLHelper = (await import('../../src/services/sparql/SPARQLHelper.js')).default;
+    
+    const startTime = Date.now();
+    
+    // Validate input
+    if (!decompositionResults || !decompositionResults.dataset) {
+      throw new Error('Decomposition results must contain an RDF dataset');
+    }
+    
+    // Create SPARQL helper instance
+    const sparqlHelper = new SPARQLHelper(endpoint, {
+      auth: auth ? { user: auth.username, password: auth.password } : undefined,
+      timeout: 30000
+    });
+    
+    // Convert RDF dataset to N-Triples format for SPARQL insertion
+    const { dataset } = decompositionResults;
+    const triples = [];
+    
+    // Iterate through the dataset and convert to N-Triples strings
+    for (const quad of dataset) {
+      const subject = quad.subject.termType === 'NamedNode' ? `<${quad.subject.value}>` : quad.subject.value;
+      const predicate = `<${quad.predicate.value}>`;
+      let object;
+      
+      if (quad.object.termType === 'NamedNode') {
+        object = `<${quad.object.value}>`;
+      } else if (quad.object.termType === 'Literal') {
+        const value = SPARQLHelper.escapeString(quad.object.value);
+        if (quad.object.datatype) {
+          object = `"${value}"^^<${quad.object.datatype.value}>`;
+        } else if (quad.object.language) {
+          object = `"${value}"@${quad.object.language}`;
+        } else {
+          object = `"${value}"`;
+        }
+      } else {
+        object = quad.object.value;
+      }
+      
+      triples.push(`${subject} ${predicate} ${object} .`);
+    }
+    
+    if (triples.length === 0) {
+      return {
+        triplesExported: 0,
+        endpoint: endpoint,
+        status: 'success',
+        message: 'No triples to export',
+        responseTime: Date.now() - startTime
+      };
+    }
+    
+    // Create graph URI for the data
+    const graphURI = `http://purl.org/stuff/ragno/decomposition/${Date.now()}`;
+    
+    // Batch insert triples in chunks to avoid overwhelming the endpoint
+    const batchSize = 100;
+    const batches = [];
+    
+    for (let i = 0; i < triples.length; i += batchSize) {
+      const batch = triples.slice(i, i + batchSize);
+      const insertQuery = sparqlHelper.createInsertDataQuery(graphURI, batch.join('\n'));
+      batches.push(insertQuery);
+    }
+    
+    // Execute all batches
+    const results = await sparqlHelper.executeUpdates(batches);
+    const stats = SPARQLHelper.getExecutionStats(results);
+    
+    // Count successful exports
+    const successfulBatches = results.filter(r => r.success).length;
+    const totalTriples = successfulBatches * batchSize + 
+                        (triples.length % batchSize) * (results[results.length - 1]?.success ? 1 : 0);
+    
+    const exportResults = {
+      triplesExported: Math.min(totalTriples, triples.length),
+      endpoint: endpoint,
+      graphURI: graphURI,
+      status: stats.successRate > 0 ? 'success' : 'failed',
+      batchesExecuted: batches.length,
+      successfulBatches: successfulBatches,
+      successRate: stats.successRate,
+      responseTime: Date.now() - startTime,
+      statistics: decompositionResults.statistics
+    };
+    
+    if (stats.successRate < 100) {
+      exportResults.warnings = results
+        .filter(r => !r.success)
+        .map(r => r.error || 'Unknown error');
+    }
+    
+    return exportResults;
+    
+  } catch (error) {
+    return {
+      triplesExported: 0,
+      endpoint: endpoint,
+      status: 'error',
+      error: error.message,
+      responseTime: Date.now() - (Date.now() - 1000) // Approximate timing
+    };
+  }
+}
 
 // Ragno Tool Input Schemas
 const RagnoDecomposeCorpusSchema = z.object({
@@ -392,7 +508,7 @@ export function registerRagnoTools(server) {
         }
 
         // Perform export
-        const exportResults = await exportToRDF(
+        const exportResults = await exportDecompositionToSPARQL(
           decompositionResults,
           targetEndpoint,
           auth

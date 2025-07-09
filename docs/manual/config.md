@@ -150,6 +150,7 @@ The main configuration file follows this structure:
     "redirect": 4110,
     "redirectTarget": 4120
   },
+  "templatesPath": "prompts/templates",
   "llmProviders": [
     {
       "type": "mistral",
@@ -203,6 +204,20 @@ The main configuration file follows this structure:
   }
 }
 ```
+
+#### Prompt Templates Configuration
+```json
+{
+  "templatesPath": "prompts/templates"
+}
+```
+
+**Configuration Options:**
+
+- **templatesPath**: Path to prompt templates directory (relative to project root or absolute path)
+  - Default: `"prompts/templates"`
+  - Example: `"custom/templates"` or `"/absolute/path/to/templates"`
+  - Used by the unified prompt management system to load external template files
 
 #### LLM Providers Array
 ```json

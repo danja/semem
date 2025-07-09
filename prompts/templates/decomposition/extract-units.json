@@ -1,0 +1,21 @@
+{
+  "name": "decomposition-extract-units",
+  "description": "Breaks down text into independent semantic units.",
+  "version": "1.0",
+  "category": "decomposition",
+  "format": "completion",
+  "content": "Break down the following text into independent semantic units. Each unit should represent a complete thought, event, or concept that can stand alone. Return as a JSON array of strings.\n\nText: \"${text}\"\n\nReturn format: [\"unit1\", \"unit2\", \"unit3\"]\n\nSemantic units:",
+  "arguments": [
+    {
+      "name": "text",
+      "type": "string",
+      "required": true
+    }
+  ],
+  "modelVariants": {
+    "mistral": {
+      "format": "chat",
+      "content": "You are an expert in semantic analysis. Your task is to break down the following text into a JSON array of independent semantic units, where each unit is a complete thought.\n\nText: \"${text}\""
+    }
+  }
+}

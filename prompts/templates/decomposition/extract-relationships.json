@@ -1,0 +1,26 @@
+{
+  "name": "decomposition-extract-relationships",
+  "description": "Identifies relationships between entities in a text.",
+  "version": "1.0",
+  "category": "decomposition",
+  "format": "completion",
+  "content": "Identify relationships between these entities in the given text. Return relationships as JSON array with source, target, type, content, and weight (0-1).\n\nEntities: [${entityNames}]\nText: \"${unitText}\"\n\nReturn format:\n[{\"source\": \"Entity1\", \"target\": \"Entity2\", \"type\": \"collaborates_with\", \"content\": \"relationship description\", \"weight\": 0.8}]\n\nRelationships:",
+  "arguments": [
+    {
+      "name": "entityNames",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "unitText",
+      "type": "string",
+      "required": true
+    }
+  ],
+  "modelVariants": {
+    "mistral": {
+      "format": "chat",
+      "content": "You are an expert in relationship extraction. Identify the relationships between the entities listed below, based on the provided text. Return a JSON array of relationships.\n\nEntities: [${entityNames}]\nText: \"${unitText}\""
+    }
+  }
+}

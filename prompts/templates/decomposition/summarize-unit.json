@@ -1,0 +1,21 @@
+{
+  "name": "decomposition-summarize-unit",
+  "description": "Generates a concise summary of a semantic unit.",
+  "version": "1.0",
+  "category": "decomposition",
+  "format": "completion",
+  "content": "Provide a concise 1-2 sentence summary of the key concept or event in this text:\n\n\"${unitText}\"\n\nSummary:",
+  "arguments": [
+    {
+      "name": "unitText",
+      "type": "string",
+      "required": true
+    }
+  ],
+  "modelVariants": {
+    "mistral": {
+      "format": "chat",
+      "content": "You are an expert in summarization. Provide a concise 1-2 sentence summary of the key concept in this text:\n\n\"${unitText}\""
+    }
+  }
+}

@@ -14,22 +14,22 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 
 async function main() {
   try {
-    // Parse command line arguments
+    // Parse command line arguments/mcp
     const args = process.argv.slice(2);
-    const transport = args.includes('--http') ? 'http' : 
-                     args.includes('--sse') ? 'sse' : 'stdio';
-    
+    const transport = args.includes('--http') ? 'http' :
+      args.includes('--sse') ? 'sse' : 'stdio';
+
     const portIndex = args.indexOf('--port');
-    const port = portIndex !== -1 && args[portIndex + 1] ? 
-                 parseInt(args[portIndex + 1]) : 3000;
-    
+    const port = portIndex !== -1 && args[portIndex + 1] ?
+      parseInt(args[portIndex + 1]) : 3000;
+
     const configIndex = args.indexOf('--config');
-    const configPath = configIndex !== -1 && args[configIndex + 1] ? 
-                       args[configIndex + 1] : undefined;
+    const configPath = configIndex !== -1 && args[configIndex + 1] ?
+      args[configIndex + 1] : undefined;
 
     // Start the MCP server
     const server = await createServer();
-    
+
     // Create and connect transport
     const serverTransport = new StdioServerTransport();
     await server.connect(serverTransport);
