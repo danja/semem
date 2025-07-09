@@ -412,6 +412,10 @@ export class CreateConceptsUnified {
                 throw new Error(`No suitable concept extraction template available. Template '${templateName}' not found.`);
             }
 
+            // Show which template is being used
+            const templateFile = templateName.replace('concept-extraction-', '') + '.json';
+            console.log(`Using prompt template: prompts/templates/concept-extraction/${templateFile}`);
+
             // Generate prompt using unified system
             const promptResult = await this.promptManager.generatePrompt(templateName, context, options);
             

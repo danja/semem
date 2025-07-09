@@ -16,7 +16,7 @@
  */
 
 import { parseArgs } from 'util';
-import { CreateConcepts } from '../../src/ragno/CreateConcepts.js';
+import { CreateConceptsUnified as CreateConcepts } from '../../src/ragno/CreateConceptsUnified.js';
 import logger from 'loglevel';
 import dotenv from 'dotenv';
 

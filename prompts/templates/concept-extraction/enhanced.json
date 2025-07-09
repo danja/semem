@@ -4,7 +4,9 @@
   "format": "completion",
   "category": "concept-extraction",
   "version": "2.0",
-  "supportedModels": ["*"],
+  "supportedModels": [
+    "*"
+  ],
   "arguments": [
     {
       "name": "text",
@@ -13,7 +15,7 @@
       "description": "Text to extract concepts from"
     }
   ],
-  "content": "Extract key concepts from the following text and return them as a JSON array of strings only. Be precise and focus on the most important concepts. Text: \"${text}\"",
+  "content": "Extract a maximum of five key concepts from the following text and return them as a JSON array of strings only. Be precise and focus on only the most specific and important concepts. Text: \"${text}\"",
   "metadata": {
     "purpose": "Enhanced concept extraction for CreateConcepts",
     "version": "2.0",
