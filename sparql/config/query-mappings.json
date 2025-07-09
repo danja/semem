@@ -5,6 +5,7 @@
   "corpus-loading": "retrieval/corpus-loading.sparql",
   "processed-questions": "retrieval/processed-questions.sparql",
   "document-chunks": "retrieval/document-chunks.sparql",
+  "rag-document-chunks": "retrieval/rag-document-chunks.sparql",
   "enhanced-questions-wikidata": "retrieval/enhanced-questions-wikidata.sparql",
   "test-questions": "retrieval/test-questions.sparql",
   "insert-data": "management/insert-data.sparql",

@@ -1,0 +1,20 @@
+SELECT ?chunk ?content ?embedding ?extent ?sourceUnit WHERE {
+    GRAPH <${graphURI}> {
+        ?chunk a ragno:TextElement ;
+               ragno:content ?content ;
+               ragno:embedding ?embedding ;
+               dcterms:extent ?extent .
+        
+        OPTIONAL {
+            ?chunk prov:wasDerivedFrom ?sourceUnit .
+        }
+        
+        # Filter out empty embeddings
+        FILTER(?embedding != "")
+        FILTER(?embedding != "[]")
+        
+        ${additionalFilters}
+    }
+}
+ORDER BY ?chunk
+${limitClause}

@@ -1,6 +1,6 @@
 # Document Processing Examples
 
-This directory contains scripts for processing PDF documents and creating semantic chunks for the Semem knowledge management system.
+This directory contains scripts for processing PDF documents in theSemem knowledge management system.
 
 **Example Workflow:**
 
@@ -19,6 +19,10 @@ node examples/document/ExtractConcepts.js
 node examples/document/Decompose.js 
 node examples/document/SOM.js 
 node examples/document/EnhanceCorpuscles.js
+
+# RAG Question Answering
+node examples/document/RAG.js "What is machine learning?"
+node examples/document/RAG.js --interactive
 ```
 
 
@@ -806,6 +810,135 @@ ORDER BY DESC(?kCoreLevel) DESC(?centralityScore)
 | http://purl.org/stuff/instance/enhanced_corpuscle_concept_ai   | "Enhanced: artificial intelligence" | "concept-based" | 2          | 0.0198765       | 3                | 0.6987654     | http://purl.org/stuff/instance/corpuscle-def456 |
 ```
 
+### RAG.js
+
+Implements a complete Retrieval Augmented Generation (RAG) system that performs semantic search over processed document chunks and generates contextually augmented responses using configured LLM providers.
+
+**Features:**
+- Loads configuration from `config/config.json` with proper path resolution for examples/document
+- Connects to SPARQL endpoint using configured storage options
+- Retrieves document chunks with embeddings using SPARQL template system
+- Builds FAISS index for efficient similarity search over vector embeddings
+- Generates query embeddings using configured embedding providers (Nomic, Ollama)
+- Performs semantic search to find top-k most relevant document chunks
+- Augments user questions with retrieved context for improved LLM responses
+- Uses priority-based LLM provider selection (Mistral, Claude, Ollama fallback)
+- Supports both single question and interactive modes
+- Handles embedding dimension detection and mismatch resolution
+- Provides comprehensive logging and error handling
+
+**Usage:**
+```bash
+# Answer a single question (run from project root)
+node examples/document/RAG.js "What is machine learning?"
+
+# Answer a question with specific graph
+node examples/document/RAG.js "How does neural network training work?" --graph "http://example.org/my-docs"
+
+# Interactive mode for multiple questions
+node examples/document/RAG.js --interactive
+
+# Show help
+node examples/document/RAG.js --help
+```
+
+**Command Line Options:**
+- `--graph <uri>` - Named graph URI to search (default: from config)
+- `--interactive` - Interactive mode for multiple questions
+- `--help, -h` - Show help message
+
+**Prerequisites:**
+- Document processing pipeline completed:
+  1. `LoadPDFs.js` - Load documents into SPARQL store
+  2. `ChunkDocuments.js` - Create semantic chunks
+  3. `MakeEmbeddings.js` - Generate embeddings for chunks
+- SPARQL endpoint running with document data
+- Configured LLM and embedding providers in config.json
+- Environment variables set in `.env` file
+
+**Architecture:**
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   User Query    │───▶│  Query Embedding │───▶│  FAISS Search   │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+                                                        │
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│ LLM Generation  │◀───│ Context Augment │◀───│ Top-K Retrieval │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+        │
+        ▼
+┌─────────────────┐
+│ Final Response  │
+└─────────────────┘
+```
+
+**Technical Details:**
+- **SPARQL Integration**: Uses `SPARQLQueryService` and `SPARQLHelper` with `rag-document-chunks.sparql` template
+- **Vector Search**: FAISS IndexFlatIP for inner product similarity search
+- **Embedding Models**: Supports Nomic (768-dim) and Ollama (1536-dim) with automatic dimension detection
+- **LLM Providers**: Priority-based selection from Mistral → Claude → Ollama fallback
+- **Context Window**: Retrieves top-3 chunks with full content for context augmentation
+- **Error Handling**: Graceful fallbacks for missing embeddings, API failures, and dimension mismatches
+
+**Configuration Requirements:**
+```json
+{
+  "storage": {
+    "type": "sparql",
+    "options": {
+      "query": "http://localhost:3030/semem/query",
+      "graphName": "http://tensegrity.it/semem",
+      "user": "${SPARQL_USER}",
+      "password": "${SPARQL_PASSWORD}"
+    }
+  },
+  "embeddingProvider": "nomic",
+  "embeddingModel": "nomic-embed-text:v1.5",
+  "llmProviders": [
+    {
+      "type": "mistral",
+      "apiKey": "${MISTRAL_API_KEY}",
+      "chatModel": "mistral-small-latest",
+      "priority": 1,
+      "capabilities": ["chat"]
+    }
+  ]
+}
+```
+
+**Sample Output:**
+```
+🤖 RAG Interactive Mode
+Type your questions, or "quit" to exit.
+==================================================
+
+❓ Your question: What is machine learning?
+
+🔍 PERFORMING SEMANTIC SEARCH
+========================================
+📝 Query: "What is machine learning?"
+🎯 Limit: 3 results
+✅ Found 3 results
+1. "e4e5c93c523b84d8_0_59d635888bdc695f" (score: 0.8234)
+2. "e4e5c93c523b84d8_12_e383a9aaa6f44aa9" (score: 0.7891)
+3. "e4e5c93c523b84d8_24_72ccfc3d9f52cd5d" (score: 0.7456)
+
+🧠 GENERATING AUGMENTED RESPONSE
+========================================
+📝 Augmented prompt created (2847 characters)
+✅ Response generated successfully
+
+🤖 Response:
+Machine learning is a subset of artificial intelligence that involves developing algorithms and models that enable computers to learn and make decisions from data without being explicitly programmed for each specific task...
+```
+
+**Error Handling:**
+- **No Embeddings**: Gracefully handles missing or empty embeddings with helpful error messages
+- **API Failures**: Falls back through provider priority chain (Mistral → Claude → Ollama)
+- **Dimension Mismatch**: Automatically adjusts FAISS index to match stored embedding dimensions
+- **Empty Results**: Provides clear feedback when no relevant context is found
+- **Configuration Errors**: Validates SPARQL endpoints and provider configurations
+
 ## Workflow
 
 The typical workflow for processing documents is:
@@ -818,7 +951,8 @@ The typical workflow for processing documents is:
 6. **Semantic Decomposition**: Use `node examples/document/Decompose.js` to apply semantic decomposition to processed chunks, creating entities, relationships, and semantic units
 7. **SOM Clustering**: Use `node examples/document/SOM.js` to apply Self-Organizing Map clustering to corpuscles, creating concept-based clusters and relationships without using LLM or embedding tools
 8. **Enhance Corpuscles**: Use `node examples/document/EnhanceCorpuscles.js` to analyze corpuscles using graph analytics, adding structural importance features and creating enhanced corpuscles based on K-core decomposition and centrality analysis
-9. **Query Results**: Use the provided SPARQL queries to analyze the processed documents, embeddings, chunks, concepts, semantic decomposition, SOM clusters, and enhanced corpuscles
+9. **RAG Question Answering**: Use `node examples/document/RAG.js` to perform Retrieval Augmented Generation over the processed document chunks, providing semantic search and contextually enhanced responses
+10. **Query Results**: Use the provided SPARQL queries to analyze the processed documents, embeddings, chunks, concepts, semantic decomposition, SOM clusters, and enhanced corpuscles
 
 
 ## Configuration
