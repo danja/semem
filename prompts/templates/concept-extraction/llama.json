@@ -1,0 +1,22 @@
+{
+  "name": "concept-extraction-llama",
+  "description": "Llama-optimized concept extraction",
+  "format": "completion",
+  "category": "concept-extraction",
+  "version": "2.0",
+  "supportedModels": ["llama2", "llama", "qwen2"],
+  "arguments": [
+    {
+      "name": "text",
+      "type": "string",
+      "required": true,
+      "description": "Text to extract concepts from"
+    }
+  ],
+  "content": "[INST] Extract key concepts from the following text and return them as a JSON array of strings only. Example: [\"concept1\", \"concept2\"]. Text: \"${text}\" [/INST]",
+  "metadata": {
+    "purpose": "Llama-specific concept extraction",
+    "version": "2.0",
+    "optimizedFor": "llama-family"
+  }
+}

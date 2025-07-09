@@ -14,6 +14,7 @@ import {
     PromptResult,
     PromptValidation 
 } from './interfaces.js';
+import TemplateLoader from './TemplateLoader.js';
 
 export default class PromptManager {
     constructor(options = {}) {
@@ -22,12 +23,16 @@ export default class PromptManager {
             cacheTemplates: options.cacheTemplates !== false,
             validateTemplates: options.validateTemplates !== false,
             logLevel: options.logLevel || 'info',
+            templatesPath: options.templatesPath,
             ...options
         };
         
         // Template storage
         this.templates = new Map();
         this.templateCache = new Map();
+        
+        // Template loader for external files
+        this.templateLoader = new TemplateLoader(this.options.templatesPath);
         
         // Format handlers
         this.formatters = new Map();
@@ -544,6 +549,97 @@ export default class PromptManager {
         return { ...this.stats };
     }
     
+    /**
+     * Load external templates from prompts/templates/ directory
+     */
+    async loadExternalTemplates() {
+        try {
+            const externalTemplates = await this.templateLoader.loadAllTemplates();
+            
+            // Register all loaded templates
+            for (const [name, template] of externalTemplates) {
+                this.templates.set(name, template);
+                this.stats.templatesLoaded++;
+            }
+            
+            logger.info(`Loaded ${externalTemplates.size} external templates from filesystem`);
+            return externalTemplates;
+            
+        } catch (error) {
+            console.error('\n' + '='.repeat(80));
+            console.error('⚠️  CRITICAL: PROMPT MANAGER TEMPLATE LOADING FAILED');
+            console.error('='.repeat(80));
+            console.error('❌ Cannot load external prompt templates');
+            console.error('📁 Template directory:', this.templatesPath);
+            console.error('💥 Error:', error.message);
+            console.error('🔧 Check that prompts/templates/ directory exists and contains valid JSON files');
+            console.error('='.repeat(80) + '\n');
+            
+            logger.error('Failed to load external templates:', error.message);
+            throw error;
+        }
+    }
+
+    /**
+     * Load a specific template from external files
+     */
+    async loadExternalTemplate(category, name) {
+        try {
+            const template = await this.templateLoader.loadTemplateByName(category, name);
+            
+            if (template) {
+                this.registerTemplate(template);
+                logger.debug(`Loaded external template: ${template.name}`);
+            }
+            
+            return template;
+            
+        } catch (error) {
+            logger.error(`Failed to load external template ${category}/${name}:`, error.message);
+            return null;
+        }
+    }
+
+    /**
+     * Reload all external templates (useful for development)
+     */
+    async reloadExternalTemplates() {
+        try {
+            // Clear existing external templates (keep registered ones)
+            const externalTemplateNames = [];
+            for (const [name, template] of this.templates) {
+                if (template.metadata?.external) {
+                    externalTemplateNames.push(name);
+                }
+            }
+            
+            // Remove external templates
+            externalTemplateNames.forEach(name => this.templates.delete(name));
+            
+            // Reload from filesystem
+            const reloadedTemplates = await this.loadExternalTemplates();
+            
+            logger.info(`Reloaded ${reloadedTemplates.size} external templates`);
+            return reloadedTemplates;
+            
+        } catch (error) {
+            logger.error('Failed to reload external templates:', error.message);
+            throw error;
+        }
+    }
+
+    /**
+     * List available external template files
+     */
+    async listExternalTemplateFiles() {
+        try {
+            return await this.templateLoader.listTemplateFiles();
+        } catch (error) {
+            logger.error('Failed to list external template files:', error.message);
+            return [];
+        }
+    }
+
     /**
      * Load templates from various sources
      */

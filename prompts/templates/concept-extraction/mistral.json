@@ -1,0 +1,22 @@
+{
+  "name": "concept-extraction-mistral",
+  "description": "Mistral-optimized concept extraction",
+  "format": "chat",
+  "category": "concept-extraction",
+  "version": "2.0",
+  "supportedModels": ["mistral"],
+  "arguments": [
+    {
+      "name": "text",
+      "type": "string",
+      "required": true,
+      "description": "Text to extract concepts from"
+    }
+  ],
+  "content": "Extract key concepts from the following text and return them as a JSON array of strings. Only return the JSON array, nothing else.\n\nExamples:\nText: \"Machine learning algorithms analyze data patterns\"\nResponse: [\"machine learning\", \"algorithms\", \"data analysis\", \"patterns\"]\n\nText: \"Climate change affects global weather systems\"\nResponse: [\"climate change\", \"global weather\", \"weather systems\", \"environmental impact\"]\n\nNow extract concepts from this text:\n\"${text}\"",
+  "metadata": {
+    "purpose": "Mistral-specific concept extraction",
+    "version": "2.0",
+    "optimizedFor": "mistral"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "name": "concept-extraction-enhanced",
+  "description": "Enhanced concept extraction with better parsing and validation",
+  "format": "completion",
+  "category": "concept-extraction",
+  "version": "2.0",
+  "supportedModels": ["*"],
+  "arguments": [
+    {
+      "name": "text",
+      "type": "string",
+      "required": true,
+      "description": "Text to extract concepts from"
+    }
+  ],
+  "content": "Extract key concepts from the following text and return them as a JSON array of strings only. Be precise and focus on the most important concepts. Text: \"${text}\"",
+  "metadata": {
+    "purpose": "Enhanced concept extraction for CreateConcepts",
+    "version": "2.0",
+    "improvedParsing": true
+  }
+}
