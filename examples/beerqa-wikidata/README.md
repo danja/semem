@@ -2,6 +2,16 @@
 
 This directory contains the enhanced BeerQA workflow that integrates Wikidata's global knowledge graph with local Wikipedia semantic memory, creating a powerful hybrid question-answering system.
 
+## Quick Start
+
+For a complete end-to-end question answering experience, use the combined workflow:
+
+```bash
+node examples/beerqa-wikidata/Answer.js "What was Einstein's day job?"
+```
+
+This single command combines all three workflow phases (Research → Navigate → Answer) and provides an enhanced answer with multi-source context. Similar to the Flow-based approach in `examples/flow/09-enhanced-answers.js`, but uses the original beerqa-wikidata components directly.
+
 ## Overview
 
 The enhanced workflow extends the original BeerQA system by:
