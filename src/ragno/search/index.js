@@ -149,6 +149,14 @@ export default class RagnoSearch {
                 await this.loadVectorIndex()
             }
             
+            // Phase 5: Populate vector index from SPARQL if empty
+            if (this.vectorIndex.getStatistics().totalNodes === 0 && this.sparqlEndpoint) {
+                logger.info('Vector index is empty, populating from SPARQL store...')
+                // Clear the index to ensure it's properly initialized
+                this.vectorIndex.clear()
+                await this.populateVectorIndexFromSPARQL()
+            }
+            
             // Mark as initialized
             this.initialized = true
             this.stats.initializationTime = Date.now() - startTime
@@ -333,7 +341,7 @@ export default class RagnoSearch {
      * Load vector index from disk
      */
     async loadVectorIndex() {
-        this.ensureInitialized()
+        // Note: Don't call ensureInitialized() here as this method is called during initialization
         
         if (!this.options.indexPersistence) {
             logger.debug('Index persistence disabled, skipping load')
@@ -357,6 +365,113 @@ export default class RagnoSearch {
                 logger.error('Failed to load vector index:', error)
                 throw error
             }
+        }
+    }
+    
+    /**
+     * Populate vector index from SPARQL store
+     */
+    async populateVectorIndexFromSPARQL() {
+        if (!this.sparqlEndpoint) {
+            logger.warn('No SPARQL endpoint configured, cannot populate vector index')
+            return
+        }
+        
+        try {
+            logger.info('Querying SPARQL store for TextElement data with embeddings...')
+            
+            // Create SPARQLHelper for querying
+            const SPARQLHelper = (await import('../../services/sparql/SPARQLHelper.js')).default
+            const queryEndpoint = this.sparqlEndpoint.replace('/update', '/query')
+            const sparqlHelper = new SPARQLHelper(this.sparqlEndpoint, { auth: this.sparqlAuth || {} })
+            
+            // Query for TextElements with embeddings
+            const query = `
+                PREFIX ragno: <http://purl.org/stuff/ragno/>
+                PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+                
+                SELECT ?textElement ?content ?embedding ?type
+                FROM <${this.options.graphName || 'http://tensegrity.it/semem'}>
+                WHERE {
+                    ?textElement a ragno:TextElement .
+                    ?textElement ragno:content ?content .
+                    ?textElement ragno:embedding ?embedding .
+                    OPTIONAL { ?textElement a ?type }
+                }
+            `
+            
+            const result = await sparqlHelper.executeSelect(query)
+            if (!result.success) {
+                throw new Error(`SPARQL query failed: ${result.error}`)
+            }
+            
+            const bindings = result.data.results.bindings
+            logger.info(`Found ${bindings.length} TextElements with embeddings`)
+            
+            if (bindings.length === 0) {
+                logger.warn('No TextElements with embeddings found in SPARQL store')
+                return
+            }
+            
+            // Process and add to vector index
+            let addedCount = 0
+            for (const binding of bindings) {
+                try {
+                    const uri = binding.textElement?.value || binding.textElement
+                    const content = binding.content?.value || binding.content || ''
+                    const embeddingStr = binding.embedding?.value || binding.embedding
+                    const type = binding.type?.value || binding.type || 'ragno:TextElement'
+                    
+                    if (!uri || !embeddingStr) {
+                        logger.warn(`Skipping TextElement with missing URI or embedding`)
+                        continue
+                    }
+                    
+                    // Parse embedding (should be a comma-separated string of numbers)
+                    let embedding
+                    try {
+                        if (embeddingStr.startsWith('[') && embeddingStr.endsWith(']')) {
+                            embedding = JSON.parse(embeddingStr)
+                        } else {
+                            // Assume comma-separated values
+                            embedding = embeddingStr.split(',').map(x => parseFloat(x.trim()))
+                        }
+                        
+                        if (!Array.isArray(embedding) || embedding.length === 0) {
+                            logger.warn(`Invalid embedding format for ${uri}`)
+                            continue
+                        }
+                        
+                    } catch (error) {
+                        logger.warn(`Failed to parse embedding for ${uri}: ${error.message}`)
+                        continue
+                    }
+                    
+                    // Add to vector index
+                    const metadata = {
+                        type: type,
+                        content: content,
+                        source: 'sparql'
+                    }
+                    
+                    this.vectorIndex.addNode(uri, embedding, metadata)
+                    addedCount++
+                    
+                } catch (error) {
+                    logger.warn(`Failed to add TextElement to vector index: ${error.message}`)
+                }
+            }
+            
+            logger.info(`Successfully added ${addedCount}/${bindings.length} TextElements to vector index`)
+            
+            // Save the populated index
+            if (this.options.indexPersistence) {
+                await this.saveVectorIndex()
+            }
+            
+        } catch (error) {
+            logger.error('Failed to populate vector index from SPARQL:', error)
+            // Don't throw - this is not a fatal error
         }
     }
     

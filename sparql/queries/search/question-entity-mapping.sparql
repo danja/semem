@@ -1,0 +1,215 @@
+# Question-Entity Mapping - Map Questions to Relevant Entities
+#
+# This query identifies entities in the knowledge graph that are most relevant
+# to a given question or search query. It uses various matching strategies
+# including exact text matching, semantic similarity, and relationship analysis
+# to find the most appropriate starting points for document search.
+#
+# Parameters:
+# - searchTerms: Space-separated list of search terms extracted from the question
+# - graphURI: Named graph to search within
+# - entityTypes: Optional filter for specific entity types
+# - similarityThreshold: Minimum similarity threshold for matching
+# - limitClause: Optional LIMIT clause for result pagination
+#
+# Returns:
+# - Matched entities with relevance scores
+# - Matching strategies used (exact, partial, semantic)
+# - Entity content and metadata
+# - Associated questions and relationships
+
+PREFIX ragno: <http://purl.org/stuff/ragno/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+
+SELECT DISTINCT ?entity ?entityType ?label ?content ?matchType ?relevanceScore 
+                ?associatedQuestion ?sourceDocument ?matchedTerm
+WHERE {
+  GRAPH <${graphURI}> {
+    
+    # Exact label matching - highest priority
+    {
+      ?entity rdfs:label ?label .
+      ?entity rdf:type ?entityType .
+      
+      # Match against search terms
+      FILTER(
+        ${searchTerms}
+      )
+      
+      OPTIONAL { ?entity ragno:content ?content }
+      OPTIONAL { ?entity dcterms:source ?sourceDocument }
+      
+      BIND("exact_label" AS ?matchType)
+      BIND(1.0 AS ?relevanceScore)
+      BIND(?label AS ?matchedTerm)
+      
+      # Filter for relevant entity types
+      FILTER(?entityType IN (ragno:Entity, ragno:Unit, ragno:TextElement, 
+                           ragno:CommunityElement, ragno:Attribute))
+    }
+    
+    UNION
+    
+    # Partial label matching - medium priority
+    {
+      ?entity rdfs:label ?label .
+      ?entity rdf:type ?entityType .
+      
+      # Partial text matching using CONTAINS
+      FILTER(
+        ${searchTerms}
+      )
+      
+      OPTIONAL { ?entity ragno:content ?content }
+      OPTIONAL { ?entity dcterms:source ?sourceDocument }
+      
+      BIND("partial_label" AS ?matchType)
+      BIND(0.8 AS ?relevanceScore)
+      BIND(?label AS ?matchedTerm)
+      
+      # Filter for relevant entity types
+      FILTER(?entityType IN (ragno:Entity, ragno:Unit, ragno:TextElement, 
+                           ragno:CommunityElement, ragno:Attribute))
+    }
+    
+    UNION
+    
+    # Content matching - lower priority but broader coverage
+    {
+      ?entity ragno:content ?content .
+      ?entity rdf:type ?entityType .
+      
+      # Content text matching
+      FILTER(
+        ${searchTerms}
+      )
+      
+      OPTIONAL { ?entity rdfs:label ?label }
+      OPTIONAL { ?entity dcterms:source ?sourceDocument }
+      
+      BIND("content_match" AS ?matchType)
+      BIND(0.6 AS ?relevanceScore)
+      BIND(SUBSTR(?content, 1, 100) AS ?matchedTerm)
+      
+      # Filter for relevant entity types
+      FILTER(?entityType IN (ragno:Entity, ragno:Unit, ragno:TextElement, 
+                           ragno:CommunityElement, ragno:Attribute))
+    }
+    
+    UNION
+    
+    # Concept/keyword matching through skos:concept
+    {
+      ?entity skos:concept ?concept .
+      ?entity rdf:type ?entityType .
+      
+      # Match concepts against search terms
+      FILTER(
+        ${searchTerms}
+      )
+      
+      OPTIONAL { ?entity rdfs:label ?label }
+      OPTIONAL { ?entity ragno:content ?content }
+      OPTIONAL { ?entity dcterms:source ?sourceDocument }
+      
+      BIND("concept_match" AS ?matchType)
+      BIND(0.7 AS ?relevanceScore)
+      BIND(?concept AS ?matchedTerm)
+      
+      # Filter for relevant entity types
+      FILTER(?entityType IN (ragno:Entity, ragno:Unit, ragno:TextElement, 
+                           ragno:CommunityElement, ragno:Attribute))
+    }
+    
+    UNION
+    
+    # Question-entity relationships (for entities that answer questions)
+    {
+      ?question rdf:type ragno:Question .
+      ?question ragno:hasAnswer ?entity .
+      ?entity rdf:type ?entityType .
+      
+      # Match question text against search terms
+      ?question rdfs:label ?questionText .
+      FILTER(
+        ${searchTerms}
+      )
+      
+      OPTIONAL { ?entity rdfs:label ?label }
+      OPTIONAL { ?entity ragno:content ?content }
+      OPTIONAL { ?entity dcterms:source ?sourceDocument }
+      
+      BIND("question_answer" AS ?matchType)
+      BIND(0.9 AS ?relevanceScore)
+      BIND(?questionText AS ?associatedQuestion)
+      BIND(?questionText AS ?matchedTerm)
+      
+      # Filter for relevant entity types
+      FILTER(?entityType IN (ragno:Entity, ragno:Unit, ragno:TextElement, 
+                           ragno:CommunityElement, ragno:Attribute))
+    }
+    
+    UNION
+    
+    # Related entities through relationships
+    {
+      ?relationship rdf:type ragno:Relationship .
+      ?relationship ragno:hasSourceEntity ?sourceEntity .
+      ?relationship ragno:hasTargetEntity ?entity .
+      
+      # Match source entity against search terms
+      ?sourceEntity rdfs:label ?sourceLabel .
+      FILTER(
+        ${searchTerms}
+      )
+      
+      ?entity rdf:type ?entityType .
+      OPTIONAL { ?entity rdfs:label ?label }
+      OPTIONAL { ?entity ragno:content ?content }
+      OPTIONAL { ?entity dcterms:source ?sourceDocument }
+      OPTIONAL { ?relationship ragno:weight ?relWeight }
+      
+      BIND("relationship_target" AS ?matchType)
+      BIND(COALESCE(?relWeight, 0.5) AS ?relevanceScore)
+      BIND(?sourceLabel AS ?matchedTerm)
+      
+      # Filter for relevant entity types
+      FILTER(?entityType IN (ragno:Entity, ragno:Unit, ragno:TextElement, 
+                           ragno:CommunityElement, ragno:Attribute))
+    }
+    
+    UNION
+    
+    # Entities with high importance scores (general relevance)
+    {
+      ?entity ragno:importanceScore ?importance .
+      ?entity rdf:type ?entityType .
+      
+      # Only include high-importance entities
+      FILTER(?importance > 0.8)
+      
+      OPTIONAL { ?entity rdfs:label ?label }
+      OPTIONAL { ?entity ragno:content ?content }
+      OPTIONAL { ?entity dcterms:source ?sourceDocument }
+      
+      BIND("high_importance" AS ?matchType)
+      BIND(?importance AS ?relevanceScore)
+      BIND("high importance entity" AS ?matchedTerm)
+      
+      # Filter for relevant entity types
+      FILTER(?entityType IN (ragno:Entity, ragno:Unit, ragno:TextElement, 
+                           ragno:CommunityElement, ragno:Attribute))
+    }
+    
+    ${entityTypes}
+  }
+  
+  # Filter by similarity threshold if specified
+  FILTER(?relevanceScore >= ${similarityThreshold})
+}
+ORDER BY DESC(?relevanceScore) ?matchType ?entityType
+${limitClause}

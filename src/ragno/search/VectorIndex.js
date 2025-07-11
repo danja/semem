@@ -378,7 +378,8 @@ export default class VectorIndex {
                 stats: this.stats
             }
 
-            await require('fs/promises').writeFile(metadataPath, JSON.stringify(metadataObj, null, 2))
+            const fs = await import('fs/promises')
+            await fs.writeFile(metadataPath, JSON.stringify(metadataObj, null, 2))
 
             logger.info('Vector index saved successfully')
         } catch (error) {
@@ -400,7 +401,8 @@ export default class VectorIndex {
             this.index.readIndex(indexPath)
 
             // Load metadata
-            const metadataContent = await require('fs/promises').readFile(metadataPath, 'utf-8')
+            const fs = await import('fs/promises')
+            const metadataContent = await fs.readFile(metadataPath, 'utf-8')
             const metadataObj = JSON.parse(metadataContent)
 
             // Restore state
@@ -451,7 +453,9 @@ export default class VectorIndex {
     getStatistics() {
         return {
             ...this.stats,
-            nodesByType: Object.fromEntries(this.stats.nodesByType),
+            nodesByType: this.stats.nodesByType instanceof Map 
+                ? Object.fromEntries(this.stats.nodesByType) 
+                : this.stats.nodesByType || {},
             availableTypes: Array.from(this.typeToNodes.keys()),
             indexSize: this.stats.totalNodes,
             dimension: this.options.dimension,

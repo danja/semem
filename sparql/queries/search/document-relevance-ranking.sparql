@@ -1,0 +1,185 @@
+# Document Relevance Ranking - Advanced Relevance Scoring for Search Results
+#
+# This query provides sophisticated relevance scoring for search results by
+# combining multiple signals including semantic similarity, relationship strength,
+# document structure, temporal relevance, and user interaction patterns.
+# It supports both content-based and graph-based relevance calculations.
+#
+# Parameters:
+# - entityList: Comma-separated list of entity URIs to rank
+# - graphURI: Named graph containing the entities
+# - queryContext: Optional context terms for relevance calculation
+# - temporalWeight: Weight for temporal relevance (default: 0.1)
+# - structuralWeight: Weight for structural importance (default: 0.2)
+# - semanticWeight: Weight for semantic similarity (default: 0.4)
+# - relationshipWeight: Weight for relationship relevance (default: 0.3)
+#
+# Returns:
+# - Comprehensive relevance scores for each entity
+# - Breakdown of scoring components
+# - Ranking explanation and justification
+# - Metadata for result presentation
+
+PREFIX ragno: <http://purl.org/stuff/ragno/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+SELECT ?entity ?entityType ?label ?content ?finalScore
+       ?semanticScore ?structuralScore ?temporalScore ?relationshipScore
+       ?rankingExplanation ?sourceDocument ?lastModified
+WHERE {
+  GRAPH <${graphURI}> {
+    
+    # Base entity information
+    ?entity rdf:type ?entityType .
+    OPTIONAL { ?entity rdfs:label ?label }
+    OPTIONAL { ?entity ragno:content ?content }
+    OPTIONAL { ?entity dcterms:source ?sourceDocument }
+    OPTIONAL { ?entity dcterms:modified ?lastModified }
+    
+    # Filter to entities in the provided list
+    FILTER(?entity IN (${entityList}))
+    
+    # Semantic similarity score (base score from vector similarity)
+    OPTIONAL {
+      ?entity ragno:similarityScore ?baseSimilarity .
+      BIND(COALESCE(?baseSimilarity, 0.0) AS ?semanticScore)
+    }
+    
+    # Structural importance score
+    OPTIONAL {
+      {
+        # Entity importance based on relationship centrality
+        SELECT ?entity (COUNT(DISTINCT ?relationship) AS ?relationshipCount) WHERE {
+          {
+            ?relationship ragno:hasSourceEntity ?entity .
+          }
+          UNION
+          {
+            ?relationship ragno:hasTargetEntity ?entity .
+          }
+        }
+        GROUP BY ?entity
+      }
+      
+      # Convert relationship count to normalized score
+      BIND(LEAST(1.0, ?relationshipCount / 10.0) AS ?structuralScore)
+    }
+    
+    # Alternative structural score using ragno:importanceScore
+    OPTIONAL {
+      ?entity ragno:importanceScore ?importance .
+      BIND(COALESCE(?importance, 0.0) AS ?altStructuralScore)
+    }
+    
+    # Temporal relevance score
+    OPTIONAL {
+      ?entity dcterms:created ?created .
+      ?entity dcterms:modified ?modified .
+      
+      # Calculate recency score (more recent = higher score)
+      BIND(NOW() AS ?now)
+      BIND(COALESCE(?modified, ?created, ?now) AS ?relevantDate)
+      BIND((?now - ?relevantDate) / (365 * 24 * 60 * 60) AS ?yearsAgo) # Convert to years
+      BIND(GREATEST(0.0, 1.0 - (?yearsAgo / 5.0)) AS ?temporalScore) # Decay over 5 years
+    }
+    
+    # Relationship relevance score
+    OPTIONAL {
+      {
+        # Calculate weighted relationship score
+        SELECT ?entity (AVG(?weight) AS ?avgRelWeight) WHERE {
+          {
+            ?relationship ragno:hasSourceEntity ?entity .
+            ?relationship ragno:weight ?weight .
+          }
+          UNION
+          {
+            ?relationship ragno:hasTargetEntity ?entity .
+            ?relationship ragno:weight ?weight .
+          }
+        }
+        GROUP BY ?entity
+      }
+      
+      BIND(COALESCE(?avgRelWeight, 0.0) AS ?relationshipScore)
+    }
+    
+    # Content length bonus (longer content might be more comprehensive)
+    OPTIONAL {
+      ?entity ragno:content ?content .
+      BIND(STRLEN(?content) AS ?contentLength)
+      BIND(LEAST(0.2, ?contentLength / 5000.0) AS ?contentLengthBonus)
+    }
+    
+    # Document type bonus (some types are more authoritative)
+    BIND(
+      IF(?entityType = ragno:Entity, 0.1,
+        IF(?entityType = ragno:Unit, 0.08,
+          IF(?entityType = ragno:TextElement, 0.06,
+            IF(?entityType = ragno:CommunityElement, 0.04,
+              IF(?entityType = ragno:Attribute, 0.02, 0.0)
+            )
+          )
+        )
+      ) AS ?typeBonus
+    )
+    
+    # Usage/access frequency bonus
+    OPTIONAL {
+      ?entity ragno:accessCount ?accessCount .
+      BIND(LEAST(0.1, ?accessCount / 100.0) AS ?usageBonus)
+    }
+    
+    # Quality indicators
+    OPTIONAL {
+      ?entity ragno:qualityScore ?quality .
+      BIND(COALESCE(?quality, 0.5) AS ?qualityScore)
+    }
+    
+    # Source document authority bonus
+    OPTIONAL {
+      ?sourceDocument ragno:authorityScore ?docAuthority .
+      BIND(COALESCE(?docAuthority, 0.5) * 0.1 AS ?authorityBonus)
+    }
+  }
+  
+  # Calculate component scores with fallbacks
+  BIND(COALESCE(?semanticScore, 0.0) AS ?finalSemanticScore)
+  BIND(COALESCE(?structuralScore, ?altStructuralScore, 0.0) AS ?finalStructuralScore)
+  BIND(COALESCE(?temporalScore, 0.5) AS ?finalTemporalScore) # Default to medium for missing dates
+  BIND(COALESCE(?relationshipScore, 0.0) AS ?finalRelationshipScore)
+  BIND(COALESCE(?contentLengthBonus, 0.0) AS ?finalContentBonus)
+  BIND(COALESCE(?usageBonus, 0.0) AS ?finalUsageBonus)
+  BIND(COALESCE(?authorityBonus, 0.0) AS ?finalAuthorityBonus)
+  BIND(COALESCE(?qualityScore, 0.5) AS ?finalQualityScore)
+  
+  # Calculate weighted final score
+  BIND(
+    (${semanticWeight} * ?finalSemanticScore) +
+    (${structuralWeight} * ?finalStructuralScore) +
+    (${temporalWeight} * ?finalTemporalScore) +
+    (${relationshipWeight} * ?finalRelationshipScore) +
+    ?typeBonus +
+    ?finalContentBonus +
+    ?finalUsageBonus +
+    ?finalAuthorityBonus +
+    (0.1 * ?finalQualityScore)
+  AS ?finalScore)
+  
+  # Create ranking explanation
+  BIND(
+    CONCAT(
+      "Semantic: ", STR(ROUND(?finalSemanticScore * 100) / 100),
+      ", Structural: ", STR(ROUND(?finalStructuralScore * 100) / 100),
+      ", Temporal: ", STR(ROUND(?finalTemporalScore * 100) / 100),
+      ", Relationship: ", STR(ROUND(?finalRelationshipScore * 100) / 100),
+      ", Type: ", STR(?typeBonus),
+      ", Quality: ", STR(ROUND(?finalQualityScore * 100) / 100)
+    ) AS ?rankingExplanation
+  )
+}
+ORDER BY DESC(?finalScore) ?entityType ?label

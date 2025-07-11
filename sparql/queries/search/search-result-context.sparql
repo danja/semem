@@ -1,0 +1,279 @@
+# Search Result Context - Retrieve Contextual Information for Search Results
+#
+# This query enriches search results with comprehensive contextual information
+# including relationships, provenance, source documents, related entities,
+# and semantic metadata. It provides the additional context needed for
+# result presentation and user understanding.
+#
+# Parameters:
+# - resultURI: URI of the search result to get context for
+# - graphURI: Named graph containing the result
+# - contextDepth: How many relationship hops to include (default: 2)
+# - includeProvenance: Whether to include provenance information
+# - includeRelationships: Whether to include relationship details
+# - maxRelatedEntities: Maximum number of related entities to return
+#
+# Returns:
+# - Complete context information for the search result
+# - Relationship details and connection explanations
+# - Source document and provenance information
+# - Related entities and semantic connections
+# - Temporal and quality metadata
+
+PREFIX ragno: <http://purl.org/stuff/ragno/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+SELECT DISTINCT ?contextType ?contextValue ?contextLabel ?contextScore 
+                ?relatedEntity ?relatedLabel ?relationshipType ?relationshipDirection
+                ?sourceDocument ?documentTitle ?provenance ?temporalInfo
+WHERE {
+  GRAPH <${graphURI}> {
+    
+    # Basic entity information
+    {
+      BIND("entity_info" AS ?contextType)
+      <${resultURI}> rdfs:label ?contextValue .
+      OPTIONAL { <${resultURI}> rdfs:comment ?contextLabel }
+      BIND(1.0 AS ?contextScore)
+    }
+    
+    UNION
+    
+    # Entity type and classification
+    {
+      BIND("entity_type" AS ?contextType)
+      <${resultURI}> rdf:type ?contextValue .
+      BIND(STRAFTER(STR(?contextValue), "#") AS ?contextLabel)
+      BIND(0.9 AS ?contextScore)
+    }
+    
+    UNION
+    
+    # Content and description
+    {
+      BIND("content" AS ?contextType)
+      <${resultURI}> ragno:content ?fullContent .
+      BIND(IF(STRLEN(?fullContent) > 200, 
+             CONCAT(SUBSTR(?fullContent, 1, 200), "..."), 
+             ?fullContent) AS ?contextValue)
+      BIND("Content summary" AS ?contextLabel)
+      BIND(0.8 AS ?contextScore)
+    }
+    
+    UNION
+    
+    # Source document information
+    {
+      BIND("source_document" AS ?contextType)
+      <${resultURI}> dcterms:source ?sourceDocument .
+      ?sourceDocument rdfs:label ?documentTitle .
+      BIND(?sourceDocument AS ?contextValue)
+      BIND(?documentTitle AS ?contextLabel)
+      BIND(0.7 AS ?contextScore)
+    }
+    
+    UNION
+    
+    # Direct outgoing relationships
+    {
+      BIND("outgoing_relationship" AS ?contextType)
+      <${resultURI}> ?relationshipType ?relatedEntity .
+      
+      # Get information about the related entity
+      ?relatedEntity rdf:type ?relatedType .
+      OPTIONAL { ?relatedEntity rdfs:label ?relatedLabel }
+      
+      # Filter for meaningful relationships (not RDF structural properties)
+      FILTER(!STRSTARTS(STR(?relationshipType), "http://www.w3.org/1999/02/22-rdf-syntax-ns#"))
+      FILTER(!STRSTARTS(STR(?relationshipType), "http://www.w3.org/2000/01/rdf-schema#"))
+      FILTER(?relationshipType != dcterms:source)
+      
+      BIND(?relationshipType AS ?contextValue)
+      BIND(STRAFTER(STR(?relationshipType), "#") AS ?contextLabel)
+      BIND("outgoing" AS ?relationshipDirection)
+      BIND(0.6 AS ?contextScore)
+      
+      # Filter for document-relevant related entities
+      FILTER(?relatedType IN (ragno:Entity, ragno:Unit, ragno:TextElement, 
+                            ragno:CommunityElement, ragno:Attribute))
+    }
+    
+    UNION
+    
+    # Direct incoming relationships
+    {
+      BIND("incoming_relationship" AS ?contextType)
+      ?relatedEntity ?relationshipType <${resultURI}> .
+      
+      # Get information about the related entity
+      ?relatedEntity rdf:type ?relatedType .
+      OPTIONAL { ?relatedEntity rdfs:label ?relatedLabel }
+      
+      # Filter for meaningful relationships
+      FILTER(!STRSTARTS(STR(?relationshipType), "http://www.w3.org/1999/02/22-rdf-syntax-ns#"))
+      FILTER(!STRSTARTS(STR(?relationshipType), "http://www.w3.org/2000/01/rdf-schema#"))
+      FILTER(?relationshipType != dcterms:source)
+      
+      BIND(?relationshipType AS ?contextValue)
+      BIND(STRAFTER(STR(?relationshipType), "#") AS ?contextLabel)
+      BIND("incoming" AS ?relationshipDirection)
+      BIND(0.6 AS ?contextScore)
+      
+      # Filter for document-relevant related entities
+      FILTER(?relatedType IN (ragno:Entity, ragno:Unit, ragno:TextElement, 
+                            ragno:CommunityElement, ragno:Attribute))
+    }
+    
+    UNION
+    
+    # Formal ragno:Relationship connections
+    {
+      ?relationship rdf:type ragno:Relationship .
+      {
+        ?relationship ragno:hasSourceEntity <${resultURI}> .
+        ?relationship ragno:hasTargetEntity ?relatedEntity .
+        BIND("formal_outgoing" AS ?relationshipDirection)
+      }
+      UNION
+      {
+        ?relationship ragno:hasTargetEntity <${resultURI}> .
+        ?relationship ragno:hasSourceEntity ?relatedEntity .
+        BIND("formal_incoming" AS ?relationshipDirection)
+      }
+      
+      BIND("formal_relationship" AS ?contextType)
+      OPTIONAL { ?relationship ragno:relationshipType ?relationshipType }
+      OPTIONAL { ?relationship ragno:weight ?relWeight }
+      OPTIONAL { ?relatedEntity rdfs:label ?relatedLabel }
+      
+      BIND(?relationshipType AS ?contextValue)
+      BIND(CONCAT("Formal relationship: ", STRAFTER(STR(?relationshipType), "#")) AS ?contextLabel)
+      BIND(COALESCE(?relWeight, 0.5) AS ?contextScore)
+    }
+    
+    UNION
+    
+    # Concepts and keywords
+    {
+      BIND("concepts" AS ?contextType)
+      <${resultURI}> skos:concept ?concept .
+      BIND(?concept AS ?contextValue)
+      BIND("Associated concept" AS ?contextLabel)
+      BIND(0.5 AS ?contextScore)
+    }
+    
+    UNION
+    
+    # Temporal information
+    {
+      BIND("temporal_info" AS ?contextType)
+      {
+        <${resultURI}> dcterms:created ?temporal .
+        BIND("created" AS ?temporalType)
+      }
+      UNION
+      {
+        <${resultURI}> dcterms:modified ?temporal .
+        BIND("modified" AS ?temporalType)
+      }
+      UNION
+      {
+        <${resultURI}> dcterms:date ?temporal .
+        BIND("date" AS ?temporalType)
+      }
+      
+      BIND(?temporal AS ?contextValue)
+      BIND(CONCAT("Date ", ?temporalType) AS ?contextLabel)
+      BIND(?temporal AS ?temporalInfo)
+      BIND(0.3 AS ?contextScore)
+    }
+    
+    UNION
+    
+    # Provenance information
+    {
+      BIND("provenance" AS ?contextType)
+      {
+        <${resultURI}> prov:wasDerivedFrom ?provSource .
+        BIND(?provSource AS ?contextValue)
+        BIND("Derived from" AS ?contextLabel)
+      }
+      UNION
+      {
+        <${resultURI}> prov:wasGeneratedBy ?provActivity .
+        BIND(?provActivity AS ?contextValue)
+        BIND("Generated by" AS ?contextLabel)
+      }
+      UNION
+      {
+        <${resultURI}> prov:wasAttributedTo ?provAgent .
+        BIND(?provAgent AS ?contextValue)
+        BIND("Attributed to" AS ?contextLabel)
+      }
+      
+      BIND(?contextValue AS ?provenance)
+      BIND(0.4 AS ?contextScore)
+    }
+    
+    UNION
+    
+    # Quality and scoring information
+    {
+      BIND("quality_metrics" AS ?contextType)
+      {
+        <${resultURI}> ragno:importanceScore ?score .
+        BIND(?score AS ?contextValue)
+        BIND("Importance score" AS ?contextLabel)
+      }
+      UNION
+      {
+        <${resultURI}> ragno:qualityScore ?score .
+        BIND(?score AS ?contextValue)
+        BIND("Quality score" AS ?contextLabel)
+      }
+      UNION
+      {
+        <${resultURI}> ragno:accessCount ?count .
+        BIND(?count AS ?contextValue)
+        BIND("Access count" AS ?contextLabel)
+      }
+      
+      BIND(0.3 AS ?contextScore)
+    }
+    
+    UNION
+    
+    # Same-source entities (document siblings)
+    {
+      BIND("document_siblings" AS ?contextType)
+      <${resultURI}> dcterms:source ?commonSource .
+      ?relatedEntity dcterms:source ?commonSource .
+      ?relatedEntity rdf:type ?relatedType .
+      
+      # Filter out self
+      FILTER(?relatedEntity != <${resultURI}>)
+      
+      OPTIONAL { ?relatedEntity rdfs:label ?relatedLabel }
+      
+      BIND(?commonSource AS ?contextValue)
+      BIND("Same document" AS ?contextLabel)
+      BIND("document_sibling" AS ?relationshipType)
+      BIND("sibling" AS ?relationshipDirection)
+      BIND(0.4 AS ?contextScore)
+      
+      # Filter for document-relevant related entities
+      FILTER(?relatedType IN (ragno:Entity, ragno:Unit, ragno:TextElement, 
+                            ragno:CommunityElement, ragno:Attribute))
+    }
+    
+    ${includeProvenance}
+    ${includeRelationships}
+  }
+}
+ORDER BY DESC(?contextScore) ?contextType ?contextLabel
+LIMIT ${maxRelatedEntities}

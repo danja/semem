@@ -25,5 +25,6 @@
   "find-textelements-without-embeddings": "find-textelements-without-embeddings.sparql",
   "store-textelement-embedding": "store-textelement-embedding.sparql",
   "find-chunks-for-decomposition": "find-chunks-for-decomposition.sparql",
-  "mark-chunks-decomposed": "mark-chunks-decomposed.sparql"
+  "mark-chunks-decomposed": "mark-chunks-decomposed.sparql",
+  "list-concepts": "list-concepts.sparql"
 }

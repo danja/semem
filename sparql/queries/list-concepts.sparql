@@ -1,0 +1,54 @@
+PREFIX ragno: <http://purl.org/stuff/ragno/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX semem: <http://purl.org/semem/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+SELECT DISTINCT 
+    ?conceptCorpuscle 
+    ?conceptLabel 
+    ?conceptContent 
+    ?sourceTextElement 
+    ?conceptUnit
+    ?created
+    ?hasEmbedding
+    ?collectionCorpuscle
+WHERE {
+    GRAPH <${graphURI}> {
+        # Find concept corpuscles
+        ?conceptCorpuscle a ragno:Corpuscle ;
+                         rdfs:label ?conceptLabel ;
+                         ragno:content ?conceptContent ;
+                         dcterms:created ?created ;
+                         prov:wasDerivedFrom ?sourceTextElement .
+        
+        # Check if it has an embedding
+        OPTIONAL {
+            ?conceptCorpuscle ragno:embedding ?embedding .
+            BIND(true as ?hasEmbedding)
+        }
+        
+        # Find the corresponding Unit (if exists)
+        OPTIONAL {
+            ?conceptCorpuscle skos:member ?conceptUnit .
+            ?conceptUnit a ragno:Unit .
+        }
+        
+        # Find collection corpuscle that contains this concept
+        OPTIONAL {
+            ?collectionCorpuscle a ragno:Corpuscle ;
+                               skos:member ?conceptUnit .
+            ?collectionCorpuscle prov:wasDerivedFrom ?sourceTextElement .
+            
+            # Ensure it's actually a collection (not the individual concept corpuscle)
+            FILTER(?collectionCorpuscle != ?conceptCorpuscle)
+        }
+        
+        # Filter for concept corpuscles (labels start with "Concept:")
+        FILTER(STRSTARTS(STR(?conceptLabel), "Concept:"))
+    }
+}
+ORDER BY ?created ?conceptLabel
+${limit}

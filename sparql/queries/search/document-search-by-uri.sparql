@@ -1,0 +1,160 @@
+# Document Search by URI - Find Related Nodes from URI Starting Point
+# 
+# This query finds nodes in the knowledge graph that are related to a given URI
+# starting point through various relationship types and semantic connections.
+# It supports both direct relationships and multi-hop traversal for comprehensive
+# document search capabilities.
+#
+# Parameters:
+# - startingURI: The URI to start the search from
+# - graphURI: Named graph to search within
+# - maxHops: Maximum number of relationship hops (default: 2)
+# - relationshipTypes: Optional filter for specific relationship types
+# - limitClause: Optional LIMIT clause for result pagination
+#
+# Returns:
+# - Related entities with their types, relationships, and relevance scores
+# - Relationship paths showing how entities are connected
+# - Content and metadata for each related entity
+
+PREFIX ragno: <http://purl.org/stuff/ragno/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+
+SELECT DISTINCT ?relatedEntity ?entityType ?relationshipType ?relationshipPath 
+                ?content ?title ?score ?distance ?sourceDocument
+WHERE {
+  GRAPH <${graphURI}> {
+    
+    # Direct relationships (1-hop)
+    {
+      <${startingURI}> ?relationshipType ?relatedEntity .
+      
+      # Get entity type and content
+      ?relatedEntity rdf:type ?entityType .
+      OPTIONAL { ?relatedEntity ragno:content ?content }
+      OPTIONAL { ?relatedEntity rdfs:label ?title }
+      OPTIONAL { ?relatedEntity ragno:score ?score }
+      OPTIONAL { ?relatedEntity dcterms:source ?sourceDocument }
+      
+      BIND("1" AS ?distance)
+      BIND(CONCAT(str(<${startingURI}>), " -> ", str(?relatedEntity)) AS ?relationshipPath)
+      
+      # Filter for document-relevant types
+      FILTER(?entityType IN (ragno:Entity, ragno:Unit, ragno:TextElement, 
+                           ragno:CommunityElement, ragno:Attribute))
+    }
+    
+    UNION
+    
+    # Inverse relationships (1-hop)
+    {
+      ?relatedEntity ?relationshipType <${startingURI}> .
+      
+      # Get entity type and content
+      ?relatedEntity rdf:type ?entityType .
+      OPTIONAL { ?relatedEntity ragno:content ?content }
+      OPTIONAL { ?relatedEntity rdfs:label ?title }
+      OPTIONAL { ?relatedEntity ragno:score ?score }
+      OPTIONAL { ?relatedEntity dcterms:source ?sourceDocument }
+      
+      BIND("1" AS ?distance)
+      BIND(CONCAT(str(?relatedEntity), " -> ", str(<${startingURI}>)) AS ?relationshipPath)
+      
+      # Filter for document-relevant types
+      FILTER(?entityType IN (ragno:Entity, ragno:Unit, ragno:TextElement, 
+                           ragno:CommunityElement, ragno:Attribute))
+    }
+    
+    UNION
+    
+    # 2-hop relationships
+    {
+      <${startingURI}> ?rel1 ?intermediate .
+      ?intermediate ?rel2 ?relatedEntity .
+      
+      # Get entity type and content
+      ?relatedEntity rdf:type ?entityType .
+      OPTIONAL { ?relatedEntity ragno:content ?content }
+      OPTIONAL { ?relatedEntity rdfs:label ?title }
+      OPTIONAL { ?relatedEntity ragno:score ?score }
+      OPTIONAL { ?relatedEntity dcterms:source ?sourceDocument }
+      
+      BIND("2" AS ?distance)
+      BIND(CONCAT(str(<${startingURI}>), " -> ", str(?intermediate), " -> ", str(?relatedEntity)) AS ?relationshipPath)
+      
+      # Filter out the starting URI from results
+      FILTER(?relatedEntity != <${startingURI}>)
+      FILTER(?intermediate != <${startingURI}>)
+      
+      # Filter for document-relevant types
+      FILTER(?entityType IN (ragno:Entity, ragno:Unit, ragno:TextElement, 
+                           ragno:CommunityElement, ragno:Attribute))
+    }
+    
+    UNION
+    
+    # Relationship-based connections (through ragno:Relationship entities)
+    {
+      ?relationship rdf:type ragno:Relationship .
+      {
+        ?relationship ragno:hasSourceEntity <${startingURI}> .
+        ?relationship ragno:hasTargetEntity ?relatedEntity .
+      }
+      UNION
+      {
+        ?relationship ragno:hasTargetEntity <${startingURI}> .
+        ?relationship ragno:hasSourceEntity ?relatedEntity .
+      }
+      
+      # Get relationship type and weight
+      OPTIONAL { ?relationship ragno:relationshipType ?relationshipType }
+      OPTIONAL { ?relationship ragno:weight ?score }
+      
+      # Get entity type and content
+      ?relatedEntity rdf:type ?entityType .
+      OPTIONAL { ?relatedEntity ragno:content ?content }
+      OPTIONAL { ?relatedEntity rdfs:label ?title }
+      OPTIONAL { ?relatedEntity dcterms:source ?sourceDocument }
+      
+      BIND("1" AS ?distance)
+      BIND(CONCAT("relationship: ", str(?relationshipType)) AS ?relationshipPath)
+      
+      # Filter for document-relevant types
+      FILTER(?entityType IN (ragno:Entity, ragno:Unit, ragno:TextElement, 
+                           ragno:CommunityElement, ragno:Attribute))
+    }
+    
+    UNION
+    
+    # Same source document connections
+    {
+      <${startingURI}> dcterms:source ?sourceDoc .
+      ?relatedEntity dcterms:source ?sourceDoc .
+      
+      # Get entity type and content
+      ?relatedEntity rdf:type ?entityType .
+      OPTIONAL { ?relatedEntity ragno:content ?content }
+      OPTIONAL { ?relatedEntity rdfs:label ?title }
+      OPTIONAL { ?relatedEntity ragno:score ?score }
+      
+      BIND(?sourceDoc AS ?sourceDocument)
+      BIND("source" AS ?relationshipType)
+      BIND("1" AS ?distance)
+      BIND(CONCAT("same-source: ", str(?sourceDoc)) AS ?relationshipPath)
+      
+      # Filter out self
+      FILTER(?relatedEntity != <${startingURI}>)
+      
+      # Filter for document-relevant types
+      FILTER(?entityType IN (ragno:Entity, ragno:Unit, ragno:TextElement, 
+                           ragno:CommunityElement, ragno:Attribute))
+    }
+    
+    ${relationshipTypes}
+  }
+}
+ORDER BY ?distance DESC(?score) ?entityType
+${limitClause}

@@ -23,6 +23,10 @@ node examples/document/EnhanceCorpuscles.js
 # RAG Question Answering
 node examples/document/RAG.js "What is machine learning?"
 node examples/document/RAG.js --interactive
+
+# Advanced Search System
+node examples/document/Search.js "machine learning"
+node examples/document/Search.js --interactive
 ```
 
 
@@ -939,6 +943,148 @@ Machine learning is a subset of artificial intelligence that involves developing
 - **Empty Results**: Provides clear feedback when no relevant context is found
 - **Configuration Errors**: Validates SPARQL endpoints and provider configurations
 
+### Search.js
+
+Implements a comprehensive document search system that combines multiple search strategies to find relevant content across processed document collections. Unlike RAG.js which focuses on question answering, Search.js provides advanced search capabilities with filtering, ranking, and multiple search modes.
+
+**Features:**
+- **Multi-Mode Search**: Supports dual, exact, similarity, and traversal search modes
+- **RagnoSearch Integration**: Uses the full RagnoSearch system with vector similarity, SPARQL exact matching, and Personalized PageRank traversal
+- **Advanced Filtering**: Relevance filtering, type-based filtering, deduplication, and result ranking
+- **Multiple Output Formats**: Detailed, summary, and URI-only result formats
+- **Interactive CLI**: Full-featured command-line interface with persistent sessions
+- **URI-based Search**: Can search starting from specific entity URIs for graph traversal
+- **Performance Monitoring**: Built-in search statistics and timing metrics
+- **Configuration Flexibility**: Supports custom search parameters, thresholds, and result limits
+
+**Usage:**
+```bash
+# Basic text search (run from project root)
+node examples/document/Search.js "machine learning algorithms"
+
+# Interactive mode for multiple searches
+node examples/document/Search.js --interactive
+
+# Search with custom parameters
+node examples/document/Search.js "neural networks" --limit 10 --threshold 0.7 --mode dual
+
+# URI-based search for graph traversal
+node examples/document/Search.js "http://purl.org/stuff/instance/entity-ml" --mode traversal
+
+# Different output formats
+node examples/document/Search.js "AI" --format summary
+node examples/document/Search.js "AI" --format uris
+
+# Custom graph and search options
+node examples/document/Search.js "deep learning" --graph "http://example.org/my-docs" --verbose
+
+# Show help
+node examples/document/Search.js --help
+```
+
+**Command Line Options:**
+- `--interactive, -i` - Interactive mode for multiple searches
+- `--mode <type>` - Search mode: dual, exact, similarity, traversal (default: dual)
+- `--limit <number>` - Maximum number of results (default: 10)
+- `--threshold <number>` - Relevance threshold 0-1 (default: 0.5)
+- `--format <type>` - Output format: detailed, summary, uris (default: detailed)
+- `--graph <uri>` - Target graph URI (default: from config)
+- `--verbose, -v` - Enable verbose logging
+- `--help, -h` - Show help message
+
+**Search Modes:**
+- **Dual**: Combines exact SPARQL matching with vector similarity search (recommended)
+- **Exact**: SPARQL-only search for precise term matching
+- **Similarity**: Vector-only search for semantic similarity
+- **Traversal**: Graph traversal using Personalized PageRank from starting entities
+
+**Architecture:**
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   User Query    │───▶│ Query Analysis  │───▶│ Search Strategy │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+                                                        │
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│ Formatted       │◀───│ Filter & Rank   │◀───│ Multi-Source    │
+│ Results         │    │ Results         │    │ Search          │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+                              │                        │
+                              ▼                        ▼
+                    ┌─────────────────┐    ┌─────────────────┐
+                    │ Relevance       │    │ • SPARQL Exact  │
+                    │ Filtering       │    │ • Vector Search │
+                    └─────────────────┘    │ • PPR Traversal │
+                                          └─────────────────┘
+```
+
+**Sample Output:**
+```
+🔍 Document Search System
+========================
+
+📝 Query: "machine learning algorithms"
+🎯 Mode: dual | Limit: 10 | Threshold: 0.5
+
+🔍 SEARCH RESULTS
+=================
+✅ Found 7 results in 1,247ms
+
+📄 Result 1 (Score: 0.891)
+┌─ URI: http://purl.org/stuff/instance/entity-ml-algorithms
+├─ Type: ragno:Entity
+├─ Content: Machine learning algorithms are computational methods that enable systems to learn patterns from data...
+└─ Source: http://purl.org/stuff/instance/chunk-abc123
+
+📄 Result 2 (Score: 0.834)
+┌─ URI: http://purl.org/stuff/instance/unit-neural-nets
+├─ Type: ragno:SemanticUnit
+├─ Content: Neural network algorithms form the foundation of deep learning approaches...
+└─ Source: http://purl.org/stuff/instance/chunk-def456
+
+📊 SEARCH STATISTICS
+====================
+• Total searches: 1
+• Successful searches: 1
+• Average search time: 1,247ms
+• Last search: dual mode, 7 results
+```
+
+**Prerequisites:**
+- Complete document processing pipeline:
+  1. `LoadPDFs.js` - Document ingestion
+  2. `ChunkDocuments.js` - Text chunking
+  3. `MakeEmbeddings.js` - Vector embeddings
+  4. `ExtractConcepts.js` or `Decompose.js` - Entity extraction
+- SPARQL endpoint with document data
+- Configured embedding providers for similarity search
+- LLM providers for entity extraction (if using traversal mode)
+
+**Technical Integration:**
+- **RagnoSearch System**: Full integration with dual search capabilities
+- **Vector Index**: HNSW-based similarity search with configurable dimensions
+- **SPARQL Templates**: Uses optimized query templates for different search types
+- **SearchFilters**: Advanced result filtering and ranking algorithms
+- **Graph Traversal**: Personalized PageRank for entity-centric search
+- **Performance**: Built-in caching and optimization for repeated searches
+
+**Comparison with RAG.js:**
+
+| Feature | Search.js | RAG.js |
+|---------|-----------|---------|
+| **Purpose** | Document discovery & exploration | Question answering with context |
+| **Search Modes** | 4 modes (dual, exact, similarity, traversal) | Similarity search only |
+| **Output** | Search results with metadata | Generated text responses |
+| **Interaction** | Search interface with filtering | RAG pipeline with augmentation |
+| **Use Cases** | Content discovery, research, exploration | Q&A, chatbot, knowledge retrieval |
+| **Result Types** | Documents, entities, semantic units | Contextual text generation |
+
+**Use Cases:**
+- **Research & Discovery**: Find related documents and concepts across large collections
+- **Content Exploration**: Navigate through semantic relationships between entities
+- **Quality Assessment**: Evaluate document processing results and entity extraction
+- **Graph Navigation**: Explore knowledge graph connections starting from specific entities
+- **Performance Analysis**: Monitor search system performance and result quality
+
 ## Workflow
 
 The typical workflow for processing documents is:
@@ -952,7 +1098,8 @@ The typical workflow for processing documents is:
 7. **SOM Clustering**: Use `node examples/document/SOM.js` to apply Self-Organizing Map clustering to corpuscles, creating concept-based clusters and relationships without using LLM or embedding tools
 8. **Enhance Corpuscles**: Use `node examples/document/EnhanceCorpuscles.js` to analyze corpuscles using graph analytics, adding structural importance features and creating enhanced corpuscles based on K-core decomposition and centrality analysis
 9. **RAG Question Answering**: Use `node examples/document/RAG.js` to perform Retrieval Augmented Generation over the processed document chunks, providing semantic search and contextually enhanced responses
-10. **Query Results**: Use the provided SPARQL queries to analyze the processed documents, embeddings, chunks, concepts, semantic decomposition, SOM clusters, and enhanced corpuscles
+10. **Advanced Search**: Use `node examples/document/Search.js` to perform comprehensive document search with multiple modes, filtering, and graph traversal capabilities
+11. **Query Results**: Use the provided SPARQL queries to analyze the processed documents, embeddings, chunks, concepts, semantic decomposition, SOM clusters, and enhanced corpuscles
 
 
 ## Configuration
