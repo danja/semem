@@ -144,5 +144,15 @@
     "popularityWeight": 0.2,
     "typeRelevanceWeight": 0.3,
     "skipExpandedSearch": false
+  },
+  "search": {
+    "defaultThreshold": 0.5,
+    "defaultMode": "dual",
+    "defaultLimit": 10,
+    "enableContextEnrichment": true,
+    "enableProvenance": true
+  },
+  "context": {
+    "truncationLimit": null
   }
 }

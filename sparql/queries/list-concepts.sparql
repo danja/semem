@@ -4,6 +4,7 @@ PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX prov: <http://www.w3.org/ns/prov#>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 PREFIX semem: <http://purl.org/semem/>
+PREFIX semem2: <http://semem.hyperdata.it/>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
 SELECT DISTINCT 
@@ -15,6 +16,9 @@ SELECT DISTINCT
     ?created
     ?hasEmbedding
     ?collectionCorpuscle
+    ?sourceUnit
+    ?documentTitle
+    ?documentFile
 WHERE {
     GRAPH <${graphURI}> {
         # Find concept corpuscles
@@ -44,6 +48,22 @@ WHERE {
             
             # Ensure it's actually a collection (not the individual concept corpuscle)
             FILTER(?collectionCorpuscle != ?conceptCorpuscle)
+        }
+        
+        # Trace back to source document through Chunk -> TextElement -> Unit -> Document
+        OPTIONAL {
+            # Chunk (sourceTextElement) was derived from TextElement
+            ?sourceTextElement prov:wasDerivedFrom ?intermediateTextElement .
+            ?intermediateTextElement a ragno:TextElement .
+            
+            # TextElement was derived from Unit
+            ?intermediateTextElement prov:wasDerivedFrom ?sourceUnit .
+            ?sourceUnit a ragno:Unit .
+            
+            # Get document title and file information from Unit
+            OPTIONAL { ?sourceUnit rdfs:label ?documentTitle }
+            OPTIONAL { ?sourceUnit semem:sourceFile ?documentFile }
+            OPTIONAL { ?sourceUnit semem2:sourceFile ?documentFile }
         }
         
         # Filter for concept corpuscles (labels start with "Concept:")

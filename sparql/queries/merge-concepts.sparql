@@ -1,0 +1,79 @@
+PREFIX ragno: <http://purl.org/stuff/ragno/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX semem: <http://purl.org/semem/>
+PREFIX semem2: <http://semem.hyperdata.it/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+# Find concepts that have the exact same label within the same source document
+# Uses the three-tier concept model: ragno:Unit (concept) -> ragno:Corpuscle (container) -> Collection Corpuscle
+SELECT DISTINCT 
+    ?conceptText
+    ?sourceUnit
+    ?documentTitle
+    ?documentFile
+    (GROUP_CONCAT(DISTINCT ?conceptCorpuscle; separator="|") AS ?duplicateCorpuscles)
+    (GROUP_CONCAT(DISTINCT ?conceptUnit; separator="|") AS ?conceptUnits)
+    (GROUP_CONCAT(DISTINCT ?sourceTextElement; separator="|") AS ?sourceChunks)
+    (GROUP_CONCAT(DISTINCT ?intermediateTextElement; separator="|") AS ?intermediateElements)
+    (GROUP_CONCAT(DISTINCT ?collectionCorpuscle; separator="|") AS ?collectionCorpuscles)
+    (COUNT(DISTINCT ?conceptCorpuscle) AS ?duplicateCount)
+WHERE {
+    GRAPH <${graphURI}> {
+        # Find concept corpuscles (ragno:Corpuscle) that contain semantic concepts
+        ?conceptCorpuscle a ragno:Corpuscle ;
+                         rdfs:label ?conceptLabel ;
+                         ragno:content ?conceptContent ;
+                         dcterms:created ?created ;
+                         prov:wasDerivedFrom ?sourceTextElement .
+        
+        # Find the corresponding semantic concept (ragno:Unit)
+        # These are ragno:Unit instances that represent concepts
+        ?conceptCorpuscle skos:member ?conceptUnit .
+        ?conceptUnit a ragno:Unit .
+        
+        # Find collection corpuscle that groups concepts from the same text element
+        OPTIONAL {
+            ?collectionCorpuscle a ragno:Corpuscle ;
+                               skos:member ?conceptUnit .
+            ?collectionCorpuscle prov:wasDerivedFrom ?sourceTextElement .
+            
+            # Ensure it's actually a collection (not the individual concept corpuscle)
+            FILTER(?collectionCorpuscle != ?conceptCorpuscle)
+        }
+        
+        # Trace back to source document through provenance chain:
+        # Concept -> Chunk -> TextElement -> Unit -> Document
+        OPTIONAL {
+            # Chunk (sourceTextElement) was derived from TextElement
+            ?sourceTextElement prov:wasDerivedFrom ?intermediateTextElement .
+            ?intermediateTextElement a ragno:TextElement .
+            
+            # TextElement was derived from Unit (Document)
+            ?intermediateTextElement prov:wasDerivedFrom ?sourceUnit .
+            ?sourceUnit a ragno:Unit .
+            
+            # Get document title and file information from source Unit
+            OPTIONAL { ?sourceUnit rdfs:label ?documentTitle }
+            OPTIONAL { ?sourceUnit semem:sourceFile ?documentFile }
+            OPTIONAL { ?sourceUnit semem2:sourceFile ?documentFile }
+        }
+        
+        # Filter for concept corpuscles (labels start with "Concept:")
+        FILTER(STRSTARTS(STR(?conceptLabel), "Concept:"))
+        
+        # Ensure the concept unit has an rdfs:label (the actual concept text)
+        ?conceptUnit rdfs:label ?conceptText .
+        
+        # Ensure we have a valid source document for grouping
+        FILTER(BOUND(?sourceUnit))
+    }
+}
+# Group by exact concept text and source document to find duplicates
+GROUP BY ?conceptText ?sourceUnit ?documentTitle ?documentFile
+# Only return groups that have multiple concept corpuscles (duplicates)
+HAVING (COUNT(DISTINCT ?conceptCorpuscle) > 1)
+ORDER BY DESC(?duplicateCount) ?documentTitle ?conceptText
+${limit}

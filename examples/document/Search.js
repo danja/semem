@@ -60,23 +60,27 @@ logger.debug(`   NOMIC_API_KEY: ${process.env.NOMIC_API_KEY ? 'SET' : 'NOT SET'}
 class DocumentSearchSystem {
     constructor(config, options = {}) {
         this.config = config;
+        // Get search defaults from config
+        const searchConfig = this.config.get('search') || {};
+        
         this.options = {
-            // Search behavior options
-            mode: options.mode || 'dual',              // dual, exact, similarity, traversal
-            limit: options.limit || 10,                // Number of results to return
-            threshold: options.threshold || 0.7,       // Relevance threshold
-            includeContext: options.includeContext !== false, // Include relationship context
-            includeProvenance: options.includeProvenance !== false, // Include search method info
+            // Start with passed options
+            ...options,
             
-            // Output formatting options
+            // Override with computed values from config
+            mode: options.mode || searchConfig.defaultMode || 'dual',              // dual, exact, similarity, traversal
+            limit: options.limit != null ? options.limit : (searchConfig.defaultLimit || 10),                // Number of results to return
+            threshold: options.threshold != null ? options.threshold : (searchConfig.defaultThreshold || 0.7),       // Relevance threshold
+            includeContext: options.includeContext !== false && (searchConfig.enableContextEnrichment !== false), // Include relationship context
+            includeProvenance: options.includeProvenance !== false && (searchConfig.enableProvenance !== false), // Include search method info
+            
+            // Output formatting options (can be overridden by options)
             format: options.format || 'detailed',      // detailed, summary, uris
             sortBy: options.sortBy || 'relevance',     // relevance, type, score
             
             // Graph and configuration options
             graphName: options.graphName || null,
-            verbose: options.verbose || false,
-            
-            ...options
+            verbose: options.verbose || false
         };
 
         // Core components
@@ -634,9 +638,9 @@ function parseArgs() {
     const args = process.argv.slice(2);
     const options = {
         query: null,
-        mode: 'dual',
-        limit: 10,
-        threshold: 0.7,
+        mode: null,      // Will use config default
+        limit: null,     // Will use config default
+        threshold: null, // Will use config default
         format: 'detailed',
         sortBy: 'relevance',
         graphName: null,
@@ -705,7 +709,7 @@ function showUsage() {
     console.log('Options:');
     console.log('  --mode <mode>        Search mode: dual, exact, similarity, traversal (default: dual)');
     console.log('  --limit <n>          Maximum number of results (default: 10)');
-    console.log('  --threshold <n>      Relevance threshold 0.0-1.0 (default: 0.7)');
+    console.log('  --threshold <n>      Relevance threshold 0.0-1.0 (default: from config, fallback 0.7)');
     console.log('  --format <format>    Output format: detailed, summary, uris (default: detailed)');
     console.log('  --sort <sort>        Sort results by: relevance, type, score (default: relevance)');
     console.log('  --graph <uri>        Named graph URI to search (default: from config)');

@@ -73,6 +73,9 @@ Examples:
     console.log('🔍 Listing Concepts from Knowledge Graph');
     console.log('='.repeat(60));
 
+    let queryService = null;
+    let sparqlHelper = null;
+
     try {
         // Load configuration
         const configPath = process.cwd().endsWith('/examples/document') 
@@ -87,13 +90,13 @@ Examples:
         const sparqlEndpoint = storageConfig?.options?.query || 'http://localhost:3030/semem/query';
 
         // Create query service and SPARQL helper
-        const queryService = new SPARQLQueryService({
+        queryService = new SPARQLQueryService({
             queryPath: process.cwd().endsWith('/examples/document') 
                 ? '../../sparql/queries' 
                 : 'sparql/queries'
         });
 
-        const sparqlHelper = new SPARQLHelper(sparqlEndpoint, {
+        sparqlHelper = new SPARQLHelper(sparqlEndpoint, {
             user: storageConfig?.options?.user,
             password: storageConfig?.options?.password
         });
@@ -136,44 +139,54 @@ Examples:
             return;
         }
 
-        // Group concepts by source text element for better organization
-        const conceptsBySource = {};
+        // Group concepts by source document for better organization
+        const conceptsByDocument = {};
         concepts.forEach(concept => {
-            const sourceURI = concept.sourceTextElement.value;
-            if (!conceptsBySource[sourceURI]) {
-                conceptsBySource[sourceURI] = [];
+            const docTitle = concept.documentTitle ? concept.documentTitle.value : 'Unknown Document';
+            const docFile = concept.documentFile ? concept.documentFile.value : 'Unknown File';
+            const docKey = `${docTitle}||${docFile}`;
+            
+            if (!conceptsByDocument[docKey]) {
+                conceptsByDocument[docKey] = {
+                    title: docTitle,
+                    file: docFile,
+                    concepts: []
+                };
             }
-            conceptsBySource[sourceURI].push(concept);
+            conceptsByDocument[docKey].concepts.push(concept);
         });
 
         // Display concepts based on format
         let conceptIndex = 1;
         
-        for (const [sourceURI, sourceConcepts] of Object.entries(conceptsBySource)) {
+        for (const [docKey, docData] of Object.entries(conceptsByDocument)) {
             if (args.format === 'compact') {
                 // Compact format - just concept content
-                sourceConcepts.forEach(concept => {
+                docData.concepts.forEach(concept => {
                     console.log(concept.conceptContent.value);
                 });
             } else if (args.format === 'summary') {
-                // Summary format - concept content and source
-                console.log(`📄 Source: ${sourceURI.split('/').pop()}`);
-                sourceConcepts.forEach(concept => {
+                // Summary format - concept content and source document
+                console.log(`📚 Document: ${docData.title}`);
+                console.log(`📁 File: ${docData.file}`);
+                console.log(`📝 Concepts (${docData.concepts.length}):`);
+                docData.concepts.forEach(concept => {
                     console.log(`   • ${concept.conceptContent.value}`);
                 });
                 console.log('');
             } else {
                 // Detailed format - full information
-                console.log(`📄 Source TextElement: ${sourceURI.split('/').pop()}`);
-                console.log(`   Full URI: ${sourceURI}`);
-                console.log(`   Concepts (${sourceConcepts.length}):`);
+                console.log(`📚 Document: ${docData.title}`);
+                console.log(`📁 File: ${docData.file}`);
+                console.log(`📝 Concepts (${docData.concepts.length}):`);
                 
-                sourceConcepts.forEach(concept => {
+                docData.concepts.forEach(concept => {
                     console.log(`   ${conceptIndex}. ${concept.conceptContent.value}`);
-                    console.log(`       📍 URI: ${concept.conceptCorpuscle.value.split('/').pop()}`);
+                    console.log(`       📍 Concept URI: ${concept.conceptCorpuscle.value.split('/').pop()}`);
                     console.log(`       🏷️  Label: ${concept.conceptLabel.value}`);
                     console.log(`       📅 Created: ${concept.created.value}`);
                     console.log(`       🧠 Has Embedding: ${concept.hasEmbedding ? 'Yes' : 'No'}`);
+                    console.log(`       📄 TextElement: ${concept.sourceTextElement.value.split('/').pop()}`);
                     
                     if (concept.conceptUnit) {
                         console.log(`       🔗 Unit URI: ${concept.conceptUnit.value.split('/').pop()}`);
@@ -181,6 +194,10 @@ Examples:
                     
                     if (concept.collectionCorpuscle) {
                         console.log(`       📦 Collection: ${concept.collectionCorpuscle.value.split('/').pop()}`);
+                    }
+                    
+                    if (concept.sourceUnit) {
+                        console.log(`       📖 Source Unit: ${concept.sourceUnit.value.split('/').pop()}`);
                     }
                     
                     console.log('');
@@ -195,10 +212,11 @@ Examples:
         if (args.format !== 'compact') {
             console.log('📊 Summary Statistics:');
             console.log(`   Total concepts: ${concepts.length}`);
-            console.log(`   Source text elements: ${Object.keys(conceptsBySource).length}`);
+            console.log(`   Source documents: ${Object.keys(conceptsByDocument).length}`);
             console.log(`   Concepts with embeddings: ${concepts.filter(c => c.hasEmbedding).length}`);
             console.log(`   Concepts with units: ${concepts.filter(c => c.conceptUnit).length}`);
             console.log(`   Concepts in collections: ${concepts.filter(c => c.collectionCorpuscle).length}`);
+            console.log(`   Concepts with document titles: ${concepts.filter(c => c.documentTitle).length}`);
             console.log('');
         }
 
@@ -218,7 +236,22 @@ Examples:
         console.log('- Verify that concepts have been extracted (run ExtractConcepts.js)');
         console.log('- Check network connectivity to SPARQL endpoint');
         
+        // Cleanup before exit
+        if (queryService) {
+            queryService.cleanup();
+        }
+        
         process.exit(1);
+    } finally {
+        // Always cleanup connections
+        if (queryService) {
+            queryService.cleanup();
+        }
+        
+        // Force exit after a short delay to ensure cleanup completes
+        setTimeout(() => {
+            process.exit(0);
+        }, 100);
     }
 }
 

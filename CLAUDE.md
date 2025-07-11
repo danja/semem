@@ -16,9 +16,12 @@ Only look at docs when requested. Always ignore all files under docs/ignore
 
 ## Development Guidelines
 
+When creating new code follow the patterns described in `docs/manual/infrastructure.md`
+
 - scripts should be run from the server root
 
-## Documentation Guidelines
+
+## Blog Guidelines
 
 - Progress reports and plans should be saved as md files under docs/postcraft/content/raw/entries/ 
 - Naming scheme follows format: `YYYY-MM-DD_claude_title.md`
@@ -26,54 +29,6 @@ Only look at docs when requested. Always ignore all files under docs/ignore
 - Document should be rendered in the style of a development worklog
 - If the document exceeds a page or two, or if the primary topic of activity changes, create a new document
 
-## Commands
-
-### Setup
-
-```bash
-# Copy example environment file and configure API keys
-cp example.env .env
-
-# Install dependencies
-npm install
-
-# Install Ollama models (if using Ollama)
-ollama pull nomic-embed-text
-ollama pull qwen2:1.5b
-```
-
-### Testing
-
-```bash
-# Run all tests
-npm test
-
-# Run a specific test file
-npm test -- tests/unit/Config.spec.js
-
-# Run tests with coverage
-npm test:coverage
-
-# Generate HTML coverage report
-npm test:report
-
-# Check coverage thresholds
-npm test:check
-```
-
-### Documentation
-
-```bash
-# Generate JSDoc documentation
-npm run docs
-```
-
-### Repository Tools
-
-```bash
-# Run repomix with configurations
-npm run rp
-```
 
 ## Architecture
 
@@ -108,18 +63,11 @@ Semem has a layered architecture with the following key components:
 
 6. **Ragno Layer (Knowledge Graph Integration)**
    - `Entity`: RDF-based entities extracted from text
-   - `SemanticUnit`: Independent semantic units from corpus decomposition  
+   - `Unit`: Independent semantic units from corpus decomposition  
    - `Relationship`: First-class relationship nodes between entities
    - `RDFGraphManager`: Manages RDF graph operations
    - `decomposeCorpus`: Main function for text-to-RDF decomposition
    - Uses Ragno vocabulary (http://purl.org/stuff/ragno/) for RDF modeling
-
-## Requirements
-
-- Node.js 20.11.0+
-- SPARQL endpoint (Apache Fuseki) for SPARQL-based storage
-- Ollama or compatible LLM service
-- API keys for various LLM providers (configured in .env)
 
 ## Working with the Codebase
 
@@ -131,9 +79,12 @@ Semem has a layered architecture with the following key components:
 
 ## Common Issues and Solutions
 
-### Configuration patterns
-- Read `docs/manual/config.md` for general setup
-- Read `docs/manual/provider-config.md` for details of embedding and llm chat completion services
+If problems are enountered in the following areas, refer to documentation :
+
+- Read `docs/manual/config.md` for issues related to general setup
+- Read `docs/manual/provider-config.md` for issues relating to embedding and llm chat completion services
+- Read `docs/manual/prompt-management.md` for issues related to chat completion prompts
+- Read `docs/manual/sparql-service.md` for issues related to SPARQL 
 
 ### LLM Connector and Model Configuration (from api-server.js)
 The semem system uses a priority-based LLM provider configuration pattern:

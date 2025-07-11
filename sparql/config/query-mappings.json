@@ -26,5 +26,7 @@
   "store-textelement-embedding": "store-textelement-embedding.sparql",
   "find-chunks-for-decomposition": "find-chunks-for-decomposition.sparql",
   "mark-chunks-decomposed": "mark-chunks-decomposed.sparql",
-  "list-concepts": "list-concepts.sparql"
+  "list-concepts": "list-concepts.sparql",
+  "merge-concepts": "merge-concepts.sparql",
+  "corpuscle-details": "corpuscle-details.sparql"
 }

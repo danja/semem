@@ -53,7 +53,11 @@ class ConsumeQuestion {
         }
         
         // Initialize SPARQL services
-        this.queryService = new SPARQLQueryService();
+        this.queryService = new SPARQLQueryService({
+            queryPath: process.cwd().endsWith('/examples/document') 
+                ? '../../sparql/queries' 
+                : 'sparql/queries'
+        });
         this.sparqlHelper = new SPARQLHelper(storageConfig.options.query, {
             user: storageConfig.options.user,
             password: storageConfig.options.password
@@ -103,54 +107,22 @@ class ConsumeQuestion {
 
     /**
      * Query the SPARQL store for detailed information about the corpuscle
+     * Uses the SPARQLQueryService templating system as described in docs/manual/sparql-service.md
      */
     async queryCorpuscleDetails(corpuscleURI, graphName = null) {
         const storageConfig = this.config.get('storage');
         const targetGraph = graphName || storageConfig.options.graphName || this.config.get('graphName') || 'http://tensegrity.it/semem';
 
-        const query = `
-        PREFIX ragno: <http://purl.org/stuff/ragno/>
-        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-        PREFIX dcterms: <http://purl.org/dc/terms/>
-        PREFIX prov: <http://www.w3.org/ns/prov#>
-        PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-        PREFIX semem: <http://semem.hyperdata.it/>
+        // Use SPARQLQueryService with the corpuscle-details query template
+        // Query file: sparql/queries/corpuscle-details.sparql
+        // Template parameters: graphURI, corpuscleURI
+        const queryParams = {
+            graphURI: targetGraph,
+            corpuscleURI: corpuscleURI
+        };
 
-        SELECT DISTINCT ?property ?value ?type WHERE {
-            GRAPH <${targetGraph}> {
-                {
-                    # Direct properties of the corpuscle
-                    <${corpuscleURI}> ?property ?value .
-                    BIND("corpuscle" AS ?type)
-                }
-                UNION
-                {
-                    # Related text element details
-                    <${corpuscleURI}> prov:wasDerivedFrom ?textElement .
-                    ?textElement ?property ?value .
-                    BIND("textElement" AS ?type)
-                }
-                UNION
-                {
-                    # Related question unit details
-                    <${corpuscleURI}> prov:wasDerivedFrom ?textElement .
-                    ?textElement prov:wasDerivedFrom ?questionUnit .
-                    ?questionUnit ?property ?value .
-                    BIND("questionUnit" AS ?type)
-                }
-                UNION
-                {
-                    # Concepts in the corpuscle
-                    <${corpuscleURI}> skos:member ?concept .
-                    ?concept rdfs:label ?value .
-                    BIND(rdfs:label AS ?property)
-                    BIND("concept" AS ?type)
-                }
-            }
-        }
-        ORDER BY ?type ?property ?value
-        `;
+        logger.debug('🔍 Loading corpuscle details query from template...');
+        const query = await this.queryService.getQuery('corpuscle-details', queryParams);
 
         logger.debug('🔍 Executing corpuscle details query...');
         const result = await this.sparqlHelper.executeSelect(query);
@@ -237,7 +209,7 @@ class ConsumeQuestion {
         }
         
         if (this.queryService && typeof this.queryService.cleanup === 'function') {
-            await this.queryService.cleanup();
+            this.queryService.cleanup();
         }
 
         logger.info('✅ ConsumeQuestion cleanup completed');

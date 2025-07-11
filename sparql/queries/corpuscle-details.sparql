@@ -1,0 +1,41 @@
+PREFIX ragno: <http://purl.org/stuff/ragno/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX semem: <http://semem.hyperdata.it/>
+
+SELECT DISTINCT ?property ?value ?type WHERE {
+    GRAPH <${graphURI}> {
+        {
+            # Direct properties of the corpuscle
+            <${corpuscleURI}> ?property ?value .
+            BIND("corpuscle" AS ?type)
+        }
+        UNION
+        {
+            # Related text element details
+            <${corpuscleURI}> prov:wasDerivedFrom ?textElement .
+            ?textElement ?property ?value .
+            BIND("textElement" AS ?type)
+        }
+        UNION
+        {
+            # Related question unit details
+            <${corpuscleURI}> prov:wasDerivedFrom ?textElement .
+            ?textElement prov:wasDerivedFrom ?questionUnit .
+            ?questionUnit ?property ?value .
+            BIND("questionUnit" AS ?type)
+        }
+        UNION
+        {
+            # Concepts in the corpuscle
+            <${corpuscleURI}> skos:member ?concept .
+            ?concept rdfs:label ?value .
+            BIND(rdfs:label AS ?property)
+            BIND("concept" AS ?type)
+        }
+    }
+}
+ORDER BY ?type ?property ?value

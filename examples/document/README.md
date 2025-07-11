@@ -27,6 +27,10 @@ node examples/document/RAG.js --interactive
 # Advanced Search System
 node examples/document/Search.js "machine learning"
 node examples/document/Search.js --interactive
+
+# Ask Ragno - Interactive Q&A System
+node examples/document/AskRagno.js "What is machine learning?"
+node examples/document/AskRagno.js --interactive
 ```
 
 
@@ -252,6 +256,154 @@ node examples/document/ExtractConcepts.js --help
     prov:wasDerivedFrom <http://purl.org/stuff/instance/chunk-abcd1234> ;
     ragno:inCorpuscle <http://purl.org/stuff/instance/corpuscle-xyz789> .
 ```
+
+### ListConcepts.js
+
+Lists and analyzes extracted concepts from the knowledge graph, providing insights into the concept extraction results. This script traces concepts back to their source documents through the full path: Concept → Chunk → TextElement → Unit → Document.
+
+**Features:**
+- Lists all concept corpuscles created by ExtractConcepts.js with full document traceability
+- Organizes concepts by source document (PDF file) rather than individual chunks
+- Supports three output formats: detailed, summary, and compact
+- Shows concept metadata including embeddings, creation dates, and relationships
+- Provides comprehensive statistics about concept extraction results
+- Follows the complete path from concepts back to original PDF documents
+- Proper connection cleanup to avoid hanging processes
+
+**Usage:**
+```bash
+# List concepts with default settings (50 concepts, detailed format)
+node examples/document/ListConcepts.js
+
+# List concepts from specific graph with limit
+node examples/document/ListConcepts.js --graph "http://example.org/my-docs" --limit 20
+
+# Summary format grouped by document
+node examples/document/ListConcepts.js --format summary --limit 10
+
+# Compact format for processing (just concept text)
+node examples/document/ListConcepts.js --format compact --limit 100
+
+# Show help
+node examples/document/ListConcepts.js --help
+```
+
+**Command Line Options:**
+- `--limit <number>` - Maximum number of concepts to display (default: 50)
+- `--graph <uri>` - Graph URI to query (default: from config)
+- `--format <format>` - Output format: detailed, summary, compact (default: detailed)
+- `--help, -h` - Show help message
+
+**Output Formats:**
+- **Detailed**: Full concept information including URIs, embeddings, creation dates, and document traceability
+- **Summary**: Concepts grouped by source document with document titles and file paths
+- **Compact**: Just concept text content (one per line) suitable for further processing
+
+**Sample Output (Summary Format):**
+```
+📚 Document: beerQA
+📁 File: data/pdfs/beerQA.pdf
+📝 Concepts (8):
+   • BeerQA
+   • Wikipedia corpora versions
+   • benchmark
+   • competitive performance
+   • iterative fashion
+   • knowledge bases
+
+📚 Document: elife-52614-v1
+📁 File: data/pdfs/elife-52614-v1.pdf
+📝 Concepts (5):
+   • protein structures
+   • molecular dynamics
+   • machine learning
+   • neural networks
+   • deep learning
+
+📊 Summary Statistics:
+   Total concepts: 13
+   Source documents: 2
+   Concepts with embeddings: 13
+   Concepts with units: 13
+   Concepts in collections: 13
+   Concepts with document titles: 13
+```
+
+**Prerequisites:**
+- Concepts must be extracted using ExtractConcepts.js
+- Document processing pipeline must be complete: LoadPDFs.js → ChunkDocuments.js → MakeEmbeddings.js → ExtractConcepts.js
+- SPARQL endpoint with document data and concept corpuscles
+
+**Technical Details:**
+- Uses SPARQLQueryService with the list-concepts.sparql query template
+- Traces concept lineage through the full document hierarchy
+- Supports both semem: and semem2: namespaces for sourceFile properties
+- Properly handles SPARQL connection cleanup to avoid hanging processes
+- Groups concepts by document for better organization and analysis
+
+### MergeConcepts.js
+
+Finds duplicate concepts (same exact label) within the same source document and merges them into a single concept. This helps consolidate concept extraction results and reduce redundancy by combining all intermediate text elements from duplicate concepts into a merged concept while removing the redundant concept corpuscles.
+
+**Features:**
+- Finds concepts with identical labels that originated from the same source document
+- Uses the three-tier concept model: `ragno:Unit` (concept) → `ragno:Corpuscle` (container) → Collection Corpuscle
+- Creates merged concept units and corpuscles that consolidate all relationships
+- Removes duplicate concept corpuscles and their associated concept units
+- Preserves all intermediate text elements and provenance information
+- Supports dry-run mode for previewing merges without making changes
+- Proper connection cleanup to avoid hanging processes
+
+**Usage:**
+```bash
+# Merge duplicate concepts (default: up to 50 groups)
+node examples/document/MergeConcepts.js
+
+# Preview what would be merged without making changes
+node examples/document/MergeConcepts.js --dry-run
+
+# Process specific number of concept groups
+node examples/document/MergeConcepts.js --limit 20
+
+# Use custom SPARQL graph
+node examples/document/MergeConcepts.js --graph "http://example.org/my-docs"
+
+# Show help
+node examples/document/MergeConcepts.js --help
+```
+
+**Command Line Options:**
+- `--limit <number>` - Maximum number of concept groups to process (default: 50)
+- `--graph <uri>` - Graph URI to query (default: from config)
+- `--dry-run` - Show what would be merged without making changes
+- `--help, -h` - Show help message
+
+**Sample Output:**
+```
+📚 Document: Research Paper on AI
+📁 File: data/pdfs/ai-research.pdf
+🔗 Concept: "machine learning"
+🏷️  Label: "Concept: machine learning"
+🔢 Duplicates: 3 copies
+🎯 Concept units: 3
+📄 Source chunks: 3
+📋 Intermediate elements: 3
+   ✅ Successfully merged into: merged-concept-corpuscle-abc123
+   🗑️  Removed 2 duplicate concepts
+```
+
+**Prerequisites:**
+- Concepts must be extracted using ExtractConcepts.js
+- Document processing pipeline must be complete
+- SPARQL endpoint with document data and concept corpuscles
+
+**Technical Details:**
+- Uses SPARQLQueryService with the merge-concepts.sparql query template
+- Groups concepts by exact label match within the same source document
+- Creates merged concept units as `ragno:Unit` (not `skos:Concept`)
+- Maintains proper provenance chains with `prov:wasDerivedFrom`
+- Uses `ragno:mergedFrom` property to track original duplicate sources
+- Deletes both concept units and corpuscles during cleanup
 
 ### Decompose.js
 
@@ -1085,6 +1237,115 @@ node examples/document/Search.js --help
 - **Graph Navigation**: Explore knowledge graph connections starting from specific entities
 - **Performance Analysis**: Monitor search system performance and result quality
 
+### AskRagno.js
+
+Implements a comprehensive question-answering system that combines question storage, semantic search, and contextual answer generation. Unlike RAG.js which focuses on retrieval augmented generation, AskRagno provides persistent question storage and advanced search integration.
+
+**Features:**
+- **Question Storage**: Questions stored as corpuscles in SPARQL store for future reference
+- **Semantic Search**: Integration with DocumentSearchSystem for comprehensive context retrieval
+- **Context Augmentation**: Uses ContextManager to build comprehensive context from search results
+- **Multi-Provider LLM**: Priority-based LLM provider selection (Mistral → Claude → Ollama)
+- **Interactive Mode**: CLI interface supporting both single questions and continuous Q&A sessions
+- **Performance Monitoring**: Built-in statistics tracking and response time monitoring
+
+**Usage:**
+```bash
+# Ask a single question (run from project root)
+node examples/document/AskRagno.js "What is machine learning?"
+
+# Interactive mode for multiple questions
+node examples/document/AskRagno.js --interactive
+
+# Custom graph and verbose logging
+node examples/document/AskRagno.js "How do neural networks work?" --graph "http://example.org/my-docs" --verbose
+
+# Show help
+node examples/document/AskRagno.js --help
+```
+
+**Command Line Options:**
+- `--graph <uri>` - Named graph URI to use (default: from config)
+- `--interactive` - Interactive mode for multiple questions
+- `--verbose` - Enable verbose logging
+- `--help, -h` - Show help message
+
+**Architecture:**
+```
+User Question → Store as Corpuscle → Search for Context → Build Augmented Prompt → Generate Answer
+```
+
+**Sample Output:**
+```
+🤖 AskRagno Interactive Mode
+Ask your questions and get contextually augmented answers!
+==================================================
+
+❓ Your question: What is machine learning?
+
+🔍 PROCESSING QUESTION
+========================================
+📝 Step 1: Storing question as corpuscle...
+✅ Question stored: http://purl.org/stuff/instance/corpuscle-abc123
+
+🔍 Step 2: Searching for relevant information...
+✅ Found 3 relevant results
+
+🧠 Step 3: Building context from search results...
+✅ Context built (2847 characters)
+
+💬 Step 4: Generating answer with LLM...
+✅ Answer generated (456 characters)
+
+🤖 Answer:
+========================================
+Machine learning is a subset of artificial intelligence that enables computers to learn from data without being explicitly programmed. It uses algorithms that iteratively learn from data, allowing systems to find insights and make predictions about new data based on patterns discovered in training data.
+========================================
+📊 Response time: 3,247ms | Context sources: 3
+🔗 Question stored: http://purl.org/stuff/instance/corpuscle-abc123
+```
+
+**Prerequisites:**
+- Document processing pipeline completed:
+  1. `LoadPDFs.js` - Document ingestion
+  2. `ChunkDocuments.js` - Text chunking
+  3. `MakeEmbeddings.js` - Vector embeddings
+  4. `ExtractConcepts.js` - Concept extraction
+- SPARQL endpoint running with document data
+- Configured LLM providers in config.json
+- Environment variables set in .env file
+
+**Technical Integration:**
+- **Question Storage**: Uses TextToCorpuscle patterns for persistent question storage
+- **Search Integration**: Full DocumentSearchSystem integration with dual search capabilities
+- **Context Building**: ContextManager for intelligent context augmentation
+- **LLM Integration**: Multi-provider support with graceful fallback handling
+- **Resource Management**: Proper cleanup and connection management
+
+**Comparison with RAG.js and Search.js:**
+
+| Feature | AskRagno.js | RAG.js | Search.js |
+|---------|-------------|---------|-----------|
+| **Purpose** | Interactive Q&A with persistence | Document-based question answering | Document discovery & exploration |
+| **Question Storage** | Persistent as corpuscles | Ephemeral | N/A |
+| **Search Integration** | Full DocumentSearchSystem | FAISS similarity only | Advanced multi-mode search |
+| **Context Building** | ContextManager integration | Basic context augmentation | No context building |
+| **LLM Integration** | Multi-provider with fallback | Single provider | Entity extraction only |
+| **Interactive Mode** | Full CLI with statistics | Basic interactive | Advanced interactive |
+| **Use Cases** | Q&A systems, chatbots, knowledge bases | Quick document Q&A | Research, content discovery |
+
+**Performance Characteristics:**
+- Response times typically under 5 seconds
+- Supports concurrent question processing
+- Built-in performance monitoring and statistics
+- Proper resource cleanup and connection management
+
+**Error Handling:**
+- Graceful handling of service failures (SPARQL, search, LLM)
+- Continues processing with partial results
+- Clear error messages for configuration issues
+- Proper cleanup even during error conditions
+
 ## Workflow
 
 The typical workflow for processing documents is:
@@ -1099,7 +1360,8 @@ The typical workflow for processing documents is:
 8. **Enhance Corpuscles**: Use `node examples/document/EnhanceCorpuscles.js` to analyze corpuscles using graph analytics, adding structural importance features and creating enhanced corpuscles based on K-core decomposition and centrality analysis
 9. **RAG Question Answering**: Use `node examples/document/RAG.js` to perform Retrieval Augmented Generation over the processed document chunks, providing semantic search and contextually enhanced responses
 10. **Advanced Search**: Use `node examples/document/Search.js` to perform comprehensive document search with multiple modes, filtering, and graph traversal capabilities
-11. **Query Results**: Use the provided SPARQL queries to analyze the processed documents, embeddings, chunks, concepts, semantic decomposition, SOM clusters, and enhanced corpuscles
+11. **Interactive Q&A**: Use `node examples/document/AskRagno.js` to ask questions with persistent storage, advanced search integration, and contextual answer generation
+12. **Query Results**: Use the provided SPARQL queries to analyze the processed documents, embeddings, chunks, concepts, semantic decomposition, SOM clusters, and enhanced corpuscles
 
 
 ## Configuration
