@@ -1,6 +1,54 @@
 # Document Processing Examples
 
-This directory contains scripts for processing PDF documents in theSemem knowledge management system.
+This directory contains scripts for processing PDF documents in the Semem knowledge management system.
+
+## 🧠 Memory Ingestion - AddMemory.js (Quick Start)
+
+**For quick text ingestion**, use the unified memory ingestion script that handles the complete pipeline in one command:
+
+```bash
+# Add text file to memory with complete processing
+node examples/document/AddMemory.js document.txt --title "Document Title"
+
+# Add text with custom options
+node examples/document/AddMemory.js text.md --title "My Notes" --graph "http://my.graph/uri" --verbose
+
+# Process from stdin
+echo "AI is transforming technology" | node examples/document/AddMemory.js --title "AI Note"
+```
+
+**Features:**
+- **Complete Pipeline**: Text → ragno:Unit → Chunking → Embeddings → Concepts → Decomposition → SPARQL Storage
+- **Provider Integration**: Automatic LLM/embedding provider selection (Mistral, Claude, Ollama)
+- **Real-time Statistics**: Processing metrics and timing information
+- **Error Handling**: Comprehensive validation and graceful fallbacks
+- **Configurable Concept Extraction**: Sensitivity controlled via `config/config.json`
+
+The AddMemory.js script orchestrates the entire memory ingestion pipeline automatically, making it the preferred method for adding new content to the semantic memory system.
+
+### Concept Extraction Configuration
+
+The sensitivity of concept extraction can be controlled via the `conceptExtraction` section in `config/config.json`:
+
+```json
+{
+  "conceptExtraction": {
+    "maxConcepts": 3,        // Maximum concepts per text chunk (conservative default)
+    "temperature": 0.1,      // LLM temperature for focused extraction
+    "minConceptLength": 4,   // Minimum concept character length
+    "maxConceptLength": 80   // Maximum concept character length
+  }
+}
+```
+
+**Tuning Guidelines:**
+- **Conservative (recommended)**: `maxConcepts: 2-3, temperature: 0.1` - Fewer, high-quality concepts
+- **Balanced**: `maxConcepts: 4-5, temperature: 0.2` - Moderate concept extraction
+- **Comprehensive**: `maxConcepts: 6-8, temperature: 0.3` - More concepts, may include noise
+
+The defaults are set conservatively to prevent creating excessive ragno:Unit instances while maintaining semantic richness.
+
+---
 
 **Example Workflow:**
 
@@ -1371,6 +1419,16 @@ All scripts use the semem configuration system:
 - Environment variables: `.env` file for credentials
 - SPARQL endpoints: Configured in the config file with environment variable substitution
 - Embedding providers: Configurable (Ollama, Nomic) with model selection and API keys
+- **Concept extraction**: Sensitivity controlled via `conceptExtraction` section (see AddMemory.js section above)
+
+### Key Configuration Sections
+
+- **`conceptExtraction`**: Controls concept extraction sensitivity and limits (see AddMemory.js documentation)
+- **`llmProviders`**: Priority-based LLM provider configuration with fallback support
+- **`storage`**: SPARQL endpoint configuration for knowledge graph storage
+- **`performance`**: Performance tuning for various processing components
+
+See [config.md](../../docs/manual/config.md) for complete configuration documentation.
 
 ## Dependencies
 

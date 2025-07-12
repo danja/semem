@@ -1,0 +1,11 @@
+PREFIX ragno: <http://purl.org/stuff/ragno/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX semem: <http://semem.hyperdata.it/>
+
+ASK WHERE {
+    GRAPH <${graphURI}> {
+        ?unit a ragno:Unit ;
+              semem:sourceFile "${sourceFile}" .
+    }
+}

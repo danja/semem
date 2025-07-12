@@ -319,6 +319,108 @@ export class CreateConceptsUnified {
     }
 
     /**
+     * Check for existing concepts in the store to enable deduplication
+     * @param {string[]} concepts - Array of concept texts to check
+     * @param {string} targetGraph - Graph URI to search in
+     * @returns {Object} Map of concept text to existing concept information
+     */
+    async checkExistingConcepts(concepts, targetGraph) {
+        if (!concepts || concepts.length === 0) {
+            return {};
+        }
+
+        // Check if deduplication is enabled in config
+        const deduplicationConfig = this.config.get('conceptExtraction.deduplication') || {};
+        if (!deduplicationConfig.enabled) {
+            logger.info(`⚠️  Concept deduplication disabled in configuration - creating all concepts as new`);
+            return {};
+        }
+
+        try {
+            logger.info(`🔍 Checking for existing concepts: ${concepts.length} concepts to verify (deduplication enabled)`);
+            
+            // Build dynamic filter for concept text matching based on config
+            const caseInsensitive = deduplicationConfig.caseInsensitive !== false; // Default true
+            const maxConceptsToCheck = deduplicationConfig.maxExistingConceptsToCheck || 1000;
+            
+            const conceptFilters = concepts.map(concept => {
+                const escapedConcept = concept.replace(/"/g, '\\"');
+                if (caseInsensitive) {
+                    return `(LCASE(?conceptContent) = LCASE("${escapedConcept}") || LCASE(?conceptText) = LCASE("${escapedConcept}"))`;
+                } else {
+                    return `(?conceptContent = "${escapedConcept}" || ?conceptText = "${escapedConcept}")`;
+                }
+            }).join(' || ');
+            
+            const conceptTextsFilter = `FILTER(${conceptFilters})`;
+            
+            // Load and execute the find-existing-concepts query
+            const queryTemplate = await this.queryService.loadQuery('find-existing-concepts');
+            if (!queryTemplate) {
+                throw new Error('find-existing-concepts query template not found');
+            }
+            
+            const query = queryTemplate
+                .replace('${graphURI}', targetGraph)
+                .replace('${conceptTexts}', conceptTextsFilter)
+                .replace('${additionalFilters}', '')
+                .replace('${limitClause}', `LIMIT ${maxConceptsToCheck}`);
+            
+            logger.debug('Executing concept existence check query...');
+            const result = await this.sparqlHelper.executeSelect(query);
+            
+            if (!result.success) {
+                throw new Error(`SPARQL query failed: ${result.error}`);
+            }
+            
+            // Process results into a lookup map
+            const existingConcepts = {};
+            const bindings = result.data.results.bindings;
+            
+            for (const binding of bindings) {
+                const conceptText = binding.conceptText?.value || binding.conceptContent?.value;
+                if (conceptText) {
+                    // Store the first (most recent) match for each concept text
+                    if (!existingConcepts[conceptText.toLowerCase()]) {
+                        existingConcepts[conceptText.toLowerCase()] = {
+                            conceptCorpuscle: binding.conceptCorpuscle?.value,
+                            conceptUnit: binding.conceptUnit?.value,
+                            conceptText: conceptText,
+                            conceptContent: binding.conceptContent?.value,
+                            conceptLabel: binding.conceptLabel?.value,
+                            embedding: binding.embedding?.value,
+                            created: binding.created?.value,
+                            sourceTextElement: binding.sourceTextElement?.value,
+                            sourceUnit: binding.sourceUnit?.value,
+                            collectionCorpuscle: binding.collectionCorpuscle?.value
+                        };
+                    }
+                }
+            }
+            
+            const foundCount = Object.keys(existingConcepts).length;
+            const newCount = concepts.length - foundCount;
+            
+            logger.info(`✅ Concept deduplication check completed:`);
+            logger.info(`   📋 Concepts checked: ${concepts.length}`);
+            logger.info(`   🔍 Existing concepts found: ${foundCount}`);
+            logger.info(`   ✨ New concepts to create: ${newCount}`);
+            
+            if (foundCount > 0) {
+                const foundConcepts = Object.values(existingConcepts).map(c => c.conceptText).slice(0, 3);
+                logger.info(`   📝 Sample existing: ${foundConcepts.join(', ')}${foundCount > 3 ? '...' : ''}`);
+            }
+            
+            return existingConcepts;
+            
+        } catch (error) {
+            logger.warn(`⚠️  Failed to check existing concepts: ${error.message}`);
+            logger.warn('Falling back to creating all concepts as new (no deduplication)');
+            return {}; // Return empty map to indicate no existing concepts found
+        }
+    }
+
+    /**
      * Find TextElements without concepts using SPARQL template
      */
     async findTextElementsWithoutConcepts(targetGraph, limit = 0) {
@@ -369,18 +471,22 @@ export class CreateConceptsUnified {
         try {
             logger.info(`🧠 Extracting concepts from content (${content.length} characters) using unified prompt system...`);
             
+            // Get config values
+            const temperature = this.config.get('conceptExtraction.temperature') || 0.2;
+            const retries = this.config.get('conceptExtraction.retries') || 3;
+            
             // Create prompt context
             const context = new PromptContext({
                 arguments: { text: content },
                 model: this.chatModel,
-                temperature: 0.2
+                temperature: temperature
             });
 
             // Create prompt options
             const options = new PromptOptions({
                 format: 'completion',
-                temperature: 0.2,
-                retries: 3,
+                temperature: temperature,
+                retries: retries,
                 useMemory: false,
                 debug: false
             });
@@ -541,12 +647,16 @@ export class CreateConceptsUnified {
                 throw new Error('Response is not in expected format');
             }
 
-            // Clean and validate concepts
+            // Clean and validate concepts using config
+            const maxConcepts = this.config.get('conceptExtraction.maxConcepts') || 5;
+            const minLength = this.config.get('conceptExtraction.minConceptLength') || 3;
+            const maxLength = this.config.get('conceptExtraction.maxConceptLength') || 100;
+            
             const cleanedConcepts = concepts
                 .filter(concept => concept && typeof concept === 'string')
                 .map(concept => concept.trim())
-                .filter(concept => concept.length > 0)
-                .slice(0, 20); // Limit to 20 concepts maximum
+                .filter(concept => concept.length >= minLength && concept.length <= maxLength)
+                .slice(0, maxConcepts);
 
             logger.info(`Successfully parsed ${cleanedConcepts.length} concepts`);
             return cleanedConcepts;
@@ -617,10 +727,14 @@ export class CreateConceptsUnified {
             }
         }
         
-        // Limit to reasonable number and clean up
+        // Limit to reasonable number and clean up using config
+        const maxConcepts = this.config.get('conceptExtraction.maxConcepts') || 5;
+        const minLength = this.config.get('conceptExtraction.minConceptLength') || 3;
+        const maxLength = this.config.get('conceptExtraction.maxConceptLength') || 100;
+        
         return concepts
-            .slice(0, 10) // Limit to 10 concepts
-            .filter(c => c.length >= 3 && c.length <= 100) // Reasonable length
+            .slice(0, maxConcepts)
+            .filter(c => c.length >= minLength && c.length <= maxLength)
             .map(c => c.replace(/["""'']/g, '').trim()); // Clean quotes
     }
 
@@ -663,16 +777,128 @@ export class CreateConceptsUnified {
     }
 
     /**
-     * Create concept corpuscles with embeddings and store in SPARQL
+     * Create references to existing concepts instead of new corpuscles
+     * @param {string} textElementURI - URI of the source text element
+     * @param {Object[]} existingConceptMappings - Array of existing concept info
+     * @param {string} targetGraph - Target graph URI
+     * @returns {Object} Reference data for existing concepts
+     */
+    async createConceptReferences(textElementURI, existingConceptMappings, targetGraph) {
+        logger.info(`🔗 Creating references to ${existingConceptMappings.length} existing concepts...`);
+        
+        const now = new Date().toISOString();
+        const referencedConceptURIs = [];
+        let referenceTriples = '';
+        
+        for (const conceptInfo of existingConceptMappings) {
+            const conceptUnit = conceptInfo.conceptUnit;
+            const conceptText = conceptInfo.conceptText;
+            
+            if (conceptUnit) {
+                referencedConceptURIs.push(conceptUnit);
+                
+                // Create lightweight reference relationship
+                referenceTriples += `
+                    # Reference to existing concept instead of creating duplicate
+                    <${textElementURI}> semem:referencesConcept <${conceptUnit}> ;
+                                       semem:conceptDerivation "reference" ;
+                                       dcterms:created "${now}"^^xsd:dateTime .
+                    
+                    # Track this text element as a new source for the concept
+                    <${conceptUnit}> semem:referencedBy <${textElementURI}> ;
+                                    semem:lastReferenced "${now}"^^xsd:dateTime .
+                `;
+            }
+        }
+        
+        logger.info(`✅ Generated references to ${referencedConceptURIs.length} existing concepts`);
+        
+        return {
+            referencedConceptURIs,
+            referenceTriples,
+            type: 'references'
+        };
+    }
+
+    /**
+     * Create concept corpuscles with embeddings and store in SPARQL (enhanced with deduplication)
      */
     async createConceptCorpuscles(textElementURI, conceptEmbeddings, targetGraph) {
-        logger.info(`📦 Creating concept corpuscles for ${conceptEmbeddings.length} concepts...`);
+        logger.info(`📦 Creating concept corpuscles for ${conceptEmbeddings.length} concepts with deduplication...`);
+        
+        // Step 1: Check for existing concepts to enable deduplication
+        const conceptTexts = conceptEmbeddings.map(ce => ce.concept);
+        const existingConcepts = await this.checkExistingConcepts(conceptTexts, targetGraph);
+        
+        // Step 2: Separate existing vs new concepts
+        const existingConceptMappings = [];
+        const newConceptEmbeddings = [];
+        
+        for (const { concept, embedding } of conceptEmbeddings) {
+            const existingInfo = existingConcepts[concept.toLowerCase()];
+            if (existingInfo && existingInfo.conceptUnit) {
+                existingConceptMappings.push(existingInfo);
+            } else {
+                newConceptEmbeddings.push({ concept, embedding });
+            }
+        }
+        
+        logger.info(`📊 Deduplication analysis:`);
+        logger.info(`   🔍 Found ${existingConceptMappings.length} existing concepts to reference`);
+        logger.info(`   ✨ Creating ${newConceptEmbeddings.length} new concept corpuscles`);
+        
+        // Step 3: Create references to existing concepts
+        let referenceData = { referencedConceptURIs: [], referenceTriples: '', type: 'references' };
+        if (existingConceptMappings.length > 0) {
+            referenceData = await this.createConceptReferences(textElementURI, existingConceptMappings, targetGraph);
+        }
+        
+        // Step 4: Create new concept corpuscles for concepts that don't exist
+        let newConceptData = { conceptURIs: [], conceptCorpuscleURIs: [], conceptTriples: '', type: 'new' };
+        if (newConceptEmbeddings.length > 0) {
+            newConceptData = await this.createNewConceptCorpuscles(textElementURI, newConceptEmbeddings, targetGraph);
+        }
+        
+        // Step 5: Combine all concept URIs for collection corpuscle
+        const allConceptURIs = [
+            ...referenceData.referencedConceptURIs,
+            ...newConceptData.conceptURIs
+        ];
+        
+        // Step 6: Combine all triples
+        const combinedTriples = [
+            referenceData.referenceTriples,
+            newConceptData.conceptTriples
+        ].filter(t => t.trim()).join('\n');
+        
+        logger.info(`✅ Concept processing completed:`);
+        logger.info(`   🔗 Referenced existing: ${referenceData.referencedConceptURIs.length}`);
+        logger.info(`   📦 Created new corpuscles: ${newConceptData.conceptCorpuscleURIs.length}`);
+        logger.info(`   📋 Total concepts: ${allConceptURIs.length}`);
+        
+        return {
+            conceptURIs: allConceptURIs,
+            conceptCorpuscleURIs: newConceptData.conceptCorpuscleURIs, // Only new corpuscles
+            referencedConceptURIs: referenceData.referencedConceptURIs,
+            conceptTriples: combinedTriples,
+            stats: {
+                existing: existingConceptMappings.length,
+                new: newConceptEmbeddings.length,
+                total: allConceptURIs.length,
+                deduplicationEnabled: true
+            }
+        };
+    }
+
+    /**
+     * Create new concept corpuscles for concepts that don't already exist
+     */
+    async createNewConceptCorpuscles(textElementURI, conceptEmbeddings, targetGraph) {
+        logger.info(`📦 Creating ${conceptEmbeddings.length} new concept corpuscles...`);
         
         const now = new Date().toISOString();
         const conceptCorpuscleURIs = [];
         const conceptURIs = [];
-        
-        // Create individual concept corpuscles and units
         let conceptTriples = '';
         
         for (let i = 0; i < conceptEmbeddings.length; i++) {
@@ -694,7 +920,8 @@ export class CreateConceptsUnified {
                     rdfs:label ${SPARQLHelper.createLiteral(concept)} ;
                     dcterms:created "${now}"^^xsd:dateTime ;
                     prov:wasDerivedFrom <${textElementURI}> ;
-                    ragno:inCorpuscle <${conceptCorpuscleURI}> .
+                    ragno:inCorpuscle <${conceptCorpuscleURI}> ;
+                    semem:conceptDerivation "new" .
                 
                 # Individual concept corpuscle with embedding
                 <${conceptCorpuscleURI}> a ragno:Corpuscle ;
@@ -710,7 +937,8 @@ export class CreateConceptsUnified {
         return {
             conceptURIs,
             conceptCorpuscleURIs,
-            conceptTriples
+            conceptTriples,
+            type: 'new'
         };
     }
 
@@ -741,9 +969,9 @@ export class CreateConceptsUnified {
     }
 
     /**
-     * Store all concept-related data in SPARQL store
+     * Store all concept-related data in SPARQL store (enhanced for deduplication)
      */
-    async storeConceptData(textElementURI, conceptTriples, collectionTriples, collectionCorpuscleURI, targetGraph) {
+    async storeConceptData(textElementURI, conceptTriples, collectionTriples, collectionCorpuscleURI, targetGraph, stats = null) {
         logger.info(`💾 Storing concept data in SPARQL store...`);
         
         const updateTriples = `
@@ -763,7 +991,14 @@ export class CreateConceptsUnified {
             throw new Error(`Failed to store concept data: ${result.error}`);
         }
         
-        logger.info(`✅ Successfully stored concept data in SPARQL store`);
+        if (stats && stats.deduplicationEnabled) {
+            logger.info(`✅ Successfully stored concept data with deduplication:`);
+            logger.info(`   🔗 Referenced existing concepts: ${stats.existing}`);
+            logger.info(`   📦 Created new corpuscles: ${stats.new}`);
+            logger.info(`   📋 Total concepts processed: ${stats.total}`);
+        } else {
+            logger.info(`✅ Successfully stored concept data in SPARQL store`);
+        }
     }
 
     /**
@@ -823,8 +1058,8 @@ export class CreateConceptsUnified {
                 };
             }
 
-            // Step 3: Create concept corpuscles with embeddings
-            const { conceptURIs, conceptCorpuscleURIs, conceptTriples } = 
+            // Step 3: Create concept corpuscles with embeddings (with deduplication)
+            const { conceptURIs, conceptCorpuscleURIs, referencedConceptURIs, conceptTriples, stats } = 
                 await this.createConceptCorpuscles(textElementURI, conceptEmbeddings, targetGraph);
 
             // Step 4: Create collection corpuscle
@@ -837,10 +1072,11 @@ export class CreateConceptsUnified {
                 conceptTriples, 
                 collectionTriples, 
                 collectionCorpuscleURI, 
-                targetGraph
+                targetGraph,
+                stats
             );
 
-            logger.info(`   ✅ Successfully processed with ${conceptEmbeddings.length} concept corpuscles using unified prompt system`);
+            logger.info(`   ✅ Successfully processed with deduplication using unified prompt system`);
             logger.info(`   📝 Concepts: ${concepts.slice(0, 5).join(', ')}${concepts.length > 5 ? '...' : ''}`);
             
             return {
@@ -848,7 +1084,9 @@ export class CreateConceptsUnified {
                 conceptCount: conceptEmbeddings.length,
                 collectionCorpuscleURI,
                 conceptCorpuscleURIs,
-                concepts
+                referencedConceptURIs: referencedConceptURIs || [],
+                concepts,
+                deduplicationStats: stats
             };
             
         } catch (error) {
@@ -888,6 +1126,9 @@ export class CreateConceptsUnified {
         let failed = 0;
         let totalConcepts = 0;
         let totalCorpuscles = 0;
+        let totalReferencedConcepts = 0;
+        let totalNewConcepts = 0;
+        let totalExistingConcepts = 0;
         
         for (const textElement of textElementsWithoutConcepts) {
             try {
@@ -899,20 +1140,31 @@ export class CreateConceptsUnified {
                 if (result.collectionCorpuscleURI) {
                     totalCorpuscles += 1; // Add collection corpuscle
                 }
+                
+                // Track deduplication statistics
+                if (result.deduplicationStats) {
+                    totalNewConcepts += result.deduplicationStats.new;
+                    totalExistingConcepts += result.deduplicationStats.existing;
+                }
+                totalReferencedConcepts += (result.referencedConceptURIs || []).length;
+                
             } catch (error) {
                 logger.error(`Failed to process TextElement: ${error.message}`);
                 failed++;
             }
         }
         
-        logger.info(`\n📊 Enhanced Concept Extraction Summary (Unified Prompt System):`);
+        logger.info(`\n📊 Enhanced Concept Extraction Summary (With Deduplication):`);
         logger.info(`   ✅ Successfully processed: ${processed} TextElements`);
         logger.info(`   ❌ Failed: ${failed} TextElements`);
         logger.info(`   🧠 Total concepts extracted: ${totalConcepts}`);
         logger.info(`   📦 Total corpuscles created: ${totalCorpuscles}`);
         logger.info(`   🔗 Collection corpuscles: ${results.filter(r => r.collectionCorpuscleURI).length}`);
+        logger.info(`   ✨ New concept corpuscles: ${totalNewConcepts}`);
+        logger.info(`   🔍 Existing concepts referenced: ${totalExistingConcepts}`);
+        logger.info(`   💡 Deduplication efficiency: ${totalExistingConcepts > 0 ? Math.round((totalExistingConcepts / totalConcepts) * 100) : 0}% concepts reused`);
         logger.info(`   🎯 Graph: ${targetGraph}`);
-        logger.info(`   🎯 Prompt System: Unified (v2.0)`);
+        logger.info(`   🎯 Prompt System: Unified (v2.0) + Deduplication`);
         
         return results;
     }

@@ -1,0 +1,33 @@
+{
+  "name": "document-finder-search",
+  "description": "Enhanced search query processing for document location discovery",
+  "format": "chat",
+  "category": "search",
+  "version": "1.0",
+  "supportedModels": [
+    "mistral",
+    "claude",
+    "ollama"
+  ],
+  "arguments": [
+    {
+      "name": "query",
+      "type": "string",
+      "required": true,
+      "description": "User search query (question, keywords, or document reference)"
+    },
+    {
+      "name": "context",
+      "type": "string",
+      "required": false,
+      "description": "Optional context about the search domain or previous results"
+    }
+  ],
+  "content": "You are helping to locate stored documents in a semantic memory system. The user has provided a search query that may be a question, keywords, or document reference. Your task is to enhance and expand this query to improve document discovery.\n\nAnalyze the user's query and provide:\n1. Alternative keywords and synonyms that might match relevant content\n2. Related concepts that could help find the target documents\n3. Different phrasings of the query that might yield better results\n4. Document types or categories that might contain this information\n\nRespond with a JSON object containing:\n{\n  \"expandedKeywords\": [\"keyword1\", \"keyword2\", \"keyword3\"],\n  \"relatedConcepts\": [\"concept1\", \"concept2\", \"concept3\"],\n  \"alternativePhrasings\": [\"phrasing1\", \"phrasing2\"],\n  \"documentTypes\": [\"research paper\", \"technical document\", \"manual\"],\n  \"searchStrategy\": \"brief description of recommended search approach\"\n}\n\nExamples:\n\nQuery: \"machine learning algorithms\"\nResponse: {\n  \"expandedKeywords\": [\"ML\", \"artificial intelligence\", \"neural networks\", \"deep learning\", \"AI models\"],\n  \"relatedConcepts\": [\"training data\", \"model architecture\", \"optimization\", \"supervised learning\"],\n  \"alternativePhrasings\": [\"ML techniques\", \"AI algorithms\", \"learning models\"],\n  \"documentTypes\": [\"research paper\", \"technical guide\", \"implementation manual\"],\n  \"searchStrategy\": \"Search for technical documents containing ML terminology and algorithm descriptions\"\n}\n\nQuery: \"What is neural network training?\"\nResponse: {\n  \"expandedKeywords\": [\"backpropagation\", \"gradient descent\", \"loss function\", \"epochs\", \"learning rate\"],\n  \"relatedConcepts\": [\"optimization\", \"model parameters\", \"training data\", \"validation\"],\n  \"alternativePhrasings\": [\"How do neural networks learn?\", \"NN training process\", \"network optimization\"],\n  \"documentTypes\": [\"tutorial\", \"educational material\", \"technical documentation\"],\n  \"searchStrategy\": \"Look for educational content explaining neural network learning processes\"\n}\n\nNow analyze this query and provide the enhancement:\n\"${query}\"\n\n${context ? `Additional context: ${context}` : ''}",
+  "metadata": {
+    "purpose": "Query enhancement for document location discovery",
+    "version": "1.0",
+    "optimizedFor": "semantic search and document retrieval",
+    "outputFormat": "JSON with expanded search terms and strategy"
+  }
+}

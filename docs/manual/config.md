@@ -219,6 +219,33 @@ The main configuration file follows this structure:
   - Example: `"custom/templates"` or `"/absolute/path/to/templates"`
   - Used by the unified prompt management system to load external template files
 
+#### Concept Extraction Configuration
+```json
+{
+  "conceptExtraction": {
+    "maxConcepts": 3,
+    "temperature": 0.1,
+    "retries": 3,
+    "minConceptLength": 4,
+    "maxConceptLength": 80
+  }
+}
+```
+
+**Configuration Options:**
+
+- **maxConcepts**: Maximum number of concepts to extract per text chunk (default: 3)
+  - Lower values (2-3) for conservative extraction (recommended)
+  - Higher values (5-8) for comprehensive extraction
+- **temperature**: LLM temperature for concept extraction (default: 0.1)
+  - Lower values (0.1) for more focused, consistent concepts (recommended)
+  - Higher values (0.3-0.4) for more creative, diverse concepts
+- **retries**: Number of retry attempts for failed LLM calls (default: 3)
+- **minConceptLength**: Minimum character length for valid concepts (default: 4)
+- **maxConceptLength**: Maximum character length for valid concepts (default: 80)
+
+This configuration controls the sensitivity and behavior of concept extraction in the memory ingestion pipeline, allowing fine-tuning of how many concepts are extracted and their quality filtering.
+
 #### LLM Providers Array
 ```json
 {

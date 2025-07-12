@@ -1,0 +1,88 @@
+# Find Document Locations - Search for Text Elements and Their Source Documents
+# 
+# This query searches for text elements that match a query term and traces them back
+# to their source documents through provenance relationships. It combines semantic
+# search capabilities with document provenance tracking to enable location discovery.
+#
+# Parameters:
+# - graphURI: Named graph to search within
+# - searchTerm: Text to search for (used in content matching)
+# - additionalFilters: Optional additional WHERE clause filters
+# - limitClause: Optional LIMIT clause for result pagination
+#
+# Returns:
+# - Text elements with content matching the search
+# - Source document information and provenance chains
+# - Relevance scoring and metadata
+# - Creation dates and file paths
+
+PREFIX ragno: <http://purl.org/stuff/ragno/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+PREFIX semem: <http://semem.hyperdata.it/>
+
+SELECT DISTINCT ?textElement ?content ?embedding ?score ?relevance
+                ?sourceUnit ?sourceTitle ?sourceFile ?sourceCreated
+                ?documentType ?provenanceChain
+WHERE {
+  GRAPH <${graphURI}> {
+    
+    # Find text elements with content matching search criteria
+    ?textElement a ragno:TextElement ;
+                 ragno:content ?content .
+    
+    # Get embeddings and scores for relevance ranking
+    OPTIONAL { ?textElement ragno:embedding ?embedding }
+    OPTIONAL { ?textElement ragno:score ?score }
+    OPTIONAL { ?textElement ragno:relevance ?relevance }
+    
+    # Trace back to source documents through provenance
+    OPTIONAL {
+      ?textElement prov:wasDerivedFrom ?sourceUnit .
+      
+      # Get source unit information
+      ?sourceUnit a ?documentType .
+      OPTIONAL { ?sourceUnit rdfs:label ?sourceTitle }
+      OPTIONAL { ?sourceUnit dcterms:created ?sourceCreated }
+      OPTIONAL { ?sourceUnit semem:sourceFile ?sourceFile }
+      
+      # Build provenance chain description
+      BIND(CONCAT("TextElement -> ", str(?sourceUnit)) AS ?provenanceChain)
+      
+      # Filter for document units (not intermediate chunks)
+      FILTER(?documentType = ragno:Unit)
+    }
+    
+    # Alternative: Direct source document relationship
+    UNION {
+      ?textElement dcterms:source ?sourceUnit .
+      
+      # Get source document information
+      ?sourceUnit a ?documentType .
+      OPTIONAL { ?sourceUnit rdfs:label ?sourceTitle }
+      OPTIONAL { ?sourceUnit dcterms:created ?sourceCreated }
+      OPTIONAL { ?sourceUnit semem:sourceFile ?sourceFile }
+      
+      BIND(CONCAT("TextElement -> ", str(?sourceUnit), " (direct)") AS ?provenanceChain)
+    }
+    
+    # Content-based filtering
+    ${searchTerm}
+    
+    # Filter out empty content and embeddings
+    FILTER(?content != "")
+    FILTER(?content != " ")
+    FILTER(STRLEN(?content) > 10)
+    
+    # Only include text elements with valid embeddings for similarity search
+    FILTER(BOUND(?embedding))
+    FILTER(?embedding != "")
+    FILTER(?embedding != "[]")
+    
+    ${additionalFilters}
+  }
+}
+ORDER BY DESC(?relevance) DESC(?score) ?sourceFile ?sourceCreated
+${limitClause}

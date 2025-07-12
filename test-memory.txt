@@ -1,0 +1,7 @@
+This is a test document for the Memorise module. 
+
+It contains several sentences to test the memory ingestion pipeline. The text discusses artificial intelligence and machine learning concepts. Natural language processing is an important field in AI that enables computers to understand human language.
+
+Machine learning algorithms can learn patterns from data without explicit programming. Deep learning uses neural networks with multiple layers to process complex information. These technologies have applications in healthcare, finance, and many other domains.
+
+The goal is to create a rich knowledge representation that can be queried and used for various AI applications.

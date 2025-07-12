@@ -154,5 +154,20 @@
   },
   "context": {
     "truncationLimit": null
+  },
+  "conceptExtraction": {
+    "maxConcepts": 3,
+    "temperature": 0.1,
+    "retries": 3,
+    "minConceptLength": 4,
+    "maxConceptLength": 80,
+    "deduplication": {
+      "enabled": true,
+      "strategy": "exact",
+      "caseInsensitive": true,
+      "embeddingSimilarityThreshold": 0.9,
+      "maxExistingConceptsToCheck": 1000,
+      "description": "Concept deduplication settings to avoid creating duplicate concept corpuscles"
+    }
   }
 }

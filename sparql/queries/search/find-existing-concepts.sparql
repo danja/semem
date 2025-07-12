@@ -1,0 +1,93 @@
+# Find Existing Concepts - Batch lookup for concept deduplication
+# 
+# This query searches for existing concept corpuscles that match given concept texts
+# to enable efficient deduplication during concept creation. It supports batch lookup
+# of multiple concepts in a single query to minimize SPARQL operations.
+#
+# Parameters:
+# - graphURI: Named graph to search within
+# - conceptTexts: Filter clause for concept text matching (generated dynamically)
+# - additionalFilters: Optional additional WHERE clause filters
+#
+# Returns:
+# - Existing concept corpuscles with URIs, content, embeddings
+# - Associated concept units and collection information
+# - Provenance and creation metadata
+# - Document source information for context
+
+PREFIX ragno: <http://purl.org/stuff/ragno/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX semem: <http://semem.hyperdata.it/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+SELECT DISTINCT 
+    ?conceptCorpuscle 
+    ?conceptUnit
+    ?conceptText
+    ?conceptContent
+    ?conceptLabel
+    ?embedding
+    ?created
+    ?sourceTextElement
+    ?sourceUnit
+    ?collectionCorpuscle
+WHERE {
+    GRAPH <${graphURI}> {
+        
+        # Find concept corpuscles with matching content
+        ?conceptCorpuscle a ragno:Corpuscle ;
+                         rdfs:label ?conceptLabel ;
+                         ragno:content ?conceptContent ;
+                         dcterms:created ?created ;
+                         prov:wasDerivedFrom ?sourceTextElement .
+        
+        # Get embeddings if available
+        OPTIONAL {
+            ?conceptCorpuscle ragno:embedding ?embedding .
+        }
+        
+        # Find the corresponding concept unit
+        OPTIONAL {
+            ?conceptCorpuscle skos:member ?conceptUnit .
+            ?conceptUnit a ragno:Unit ;
+                        rdfs:label ?conceptText .
+        }
+        
+        # Find collection corpuscle that contains this concept
+        OPTIONAL {
+            ?collectionCorpuscle a ragno:Corpuscle ;
+                               skos:member ?conceptUnit ;
+                               prov:wasDerivedFrom ?sourceTextElement .
+            
+            # Ensure it's actually a collection (not the individual concept corpuscle)
+            FILTER(?collectionCorpuscle != ?conceptCorpuscle)
+        }
+        
+        # Trace back to source document unit
+        OPTIONAL {
+            # Follow provenance chain: Chunk -> TextElement -> Unit
+            ?sourceTextElement prov:wasDerivedFrom ?intermediateTextElement .
+            ?intermediateTextElement a ragno:TextElement ;
+                                   prov:wasDerivedFrom ?sourceUnit .
+            ?sourceUnit a ragno:Unit .
+        }
+        
+        # Filter for concept corpuscles (labels start with "Concept:")
+        FILTER(STRSTARTS(STR(?conceptLabel), "Concept:"))
+        
+        # Dynamic concept text matching (replaced by implementation)
+        ${conceptTexts}
+        
+        # Ensure we have valid concept data
+        FILTER(BOUND(?conceptContent))
+        FILTER(?conceptContent != "")
+        
+        ${additionalFilters}
+    }
+}
+ORDER BY ?conceptText ?created
+${limitClause}

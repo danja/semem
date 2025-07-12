@@ -1,0 +1,26 @@
+PREFIX ragno: <http://purl.org/stuff/ragno/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX olo: <http://purl.org/ontology/olo/core#>
+
+SELECT 
+    (COUNT(DISTINCT ?unit) AS ?totalUnits)
+    (COUNT(DISTINCT ?textElement) AS ?totalTextElements) 
+    (COUNT(DISTINCT ?chunk) AS ?totalChunks)
+    (COUNT(DISTINCT ?corpuscle) AS ?totalCorpuscles)
+    (COUNT(DISTINCT ?entity) AS ?totalEntities)
+    (COUNT(DISTINCT ?relationship) AS ?totalRelationships)
+WHERE {
+    GRAPH <${graphURI}> {
+        OPTIONAL { ?unit a ragno:Unit }
+        OPTIONAL { ?textElement a ragno:TextElement }
+        OPTIONAL { 
+            ?chunk a ragno:Unit, ragno:TextElement ;
+                   olo:index ?index .
+        }
+        OPTIONAL { ?corpuscle a ragno:Corpuscle }
+        OPTIONAL { ?entity a ragno:Entity }
+        OPTIONAL { ?relationship a ragno:Relationship }
+    }
+}

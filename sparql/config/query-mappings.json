@@ -16,6 +16,8 @@
   "importance-rankings": "search/importance-rankings.sparql",
   "ppr-results-export": "search/ppr-results-export.sparql",
   "document-chunks-count": "search/document-chunks-count.sparql",
+  "find-document-locations": "search/find-document-locations.sparql",
+  "find-existing-concepts": "search/find-existing-concepts.sparql",
   "knowledge-graph-construct": "visualization/knowledge-graph-construct.sparql",
   "check-document-exists": "check-document-exists.sparql",
   "list-documents": "list-documents.sparql",
@@ -28,5 +30,8 @@
   "mark-chunks-decomposed": "mark-chunks-decomposed.sparql",
   "list-concepts": "list-concepts.sparql",
   "merge-concepts": "merge-concepts.sparql",
-  "corpuscle-details": "corpuscle-details.sparql"
+  "corpuscle-details": "corpuscle-details.sparql",
+  "memory-unit-exists": "memory-unit-exists.sparql",
+  "memory-statistics": "memory-statistics.sparql",
+  "memory-cleanup": "memory-cleanup.sparql"
 }
