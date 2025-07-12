@@ -348,12 +348,12 @@ class FindMemory {
                 // Get source document information via SPARQL
                 const sourceInfo = await this.getSourceDocumentInfo(result.uri);
                 
-                if (sourceInfo) {
-                    documented.push({
-                        ...result,
-                        sourceDocument: sourceInfo
-                    });
-                }
+                // Always include the result, regardless of whether source info is available
+                documented.push({
+                    ...result,
+                    sourceDocument: sourceInfo
+                });
+                
             } catch (error) {
                 logger.warn(`Failed to trace source for ${result.uri}: ${error.message}`);
                 // Include result even without source info
@@ -437,8 +437,11 @@ class FindMemory {
 
         logger.info(`📊 Result breakdown: ${withSourceInfo.length} with source info, ${withoutSourceInfo.length} without source info`);
 
-        // Prefer results with source info, but include others if needed
-        const finalResults = withSourceInfo.length > 0 ? withSourceInfo : withoutSourceInfo;
+        // Return results even without source document info 
+        // (show the found content rather than hiding it from users)
+        const finalResults = withSourceInfo.length > 0 ? 
+            [...withSourceInfo, ...withoutSourceInfo] : 
+            withoutSourceInfo;
         
         return finalResults.slice(0, maxResults);
     }
