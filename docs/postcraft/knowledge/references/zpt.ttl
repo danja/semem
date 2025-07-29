@@ -1,0 +1,346 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix zpt: <http://purl.org/stuff/zpt/> .
+@prefix ragno: <http://purl.org/stuff/ragno/> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix doap: <http://usefulinc.com/ns/doap#> .
+@prefix time: <http://www.w3.org/2006/time#> .
+@prefix geo: <http://www.w3.org/2003/01/geo/wgs84_pos#> .
+
+# Ontology Definition
+zpt: a owl:Ontology, skos:ConceptScheme, doap:Project ;
+    dcterms:title "ZPT Knowledge Navigation Ontology"@en ;
+    dcterms:description "An ontology for Zoom-Pan-Tilt based knowledge navigation over heterogeneous knowledge graphs."@en ;
+    dcterms:abstract "ZPT provides vocabulary for dynamic knowledge navigation using camera metaphors: zoom for abstraction levels, pan for domain scope, and tilt for information representation perspectives."@en ;
+    dcterms:creator [
+        a foaf:Person ;
+        foaf:name "Danny Ayers" ;
+        foaf:homepage <https://danny.ayers.name>
+    ] ;
+    owl:versionInfo "0.1.0" ;
+    owl:imports <http://purl.org/stuff/ragno/> ,
+                <http://www.w3.org/2004/02/skos/core> ,
+                <http://www.w3.org/ns/prov-o#> ;
+    skos:hasTopConcept zpt:NavigationView ;
+    doap:homepage <http://github.com/danja/zpt> ;
+    doap:name "ZPT" ;
+    doap:shortdesc "Knowledge navigation using Zoom-Pan-Tilt metaphors"@en ;
+    doap:programming-language "RDF/OWL" .
+
+# Core Navigation Classes
+
+## Navigation View - The Current Viewport
+zpt:NavigationView a owl:Class ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:label "Navigation View"@en ;
+    rdfs:comment "A specific viewport into a knowledge space defined by zoom, pan, and tilt parameters."@en ;
+    skos:definition "Represents the current state of knowledge navigation, combining abstraction level, domain scope, and representation method."@en ;
+    skos:inScheme zpt: .
+
+## Zoom - Abstraction Level Management
+zpt:ZoomLevel a owl:Class ;
+    rdfs:subClassOf skos:Concept ;
+    rdfs:label "Zoom Level"@en ;
+    rdfs:comment "Represents the level of abstraction in knowledge representation."@en ;
+    skos:definition "A position on the abstraction hierarchy from detailed text to high-level summaries."@en ;
+    skos:broader zpt:NavigationDimension .
+
+zpt:ZoomState a owl:Class ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:label "Zoom State"@en ;
+    rdfs:comment "The current zoom configuration for a navigation view."@en ;
+    skos:definition "Captures the specific abstraction parameters active in a navigation session."@en .
+
+## Pan - Domain Scope Management  
+zpt:PanDomain a owl:Class ;
+    rdfs:subClassOf skos:Collection ;
+    rdfs:label "Pan Domain"@en ;
+    rdfs:comment "Defines the conceptual boundaries of information under consideration."@en ;
+    skos:definition "A thematic or topical scope that constrains the knowledge space being navigated."@en ;
+    skos:broader zpt:NavigationDimension .
+
+zpt:PanState a owl:Class ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:label "Pan State"@en ;
+    rdfs:comment "The current domain focus for a navigation view."@en ;
+    skos:definition "Captures the specific domain boundaries active in a navigation session."@en .
+
+## Tilt - Representation Perspective Management
+zpt:TiltProjection a owl:Class ;
+    rdfs:subClassOf skos:Concept ;
+    rdfs:label "Tilt Projection"@en ;
+    rdfs:comment "Defines how information is represented and accessed."@en ;
+    skos:definition "A method for projecting knowledge into specific representational forms."@en ;
+    skos:broader zpt:NavigationDimension .
+
+zpt:TiltState a owl:Class ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:label "Tilt State"@en ;
+    rdfs:comment "The current representation method for a navigation view."@en ;
+    skos:definition "Captures the specific projection parameters active in a navigation session."@en .
+
+## Navigation Dimensions
+zpt:NavigationDimension a owl:Class ;
+    rdfs:subClassOf skos:Concept ;
+    rdfs:label "Navigation Dimension"@en ;
+    rdfs:comment "Abstract class for the three dimensions of ZPT navigation."@en ;
+    skos:definition "Base class for zoom, pan, and tilt navigation parameters."@en ;
+    skos:topConceptOf zpt: .
+
+# Ragno Integration Classes
+
+## ZPT-Enhanced Corpuscle
+zpt:NavigableCorpuscle a owl:Class ;
+    rdfs:subClassOf ragno:Corpuscle ;
+    rdfs:label "Navigable Corpuscle"@en ;
+    rdfs:comment "A Ragno corpuscle enhanced with ZPT navigation metadata."@en ;
+    skos:definition "A knowledge collection optimized for dynamic navigation with zoom-pan-tilt parameters."@en .
+
+## Navigation-Aware Element
+zpt:NavigableElement a owl:Class ;
+    rdfs:subClassOf ragno:Element ;
+    rdfs:label "Navigable Element"@en ;
+    rdfs:comment "A Ragno element with navigation positioning metadata."@en ;
+    skos:definition "A knowledge element that can be positioned within ZPT navigation space."@en .
+
+# Navigation Process Classes
+
+## Navigation Session
+zpt:NavigationSession a owl:Class ;
+    rdfs:subClassOf prov:Activity ;
+    rdfs:label "Navigation Session"@en ;
+    rdfs:comment "A temporal sequence of navigation actions by an agent."@en ;
+    skos:definition "Represents a complete navigation workflow with associated provenance."@en .
+
+## Navigation Agent
+zpt:NavigationAgent a owl:Class ;
+    rdfs:subClassOf prov:Agent ;
+    rdfs:label "Navigation Agent"@en ;
+    rdfs:comment "An entity capable of performing knowledge navigation."@en ;
+    skos:definition "Human or artificial agent that navigates knowledge spaces using ZPT operations."@en .
+
+# Specific Zoom Levels
+
+zpt:EntityLevel a zpt:ZoomLevel ;
+    rdfs:label "Entity Level"@en ;
+    skos:prefLabel "Entity"@en ;
+    skos:definition "Focus on individual named entities and their immediate properties."@en ;
+    zpt:abstractionOrder 1 ;
+    zpt:correspondsToRagno ragno:Entity .
+
+zpt:UnitLevel a zpt:ZoomLevel ;
+    rdfs:label "Unit Level"@en ;
+    skos:prefLabel "Semantic Unit"@en ;
+    skos:definition "Focus on independent semantic events and local summaries."@en ;
+    zpt:abstractionOrder 2 ;
+    zpt:correspondsToRagno ragno:Unit .
+
+zpt:TextLevel a zpt:ZoomLevel ;
+    rdfs:label "Text Level"@en ;
+    skos:prefLabel "Full Text"@en ;
+    skos:definition "Focus on complete text documents with full detail."@en ;
+    zpt:abstractionOrder 3 ;
+    zpt:correspondsToRagno ragno:TextElement .
+
+zpt:CommunityLevel a zpt:ZoomLevel ;
+    rdfs:label "Community Level"@en ;
+    skos:prefLabel "Community"@en ;
+    skos:definition "Focus on high-level insights and community summaries."@en ;
+    zpt:abstractionOrder 4 ;
+    zpt:correspondsToRagno ragno:CommunityElement .
+
+zpt:CorpusLevel a zpt:ZoomLevel ;
+    rdfs:label "Corpus Level"@en ;
+    skos:prefLabel "Corpus Overview"@en ;
+    skos:definition "Focus on complete knowledge base structure and metadata."@en ;
+    zpt:abstractionOrder 5 ;
+    zpt:correspondsToRagno ragno:Corpus .
+
+# Core Properties
+
+## Navigation State Properties
+zpt:hasZoomState a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain zpt:NavigationView ;
+    rdfs:range zpt:ZoomState ;
+    rdfs:label "has zoom state"@en ;
+    rdfs:comment "Links a navigation view to its current zoom configuration."@en .
+
+zpt:hasPanState a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain zpt:NavigationView ;
+    rdfs:range zpt:PanState ;
+    rdfs:label "has pan state"@en ;
+    rdfs:comment "Links a navigation view to its current pan configuration."@en .
+
+zpt:hasTiltState a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain zpt:NavigationView ;
+    rdfs:range zpt:TiltState ;
+    rdfs:label "has tilt state"@en ;
+    rdfs:comment "Links a navigation view to its current tilt configuration."@en .
+
+## State Configuration Properties
+zpt:atZoomLevel a owl:ObjectProperty ;
+    rdfs:domain zpt:ZoomState ;
+    rdfs:range zpt:ZoomLevel ;
+    rdfs:label "at zoom level"@en ;
+    rdfs:comment "Specifies the zoom level for a zoom state."@en .
+
+zpt:withPanDomain a owl:ObjectProperty ;
+    rdfs:domain zpt:PanState ;
+    rdfs:range zpt:PanDomain ;
+    rdfs:label "with pan domain"@en ;
+    rdfs:comment "Specifies the domain scope for a pan state."@en .
+
+zpt:withTiltProjection a owl:ObjectProperty ;
+    rdfs:domain zpt:TiltState ;
+    rdfs:range zpt:TiltProjection ;
+    rdfs:label "with tilt projection"@en ;
+    rdfs:comment "Specifies the projection method for a tilt state."@en .
+
+## Corpuscle Selection Properties
+zpt:selectedCorpuscle a owl:ObjectProperty ;
+    rdfs:domain zpt:NavigationView ;
+    rdfs:range zpt:NavigableCorpuscle ;
+    rdfs:label "selected corpuscle"@en ;
+    rdfs:comment "Links a navigation view to corpuscles selected for the current ZPT configuration."@en .
+
+zpt:candidateCorpuscle a owl:ObjectProperty ;
+    rdfs:domain zpt:NavigationView ;
+    rdfs:range zpt:NavigableCorpuscle ;
+    rdfs:label "candidate corpuscle"@en ;
+    rdfs:comment "Links a navigation view to corpuscles considered but not selected."@en .
+
+## Optimization Properties
+zpt:optimizationScore a owl:DatatypeProperty ;
+    rdfs:domain zpt:NavigableCorpuscle ;
+    rdfs:range xsd:float ;
+    rdfs:label "optimization score"@en ;
+    rdfs:comment "Overall fitness score for corpuscle selection in current navigation context."@en .
+
+zpt:zoomRelevance a owl:DatatypeProperty ;
+    rdfs:domain zpt:NavigableCorpuscle ;
+    rdfs:range xsd:float ;
+    rdfs:label "zoom relevance"@en ;
+    rdfs:comment "Relevance score for the zoom dimension."@en .
+
+zpt:panCoverage a owl:DatatypeProperty ;
+    rdfs:domain zpt:NavigableCorpuscle ;
+    rdfs:range xsd:float ;
+    rdfs:label "pan coverage"@en ;
+    rdfs:comment "Coverage score for the pan dimension."@en .
+
+zpt:tiltEffectiveness a owl:DatatypeProperty ;
+    rdfs:domain zpt:NavigableCorpuscle ;
+    rdfs:range xsd:float ;
+    rdfs:label "tilt effectiveness"@en ;
+    rdfs:comment "Effectiveness score for the tilt dimension."@en .
+
+## Abstraction Properties
+zpt:abstractionOrder a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:domain zpt:ZoomLevel ;
+    rdfs:range xsd:integer ;
+    rdfs:label "abstraction order"@en ;
+    rdfs:comment "Numeric ordering of abstraction levels (1=most specific, higher=more abstract)."@en .
+
+zpt:correspondsToRagno a owl:ObjectProperty ;
+    rdfs:domain zpt:ZoomLevel ;
+    rdfs:range owl:Class ;
+    rdfs:label "corresponds to ragno"@en ;
+    rdfs:comment "Maps zoom levels to corresponding Ragno element types."@en .
+
+## Navigation Process Properties
+zpt:navigatedBy a owl:ObjectProperty ;
+    rdfs:domain zpt:NavigationView ;
+    rdfs:range zpt:NavigationAgent ;
+    rdfs:subPropertyOf prov:wasAssociatedWith ;
+    rdfs:label "navigated by"@en ;
+    rdfs:comment "Links a navigation view to the agent performing navigation."@en .
+
+zpt:partOfSession a owl:ObjectProperty ;
+    rdfs:domain zpt:NavigationView ;
+    rdfs:range zpt:NavigationSession ;
+    rdfs:subPropertyOf prov:wasGeneratedBy ;
+    rdfs:label "part of session"@en ;
+    rdfs:comment "Links a navigation view to its containing session."@en .
+
+zpt:previousView a owl:ObjectProperty ;
+    rdfs:domain zpt:NavigationView ;
+    rdfs:range zpt:NavigationView ;
+    rdfs:subPropertyOf prov:wasDerivedFrom ;
+    rdfs:label "previous view"@en ;
+    rdfs:comment "Links to the previous navigation view in a sequence."@en .
+
+## Query Integration Properties
+zpt:answersQuery a owl:ObjectProperty ;
+    rdfs:domain zpt:NavigationView ;
+    rdfs:range rdfs:Literal ;
+    rdfs:label "answers query"@en ;
+    rdfs:comment "The natural language query that this navigation view addresses."@en .
+
+zpt:queryComplexity a owl:DatatypeProperty ;
+    rdfs:domain zpt:NavigationView ;
+    rdfs:range xsd:string ;
+    rdfs:label "query complexity"@en ;
+    rdfs:comment "Classification of query complexity (simple, multi-hop, exploratory, comparative)."@en .
+
+## Temporal Properties
+zpt:navigationTimestamp a owl:DatatypeProperty ;
+    rdfs:domain zpt:NavigationView ;
+    rdfs:range xsd:dateTime ;
+    rdfs:subPropertyOf dcterms:created ;
+    rdfs:label "navigation timestamp"@en ;
+    rdfs:comment "Timestamp when the navigation view was created."@en .
+
+zpt:sessionDuration a owl:DatatypeProperty ;
+    rdfs:domain zpt:NavigationSession ;
+    rdfs:range xsd:duration ;
+    rdfs:label "session duration"@en ;
+    rdfs:comment "Total duration of the navigation session."@en .
+
+# Tilt Projection Types
+
+zpt:EmbeddingProjection a zpt:TiltProjection ;
+    rdfs:label "Embedding Projection"@en ;
+    skos:prefLabel "Vector Embeddings"@en ;
+    skos:definition "Information access through vector similarity in embedding space."@en .
+
+zpt:KeywordProjection a zpt:TiltProjection ;
+    rdfs:label "Keyword Projection"@en ;
+    skos:prefLabel "Keyword Search"@en ;
+    skos:definition "Information access through keyword matching and indexing."@en .
+
+zpt:GraphProjection a zpt:TiltProjection ;
+    rdfs:label "Graph Projection"@en ;
+    skos:prefLabel "Graph Traversal"@en ;
+    skos:definition "Information access through graph structure and connectivity."@en .
+
+zpt:TemporalProjection a zpt:TiltProjection ;
+    rdfs:label "Temporal Projection"@en ;
+    skos:prefLabel "Time-based View"@en ;
+    skos:definition "Information access organized by temporal relationships."@en .
+
+# Pan Domain Types
+
+zpt:TopicDomain a zpt:PanDomain ;
+    rdfs:label "Topic Domain"@en ;
+    skos:prefLabel "Thematic Scope"@en ;
+    skos:definition "Domain defined by subject matter or thematic content."@en .
+
+zpt:EntityDomain a zpt:PanDomain ;
+    rdfs:label "Entity Domain"@en ;
+    skos:prefLabel "Entity-centered Scope"@en ;
+    skos:definition "Domain defined by specific entities and their relationships."@en .
+
+zpt:TemporalDomain a zpt:PanDomain ;
+    rdfs:label "Temporal Domain"@en ;
+    skos:prefLabel "Time-based Scope"@en ;
+    skos:definition "Domain defined by temporal boundaries or periods."@en .
+
+zpt:GeospatialDomain a zpt:PanDomain ;
+    rdfs:label "Geospatial Domain"@en ;
+    skos:prefLabel "Geographic Scope"@en ;
+    skos:definition "Domain defined by geographic or spatial boundaries."@en .
