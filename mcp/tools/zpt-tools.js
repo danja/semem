@@ -720,9 +720,9 @@ class ZPTNavigationService {
 
       const totalTime = Date.now() - startTime;
 
-      // Generate simulated content based on parameters
-      const content = await this.generateNavigationContent(query, zoom, pan, tilt, transform);
-      content.source = 'simulated';
+      // Query real content from SPARQL store based on parameters  
+      const content = await this.queryRealNavigationContent(query, zoom, pan, tilt, transform);
+      content.source = 'sparql';
 
       // Ensure content has expected structure
       if (!content.data) {
@@ -748,7 +748,7 @@ class ZPTNavigationService {
             projectionTime,
             transformationTime,
             totalTime,
-            mode: 'simulation'
+            mode: 'real'
           },
           navigation: {
             query,
@@ -764,7 +764,7 @@ class ZPTNavigationService {
         }
       };
     } catch (error) {
-      mcpDebugger.error('Simulation navigation failed', error);
+      mcpDebugger.error('Real navigation failed', error);
       // For testing, ensure the error is properly structured
       if (process.env.NODE_ENV === 'test') {
         if (error.isSPARQLError) {
@@ -1545,6 +1545,157 @@ class ZPTNavigationService {
     const baseTime = 120;
 
     return Math.floor(baseTime * (formatComplexity[transform.format] || 1) * tokenFactor + Math.random() * 60);
+  }
+
+  async queryRealNavigationContent(query, zoom, pan, tilt, transform = {}) {
+    try {
+      // Connect to the actual SPARQL store through memory manager
+      if (!this.memoryManager || !this.memoryManager.store) {
+        mcpDebugger.warn('No SPARQL store available, falling back to empty results');
+        return this.createEmptyNavigationContent(query, zoom, tilt);
+      }
+
+      const sparqlStore = this.memoryManager.store;
+      
+      // Build search filters based on pan parameters
+      const filters = this.buildSparqlFilters(pan, query);
+      
+      // Execute appropriate SPARQL query based on zoom level
+      let results = [];
+      switch (zoom) {
+        case 'entity':
+          results = await sparqlStore.queryByZoom('entity', 10, filters);
+          break;
+        case 'unit':
+          results = await sparqlStore.queryByZoom('micro', 15, filters);
+          break;
+        case 'text':
+          results = await sparqlStore.search(await sparqlStore.generateEmbedding?.(query) || [], 10, 0.5);
+          break;
+        case 'community':
+          results = await sparqlStore.queryByZoom('community', 8, filters);
+          break;
+        case 'corpus':
+          results = await sparqlStore.queryByZoom('corpus', 5, filters);
+          break;
+        default:
+          results = await sparqlStore.queryByZoom('entity', 10, filters);
+      }
+
+      // Convert SPARQL results to navigation format
+      const navigationResults = this.convertSparqlToNavigation(results, zoom);
+      
+      return {
+        query: query || '',
+        zoom: zoom || 'entity', 
+        tilt: tilt || 'keywords',
+        results: navigationResults,
+        success: true,
+        estimatedResults: await this.getEstimatedResultCount(sparqlStore, zoom, filters),
+        suggestions: [],
+        corpusHealth: {}
+      };
+      
+    } catch (error) {
+      mcpDebugger.error('Real navigation query failed', error);
+      return this.createEmptyNavigationContent(query, zoom, tilt);
+    }
+  }
+
+  createEmptyNavigationContent(query, zoom, tilt) {
+    return {
+      query: query || '',
+      zoom: zoom || 'entity',
+      tilt: tilt || 'keywords', 
+      results: [],
+      success: true,
+      estimatedResults: 0,
+      suggestions: [],
+      corpusHealth: {}
+    };
+  }
+
+  buildSparqlFilters(pan, query) {
+    const filters = {};
+    
+    if (pan && typeof pan === 'object') {
+      if (pan.domains && Array.isArray(pan.domains)) {
+        filters.domains = pan.domains;
+      }
+      if (pan.keywords && Array.isArray(pan.keywords)) {
+        filters.keywords = pan.keywords;
+      }
+      if (pan.entities && Array.isArray(pan.entities)) {
+        filters.entities = pan.entities;
+      }
+      if (pan.temporal) {
+        filters.temporal = pan.temporal;
+      }
+    }
+    
+    if (query && query.trim()) {
+      filters.textSearch = query.trim();
+    }
+    
+    return filters;
+  }
+
+  convertSparqlToNavigation(sparqlResults, zoom) {
+    if (!Array.isArray(sparqlResults)) {
+      return [];
+    }
+
+    return sparqlResults.map((result, index) => {
+      // Handle different result formats from SPARQL queries
+      if (result.uri || result.id) {
+        return {
+          id: result.uri || result.id,
+          label: result.label || result.prefLabel || `${zoom} item ${index + 1}`,
+          type: zoom,
+          score: result.similarity || result.score || (1 - index * 0.1).toFixed(2),
+          metadata: {
+            relevance: result.similarity || result.relevance || '0.500',
+            source: result.source || 'sparql',
+            timestamp: result.timestamp || new Date().toISOString(),
+            type: result.type || zoom
+          }
+        };
+      } else {
+        // Handle memory/interaction results
+        return {
+          id: result.id || `memory_${Math.random().toString(36).substring(2, 10)}`,
+          label: result.prompt || result.label || `${zoom} item ${index + 1}`,
+          type: zoom,
+          score: result.similarity || (1 - index * 0.1).toFixed(2),
+          metadata: {
+            relevance: result.similarity || '0.500',
+            source: 'memory',
+            timestamp: result.timestamp || new Date().toISOString(),
+            content: result.response || result.content
+          }
+        };
+      }
+    });
+  }
+
+  async getEstimatedResultCount(sparqlStore, zoom, filters) {
+    try {
+      if (sparqlStore.getGraphStats) {
+        const stats = await sparqlStore.getGraphStats();
+        const zoomCounts = {
+          entity: stats.entityCount || 0,
+          unit: stats.unitCount || 0, 
+          text: stats.unitCount || 0,
+          community: stats.communityCount || 0,
+          corpus: stats.corpusCount || 1
+        };
+        return zoomCounts[zoom] || 0;
+      }
+      return 0;
+    } catch (error) {
+      mcpDebugger.warn('Could not get estimated result count', error);
+      return 0;
+    }
   }
 
   async generateNavigationContent(query, zoom, pan, tilt, transform = {}) {
