@@ -236,6 +236,158 @@ async function startOptimizedServer() {
     });
     console.log('✅ [START] Health endpoint configured');
 
+    // Simple Verbs REST endpoints - simplified MCP interface
+    console.log('🔧 [START] Setting up Simple Verbs REST endpoints...');
+    
+    // Import Simple Verbs Service
+    let SimpleVerbsService;
+    try {
+      const simpleVerbsModule = await import('./tools/simple-verbs.js');
+      SimpleVerbsService = simpleVerbsModule.SimpleVerbsService;
+    } catch (error) {
+      console.log('⚠️ [REST] Simple Verbs module not available:', error.message);
+    }
+
+    if (SimpleVerbsService) {
+      const simpleVerbsService = new SimpleVerbsService();
+
+      // TELL endpoint - Add resources to the system
+      app.post('/tell', async (req, res) => {
+        try {
+          const { content, type = 'interaction', metadata = {} } = req.body;
+          if (!content) {
+            return res.status(400).json({ error: 'Content is required' });
+          }
+          
+          const result = await simpleVerbsService.tell({ content, type, metadata });
+          res.json(result);
+        } catch (error) {
+          res.status(500).json({ 
+            success: false, 
+            verb: 'tell', 
+            error: error.message 
+          });
+        }
+      });
+
+      // ASK endpoint - Query the system
+      app.post('/ask', async (req, res) => {
+        try {
+          const { question, mode = 'standard', useContext = true } = req.body;
+          if (!question) {
+            return res.status(400).json({ error: 'Question is required' });
+          }
+          
+          const result = await simpleVerbsService.ask({ question, mode, useContext });
+          res.json(result);
+        } catch (error) {
+          res.status(500).json({ 
+            success: false, 
+            verb: 'ask', 
+            question: req.body.question,
+            error: error.message 
+          });
+        }
+      });
+
+      // AUGMENT endpoint - Run operations on content
+      app.post('/augment', async (req, res) => {
+        try {
+          const { target, operation = 'auto', options = {} } = req.body;
+          if (!target) {
+            return res.status(400).json({ error: 'Target content is required' });
+          }
+          
+          const result = await simpleVerbsService.augment({ target, operation, options });
+          res.json(result);
+        } catch (error) {
+          res.status(500).json({ 
+            success: false, 
+            verb: 'augment', 
+            target: req.body.target?.substring(0, 100) + '...',
+            error: error.message 
+          });
+        }
+      });
+
+      // ZOOM endpoint - Set abstraction level
+      app.post('/zoom', async (req, res) => {
+        try {
+          const { level = 'entity', query } = req.body;
+          const result = await simpleVerbsService.zoom({ level, query });
+          res.json(result);
+        } catch (error) {
+          res.status(500).json({ 
+            success: false, 
+            verb: 'zoom', 
+            level: req.body.level,
+            error: error.message 
+          });
+        }
+      });
+
+      // PAN endpoint - Set domain/filtering
+      app.post('/pan', async (req, res) => {
+        try {
+          // Extract all pan parameters from request body
+          const panParams = { ...req.body };
+          const result = await simpleVerbsService.pan(panParams);
+          res.json(result);
+        } catch (error) {
+          res.status(500).json({ 
+            success: false, 
+            verb: 'pan', 
+            panParams: req.body,
+            error: error.message 
+          });
+        }
+      });
+
+      // TILT endpoint - Set view filter
+      app.post('/tilt', async (req, res) => {
+        try {
+          const { style = 'keywords', query } = req.body;
+          const result = await simpleVerbsService.tilt({ style, query });
+          res.json(result);
+        } catch (error) {
+          res.status(500).json({ 
+            success: false, 
+            verb: 'tilt', 
+            style: req.body.style,
+            error: error.message 
+          });
+        }
+      });
+
+      // GET endpoints for reading state
+      app.get('/state', async (req, res) => {
+        try {
+          await simpleVerbsService.initialize();
+          const state = simpleVerbsService.stateManager?.getState();
+          res.json({ 
+            success: true, 
+            state: state || { message: 'State not available' } 
+          });
+        } catch (error) {
+          res.status(500).json({ 
+            success: false, 
+            error: error.message 
+          });
+        }
+      });
+
+      console.log('✅ [START] Simple Verbs REST endpoints configured:');
+      console.log('   POST /tell - Add resources to the system');
+      console.log('   POST /ask - Query the system');
+      console.log('   POST /augment - Augment content');
+      console.log('   POST /zoom - Set abstraction level');
+      console.log('   POST /pan - Set domain/filtering');
+      console.log('   POST /tilt - Set view filter');
+      console.log('   GET /state - Get current ZPT state');
+    } else {
+      console.log('⚠️ [REST] Simple Verbs REST endpoints not available (service not loaded)');
+    }
+
     // Serve MCP Inspector static files
     console.log('🔧 [START] Setting up static file routes...');
     const inspectorPath = path.resolve(__dirname, '../node_modules/@modelcontextprotocol/inspector/client/dist');
@@ -262,6 +414,9 @@ async function startOptimizedServer() {
       mcpDebugger.info(`Health check: http://localhost:${port}/health`);
       mcpDebugger.info(`MCP endpoint: http://localhost:${port}/mcp`);
       mcpDebugger.info(`Inspector: http://localhost:${port}/inspector`);
+      mcpDebugger.info('🌟 Simple Verbs REST API:');
+      mcpDebugger.info(`   POST /tell, /ask, /augment, /zoom, /pan, /tilt`);
+      mcpDebugger.info(`   GET /state`);
       mcpDebugger.info('🔄 Full server initialization will happen on first request or in background...');
       
       console.log('🔄 [START] Ready to handle MCP sessions...');

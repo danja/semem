@@ -33,6 +33,9 @@ import { initializeServices } from './lib/initialization.js';
 import { registerMemoryTools } from './tools/memory-tools.js';
 import { registerZPTTools } from './tools/zpt-tools.js';
 
+// Import Simple Verbs - New simplified MCP interface
+import { registerSimpleVerbs } from './tools/simple-verbs.js';
+
 // Import ZPT components for centralized handler
 // import { ZPTNavigationService } from './tools/zpt-tools.js';
 import { registerResearchWorkflowTools } from './tools/research-workflow-tools.js';
@@ -533,6 +536,83 @@ function registerToolCallHandler(server) {
   server.setRequestHandler(ListToolsRequestSchema, async () => {
     return {
       tools: [
+        // Simple Verbs - Primary interface for MCP (moved to top for visibility)
+        {
+          name: 'tell',
+          description: 'Add resources to the system with minimal processing. Supports interaction, document, and concept types.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              content: { type: 'string', description: 'Content to add to the system' },
+              type: { type: 'string', enum: ['interaction', 'document', 'concept'], default: 'interaction', description: 'Type of content being added' },
+              metadata: { type: 'object', description: 'Optional metadata for the content' }
+            },
+            required: ['content']
+          }
+        },
+        {
+          name: 'ask',
+          description: 'Query the system using current ZPT context for enhanced answers.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              question: { type: 'string', description: 'Question to ask the system' },
+              useContext: { type: 'boolean', default: true, description: 'Whether to use ZPT context for enhanced answers' }
+            },
+            required: ['question']
+          }
+        },
+        {
+          name: 'augment',
+          description: 'Run operations like concept extraction on relevant knowledgebase parts.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              operation: { type: 'string', enum: ['extract_concepts', 'generate_embedding', 'analyze_text'], default: 'extract_concepts', description: 'Operation to perform' },
+              target: { type: 'string', description: 'Target content or identifier for augmentation' },
+              parameters: { type: 'object', description: 'Parameters for the augmentation operation' }
+            },
+            required: ['operation', 'target']
+          }
+        },
+        {
+          name: 'zoom',
+          description: 'Set the abstraction level for navigation (entity, unit, text, community, corpus).',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              level: { type: 'string', enum: ['entity', 'unit', 'text', 'community', 'corpus'], description: 'Detail level for navigation' },
+              query: { type: 'string', description: 'Optional query to update along with zoom level' }
+            },
+            required: ['level']
+          }
+        },
+        {
+          name: 'pan',
+          description: 'Set subject domain filters (temporal, keywords, entities, domains).',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              temporal: { type: 'object', description: 'Temporal filtering parameters' },
+              keywords: { type: 'array', items: { type: 'string' }, description: 'Keywords to filter by' },
+              entities: { type: 'array', items: { type: 'string' }, description: 'Entity names to filter by' },
+              domains: { type: 'array', items: { type: 'string' }, description: 'Subject domains to filter by' },
+              query: { type: 'string', description: 'Optional query to update along with pan filters' }
+            }
+          }
+        },
+        {
+          name: 'tilt',
+          description: 'Set the view filter/representation style (keywords, embedding, graph, temporal).',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              style: { type: 'string', enum: ['keywords', 'embedding', 'graph', 'temporal'], description: 'Representation style for content display' },
+              query: { type: 'string', description: 'Optional query to update along with tilt style' }
+            },
+            required: ['style']
+          }
+        },
         {
           name: 'semem_extract_concepts',
           description: 'Extract semantic concepts from text using LLM analysis',
@@ -2291,6 +2371,49 @@ function registerToolCallHandler(server) {
         return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
       }*/
       
+      // Simple Verbs - Primary MCP Interface
+      if (name === 'tell') {
+        const { getSimpleVerbsService } = await import('./tools/simple-verbs.js');
+        const service = getSimpleVerbsService();
+        const result = await service.tell(args);
+        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+      }
+
+      if (name === 'ask') {
+        const { getSimpleVerbsService } = await import('./tools/simple-verbs.js');
+        const service = getSimpleVerbsService();
+        const result = await service.ask(args);
+        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+      }
+
+      if (name === 'augment') {
+        const { getSimpleVerbsService } = await import('./tools/simple-verbs.js');
+        const service = getSimpleVerbsService();
+        const result = await service.augment(args);
+        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+      }
+
+      if (name === 'zoom') {
+        const { getSimpleVerbsService } = await import('./tools/simple-verbs.js');
+        const service = getSimpleVerbsService();
+        const result = await service.zoom(args);
+        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+      }
+
+      if (name === 'pan') {
+        const { getSimpleVerbsService } = await import('./tools/simple-verbs.js');
+        const service = getSimpleVerbsService();
+        const result = await service.pan(args);
+        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+      }
+
+      if (name === 'tilt') {
+        const { getSimpleVerbsService } = await import('./tools/simple-verbs.js');
+        const service = getSimpleVerbsService();
+        const result = await service.tilt(args);
+        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+      }
+      
       // Add other tools here...
       
       throw new Error(`Unknown tool: ${name}`);
@@ -2405,6 +2528,11 @@ async function createServer() {
   // Register centralized tool call handler (works with correct argument passing)
   registerToolCallHandler(server);
 
+  // Register Simple Verbs - PROMINENTLY FEATURED simplified interface
+  mcpDebugger.info('🌟 Registering Simple MCP Verbs (tell, ask, augment, zoom, pan, tilt)...');
+  registerSimpleVerbs(server);
+  mcpDebugger.info('🌟 Simple MCP Verbs registered successfully - these provide the primary interface');
+
   // Register all tools using a consistent pattern
   mcpDebugger.info('Tools handled by centralized handler (working pattern)...');
   // registerMemoryTools(server); // Handled by centralized handler
@@ -2413,7 +2541,7 @@ async function createServer() {
   // registerRagnoTools(server);
   // registerSPARQLTools(server);
   // registerVSOMTools(server);
-  mcpDebugger.info('All tools registered.');
+  mcpDebugger.info('All complex tools registered (legacy/advanced interface).');
 
   // Register all resources
   mcpDebugger.info('Registering resources using setRequestHandler pattern...');
@@ -2508,6 +2636,11 @@ async function createIsolatedServer() {
   await workflowOrchestrator.initialize(server);
   mcpDebugger.info('Enhanced workflow orchestrator initialized successfully');
 
+  // Register Simple Verbs - PROMINENTLY FEATURED simplified interface for isolated server
+  mcpDebugger.info('🌟 Registering Simple MCP Verbs (tell, ask, augment, zoom, pan, tilt)...');
+  registerSimpleVerbs(server);
+  mcpDebugger.info('🌟 Simple MCP Verbs registered successfully - these provide the primary interface');
+
   // Register all tools using a consistent pattern
   mcpDebugger.info('Registering all tools...');
   // registerMemoryTools(server); // Disabled to avoid conflicts with centralized handler
@@ -2516,7 +2649,7 @@ async function createIsolatedServer() {
   registerRagnoTools(server);
   registerSPARQLTools(server);
   registerVSOMTools(server);
-  mcpDebugger.info('All tools registered.');
+  mcpDebugger.info('All complex tools registered (legacy/advanced interface).');
 
   // Register all resources
   mcpDebugger.info('Registering resources using setRequestHandler pattern...');

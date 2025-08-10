@@ -1,6 +1,6 @@
 # Semem MCP Examples
 
-Comprehensive examples and demonstrations for the Semem Model Context Protocol (MCP) server, showcasing all 32 tools and 15 resources across semantic memory management, knowledge graph operations, and 3D navigation.
+Comprehensive examples and demonstrations for the Semem Model Context Protocol (MCP) server. **NEW**: Now featuring a simplified 5-verb interface alongside the complete 32 tools and 15 resources for semantic memory management, knowledge graph operations, and 3D navigation.
 
 ## 🚀 Quick Start
 
@@ -21,6 +21,142 @@ node examples/mcp/SememCoreDemo.js
 # Or try ZPT 3D navigation
 node examples/mcp/ZPTBasicNavigation.js
 ```
+
+## 🌟 Simple Verbs Interface - NEW SIMPLIFIED MCP
+
+The Semem MCP now provides a **simplified 5-verb interface** that makes complex knowledge operations as simple as natural conversation. This is the **primary interface** for most users.
+
+### The 5 Basic Verbs
+
+| Verb | Purpose | Examples |
+|------|---------|----------|
+| **tell** | Add resources to the system | Store documents, interactions, concepts |
+| **ask** | Query the system | Ask questions with contextual answers |
+| **augment** | Enhance content | Extract concepts, add attributes |
+| **zoom** | Set abstraction level | Focus on entities, units, communities |
+| **pan** | Set domain/filtering | Filter by time, topic, keywords |
+| **tilt** | Set view perspective | Keywords, embeddings, graphs, temporal |
+
+### Quick Start with Simple Verbs
+
+#### MCP Tool Interface
+```javascript
+// Tell the system something
+await client.callTool('tell', {
+  content: "Machine learning is a subset of artificial intelligence",
+  type: "concept"
+});
+
+// Ask a question with context
+await client.callTool('ask', {
+  question: "What is machine learning?",
+  useContext: true
+});
+
+// Set zoom level for navigation
+await client.callTool('zoom', {
+  level: "entity",
+  query: "artificial intelligence"
+});
+```
+
+#### HTTP REST API
+```bash
+# Tell the system something
+curl -X POST http://localhost:3000/tell \
+  -H "Content-Type: application/json" \
+  -d '{"content": "Machine learning is a subset of AI", "type": "concept"}'
+
+# Ask a question  
+curl -X POST http://localhost:3000/ask \
+  -H "Content-Type: application/json" \
+  -d '{"question": "What is machine learning?"}'
+
+# Set zoom level
+curl -X POST http://localhost:3000/zoom \
+  -H "Content-Type: application/json" \
+  -d '{"level": "entity", "query": "artificial intelligence"}'
+
+# Get current state
+curl http://localhost:3000/state
+```
+
+### Simple Verbs REST Endpoints
+
+The HTTP server provides RESTful endpoints for all simple verbs:
+
+| Method | Endpoint | Purpose | Parameters |
+|--------|----------|---------|------------|
+| POST | `/tell` | Add resources | `{content, type?, metadata?}` |
+| POST | `/ask` | Query system | `{question, mode?, useContext?}` |
+| POST | `/augment` | Enhance content | `{target, operation?, options?}` |
+| POST | `/zoom` | Set abstraction | `{level, query?}` |
+| POST | `/pan` | Set filtering | `{domain?, temporal?, keywords?, entities?}` |
+| POST | `/tilt` | Set perspective | `{style, query?}` |
+| GET | `/state` | Get ZPT state | - |
+
+### ZPT State Management
+
+The simple verbs maintain **persistent context** through ZPT (Zoom, Pan, Tilt) state:
+
+- **Zoom**: Current abstraction level (entity, unit, text, community, corpus)
+- **Pan**: Active domain filters (temporal, keywords, entities, domains)  
+- **Tilt**: Current view style (keywords, embedding, graph, temporal)
+
+### Example Workflow with Simple Verbs
+
+```javascript
+// 1. Tell the system about your domain
+await client.callTool('tell', {
+  content: "Our company uses React, Node.js, and PostgreSQL for web development",
+  type: "document", 
+  metadata: { title: "Tech Stack Documentation" }
+});
+
+// 2. Set context for navigation
+await client.callTool('zoom', { level: "entity" });
+await client.callTool('pan', { domains: ["technology", "web-development"] });
+await client.callTool('tilt', { style: "keywords" });
+
+// 3. Ask contextual questions
+const result = await client.callTool('ask', {
+  question: "What frontend technologies do we use?",
+  useContext: true  // Uses current ZPT state
+});
+
+// 4. Augment with additional insights
+await client.callTool('augment', {
+  target: result.answer,
+  operation: "concepts"
+});
+```
+
+### Migration Guide: Complex Tools → Simple Verbs
+
+| Old Complex Tools | Simple Verb | Notes |
+|-------------------|-------------|-------|
+| `semem_store_interaction` | `tell` | Direct replacement with type selection |
+| `semem_ask`, `semem_answer` | `ask` | Unified querying with context |
+| `semem_extract_concepts` | `augment` | Use operation: "concepts" |
+| `ragno_augment_attributes` | `augment` | Use operation: "attributes" |  
+| `zpt_navigate` | `zoom`, `pan`, `tilt` | Break down into state + navigation |
+| Multiple retrieval tools | `ask` + ZPT state | Context-aware retrieval |
+
+### When to Use Simple Verbs vs Complex Tools
+
+#### ✅ Use Simple Verbs For:
+- **Conversational interfaces** - Natural language interaction
+- **REST API integration** - HTTP endpoints for web apps
+- **Rapid prototyping** - Quick knowledge base operations  
+- **Learning the system** - Intuitive interface for new users
+- **Most common operations** - 80% of typical use cases
+
+#### ⚙️ Use Complex Tools For:
+- **Fine-grained control** - Specific parameter tuning
+- **System administration** - Storage management, migrations
+- **Performance optimization** - Detailed metrics and analysis
+- **Advanced integrations** - Custom workflow orchestration
+- **Research and development** - Full access to all 32 tools
 
 ## 📚 Complete Tool & Resource Coverage
 
@@ -162,7 +298,20 @@ DEBUG=* node examples/mcp/[DemoName].js
 
 ## 📖 Learning Path
 
-### 1. **Start Here: Basic Memory** ⭐
+### 🌟 **Start Here: Simple Verbs** ⭐ NEW!
+**Begin with the simplified interface** - try the REST API or MCP tools:
+```bash
+# Use curl to test simple verbs
+curl -X POST http://localhost:3000/tell \
+  -H "Content-Type: application/json" \
+  -d '{"content": "Hello, this is my first message"}'
+
+curl -X POST http://localhost:3000/ask \
+  -H "Content-Type: application/json" \
+  -d '{"question": "What did I just tell you?"}'
+```
+
+### 1. **Basic Memory Operations** ⭐
 Run `SememCoreDemo.js` to understand core semantic memory concepts
 
 ### 2. **Explore Knowledge Graphs** ⭐⭐
@@ -236,6 +385,19 @@ class MyCustomDemo {
 ## 📋 Complete Reference
 
 ### Quick Command Reference
+
+#### 🌟 Simple Verbs (Primary Interface)
+```bash
+# Simple verbs - natural language interface
+tell                         # Add resources to system (documents, concepts, interactions)
+ask                          # Query with contextual answers
+augment                      # Extract concepts, add attributes, enhance content
+zoom                         # Set abstraction level (entity, unit, community, corpus)
+pan                          # Set domain/filtering (temporal, keywords, entities)
+tilt                         # Set view perspective (keywords, embedding, graph, temporal)
+```
+
+#### ⚙️ Complex Tools (Advanced/Legacy Interface)  
 ```bash
 # Memory operations
 semem_store_interaction       # Store new memory with embeddings
