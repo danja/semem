@@ -7,20 +7,8 @@
  * for web-based integrations and Claude Desktop.
  */
 
-import path from 'path';
-import { fileURLToPath } from 'url';
-import { startServer } from '../mcp/http-server.js';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-// Parse command line arguments
+// Parse command line arguments to set environment variables  
 const args = process.argv.slice(2);
-const port = args.find(arg => arg.startsWith('--port='))?.split('=')[1] || process.env.MCP_PORT || 3000;
-const host = args.find(arg => arg.startsWith('--host='))?.split('=')[1] || process.env.MCP_HOST || 'localhost';
-
-// Set environment variables
-process.env.MCP_PORT = port;
-process.env.MCP_HOST = host;
 
 // Show usage if --help
 if (args.includes('--help') || args.includes('-h')) {
@@ -29,32 +17,25 @@ Semem MCP HTTP Server
 
 Usage:
   semem-mcp-http [options]
-
+  
 Options:
-  --port=<port>    Port to run the HTTP server on (default: 3000)
-  --host=<host>    Host to bind to (default: localhost)
-  --help, -h       Show this help message
+  --port=PORT    Set server port (default: 3000)
+  --host=HOST    Set server host (default: localhost)
+  --help, -h     Show this help message
 
 Environment Variables:
-  MCP_PORT         Port for the HTTP server
-  MCP_HOST         Host to bind to
+  MCP_PORT       Port for the HTTP server
+  MCP_HOST       Host to bind to
   
-Integration URL:
-  http://<host>:<port>/mcp
-
 Example:
-  semem-mcp-http --port=4000 --host=127.0.0.1
-  
-For Claude Desktop configuration, add to your config:
+  semem-mcp-http --port=3001 --host=0.0.0.0
+
+For Claude Desktop integration:
 {
   "mcpServers": {
     "semem": {
-      "command": "node",
-      "args": ["${__dirname}/../mcp/http-server.js"],
-      "env": {
-        "MCP_PORT": "3000",
-        "MCP_HOST": "localhost"
-      }
+      "command": "npx",
+      "args": ["semem-mcp-http", "--port=3000"]
     }
   }
 }
@@ -62,5 +43,13 @@ For Claude Desktop configuration, add to your config:
   process.exit(0);
 }
 
-console.log(`🚀 Starting Semem MCP HTTP Server on http://${host}:${port}`);
-startServer().catch(console.error);
+// Set environment variables from command line args
+if (args.find(arg => arg.startsWith('--port='))) {
+    process.env.MCP_PORT = args.find(arg => arg.startsWith('--port='))?.split('=')[1];
+}
+if (args.find(arg => arg.startsWith('--host='))) {
+    process.env.MCP_HOST = args.find(arg => arg.startsWith('--host='))?.split('=')[1];
+}
+
+// Import and start the HTTP server
+import '../mcp/http-server.js';

@@ -121,16 +121,24 @@ curl http://localhost:3000/state
 
 **Full UI + API servers:**
 ```bash
-npm start  # Starts both API server (port 3000) and UI server (port 3001)
+npm start  # Starts both API server (port 4100) and UI server (port 4120)
 ```
 
 **MCP Server for Claude Desktop:**
 ```bash
-# Run MCP server for Claude Desktop integration
-npm run mcp-server-new
+# Run MCP server for Claude Desktop integration (local dev)
+npm run mcp
 
-# Or via npx (if installed as package)
+# Run MCP HTTP server (local dev)
+npm run mcp:http
+
+# Or via published package (requires: npm install -g semem)
+semem-mcp
+semem-mcp-http
+
+# Or via npx (downloads package)
 npx semem-mcp
+npx semem-mcp-http
 ```
 
 **Development mode:**
@@ -439,7 +447,7 @@ node examples/basic/MemoryEmbeddingJSON.js
 node examples/ragno/RagnoPipelineDemo.js
 
 # MCP server integration (32 tools + 15 resources + 8 prompt workflows)
-npm run mcp-server-new     # Start MCP server
+npm run mcp               # Start MCP server
 node examples/mcp/SememCoreDemo.js           # Core memory operations
 node examples/mcp/RagnoCorpusDecomposition.js # Knowledge graphs
 node examples/mcp/ZPTBasicNavigation.js      # 3D navigation
@@ -452,7 +460,7 @@ node examples/mcp/ZPTPerformanceOptimization.js # Performance tuning
 node examples/mcp/ZPTIntegrationWorkflows.js # Cross-system integration
 
 # MCP Prompts workflows (NEW!)
-# Start MCP server first: npm run mcp-server-new
+# Start MCP server first: npm run mcp
 # Then use Claude Desktop or other MCP clients to execute:
 # - semem-research-analysis: Analyze research documents
 # - semem-memory-qa: Q&A with semantic memory
@@ -640,7 +648,7 @@ semem-mcp-http --port=3000
 
 ```bash
 # Start MCP server
-npm run mcp-server-new
+npm run mcp
 
 # Connect from Claude Desktop or other MCP clients
 # Server provides 32 tools + 15 resources + 8 prompt workflows covering all Semem capabilities
@@ -734,7 +742,7 @@ node src/servers/api-server.js    # Start API server only
 node src/servers/ui-server.js     # Start UI server only
 
 # MCP Server
-npm run mcp-server-new    # Start new MCP server
+npm run mcp    # Start new MCP server
 npm run mcp-example       # Run MCP client example
 ```
 
