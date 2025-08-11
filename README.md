@@ -132,13 +132,14 @@ npm run mcp
 # Run MCP HTTP server (local dev)
 npm run mcp:http
 
-# Or via published package (requires: npm install -g semem)
-semem-mcp
-semem-mcp-http
+# Or via published package
+npx semem mcp                    # MCP server (stdio transport)
+npx semem mcp --transport http   # MCP HTTP server on port 3000
+npx semem mcp --port 3001        # MCP server on custom port
 
-# Or via npx (downloads package)
-npx semem-mcp
-npx semem-mcp-http
+# Or install globally: npm install -g semem
+semem mcp
+semem mcp --transport http
 ```
 
 **Development mode:**
@@ -154,8 +155,8 @@ Add Semem to your Claude Desktop MCP configuration:
 {
   "mcpServers": {
     "semem": {
-      "command": "node",
-      "args": ["path/to/semem/mcp/index.js"]
+      "command": "npx",
+      "args": ["semem", "mcp"]
     }
   }
 }
@@ -634,14 +635,14 @@ If you've installed Semem as an npm package, you can run the MCP server directly
 npm install -g semem
 
 # Run MCP server via npx (recommended)
-npx semem-mcp
+npx semem mcp
 
 # Run HTTP MCP server
-npx semem-mcp-http --port=3000
+npx semem mcp-http --port=3000
 
 # Or if installed globally
-semem-mcp
-semem-mcp-http --port=3000
+semem mcp
+semem mcp --transport http --port 3000
 ```
 
 ### Using from Source
@@ -663,7 +664,7 @@ Add to your Claude Desktop MCP configuration:
   "mcpServers": {
     "semem": {
       "command": "npx",
-      "args": ["semem-mcp"]
+      "args": ["semem mcp"]
     }
   }
 }
@@ -676,7 +677,7 @@ Or for HTTP transport:
   "mcpServers": {
     "semem": {
       "command": "npx", 
-      "args": ["semem-mcp-http", "--port=3000"],
+      "args": ["semem mcp-http", "--port=3000"],
       "env": {
         "MCP_PORT": "3000"
       }
