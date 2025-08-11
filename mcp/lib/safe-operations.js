@@ -139,18 +139,17 @@ export class SafeOperations {
   }
 
   /**
-   * Search for similar content using embedding
+   * Search for similar content using text query (uses proven MemoryManager method)
    */
-  async searchSimilar(queryEmbedding, limit = 10, threshold = 0.7) {
-    if (!queryEmbedding || !Array.isArray(queryEmbedding)) {
-      throw new Error('Invalid queryEmbedding: must be a non-empty array');
+  async searchSimilar(queryText, limit = 10, threshold = 0.7) {
+    if (!queryText || typeof queryText !== 'string' || !queryText.trim()) {
+      return []; // Return empty array for invalid queries
     }
     
-    // Use the storage's search method if available for embedding-based search
-    if (this.memoryManager.storage && this.memoryManager.storage.search) {
-      return await this.memoryManager.storage.search(queryEmbedding, limit, threshold);
-    }
+    // Use the MemoryManager's proven retrieveRelevantInteractions method
+    // Convert threshold from 0-1 scale to percentage (0-100 scale) 
+    const similarityThreshold = Math.round(threshold * 100);
     
-    throw new Error('Store does not support embedding-based search - no search method available');
+    return await this.memoryManager.retrieveRelevantInteractions(queryText.trim(), similarityThreshold, 0, limit);
   }
 }

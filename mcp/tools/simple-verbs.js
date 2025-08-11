@@ -327,39 +327,14 @@ class SimpleVerbsService {
       
       let result;
       
-      if (useContext && this.stateManager.state.lastQuery) {
-        // Use ZPT navigation with current context
-        const navParams = this.stateManager.getNavigationParams(question);
-        const navResult = await this.zptService.navigate(navParams);
-        
-        // Generate contextual answer using navigation results
-        if (navResult.success && navResult.content?.data?.length > 0) {
-          const context = navResult.content.data
-            .map(item => item.content || item.label || '')
-            .join('\n');
-            
-          result = await this.safeOps.generateResponse(question, context);
-        } else {
-          // Fallback to basic answer if navigation fails
-          result = await this.safeOps.generateResponse(question);
-        }
-        
-        return {
-          success: true,
-          verb: 'ask',
-          question,
-          answer: result,
-          usedContext: true,
-          contextItems: navResult.content?.data?.length || 0,
-          zptState: this.stateManager.getState(),
-          navigation: navResult
-        };
-        
-      } else {
-        // Direct semantic memory search and response
-        const queryEmbedding = await this.safeOps.generateEmbedding(question);
-        const memories = await this.safeOps.searchSimilar(queryEmbedding, 3, 0.7);
-        
+      // Always try direct semantic memory search first (bypassing broken ZPT navigation)
+      mcpDebugger.info('Using direct memory search for reliable semantic retrieval');
+      
+      // Use proven MemoryManager.retrieveRelevantInteractions method via SafeOperations
+      const memories = await this.safeOps.searchSimilar(question, 5, 0.5);
+      
+      if (memories && memories.length > 0) {
+        // Found relevant memories - use them as context
         const context = memories
           .map(memory => `${memory.prompt}: ${memory.response}`)
           .join('\n');
@@ -374,10 +349,63 @@ class SimpleVerbsService {
           verb: 'ask',
           question,
           answer: result,
-          usedContext: false,
+          usedContext: true,
+          contextItems: memories.length,
           memories: memories.length,
-          zptState: this.stateManager.getState()
+          zptState: this.stateManager.getState(),
+          searchMethod: 'direct_memory_search'
         };
+        
+      } else {
+        // No relevant memories found - try ZPT navigation as fallback (if requested)
+        if (useContext && this.stateManager.state.lastQuery && mode === 'navigation') {
+          mcpDebugger.info('No memories found, falling back to ZPT navigation');
+          
+          const navParams = this.stateManager.getNavigationParams(question);
+          const navResult = await this.zptService.navigate(navParams);
+          
+          // Generate contextual answer using navigation results
+          if (navResult.success && navResult.content?.data?.length > 0) {
+            const context = navResult.content.data
+              .map(item => item.content || item.label || '')
+              .join('\n');
+              
+            result = await this.safeOps.generateResponse(question, context);
+          } else {
+            // Fallback to basic answer if navigation also fails
+            result = await this.safeOps.generateResponse(question);
+          }
+          
+          return {
+            success: true,
+            verb: 'ask',
+            question,
+            answer: result,
+            usedContext: true,
+            contextItems: navResult.content?.data?.length || 0,
+            zptState: this.stateManager.getState(),
+            navigation: navResult,
+            searchMethod: 'zpt_navigation_fallback'
+          };
+          
+        } else {
+          // No memories and no navigation - basic response
+          result = await this.safeOps.generateResponse(question);
+          
+          // Update state with this query
+          this.stateManager.state.lastQuery = question;
+          
+          return {
+            success: true,
+            verb: 'ask',
+            question,
+            answer: result,
+            usedContext: false,
+            memories: 0,
+            zptState: this.stateManager.getState(),
+            searchMethod: 'basic_response'
+          };
+        }
       }
       
     } catch (error) {
@@ -498,11 +526,34 @@ class SimpleVerbsService {
       
       // If query provided, perform navigation with new zoom level
       if (query) {
-        const navParams = this.stateManager.getNavigationParams(query);
-        const navResult = await this.zptService.navigate(navParams);
-        
-        result.navigation = navResult;
-        result.query = query;
+        try {
+          const navParams = this.stateManager.getNavigationParams(query);
+          mcpDebugger.debug('Zoom navigation params:', navParams);
+          
+          // Ensure proper parameter format for ZPT navigation
+          const zptParams = {
+            query: navParams.query,
+            zoom: navParams.zoom,
+            pan: navParams.pan || {},
+            tilt: navParams.tilt || 'keywords'
+          };
+          
+          mcpDebugger.debug('Calling ZPT navigate with params:', zptParams);
+          const navResult = await this.zptService.navigate(zptParams);
+          
+          result.navigation = navResult;
+          result.query = query;
+        } catch (navError) {
+          mcpDebugger.warn('ZPT navigation failed in zoom verb:', navError.message);
+          // Navigation failed but zoom state change succeeded - this is acceptable
+          result.navigation = {
+            success: false,
+            error: navError.message,
+            content: { data: [], success: false, error: navError.message }
+          };
+          result.query = query;
+          result.warning = 'Zoom level set successfully, but navigation skipped due to error';
+        }
       }
       
       return result;

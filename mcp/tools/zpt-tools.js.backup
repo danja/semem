@@ -1563,22 +1563,7 @@ class ZPTNavigationService {
 
   // REMOVED: generateNavigationContent - simulation method eliminated to force real data usage
 
-  // Essential method stubs to prevent reference errors
-  calculateCorpuscleCount(zoom) {
-    const counts = { entity: 5, unit: 12, text: 20, community: 8, corpus: 3, micro: 15 };
-    return counts[zoom] || 5;
-  }
-
-  getItemType(zoom) {
-    const types = {
-      entity: 'ragno:Entity',
-      unit: 'ragno:SemanticUnit', 
-      text: 'ragno:TextElement',
-      community: 'ragno:CommunityElement',
-      corpus: 'ragno:CorpusElement'
-    };
-    return types[zoom] || 'ragno:Element';
-  }
+  // REMOVED: calculateCorpuscleCount and getItemType - simulation helpers eliminated
 
   // REMOVED: generateItemContent - simulation method eliminated
 
