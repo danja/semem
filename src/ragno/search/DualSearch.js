@@ -63,10 +63,12 @@ export default class DualSearch {
         
         // Initialize SPARQL helper if endpoint is provided
         this.sparqlHelper = null
-        if (this.sparqlEndpoint) {
+        if (this.sparqlEndpoint && typeof this.sparqlEndpoint === 'string') {
             // SPARQLHelper expects an update endpoint, so convert query endpoint to update endpoint
             const updateEndpoint = this.sparqlEndpoint.replace('/query', '/update')
             this.sparqlHelper = new SPARQLHelper(updateEndpoint, options.sparqlAuth || {})
+        } else if (this.sparqlEndpoint) {
+            logger.warn('DualSearch: sparqlEndpoint provided but is not a string:', typeof this.sparqlEndpoint, this.sparqlEndpoint)
         }
 
         // Search statistics

@@ -72,7 +72,16 @@ export default class RagnoAPI extends BaseAPI {
                 if (memoryManager && memoryManager.storage) {
                     this.sparqlStore = memoryManager.storage;
                     if (this.sparqlStore.endpoint) {
-                        this.sparqlEndpoint = this.sparqlStore.endpoint;
+                        // Extract string URL from endpoint configuration
+                        if (typeof this.sparqlStore.endpoint === 'string') {
+                            this.sparqlEndpoint = this.sparqlStore.endpoint;
+                        } else if (this.sparqlStore.endpoint.query) {
+                            // If endpoint is object with query URL
+                            this.sparqlEndpoint = this.sparqlStore.endpoint.query;
+                        } else if (this.sparqlStore.options && this.sparqlStore.options.query) {
+                            // If stored in options.query
+                            this.sparqlEndpoint = this.sparqlStore.options.query;
+                        }
                     }
                 }
             } catch (error) {

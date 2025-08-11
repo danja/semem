@@ -62,53 +62,98 @@ The description below is very AI-sloppy.
 
 
 
-## 🚀 Quick Start
+## 🚀 Quick Start - Simple Verbs Interface
+
+Get started with Semem's natural language interface in 5 minutes:
 
 ### Prerequisites
 - Node.js 20.11.0 or higher
 - npm (comes with Node.js)
 
-### Installation
+### Installation & Setup
 
-1. Clone the repository:
+1. **Clone and install:**
    ```bash
    git clone https://github.com/danja/semem.git
    cd semem
-   ```
-
-2. Install dependencies:
-   ```bash
    npm install
    ```
 
-### Starting the Application
+2. **Start the MCP server:**
+   ```bash
+   node mcp/http-server.js
+   ```
+   The server starts on `http://localhost:3000` with Simple Verbs REST endpoints.
 
-#### Option 1: Start all services (recommended)
+### Try the 5 Simple Verbs
+
+**Store knowledge with `tell`:**
 ```bash
-npm start
+curl -X POST http://localhost:3000/tell \
+  -H "Content-Type: application/json" \
+  -d '{"content": "Machine learning is a subset of AI that enables computers to learn", "type": "concept"}'
 ```
-This will start both the API server and UI server with a single command.
 
-#### Option 2: Start services individually
+**Query knowledge with `ask`:**
 ```bash
-# Start API server
-npm run start:api
-
-# In a new terminal, start the UI server
-npm run start:ui
+curl -X POST http://localhost:3000/ask \
+  -H "Content-Type: application/json" \
+  -d '{"question": "What is machine learning?"}'
 ```
 
-#### Development Mode
-For development with hot-reloading:
+**Set context with `zoom` and `pan`:**
 ```bash
-npm run dev
+# Set abstraction level
+curl -X POST http://localhost:3000/zoom \
+  -d '{"level": "entity"}'
+
+# Apply domain filtering  
+curl -X POST http://localhost:3000/pan \
+  -d '{"domains": ["AI", "technology"], "keywords": ["machine learning"]}'
 ```
 
-### Accessing the UI
-Once the servers are running, open your browser and navigate to:
+**Check your ZPT state:**
+```bash
+curl http://localhost:3000/state
 ```
-http://localhost:3000
+
+### Alternative Startup Options
+
+**Full UI + API servers:**
+```bash
+npm start  # Starts both API server (port 3000) and UI server (port 3001)
 ```
+
+**MCP Server for Claude Desktop:**
+```bash
+# Run MCP server for Claude Desktop integration
+npm run mcp-server-new
+
+# Or via npx (if installed as package)
+npx semem-mcp
+```
+
+**Development mode:**
+```bash
+npm run dev  # Hot-reloading for development
+```
+
+### 🤖 Claude Desktop Integration
+
+Add Semem to your Claude Desktop MCP configuration:
+
+```json
+{
+  "mcpServers": {
+    "semem": {
+      "command": "node",
+      "args": ["path/to/semem/mcp/index.js"]
+    }
+  }
+}
+```
+
+Then use the 5 Simple Verbs directly in Claude Desktop conversations!
 
 ## 🖥️ UI Features
 
@@ -132,15 +177,51 @@ Query and explore your knowledge graph using the built-in SPARQL browser.
 
 ## 🚀 Key Features
 
+- **🗣️ Simple Verbs Interface**: 5-verb natural language API (tell, ask, augment, zoom, pan, tilt) for intuitive semantic operations
 - **🧠 Semantic Memory**: Intelligent context retrieval and memory organization with vector embeddings and SPARQL
 - **🕸️ Knowledge Graph Processing**: End-to-end Ragno pipeline for entity extraction and relationship modeling
-- **🎯 Zoom, Pan Tilt (ZPT)**: Knowledge navigation and processing, cinematic analogy 
+- **🎯 Zoom, Pan Tilt (ZPT)**: Knowledge navigation and processing with persistent state management
 - **🔌 Model Context Protocol (MCP)**: JSON-RPC 2.0 API for seamless LLM and agent integration with workflow orchestration
 - **🚀 MCP Prompts**: 8 pre-built workflow templates for complex multi-step operations
 - **🔍 Advanced Algorithms**: HyDE, VSOM, graph analytics, community detection, and Personal PageRank
 - **📊 Interactive Visualizations**: VSOM (Vector Self-Organizing Maps) for high-dimensional data exploration
 - **🔗 Multi-Provider LLM Support**: Ollama, Claude, Mistral, and other providers via unified connector system
 - **📊 Multiple Storage Backends**: In-memory, JSON, and SPARQL/RDF with caching optimization
+
+## 🗣️ Simple Verbs Interface
+
+Semem features a **5-verb natural language interface** that simplifies complex knowledge operations into conversational commands:
+
+### The 5 Simple Verbs
+
+| Verb | Purpose | Example |
+|------|---------|---------|
+| **tell** | Store information with automatic embeddings | `tell: "Machine learning uses neural networks"` |
+| **ask** | Query stored knowledge with semantic search | `ask: "What is machine learning?"` |
+| **augment** | Extract concepts and enhance content | `augment: {"target": "text to analyze", "operation": "concepts"}` |
+| **zoom** | Set abstraction level (entity/unit/text/community/corpus) | `zoom: {"level": "entity"}` |
+| **pan** | Apply domain/temporal/keyword filtering | `pan: {"domains": ["AI"], "keywords": ["neural networks"]}` |
+| **tilt** | Choose view perspective (keywords/embedding/graph/temporal) | `tilt: {"style": "embedding"}` |
+
+### Quick Example Workflow
+
+```bash
+# Store knowledge
+curl -X POST http://localhost:3000/tell \
+  -d '{"content": "The 5 Simple Verbs simplify semantic operations"}'
+
+# Set context  
+curl -X POST http://localhost:3000/zoom -d '{"level": "entity"}'
+curl -X POST http://localhost:3000/pan -d '{"domains": ["MCP"], "keywords": ["verbs"]}'
+
+# Query with context
+curl -X POST http://localhost:3000/ask \
+  -d '{"question": "What are the Simple Verbs?"}'
+```
+
+The system maintains **persistent ZPT state** across operations, enabling contextual conversations with your knowledge base. All verbs work via REST API, MCP protocol, or direct SDK calls.
+
+See [docs/PROMPT.md](docs/PROMPT.md) for detailed usage instructions.
 
 ## 📊 Data Visualization
 
