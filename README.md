@@ -21,9 +21,9 @@ The intuition is that while LLMs and associated techniques have massively advanc
 
 ## Status 2025-06-21 
 
-Latest workflow experiment : [beerqa-2.md](https://github.com/danja/semem/blob/main/docs/manual/beerqa-2.md)
+Latest workflow experiment : [PDF ingestion](https://github.com/danja/semem/tree/main/examples/document#readme)
 
-See also :  [blog](https://tensegrity.it) (co-written with Claude Code) and [CURRENT-ACTIVITIES.md](https://github.com/danja/semem/blob/main/docs/CURRENT-ACTIVITY.md)
+See also :  [blog](https://tensegrity.it) (co-written with Claude Code)
 
 <details>
 <summary>Mostly functional but very, very sketchy. It has an MCP server, HTTP API, a crude browser UI and code APIs. A lot to do before much will be remotely useful. It is in active development in June 2025. The codebase is big and chaotic, <strong>it is not for the fainthearted</strong>.</summary>
