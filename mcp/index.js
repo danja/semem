@@ -614,6 +614,17 @@ function registerToolCallHandler(server) {
           }
         },
         {
+          name: 'inspect',
+          description: 'Inspect stored memories and session cache for debugging purposes.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              what: { type: 'string', enum: ['session', 'concepts', 'embeddings', 'all'], default: 'session', description: 'What to inspect' },
+              details: { type: 'boolean', default: false, description: 'Include detailed information' }
+            }
+          }
+        },
+        {
           name: 'semem_extract_concepts',
           description: 'Extract semantic concepts from text using LLM analysis',
           inputSchema: {
@@ -637,7 +648,7 @@ function registerToolCallHandler(server) {
         },
         {
           name: 'semem_store_interaction',
-          description: 'Store a new interaction in semantic memory with embeddings and concept extraction',
+          description: '[DEPRECATED - Use "tell" verb instead] Store a new interaction in semantic memory with embeddings and concept extraction',
           inputSchema: {
             type: 'object',
             properties: {
@@ -650,7 +661,7 @@ function registerToolCallHandler(server) {
         },
         {
           name: 'semem_retrieve_memories',
-          description: 'Retrieve similar memories from semantic memory using vector search',
+          description: '[DEPRECATED - Use "ask" verb instead] Retrieve similar memories from semantic memory using vector search',
           inputSchema: {
             type: 'object',
             properties: {
@@ -676,7 +687,7 @@ function registerToolCallHandler(server) {
         },
         {
           name: 'semem_answer',
-          description: 'Answer a question using iterative feedback and the complete Semem knowledge processing pipeline',
+          description: '[DEPRECATED - Use "ask" verb instead] Answer a question using iterative feedback and the complete Semem knowledge processing pipeline',
           inputSchema: {
             type: 'object',
             properties: {
@@ -696,7 +707,7 @@ function registerToolCallHandler(server) {
         },
         {
           name: 'semem_ask',
-          description: 'Ask a question that will be stored in Document QA format and optionally processed through the pipeline',
+          description: '[DEPRECATED - Use "ask" verb instead] Ask a question that will be stored in Document QA format and optionally processed through the pipeline',
           inputSchema: {
             type: 'object',
             properties: {
@@ -2406,11 +2417,16 @@ function registerToolCallHandler(server) {
         const result = await service.pan(args);
         return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
       }
-
       if (name === 'tilt') {
         const { getSimpleVerbsService } = await import('./tools/simple-verbs.js');
         const service = getSimpleVerbsService();
         const result = await service.tilt(args);
+        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+      }
+      if (name === 'inspect') {
+        const { getSimpleVerbsService } = await import('./tools/simple-verbs.js');
+        const service = getSimpleVerbsService();
+        const result = await service.inspect(args);
         return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
       }
       
@@ -2529,7 +2545,7 @@ async function createServer() {
   registerToolCallHandler(server);
 
   // Register Simple Verbs - PROMINENTLY FEATURED simplified interface
-  mcpDebugger.info('🌟 Registering Simple MCP Verbs (tell, ask, augment, zoom, pan, tilt)...');
+  mcpDebugger.info('🌟 Registering Simple MCP Verbs (tell, ask, augment, zoom, pan, tilt, inspect)...');
   registerSimpleVerbs(server);
   mcpDebugger.info('🌟 Simple MCP Verbs registered successfully - these provide the primary interface');
 
@@ -2637,7 +2653,7 @@ async function createIsolatedServer() {
   mcpDebugger.info('Enhanced workflow orchestrator initialized successfully');
 
   // Register Simple Verbs - PROMINENTLY FEATURED simplified interface for isolated server
-  mcpDebugger.info('🌟 Registering Simple MCP Verbs (tell, ask, augment, zoom, pan, tilt)...');
+  mcpDebugger.info('🌟 Registering Simple MCP Verbs (tell, ask, augment, zoom, pan, tilt, inspect)...');
   registerSimpleVerbs(server);
   mcpDebugger.info('🌟 Simple MCP Verbs registered successfully - these provide the primary interface');
 

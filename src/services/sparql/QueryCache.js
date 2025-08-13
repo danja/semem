@@ -96,7 +96,7 @@ export class QueryCache {
 
     evictLRU() {
         let oldestKey = null;
-        let oldestTime = Date.now();
+        let oldestTime = Number.MAX_SAFE_INTEGER;
 
         for (const [key, entry] of this.cache.entries()) {
             if (entry.lastAccessed < oldestTime) {

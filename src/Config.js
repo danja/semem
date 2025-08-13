@@ -8,12 +8,12 @@ import fs from 'fs';
 export default class Config {
     static defaults = {
         storage: {
-            type: 'memory',
+            type: 'sparql',
             options: {
-                path: 'interaction_history.json',
-                endpoint: 'http://localhost:8080',
-                apiKey: '',
-                timeout: 5000
+                update: 'http://localhost:4030/semem/update',
+                query: 'http://localhost:4030/semem/query',
+                user: 'admin',
+                password: 'admin123'
             }
         },
         models: {

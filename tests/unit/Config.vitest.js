@@ -17,12 +17,12 @@ describe('Config', () => {
   // Sample valid config matching Config.defaults
   const validConfig = {
     storage: {
-      type: 'memory',
+      type: 'sparql',
       options: {
-        path: 'interaction_history.json',
-        endpoint: 'http://localhost:8080',
-        apiKey: '',
-        timeout: 5000
+        update: 'http://localhost:4030/test-mem/update',
+        query: 'http://localhost:4030/test-mem/query',
+        user: 'admin',
+        password: 'admin123'
       }
     },
     models: {
@@ -71,7 +71,7 @@ describe('Config', () => {
     it('should initialize with defaults when no config provided', async () => {
       const config = new Config();
       await config.init();
-      expect(config.get('storage.type')).toBe('memory');
+      expect(config.get('storage.type')).toBe('sparql');
       expect(config.get('models.chat.model')).toBe('mistral-small-latest');
     });
 
@@ -119,10 +119,10 @@ describe('Config', () => {
     it.skip('should handle environment overrides', async () => {
       // Skipping this test as it can interfere with other tests due to environment changes
       // In a real migration, we would need to properly isolate environment changes
-      process.env.SEMEM_STORAGE_TYPE = 'json';
+      process.env.SEMEM_STORAGE_TYPE = 'sparql';
       const config = new Config(validConfig);
       await config.init();
-      expect(config.get('storage.type')).toBe('json');
+      expect(config.get('storage.type')).toBe('sparql');
     });
   });
 
@@ -131,7 +131,7 @@ describe('Config', () => {
       const config = new Config(validConfig);
       await config.init();
       expect(config.initialized).toBe(true);
-      expect(config.get('storage.type')).toBe('memory');
+      expect(config.get('storage.type')).toBe('sparql');
     });
 
     it.skip('should validate during creation', async () => {

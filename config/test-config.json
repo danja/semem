@@ -1,8 +1,11 @@
 {
   "storage": {
-    "type": "memory",
+    "type": "sparql",
     "options": {
-      "path": "interaction_history.json"
+      "update": "http://localhost:4030/test/update",
+      "query": "http://localhost:4030/test/query",
+      "user": "admin",
+      "password": "admin123"
     }
   },
   "servers": {

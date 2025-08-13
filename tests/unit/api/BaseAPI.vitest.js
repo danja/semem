@@ -59,7 +59,7 @@ describe('BaseAPI', () => {
   beforeEach(async () => {
     // Create a minimal config for testing
     mockConfig = new Config({
-      storage: { type: 'memory' },
+      storage: { type: 'sparql' },
       models: {
         chat: {
           provider: 'mistral',

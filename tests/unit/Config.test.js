@@ -12,12 +12,12 @@ describe('Config', () => {
   // Sample valid config matching Config.defaults
   const validConfig = {
     storage: {
-      type: 'memory',
+      type: 'sparql',
       options: {
-        path: 'interaction_history.json',
-        endpoint: 'http://localhost:8080',
-        apiKey: '',
-        timeout: 5000
+        update: 'http://localhost:4030/semem/update',
+        query: 'http://localhost:4030/semem/query',
+        user: 'admin',
+        password: 'admin123'
       }
     },
     models: {
@@ -84,7 +84,7 @@ describe('Config', () => {
     it('should initialize with defaults when no config provided', async () => {
       const config = new Config();
       await config.init();
-      expect(config.get('storage.type')).toBe('memory');
+      expect(config.get('storage.type')).toBe('sparql');
       expect(config.get('models.chat.model')).toBe('mistral-small-latest');
     });
 
@@ -132,7 +132,7 @@ describe('Config', () => {
       config.initialized = true;
 
       expect(config.initialized).toBeTruthy();
-      expect(config.get('storage.type')).toBe('memory');
+      expect(config.get('storage.type')).toBe('sparql');
     });
 
     it('should validate during creation', async () => {
@@ -194,7 +194,7 @@ describe('Config', () => {
     it.skip('should validate model configuration', async () => {
       // Create a minimal config with just the necessary test parts
       const testConfig = {
-        storage: { type: 'memory' },
+        storage: { type: 'sparql' },
         // Deliberately missing model fields here
         models: {
           chat: {},

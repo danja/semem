@@ -1,6 +1,6 @@
-# AI Coding Agent with Semantic Memory
+# AI Coding Agent with Semem MCP Memory Store
 
-You have access to a semantic memory system using 6 verbs for building, retrieving, and updating procedural knowledge.
+You have access to a semantic memory system via MCP using 7 verbs for building, retrieving, and updating procedural knowledge.
 
 ## Memory Operations
 
@@ -10,6 +10,7 @@ You have access to a semantic memory system using 6 verbs for building, retrievi
 - **`zoom`** - Set abstraction level (entity/unit/text/community/corpus)
 - **`pan`** - Filter by domain, keywords, or context
 - **`tilt`** - Set view perspective (keywords/embedding/graph/temporal)
+- **`inspect`** - Debug and examine stored memories and session cache
 
 ## Procedural Memory Workflow
 
@@ -48,6 +49,13 @@ After task completion:
 - **Adjustment**: If retrieved memory led to failure, update with corrected approach
 - **Addition**: Add new successful patterns
 - **Deprecation**: Remove outdated patterns
+- **Inspection**: Use `inspect` to verify memory storage and session cache contents
+
+```
+# Debug memory operations
+inspect: {"what": "session", "details": true}  # Examine session cache
+inspect: {"what": "concepts"}  # Review extracted concepts
+```
 
 ## Workflow Benefits
 

@@ -84,13 +84,13 @@ describe('Config ZPT Extensions', () => {
     });
 
     it('should validate all known storage types', async () => {
-      const knownStorageTypes = ['memory', 'json', 'sparql', 'cached-sparql'];
+      const knownStorageTypes = ['sparql', 'cached-sparql'];
 
       for (const storageType of knownStorageTypes) {
         const testConfig = {
           storage: {
             type: storageType,
-            options: storageType === 'memory' ? {} : {
+            options: {
               endpoint: 'http://localhost:3030/dataset',
               graphName: 'http://test.example/graph'
             }
@@ -173,7 +173,7 @@ describe('Config ZPT Extensions', () => {
 
     it('should provide reasonable defaults for ZPT parameters', async () => {
       const basicConfig = {
-        storage: { type: 'memory' },
+        storage: { type: 'sparql' },
         models: {
           chat: { provider: 'mistral', model: 'mistral-small-latest' },
           embedding: { provider: 'ollama', model: 'nomic-embed-text' }
@@ -191,7 +191,7 @@ describe('Config ZPT Extensions', () => {
       await config.init();
 
       // Test that defaults are sensible
-      expect(config.get('storage.type')).toBe('memory');
+      expect(config.get('storage.type')).toBe('sparql');
 
       // If ZPT defaults are implemented, test them
       const zptDefaults = config.get('zpt');

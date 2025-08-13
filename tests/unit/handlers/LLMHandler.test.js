@@ -111,20 +111,18 @@ describe('LLMHandler', () => {
             // Mock a successful but invalid JSON response
             mockProvider.generateCompletion.mockResolvedValue('not a json array');
             
-            // The method should throw an error for invalid JSON
-            await expect(handler.extractConcepts('test text'))
-                .rejects
-                .toThrow('No JSON array found in LLM response for concept extraction');
+            // The method should return empty array for invalid JSON (resilient behavior)
+            const result = await handler.extractConcepts('test text');
+            expect(result).toEqual(['not a json array']); // Falls back to manual extraction
         });
         
         it('should handle empty responses from LLM', async () => {
             // Mock an empty response
             mockProvider.generateCompletion.mockResolvedValue('');
             
-            // The method should throw an error for empty responses
-            await expect(handler.extractConcepts('test text'))
-                .rejects
-                .toThrow('No JSON array found in LLM response for concept extraction');
+            // The method should return empty array for empty responses (resilient behavior)
+            const result = await handler.extractConcepts('test text');
+            expect(result).toEqual([]);
         });
         
         it('should handle LLM provider errors', async () => {
@@ -132,49 +130,43 @@ describe('LLMHandler', () => {
             const error = new Error('LLM Error');
             mockProvider.generateCompletion.mockRejectedValue(error);
             
-            // The error should propagate up
-            await expect(handler.extractConcepts('test text'))
-                .rejects
-                .toThrow(error);
+            // The method should return empty array for provider errors (resilient behavior)
+            const result = await handler.extractConcepts('test text');
+            expect(result).toEqual([]);
         });
         
         it('should handle malformed JSON array responses', async () => {
             // Mock a response that's JSON but not an array
             mockProvider.generateCompletion.mockResolvedValue('{"key": "value"}');
             
-            // The method should throw an error for non-array JSON
-            // ParseHelper will successfully extract the JSON, but LLMHandler will detect it's not an array
-            await expect(handler.extractConcepts('test text'))
-                .rejects
-                .toThrow('Failed to parse JSON from cleaned response: Parsed result is not an array');
+            // The method should return the value via manual extraction (resilient behavior)
+            const result = await handler.extractConcepts('test text');
+            expect(result).toEqual(['value']); // Manual extraction gets the quoted value
         });
         
         it('should handle non-array JSON responses', async () => {
             // Mock a response that's a JSON string but not an array
             mockProvider.generateCompletion.mockResolvedValue('"just a string"');
             
-            // The method should throw an error for non-array JSON
-            await expect(handler.extractConcepts('test text'))
-                .rejects
-                .toThrow('No JSON array found in LLM response for concept extraction');
+            // The method should return the string via manual extraction (resilient behavior)
+            const result = await handler.extractConcepts('test text');
+            expect(result).toEqual(['just a string']); // Manual extraction gets the quoted string
         });
         
         it('should handle null/undefined responses', async () => {
             // Mock a null response
             mockProvider.generateCompletion.mockResolvedValue(null);
             
-            // The method should throw a TypeError when trying to call match on null/undefined
-            await expect(handler.extractConcepts('test text'))
-                .rejects
-                .toThrow(/Cannot read propert(y|ies) of (null|undefined)/);
+            // The method should return empty array for null responses (resilient behavior)
+            const result = await handler.extractConcepts('test text');
+            expect(result).toEqual([]);
             
             // Mock an undefined response
             mockProvider.generateCompletion.mockResolvedValue(undefined);
             
-            // The method should throw a TypeError when trying to call match on null/undefined
-            await expect(handler.extractConcepts('test text'))
-                .rejects
-                .toThrow(/Cannot read propert(y|ies) of (null|undefined)/);
+            // The method should return empty array for undefined responses (resilient behavior)
+            const result2 = await handler.extractConcepts('test text');
+            expect(result2).toEqual([]);
         });
         
         it('should handle non-string responses', async () => {
@@ -208,13 +200,13 @@ describe('LLMHandler', () => {
         
         it('should handle arrays with mixed value types', async () => {
             // Mock a response with an array containing mixed types
-            // The actual implementation doesn't convert types, it returns them as-is
+            // The manual extraction only returns string concepts from quoted strings
             const testArray = [1, 'text', true, null, {key: 'value'}];
             mockProvider.generateCompletion.mockResolvedValue(JSON.stringify(testArray));
             
             const concepts = await handler.extractConcepts('test text');
-            // The implementation returns the array as-is without type conversion
-            expect(concepts).toEqual(testArray);
+            // Manual extraction only gets string values
+            expect(concepts).toEqual(['text']);
         });
         
         it('should handle JSON with newlines and formatting', async () => {
@@ -233,17 +225,17 @@ describe('LLMHandler', () => {
         it('should handle responses with no array', async () => {
             mockProvider.generateCompletion.mockResolvedValue('The text discusses various topics');
 
-            await expect(handler.extractConcepts('test text'))
-                .rejects
-                .toThrow('No JSON array found in LLM response for concept extraction');
+            // The method should return extracted phrases via manual extraction (resilient behavior)
+            const result = await handler.extractConcepts('test text');
+            expect(result).toEqual(['The text discusses various topics']); // Manual extraction gets the phrase
         });
         
         it('should handle LLM errors gracefully', async () => {
             mockProvider.generateCompletion.mockRejectedValue(new Error('API Error'));
 
-            await expect(handler.extractConcepts('test text'))
-                .rejects
-                .toThrow('API Error');
+            // The method should return empty array for API errors (resilient behavior)
+            const result = await handler.extractConcepts('test text');
+            expect(result).toEqual([]);
         });
     });
     

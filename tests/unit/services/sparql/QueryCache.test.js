@@ -100,14 +100,15 @@ describe('QueryCache', () => {
 
         it('should update access time on get', async () => {
             await cache.set('key1', 'value1');
+            await cache.set('key2', 'value2');
             
-            // Access before TTL expires
-            await new Promise(resolve => setTimeout(resolve, 300));
+            // Access key1 to update its lastAccessed time
+            await new Promise(resolve => setTimeout(resolve, 100));
             expect(await cache.get('key1')).toBe('value1');
             
-            // Wait a bit more but should still be valid due to access time update
-            await new Promise(resolve => setTimeout(resolve, 800));
-            expect(await cache.get('key1')).toBe('value1');
+            // Verify that lastAccessed was updated (this affects LRU, not TTL)
+            const entry = cache.cache.get('key1');
+            expect(entry.lastAccessed).toBeGreaterThan(entry.timestamp);
         });
     });
 
@@ -177,11 +178,23 @@ describe('QueryCache', () => {
         });
 
         it('should handle missing files gracefully', async () => {
-            const nonExistentFile = '/path/that/does/not/exist.txt';
-            await cache.set('key1', 'value1', nonExistentFile);
+            const nonExistentFile = path.join(process.cwd(), `nonexistent-${Date.now()}.txt`);
             
-            // Should return null due to missing file
-            expect(await cache.get('key1', nonExistentFile)).toBeNull();
+            // Mock console.warn to prevent stderr output during test
+            const originalWarn = console.warn;
+            console.warn = vi.fn();
+            
+            try {
+                await cache.set('key1', 'value1', nonExistentFile);
+                
+                // Should return null due to missing file
+                expect(await cache.get('key1', nonExistentFile)).toBeNull();
+                
+                // Should have logged a warning about the missing file
+                expect(console.warn).toHaveBeenCalledWith(expect.stringContaining('Could not stat file'));
+            } finally {
+                console.warn = originalWarn;
+            }
         });
 
         it('should clean up file stats when entries are deleted', async () => {

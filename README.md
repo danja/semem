@@ -85,7 +85,7 @@ Get started with Semem's natural language interface in 5 minutes:
    ```
    The server starts on `http://localhost:3000` with Simple Verbs REST endpoints.
 
-### Try the 5 Simple Verbs
+### Try the 7 Simple Verbs
 
 **Store knowledge with `tell`:**
 ```bash
@@ -177,7 +177,7 @@ Add Semem to your Claude Desktop MCP configuration:
 }
 ```
 
-Then use the 5 Simple Verbs directly in Claude Desktop conversations!
+Then use the 7 Simple Verbs directly in Claude Desktop conversations!
 
 ## 🖥️ UI Features
 
@@ -201,7 +201,7 @@ Query and explore your knowledge graph using the built-in SPARQL browser.
 
 ## 🚀 Key Features
 
-- **🗣️ Simple Verbs Interface**: 5-verb natural language API (tell, ask, augment, zoom, pan, tilt) for intuitive semantic operations
+- **🗣️ Simple Verbs Interface**: 7-verb natural language API (tell, ask, augment, zoom, pan, tilt, inspect) for intuitive semantic operations
 - **🧠 Semantic Memory**: Intelligent context retrieval and memory organization with vector embeddings and SPARQL
 - **🕸️ Knowledge Graph Processing**: End-to-end Ragno pipeline for entity extraction and relationship modeling
 - **🎯 Zoom, Pan Tilt (ZPT)**: Knowledge navigation and processing with persistent state management
@@ -214,9 +214,9 @@ Query and explore your knowledge graph using the built-in SPARQL browser.
 
 ## 🗣️ Simple Verbs Interface
 
-Semem features a **5-verb natural language interface** that simplifies complex knowledge operations into conversational commands:
+Semem features a **7-verb natural language interface** that simplifies complex knowledge operations into conversational commands:
 
-### The 5 Simple Verbs
+### The 7 Simple Verbs
 
 | Verb | Purpose | Example |
 |------|---------|---------|
@@ -226,13 +226,14 @@ Semem features a **5-verb natural language interface** that simplifies complex k
 | **zoom** | Set abstraction level (entity/unit/text/community/corpus) | `zoom: {"level": "entity"}` |
 | **pan** | Apply domain/temporal/keyword filtering | `pan: {"domains": ["AI"], "keywords": ["neural networks"]}` |
 | **tilt** | Choose view perspective (keywords/embedding/graph/temporal) | `tilt: {"style": "embedding"}` |
+| **inspect** | Debug and examine stored memories and session cache | `inspect: {"what": "session", "details": true}` |
 
 ### Quick Example Workflow
 
 ```bash
 # Store knowledge
 curl -X POST http://localhost:3000/tell \
-  -d '{"content": "The 5 Simple Verbs simplify semantic operations"}'
+  -d '{"content": "The 7 Simple Verbs simplify semantic operations"}'
 
 # Set context  
 curl -X POST http://localhost:3000/zoom -d '{"level": "entity"}'
@@ -612,6 +613,28 @@ See [examples/README.md](examples/README.md) and [examples/mcp/README.md](exampl
   }
 }
 ```
+
+#### Session-Level Memory Cache
+
+Semem implements a **hybrid storage strategy** that combines persistent storage with session-level caching for immediate semantic retrieval:
+
+**How it works:**
+- **`tell` operations** store content in both persistent storage (SPARQL/JSON) AND a session-level cache
+- **`ask` operations** search session cache first, then persistent storage, combining results by semantic similarity
+- **Immediate availability**: Recently stored concepts are immediately available for retrieval within the same session
+- **Semantic similarity**: Uses cosine similarity on embeddings for intelligent result ranking
+
+**Session cache features:**
+- **In-memory vector search** with similarity caching for performance
+- **Concept tracking** - maintains a set of all concepts from the session
+- **Debugging support** - use `inspect` tool to examine cache contents:
+  ```bash
+  curl -X POST http://localhost:3000/inspect \
+    -H "Content-Type: application/json" \
+    -d '{"what": "session", "details": true}'
+  ```
+
+This solves the common issue where `tell` → `ask` operations couldn't find recently stored content due to indexing delays in persistent storage.
 
 ### LLM Providers
 

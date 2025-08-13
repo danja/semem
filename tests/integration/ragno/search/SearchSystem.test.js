@@ -207,9 +207,13 @@ describe('Document Search System Integration', () => {
         }
 
         try {
-            // Clear test graph
-            const clearQuery = sparqlHelper.createClearGraphQuery(testGraphURI);
-            await sparqlHelper.executeUpdate(clearQuery);
+            // Clear test graph (ignore errors if graph doesn't exist)
+            try {
+                const clearQuery = sparqlHelper.createClearGraphQuery(testGraphURI);
+                await sparqlHelper.executeUpdate(clearQuery);
+            } catch (clearError) {
+                console.log('Graph clear failed (graph may not exist, continuing):', clearError.message);
+            }
 
             // Insert test entities using proper INSERT DATA query
             const testTriples = `
@@ -277,9 +281,13 @@ describe('Document Search System Integration', () => {
         }
 
         try {
-            const clearQuery = sparqlHelper.createClearGraphQuery(testGraphURI);
-            await sparqlHelper.executeUpdate(clearQuery);
-            console.log('Test data cleanup completed');
+            try {
+                const clearQuery = sparqlHelper.createClearGraphQuery(testGraphURI);
+                await sparqlHelper.executeUpdate(clearQuery);
+                console.log('Test data cleanup completed');
+            } catch (clearError) {
+                console.log('Graph cleanup failed (graph may not exist):', clearError.message);
+            }
         } catch (error) {
             console.warn('Failed to cleanup test data:', error.message);
         }
