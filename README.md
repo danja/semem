@@ -14,7 +14,7 @@
 *click the triangles to expand the text* 
  
 <details> 
-<summary>Semem is an experimental Node.js toolkit for AI memory management</summary> that integrates large language models (LLMs) with Semantic Web technologies (RDF/SPARQL). It offers knowledge graph retrieval and augmentation algorithms within a conceptual model based on the <a href="https://github.com/danja/ragno">Ragno</a> (knowledge graph description) and <a href="https://github.com/danja/zpt">ZPT</a> (knowledge graph navigation) ontologies. It is a [Tensegrity](https://github.com/danja/tensegrity) subproject.
+<summary>Semem is an experimental Node.js toolkit for AI memory management</summary> that integrates large language models (LLMs) with Semantic Web technologies (RDF/SPARQL). It offers knowledge graph retrieval and augmentation algorithms within a conceptual model based on the <a href="https://github.com/danja/ragno">Ragno</a> (knowledge graph description) and <a href="https://github.com/danja/zpt">ZPT</a> (knowledge graph navigation) ontologies. It is a <a href="https://github.com/danja/tensegrity">tensegrity</a> project.
 
 The intuition is that while LLMs and associated techniques have massively advanced the field of AI and offer considerable utility, the typical approach is missing the elephant in the room: <strong>the Web</strong> - the biggest known knowledgebase in our universe. Semantic Web technologies offer data integration at a global scale, with tried & tested conceptual models for knowledge representation. <strong>There is a lot of low-hanging fruit.</strong>
 </details>
