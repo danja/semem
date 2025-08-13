@@ -31,14 +31,39 @@ program
   .option('-c, --config <path>', 'Configuration file path')
   .action(async (options) => {
     try {
-      const { startMCPServer } = await import('../mcp/index.js');
-      await startMCPServer({
-        transport: options.transport,
-        port: options.port ? parseInt(options.port) : undefined,
-        configPath: options.config
-      });
+      const { createServer } = await import('../mcp/index.js');
+      const { StdioServerTransport } = await import('@modelcontextprotocol/sdk/server/stdio.js');
+      
+      // Create the MCP server
+      const server = await createServer();
+      
+      // Choose transport based on options
+      if (options.transport === 'http' || options.transport === 'sse') {
+        // For HTTP/SSE transport, delegate to http-server
+        const { default: httpServer } = await import('../mcp/http-server.js');
+        console.log(`Starting MCP HTTP server on port ${options.port || 3000}`);
+      } else {
+        // For stdio transport, use SDK transport
+        const transport = new StdioServerTransport();
+        await server.connect(transport);
+        
+        // Handle graceful shutdown
+        process.on('SIGINT', async () => {
+          console.log('\nShutting down MCP server...');
+          if (server && server.close) {
+            await server.close();
+          }
+          process.exit(0);
+        });
+        
+        // Keep process alive for stdio
+        process.stdin.resume();
+      }
     } catch (error) {
       console.error('Failed to start MCP server:', error.message);
+      if (process.env.NODE_ENV === 'development') {
+        console.error(error.stack);
+      }
       process.exit(1);
     }
   });

@@ -1,8 +1,8 @@
 # Simple Verbs System Prompt
 
-You have access to a 5-verb interface for semantic memory operations. Use these verbs naturally in conversation:
+You have access to a 6-verb interface for semantic memory operations. Use these verbs naturally in conversation:
 
-## The 5 Simple Verbs
+## The 6 Simple Verbs
 
 ### **tell** - Store Information
 Store content with automatic embeddings and concept extraction.
