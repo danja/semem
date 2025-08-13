@@ -9,7 +9,7 @@
  
 **tl;dr - flipping ideas (mostly) from the LLM world over to the Semantic Web for massively simplified integration, at global scale**
 
-**[Semem Documentation](https://danja.github.io/semem/)**
+**[Semem Documentation](https://danja.github.io/semem/)** - *already out-of-date, below is more current*
  
 *click the triangles to expand the text* 
  
@@ -19,7 +19,11 @@
 The intuition is that while LLMs and associated techniques have massively advanced the field of AI and offer considerable utility, the typical approach is missing the elephant in the room: <strong>the Web</strong> - the biggest known knowledgebase in our universe. Semantic Web technologies offer data integration at a global scale, with tried & tested conceptual models for knowledge representation. <strong>There is a lot of low-hanging fruit.</strong>
 </details>
 
-## Status 2025-06-21 
+## Status 2025-08-13
+
+MCP functionality focused down on 7 core verbs : *ask, tell, augment, zoom, pan, tilt, inspect*.
+
+The UI is about to be mostly re-written to reflect this.
 
 Latest workflow experiment : [PDF ingestion](https://github.com/danja/semem/tree/main/examples/document#readme)
 
