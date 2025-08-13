@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Semem Workbench - Semantic Memory Interface</title>
+    <link rel="stylesheet" href="styles/workbench.css">
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+</head>
+
+<body>
+    <div id="app" class="workbench-app">
+        <!-- Session Dashboard -->
+        <header id="session-dashboard" class="session-dashboard">
+            <div class="session-info">
+                <div class="session-id">
+                    <span class="label">Session:</span>
+                    <span id="session-id-display">Loading...</span>
+                    <span id="session-duration">(0m)</span>
+                </div>
+                <div class="zpt-state">
+                    <span class="label">ZPT:</span>
+                    <span id="zoom-display" class="zpt-value">entity</span>
+                    <span class="separator">/</span>
+                    <span id="pan-display" class="zpt-value">all</span>
+                    <span class="separator">/</span>
+                    <span id="tilt-display" class="zpt-value">keywords</span>
+                </div>
+            </div>
+            
+            <div class="session-stats">
+                <div class="stat-item">
+                    <span class="stat-icon">💭</span>
+                    <span id="cache-interactions">0</span>
+                    <span class="stat-label">interactions</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-icon">🧠</span>
+                    <span id="cache-concepts">0</span>
+                    <span class="stat-label">concepts</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-icon">⚡</span>
+                    <span id="last-operation-time">-</span>
+                    <span class="stat-label">last op</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-icon">🎯</span>
+                    <span id="cache-hit-rate">-</span>
+                    <span class="stat-label">cache hits</span>
+                </div>
+            </div>
+            
+            <div class="session-actions">
+                <button id="session-export" class="btn btn-sm btn-outline" title="Export Session">📤</button>
+                <button id="session-clear" class="btn btn-sm btn-outline" title="Clear Session">🗑️</button>
+                <button id="session-settings" class="btn btn-sm btn-outline" title="Settings">⚙️</button>
+            </div>
+        </header>
+
+        <!-- Main Navigation -->
+        <nav id="main-nav" class="main-nav">
+            <button class="nav-btn active" data-tab="workbench">
+                <span class="nav-icon">🧠</span>
+                <span class="nav-label">Semantic Memory</span>
+            </button>
+            <button class="nav-btn" data-tab="monitor">
+                <span class="nav-icon">📊</span>
+                <span class="nav-label">System Monitor</span>
+            </button>
+            <button class="nav-btn" data-tab="settings">
+                <span class="nav-icon">⚙️</span>
+                <span class="nav-label">Settings</span>
+            </button>
+            <button class="nav-btn" data-tab="sparql">
+                <span class="nav-icon">🔧</span>
+                <span class="nav-label">SPARQL Browser</span>
+            </button>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main id="main-content" class="main-content">
+            <!-- Workbench Tab (Main 7 Simple Verbs Interface) -->
+            <section id="workbench-tab" class="tab-content active">
+                <!-- Three-Column Workflow -->
+                <div class="workflow-grid">
+                    <!-- Tell Column -->
+                    <div class="workflow-column tell-column">
+                        <div class="column-header">
+                            <h2 class="column-title">
+                                <span class="verb-icon">📝</span>
+                                Tell
+                            </h2>
+                            <div class="column-subtitle">Store knowledge and concepts</div>
+                        </div>
+                        
+                        <div class="column-content">
+                            <div class="input-group">
+                                <label for="tell-content" class="input-label">Content</label>
+                                <textarea 
+                                    id="tell-content" 
+                                    class="content-input" 
+                                    placeholder="Enter content to store in semantic memory..."
+                                    rows="8"
+                                ></textarea>
+                            </div>
+                            
+                            <div class="input-row">
+                                <div class="input-group flex-1">
+                                    <label for="tell-type" class="input-label">Type</label>
+                                    <select id="tell-type" class="select-input">
+                                        <option value="concept">Concept</option>
+                                        <option value="interaction">Interaction</option>
+                                        <option value="document">Document</option>
+                                    </select>
+                                </div>
+                                <div class="input-group flex-2">
+                                    <label for="tell-tags" class="input-label">Tags</label>
+                                    <input type="text" id="tell-tags" class="text-input" placeholder="Optional tags...">
+                                </div>
+                            </div>
+                            
+                            <div class="concept-preview" id="concept-preview">
+                                <div class="preview-header">
+                                    <span class="preview-label">Concept Preview</span>
+                                    <span class="preview-count" id="concept-count">0 concepts</span>
+                                </div>
+                                <div class="preview-content" id="concept-list">
+                                    <div class="preview-placeholder">Start typing to see extracted concepts...</div>
+                                </div>
+                            </div>
+                            
+                            <button id="tell-submit" class="btn btn-primary btn-large">
+                                <span class="btn-icon">💾</span>
+                                <span class="btn-text">Store in Memory</span>
+                                <span class="btn-timing" id="tell-timing"></span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Ask Column -->
+                    <div class="workflow-column ask-column">
+                        <div class="column-header">
+                            <h2 class="column-title">
+                                <span class="verb-icon">❓</span>
+                                Ask
+                            </h2>
+                            <div class="column-subtitle">Query stored knowledge</div>
+                        </div>
+                        
+                        <div class="column-content">
+                            <div class="input-group">
+                                <label for="ask-query" class="input-label">Query</label>
+                                <div class="query-input-container">
+                                    <textarea 
+                                        id="ask-query" 
+                                        class="query-input" 
+                                        placeholder="Ask a question about stored knowledge..."
+                                        rows="3"
+                                    ></textarea>
+                                    <div class="query-suggestions" id="query-suggestions"></div>
+                                </div>
+                            </div>
+                            
+                            <button id="ask-submit" class="btn btn-primary btn-large">
+                                <span class="btn-icon">🔍</span>
+                                <span class="btn-text">Search Memory</span>
+                                <span class="btn-timing" id="ask-timing"></span>
+                            </button>
+                            
+                            <div class="results-container" id="ask-results">
+                                <div class="results-placeholder">
+                                    <div class="placeholder-icon">🧠</div>
+                                    <div class="placeholder-text">Ask a question to search your semantic memory</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Navigate Column -->
+                    <div class="workflow-column navigate-column">
+                        <div class="column-header">
+                            <h2 class="column-title">
+                                <span class="verb-icon">🧭</span>
+                                Navigate
+                            </h2>
+                            <div class="column-subtitle">Control knowledge perspective</div>
+                        </div>
+                        
+                        <div class="column-content">
+                            <!-- Zoom Controls -->
+                            <div class="nav-group">
+                                <div class="nav-group-header">
+                                    <span class="nav-verb-icon">🔍</span>
+                                    <span class="nav-verb-title">Zoom</span>
+                                    <span class="nav-verb-subtitle">Abstraction Level</span>
+                                </div>
+                                <div class="zoom-controls">
+                                    <button class="zoom-btn active" data-zoom="entity">Entity</button>
+                                    <button class="zoom-btn" data-zoom="unit">Unit</button>
+                                    <button class="zoom-btn" data-zoom="text">Text</button>
+                                    <button class="zoom-btn" data-zoom="community">Community</button>
+                                    <button class="zoom-btn" data-zoom="corpus">Corpus</button>
+                                </div>
+                            </div>
+                            
+                            <!-- Pan Controls -->
+                            <div class="nav-group">
+                                <div class="nav-group-header">
+                                    <span class="nav-verb-icon">🎯</span>
+                                    <span class="nav-verb-title">Pan</span>
+                                    <span class="nav-verb-subtitle">Domain Filters</span>
+                                </div>
+                                <div class="pan-controls">
+                                    <div class="input-group">
+                                        <label for="pan-domains" class="input-label">Domains</label>
+                                        <input type="text" id="pan-domains" class="text-input" placeholder="AI, technology...">
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="pan-keywords" class="input-label">Keywords</label>
+                                        <input type="text" id="pan-keywords" class="text-input" placeholder="neural networks...">
+                                    </div>
+                                    <div class="active-filters" id="active-filters"></div>
+                                </div>
+                            </div>
+                            
+                            <!-- Tilt Controls -->
+                            <div class="nav-group">
+                                <div class="nav-group-header">
+                                    <span class="nav-verb-icon">👁️</span>
+                                    <span class="nav-verb-title">Tilt</span>
+                                    <span class="nav-verb-subtitle">View Style</span>
+                                </div>
+                                <div class="tilt-controls">
+                                    <button class="tilt-btn active" data-tilt="keywords">Keywords</button>
+                                    <button class="tilt-btn" data-tilt="embedding">Embedding</button>
+                                    <button class="tilt-btn" data-tilt="graph">Graph</button>
+                                    <button class="tilt-btn" data-tilt="temporal">Temporal</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Expandable Secondary Panels -->
+                <div class="secondary-panels">
+                    <!-- Augment Panel -->
+                    <div class="panel augment-panel" id="augment-panel">
+                        <div class="panel-header">
+                            <h3 class="panel-title">
+                                <span class="verb-icon">🔬</span>
+                                Augment
+                            </h3>
+                            <button class="panel-toggle" data-panel="augment">
+                                <span class="toggle-icon">▼</span>
+                            </button>
+                        </div>
+                        <div class="panel-content" style="display: none;">
+                            <div class="augment-tools">
+                                <div class="tool-group">
+                                    <label for="augment-text" class="input-label">Analyze Text</label>
+                                    <textarea id="augment-text" class="text-input" placeholder="Enter text to analyze..." rows="4"></textarea>
+                                    <button id="augment-extract" class="btn btn-secondary">Extract Concepts</button>
+                                </div>
+                                <div id="augment-results" class="augment-results"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Memory Explorer Panel -->
+                    <div class="panel memory-panel" id="memory-panel">
+                        <div class="panel-header">
+                            <h3 class="panel-title">
+                                <span class="verb-icon">🗂️</span>
+                                Memory Explorer
+                            </h3>
+                            <button class="panel-toggle" data-panel="memory">
+                                <span class="toggle-icon">▼</span>
+                            </button>
+                        </div>
+                        <div class="panel-content" style="display: none;">
+                            <div class="memory-explorer">
+                                <div class="explorer-tabs">
+                                    <button class="explorer-tab active" data-explorer-tab="recent">Recent</button>
+                                    <button class="explorer-tab" data-explorer-tab="concepts">Concepts</button>
+                                    <button class="explorer-tab" data-explorer-tab="relationships">Relationships</button>
+                                </div>
+                                <div id="memory-explorer-content" class="explorer-content">
+                                    <div class="explorer-placeholder">Loading memory data...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Inspect Panel -->
+                    <div class="panel inspect-panel" id="inspect-panel">
+                        <div class="panel-header">
+                            <h3 class="panel-title">
+                                <span class="verb-icon">🔍</span>
+                                Inspect
+                            </h3>
+                            <button class="panel-toggle" data-panel="inspect">
+                                <span class="toggle-icon">▼</span>
+                            </button>
+                        </div>
+                        <div class="panel-content" style="display: none;">
+                            <div class="inspect-tools">
+                                <div class="inspect-tabs">
+                                    <button class="inspect-tab active" data-inspect-tab="session">Session Cache</button>
+                                    <button class="inspect-tab" data-inspect-tab="performance">Performance</button>
+                                    <button class="inspect-tab" data-inspect-tab="debug">Debug</button>
+                                </div>
+                                <div id="inspect-content" class="inspect-content">
+                                    <div class="inspect-placeholder">Click refresh to load session data...</div>
+                                </div>
+                                <button id="inspect-refresh" class="btn btn-secondary btn-small">Refresh</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- System Monitor Tab -->
+            <section id="monitor-tab" class="tab-content" style="display: none;">
+                <div class="monitor-container">
+                    <h2>System Monitor</h2>
+                    <div class="monitor-grid">
+                        <div class="monitor-card">
+                            <h3>Performance Metrics</h3>
+                            <div id="performance-metrics">Loading...</div>
+                        </div>
+                        <div class="monitor-card">
+                            <h3>System Health</h3>
+                            <div id="system-health">Loading...</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Settings Tab -->
+            <section id="settings-tab" class="tab-content" style="display: none;">
+                <div class="settings-container">
+                    <h2>Settings</h2>
+                    <div class="settings-form">
+                        <div class="setting-group">
+                            <h3>Interface</h3>
+                            <label class="setting-item">
+                                <input type="checkbox" id="setting-auto-concepts" checked>
+                                <span>Auto-extract concepts while typing</span>
+                            </label>
+                            <label class="setting-item">
+                                <input type="checkbox" id="setting-performance-display" checked>
+                                <span>Show performance timing</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SPARQL Browser Tab (Preserved from old UI) -->
+            <section id="sparql-tab" class="tab-content" style="display: none;">
+                <div class="sparql-container">
+                    <h2>SPARQL Browser</h2>
+                    <div class="sparql-notice">
+                        <p>Advanced SPARQL functionality preserved from the original interface.</p>
+                        <button id="load-legacy-sparql" class="btn btn-primary">Load SPARQL Browser</button>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Loading Overlay -->
+        <div id="loading-overlay" class="loading-overlay" style="display: none;">
+            <div class="loading-content">
+                <div class="loading-spinner"></div>
+                <div class="loading-text">Processing...</div>
+            </div>
+        </div>
+
+        <!-- Toast Notifications -->
+        <div id="toast-container" class="toast-container"></div>
+    </div>
+
+    <script src="js/workbench.js" type="module"></script>
+</body>
+
+</html>
