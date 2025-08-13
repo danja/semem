@@ -28,3 +28,5 @@ Cheers,Danny.
 https://danny.ayers.name
 
 
+make a todo list : 1. refactor the code to use ES modules; 2. add settings for the choice of models and sparql endpoints (defaults should be as found via Config.js) ; integrate the   │
+│   SPARQL browser; write a concise HOWTO for the UI replacing docs/manual/gui.md; run tests corresponding to those in docs/PROBES.md against the UI using playwright mcp  
