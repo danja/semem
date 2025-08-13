@@ -341,7 +341,118 @@ export default class Config {
         }
     }
 
+    /**
+     * Detect if running in tbox environment and adjust SPARQL configuration accordingly
+     */
+    detectTboxEnvironment() {
+        // Check for tbox environment indicators
+        const isTboxEnvironment = (
+            // Check if running in docker container with tbox network
+            process.env.HOSTNAME?.includes('tbox') ||
+            process.env.DOCKER_ENV === 'tbox' ||
+            // Check if Fuseki is available on tbox port (4030)
+            this.isTboxFusekiAvailable() ||
+            // Check if we're in a docker container and can resolve 'fuseki' hostname
+            process.env.NODE_ENV === 'production' && this.canResolveFusekiHostname() ||
+            // Explicit tbox environment flag
+            process.env.USE_TBOX_FUSEKI === 'true'
+        );
+
+        if (isTboxEnvironment) {
+            console.log('🔧 Tbox environment detected - adjusting SPARQL configuration');
+            this.adjustForTboxEnvironment();
+        } else {
+            console.log('📍 Standalone environment detected - using default SPARQL configuration');
+        }
+    }
+
+    /**
+     * Check if tbox Fuseki server is available
+     */
+    isTboxFusekiAvailable() {
+        try {
+            // This is a synchronous check - in production you might want async
+            const http = require('http');
+            // Simple availability check for localhost:4030
+            return process.env.FUSEKI_URL === 'http://fuseki:3030' || 
+                   process.env.TBOX_FUSEKI_PORT === '4030';
+        } catch (error) {
+            return false;
+        }
+    }
+
+    /**
+     * Check if we can resolve the 'fuseki' hostname (docker internal)
+     */
+    canResolveFusekiHostname() {
+        try {
+            // In docker environment, 'fuseki' hostname should be resolvable
+            return process.env.FUSEKI_URL === 'http://fuseki:3030';
+        } catch (error) {
+            return false;
+        }
+    }
+
+    /**
+     * Adjust configuration for tbox environment
+     */
+    adjustForTboxEnvironment() {
+        // Override storage SPARQL endpoints to use tbox Fuseki
+        if (this.config.storage && this.config.storage.type === 'sparql') {
+            // Use internal docker hostname if available, otherwise external port
+            const fusekiBase = process.env.FUSEKI_URL === 'http://fuseki:3030' 
+                ? 'http://fuseki:3030' 
+                : 'http://localhost:4030';
+            
+            this.config.storage.options.query = `${fusekiBase}/semem/query`;
+            this.config.storage.options.update = `${fusekiBase}/semem/update`;
+            this.config.storage.options.data = `${fusekiBase}/semem/data`;
+            
+            console.log(`🔄 Updated storage endpoints to use: ${fusekiBase}`);
+        }
+
+        // Update SPARQL endpoints list to prioritize tbox Fuseki
+        if (this.config.sparqlEndpoints) {
+            // Find existing tbox endpoint or create new one
+            let tboxEndpoint = this.config.sparqlEndpoints.find(ep => ep.label === 'Tbox Fuseki');
+            
+            if (!tboxEndpoint) {
+                tboxEndpoint = {
+                    label: 'Tbox Fuseki',
+                    user: '${SPARQL_USER}',
+                    password: '${SPARQL_PASSWORD}',
+                    urlBase: 'http://localhost:4030',
+                    dataset: 'semem',
+                    query: '/semem/query',
+                    update: '/semem/update',
+                    upload: '/semem/upload',
+                    gspRead: '/semem/data',
+                    gspWrite: '/semem/data'
+                };
+                this.config.sparqlEndpoints.unshift(tboxEndpoint); // Add at beginning for priority
+            } else {
+                // Update existing endpoint to use correct dataset
+                tboxEndpoint.dataset = 'semem';
+                tboxEndpoint.query = '/semem/query';
+                tboxEndpoint.update = '/semem/update';
+                tboxEndpoint.upload = '/semem/upload';
+                tboxEndpoint.gspRead = '/semem/data';
+                tboxEndpoint.gspWrite = '/semem/data';
+            }
+
+            // If running inside docker, use internal hostname
+            if (process.env.FUSEKI_URL === 'http://fuseki:3030') {
+                tboxEndpoint.urlBase = 'http://fuseki:3030';
+            }
+
+            console.log(`🎯 Configured tbox SPARQL endpoint: ${tboxEndpoint.urlBase}/semem`);
+        }
+    }
+
     applyEnvironmentOverrides() {
+        // Auto-detect tbox environment and adjust SPARQL endpoints
+        this.detectTboxEnvironment();
+
         // Handle environment variables with SEMEM_ prefix
         for (const [key, value] of Object.entries(process.env)) {
             if (key.startsWith('SEMEM_')) {
