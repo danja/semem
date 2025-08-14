@@ -163,8 +163,9 @@ class SemanticMemoryWorkbench {
         
         // Tab navigation
         const cleanup1 = addEventListenerWithCleanup(document, 'click', (event) => {
-            if (event.target.matches('.nav-btn')) {
-                const tabName = event.target.dataset.tab;
+            const navBtn = event.target.closest('.nav-btn');
+            if (navBtn) {
+                const tabName = navBtn.dataset.tab;
                 if (tabName) {
                     this.handleTabSwitch(tabName);
                 }
