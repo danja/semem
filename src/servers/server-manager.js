@@ -62,11 +62,33 @@ class ServerManager {
 
     killProcessOnPort(port) {
         try {
-            execSync(`lsof -ti:${port} | xargs kill -9 2>/dev/null || true`);
-            this.log(`Freed port ${port}`);
-            return true;
+            // First get the process info before killing
+            const processInfo = execSync(`lsof -i:${port} -t -sTCP:LISTEN`).toString().trim();
+            
+            if (!processInfo) {
+                this.log(`No process found listening on port ${port}`);
+                return true;
+            }
+            
+            // Get the command name and arguments
+            const pid = processInfo.split('\n')[0].trim();
+            const cmd = execSync(`ps -p ${pid} -o command=`).toString().trim();
+            
+            // Only kill Node.js processes that are part of our application
+            if (cmd.includes('node') && (cmd.includes('semem') || cmd.includes('workbench'))) {
+                this.log(`Killing process on port ${port} (${pid}): ${cmd}`);
+                execSync(`kill -9 ${pid} 2>/dev/null || true`);
+                return true;
+            } else {
+                this.log(`Not killing non-Node process on port ${port}: ${cmd}`);
+                return false;
+            }
         } catch (error) {
-            this.log(`Error freeing port ${port}: ${error.message}`);
+            if (error.message.includes('Command failed')) {
+                this.log(`No process found on port ${port}`);
+                return true;
+            }
+            this.log(`Error checking port ${port}: ${error.message}`);
             return false;
         }
     }

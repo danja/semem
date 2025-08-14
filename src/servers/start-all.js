@@ -22,7 +22,9 @@ await configInstance.init();
 const config = configInstance.config;
 
 // Get server ports from config
-const { api, ui } = config.servers;
+const { api } = config.servers;
+const workbenchPort = 3000; // Default workbench port
+const mcpPort = 4101; // Default MCP server port
 
 // Create server manager instance
 const serverManager = new ServerManager();
@@ -43,17 +45,32 @@ const startServers = async () => {
             { NODE_ENV: 'production' }
         );
 
-        // Start UI server
+        // Start Workbench server
         await serverManager.startServer(
-            join(__dirname, 'ui-server.js'),
-            'UI Server',
-            ui,
-            { NODE_ENV: 'production' }
+            join(projectRoot, 'src', 'frontend', 'workbench', 'server.js'),
+            'Workbench UI',
+            workbenchPort,
+            { 
+                NODE_ENV: 'production',
+                cwd: join(projectRoot, 'src', 'frontend', 'workbench')
+            }
+        );
+
+        // Start MCP server (using the http-server.js implementation)
+        await serverManager.startServer(
+            join(projectRoot, 'mcp', 'http-server.js'),
+            'MCP Server',
+            mcpPort,
+            { 
+                NODE_ENV: 'production',
+                cwd: join(projectRoot, 'mcp')
+            }
         );
 
         console.log('\n--- All servers started successfully! ---');
         console.log(`- API Server:      http://localhost:${api}`);
-        console.log(`- UI Server:       http://localhost:${ui}`);
+        console.log(`- Workbench UI:    http://localhost:${workbenchPort}`);
+        console.log(`- MCP Server:      http://localhost:${mcpPort}`);
         console.log('\nPress Ctrl+C to stop all servers');
 
     } catch (error) {

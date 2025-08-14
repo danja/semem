@@ -56,7 +56,7 @@
 
         <!-- Main Content Area -->
         <main class="main-content">
-            <!-- Primary Verbs: 4-Column Layout -->
+            <!-- Primary Verbs: 6-Column Layout -->
             <section class="primary-verbs">
                 <!-- Tell Column -->
                 <div class="verb-column tell-column">
@@ -289,17 +289,16 @@
                     </div>
                 </div>
 
-                <!-- Console Column -->
-            <section class="secondary-verbs">
-                <!-- Augment Panel -->
-                <div class="verb-panel augment-panel" id="augment-panel">
-                    <button class="panel-toggle" data-panel="augment">
-                        <span class="verb-icon">🔬</span>
-                        <span class="panel-title">Augment</span>
-                        <span class="panel-description">Extract concepts and analyze</span>
-                        <span class="toggle-icon">▼</span>
-                    </button>
-                    <div class="panel-content" style="display: none;">
+                <!-- Augment Column -->
+                <div class="verb-column augment-column">
+                    <div class="column-header">
+                        <h2 class="verb-title">
+                            <span class="verb-icon">🔬</span>
+                            Augment
+                        </h2>
+                        <p class="verb-description">Extract concepts and analyze</p>
+                    </div>
+                    <div class="column-content">
                         <form class="verb-form" id="augment-form">
                             <div class="form-group">
                                 <label for="augment-target" class="form-label">Target Content</label>
@@ -333,15 +332,16 @@
                     </div>
                 </div>
 
-                <!-- Inspect Panel -->
-                <div class="verb-panel inspect-panel" id="inspect-panel">
-                    <button class="panel-toggle" data-panel="inspect">
-                        <span class="verb-icon">🔍</span>
-                        <span class="panel-title">Inspect</span>
-                        <span class="panel-description">Debug and monitor state</span>
-                        <span class="toggle-icon">▼</span>
-                    </button>
-                    <div class="panel-content" style="display: none;">
+                <!-- Inspect Column -->
+                <div class="verb-column inspect-column">
+                    <div class="column-header">
+                        <h2 class="verb-title">
+                            <span class="verb-icon">🔍</span>
+                            Inspect
+                        </h2>
+                        <p class="verb-description">Debug and monitor state</p>
+                    </div>
+                    <div class="column-content">
                         <div class="inspect-controls">
                             <button type="button" class="verb-button inspect-button" data-inspect="session">
                                 <span class="button-icon">📊</span>
