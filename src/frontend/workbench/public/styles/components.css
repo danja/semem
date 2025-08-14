@@ -364,12 +364,190 @@ select:focus-visible {
     }
 }
 
+/* Console Components */
+.console-controls {
+    margin-bottom: var(--space-md);
+}
+
+.console-toolbar {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm) 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.console-button {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: var(--space-xs) var(--space-sm);
+    border: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    border-radius: calc(var(--border-radius) / 2);
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.console-button:hover {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+.console-button.active {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+.console-filter {
+    margin-left: auto;
+}
+
+.console-filter .form-select {
+    font-size: 0.75rem;
+    padding: var(--space-xs) var(--space-sm);
+}
+
+.console-logs {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    height: 400px;
+    overflow-y: auto;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    position: relative;
+}
+
+.console-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+.console-placeholder .placeholder-icon {
+    font-size: 2rem;
+    margin-bottom: var(--space-md);
+    opacity: 0.5;
+}
+
+.console-placeholder .placeholder-text {
+    font-size: 0.875rem;
+    font-family: var(--font-family);
+}
+
+.console-log-entry {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-sm);
+    padding: var(--space-xs) var(--space-sm);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    line-height: var(--line-height-tight);
+}
+
+.console-log-entry:last-child {
+    border-bottom: none;
+}
+
+.console-log-entry.info {
+    background: rgba(37, 99, 235, 0.05);
+    border-left: 3px solid var(--primary-color);
+}
+
+.console-log-entry.success {
+    background: rgba(5, 150, 105, 0.05);
+    border-left: 3px solid var(--success-color);
+}
+
+.console-log-entry.warning {
+    background: rgba(217, 119, 6, 0.05);
+    border-left: 3px solid var(--warning-color);
+}
+
+.console-log-entry.error {
+    background: rgba(220, 38, 38, 0.05);
+    border-left: 3px solid var(--error-color);
+}
+
+.console-log-timestamp {
+    color: var(--text-muted);
+    font-weight: 500;
+    white-space: nowrap;
+    min-width: 60px;
+}
+
+.console-log-level {
+    font-weight: 600;
+    text-transform: uppercase;
+    white-space: nowrap;
+    min-width: 50px;
+}
+
+.console-log-level.info {
+    color: var(--primary-color);
+}
+
+.console-log-level.success {
+    color: var(--success-color);
+}
+
+.console-log-level.warning {
+    color: var(--warning-color);
+}
+
+.console-log-level.error {
+    color: var(--error-color);
+}
+
+.console-log-message {
+    flex: 1;
+    color: var(--text-primary);
+    word-break: break-word;
+}
+
+.console-log-details {
+    margin-top: var(--space-xs);
+    padding: var(--space-xs) var(--space-sm);
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: calc(var(--border-radius) / 2);
+    font-size: 0.6875rem;
+    color: var(--text-muted);
+}
+
+/* Console scrollbar styling */
+.console-logs::-webkit-scrollbar {
+    width: 6px;
+}
+
+.console-logs::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+}
+
+.console-logs::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 3px;
+}
+
+.console-logs::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
+}
+
 /* Print styles */
 @media print {
     .loading-overlay,
     .toast-container,
     .verb-button,
-    .panel-toggle {
+    .panel-toggle,
+    .console-controls {
         display: none !important;
     }
     
@@ -381,6 +559,12 @@ select:focus-visible {
     .verb-panel {
         box-shadow: none;
         border: 1px solid #ccc;
+    }
+    
+    .console-logs {
+        height: auto;
+        max-height: 300px;
+        overflow: visible;
     }
 }
 

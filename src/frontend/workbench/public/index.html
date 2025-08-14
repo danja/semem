@@ -56,7 +56,7 @@
 
         <!-- Main Content Area -->
         <main class="main-content">
-            <!-- Primary Verbs: 3-Column Layout -->
+            <!-- Primary Verbs: 4-Column Layout -->
             <section class="primary-verbs">
                 <!-- Tell Column -->
                 <div class="verb-column tell-column">
@@ -246,9 +246,50 @@
                         </div>
                     </div>
                 </div>
-            </section>
 
-            <!-- Secondary Verbs: Expandable Panels -->
+                <!-- Console Column -->
+                <div class="verb-column console-column">
+                    <div class="column-header">
+                        <h2 class="verb-title">
+                            <span class="verb-icon">📋</span>
+                            Console
+                        </h2>
+                        <p class="verb-description">Monitor operations and logs</p>
+                    </div>
+                    
+                    <div class="column-content" id="console-component">
+                        <div class="console-controls">
+                            <div class="console-toolbar">
+                                <button type="button" class="console-button clear-button" id="console-clear">
+                                    <span class="button-icon">🗑️</span>
+                                    <span class="button-text">Clear</span>
+                                </button>
+                                <button type="button" class="console-button auto-scroll-button active" id="console-auto-scroll">
+                                    <span class="button-icon">⬇️</span>
+                                    <span class="button-text">Auto-scroll</span>
+                                </button>
+                                <div class="console-filter">
+                                    <select id="console-level-filter" class="form-select">
+                                        <option value="all">All Levels</option>
+                                        <option value="info">Info</option>
+                                        <option value="success">Success</option>
+                                        <option value="warning">Warning</option>
+                                        <option value="error">Error</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="console-logs" id="console-logs">
+                            <div class="console-placeholder">
+                                <div class="placeholder-icon">📋</div>
+                                <p class="placeholder-text">Console logs will appear here as operations are performed</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Console Column -->
             <section class="secondary-verbs">
                 <!-- Augment Panel -->
                 <div class="verb-panel augment-panel" id="augment-panel">

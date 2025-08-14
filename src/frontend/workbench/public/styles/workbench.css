@@ -219,10 +219,10 @@ body {
     width: 100%;
 }
 
-/* Primary Verbs - 3 Column Layout */
+/* Primary Verbs - 4 Column Layout */
 .primary-verbs {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: var(--space-lg);
     margin-bottom: var(--space-xl);
 }

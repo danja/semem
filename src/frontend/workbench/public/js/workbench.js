@@ -5,6 +5,8 @@
 
 import { apiService } from './services/ApiService.js';
 import { stateManager } from './services/StateManager.js';
+import { consoleService } from './services/ConsoleService.js';
+import ConsoleComponent from './components/ConsoleComponent.js';
 import DomUtils from './utils/DomUtils.js';
 
 class WorkbenchApp {
@@ -49,6 +51,12 @@ class WorkbenchApp {
       
       this.initialized = true;
       console.log('✅ Workbench initialization complete');
+      
+      // Log successful initialization
+      consoleService.success('Workbench initialized successfully', {
+        components: Object.keys(this.components),
+        timestamp: new Date().toISOString()
+      });
       
       // Show success toast
       DomUtils.showToast('Workbench initialized successfully', 'success', 3000);
@@ -143,6 +151,7 @@ class WorkbenchApp {
     this.initializeAskComponent();
     this.initializeNavigateComponent();
     this.initializeDashboardComponent();
+    this.initializeConsoleComponent();
   }
 
   initializeTellComponent() {
@@ -191,6 +200,11 @@ class WorkbenchApp {
     };
   }
 
+  initializeConsoleComponent() {
+    this.components.console = new ConsoleComponent();
+    this.components.console.init();
+  }
+
   // ===== EVENT HANDLERS =====
 
   async handleTellSubmit(event) {
@@ -201,6 +215,13 @@ class WorkbenchApp {
     const button = this.components.tell.button;
     const results = this.components.tell.results;
     
+    const startTime = Date.now();
+    const logId = consoleService.logOperationStart('tell', {
+      type: formData.type,
+      contentLength: formData.content?.length || 0,
+      hasTags: Boolean(formData.tags)
+    });
+    
     try {
       DomUtils.setButtonLoading(button, true);
       
@@ -209,6 +230,9 @@ class WorkbenchApp {
         type: formData.type || 'interaction',
         metadata: formData.tags ? { tags: formData.tags.split(',').map(t => t.trim()) } : {}
       });
+      
+      const duration = Date.now() - startTime;
+      consoleService.logOperationSuccess('tell', result, duration);
       
       // Update session stats
       stateManager.updateSessionStats({
@@ -224,6 +248,8 @@ class WorkbenchApp {
       DomUtils.showToast('Content stored successfully', 'success');
       
     } catch (error) {
+      const duration = Date.now() - startTime;
+      consoleService.logOperationError('tell', error, duration);
       console.error('Tell operation failed:', error);
       DomUtils.showToast('Failed to store content: ' + apiService.getErrorMessage(error), 'error');
     } finally {
@@ -239,6 +265,13 @@ class WorkbenchApp {
     const button = this.components.ask.button;
     const results = this.components.ask.results;
     
+    const startTime = Date.now();
+    const logId = consoleService.logOperationStart('ask', {
+      mode: formData.mode,
+      useContext: Boolean(formData.useContext),
+      questionLength: formData.question?.length || 0
+    });
+    
     try {
       DomUtils.setButtonLoading(button, true);
       
@@ -247,6 +280,9 @@ class WorkbenchApp {
         mode: formData.mode || 'standard',
         useContext: Boolean(formData.useContext)
       });
+      
+      const duration = Date.now() - startTime;
+      consoleService.logOperationSuccess('ask', result, duration);
       
       // Update session stats
       stateManager.updateSessionStats({
@@ -259,6 +295,8 @@ class WorkbenchApp {
       DomUtils.showToast('Query completed', 'success');
       
     } catch (error) {
+      const duration = Date.now() - startTime;
+      consoleService.logOperationError('ask', error, duration);
       console.error('Ask operation failed:', error);
       DomUtils.showToast('Failed to query: ' + apiService.getErrorMessage(error), 'error');
     } finally {
@@ -273,6 +311,12 @@ class WorkbenchApp {
     const formData = DomUtils.getFormData(form);
     const results = DomUtils.$('#augment-results');
     
+    const startTime = Date.now();
+    const logId = consoleService.logOperationStart('augment', {
+      operation: formData.operation || 'auto',
+      targetLength: formData.target?.length || 0
+    });
+    
     try {
       stateManager.setLoadingState('augment', true);
       
@@ -281,12 +325,17 @@ class WorkbenchApp {
         operation: formData.operation || 'auto'
       });
       
+      const duration = Date.now() - startTime;
+      consoleService.logOperationSuccess('augment', result, duration);
+      
       // Show results
       this.displayAugmentResults(results, result);
       
       DomUtils.showToast('Analysis completed', 'success');
       
     } catch (error) {
+      const duration = Date.now() - startTime;
+      consoleService.logOperationError('augment', error, duration);
       console.error('Augment operation failed:', error);
       DomUtils.showToast('Failed to analyze: ' + apiService.getErrorMessage(error), 'error');
     } finally {
@@ -300,6 +349,8 @@ class WorkbenchApp {
     
     if (!level) return;
     
+    const oldState = stateManager.getState();
+    
     try {
       // Update button states
       DomUtils.$$('.zoom-button').forEach(btn => {
@@ -309,8 +360,12 @@ class WorkbenchApp {
       
       await stateManager.setZoom(level);
       
+      const newState = stateManager.getState();
+      consoleService.logStateChange('zoom', oldState, newState);
+      
     } catch (error) {
       console.error('Zoom change failed:', error);
+      consoleService.error('Failed to change zoom level', { level, error: error.message });
       DomUtils.showToast('Failed to change zoom level', 'error');
     }
   }
@@ -321,6 +376,8 @@ class WorkbenchApp {
     
     if (!style) return;
     
+    const oldState = stateManager.getState();
+    
     try {
       // Update button states
       DomUtils.$$('.tilt-button').forEach(btn => {
@@ -330,8 +387,12 @@ class WorkbenchApp {
       
       await stateManager.setTilt(style);
       
+      const newState = stateManager.getState();
+      consoleService.logStateChange('tilt', oldState, newState);
+      
     } catch (error) {
       console.error('Tilt change failed:', error);
+      consoleService.error('Failed to change view style', { style, error: error.message });
       DomUtils.showToast('Failed to change view style', 'error');
     }
   }
@@ -343,10 +404,17 @@ class WorkbenchApp {
     const domains = domainsInput?.value || '';
     const keywords = keywordsInput?.value || '';
     
+    const oldState = stateManager.getState();
+    
     try {
       await stateManager.setPan({ domains, keywords });
+      
+      const newState = stateManager.getState();
+      consoleService.logStateChange('pan', oldState, newState);
+      
     } catch (error) {
       console.error('Pan change failed:', error);
+      consoleService.error('Failed to update filters', { domains, keywords, error: error.message });
       DomUtils.showToast('Failed to update filters', 'error');
     }
   }
