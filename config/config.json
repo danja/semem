@@ -12,9 +12,9 @@
   },
   "servers": {
     "api": 4100,
-    "ui": 4120,
-    "redirect": 4110,
-    "redirectTarget": 4120
+    "ui": 4150,
+    "workbench": 4102,
+    "mcp": 4101
   },
   "api": {
     "key": "${SEMEM_API_KEY}"

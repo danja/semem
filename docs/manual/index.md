@@ -37,6 +37,14 @@ The following are workflows applied to sample questions from the [BeerQA](https:
 
 **[config.md](config.md)** - Complete system configuration guide covering config.json and .env setup, storage backends (memory, JSON, SPARQL), LLM provider configuration (Mistral, Claude, Ollama, Nomic), server deployment (SDK, HTTP API, MCP, UI), and production deployment patterns.
 
+**[servers.md](servers.md)** - Server architecture guide explaining the purpose and role of API Server (4100), MCP Server (4101), and Workbench UI (4102), including proxy configuration and startup procedures.
+
+**[provider-config.md](provider-config.md)** - LLM and embedding provider configuration details.
+
+**[sparql-service.md](sparql-service.md)** - SPARQL endpoint configuration and troubleshooting guide.
+
+**[prompt-management.md](prompt-management.md)** - System for managing chat completion prompts.
+
 ### Command-Line Demos
 
 **[examples](../../examples/README.md)**
@@ -67,14 +75,34 @@ The following are workflows applied to sample questions from the [BeerQA](https:
 
 **[gui.md](gui.md)** - Web-based user interface documentation covering the VSOM visualization system, SPARQL browser, interactive console, memory management interface, and administrative tools for system monitoring and configuration.
 
+**[workbench-howto.md](workbench-howto.md)** - User guide for the web-based workbench interface.
+
+**[vsom.md](vsom.md)** - Vector Self-Organizing Map visualization system documentation.
+
+### Development and Infrastructure
+
+**[infrastructure.md](infrastructure.md)** - Development patterns and coding guidelines for extending the system.
+
+**[context-window.md](context-window.md)** - Context window management and text chunking strategies.
+
+**[index-cache.md](index-cache.md)** - Vector index caching and performance optimization.
+
+**[decompose.md](decompose.md)** - Text corpus decomposition into semantic units.
+
+**[corpuscle-ranking.md](corpuscle-ranking.md)** - Ranking algorithms for semantic corpuscles.
+
+**[graph-analytics.md](graph-analytics.md)** - Knowledge graph analytics and community detection.
+
+**[flow-optimize.md](flow-optimize.md)** - Workflow optimization strategies.
+
 ## Architecture Overview
 
 Semem's layered architecture enables flexible deployment and integration:
 
-- **Interface Layer**: Direct SDK usage, HTTP REST API, MCP protocol server, web UI
+- **Interface Layer**: Direct SDK usage, HTTP REST API, MCP protocol server, web UI ([servers.md](servers.md))
 - **Core Services**: Memory management, LLM handling, embedding generation, context management
 - **Knowledge Systems**: Ragno (graph construction), ZPT (navigation), storage backends
-- **Integration**: SPARQL endpoints, external LLM providers, vector databases
+- **Integration**: SPARQL endpoints, external LLM providers, vector databases ([config.md](config.md))
 
 ## Getting Started
 

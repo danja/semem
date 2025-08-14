@@ -27,7 +27,7 @@ console.log('🚀 HTTP SERVER: Starting script execution...');
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
-const port = mcpConfig.port || 3000;
+const port = process.env.PORT || mcpConfig.port || 3000;
 let httpTerminator = null;
 
 console.log(`🚀 HTTP SERVER: Variables initialized, port: ${port}`);

@@ -22,9 +22,7 @@ await configInstance.init();
 const config = configInstance.config;
 
 // Get server ports from config
-const { api } = config.servers;
-const workbenchPort = 3000; // Default workbench port
-const mcpPort = 4101; // Default MCP server port
+const { api, workbench, mcp } = config.servers;
 
 // Create server manager instance
 const serverManager = new ServerManager();
@@ -49,9 +47,10 @@ const startServers = async () => {
         await serverManager.startServer(
             join(projectRoot, 'src', 'frontend', 'workbench', 'server.js'),
             'Workbench UI',
-            workbenchPort,
+            workbench,
             { 
                 NODE_ENV: 'production',
+                MCP_SERVER: `http://localhost:${mcp}`,
                 cwd: join(projectRoot, 'src', 'frontend', 'workbench')
             }
         );
@@ -60,7 +59,7 @@ const startServers = async () => {
         await serverManager.startServer(
             join(projectRoot, 'mcp', 'http-server.js'),
             'MCP Server',
-            mcpPort,
+            mcp,
             { 
                 NODE_ENV: 'production',
                 cwd: join(projectRoot, 'mcp')
@@ -69,8 +68,8 @@ const startServers = async () => {
 
         console.log('\n--- All servers started successfully! ---');
         console.log(`- API Server:      http://localhost:${api}`);
-        console.log(`- Workbench UI:    http://localhost:${workbenchPort}`);
-        console.log(`- MCP Server:      http://localhost:${mcpPort}`);
+        console.log(`- Workbench UI:    http://localhost:${workbench}`);
+        console.log(`- MCP Server:      http://localhost:${mcp}`);
         console.log('\nPress Ctrl+C to stop all servers');
 
     } catch (error) {
@@ -80,16 +79,18 @@ const startServers = async () => {
     }
 };
 
-// Handle manual shutdown via Ctrl+C
-process.stdin.setRawMode(true);
-process.stdin.on('data', async (data) => {
-    // Ctrl+C or 'q' to quit
-    if (data.toString() === '\x03' || data.toString().toLowerCase() === 'q') {
-        console.log('\nShutting down servers...');
-        await serverManager.stopAllServers();
-        process.exit(0);
-    }
-});
+// Handle manual shutdown via Ctrl+C (only if running interactively)
+if (process.stdin.isTTY) {
+    process.stdin.setRawMode(true);
+    process.stdin.on('data', async (data) => {
+        // Ctrl+C or 'q' to quit
+        if (data.toString() === '\x03' || data.toString().toLowerCase() === 'q') {
+            console.log('\nShutting down servers...');
+            await serverManager.stopAllServers();
+            process.exit(0);
+        }
+    });
+}
 
 // Start all servers
 startServers();

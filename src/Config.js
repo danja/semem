@@ -371,11 +371,11 @@ export default class Config {
      */
     isTboxFusekiAvailable() {
         try {
-            // This is a synchronous check - in production you might want async
-            const http = require('http');
-            // Simple availability check for localhost:4030
+            // Only detect tbox environment if explicitly configured via environment variables
+            // Don't auto-detect based on port availability to avoid switching configs unintentionally
             return process.env.FUSEKI_URL === 'http://fuseki:3030' || 
-                   process.env.TBOX_FUSEKI_PORT === '4030';
+                   process.env.TBOX_FUSEKI_PORT === '4030' ||
+                   process.env.USE_TBOX_FUSEKI === 'true';
         } catch (error) {
             return false;
         }
