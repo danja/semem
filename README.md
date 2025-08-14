@@ -23,7 +23,7 @@ The intuition is that while LLMs and associated techniques have massively advanc
 
 MCP functionality focused down on 7 core verbs : *ask, tell, augment, zoom, pan, tilt, inspect*. See below and [this blog post](https://tensegrity.it/entries/2025-08-10_claude_simple_verbs.html) (in which Claude demonstrates an inability to count).
 
-The UI is about to be mostly re-written to reflect this.
+The UI has been totally re-written to reflect this. Currently testing.
 
 Latest workflow experiment : [PDF ingestion](https://github.com/danja/semem/tree/main/examples/document#readme)
 
