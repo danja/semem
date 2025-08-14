@@ -72,7 +72,7 @@ export class StateManager {
    * Get current state
    */
   getState() {
-    return structuredClone(this.state);
+    return this.deepCloneState(this.state);
   }
 
   /**
@@ -392,6 +392,40 @@ export class StateManager {
   // ===== UTILITY METHODS =====
 
   /**
+   * Deep clone state preserving Set objects
+   */
+  deepCloneState(obj) {
+    if (obj === null || typeof obj !== 'object') {
+      return obj;
+    }
+    
+    if (obj instanceof Set) {
+      return new Set(obj);
+    }
+    
+    if (obj instanceof Map) {
+      return new Map(obj);
+    }
+    
+    if (obj instanceof Date) {
+      return new Date(obj);
+    }
+    
+    if (Array.isArray(obj)) {
+      return obj.map(item => this.deepCloneState(item));
+    }
+    
+    const cloned = {};
+    for (const key in obj) {
+      if (obj.hasOwnProperty(key)) {
+        cloned[key] = this.deepCloneState(obj[key]);
+      }
+    }
+    
+    return cloned;
+  }
+
+  /**
    * Deep merge objects
    */
   deepMerge(target, source) {
@@ -399,7 +433,12 @@ export class StateManager {
     
     for (const key in source) {
       if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
-        result[key] = this.deepMerge(target[key] || {}, source[key]);
+        // Handle special objects that should not be merged
+        if (source[key] instanceof Set || source[key] instanceof Map || source[key] instanceof Date) {
+          result[key] = source[key];
+        } else {
+          result[key] = this.deepMerge(target[key] || {}, source[key]);
+        }
       } else {
         result[key] = source[key];
       }
