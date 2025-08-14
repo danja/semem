@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Semantic Memory Workbench</title>
+    <meta name="description" content="7 Simple Verbs interface for semantic memory management">
+    <link rel="stylesheet" href="styles/workbench.css">
+    <link rel="stylesheet" href="styles/components.css">
+</head>
+<body>
+    <div id="app" class="workbench-app">
+        <!-- Session Dashboard Header -->
+        <header id="session-dashboard" class="session-dashboard">
+            <div class="dashboard-content">
+                <div class="session-info">
+                    <h1 class="workbench-title">
+                        <span class="title-icon">🧠</span>
+                        Semantic Memory
+                    </h1>
+                    <div class="session-stats">
+                        <span class="stat-item">
+                            <span class="stat-icon">💭</span>
+                            <span id="interactions-count">0</span> interactions
+                        </span>
+                        <span class="stat-item">
+                            <span class="stat-icon">🧩</span>
+                            <span id="concepts-count">0</span> concepts
+                        </span>
+                        <span class="stat-item">
+                            <span class="stat-icon">⚡</span>
+                            <span id="session-duration">0s</span>
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="zpt-state">
+                    <div class="zpt-display">
+                        <span class="zpt-label">ZPT:</span>
+                        <span class="zpt-value" id="zoom-state">entity</span>
+                        <span class="zpt-separator">/</span>
+                        <span class="zpt-value" id="pan-state">all</span>
+                        <span class="zpt-separator">/</span>
+                        <span class="zpt-value" id="tilt-state">keywords</span>
+                    </div>
+                </div>
+                
+                <div class="connection-status">
+                    <div class="status-indicator" id="connection-status">
+                        <span class="status-dot"></span>
+                        <span class="status-text">Connecting...</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Primary Verbs: 3-Column Layout -->
+            <section class="primary-verbs">
+                <!-- Tell Column -->
+                <div class="verb-column tell-column">
+                    <div class="column-header">
+                        <h2 class="verb-title">
+                            <span class="verb-icon">📝</span>
+                            Tell
+                        </h2>
+                        <p class="verb-description">Store knowledge and concepts</p>
+                    </div>
+                    
+                    <div class="column-content" id="tell-component">
+                        <form class="verb-form" id="tell-form">
+                            <div class="form-group">
+                                <label for="tell-content" class="form-label">Content</label>
+                                <textarea 
+                                    id="tell-content" 
+                                    name="content"
+                                    class="form-textarea"
+                                    placeholder="Enter information to store in semantic memory..."
+                                    rows="6"
+                                    required
+                                ></textarea>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="tell-type" class="form-label">Type</label>
+                                    <select id="tell-type" name="type" class="form-select">
+                                        <option value="concept">Concept</option>
+                                        <option value="interaction">Interaction</option>
+                                        <option value="document">Document</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="tell-tags" class="form-label">Tags</label>
+                                    <input 
+                                        type="text" 
+                                        id="tell-tags" 
+                                        name="tags"
+                                        class="form-input"
+                                        placeholder="Optional tags..."
+                                    >
+                                </div>
+                            </div>
+                            
+                            <button type="submit" class="verb-button tell-button" id="tell-submit">
+                                <span class="button-icon">💾</span>
+                                <span class="button-text">Store Memory</span>
+                                <span class="button-loader" style="display: none;">⏳</span>
+                            </button>
+                        </form>
+                        
+                        <div class="verb-results" id="tell-results" style="display: none;">
+                            <!-- Tell results will appear here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ask Column -->
+                <div class="verb-column ask-column">
+                    <div class="column-header">
+                        <h2 class="verb-title">
+                            <span class="verb-icon">❓</span>
+                            Ask
+                        </h2>
+                        <p class="verb-description">Query stored knowledge</p>
+                    </div>
+                    
+                    <div class="column-content" id="ask-component">
+                        <form class="verb-form" id="ask-form">
+                            <div class="form-group">
+                                <label for="ask-question" class="form-label">Question</label>
+                                <textarea 
+                                    id="ask-question" 
+                                    name="question"
+                                    class="form-textarea"
+                                    placeholder="Ask a question about your stored knowledge..."
+                                    rows="3"
+                                    required
+                                ></textarea>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="ask-mode" class="form-label">Mode</label>
+                                    <select id="ask-mode" name="mode" class="form-select">
+                                        <option value="basic">Basic</option>
+                                        <option value="standard" selected>Standard</option>
+                                        <option value="comprehensive">Comprehensive</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group checkbox-group">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="use-context" name="useContext" checked>
+                                        <span class="checkbox-text">Use Context</span>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <button type="submit" class="verb-button ask-button" id="ask-submit">
+                                <span class="button-icon">🔍</span>
+                                <span class="button-text">Search Memory</span>
+                                <span class="button-loader" style="display: none;">⏳</span>
+                            </button>
+                        </form>
+                        
+                        <div class="verb-results" id="ask-results">
+                            <div class="results-placeholder">
+                                <div class="placeholder-icon">🧠</div>
+                                <p class="placeholder-text">Ask a question to search your semantic memory</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Navigate Column -->
+                <div class="verb-column navigate-column">
+                    <div class="column-header">
+                        <h2 class="verb-title">
+                            <span class="verb-icon">🧭</span>
+                            Navigate
+                        </h2>
+                        <p class="verb-description">Control knowledge perspective</p>
+                    </div>
+                    
+                    <div class="column-content" id="navigate-component">
+                        <!-- Zoom Controls -->
+                        <div class="nav-section zoom-section">
+                            <h3 class="nav-section-title">
+                                <span class="nav-icon">🔍</span>
+                                Zoom <span class="nav-subtitle">Abstraction Level</span>
+                            </h3>
+                            <div class="zoom-controls">
+                                <button type="button" class="zoom-button active" data-level="entity">Entity</button>
+                                <button type="button" class="zoom-button" data-level="unit">Unit</button>
+                                <button type="button" class="zoom-button" data-level="text">Text</button>
+                                <button type="button" class="zoom-button" data-level="community">Community</button>
+                                <button type="button" class="zoom-button" data-level="corpus">Corpus</button>
+                            </div>
+                        </div>
+
+                        <!-- Pan Controls -->
+                        <div class="nav-section pan-section">
+                            <h3 class="nav-section-title">
+                                <span class="nav-icon">🎯</span>
+                                Pan <span class="nav-subtitle">Domain Filters</span>
+                            </h3>
+                            <div class="pan-controls">
+                                <div class="form-group">
+                                    <label for="pan-domains" class="form-label">Domains</label>
+                                    <input 
+                                        type="text" 
+                                        id="pan-domains" 
+                                        name="domains"
+                                        class="form-input"
+                                        placeholder="AI, technology, science..."
+                                    >
+                                </div>
+                                <div class="form-group">
+                                    <label for="pan-keywords" class="form-label">Keywords</label>
+                                    <input 
+                                        type="text" 
+                                        id="pan-keywords" 
+                                        name="keywords"
+                                        class="form-input"
+                                        placeholder="machine learning, neural..."
+                                    >
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tilt Controls -->
+                        <div class="nav-section tilt-section">
+                            <h3 class="nav-section-title">
+                                <span class="nav-icon">👁️</span>
+                                Tilt <span class="nav-subtitle">View Style</span>
+                            </h3>
+                            <div class="tilt-controls">
+                                <button type="button" class="tilt-button active" data-style="keywords">Keywords</button>
+                                <button type="button" class="tilt-button" data-style="embedding">Embedding</button>
+                                <button type="button" class="tilt-button" data-style="graph">Graph</button>
+                                <button type="button" class="tilt-button" data-style="temporal">Temporal</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Secondary Verbs: Expandable Panels -->
+            <section class="secondary-verbs">
+                <!-- Augment Panel -->
+                <div class="verb-panel augment-panel" id="augment-panel">
+                    <button class="panel-toggle" data-panel="augment">
+                        <span class="verb-icon">🔬</span>
+                        <span class="panel-title">Augment</span>
+                        <span class="panel-description">Extract concepts and analyze</span>
+                        <span class="toggle-icon">▼</span>
+                    </button>
+                    <div class="panel-content" style="display: none;">
+                        <form class="verb-form" id="augment-form">
+                            <div class="form-group">
+                                <label for="augment-target" class="form-label">Target Content</label>
+                                <textarea 
+                                    id="augment-target" 
+                                    name="target"
+                                    class="form-textarea"
+                                    placeholder="Enter text to analyze..."
+                                    rows="4"
+                                ></textarea>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="augment-operation" class="form-label">Operation</label>
+                                    <select id="augment-operation" name="operation" class="form-select">
+                                        <option value="auto">Auto</option>
+                                        <option value="concepts">Extract Concepts</option>
+                                        <option value="attributes">Analyze Attributes</option>
+                                        <option value="relationships">Find Relationships</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <button type="submit" class="verb-button augment-button">
+                                <span class="button-icon">🔬</span>
+                                <span class="button-text">Analyze</span>
+                            </button>
+                        </form>
+                        <div class="verb-results" id="augment-results" style="display: none;">
+                            <!-- Augment results will appear here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Inspect Panel -->
+                <div class="verb-panel inspect-panel" id="inspect-panel">
+                    <button class="panel-toggle" data-panel="inspect">
+                        <span class="verb-icon">🔍</span>
+                        <span class="panel-title">Inspect</span>
+                        <span class="panel-description">Debug and monitor state</span>
+                        <span class="toggle-icon">▼</span>
+                    </button>
+                    <div class="panel-content" style="display: none;">
+                        <div class="inspect-controls">
+                            <button type="button" class="verb-button inspect-button" data-inspect="session">
+                                <span class="button-icon">📊</span>
+                                <span class="button-text">Session Info</span>
+                            </button>
+                            <button type="button" class="verb-button inspect-button" data-inspect="concepts">
+                                <span class="button-icon">🧩</span>
+                                <span class="button-text">Concepts</span>
+                            </button>
+                            <button type="button" class="verb-button inspect-button" data-inspect="all">
+                                <span class="button-icon">🔍</span>
+                                <span class="button-text">All Data</span>
+                            </button>
+                        </div>
+                        <div class="verb-results" id="inspect-results" style="display: none;">
+                            <!-- Inspect results will appear here -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Toast Notifications -->
+        <div id="toast-container" class="toast-container"></div>
+        
+        <!-- Loading Overlay -->
+        <div id="loading-overlay" class="loading-overlay" style="display: none;">
+            <div class="loading-content">
+                <div class="loading-spinner"></div>
+                <div class="loading-text">Processing...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Application Script -->
+    <script type="module" src="js/workbench.js"></script>
+</body>
+</html>
