@@ -175,6 +175,49 @@
                     </div>
                 </div>
 
+                <!-- Augment Column -->
+                <div class="verb-column augment-column">
+                    <div class="column-header">
+                        <h2 class="verb-title">
+                            <span class="verb-icon">🔬</span>
+                            Augment
+                        </h2>
+                        <p class="verb-description">Extract concepts and analyze</p>
+                    </div>
+                    <div class="column-content">
+                        <form class="verb-form" id="augment-form">
+                            <div class="form-group">
+                                <label for="augment-target" class="form-label">Target Content</label>
+                                <textarea 
+                                    id="augment-target" 
+                                    name="target"
+                                    class="form-textarea"
+                                    placeholder="Enter text to analyze..."
+                                    rows="4"
+                                ></textarea>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="augment-operation" class="form-label">Operation</label>
+                                    <select id="augment-operation" name="operation" class="form-select">
+                                        <option value="auto">Auto</option>
+                                        <option value="concepts">Extract Concepts</option>
+                                        <option value="attributes">Analyze Attributes</option>
+                                        <option value="relationships">Find Relationships</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <button type="submit" class="verb-button augment-button">
+                                <span class="button-icon">🔬</span>
+                                <span class="button-text">Analyze</span>
+                            </button>
+                        </form>
+                        <div class="verb-results" id="augment-results" style="display: none;">
+                            <!-- Augment results will appear here -->
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Navigate Column -->
                 <div class="verb-column navigate-column">
                     <div class="column-header">
@@ -247,6 +290,36 @@
                     </div>
                 </div>
 
+                <!-- Inspect Column -->
+                <div class="verb-column inspect-column">
+                    <div class="column-header">
+                        <h2 class="verb-title">
+                            <span class="verb-icon">🔍</span>
+                            Inspect
+                        </h2>
+                        <p class="verb-description">Debug and monitor state</p>
+                    </div>
+                    <div class="column-content">
+                        <div class="inspect-controls">
+                            <button type="button" class="verb-button inspect-button" data-inspect="session">
+                                <span class="button-icon">📊</span>
+                                <span class="button-text">Session Info</span>
+                            </button>
+                            <button type="button" class="verb-button inspect-button" data-inspect="concepts">
+                                <span class="button-icon">🧩</span>
+                                <span class="button-text">Concepts</span>
+                            </button>
+                            <button type="button" class="verb-button inspect-button" data-inspect="all">
+                                <span class="button-icon">🔍</span>
+                                <span class="button-text">All Data</span>
+                            </button>
+                        </div>
+                        <div class="verb-results" id="inspect-results" style="display: none;">
+                            <!-- Inspect results will appear here -->
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Console Column -->
                 <div class="verb-column console-column">
                     <div class="column-header">
@@ -289,78 +362,6 @@
                     </div>
                 </div>
 
-                <!-- Augment Column -->
-                <div class="verb-column augment-column">
-                    <div class="column-header">
-                        <h2 class="verb-title">
-                            <span class="verb-icon">🔬</span>
-                            Augment
-                        </h2>
-                        <p class="verb-description">Extract concepts and analyze</p>
-                    </div>
-                    <div class="column-content">
-                        <form class="verb-form" id="augment-form">
-                            <div class="form-group">
-                                <label for="augment-target" class="form-label">Target Content</label>
-                                <textarea 
-                                    id="augment-target" 
-                                    name="target"
-                                    class="form-textarea"
-                                    placeholder="Enter text to analyze..."
-                                    rows="4"
-                                ></textarea>
-                            </div>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="augment-operation" class="form-label">Operation</label>
-                                    <select id="augment-operation" name="operation" class="form-select">
-                                        <option value="auto">Auto</option>
-                                        <option value="concepts">Extract Concepts</option>
-                                        <option value="attributes">Analyze Attributes</option>
-                                        <option value="relationships">Find Relationships</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <button type="submit" class="verb-button augment-button">
-                                <span class="button-icon">🔬</span>
-                                <span class="button-text">Analyze</span>
-                            </button>
-                        </form>
-                        <div class="verb-results" id="augment-results" style="display: none;">
-                            <!-- Augment results will appear here -->
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Inspect Column -->
-                <div class="verb-column inspect-column">
-                    <div class="column-header">
-                        <h2 class="verb-title">
-                            <span class="verb-icon">🔍</span>
-                            Inspect
-                        </h2>
-                        <p class="verb-description">Debug and monitor state</p>
-                    </div>
-                    <div class="column-content">
-                        <div class="inspect-controls">
-                            <button type="button" class="verb-button inspect-button" data-inspect="session">
-                                <span class="button-icon">📊</span>
-                                <span class="button-text">Session Info</span>
-                            </button>
-                            <button type="button" class="verb-button inspect-button" data-inspect="concepts">
-                                <span class="button-icon">🧩</span>
-                                <span class="button-text">Concepts</span>
-                            </button>
-                            <button type="button" class="verb-button inspect-button" data-inspect="all">
-                                <span class="button-icon">🔍</span>
-                                <span class="button-text">All Data</span>
-                            </button>
-                        </div>
-                        <div class="verb-results" id="inspect-results" style="display: none;">
-                            <!-- Inspect results will appear here -->
-                        </div>
-                    </div>
-                </div>
             </section>
         </main>
 

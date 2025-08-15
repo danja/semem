@@ -2,6 +2,7 @@
  * Service initialization for MCP server
  */
 import path from 'path';
+import { fileURLToPath } from 'url';
 import MemoryManager from '../../src/MemoryManager.js';
 import Config from '../../src/Config.js';
 import { createLLMConnector, createEmbeddingConnector, getModelConfig } from './config.js';
@@ -24,7 +25,9 @@ export async function initializeServices() {
     
     // Initialize config first
     console.log('📝 [CONFIG] Initializing config...');
-    const configPath = process.env.SEMEM_CONFIG_PATH || path.join(process.cwd(), 'config', 'config.json');
+    // Use project root instead of process.cwd() to handle different working directories
+    const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
+    const configPath = process.env.SEMEM_CONFIG_PATH || path.join(projectRoot, 'config', 'config.json');
     console.log(`📝 [CONFIG] Environment SEMEM_CONFIG_PATH: ${process.env.SEMEM_CONFIG_PATH}`);
     console.log(`📝 [CONFIG] Resolved config file path: ${configPath}`);
     
@@ -138,7 +141,9 @@ export async function createIsolatedServices() {
     
     // Initialize config first
     console.log('📝 [ISOLATED-CONFIG] Initializing config...');
-    const configPath = process.env.SEMEM_CONFIG_PATH || path.join(process.cwd(), 'config', 'config.json');
+    // Use project root instead of process.cwd() to handle different working directories
+    const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
+    const configPath = process.env.SEMEM_CONFIG_PATH || path.join(projectRoot, 'config', 'config.json');
     console.log(`📝 [ISOLATED-CONFIG] Config file path: ${configPath}`);
     
     const isolatedConfig = new Config(configPath);

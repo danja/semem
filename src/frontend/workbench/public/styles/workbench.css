@@ -81,7 +81,7 @@ body {
     width: 100%;
     max-width: 100%;
     margin: 0;
-    padding: 0 var(--space-md);
+    padding: 0 var(--space-sm);
     box-sizing: border-box;
 }
 
@@ -89,7 +89,7 @@ body {
 .session-dashboard {
     background: var(--bg-primary);
     border-bottom: 1px solid var(--border-color);
-    padding: var(--space-sm) var(--space-md);
+    padding: var(--space-xs) var(--space-sm);
     position: sticky;
     top: 0;
     z-index: 100;
@@ -219,14 +219,14 @@ body {
 /* Main Content */
 .main-content {
     flex: 1;
-    padding: var(--space-sm) 0;
+    padding: var(--space-xs) 0;
     display: flex;
     flex-direction: column;
-    gap: var(--space-sm);
+    gap: var(--space-xs);
     width: 100%;
     margin: 0 auto;
     max-width: 100%;
-    height: calc(100vh - 50px);
+    height: calc(100vh - 45px);
     overflow: hidden;
     min-width: 0;
     box-sizing: border-box;
@@ -236,7 +236,7 @@ body {
 .primary-verbs {
     display: grid;
     grid-template-columns: repeat(6, minmax(0, 1fr));
-    gap: var(--space-sm);
+    gap: var(--space-xs);
     margin: 0 auto;
     padding: 0;
     width: 100%;
@@ -261,7 +261,7 @@ body {
 }
 
 .column-header {
-    padding: var(--space-sm) var(--space-md);
+    padding: var(--space-xs) var(--space-sm);
     border-bottom: 1px solid var(--border-color);
     background: var(--bg-secondary);
     border-radius: var(--border-radius) var(--border-radius) 0 0;
@@ -269,12 +269,12 @@ body {
 }
 
 .verb-title {
-    margin: 0 0 var(--space-xs) 0;
-    font-size: 1.25rem;
+    margin: 0 0 var(--space-2xs) 0;
+    font-size: 1.1rem;
     font-weight: 600;
     display: flex;
     align-items: center;
-    gap: var(--space-sm);
+    gap: var(--space-xs);
     color: var(--text-primary);
 }
 
@@ -290,10 +290,10 @@ body {
 
 .column-content {
     flex: 1;
-    padding: var(--space-sm) var(--space-md);
+    padding: var(--space-xs) var(--space-sm);
     display: flex;
     flex-direction: column;
-    gap: var(--space-sm);
+    gap: var(--space-xs);
     overflow-y: auto;
     min-height: 0; /* Fix for Firefox */
 }
@@ -302,7 +302,7 @@ body {
 .verb-form {
     display: flex;
     flex-direction: column;
-    gap: var(--space-md);
+    gap: var(--space-sm);
 }
 
 .form-group {
@@ -327,7 +327,7 @@ body {
 .form-input,
 .form-textarea,
 .form-select {
-    padding: var(--space-sm) var(--space-md);
+    padding: var(--space-xs) var(--space-sm);
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius);
     font-size: 0.875rem;

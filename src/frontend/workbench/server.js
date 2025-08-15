@@ -1,24 +1,28 @@
 #!/usr/bin/env node
 
+import dotenv from 'dotenv';
 import express from 'express';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
+// Load environment variables from .env file
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const projectRoot = path.resolve(__dirname, '../../..');
+dotenv.config({ path: path.join(projectRoot, '.env') });
 
 const app = express();
-const PORT = process.env.PORT || 8081;
-const MCP_SERVER_URL = process.env.MCP_SERVER || 'http://localhost:3000';
+const PORT = process.env.PORT || 4102;
+const MCP_SERVER_URL = process.env.MCP_SERVER || 'http://localhost:4101';
 
 // Serve static files from public directory
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'healthy', 
+  res.json({
+    status: 'healthy',
     service: 'workbench',
     timestamp: new Date().toISOString(),
     mcpServer: MCP_SERVER_URL
@@ -34,9 +38,9 @@ app.use('/api', createProxyMiddleware({
   },
   onError: (err, req, res) => {
     console.error('Proxy error:', err.message);
-    res.status(502).json({ 
+    res.status(502).json({
       error: 'MCP server unavailable',
-      message: err.message 
+      message: err.message
     });
   }
 }));
