@@ -600,10 +600,16 @@ class WorkbenchApp {
       ]),
       DomUtils.createElement('div', { className: 'result-content' }, [
         DomUtils.createElement('p', {}, `Successfully stored content with ID: ${result.id || 'Generated'}`),
-        result.concepts && DomUtils.createElement('div', { className: 'concept-list' }, 
-          result.concepts.map(concept => 
-            DomUtils.createElement('span', { className: 'concept-tag' }, concept)
-          )
+        result.concepts && DomUtils.createElement('div', { className: 'concept-info' }, 
+          Array.isArray(result.concepts) 
+            ? DomUtils.createElement('div', { className: 'concept-list' },
+                result.concepts.map(concept => 
+                  DomUtils.createElement('span', { className: 'concept-tag' }, concept)
+                )
+              )
+            : DomUtils.createElement('span', { className: 'concept-count' }, 
+                `${result.concepts} concepts extracted`
+              )
         )
       ].filter(Boolean))
     ]);
@@ -650,11 +656,15 @@ class WorkbenchApp {
       DomUtils.createElement('div', { className: 'result-content' }, [
         result.concepts && DomUtils.createElement('div', {}, [
           DomUtils.createElement('h4', {}, 'Extracted Concepts:'),
-          DomUtils.createElement('div', { className: 'concept-list' },
-            result.concepts.map(concept =>
-              DomUtils.createElement('span', { className: 'concept-tag' }, concept)
-            )
-          )
+          Array.isArray(result.concepts) 
+            ? DomUtils.createElement('div', { className: 'concept-list' },
+                result.concepts.map(concept =>
+                  DomUtils.createElement('span', { className: 'concept-tag' }, concept)
+                )
+              )
+            : DomUtils.createElement('span', { className: 'concept-count' }, 
+                `${result.concepts} concepts found`
+              )
         ]),
         result.summary && DomUtils.createElement('p', {}, result.summary)
       ].filter(Boolean))
