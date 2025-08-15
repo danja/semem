@@ -74,6 +74,15 @@ class WorkbenchApp {
     const tellForm = DomUtils.$('#tell-form');
     if (tellForm) {
       tellForm.addEventListener('submit', this.handleTellSubmit);
+      
+      // Type dropdown change handler
+      const typeSelect = DomUtils.$('#tell-type');
+      if (typeSelect) {
+        typeSelect.addEventListener('change', this.handleTellTypeChange.bind(this));
+      }
+      
+      // File upload controls
+      this.setupFileUploadControls();
     }
     
     // Ask form
@@ -215,21 +224,39 @@ class WorkbenchApp {
     const button = this.components.tell.button;
     const results = this.components.tell.results;
     
+    // Check if this is a file upload (document type with file selected)
+    const fileInput = DomUtils.$('#document-file');
+    const hasFile = fileInput && fileInput.files.length > 0;
+    const isDocumentType = formData.type === 'document';
+    
     const startTime = Date.now();
     const logId = consoleService.logOperationStart('tell', {
       type: formData.type,
       contentLength: formData.content?.length || 0,
-      hasTags: Boolean(formData.tags)
+      hasTags: Boolean(formData.tags),
+      hasFile: hasFile
     });
     
     try {
       DomUtils.setButtonLoading(button, true);
       
-      const result = await apiService.tell({
-        content: formData.content,
-        type: formData.type || 'interaction',
-        metadata: formData.tags ? { tags: formData.tags.split(',').map(t => t.trim()) } : {}
-      });
+      let result;
+      
+      if (isDocumentType && hasFile) {
+        // Handle file upload
+        result = await this.handleDocumentUpload(fileInput.files[0], formData);
+      } else {
+        // Handle regular text input
+        if (!formData.content?.trim()) {
+          throw new Error('Please provide content or upload a file');
+        }
+        
+        result = await apiService.tell({
+          content: formData.content,
+          type: formData.type || 'interaction',
+          metadata: formData.tags ? { tags: formData.tags.split(',').map(t => t.trim()) } : {}
+        });
+      }
       
       const duration = Date.now() - startTime;
       consoleService.logOperationSuccess('tell', result, duration);
@@ -255,6 +282,231 @@ class WorkbenchApp {
     } finally {
       DomUtils.setButtonLoading(button, false);
     }
+  }
+
+  // ===== FILE UPLOAD HANDLING =====
+
+  setupFileUploadControls() {
+    const fileInput = DomUtils.$('#document-file');
+    const selectButton = DomUtils.$('#select-file-button');
+    const removeButton = DomUtils.$('#remove-file-button');
+    
+    if (fileInput && selectButton) {
+      // File select button handler
+      selectButton.addEventListener('click', () => {
+        fileInput.click();
+      });
+      
+      // File input change handler
+      fileInput.addEventListener('change', this.handleFileSelection.bind(this));
+    }
+    
+    if (removeButton) {
+      removeButton.addEventListener('click', this.handleFileRemoval.bind(this));
+    }
+  }
+
+  handleTellTypeChange(event) {
+    const selectedType = event.target.value;
+    const uploadSection = DomUtils.$('#document-upload-section');
+    const contentTextarea = DomUtils.$('#tell-content');
+    
+    if (selectedType === 'document') {
+      DomUtils.show(uploadSection);
+      contentTextarea.placeholder = 'Upload a document file or enter document content manually...';
+      contentTextarea.removeAttribute('required');
+    } else {
+      DomUtils.hide(uploadSection);
+      contentTextarea.placeholder = 'Enter information to store in semantic memory...';
+      contentTextarea.setAttribute('required', 'required');
+      // Clear any selected file
+      this.clearSelectedFile();
+    }
+  }
+
+  handleFileSelection(event) {
+    const file = event.target.files[0];
+    if (!file) {
+      this.clearSelectedFile();
+      return;
+    }
+
+    // Log file selection
+    consoleService.info('File selected for upload', {
+      filename: file.name,
+      fileSize: file.size,
+      lastModified: new Date(file.lastModified).toISOString()
+    });
+
+    // Validate file type and infer document type
+    const fileType = this.getFileTypeFromExtension(file.name);
+    if (!fileType) {
+      consoleService.logWarning('Unsupported file type selected', {
+        filename: file.name,
+        extension: file.name.split('.').pop()
+      });
+      DomUtils.showToast('Unsupported file type. Please select a PDF, TXT, or MD file.', 'error');
+      this.clearSelectedFile();
+      return;
+    }
+
+    // Validate file size (10MB limit)
+    const maxSize = 10 * 1024 * 1024;
+    if (file.size > maxSize) {
+      consoleService.logWarning('File too large for upload', {
+        filename: file.name,
+        fileSize: file.size,
+        maxSize: maxSize
+      });
+      DomUtils.showToast('File too large. Please select a file under 10MB.', 'error');
+      this.clearSelectedFile();
+      return;
+    }
+
+    // Log successful validation
+    consoleService.success('File validation passed', {
+      filename: file.name,
+      documentType: fileType,
+      fileSize: this.formatFileSize(file.size)
+    });
+
+    // Display selected file info
+    this.displaySelectedFile(file, fileType);
+  }
+
+  getFileTypeFromExtension(filename) {
+    const extension = filename.toLowerCase().split('.').pop();
+    const typeMap = {
+      'pdf': 'pdf',
+      'txt': 'text',
+      'md': 'markdown'
+    };
+    return typeMap[extension] || null;
+  }
+
+  displaySelectedFile(file, fileType) {
+    const selectedFileInfo = DomUtils.$('#selected-file-info');
+    const fileName = DomUtils.$('#selected-file-name');
+    const fileSize = DomUtils.$('#selected-file-size');
+    
+    if (selectedFileInfo && fileName && fileSize) {
+      fileName.textContent = file.name;
+      fileSize.textContent = this.formatFileSize(file.size);
+      DomUtils.show(selectedFileInfo);
+      
+      // Hide the upload area
+      const uploadArea = DomUtils.$('.file-upload-info');
+      if (uploadArea) {
+        DomUtils.hide(uploadArea);
+      }
+    }
+  }
+
+  handleFileRemoval() {
+    this.clearSelectedFile();
+  }
+
+  clearSelectedFile() {
+    const fileInput = DomUtils.$('#document-file');
+    const selectedFileInfo = DomUtils.$('#selected-file-info');
+    const uploadArea = DomUtils.$('.file-upload-info');
+    
+    if (fileInput) {
+      fileInput.value = '';
+    }
+    
+    if (selectedFileInfo) {
+      DomUtils.hide(selectedFileInfo);
+    }
+    
+    if (uploadArea) {
+      DomUtils.show(uploadArea);
+    }
+  }
+
+  formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  }
+
+  async handleDocumentUpload(file, formData) {
+    const fileType = this.getFileTypeFromExtension(file.name);
+    const uploadStartTime = Date.now();
+    
+    // Log upload start
+    consoleService.info('Document upload started', {
+      filename: file.name,
+      fileType: fileType,
+      fileSize: file.size,
+      mediaType: this.getMediaType(fileType)
+    });
+    
+    try {
+      // Create a temporary file URL for the MCP service
+      consoleService.info('Processing file for upload...', { step: 'file_processing' });
+      const fileUrl = await this.createFileUrl(file);
+      
+      // Call the MCP document upload service
+      consoleService.info('Sending document to MCP service...', { 
+        step: 'mcp_upload',
+        documentType: fileType 
+      });
+      
+      const result = await apiService.uploadDocument({
+        fileUrl: fileUrl,
+        filename: file.name,
+        mediaType: this.getMediaType(fileType),
+        documentType: fileType,
+        metadata: {
+          originalName: file.name,
+          size: file.size,
+          tags: formData.tags ? formData.tags.split(',').map(t => t.trim()) : [],
+          uploadedAt: new Date().toISOString()
+        }
+      });
+      
+      const uploadDuration = Date.now() - uploadStartTime;
+      consoleService.success('Document upload completed', {
+        filename: file.name,
+        duration: uploadDuration,
+        processed: result.success || false,
+        concepts: result.concepts || 0
+      });
+      
+      return result;
+    } catch (error) {
+      const uploadDuration = Date.now() - uploadStartTime;
+      consoleService.error('Document upload failed', {
+        filename: file.name,
+        duration: uploadDuration,
+        error: error.message,
+        fileType: fileType
+      });
+      
+      console.error('Document upload failed:', error);
+      throw new Error(`Failed to upload document: ${error.message}`);
+    }
+  }
+
+  async createFileUrl(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(new Error('Failed to read file'));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  getMediaType(fileType) {
+    const mediaTypes = {
+      'pdf': 'application/pdf',
+      'text': 'text/plain',
+      'markdown': 'text/markdown'
+    };
+    return mediaTypes[fileType] || 'application/octet-stream';
   }
 
   async handleAskSubmit(event) {

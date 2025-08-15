@@ -1,0 +1,343 @@
+import { writeFileSync, mkdirSync, existsSync, readFileSync } from 'fs';
+import { join, dirname, basename, extname } from 'path';
+import { fileURLToPath } from 'url';
+import { v4 as uuidv4 } from 'uuid';
+import PDFConverter from '../../src/services/document/PDFConverter.js';
+import { URIMinter } from '../../src/utils/URIMinter.js';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+/**
+ * Document upload and processing tools for MCP
+ * Following the pattern from examples/document/LoadPDFs.js
+ */
+export class DocumentProcessor {
+  constructor(config, sparqlHelper) {
+    this.config = config;
+    this.sparqlHelper = sparqlHelper;
+    this.tempDir = join(process.cwd(), 'temp', 'uploads');
+    
+    // Ensure temp directory exists
+    if (!existsSync(this.tempDir)) {
+      mkdirSync(this.tempDir, { recursive: true });
+    }
+  }
+
+  /**
+   * Process uploaded document file
+   * @param {string} fileUrl - Data URL of the uploaded file
+   * @param {string} filename - Original filename
+   * @param {string} mediaType - MIME type
+   * @param {string} documentType - Inferred type (pdf, text, markdown)
+   * @param {Object} metadata - Additional metadata
+   * @returns {Promise<Object>} Processing result
+   */
+  async processUploadedDocument({ fileUrl, filename, mediaType, documentType, metadata = {} }) {
+    const uploadId = uuidv4();
+    const processingStartTime = Date.now();
+    
+    try {
+      // Save file to temp directory
+      const tempFilePath = await this.saveDataUrlToFile(fileUrl, filename, uploadId);
+      
+      // Process based on document type
+      let content, processedMetadata;
+      
+      switch (documentType) {
+        case 'pdf':
+          ({ content, processedMetadata } = await this.processPDF(tempFilePath, filename, metadata));
+          break;
+        case 'text':
+          ({ content, processedMetadata } = await this.processTextFile(tempFilePath, filename, metadata));
+          break;
+        case 'markdown':
+          ({ content, processedMetadata } = await this.processMarkdownFile(tempFilePath, filename, metadata));
+          break;
+        default:
+          throw new Error(`Unsupported document type: ${documentType}`);
+      }
+      
+      // Store in SPARQL following LoadPDFs pattern
+      const result = await this.storeDocumentInSPARQL(content, filename, processedMetadata, documentType);
+      
+      // Cleanup temp file
+      this.cleanupTempFile(tempFilePath);
+      
+      const processingTime = Date.now() - processingStartTime;
+      
+      return {
+        success: true,
+        verb: 'uploadDocument',
+        filename: filename,
+        documentType: documentType,
+        processingTime: processingTime,
+        stored: result.stored,
+        unitURI: result.unitURI,
+        textURI: result.textURI,
+        contentLength: content.length,
+        concepts: processedMetadata.concepts?.length || 0,
+        message: `Successfully processed and stored ${documentType.toUpperCase()} document`
+      };
+      
+    } catch (error) {
+      const processingTime = Date.now() - processingStartTime;
+      
+      return {
+        success: false,
+        verb: 'uploadDocument',
+        filename: filename,
+        documentType: documentType,
+        processingTime: processingTime,
+        error: error.message,
+        message: `Failed to process document: ${error.message}`
+      };
+    }
+  }
+
+  /**
+   * Get file type from filename extension
+   */
+  getFileTypeFromExtension(filename) {
+    const extension = filename.toLowerCase().split('.').pop();
+    const typeMap = {
+      'pdf': 'pdf',
+      'txt': 'text',
+      'md': 'markdown'
+    };
+    return typeMap[extension] || null;
+  }
+
+  /**
+   * Save data URL to temporary file
+   */
+  async saveDataUrlToFile(dataUrl, originalFilename, uploadId) {
+    // Extract base64 data from data URL
+    const matches = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
+    if (!matches) {
+      throw new Error('Invalid data URL format');
+    }
+    
+    const [, mimeType, base64Data] = matches;
+    const buffer = Buffer.from(base64Data, 'base64');
+    
+    // Generate temporary file path
+    const extension = extname(originalFilename);
+    const tempFilename = `${uploadId}_${basename(originalFilename, extension)}${extension}`;
+    const tempFilePath = join(this.tempDir, tempFilename);
+    
+    // Write file
+    writeFileSync(tempFilePath, buffer);
+    
+    return tempFilePath;
+  }
+
+  /**
+   * Process PDF file using existing PDFConverter
+   */
+  async processPDF(filePath, filename, metadata) {
+    const result = await PDFConverter.convert(filePath, {
+      metadata: { title: metadata.title || filename, sourceFile: filename }
+    });
+    
+    return {
+      content: result.markdown,
+      processedMetadata: {
+        ...result.metadata,
+        ...metadata,
+        type: 'ragno:Unit',
+        format: 'pdf',
+        pages: result.metadata.pages
+      }
+    };
+  }
+
+  /**
+   * Process plain text file
+   */
+  async processTextFile(filePath, filename, metadata) {
+    const content = readFileSync(filePath, 'utf8');
+    
+    return {
+      content: content,
+      processedMetadata: {
+        ...metadata,
+        type: 'ragno:Unit',
+        format: 'text',
+        title: metadata.title || filename,
+        sourceFile: filename,
+        size: content.length
+      }
+    };
+  }
+
+  /**
+   * Process markdown file
+   */
+  async processMarkdownFile(filePath, filename, metadata) {
+    const content = readFileSync(filePath, 'utf8');
+    
+    return {
+      content: content,
+      processedMetadata: {
+        ...metadata,
+        type: 'ragno:Unit',
+        format: 'markdown',
+        title: metadata.title || filename,
+        sourceFile: filename,
+        size: content.length
+      }
+    };
+  }
+
+  /**
+   * Store document in SPARQL following LoadPDFs pattern
+   */
+  async storeDocumentInSPARQL(content, filename, metadata, documentType) {
+    const targetGraph = this.config.get('storage.options.graphName') || 
+                       this.config.get('graphName') || 
+                       'http://purl.org/stuff/semem/documents';
+    
+    // Generate URIs following LoadPDFs pattern
+    const unitURI = URIMinter.mintURI('http://purl.org/stuff/instance/', 'unit', filename);
+    const textURI = URIMinter.mintURI('http://purl.org/stuff/instance/', 'text', content);
+    
+    const now = new Date().toISOString();
+    
+    // Create SPARQL update query following LoadPDFs pattern
+    const updateQuery = `
+      PREFIX ragno: <http://purl.org/stuff/ragno/>
+      PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+      PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+      PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+      PREFIX dcterms: <http://purl.org/dc/terms/>
+      PREFIX prov: <http://www.w3.org/ns/prov#>
+      PREFIX semem: <http://semem.hyperdata.it/>
+
+      INSERT DATA {
+        GRAPH <${targetGraph}> {
+          # Store ragno:Unit
+          <${unitURI}> a ragno:Unit ;
+            rdfs:label """${(metadata.title || filename).replace(/"/g, '\\"')}""" ;
+            dcterms:created "${now}"^^xsd:dateTime ;
+            semem:sourceFile "${filename}" ;
+            semem:documentType "${documentType}" ;
+            semem:uploadedAt "${metadata.uploadedAt || now}" ;
+            ragno:hasTextElement <${textURI}> .
+          
+          # Store ragno:TextElement
+          <${textURI}> a ragno:TextElement ;
+            rdfs:label """${filename} content""" ;
+            dcterms:created "${now}"^^xsd:dateTime ;
+            ragno:content """${content.replace(/"/g, '\\"')}""" ;
+            dcterms:extent ${content.length} ;
+            prov:wasDerivedFrom <${unitURI}> .
+        }
+      }
+    `;
+    
+    await this.sparqlHelper.executeUpdate(updateQuery);
+    
+    return {
+      stored: true,
+      unitURI,
+      textURI,
+      targetGraph
+    };
+  }
+
+  /**
+   * Cleanup temporary file
+   */
+  cleanupTempFile(filePath) {
+    try {
+      if (existsSync(filePath)) {
+        // Note: In a real implementation, you might want to use fs.unlink
+        // For now, we'll leave temp files for debugging
+        // unlinkSync(filePath);
+      }
+    } catch (error) {
+      console.warn(`Failed to cleanup temp file ${filePath}:`, error.message);
+    }
+  }
+
+  /**
+   * Check if document already exists in SPARQL store
+   */
+  async checkDocumentExists(filename, targetGraph) {
+    try {
+      const query = `
+        PREFIX ragno: <http://purl.org/stuff/ragno/>
+        PREFIX semem: <http://semem.hyperdata.it/>
+        
+        ASK {
+          GRAPH <${targetGraph}> {
+            ?unit a ragno:Unit ;
+                  semem:sourceFile "${filename}" .
+          }
+        }
+      `;
+      
+      const storageConfig = this.config.get('storage.options');
+      const response = await fetch(storageConfig.query, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/sparql-query',
+          'Accept': 'application/sparql-results+json',
+          'Authorization': `Basic ${Buffer.from(`${storageConfig.user}:${storageConfig.password}`).toString('base64')}`
+        },
+        body: query
+      });
+      
+      const result = await response.json();
+      return result.boolean === true;
+    } catch (error) {
+      console.warn(`Warning: Could not check if document exists: ${error.message}`);
+      return false;
+    }
+  }
+}
+
+/**
+ * Create MCP tool for document upload
+ */
+export const createDocumentUploadTool = (processor) => ({
+  name: 'uploadDocument',
+  description: 'Upload and process document file (PDF, TXT, MD)',
+  parameters: {
+    type: 'object',
+    properties: {
+      fileUrl: {
+        type: 'string',
+        description: 'Data URL of the uploaded file'
+      },
+      filename: {
+        type: 'string',
+        description: 'Original filename'
+      },
+      mediaType: {
+        type: 'string',
+        description: 'MIME type of the file'
+      },
+      documentType: {
+        type: 'string',
+        enum: ['pdf', 'text', 'markdown'],
+        description: 'Document type inferred from extension'
+      },
+      metadata: {
+        type: 'object',
+        description: 'Additional metadata',
+        properties: {
+          title: { type: 'string' },
+          tags: { type: 'array', items: { type: 'string' } },
+          uploadedAt: { type: 'string' },
+          originalName: { type: 'string' },
+          size: { type: 'number' }
+        }
+      }
+    },
+    required: ['fileUrl', 'filename', 'mediaType', 'documentType']
+  },
+  handler: async (params) => {
+    return await processor.processUploadedDocument(params);
+  }
+});

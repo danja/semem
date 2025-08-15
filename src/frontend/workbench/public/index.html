@@ -104,6 +104,38 @@
                                 </div>
                             </div>
                             
+                            <!-- File Upload Section (shown when Document type selected) -->
+                            <div class="form-group file-upload-section" id="document-upload-section" style="display: none;">
+                                <label for="document-file" class="form-label">
+                                    Upload Document
+                                    <span class="file-types-hint">(PDF, TXT, MD)</span>
+                                </label>
+                                <div class="file-upload-area">
+                                    <input 
+                                        type="file" 
+                                        id="document-file" 
+                                        name="file"
+                                        class="file-input"
+                                        accept=".pdf,.txt,.md"
+                                    >
+                                    <div class="file-upload-info">
+                                        <span class="file-upload-icon">📄</span>
+                                        <span class="file-upload-text">Choose file or drag and drop</span>
+                                        <span class="file-upload-subtext">Supports PDF, Text, and Markdown files</span>
+                                    </div>
+                                    <button type="button" class="file-select-button" id="select-file-button">
+                                        <span class="button-icon">📁</span>
+                                        <span class="button-text">Select File</span>
+                                    </button>
+                                </div>
+                                <div class="selected-file-info" id="selected-file-info" style="display: none;">
+                                    <span class="file-icon">📄</span>
+                                    <span class="file-name" id="selected-file-name"></span>
+                                    <span class="file-size" id="selected-file-size"></span>
+                                    <button type="button" class="file-remove-button" id="remove-file-button">×</button>
+                                </div>
+                            </div>
+                            
                             <button type="submit" class="verb-button tell-button" id="tell-submit">
                                 <span class="button-icon">💾</span>
                                 <span class="button-text">Store Memory</span>

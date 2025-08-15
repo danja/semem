@@ -625,6 +625,31 @@ function registerToolCallHandler(server) {
           }
         },
         {
+          name: 'uploadDocument',
+          description: 'Upload and process document file (PDF, TXT, MD)',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              fileUrl: { type: 'string', description: 'Data URL of the uploaded file' },
+              filename: { type: 'string', description: 'Original filename' },
+              mediaType: { type: 'string', description: 'MIME type of the file' },
+              documentType: { type: 'string', enum: ['pdf', 'text', 'markdown'], description: 'Document type inferred from extension' },
+              metadata: {
+                type: 'object',
+                description: 'Additional metadata',
+                properties: {
+                  title: { type: 'string' },
+                  tags: { type: 'array', items: { type: 'string' } },
+                  uploadedAt: { type: 'string' },
+                  originalName: { type: 'string' },
+                  size: { type: 'number' }
+                }
+              }
+            },
+            required: ['fileUrl', 'filename', 'mediaType', 'documentType']
+          }
+        },
+        {
           name: 'semem_extract_concepts',
           description: 'Extract semantic concepts from text using LLM analysis',
           inputSchema: {
@@ -2430,6 +2455,21 @@ function registerToolCallHandler(server) {
         return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
       }
       
+      if (name === 'uploadDocument') {
+        const { DocumentProcessor } = await import('./tools/document-tools.js');
+        const SPARQLHelper = (await import('../src/services/sparql/SPARQLHelper.js')).default;
+        
+        const storageConfig = config.get('storage.options');
+        const sparqlHelper = new SPARQLHelper(storageConfig.update, {
+          user: storageConfig.user,
+          password: storageConfig.password
+        });
+        
+        const processor = new DocumentProcessor(config, sparqlHelper);
+        const result = await processor.processUploadedDocument(args);
+        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+      }
+
       // Add other tools here...
       
       throw new Error(`Unknown tool: ${name}`);

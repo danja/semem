@@ -658,4 +658,199 @@ body {
     }
 }
 
+/* ===== FILE UPLOAD STYLES ===== */
+
+.file-upload-section {
+    border: 2px dashed var(--border-color);
+    border-radius: var(--border-radius);
+    padding: var(--space-lg);
+    margin-top: var(--space-md);
+    background: var(--bg-secondary);
+    transition: all 0.2s ease;
+}
+
+.file-upload-section:hover {
+    border-color: var(--primary-color);
+    background: var(--bg-primary);
+}
+
+.file-upload-area {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-sm);
+    min-height: 120px;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.file-input {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    z-index: -1;
+    pointer-events: none;
+}
+
+.file-upload-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2xs);
+    text-align: center;
+    pointer-events: none;
+}
+
+.file-upload-icon {
+    font-size: 2rem;
+    color: var(--text-secondary);
+    margin-bottom: var(--space-2xs);
+}
+
+.file-upload-text {
+    font-weight: 500;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+}
+
+.file-upload-subtext {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.file-types-hint {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-weight: normal;
+    margin-left: var(--space-xs);
+}
+
+.file-select-button {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2xs);
+    padding: var(--space-xs) var(--space-md);
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    pointer-events: all;
+}
+
+.file-select-button:hover {
+    background: var(--primary-hover);
+}
+
+.file-select-button .button-icon {
+    font-size: 0.875rem;
+}
+
+.selected-file-info {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    margin-top: var(--space-sm);
+}
+
+.selected-file-info .file-icon {
+    font-size: 1.25rem;
+    color: var(--primary-color);
+}
+
+.file-name {
+    font-weight: 500;
+    color: var(--text-primary);
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.file-size {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-left: auto;
+}
+
+.file-remove-button {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: var(--space-2xs);
+    margin-left: var(--space-sm);
+    border-radius: 4px;
+    font-size: 1.125rem;
+    line-height: 1;
+    transition: all 0.2s ease;
+}
+
+.file-remove-button:hover {
+    background: var(--error-color);
+    color: white;
+}
+
+/* Dark mode file upload styles */
+@media (prefers-color-scheme: dark) {
+    .file-upload-section {
+        border-color: var(--border-color);
+        background: rgba(64, 748, 155, 0.1);
+    }
+    
+    .file-upload-section:hover {
+        border-color: var(--primary-color);
+        background: rgba(64, 748, 155, 0.15);
+    }
+    
+    .selected-file-info {
+        background: rgba(15, 23, 42, 0.5);
+        border-color: var(--border-color);
+    }
+}
+
+/* Responsive file upload */
+@media (max-width: 768px) {
+    .file-upload-area {
+        min-height: 100px;
+        padding: var(--space-sm);
+    }
+    
+    .file-upload-icon {
+        font-size: 1.5rem;
+    }
+    
+    .file-upload-text {
+        font-size: 0.85rem;
+    }
+    
+    .file-upload-subtext {
+        font-size: 0.75rem;
+    }
+    
+    .selected-file-info {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-2xs);
+    }
+    
+    .file-size {
+        margin-left: 0;
+    }
+}
+
 /* Loading and Toast Styles in Next File */
