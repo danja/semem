@@ -396,6 +396,28 @@ export class DomUtils {
     return toast;
   }
 
+  // ===== MESSAGE DISPLAY =====
+
+  /**
+   * Show message in a container
+   */
+  static showMessage(container, message, type = 'info') {
+    if (!container) return;
+    
+    const messageElement = this.createElement('div', {
+      className: `message ${type}`
+    }, [
+      this.createElement('div', { className: 'message-content' }, message)
+    ]);
+    
+    // Clear previous messages
+    container.innerHTML = '';
+    container.appendChild(messageElement);
+    this.show(container);
+    
+    return messageElement;
+  }
+
   // ===== ACCESSIBILITY =====
 
   /**

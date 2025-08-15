@@ -185,6 +185,44 @@ export class ApiService {
     });
   }
 
+  // ===== INSPECT METHODS =====
+
+  /**
+   * INSPECT SESSION - Get session state and cache information
+   * @param {boolean} details - Include detailed information
+   * @returns {Promise<Object>} Session inspection data
+   */
+  async inspectSession(details = true) {
+    return this.makeRequest('/inspect', {
+      method: 'POST',
+      body: JSON.stringify({ what: 'session', details })
+    });
+  }
+
+  /**
+   * INSPECT CONCEPTS - Get concepts and embeddings information
+   * @param {boolean} details - Include detailed information
+   * @returns {Promise<Object>} Concepts inspection data
+   */
+  async inspectConcepts(details = true) {
+    return this.makeRequest('/inspect', {
+      method: 'POST',
+      body: JSON.stringify({ what: 'concepts', details })
+    });
+  }
+
+  /**
+   * INSPECT ALL DATA - Get complete system state information
+   * @param {boolean} details - Include detailed information
+   * @returns {Promise<Object>} Complete inspection data
+   */
+  async inspectAllData(details = true) {
+    return this.makeRequest('/inspect', {
+      method: 'POST',
+      body: JSON.stringify({ what: 'all', details })
+    });
+  }
+
   // ===== UTILITY METHODS =====
 
   /**

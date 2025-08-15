@@ -390,6 +390,24 @@ async function startOptimizedServer() {
         }
       });
 
+      // INSPECT endpoint - Debug and monitor system state
+      app.post('/inspect', async (req, res) => {
+        try {
+          const { what = 'session', details = true } = req.body;
+          
+          // Call the MCP inspect tool
+          const result = await simpleVerbsService.inspect({ what, details });
+          res.json(result);
+        } catch (error) {
+          res.status(500).json({ 
+            success: false, 
+            verb: 'inspect', 
+            what: req.body.what,
+            error: error.message 
+          });
+        }
+      });
+
       // UPLOAD-DOCUMENT endpoint - Upload and process document files
       app.post('/upload-document', async (req, res) => {
         try {
@@ -445,6 +463,7 @@ async function startOptimizedServer() {
       console.log('   POST /zoom - Set abstraction level');
       console.log('   POST /pan - Set domain/filtering');
       console.log('   POST /tilt - Set view filter');
+      console.log('   POST /inspect - Debug and monitor system state');
       console.log('   GET /state - Get current ZPT state');
     } else {
       console.log('⚠️ [REST] Simple Verbs REST endpoints not available (service not loaded)');

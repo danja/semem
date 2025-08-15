@@ -73,12 +73,14 @@ class WorkbenchApp {
     // Tell form
     const tellForm = DomUtils.$('#tell-form');
     if (tellForm) {
-      tellForm.addEventListener('submit', this.handleTellSubmit);
+      tellForm.addEventListener('submit', this.handleTellSubmit.bind(this));
       
       // Type dropdown change handler
       const typeSelect = DomUtils.$('#tell-type');
       if (typeSelect) {
         typeSelect.addEventListener('change', this.handleTellTypeChange.bind(this));
+        // Initialize UI state based on current selection
+        this.handleTellTypeChange({ target: typeSelect });
       }
       
       // File upload controls
@@ -105,6 +107,9 @@ class WorkbenchApp {
     
     // Inspect controls
     this.setupInspectControls();
+    
+    // Modal controls
+    this.setupModalControls();
   }
 
   setupNavigationControls() {
@@ -140,6 +145,48 @@ class WorkbenchApp {
   setupInspectControls() {
     DomUtils.$$('.inspect-button').forEach(button => {
       button.addEventListener('click', this.handleInspectAction);
+    });
+  }
+
+  setupModalControls() {
+    // Close button for inspect modal
+    const closeButton = DomUtils.$('#close-inspect-results');
+    const modal = DomUtils.$('#inspect-results-modal');
+    const backdrop = modal?.querySelector('.modal-backdrop');
+    
+    if (closeButton) {
+      closeButton.addEventListener('click', () => {
+        this.closeInspectModal();
+      });
+    }
+    
+    // Close on backdrop click
+    if (backdrop) {
+      backdrop.addEventListener('click', () => {
+        this.closeInspectModal();
+      });
+    }
+    
+    // Close on Escape key
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') {
+        const modal = DomUtils.$('#inspect-results-modal');
+        if (modal && modal.style.display !== 'none') {
+          this.closeInspectModal();
+        }
+      }
+    });
+  }
+
+  closeInspectModal() {
+    const modal = DomUtils.$('#inspect-results-modal');
+    if (modal) {
+      DomUtils.hide(modal);
+    }
+    
+    // Clear active states from inspect buttons
+    DomUtils.$$('.inspect-button').forEach(btn => {
+      DomUtils.removeClass(btn, 'active');
     });
   }
 
@@ -245,10 +292,13 @@ class WorkbenchApp {
       if (isDocumentType && hasFile) {
         // Handle file upload
         result = await this.handleDocumentUpload(fileInput.files[0], formData);
+      } else if (isDocumentType && !hasFile) {
+        // Document type selected but no file provided
+        throw new Error('Please select a file to upload for document type');
       } else {
         // Handle regular text input
         if (!formData.content?.trim()) {
-          throw new Error('Please provide content or upload a file');
+          throw new Error('Please provide content to store');
         }
         
         result = await apiService.tell({
@@ -277,6 +327,9 @@ class WorkbenchApp {
     } catch (error) {
       const duration = Date.now() - startTime;
       consoleService.logOperationError('tell', error, duration);
+      
+      // Show user-friendly error message
+      DomUtils.showMessage(results, error.message, 'error');
       console.error('Tell operation failed:', error);
       DomUtils.showToast('Failed to store content: ' + apiService.getErrorMessage(error), 'error');
     } finally {
@@ -312,16 +365,23 @@ class WorkbenchApp {
     const contentTextarea = DomUtils.$('#tell-content');
     
     if (selectedType === 'document') {
-      DomUtils.show(uploadSection);
+      // Show upload section
+      if (uploadSection) {
+        uploadSection.style.display = 'block';
+      }
       contentTextarea.placeholder = 'Upload a document file or enter document content manually...';
       contentTextarea.removeAttribute('required');
     } else {
-      DomUtils.hide(uploadSection);
+      // Hide upload section
+      if (uploadSection) {
+        uploadSection.style.display = 'none';
+      }
       contentTextarea.placeholder = 'Enter information to store in semantic memory...';
       contentTextarea.setAttribute('required', 'required');
       // Clear any selected file
       this.clearSelectedFile();
     }
+    
   }
 
   handleFileSelection(event) {
@@ -699,42 +759,66 @@ class WorkbenchApp {
   }
 
   async handleInspectAction(event) {
-    const button = event.target;
+    const button = event.target.closest('button');
     const inspectType = button.dataset.inspect;
-    const results = DomUtils.$('#inspect-results');
     
-    if (!inspectType || !results) return;
+    if (!inspectType) return;
+    
+    // Clear previous active states
+    DomUtils.$$('.inspect-button').forEach(btn => {
+      DomUtils.removeClass(btn, 'active');
+    });
+    
+    // Set current button as active
+    DomUtils.addClass(button, 'active');
+    
+    const startTime = Date.now();
+    consoleService.info(`Starting inspect operation: ${inspectType}`, {
+      action: inspectType,
+      buttonElement: button.textContent.trim(),
+      timestamp: new Date().toISOString()
+    });
     
     try {
-      stateManager.setLoadingState('inspect', true);
+      DomUtils.setButtonLoading(button, true);
       
       let result;
-      
       switch (inspectType) {
         case 'session':
-          result = { state: stateManager.getState() };
+          result = await apiService.inspectSession();
           break;
         case 'concepts':
-          result = await apiService.getState();
+          result = await apiService.inspectConcepts();
           break;
         case 'all':
-          result = {
-            localState: stateManager.getState(),
-            serverState: await apiService.getState(),
-            health: await apiService.getHealth()
-          };
+          result = await apiService.inspectAllData();
           break;
         default:
           throw new Error(`Unknown inspect type: ${inspectType}`);
       }
       
-      this.displayInspectResults(results, result);
+      const duration = Date.now() - startTime;
+      consoleService.success(`Inspect ${inspectType} completed`, {
+        action: inspectType,
+        dataKeys: Object.keys(result),
+        recordCount: this.getRecordCount(result),
+        duration
+      });
+      
+      // Display results
+      this.displayInspectResults(inspectType, result);
       
     } catch (error) {
-      console.error('Inspect operation failed:', error);
-      DomUtils.showToast('Failed to inspect: ' + apiService.getErrorMessage(error), 'error');
+      const duration = Date.now() - startTime;
+      consoleService.error(`Inspect ${inspectType} failed`, {
+        action: inspectType,
+        duration,
+        error: error.message
+      });
+      
+      DomUtils.showToast(`Failed to inspect ${inspectType}: ${apiService.getErrorMessage(error)}`, 'error');
     } finally {
-      stateManager.setLoadingState('inspect', false);
+      DomUtils.setButtonLoading(button, false);
     }
   }
 
@@ -925,9 +1009,43 @@ class WorkbenchApp {
     container.appendChild(resultElement);
   }
 
-  displayInspectResults(container, result) {
-    if (!container) return;
+  displayInspectResults(inspectType, result) {
+    const resultsContainer = DomUtils.$('#inspect-results-modal');
+    const titleElement = DomUtils.$('#inspect-results-title');
+    const contentElement = DomUtils.$('#inspect-results-content');
     
+    if (!resultsContainer || !titleElement || !contentElement) {
+      // Fallback to showing in inline results container
+      const fallbackContainer = DomUtils.$('#inspect-results');
+      if (fallbackContainer) {
+        this.displayInspectResultsFallback(fallbackContainer, inspectType, result);
+      }
+      return;
+    }
+    
+    titleElement.textContent = `${inspectType.charAt(0).toUpperCase() + inspectType.slice(1)} Inspection`;
+    
+    let html = '';
+    
+    switch (inspectType) {
+      case 'session':
+        html = this.formatSessionResults(result);
+        break;
+      case 'concepts':
+        html = this.formatConceptsResults(result);
+        break;
+      case 'all':
+        html = this.formatAllDataResults(result);
+        break;
+      default:
+        html = this.formatGenericResults(result);
+    }
+    
+    contentElement.innerHTML = html;
+    DomUtils.show(resultsContainer);
+  }
+
+  displayInspectResultsFallback(container, inspectType, result) {
     container.innerHTML = '';
     DomUtils.show(container);
     
@@ -936,12 +1054,100 @@ class WorkbenchApp {
     
     const resultElement = DomUtils.createElement('div', { className: 'result-item' }, [
       DomUtils.createElement('div', { className: 'result-header' }, [
-        DomUtils.createElement('h3', { className: 'result-title' }, 'Inspection Data')
+        DomUtils.createElement('h3', { className: 'result-title' }, `${inspectType} Inspection Data`)
       ]),
       DomUtils.createElement('div', { className: 'result-content' }, codeBlock)
     ]);
     
     container.appendChild(resultElement);
+  }
+
+  formatSessionResults(result) {
+    const sessionInfo = result.zptState || result.sessionCache || result;
+    
+    return `
+      <div class="session-info">
+        <h5>Session State</h5>
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="label">Session ID:</span>
+            <span class="value">${sessionInfo.sessionId || 'N/A'}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Zoom Level:</span>
+            <span class="value">${sessionInfo.zoom || 'N/A'}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Interactions:</span>
+            <span class="value">${sessionInfo.interactions || 0}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Concepts:</span>
+            <span class="value">${sessionInfo.concepts || 0}</span>
+          </div>
+        </div>
+      </div>
+      <div class="raw-data">
+        <h5>Raw Data</h5>
+        <pre class="json-data">${JSON.stringify(result, null, 2)}</pre>
+      </div>
+    `;
+  }
+
+  formatConceptsResults(result) {
+    const conceptCount = result.conceptCount || result.concepts?.length || 0;
+    
+    return `
+      <div class="concepts-summary">
+        <h5>Concepts Overview</h5>
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="label">Total Concepts:</span>
+            <span class="value">${conceptCount}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Storage Type:</span>
+            <span class="value">${result.storageType || 'Unknown'}</span>
+          </div>
+        </div>
+      </div>
+      <div class="raw-data">
+        <h5>Full Data</h5>
+        <pre class="json-data">${JSON.stringify(result, null, 2)}</pre>
+      </div>
+    `;
+  }
+
+  formatAllDataResults(result) {
+    return `
+      <div class="all-data-summary">
+        <h5>Complete System State</h5>
+        <div class="data-sections">
+          ${Object.keys(result).map(section => `
+            <div class="data-section">
+              <h6>${section}</h6>
+              <pre class="json-data">${JSON.stringify(result[section], null, 2)}</pre>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  formatGenericResults(result) {
+    return `
+      <div class="generic-results">
+        <pre class="json-data">${JSON.stringify(result, null, 2)}</pre>
+      </div>
+    `;
+  }
+
+  getRecordCount(result) {
+    if (result.conceptCount) return result.conceptCount;
+    if (result.concepts?.length) return result.concepts.length;
+    if (result.sessionCache?.interactions) return result.sessionCache.interactions;
+    if (Array.isArray(result)) return result.length;
+    return Object.keys(result).length;
   }
 }
 
