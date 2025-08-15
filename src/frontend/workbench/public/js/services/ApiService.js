@@ -60,6 +60,28 @@ export class ApiService {
   }
 
   /**
+   * UPLOAD DOCUMENT - Upload and process document file
+   * @param {Object} params - Upload parameters
+   * @param {string} params.fileUrl - Data URL of the file
+   * @param {string} params.filename - Original filename
+   * @param {string} params.mediaType - MIME type of the file
+   * @param {string} params.documentType - Document type (pdf, text, markdown)
+   * @param {Object} params.metadata - Additional metadata
+   */
+  async uploadDocument({ fileUrl, filename, mediaType, documentType, metadata = {} }) {
+    return this.makeRequest('/upload-document', {
+      method: 'POST',
+      body: JSON.stringify({ 
+        fileUrl, 
+        filename, 
+        mediaType, 
+        documentType, 
+        metadata 
+      })
+    });
+  }
+
+  /**
    * ASK - Query stored knowledge
    * @param {Object} params - Ask parameters
    * @param {string} params.question - Question to ask

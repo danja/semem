@@ -5,6 +5,7 @@ import express from 'express';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import Config from '../../Config.js';
 
 // Load environment variables from .env file
 const __filename = fileURLToPath(import.meta.url);
@@ -12,9 +13,14 @@ const __dirname = path.dirname(__filename);
 const projectRoot = path.resolve(__dirname, '../../..');
 dotenv.config({ path: path.join(projectRoot, '.env') });
 
+// Initialize config
+const config = new Config(process.env.SEMEM_CONFIG_PATH || path.join(projectRoot, 'config/config.json'));
+await config.init();
+
 const app = express();
-const PORT = process.env.PORT || 4102;
-const MCP_SERVER_URL = process.env.MCP_SERVER || 'http://localhost:4101';
+const PORT = process.env.PORT || config.get('servers.workbench') || 4102;
+const MCP_PORT = process.env.MCP_PORT || config.get('servers.mcp') || 4101;
+const MCP_SERVER_URL = process.env.MCP_SERVER || `http://localhost:${MCP_PORT}`;
 
 // Serve static files from public directory
 app.use(express.static(path.join(__dirname, 'public')));

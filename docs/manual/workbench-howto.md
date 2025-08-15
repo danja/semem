@@ -6,13 +6,13 @@
 ```bash
 ./start.sh
 ```
-This starts all servers including the Semantic Memory Workbench at `http://localhost:8081`
+This starts all servers including the Semantic Memory Workbench at `http://localhost:4102`
 
 ### Manual Start
 If you need to start just the workbench server:
 ```bash
 cd src/frontend/workbench
-PORT=8081 node server.js
+node server.js  # Uses port 4102 from config.json
 ```
 
 ### Stopping Servers
@@ -23,7 +23,7 @@ This stops all servers including the workbench.
 
 ## Quick Start
 
-The Semantic Memory Workbench provides an intuitive web interface for managing semantic memory using the 7 Simple Verbs methodology. Once started, access it at `http://localhost:8081`.
+The Semantic Memory Workbench provides an intuitive web interface for managing semantic memory using the 7 Simple Verbs methodology. Once started, access it at `http://localhost:4102`.
 
 ## Interface Overview
 
@@ -44,12 +44,29 @@ The Semantic Memory Workbench provides an intuitive web interface for managing s
 Store information in semantic memory:
 
 1. **Content**: Enter text, concepts, or documents
-2. **Type**: Choose Concept, Interaction, or Document
+2. **Type**: Choose Concept, Interaction, or Document  
 3. **Tags**: Add optional metadata tags
 4. **Concept Preview**: See extracted concepts (when server connected)
 5. **Store**: Click "💾 Store Content" to save
 
-**Example**: Enter "Machine learning is a subset of AI" to store a concept.
+#### 📄 Document Upload (Document Type)
+When "Document" type is selected, additional upload controls appear:
+
+1. **Select Type**: Choose "Document" from the type dropdown
+2. **Upload File**: Click "📁 Select File" or drag-and-drop to upload area
+3. **Supported Formats**: 
+   - **PDF** (.pdf) - Processed via PDFConverter to markdown
+   - **Text** (.txt) - Plain text documents  
+   - **Markdown** (.md) - Markdown formatted documents
+4. **Automatic Processing**:
+   - File type automatically detected from extension
+   - Content converted and processed via DocumentProcessor
+   - Stored as `ragno:Unit` with `ragno:TextElement` entities in SPARQL
+5. **Progress Tracking**: All upload steps logged to Console panel
+
+**Example**: Upload a research paper PDF to add its content to your knowledge base.
+
+**Text/Concept Example**: Enter "Machine learning is a subset of AI" to store a concept.
 
 ### ❓ Ask - Query Knowledge
 Search your semantic memory:
@@ -96,7 +113,7 @@ Configure AI providers for chat completion and embeddings:
 
 ### 🔗 Endpoints
 Manage API endpoints:
-- **Semem MCP Server**: `http://localhost:4100` (default)
+- **Semem MCP Server**: `http://localhost:4101` (default)
 - **Health Check**: Server connectivity monitoring
 
 ### 💾 Storage & Other Options
@@ -152,7 +169,7 @@ Debug session state and performance:
 ### Common Issues
 
 **Server Connection Failed**
-- Verify MCP server is running on port 4100
+- Verify MCP server is running on port 4101
 - Check workbench server proxy configuration
 - Use dashboard refresh to retry connection
 
@@ -171,6 +188,12 @@ Debug session state and performance:
 - Clear session cache with "🗑️" button
 - Reduce result limits in Settings → Memory
 
+**Document Upload Failures**
+- Check file size limits (large PDFs may take longer to process)
+- Verify file format is supported (.pdf, .txt, .md only)
+- Monitor Console panel for detailed error messages
+- Ensure SPARQL backend is available and connected
+
 ### Browser Compatibility
 - **Required**: Modern browsers with ES modules support
 - **Recommended**: Chrome 80+, Firefox 72+, Safari 13.1+, Edge 80+
@@ -183,6 +206,7 @@ The workbench communicates with the MCP server via HTTP proxy:
 - **POST /tell**: Store content and concepts in semantic memory
 - **POST /ask**: Query knowledge with contextual responses
 - **POST /augment**: Extract concepts and analyze text
+- **POST /upload-document**: Process and store PDF, TXT, MD documents
 - **POST /zoom, /pan, /tilt**: ZPT navigation operations
 - **GET /health**: Check server connectivity and status
 

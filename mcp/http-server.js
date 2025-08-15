@@ -25,11 +25,23 @@ import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/
 import { McpServer as Server } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { mcpDebugger } from './lib/debug-utils.js';
 import { mcpConfig } from './lib/config.js';
+import Config from '../src/Config.js';
 
 console.log('🚀 HTTP SERVER: Starting script execution...');
 
+// Initialize config to get port from config.json
+let port = process.env.PORT || process.env.MCP_PORT || 3000;
+try {
+  const configPath = process.env.SEMEM_CONFIG_PATH || path.join(process.cwd(), 'config/config.json');
+  const config = new Config(configPath);
+  await config.init();
+  port = process.env.PORT || process.env.MCP_PORT || config.get('servers.mcp') || config.get('port') || 3000;
+  console.log(`🔧 HTTP SERVER: Using port ${port} from config`);
+} catch (error) {
+  console.warn('⚠️ HTTP SERVER: Could not load config, using default port:', error.message);
+}
+
 const app = express();
-const port = process.env.PORT || mcpConfig.port || 3000;
 let httpTerminator = null;
 
 console.log(`🚀 HTTP SERVER: Variables initialized, port: ${port}`);
@@ -378,10 +390,58 @@ async function startOptimizedServer() {
         }
       });
 
+      // UPLOAD-DOCUMENT endpoint - Upload and process document files
+      app.post('/upload-document', async (req, res) => {
+        try {
+          const { fileUrl, filename, mediaType, documentType, metadata = {} } = req.body;
+          
+          if (!fileUrl || !filename || !documentType) {
+            return res.status(400).json({ 
+              error: 'fileUrl, filename, and documentType are required' 
+            });
+          }
+          
+          
+          // Import and use DocumentProcessor directly (similar to other endpoints)
+          const { DocumentProcessor } = await import('./tools/document-tools.js');
+          const SPARQLHelper = (await import('../src/services/sparql/SPARQLHelper.js')).default;
+          const Config = (await import('../src/Config.js')).default;
+          
+          // Initialize components
+          const config = new Config(process.env.SEMEM_CONFIG_PATH || 'config/config.json');
+          await config.init();
+          
+          const storageConfig = config.get('storage.options');
+          const sparqlHelper = new SPARQLHelper(storageConfig.update, {
+            user: storageConfig.user,
+            password: storageConfig.password
+          });
+          
+          const processor = new DocumentProcessor(config, sparqlHelper);
+          const result = await processor.processUploadedDocument({
+            fileUrl,
+            filename,
+            mediaType,
+            documentType,
+            metadata
+          });
+          
+          res.json(result);
+        } catch (error) {
+          res.status(500).json({ 
+            success: false, 
+            verb: 'uploadDocument', 
+            filename: req.body.filename,
+            error: error.message 
+          });
+        }
+      });
+
       console.log('✅ [START] Simple Verbs REST endpoints configured:');
       console.log('   POST /tell - Add resources to the system');
       console.log('   POST /ask - Query the system');
       console.log('   POST /augment - Augment content');
+      console.log('   POST /upload-document - Upload and process document files');
       console.log('   POST /zoom - Set abstraction level');
       console.log('   POST /pan - Set domain/filtering');
       console.log('   POST /tilt - Set view filter');
