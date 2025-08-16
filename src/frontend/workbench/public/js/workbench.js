@@ -181,7 +181,9 @@ class WorkbenchApp {
   closeInspectModal() {
     const modal = DomUtils.$('#inspect-results-modal');
     if (modal) {
-      DomUtils.hide(modal);
+      // Hide modal immediately without animation for better UX
+      modal.style.display = 'none';
+      modal.style.animation = '';
     }
     
     // Clear active states from inspect buttons
@@ -1155,6 +1157,9 @@ class WorkbenchApp {
 document.addEventListener('DOMContentLoaded', async () => {
   const app = new WorkbenchApp();
   await app.init();
+  
+  // Expose app instance to global scope for event handlers
+  window.workbenchApp = app;
 });
 
 // Export for testing
