@@ -1,0 +1,18 @@
+INSERT DATA {
+    GRAPH <${storageGraph}> {
+        <${articleURI}> a ragno:WikipediaArticle ;
+            dcterms:title "${title}" ;
+            ragno:content "${content}" ;
+            ragno:snippet "${snippet}" ;
+            foaf:page <${pageUrl}> ;
+            ragno:wikipediaPageId "${pageId}" ;
+            ragno:wordCount ${wordCount} ;
+            ragno:relevanceScore ${relevanceScore} ;
+            ragno:searchId "${searchId}" ;
+            ragno:originalQuery "${originalQuery}" ;
+            ragno:enhancementSource "wikipedia" ;
+            ragno:hasEmbedding "${embedding}" ;
+            dcterms:created "${timestamp}"^^xsd:dateTime ;
+            ragno:status "active" .
+    }
+}

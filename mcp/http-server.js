@@ -287,12 +287,12 @@ async function startOptimizedServer() {
       // ASK endpoint - Query the system
       app.post('/ask', async (req, res) => {
         try {
-          const { question, mode = 'standard', useContext = true } = req.body;
+          const { question, mode = 'standard', useContext = true, useHyDE = false, useWikipedia = false, useWikidata = false } = req.body;
           if (!question) {
             return res.status(400).json({ error: 'Question is required' });
           }
           
-          const result = await simpleVerbsService.ask({ question, mode, useContext });
+          const result = await simpleVerbsService.ask({ question, mode, useContext, useHyDE, useWikipedia, useWikidata });
           res.json(result);
         } catch (error) {
           res.status(500).json({ 

@@ -3,7 +3,7 @@
  */
 export default class FilterBuilder {
     constructor(options = {}) {
-        this.graphName = options.graphName || 'http://example.org/ragno/memory';
+        this.graphName = options.graphName || 'http://hyperdata.it/content';
         this.initializeNamespaces();
         this.initializeQueryTemplates();
     }

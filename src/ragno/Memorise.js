@@ -296,7 +296,7 @@ export default class Memorise {
         
         try {
             const targetGraph = options.graph || this.config.get('storage.options.graphName') || 
-                               this.config.get('graphName') || 'http://purl.org/stuff/semem/documents';
+                               this.config.get('graphName') || 'http://hyperdata.it/content';
 
             // Step 1: Create ragno:Unit and ragno:TextElement
             logger.info('📄 Step 1: Creating ragno:Unit and ragno:TextElement...');

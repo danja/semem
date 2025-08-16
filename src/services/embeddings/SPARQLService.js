@@ -18,7 +18,7 @@ class SPARQLService {
     constructor(options = {}) {
         this.queryEndpoint = options.queryEndpoint || 'https://fuseki.hyperdata.it/semem/query';
         this.updateEndpoint = options.updateEndpoint || 'https://fuseki.hyperdata.it/semem/update';
-        this.graphName = options.graphName || 'http://example.org/default';
+        this.graphName = options.graphName || 'http://hyperdata.it/content';
         this.auth = options.auth || { user: 'admin', password: 'admin123' };
         
         logger.info(`SPARQLService initialized with endpoints: ${this.queryEndpoint}, ${this.updateEndpoint}`);

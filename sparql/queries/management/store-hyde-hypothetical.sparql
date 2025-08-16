@@ -1,0 +1,13 @@
+INSERT DATA {
+    GRAPH <${storageGraph}> {
+        <${hypotheticalDocURI}> a ragno:HypotheticalDocument ;
+            ragno:originalQuery "${originalQuery}" ;
+            ragno:content "${hypotheticalContent}" ;
+            ragno:hydeSessionId "${sessionId}" ;
+            ragno:enhancementSource "hyde" ;
+            ragno:generatedBy "${llmModel}" ;
+            ragno:hasEmbedding "${embedding}" ;
+            dcterms:created "${timestamp}"^^xsd:dateTime ;
+            ragno:status "active" .
+    }
+}

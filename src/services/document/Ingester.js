@@ -14,7 +14,7 @@ export default class Ingester {
 
     this.store = store;
     this.config = {
-      graphName: options.graphName || 'http://example.org/semem/documents',
+      graphName: options.graphName || 'http://hyperdata.it/content',
       batchSize: options.batchSize || 10,
       enableProvenance: options.enableProvenance !== false,
       ...options

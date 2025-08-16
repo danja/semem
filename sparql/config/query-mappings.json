@@ -33,5 +33,13 @@
   "corpuscle-details": "corpuscle-details.sparql",
   "memory-unit-exists": "memory-unit-exists.sparql",
   "memory-statistics": "memory-statistics.sparql",
-  "memory-cleanup": "memory-cleanup.sparql"
+  "memory-cleanup": "memory-cleanup.sparql",
+  "store-hyde-hypothetical": "management/store-hyde-hypothetical.sparql",
+  "store-wikipedia-article": "management/store-wikipedia-article.sparql",
+  "store-wikidata-entity": "management/store-wikidata-entity.sparql",
+  "store-wikidata-relationship": "management/store-wikidata-relationship.sparql",
+  "retrieve-hyde-context": "retrieval/retrieve-hyde-context.sparql",
+  "retrieve-wikipedia-context": "retrieval/retrieve-wikipedia-context.sparql",
+  "retrieve-wikidata-context": "retrieval/retrieve-wikidata-context.sparql",
+  "enhancement-semantic-search": "search/enhancement-semantic-search.sparql"
 }

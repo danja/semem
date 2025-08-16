@@ -2,8 +2,6 @@
 import { vi, expect, afterEach, beforeAll, afterAll } from 'vitest';
 // import matchers from '@testing-library/jest-dom/matchers';
 // import { cleanup } from '@testing-library/react';
-import { setupServer } from 'msw/node';
-import { rest } from 'msw';
 
 // Extend Vitest's expect with DOM matchers - commented out due to missing package
 // expect.extend(matchers);
@@ -23,23 +21,8 @@ global.console = {
 const fetchMock = vi.fn();
 global.fetch = fetchMock;
 
-// Setup MSW for API mocking
-export const server = setupServer(
-  rest.get('*', (req, res, ctx) => {
-    console.warn(`Unhandled GET request: ${req.url.toString()}`);
-    return res(ctx.status(404), ctx.json({ error: 'Not found' }));
-  }),
-  rest.post('*', (req, res, ctx) => {
-    console.warn(`Unhandled POST request: ${req.url.toString()}`);
-    return res(ctx.status(404), ctx.json({ error: 'Not found' }));
-  })
-);
-
 // Setup before all tests
 beforeAll(() => {
-  // Start the mock server
-  server.listen({ onUnhandledRequest: 'warn' });
-  
   // Set test timezone for consistent results
   process.env.TZ = 'UTC';
 });
@@ -52,18 +35,12 @@ afterEach(() => {
   // Reset all mocks
   vi.clearAllMocks();
   
-  // Reset the mock server handlers
-  server.resetHandlers();
-  
   // Reset fetch mock
   fetchMock.mockReset();
 });
 
 // Cleanup after all tests
 afterAll(() => {
-  // Close the mock server
-  server.close();
-  
   // Restore original console methods
   vi.restoreAllMocks();
 });

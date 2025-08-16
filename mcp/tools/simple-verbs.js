@@ -12,6 +12,7 @@ import { SafeOperations } from '../lib/safe-operations.js';
 
 // Import existing complex tools to wrap
 import { ZPTNavigationService } from './zpt-tools.js';
+import { EnhancementCoordinator } from '../../src/services/enhancement/EnhancementCoordinator.js';
 
 // Simple Verb Tool Names
 export const SimpleVerbToolNames = {
@@ -34,7 +35,10 @@ const TellSchema = z.object({
 const AskSchema = z.object({
   question: z.string().min(1, "Question cannot be empty"),
   mode: z.enum(['basic', 'standard', 'comprehensive']).optional().default('standard'),
-  useContext: z.boolean().optional().default(true)
+  useContext: z.boolean().optional().default(true),
+  useHyDE: z.boolean().optional().default(false),
+  useWikipedia: z.boolean().optional().default(false),
+  useWikidata: z.boolean().optional().default(false)
 });
 
 const AugmentSchema = z.object({
@@ -344,6 +348,7 @@ class SimpleVerbsService {
     this.safeOps = null;
     this.zptService = null;
     this.stateManager = null;
+    this.enhancementCoordinator = null;
   }
 
   /**
@@ -357,7 +362,15 @@ class SimpleVerbsService {
       this.zptService = new ZPTNavigationService(this.memoryManager, this.safeOps);
       this.stateManager = new ZPTStateManager(this.memoryManager);
       
-      mcpDebugger.info('SimpleVerbsService initialized with ZPT state management');
+      // Initialize enhancement coordinator with available handlers
+      this.enhancementCoordinator = new EnhancementCoordinator({
+        llmHandler: this.memoryManager.llmHandler,
+        embeddingHandler: this.memoryManager.embeddingHandler,
+        sparqlHelper: this.memoryManager.store?.sparqlHelper,
+        config: this.memoryManager.config
+      });
+      
+      mcpDebugger.info('SimpleVerbsService initialized with ZPT state management and enhancement coordinator');
     }
   }
 
@@ -462,22 +475,62 @@ class SimpleVerbsService {
   }
 
   /**
-   * ASK - Query the system using current ZPT context
+   * ASK - Query the system using current ZPT context with optional enhancements
    */
-  async ask({ question, mode = 'standard', useContext = true }) {
+  async ask({ question, mode = 'standard', useContext = true, useHyDE = false, useWikipedia = false, useWikidata = false }) {
     await this.initialize();
     
     try {
-      mcpDebugger.debug('Simple Verb: ask', { question, mode, useContext });
+      mcpDebugger.debug('Simple Verb: ask', { question, mode, useContext, useHyDE, useWikipedia, useWikidata });
       
       let result;
       let sessionResults = [];
       let persistentResults = [];
+      let enhancementResult = null;
       
-      // Step 1: Generate embedding for semantic search
+      // Step 1: Check if any enhancements are requested
+      const hasEnhancements = useHyDE || useWikipedia || useWikidata;
+      
+      if (hasEnhancements && this.enhancementCoordinator) {
+        mcpDebugger.info('Processing query with enhancements');
+        try {
+          enhancementResult = await this.enhancementCoordinator.enhanceQuery(question, {
+            useHyDE,
+            useWikipedia, 
+            useWikidata,
+            mode
+          });
+          
+          if (enhancementResult.success && enhancementResult.enhancedAnswer) {
+            // Enhancement succeeded with generated answer - return it directly
+            mcpDebugger.info('Enhancement successful with generated answer');
+            
+            return {
+              success: true,
+              verb: 'ask',
+              question,
+              answer: enhancementResult.enhancedAnswer,
+              usedContext: true,
+              contextItems: enhancementResult.context ? Object.keys(enhancementResult.context.enhancements || {}).length : 0,
+              enhancementType: enhancementResult.enhancementType,
+              enhancements: enhancementResult.metadata?.servicesUsed || [],
+              enhancementStats: enhancementResult.stats,
+              zptState: this.stateManager.getState(),
+              searchMethod: 'enhanced_generation',
+              sessionCacheStats: this.stateManager.getSessionCacheStats()
+            };
+          }
+          
+        } catch (enhancementError) {
+          mcpDebugger.warn('Enhancement failed, falling back to regular search:', enhancementError.message);
+          // Continue with regular search below
+        }
+      }
+      
+      // Step 2: Generate embedding for semantic search
       const queryEmbedding = await this.safeOps.generateEmbedding(question);
       
-      // Step 2: Search session cache first for immediate results
+      // Step 3: Search session cache first for immediate results
       mcpDebugger.info('Searching session cache for immediate semantic retrieval');
       sessionResults = await this.stateManager.searchSessionCache(question, queryEmbedding, 3, 0.4);
       
@@ -485,11 +538,11 @@ class SimpleVerbsService {
         mcpDebugger.info(`Found ${sessionResults.length} results in session cache`);
       }
       
-      // Step 3: Search persistent storage for additional context
+      // Step 4: Search persistent storage for additional context
       mcpDebugger.info('Searching persistent storage for additional context');
       persistentResults = await this.safeOps.searchSimilar(question, 5, 0.5);
       
-      // Step 4: Combine and rank results
+      // Step 5: Combine and rank results
       const allResults = [
         ...sessionResults.map(r => ({ ...r, source: 'session_cache' })),
         ...persistentResults.map(r => ({ ...r, source: 'persistent_storage' }))

@@ -1,0 +1,38 @@
+SELECT ?entity ?label ?description ?wikidataId ?wikidataUrl ?relevanceScore ?detailsId ?timestamp
+       ?relationship ?sourceEntityLabel ?propertyLabel ?targetEntityLabel ?confidence
+WHERE {
+    GRAPH <${storageGraph}> {
+        ?entity a ragno:WikidataEntity ;
+            ragno:wikidataId ?wikidataId ;
+            dcterms:title ?label ;
+            dcterms:description ?description ;
+            foaf:page ?wikidataUrl ;
+            ragno:detailsId ?detailsId ;
+            ragno:originalQuery ?originalQuery ;
+            ragno:enhancementSource "wikidata" ;
+            ragno:relevanceScore ?relevanceScore ;
+            dcterms:created ?timestamp ;
+            ragno:status "active" .
+        
+        # Optional relationships for this entity
+        OPTIONAL {
+            ?relationship a ragno:WikidataRelationship ;
+                ragno:sourceEntityLabel ?sourceEntityLabel ;
+                ragno:propertyLabel ?propertyLabel ;
+                ragno:targetEntityLabel ?targetEntityLabel ;
+                ragno:confidence ?confidence ;
+                ragno:detailsId ?detailsId .
+        }
+        
+        # Text similarity filter
+        FILTER(
+            CONTAINS(LCASE(?label), LCASE("${queryKeywords}")) ||
+            CONTAINS(LCASE(?description), LCASE("${queryKeywords}"))
+        )
+        
+        # Relevance threshold filter
+        FILTER(?relevanceScore >= ${minRelevanceScore})
+    }
+}
+ORDER BY DESC(?relevanceScore) DESC(?timestamp)
+LIMIT ${maxResults}

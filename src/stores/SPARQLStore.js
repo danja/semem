@@ -117,7 +117,7 @@ export default class SPARQLStore extends BaseStore {
             user: options.user || 'admin',
             password: options.password || 'admin'
         }
-        this.graphName = options.graphName || 'http://tensegrity.it/semem'
+        this.graphName = options.graphName || 'http://hyperdata.it/content'
         this.inTransaction = false
         this.dimension = options.dimension || 1536
         

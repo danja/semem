@@ -141,9 +141,24 @@ export class DomUtils {
     const formData = new FormData(form);
     const data = {};
     
+    // First, get all form elements to handle unchecked checkboxes
+    const formElements = form.querySelectorAll('input, select, textarea');
+    
+    // Initialize all checkbox values to false
+    formElements.forEach(element => {
+      if (element.type === 'checkbox') {
+        data[element.name] = false;
+      }
+    });
+    
+    // Then process FormData (this will override checkbox values for checked ones)
     for (const [key, value] of formData.entries()) {
-      // Handle multiple values (checkboxes, multi-select)
-      if (data.hasOwnProperty(key)) {
+      // Handle checkboxes explicitly
+      if (form.querySelector(`input[name="${key}"][type="checkbox"]`)) {
+        data[key] = true; // If it's in FormData, the checkbox is checked
+      }
+      // Handle multiple values (multi-select, etc.)
+      else if (data.hasOwnProperty(key) && data[key] !== false) {
         if (Array.isArray(data[key])) {
           data[key].push(value);
         } else {

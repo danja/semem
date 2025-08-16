@@ -1,0 +1,21 @@
+SELECT ?hypotheticalDoc ?content ?sessionId ?embedding ?timestamp ?relevanceScore
+WHERE {
+    GRAPH <${storageGraph}> {
+        ?hypotheticalDoc a ragno:HypotheticalDocument ;
+            ragno:originalQuery ?originalQuery ;
+            ragno:content ?content ;
+            ragno:hydeSessionId ?sessionId ;
+            ragno:enhancementSource "hyde" ;
+            ragno:hasEmbedding ?embedding ;
+            dcterms:created ?timestamp ;
+            ragno:status "active" .
+        
+        # Text similarity filter for queries
+        FILTER(CONTAINS(LCASE(?originalQuery), LCASE("${queryKeywords}")))
+        
+        # Calculate relevance score based on query similarity
+        BIND(${baseRelevanceScore} AS ?relevanceScore)
+    }
+}
+ORDER BY DESC(?timestamp)
+LIMIT ${maxResults}

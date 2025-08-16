@@ -1,0 +1,54 @@
+SELECT ?item ?type ?title ?content ?enhancementSource ?relevanceScore ?timestamp ?embedding
+WHERE {
+    GRAPH <${storageGraph}> {
+        ?item ?typeProperty ?type ;
+              dcterms:title ?title ;
+              ragno:enhancementSource ?enhancementSource ;
+              dcterms:created ?timestamp ;
+              ragno:status "active" .
+        
+        # Get content based on enhancement type
+        {
+            # HyDE hypothetical documents
+            ?item a ragno:HypotheticalDocument ;
+                  ragno:content ?content ;
+                  ragno:hasEmbedding ?embedding .
+            BIND("hyde" AS ?enhancementSource)
+            BIND(${hydeWeight} AS ?baseScore)
+        }
+        UNION
+        {
+            # Wikipedia articles
+            ?item a ragno:WikipediaArticle ;
+                  ragno:content ?content ;
+                  ragno:relevanceScore ?relevanceScore ;
+                  ragno:hasEmbedding ?embedding .
+            BIND("wikipedia" AS ?enhancementSource)
+            BIND(?relevanceScore AS ?baseScore)
+        }
+        UNION
+        {
+            # Wikidata entities
+            ?item a ragno:WikidataEntity ;
+                  dcterms:description ?content ;
+                  ragno:relevanceScore ?relevanceScore .
+            BIND("wikidata" AS ?enhancementSource)
+            BIND(?relevanceScore AS ?baseScore)
+            BIND("" AS ?embedding)
+        }
+        
+        # Text similarity filter
+        FILTER(
+            CONTAINS(LCASE(?title), LCASE("${queryKeywords}")) ||
+            CONTAINS(LCASE(?content), LCASE("${queryKeywords}"))
+        )
+        
+        # Enhancement source filter
+        ${enhancementSourceFilter}
+        
+        # Time filter
+        ${timeFilter}
+    }
+}
+ORDER BY DESC(?baseScore) DESC(?timestamp)
+LIMIT ${maxResults}

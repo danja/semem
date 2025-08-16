@@ -11,6 +11,7 @@ import { logger } from '../../Utils.js';
 // Import ZPT ontology integration
 import { NamespaceUtils, getSPARQLPrefixes } from '../ontology/ZPTNamespaces.js';
 import { ZPTDataFactory } from '../ontology/ZPTDataFactory.js';
+import { EnhancedZPTQueries } from '../enhanced/EnhancedZPTQueries.js';
 
 export default class CorpuscleSelector {
     constructor(ragnoCorpus, options = {}) {
@@ -41,6 +42,13 @@ export default class CorpuscleSelector {
                 navigationGraph: this.config.navigationGraph
             });
         }
+
+        // Initialize enhanced query engine
+        this.enhancedQueries = new EnhancedZPTQueries({
+            contentGraph: 'http://hyperdata.it/content',
+            navigationGraph: this.config.navigationGraph,
+            sparqlStore: this.sparqlStore
+        });
 
         // Performance tracking
         this.metrics = {
@@ -154,6 +162,125 @@ export default class CorpuscleSelector {
             logger.error('Corpuscle selection failed', { error, params });
             throw new Error(`Selection failed: ${error.message}`);
         }
+    }
+
+    /**
+     * Enhanced selection method using live SPARQL filtering
+     * @param {Object} params - ZPT navigation parameters
+     * @returns {Promise<Object>} Enhanced selection results
+     */
+    async selectEnhanced(params) {
+        const startTime = Date.now();
+        this.metrics.totalSelections++;
+
+        try {
+            logger.info('🚀 Starting enhanced ZPT corpuscle selection', { params });
+
+            // Use the enhanced query engine
+            const result = await this.enhancedQueries.executeNavigation(params);
+            
+            // Transform results to corpuscle format
+            const corpuscles = this.transformToCorpuscles(result.results, params);
+            
+            // Build enhanced result object
+            const enhancedResult = {
+                corpuscles: corpuscles,
+                metadata: {
+                    selectionTime: Date.now() - startTime,
+                    totalFound: result.results.length,
+                    zoomLevel: params.zoom,
+                    panFilters: params.pan,
+                    tiltProjection: params.tilt,
+                    queryTimestamp: result.timestamp,
+                    enhanced: true
+                },
+                navigation: {
+                    queryParams: result.queryParams,
+                    success: result.success
+                }
+            };
+
+            // Update metrics
+            this.updateMetrics(Date.now() - startTime);
+
+            logger.info('✅ Enhanced corpuscle selection completed', {
+                resultCount: enhancedResult.corpuscles.length,
+                selectionTime: enhancedResult.metadata.selectionTime
+            });
+
+            return enhancedResult;
+
+        } catch (error) {
+            logger.error('❌ Enhanced corpuscle selection failed', { error, params });
+            throw new Error(`Enhanced selection failed: ${error.message}`);
+        }
+    }
+
+    /**
+     * Transform SPARQL results to corpuscle format
+     */
+    transformToCorpuscles(sparqlResults, params) {
+        return sparqlResults.map((binding, index) => {
+            const corpuscle = {
+                uri: binding.item?.value || `http://purl.org/stuff/instance/corpuscle-${index}`,
+                content: binding.content?.value || binding.label?.value || '',
+                type: this.getCorpuscleType(params.zoom),
+                metadata: {
+                    zoom: params.zoom,
+                    tilt: params.tilt,
+                    index: index
+                }
+            };
+
+            // Add zoom-specific fields
+            switch (params.zoom?.toLowerCase()) {
+                case 'entity':
+                    corpuscle.label = binding.label?.value;
+                    corpuscle.isEntryPoint = binding.isEntryPoint?.value === 'true';
+                    corpuscle.frequency = parseInt(binding.frequency?.value || '0');
+                    break;
+                case 'unit':
+                    corpuscle.created = binding.created?.value;
+                    corpuscle.hasEmbedding = !!binding.hasEmbedding?.value;
+                    break;
+                case 'text':
+                    corpuscle.created = binding.created?.value;
+                    corpuscle.sourceDocument = binding.sourceDocument?.value;
+                    break;
+                case 'community':
+                    corpuscle.memberCount = parseInt(binding.memberCount?.value || '0');
+                    break;
+                case 'corpus':
+                    corpuscle.elementCount = parseInt(binding.elementCount?.value || '0');
+                    corpuscle.description = binding.description?.value;
+                    break;
+            }
+
+            // Add tilt-specific fields
+            if (params.tilt === 'embedding' && binding.embedding) {
+                corpuscle.embedding = {
+                    model: binding.embeddingModel?.value,
+                    dimension: parseInt(binding.dimension?.value || '0'),
+                    vector: binding.embedding?.value
+                };
+            }
+
+            return corpuscle;
+        });
+    }
+
+    /**
+     * Get corpuscle type based on zoom level
+     */
+    getCorpuscleType(zoomLevel) {
+        const typeMapping = {
+            'entity': 'ragno:Entity',
+            'unit': 'ragno:Unit',
+            'text': 'ragno:TextElement', 
+            'community': 'ragno:Community',
+            'corpus': 'ragno:Corpus'
+        };
+        return typeMapping[zoomLevel?.toLowerCase()] || 'ragno:Element';
     }
 
     /**

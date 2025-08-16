@@ -1,0 +1,28 @@
+SELECT ?article ?title ?content ?snippet ?pageUrl ?relevanceScore ?searchId ?timestamp
+WHERE {
+    GRAPH <${storageGraph}> {
+        ?article a ragno:WikipediaArticle ;
+            dcterms:title ?title ;
+            ragno:content ?content ;
+            ragno:snippet ?snippet ;
+            foaf:page ?pageUrl ;
+            ragno:relevanceScore ?relevanceScore ;
+            ragno:searchId ?searchId ;
+            ragno:originalQuery ?originalQuery ;
+            ragno:enhancementSource "wikipedia" ;
+            dcterms:created ?timestamp ;
+            ragno:status "active" .
+        
+        # Text similarity filter
+        FILTER(
+            CONTAINS(LCASE(?title), LCASE("${queryKeywords}")) ||
+            CONTAINS(LCASE(?content), LCASE("${queryKeywords}")) ||
+            CONTAINS(LCASE(?snippet), LCASE("${queryKeywords}"))
+        )
+        
+        # Relevance threshold filter
+        FILTER(?relevanceScore >= ${minRelevanceScore})
+    }
+}
+ORDER BY DESC(?relevanceScore) DESC(?timestamp)
+LIMIT ${maxResults}

@@ -239,3 +239,60 @@ ragno:inCorpuscle a owl:ObjectProperty ;
     rdfs:subPropertyOf skos:inScheme ;
     rdfs:label "in corpuscle"@en ;
     rdfs:comment "Links an element to a containing corpuscle."@en .
+
+## Embedding and Indexing Properties
+ragno:hasEmbedding a owl:ObjectProperty ;
+    rdfs:domain ragno:Element ;
+    rdfs:range ragno:IndexElement ;
+    rdfs:subPropertyOf skos:related ;
+    rdfs:label "has embedding"@en ;
+    rdfs:comment "Links an element to its vector embedding representation."@en ;
+    skos:definition "Associates a ragno:Element with a ragno:IndexElement that contains vector embeddings for similarity search."@en .
+
+ragno:hasIndexElement a owl:ObjectProperty ;
+    rdfs:domain ragno:Element ;
+    rdfs:range ragno:IndexElement ;
+    rdfs:subPropertyOf skos:related ;
+    rdfs:label "has index element"@en ;
+    rdfs:comment "Links an element to indexing structures for retrieval."@en ;
+    skos:definition "General property for linking elements to any indexing structure including embeddings, keywords, or other retrieval mechanisms."@en .
+
+ragno:embeddingDimension a owl:DatatypeProperty ;
+    rdfs:domain ragno:IndexElement ;
+    rdfs:range xsd:integer ;
+    rdfs:label "embedding dimension"@en ;
+    rdfs:comment "The dimensionality of a vector embedding."@en ;
+    skos:definition "Specifies the number of dimensions in a vector embedding representation."@en .
+
+ragno:embeddingModel a owl:DatatypeProperty ;
+    rdfs:domain ragno:IndexElement ;
+    rdfs:range xsd:string ;
+    rdfs:label "embedding model"@en ;
+    rdfs:comment "The model used to generate the embedding."@en ;
+    skos:definition "Identifies the specific embedding model or algorithm used to generate vector representations."@en .
+
+ragno:vectorContent a owl:DatatypeProperty ;
+    rdfs:domain ragno:IndexElement ;
+    rdfs:range xsd:string ;
+    rdfs:label "vector content"@en ;
+    rdfs:comment "The actual vector values as a serialized string."@en ;
+    skos:definition "Contains the vector embedding values, typically as JSON array or space-separated values."@en .
+
+## Embedding SubTypes
+ragno:VectorEmbedding a skos:Concept ;
+    rdfs:subClassOf ragno:IndexElement ;
+    skos:prefLabel "Vector Embedding"@en ;
+    skos:definition "An IndexElement containing vector representations for semantic similarity."@en ;
+    skos:inScheme ragno: .
+
+ragno:TextEmbedding a skos:Concept ;
+    rdfs:subClassOf ragno:VectorEmbedding ;
+    skos:prefLabel "Text Embedding"@en ;
+    skos:definition "Vector embedding derived from textual content."@en ;
+    skos:broader ragno:VectorEmbedding .
+
+ragno:SemanticEmbedding a skos:Concept ;
+    rdfs:subClassOf ragno:VectorEmbedding ;
+    skos:prefLabel "Semantic Embedding"@en ;
+    skos:definition "Vector embedding capturing semantic meaning and relationships."@en ;
+    skos:broader ragno:VectorEmbedding .

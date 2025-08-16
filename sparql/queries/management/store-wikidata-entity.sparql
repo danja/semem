@@ -1,0 +1,15 @@
+INSERT DATA {
+    GRAPH <${storageGraph}> {
+        <${entityURI}> a ragno:WikidataEntity ;
+            ragno:wikidataId "${wikidataId}" ;
+            dcterms:title "${label}" ;
+            dcterms:description "${description}" ;
+            foaf:page <${wikidataUrl}> ;
+            ragno:detailsId "${detailsId}" ;
+            ragno:originalQuery "${originalQuery}" ;
+            ragno:enhancementSource "wikidata" ;
+            ragno:relevanceScore ${relevanceScore} ;
+            dcterms:created "${timestamp}"^^xsd:dateTime ;
+            ragno:status "active" .
+    }
+}

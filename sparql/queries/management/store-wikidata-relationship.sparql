@@ -1,0 +1,18 @@
+INSERT DATA {
+    GRAPH <${storageGraph}> {
+        <${relationshipURI}> a ragno:WikidataRelationship ;
+            ragno:sourceEntity "${sourceEntity}" ;
+            ragno:sourceEntityLabel "${sourceEntityLabel}" ;
+            ragno:property "${property}" ;
+            ragno:propertyLabel "${propertyLabel}" ;
+            ragno:targetEntity "${targetEntity}" ;
+            ragno:targetEntityLabel "${targetEntityLabel}" ;
+            ragno:valueType "${valueType}" ;
+            ragno:confidence ${confidence} ;
+            ragno:detailsId "${detailsId}" ;
+            ragno:originalQuery "${originalQuery}" ;
+            ragno:enhancementSource "wikidata" ;
+            dcterms:created "${timestamp}"^^xsd:dateTime ;
+            ragno:status "active" .
+    }
+}

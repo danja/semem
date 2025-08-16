@@ -583,6 +583,9 @@ class WorkbenchApp {
     const logId = consoleService.logOperationStart('ask', {
       mode: formData.mode,
       useContext: Boolean(formData.useContext),
+      useHyDE: Boolean(formData.useHyDE),
+      useWikipedia: Boolean(formData.useWikipedia),
+      useWikidata: Boolean(formData.useWikidata),
       questionLength: formData.question?.length || 0
     });
     
@@ -592,7 +595,10 @@ class WorkbenchApp {
       const result = await apiService.ask({
         question: formData.question,
         mode: formData.mode || 'standard',
-        useContext: Boolean(formData.useContext)
+        useContext: Boolean(formData.useContext),
+        useHyDE: Boolean(formData.useHyDE),
+        useWikipedia: Boolean(formData.useWikipedia),
+        useWikidata: Boolean(formData.useWikidata)
       });
       
       const duration = Date.now() - startTime;

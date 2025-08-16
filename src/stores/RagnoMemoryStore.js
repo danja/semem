@@ -128,13 +128,13 @@ export default class RagnoMemoryStore extends MemoryStore {
         // Batch create new concepts
         if (conceptsToCreate.size > 0) {
             const query = this.buildBatchConceptInsert(conceptsToCreate);
-            await this.ragnoStore._executeSparqlUpdate(query);
+            await this.ragnoStore._executeSparqlUpdate(query, this.ragnoStore.endpoint.update);
         }
 
         // Batch update frequencies
         if (conceptsToUpdate.size > 0) {
             const query = this.buildBatchFrequencyUpdate(conceptsToUpdate);
-            await this.ragnoStore._executeSparqlUpdate(query);
+            await this.ragnoStore._executeSparqlUpdate(query, this.ragnoStore.endpoint.update);
         }
     }
 
@@ -164,7 +164,7 @@ export default class RagnoMemoryStore extends MemoryStore {
 
         // Build batch update query
         const query = this.buildBatchRelationshipUpdate(relMap);
-        await this.ragnoStore._executeSparqlUpdate(query);
+        await this.ragnoStore._executeSparqlUpdate(query, this.ragnoStore.endpoint.update);
     }
 
     /**
