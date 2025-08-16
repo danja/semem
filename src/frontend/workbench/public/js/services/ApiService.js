@@ -49,13 +49,14 @@ export class ApiService {
    * @param {Object} params - Tell parameters
    * @param {string} params.content - Content to store
    * @param {string} params.type - Type: 'concept' | 'interaction' | 'document'
+   * @param {boolean} params.lazy - Whether to store without immediate processing
    * @param {Object} params.metadata - Optional metadata
    * @returns {Promise<Object>} Tell result
    */
-  async tell({ content, type = 'interaction', metadata = {} }) {
+  async tell({ content, type = 'interaction', lazy = false, metadata = {} }) {
     return this.makeRequest('/tell', {
       method: 'POST',
-      body: JSON.stringify({ content, type, metadata })
+      body: JSON.stringify({ content, type, lazy, metadata })
     });
   }
 

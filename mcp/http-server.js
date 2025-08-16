@@ -268,12 +268,12 @@ async function startOptimizedServer() {
       // TELL endpoint - Add resources to the system
       app.post('/tell', async (req, res) => {
         try {
-          const { content, type = 'interaction', metadata = {} } = req.body;
+          const { content, type = 'interaction', metadata = {}, lazy = false } = req.body;
           if (!content) {
             return res.status(400).json({ error: 'Content is required' });
           }
           
-          const result = await simpleVerbsService.tell({ content, type, metadata });
+          const result = await simpleVerbsService.tell({ content, type, metadata, lazy });
           res.json(result);
         } catch (error) {
           res.status(500).json({ 

@@ -104,6 +104,15 @@
                                 </div>
                             </div>
                             
+                            <!-- Lazy Storage Option -->
+                            <div class="form-group lazy-option">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="tell-lazy" name="lazy">
+                                    <span class="checkbox-text">Lazy Storage</span>
+                                    <span class="checkbox-hint">Store without immediate processing</span>
+                                </label>
+                            </div>
+                            
                             <!-- File Upload Section (shown when Document type selected) -->
                             <div class="form-group file-upload-section" id="document-upload-section" style="display: none;">
                                 <label for="document-file" class="form-label">
@@ -246,7 +255,7 @@
                                     id="augment-target" 
                                     name="target"
                                     class="form-textarea"
-                                    placeholder="Enter text to analyze..."
+                                    placeholder="Enter text to analyze (or leave empty for 'Process Lazy Content')..."
                                     rows="4"
                                 ></textarea>
                             </div>
@@ -258,6 +267,7 @@
                                         <option value="concepts">Extract Concepts</option>
                                         <option value="attributes">Analyze Attributes</option>
                                         <option value="relationships">Find Relationships</option>
+                                        <option value="process_lazy">Process Lazy Content</option>
                                     </select>
                                 </div>
                             </div>

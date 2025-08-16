@@ -29,7 +29,8 @@ export const SimpleVerbToolNames = {
 const TellSchema = z.object({
   content: z.string().min(1, "Content cannot be empty"),
   type: z.enum(['interaction', 'document', 'concept']).optional().default('interaction'),
-  metadata: z.object({}).optional().default({})
+  metadata: z.object({}).optional().default({}),
+  lazy: z.boolean().optional().default(false)
 });
 
 const AskSchema = z.object({
@@ -43,7 +44,7 @@ const AskSchema = z.object({
 
 const AugmentSchema = z.object({
   target: z.string().min(1, "Target content/context cannot be empty"),
-  operation: z.enum(['concepts', 'attributes', 'relationships', 'auto']).optional().default('auto'),
+  operation: z.enum(['concepts', 'attributes', 'relationships', 'process_lazy', 'auto']).optional().default('auto'),
   options: z.object({}).optional().default({})
 });
 
@@ -377,11 +378,12 @@ class SimpleVerbsService {
   /**
    * TELL - Add resources to the system with minimal processing
    */
-  async tell({ content, type = 'interaction', metadata = {} }) {
+  async tell({ content, type = 'interaction', metadata = {}, lazy = false }) {
     await this.initialize();
     
     try {
-      mcpDebugger.debug('Simple Verb: tell', { type, contentLength: content.length });
+      mcpDebugger.debug('Simple Verb: tell', { type, contentLength: content.length, lazy });
+      console.log('DEBUG TELL PARAMETERS:', { content: content.substring(0, 50), type, lazy, metadata });
       
       let result;
       let embedding;
@@ -389,85 +391,145 @@ class SimpleVerbsService {
       let prompt;
       let response = content;
       
-      switch (type) {
-        case 'interaction':
-          // Store as semantic memory interaction
-          embedding = await this.safeOps.generateEmbedding(content);
-          concepts = await this.safeOps.extractConcepts(content);
-          prompt = `User input: ${content.substring(0, 100)}...`;
-          
-          result = await this.safeOps.storeInteraction(
-            prompt,
-            response,
-            { ...metadata, type: 'tell_interaction', concepts }
-          );
-          break;
-          
-        case 'document':
-          // Store as document-style content
-          embedding = await this.safeOps.generateEmbedding(content);
-          concepts = await this.safeOps.extractConcepts(content);
-          prompt = `Document: ${metadata.title || 'Untitled'}`;
-          
-          result = await this.safeOps.storeInteraction(
-            prompt,
-            response,
-            { ...metadata, type: 'tell_document', concepts }
-          );
-          break;
-          
-        case 'concept':
-          // Store as concept definition
-          embedding = await this.safeOps.generateEmbedding(content);
-          concepts = await this.safeOps.extractConcepts(content);
-          prompt = `Concept: ${metadata.name || 'Unnamed'}`;
-          
-          result = await this.safeOps.storeInteraction(
-            prompt,
-            response,
-            { ...metadata, type: 'tell_concept', concepts }
-          );
-          break;
-          
-        default:
-          throw new Error(`Unknown tell type: ${type}`);
+      if (lazy) {
+        // Lazy storage - store content as-is without processing
+        const elementId = `semem:${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+        prompt = type === 'document' ? `Document: ${metadata.title || 'Untitled'}` :
+                type === 'concept' ? `Concept: ${metadata.name || 'Unnamed'}` :
+                `User input: ${content.substring(0, 100)}...`;
+        
+        const lazyData = {
+          id: elementId,
+          content,
+          type,
+          prompt,
+          title: metadata.title || metadata.name,
+          metadata
+        };
+        
+        console.log('DEBUG MEMORY MANAGER:', !!this.memoryManager);
+        console.log('DEBUG STORE:', !!this.memoryManager?.store);
+        console.log('DEBUG STORE TYPE:', typeof this.memoryManager?.store);
+        
+        if (!this.memoryManager?.store) {
+          throw new Error('Memory manager store is not available');
+        }
+        
+        console.log('DEBUG STORE CONSTRUCTOR:', this.memoryManager.store.constructor.name);
+        console.log('DEBUG STORE METHODS:', Object.getOwnPropertyNames(this.memoryManager.store.constructor.prototype));
+        
+        if (typeof this.memoryManager.store.storeLazyContent === 'function') {
+          result = await this.memoryManager.store.storeLazyContent(lazyData);
+        } else {
+          throw new Error(`Store does not have storeLazyContent method. Store type: ${this.memoryManager.store.constructor.name}`);
+        }
+        
+        mcpDebugger.info('Lazy tell operation completed', {
+          type,
+          elementId,
+          contentLength: content.length
+        });
+        
+        return {
+          success: true,
+          verb: 'tell',
+          type,
+          stored: true,
+          lazy: true,
+          contentLength: content.length,
+          metadata: { ...metadata },
+          concepts: 0,
+          sessionCached: false,
+          zptState: this.stateManager.getState(),
+          message: `Successfully stored ${type} content lazily (without processing)`
+        };
+        
+      } else {
+        // Normal processing - existing behavior
+        switch (type) {
+          case 'interaction':
+            // Store as semantic memory interaction
+            embedding = await this.safeOps.generateEmbedding(content);
+            concepts = await this.safeOps.extractConcepts(content);
+            prompt = `User input: ${content.substring(0, 100)}...`;
+            
+            result = await this.safeOps.storeInteraction(
+              prompt,
+              response,
+              { ...metadata, type: 'tell_interaction', concepts }
+            );
+            break;
+            
+          case 'document':
+            // Store as document-style content
+            embedding = await this.safeOps.generateEmbedding(content);
+            concepts = await this.safeOps.extractConcepts(content);
+            prompt = `Document: ${metadata.title || 'Untitled'}`;
+            
+            result = await this.safeOps.storeInteraction(
+              prompt,
+              response,
+              { ...metadata, type: 'tell_document', concepts }
+            );
+            break;
+            
+          case 'concept':
+            // Store as concept definition
+            embedding = await this.safeOps.generateEmbedding(content);
+            concepts = await this.safeOps.extractConcepts(content);
+            prompt = `Concept: ${metadata.name || 'Unnamed'}`;
+            
+            result = await this.safeOps.storeInteraction(
+              prompt,
+              response,
+              { ...metadata, type: 'tell_concept', concepts }
+            );
+            break;
+            
+          default:
+            throw new Error(`Unknown tell type: ${type}`);
+        }
       }
 
-      // Add to session cache for immediate retrieval
-      const sessionId = `${this.stateManager.state.sessionId}_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
-      await this.stateManager.addToSessionCache(
-        sessionId,
-        prompt,
-        response,
-        embedding,
-        concepts,
-        { ...metadata, type: `tell_${type}`, storedAt: Date.now() }
-      );
+      // Add to session cache for immediate retrieval (only for processed content)
+      if (!lazy) {
+        const sessionId = `${this.stateManager.state.sessionId}_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+        await this.stateManager.addToSessionCache(
+          sessionId,
+          prompt,
+          response,
+          embedding,
+          concepts,
+          { ...metadata, type: `tell_${type}`, storedAt: Date.now() }
+        );
 
-      mcpDebugger.info('Tell operation completed with session caching', {
-        type,
-        conceptCount: concepts.length,
-        sessionCacheSize: this.stateManager.sessionCache.interactions.size
-      });
-      
-      return {
-        success: true,
-        verb: 'tell',
-        type,
-        stored: true,
-        contentLength: content.length,
-        metadata: { ...metadata },
-        concepts: concepts.length,
-        sessionCached: true,
-        zptState: this.stateManager.getState(),
-        message: `Successfully stored ${type} content`
-      };
+        mcpDebugger.info('Tell operation completed with session caching', {
+          type,
+          conceptCount: concepts.length,
+          sessionCacheSize: this.stateManager.sessionCache.interactions.size
+        });
+        
+        return {
+          success: true,
+          verb: 'tell',
+          type,
+          stored: true,
+          contentLength: content.length,
+          metadata: { ...metadata },
+          concepts: concepts.length,
+          sessionCached: true,
+          zptState: this.stateManager.getState(),
+          message: `Successfully stored ${type} content`
+        };
+      }
       
     } catch (error) {
       mcpDebugger.error('Tell verb failed', error);
       return {
         success: false,
         verb: 'tell',
+        type,
+        lazy,
         error: error.message,
         zptState: this.stateManager.getState()
       };
@@ -691,6 +753,80 @@ class SimpleVerbsService {
             };
           } else {
             result = { relationships: [], error: 'No relationships found' };
+          }
+          break;
+          
+        case 'process_lazy':
+          // Process lazy content - find and process unprocessed content
+          try {
+            // If target is "all", process all lazy content
+            if (target === 'all' || target === '') {
+              const lazyItems = await this.memoryManager.store.findLazyContent(options.limit || 10);
+              
+              if (lazyItems.length === 0) {
+                result = {
+                  processedItems: [],
+                  message: 'No lazy content found to process'
+                };
+              } else {
+                const processedItems = [];
+                
+                for (const item of lazyItems) {
+                  try {
+                    // Generate embedding and extract concepts for lazy content
+                    const embedding = await this.safeOps.generateEmbedding(item.content);
+                    const concepts = await this.safeOps.extractConcepts(item.content);
+                    
+                    // Update the lazy content to processed status
+                    await this.memoryManager.store.updateLazyToProcessed(item.id, embedding, concepts);
+                    
+                    processedItems.push({
+                      id: item.id,
+                      label: item.label,
+                      type: item.type,
+                      conceptCount: concepts.length,
+                      embeddingDimension: embedding.length
+                    });
+                    
+                    mcpDebugger.info('Processed lazy content', { 
+                      id: item.id, 
+                      conceptCount: concepts.length 
+                    });
+                    
+                  } catch (itemError) {
+                    mcpDebugger.warn('Failed to process lazy item', { 
+                      id: item.id, 
+                      error: itemError.message 
+                    });
+                  }
+                }
+                
+                result = {
+                  processedItems,
+                  totalProcessed: processedItems.length,
+                  totalFound: lazyItems.length,
+                  augmentationType: 'process_lazy'
+                };
+              }
+            } else {
+              // Process specific content (treat as regular augmentation)
+              const concepts = await this.safeOps.extractConcepts(target);
+              const embedding = await this.safeOps.generateEmbedding(target);
+              
+              result = {
+                concepts,
+                embedding: {
+                  dimension: embedding.length,
+                  preview: embedding.slice(0, 5).map(x => parseFloat(x.toFixed(4)))
+                },
+                augmentationType: 'process_lazy_specific'
+              };
+            }
+          } catch (lazyError) {
+            result = {
+              error: lazyError.message,
+              augmentationType: 'process_lazy_failed'
+            };
           }
           break;
           

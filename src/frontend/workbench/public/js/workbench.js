@@ -273,6 +273,9 @@ class WorkbenchApp {
     const button = this.components.tell.button;
     const results = this.components.tell.results;
     
+    // Debug: Log form data to console
+    console.log('DEBUG: Form data extracted:', formData);
+    
     // Check if this is a file upload (document type with file selected)
     const fileInput = DomUtils.$('#document-file');
     const hasFile = fileInput && fileInput.files.length > 0;
@@ -306,6 +309,7 @@ class WorkbenchApp {
         result = await apiService.tell({
           content: formData.content,
           type: formData.type || 'interaction',
+          lazy: formData.lazy || false,
           metadata: formData.tags ? { tags: formData.tags.split(',').map(t => t.trim()) } : {}
         });
       }
@@ -631,18 +635,30 @@ class WorkbenchApp {
     const formData = DomUtils.getFormData(form);
     const results = DomUtils.$('#augment-results');
     
+    // Handle process_lazy operation differently
+    const isProcessLazy = formData.operation === 'process_lazy';
+    const target = isProcessLazy ? 'all' : formData.target;
+    
+    // Validate target content for non-lazy operations
+    if (!isProcessLazy && !target?.trim()) {
+      DomUtils.showMessage(results, 'Please provide target content to analyze', 'error');
+      return;
+    }
+    
     const startTime = Date.now();
     const logId = consoleService.logOperationStart('augment', {
       operation: formData.operation || 'auto',
-      targetLength: formData.target?.length || 0
+      targetLength: target?.length || 0,
+      isProcessLazy
     });
     
     try {
       stateManager.setLoadingState('augment', true);
       
       const result = await apiService.augment({
-        target: formData.target,
-        operation: formData.operation || 'auto'
+        target: target,
+        operation: formData.operation || 'auto',
+        options: isProcessLazy ? { limit: 10 } : {}
       });
       
       const duration = Date.now() - startTime;
@@ -651,7 +667,10 @@ class WorkbenchApp {
       // Show results
       this.displayAugmentResults(results, result);
       
-      DomUtils.showToast('Analysis completed', 'success');
+      const successMessage = isProcessLazy ? 
+        'Lazy content processed successfully' : 
+        'Analysis completed';
+      DomUtils.showToast(successMessage, 'success');
       
     } catch (error) {
       const duration = Date.now() - startTime;

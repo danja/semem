@@ -1444,4 +1444,165 @@ export default class SPARQLStore extends BaseStore {
     async executeSelect(selectQuery) {
         return await this._executeSparqlQuery(selectQuery, this.endpoint.query);
     }
+
+    /**
+     * Store content lazily without processing (no embeddings or concept extraction)
+     * Uses ragno vocabulary to store raw content for later processing
+     * @param {Object} data - Content data with id, content, type, metadata
+     * @returns {Promise<void>}
+     */
+    async storeLazyContent(data) {
+        if (!data || !data.id) {
+            throw new Error('Data must have an id field')
+        }
+        
+        const elementUri = `<${data.id}>`
+        const timestamp = new Date().toISOString()
+        
+        // Determine ragno class based on content type
+        let ragnoClass;
+        switch (data.type) {
+            case 'document':
+                ragnoClass = 'ragno:TextElement';
+                break;
+            case 'concept':
+                ragnoClass = 'ragno:Entity';
+                break;
+            case 'interaction':
+            default:
+                ragnoClass = 'ragno:Element';
+                break;
+        }
+        
+        const insertQuery = `
+            PREFIX ragno: <http://purl.org/stuff/ragno/>
+            PREFIX zpt: <http://purl.org/stuff/zpt/>
+            PREFIX dcterms: <http://purl.org/dc/terms/>
+            PREFIX semem: <http://purl.org/stuff/semem/>
+            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+            
+            INSERT DATA {
+                GRAPH <${this.graphName}> {
+                    ${elementUri} a ${ragnoClass} ;
+                        ragno:content "${this._escapeSparqlString(data.content || '')}" ;
+                        ragno:subType semem:${data.type || 'element'} ;
+                        dcterms:created "${timestamp}"^^xsd:dateTime ;
+                        semem:processingStatus "lazy" ;
+                        ragno:isEntryPoint false ;
+                        rdfs:label "${this._escapeSparqlString(data.prompt || data.title || 'Lazy Content')}" .
+                    
+                    ${data.metadata && Object.keys(data.metadata).length > 0 ? 
+                        Object.entries(data.metadata)
+                            .map(([key, value]) => `${elementUri} semem:${this._escapeProperty(key)} "${this._escapeSparqlString(String(value))}" .`)
+                            .join('\n                    ') 
+                        : ''
+                    }
+                }
+            }
+        `
+        
+        await this._executeSparqlUpdate(insertQuery, this.endpoint.update)
+        
+        return {
+            id: data.id,
+            uri: data.id,
+            stored: true,
+            lazy: true,
+            timestamp,
+            ragnoClass: ragnoClass.split(':')[1]
+        }
+    }
+
+    /**
+     * Find lazy content that needs processing
+     * @param {number} limit - Maximum number of items to return
+     * @returns {Promise<Array>} Array of lazy content items
+     */
+    async findLazyContent(limit = 10) {
+        const query = `
+            PREFIX ragno: <http://purl.org/stuff/ragno/>
+            PREFIX semem: <http://purl.org/stuff/semem/>
+            PREFIX dcterms: <http://purl.org/dc/terms/>
+            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            
+            SELECT ?element ?content ?label ?type ?created WHERE {
+                GRAPH <${this.graphName}> {
+                    ?element semem:processingStatus "lazy" ;
+                             ragno:content ?content ;
+                             rdfs:label ?label ;
+                             dcterms:created ?created .
+                    OPTIONAL { ?element ragno:subType ?type }
+                }
+            }
+            ORDER BY DESC(?created)
+            LIMIT ${limit}
+        `
+        
+        const result = await this._executeSparqlQuery(query, this.endpoint.query)
+        
+        return result.results.bindings.map(binding => ({
+            id: binding.element.value,
+            content: binding.content.value,
+            label: binding.label.value,
+            type: binding.type?.value || 'element',
+            created: binding.created.value
+        }))
+    }
+
+    /**
+     * Update lazy content to processed status
+     * @param {string} elementId - Element ID to update
+     * @param {Array} embedding - Generated embedding
+     * @param {Array} concepts - Extracted concepts
+     * @returns {Promise<void>}
+     */
+    async updateLazyToProcessed(elementId, embedding = [], concepts = []) {
+        const elementUri = `<${elementId}>`
+        const embeddingStr = JSON.stringify(embedding)
+        const conceptsStr = concepts.map(c => `"${this._escapeSparqlString(c)}"`).join(', ')
+        
+        const updateQuery = `
+            PREFIX ragno: <http://purl.org/stuff/ragno/>
+            PREFIX semem: <http://purl.org/stuff/semem/>
+            PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+            PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+            
+            DELETE {
+                GRAPH <${this.graphName}> {
+                    ${elementUri} semem:processingStatus "lazy" ;
+                                  ragno:isEntryPoint false .
+                }
+            }
+            INSERT {
+                GRAPH <${this.graphName}> {
+                    ${elementUri} semem:processingStatus "processed" ;
+                                  ragno:isEntryPoint true ;
+                                  ragno:embedding "${this._escapeSparqlString(embeddingStr)}" .
+                    ${concepts.length > 0 ? 
+                        concepts.map(concept => 
+                            `${elementUri} skos:related "${this._escapeSparqlString(concept)}" .`
+                        ).join('\n                    ')
+                        : ''
+                    }
+                }
+            }
+            WHERE {
+                GRAPH <${this.graphName}> {
+                    ${elementUri} semem:processingStatus "lazy" .
+                }
+            }
+        `
+        
+        await this._executeSparqlUpdate(updateQuery, this.endpoint.update)
+    }
+
+    /**
+     * Helper method to escape property names for SPARQL
+     * @param {string} property - Property name to escape
+     * @returns {string} Escaped property name
+     */
+    _escapeProperty(property) {
+        return property.replace(/[^a-zA-Z0-9_]/g, '_')
+    }
 }

@@ -77,7 +77,7 @@ export default class MemoryManager {
             this.llmHandler = null
         }
         this.memStore = new MemoryStore(dimension)
-        this.storage = storage || new InMemoryStore()
+        this.store = storage || new InMemoryStore()
         this.contextManager = new ContextManager(contextOptions)
 
         // Start initialization but don't wait for it here
@@ -109,7 +109,7 @@ export default class MemoryManager {
         }
 
         try {
-            const [shortTerm, longTerm] = await this.storage.loadHistory()
+            const [shortTerm, longTerm] = await this.store.loadHistory()
             this.logger.info(`Loading memory history: ${shortTerm.length} short-term, ${longTerm.length} long-term items`)
 
             for (const interaction of shortTerm) {
@@ -154,7 +154,7 @@ export default class MemoryManager {
             this.memStore.accessCounts.push(interaction.accessCount)
             this.memStore.conceptsList.push(interaction.concepts)
 
-            await this.storage.saveMemoryToHistory(this.memStore)
+            await this.store.saveMemoryToHistory(this.memStore)
             this.logger.info('Interaction added successfully')
         } catch (error) {
             this.logger.error('Failed to add interaction:', error)
@@ -276,7 +276,7 @@ export default class MemoryManager {
         let error = null
         try {
             // Save current state before disposal
-            await this.storage.saveMemoryToHistory(this.memStore)
+            await this.store.saveMemoryToHistory(this.memStore)
         } catch (e) {
             error = e
         }
@@ -284,8 +284,8 @@ export default class MemoryManager {
         try {
             // Clean up resources
             this.cacheManager.dispose()
-            if (this.storage?.close) {
-                await this.storage.close()
+            if (this.store?.close) {
+                await this.store.close()
             }
         } catch (e) {
             if (!error) error = e
