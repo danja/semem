@@ -32,7 +32,7 @@ console.log('🚀 HTTP SERVER: Starting script execution...');
 // Initialize config to get port from config.json
 let port = process.env.PORT || process.env.MCP_PORT || 3000;
 try {
-  const configPath = process.env.SEMEM_CONFIG_PATH || path.join(process.cwd(), 'config/config.json');
+  const configPath = process.env.SEMEM_CONFIG_PATH || path.join(projectRoot, 'config/config.json');
   const config = new Config(configPath);
   await config.init();
   port = process.env.PORT || process.env.MCP_PORT || config.get('servers.mcp') || config.get('port') || 3000;

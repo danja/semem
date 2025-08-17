@@ -10,8 +10,8 @@ export default class Config {
         storage: {
             type: 'sparql',
             options: {
-                update: 'http://localhost:4030/semem/update',
-                query: 'http://localhost:4030/semem/query',
+                update: 'http://localhost:3030/semem/update',
+                query: 'http://localhost:3030/semem/query',
                 user: 'admin',
                 password: 'admin123'
             }
