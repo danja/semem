@@ -650,6 +650,35 @@ function registerToolCallHandler(server) {
           }
         },
         {
+          name: 'sparql_ingest_documents',
+          description: 'Ingest documents from SPARQL endpoint using query templates',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              endpoint: { type: 'string', description: 'SPARQL query endpoint URL' },
+              template: { 
+                type: 'string', 
+                enum: ['blog-articles', 'generic-documents', 'wikidata-entities'],
+                description: 'Name of SPARQL query template' 
+              },
+              limit: { type: 'number', minimum: 1, maximum: 500, default: 50, description: 'Maximum number of documents to ingest' },
+              lazy: { type: 'boolean', default: false, description: 'Use lazy processing (store without immediate embedding/concept extraction)' },
+              dryRun: { type: 'boolean', default: false, description: 'Preview documents without actually ingesting them' },
+              auth: {
+                type: 'object',
+                description: 'Authentication credentials for SPARQL endpoint',
+                properties: {
+                  user: { type: 'string' },
+                  password: { type: 'string' }
+                }
+              },
+              variables: { type: 'object', description: 'Variables to substitute in SPARQL template' },
+              fieldMappings: { type: 'object', description: 'Custom field mappings for extracting document data' }
+            },
+            required: ['endpoint', 'template']
+          }
+        },
+        {
           name: 'semem_extract_concepts',
           description: 'Extract semantic concepts from text using LLM analysis',
           inputSchema: {
@@ -2467,6 +2496,16 @@ function registerToolCallHandler(server) {
         
         const processor = new DocumentProcessor(config, sparqlHelper);
         const result = await processor.processUploadedDocument(args);
+        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+      }
+
+      if (name === 'sparql_ingest_documents') {
+        const { createSparqlIngestTool } = await import('./tools/document-tools.js');
+        const { getSimpleVerbsService } = await import('./tools/simple-verbs.js');
+        
+        const simpleVerbsService = getSimpleVerbsService();
+        const tool = createSparqlIngestTool(simpleVerbsService);
+        const result = await tool.handler(args);
         return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
       }
 

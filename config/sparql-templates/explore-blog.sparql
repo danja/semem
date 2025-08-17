@@ -1,0 +1,11 @@
+# Exploratory query to understand the blog data structure
+PREFIX schema: <http://schema.org/>
+PREFIX : <http://purl.org/stuff/transmissions/>
+
+SELECT DISTINCT ?s ?p ?o WHERE {
+    GRAPH ?g {
+        ?s a schema:Article .
+        ?s ?p ?o .
+    }
+}
+LIMIT {{limit}}

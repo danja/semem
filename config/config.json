@@ -169,5 +169,60 @@
       "maxExistingConceptsToCheck": 1000,
       "description": "Concept deduplication settings to avoid creating duplicate concept corpuscles"
     }
+  },
+  "sparqlIngestion": {
+    "templateDirectory": "config/sparql-templates",
+    "defaultTemplate": "generic-documents",
+    "defaultLimit": 50,
+    "defaultTimeout": 30000,
+    "defaultBatchSize": 50,
+    "presetEndpoints": {
+      "danny-blog": {
+        "url": "https://fuseki.hyperdata.it/danny.ayers.name/query",
+        "template": "blog-articles",
+        "auth": {
+          "user": "${SPARQL_USER}",
+          "password": "${SPARQL_PASSWORD}"
+        },
+        "fieldMappings": {
+          "uri": "uri",
+          "title": "title", 
+          "content": "content",
+          "created": "created",
+          "modified": "modified",
+          "slug": "slug",
+          "relative": "relative"
+        },
+        "description": "Danny Ayers' blog articles from Fuseki endpoint"
+      },
+      "local-fuseki": {
+        "url": "http://localhost:3030/dataset/query",
+        "template": "generic-documents",
+        "auth": {
+          "user": "admin",
+          "password": "admin"
+        },
+        "description": "Local Fuseki instance for testing"
+      },
+      "wikidata": {
+        "url": "https://query.wikidata.org/sparql",
+        "template": "wikidata-entities",
+        "auth": null,
+        "timeout": 60000,
+        "description": "Wikidata SPARQL endpoint (public, no auth required)"
+      }
+    },
+    "processing": {
+      "defaultLazy": false,
+      "enableProgressReporting": true,
+      "retryFailedDocuments": 3,
+      "skipExistingDocuments": true
+    },
+    "validation": {
+      "minContentLength": 10,
+      "maxContentLength": 1000000,
+      "requiredFields": ["uri", "title", "content"],
+      "skipEmptyContent": true
+    }
   }
 }

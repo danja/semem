@@ -4,6 +4,7 @@ import { fileURLToPath } from 'url';
 import { v4 as uuidv4 } from 'uuid';
 import PDFConverter from '../../src/services/document/PDFConverter.js';
 import { URIMinter } from '../../src/utils/URIMinter.js';
+import SPARQLDocumentIngester from '../../src/services/ingestion/SPARQLDocumentIngester.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -339,5 +340,136 @@ export const createDocumentUploadTool = (processor) => ({
   },
   handler: async (params) => {
     return await processor.processUploadedDocument(params);
+  }
+});
+
+/**
+ * Create MCP tool for SPARQL document ingestion
+ */
+export const createSparqlIngestTool = (simpleVerbsService) => ({
+  name: 'sparql_ingest_documents',
+  description: 'Ingest documents from SPARQL endpoint using query templates',
+  parameters: {
+    type: 'object',
+    properties: {
+      endpoint: {
+        type: 'string',
+        description: 'SPARQL query endpoint URL'
+      },
+      template: {
+        type: 'string',
+        description: 'Name of SPARQL query template (blog-articles, generic-documents, wikidata-entities)',
+        enum: ['blog-articles', 'generic-documents', 'wikidata-entities']
+      },
+      limit: {
+        type: 'number',
+        description: 'Maximum number of documents to ingest',
+        default: 50,
+        minimum: 1,
+        maximum: 500
+      },
+      lazy: {
+        type: 'boolean',
+        description: 'Use lazy processing (store without immediate embedding/concept extraction)',
+        default: false
+      },
+      dryRun: {
+        type: 'boolean',
+        description: 'Preview documents without actually ingesting them',
+        default: false
+      },
+      auth: {
+        type: 'object',
+        description: 'Authentication credentials for SPARQL endpoint',
+        properties: {
+          user: { type: 'string' },
+          password: { type: 'string' }
+        }
+      },
+      variables: {
+        type: 'object',
+        description: 'Variables to substitute in SPARQL template'
+      },
+      fieldMappings: {
+        type: 'object',
+        description: 'Custom field mappings for extracting document data'
+      }
+    },
+    required: ['endpoint', 'template']
+  },
+  handler: async (params) => {
+    const {
+      endpoint,
+      template,
+      limit = 50,
+      lazy = false,
+      dryRun = false,
+      auth,
+      variables = {},
+      fieldMappings
+    } = params;
+
+    try {
+      // Create SPARQL ingester
+      const ingester = new SPARQLDocumentIngester({
+        endpoint,
+        auth,
+        fieldMappings
+      });
+
+      // Handle dry run
+      if (dryRun) {
+        const result = await ingester.dryRun(template, { variables, limit });
+        return {
+          success: true,
+          type: 'dry_run',
+          ...result
+        };
+      }
+
+      // Create tell function that uses the simple verbs service
+      const tellFunction = async (tellParams) => {
+        if (!simpleVerbsService) {
+          throw new Error('Simple verbs service not available');
+        }
+        return await simpleVerbsService.tell(tellParams);
+      };
+
+      // Execute ingestion
+      const result = await ingester.ingestFromTemplate(template, {
+        variables,
+        limit,
+        lazy,
+        tellFunction,
+        progressCallback: (progress) => {
+          // Could emit progress events here if needed
+          console.log(`Progress: ${progress.processed}/${progress.total} documents processed`);
+        }
+      });
+
+      return {
+        success: result.success,
+        type: 'ingestion',
+        template,
+        endpoint,
+        documentsFound: result.statistics?.documentsFound || 0,
+        documentsIngested: result.statistics?.documentsIngested || 0,
+        errors: result.statistics?.errors || 0,
+        duration: result.duration,
+        errorDetails: result.errors?.slice(0, 5) || [], // Show first 5 errors
+        message: result.success 
+          ? `Successfully ingested ${result.statistics?.documentsIngested || 0} documents from ${endpoint}`
+          : `Ingestion failed: ${result.error}`
+      };
+
+    } catch (error) {
+      return {
+        success: false,
+        type: 'ingestion',
+        error: error.message,
+        endpoint,
+        template
+      };
+    }
   }
 });

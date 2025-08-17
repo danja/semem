@@ -1,0 +1,24 @@
+PREFIX wd: <http://www.wikidata.org/entity/>
+PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX schema: <http://schema.org/>
+
+SELECT DISTINCT ?uri ?title ?content ?description ?instanceof WHERE {
+    ?uri rdfs:label ?title ;
+         schema:description ?description .
+    
+    # Get instance of property for categorization
+    OPTIONAL { ?uri wdt:P31 ?instanceof }
+    
+    # Use description as content for Wikidata entities
+    BIND(?description as ?content)
+    
+    # Filter for English language
+    FILTER(LANG(?title) = "en")
+    FILTER(LANG(?description) = "en")
+    
+    # Only include entities with meaningful descriptions
+    FILTER(STRLEN(?description) > 20)
+}
+ORDER BY ?title
+LIMIT {{limit}}

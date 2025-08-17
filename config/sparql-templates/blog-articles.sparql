@@ -1,0 +1,21 @@
+PREFIX schema: <http://schema.org/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX : <http://purl.org/stuff/transmissions/>
+
+SELECT DISTINCT ?uri ?title ?content ?modified ?slug ?relative ?created WHERE {
+    GRAPH ?g {
+        ?uri a schema:Article ;
+            schema:headline ?title ;
+            schema:articleBody ?content .
+        OPTIONAL { ?uri schema:dateModified ?modified }
+        OPTIONAL { ?uri :slug ?slug }
+        OPTIONAL { ?uri :relative ?relative }
+        OPTIONAL { ?uri schema:dateCreated ?created }
+    }
+    # Filter out empty or very short content
+    FILTER(STRLEN(?content) > 10)
+    # Filter out system files
+    FILTER(!CONTAINS(?title, ".about"))
+}
+ORDER BY DESC(?modified) DESC(?created)
+LIMIT {{limit}}

@@ -1,0 +1,43 @@
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX schema: <http://schema.org/>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+
+SELECT DISTINCT ?uri ?title ?content ?created ?modified ?description ?author WHERE {
+    # Flexible pattern to match various document types
+    {
+        # Schema.org Article pattern
+        ?uri a schema:Article ;
+             schema:headline ?title ;
+             schema:articleBody ?content .
+        OPTIONAL { ?uri schema:dateCreated ?created }
+        OPTIONAL { ?uri schema:dateModified ?modified }
+        OPTIONAL { ?uri schema:description ?description }
+        OPTIONAL { ?uri schema:author ?author }
+    }
+    UNION
+    {
+        # DCMI/Dublin Core pattern
+        ?uri dcterms:title ?title ;
+             dcterms:description ?content .
+        OPTIONAL { ?uri dcterms:created ?created }
+        OPTIONAL { ?uri dcterms:modified ?modified }
+        OPTIONAL { ?uri dcterms:abstract ?description }
+        OPTIONAL { ?uri dcterms:creator ?author }
+    }
+    UNION
+    {
+        # RDFS/SKOS pattern
+        ?uri rdfs:label ?title .
+        OPTIONAL { ?uri rdfs:comment ?content }
+        OPTIONAL { ?uri skos:definition ?content }
+        OPTIONAL { ?uri dcterms:created ?created }
+        OPTIONAL { ?uri dcterms:modified ?modified }
+        OPTIONAL { ?uri skos:note ?description }
+    }
+    
+    # Filter out resources without meaningful content
+    FILTER(STRLEN(?content) > 10)
+}
+ORDER BY DESC(?modified) DESC(?created)
+LIMIT {{limit}}
