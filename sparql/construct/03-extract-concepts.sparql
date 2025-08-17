@@ -1,0 +1,69 @@
+PREFIX ragno: <http://purl.org/stuff/ragno/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX semem: <http://semem.hyperdata.it/>
+
+# Extract concept-based knowledge from corpuscles
+# Focuses on extracted concepts and their semantic relationships
+CONSTRUCT {
+    ?conceptCorpuscle rdf:type ragno:Concept ;
+                      rdfs:label ?cleanLabel ;
+                      ragno:content ?content ;
+                      ragno:hasEmbedding ?embedding ;
+                      dcterms:created ?created ;
+                      prov:wasDerivedFrom ?sourceElement ;
+                      ragno:belongsToUnit ?conceptUnit ;
+                      ragno:sourceDocument ?documentTitle ;
+                      ragno:sourceFile ?documentFile ;
+                      ragno:processingStage "concept-extraction" .
+    
+    # Create concept hierarchy relationships
+    ?conceptUnit ragno:contains ?conceptCorpuscle ;
+                 rdf:type ragno:ConceptCollection .
+}
+WHERE {
+    GRAPH <${graphURI}> {
+        # Find concept corpuscles (labels start with "Concept:")
+        ?conceptCorpuscle a ragno:Corpuscle ;
+                         rdfs:label ?conceptLabel ;
+                         ragno:content ?content ;
+                         dcterms:created ?created ;
+                         prov:wasDerivedFrom ?sourceElement .
+        
+        FILTER(STRSTARTS(STR(?conceptLabel), "Concept:"))
+        
+        # Clean up the concept label
+        BIND(SUBSTR(?conceptLabel, 9) AS ?cleanLabel)
+        
+        # Check for embeddings
+        OPTIONAL {
+            ?conceptCorpuscle ragno:hasEmbedding ?embedding .
+        }
+        
+        # Find the corresponding Unit (concept collection)
+        OPTIONAL {
+            ?conceptCorpuscle skos:member ?conceptUnit .
+            ?conceptUnit a ragno:Unit .
+        }
+        
+        # Trace back to source document
+        OPTIONAL {
+            ?sourceElement prov:wasDerivedFrom ?intermediateElement .
+            ?intermediateElement a ragno:TextElement ;
+                               prov:wasDerivedFrom ?sourceUnit .
+            ?sourceUnit a ragno:Unit .
+            
+            # Get document metadata
+            OPTIONAL { ?sourceUnit rdfs:label ?documentTitle }
+            OPTIONAL { 
+                { ?sourceUnit semem:sourceFile ?documentFile } 
+                UNION 
+                { ?sourceUnit <http://purl.org/semem/sourceFile> ?documentFile }
+            }
+        }
+    }
+}
+ORDER BY ?documentTitle ?created ?cleanLabel

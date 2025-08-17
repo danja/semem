@@ -1,0 +1,117 @@
+PREFIX ragno: <http://purl.org/stuff/ragno/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+PREFIX olo: <http://purl.org/ontology/olo/core#>
+
+# Extract provenance chains showing content derivation paths
+# Tracks how knowledge flows from documents through processing stages
+CONSTRUCT {
+    ?element rdf:type ragno:ProvenanceElement ;
+             rdfs:label ?label ;
+             ragno:content ?content ;
+             ragno:processingStage ?stage ;
+             ragno:processingLevel ?level ;
+             prov:wasDerivedFrom ?source ;
+             prov:wasGeneratedBy ?process ;
+             dcterms:created ?created ;
+             ragno:derivationPath ?path ;
+             ragno:originalSource ?rootSource .
+    
+    # Create simplified derivation relationships
+    ?element ragno:derivedFrom ?source ;
+             ragno:derivationLevel ?level .
+    
+    # Create processing stage flows
+    ?process rdf:type ragno:ProcessingStage ;
+             rdfs:label ?processLabel ;
+             ragno:stageType ?processType ;
+             ragno:inputType ?inputType ;
+             ragno:outputType ?outputType .
+}
+WHERE {
+    GRAPH <${graphURI}> {
+        ?element prov:wasDerivedFrom+ ?source .
+        
+        # Core element properties
+        OPTIONAL { ?element rdfs:label ?label }
+        OPTIONAL { ?element ragno:content ?content }
+        OPTIONAL { ?element dcterms:created ?created }
+        OPTIONAL { ?element prov:wasGeneratedBy ?process }
+        
+        # Determine processing stage based on element type and relationships
+        BIND(
+            IF(?element a ragno:Unit && CONTAINS(STR(?element), "doc-"),
+               "document-ingestion",
+               IF(?element a ragno:TextElement,
+                  "text-extraction", 
+                  IF(?element a ragno:Unit && ?element a ragno:TextElement,
+                     "chunk-creation",
+                     IF(?element a ragno:Corpuscle && STRSTARTS(STR(?element), "Concept:"),
+                        "concept-extraction",
+                        IF(?element a ragno:Entity,
+                           "entity-extraction",
+                           IF(?element a ragno:Relationship,
+                              "relationship-creation",
+                              "unknown-processing")))))) AS ?stage
+        )
+        
+        # Calculate processing level (depth from original source)
+        {
+            SELECT ?element (COUNT(?intermediate) AS ?level) WHERE {
+                ?element prov:wasDerivedFrom* ?intermediate .
+                ?intermediate prov:wasDerivedFrom+ ?root .
+                FILTER NOT EXISTS { ?root prov:wasDerivedFrom ?parent }
+            }
+            GROUP BY ?element
+        }
+        
+        # Find the root source (document level)
+        OPTIONAL {
+            ?element prov:wasDerivedFrom+ ?rootSource .
+            FILTER NOT EXISTS { ?rootSource prov:wasDerivedFrom ?parent }
+        }
+        
+        # Create derivation path
+        BIND(
+            CONCAT(
+                STR(?rootSource), 
+                " → ",
+                ?stage,
+                " → ",
+                STR(?element)
+            ) AS ?path
+        )
+        
+        # Create process information
+        OPTIONAL {
+            ?process rdf:type ?processType .
+            
+            BIND(
+                CONCAT("Process: ", STR(?processType)) AS ?processLabel
+            )
+            
+            # Determine input/output types
+            BIND(
+                IF(?stage = "text-extraction", "Document", 
+                   IF(?stage = "chunk-creation", "TextElement",
+                      IF(?stage = "concept-extraction", "Chunk",
+                         IF(?stage = "entity-extraction", "Chunk",
+                            "Unknown")))) AS ?inputType
+            )
+            
+            BIND(
+                IF(?stage = "text-extraction", "TextElement", 
+                   IF(?stage = "chunk-creation", "Chunk",
+                      IF(?stage = "concept-extraction", "Concept",
+                         IF(?stage = "entity-extraction", "Entity",
+                            "Unknown")))) AS ?outputType
+            )
+        }
+        
+        # Filter for elements with clear provenance
+        FILTER(BOUND(?source))
+    }
+}
+ORDER BY ?level ?created

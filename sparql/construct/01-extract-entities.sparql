@@ -1,0 +1,66 @@
+PREFIX ragno: <http://purl.org/stuff/ragno/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+
+# Extract all entities from the Semem knowledge base
+# This creates a clean entity-centric view with key properties
+CONSTRUCT {
+    ?entity rdf:type ragno:Entity ;
+            rdfs:label ?label ;
+            ragno:content ?content ;
+            ragno:entityType ?entityType ;
+            ragno:hasEmbedding ?embedding ;
+            ragno:weight ?weight ;
+            ragno:centrality ?centrality ;
+            ragno:confidence ?confidence ;
+            dcterms:created ?created ;
+            prov:wasDerivedFrom ?source ;
+            ragno:sourceDocument ?sourceDoc ;
+            ragno:inDomain ?domain .
+}
+WHERE {
+    GRAPH <${graphURI}> {
+        ?entity a ragno:Entity .
+        
+        # Core entity properties
+        OPTIONAL { ?entity rdfs:label ?label }
+        OPTIONAL { ?entity ragno:content ?content }
+        OPTIONAL { ?entity ragno:entityType ?entityType }
+        OPTIONAL { ?entity ragno:hasEmbedding ?embedding }
+        OPTIONAL { ?entity ragno:weight ?weight }
+        OPTIONAL { ?entity ragno:centrality ?centrality }
+        OPTIONAL { ?entity ragno:confidence ?confidence }
+        OPTIONAL { ?entity dcterms:created ?created }
+        OPTIONAL { ?entity prov:wasDerivedFrom ?source }
+        
+        # Trace to source document
+        OPTIONAL {
+            ?entity prov:wasDerivedFrom+ ?sourceDoc .
+            ?sourceDoc a ragno:Unit .
+            FILTER(CONTAINS(STR(?sourceDoc), "doc-") || CONTAINS(STR(?sourceDoc), "document"))
+        }
+        
+        # Infer domain from entity content or source
+        OPTIONAL {
+            BIND(
+                IF(CONTAINS(LCASE(COALESCE(?content, "")), "climate") || 
+                   CONTAINS(LCASE(COALESCE(?content, "")), "ocean") ||
+                   CONTAINS(LCASE(COALESCE(?content, "")), "warming"), 
+                   "climate-science",
+                   IF(CONTAINS(LCASE(COALESCE(?content, "")), "urban") || 
+                      CONTAINS(LCASE(COALESCE(?content, "")), "city") ||
+                      CONTAINS(LCASE(COALESCE(?content, "")), "planning"), 
+                      "urban-planning",
+                      IF(CONTAINS(LCASE(COALESCE(?content, "")), "neuron") || 
+                         CONTAINS(LCASE(COALESCE(?content, "")), "brain") ||
+                         CONTAINS(LCASE(COALESCE(?content, "")), "cognitive"), 
+                         "neuroscience",
+                         "general"))) AS ?domain
+            )
+        }
+    }
+}
+ORDER BY DESC(?centrality) ?created

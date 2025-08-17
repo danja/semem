@@ -10,11 +10,11 @@ export default {
   mode: process.env.NODE_ENV === 'production' ? 'production' : 'development',
   
   entry: {
-    main: './src/frontend/index.js'
+    workbench: './src/frontend/workbench/public/js/workbench.js'
   },
   
   output: {
-    path: path.resolve(__dirname, 'dist'),
+    path: path.resolve(__dirname, 'dist/workbench'),
     filename: process.env.NODE_ENV === 'production' ? '[name].[contenthash].js' : '[name].js',
     clean: true,
     publicPath: './'
@@ -57,19 +57,25 @@ export default {
   
   plugins: [
     new HtmlWebpackPlugin({
-      template: './src/frontend/index.template.html',
+      template: './src/frontend/workbench/public/index.html',
       filename: 'index.html',
-      inject: 'body'
+      inject: 'body',
+      title: 'Semantic Memory Workbench'
     }),
     new CopyWebpackPlugin({
       patterns: [
+        // Copy workbench styles
         {
-          from: 'src/frontend/styles/theme.css',
-          to: 'theme.css'
+          from: 'src/frontend/workbench/public/styles',
+          to: 'styles'
         },
+        // Copy workbench JavaScript modules (excluding the main entry point)
         {
-          from: 'src/frontend/styles/components',
-          to: 'components'
+          from: 'src/frontend/workbench/public/js',
+          to: 'js',
+          globOptions: {
+            ignore: ['**/workbench.js'] // Exclude main entry point as it's handled by webpack
+          }
         }
       ]
     })
@@ -78,7 +84,11 @@ export default {
   resolve: {
     extensions: ['.js', '.json'],
     alias: {
-      '@': path.resolve(__dirname, 'src/frontend')
+      '@': path.resolve(__dirname, 'src/frontend/workbench'),
+      '@workbench': path.resolve(__dirname, 'src/frontend/workbench/public'),
+      '@services': path.resolve(__dirname, 'src/frontend/workbench/public/js/services'),
+      '@components': path.resolve(__dirname, 'src/frontend/workbench/public/js/components'),
+      '@utils': path.resolve(__dirname, 'src/frontend/workbench/public/js/utils')
     },
     fallback: {
       "path": "path-browserify",
@@ -92,20 +102,29 @@ export default {
   devtool: process.env.NODE_ENV === 'production' ? 'source-map' : 'eval-source-map',
   
   devServer: {
-    static: {
-      directory: path.join(__dirname, 'dist'),
-    },
+    static: [
+      {
+        directory: path.join(__dirname, 'dist/workbench'),
+      },
+      {
+        directory: path.join(__dirname, 'src/frontend/workbench/public'),
+        publicPath: '/workbench'
+      }
+    ],
     compress: true,
     port: 9000,
-    hot: process.env.NODE_ENV !== 'production', // Only enable HMR in development
+    hot: process.env.NODE_ENV !== 'production',
     proxy: [
       {
-        context: ['/api'],
-        target: 'http://localhost:4100',
+        context: ['/api', '/tell', '/ask', '/augment', '/zoom', '/pan', '/tilt', '/zpt', '/inspect', '/state'],
+        target: 'http://localhost:4105', // Updated to match current MCP server port
         secure: false,
         changeOrigin: true
       }
-    ]
+    ],
+    historyApiFallback: {
+      index: '/index.html'
+    }
   },
   
   optimization: {
@@ -117,6 +136,12 @@ export default {
           name: 'vendors',
           chunks: 'all',
         },
+        workbench: {
+          test: /[\\/]src[\\/]frontend[\\/]workbench[\\/]/,
+          name: 'workbench-common',
+          chunks: 'all',
+          minChunks: 2
+        }
       },
     },
   },

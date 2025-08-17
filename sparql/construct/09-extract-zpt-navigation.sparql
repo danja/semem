@@ -1,0 +1,190 @@
+PREFIX ragno: <http://purl.org/stuff/ragno/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+PREFIX zpt: <http://purl.org/zpt/>
+PREFIX semem: <http://semem.hyperdata.it/>
+
+# Extract ZPT (Zoom-Pan-Tilt) navigation structures
+# Creates multi-dimensional navigation view of knowledge space
+CONSTRUCT {
+    # ZPT Zoom Levels (abstraction hierarchy)
+    ?zoomLevel rdf:type zpt:ZoomLevel ;
+               rdfs:label ?zoomLabel ;
+               zpt:abstraction ?abstraction ;
+               zpt:hasElements ?elementCount ;
+               zpt:levelOrder ?order .
+    
+    # ZPT Pan Domains (content filtering)
+    ?panDomain rdf:type zpt:PanDomain ;
+               rdfs:label ?panLabel ;
+               zpt:domainType ?domainType ;
+               zpt:keywords ?keywords ;
+               zpt:hasContent ?contentCount .
+    
+    # ZPT Tilt Perspectives (view styles)
+    ?tiltView rdf:type zpt:TiltPerspective ;
+              rdfs:label ?tiltLabel ;
+              zpt:viewType ?viewType ;
+              zpt:projection ?projection .
+    
+    # Content elements with ZPT coordinates
+    ?element zpt:zoomLevel ?elementZoom ;
+             zpt:panDomain ?elementPan ;
+             zpt:tiltView ?elementTilt ;
+             zpt:navigationScore ?navScore ;
+             zpt:discoverability ?discoverability .
+    
+    # ZPT Navigation paths
+    ?navPath rdf:type zpt:NavigationPath ;
+             zpt:fromZoom ?fromZoom ;
+             zpt:toZoom ?toZoom ;
+             zpt:panFilter ?panFilter ;
+             zpt:tiltProjection ?tiltProjection ;
+             zpt:pathWeight ?pathWeight .
+}
+WHERE {
+    GRAPH <${graphURI}> {
+        # Define ZPT Zoom Levels
+        VALUES (?abstraction ?zoomLabel ?order) {
+            ("corpus" "Corpus Level - Complete Knowledge Base" 1)
+            ("community" "Community Level - Related Concept Clusters" 2)
+            ("text" "Text Level - Document and Article Sections" 3)
+            ("unit" "Unit Level - Semantic Text Chunks" 4)
+            ("entity" "Entity Level - Individual Concepts and Entities" 5)
+        }
+        
+        BIND(IRI(CONCAT(STR(zpt:), "zoom-", ?abstraction)) AS ?zoomLevel)
+        
+        # Define ZPT Pan Domains
+        VALUES (?domainType ?panLabel ?keywords) {
+            ("temporal" "Temporal Domain - Time-based filtering" "recent,historical,current,past,future")
+            ("topical" "Topical Domain - Subject matter filtering" "climate,urban,neuroscience,technology,science")
+            ("structural" "Structural Domain - Content type filtering" "document,concept,entity,relationship,chunk")
+            ("quality" "Quality Domain - Confidence and reliability filtering" "high-confidence,verified,uncertain,preliminary")
+        }
+        
+        BIND(IRI(CONCAT(STR(zpt:), "pan-", ?domainType)) AS ?panDomain)
+        
+        # Define ZPT Tilt Perspectives
+        VALUES (?viewType ?tiltLabel ?projection) {
+            ("keywords" "Keywords View - Concept and term based" "textual")
+            ("embedding" "Embedding View - Vector similarity based" "vectorial")
+            ("graph" "Graph View - Relationship network based" "topological")
+            ("temporal" "Temporal View - Time sequence based" "chronological")
+        }
+        
+        BIND(IRI(CONCAT(STR(zpt:), "tilt-", ?viewType)) AS ?tiltView)
+        
+        # Assign elements to ZPT coordinates
+        OPTIONAL {
+            ?element ragno:content ?content .
+            
+            # Determine Zoom Level
+            BIND(
+                IF(?element a ragno:Unit && CONTAINS(STR(?element), "doc-"),
+                   IRI(CONCAT(STR(zpt:), "zoom-text")),
+                   IF(?element a ragno:TextElement,
+                      IRI(CONCAT(STR(zpt:), "zoom-unit")),
+                      IF(?element a ragno:Entity,
+                         IRI(CONCAT(STR(zpt:), "zoom-entity")),
+                         IF(?element a ragno:Corpuscle,
+                            IRI(CONCAT(STR(zpt:), "zoom-entity")),
+                            IRI(CONCAT(STR(zpt:), "zoom-corpus")))))) AS ?elementZoom
+            )
+            
+            # Determine Pan Domain
+            BIND(
+                IF(CONTAINS(LCASE(?content), "climate") || CONTAINS(LCASE(?content), "urban") || CONTAINS(LCASE(?content), "neuroscience"),
+                   IRI(CONCAT(STR(zpt:), "pan-topical")),
+                   IF(?element a ragno:Unit || ?element a ragno:TextElement,
+                      IRI(CONCAT(STR(zpt:), "pan-structural")),
+                      IRI(CONCAT(STR(zpt:), "pan-quality")))) AS ?elementPan
+            )
+            
+            # Determine Tilt View
+            BIND(
+                IF(EXISTS { ?element ragno:hasEmbedding ?emb },
+                   IRI(CONCAT(STR(zpt:), "tilt-embedding")),
+                   IF(EXISTS { ?element ragno:relatedTo ?related },
+                      IRI(CONCAT(STR(zpt:), "tilt-graph")),
+                      IRI(CONCAT(STR(zpt:), "tilt-keywords")))) AS ?elementTilt
+            )
+            
+            # Calculate navigation score
+            BIND(
+                (IF(EXISTS { ?element ragno:hasEmbedding ?emb }, 1.0, 0.0) +
+                 IF(EXISTS { ?element rdfs:label ?lbl }, 0.5, 0.0) +
+                 IF(EXISTS { ?element ragno:content ?cnt }, 0.5, 0.0) +
+                 IF(EXISTS { ?element dcterms:created ?dt }, 0.3, 0.0) +
+                 IF(EXISTS { ?element prov:wasDerivedFrom ?src }, 0.2, 0.0)) AS ?navScore
+            )
+            
+            # Calculate discoverability
+            BIND(
+                IF(?navScore > 2.0, "high",
+                   IF(?navScore > 1.0, "medium", "low")) AS ?discoverability
+            )
+        }
+        
+        # Count elements per zoom level
+        {
+            SELECT ?zoomLevel ?abstraction (COUNT(?el) AS ?elementCount) WHERE {
+                OPTIONAL {
+                    ?el ragno:content ?elContent .
+                    
+                    FILTER(
+                        (?abstraction = "corpus") ||
+                        (?abstraction = "text" && ?el a ragno:Unit && CONTAINS(STR(?el), "doc-")) ||
+                        (?abstraction = "unit" && ?el a ragno:TextElement) ||
+                        (?abstraction = "entity" && (?el a ragno:Entity || ?el a ragno:Corpuscle))
+                    )
+                }
+            }
+            GROUP BY ?zoomLevel ?abstraction
+        }
+        
+        # Count content per pan domain
+        {
+            SELECT ?panDomain ?domainType (COUNT(?ct) AS ?contentCount) WHERE {
+                OPTIONAL {
+                    ?ct ragno:content ?ctContent .
+                    
+                    FILTER(
+                        (?domainType = "topical" && (
+                            CONTAINS(LCASE(?ctContent), "climate") ||
+                            CONTAINS(LCASE(?ctContent), "urban") ||
+                            CONTAINS(LCASE(?ctContent), "neuroscience")
+                        )) ||
+                        (?domainType = "structural" && (
+                            ?ct a ragno:Unit || ?ct a ragno:Entity || ?ct a ragno:Corpuscle
+                        )) ||
+                        (?domainType = "temporal" && EXISTS { ?ct dcterms:created ?created }) ||
+                        (?domainType = "quality" && EXISTS { ?ct ragno:confidence ?conf })
+                    )
+                }
+            }
+            GROUP BY ?panDomain ?domainType
+        }
+        
+        # Create navigation paths between zoom levels
+        OPTIONAL {
+            VALUES (?fromZoom ?toZoom ?pathWeight) {
+                (IRI(CONCAT(STR(zpt:), "zoom-corpus")) IRI(CONCAT(STR(zpt:), "zoom-community")) 0.9)
+                (IRI(CONCAT(STR(zpt:), "zoom-community")) IRI(CONCAT(STR(zpt:), "zoom-text")) 0.8)
+                (IRI(CONCAT(STR(zpt:), "zoom-text")) IRI(CONCAT(STR(zpt:), "zoom-unit")) 0.7)
+                (IRI(CONCAT(STR(zpt:), "zoom-unit")) IRI(CONCAT(STR(zpt:), "zoom-entity")) 0.6)
+            }
+            
+            BIND(IRI(CONCAT(STR(zpt:), "path-", 
+                           SUBSTR(STR(?fromZoom), STRLEN(STR(zpt:)) + 1), 
+                           "-to-", 
+                           SUBSTR(STR(?toZoom), STRLEN(STR(zpt:)) + 1))) AS ?navPath)
+            
+            BIND(IRI(CONCAT(STR(zpt:), "pan-topical")) AS ?panFilter)
+            BIND(IRI(CONCAT(STR(zpt:), "tilt-embedding")) AS ?tiltProjection)
+        }
+    }
+}
+ORDER BY ?order ?domainType ?viewType

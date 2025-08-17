@@ -1,0 +1,60 @@
+PREFIX ragno: <http://purl.org/stuff/ragno/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+
+# Extract embedding information across all content types
+# Provides vector space view of the knowledge base
+CONSTRUCT {
+    ?element rdf:type ragno:EmbeddedElement ;
+             rdfs:label ?label ;
+             ragno:content ?content ;
+             ragno:hasEmbedding ?embedding ;
+             ragno:embeddingDimension ?dimension ;
+             ragno:embeddingModel ?model ;
+             ragno:originalType ?originalType ;
+             dcterms:created ?created ;
+             ragno:contentLength ?contentLength ;
+             ragno:embeddingNorm ?norm .
+    
+    # Create similarity clusters (simplified)
+    ?element ragno:inEmbeddingCluster ?cluster .
+}
+WHERE {
+    GRAPH <${graphURI}> {
+        # Find all elements with embeddings
+        ?element ragno:hasEmbedding ?embedding .
+        
+        # Get element metadata
+        OPTIONAL { ?element rdfs:label ?label }
+        OPTIONAL { ?element ragno:content ?content }
+        OPTIONAL { ?element dcterms:created ?created }
+        
+        # Determine original type
+        OPTIONAL { ?element a ?type }
+        BIND(COALESCE(?type, ragno:Element) AS ?originalType)
+        
+        # Calculate content metrics
+        OPTIONAL {
+            BIND(STRLEN(?content) AS ?contentLength)
+        }
+        
+        # Extract embedding metadata (if available)
+        OPTIONAL { ?element ragno:embeddingModel ?model }
+        OPTIONAL { ?element ragno:embeddingDimension ?dimension }
+        OPTIONAL { ?element ragno:embeddingNorm ?norm }
+        
+        # Create simple clustering based on content type and creation time
+        BIND(
+            CONCAT(
+                STR(?originalType), 
+                "-", 
+                IF(BOUND(?created), 
+                   SUBSTR(STR(?created), 1, 10), 
+                   "unknown-date")
+            ) AS ?cluster
+        )
+    }
+}
+ORDER BY ?originalType ?created

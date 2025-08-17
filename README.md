@@ -85,22 +85,24 @@ Get started with Semem's natural language interface in 5 minutes:
 
 2. **Start the MCP server:**
    ```bash
+   npm run mcp:http
+   # OR
    node mcp/http-server.js
    ```
-   The server starts on `http://localhost:3000` with Simple Verbs REST endpoints.
+   The server starts on `http://localhost:4105` with Simple Verbs REST endpoints.
 
 ### Try the 7 Simple Verbs
 
 **Store knowledge with `tell`:**
 ```bash
-curl -X POST http://localhost:3000/tell \
+curl -X POST http://localhost:4105/tell \
   -H "Content-Type: application/json" \
   -d '{"content": "Machine learning is a subset of AI that enables computers to learn", "type": "concept"}'
 ```
 
 **Query knowledge with `ask`:**
 ```bash
-curl -X POST http://localhost:3000/ask \
+curl -X POST http://localhost:4105/ask \
   -H "Content-Type: application/json" \
   -d '{"question": "What is machine learning?"}'
 ```
@@ -108,24 +110,30 @@ curl -X POST http://localhost:3000/ask \
 **Set context with `zoom` and `pan`:**
 ```bash
 # Set abstraction level
-curl -X POST http://localhost:3000/zoom \
+curl -X POST http://localhost:4105/zoom \
   -d '{"level": "entity"}'
 
 # Apply domain filtering  
-curl -X POST http://localhost:3000/pan \
+curl -X POST http://localhost:4105/pan \
   -d '{"domains": ["AI", "technology"], "keywords": ["machine learning"]}'
 ```
 
 **Check your ZPT state:**
 ```bash
-curl http://localhost:3000/state
+curl http://localhost:4105/state
 ```
 
 ### Alternative Startup Options
 
-**Full UI + API servers:**
+**Workbench Development:**
 ```bash
-npm start  # Starts both API server (port 4100) and UI server (port 4120)
+npm run start:workbench  # Start workbench server (port 8081)
+npm run dev              # Start webpack dev server with hot reload (port 9000)
+```
+
+**Legacy API servers:**
+```bash
+npm start  # Starts both API server (port 4100) and legacy UI server (port 4120)
 ```
 
 **MCP Server for Claude Desktop:**
@@ -141,16 +149,17 @@ git clone https://github.com/danja/semem.git
 cd semem
 npm install
 npm run mcp                      # Stdio MCP server
-npm run mcp:http                 # HTTP MCP server on port 3000
+npm run mcp:http                 # HTTP MCP server on port 4105
 
 # Alternative: Direct node execution
 node mcp/index.js                # Stdio MCP server  
-node mcp/http-server.js          # HTTP MCP server on port 3000
+node mcp/http-server.js          # HTTP MCP server on port 4105
 ```
 
 **Development mode:**
 ```bash
-npm run dev  # Hot-reloading for development
+npm run dev              # Webpack dev server for workbench UI
+npm run start:mcp        # MCP server backend
 ```
 
 ### 🤖 Claude Desktop Integration
@@ -183,25 +192,33 @@ Add Semem to your Claude Desktop MCP configuration:
 
 Then use the 7 Simple Verbs directly in Claude Desktop conversations!
 
-## 🖥️ UI Features
+## 🖥️ Workbench UI Features
 
-### Interactive Console
-Access the developer console by clicking the tab on the right side of the screen. The console provides:
-- Real-time log viewing
-- Log level filtering (Error, Warn, Info, Debug, Trace)
-- Search functionality
-- Pause/Resume logging
-- Copy logs to clipboard
+### Semantic Memory Workbench
+The modern web-based interface implementing the 7 Simple Verbs:
 
-### VSOM Visualization
-Explore high-dimensional data with the Vector Self-Organizing Map visualization:
-1. Navigate to the VSOM tab
-2. Load or train a SOM model
-3. Interact with the visualization
-4. Explore feature maps and clustering
+**Core Panels:**
+- **Tell**: Store content with lazy/immediate processing options
+- **Ask**: Query knowledge with HyDE, Wikipedia, and Wikidata enhancements  
+- **Augment**: Extract concepts and process lazy content
+- **Navigate**: ZPT (Zoom/Pan/Tilt) knowledge space navigation with real-time feedback
+- **Inspect**: Debug system state and session cache
+- **Console**: Real-time log viewing with filtering and search
 
-### SPARQL Browser
-Query and explore your knowledge graph using the built-in SPARQL browser.
+**Key Features:**
+- **Real-time ZPT State Display**: Current zoom/pan/tilt settings with descriptions
+- **Visual Navigation Feedback**: Execute navigation with loading states and results
+- **Session Statistics**: Track interactions, concepts, and session duration
+- **Connection Status**: Live backend connectivity monitoring
+
+**Development Access:**
+```bash
+npm run start:workbench  # Direct workbench server (port 8081)
+npm run dev              # Webpack dev server with hot reload (port 9000)
+```
+
+### Legacy UI Components
+The original UI system includes VSOM visualization and SPARQL browser (via `npm start`).
 
 ## 🚀 Key Features
 
@@ -236,15 +253,15 @@ Semem features a **7-verb natural language interface** that simplifies complex k
 
 ```bash
 # Store knowledge
-curl -X POST http://localhost:3000/tell \
+curl -X POST http://localhost:4105/tell \
   -d '{"content": "The 7 Simple Verbs simplify semantic operations"}'
 
 # Set context  
-curl -X POST http://localhost:3000/zoom -d '{"level": "entity"}'
-curl -X POST http://localhost:3000/pan -d '{"domains": ["MCP"], "keywords": ["verbs"]}'
+curl -X POST http://localhost:4105/zoom -d '{"level": "entity"}'
+curl -X POST http://localhost:4105/pan -d '{"domains": ["MCP"], "keywords": ["verbs"]}'
 
 # Query with context
-curl -X POST http://localhost:3000/ask \
+curl -X POST http://localhost:4105/ask \
   -d '{"question": "What are the Simple Verbs?"}'
 ```
 
@@ -276,56 +293,76 @@ For more details, see the [VSOM Documentation](docs/features/vsom/README.md).
 
 ```
 semem/
-├── src/                    # Core library code
-│   ├── handlers/          # LLM and embedding handlers
-│   ├── stores/            # Storage backends (JSON, SPARQL, etc.)
-│   ├── connectors/        # LLM provider connectors
-│   ├── servers/           # HTTP server implementations
-│   ├── ragno/             # Knowledge graph algorithms
-│   └── zpt/               # Zero-Point Traversal system
-├── examples/              # Organized examples by category
-│   ├── basic/            # Core functionality examples
-│   ├── ragno/            # Knowledge graph examples
-│   ├── mcp/              # MCP integration examples
-│   ├── zpt/              # ZPT processing examples
-│   └── pending/          # Work-in-progress examples
-├── mcp/                   # MCP server implementation
-├── config/               # Configuration files
-└── docs/                 # Comprehensive documentation
+├── src/                           # Core library code
+│   ├── handlers/                 # LLM and embedding handlers
+│   ├── stores/                   # Storage backends (JSON, SPARQL, etc.)
+│   ├── connectors/               # LLM provider connectors
+│   ├── servers/                  # HTTP server implementations
+│   ├── ragno/                    # Knowledge graph algorithms
+│   ├── zpt/                      # Zero-Point Traversal system
+│   └── frontend/
+│       ├── workbench/            # Modern workbench UI (primary)
+│       │   ├── public/           # Workbench source files
+│       │   └── server.js         # Workbench development server
+│       └── [legacy]/             # Legacy UI components
+├── dist/                         # Build outputs
+│   └── workbench/               # Built workbench application
+├── examples/                     # Organized examples by category
+│   ├── basic/                   # Core functionality examples
+│   ├── ragno/                   # Knowledge graph examples
+│   ├── mcp/                     # MCP integration examples
+│   ├── zpt/                     # ZPT processing examples
+│   └── pending/                 # Work-in-progress examples
+├── mcp/                          # MCP server implementation
+│   ├── http-server.js           # Primary MCP HTTP server
+│   ├── tools/                   # MCP tool implementations
+│   └── prompts/                 # MCP workflow templates
+├── config/                       # Configuration files
+├── webpack.config.js             # Workbench build configuration
+└── docs/                        # Comprehensive documentation
 ```
 
 ## 🌐 Server Architecture
 
-Semem provides a complete HTTP server infrastructure for deploying AI memory and knowledge graph services. The server system consists of four main components located in `src/servers/`:
+Semem provides a complete HTTP server infrastructure with a modern workbench-first approach:
 
-### Core Server Components
+### Primary Components
 
-#### 🔥 **API Server** (`api-server.js`)
-The main REST API server providing HTTP endpoints for all Semem functionality:
+#### 🧠 **MCP Server** (`mcp/http-server.js`)
+The primary server providing both MCP protocol and Simple Verbs REST API:
+
+- **Simple Verbs REST API**: 7-verb natural language interface (tell, ask, augment, zoom, pan, tilt, inspect)
+- **MCP Protocol**: JSON-RPC 2.0 API for LLM integration (32 tools + 15 resources + 8 prompts)
+- **Session Management**: Persistent ZPT state across operations
+- **Error Handling**: Robust error recovery and partial results
+
+**Key Simple Verbs Endpoints:**
+```
+POST /tell               # Store content with embeddings
+POST /ask                # Query knowledge with semantic search
+POST /augment            # Extract concepts and enhance content
+POST /zoom               # Set abstraction level
+POST /pan                # Apply domain/temporal filtering  
+POST /tilt               # Choose view perspective
+POST /inspect            # Debug system state
+GET  /state              # Get current ZPT state
+```
+
+#### 🖥️ **Workbench** (`src/frontend/workbench/`)
+Modern web-based interface implementing the 7 Simple Verbs:
+
+- **Interactive Panels**: Tell, Ask, Augment, Navigate, Inspect, Console
+- **Real-time Feedback**: ZPT state display and navigation results
+- **Development Server**: Hot reload with webpack dev server
+- **Session Tracking**: Live statistics and connection monitoring
+
+#### 🔥 **Legacy API Server** (`api-server.js`)
+REST API server for backward compatibility:
 
 - **Memory Operations**: Store, search, and retrieve semantic memories
 - **Chat Interface**: Conversational AI with context awareness
 - **Embedding Services**: Vector embedding generation and management
 - **Configuration Management**: Dynamic provider and storage configuration
-- **Health Monitoring**: System status and metrics endpoints
-
-**Key Endpoints:**
-```
-POST /api/memory          # Store new memories
-GET  /api/memory/search   # Search existing memories
-POST /api/chat            # Chat with context
-POST /api/chat/stream     # Streaming chat responses
-GET  /api/health          # System health check
-GET  /api/config          # Server configuration
-```
-
-#### 🎛️ **UI Server** (`ui-server.js`)
-Web interface server for interactive access to Semem capabilities:
-
-- **Provider Selection**: Choose from configured LLM providers
-- **Memory Browser**: Visual interface for memory exploration
-- **Chat Interface**: Web-based conversational UI
-- **Configuration UI**: Visual configuration management
 
 #### 🚀 **Server Manager** (`server-manager.js`)
 Process management system for coordinating multiple server instances:
@@ -346,20 +383,27 @@ Orchestration script for launching the complete server ecosystem:
 
 ### Quick Server Deployment
 
+**Recommended - Workbench Development:**
 ```bash
-# Start all servers (recommended)
-./start.sh
+# Start MCP server (backend)
+npm run start:mcp                 # MCP server (port 4105)
+
+# Start workbench (frontend) 
+npm run start:workbench           # Workbench server (port 8081)
+# OR for development with hot reload
+npm run dev                       # Webpack dev server (port 9000)
+```
+
+**Legacy - Full Server Stack:**
+```bash
+# Start all legacy servers
+./start.sh                        # API server (4100) + UI server (4120)
 # OR
-npm run start-servers
+npm start
 
 # Individual server startup
 node src/servers/api-server.js    # API only (port 4100)
-node src/servers/ui-server.js     # UI only (port 4120)
-
-# Stop all servers
-./stop.sh
-# OR
-npm run stop-servers
+node mcp/http-server.js           # MCP server (port 4105)
 ```
 
 ### Server Configuration
@@ -388,20 +432,25 @@ Servers are configured via `config/config.json`:
 
 **Development Mode:**
 ```bash
-# Start with hot reload and debug logging
-LOG_LEVEL=debug ./start.sh
+# Workbench development with hot reload
+npm run dev                       # Webpack dev server (port 9000)
+npm run start:mcp                 # MCP backend (port 4105)
 
-# Watch mode with automatic restarts
-npm run dev
+# Legacy development
+LOG_LEVEL=debug ./start.sh        # Legacy servers with debug logging
 ```
 
 **Production Deployment:**
 ```bash
-# Set production environment
-NODE_ENV=production ./start.sh
+# Build workbench for production
+npm run build:workbench
+
+# Start production servers
+NODE_ENV=production npm run start:mcp
 
 # With process management (PM2)
-pm2 start src/servers/start-all.js --name semem-servers
+pm2 start mcp/http-server.js --name semem-mcp
+pm2 start src/frontend/workbench/server.js --name semem-workbench
 ```
 
 ### Server Monitoring
@@ -633,7 +682,7 @@ Semem implements a **hybrid storage strategy** that combines persistent storage 
 - **Concept tracking** - maintains a set of all concepts from the session
 - **Debugging support** - use `inspect` tool to examine cache contents:
   ```bash
-  curl -X POST http://localhost:3000/inspect \
+  curl -X POST http://localhost:4105/inspect \
     -H "Content-Type: application/json" \
     -d '{"what": "session", "details": true}'
   ```
@@ -767,26 +816,61 @@ npm test -- tests/unit/Config.spec.js
 ### Project Scripts
 
 ```bash
-# Development
-npm run dev                # Start dev server with hot reload
-npm run build:watch       # Build and watch for changes
+# Development - Workbench
+npm run dev                # Webpack dev server with hot reload (port 9000)
+npm run start:workbench    # Workbench server (port 8081)
+npm run start:mcp          # MCP server (port 4105)
+
+# Build
+npm run build              # Full build (types + workbench)
+npm run build:workbench    # Build workbench for production
+npm run build:dev          # Development build
 
 # Testing
-npm test                   # Run unit tests
-npm run test:coverage     # Generate coverage report
+npm test                   # Run unit and integration tests
+npm run test:unit          # Run unit tests only
+npm run test:coverage      # Generate coverage report
+npm run test:e2e           # End-to-end tests
 
 # Documentation
-npm run docs              # Generate JSDoc documentation
+npm run docs               # Generate JSDoc documentation
 
-# HTTP Servers
-./start.sh                # Start all servers (API + UI)
-./stop.sh                 # Stop all servers
-node src/servers/api-server.js    # Start API server only
-node src/servers/ui-server.js     # Start UI server only
+# Legacy Servers
+./start.sh                 # Start all legacy servers (API + UI)
+node src/servers/api-server.js     # API server only (port 4100)
 
 # MCP Server
-npm run mcp    # Start new MCP server
-npm run mcp-example       # Run MCP client example
+npm run mcp                # Start MCP server (stdio mode)
+npm run mcp:http           # Start MCP HTTP server (port 4105)
+```
+
+### Workbench Development Workflow
+
+**Quick Start:**
+```bash
+# Terminal 1: Start MCP backend
+npm run start:mcp
+
+# Terminal 2: Start development server  
+npm run dev
+# Opens http://localhost:9000 with hot reload
+```
+
+**Architecture:**
+- **Frontend**: Webpack dev server (port 9000) with hot module replacement
+- **Backend**: MCP server (port 4105) with Simple Verbs REST API  
+- **Proxy**: Webpack automatically proxies API calls to MCP server
+- **Build Output**: `dist/workbench/` contains production build
+
+**Key Features:**
+- **Hot Reload**: Changes to workbench files trigger automatic browser refresh
+- **Source Maps**: Full debugging support in development mode
+- **Module Aliases**: Clean imports with `@workbench`, `@services`, `@components`
+- **Live Backend**: MCP server provides real semantic memory functionality
+
+**Production Build:**
+```bash
+npm run build:workbench  # Creates optimized bundle in dist/workbench/
 ```
 
 ### Adding New Examples

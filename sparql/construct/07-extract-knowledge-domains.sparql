@@ -1,0 +1,184 @@
+PREFIX ragno: <http://purl.org/stuff/ragno/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX semem: <http://semem.hyperdata.it/>
+
+# Extract knowledge domains and their content organization
+# Creates domain-centric view with content clustering
+CONSTRUCT {
+    ?domain rdf:type semem:KnowledgeDomain ;
+            rdfs:label ?domainLabel ;
+            semem:domainType ?domainType ;
+            semem:hasDocuments ?documentCount ;
+            semem:hasEntities ?entityCount ;
+            semem:hasConcepts ?conceptCount ;
+            semem:hasRelationships ?relationshipCount ;
+            semem:primaryKeywords ?keywords ;
+            semem:color ?domainColor .
+    
+    ?document semem:belongsToDomain ?domain ;
+              semem:domainRelevance ?relevance .
+    
+    ?entity semem:inDomain ?domain ;
+            semem:domainScore ?score .
+    
+    ?concept semem:relatedToDomain ?domain ;
+             semem:domainWeight ?weight .
+}
+WHERE {
+    GRAPH <${graphURI}> {
+        # Define knowledge domains based on content analysis
+        VALUES (?domainType ?domainLabel ?keywords ?domainColor) {
+            ("climate-science" "Climate Science & Environmental Systems" "climate,ocean,warming,temperature,greenhouse,carbon,atmosphere" "#2E86AB")
+            ("urban-planning" "Urban Planning & Sustainable Cities" "urban,city,planning,development,infrastructure,transport,sustainable" "#A23B72")
+            ("neuroscience" "Neuroscience & Cognitive Science" "neuron,brain,cognitive,memory,learning,neural,consciousness,perception" "#F18F01")
+            ("machine-learning" "Machine Learning & AI" "algorithm,model,training,data,neural,artificial,intelligence,learning" "#C73E1D")
+            ("general" "General Knowledge" "concept,information,knowledge,data,system,process,analysis" "#6C757D")
+        }
+        
+        # Create domain URI
+        BIND(IRI(CONCAT(STR(semem:), "domain-", ?domainType)) AS ?domain)
+        
+        # Find documents belonging to each domain
+        OPTIONAL {
+            ?document a ragno:Unit .
+            FILTER(CONTAINS(STR(?document), "doc-") || CONTAINS(STR(?document), "document"))
+            
+            ?document ragno:content ?docContent .
+            
+            # Calculate domain relevance based on keyword matching
+            BIND(
+                (IF(CONTAINS(LCASE(?docContent), "climate"), 1, 0) +
+                 IF(CONTAINS(LCASE(?docContent), "ocean"), 1, 0) +
+                 IF(CONTAINS(LCASE(?docContent), "warming"), 1, 0) +
+                 IF(CONTAINS(LCASE(?docContent), "urban"), 1, 0) +
+                 IF(CONTAINS(LCASE(?docContent), "city"), 1, 0) +
+                 IF(CONTAINS(LCASE(?docContent), "planning"), 1, 0) +
+                 IF(CONTAINS(LCASE(?docContent), "neuron"), 1, 0) +
+                 IF(CONTAINS(LCASE(?docContent), "brain"), 1, 0) +
+                 IF(CONTAINS(LCASE(?docContent), "cognitive"), 1, 0) +
+                 IF(CONTAINS(LCASE(?docContent), "algorithm"), 1, 0) +
+                 IF(CONTAINS(LCASE(?docContent), "model"), 1, 0) +
+                 IF(CONTAINS(LCASE(?docContent), "training"), 1, 0)) AS ?relevanceScore
+            )
+            
+            # Assign to domain with highest relevance
+            FILTER(
+                (?domainType = "climate-science" && (
+                    CONTAINS(LCASE(?docContent), "climate") ||
+                    CONTAINS(LCASE(?docContent), "ocean") ||
+                    CONTAINS(LCASE(?docContent), "warming")
+                )) ||
+                (?domainType = "urban-planning" && (
+                    CONTAINS(LCASE(?docContent), "urban") ||
+                    CONTAINS(LCASE(?docContent), "city") ||
+                    CONTAINS(LCASE(?docContent), "planning")
+                )) ||
+                (?domainType = "neuroscience" && (
+                    CONTAINS(LCASE(?docContent), "neuron") ||
+                    CONTAINS(LCASE(?docContent), "brain") ||
+                    CONTAINS(LCASE(?docContent), "cognitive")
+                )) ||
+                (?domainType = "machine-learning" && (
+                    CONTAINS(LCASE(?docContent), "algorithm") ||
+                    CONTAINS(LCASE(?docContent), "model") ||
+                    CONTAINS(LCASE(?docContent), "training")
+                )) ||
+                (?domainType = "general" && ?relevanceScore = 0)
+            )
+            
+            BIND(?relevanceScore AS ?relevance)
+        }
+        
+        # Find entities in each domain
+        OPTIONAL {
+            ?entity a ragno:Entity ;
+                   ragno:content ?entityContent .
+            
+            # Calculate domain score for entities
+            BIND(
+                IF(?domainType = "climate-science" && (
+                    CONTAINS(LCASE(?entityContent), "climate") ||
+                    CONTAINS(LCASE(?entityContent), "ocean") ||
+                    CONTAINS(LCASE(?entityContent), "warming")
+                ), 0.9,
+                IF(?domainType = "urban-planning" && (
+                    CONTAINS(LCASE(?entityContent), "urban") ||
+                    CONTAINS(LCASE(?entityContent), "city")
+                ), 0.9,
+                IF(?domainType = "neuroscience" && (
+                    CONTAINS(LCASE(?entityContent), "brain") ||
+                    CONTAINS(LCASE(?entityContent), "neural")
+                ), 0.9,
+                IF(?domainType = "machine-learning" && (
+                    CONTAINS(LCASE(?entityContent), "algorithm") ||
+                    CONTAINS(LCASE(?entityContent), "model")
+                ), 0.9,
+                0.1)))) AS ?score
+            )
+            
+            FILTER(?score > 0.5)
+        }
+        
+        # Find concepts related to each domain
+        OPTIONAL {
+            ?concept a ragno:Corpuscle ;
+                    rdfs:label ?conceptLabel ;
+                    ragno:content ?conceptContent .
+            
+            FILTER(STRSTARTS(?conceptLabel, "Concept:"))
+            
+            # Calculate domain weight for concepts
+            BIND(
+                IF(?domainType = "climate-science" && (
+                    CONTAINS(LCASE(?conceptContent), "climate") ||
+                    CONTAINS(LCASE(?conceptContent), "environment")
+                ), 0.8,
+                IF(?domainType = "urban-planning" && (
+                    CONTAINS(LCASE(?conceptContent), "urban") ||
+                    CONTAINS(LCASE(?conceptContent), "infrastructure")
+                ), 0.8,
+                IF(?domainType = "neuroscience" && (
+                    CONTAINS(LCASE(?conceptContent), "cognitive") ||
+                    CONTAINS(LCASE(?conceptContent), "memory")
+                ), 0.8,
+                0.2))) AS ?weight
+            )
+            
+            FILTER(?weight > 0.5)
+        }
+        
+        # Count domain content
+        {
+            SELECT ?domain ?domainType
+                   (COUNT(DISTINCT ?doc) AS ?documentCount)
+                   (COUNT(DISTINCT ?ent) AS ?entityCount)
+                   (COUNT(DISTINCT ?conc) AS ?conceptCount)
+                   (COUNT(DISTINCT ?rel) AS ?relationshipCount)
+            WHERE {
+                OPTIONAL {
+                    ?doc a ragno:Unit .
+                    FILTER(CONTAINS(STR(?doc), "doc-"))
+                    # Domain matching logic here (simplified)
+                }
+                OPTIONAL {
+                    ?ent a ragno:Entity .
+                    # Domain matching logic here (simplified)
+                }
+                OPTIONAL {
+                    ?conc a ragno:Corpuscle .
+                    # Domain matching logic here (simplified)
+                }
+                OPTIONAL {
+                    ?rel a ragno:Relationship .
+                    # Domain matching logic here (simplified)
+                }
+            }
+            GROUP BY ?domain ?domainType
+        }
+    }
+}
+ORDER BY ?domainType

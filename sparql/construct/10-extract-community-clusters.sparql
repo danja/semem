@@ -1,0 +1,186 @@
+PREFIX ragno: <http://purl.org/stuff/ragno/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+PREFIX semem: <http://semem.hyperdata.it/>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+
+# Extract community clusters and their semantic relationships
+# Creates community-level view for knowledge organization
+CONSTRUCT {
+    ?community rdf:type ragno:Community ;
+               rdfs:label ?communityLabel ;
+               ragno:communityType ?communityType ;
+               ragno:clusteringAlgorithm ?algorithm ;
+               ragno:cohesionScore ?cohesion ;
+               ragno:memberCount ?memberCount ;
+               ragno:centralConcepts ?centralConcepts ;
+               ragno:communityKeywords ?keywords ;
+               ragno:averageEmbedding ?centroid ;
+               dcterms:created ?clusterTime .
+    
+    # Community membership relationships
+    ?member ragno:belongsToCommunity ?community ;
+            ragno:membershipScore ?membershipScore ;
+            ragno:roleInCommunity ?role .
+    
+    # Inter-community relationships
+    ?community ragno:connectedTo ?otherCommunity ;
+               ragno:connectionType ?connectionType ;
+               ragno:connectionStrength ?connectionStrength .
+    
+    # Community evolution over time
+    ?community ragno:evolvedFrom ?previousCommunity ;
+               ragno:evolutionType ?evolutionType ;
+               ragno:stabilityScore ?stability .
+}
+WHERE {
+    GRAPH <${graphURI}> {
+        # Identify semantic clusters based on shared concepts and relationships
+        {
+            SELECT ?communityType ?centralConcept
+                   (GROUP_CONCAT(DISTINCT ?concept; separator=", ") AS ?centralConcepts)
+                   (COUNT(DISTINCT ?member) AS ?memberCount)
+            WHERE {
+                # Group entities by shared semantic properties
+                ?member ragno:content ?memberContent .
+                
+                # Extract central concepts for clustering
+                BIND(
+                    IF(CONTAINS(LCASE(?memberContent), "climate") && CONTAINS(LCASE(?memberContent), "system"),
+                       "climate-systems",
+                       IF(CONTAINS(LCASE(?memberContent), "urban") && CONTAINS(LCASE(?memberContent), "planning"),
+                          "urban-development",
+                          IF(CONTAINS(LCASE(?memberContent), "neural") && CONTAINS(LCASE(?memberContent), "network"),
+                             "neural-systems",
+                             IF(CONTAINS(LCASE(?memberContent), "algorithm") && CONTAINS(LCASE(?memberContent), "learning"),
+                                "machine-learning",
+                                IF(CONTAINS(LCASE(?memberContent), "memory") && CONTAINS(LCASE(?memberContent), "semantic"),
+                                   "semantic-memory",
+                                   "general-concepts"))))) AS ?communityType
+                )
+                
+                # Extract key concepts
+                BIND(
+                    IF(CONTAINS(LCASE(?memberContent), "feedback"), "feedback",
+                       IF(CONTAINS(LCASE(?memberContent), "network"), "network",
+                          IF(CONTAINS(LCASE(?memberContent), "system"), "system",
+                             IF(CONTAINS(LCASE(?memberContent), "process"), "process",
+                                "concept")))) AS ?concept
+                )
+                
+                BIND(?concept AS ?centralConcept)
+            }
+            GROUP BY ?communityType ?centralConcept
+            HAVING(COUNT(DISTINCT ?member) > 1)
+        }
+        
+        # Create community URIs
+        BIND(IRI(CONCAT(STR(semem:), "community-", ?communityType)) AS ?community)
+        
+        # Create community labels
+        BIND(
+            CONCAT("Community: ", 
+                   REPLACE(?communityType, "-", " "),
+                   " (", STR(?memberCount), " members)") AS ?communityLabel
+        )
+        
+        # Set clustering algorithm and parameters
+        BIND("semantic-similarity" AS ?algorithm)
+        BIND(NOW() AS ?clusterTime)
+        
+        # Calculate cohesion score based on shared concepts
+        BIND(
+            IF(?memberCount > 10, 0.9,
+               IF(?memberCount > 5, 0.7,
+                  IF(?memberCount > 2, 0.5, 0.3))) AS ?cohesion
+        )
+        
+        # Extract community keywords
+        BIND(
+            CONCAT(?centralConcepts, ",", 
+                   REPLACE(?communityType, "-", ",")) AS ?keywords
+        )
+        
+        # Find community members with scores
+        OPTIONAL {
+            ?member ragno:content ?memberContent .
+            
+            # Calculate membership score
+            BIND(
+                IF(CONTAINS(LCASE(?memberContent), "climate") && ?communityType = "climate-systems", 0.9,
+                   IF(CONTAINS(LCASE(?memberContent), "urban") && ?communityType = "urban-development", 0.9,
+                      IF(CONTAINS(LCASE(?memberContent), "neural") && ?communityType = "neural-systems", 0.9,
+                         IF(CONTAINS(LCASE(?memberContent), "algorithm") && ?communityType = "machine-learning", 0.9,
+                            IF(CONTAINS(LCASE(?memberContent), "memory") && ?communityType = "semantic-memory", 0.9,
+                               0.3))))) AS ?membershipScore
+            )
+            
+            FILTER(?membershipScore > 0.5)
+            
+            # Determine role in community
+            BIND(
+                IF(?membershipScore > 0.8, "core",
+                   IF(?membershipScore > 0.6, "active", "peripheral")) AS ?role
+            )
+        }
+        
+        # Find inter-community connections
+        OPTIONAL {
+            ?otherCommunity rdf:type ragno:Community .
+            FILTER(?community != ?otherCommunity)
+            
+            # Find shared members or concepts
+            ?sharedMember ragno:belongsToCommunity ?community ;
+                         ragno:belongsToCommunity ?otherCommunity .
+            
+            BIND("shared-members" AS ?connectionType)
+            
+            # Calculate connection strength based on shared elements
+            {
+                SELECT ?community ?otherCommunity (COUNT(?shared) AS ?sharedCount) WHERE {
+                    ?shared ragno:belongsToCommunity ?community ;
+                           ragno:belongsToCommunity ?otherCommunity .
+                }
+                GROUP BY ?community ?otherCommunity
+            }
+            
+            BIND(
+                IF(?sharedCount > 3, 0.8,
+                   IF(?sharedCount > 1, 0.5, 0.2)) AS ?connectionStrength
+            )
+            
+            FILTER(?connectionStrength > 0.3)
+        }
+        
+        # Community evolution tracking
+        OPTIONAL {
+            # Find temporal predecessors (simplified)
+            ?previousCommunity rdf:type ragno:Community ;
+                             dcterms:created ?prevTime .
+            
+            FILTER(?prevTime < ?clusterTime)
+            
+            # Determine evolution type
+            BIND(
+                IF(?memberCount > 5, "growth",
+                   IF(?memberCount < 3, "consolidation", "stable")) AS ?evolutionType
+            )
+            
+            # Calculate stability based on member consistency
+            BIND(
+                IF(?cohesion > 0.7, 0.8,
+                   IF(?cohesion > 0.5, 0.6, 0.4)) AS ?stability
+            )
+        }
+        
+        # Calculate community centroid (simplified)
+        OPTIONAL {
+            BIND(
+                CONCAT("embedding-centroid-", ?communityType) AS ?centroid
+            )
+        }
+    }
+}
+ORDER BY DESC(?memberCount) ?communityType

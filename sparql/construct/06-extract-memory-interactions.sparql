@@ -1,0 +1,143 @@
+PREFIX ragno: <http://purl.org/stuff/ragno/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+PREFIX semem: <http://semem.hyperdata.it/>
+
+# Extract semantic memory interactions (tell/ask operations)
+# Provides conversation and interaction history view
+CONSTRUCT {
+    ?interaction rdf:type semem:MemoryInteraction ;
+                 rdfs:label ?interactionLabel ;
+                 semem:interactionType ?interactionType ;
+                 semem:prompt ?prompt ;
+                 semem:response ?response ;
+                 semem:hasEmbedding ?embedding ;
+                 dcterms:created ?timestamp ;
+                 semem:processingMode ?mode ;
+                 semem:conceptsExtracted ?concepts ;
+                 semem:sessionId ?sessionId ;
+                 prov:wasGeneratedBy ?agent .
+    
+    # Link interactions to extracted concepts
+    ?interaction semem:generatedConcept ?concept .
+    
+    # Create interaction chains
+    ?interaction semem:followedBy ?nextInteraction .
+}
+WHERE {
+    GRAPH <${graphURI}> {
+        # Find memory interaction elements
+        ?interaction ragno:content ?content .
+        
+        # Filter for memory interactions (those with prompt/response structure)
+        FILTER(
+            CONTAINS(LCASE(?content), "prompt:") || 
+            CONTAINS(LCASE(?content), "response:") ||
+            CONTAINS(LCASE(?content), "question:") ||
+            CONTAINS(LCASE(?content), "answer:")
+        )
+        
+        # Extract interaction metadata
+        OPTIONAL { ?interaction rdfs:label ?label }
+        OPTIONAL { ?interaction dcterms:created ?timestamp }
+        OPTIONAL { ?interaction ragno:hasEmbedding ?embedding }
+        OPTIONAL { ?interaction prov:wasGeneratedBy ?agent }
+        
+        # Parse content to extract prompt and response
+        BIND(
+            IF(CONTAINS(?content, "prompt:"),
+               SUBSTR(?content, STRLEN("prompt:") + 1),
+               IF(CONTAINS(?content, "question:"),
+                  SUBSTR(?content, STRLEN("question:") + 1),
+                  ?content)) AS ?prompt
+        )
+        
+        BIND(
+            IF(CONTAINS(?content, "response:"),
+               SUBSTR(?content, STRLEN("response:") + 1),
+               IF(CONTAINS(?content, "answer:"),
+                  SUBSTR(?content, STRLEN("answer:") + 1),
+                  "")) AS ?response
+        )
+        
+        # Determine interaction type
+        BIND(
+            IF(CONTAINS(LCASE(?content), "tell") || CONTAINS(LCASE(?label), "tell"),
+               "tell",
+               IF(CONTAINS(LCASE(?content), "ask") || CONTAINS(LCASE(?label), "ask"),
+                  "ask",
+                  IF(CONTAINS(LCASE(?content), "augment"),
+                     "augment",
+                     "unknown"))) AS ?interactionType
+        )
+        
+        # Create interaction label
+        BIND(
+            CONCAT(?interactionType, " - ", 
+                   IF(STRLEN(?prompt) > 50, 
+                      CONCAT(SUBSTR(?prompt, 1, 50), "..."), 
+                      ?prompt)) AS ?interactionLabel
+        )
+        
+        # Determine processing mode
+        BIND(
+            IF(CONTAINS(LCASE(?content), "lazy"),
+               "lazy",
+               "immediate") AS ?mode
+        )
+        
+        # Extract session ID from URI or metadata
+        BIND(
+            IF(CONTAINS(STR(?interaction), "session"),
+               REPLACE(STR(?interaction), ".*session[/-]([^/]+).*", "$1"),
+               "default") AS ?sessionId
+        )
+        
+        # Find related concepts (if any)
+        OPTIONAL {
+            ?concept a ragno:Corpuscle ;
+                    prov:wasDerivedFrom ?interaction .
+            FILTER(STRSTARTS(STR(?concept), "Concept:"))
+        }
+        
+        # Create concept extraction summary
+        {
+            SELECT ?interaction (GROUP_CONCAT(?conceptLabel; separator=", ") AS ?concepts)
+            WHERE {
+                OPTIONAL {
+                    ?relatedConcept a ragno:Corpuscle ;
+                                   rdfs:label ?conceptLabel ;
+                                   prov:wasDerivedFrom ?interaction .
+                    FILTER(STRSTARTS(?conceptLabel, "Concept:"))
+                }
+            }
+            GROUP BY ?interaction
+        }
+        
+        # Create interaction chains (temporal ordering)
+        OPTIONAL {
+            ?nextInteraction ragno:content ?nextContent ;
+                           dcterms:created ?nextTimestamp .
+            FILTER(
+                ?nextTimestamp > ?timestamp &&
+                (CONTAINS(LCASE(?nextContent), "prompt:") || 
+                 CONTAINS(LCASE(?nextContent), "response:"))
+            )
+            
+            # Find the immediate next interaction
+            FILTER NOT EXISTS {
+                ?intermediateInteraction ragno:content ?intContent ;
+                                       dcterms:created ?intTimestamp .
+                FILTER(
+                    ?intTimestamp > ?timestamp &&
+                    ?intTimestamp < ?nextTimestamp &&
+                    (CONTAINS(LCASE(?intContent), "prompt:") || 
+                     CONTAINS(LCASE(?intContent), "response:"))
+                )
+            }
+        }
+    }
+}
+ORDER BY ?timestamp
