@@ -280,6 +280,29 @@ export class ApiService {
     };
   }
 
+  // ===== ZPT NAVIGATION METHODS =====
+  
+  /**
+   * ZPT NAVIGATE - Execute navigation with zoom/pan/tilt parameters
+   * @param {Object} params - Navigation parameters
+   * @param {string} params.query - Navigation query
+   * @param {string} params.zoom - Zoom level (entity, unit, text, community, corpus)
+   * @param {Object} params.pan - Pan filters {domains, keywords}
+   * @param {string} params.tilt - Tilt style (keywords, embedding, graph, temporal)
+   * @returns {Promise<Object>} Navigation results
+   */
+  async zptNavigate({ query, zoom = 'entity', pan = {}, tilt = 'keywords' }) {
+    return this.makeRequest('/zpt/navigate', {
+      method: 'POST',
+      body: JSON.stringify({
+        query,
+        zoom,
+        pan,
+        tilt
+      })
+    });
+  }
+
   /**
    * Batch multiple API calls
    * @param {Array} requests - Array of {method, params} objects

@@ -49,6 +49,9 @@ class WorkbenchApp {
       // Update initial UI state
       this.updateUI();
       
+      // Initialize navigation display
+      this.updateNavigationDisplay();
+      
       this.initialized = true;
       console.log('✅ Workbench initialization complete');
       
@@ -133,6 +136,12 @@ class WorkbenchApp {
     
     if (panKeywords) {
       panKeywords.addEventListener('input', DomUtils.debounce(this.handlePanChange, 500));
+    }
+    
+    // Navigation execute button
+    const navExecuteButton = DomUtils.$('#nav-execute');
+    if (navExecuteButton) {
+      navExecuteButton.addEventListener('click', this.handleNavigationExecute.bind(this));
     }
   }
 
@@ -702,6 +711,9 @@ class WorkbenchApp {
       const newState = stateManager.getState();
       consoleService.logStateChange('zoom', oldState, newState);
       
+      // Update visual feedback
+      this.updateNavigationDisplay();
+      
     } catch (error) {
       console.error('Zoom change failed:', error);
       consoleService.error('Failed to change zoom level', { level, error: error.message });
@@ -729,6 +741,9 @@ class WorkbenchApp {
       const newState = stateManager.getState();
       consoleService.logStateChange('tilt', oldState, newState);
       
+      // Update visual feedback
+      this.updateNavigationDisplay();
+      
     } catch (error) {
       console.error('Tilt change failed:', error);
       consoleService.error('Failed to change view style', { style, error: error.message });
@@ -750,6 +765,9 @@ class WorkbenchApp {
       
       const newState = stateManager.getState();
       consoleService.logStateChange('pan', oldState, newState);
+      
+      // Update visual feedback
+      this.updateNavigationDisplay();
       
     } catch (error) {
       console.error('Pan change failed:', error);
@@ -1175,6 +1193,190 @@ class WorkbenchApp {
     if (result.sessionCache?.interactions) return result.sessionCache.interactions;
     if (Array.isArray(result)) return result.length;
     return Object.keys(result).length;
+  }
+
+  // Navigation Enhancement Methods
+  updateNavigationDisplay() {
+    const state = stateManager.getState();
+    
+    // Update zoom display
+    const zoomValue = DomUtils.$('#current-zoom');
+    const zoomDescription = DomUtils.$('#zoom-description');
+    if (zoomValue && zoomDescription) {
+      zoomValue.textContent = this.formatZoomLevel(state.zoom);
+      zoomDescription.textContent = this.getZoomDescription(state.zoom);
+    }
+    
+    // Update tilt display
+    const tiltValue = DomUtils.$('#current-tilt');
+    const tiltDescription = DomUtils.$('#tilt-description');
+    if (tiltValue && tiltDescription) {
+      tiltValue.textContent = this.formatTiltStyle(state.tilt);
+      tiltDescription.textContent = this.getTiltDescription(state.tilt);
+    }
+    
+    // Update pan display
+    const panValue = DomUtils.$('#current-pan');
+    const panDescription = DomUtils.$('#pan-description');
+    if (panValue && panDescription) {
+      const panText = this.formatPanFilters(state.pan);
+      panValue.textContent = panText;
+      panDescription.textContent = this.getPanDescription(state.pan);
+    }
+  }
+
+  formatZoomLevel(zoom) {
+    const levels = {
+      'entity': 'Entity',
+      'unit': 'Unit', 
+      'text': 'Text',
+      'community': 'Community',
+      'corpus': 'Corpus'
+    };
+    return levels[zoom] || 'Entity';
+  }
+
+  getZoomDescription(zoom) {
+    const descriptions = {
+      'entity': 'Individual entities and concepts',
+      'unit': 'Semantic text units and paragraphs',
+      'text': 'Full documents and articles',
+      'community': 'Groups of related concepts',
+      'corpus': 'Entire knowledge collection'
+    };
+    return descriptions[zoom] || 'Individual entities and concepts';
+  }
+
+  formatTiltStyle(tilt) {
+    const styles = {
+      'keywords': 'Keywords',
+      'embedding': 'Embedding',
+      'graph': 'Graph',
+      'temporal': 'Temporal'
+    };
+    return styles[tilt] || 'Keywords';
+  }
+
+  getTiltDescription(tilt) {
+    const descriptions = {
+      'keywords': 'Keyword-based view of content',
+      'embedding': 'Vector similarity view',
+      'graph': 'Relationship network view',
+      'temporal': 'Time-based organization'
+    };
+    return descriptions[tilt] || 'Keyword-based view of content';
+  }
+
+  formatPanFilters(pan) {
+    const parts = [];
+    if (pan?.domains) parts.push(`Domains: ${pan.domains}`);
+    if (pan?.keywords) parts.push(`Keywords: ${pan.keywords}`);
+    return parts.length > 0 ? parts.join(', ') : 'All domains';
+  }
+
+  getPanDescription(pan) {
+    if (pan?.domains || pan?.keywords) {
+      return 'Filtered by specified criteria';
+    }
+    return 'No domain filters applied';
+  }
+
+  async handleNavigationExecute(event) {
+    event.preventDefault();
+    
+    const button = event.target.closest('button');
+    const buttonText = button.querySelector('.button-text');
+    const buttonLoader = button.querySelector('.button-loader');
+    
+    try {
+      // Show loading state
+      button.disabled = true;
+      DomUtils.hide(buttonText);
+      DomUtils.show(buttonLoader);
+      
+      const state = stateManager.getState();
+      
+      // Build navigation query
+      const query = "Navigate knowledge space";  // Default query
+      const navigationParams = {
+        zoom: state.zoom || 'entity',
+        pan: state.pan || {},
+        tilt: state.tilt || 'keywords'
+      };
+      
+      consoleService.info('Executing navigation', navigationParams);
+      
+      // Call ZPT navigation API
+      const result = await apiService.zptNavigate({
+        query,
+        ...navigationParams
+      });
+      
+      // Display results
+      this.displayNavigationResults(result);
+      
+      consoleService.success('Navigation executed successfully', result);
+      DomUtils.showToast('Navigation executed successfully', 'success');
+      
+    } catch (error) {
+      console.error('Navigation execution failed:', error);
+      consoleService.error('Navigation execution failed', { error: error.message });
+      DomUtils.showToast('Navigation execution failed', 'error');
+    } finally {
+      // Reset button state
+      button.disabled = false;
+      DomUtils.show(buttonText);
+      DomUtils.hide(buttonLoader);
+    }
+  }
+
+  displayNavigationResults(result) {
+    const resultsContainer = DomUtils.$('#nav-results-content');
+    if (!resultsContainer) return;
+    
+    DomUtils.show(resultsContainer);
+    
+    let html = '<div class="navigation-results">';
+    
+    if (result.success && result.data) {
+      html += '<h4>Navigation Results</h4>';
+      
+      if (result.data.entities && result.data.entities.length > 0) {
+        html += '<div class="result-section">';
+        html += '<h5>📍 Found Entities</h5>';
+        html += '<ul class="entity-list">';
+        result.data.entities.slice(0, 10).forEach(entity => {
+          html += `<li class="entity-item">
+            <strong>${DomUtils.escapeHtml(entity.name || entity.id)}</strong>
+            ${entity.content ? `<p>${DomUtils.escapeHtml(entity.content.substring(0, 100))}...</p>` : ''}
+          </li>`;
+        });
+        html += '</ul>';
+        html += '</div>';
+      }
+      
+      if (result.data.stats) {
+        html += '<div class="result-section">';
+        html += '<h5>📊 Statistics</h5>';
+        html += '<div class="stats-grid">';
+        Object.entries(result.data.stats).forEach(([key, value]) => {
+          html += `<div class="stat-item">
+            <span class="stat-label">${key}:</span>
+            <span class="stat-value">${value}</span>
+          </div>`;
+        });
+        html += '</div>';
+        html += '</div>';
+      }
+    } else {
+      html += '<div class="result-placeholder">';
+      html += '<p>No results found for current navigation settings.</p>';
+      html += '<p>Try adjusting the zoom level, domain filters, or view style.</p>';
+      html += '</div>';
+    }
+    
+    html += '</div>';
+    resultsContainer.innerHTML = html;
   }
 }
 

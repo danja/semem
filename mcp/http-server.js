@@ -373,6 +373,39 @@ async function startOptimizedServer() {
         }
       });
 
+      // ZPT NAVIGATE endpoint - Execute navigation with zoom/pan/tilt
+      app.post('/zpt/navigate', async (req, res) => {
+        try {
+          const { query = 'Navigate knowledge space', zoom = 'entity', pan = {}, tilt = 'keywords' } = req.body;
+          
+          // Use the ZPT navigation service from simple verbs
+          await simpleVerbsService.initialize();
+          
+          // Get the ZPT service from simple verbs
+          const zptService = simpleVerbsService.zptService;
+          if (!zptService) {
+            throw new Error('ZPT navigation service not available');
+          }
+          
+          // Execute navigation
+          const result = await zptService.navigate(query, zoom, pan, tilt);
+          
+          res.json({ 
+            success: true, 
+            verb: 'zpt_navigate',
+            data: result,
+            navigation: { query, zoom, pan, tilt }
+          });
+        } catch (error) {
+          res.status(500).json({ 
+            success: false, 
+            verb: 'zpt_navigate', 
+            navigation: req.body,
+            error: error.message 
+          });
+        }
+      });
+
       // GET endpoints for reading state
       app.get('/state', async (req, res) => {
         try {
@@ -463,6 +496,7 @@ async function startOptimizedServer() {
       console.log('   POST /zoom - Set abstraction level');
       console.log('   POST /pan - Set domain/filtering');
       console.log('   POST /tilt - Set view filter');
+      console.log('   POST /zpt/navigate - Execute ZPT navigation');
       console.log('   POST /inspect - Debug and monitor system state');
       console.log('   GET /state - Get current ZPT state');
     } else {

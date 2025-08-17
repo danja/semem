@@ -351,6 +351,76 @@
                                 <button type="button" class="tilt-button" data-style="temporal">Temporal</button>
                             </div>
                         </div>
+
+                        <!-- Navigation Actions -->
+                        <div class="nav-section nav-actions">
+                            <button type="button" class="verb-button navigate-button" id="nav-execute">
+                                <span class="button-icon">🧭</span>
+                                <span class="button-text">Execute Navigation</span>
+                                <span class="button-loader" style="display: none;">⏳</span>
+                            </button>
+                        </div>
+
+                        <!-- Navigation Results -->
+                        <div class="verb-results" id="navigate-results">
+                            <div class="nav-status">
+                                <div class="current-perspective">
+                                    <h4 class="status-title">Current Perspective</h4>
+                                    <div class="perspective-display">
+                                        <div class="perspective-item">
+                                            <span class="perspective-label">Zoom:</span>
+                                            <span class="perspective-value" id="current-zoom">Entity</span>
+                                            <span class="perspective-description" id="zoom-description">Individual entities and concepts</span>
+                                        </div>
+                                        <div class="perspective-item">
+                                            <span class="perspective-label">Pan:</span>
+                                            <span class="perspective-value" id="current-pan">All domains</span>
+                                            <span class="perspective-description" id="pan-description">No domain filters applied</span>
+                                        </div>
+                                        <div class="perspective-item">
+                                            <span class="perspective-label">Tilt:</span>
+                                            <span class="perspective-value" id="current-tilt">Keywords</span>
+                                            <span class="perspective-description" id="tilt-description">Keyword-based view of content</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="nav-results-content" id="nav-results-content" style="display: none;">
+                                <!-- Navigation results will appear here -->
+                            </div>
+                            
+                            <div class="nav-help">
+                                <details class="help-section">
+                                    <summary class="help-title">📖 How Navigation Works</summary>
+                                    <div class="help-content">
+                                        <div class="help-item">
+                                            <h5>🔍 Zoom - Abstraction Level</h5>
+                                            <ul>
+                                                <li><strong>Entity:</strong> Individual concepts and entities</li>
+                                                <li><strong>Unit:</strong> Semantic text units and paragraphs</li>
+                                                <li><strong>Text:</strong> Full documents and articles</li>
+                                                <li><strong>Community:</strong> Groups of related concepts</li>
+                                                <li><strong>Corpus:</strong> Entire knowledge collection</li>
+                                            </ul>
+                                        </div>
+                                        <div class="help-item">
+                                            <h5>🎯 Pan - Domain Filters</h5>
+                                            <p>Filter content by subject domains or keywords to focus on specific topics.</p>
+                                        </div>
+                                        <div class="help-item">
+                                            <h5>👁️ Tilt - View Style</h5>
+                                            <ul>
+                                                <li><strong>Keywords:</strong> Text-based keyword view</li>
+                                                <li><strong>Embedding:</strong> Vector similarity view</li>
+                                                <li><strong>Graph:</strong> Relationship network view</li>
+                                                <li><strong>Temporal:</strong> Time-based organization</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </details>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
