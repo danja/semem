@@ -45,8 +45,8 @@ describe('Document Search System Integration', () => {
             config = new Config();
             await config.init();
             
-            // Setup test graph URI
-            testGraphURI = 'http://test.semem.it/search-integration';
+            // Setup test graph URI - use existing graph
+            testGraphURI = 'http://hyperdata.it/content';
             
             // Get SPARQL configuration following the established pattern
             const sparqlEndpoints = config.get('sparqlEndpoints');

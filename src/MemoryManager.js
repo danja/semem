@@ -18,6 +18,7 @@ export default class MemoryManager {
         embeddingModel = 'nomic-embed-text',
         storage = null,
         dimension = 1536,
+        config = null,
         contextOptions = {
             maxTokens: 8192
         },
@@ -76,7 +77,7 @@ export default class MemoryManager {
             this.logger.warn('Provider does not support chat operations - LLM functionality will be limited')
             this.llmHandler = null
         }
-        this.memStore = new MemoryStore(dimension)
+        this.memStore = new MemoryStore(dimension, config)
         this.store = storage || new InMemoryStore()
         this.contextManager = new ContextManager(contextOptions)
 
@@ -196,6 +197,9 @@ export default class MemoryManager {
             });
             
             const results = await this.memStore.retrieve(queryEmbedding, queryConcepts, similarityThreshold, excludeLastN);
+            
+            // Persist any memory classification changes (promotion to long-term)
+            await this.store.saveMemoryToHistory(this.memStore);
             
             this.logger.info('MemStore.retrieve returned:', {
                 resultsType: typeof results,

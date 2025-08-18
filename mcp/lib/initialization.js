@@ -100,7 +100,8 @@ export async function initializeServices() {
       embeddingProvider,
       chatModel: modelConfig.chatModel,
       embeddingModel: modelConfig.embeddingModel,
-      storage: storageBackend
+      storage: storageBackend,
+      config: config
     });
     console.log('✅ [MEMORY] MemoryManager instance created');
     

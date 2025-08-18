@@ -5,7 +5,12 @@
 
 export class ApiService {
   constructor(baseUrl = '/api') {
-    this.baseUrl = baseUrl;
+    // In test environment, use absolute URL to avoid fetch parsing errors
+    if (typeof process !== 'undefined' && process.env?.NODE_ENV === 'test') {
+      this.baseUrl = baseUrl.startsWith('http') ? baseUrl : `http://localhost:3000${baseUrl}`;
+    } else {
+      this.baseUrl = baseUrl;
+    }
     this.defaultHeaders = {
       'Content-Type': 'application/json'
     };

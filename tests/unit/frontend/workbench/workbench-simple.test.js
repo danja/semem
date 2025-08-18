@@ -4,6 +4,86 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
+// Mock StateManager and ApiService BEFORE any DOM setup
+vi.mock('../../../../src/frontend/workbench/public/js/services/StateManager.js', () => ({
+  StateManager: class MockStateManager {
+    constructor() {
+      this.state = {
+        zoom: 'entity',
+        pan: { domains: [], keywords: [], entities: [] },
+        tilt: 'keywords',
+        session: { interactionsCount: 0, conceptsCount: 0 },
+        connection: { status: 'connected' }
+      };
+      this.listeners = new Map();
+    }
+    
+    getState() { return { ...this.state }; }
+    setState() {}
+    subscribe() { return () => {}; }
+    setZoom() { return Promise.resolve(); }
+    setPan() { return Promise.resolve(); }
+    setTilt() { return Promise.resolve(); }
+    updateSessionStats() {}
+    getFormattedDuration() { return '0s'; }
+    notifyListeners() {}
+    destroy() {}
+  },
+  stateManager: {
+    getState: vi.fn(() => ({
+      zoom: 'entity',
+      pan: { domains: [], keywords: [], entities: [] },
+      tilt: 'keywords',
+      session: { interactionsCount: 0, conceptsCount: 0 },
+      connection: { status: 'connected' }
+    })),
+    setState: vi.fn(),
+    subscribe: vi.fn(() => () => {}),
+    setZoom: vi.fn(() => Promise.resolve()),
+    setPan: vi.fn(() => Promise.resolve()),
+    setTilt: vi.fn(() => Promise.resolve()),
+    updateSessionStats: vi.fn(),
+    getFormattedDuration: vi.fn(() => '0s'),
+    notifyListeners: vi.fn(),
+    destroy: vi.fn()
+  }
+}));
+
+vi.mock('../../../../src/frontend/workbench/public/js/services/ApiService.js', () => {
+  const MockApiService = class MockApiService {
+    constructor() {
+      this.baseUrl = '/api';
+      this.defaultHeaders = { 'Content-Type': 'application/json' };
+    }
+    
+    async makeRequest() { return { success: true }; }
+    async tell() { return { success: true }; }
+    async ask() { return { success: true }; }
+    async zoom() { return { success: true }; }
+    async pan() { return { success: true }; }
+    async tilt() { return { success: true }; }
+    async getState() { return { success: true, state: {} }; }
+    async testConnection() { return true; }
+  };
+  
+  const mockApiService = {
+    makeRequest: vi.fn(() => Promise.resolve({ success: true })),
+    tell: vi.fn(() => Promise.resolve({ success: true })),
+    ask: vi.fn(() => Promise.resolve({ success: true })),
+    zoom: vi.fn(() => Promise.resolve({ success: true })),
+    pan: vi.fn(() => Promise.resolve({ success: true })),
+    tilt: vi.fn(() => Promise.resolve({ success: true })),
+    getState: vi.fn(() => Promise.resolve({ success: true, state: {} })),
+    testConnection: vi.fn(() => Promise.resolve(true))
+  };
+  
+  return {
+    ApiService: MockApiService,
+    apiService: mockApiService,
+    default: MockApiService
+  };
+});
+
 // Mock DOM globals for Node.js environment
 const mockElement = {
   addEventListener: vi.fn(),

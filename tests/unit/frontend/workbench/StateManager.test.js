@@ -3,9 +3,8 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { StateManager } from '../../../../src/frontend/workbench/public/js/services/StateManager.js';
 
-// Mock the ApiService
+// Mock the ApiService BEFORE importing StateManager
 vi.mock('../../../../src/frontend/workbench/public/js/services/ApiService.js', () => ({
   apiService: {
     zoom: vi.fn(),
@@ -15,6 +14,38 @@ vi.mock('../../../../src/frontend/workbench/public/js/services/ApiService.js', (
     testConnection: vi.fn()
   }
 }));
+
+// Mock the StateManager's initialize method to prevent immediate API calls
+vi.mock('../../../../src/frontend/workbench/public/js/services/StateManager.js', async () => {
+  const actual = await vi.importActual('../../../../src/frontend/workbench/public/js/services/StateManager.js');
+  return {
+    ...actual,
+    StateManager: class MockedStateManager extends actual.StateManager {
+      constructor() {
+        super();
+        // Clear intervals created in constructor to prevent real API calls
+        if (this.connectionCheckInterval) {
+          clearInterval(this.connectionCheckInterval);
+          this.connectionCheckInterval = null;
+        }
+        if (this.updateInterval) {
+          clearInterval(this.updateInterval);  
+          this.updateInterval = null;
+        }
+      }
+      
+      // Override initialize to prevent automatic API calls
+      async initialize() {
+        // Start timers but don't sync with server
+        this.startSessionTimer();
+        this.startConnectionMonitor();
+        // Skip syncWithServer() to avoid real API calls
+      }
+    }
+  };
+});
+
+import { StateManager } from '../../../../src/frontend/workbench/public/js/services/StateManager.js';
 
 describe('StateManager', () => {
   let stateManager;
@@ -28,6 +59,10 @@ describe('StateManager', () => {
     const { apiService } = await import('../../../../src/frontend/workbench/public/js/services/ApiService.js');
     mockApiService = apiService;
     vi.clearAllMocks();
+    
+    // Mock testConnection to prevent real network calls
+    mockApiService.testConnection.mockResolvedValue(true);
+    mockApiService.getState.mockResolvedValue({ success: true, state: {} });
     
     stateManager = new StateManager();
   });

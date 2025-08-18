@@ -204,7 +204,8 @@ class APIServer {
             chatModel: modelConfig.chatModel,
             embeddingModel: modelConfig.embeddingModel,
             dimension,
-            storage
+            storage,
+            config: this.config
         });
 
         // Store components in context

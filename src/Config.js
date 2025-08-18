@@ -51,7 +51,9 @@ export default class Config {
             dimension: 1536,
             similarityThreshold: 40,
             contextWindow: 3,
-            decayRate: 0.0001
+            decayRate: 0.0001,
+            promotionThreshold: 2.0,    // Score needed for long-term promotion (lowered for testing)
+            classificationChance: 0.5   // Probability of running classification per retrieval (increased for testing)
         },
         sparqlEndpoints: [{
             label: "Hyperdata Fuseki",

@@ -323,6 +323,11 @@ zpt:TemporalProjection a zpt:TiltProjection ;
     skos:prefLabel "Time-based View"@en ;
     skos:definition "Information access organized by temporal relationships."@en .
 
+zpt:MemoryProjection a zpt:TiltProjection ;
+    rdfs:label "Memory Projection"@en ;
+    skos:prefLabel "Memory-based View"@en ;
+    skos:definition "Information access organized by memory importance, recency, and access patterns."@en .
+
 # Pan Domain Types
 
 zpt:TopicDomain a zpt:PanDomain ;

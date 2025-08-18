@@ -1252,7 +1252,8 @@ class WorkbenchApp {
       'keywords': 'Keywords',
       'embedding': 'Embedding',
       'graph': 'Graph',
-      'temporal': 'Temporal'
+      'temporal': 'Temporal',
+      'memory': 'Memory'
     };
     return styles[tilt] || 'Keywords';
   }
@@ -1262,7 +1263,8 @@ class WorkbenchApp {
       'keywords': 'Keyword-based view of content',
       'embedding': 'Vector similarity view',
       'graph': 'Relationship network view',
-      'temporal': 'Time-based organization'
+      'temporal': 'Time-based organization',
+      'memory': 'Memory importance and access patterns'
     };
     return descriptions[tilt] || 'Keyword-based view of content';
   }
