@@ -461,7 +461,7 @@ export default class SPARQLStore extends BaseStore {
                     semem:id "${interaction.id}" ;
                     semem:prompt "${this._escapeSparqlString(interaction.prompt)}" ;
                     semem:output "${this._escapeSparqlString(interaction.output)}" ;
-                    ragno:content "${this._escapeSparqlString(interaction.prompt + ' ' + interaction.output)}" ;
+                    ragno:content """${this._escapeTripleQuotedString(interaction.prompt + ' ' + interaction.output)}""" ;
                     semem:embedding """${embeddingStr}""" ;
                     semem:timestamp "${interaction.timestamp}"^^xsd:integer ;
                     semem:accessCount "${interaction.accessCount}"^^xsd:integer ;
@@ -584,7 +584,20 @@ export default class SPARQLStore extends BaseStore {
         if (typeof str !== 'string') {
             str = String(str);
         }
-        return str.replace(/["\\]/g, '\\$&').replace(/\n/g, '\\n')
+        return str.replace(/["\\]/g, '\\$&').replace(/\n/g, '\\n').replace(/\r/g, '\\r').replace(/\t/g, '\\t')
+    }
+
+    /**
+     * Escape text for use in SPARQL triple-quoted literals
+     * Triple-quoted literals can contain newlines and quotes but need backslashes escaped
+     */
+    _escapeTripleQuotedString(str) {
+        // Ensure str is a string
+        if (typeof str !== 'string') {
+            str = String(str);
+        }
+        // Only escape backslashes and triple quotes for triple-quoted literals
+        return str.replace(/\\/g, '\\\\').replace(/"""/g, '\\"\\"\\"')
     }
 
     async beginTransaction() {
@@ -712,7 +725,7 @@ export default class SPARQLStore extends BaseStore {
             INSERT DATA {
                 GRAPH <${this.graphName}> {
                     ${unitUri} a ragno:SemanticUnit ;
-                        ragno:hasContent "${this._escapeSparqlString(unit.content || '')}" ;
+                        ragno:hasContent """${this._escapeTripleQuotedString(unit.content || '')}""" ;
                         rdfs:label "${this._escapeSparqlString(unit.summary || unit.content?.substring(0, 100) || '')}" ;
                         semem:embedding """${embeddingStr}""" ;
                         dcterms:created "${new Date().toISOString()}"^^xsd:dateTime ;
@@ -1245,7 +1258,7 @@ export default class SPARQLStore extends BaseStore {
             INSERT DATA {
                 GRAPH <${this.graphName}> {
                     ${entityUri} a ragno:Element ;
-                        ragno:content "${this._escapeSparqlString(data.response || data.content || '')}" ;
+                        ragno:content """${this._escapeTripleQuotedString(data.response || data.content || '')}""" ;
                         skos:prefLabel "${this._escapeSparqlString(data.prompt || '')}" ;
                         ragno:embedding "${this._escapeSparqlString(JSON.stringify(data.embedding || []))}" ;
                         dcterms:created "${new Date().toISOString()}"^^xsd:dateTime ;
@@ -1485,7 +1498,7 @@ export default class SPARQLStore extends BaseStore {
             INSERT DATA {
                 GRAPH <${this.graphName}> {
                     ${elementUri} a ${ragnoClass} ;
-                        ragno:content "${this._escapeSparqlString(data.content || '')}" ;
+                        ragno:content """${this._escapeTripleQuotedString(data.content || '')}""" ;
                         ragno:subType semem:${data.type || 'element'} ;
                         dcterms:created "${timestamp}"^^xsd:dateTime ;
                         semem:processingStatus "lazy" ;

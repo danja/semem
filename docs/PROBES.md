@@ -586,8 +586,204 @@ npm run test:probes:coverage
 - **Quarterly Integration Testing**: Full cross-system integration probe execution
 - **Continuous Monitoring**: Alert on probe failure or performance regression
 
+## Workbench Integration Probes
+
+### Probe W.1: Document Upload and Query Workflow
+```javascript
+// Test: Complete document upload through workbench and subsequent querying
+{
+  "test": "workbench_document_upload_query_integration",
+  "workflow_description": "Upload document via workbench Tell interface, then query for content via Ask interface",
+  "test_steps": [
+    {
+      "step": 1,
+      "action": "navigate_to_workbench",
+      "url": "http://localhost:8081",
+      "verify": "workbench_loaded_successfully"
+    },
+    {
+      "step": 2,
+      "action": "select_tell_tab",
+      "verify": "tell_interface_active"
+    },
+    {
+      "step": 3,
+      "action": "select_document_type",
+      "form_data": {"type": "document"},
+      "verify": "document_upload_section_visible"
+    },
+    {
+      "step": 4,
+      "action": "upload_test_document",
+      "file_path": "docs/manual/algorithms.md",
+      "verify": [
+        "file_accepted_successfully",
+        "document_processing_started",
+        "concepts_extracted",
+        "embeddings_generated"
+      ]
+    },
+    {
+      "step": 5,
+      "action": "switch_to_ask_tab",
+      "verify": "ask_interface_active"
+    },
+    {
+      "step": 6,
+      "action": "query_document_content",
+      "query": "What is VSOM?",
+      "expected_results": {
+        "should_contain": [
+          "Visual Self-Organizing Maps",
+          "VSOM",
+          "clustering",
+          "embeddings",
+          "visualization"
+        ],
+        "min_relevance_score": 0.7,
+        "response_source": "uploaded_document"
+      }
+    },
+    {
+      "step": 7,
+      "action": "verify_document_content_accessible",
+      "additional_queries": [
+        {
+          "query": "What algorithms are available for community detection?",
+          "expected_concepts": ["Leiden", "community", "detection"]
+        },
+        {
+          "query": "How does personalized PageRank work?",
+          "expected_concepts": ["PageRank", "PPR", "random walk", "traversal"]
+        }
+      ]
+    }
+  ],
+  "integration_checks": [
+    {
+      "layer": "frontend_ui",
+      "checks": [
+        "document_upload_form_functional",
+        "file_validation_working",
+        "progress_indicators_displayed",
+        "success_notifications_shown"
+      ]
+    },
+    {
+      "layer": "api_backend",
+      "checks": [
+        "document_processed_via_mcp",
+        "content_stored_in_sparql",
+        "embeddings_generated_correctly",
+        "concepts_extracted_and_stored"
+      ]
+    },
+    {
+      "layer": "query_retrieval",
+      "checks": [
+        "document_content_indexed",
+        "semantic_search_functional",
+        "relevance_scoring_accurate",
+        "response_generation_includes_document"
+      ]
+    }
+  ],
+  "failure_scenarios": [
+    {
+      "scenario": "document_upload_fails",
+      "symptoms": [
+        "file_rejected_without_clear_error",
+        "upload_hangs_indefinitely",
+        "processing_fails_silently"
+      ],
+      "debug_actions": [
+        "check_api_server_logs",
+        "verify_mcp_connection",
+        "inspect_sparql_store_status"
+      ]
+    },
+    {
+      "scenario": "document_not_queryable",
+      "symptoms": [
+        "ask_returns_no_results",
+        "document_content_not_found",
+        "embeddings_not_searchable"
+      ],
+      "debug_actions": [
+        "verify_embeddings_stored",
+        "check_sparql_content_storage", 
+        "test_semantic_search_directly",
+        "inspect_concept_extraction_results"
+      ]
+    }
+  ],
+  "performance_benchmarks": {
+    "document_upload_time": "<10s for 50KB file",
+    "concept_extraction_time": "<5s",
+    "embedding_generation_time": "<3s",
+    "query_response_time": "<2s"
+  }
+}
+```
+
+### Probe W.2: Cross-Session Document Persistence
+```javascript
+// Test: Document remains accessible across browser sessions
+{
+  "test": "workbench_document_persistence_across_sessions",
+  "workflow": [
+    {
+      "session": 1,
+      "actions": [
+        "upload_document_algorithms_md",
+        "verify_successful_upload",
+        "close_browser"
+      ]
+    },
+    {
+      "session": 2,
+      "actions": [
+        "open_fresh_browser_session",
+        "navigate_to_workbench",
+        "query_for_vsom_information",
+        "verify_document_content_accessible"
+      ]
+    }
+  ],
+  "persistence_checks": [
+    "sparql_storage_retained",
+    "embeddings_persisted",
+    "concepts_available",
+    "cross_session_retrieval_functional"
+  ]
+}
+```
+
+### Probe W.3: Multiple Document Integration
+```javascript
+// Test: Multiple documents uploaded and queryable together
+{
+  "test": "workbench_multiple_document_integration", 
+  "workflow": [
+    {"upload": "docs/manual/algorithms.md"},
+    {"upload": "docs/manual/config.md"},
+    {"upload": "docs/manual/infrastructure.md"},
+    {
+      "query": "How do I configure VSOM parameters?",
+      "expected_integration": [
+        "algorithms.md provides VSOM details",
+        "config.md provides configuration guidance",
+        "cross_document_synthesis_in_response"
+      ]
+    }
+  ]
+}
+```
+
 ## Conclusion
 
 This comprehensive probe system ensures that all 7 Simple Verbs operate correctly across session cache, persistent storage, and RDF graph layers. The multi-layer verification approach catches issues early, while performance monitoring prevents regression. The agent-friendly interface makes debugging and system optimization straightforward for both human developers and AI assistants.
+
+The **Workbench Integration Probes** specifically test the end-to-end workflow that users experience when uploading documents and querying them through the web interface, ensuring that the document upload → storage → retrieval → response generation pipeline works correctly.
 
 The probe system serves as both a testing framework and a system health monitoring tool, providing confidence in the semantic memory system's reliability and performance.
