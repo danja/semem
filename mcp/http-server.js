@@ -225,8 +225,11 @@ async function startOptimizedServer() {
     // Configure Express middleware
     console.log('🔧 [START] Configuring Express middleware...');
     app.use(cors());
-    app.use(express.json());
-    console.log('✅ [START] Express middleware configured');
+    // Increase JSON payload limit for document uploads (PDFs can be several MB)
+    app.use(express.json({ limit: '50mb' }));
+    // Also handle URL-encoded data with increased limits
+    app.use(express.urlencoded({ limit: '50mb', extended: true }));
+    console.log('✅ [START] Express middleware configured with 50MB payload limits');
 
     // Wire up the request handler to the /mcp endpoint
     console.log('🔧 [START] Setting up MCP endpoint...');
@@ -468,7 +471,8 @@ async function startOptimizedServer() {
             password: storageConfig.password
           });
           
-          const processor = new DocumentProcessor(config, sparqlHelper);
+          // Pass simpleVerbsService for memory integration
+          const processor = new DocumentProcessor(config, sparqlHelper, simpleVerbsService);
           const result = await processor.processUploadedDocument({
             fileUrl,
             filename,

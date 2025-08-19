@@ -42,8 +42,17 @@ app.use('/api', createProxyMiddleware({
   pathRewrite: {
     '^/api': '' // Remove /api prefix when forwarding
   },
+  onProxyReq: (proxyReq, req, res) => {
+    console.log(`🔄 [WORKBENCH PROXY] ${req.method} ${req.originalUrl} -> ${MCP_SERVER_URL}${req.url.replace('/api', '')}`);
+    if (req.body) {
+      console.log('📤 [WORKBENCH PROXY] Request body length:', JSON.stringify(req.body).length);
+    }
+  },
+  onProxyRes: (proxyRes, req, res) => {
+    console.log(`📡 [WORKBENCH PROXY] Response ${proxyRes.statusCode} for ${req.method} ${req.originalUrl}`);
+  },
   onError: (err, req, res) => {
-    console.error('Proxy error:', err.message);
+    console.error('❌ [WORKBENCH PROXY] Proxy error:', err.message);
     res.status(502).json({
       error: 'MCP server unavailable',
       message: err.message

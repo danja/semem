@@ -13,9 +13,10 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
  * Following the pattern from examples/document/LoadPDFs.js
  */
 export class DocumentProcessor {
-  constructor(config, sparqlHelper) {
+  constructor(config, sparqlHelper, simpleVerbsService = null) {
     this.config = config;
     this.sparqlHelper = sparqlHelper;
+    this.simpleVerbsService = simpleVerbsService;
     this.tempDir = join(process.cwd(), 'temp', 'uploads');
     
     // Ensure temp directory exists
@@ -61,6 +62,36 @@ export class DocumentProcessor {
       // Store in SPARQL following LoadPDFs pattern
       const result = await this.storeDocumentInSPARQL(content, filename, processedMetadata, documentType);
       
+      // ALSO store in memory system for semantic search and retrieval
+      let memoryResult = null;
+      let conceptsExtracted = 0;
+      
+      if (this.simpleVerbsService) {
+        try {
+          console.log(`📚 Integrating ${filename} with memory system for semantic search...`);
+          memoryResult = await this.simpleVerbsService.tell({
+            content: content,
+            type: 'document',
+            metadata: {
+              ...processedMetadata,
+              originalFormat: documentType,
+              filename: filename,
+              unitURI: result.unitURI,
+              textURI: result.textURI,
+              source: 'document_upload'
+            }
+          });
+          
+          conceptsExtracted = memoryResult.concepts || 0;
+          console.log(`✅ Memory integration complete. Extracted ${conceptsExtracted} concepts.`);
+        } catch (error) {
+          console.warn(`⚠️ Memory system integration failed for ${filename}:`, error.message);
+          // Don't fail the entire operation if memory integration fails
+        }
+      } else {
+        console.warn('⚠️ Simple verbs service not available for memory integration');
+      }
+      
       // Cleanup temp file
       this.cleanupTempFile(tempFilePath);
       
@@ -76,8 +107,9 @@ export class DocumentProcessor {
         unitURI: result.unitURI,
         textURI: result.textURI,
         contentLength: content.length,
-        concepts: processedMetadata.concepts?.length || 0,
-        message: `Successfully processed and stored ${documentType.toUpperCase()} document`
+        concepts: conceptsExtracted,
+        memoryIntegration: memoryResult ? 'success' : 'failed',
+        message: `Successfully processed and stored ${documentType.toUpperCase()} document${memoryResult ? ' with memory integration' : ''}`
       };
       
     } catch (error) {
@@ -218,7 +250,7 @@ export class DocumentProcessor {
         GRAPH <${targetGraph}> {
           # Store ragno:Unit
           <${unitURI}> a ragno:Unit ;
-            rdfs:label """${(metadata.title || filename).replace(/"/g, '\\"')}""" ;
+            rdfs:label "${(metadata.title || filename).replace(/"/g, '\\"')}" ;
             dcterms:created "${now}"^^xsd:dateTime ;
             semem:sourceFile "${filename}" ;
             semem:documentType "${documentType}" ;
@@ -227,9 +259,9 @@ export class DocumentProcessor {
           
           # Store ragno:TextElement
           <${textURI}> a ragno:TextElement ;
-            rdfs:label """${filename} content""" ;
+            rdfs:label "${filename} content" ;
             dcterms:created "${now}"^^xsd:dateTime ;
-            ragno:content """${content.replace(/"/g, '\\"')}""" ;
+            ragno:content "${content.replace(/"/g, '\\"').replace(/\n/g, '\\n')}" ;
             dcterms:extent ${content.length} ;
             prov:wasDerivedFrom <${unitURI}> .
         }

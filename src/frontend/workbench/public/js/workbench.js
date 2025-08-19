@@ -425,15 +425,15 @@ class WorkbenchApp {
       return;
     }
 
-    // Validate file size (10MB limit)
-    const maxSize = 10 * 1024 * 1024;
+    // Validate file size (25MB limit for documents, especially PDFs)
+    const maxSize = 25 * 1024 * 1024;
     if (file.size > maxSize) {
       consoleService.logWarning('File too large for upload', {
         filename: file.name,
         fileSize: file.size,
         maxSize: maxSize
       });
-      DomUtils.showToast('File too large. Please select a file under 10MB.', 'error');
+      DomUtils.showToast('File too large. Please select a file under 25MB.', 'error');
       this.clearSelectedFile();
       return;
     }
@@ -511,7 +511,9 @@ class WorkbenchApp {
     const fileType = this.getFileTypeFromExtension(file.name);
     const uploadStartTime = Date.now();
     
-    // Log upload start
+    // Log upload start with comprehensive details
+    console.log('🔄 [WORKBENCH UPLOAD] Document upload started');
+    console.log(`📄 [WORKBENCH UPLOAD] File: ${file.name} (${file.size} bytes, type: ${fileType})`);
     consoleService.info('Document upload started', {
       filename: file.name,
       fileType: fileType,
@@ -521,16 +523,13 @@ class WorkbenchApp {
     
     try {
       // Create a temporary file URL for the MCP service
+      console.log('🔄 [WORKBENCH UPLOAD] Step 1: Creating file URL...');
       consoleService.info('Processing file for upload...', { step: 'file_processing' });
       const fileUrl = await this.createFileUrl(file);
+      console.log(`✅ [WORKBENCH UPLOAD] File URL created, length: ${fileUrl.length} chars`);
       
-      // Call the MCP document upload service
-      consoleService.info('Sending document to MCP service...', { 
-        step: 'mcp_upload',
-        documentType: fileType 
-      });
-      
-      const result = await apiService.uploadDocument({
+      // Prepare upload payload
+      const uploadPayload = {
         fileUrl: fileUrl,
         filename: file.name,
         mediaType: this.getMediaType(fileType),
@@ -541,23 +540,42 @@ class WorkbenchApp {
           tags: formData.tags ? formData.tags.split(',').map(t => t.trim()) : [],
           uploadedAt: new Date().toISOString()
         }
+      };
+      
+      console.log('🔄 [WORKBENCH UPLOAD] Step 2: Prepared upload payload');
+      console.log(`📤 [WORKBENCH UPLOAD] Payload metadata:`, uploadPayload.metadata);
+      
+      // Call the MCP document upload service
+      console.log('🔄 [WORKBENCH UPLOAD] Step 3: Sending to MCP service...');
+      consoleService.info('Sending document to MCP service...', { 
+        step: 'mcp_upload',
+        documentType: fileType 
       });
       
+      const result = await apiService.uploadDocument(uploadPayload);
+      
       const uploadDuration = Date.now() - uploadStartTime;
+      console.log(`✅ [WORKBENCH UPLOAD] Document upload completed in ${uploadDuration}ms`);
+      console.log('📊 [WORKBENCH UPLOAD] Result:', result);
+      
       consoleService.success('Document upload completed', {
         filename: file.name,
         duration: uploadDuration,
         processed: result.success || false,
-        concepts: result.concepts || 0
+        concepts: result.concepts || 0,
+        resultKeys: Object.keys(result || {})
       });
       
       return result;
     } catch (error) {
       const uploadDuration = Date.now() - uploadStartTime;
+      console.error(`❌ [WORKBENCH UPLOAD] Document upload failed after ${uploadDuration}ms:`, error);
+      
       consoleService.error('Document upload failed', {
         filename: file.name,
         duration: uploadDuration,
         error: error.message,
+        errorStack: error.stack,
         fileType: fileType
       });
       
