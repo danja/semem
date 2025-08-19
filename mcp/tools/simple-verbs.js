@@ -461,16 +461,106 @@ class SimpleVerbsService {
             break;
             
           case 'document':
-            // Store as document-style content
-            embedding = await this.safeOps.generateEmbedding(content);
-            concepts = await this.safeOps.extractConcepts(content);
-            prompt = `Document: ${metadata.title || 'Untitled'}`;
+            // Handle large documents by chunking them first
+            const MAX_EMBEDDING_SIZE = 8000; // Conservative limit for embedding APIs
             
-            result = await this.safeOps.storeInteraction(
-              prompt,
-              response,
-              { ...metadata, type: 'tell_document', concepts }
-            );
+            if (content.length > MAX_EMBEDDING_SIZE) {
+              let chunkingResult;
+              try {
+                // Import chunker for large documents
+                const Chunker = (await import('../../src/services/document/Chunker.js')).default;
+                const chunker = new Chunker({
+                  maxChunkSize: 2000,
+                  minChunkSize: 100,
+                  overlapSize: 100,
+                  strategy: 'semantic'
+                });
+                
+                console.log(`📚 Document too large (${content.length} chars > ${MAX_EMBEDDING_SIZE}). Chunking into smaller pieces...`);
+                
+                // Chunk the document
+                chunkingResult = await chunker.chunk(content, {
+                  title: metadata.title || 'Untitled Document',
+                  sourceFile: metadata.filename || 'unknown'
+                });
+                
+                console.log(`✂️  Created ${chunkingResult.chunks.length} chunks for processing`);
+              } catch (chunkingError) {
+                console.error('❌ Error during document chunking:', chunkingError.message);
+                throw new Error(`Failed to chunk large document: ${chunkingError.message}. Document size: ${content.length} characters.`);
+              }
+              
+              // Process each chunk separately
+              const chunkResults = [];
+              let allConcepts = [];
+              
+              for (let i = 0; i < chunkingResult.chunks.length; i++) {
+                const chunk = chunkingResult.chunks[i];
+                try {
+                  console.log(`🧩 Processing chunk ${i + 1}/${chunkingResult.chunks.length} (${chunk.size} chars)...`);
+                  
+                  const chunkEmbedding = await this.safeOps.generateEmbedding(chunk.content);
+                  const chunkConcepts = await this.safeOps.extractConcepts(chunk.content);
+                  const chunkPrompt = `Document: ${metadata.title || 'Untitled'} (Chunk ${i + 1}/${chunkingResult.chunks.length})`;
+                  
+                  const chunkResult = await this.safeOps.storeInteraction(
+                    chunkPrompt,
+                    chunk.content,
+                    { 
+                      ...metadata, 
+                      type: 'tell_document_chunk',
+                      chunkIndex: i,
+                      totalChunks: chunkingResult.chunks.length,
+                      chunkSize: chunk.size,
+                      concepts: chunkConcepts 
+                    }
+                  );
+                  
+                  chunkResults.push(chunkResult);
+                  allConcepts = [...allConcepts, ...chunkConcepts];
+                  
+                  console.log(`✅ Chunk ${i + 1} processed successfully (${chunkConcepts.length} concepts extracted)`);
+                } catch (chunkError) {
+                  console.error(`❌ Error processing chunk ${i + 1}:`, chunkError.message);
+                  // Don't throw here - continue with other chunks but log the failure
+                  chunkResults.push({
+                    error: true,
+                    message: `Failed to process chunk ${i + 1}: ${chunkError.message}`,
+                    chunkIndex: i,
+                    chunkSize: chunk.size
+                  });
+                }
+              }
+              
+              // Store document summary with aggregated concepts
+              concepts = [...new Set(allConcepts)]; // Remove duplicates
+              prompt = `Document: ${metadata.title || 'Untitled'} (${chunkingResult.chunks.length} chunks)`;
+              
+              result = {
+                ...chunkResults[0], // Use first chunk as base result
+                chunks: chunkResults.length,
+                totalConcepts: concepts.length,
+                chunkingMetadata: chunkingResult.metadata
+              };
+            } else {
+              // Small document - process normally
+              try {
+                console.log(`📄 Processing document (${content.length} chars - under limit)...`);
+                embedding = await this.safeOps.generateEmbedding(content);
+                concepts = await this.safeOps.extractConcepts(content);
+                prompt = `Document: ${metadata.title || 'Untitled'}`;
+                
+                result = await this.safeOps.storeInteraction(
+                  prompt,
+                  response,
+                  { ...metadata, type: 'tell_document', concepts }
+                );
+                console.log(`✅ Document processed successfully (${concepts.length} concepts extracted)`);
+              } catch (docError) {
+                console.error(`❌ Error processing document:`, docError.message);
+                throw new Error(`Failed to process document: ${docError.message}. Document size: ${content.length} characters. Consider breaking it into smaller sections.`);
+              }
+            }
             break;
             
           case 'concept':

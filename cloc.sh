@@ -1,0 +1,1 @@
+cloc --vcs=git --include-ext=ttl --include-ext=sparql --include-ext=md .

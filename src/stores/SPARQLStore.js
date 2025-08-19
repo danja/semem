@@ -139,7 +139,7 @@ export default class SPARQLStore extends BaseStore {
         // Use resilience wrapper only if enabled
         if (this.resilience.enabled) {
             return this.executeWithResilience(async () => {
-                logger.error('[SPARQL QUERY]', endpoint) // { endpoint, query }
+                logger.debug('[SPARQL QUERY]', endpoint) // { endpoint, query }
                 const response = await this.withTimeout(
                     fetch(endpoint, {
                         method: 'POST',
@@ -168,7 +168,7 @@ export default class SPARQLStore extends BaseStore {
 
         // Original implementation for backward compatibility
         try {
-            logger.error('[SPARQL QUERY]', endpoint) // { endpoint, query }
+            logger.debug('[SPARQL QUERY]', endpoint) // { endpoint, query }
             const response = await fetch(endpoint, {
                 method: 'POST',
                 headers: {
@@ -201,7 +201,7 @@ export default class SPARQLStore extends BaseStore {
         // Use resilience wrapper only if enabled
         if (this.resilience.enabled) {
             return this.executeWithResilience(async () => {
-                logger.error('[SPARQL UPDATE]', endpoint) //  { endpoint, update }
+                logger.debug('[SPARQL UPDATE]', endpoint) //  { endpoint, update }
                 const response = await this.withTimeout(
                     fetch(endpoint, {
                         method: 'POST',
@@ -229,7 +229,7 @@ export default class SPARQLStore extends BaseStore {
 
         // Original implementation for backward compatibility
         try {
-            logger.error('[SPARQL UPDATE]', endpoint) //  { endpoint, update }
+            logger.debug('[SPARQL UPDATE]', endpoint) //  { endpoint, update }
             const response = await fetch(endpoint, {
                 method: 'POST',
                 headers: {
