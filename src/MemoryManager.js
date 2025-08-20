@@ -199,7 +199,22 @@ export default class MemoryManager {
             const results = await this.memStore.retrieve(queryEmbedding, queryConcepts, similarityThreshold, excludeLastN);
             
             // Persist any memory classification changes (promotion to long-term)
-            await this.store.saveMemoryToHistory(this.memStore);
+            // Skip memory persistence if content is too large to prevent string length errors
+            try {
+                await this.store.saveMemoryToHistory(this.memStore);
+            } catch (error) {
+                if (error.code === 'CONTENT_TOO_LARGE' || error.message.includes('string length')) {
+                    this.logger.warn('Skipping memory persistence due to oversized content', {
+                        error: error.message,
+                        shortTermCount: this.memStore?.shortTermMemory?.length || 0,
+                        longTermCount: this.memStore?.longTermMemory?.length || 0
+                    });
+                    // Continue without persisting - memory is still available in current session
+                } else {
+                    // Re-throw other errors
+                    throw error;
+                }
+            }
             
             this.logger.info('MemStore.retrieve returned:', {
                 resultsType: typeof results,
@@ -260,20 +275,59 @@ export default class MemoryManager {
     }
 
     async storeInteraction(prompt, response, metadata = {}) {
+        const combinedText = `${prompt} ${response}`;
+        const MEMORY_CONTENT_LIMIT = 5000; // Conservative limit for in-memory processing
+        
+        // Check if content is too large for memory processing
+        if (combinedText.length > MEMORY_CONTENT_LIMIT) {
+            this.logger.warn('Content too large for memory processing, storing directly to SPARQL without embeddings', {
+                combinedLength: combinedText.length,
+                limit: MEMORY_CONTENT_LIMIT,
+                suggestion: 'Use Augment → Chunk Documents to process this content for semantic search'
+            });
+            
+            // Store directly to SPARQL as a document without embeddings
+            const documentData = {
+                id: `interaction_${Date.now()}`,
+                prompt: prompt,
+                response: response,
+                timestamp: Date.now(),
+                metadata: {
+                    ...metadata,
+                    contentTooLarge: true,
+                    originalLength: combinedText.length,
+                    processingSkipped: 'content_too_large'
+                }
+            };
+            
+            // Store to SPARQL as Ragno document without memory processing
+            await this.store.storeDocument(documentData);
+            
+            return {
+                success: true,
+                deferred: true,
+                reason: 'content_too_large',
+                storedAs: 'document',
+                concepts: 0,
+                timestamp: Date.now(),
+                suggestion: 'Use Augment → Chunk Documents to enable semantic search'
+            };
+        }
+        
         // Generate embedding for the combined prompt and response
-        const embedding = await this.generateEmbedding(`${prompt} ${response}`)
+        const embedding = await this.generateEmbedding(combinedText);
         
         // Extract concepts from the combined text (returns empty array if no chat provider)
-        const concepts = await this.extractConcepts(`${prompt} ${response}`)
+        const concepts = await this.extractConcepts(combinedText);
         
         // Store the interaction using addInteraction
-        await this.addInteraction(prompt, response, embedding, concepts, metadata)
+        await this.addInteraction(prompt, response, embedding, concepts, metadata);
         
         return {
             success: true,
             concepts: concepts.length,
             timestamp: Date.now()
-        }
+        };
     }
 
     async dispose() {
@@ -282,7 +336,15 @@ export default class MemoryManager {
             // Save current state before disposal
             await this.store.saveMemoryToHistory(this.memStore)
         } catch (e) {
-            error = e
+            // Handle large content errors gracefully during disposal
+            if (e.code === 'CONTENT_TOO_LARGE' || e.message.includes('string length')) {
+                this.logger.warn('Skipping memory persistence during disposal due to oversized content', {
+                    error: e.message
+                });
+                // Don't treat this as a fatal error during disposal
+            } else {
+                error = e;
+            }
         }
 
         try {

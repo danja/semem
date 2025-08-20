@@ -3,6 +3,8 @@
  * Handle edge cases without modifying core components
  */
 
+import { mcpDebugger } from './debug-utils.js';
+
 export class SafeOperations {
   constructor(memoryManager) {
     this.memoryManager = memoryManager;
@@ -125,7 +127,26 @@ export class SafeOperations {
     if (!text || typeof text !== 'string') {
       throw new Error('Text is required for embedding generation');
     }
-    return await this.memoryManager.generateEmbedding(text);
+    
+    const startTime = Date.now();
+    mcpDebugger.debug('🧮 Generating embedding', { textLength: text.length });
+    
+    try {
+      const embedding = await this.memoryManager.generateEmbedding(text);
+      const duration = Date.now() - startTime;
+      mcpDebugger.debug('✅ Embedding generated successfully', { 
+        duration: duration + 'ms', 
+        embeddingLength: embedding?.length || 0 
+      });
+      return embedding;
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      mcpDebugger.error('❌ Embedding generation failed', { 
+        duration: duration + 'ms', 
+        error: error.message 
+      });
+      throw error;
+    }
   }
 
   /**
@@ -135,7 +156,31 @@ export class SafeOperations {
     if (!prompt || typeof prompt !== 'string') {
       throw new Error('Prompt is required for response generation');
     }
-    return await this.memoryManager.llmHandler.generateResponse(prompt, context, options);
+    
+    const startTime = Date.now();
+    const contextLength = typeof context === 'string' ? context.length : JSON.stringify(context).length;
+    mcpDebugger.debug('🤖 Generating LLM response', { 
+      promptLength: prompt.length, 
+      contextLength,
+      hasContext: !!context && contextLength > 0
+    });
+    
+    try {
+      const response = await this.memoryManager.llmHandler.generateResponse(prompt, context, options);
+      const duration = Date.now() - startTime;
+      mcpDebugger.debug('✅ LLM response generated successfully', { 
+        duration: duration + 'ms',
+        responseLength: response?.length || 0
+      });
+      return response;
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      mcpDebugger.error('❌ LLM response generation failed', { 
+        duration: duration + 'ms', 
+        error: error.message 
+      });
+      throw error;
+    }
   }
 
   /**
@@ -146,10 +191,35 @@ export class SafeOperations {
       return []; // Return empty array for invalid queries
     }
     
-    // Use the MemoryManager's proven retrieveRelevantInteractions method
-    // Convert threshold from 0-1 scale to percentage (0-100 scale) 
+    const startTime = Date.now();
     const similarityThreshold = Math.round(threshold * 100);
+    mcpDebugger.debug('🔍 Searching for similar content', { 
+      queryLength: queryText.trim().length, 
+      limit, 
+      threshold,
+      similarityThreshold 
+    });
     
-    return await this.memoryManager.retrieveRelevantInteractions(queryText.trim(), similarityThreshold, 0, limit);
+    try {
+      // Use the MemoryManager's proven retrieveRelevantInteractions method
+      // Convert threshold from 0-1 scale to percentage (0-100 scale) 
+      const results = await this.memoryManager.retrieveRelevantInteractions(queryText.trim(), similarityThreshold, 0, limit);
+      const duration = Date.now() - startTime;
+      
+      mcpDebugger.debug('✅ Similar content search completed', { 
+        duration: duration + 'ms',
+        resultsFound: results.length,
+        topSimilarity: results[0]?.similarity || 0
+      });
+      
+      return results;
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      mcpDebugger.error('❌ Similar content search failed', { 
+        duration: duration + 'ms', 
+        error: error.message 
+      });
+      throw error;
+    }
   }
 }

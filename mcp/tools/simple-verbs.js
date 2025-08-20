@@ -7,6 +7,7 @@
 import { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 import { mcpDebugger } from '../lib/debug-utils.js';
+import path from 'path';
 import { initializeServices, getMemoryManager } from '../lib/initialization.js';
 import { SafeOperations } from '../lib/safe-operations.js';
 
@@ -641,6 +642,8 @@ class SimpleVerbsService {
     await this.initialize();
     
     try {
+      const startTime = Date.now();
+      mcpDebugger.info('🔍 Starting Ask operation', { question: question.substring(0, 100) + (question.length > 100 ? '...' : ''), mode, useContext, useHyDE, useWikipedia, useWikidata });
       mcpDebugger.debug('Simple Verb: ask', { question, mode, useContext, useHyDE, useWikipedia, useWikidata });
       
       let result;
@@ -652,6 +655,8 @@ class SimpleVerbsService {
       const hasEnhancements = useHyDE || useWikipedia || useWikidata;
       
       if (hasEnhancements && this.enhancementCoordinator) {
+        const stepStartTime = Date.now();
+        mcpDebugger.info('📈 Step 1: Processing query with enhancements', { useHyDE, useWikipedia, useWikidata });
         mcpDebugger.info('Processing query with enhancements');
         try {
           enhancementResult = await this.enhancementCoordinator.enhanceQuery(question, {
@@ -663,6 +668,8 @@ class SimpleVerbsService {
           
           if (enhancementResult.success && enhancementResult.enhancedAnswer) {
             // Enhancement succeeded with generated answer - return it directly
+            const stepDuration = Date.now() - stepStartTime;
+            mcpDebugger.info('✅ Step 1 complete: Enhancement successful with generated answer', { duration: stepDuration + 'ms' });
             mcpDebugger.info('Enhancement successful with generated answer');
             
             return {
@@ -682,27 +689,45 @@ class SimpleVerbsService {
           }
           
         } catch (enhancementError) {
+          const stepDuration = Date.now() - stepStartTime;
+          mcpDebugger.warn('❌ Step 1 failed: Enhancement failed, falling back to regular search', { duration: stepDuration + 'ms', error: enhancementError.message });
           mcpDebugger.warn('Enhancement failed, falling back to regular search:', enhancementError.message);
           // Continue with regular search below
         }
       }
       
       // Step 2: Generate embedding for semantic search
+      const embeddingStartTime = Date.now();
+      mcpDebugger.info('🧮 Step 2: Generating query embedding for semantic search');
       const queryEmbedding = await this.safeOps.generateEmbedding(question);
+      const embeddingDuration = Date.now() - embeddingStartTime;
+      mcpDebugger.info('✅ Step 2 complete: Query embedding generated', { duration: embeddingDuration + 'ms', embeddingLength: queryEmbedding?.length || 0 });
       
       // Step 3: Search session cache first for immediate results
+      const sessionSearchStartTime = Date.now();
+      mcpDebugger.info('🔍 Step 3: Searching session cache for immediate semantic results');
       mcpDebugger.info('Searching session cache for immediate semantic retrieval');
       sessionResults = await this.stateManager.searchSessionCache(question, queryEmbedding, 3, 0.4);
+      const sessionSearchDuration = Date.now() - sessionSearchStartTime;
       
       if (sessionResults.length > 0) {
+        mcpDebugger.info('✅ Step 3 complete: Found results in session cache', { duration: sessionSearchDuration + 'ms', results: sessionResults.length });
         mcpDebugger.info(`Found ${sessionResults.length} results in session cache`);
+      } else {
+        mcpDebugger.info('✅ Step 3 complete: No results found in session cache', { duration: sessionSearchDuration + 'ms' });
       }
       
       // Step 4: Search persistent storage for additional context
+      const persistentSearchStartTime = Date.now();
+      mcpDebugger.info('💾 Step 4: Searching persistent storage for additional context');
       mcpDebugger.info('Searching persistent storage for additional context');
       persistentResults = await this.safeOps.searchSimilar(question, 5, 0.5);
+      const persistentSearchDuration = Date.now() - persistentSearchStartTime;
+      mcpDebugger.info('✅ Step 4 complete: Persistent storage search finished', { duration: persistentSearchDuration + 'ms', results: persistentResults.length });
       
       // Step 5: Combine and rank results
+      const combineStartTime = Date.now();
+      mcpDebugger.info('🔄 Step 5: Combining and ranking search results');
       const allResults = [
         ...sessionResults.map(r => ({ ...r, source: 'session_cache' })),
         ...persistentResults.map(r => ({ ...r, source: 'persistent_storage' }))
@@ -712,18 +737,32 @@ class SimpleVerbsService {
       const uniqueResults = Array.from(
         new Map(allResults.map(r => [r.prompt + r.response, r])).values()
       ).sort((a, b) => (b.similarity || 0) - (a.similarity || 0));
+      const combineDuration = Date.now() - combineStartTime;
+      mcpDebugger.info('✅ Step 5 complete: Results combined and ranked', { 
+        duration: combineDuration + 'ms',
+        totalResults: allResults.length,
+        uniqueResults: uniqueResults.length,
+        topSimilarity: uniqueResults[0]?.similarity || 0
+      });
       
       if (uniqueResults.length > 0) {
         // Found relevant memories - use them as context
+        const contextStartTime = Date.now();
+        mcpDebugger.info('🤖 Step 6: Generating response with context', { contextItems: Math.min(uniqueResults.length, 5) });
         const context = uniqueResults
           .slice(0, 5) // Limit to top 5 results
           .map(memory => `${memory.prompt}: ${memory.response}`)
           .join('\n');
           
         result = await this.safeOps.generateResponse(question, context);
+        const contextDuration = Date.now() - contextStartTime;
+        mcpDebugger.info('✅ Step 6 complete: Response generated with context', { duration: contextDuration + 'ms' });
         
         // Update state with this query
         this.stateManager.state.lastQuery = question;
+        
+        const totalDuration = Date.now() - startTime;
+        mcpDebugger.info('✅ Ask operation complete: Success with context', { totalDuration: totalDuration + 'ms' });
         
         return {
           success: true,
@@ -743,6 +782,8 @@ class SimpleVerbsService {
       } else {
         // No relevant memories found - try ZPT navigation as fallback (if requested)
         if (useContext && this.stateManager.state.lastQuery && mode === 'navigation') {
+          const navStartTime = Date.now();
+          mcpDebugger.info('🧭 Step 6a: No memories found, falling back to ZPT navigation');
           mcpDebugger.info('No memories found, falling back to ZPT navigation');
           
           const navParams = this.stateManager.getNavigationParams(question);
@@ -755,10 +796,17 @@ class SimpleVerbsService {
               .join('\n');
               
             result = await this.safeOps.generateResponse(question, context);
+            const navDuration = Date.now() - navStartTime;
+            mcpDebugger.info('✅ Step 6a complete: Response generated with navigation context', { duration: navDuration + 'ms', navItems: navResult.content.data.length });
           } else {
             // Fallback to basic answer if navigation also fails
             result = await this.safeOps.generateResponse(question);
+            const navDuration = Date.now() - navStartTime;
+            mcpDebugger.info('✅ Step 6a complete: Navigation failed, basic response generated', { duration: navDuration + 'ms' });
           }
+          
+          const totalDuration = Date.now() - startTime;
+          mcpDebugger.info('✅ Ask operation complete: Success with navigation fallback', { totalDuration: totalDuration + 'ms' });
           
           return {
             success: true,
@@ -777,10 +825,17 @@ class SimpleVerbsService {
           
         } else {
           // No memories and no navigation - basic response
+          const basicStartTime = Date.now();
+          mcpDebugger.info('🤖 Step 6b: No memories found, generating basic response');
           result = await this.safeOps.generateResponse(question);
+          const basicDuration = Date.now() - basicStartTime;
+          mcpDebugger.info('✅ Step 6b complete: Basic response generated', { duration: basicDuration + 'ms' });
           
           // Update state with this query
           this.stateManager.state.lastQuery = question;
+          
+          const totalDuration = Date.now() - startTime;
+          mcpDebugger.info('✅ Ask operation complete: Success with basic response', { totalDuration: totalDuration + 'ms' });
           
           return {
             success: true,
@@ -799,6 +854,8 @@ class SimpleVerbsService {
       }
       
     } catch (error) {
+      const totalDuration = Date.now() - startTime;
+      mcpDebugger.error('❌ Ask operation failed', { error: error.message, totalDuration: totalDuration + 'ms' });
       mcpDebugger.error('Ask verb failed', error);
       return {
         success: false,
@@ -950,8 +1007,12 @@ class SimpleVerbsService {
             const storageConfig = config.get('storage.options');
             const targetGraph = graph || storageConfig.graphName || 'http://hyperdata.it/content';
             
-            // Initialize services
-            const queryService = new SPARQLQueryService();
+            // Initialize services with explicit paths
+            const queryService = new SPARQLQueryService({
+              queryPath: path.join(process.cwd(), 'sparql/queries'),
+              templatePath: path.join(process.cwd(), 'sparql/templates'),
+              configPath: path.join(process.cwd(), 'sparql/config')
+            });
             const sparqlHelper = new SPARQLHelper(storageConfig.update, {
               user: storageConfig.user,
               password: storageConfig.password

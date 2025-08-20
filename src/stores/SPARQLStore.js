@@ -435,6 +435,20 @@ export default class SPARQLStore extends BaseStore {
             logger.info(`Saved memory to SPARQL store ${this.endpoint.update} graph <${this.graphName}>. Stats: ${memoryStore.shortTermMemory.length} short-term, ${memoryStore.longTermMemory.length} long-term memories`)
         } catch (error) {
             await this.rollbackTransaction()
+            
+            // Handle string length errors specifically
+            if (error instanceof RangeError && error.message.includes('string length')) {
+                const detailedError = new Error(`String length error in SPARQL store: ${error.message}. This usually indicates content is too large for processing. Consider chunking the content first.`);
+                detailedError.code = 'CONTENT_TOO_LARGE';
+                logger.error('String length error in SPARQL store - content too large:', {
+                    originalError: error.message,
+                    shortTermCount: memoryStore.shortTermMemory.length,
+                    longTermCount: memoryStore.longTermMemory.length,
+                    suggestion: 'Consider chunking large content before storing'
+                });
+                throw detailedError;
+            }
+            
             logger.error('Error saving to SPARQL store:', error)
             throw error
         }
@@ -481,18 +495,37 @@ export default class SPARQLStore extends BaseStore {
         return memories.map((interaction, index) => {
             // Ensure all required fields have values
             const id = interaction.id || uuidv4()
-            const prompt = interaction.prompt || ''
-            const output = interaction.output || interaction.response || ''
+            let prompt = interaction.prompt || ''
+            let output = interaction.output || interaction.response || ''
             const timestamp = interaction.timestamp || Date.now()
             const accessCount = interaction.accessCount || 1
             const decayFactor = interaction.decayFactor || 1.0
+
+            // Add length validation to prevent string length errors
+            const MAX_CONTENT_LENGTH = 50000; // Conservative limit to prevent RangeError
+            
+            if (prompt.length > MAX_CONTENT_LENGTH) {
+                logger.warn(`Truncating prompt from ${prompt.length} to ${MAX_CONTENT_LENGTH} characters to prevent string length error`);
+                prompt = prompt.substring(0, MAX_CONTENT_LENGTH) + '... [TRUNCATED]';
+            }
+            
+            if (output.length > MAX_CONTENT_LENGTH) {
+                logger.warn(`Truncating output from ${output.length} to ${MAX_CONTENT_LENGTH} characters to prevent string length error`);
+                output = output.substring(0, MAX_CONTENT_LENGTH) + '... [TRUNCATED]';
+            }
 
             // Handle embeddings
             let embeddingStr = '[]'
             if (Array.isArray(interaction.embedding)) {
                 try {
                     this.validateEmbedding(interaction.embedding)
-                    embeddingStr = JSON.stringify(interaction.embedding)
+                    const jsonStr = JSON.stringify(interaction.embedding);
+                    if (jsonStr.length > MAX_CONTENT_LENGTH) {
+                        logger.warn(`Embedding JSON too large (${jsonStr.length} chars), using empty array`);
+                        embeddingStr = '[]';
+                    } else {
+                        embeddingStr = jsonStr;
+                    }
                 } catch (error) {
                     logger.error('Invalid embedding in memory:', error)
                 }
@@ -501,7 +534,18 @@ export default class SPARQLStore extends BaseStore {
             // Handle concepts
             let conceptsStr = '[]'
             if (Array.isArray(interaction.concepts)) {
-                conceptsStr = JSON.stringify(interaction.concepts)
+                try {
+                    const jsonStr = JSON.stringify(interaction.concepts);
+                    if (jsonStr.length > MAX_CONTENT_LENGTH) {
+                        logger.warn(`Concepts JSON too large (${jsonStr.length} chars), using empty array`);
+                        conceptsStr = '[]';
+                    } else {
+                        conceptsStr = jsonStr;
+                    }
+                } catch (error) {
+                    logger.error('Error stringifying concepts:', error);
+                    conceptsStr = '[]';
+                }
             }
 
             return `
@@ -586,6 +630,14 @@ export default class SPARQLStore extends BaseStore {
         if (typeof str !== 'string') {
             str = String(str);
         }
+        
+        // Prevent string length errors by truncating extremely long strings
+        const MAX_SPARQL_STRING_LENGTH = 100000; // Conservative limit for SPARQL strings
+        if (str.length > MAX_SPARQL_STRING_LENGTH) {
+            logger.warn(`Truncating string from ${str.length} to ${MAX_SPARQL_STRING_LENGTH} characters in SPARQL escape`);
+            str = str.substring(0, MAX_SPARQL_STRING_LENGTH) + '... [TRUNCATED]';
+        }
+        
         return str.replace(/["\\]/g, '\\$&').replace(/\n/g, '\\n').replace(/\r/g, '\\r').replace(/\t/g, '\\t')
     }
 
@@ -597,6 +649,13 @@ export default class SPARQLStore extends BaseStore {
         // Ensure str is a string
         if (typeof str !== 'string') {
             str = String(str);
+        }
+        
+        // Prevent string length errors by truncating extremely long strings
+        const MAX_SPARQL_STRING_LENGTH = 100000; // Conservative limit for SPARQL strings
+        if (str.length > MAX_SPARQL_STRING_LENGTH) {
+            logger.warn(`Truncating string from ${str.length} to ${MAX_SPARQL_STRING_LENGTH} characters in triple-quoted SPARQL escape`);
+            str = str.substring(0, MAX_SPARQL_STRING_LENGTH) + '... [TRUNCATED]';
         }
         
         // For SPARQL triple-quoted strings, we need to:
@@ -1627,6 +1686,59 @@ export default class SPARQLStore extends BaseStore {
         `
         
         await this._executeSparqlUpdate(updateQuery, this.endpoint.update)
+    }
+
+    /**
+     * Store large document directly without memory processing
+     * Used when content is too large for embedding generation
+     * @param {Object} documentData - Document data to store
+     * @returns {Promise<void>}
+     */
+    async storeDocument(documentData) {
+        logger.info('Storing large document directly to SPARQL without embeddings', {
+            id: documentData.id,
+            promptLength: documentData.prompt?.length || 0,
+            responseLength: documentData.response?.length || 0
+        });
+
+        try {
+            await this.beginTransaction();
+            
+            const documentUri = `${this.config.baseUri}document/${documentData.id}`;
+            const insertQuery = `
+                PREFIX ragno: <http://purl.org/stuff/ragno/>
+                PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+                PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+                PREFIX semem: <http://purl.org/stuff/semem/>
+
+                INSERT DATA {
+                    GRAPH <${this.graphName}> {
+                        <${documentUri}> a ragno:TextElement ;
+                            rdfs:label "${this._escapeSparqlString(documentData.prompt?.substring(0, 100) || 'Large Document')}" ;
+                            ragno:content "${this._escapeSparqlString(documentData.prompt + ' ' + documentData.response)}" ;
+                            semem:prompt "${this._escapeSparqlString(documentData.prompt || '')}" ;
+                            semem:output "${this._escapeSparqlString(documentData.response || '')}" ;
+                            semem:timestamp "${documentData.timestamp}"^^xsd:long ;
+                            ragno:processed "false"^^xsd:boolean ;
+                            ragno:processingSkipped "${documentData.metadata?.processingSkipped || 'unknown'}" ;
+                            ragno:contentLength "${(documentData.prompt + documentData.response).length}"^^xsd:integer .
+                    }
+                }
+            `;
+
+            await this._executeSparqlUpdate(insertQuery, this.endpoint.update);
+            await this.commitTransaction();
+
+            logger.info('Large document stored successfully', {
+                uri: documentUri,
+                contentLength: (documentData.prompt + documentData.response).length
+            });
+
+        } catch (error) {
+            await this.rollbackTransaction();
+            logger.error('Error storing large document to SPARQL:', error);
+            throw error;
+        }
     }
 
     /**
