@@ -62,11 +62,13 @@ export class DocumentProcessor {
       // Store in SPARQL following LoadPDFs pattern
       const result = await this.storeDocumentInSPARQL(content, filename, processedMetadata, documentType);
       
-      // ALSO store in memory system for semantic search and retrieval
+      // For large documents (>2000 chars), skip immediate memory integration
+      // Store full document first, then handle chunking and embeddings separately
       let memoryResult = null;
       let conceptsExtracted = 0;
+      const MEMORY_INTEGRATION_LIMIT = 2000; // Conservative limit for memory processing
       
-      if (this.simpleVerbsService) {
+      if (this.simpleVerbsService && content.length <= MEMORY_INTEGRATION_LIMIT) {
         try {
           console.log(`📚 Integrating ${filename} with memory system for semantic search...`);
           memoryResult = await this.simpleVerbsService.tell({
@@ -88,6 +90,10 @@ export class DocumentProcessor {
           console.warn(`⚠️ Memory system integration failed for ${filename}:`, error.message);
           // Don't fail the entire operation if memory integration fails
         }
+      } else if (content.length > MEMORY_INTEGRATION_LIMIT) {
+        console.log(`📄 Document too large (${content.length} chars > ${MEMORY_INTEGRATION_LIMIT}) for immediate memory integration.`);
+        console.log(`✨ Document stored in SPARQL. Use ChunkDocuments.js to create searchable chunks with embeddings.`);
+        memoryResult = { deferred: true, reason: 'document_too_large' };
       } else {
         console.warn('⚠️ Simple verbs service not available for memory integration');
       }
@@ -108,8 +114,8 @@ export class DocumentProcessor {
         textURI: result.textURI,
         contentLength: content.length,
         concepts: conceptsExtracted,
-        memoryIntegration: memoryResult ? 'success' : 'failed',
-        message: `Successfully processed and stored ${documentType.toUpperCase()} document${memoryResult ? ' with memory integration' : ''}`
+        memoryIntegration: memoryResult?.deferred ? 'deferred' : (memoryResult ? 'success' : 'failed'),
+        message: `Successfully processed and stored ${documentType.toUpperCase()} document${memoryResult?.deferred ? '. Run ChunkDocuments.js to create searchable chunks.' : (memoryResult ? ' with memory integration' : '')}`
       };
       
     } catch (error) {

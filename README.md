@@ -9,6 +9,8 @@
  
 **tl;dr - flipping ideas (mostly) from the LLM world over to the Semantic Web for massively simplified integration, at global scale**
 
+![Semem Workbench](docs/images/workbench.png)
+
 **[Semem Documentation](https://danja.github.io/semem/)** - *already out-of-date, below is more current*
  
 *click the triangles to expand the text* 
