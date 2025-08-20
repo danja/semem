@@ -367,6 +367,25 @@ body {
     font-size: 0.875rem;
 }
 
+/* Chunking options section */
+.chunking-options {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: var(--space-lg);
+    margin-top: var(--space-md);
+}
+
+.options-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 var(--space-md) 0;
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
 /* Buttons */
 .verb-button {
     display: flex;

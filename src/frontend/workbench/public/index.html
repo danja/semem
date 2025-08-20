@@ -268,7 +268,73 @@
                                         <option value="attributes">Analyze Attributes</option>
                                         <option value="relationships">Find Relationships</option>
                                         <option value="process_lazy">Process Lazy Content</option>
+                                        <option value="chunk_documents">Chunk Documents</option>
                                     </select>
+                                </div>
+                            </div>
+                            
+                            <!-- Chunking Options (shown when chunk_documents selected) -->
+                            <div class="form-group chunking-options" id="chunking-options-section" style="display: none;">
+                                <h4 class="options-title">📄 Chunking Options</h4>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="max-chunk-size" class="form-label">Max Chunk Size</label>
+                                        <input 
+                                            type="number" 
+                                            id="max-chunk-size" 
+                                            name="maxChunkSize"
+                                            class="form-input"
+                                            value="2000"
+                                            min="100"
+                                            max="8000"
+                                        >
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="min-chunk-size" class="form-label">Min Chunk Size</label>
+                                        <input 
+                                            type="number" 
+                                            id="min-chunk-size" 
+                                            name="minChunkSize"
+                                            class="form-input"
+                                            value="100"
+                                            min="50"
+                                            max="1000"
+                                        >
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="overlap-size" class="form-label">Overlap Size</label>
+                                        <input 
+                                            type="number" 
+                                            id="overlap-size" 
+                                            name="overlapSize"
+                                            class="form-input"
+                                            value="100"
+                                            min="0"
+                                            max="500"
+                                        >
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="chunk-strategy" class="form-label">Strategy</label>
+                                        <select id="chunk-strategy" name="strategy" class="form-select">
+                                            <option value="semantic">Semantic</option>
+                                            <option value="fixed">Fixed</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="min-content-length" class="form-label">Min Content Length</label>
+                                    <input 
+                                        type="number" 
+                                        id="min-content-length" 
+                                        name="minContentLength"
+                                        class="form-input"
+                                        value="2000"
+                                        min="500"
+                                        max="10000"
+                                        placeholder="Only chunk documents longer than this"
+                                    >
                                 </div>
                             </div>
                             <button type="submit" class="verb-button augment-button">

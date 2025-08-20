@@ -44,8 +44,16 @@ const AskSchema = z.object({
 
 const AugmentSchema = z.object({
   target: z.string().min(1, "Target content/context cannot be empty"),
-  operation: z.enum(['concepts', 'attributes', 'relationships', 'process_lazy', 'auto']).optional().default('auto'),
-  options: z.object({}).optional().default({})
+  operation: z.enum(['concepts', 'attributes', 'relationships', 'process_lazy', 'chunk_documents', 'auto']).optional().default('auto'),
+  options: z.object({
+    // Chunking-specific options
+    maxChunkSize: z.number().optional().default(2000),
+    minChunkSize: z.number().optional().default(100),
+    overlapSize: z.number().optional().default(100),
+    strategy: z.enum(['semantic', 'fixed']).optional().default('semantic'),
+    minContentLength: z.number().optional().default(2000),
+    graph: z.string().optional()
+  }).optional().default({})
 });
 
 const ZoomSchema = z.object({
@@ -916,6 +924,227 @@ class SimpleVerbsService {
             result = {
               error: lazyError.message,
               augmentationType: 'process_lazy_failed'
+            };
+          }
+          break;
+          
+        case 'chunk_documents':
+          // Chunk documents stored in SPARQL that haven't been processed yet
+          try {
+            const {
+              maxChunkSize = 2000,
+              minChunkSize = 100, 
+              overlapSize = 100,
+              strategy = 'semantic',
+              minContentLength = 2000,
+              graph
+            } = options;
+
+            // Import chunking dependencies
+            const Chunker = (await import('../../src/services/document/Chunker.js')).default;
+            const { SPARQLQueryService } = await import('../../src/services/sparql/index.js');
+            const SPARQLHelper = (await import('../../src/services/sparql/SPARQLHelper.js')).default;
+            const { URIMinter } = await import('../../src/utils/URIMinter.js');
+            
+            const config = this.memoryManager.config;
+            const storageConfig = config.get('storage.options');
+            const targetGraph = graph || storageConfig.graphName || 'http://hyperdata.it/content';
+            
+            // Initialize services
+            const queryService = new SPARQLQueryService();
+            const sparqlHelper = new SPARQLHelper(storageConfig.update, {
+              user: storageConfig.user,
+              password: storageConfig.password
+            });
+            
+            const chunker = new Chunker({
+              maxChunkSize,
+              minChunkSize,
+              overlapSize,
+              strategy,
+              baseNamespace: 'http://purl.org/stuff/instance/'
+            });
+
+            let textElementsToProcess = [];
+
+            if (target === 'all' || target === '') {
+              // Find unprocessed text elements
+              const query = await queryService.getQuery('find-unprocessed-text-elements', {
+                graphURI: targetGraph,
+                limit: 1000000,
+                minContentLength
+              });
+              
+              const response = await fetch(storageConfig.query, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/sparql-query',
+                  'Accept': 'application/sparql-results+json',
+                  'Authorization': `Basic ${Buffer.from(`${storageConfig.user}:${storageConfig.password}`).toString('base64')}`
+                },
+                body: query
+              });
+              
+              const queryResult = await response.json();
+              textElementsToProcess = queryResult.results?.bindings || [];
+              
+            } else {
+              // Process specific text element URI
+              const query = `
+                PREFIX ragno: <http://purl.org/stuff/ragno/>
+                PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+                PREFIX prov: <http://www.w3.org/ns/prov#>
+                
+                SELECT ?textElement ?content ?sourceUnit WHERE {
+                  GRAPH <${targetGraph}> {
+                    <${target}> ragno:content ?content ;
+                               rdfs:label ?label .
+                    OPTIONAL { <${target}> prov:wasDerivedFrom ?sourceUnit }
+                    BIND(<${target}> AS ?textElement)
+                    FILTER(STRLEN(?content) >= ${minContentLength})
+                  }
+                }
+              `;
+              
+              const response = await fetch(storageConfig.query, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/sparql-query',
+                  'Accept': 'application/sparql-results+json',
+                  'Authorization': `Basic ${Buffer.from(`${storageConfig.user}:${storageConfig.password}`).toString('base64')}`
+                },
+                body: query
+              });
+              
+              const queryResult = await response.json();
+              textElementsToProcess = queryResult.results?.bindings || [];
+            }
+
+            if (textElementsToProcess.length === 0) {
+              result = {
+                chunkedDocuments: [],
+                message: 'No eligible text elements found for chunking',
+                augmentationType: 'chunk_documents'
+              };
+            } else {
+              const chunkedResults = [];
+              
+              for (const element of textElementsToProcess) {
+                const textElementURI = element.textElement.value;
+                const content = element.content.value;
+                const sourceUnit = element.sourceUnit?.value;
+                
+                try {
+                  console.log(`🧩 Chunking document: ${textElementURI} (${content.length} chars)`);
+                  
+                  // Chunk the content
+                  const chunkingResult = await chunker.chunk(content, {
+                    title: `TextElement ${textElementURI.split('/').pop()}`,
+                    sourceUri: textElementURI
+                  });
+                  
+                  console.log(`✂️ Created ${chunkingResult.chunks.length} chunks`);
+                  
+                  // Generate URIs for the OLO structure
+                  const chunkListURI = URIMinter.mintURI('http://purl.org/stuff/instance/', 'chunklist', textElementURI);
+                  
+                  // Build chunk triples
+                  const chunkTriples = [];
+                  const slotTriples = [];
+                  
+                  for (let i = 0; i < chunkingResult.chunks.length; i++) {
+                    const chunk = chunkingResult.chunks[i];
+                    const chunkURI = chunk.uri;
+                    const slotURI = URIMinter.mintURI('http://purl.org/stuff/instance/', 'slot', `${textElementURI}-${i}`);
+                    
+                    // Generate embedding for chunk
+                    const chunkEmbedding = await this.safeOps.generateEmbedding(chunk.content);
+                    const embeddingURI = URIMinter.mintURI('http://purl.org/stuff/instance/', 'embedding', chunk.content);
+                    
+                    // Chunk as both ragno:Unit and ragno:TextElement for embeddings
+                    chunkTriples.push(`
+    <${chunkURI}> a ragno:Unit, ragno:TextElement ;
+                  ragno:content """${chunk.content.replace(/"/g, '\\"')}""" ;
+                  dcterms:extent ${chunk.size} ;
+                  olo:index ${chunk.index} ;
+                  prov:wasDerivedFrom <${textElementURI}> ;
+                  ragno:hasEmbedding <${embeddingURI}> ;
+                  dcterms:created "${new Date().toISOString()}"^^xsd:dateTime .
+                  
+    <${embeddingURI}> a ragno:IndexElement ;
+                      ragno:embeddingModel "nomic-embed-text" ;
+                      ragno:subType ragno:TextEmbedding ;
+                      ragno:embeddingDimension ${chunkEmbedding.length} ;
+                      ragno:vectorContent "[${chunkEmbedding.join(',')}]" .`);
+                    
+                    // OLO slot structure
+                    slotTriples.push(`
+    <${slotURI}> a olo:Slot ;
+                 olo:index ${i + 1} ;
+                 olo:item <${chunkURI}> ;
+                 olo:ordered_list <${chunkListURI}> .
+    
+    <${chunkListURI}> olo:slot <${slotURI}> .`);
+                    
+                    // Add next/previous relationships for slots
+                    if (i > 0) {
+                      const prevSlotURI = URIMinter.mintURI('http://purl.org/stuff/instance/', 'slot', `${textElementURI}-${i-1}`);
+                      slotTriples.push(`
+    <${slotURI}> olo:previous <${prevSlotURI}> .
+    <${prevSlotURI}> olo:next <${slotURI}> .`);
+                    }
+                  }
+                  
+                  // Create the SPARQL update query
+                  const updateQuery = await queryService.getQuery('store-chunks-with-olo', {
+                    graphURI: targetGraph,
+                    textElementURI: textElementURI,
+                    chunkListURI: chunkListURI,
+                    chunkCount: chunkingResult.chunks.length,
+                    textElementTitle: textElementURI.split('/').pop(),
+                    chunkTriples: chunkTriples.join('\n'),
+                    slotTriples: slotTriples.join('\n')
+                  });
+                  
+                  // Execute the update
+                  await sparqlHelper.executeUpdate(updateQuery);
+                  
+                  chunkedResults.push({
+                    textElementURI,
+                    chunkCount: chunkingResult.chunks.length,
+                    chunkListURI,
+                    avgChunkSize: Math.round(chunkingResult.metadata.chunking.avgChunkSize),
+                    contentLength: content.length
+                  });
+                  
+                  console.log(`✅ Chunked and stored ${chunkingResult.chunks.length} chunks with embeddings`);
+                  
+                } catch (chunkError) {
+                  console.error(`❌ Error chunking ${textElementURI}:`, chunkError.message);
+                  chunkedResults.push({
+                    textElementURI,
+                    error: chunkError.message,
+                    contentLength: content.length
+                  });
+                }
+              }
+              
+              result = {
+                chunkedDocuments: chunkedResults,
+                totalProcessed: chunkedResults.filter(r => !r.error).length,
+                totalFound: textElementsToProcess.length,
+                totalChunks: chunkedResults.reduce((sum, r) => sum + (r.chunkCount || 0), 0),
+                augmentationType: 'chunk_documents',
+                options: { maxChunkSize, minChunkSize, overlapSize, strategy, minContentLength },
+                message: `Processed ${chunkedResults.filter(r => !r.error).length}/${textElementsToProcess.length} documents, created ${chunkedResults.reduce((sum, r) => sum + (r.chunkCount || 0), 0)} searchable chunks`
+              };
+            }
+            
+          } catch (chunkingError) {
+            result = {
+              error: chunkingError.message,
+              augmentationType: 'chunk_documents_failed',
+              message: `Document chunking failed: ${chunkingError.message}`
             };
           }
           break;

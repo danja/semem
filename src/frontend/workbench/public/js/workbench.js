@@ -18,6 +18,7 @@ class WorkbenchApp {
     this.handleTellSubmit = this.handleTellSubmit.bind(this);
     this.handleAskSubmit = this.handleAskSubmit.bind(this);
     this.handleAugmentSubmit = this.handleAugmentSubmit.bind(this);
+    this.handleAugmentOperationChange = this.handleAugmentOperationChange.bind(this);
     this.handleZoomChange = this.handleZoomChange.bind(this);
     this.handlePanChange = this.handlePanChange.bind(this);
     this.handleTiltChange = this.handleTiltChange.bind(this);
@@ -100,6 +101,14 @@ class WorkbenchApp {
     const augmentForm = DomUtils.$('#augment-form');
     if (augmentForm) {
       augmentForm.addEventListener('submit', this.handleAugmentSubmit);
+      
+      // Operation dropdown change handler
+      const operationSelect = DomUtils.$('#augment-operation');
+      if (operationSelect) {
+        operationSelect.addEventListener('change', this.handleAugmentOperationChange.bind(this));
+        // Initialize UI state based on current selection
+        this.handleAugmentOperationChange({ target: operationSelect });
+      }
     }
     
     // Navigation controls
@@ -399,6 +408,37 @@ class WorkbenchApp {
     
   }
 
+  handleAugmentOperationChange(event) {
+    const selectedOperation = event.target.value;
+    const chunkingOptions = DomUtils.$('#chunking-options-section');
+    const targetTextarea = DomUtils.$('#augment-target');
+    
+    if (selectedOperation === 'chunk_documents') {
+      // Show chunking options
+      if (chunkingOptions) {
+        chunkingOptions.style.display = 'block';
+      }
+      // Update placeholder text to clarify that target is optional for chunking
+      if (targetTextarea) {
+        targetTextarea.placeholder = 'Leave empty to chunk all unprocessed documents, or enter specific document URI...';
+        targetTextarea.removeAttribute('required');
+      }
+    } else {
+      // Hide chunking options
+      if (chunkingOptions) {
+        chunkingOptions.style.display = 'none';
+      }
+      // Reset placeholder text for other operations
+      if (targetTextarea) {
+        if (selectedOperation === 'process_lazy') {
+          targetTextarea.placeholder = 'Enter text to analyze (or leave empty for \'Process Lazy Content\')...';
+        } else {
+          targetTextarea.placeholder = 'Enter text to analyze...';
+        }
+      }
+    }
+  }
+
   handleFileSelection(event) {
     const file = event.target.files[0];
     if (!file) {
@@ -662,12 +702,13 @@ class WorkbenchApp {
     const formData = DomUtils.getFormData(form);
     const results = DomUtils.$('#augment-results');
     
-    // Handle process_lazy operation differently
+    // Handle special operations differently
     const isProcessLazy = formData.operation === 'process_lazy';
-    const target = isProcessLazy ? 'all' : formData.target;
+    const isChunkDocuments = formData.operation === 'chunk_documents';
+    const target = isProcessLazy ? 'all' : (isChunkDocuments ? (formData.target || 'all') : formData.target);
     
-    // Validate target content for non-lazy operations
-    if (!isProcessLazy && !target?.trim()) {
+    // Validate target content for non-special operations
+    if (!isProcessLazy && !isChunkDocuments && !target?.trim()) {
       DomUtils.showMessage(results, 'Please provide target content to analyze', 'error');
       return;
     }
@@ -676,8 +717,24 @@ class WorkbenchApp {
     const logId = consoleService.logOperationStart('augment', {
       operation: formData.operation || 'auto',
       targetLength: target?.length || 0,
-      isProcessLazy
+      isProcessLazy,
+      isChunkDocuments
     });
+    
+    // Build options object based on operation type
+    let options = {};
+    if (isProcessLazy) {
+      options = { limit: 10 };
+    } else if (isChunkDocuments) {
+      // Collect chunking options from form
+      options = {
+        maxChunkSize: parseInt(formData.maxChunkSize) || 2000,
+        minChunkSize: parseInt(formData.minChunkSize) || 100,
+        overlapSize: parseInt(formData.overlapSize) || 100,
+        strategy: formData.strategy || 'semantic',
+        minContentLength: parseInt(formData.minContentLength) || 2000
+      };
+    }
     
     try {
       stateManager.setLoadingState('augment', true);
@@ -685,7 +742,7 @@ class WorkbenchApp {
       const result = await apiService.augment({
         target: target,
         operation: formData.operation || 'auto',
-        options: isProcessLazy ? { limit: 10 } : {}
+        options: options
       });
       
       const duration = Date.now() - startTime;
@@ -694,9 +751,14 @@ class WorkbenchApp {
       // Show results
       this.displayAugmentResults(results, result);
       
-      const successMessage = isProcessLazy ? 
-        'Lazy content processed successfully' : 
-        'Analysis completed';
+      let successMessage;
+      if (isProcessLazy) {
+        successMessage = 'Lazy content processed successfully';
+      } else if (isChunkDocuments) {
+        successMessage = 'Document chunking completed successfully';
+      } else {
+        successMessage = 'Analysis completed';
+      }
       DomUtils.showToast(successMessage, 'success');
       
     } catch (error) {
