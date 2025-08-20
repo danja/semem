@@ -1,5 +1,6 @@
 import BaseStore from './BaseStore.js'
 import logger from 'loglevel'
+import { SPARQLQueryService } from '../services/sparql/SPARQLQueryService.js'
 import { v4 as uuidv4 } from 'uuid'
 
 // ZPT Query Templates for different zoom levels and data types
@@ -120,6 +121,7 @@ export default class SPARQLStore extends BaseStore {
         this.graphName = options.graphName || 'http://hyperdata.it/content'
         this.inTransaction = false
         this.dimension = options.dimension || 1536
+        this.queryService = new SPARQLQueryService()
         
         // Simple resilience configuration (opt-in)
         this.resilience = {
@@ -995,21 +997,16 @@ export default class SPARQLStore extends BaseStore {
         const embeddingStr = JSON.stringify(queryEmbedding)
         const filterClauses = this._buildFilterClauses(filters)
 
-        const query = `
-            PREFIX ragno: <http://purl.org/stuff/ragno/>
-            PREFIX semem: <http://purl.org/stuff/semem/>
-            PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+        // Use template-based query instead of hardcoded SPARQL
+        const queryTemplate = await this.queryService.loadQuery('semantic-search')
+        if (!queryTemplate) {
+            throw new Error('semantic-search query template not found')
+        }
 
-            SELECT ?uri ?embedding ?similarity ?label ?type WHERE {
-                GRAPH <${this.graphName}> {
-                    ?uri semem:embedding ?embedding ;
-                         rdfs:label ?label .
-                    OPTIONAL { ?uri rdf:type ?type }
-                    ${filterClauses}
-                }
-            }
-            LIMIT ${limit * 2}
-        `
+        const query = queryTemplate
+            .replace('${graphName}', this.graphName)
+            .replace('${filters}', filterClauses)
+            .replace('${limit}', limit * 2)
 
         try {
             const result = await this._executeSparqlQuery(query, this.endpoint.query)
@@ -1018,7 +1015,15 @@ export default class SPARQLStore extends BaseStore {
             for (const binding of result.results.bindings) {
                 try {
                     let embedding = []
-                    if (binding.embedding?.value && binding.embedding.value !== 'undefined') {
+                    
+                    // Handle two embedding formats:
+                    // 1. semem vocabulary: embedding value is JSON array string
+                    // 2. ragno vocabulary: embedding is URI, embeddingVector has the actual vector
+                    if (binding.embeddingVector?.value && binding.embeddingVector.value !== 'undefined') {
+                        // Ragno format: embedding stored as URI reference with vector data
+                        embedding = JSON.parse(binding.embeddingVector.value.trim())
+                    } else if (binding.embedding?.value && binding.embedding.value !== 'undefined' && binding.embedding.type === 'literal') {
+                        // Semem format: embedding value is the JSON array string
                         embedding = JSON.parse(binding.embedding.value.trim())
                     }
 

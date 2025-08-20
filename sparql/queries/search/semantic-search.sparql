@@ -1,0 +1,33 @@
+SELECT ?uri ?embedding ?embeddingVector ?label ?type ?content WHERE {
+    GRAPH <${graphName}> {
+        {
+            # Search ragno vocabulary (preferred for documents)
+            ?uri ragno:embedding ?embedding ;
+                 rdfs:label ?label .
+            OPTIONAL { ?uri rdf:type ?type }
+            OPTIONAL { ?uri ragno:content ?content }
+            # Get embedding vector data if stored as URI reference
+            OPTIONAL { 
+                ?embedding ragno:vectorContent ?embeddingVector 
+            }
+        } UNION {
+            # Search ragno hasEmbedding (alternative property)
+            ?uri ragno:hasEmbedding ?embedding ;
+                 rdfs:label ?label .
+            OPTIONAL { ?uri rdf:type ?type }  
+            OPTIONAL { ?uri ragno:content ?content }
+            # Get embedding vector data if stored as URI reference
+            OPTIONAL { 
+                ?embedding ragno:vectorContent ?embeddingVector 
+            }
+        } UNION {
+            # Search semem vocabulary (legacy support - embedding is vector literal)
+            ?uri semem:embedding ?embedding ;
+                 rdfs:label ?label .
+            OPTIONAL { ?uri rdf:type ?type }
+            OPTIONAL { ?uri semem:response ?content }
+        }
+        ${filters}
+    }
+}
+LIMIT ${limit}

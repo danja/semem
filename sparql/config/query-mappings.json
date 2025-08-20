@@ -41,5 +41,6 @@
   "retrieve-hyde-context": "retrieval/retrieve-hyde-context.sparql",
   "retrieve-wikipedia-context": "retrieval/retrieve-wikipedia-context.sparql",
   "retrieve-wikidata-context": "retrieval/retrieve-wikidata-context.sparql",
-  "enhancement-semantic-search": "search/enhancement-semantic-search.sparql"
+  "enhancement-semantic-search": "search/enhancement-semantic-search.sparql",
+  "semantic-search": "search/semantic-search.sparql"
 }

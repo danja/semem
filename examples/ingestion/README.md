@@ -47,6 +47,12 @@ node examples/ingestion/SPARQLIngest.js \
   --template blog-articles \
   --dry-run --limit 5
 
+# Ingest blog articles 
+node examples/ingestion/SPARQLIngest.js \
+  --endpoint "https://fuseki.hyperdata.it/danny.ayers.name/query" \
+  --template blog-articles \
+  --limit 5
+
 # Ingest documents with lazy processing
 node examples/ingestion/SPARQLIngest.js \
   --endpoint "http://localhost:3030/dataset/query" \
