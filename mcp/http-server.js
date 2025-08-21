@@ -311,11 +311,17 @@ async function startOptimizedServer() {
       app.post('/augment', async (req, res) => {
         try {
           const { target, operation = 'auto', options = {} } = req.body;
-          if (!target) {
+          // Allow empty target for certain operations that work on "all" content
+          const allowEmptyTarget = ['process_lazy', 'chunk_documents'].includes(operation);
+          if (!target && !allowEmptyTarget) {
             return res.status(400).json({ error: 'Target content is required' });
           }
           
-          const result = await simpleVerbsService.augment({ target, operation, options });
+          const result = await simpleVerbsService.augment({ 
+            target: target || 'all', 
+            operation, 
+            options 
+          });
           res.json(result);
         } catch (error) {
           res.status(500).json({ 

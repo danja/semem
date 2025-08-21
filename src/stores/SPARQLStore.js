@@ -1368,18 +1368,31 @@ export default class SPARQLStore extends BaseStore {
         const searchQuery = `
             PREFIX ragno: <http://purl.org/stuff/ragno/>
             PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+            PREFIX dcterms: <http://purl.org/dc/terms/>
 
             SELECT ?entity ?prompt ?content ?embedding ?timestamp ?type
             FROM <${this.graphName}>
             WHERE {
-                ?entity a ragno:Element ;
-                    skos:prefLabel ?prompt ;
-                    ragno:content ?content ;
-                    ragno:embedding ?embedding ;
-                    ragno:timestamp ?timestamp .
-                OPTIONAL { ?entity ragno:type ?type }
+                {
+                    # Search in regular ragno:Element objects (old format)
+                    ?entity a ragno:Element ;
+                        skos:prefLabel ?prompt ;
+                        ragno:content ?content ;
+                        ragno:embedding ?embedding ;
+                        ragno:timestamp ?timestamp .
+                    OPTIONAL { ?entity ragno:type ?type }
+                } UNION {
+                    # Search in ragno:Unit chunks (new format)
+                    ?entity a ragno:Unit ;
+                        ragno:content ?content .
+                    ?entity ragno:hasEmbedding ?embeddingUri .
+                    ?embeddingUri ragno:vectorContent ?embedding .
+                    OPTIONAL { ?entity dcterms:created ?timestamp }
+                    BIND("Chunk" AS ?type)
+                    BIND(CONCAT("Document chunk: ", SUBSTR(?content, 1, 50), "...") AS ?prompt)
+                }
             }
-            LIMIT ${limit}
+            LIMIT ${limit * 2}
         `
 
         try {
@@ -1391,7 +1404,15 @@ export default class SPARQLStore extends BaseStore {
                     let embedding = []
                     if (binding.embedding?.value && binding.embedding.value !== 'undefined') {
                         try {
-                            embedding = JSON.parse(binding.embedding.value.trim())
+                            const embeddingStr = binding.embedding.value.trim()
+                            // Handle both formats: direct JSON array or vector content with brackets
+                            if (embeddingStr.startsWith('[') && embeddingStr.endsWith(']')) {
+                                embedding = JSON.parse(embeddingStr)
+                            } else {
+                                // Try to parse as simple comma-separated values wrapped in brackets
+                                const cleaned = embeddingStr.replace(/^\[|\]$/g, '')
+                                embedding = cleaned.split(',').map(x => parseFloat(x.trim())).filter(x => !isNaN(x))
+                            }
                         } catch (embeddingError) {
                             logger.warn('Invalid embedding format:', embeddingError)
                         }

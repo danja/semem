@@ -1,8 +1,8 @@
 SELECT ?textElement ?content ?sourceUnit {
   GRAPH <${graphURI}> {
     ?textElement a ragno:TextElement ;
-                 ragno:content ?content ;
-                 prov:wasDerivedFrom ?sourceUnit .
+                 ragno:content ?content .
+    OPTIONAL { ?textElement prov:wasDerivedFrom ?sourceUnit }
     
     FILTER NOT EXISTS {
       ?textElement semem:hasChunks true .

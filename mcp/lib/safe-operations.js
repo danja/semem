@@ -201,14 +201,37 @@ export class SafeOperations {
     });
     
     try {
-      // Use the MemoryManager's proven retrieveRelevantInteractions method
-      // Convert threshold from 0-1 scale to percentage (0-100 scale) 
-      const results = await this.memoryManager.retrieveRelevantInteractions(queryText.trim(), similarityThreshold, 0, limit);
+      // Search both interactions and chunks for comprehensive results
+      let allResults = [];
+      
+      // 1. Search interactions using MemoryManager (proven method)
+      // Convert threshold from 0-1 scale to percentage (0-100 scale)
+      const interactions = await this.memoryManager.retrieveRelevantInteractions(queryText.trim(), similarityThreshold, 0, limit);
+      allResults.push(...interactions);
+      
+      // 2. Search chunks directly using the store's search method
+      if (this.memoryManager.store && typeof this.memoryManager.store.search === 'function') {
+        // Generate embedding for the query
+        const queryEmbedding = await this.generateEmbedding(queryText);
+        const chunks = await this.memoryManager.store.search(queryEmbedding, limit, threshold);
+        allResults.push(...chunks);
+      }
+      
+      // Remove duplicates and sort by similarity
+      const uniqueResults = Array.from(
+        new Map(allResults.map(r => [`${r.prompt}_${r.response}`, r])).values()
+      ).sort((a, b) => (b.similarity || 0) - (a.similarity || 0));
+      
+      // Limit to requested number
+      const results = uniqueResults.slice(0, limit);
+      
       const duration = Date.now() - startTime;
       
       mcpDebugger.debug('✅ Similar content search completed', { 
         duration: duration + 'ms',
-        resultsFound: results.length,
+        interactionsFound: interactions.length,
+        chunksFound: allResults.length - interactions.length,
+        totalUnique: results.length,
         topSimilarity: results[0]?.similarity || 0
       });
       

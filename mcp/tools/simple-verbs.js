@@ -44,7 +44,7 @@ const AskSchema = z.object({
 });
 
 const AugmentSchema = z.object({
-  target: z.string().min(1, "Target content/context cannot be empty"),
+  target: z.string().optional().default('all'),
   operation: z.enum(['concepts', 'attributes', 'relationships', 'process_lazy', 'chunk_documents', 'auto']).optional().default('auto'),
   options: z.object({
     // Chunking-specific options
@@ -875,6 +875,12 @@ class SimpleVerbsService {
     await this.initialize();
     
     try {
+      // Validate target for operations that require specific content
+      const requiresSpecificTarget = ['concepts', 'attributes', 'relationships'].includes(operation);
+      if (requiresSpecificTarget && (!target || target === 'all')) {
+        throw new Error(`Operation '${operation}' requires specific target content, not 'all'`);
+      }
+      
       mcpDebugger.debug('Simple Verb: augment', { target, operation });
       
       let result;

@@ -79,6 +79,7 @@ export default class MemoryManager {
         }
         this.memStore = new MemoryStore(dimension, config)
         this.store = storage || new InMemoryStore()
+        this.config = config
         this.contextManager = new ContextManager(contextOptions)
 
         // Start initialization but don't wait for it here

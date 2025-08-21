@@ -8,9 +8,11 @@ const __dirname = path.dirname(__filename);
 
 export class SPARQLQueryService {
     constructor(options = {}) {
-        this.queryPath = options.queryPath || path.join(__dirname, '../../../sparql/queries');
-        this.templatePath = options.templatePath || path.join(__dirname, '../../../sparql/templates');
-        this.configPath = options.configPath || path.join(__dirname, '../../../sparql/config');
+        // Calculate paths relative to project root
+        const projectRoot = path.join(__dirname, '../../..');
+        this.queryPath = options.queryPath || path.join(projectRoot, 'sparql/queries');
+        this.templatePath = options.templatePath || path.join(projectRoot, 'sparql/templates');
+        this.configPath = options.configPath || path.join(projectRoot, 'sparql/config');
         this.cache = new QueryCache(options.cacheOptions || {});
         this.prefixes = null;
         this.queryMappings = null;
@@ -69,6 +71,8 @@ PREFIX owl: <http://www.w3.org/2002/07/owl#>
             'navigation-questions': 'retrieval/navigation-questions.sparql',
             'corpus-loading': 'retrieval/corpus-loading.sparql',
             'processed-questions': 'retrieval/processed-questions.sparql',
+            'find-unprocessed-text-elements': 'find-unprocessed-text-elements.sparql',
+            'store-chunks-with-olo': 'store-chunks-with-olo.sparql',
             'insert-data': 'management/insert-data.sparql',
             'clear-graph': 'management/clear-graph.sparql',
             'relationship-creation': 'management/relationship-creation.sparql',
