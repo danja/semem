@@ -152,6 +152,7 @@
     "enableContextEnrichment": true,
     "enableProvenance": true
   },
+  "baseUri": "http://hyperdata.it/",
   "context": {
     "truncationLimit": null
   },

@@ -92,7 +92,7 @@ const ZPT_QUERY_TEMPLATES = {
 }
 
 export default class SPARQLStore extends BaseStore {
-    constructor(endpoint, options = {}) {
+    constructor(endpoint, options = {}, config = null) {
         super()
         // Robust endpoint handling: allow string or object
         if (typeof endpoint === 'string') {
@@ -122,6 +122,8 @@ export default class SPARQLStore extends BaseStore {
         this.inTransaction = false
         this.dimension = options.dimension || 1536
         this.queryService = new SPARQLQueryService()
+        this.config = config
+        this.baseUri = config?.get?.('baseUri') || config?.baseUri || 'http://hyperdata.it/'
         
         // Simple resilience configuration (opt-in)
         this.resilience = {
@@ -570,7 +572,7 @@ export default class SPARQLStore extends BaseStore {
         memories.forEach((interaction, index) => {
             if (Array.isArray(interaction.concepts)) {
                 interaction.concepts.forEach(concept => {
-                    const conceptUri = `http://example.org/concept/${encodeURIComponent(concept)}`
+                    const conceptUri = `${this.baseUri}concept/${encodeURIComponent(concept)}`
 
                     if (!seenConcepts.has(conceptUri)) {
                         conceptStatements.push(`
@@ -599,7 +601,7 @@ export default class SPARQLStore extends BaseStore {
         memories.forEach((interaction, index) => {
             if (Array.isArray(interaction.concepts)) {
                 interaction.concepts.forEach(concept => {
-                    const conceptUri = `http://example.org/concept/${encodeURIComponent(concept)}`
+                    const conceptUri = `${this.baseUri}concept/${encodeURIComponent(concept)}`
 
                     if (!seenConcepts.has(conceptUri)) {
                         conceptStatements.push(`
@@ -1704,7 +1706,7 @@ export default class SPARQLStore extends BaseStore {
         try {
             await this.beginTransaction();
             
-            const documentUri = `${this.config.baseUri}document/${documentData.id}`;
+            const documentUri = `${this.baseUri}document/${documentData.id}`;
             const insertQuery = `
                 PREFIX ragno: <http://purl.org/stuff/ragno/>
                 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
