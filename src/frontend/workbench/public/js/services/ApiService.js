@@ -93,12 +93,22 @@ export class ApiService {
    * @param {string} params.question - Question to ask
    * @param {string} params.mode - Mode: 'basic' | 'standard' | 'comprehensive'
    * @param {boolean} params.useContext - Whether to use context
+   * @param {boolean} params.useHyDE - Whether to use HyDE enhancement
+   * @param {boolean} params.useWikipedia - Whether to use Wikipedia enhancement
+   * @param {boolean} params.useWikidata - Whether to use Wikidata enhancement
    * @returns {Promise<Object>} Ask result with answer and related content
    */
-  async ask({ question, mode = 'standard', useContext = true }) {
+  async ask({ question, mode = 'standard', useContext = true, useHyDE = false, useWikipedia = false, useWikidata = false }) {
     return this.makeRequest('/ask', {
       method: 'POST',
-      body: JSON.stringify({ question, mode, useContext })
+      body: JSON.stringify({ 
+        question, 
+        mode, 
+        useContext,
+        useHyDE,
+        useWikipedia,
+        useWikidata
+      })
     });
   }
 
