@@ -14,6 +14,7 @@ import { SafeOperations } from '../lib/safe-operations.js';
 // Import existing complex tools to wrap
 import { ZPTNavigationService } from './zpt-tools.js';
 import { EnhancementCoordinator } from '../../src/services/enhancement/EnhancementCoordinator.js';
+import { HybridContextManager } from '../../src/services/context/HybridContextManager.js';
 
 // Simple Verb Tool Names
 export const SimpleVerbToolNames = {
@@ -359,6 +360,7 @@ class SimpleVerbsService {
     this.zptService = null;
     this.stateManager = null;
     this.enhancementCoordinator = null;
+    this.hybridContextManager = null;
   }
 
   /**
@@ -380,7 +382,15 @@ class SimpleVerbsService {
         config: this.memoryManager.config
       });
       
-      mcpDebugger.info('SimpleVerbsService initialized with ZPT state management and enhancement coordinator');
+      // Initialize hybrid context manager for intelligent context merging
+      this.hybridContextManager = new HybridContextManager({
+        memoryManager: this.memoryManager,
+        enhancementCoordinator: this.enhancementCoordinator,
+        safeOps: this.safeOps,
+        stateManager: this.stateManager
+      });
+      
+      mcpDebugger.info('SimpleVerbsService initialized with ZPT state management, enhancement coordinator, and hybrid context manager');
     }
   }
 
@@ -637,231 +647,72 @@ class SimpleVerbsService {
 
   /**
    * ASK - Query the system using current ZPT context with optional enhancements
+   * Now uses HybridContextManager for intelligent merging of enhancement and personal context
    */
   async ask({ question, mode = 'standard', useContext = true, useHyDE = false, useWikipedia = false, useWikidata = false }) {
     await this.initialize();
     
     try {
       const startTime = Date.now();
-      mcpDebugger.info('🔍 Starting Ask operation', { question: question.substring(0, 100) + (question.length > 100 ? '...' : ''), mode, useContext, useHyDE, useWikipedia, useWikidata });
-      mcpDebugger.debug('Simple Verb: ask', { question, mode, useContext, useHyDE, useWikipedia, useWikidata });
+      mcpDebugger.info('🔍 Starting Hybrid Ask operation', { 
+        question: question.substring(0, 100) + (question.length > 100 ? '...' : ''), 
+        mode, useContext, useHyDE, useWikipedia, useWikidata 
+      });
+      mcpDebugger.debug('Simple Verb: ask (hybrid)', { question, mode, useContext, useHyDE, useWikipedia, useWikidata });
       
-      let result;
-      let sessionResults = [];
-      let persistentResults = [];
-      let enhancementResult = null;
-      
-      // Step 1: Check if any enhancements are requested
-      const hasEnhancements = useHyDE || useWikipedia || useWikidata;
-      
-      if (hasEnhancements && this.enhancementCoordinator) {
-        const stepStartTime = Date.now();
-        mcpDebugger.info('📈 Step 1: Processing query with enhancements', { useHyDE, useWikipedia, useWikidata });
-        mcpDebugger.info('Processing query with enhancements');
-        try {
-          enhancementResult = await this.enhancementCoordinator.enhanceQuery(question, {
-            useHyDE,
-            useWikipedia, 
-            useWikidata,
-            mode
-          });
-          
-          if (enhancementResult.success && enhancementResult.enhancedAnswer) {
-            // Enhancement succeeded with generated answer - return it directly
-            const stepDuration = Date.now() - stepStartTime;
-            mcpDebugger.info('✅ Step 1 complete: Enhancement successful with generated answer', { duration: stepDuration + 'ms' });
-            mcpDebugger.info('Enhancement successful with generated answer');
-            
-            return {
-              success: true,
-              verb: 'ask',
-              question,
-              answer: enhancementResult.enhancedAnswer,
-              usedContext: true,
-              contextItems: enhancementResult.context ? Object.keys(enhancementResult.context.enhancements || {}).length : 0,
-              enhancementType: enhancementResult.enhancementType,
-              enhancements: enhancementResult.metadata?.servicesUsed || [],
-              enhancementStats: enhancementResult.stats,
-              zptState: this.stateManager.getState(),
-              searchMethod: 'enhanced_generation',
-              sessionCacheStats: this.stateManager.getSessionCacheStats()
-            };
-          }
-          
-        } catch (enhancementError) {
-          const stepDuration = Date.now() - stepStartTime;
-          mcpDebugger.warn('❌ Step 1 failed: Enhancement failed, falling back to regular search', { duration: stepDuration + 'ms', error: enhancementError.message });
-          mcpDebugger.warn('Enhancement failed, falling back to regular search:', enhancementError.message);
-          // Continue with regular search below
-        }
-      }
-      
-      // Step 2: Generate embedding for semantic search
-      const embeddingStartTime = Date.now();
-      mcpDebugger.info('🧮 Step 2: Generating query embedding for semantic search');
-      const queryEmbedding = await this.safeOps.generateEmbedding(question);
-      const embeddingDuration = Date.now() - embeddingStartTime;
-      mcpDebugger.info('✅ Step 2 complete: Query embedding generated', { duration: embeddingDuration + 'ms', embeddingLength: queryEmbedding?.length || 0 });
-      
-      // Step 3: Search session cache first for immediate results
-      const sessionSearchStartTime = Date.now();
-      mcpDebugger.info('🔍 Step 3: Searching session cache for immediate semantic results');
-      mcpDebugger.info('Searching session cache for immediate semantic retrieval');
-      sessionResults = await this.stateManager.searchSessionCache(question, queryEmbedding, 3, 0.4);
-      const sessionSearchDuration = Date.now() - sessionSearchStartTime;
-      
-      if (sessionResults.length > 0) {
-        mcpDebugger.info('✅ Step 3 complete: Found results in session cache', { duration: sessionSearchDuration + 'ms', results: sessionResults.length });
-        mcpDebugger.info(`Found ${sessionResults.length} results in session cache`);
-      } else {
-        mcpDebugger.info('✅ Step 3 complete: No results found in session cache', { duration: sessionSearchDuration + 'ms' });
-      }
-      
-      // Step 4: Search persistent storage for additional context
-      const persistentSearchStartTime = Date.now();
-      mcpDebugger.info('💾 Step 4: Searching persistent storage for additional context');
-      mcpDebugger.info('Searching persistent storage for additional context');
-      persistentResults = await this.safeOps.searchSimilar(question, 5, 0.5);
-      const persistentSearchDuration = Date.now() - persistentSearchStartTime;
-      mcpDebugger.info('✅ Step 4 complete: Persistent storage search finished', { duration: persistentSearchDuration + 'ms', results: persistentResults.length });
-      
-      // Step 5: Combine and rank results
-      const combineStartTime = Date.now();
-      mcpDebugger.info('🔄 Step 5: Combining and ranking search results');
-      const allResults = [
-        ...sessionResults.map(r => ({ ...r, source: 'session_cache' })),
-        ...persistentResults.map(r => ({ ...r, source: 'persistent_storage' }))
-      ];
-      
-      // Remove duplicates and sort by similarity
-      const uniqueResults = Array.from(
-        new Map(allResults.map(r => [r.prompt + r.response, r])).values()
-      ).sort((a, b) => (b.similarity || 0) - (a.similarity || 0));
-      const combineDuration = Date.now() - combineStartTime;
-      mcpDebugger.info('✅ Step 5 complete: Results combined and ranked', { 
-        duration: combineDuration + 'ms',
-        totalResults: allResults.length,
-        uniqueResults: uniqueResults.length,
-        topSimilarity: uniqueResults[0]?.similarity || 0
+      // Use HybridContextManager for intelligent context processing
+      const hybridResult = await this.hybridContextManager.processQuery(question, {
+        mode,
+        useContext,
+        useHyDE,
+        useWikipedia,
+        useWikidata
       });
       
-      if (uniqueResults.length > 0) {
-        // Found relevant memories - use them as context
-        const contextStartTime = Date.now();
-        mcpDebugger.info('🤖 Step 6: Generating response with context', { contextItems: Math.min(uniqueResults.length, 5) });
-        const context = uniqueResults
-          .slice(0, 5) // Limit to top 5 results
-          .map(memory => `${memory.prompt}: ${memory.response}`)
-          .join('\n');
-          
-        result = await this.safeOps.generateResponse(question, context);
-        const contextDuration = Date.now() - contextStartTime;
-        mcpDebugger.info('✅ Step 6 complete: Response generated with context', { duration: contextDuration + 'ms' });
-        
-        // Update state with this query
-        this.stateManager.state.lastQuery = question;
-        
-        const totalDuration = Date.now() - startTime;
-        mcpDebugger.info('✅ Ask operation complete: Success with context', { totalDuration: totalDuration + 'ms' });
-        
-        return {
-          success: true,
-          verb: 'ask',
-          question,
-          answer: result,
-          usedContext: true,
-          contextItems: uniqueResults.length,
-          sessionResults: sessionResults.length,
-          persistentResults: persistentResults.length,
-          memories: uniqueResults.length,
-          zptState: this.stateManager.getState(),
-          searchMethod: 'hybrid_semantic_search',
-          sessionCacheStats: this.stateManager.getSessionCacheStats()
-        };
-        
-      } else {
-        // No relevant memories found - try ZPT navigation as fallback (if requested)
-        if (useContext && this.stateManager.state.lastQuery && mode === 'navigation') {
-          const navStartTime = Date.now();
-          mcpDebugger.info('🧭 Step 6a: No memories found, falling back to ZPT navigation');
-          mcpDebugger.info('No memories found, falling back to ZPT navigation');
-          
-          const navParams = this.stateManager.getNavigationParams(question);
-          const navResult = await this.zptService.navigate(navParams);
-          
-          // Generate contextual answer using navigation results
-          if (navResult.success && navResult.content?.data?.length > 0) {
-            const context = navResult.content.data
-              .map(item => item.content || item.label || '')
-              .join('\n');
-              
-            result = await this.safeOps.generateResponse(question, context);
-            const navDuration = Date.now() - navStartTime;
-            mcpDebugger.info('✅ Step 6a complete: Response generated with navigation context', { duration: navDuration + 'ms', navItems: navResult.content.data.length });
-          } else {
-            // Fallback to basic answer if navigation also fails
-            result = await this.safeOps.generateResponse(question);
-            const navDuration = Date.now() - navStartTime;
-            mcpDebugger.info('✅ Step 6a complete: Navigation failed, basic response generated', { duration: navDuration + 'ms' });
-          }
-          
-          const totalDuration = Date.now() - startTime;
-          mcpDebugger.info('✅ Ask operation complete: Success with navigation fallback', { totalDuration: totalDuration + 'ms' });
-          
-          return {
-            success: true,
-            verb: 'ask',
-            question,
-            answer: result,
-            usedContext: true,
-            contextItems: navResult.content?.data?.length || 0,
-            sessionResults: 0,
-            persistentResults: 0,
-            zptState: this.stateManager.getState(),
-            navigation: navResult,
-            searchMethod: 'zpt_navigation_fallback',
-            sessionCacheStats: this.stateManager.getSessionCacheStats()
-          };
-          
-        } else {
-          // No memories and no navigation - basic response
-          const basicStartTime = Date.now();
-          mcpDebugger.info('🤖 Step 6b: No memories found, generating basic response');
-          result = await this.safeOps.generateResponse(question);
-          const basicDuration = Date.now() - basicStartTime;
-          mcpDebugger.info('✅ Step 6b complete: Basic response generated', { duration: basicDuration + 'ms' });
-          
-          // Update state with this query
-          this.stateManager.state.lastQuery = question;
-          
-          const totalDuration = Date.now() - startTime;
-          mcpDebugger.info('✅ Ask operation complete: Success with basic response', { totalDuration: totalDuration + 'ms' });
-          
-          return {
-            success: true,
-            verb: 'ask',
-            question,
-            answer: result,
-            usedContext: false,
-            sessionResults: 0,
-            persistentResults: 0,
-            memories: 0,
-            zptState: this.stateManager.getState(),
-            searchMethod: 'basic_response',
-            sessionCacheStats: this.stateManager.getSessionCacheStats()
-          };
-        }
-      }
+      // Update state with this query
+      this.stateManager.state.lastQuery = question;
+      
+      const totalDuration = Date.now() - startTime;
+      mcpDebugger.info('✅ Hybrid Ask operation complete', { 
+        totalDuration: totalDuration + 'ms',
+        success: hybridResult.success,
+        mergeStrategy: hybridResult.mergeStrategy,
+        enhancementUsed: hybridResult.enhancementUsed,
+        localContextUsed: hybridResult.localContextUsed
+      });
+      
+      // Transform hybrid result to standard ask response format
+      return {
+        success: hybridResult.success,
+        verb: 'ask',
+        question,
+        answer: hybridResult.answer,
+        usedContext: hybridResult.localContextUsed || hybridResult.enhancementUsed,
+        contextItems: (hybridResult.localContextResults?.length || 0) + (hybridResult.enhancementResults?.length || 0),
+        sessionResults: hybridResult.sessionResults || 0,
+        persistentResults: hybridResult.persistentResults || 0,
+        memories: hybridResult.localContextResults?.length || 0,
+        enhancementType: hybridResult.enhancementType,
+        enhancements: hybridResult.enhancements || [],
+        enhancementStats: hybridResult.enhancementStats,
+        mergeStrategy: hybridResult.mergeStrategy,
+        contextAnalysis: hybridResult.contextAnalysis,
+        hybridStats: hybridResult.hybridStats,
+        zptState: this.stateManager.getState(),
+        searchMethod: 'hybrid_context_processing',
+        sessionCacheStats: this.stateManager.getSessionCacheStats()
+      };
       
     } catch (error) {
       const totalDuration = Date.now() - startTime;
-      mcpDebugger.error('❌ Ask operation failed', { error: error.message, totalDuration: totalDuration + 'ms' });
-      mcpDebugger.error('Ask verb failed', error);
+      mcpDebugger.error('❌ Hybrid Ask operation failed', { error: error.message, totalDuration: totalDuration + 'ms' });
+      mcpDebugger.error('Hybrid Ask verb failed', error);
       return {
         success: false,
         verb: 'ask',
         question,
         error: error.message,
+        hybridError: true,
         zptState: this.stateManager.getState(),
         sessionCacheStats: this.stateManager.getSessionCacheStats()
       };
