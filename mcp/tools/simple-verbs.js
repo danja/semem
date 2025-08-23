@@ -46,7 +46,7 @@ const AskSchema = z.object({
 
 const AugmentSchema = z.object({
   target: z.string().optional().default('all'),
-  operation: z.enum(['concepts', 'attributes', 'relationships', 'process_lazy', 'chunk_documents', 'auto']).optional().default('auto'),
+  operation: z.enum(['auto', 'concepts', 'attributes', 'relationships', 'process_lazy', 'chunk_documents', 'extract_concepts', 'generate_embedding', 'analyze_text']).optional().default('auto'),
   options: z.object({
     // Chunking-specific options
     maxChunkSize: z.number().optional().default(2000),
@@ -55,7 +55,8 @@ const AugmentSchema = z.object({
     strategy: z.enum(['semantic', 'fixed']).optional().default('semantic'),
     minContentLength: z.number().optional().default(2000),
     graph: z.string().optional()
-  }).optional().default({})
+  }).optional().default({}),
+  parameters: z.object({}).optional().default({}) // Legacy support - will be merged with options
 });
 
 const ZoomSchema = z.object({
@@ -747,8 +748,14 @@ class SimpleVerbsService {
   /**
    * AUGMENT - Run operations on relevant knowledgebase parts
    */
-  async augment({ target, operation = 'auto', options = {} }) {
+  async augment({ target, operation = 'auto', options = {}, parameters = {} }) {
     await this.initialize();
+    
+    // Backward compatibility: merge legacy 'parameters' into 'options'
+    const mergedOptions = { ...parameters, ...options };
+    if (Object.keys(parameters).length > 0) {
+      mcpDebugger.debug('Legacy parameters detected, merged into options', { parameters, mergedOptions });
+    }
     
     try {
       // Validate target for operations that require specific content
@@ -771,7 +778,7 @@ class SimpleVerbsService {
           // Use Ragno to augment with attributes
           try {
             const { augmentWithAttributes } = await import('../../src/ragno/augmentWithAttributes.js');
-            result = await augmentWithAttributes([{ content: target }], this.memoryManager.llmHandler, options);
+            result = await augmentWithAttributes([{ content: target }], this.memoryManager.llmHandler, mergedOptions);
           } catch (importError) {
             // Fallback to concept extraction if Ragno is not available
             result = await this.safeOps.extractConcepts(target);
@@ -798,7 +805,7 @@ class SimpleVerbsService {
           try {
             // If target is "all", process all lazy content
             if (target === 'all' || target === '') {
-              const lazyItems = await this.memoryManager.store.findLazyContent(options.limit || 10);
+              const lazyItems = await this.memoryManager.store.findLazyContent(mergedOptions.limit || 10);
               
               if (lazyItems.length === 0) {
                 result = {
@@ -877,7 +884,7 @@ class SimpleVerbsService {
               strategy = 'semantic',
               minContentLength = 2000,
               graph
-            } = options;
+            } = mergedOptions;
 
             // Import chunking dependencies
             const Chunker = (await import('../../src/services/document/Chunker.js')).default;
@@ -1091,18 +1098,49 @@ class SimpleVerbsService {
             };
           }
           break;
+        
+        // Legacy operation names for backward compatibility
+        case 'extract_concepts':
+          result = await this.safeOps.extractConcepts(target);
+          break;
+          
+        case 'generate_embedding':
+          const embedding = await this.safeOps.generateEmbedding(target);
+          result = {
+            embedding: {
+              dimension: embedding.length,
+              preview: embedding.slice(0, 5).map(x => parseFloat(x.toFixed(4))),
+              full: embedding
+            },
+            augmentationType: 'generate_embedding'
+          };
+          break;
+          
+        case 'analyze_text':
+          // Analyze text combines concept extraction and embedding
+          const analysisEmbedding = await this.safeOps.generateEmbedding(target);
+          const analysisConcepts = await this.safeOps.extractConcepts(target);
+          result = {
+            concepts: analysisConcepts,
+            embedding: {
+              dimension: analysisEmbedding.length,
+              preview: analysisEmbedding.slice(0, 5).map(x => parseFloat(x.toFixed(4)))
+            },
+            augmentationType: 'analyze_text'
+          };
+          break;
           
         case 'auto':
         default:
           // Automatic augmentation - extract concepts and use ZPT context
           const concepts = await this.safeOps.extractConcepts(target);
-          const embedding = await this.safeOps.generateEmbedding(target);
+          const autoEmbedding = await this.safeOps.generateEmbedding(target);
           
           result = {
             concepts,
             embedding: {
-              dimension: embedding.length,
-              preview: embedding.slice(0, 5).map(x => parseFloat(x.toFixed(4)))
+              dimension: autoEmbedding.length,
+              preview: autoEmbedding.slice(0, 5).map(x => parseFloat(x.toFixed(4)))
             },
             augmentationType: 'auto'
           };

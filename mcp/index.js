@@ -545,7 +545,8 @@ function registerToolCallHandler(server) {
             properties: {
               content: { type: 'string', description: 'Content to add to the system' },
               type: { type: 'string', enum: ['interaction', 'document', 'concept'], default: 'interaction', description: 'Type of content being added' },
-              metadata: { type: 'object', description: 'Optional metadata for the content' }
+              metadata: { type: 'object', description: 'Optional metadata for the content' },
+              lazy: { type: 'boolean', default: false, description: 'Whether to store without immediate processing' }
             },
             required: ['content']
           }
@@ -557,7 +558,11 @@ function registerToolCallHandler(server) {
             type: 'object',
             properties: {
               question: { type: 'string', description: 'Question to ask the system' },
-              useContext: { type: 'boolean', default: true, description: 'Whether to use ZPT context for enhanced answers' }
+              useContext: { type: 'boolean', default: true, description: 'Whether to use ZPT context for enhanced answers' },
+              mode: { type: 'string', enum: ['basic', 'standard', 'comprehensive'], default: 'standard', description: 'Answer quality mode: basic (2 iterations), standard (3 iterations), comprehensive (5 iterations)' },
+              useHyDE: { type: 'boolean', default: false, description: 'Whether to use HyDE enhancement' },
+              useWikipedia: { type: 'boolean', default: false, description: 'Whether to use Wikipedia enhancement' },
+              useWikidata: { type: 'boolean', default: false, description: 'Whether to use Wikidata enhancement' }
             },
             required: ['question']
           }
@@ -568,11 +573,12 @@ function registerToolCallHandler(server) {
           inputSchema: {
             type: 'object',
             properties: {
-              operation: { type: 'string', enum: ['extract_concepts', 'generate_embedding', 'analyze_text'], default: 'extract_concepts', description: 'Operation to perform' },
+              operation: { type: 'string', enum: ['auto', 'concepts', 'attributes', 'relationships', 'process_lazy', 'chunk_documents', 'extract_concepts', 'generate_embedding', 'analyze_text'], default: 'auto', description: 'Operation to perform' },
               target: { type: 'string', description: 'Target content or identifier for augmentation' },
-              parameters: { type: 'object', description: 'Parameters for the augmentation operation' }
+              options: { type: 'object', description: 'Options for the augmentation operation' },
+              parameters: { type: 'object', description: 'Legacy parameter name (use options instead)' }
             },
-            required: ['operation', 'target']
+            required: ['target']
           }
         },
         {
@@ -620,7 +626,7 @@ function registerToolCallHandler(server) {
             type: 'object',
             properties: {
               what: { type: 'string', enum: ['session', 'concepts', 'embeddings', 'all'], default: 'session', description: 'What to inspect' },
-              details: { type: 'boolean', default: false, description: 'Include detailed information' }
+              details: { type: 'boolean', default: true, description: 'Include detailed information' }
             }
           }
         },
