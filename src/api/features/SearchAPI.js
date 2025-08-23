@@ -112,6 +112,12 @@ export default class SearchAPI extends BaseAPI {
                                 0,
                                 limit
                             );
+                            console.log('🔥 CONSOLE: SearchAPI received memories from MemoryManager', { 
+                                memoriesCount: memories?.length || 0, 
+                                firstMemory: memories?.[0] ? Object.keys(memories[0]) : 'no memories',
+                                hasInteractionProperty: memories?.[0]?.interaction ? 'YES' : 'NO',
+                                memoriesStructure: memories?.[0] ? JSON.stringify(memories[0], null, 2).substring(0, 200) : 'no memories'
+                            });
                             this.logger.info(`Retrieved ${memories?.length || 0} memories`);
                         } catch (retrievalError) {
                             this.logger.error('Error retrieving interactions:', retrievalError);
@@ -125,6 +131,11 @@ export default class SearchAPI extends BaseAPI {
                         }
                         
                         // Apply safe transformation with defensive coding
+                        console.log('🔥 CONSOLE: SearchAPI applying filter and transformation', { 
+                            memoriesBeforeFilter: memories.length,
+                            memoriesWithInteractionProperty: memories.filter(item => item && typeof item === 'object' && item.interaction).length
+                        });
+                        
                         results = memories
                             .filter(item => item && typeof item === 'object' && item.interaction)
                             .map(item => {

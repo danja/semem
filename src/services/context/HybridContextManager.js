@@ -13,7 +13,10 @@
  * - Enhancement result caching for future reuse
  */
 
-import logger from 'loglevel';
+import log from 'loglevel';
+
+const logger = log.getLogger('HybridContextManager');
+import AdaptiveSearchEngine from '../search/AdaptiveSearchEngine.js';
 
 export class HybridContextManager {
     constructor(options = {}) {
@@ -21,6 +24,14 @@ export class HybridContextManager {
         this.memoryManager = options.memoryManager;
         this.safeOperations = options.safeOperations;
         this.zptStateManager = options.zptStateManager;
+        
+        // Initialize adaptive search engine for intelligent threshold management
+        this.adaptiveSearchEngine = new AdaptiveSearchEngine(this.safeOperations, {
+            enableLearning: options.enableLearning !== false,
+            maxPasses: options.maxSearchPasses || 3,
+            targetResultCount: options.targetResultCount || 5,
+            enablePanFilterBoosts: options.enablePanFilterBoosts !== false
+        });
         
         // Configuration settings
         this.settings = {
@@ -66,6 +77,7 @@ export class HybridContextManager {
     async processQuery(query, options = {}) {
         const startTime = Date.now();
         this.stats.totalQueries++;
+        
         
         logger.info('🔄 Processing query with hybrid context approach', { 
             query: query.substring(0, 100) + '...',
@@ -124,6 +136,23 @@ export class HybridContextManager {
                 mergeStrategy: contextAnalysis.selectedStrategy
             });
 
+            // DEBUG: Log the actual structure we're working with
+            console.log('🔥 CONSOLE: HybridContextManager return data structure check', {
+                localContextResult: localContextResult ? Object.keys(localContextResult) : 'null',
+                localContextResultContexts: localContextResult?.contexts ? {
+                    exists: true,
+                    isArray: Array.isArray(localContextResult.contexts),
+                    length: localContextResult.contexts.length,
+                    type: typeof localContextResult.contexts
+                } : 'no contexts property',
+                enhancementResult: enhancementResult ? Object.keys(enhancementResult) : 'null',
+                enhancementResultResults: enhancementResult?.results ? {
+                    exists: true,
+                    isArray: Array.isArray(enhancementResult.results),
+                    length: enhancementResult.results.length
+                } : 'no results property'
+            });
+
             return {
                 success: true,
                 query,
@@ -135,6 +164,8 @@ export class HybridContextManager {
                 mergedContext,
                 processingTime,
                 zptState,
+                localContextResults: localContextResult?.contexts || [],
+                enhancementResults: enhancementResult?.results || [],
                 stats: {
                     personalContextItems: localContextResult?.contexts?.length || 0,
                     enhancementSources: enhancementResult?.metadata?.servicesUsed || [],
@@ -190,17 +221,29 @@ export class HybridContextManager {
             searches.push(Promise.resolve({ success: false, reason: 'not_requested' }));
         }
 
-        // Local context search
+        // Local context search using adaptive engine
+        logger.debug('🔍 Local context search check', { 
+            useContext: options.useContext, 
+            hasSafeOps: !!this.safeOperations,
+            hasAdaptiveEngine: !!this.adaptiveSearchEngine
+        });
+        
         if (options.useContext && this.safeOperations) {
-            const localOptions = this._adaptLocalSearchForZPT(options, zptState);
+            logger.debug('🚀 Executing adaptive local context search');
+            // Pass options directly - AdaptiveSearchEngine handles ZPT adaptation internally
             searches.push(
-                this._searchLocalContext(query, localOptions)
+                this._searchLocalContext(query, options)
                     .catch(error => {
-                        logger.warn('Local context search failed:', error.message);
+                        logger.warn('Adaptive local context search failed:', error.message);
                         return { success: false, error: error.message, contexts: [] };
                     })
             );
         } else {
+            logger.debug('⚠️ Skipping local context search', { 
+                useContext: options.useContext, 
+                hasSafeOps: !!this.safeOperations,
+                reason: !options.useContext ? 'useContext=false' : 'no safeOperations'
+            });
             searches.push(Promise.resolve({ success: false, reason: 'not_requested', contexts: [] }));
         }
 
@@ -208,57 +251,48 @@ export class HybridContextManager {
     }
 
     /**
-     * Search local context (chunks and interactions)
-     * Enhanced with ZPT-guided filtering and ranking
+     * Search local context using AdaptiveSearchEngine with intelligent thresholds
+     * Enhanced with ZPT-guided filtering, multi-pass search, and learning optimization
      * 
      * @private
      * @param {string} query 
      * @param {Object} options 
-     * @returns {Promise<Object>} Local search results
+     * @returns {Promise<Object>} Advanced local search results
      */
     async _searchLocalContext(query, options) {
-        logger.debug('🔍 Searching local context with ZPT guidance');
+        logger.debug('🎆 Searching local context with adaptive engine');
         
         // Get ZPT state for filtering
         const zptState = this._getZPTState(options);
         
-        // Use existing safe operations for local search
-        const similarity_threshold = options.threshold || 0.3;
-        const limit = options.limit || 5;
-        
-        // Perform the initial semantic search
-        let results = await this.safeOperations.searchSimilar(
+        // Execute adaptive search with intelligent threshold management
+        const adaptiveResult = await this.adaptiveSearchEngine.executeAdaptiveSearch(
             query, 
-            limit * 2, // Get more results initially to allow for filtering
-            similarity_threshold * 0.8 // Lower initial threshold for broader search
+            zptState, 
+            options
         );
         
-        // Apply ZPT filters to refine and re-rank results
-        if (results && results.length > 0) {
-            results = this._applyZPTFiltersToResults(results, zptState, query);
-            
-            logger.debug('🎯 ZPT-filtered local context results', {
-                finalCount: results.length,
-                zoomLevel: zptState.zoom,
-                hasFilters: !!(zptState.pan?.domains || zptState.pan?.keywords || zptState.pan?.entities)
-            });
-        }
+        logger.info('🎆 Adaptive local search completed', {
+            success: adaptiveResult.success,
+            results: adaptiveResult.contexts.length,
+            passes: adaptiveResult.totalPasses,
+            avgQuality: adaptiveResult.searchStats?.averageQuality || 0,
+            processingTime: adaptiveResult.searchStats?.processingTime || 0
+        });
 
         return {
-            success: results && results.length > 0,
-            contexts: results || [],
-            searchMethod: 'zpt_guided_local_semantic',
-            totalFound: results?.length || 0,
-            zptFiltering: {
-                zoom: zptState.zoom,
-                panFilters: {
-                    domains: zptState.pan?.domains?.length || 0,
-                    keywords: zptState.pan?.keywords?.length || 0,
-                    entities: zptState.pan?.entities?.length || 0,
-                    temporal: !!zptState.pan?.temporal
-                },
-                tilt: zptState.tilt
-            }
+            success: adaptiveResult.success,
+            contexts: adaptiveResult.contexts || [],
+            searchMethod: 'adaptive_intelligent_search',
+            totalFound: adaptiveResult.contexts?.length || 0,
+            adaptiveStats: {
+                totalPasses: adaptiveResult.totalPasses,
+                thresholdConfig: adaptiveResult.thresholdConfig,
+                searchStats: adaptiveResult.searchStats,
+                panFilterBoosts: adaptiveResult.thresholdConfig?.panBoosts,
+                queryAnalysis: adaptiveResult.thresholdConfig?.queryAnalysis
+            },
+            zptState: zptState
         };
     }
 
@@ -1143,11 +1177,32 @@ export class HybridContextManager {
             strategy: contextAnalysis.selectedStrategy
         });
 
+        // Prepare result arrays for simple-verbs compatibility
+        const localContextResults = synthesisComponents.personalSources || [];
+        const enhancementResults = synthesisComponents.enhancementSources || [];
+        
+        console.log('🔥 CONSOLE: HybridContextManager returning results', {
+            localContextResultsCount: localContextResults.length,
+            enhancementResultsCount: enhancementResults.length,
+            totalContextItems: localContextResults.length + enhancementResults.length,
+            localContextResultsType: Array.isArray(localContextResults) ? 'array' : typeof localContextResults,
+            enhancementResultsType: Array.isArray(enhancementResults) ? 'array' : typeof enhancementResults,
+            personalSourcesFromSynthesis: synthesisComponents.personalSources ? synthesisComponents.personalSources.length : 'undefined',
+            enhancementSourcesFromSynthesis: synthesisComponents.enhancementSources ? synthesisComponents.enhancementSources.length : 'undefined'
+        });
+        
         return {
+            success: true,
             answer: enhancedAnswer,
             synthesisPrompt,
             synthesisComponents,
             method: 'advanced_hybrid_synthesis',
+            // These fields are expected by simple-verbs.js
+            localContextResults,
+            enhancementResults,
+            localContextUsed: localContextResults.length > 0,
+            enhancementUsed: enhancementResults.length > 0,
+            // Legacy compatibility
             sourceAttribution: {
                 personalSources: synthesisComponents.personalSources?.length || 0,
                 enhancementSources: synthesisComponents.enhancementSources?.length || 0,

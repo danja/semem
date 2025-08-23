@@ -165,7 +165,7 @@ export default class MemoryManager {
     }
 
     async retrieveRelevantInteractions(query, similarityThreshold = 40, excludeLastN = 0, limit = null) {
-        this.logger.info('MemoryManager.retrieveRelevantInteractions called with:', {
+        this.logger.info('🔥 UPDATED MemoryManager.retrieveRelevantInteractions called with:', {
             query,
             similarityThreshold,
             excludeLastN,
@@ -173,6 +173,7 @@ export default class MemoryManager {
             hasMemStore: !!this.memStore,
             memStoreMemoryLength: this.memStore?.shortTermMemory?.length || 0
         });
+        console.log('🔥 CONSOLE: Updated MemoryManager code is being executed!', { query });
         
         try {
             this.logger.info('Generating embedding for query...');
@@ -197,7 +198,52 @@ export default class MemoryManager {
                 excludeLastN
             });
             
-            const results = await this.memStore.retrieve(queryEmbedding, queryConcepts, similarityThreshold, excludeLastN);
+            // Search both memory store and SPARQL store for complete coverage
+            const memStoreResults = await this.memStore.retrieve(queryEmbedding, queryConcepts, similarityThreshold, excludeLastN);
+            
+            // Also search SPARQL store for chunked documents and other stored content
+            let sparqlResults = [];
+            console.log('🔥 CONSOLE: Checking SPARQL store availability', { hasStore: !!this.store, hasSearchMethod: !!(this.store && typeof this.store.search === 'function') });
+            
+            if (this.store && typeof this.store.search === 'function') {
+                console.log('🔥 CONSOLE: Searching SPARQL store for chunked documents...');
+                this.logger.info('Searching SPARQL store for chunked documents...');
+                try {
+                    // Convert threshold from percentage to decimal if needed
+                    const threshold = similarityThreshold > 1 ? similarityThreshold / 100 : similarityThreshold;
+                    const searchLimit = limit || 10; // Default limit for SPARQL search
+                    
+                    console.log('🔥 CONSOLE: SPARQL search parameters', { threshold, searchLimit, queryEmbeddingLength: queryEmbedding.length });
+                    
+                    sparqlResults = await this.store.search(queryEmbedding, searchLimit, threshold);
+                    
+                    console.log('🔥 CONSOLE: SPARQL store search completed', { resultsCount: sparqlResults.length });
+                    this.logger.info(`SPARQL store search found ${sparqlResults.length} results`);
+                } catch (error) {
+                    console.log('🔥 CONSOLE: SPARQL store search failed', { error: error.message });
+                    this.logger.warn('SPARQL store search failed:', error.message);
+                }
+            } else {
+                console.log('🔥 CONSOLE: SPARQL store not available or search method missing');
+            }
+            
+            // Combine results from both sources
+            const combinedResults = [...memStoreResults, ...sparqlResults];
+            
+            // Remove duplicates based on content similarity
+            const uniqueResults = [];
+            const seenContent = new Set();
+            
+            for (const result of combinedResults) {
+                const contentKey = (result.prompt + result.response).substring(0, 100);
+                if (!seenContent.has(contentKey)) {
+                    seenContent.add(contentKey);
+                    uniqueResults.push(result);
+                }
+            }
+            
+            // Sort by similarity score (descending)
+            uniqueResults.sort((a, b) => (b.similarity || 0) - (a.similarity || 0));
             
             // Persist any memory classification changes (promotion to long-term)
             // Skip memory persistence if content is too large to prevent string length errors
@@ -217,11 +263,23 @@ export default class MemoryManager {
                 }
             }
             
-            this.logger.info('MemStore.retrieve returned:', {
-                resultsType: typeof results,
-                resultsLength: Array.isArray(results) ? results.length : 'not array',
-                firstResultKeys: results?.[0] ? Object.keys(results[0]) : 'no first result'
+            console.log('🔥 CONSOLE: Combined search results', {
+                memStoreResults: memStoreResults.length,
+                sparqlResults: sparqlResults.length,
+                uniqueResults: uniqueResults.length,
+                firstResultKeys: uniqueResults?.[0] ? Object.keys(uniqueResults[0]) : 'no results',
+                firstResult: uniqueResults?.[0] ? { similarity: uniqueResults[0].similarity, prompt: uniqueResults[0].prompt?.substring(0, 100) } : 'no results'
             });
+            
+            this.logger.info('Combined search results:', {
+                memStoreResults: memStoreResults.length,
+                sparqlResults: sparqlResults.length,
+                uniqueResults: uniqueResults.length,
+                firstResultKeys: uniqueResults?.[0] ? Object.keys(uniqueResults[0]) : 'no results'
+            });
+            
+            const results = uniqueResults;
+            console.log('🔥 CONSOLE: Final results being returned', { count: results.length, hasResults: results.length > 0 });
             
             // Apply limit if specified
             if (limit && typeof limit === 'number' && limit > 0) {

@@ -15,10 +15,21 @@ export class SafeOperations {
    */
   async retrieveMemories(query, threshold = 0.7, excludeLastN = 0) {
     if (!query || typeof query !== 'string' || !query.trim()) {
+      console.log('🔥 CONSOLE: SafeOperations.retrieveMemories - invalid query, returning empty array');
       return []; // Return empty array for invalid queries
     }
     
-    return await this.memoryManager.retrieveRelevantInteractions(query.trim(), threshold, excludeLastN);
+    console.log('🔥 CONSOLE: SafeOperations.retrieveMemories called', { query, threshold, excludeLastN });
+    
+    const results = await this.memoryManager.retrieveRelevantInteractions(query.trim(), threshold, excludeLastN);
+    
+    console.log('🔥 CONSOLE: SafeOperations.retrieveMemories received from MemoryManager', { 
+      resultsCount: results?.length || 0, 
+      hasResults: !!results && results.length > 0,
+      firstResult: results?.[0] ? { similarity: results[0].similarity, prompt: results[0].prompt?.substring(0, 50) } : null
+    });
+    
+    return results;
   }
 
   /**
@@ -188,8 +199,11 @@ export class SafeOperations {
    */
   async searchSimilar(queryText, limit = 10, threshold = 0.7) {
     if (!queryText || typeof queryText !== 'string' || !queryText.trim()) {
+      console.log('🔥 CONSOLE: SafeOperations.searchSimilar - invalid query, returning empty array');
       return []; // Return empty array for invalid queries
     }
+    
+    console.log('🔥 CONSOLE: SafeOperations.searchSimilar called', { queryText: queryText.substring(0, 100), limit, threshold });
     
     const startTime = Date.now();
     const similarityThreshold = Math.round(threshold * 100);
@@ -206,14 +220,20 @@ export class SafeOperations {
       
       // 1. Search interactions using MemoryManager (proven method)
       // Convert threshold from 0-1 scale to percentage (0-100 scale)
+      console.log('🔥 CONSOLE: SafeOperations.searchSimilar calling MemoryManager.retrieveRelevantInteractions', { similarityThreshold, limit });
       const interactions = await this.memoryManager.retrieveRelevantInteractions(queryText.trim(), similarityThreshold, 0, limit);
+      console.log('🔥 CONSOLE: SafeOperations.searchSimilar received from MemoryManager', { interactionsCount: interactions?.length || 0 });
       allResults.push(...interactions);
       
       // 2. Search chunks directly using the store's search method
+      // NOTE: This creates DUPLICATE search - MemoryManager already searches SPARQL store!
+      // TODO: Remove this duplication to prevent result interference
       if (this.memoryManager.store && typeof this.memoryManager.store.search === 'function') {
+        console.log('🔥 CONSOLE: SafeOperations.searchSimilar - WARNING: Performing duplicate SPARQL search (MemoryManager already did this)');
         // Generate embedding for the query
         const queryEmbedding = await this.generateEmbedding(queryText);
         const chunks = await this.memoryManager.store.search(queryEmbedding, limit, threshold);
+        console.log('🔥 CONSOLE: SafeOperations.searchSimilar duplicate SPARQL search found', { chunksCount: chunks?.length || 0 });
         allResults.push(...chunks);
       }
       
@@ -224,6 +244,14 @@ export class SafeOperations {
       
       // Limit to requested number
       const results = uniqueResults.slice(0, limit);
+      
+      console.log('🔥 CONSOLE: SafeOperations.searchSimilar final results', { 
+        allResultsCount: allResults.length, 
+        uniqueResultsCount: uniqueResults.length, 
+        finalResultsCount: results.length,
+        hasResults: results.length > 0,
+        firstResult: results[0] ? { similarity: results[0].similarity, prompt: results[0].prompt?.substring(0, 50) } : 'no results'
+      });
       
       const duration = Date.now() - startTime;
       

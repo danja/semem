@@ -386,8 +386,8 @@ class SimpleVerbsService {
       this.hybridContextManager = new HybridContextManager({
         memoryManager: this.memoryManager,
         enhancementCoordinator: this.enhancementCoordinator,
-        safeOps: this.safeOps,
-        stateManager: this.stateManager
+        safeOperations: this.safeOps,
+        zptStateManager: this.stateManager
       });
       
       mcpDebugger.info('SimpleVerbsService initialized with ZPT state management, enhancement coordinator, and hybrid context manager');
@@ -661,12 +661,37 @@ class SimpleVerbsService {
       mcpDebugger.debug('Simple Verb: ask (hybrid)', { question, mode, useContext, useHyDE, useWikipedia, useWikidata });
       
       // Use HybridContextManager for intelligent context processing
+      console.log('🔥 CONSOLE: Simple-verbs ask() calling HybridContextManager.processQuery', { 
+        question: question.substring(0, 50), 
+        useContext,
+        hasHybridContextManager: !!this.hybridContextManager 
+      });
+      
       const hybridResult = await this.hybridContextManager.processQuery(question, {
         mode,
         useContext,
         useHyDE,
         useWikipedia,
         useWikidata
+      });
+      
+      console.log('🔥 CONSOLE: Simple-verbs ask() received result from HybridContextManager', { 
+        success: hybridResult.success,
+        contextItems: hybridResult.contextItems || 0,
+        sessionResults: hybridResult.sessionResults || 0,
+        persistentResults: hybridResult.persistentResults || 0,
+        memories: hybridResult.memories || 0,
+        localContextResults: {
+          exists: !!hybridResult.localContextResults,
+          isArray: Array.isArray(hybridResult.localContextResults),
+          length: hybridResult.localContextResults?.length || 0
+        },
+        enhancementResults: {
+          exists: !!hybridResult.enhancementResults,
+          isArray: Array.isArray(hybridResult.enhancementResults),
+          length: hybridResult.enhancementResults?.length || 0
+        },
+        allKeys: Object.keys(hybridResult)
       });
       
       // Update state with this query
