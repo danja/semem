@@ -1,0 +1,95 @@
+graph TD
+    %% User Interface Layer
+    UI["Workbench UI<br/>Ask Form"] --> API["API Service<br/>POST /ask"]
+    
+    %% Network Layer
+    API --> WS["Workbench Server<br/>Proxy: 8086 to 4115"]
+    WS --> MCP["MCP HTTP Server<br/>Port 4115"]
+    
+    %% Main Processing
+    MCP --> SV["Simple Verbs Service<br/>ask method"]
+    
+    %% Decision Point
+    SV --> DC{useContext?}
+    DC -->|Yes| HCM["HybridContextManager<br/>processQuery"]
+    DC -->|No| LLM_ONLY["Direct LLM Response"]
+    
+    %% Hybrid Context Manager Flow
+    HCM --> CONCURRENT["Concurrent Search Execution"]
+    
+    %% Enhancement Path
+    CONCURRENT --> ENH_SEARCH["Enhancement Search"]
+    ENH_SEARCH --> ENH_CHECK{Enhancement<br/>Requested?}
+    ENH_CHECK -->|Yes| EC["Enhancement Coordinator<br/>Wikidata/Wikipedia/HyDE"]
+    ENH_CHECK -->|No| ENH_SKIP["Skip Enhancement"]
+    EC --> ENH_RESULT["Enhancement Results"]
+    ENH_SKIP --> ENH_RESULT
+    
+    %% Local Context Path
+    CONCURRENT --> LOCAL_SEARCH["Local Context Search"]
+    LOCAL_SEARCH --> ASE["AdaptiveSearchEngine<br/>executeAdaptiveSearch"]
+    
+    %% Adaptive Search Engine Process
+    ASE --> TC["ThresholdCalculator<br/>calculateOptimalThreshold"]
+    TC --> ZPT_ANALYSIS["ZPT State Analysis<br/>zoom/pan/tilt factors"]
+    ZPT_ANALYSIS --> QUERY_ANALYSIS["Query Complexity Analysis<br/>length, entities, concepts"]
+    QUERY_ANALYSIS --> BASE_THRESHOLD["Base Threshold<br/>0.2-0.45 based on zoom"]
+    
+    %% Multi-Pass Search
+    BASE_THRESHOLD --> MULTI_PASS["Multi-Pass Search Loop<br/>Progressive Relaxation"]
+    MULTI_PASS --> SO["SafeOperations<br/>searchSimilar"]
+    SO --> MM["MemoryManager<br/>retrieveRelevantInteractions"]
+    
+    %% Dual Store Search
+    MM --> DUAL_SEARCH["Dual Store Search"]
+    DUAL_SEARCH --> MEM_STORE["Memory Store<br/>In-process interactions"]
+    DUAL_SEARCH --> SPARQL_STORE["SPARQL Store<br/>Chunked documents + entities"]
+    
+    %% Store Results
+    MEM_STORE --> MEM_RESULTS["Memory Results"]
+    SPARQL_STORE --> SPARQL_RESULTS["SPARQL Results<br/>ragno:Element + ragno:Unit"]
+    
+    %% Combine Results
+    MEM_RESULTS --> COMBINE["Combine & Deduplicate"]
+    SPARQL_RESULTS --> COMBINE
+    COMBINE --> THRESHOLD_CHECK{"Results >= Target Count?"}
+    
+    %% Threshold Relaxation
+    THRESHOLD_CHECK -->|"No, Pass < Max"| RELAX["Relax Threshold<br/>threshold *= 0.85"]
+    RELAX --> MULTI_PASS
+    THRESHOLD_CHECK -->|"Yes or Max Pass"| LOCAL_RESULTS["Local Context Results"]
+    
+    %% Context Analysis and Merging
+    ENH_RESULT --> CONTEXT_ANALYSIS["Context Analysis<br/>analyzeContextRelevance"]
+    LOCAL_RESULTS --> CONTEXT_ANALYSIS
+    CONTEXT_ANALYSIS --> WEIGHTING["Context Weighting<br/>Personal vs Enhancement"]
+    WEIGHTING --> MERGE["Merge Contexts<br/>mergeContexts"]
+    
+    %% Response Synthesis
+    MERGE --> SYNTHESIS["Response Synthesis<br/>synthesizeResponse"]
+    SYNTHESIS --> UNIFIED["Unified Response"]
+    
+    %% Return Path
+    UNIFIED --> SV_RETURN["Simple Verbs Return<br/>contextItems: 5, memories: 5"]
+    LLM_ONLY --> SV_RETURN
+    SV_RETURN --> MCP_RETURN["MCP HTTP Response"]
+    MCP_RETURN --> WS_RETURN["Workbench Proxy"]
+    WS_RETURN --> API_RETURN["API Response"]
+    API_RETURN --> UI_UPDATE["UI Update<br/>Display Results"]
+    
+    %% Styling
+    classDef ui fill:#e1f5fe
+    classDef network fill:#f3e5f5
+    classDef processing fill:#e8f5e8
+    classDef search fill:#fff3e0
+    classDef storage fill:#fce4ec
+    classDef decision fill:#fffde7
+    classDef results fill:#e0f2f1
+    
+    class UI,API,UI_UPDATE ui
+    class WS,MCP,MCP_RETURN,WS_RETURN,API_RETURN network
+    class SV,HCM,ASE,TC,SO,MM,SYNTHESIS processing
+    class ENH_SEARCH,EC,LOCAL_SEARCH,MULTI_PASS,DUAL_SEARCH search
+    class MEM_STORE,SPARQL_STORE,MEM_RESULTS,SPARQL_RESULTS storage
+    class DC,ENH_CHECK,THRESHOLD_CHECK decision
+    class ENH_RESULT,LOCAL_RESULTS,UNIFIED,SV_RETURN results

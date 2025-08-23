@@ -1,0 +1,140 @@
+graph TD
+    %% User Interface Layer
+    UI["Workbench UI<br/>Tell Form"] --> FORM_DATA["Extract Form Data<br/>content, type, lazy, tags"]
+    
+    %% Form Processing Decision
+    FORM_DATA --> FILE_CHECK{Document type<br/>with file?}
+    FILE_CHECK -->|Yes| FILE_UPLOAD["File Upload Process<br/>Convert to data URL"]
+    FILE_CHECK -->|No| API_CALL["API Service Call"]
+    
+    %% Network Layer
+    FILE_UPLOAD --> UPLOAD_API["API uploadDocument"]
+    API_CALL --> TELL_API["API tell method"]
+    UPLOAD_API --> WS["Workbench Server<br/>Proxy: 8086 to 4115"]
+    TELL_API --> WS
+    WS --> MCP["MCP HTTP Server<br/>Port 4115"]
+    
+    %% Main Processing Entry
+    MCP --> SV["Simple Verbs Service<br/>tell method"]
+    SV --> INIT["Initialize Services<br/>await this.initialize"]
+    
+    %% Storage Mode Decision
+    INIT --> STORAGE_MODE{Lazy Storage<br/>Mode?}
+    
+    %% Lazy Storage Path
+    STORAGE_MODE -->|Yes| LAZY_PROCESS["Lazy Processing"]
+    LAZY_PROCESS --> LAZY_ID["Generate Element ID<br/>semem:timestamp_random"]
+    LAZY_ID --> LAZY_PROMPT["Create Prompt<br/>based on content type"]
+    LAZY_PROMPT --> LAZY_DATA["Package Lazy Data<br/>id, content, type, metadata"]
+    LAZY_DATA --> LAZY_STORE["Store Lazy Content<br/>storeLazyContent"]
+    LAZY_STORE --> LAZY_RETURN["Return Success<br/>lazy: true, stored: true"]
+    
+    %% Normal Processing Path
+    STORAGE_MODE -->|No| TYPE_SWITCH{"Content<br/>Type?"}
+    
+    %% Interaction Type Processing
+    TYPE_SWITCH -->|Interaction| INT_EMBED["Generate Embedding<br/>safeOps.generateEmbedding"]
+    INT_EMBED --> INT_CONCEPTS["Extract Concepts<br/>safeOps.extractConcepts"]
+    INT_CONCEPTS --> INT_PROMPT["Create Prompt<br/>User input: content..."]
+    INT_PROMPT --> INT_STORE["Store Interaction<br/>safeOps.storeInteraction"]
+    INT_STORE --> RETURN_SUCCESS["Return Success Response"]
+    
+    %% Concept Type Processing
+    TYPE_SWITCH -->|Concept| CONCEPT_EMBED["Generate Embedding<br/>safeOps.generateEmbedding"]
+    CONCEPT_EMBED --> CONCEPT_CONCEPTS["Extract Concepts<br/>safeOps.extractConcepts"]
+    CONCEPT_CONCEPTS --> CONCEPT_PROMPT["Create Prompt<br/>Concept: metadata.name"]
+    CONCEPT_PROMPT --> CONCEPT_STORE["Store Interaction<br/>safeOps.storeInteraction"]
+    CONCEPT_STORE --> RETURN_SUCCESS
+    
+    %% Document Type Processing
+    TYPE_SWITCH -->|Document| DOC_SIZE_CHECK{"Content length<br/>> 8000 chars?"}
+    
+    %% Small Document Path
+    DOC_SIZE_CHECK -->|No| SMALL_DOC_EMBED["Generate Embedding<br/>safeOps.generateEmbedding"]
+    SMALL_DOC_EMBED --> SMALL_DOC_CONCEPTS["Extract Concepts<br/>safeOps.extractConcepts"]
+    SMALL_DOC_CONCEPTS --> SMALL_DOC_PROMPT["Create Prompt<br/>Document: metadata.title"]
+    SMALL_DOC_PROMPT --> SMALL_DOC_STORE["Store Interaction<br/>safeOps.storeInteraction"]
+    SMALL_DOC_STORE --> RETURN_SUCCESS
+    
+    %% Large Document Chunking Path
+    DOC_SIZE_CHECK -->|Yes| CHUNKER_IMPORT["Import Chunker Service<br/>Dynamic import"]
+    CHUNKER_IMPORT --> CHUNKER_CONFIG["Configure Chunker<br/>maxSize: 2000, overlap: 100"]
+    CHUNKER_CONFIG --> CHUNKING_PROCESS["Chunk Document<br/>chunker.chunk"]
+    CHUNKING_PROCESS --> CHUNK_LOOP["Process Each Chunk<br/>for loop"]
+    
+    %% Chunk Processing
+    CHUNK_LOOP --> CHUNK_EMBED["Generate Chunk Embedding<br/>safeOps.generateEmbedding"]
+    CHUNK_EMBED --> CHUNK_CONCEPTS["Extract Chunk Concepts<br/>safeOps.extractConcepts"]
+    CHUNK_CONCEPTS --> CHUNK_PROMPT["Create Chunk Prompt<br/>Document: title (Chunk N/Total)"]
+    CHUNK_PROMPT --> CHUNK_STORE["Store Chunk Interaction<br/>safeOps.storeInteraction"]
+    CHUNK_STORE --> CHUNK_CHECK{"More<br/>chunks?"}
+    CHUNK_CHECK -->|Yes| CHUNK_LOOP
+    CHUNK_CHECK -->|No| AGGREGATE_CONCEPTS["Aggregate All Concepts<br/>Remove duplicates"]
+    AGGREGATE_CONCEPTS --> DOC_SUMMARY["Create Document Summary<br/>chunks count, total concepts"]
+    DOC_SUMMARY --> RETURN_SUCCESS
+    
+    %% Safe Operations Layer
+    INT_STORE --> SO["Safe Operations Layer"]
+    CONCEPT_STORE --> SO
+    SMALL_DOC_STORE --> SO
+    CHUNK_STORE --> SO
+    SO --> SO_EMBED["Embedding Provider<br/>generateEmbedding"]
+    SO --> SO_LLM["LLM Handler<br/>extractConcepts"]
+    SO --> SO_MEMORY["Memory Manager<br/>storeMemory"]
+    
+    %% Memory Manager Processing
+    SO_MEMORY --> MM["Memory Manager<br/>storeMemory"]
+    MM --> MM_EMBEDDING["Generate Combined Embedding<br/>prompt + response"]
+    MM_EMBEDDING --> MM_DATA["Prepare Memory Data<br/>id, prompt, response, embedding"]
+    MM_DATA --> MM_DUAL_STORE["Dual Store Operation"]
+    
+    %% Dual Storage System
+    MM_DUAL_STORE --> MEM_STORE["Memory Store<br/>FAISS Index Storage"]
+    MM_DUAL_STORE --> SPARQL_STORE["SPARQL Store<br/>RDF Triple Storage"]
+    
+    %% Memory Store Process
+    MEM_STORE --> FAISS_INDEX["Add to FAISS Index<br/>Vector similarity search"]
+    
+    %% SPARQL Store Process
+    SPARQL_STORE --> RDF_CONVERT["Convert to RDF<br/>ragno:Element creation"]
+    RDF_CONVERT --> RDF_INSERT["Insert RDF Triples<br/>SPARQL UPDATE"]
+    RDF_INSERT --> SPARQL_GRAPH["Store in Graph<br/>http://hyperdata.it/content"]
+    
+    %% Lazy Storage Process
+    LAZY_STORE --> LAZY_SPARQL["SPARQL Store Only<br/>storeLazyContent"]
+    LAZY_SPARQL --> LAZY_RDF["Store as RDF<br/>Without embeddings"]
+    
+    %% Response Path
+    FAISS_INDEX --> STORAGE_SUCCESS["Storage Complete"]
+    SPARQL_GRAPH --> STORAGE_SUCCESS
+    LAZY_RDF --> LAZY_RETURN
+    STORAGE_SUCCESS --> RETURN_SUCCESS
+    RETURN_SUCCESS --> MCP_RESPONSE["MCP HTTP Response"]
+    MCP_RESPONSE --> WS_RETURN["Workbench Proxy Return"]
+    WS_RETURN --> API_RESPONSE["API Service Response"]
+    API_RESPONSE --> UI_UPDATE["UI Update<br/>Display results"]
+    LAZY_RETURN --> MCP_RESPONSE
+    
+    %% Error Handling
+    CHUNKING_PROCESS --> CHUNK_ERROR{"Chunking<br/>Error?"}
+    CHUNK_ERROR -->|Yes| ERROR_RESPONSE["Return Error<br/>Failed to chunk document"]
+    CHUNK_EMBED --> EMBED_ERROR{"Embedding<br/>Error?"}
+    EMBED_ERROR -->|Yes| SKIP_CHUNK["Skip Chunk<br/>Log error, continue"]
+    SKIP_CHUNK --> CHUNK_CHECK
+    
+    %% Styling
+    classDef ui fill:#e1f5fe
+    classDef network fill:#f3e5f5
+    classDef processing fill:#e8f5e8
+    classDef storage fill:#fce4ec
+    classDef decision fill:#fffde7
+    classDef error fill:#ffebee
+    classDef success fill:#e0f2f1
+    
+    class UI,FORM_DATA,UI_UPDATE ui
+    class WS,MCP,MCP_RESPONSE,WS_RETURN,API_RESPONSE network
+    class SV,INIT,SO,MM,CHUNKER_CONFIG,CHUNKING_PROCESS processing
+    class MEM_STORE,SPARQL_STORE,FAISS_INDEX,RDF_INSERT storage
+    class FILE_CHECK,STORAGE_MODE,TYPE_SWITCH,DOC_SIZE_CHECK,CHUNK_CHECK decision
+    class CHUNK_ERROR,EMBED_ERROR,ERROR_RESPONSE error
+    class RETURN_SUCCESS,STORAGE_SUCCESS,LAZY_RETURN success

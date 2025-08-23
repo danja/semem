@@ -49,6 +49,8 @@ Store information in semantic memory:
 4. **Concept Preview**: See extracted concepts (when server connected)
 5. **Store**: Click "💾 Store Content" to save
 
+> 📖 **Detailed Documentation**: For comprehensive Tell workflow details, architecture, and technical implementation, see [`docs/manual/tell.md`](tell.md) and the [Tell workflow diagram](tell.png).
+
 #### 📄 Document Upload (Document Type)
 When "Document" type is selected, additional upload controls appear:
 
@@ -76,6 +78,8 @@ Search your semantic memory:
 3. **Results**: View contextual responses based on stored knowledge
 
 **Example**: Ask "What is machine learning?" to retrieve related stored concepts.
+
+> 📖 **Detailed Documentation**: For comprehensive Ask workflow details, enhanced search features, and technical implementation, see [`docs/ASK.md`](../ask.md) and the [Ask workflow diagram](ask.png).
 
 ### 🧭 Navigate - Control Perspective
 Adjust how you view the knowledge space using ZPT (Zoom-Pan-Tilt):
@@ -129,6 +133,8 @@ Analyze and extract semantic concepts from text:
 2. **Enter Text**: Add content to analyze in the text area
 3. **Extract**: Click "Extract Concepts" to identify key concepts
 4. **Review Results**: See extracted entities and relationships
+
+> 📖 **Detailed Documentation**: For comprehensive Augment workflow details, operation types, and technical implementation, see [`docs/manual/augment.md`](augment.md) and the [Augment workflow diagram](augment.png).
 
 ### 🗂️ Memory Explorer - Browse Stored Data
 Explore your semantic memory:

@@ -1,0 +1,175 @@
+graph TD
+    %% User Interface Layer
+    UI["Workbench UI<br/>Augment Form"] --> FORM_DATA["Extract Form Data<br/>target, operation, options"]
+    
+    %% Form Processing and Validation
+    FORM_DATA --> OPERATION_CHECK["Check Operation Type<br/>Special handling needed?"]
+    OPERATION_CHECK --> TARGET_SETUP["Setup Target Content"]
+    
+    %% Target Content Processing
+    TARGET_SETUP --> TARGET_DECISION{"Operation<br/>Type?"}
+    TARGET_DECISION -->|process_lazy| LAZY_TARGET["Set target = 'all'<br/>Add limit option"]
+    TARGET_DECISION -->|chunk_documents| CHUNK_TARGET["Set target = 'all' or form target<br/>Add chunking options"]
+    TARGET_DECISION -->|Other| NORMAL_TARGET["Use form target<br/>Validate not empty"]
+    
+    %% Network Layer
+    LAZY_TARGET --> API_CALL["API Service Call"]
+    CHUNK_TARGET --> API_CALL
+    NORMAL_TARGET --> API_CALL
+    API_CALL --> WS["Workbench Server<br/>Proxy: 8086 to 4115"]
+    WS --> MCP["MCP HTTP Server<br/>Port 4115"]
+    
+    %% Main Processing Entry
+    MCP --> SV["Simple Verbs Service<br/>augment method"]
+    SV --> INIT["Initialize Services<br/>await this.initialize"]
+    INIT --> VALIDATION["Target Validation<br/>Check required operations"]
+    
+    %% Operation Type Switch
+    VALIDATION --> OP_SWITCH{"Operation<br/>Switch"}
+    
+    %% Concepts Operation Path
+    OP_SWITCH -->|concepts| CONCEPTS_OP["Concepts Operation"]
+    CONCEPTS_OP --> CONCEPTS_EXTRACT["Extract Concepts<br/>safeOps.extractConcepts"]
+    CONCEPTS_EXTRACT --> CONCEPTS_RESULT["Return Concept List"]
+    
+    %% Attributes Operation Path
+    OP_SWITCH -->|attributes| ATTRIBUTES_OP["Attributes Operation"]
+    ATTRIBUTES_OP --> RAGNO_CHECK{"Ragno Framework<br/>Available?"}
+    RAGNO_CHECK -->|Yes| RAGNO_IMPORT["Import augmentWithAttributes<br/>Dynamic import"]
+    RAGNO_CHECK -->|No| ATTR_FALLBACK["Fallback to Concepts<br/>safeOps.extractConcepts"]
+    RAGNO_IMPORT --> RAGNO_PROCESS["Ragno Attribute Analysis<br/>LLM-based enhancement"]
+    RAGNO_PROCESS --> RAGNO_RESULT["Return Enhanced Entities"]
+    ATTR_FALLBACK --> CONCEPTS_RESULT
+    
+    %% Relationships Operation Path
+    OP_SWITCH -->|relationships| REL_OP["Relationships Operation"]
+    REL_OP --> ZPT_PARAMS["Get Navigation Params<br/>stateManager.getNavigationParams"]
+    ZPT_PARAMS --> ZPT_NAVIGATE["ZPT Navigation<br/>zptService.navigate"]
+    ZPT_NAVIGATE --> ZPT_SUCCESS{"Navigation<br/>Successful?"}
+    ZPT_SUCCESS -->|Yes| REL_RESULT["Return Relationships<br/>+ context data"]
+    ZPT_SUCCESS -->|No| REL_ERROR["Return Empty Relationships<br/>+ error message"]
+    
+    %% Process Lazy Operation Path
+    OP_SWITCH -->|process_lazy| LAZY_OP["Process Lazy Operation"]
+    LAZY_OP --> LAZY_TARGET_CHECK{"Target is<br/>'all'?"}
+    LAZY_TARGET_CHECK -->|Yes| FIND_LAZY["Find Lazy Content<br/>store.findLazyContent"]
+    LAZY_TARGET_CHECK -->|No| LAZY_SPECIFIC["Process Specific Content<br/>Extract concepts + embedding"]
+    
+    %% Batch Lazy Processing
+    FIND_LAZY --> LAZY_COUNT_CHECK{"Found lazy<br/>items?"}
+    LAZY_COUNT_CHECK -->|No| LAZY_EMPTY["Return Empty Result<br/>No lazy content found"]
+    LAZY_COUNT_CHECK -->|Yes| LAZY_LOOP["Process Each Item<br/>for loop"]
+    
+    %% Individual Lazy Item Processing
+    LAZY_LOOP --> LAZY_EMBED["Generate Embedding<br/>safeOps.generateEmbedding"]
+    LAZY_EMBED --> LAZY_CONCEPTS["Extract Concepts<br/>safeOps.extractConcepts"]
+    LAZY_CONCEPTS --> LAZY_UPDATE["Update to Processed<br/>store.updateLazyToProcessed"]
+    LAZY_UPDATE --> LAZY_ITEM_RESULT["Add to Processed Items"]
+    LAZY_ITEM_RESULT --> LAZY_MORE_CHECK{"More items<br/>to process?"}
+    LAZY_MORE_CHECK -->|Yes| LAZY_LOOP
+    LAZY_MORE_CHECK -->|No| LAZY_BATCH_RESULT["Return Batch Results<br/>processedItems, totalProcessed"]
+    
+    %% Chunk Documents Operation Path
+    OP_SWITCH -->|chunk_documents| CHUNK_OP["Chunk Documents Operation"]
+    CHUNK_OP --> CHUNK_IMPORTS["Import Services<br/>Chunker, SPARQLQueryService, SPARQLHelper"]
+    CHUNK_IMPORTS --> CHUNK_CONFIG["Configure Chunker<br/>maxSize, minSize, overlap, strategy"]
+    CHUNK_CONFIG --> CHUNK_TARGET_CHECK{"Target is<br/>'all'?"}
+    
+    %% Find Documents to Chunk
+    CHUNK_TARGET_CHECK -->|Yes| FIND_DOCS["Find Unprocessed Documents<br/>SPARQL query execution"]
+    CHUNK_TARGET_CHECK -->|No| SPECIFIC_DOC["Query Specific Document<br/>By URI"]
+    FIND_DOCS --> DOC_COUNT_CHECK{"Found documents<br/>to process?"}
+    SPECIFIC_DOC --> DOC_COUNT_CHECK
+    DOC_COUNT_CHECK -->|No| CHUNK_EMPTY["Return Empty Result<br/>No eligible documents"]
+    DOC_COUNT_CHECK -->|Yes| CHUNK_LOOP["Process Each Document<br/>for loop"]
+    
+    %% Document Chunking Process
+    CHUNK_LOOP --> CHUNK_CONTENT["Extract Content<br/>From SPARQL result"]
+    CHUNK_CONTENT --> CHUNK_EXECUTE["Execute Chunking<br/>chunker.chunk"]
+    CHUNK_EXECUTE --> CHUNK_RDF["Build RDF Triples<br/>Create chunk URIs"]
+    CHUNK_RDF --> CHUNK_STORE["Store Chunks<br/>SPARQL UPDATE"]
+    CHUNK_STORE --> CHUNK_MORE_CHECK{"More documents<br/>to process?"}
+    CHUNK_MORE_CHECK -->|Yes| CHUNK_LOOP
+    CHUNK_MORE_CHECK -->|No| CHUNK_BATCH_RESULT["Return Chunking Results<br/>chunkedDocuments, totalProcessed"]
+    
+    %% Auto Operation Path (Default)
+    OP_SWITCH -->|auto/default| AUTO_OP["Auto Operation"]
+    AUTO_OP --> AUTO_CONCEPTS["Extract Concepts<br/>safeOps.extractConcepts"]
+    AUTO_CONCEPTS --> AUTO_EMBED["Generate Embedding<br/>safeOps.generateEmbedding"]
+    AUTO_EMBED --> AUTO_RESULT["Return Concepts + Embedding<br/>+ preview data"]
+    
+    %% Safe Operations Layer
+    CONCEPTS_EXTRACT --> SO["Safe Operations Layer"]
+    RAGNO_PROCESS --> SO_LLM["LLM Handler<br/>Advanced analysis"]
+    LAZY_EMBED --> SO
+    AUTO_CONCEPTS --> SO
+    SO --> SO_LLM_BASIC["LLM Handler<br/>extractConcepts"]
+    SO --> SO_EMBED["Embedding Provider<br/>generateEmbedding"]
+    
+    %% Ragno Framework Integration
+    SO_LLM --> RAGNO_ANALYSIS["Ragno Attribute Analysis<br/>Entity enhancement"]
+    RAGNO_ANALYSIS --> RAGNO_PARSING["Parse Attribute Results<br/>Structure enhancement data"]
+    
+    %% ZPT Navigation Integration
+    ZPT_NAVIGATE --> ZPT_ENGINE["ZPT Navigation Engine<br/>Context-aware relationship discovery"]
+    ZPT_ENGINE --> ZPT_GRAPH["Generate Relationship Graph<br/>Based on zoom/pan/tilt state"]
+    
+    %% Storage Layer Integration
+    FIND_LAZY --> SPARQL_LAZY["SPARQL Store<br/>Lazy content queries"]
+    LAZY_UPDATE --> SPARQL_UPDATE["SPARQL Store<br/>Update processed status"]
+    FIND_DOCS --> SPARQL_DOCS["SPARQL Store<br/>Document queries"]
+    CHUNK_STORE --> SPARQL_CHUNKS["SPARQL Store<br/>Chunk storage"]
+    
+    %% Response Assembly
+    CONCEPTS_RESULT --> RESPONSE_BUILD["Build Response Object"]
+    RAGNO_RESULT --> RESPONSE_BUILD
+    REL_RESULT --> RESPONSE_BUILD
+    REL_ERROR --> RESPONSE_BUILD
+    LAZY_EMPTY --> RESPONSE_BUILD
+    LAZY_BATCH_RESULT --> RESPONSE_BUILD
+    LAZY_SPECIFIC --> LAZY_SPECIFIC_RESULT["Return Specific Processing<br/>concepts + embedding"]
+    LAZY_SPECIFIC_RESULT --> RESPONSE_BUILD
+    CHUNK_EMPTY --> RESPONSE_BUILD
+    CHUNK_BATCH_RESULT --> RESPONSE_BUILD
+    AUTO_RESULT --> RESPONSE_BUILD
+    
+    %% Response Path
+    RESPONSE_BUILD --> SUCCESS_RESPONSE["Success Response<br/>+ operation metadata"]
+    SUCCESS_RESPONSE --> MCP_RESPONSE["MCP HTTP Response"]
+    MCP_RESPONSE --> WS_RETURN["Workbench Proxy Return"]
+    WS_RETURN --> API_RESPONSE["API Service Response"]
+    API_RESPONSE --> UI_UPDATE["UI Update<br/>Display analysis results"]
+    
+    %% Error Handling
+    VALIDATION --> VALIDATION_ERROR{"Validation<br/>Error?"}
+    VALIDATION_ERROR -->|Yes| ERROR_RESPONSE["Return Validation Error<br/>Operation requires content"]
+    RAGNO_IMPORT --> IMPORT_ERROR{"Import<br/>Error?"}
+    IMPORT_ERROR -->|Yes| ATTR_FALLBACK
+    LAZY_EMBED --> EMBED_ERROR{"Embedding<br/>Error?"}
+    EMBED_ERROR -->|Yes| SKIP_ITEM["Skip Item<br/>Log error, continue"]
+    CHUNK_EXECUTE --> CHUNK_ERROR{"Chunking<br/>Error?"}
+    CHUNK_ERROR -->|Yes| SKIP_DOCUMENT["Skip Document<br/>Log error, continue"]
+    SKIP_ITEM --> LAZY_MORE_CHECK
+    SKIP_DOCUMENT --> CHUNK_MORE_CHECK
+    ERROR_RESPONSE --> MCP_RESPONSE
+    
+    %% Styling
+    classDef ui fill:#e1f5fe
+    classDef network fill:#f3e5f5
+    classDef processing fill:#e8f5e8
+    classDef operation fill:#fff3e0
+    classDef storage fill:#fce4ec
+    classDef decision fill:#fffde7
+    classDef error fill:#ffebee
+    classDef success fill:#e0f2f1
+    classDef integration fill:#f1f8e9
+    
+    class UI,FORM_DATA,UI_UPDATE ui
+    class WS,MCP,MCP_RESPONSE,WS_RETURN,API_RESPONSE network
+    class SV,INIT,SO,RESPONSE_BUILD processing
+    class CONCEPTS_OP,ATTRIBUTES_OP,REL_OP,LAZY_OP,CHUNK_OP,AUTO_OP operation
+    class SPARQL_LAZY,SPARQL_UPDATE,SPARQL_DOCS,SPARQL_CHUNKS storage
+    class TARGET_DECISION,RAGNO_CHECK,ZPT_SUCCESS,LAZY_TARGET_CHECK,LAZY_COUNT_CHECK decision
+    class VALIDATION_ERROR,IMPORT_ERROR,EMBED_ERROR,CHUNK_ERROR,ERROR_RESPONSE error
+    class SUCCESS_RESPONSE,CONCEPTS_RESULT,RAGNO_RESULT,AUTO_RESULT success
+    class RAGNO_ANALYSIS,ZPT_ENGINE,SO_LLM integration

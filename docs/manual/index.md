@@ -2,7 +2,7 @@
 
 **Semantic Web Memory for Intelligent Agents**
 
-**Status 2025-06-29 :** mostly working, many loose ends, not ready for use in the wild yet
+**Status 2025-08-23 :** mostly working, many loose ends, not ready for use in the wild yet. GUI rebuilt from scratch.
 
 *TODO : Doc for the HyDE algorithm*
 
@@ -76,6 +76,14 @@ The following are workflows applied to sample questions from the [BeerQA](https:
 **[gui.md](gui.md)** - Web-based user interface documentation covering the VSOM visualization system, SPARQL browser, interactive console, memory management interface, and administrative tools for system monitoring and configuration.
 
 **[workbench-howto.md](workbench-howto.md)** - User guide for the web-based workbench interface.
+
+### Core Operation Workflows
+
+**[tell.md](tell.md)** - Comprehensive Tell workflow documentation covering content storage, type handling, document processing, concept extraction, and technical architecture with detailed flow diagrams.
+
+**[ASK.md](../ASK.md)** - Enhanced Ask workflow covering query processing, HyDE integration, Wikipedia/Wikidata enhancement, adaptive search algorithms, and context-aware response generation.
+
+**[augment.md](augment.md)** - Complete Augment workflow documentation detailing concept extraction, attribute analysis, relationship discovery, lazy processing, document chunking, and Ragno framework integration.
 
 **[vsom.md](vsom.md)** - Vector Self-Organizing Map visualization system documentation.
 
