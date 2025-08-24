@@ -1,3 +1,7 @@
+PREFIX ragno: <http://purl.org/stuff/ragno/>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+PREFIX semem: <http://semem.hyperdata.it/>
+
 SELECT ?textElement ?content ?sourceUnit {
   GRAPH <${graphURI}> {
     ?textElement a ragno:TextElement ;
