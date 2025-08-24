@@ -1,6 +1,10 @@
 /**
  * Applies domain-specific filtering constraints based on pan parameters
+ * Enhanced with memory domain hierarchy support for ChatGPT-style memory features
  */
+
+import logger from 'loglevel';
+
 export default class PanDomainFilter {
     constructor(options = {}) {
         this.config = {
@@ -9,11 +13,23 @@ export default class PanDomainFilter {
             geographicPrecision: options.geographicPrecision || 6, // decimal places
             topicExpansion: options.topicExpansion !== false,
             entityResolution: options.entityResolution !== false,
+            
+            // Memory domain specific settings
+            memoryRelevanceThreshold: options.memoryRelevanceThreshold || 0.1,
+            domainFadeSupport: options.domainFadeSupport !== false,
+            hierarchicalDomains: options.hierarchicalDomains !== false,
+            crossDomainBoost: options.crossDomainBoost || 1.2,
+            
             ...options
         };
         
         this.initializeFilterStrategies();
         this.initializeDomainPatterns();
+        this.initializeMemoryDomains();
+        
+        this.logger = logger.getLogger('zpt:pan');
+        this.domainHierarchy = new Map();
+        this.memoryRelevanceEngine = options.memoryRelevanceEngine || null;
     }
 
     /**
@@ -77,6 +93,56 @@ export default class PanDomainFilter {
     }
 
     /**
+     * Initialize memory domain configurations for ChatGPT-style memory features
+     */
+    initializeMemoryDomains() {
+        this.memoryDomainTypes = {
+            user: {
+                priority: 10,
+                baseRelevance: 0.9,
+                decayHalfLife: 31536000000, // 1 year
+                fadingStrategy: 'gradual',
+                inheritanceRules: ['session', 'project']
+            },
+            project: {
+                priority: 8,
+                baseRelevance: 0.8,
+                decayHalfLife: 2592000000, // 30 days
+                fadingStrategy: 'contextual',
+                inheritanceRules: ['session'],
+                hierarchicalSupport: true
+            },
+            session: {
+                priority: 6,
+                baseRelevance: 0.7,
+                decayHalfLife: 3600000, // 1 hour
+                fadingStrategy: 'temporal',
+                inheritanceRules: []
+            },
+            instruction: {
+                priority: 15,
+                baseRelevance: 1.0,
+                decayHalfLife: Infinity, // Never decay
+                fadingStrategy: 'none',
+                inheritanceRules: ['user', 'project', 'session'],
+                alwaysVisible: true
+            }
+        };
+
+        this.memoryFilters = {
+            relevanceThreshold: this.createRelevanceThresholdFilter.bind(this),
+            domainHierarchy: this.createDomainHierarchyFilter.bind(this),
+            temporalFading: this.createTemporalFadingFilter.bind(this),
+            crossDomainBoost: this.createCrossDomainBoostFilter.bind(this)
+        };
+
+        this.logger.debug('🧠 Memory domain patterns initialized:', {
+            domainTypes: Object.keys(this.memoryDomainTypes),
+            filtersCount: Object.keys(this.memoryFilters).length
+        });
+    }
+
+    /**
      * Apply all pan filters to a selection query
      * @param {Object} panParams - Normalized pan parameters
      * @param {Object} queryContext - Query context and constraints
@@ -85,6 +151,18 @@ export default class PanDomainFilter {
     applyFilters(panParams, queryContext = {}) {
         let enhancedQuery = { ...queryContext };
         const appliedFilters = [];
+
+        // Apply memory domain filters first (if enabled)
+        if (panParams.domains && this.config.hierarchicalDomains) {
+            const memoryFilter = this.applyMemoryDomainFilter(panParams.domains, enhancedQuery);
+            enhancedQuery = { ...enhancedQuery, ...memoryFilter.query };
+            appliedFilters.push(memoryFilter.metadata);
+            
+            this.logger.debug('🧠 Applied memory domain filters:', {
+                domains: panParams.domains,
+                filterCount: appliedFilters.length
+            });
+        }
 
         // Apply topic filters
         if (panParams.topic) {
@@ -118,7 +196,8 @@ export default class PanDomainFilter {
             query: enhancedQuery,
             appliedFilters,
             filterCount: appliedFilters.length,
-            estimatedSelectivity: this.calculateSelectivity(appliedFilters)
+            estimatedSelectivity: this.calculateSelectivity(appliedFilters),
+            memoryDomainContext: this.buildMemoryDomainContext(panParams.domains)
         };
     }
 
@@ -526,6 +605,224 @@ export default class PanDomainFilter {
             confidence: 0.9,
             administrativeUnits
         };
+    }
+
+    /**
+     * Memory domain filtering methods
+     */
+    applyMemoryDomainFilter(domains, queryContext) {
+        const domainArray = Array.isArray(domains) ? domains : [domains];
+        const activeMemoryDomains = this.resolveActiveMemoryDomains(domainArray);
+        
+        // Build memory domain specific filters
+        const memoryFilters = [];
+        
+        if (this.config.memoryRelevanceThreshold) {
+            memoryFilters.push(this.memoryFilters.relevanceThreshold(activeMemoryDomains, queryContext));
+        }
+        
+        if (this.config.hierarchicalDomains) {
+            memoryFilters.push(this.memoryFilters.domainHierarchy(activeMemoryDomains, queryContext));
+        }
+        
+        if (this.config.domainFadeSupport) {
+            memoryFilters.push(this.memoryFilters.temporalFading(activeMemoryDomains, queryContext));
+        }
+        
+        if (this.config.crossDomainBoost > 1.0) {
+            memoryFilters.push(this.memoryFilters.crossDomainBoost(activeMemoryDomains, queryContext));
+        }
+
+        // Combine all memory filters
+        const combinedFilter = this.combineMemoryFilters(memoryFilters);
+        
+        return {
+            query: combinedFilter.query,
+            metadata: {
+                type: 'memory_domain',
+                domains: activeMemoryDomains,
+                filterStrategies: memoryFilters.map(f => f.strategy),
+                selectivity: this.estimateMemorySelectivity(activeMemoryDomains),
+                relevanceThreshold: this.config.memoryRelevanceThreshold
+            }
+        };
+    }
+
+    createRelevanceThresholdFilter(domains, queryContext) {
+        const threshold = this.config.memoryRelevanceThreshold;
+        
+        return {
+            strategy: 'relevance_threshold',
+            query: {
+                sparqlClause: `
+                    ?memory zpt:relevanceScore ?relevance .
+                    FILTER (?relevance >= ${threshold})
+                `,
+                confidence: 0.9
+            }
+        };
+    }
+
+    createDomainHierarchyFilter(domains, queryContext) {
+        const hierarchyClause = this.buildDomainHierarchyClause(domains);
+        
+        return {
+            strategy: 'domain_hierarchy',
+            query: {
+                sparqlClause: hierarchyClause,
+                confidence: 0.8
+            }
+        };
+    }
+
+    createTemporalFadingFilter(domains, queryContext) {
+        const now = Date.now();
+        const fadeClause = domains.map(domain => {
+            const domainType = this.extractDomainType(domain);
+            const config = this.memoryDomainTypes[domainType];
+            if (!config || config.fadingStrategy === 'none') return '';
+            
+            const halfLife = config.decayHalfLife;
+            if (halfLife === Infinity) return '';
+            
+            return `
+                {
+                    ?memory zpt:belongsToDomain <${domain}> ;
+                           dcterms:created ?created .
+                    BIND (${now} - ?created AS ?age)
+                    BIND (EXP(-?age / ${halfLife}) AS ?decayFactor)
+                    FILTER (?decayFactor > 0.01)
+                }
+            `;
+        }).filter(clause => clause).join(' UNION ');
+        
+        return {
+            strategy: 'temporal_fading',
+            query: {
+                sparqlClause: fadeClause || '',
+                confidence: 0.7
+            }
+        };
+    }
+
+    createCrossDomainBoostFilter(domains, queryContext) {
+        const boostFactor = this.config.crossDomainBoost;
+        const crossDomainClause = `
+            {
+                ?memory zpt:belongsToDomain ?domain1 ;
+                       zpt:belongsToDomain ?domain2 .
+                FILTER (?domain1 != ?domain2)
+                BIND (${boostFactor} AS ?crossDomainBoost)
+            }
+        `;
+        
+        return {
+            strategy: 'cross_domain_boost',
+            query: {
+                sparqlClause: crossDomainClause,
+                confidence: 0.6
+            }
+        };
+    }
+
+    resolveActiveMemoryDomains(domains) {
+        return domains.map(domain => {
+            if (typeof domain === 'string' && domain.includes(':')) {
+                return domain; // Already properly formatted
+            }
+            return `http://purl.org/stuff/domains/${domain}`;
+        });
+    }
+
+    extractDomainType(domainURI) {
+        const parts = domainURI.split('/');
+        const lastPart = parts[parts.length - 1];
+        return lastPart.split(':')[0];
+    }
+
+    buildDomainHierarchyClause(domains) {
+        const hierarchyClauses = domains.map(domain => {
+            const domainType = this.extractDomainType(domain);
+            const config = this.memoryDomainTypes[domainType];
+            
+            if (!config || !config.inheritanceRules.length) {
+                return `?memory zpt:belongsToDomain <${domain}> .`;
+            }
+            
+            const inheritanceClauses = config.inheritanceRules.map(inheritedType => 
+                `?memory zpt:belongsToDomain ?${inheritedType}Domain .
+                 ?${inheritedType}Domain zpt:inheritsFrom <${domain}> .`
+            ).join('\n                 ');
+            
+            return `
+                {
+                    ?memory zpt:belongsToDomain <${domain}> .
+                } UNION {
+                    ${inheritanceClauses}
+                }
+            `;
+        }).join(' UNION ');
+        
+        return hierarchyClauses;
+    }
+
+    combineMemoryFilters(memoryFilters) {
+        const nonEmptyFilters = memoryFilters.filter(f => f.query.sparqlClause.trim());
+        
+        if (nonEmptyFilters.length === 0) {
+            return { query: { sparqlClause: '', confidence: 1.0 } };
+        }
+        
+        const combinedClause = nonEmptyFilters.map(f => `{ ${f.query.sparqlClause} }`).join(' ');
+        const avgConfidence = nonEmptyFilters.reduce((sum, f) => sum + f.query.confidence, 0) / nonEmptyFilters.length;
+        
+        return {
+            query: {
+                sparqlClause: combinedClause,
+                confidence: avgConfidence
+            }
+        };
+    }
+
+    buildMemoryDomainContext(domains) {
+        if (!domains) return null;
+        
+        const domainArray = Array.isArray(domains) ? domains : [domains];
+        const context = {};
+        
+        domainArray.forEach(domain => {
+            const domainType = this.extractDomainType(domain);
+            const config = this.memoryDomainTypes[domainType];
+            
+            if (config) {
+                context[domainType] = {
+                    priority: config.priority,
+                    baseRelevance: config.baseRelevance,
+                    fadingStrategy: config.fadingStrategy,
+                    alwaysVisible: config.alwaysVisible || false
+                };
+            }
+        });
+        
+        return context;
+    }
+
+    estimateMemorySelectivity(domains) {
+        // Base selectivity on domain types and priorities
+        let selectivity = 0.5;
+        
+        domains.forEach(domain => {
+            const domainType = this.extractDomainType(domain);
+            const config = this.memoryDomainTypes[domainType];
+            
+            if (config) {
+                // Higher priority domains are more selective
+                const priorityFactor = config.priority / 15; // Normalize to 0-1
+                selectivity *= (1 - priorityFactor * 0.3);
+            }
+        });
+        
+        return Math.max(0.1, selectivity);
     }
 
     /**

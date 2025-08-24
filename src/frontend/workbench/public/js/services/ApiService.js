@@ -295,6 +295,88 @@ export class ApiService {
     };
   }
 
+  // ===== MEMORY MANAGEMENT METHODS =====
+
+  /**
+   * REMEMBER - Store content in specific memory domain with importance weighting
+   * @param {Object} params - Remember parameters
+   * @param {string} params.content - Content to remember
+   * @param {string} params.domain - Memory domain: 'user' | 'project' | 'session' | 'instruction'
+   * @param {string} params.domainId - Domain identifier (optional)
+   * @param {number} params.importance - Importance weighting (0-1)
+   * @param {Object} params.metadata - Additional metadata including tags and category
+   * @returns {Promise<Object>} Remember result
+   */
+  async remember({ content, domain = 'user', domainId, importance = 0.5, metadata = {} }) {
+    return this.makeRequest('/remember', {
+      method: 'POST',
+      body: JSON.stringify({ content, domain, domainId, importance, metadata })
+    });
+  }
+
+  /**
+   * FORGET - Fade memory visibility using navigation rather than deletion
+   * @param {Object} params - Forget parameters
+   * @param {string} params.target - Target memory identifier or domain
+   * @param {string} params.strategy - Forgetting strategy: 'fade' | 'context_switch' | 'temporal_decay'
+   * @param {number} params.fadeFactor - Fade factor for visibility reduction (0-1)
+   * @returns {Promise<Object>} Forget result
+   */
+  async forget({ target, strategy = 'fade', fadeFactor = 0.1 }) {
+    return this.makeRequest('/forget', {
+      method: 'POST',
+      body: JSON.stringify({ target, strategy, fadeFactor })
+    });
+  }
+
+  /**
+   * RECALL - Retrieve memories based on query and domain filters with relevance scoring
+   * @param {Object} params - Recall parameters
+   * @param {string} params.query - Search query for memories
+   * @param {Array<string>} params.domains - Domain filters
+   * @param {Object} params.timeRange - Temporal filters {start, end}
+   * @param {number} params.relevanceThreshold - Minimum relevance score (0-1)
+   * @param {number} params.maxResults - Maximum results to return (1-100)
+   * @returns {Promise<Object>} Recall result with memories
+   */
+  async recall({ query, domains, timeRange, relevanceThreshold = 0.1, maxResults = 10 }) {
+    return this.makeRequest('/recall', {
+      method: 'POST',
+      body: JSON.stringify({ query, domains, timeRange, relevanceThreshold, maxResults })
+    });
+  }
+
+  /**
+   * PROJECT_CONTEXT - Manage project-specific memory domains
+   * @param {Object} params - Project context parameters
+   * @param {string} params.projectId - Project identifier
+   * @param {string} params.action - Project action: 'create' | 'switch' | 'list' | 'archive'
+   * @param {Object} params.metadata - Project metadata including name, description, and technologies
+   * @returns {Promise<Object>} Project context result
+   */
+  async project_context({ projectId, action = 'switch', metadata = {} }) {
+    return this.makeRequest('/project_context', {
+      method: 'POST',
+      body: JSON.stringify({ projectId, action, metadata })
+    });
+  }
+
+  /**
+   * FADE_MEMORY - Gradually reduce memory visibility for smooth context transitions
+   * @param {Object} params - Fade memory parameters
+   * @param {string} params.domain - Domain to fade
+   * @param {number} params.fadeFactor - Fade factor (0-1)
+   * @param {string} params.transition - Transition type: 'smooth' | 'immediate'
+   * @param {boolean} params.preserveInstructions - Whether to preserve instruction memories
+   * @returns {Promise<Object>} Fade memory result
+   */
+  async fade_memory({ domain, fadeFactor = 0.1, transition = 'smooth', preserveInstructions = true }) {
+    return this.makeRequest('/fade_memory', {
+      method: 'POST',
+      body: JSON.stringify({ domain, fadeFactor, transition, preserveInstructions })
+    });
+  }
+
   // ===== ZPT NAVIGATION METHODS =====
   
   /**

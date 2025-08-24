@@ -1,0 +1,611 @@
+<!-- Memory Management Panel -->
+<!-- This can be integrated into the main workbench layout -->
+
+<section class="memory-panel" id="memory-panel">
+  <!-- Memory Dashboard -->
+  <div class="memory-dashboard">
+    <div class="dashboard-header">
+      <h2 class="panel-title">
+        <span class="panel-icon">🧠</span>
+        Memory Management
+      </h2>
+      <div class="memory-stats">
+        <div class="stat-item">
+          <span class="stat-icon">💭</span>
+          <span id="memory-count">0</span> memories
+        </div>
+        <div class="stat-item">
+          <span class="stat-icon">🏷️</span>
+          <span id="domain-count">0</span> domains
+        </div>
+        <div class="stat-item">
+          <span class="stat-icon">📁</span>
+          Project: <span id="current-project">None</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="memory-context">
+      <div class="context-display">
+        <span class="context-label">Current Domain:</span>
+        <span class="context-value" id="current-memory-domain">user</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Memory Operations Tabs -->
+  <div class="memory-tabs">
+    <button class="tab-button active" data-tab="remember">
+      <span class="tab-icon">💾</span>
+      Remember
+    </button>
+    <button class="tab-button" data-tab="recall">
+      <span class="tab-icon">🔍</span>
+      Recall
+    </button>
+    <button class="tab-button" data-tab="project">
+      <span class="tab-icon">📁</span>
+      Project
+    </button>
+    <button class="tab-button" data-tab="manage">
+      <span class="tab-icon">⚙️</span>
+      Manage
+    </button>
+  </div>
+
+  <!-- Remember Tab -->
+  <div class="tab-content active" id="remember-tab">
+    <div class="tab-header">
+      <h3 class="tab-title">Store Memory</h3>
+      <p class="tab-description">Store content in specific memory domains</p>
+    </div>
+    
+    <form class="memory-form" id="remember-form">
+      <div class="form-group">
+        <label for="remember-content" class="form-label">Content</label>
+        <textarea 
+          id="remember-content" 
+          name="content"
+          class="form-textarea"
+          placeholder="Enter content to remember..."
+          rows="4"
+          required
+        ></textarea>
+      </div>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label for="remember-domain" class="form-label">Domain</label>
+          <select id="remember-domain" name="domain" class="form-select">
+            <option value="user">User</option>
+            <option value="project">Project</option>
+            <option value="session">Session</option>
+            <option value="instruction">Instruction</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="remember-domain-id" class="form-label">Domain ID</label>
+          <input 
+            type="text" 
+            id="remember-domain-id" 
+            name="domainId"
+            class="form-input"
+            placeholder="Optional identifier..."
+          >
+        </div>
+      </div>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label for="remember-importance" class="form-label">
+            Importance 
+            <span class="importance-value">0.5</span>
+          </label>
+          <input 
+            type="range" 
+            id="remember-importance" 
+            name="importance"
+            class="importance-slider"
+            min="0" 
+            max="1" 
+            step="0.1" 
+            value="0.5"
+          >
+          <div class="importance-labels">
+            <span>Low</span>
+            <span>Medium</span>
+            <span>High</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label for="remember-tags" class="form-label">Tags</label>
+          <input 
+            type="text" 
+            id="remember-tags" 
+            name="tags"
+            class="form-input"
+            placeholder="tag1, tag2, tag3..."
+          >
+        </div>
+        
+        <div class="form-group">
+          <label for="remember-category" class="form-label">Category</label>
+          <input 
+            type="text" 
+            id="remember-category" 
+            name="category"
+            class="form-input"
+            placeholder="Optional category..."
+          >
+        </div>
+      </div>
+      
+      <button type="submit" class="memory-button remember-button" id="remember-submit">
+        <span class="button-icon">💾</span>
+        <span class="button-text">Remember</span>
+        <span class="button-loader" style="display: none;">⏳</span>
+      </button>
+    </form>
+  </div>
+
+  <!-- Recall Tab -->
+  <div class="tab-content" id="recall-tab">
+    <div class="tab-header">
+      <h3 class="tab-title">Recall Memories</h3>
+      <p class="tab-description">Search and retrieve stored memories</p>
+    </div>
+    
+    <!-- Quick Recall Buttons -->
+    <div class="quick-recall">
+      <h4 class="quick-recall-title">Quick Recall</h4>
+      <div class="quick-buttons">
+        <button class="quick-recall-button" data-query="project" data-domain="project">
+          <span class="quick-icon">📁</span>
+          Project Context
+        </button>
+        <button class="quick-recall-button" data-query="important" data-domain="">
+          <span class="quick-icon">⭐</span>
+          Important
+        </button>
+        <button class="quick-recall-button" data-query="recent" data-domain="">
+          <span class="quick-icon">🕐</span>
+          Recent
+        </button>
+        <button class="quick-recall-button" data-query="instructions" data-domain="instruction">
+          <span class="quick-icon">📋</span>
+          Instructions
+        </button>
+      </div>
+    </div>
+    
+    <form class="memory-form" id="recall-form">
+      <div class="form-group">
+        <label for="recall-query" class="form-label">Search Query</label>
+        <input 
+          type="text" 
+          id="recall-query" 
+          name="query"
+          class="form-input"
+          placeholder="Search your memories..."
+          required
+        >
+      </div>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label for="recall-domains" class="form-label">Domains</label>
+          <input 
+            type="text" 
+            id="recall-domains" 
+            name="domains"
+            class="form-input"
+            placeholder="user, project, session..."
+          >
+        </div>
+        
+        <div class="form-group">
+          <label for="recall-max-results" class="form-label">Max Results</label>
+          <input 
+            type="number" 
+            id="recall-max-results" 
+            name="maxResults"
+            class="form-input"
+            value="10"
+            min="1"
+            max="100"
+          >
+        </div>
+      </div>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label for="recall-threshold" class="form-label">
+            Relevance Threshold
+            <span class="threshold-value">0.1</span>
+          </label>
+          <input 
+            type="range" 
+            id="recall-threshold" 
+            name="relevanceThreshold"
+            class="threshold-slider"
+            min="0" 
+            max="1" 
+            step="0.1" 
+            value="0.1"
+          >
+        </div>
+      </div>
+      
+      <!-- Time Range Filter -->
+      <div class="form-group time-range-group">
+        <label class="form-label">Time Range (Optional)</label>
+        <div class="time-range-inputs">
+          <input 
+            type="date" 
+            id="recall-time-start" 
+            name="timeRangeStart"
+            class="form-input time-input"
+            placeholder="Start date"
+          >
+          <span class="time-separator">to</span>
+          <input 
+            type="date" 
+            id="recall-time-end" 
+            name="timeRangeEnd"
+            class="form-input time-input"
+            placeholder="End date"
+          >
+        </div>
+      </div>
+      
+      <button type="submit" class="memory-button recall-button" id="recall-submit">
+        <span class="button-icon">🔍</span>
+        <span class="button-text">Recall Memories</span>
+        <span class="button-loader" style="display: none;">⏳</span>
+      </button>
+    </form>
+    
+    <!-- Recall Results -->
+    <div class="recall-results" id="recall-results">
+      <div class="recall-placeholder">
+        <div class="placeholder-icon">🔍</div>
+        <p class="placeholder-text">Search for memories to see results here</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Project Tab -->
+  <div class="tab-content" id="project-tab">
+    <div class="tab-header">
+      <h3 class="tab-title">Project Context</h3>
+      <p class="tab-description">Manage project-specific memory domains</p>
+    </div>
+    
+    <!-- Quick Project Actions -->
+    <div class="project-quick-actions">
+      <div class="quick-projects" id="quick-projects">
+        <!-- Dynamic project buttons will be added here -->
+      </div>
+    </div>
+    
+    <form class="memory-form" id="project-context-form">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="project-id" class="form-label">Project ID</label>
+          <input 
+            type="text" 
+            id="project-id" 
+            name="projectId"
+            class="form-input"
+            placeholder="my-project-2024"
+            required
+          >
+        </div>
+        
+        <div class="form-group">
+          <label for="project-action" class="form-label">Action</label>
+          <select id="project-action" name="action" class="form-select">
+            <option value="create">Create</option>
+            <option value="switch" selected>Switch</option>
+            <option value="list">List</option>
+            <option value="archive">Archive</option>
+          </select>
+        </div>
+      </div>
+      
+      <!-- Project Metadata (shown for create/switch) -->
+      <div class="project-metadata" id="project-metadata">
+        <div class="form-group">
+          <label for="project-name" class="form-label">Project Name</label>
+          <input 
+            type="text" 
+            id="project-name" 
+            name="name"
+            class="form-input"
+            placeholder="My Awesome Project"
+          >
+        </div>
+        
+        <div class="form-group">
+          <label for="project-description" class="form-label">Description</label>
+          <textarea 
+            id="project-description" 
+            name="description"
+            class="form-textarea"
+            placeholder="Brief project description..."
+            rows="2"
+          ></textarea>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="project-technologies" class="form-label">Technologies</label>
+            <input 
+              type="text" 
+              id="project-technologies" 
+              name="technologies"
+              class="form-input"
+              placeholder="React, Node.js, TypeScript..."
+            >
+          </div>
+          
+          <div class="form-group">
+            <label for="project-parent" class="form-label">Parent Project</label>
+            <input 
+              type="text" 
+              id="project-parent" 
+              name="parentProject"
+              class="form-input"
+              placeholder="Optional parent project ID"
+            >
+          </div>
+        </div>
+      </div>
+      
+      <button type="submit" class="memory-button project-button" id="project-context-submit">
+        <span class="button-icon">📁</span>
+        <span class="button-text">Execute Action</span>
+        <span class="button-loader" style="display: none;">⏳</span>
+      </button>
+    </form>
+  </div>
+
+  <!-- Manage Tab -->
+  <div class="tab-content" id="manage-tab">
+    <div class="tab-header">
+      <h3 class="tab-title">Memory Management</h3>
+      <p class="tab-description">Forget and fade memory visibility</p>
+    </div>
+    
+    <!-- Memory Filter -->
+    <div class="memory-filter">
+      <h4 class="filter-title">Memory Filter</h4>
+      <div class="filter-controls">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="memory-filter-domains" class="form-label">Filter Domains</label>
+            <input 
+              type="text" 
+              id="memory-filter-domains" 
+              name="filterDomains"
+              class="form-input"
+              placeholder="user, project, session..."
+            >
+          </div>
+          
+          <div class="form-group">
+            <label for="memory-filter-threshold" class="form-label">
+              Min Relevance
+              <span class="filter-threshold-value">0.1</span>
+            </label>
+            <input 
+              type="range" 
+              id="memory-filter-threshold" 
+              name="filterThreshold"
+              class="threshold-slider"
+              min="0" 
+              max="1" 
+              step="0.1" 
+              value="0.1"
+            >
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="memory-filter-start" class="form-label">Start Date</label>
+            <input 
+              type="date" 
+              id="memory-filter-start" 
+              name="filterStart"
+              class="form-input"
+            >
+          </div>
+          
+          <div class="form-group">
+            <label for="memory-filter-end" class="form-label">End Date</label>
+            <input 
+              type="date" 
+              id="memory-filter-end" 
+              name="filterEnd"
+              class="form-input"
+            >
+          </div>
+        </div>
+        
+        <button type="button" class="memory-button filter-button" id="memory-filter-apply">
+          <span class="button-icon">🔍</span>
+          <span class="button-text">Apply Filter</span>
+        </button>
+      </div>
+    </div>
+    
+    <!-- Forget Memory -->
+    <div class="forget-section">
+      <h4 class="section-title">Forget Memory</h4>
+      <form class="memory-form" id="forget-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="forget-target" class="form-label">Target</label>
+            <input 
+              type="text" 
+              id="forget-target" 
+              name="target"
+              class="form-input"
+              placeholder="Memory ID or domain name..."
+              required
+            >
+          </div>
+          
+          <div class="form-group">
+            <label for="forget-strategy" class="form-label">Strategy</label>
+            <select id="forget-strategy" name="strategy" class="form-select">
+              <option value="fade">Fade</option>
+              <option value="context_switch">Context Switch</option>
+              <option value="temporal_decay">Temporal Decay</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="forget-fade-factor" class="form-label">
+            Fade Factor
+            <span class="fade-factor-value">0.1</span>
+          </label>
+          <input 
+            type="range" 
+            id="forget-fade-factor" 
+            name="fadeFactor"
+            class="fade-factor-slider"
+            min="0" 
+            max="1" 
+            step="0.1" 
+            value="0.1"
+          >
+          <div class="fade-factor-labels">
+            <span>Slight</span>
+            <span>Moderate</span>
+            <span>Heavy</span>
+          </div>
+        </div>
+        
+        <button type="submit" class="memory-button forget-button" id="forget-submit">
+          <span class="button-icon">🌫️</span>
+          <span class="button-text">Forget</span>
+          <span class="button-loader" style="display: none;">⏳</span>
+        </button>
+      </form>
+    </div>
+    
+    <!-- Fade Memory Domain -->
+    <div class="fade-section">
+      <h4 class="section-title">Fade Memory Domain</h4>
+      <form class="memory-form" id="fade-memory-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="fade-domain" class="form-label">Domain</label>
+            <input 
+              type="text" 
+              id="fade-domain" 
+              name="domain"
+              class="form-input"
+              placeholder="Domain to fade..."
+              required
+            >
+          </div>
+          
+          <div class="form-group">
+            <label for="fade-transition" class="form-label">Transition</label>
+            <select id="fade-transition" name="transition" class="form-select">
+              <option value="smooth">Smooth</option>
+              <option value="immediate">Immediate</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="fade-memory-fade-factor" class="form-label">
+            Fade Factor
+            <span class="fade-memory-factor-value">0.1</span>
+          </label>
+          <input 
+            type="range" 
+            id="fade-memory-fade-factor" 
+            name="fadeFactor"
+            class="fade-factor-slider"
+            min="0" 
+            max="1" 
+            step="0.1" 
+            value="0.1"
+          >
+        </div>
+        
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="fade-preserve-instructions" name="preserveInstructions" checked>
+            <span class="checkbox-text">Preserve Instructions</span>
+            <span class="checkbox-hint">Keep instruction memories visible</span>
+          </label>
+        </div>
+        
+        <button type="submit" class="memory-button fade-button" id="fade-memory-submit">
+          <span class="button-icon">🌫️</span>
+          <span class="button-text">Fade Domain</span>
+          <span class="button-loader" style="display: none;">⏳</span>
+        </button>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- Tab switching script (inline for simplicity) -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Handle memory tab switching
+  const tabButtons = document.querySelectorAll('#memory-panel .tab-button');
+  const tabContents = document.querySelectorAll('#memory-panel .tab-content');
+  
+  tabButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      const targetTab = button.dataset.tab;
+      
+      // Remove active class from all buttons and contents
+      tabButtons.forEach(b => b.classList.remove('active'));
+      tabContents.forEach(c => c.classList.remove('active'));
+      
+      // Add active class to clicked button and target content
+      button.classList.add('active');
+      document.getElementById(targetTab + '-tab').classList.add('active');
+    });
+  });
+  
+  // Handle slider value displays
+  const sliders = document.querySelectorAll('#memory-panel input[type="range"]');
+  sliders.forEach(slider => {
+    const updateValue = () => {
+      const valueSpan = document.querySelector(`.${slider.className.replace('-slider', '-value')}`);
+      if (valueSpan) {
+        valueSpan.textContent = slider.value;
+      }
+    };
+    
+    slider.addEventListener('input', updateValue);
+    updateValue(); // Set initial value
+  });
+  
+  // Handle project action change
+  const projectAction = document.getElementById('project-action');
+  const projectMetadata = document.getElementById('project-metadata');
+  
+  if (projectAction && projectMetadata) {
+    projectAction.addEventListener('change', () => {
+      const showMetadata = ['create', 'switch'].includes(projectAction.value);
+      projectMetadata.style.display = showMetadata ? 'block' : 'none';
+    });
+  }
+});
+</script>

@@ -630,6 +630,77 @@ function registerToolCallHandler(server) {
             }
           }
         },
+        // Memory Management Verbs
+        {
+          name: 'remember',
+          description: 'Store content in specific memory domain with importance weighting. Supports user, project, session, and instruction domains.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              content: { type: 'string', description: 'Content to remember' },
+              domain: { type: 'string', enum: ['user', 'project', 'session', 'instruction'], default: 'user', description: 'Memory domain' },
+              domainId: { type: 'string', description: 'Domain identifier (optional)' },
+              importance: { type: 'number', minimum: 0, maximum: 1, default: 0.5, description: 'Importance weighting' },
+              metadata: { type: 'object', description: 'Additional metadata including tags and category' }
+            },
+            required: ['content']
+          }
+        },
+        {
+          name: 'forget',
+          description: 'Fade memory visibility using navigation rather than deletion. Supports fade, context_switch, and temporal_decay strategies.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              target: { type: 'string', description: 'Target memory identifier or domain' },
+              strategy: { type: 'string', enum: ['fade', 'context_switch', 'temporal_decay'], default: 'fade', description: 'Forgetting strategy' },
+              fadeFactor: { type: 'number', minimum: 0, maximum: 1, default: 0.1, description: 'Fade factor for visibility reduction' }
+            },
+            required: ['target']
+          }
+        },
+        {
+          name: 'recall',
+          description: 'Retrieve memories based on query and domain filters with relevance scoring.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              query: { type: 'string', description: 'Search query for memories' },
+              domains: { type: 'array', items: { type: 'string' }, description: 'Domain filters' },
+              timeRange: { type: 'object', properties: { start: { type: 'string' }, end: { type: 'string' } }, description: 'Temporal filters' },
+              relevanceThreshold: { type: 'number', minimum: 0, maximum: 1, default: 0.1, description: 'Minimum relevance score' },
+              maxResults: { type: 'number', minimum: 1, maximum: 100, default: 10, description: 'Maximum results to return' }
+            },
+            required: ['query']
+          }
+        },
+        {
+          name: 'project_context',
+          description: 'Manage project-specific memory domains. Create, switch, list, or archive project contexts.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              projectId: { type: 'string', description: 'Project identifier' },
+              action: { type: 'string', enum: ['create', 'switch', 'list', 'archive'], default: 'switch', description: 'Project action' },
+              metadata: { type: 'object', description: 'Project metadata including name, description, and technologies' }
+            },
+            required: ['projectId']
+          }
+        },
+        {
+          name: 'fade_memory',
+          description: 'Gradually reduce memory visibility for smooth context transitions.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              domain: { type: 'string', description: 'Domain to fade' },
+              fadeFactor: { type: 'number', minimum: 0, maximum: 1, default: 0.1, description: 'Fade factor' },
+              transition: { type: 'string', enum: ['smooth', 'immediate'], default: 'smooth', description: 'Transition type' },
+              preserveInstructions: { type: 'boolean', default: true, description: 'Whether to preserve instruction memories' }
+            },
+            required: ['domain']
+          }
+        },
         {
           name: 'uploadDocument',
           description: 'Upload and process document file (PDF, TXT, MD)',
@@ -2487,6 +2558,42 @@ function registerToolCallHandler(server) {
         const { getSimpleVerbsService } = await import('./tools/simple-verbs.js');
         const service = getSimpleVerbsService();
         const result = await service.inspect(args);
+        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+      }
+
+      // Memory management verbs
+      if (name === 'remember') {
+        const { getSimpleVerbsService } = await import('./tools/simple-verbs.js');
+        const service = getSimpleVerbsService();
+        const result = await service.remember(args);
+        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+      }
+
+      if (name === 'forget') {
+        const { getSimpleVerbsService } = await import('./tools/simple-verbs.js');
+        const service = getSimpleVerbsService();
+        const result = await service.forget(args);
+        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+      }
+
+      if (name === 'recall') {
+        const { getSimpleVerbsService } = await import('./tools/simple-verbs.js');
+        const service = getSimpleVerbsService();
+        const result = await service.recall(args);
+        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+      }
+
+      if (name === 'project_context') {
+        const { getSimpleVerbsService } = await import('./tools/simple-verbs.js');
+        const service = getSimpleVerbsService();
+        const result = await service.project_context(args);
+        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+      }
+
+      if (name === 'fade_memory') {
+        const { getSimpleVerbsService } = await import('./tools/simple-verbs.js');
+        const service = getSimpleVerbsService();
+        const result = await service.fade_memory(args);
         return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
       }
       

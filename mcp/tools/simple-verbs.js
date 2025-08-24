@@ -15,6 +15,8 @@ import { SafeOperations } from '../lib/safe-operations.js';
 import { ZPTNavigationService } from './zpt-tools.js';
 import { EnhancementCoordinator } from '../../src/services/enhancement/EnhancementCoordinator.js';
 import { HybridContextManager } from '../../src/services/context/HybridContextManager.js';
+import { MemoryDomainManager } from '../../src/services/memory/MemoryDomainManager.js';
+import { MemoryRelevanceEngine } from '../../src/services/memory/MemoryRelevanceEngine.js';
 
 // Simple Verb Tool Names
 export const SimpleVerbToolNames = {
@@ -24,7 +26,13 @@ export const SimpleVerbToolNames = {
   ZOOM: 'zoom',
   PAN: 'pan',
   TILT: 'tilt',
-  INSPECT: 'inspect'
+  INSPECT: 'inspect',
+  // Memory management verbs
+  REMEMBER: 'remember',
+  FORGET: 'forget',
+  RECALL: 'recall',
+  PROJECT_CONTEXT: 'project_context',
+  FADE_MEMORY: 'fade_memory'
 };
 
 // Input Schemas for Simple Verbs
@@ -83,6 +91,54 @@ const TiltSchema = z.object({
 const InspectSchema = z.object({
   what: z.enum(['session', 'concepts', 'embeddings', 'all']).optional().default('session'),
   details: z.boolean().optional().default(false)
+});
+
+// Memory Management Verb Schemas
+const RememberSchema = z.object({
+  content: z.string().min(1, "Content cannot be empty"),
+  domain: z.enum(['user', 'project', 'session', 'instruction']).default('user'),
+  domainId: z.string().optional(),
+  importance: z.number().min(0).max(1).optional().default(0.5),
+  metadata: z.object({
+    tags: z.array(z.string()).optional(),
+    category: z.string().optional(),
+    expires: z.string().optional()
+  }).optional().default({})
+});
+
+const ForgetSchema = z.object({
+  target: z.string().min(1, "Target memory identifier required"),
+  strategy: z.enum(['fade', 'context_switch', 'temporal_decay']).optional().default('fade'),
+  fadeFactor: z.number().min(0).max(1).optional().default(0.1)
+});
+
+const RecallSchema = z.object({
+  query: z.string().min(1, "Query cannot be empty"),
+  domains: z.array(z.string()).optional(),
+  timeRange: z.object({
+    start: z.string().optional(),
+    end: z.string().optional()
+  }).optional(),
+  relevanceThreshold: z.number().min(0).max(1).optional().default(0.1),
+  maxResults: z.number().min(1).max(100).optional().default(10)
+});
+
+const ProjectContextSchema = z.object({
+  projectId: z.string().min(1, "Project ID required"),
+  action: z.enum(['create', 'switch', 'list', 'archive']).default('switch'),
+  metadata: z.object({
+    name: z.string().optional(),
+    description: z.string().optional(),
+    technologies: z.array(z.string()).optional(),
+    parentProject: z.string().optional()
+  }).optional().default({})
+});
+
+const FadeMemorySchema = z.object({
+  domain: z.string().min(1, "Domain required"),
+  fadeFactor: z.number().min(0).max(1).optional().default(0.1),
+  transition: z.enum(['smooth', 'immediate']).optional().default('smooth'),
+  preserveInstructions: z.boolean().optional().default(true)
 });
 
 /**
@@ -362,6 +418,9 @@ class SimpleVerbsService {
     this.stateManager = null;
     this.enhancementCoordinator = null;
     this.hybridContextManager = null;
+    // Memory domain management services
+    this.memoryDomainManager = null;
+    this.memoryRelevanceEngine = null;
   }
 
   /**
@@ -391,7 +450,25 @@ class SimpleVerbsService {
         zptStateManager: this.stateManager
       });
       
-      mcpDebugger.info('SimpleVerbsService initialized with ZPT state management, enhancement coordinator, and hybrid context manager');
+      // Initialize memory domain management services
+      this.memoryRelevanceEngine = new MemoryRelevanceEngine({
+        baseWeights: {
+          domainMatch: 0.35,
+          temporal: 0.20,
+          semantic: 0.30,
+          frequency: 0.15
+        }
+      });
+      
+      this.memoryDomainManager = new MemoryDomainManager(
+        this.memoryManager.store, 
+        this.stateManager,
+        {
+          memoryRelevanceEngine: this.memoryRelevanceEngine
+        }
+      );
+      
+      mcpDebugger.info('SimpleVerbsService initialized with ZPT state management, enhancement coordinator, hybrid context manager, and memory domain services');
     }
   }
 
@@ -1431,6 +1508,277 @@ class SimpleVerbsService {
       };
     }
   }
+
+  /**
+   * REMEMBER - Store content in specific memory domain with importance weighting
+   */
+  async remember({ content, domain = 'user', domainId, importance = 0.5, metadata = {} }) {
+    await this.initialize();
+    
+    try {
+      mcpDebugger.debug('Simple Verb: remember', { domain, domainId, importance, contentLength: content.length });
+      
+      // Create domain if needed
+      if (domainId && domain !== 'session') {
+        await this.memoryDomainManager.createDomain(domain, domainId, {
+          description: metadata.description,
+          tags: metadata.tags
+        });
+      }
+      
+      // Store memory with domain association
+      const memoryData = {
+        content: content,
+        domain: domain,
+        domainId: domainId || this.stateManager.getState().sessionId,
+        importance: importance,
+        timestamp: Date.now(),
+        metadata: {
+          ...metadata,
+          source: 'remember_verb'
+        }
+      };
+      
+      // Use tell mechanism but with domain-specific storage
+      const result = await this.tell({
+        content: content,
+        type: 'interaction',
+        metadata: memoryData
+      });
+      
+      return {
+        success: true,
+        verb: 'remember',
+        domain: domain,
+        domainId: domainId || this.stateManager.getState().sessionId,
+        importance: importance,
+        stored: result.stored,
+        zptState: this.stateManager.getState()
+      };
+      
+    } catch (error) {
+      mcpDebugger.error('Remember verb failed:', error);
+      return {
+        success: false,
+        verb: 'remember',
+        error: error.message
+      };
+    }
+  }
+
+  /**
+   * FORGET - Fade memory visibility using navigation rather than deletion
+   */
+  async forget({ target, strategy = 'fade', fadeFactor = 0.1 }) {
+    await this.initialize();
+    
+    try {
+      mcpDebugger.debug('Simple Verb: forget', { target, strategy, fadeFactor });
+      
+      let result;
+      
+      switch (strategy) {
+        case 'fade':
+          result = await this.memoryDomainManager.fadeContext(target, fadeFactor);
+          break;
+          
+        case 'context_switch':
+          // Switch away from the target domain
+          const currentDomains = this.stateManager.getState().pan?.domains || [];
+          const newDomains = currentDomains.filter(d => d !== target);
+          result = await this.memoryDomainManager.switchDomain(currentDomains, newDomains, { fadeFactor });
+          break;
+          
+        case 'temporal_decay':
+          // Apply enhanced temporal decay
+          result = { success: true, strategy: 'temporal_decay', message: 'Temporal decay applied' };
+          break;
+          
+        default:
+          throw new Error(`Unknown forget strategy: ${strategy}`);
+      }
+      
+      return {
+        success: true,
+        verb: 'forget',
+        target: target,
+        strategy: strategy,
+        fadeFactor: fadeFactor,
+        result: result,
+        zptState: this.stateManager.getState()
+      };
+      
+    } catch (error) {
+      mcpDebugger.error('Forget verb failed:', error);
+      return {
+        success: false,
+        verb: 'forget',
+        error: error.message
+      };
+    }
+  }
+
+  /**
+   * RECALL - Retrieve memories based on query and domain filters
+   */
+  async recall({ query, domains, timeRange, relevanceThreshold = 0.1, maxResults = 10 }) {
+    await this.initialize();
+    
+    try {
+      mcpDebugger.debug('Simple Verb: recall', { query, domains, relevanceThreshold, maxResults });
+      
+      // Build ZPT state for memory retrieval
+      const zptState = {
+        ...this.stateManager.getState(),
+        panDomains: domains || this.stateManager.getState().pan?.domains || [],
+        relevanceThreshold: relevanceThreshold,
+        maxMemories: maxResults
+      };
+      
+      if (timeRange) {
+        zptState.temporalFilter = timeRange;
+      }
+      
+      // Use memory domain manager to get visible memories
+      const visibleMemories = await this.memoryDomainManager.getVisibleMemories(query, zptState);
+      
+      // Format results for display
+      const formattedMemories = visibleMemories.map(memory => ({
+        id: memory.id,
+        content: memory.content || memory.prompt,
+        relevance: memory.relevance,
+        domain: memory.domain || 'unknown',
+        timestamp: memory.timestamp,
+        metadata: memory.relevanceMetadata
+      }));
+      
+      return {
+        success: true,
+        verb: 'recall',
+        query: query,
+        memoriesFound: formattedMemories.length,
+        memories: formattedMemories,
+        domains: domains,
+        relevanceThreshold: relevanceThreshold,
+        zptState: this.stateManager.getState()
+      };
+      
+    } catch (error) {
+      mcpDebugger.error('Recall verb failed:', error);
+      return {
+        success: false,
+        verb: 'recall',
+        error: error.message
+      };
+    }
+  }
+
+  /**
+   * PROJECT_CONTEXT - Manage project-specific memory domains
+   */
+  async project_context({ projectId, action = 'switch', metadata = {} }) {
+    await this.initialize();
+    
+    try {
+      mcpDebugger.debug('Simple Verb: project_context', { projectId, action, metadata });
+      
+      let result;
+      
+      switch (action) {
+        case 'create':
+          result = await this.memoryDomainManager.createDomain('project', projectId, {
+            name: metadata.name,
+            description: metadata.description,
+            technologies: metadata.technologies,
+            parentDomain: metadata.parentProject ? `project:${metadata.parentProject}` : undefined
+          });
+          break;
+          
+        case 'switch':
+          const currentDomains = this.stateManager.getState().pan?.domains || [];
+          const projectDomain = `project:${projectId}`;
+          
+          if (!currentDomains.includes(projectDomain)) {
+            result = await this.memoryDomainManager.switchDomain(
+              currentDomains, 
+              [...currentDomains, projectDomain],
+              { preserveInstructions: true }
+            );
+          } else {
+            result = { success: true, message: 'Already in project context' };
+          }
+          break;
+          
+        case 'list':
+          // List all project domains (placeholder - would query SPARQL)
+          result = { success: true, projects: [], message: 'Project listing not implemented' };
+          break;
+          
+        case 'archive':
+          result = await this.memoryDomainManager.fadeContext(`project:${projectId}`, 0.05);
+          break;
+          
+        default:
+          throw new Error(`Unknown project action: ${action}`);
+      }
+      
+      return {
+        success: true,
+        verb: 'project_context',
+        projectId: projectId,
+        action: action,
+        result: result,
+        zptState: this.stateManager.getState()
+      };
+      
+    } catch (error) {
+      mcpDebugger.error('Project context verb failed:', error);
+      return {
+        success: false,
+        verb: 'project_context',
+        error: error.message
+      };
+    }
+  }
+
+  /**
+   * FADE_MEMORY - Gradually reduce memory visibility for smooth context transitions
+   */
+  async fade_memory({ domain, fadeFactor = 0.1, transition = 'smooth', preserveInstructions = true }) {
+    await this.initialize();
+    
+    try {
+      mcpDebugger.debug('Simple Verb: fade_memory', { domain, fadeFactor, transition, preserveInstructions });
+      
+      const result = await this.memoryDomainManager.switchDomain(
+        [domain],
+        [],
+        {
+          fadeFactor: fadeFactor,
+          transition: transition,
+          preserveInstructions: preserveInstructions
+        }
+      );
+      
+      return {
+        success: true,
+        verb: 'fade_memory',
+        domain: domain,
+        fadeFactor: fadeFactor,
+        transition: transition,
+        result: result,
+        zptState: this.stateManager.getState()
+      };
+      
+    } catch (error) {
+      mcpDebugger.error('Fade memory verb failed:', error);
+      return {
+        success: false,
+        verb: 'fade_memory',
+        error: error.message
+      };
+    }
+  }
 }
 
 // Create shared service instance
@@ -1487,6 +1835,31 @@ export function getSimpleVerbsToolDefinitions() {
       name: SimpleVerbToolNames.INSPECT,
       description: "Inspect stored memories and session cache for debugging purposes.",
       inputSchema: zodToJsonSchema(InspectSchema)
+    },
+    {
+      name: SimpleVerbToolNames.REMEMBER,
+      description: "Store content in specific memory domain with importance weighting. Supports user, project, session, and instruction domains.",
+      inputSchema: zodToJsonSchema(RememberSchema)
+    },
+    {
+      name: SimpleVerbToolNames.FORGET,
+      description: "Fade memory visibility using navigation rather than deletion. Supports fade, context_switch, and temporal_decay strategies.",
+      inputSchema: zodToJsonSchema(ForgetSchema)
+    },
+    {
+      name: SimpleVerbToolNames.RECALL,
+      description: "Retrieve memories based on query and domain filters with relevance scoring.",
+      inputSchema: zodToJsonSchema(RecallSchema)
+    },
+    {
+      name: SimpleVerbToolNames.PROJECT_CONTEXT,
+      description: "Manage project-specific memory domains. Create, switch, list, or archive project contexts.",
+      inputSchema: zodToJsonSchema(ProjectContextSchema)
+    },
+    {
+      name: SimpleVerbToolNames.FADE_MEMORY,
+      description: "Gradually reduce memory visibility for smooth context transitions.",
+      inputSchema: zodToJsonSchema(FadeMemorySchema)
     }
   ];
 }

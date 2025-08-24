@@ -7,6 +7,7 @@ import { apiService } from './services/ApiService.js';
 import { stateManager } from './services/StateManager.js';
 import { consoleService } from './services/ConsoleService.js';
 import ConsoleComponent from './components/ConsoleComponent.js';
+import MemoryComponent from './components/MemoryComponent.js';
 import DomUtils from './utils/DomUtils.js';
 
 class WorkbenchApp {
@@ -228,6 +229,7 @@ class WorkbenchApp {
     this.initializeNavigateComponent();
     this.initializeDashboardComponent();
     this.initializeConsoleComponent();
+    this.initializeMemoryComponent();
   }
 
   initializeTellComponent() {
@@ -279,6 +281,17 @@ class WorkbenchApp {
   initializeConsoleComponent() {
     this.components.console = new ConsoleComponent();
     this.components.console.init();
+  }
+
+  initializeMemoryComponent() {
+    // Only initialize if memory panel exists in the DOM
+    const memoryPanel = DomUtils.$('#memory-panel');
+    if (memoryPanel) {
+      this.components.memory = new MemoryComponent();
+      this.components.memory.init().catch(error => {
+        consoleService.error('Failed to initialize Memory Component', error);
+      });
+    }
   }
 
   // ===== EVENT HANDLERS =====

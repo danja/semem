@@ -95,7 +95,23 @@ export default class SPARQLDocumentIngester {
             let processedQuery = query;
             for (const [key, value] of Object.entries(variables)) {
                 const placeholder = `{{${key}}}`;
-                processedQuery = processedQuery.replace(new RegExp(placeholder, 'g'), value);
+                // Handle null/undefined values appropriately
+                let substitution;
+                if (value === null || value === undefined) {
+                    // For limit specifically, remove the entire LIMIT clause if null/undefined
+                    if (key === 'limit') {
+                        // Remove LIMIT clause entirely - matches "LIMIT {{limit}}" patterns
+                        // This handles variations like "LIMIT {{limit}}", "LIMIT  {{limit}}", etc.
+                        const escapedPlaceholder = placeholder.replace(/[{}]/g, '\\$&');
+                        const limitPattern = new RegExp(`\\s*LIMIT\\s+${escapedPlaceholder}\\s*`, 'gi');
+                        processedQuery = processedQuery.replace(limitPattern, '\n');
+                        continue;
+                    }
+                    substitution = '';
+                } else {
+                    substitution = String(value);
+                }
+                processedQuery = processedQuery.replace(new RegExp(placeholder, 'g'), substitution);
             }
 
             logger.debug('Executing SPARQL query:', { endpoint: this.endpoint, query: processedQuery.substring(0, 200) + '...' });
