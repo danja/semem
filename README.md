@@ -29,6 +29,8 @@ The UI has been totally re-written to reflect this, see [workbench-howto](https:
 
 Most recent direct workflow experiment : [PDF ingestion](https://github.com/danja/semem/tree/main/examples/document#readme)
 
+**SPARQL Document Ingestion**: Use `examples/ingestion/SPARQLIngest.js` for importing documents from SPARQL endpoints with configurable query templates (blog-articles, generic-documents, wikidata-entities). Supports batch processing, authentication, and direct integration with the semantic memory system.
+
 See also :  [blog](https://tensegrity.it) (co-written with Claude Code)
 
 <details>
