@@ -401,10 +401,8 @@ export const createSparqlIngestTool = (simpleVerbsService) => ({
       },
       limit: {
         type: 'number',
-        description: 'Maximum number of documents to ingest',
-        default: 50,
-        minimum: 1,
-        maximum: 500
+        description: 'Maximum number of documents to ingest (optional, unlimited if not specified)',
+        minimum: 1
       },
       lazy: {
         type: 'boolean',
@@ -439,7 +437,7 @@ export const createSparqlIngestTool = (simpleVerbsService) => ({
     const {
       endpoint,
       template,
-      limit = 50,
+      limit = null,
       lazy = false,
       dryRun = false,
       auth,

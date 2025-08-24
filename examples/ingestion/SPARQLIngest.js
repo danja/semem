@@ -150,7 +150,7 @@ EXAMPLES:
 OPTIONS:
   -e, --endpoint <url>     SPARQL query endpoint URL
   -t, --template <name>    Query template (blog-articles, generic-documents, wikidata-entities)  
-  -l, --limit <number>     Maximum documents to ingest (default: 50)
+  -l, --limit <number>     Maximum documents to ingest (default: unlimited)
       --lazy               Use lazy processing (store without immediate processing)
   -d, --dry-run            Preview documents without ingesting
   -i, --interactive        Interactive mode for building queries
@@ -285,7 +285,7 @@ For more information, see: docs/manual/sparql-ingestion.md
         const {
             endpoint,
             template,
-            limit = 50,
+            limit = null,
             lazy = false,
             dryRun = false,
             auth,
@@ -450,7 +450,7 @@ For more information, see: docs/manual/sparql-ingestion.md
             await this.executeIngestion({
                 endpoint: values.endpoint,
                 template: values.template,
-                limit: values.limit ? parseInt(values.limit) : 50,
+                limit: values.limit ? parseInt(values.limit) : null,
                 lazy: values.lazy || false,
                 dryRun: values['dry-run'] || false,
                 auth,

@@ -304,7 +304,7 @@ The ingested documents follow the same RDF patterns as uploaded documents, ensur
 
 - `endpoint` (required): SPARQL endpoint URL
 - `template` (required): Template name
-- `limit` (optional): Maximum documents (default: 50)
+- `limit` (optional): Maximum documents (default: unlimited)
 - `lazy` (optional): Use lazy processing (default: false)
 - `dryRun` (optional): Preview mode (default: false)
 - `auth` (optional): Authentication credentials
