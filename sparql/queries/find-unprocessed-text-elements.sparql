@@ -1,6 +1,6 @@
 PREFIX ragno: <http://purl.org/stuff/ragno/>
 PREFIX prov: <http://www.w3.org/ns/prov#>
-PREFIX semem: <http://semem.hyperdata.it/>
+PREFIX semem: <http://purl.org/semem/>
 
 SELECT ?textElement ?content ?sourceUnit {
   GRAPH <${graphURI}> {

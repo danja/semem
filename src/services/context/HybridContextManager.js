@@ -79,6 +79,15 @@ export class HybridContextManager {
         this.stats.totalQueries++;
         
         
+        console.log('🔥 [HYBRID_CONTEXT] Starting query processing', {
+            query: query.substring(0, 50) + '...',
+            useContext: options.useContext,
+            useHyDE: options.useHyDE,
+            useWikipedia: options.useWikipedia,
+            useWikidata: options.useWikidata,
+            mode: options.mode
+        });
+        
         logger.info('🔄 Processing query with hybrid context approach', { 
             query: query.substring(0, 100) + '...',
             enableEnhancements: this._hasEnhancements(options),
@@ -90,11 +99,19 @@ export class HybridContextManager {
             const zptState = this._getZPTState(options);
             
             // Run enhancement and local search concurrently
+            console.log('🚀 [HYBRID_CONTEXT] Starting concurrent search for enhancements and local context');
             const [enhancementResult, localContextResult] = await this._runConcurrentSearch(
                 query, 
                 options, 
                 zptState
             );
+            
+            console.log('🚀 [HYBRID_CONTEXT] Concurrent search completed', {
+                enhancementSuccess: enhancementResult?.success,
+                enhancementResultsCount: enhancementResult?.results?.length || 0,
+                localContextSuccess: !!localContextResult,
+                localContextCount: localContextResult?.contexts?.length || 0
+            });
 
             // Analyze and weight the results
             const contextAnalysis = this._analyzeContextRelevance(
@@ -119,12 +136,22 @@ export class HybridContextManager {
             }
 
             // Generate unified response
+            console.log('🤝 [HYBRID_CONTEXT] Synthesizing unified response', {
+                mergedContextLength: mergedContext?.combinedContent?.length || 0,
+                strategy: contextAnalysis.selectedStrategy
+            });
+            
             const unifiedResponse = await this._synthesizeResponse(
                 query,
                 mergedContext,
                 contextAnalysis,
                 options
             );
+            
+            console.log('✅ [HYBRID_CONTEXT] Response synthesis completed', {
+                answerLength: unifiedResponse?.answer?.length || 0,
+                hasAnswer: !!unifiedResponse?.answer
+            });
 
             const processingTime = Date.now() - startTime;
             this._updateStats(contextAnalysis);
@@ -229,16 +256,23 @@ export class HybridContextManager {
         });
         
         if (options.useContext && this.safeOperations) {
+            console.log('🔍 [HYBRID_CONTEXT] Starting adaptive local context search');
             logger.debug('🚀 Executing adaptive local context search');
             // Pass options directly - AdaptiveSearchEngine handles ZPT adaptation internally
             searches.push(
                 this._searchLocalContext(query, options)
                     .catch(error => {
+                        console.log('❌ [HYBRID_CONTEXT] Local context search failed:', error.message);
                         logger.warn('Adaptive local context search failed:', error.message);
                         return { success: false, error: error.message, contexts: [] };
                     })
             );
         } else {
+            console.log('⚠️ [HYBRID_CONTEXT] Skipping local context search', { 
+                useContext: options.useContext, 
+                hasSafeOps: !!this.safeOperations,
+                reason: !options.useContext ? 'useContext=false' : 'no safeOperations'
+            });
             logger.debug('⚠️ Skipping local context search', { 
                 useContext: options.useContext, 
                 hasSafeOps: !!this.safeOperations,
@@ -260,17 +294,30 @@ export class HybridContextManager {
      * @returns {Promise<Object>} Advanced local search results
      */
     async _searchLocalContext(query, options) {
+        console.log('🎆 [HYBRID_CONTEXT] Searching local context with adaptive engine');
         logger.debug('🎆 Searching local context with adaptive engine');
         
         // Get ZPT state for filtering
         const zptState = this._getZPTState(options);
         
         // Execute adaptive search with intelligent threshold management
+        console.log('🎯 [HYBRID_CONTEXT] Executing adaptive search with ZPT state:', {
+            zoom: zptState?.zoom,
+            panDomains: zptState?.pan?.domains,
+            panKeywords: zptState?.pan?.keywords
+        });
+        
         const adaptiveResult = await this.adaptiveSearchEngine.executeAdaptiveSearch(
             query, 
             zptState, 
             options
         );
+        
+        console.log('✅ [HYBRID_CONTEXT] Adaptive search completed', {
+            success: adaptiveResult.success,
+            contextsFound: adaptiveResult.contexts?.length || 0,
+            totalPasses: adaptiveResult.totalPasses
+        });
         
         logger.info('🎆 Adaptive local search completed', {
             success: adaptiveResult.success,

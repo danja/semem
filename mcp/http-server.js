@@ -311,6 +311,7 @@ async function startOptimizedServer() {
       app.post('/augment', async (req, res) => {
         try {
           const { target, operation = 'auto', options = {} } = req.body;
+          console.log('🔥 [HTTP-SERVER] /augment endpoint called with:', { target, operation, options });
           // Allow empty target for certain operations that work on "all" content
           const allowEmptyTarget = ['process_lazy', 'chunk_documents'].includes(operation);
           if (!target && !allowEmptyTarget) {

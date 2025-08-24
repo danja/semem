@@ -4,8 +4,10 @@ scripts/del-content-graph.sh
 Ingest documents :
 node examples/ingestion/SPARQLIngest.js   --endpoint "https://fuseki.hyperdata.it/danny.ayers.name/query"   --template blog-articles   --limit 5
 
-go to the workbench and select Chunk Documents
+Use ./start.sh to start the servers.
+
+using playwright, go to the workbench UI and select Chunk Documents
 
 Ask the question "What is ADHD?" 
 
-The response should contain reference to an ingested document.
+The response should contain specific information supplied in the context from the original document.

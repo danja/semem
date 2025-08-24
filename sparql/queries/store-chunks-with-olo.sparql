@@ -5,7 +5,7 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX prov: <http://www.w3.org/ns/prov#>
 PREFIX olo: <http://purl.org/ontology/olo/core#>
-PREFIX semem: <http://semem.hyperdata.it/>
+PREFIX semem: <http://purl.org/semem/>
 
 INSERT DATA {
   GRAPH <${graphURI}> {

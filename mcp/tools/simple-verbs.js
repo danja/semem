@@ -757,6 +757,8 @@ class SimpleVerbsService {
       mcpDebugger.debug('Legacy parameters detected, merged into options', { parameters, mergedOptions });
     }
     
+    console.log('🔄 [AUGMENT] Function called with:', { target, operation, options, parameters });
+    
     try {
       // Validate target for operations that require specific content
       const requiresSpecificTarget = ['concepts', 'attributes', 'relationships'].includes(operation);
@@ -765,6 +767,7 @@ class SimpleVerbsService {
       }
       
       mcpDebugger.debug('Simple Verb: augment', { target, operation });
+      console.log('🔄 [AUGMENT] About to enter switch statement:', { operation });
       
       let result;
       
@@ -876,6 +879,8 @@ class SimpleVerbsService {
           
         case 'chunk_documents':
           // Chunk documents stored in SPARQL that haven't been processed yet
+          console.log('🔄 [CHUNK_DOCUMENTS] Case triggered - starting chunking process');
+          mcpDebugger.info('chunk_documents case triggered', { target, mergedOptions });
           try {
             const {
               maxChunkSize = 2000,
@@ -897,10 +902,11 @@ class SimpleVerbsService {
             const targetGraph = graph || storageConfig.graphName || 'http://hyperdata.it/content';
             
             // Initialize services with explicit paths
+            const projectRoot = path.join(process.cwd(), '..');
             const queryService = new SPARQLQueryService({
-              queryPath: path.join(process.cwd(), 'sparql/queries'),
-              templatePath: path.join(process.cwd(), 'sparql/templates'),
-              configPath: path.join(process.cwd(), 'sparql/config')
+              queryPath: path.join(projectRoot, 'sparql/queries'),
+              templatePath: path.join(projectRoot, 'sparql/templates'),
+              configPath: path.join(projectRoot, 'sparql/config')
             });
             const sparqlHelper = new SPARQLHelper(storageConfig.update, {
               user: storageConfig.user,
@@ -977,6 +983,7 @@ class SimpleVerbsService {
                 augmentationType: 'chunk_documents'
               };
             } else {
+              console.log('🔄 [CHUNK_DOCUMENTS] Processing documents for chunking...');
               const chunkedResults = [];
               
               for (const element of textElementsToProcess) {
@@ -985,15 +992,22 @@ class SimpleVerbsService {
                 const sourceUnit = element.sourceUnit?.value;
                 
                 try {
-                  console.log(`🧩 Chunking document: ${textElementURI} (${content.length} chars)`);
+                  console.log(`🧩 [CHUNK_DOCUMENTS] Processing document: ${textElementURI} (${content.length} chars)`);
+                  mcpDebugger.info('Starting document chunking', { textElementURI, contentLength: content.length });
                   
                   // Chunk the content
+                  console.log('✂️ [CHUNK_DOCUMENTS] Chunking content...');
                   const chunkingResult = await chunker.chunk(content, {
                     title: `TextElement ${textElementURI.split('/').pop()}`,
                     sourceUri: textElementURI
                   });
                   
-                  console.log(`✂️ Created ${chunkingResult.chunks.length} chunks`);
+                  console.log(`✂️ [CHUNK_DOCUMENTS] Created ${chunkingResult.chunks.length} chunks`);
+                  mcpDebugger.info('Document chunked successfully', { 
+                    textElementURI, 
+                    chunkCount: chunkingResult.chunks.length,
+                    avgChunkSize: chunkingResult.metadata?.chunking?.avgChunkSize || 'unknown'
+                  });
                   
                   // Generate URIs for the OLO structure
                   const chunkListURI = URIMinter.mintURI('http://purl.org/stuff/instance/', 'chunklist', textElementURI);
@@ -1057,6 +1071,7 @@ class SimpleVerbsService {
                   });
                   
                   // Execute the update
+                  console.log('💾 [CHUNK_DOCUMENTS] Storing chunks to SPARQL...');
                   await sparqlHelper.executeUpdate(updateQuery);
                   
                   chunkedResults.push({
@@ -1067,7 +1082,12 @@ class SimpleVerbsService {
                     contentLength: content.length
                   });
                   
-                  console.log(`✅ Chunked and stored ${chunkingResult.chunks.length} chunks with embeddings`);
+                  console.log(`✅ [CHUNK_DOCUMENTS] Successfully stored ${chunkingResult.chunks.length} chunks with embeddings`);
+                  mcpDebugger.info('Document chunks stored successfully', { 
+                    textElementURI, 
+                    chunkCount: chunkingResult.chunks.length,
+                    chunkListURI
+                  });
                   
                 } catch (chunkError) {
                   console.error(`❌ Error chunking ${textElementURI}:`, chunkError.message);
@@ -1132,6 +1152,12 @@ class SimpleVerbsService {
           
         case 'auto':
         default:
+          console.log('🔄 [AUGMENT] Entered default/auto case with operation:', operation);
+          if (operation !== 'auto') {
+            console.log('❌ [AUGMENT] WARNING: Unknown operation fell through to default case:', operation);
+            mcpDebugger.warn('Unknown augment operation fell through to default case', { operation, target });
+          }
+          
           // Automatic augmentation - extract concepts and use ZPT context
           const concepts = await this.safeOps.extractConcepts(target);
           const autoEmbedding = await this.safeOps.generateEmbedding(target);
