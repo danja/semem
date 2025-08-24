@@ -77,6 +77,8 @@ The following are workflows applied to sample questions from the [BeerQA](https:
 
 **[workbench-howto.md](workbench-howto.md)** - User guide for the web-based workbench interface.
 
+**[memory.md](memory.md)** - Complete guide to Semem's persistent memory system, covering conversation memory, document storage, ZPT navigation controls, workbench usage, and best practices for context-aware AI interactions that improve over time.
+
 ### Core Operation Workflows
 
 **[tell.md](tell.md)** - Comprehensive Tell workflow documentation covering content storage, type handling, document processing, concept extraction, and technical architecture with detailed flow diagrams.
