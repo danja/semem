@@ -69,8 +69,10 @@ export class CreateConcepts {
         // Initialize SPARQL services
         this.queryService = new SPARQLQueryService();
         this.sparqlHelper = new SPARQLHelper(storageConfig.options.update, {
-            user: storageConfig.options.user,
-            password: storageConfig.options.password
+            auth: {
+                user: storageConfig.options.user,
+                password: storageConfig.options.password
+            }
         });
 
         // Initialize LLM handler

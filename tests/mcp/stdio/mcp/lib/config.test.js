@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { createLLMConnector, createEmbeddingConnector, mcpConfig, getModelConfig } from '../../../../mcp/lib/config.js';
+import { createLLMConnector, createEmbeddingConnector, mcpConfig, getModelConfig } from '../../../../../mcp/lib/config.js';
 
 // Mock connectors
-vi.mock('../../../../src/connectors/OllamaConnector.js', () => ({
+vi.mock('../../../../../src/connectors/OllamaConnector.js', () => ({
   default: vi.fn(() => ({
     baseUrl: 'http://localhost:11434',
     defaultModel: 'qwen2:1.5b',
@@ -14,7 +14,7 @@ vi.mock('../../../../src/connectors/OllamaConnector.js', () => ({
   }))
 }));
 
-vi.mock('../../../../src/connectors/ClaudeConnector.js', () => ({
+vi.mock('../../../../../src/connectors/ClaudeConnector.js', () => ({
   default: vi.fn(() => ({
     apiKey: 'test-key',
     defaultModel: 'claude-3-opus-20240229',
@@ -24,7 +24,7 @@ vi.mock('../../../../src/connectors/ClaudeConnector.js', () => ({
   }))
 }));
 
-vi.mock('../../../../src/connectors/MistralConnector.js', () => ({
+vi.mock('../../../../../src/connectors/MistralConnector.js', () => ({
   default: vi.fn(() => ({
     apiKey: 'test-key',
     defaultModel: 'mistral-large-latest',
@@ -35,7 +35,7 @@ vi.mock('../../../../src/connectors/MistralConnector.js', () => ({
 }));
 
 // Mock EmbeddingConnectorFactory
-vi.mock('../../../../src/connectors/EmbeddingConnectorFactory.js', () => ({
+vi.mock('../../../../../src/connectors/EmbeddingConnectorFactory.js', () => ({
   default: {
     createConnector: vi.fn(() => ({
       generateEmbedding: vi.fn().mockResolvedValue([0.1, 0.2, 0.3]),
@@ -286,7 +286,7 @@ describe('MCP Config', () => {
 
   describe('Error Handling', () => {
     it('should handle connector creation errors gracefully', async () => {
-      const OllamaConnector = await import('../../../../src/connectors/OllamaConnector.js');
+      const OllamaConnector = await import('../../../../../src/connectors/OllamaConnector.js');
       OllamaConnector.default.mockImplementationOnce(() => {
         throw new Error('Connector creation failed');
       });

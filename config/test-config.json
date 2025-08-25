@@ -2,8 +2,8 @@
   "storage": {
     "type": "sparql",
     "options": {
-      "update": "http://localhost:4030/test/update",
-      "query": "http://localhost:4030/test/query",
+      "update": "http://localhost:3030/test/update",
+      "query": "http://localhost:3030/test/query",
       "user": "admin",
       "password": "admin123"
     }
@@ -23,7 +23,7 @@
       "label": "Local Test",
       "user": "admin",
       "password": "admin123",
-      "urlBase": "http://localhost:4030",
+      "urlBase": "http://localhost:3030",
       "dataset": "test",
       "query": "/test/query",
       "update": "/test/update",

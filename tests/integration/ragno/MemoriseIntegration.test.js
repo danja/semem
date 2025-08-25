@@ -9,6 +9,10 @@
  * They are designed to be run in a development environment with proper configuration.
  */
 
+// Load environment variables FIRST before any other imports
+import dotenv from 'dotenv';
+dotenv.config();
+
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import Memorise from '../../../src/ragno/Memorise.js';
 import path from 'path';

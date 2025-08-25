@@ -2,11 +2,11 @@
  * @file Unit tests for HyDEService (Hypothetical Document Embeddings)
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { HyDEService } from '../../../../src/services/enhancement/HyDEService.js'
-import { SPARQLQueryService } from '../../../../src/services/sparql/SPARQLQueryService.js'
+import { HyDEService } from '../../../../../src/services/enhancement/HyDEService.js'
+import { SPARQLQueryService } from '../../../../../src/services/sparql/SPARQLQueryService.js'
 
 // Mock dependencies
-vi.mock('../../../../src/services/sparql/SPARQLQueryService.js')
+vi.mock('../../../../../src/services/sparql/SPARQLQueryService.js')
 vi.mock('loglevel', () => ({
   default: {
     info: vi.fn(),

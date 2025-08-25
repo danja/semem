@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import Chunker from '../../../../src/services/document/Chunker.js';
+import Chunker from '../../../../../src/services/document/Chunker.js';
 
 describe('Chunker', () => {
   let chunker;

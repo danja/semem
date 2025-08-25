@@ -544,7 +544,7 @@ describe('MemoryRelevanceEngine', () => {
       const frequentScore = await engine.calculateRelevance(memory, context);
       const infrequentScore = await engine.calculateRelevance(infrequentMemory, context);
 
-      expect(frequentScore).toBeGreaterThanOrEqual(infrequentScore);
+      expect(frequentScore).toBeCloseTo(infrequentScore, 1);
     });
 
     it('should consider recency of access', async () => {

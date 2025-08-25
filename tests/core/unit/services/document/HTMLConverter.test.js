@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import HTMLConverter from '../../../../src/services/document/HTMLConverter.js';
+import HTMLConverter from '../../../../../src/services/document/HTMLConverter.js';
 
 describe('HTMLConverter', () => {
   describe('convertString', () => {

@@ -3,7 +3,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 // Note: This test file is prepared for future prompt implementation
 // The actual imports will be uncommented when the prompt system is implemented
 
-// import { PromptRegistry } from '../../../../mcp/prompts/registry.js';
+// import { PromptRegistry } from '../../../mcp/prompts/registry.js';
 
 describe('Prompt Registry (Future Implementation)', () => {
   let registry;

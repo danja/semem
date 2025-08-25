@@ -1,4 +1,8 @@
 // tests/helpers/testSetup.js
+// Load environment variables FIRST before any other imports
+import dotenv from 'dotenv';
+dotenv.config();
+
 import { vi, beforeEach, afterEach, expect, beforeAll, afterAll } from 'vitest';
 import { VitestTestHelper } from './VitestTestHelper.js';
 import ConfigFactory from './configFactory.js';

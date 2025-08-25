@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { eventBus, EVENTS, resetEventBus } from '../../../../src/frontend/js/services/eventBus';
+import { eventBus, EVENTS, resetEventBus } from '../../../../../../src/frontend/js/services/eventBus';
 
 describe('EventBus', () => {
   beforeEach(() => {

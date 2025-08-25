@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import Config from '../../../../src/Config.js';
+import Config from '../../../../../src/Config.js';
 
 // Simple test implementations to validate expected interface and behavior
 // These will be replaced with real implementations once they exist

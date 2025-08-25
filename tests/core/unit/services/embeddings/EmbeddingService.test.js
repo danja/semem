@@ -2,11 +2,11 @@
  * @file Unit tests for EmbeddingService with multiple provider support
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import EmbeddingService from '../../../../src/services/embeddings/EmbeddingService.js'
-import EmbeddingConnectorFactory from '../../../../src/connectors/EmbeddingConnectorFactory.js'
+import EmbeddingService from '../../../../../src/services/embeddings/EmbeddingService.js'
+import EmbeddingConnectorFactory from '../../../../../src/connectors/EmbeddingConnectorFactory.js'
 
 // Mock the factory
-vi.mock('../../../../src/connectors/EmbeddingConnectorFactory.js')
+vi.mock('../../../../../src/connectors/EmbeddingConnectorFactory.js')
 
 describe('EmbeddingService', () => {
   let service

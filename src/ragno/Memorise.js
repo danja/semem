@@ -126,8 +126,10 @@ export default class Memorise {
         }
         
         this.sparqlHelper = new SPARQLHelper(storageConfig.options.update, {
-            user: storageConfig.options.user,
-            password: storageConfig.options.password
+            auth: {
+                user: storageConfig.options.user,
+                password: storageConfig.options.password
+            }
         });
         
         logger.debug('SPARQL services initialized');

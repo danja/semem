@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import UIServer from '../../../../src/services/search/UIServer.js';
+import UIServer from '../../../../../src/services/search/UIServer.js';
 import { EventEmitter } from 'events';
 
 // Mock logger to suppress test output
