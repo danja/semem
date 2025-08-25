@@ -93,6 +93,8 @@ The following are workflows applied to sample questions from the [BeerQA](https:
 
 **[infrastructure.md](infrastructure.md)** - Development patterns and coding guidelines for extending the system.
 
+**[tests.md](tests.md)** - Testing infrastructure documentation covering test categories, service dependencies, SPARQL test store setup, and test execution patterns with automatic service availability checking.
+
 **[context-window.md](context-window.md)** - Context window management and text chunking strategies.
 
 **[index-cache.md](index-cache.md)** - Vector index caching and performance optimization.
