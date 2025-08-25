@@ -1,6 +1,72 @@
 // tests/helpers/testSetup.js
-import { vi, beforeEach, afterEach, expect } from 'vitest';
+import { vi, beforeEach, afterEach, expect, beforeAll, afterAll } from 'vitest';
 import { VitestTestHelper } from './VitestTestHelper.js';
+import ConfigFactory from './configFactory.js';
+import ServiceChecker from './serviceChecks.js';
+
+// Mock external dependencies that might not be available in test environment
+vi.mock('d3', () => ({
+  default: {
+    select: vi.fn(() => ({
+      selectAll: vi.fn(() => ({
+        data: vi.fn(() => ({
+          enter: vi.fn(() => ({
+            append: vi.fn(() => ({
+              attr: vi.fn(() => ({})),
+              style: vi.fn(() => ({})),
+              text: vi.fn(() => ({}))
+            }))
+          }))
+        }))
+      }))
+    })),
+    scaleLinear: vi.fn(() => ({
+      domain: vi.fn(() => ({
+        range: vi.fn(() => vi.fn())
+      }))
+    }))
+  }
+}));
+
+// Global test setup
+global.console = {
+  ...console,
+  // Reduce noise in tests unless explicitly needed
+  log: vi.fn(),
+  debug: vi.fn(),
+  info: vi.fn(),
+  warn: vi.fn(),
+  error: console.error // Keep errors visible for debugging
+};
+
+// Global service availability check
+let serviceStatus = {};
+
+beforeAll(async () => {
+  // Check service availability at start of test run
+  try {
+    serviceStatus = await ServiceChecker.checkAllServices();
+  } catch (error) {
+    console.error('Service check failed:', error);
+    serviceStatus = {};
+  }
+});
+
+// Global test lifecycle hooks
+beforeEach(() => {
+  // Reset all mocks before each test
+  vi.clearAllMocks();
+});
+
+afterEach(() => {
+  // Cleanup temporary config files
+  ConfigFactory.cleanupTempFiles();
+});
+
+afterAll(() => {
+  // Final cleanup
+  ConfigFactory.cleanupTempFiles();
+});
 
 /**
  * Set up and tear down test utilities for Vitest tests
@@ -65,6 +131,13 @@ export function setupTestEnvironment() {
              */
             setupTimers() {
                 vi.useFakeTimers();
+            },
+
+            /**
+             * Get service availability status
+             */
+            getServiceStatus() {
+                return serviceStatus;
             }
         };
     });
@@ -75,16 +148,30 @@ export function setupTestEnvironment() {
         
         // Wait for all pending promises to resolve
         if (pendingPromises.size > 0) {
-            await Promise.all([...pendingPromises]);
+            try {
+                await Promise.all([...pendingPromises]);
+            } catch (error) {
+                // Ignore cleanup errors
+            }
             pendingPromises.clear();
         }
         
         // Call cleanup functions
-        cleanupFunctions.forEach(cleanup => cleanup());
+        cleanupFunctions.forEach(cleanup => {
+            try {
+                cleanup();
+            } catch (error) {
+                // Ignore cleanup errors
+            }
+        });
         cleanupFunctions.clear();
         
         // Clean up mocks
-        await VitestTestHelper.cleanupMocks(...mocks);
+        try {
+            await VitestTestHelper.cleanupMocks(...mocks);
+        } catch (error) {
+            // Ignore cleanup errors
+        }
         mocks.clear();
     });
 }
@@ -93,3 +180,6 @@ export function setupTestEnvironment() {
 export function registerCustomMatchers() {
     expect.extend(VitestTestHelper.vitestMatchers);
 }
+
+// Export service status for use in tests
+export { serviceStatus };

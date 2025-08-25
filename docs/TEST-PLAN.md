@@ -7,6 +7,6 @@ External services include :
 * Wikipedia
 * Wikidata
 Other external services may be incorporated later.
-Vitest will be used for most tests, Playwright for user interface tests. Avoid bringing in any new dependencies.
+Modern ES modules will be used throughout. Vitest will be used for most tests, Playwright for user interface tests. Avoid bringing in any new dependencies.
 There are already quite a few tests, these may need reorganising to fit in the new system.
 Think hard about how to make this manageable, following best practices.

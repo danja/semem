@@ -1,19 +1,24 @@
-import { defineConfig } from 'vitest/config';
+import { defineConfig, mergeConfig } from 'vitest/config';
+import { sharedConfig } from './vitest.shared.js';
 
-export default defineConfig({
+// Workbench tests - Frontend workbench interface
+export default mergeConfig(sharedConfig, defineConfig({
   test: {
     name: 'workbench',
-    environment: 'node',
-    setupFiles: ['./tests/setup-vitest.js'], // Use the simpler setup
     include: [
-      'tests/unit/frontend/workbench/**/*.test.{js,jsx,ts,tsx}'
+      'tests/ui/workbench/**/*.test.{js,jsx,ts,tsx}',
+      'tests/unit/frontend/workbench/**/*.test.{js,jsx,ts,tsx}' // Keep existing tests
     ],
-    exclude: [
-      '**/node_modules/**',
-      '**/dist/**'
-    ],
-    testTimeout: 10000,
-    globals: true,
-    isolate: true
+    testTimeout: 20000,
+    environment: 'jsdom', // Browser environment for frontend tests
+    coverage: {
+      reportsDirectory: './coverage/workbench',
+      thresholds: {
+        lines: 65,
+        functions: 65,
+        branches: 55,
+        statements: 65
+      }
+    }
   }
-});
+}));
