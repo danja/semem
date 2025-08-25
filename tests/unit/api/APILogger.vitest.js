@@ -119,10 +119,6 @@ describe('APILogger', () => {
       expect(errorEntries[0].level).toBe('error');
     });
     
-    it.skip('should filter by time range', () => {
-      // This test is skipped since timestamp filtering may behave differently 
-      // in different environments
-    });
     
     it('should limit results', () => {
       for (let i = 0; i < 10; i++) {

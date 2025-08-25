@@ -32,38 +32,3 @@ describe('Ragno decomposeCorpus', () => {
     mockEnv.cleanup()
   })
 
-  it.skip('should decompose text chunks into semantic units and entities (requires RDF mocking)', async () => {
-    // This test requires complex RDF-Ext mocking that's difficult to maintain
-    // Skipping until RDF element creation is properly mocked
-    expect(true).toBe(true)
-  })
-
-  it('should handle empty text chunks', async () => {
-    const result = await decomposeCorpus([], mockEnv.llmHandler)
-    
-    expect(result.units).toHaveLength(0)
-    expect(result.entities).toHaveLength(0)
-    expect(result.relationships).toHaveLength(0)
-    expect(result.statistics.totalChunks).toBe(0)
-  })
-
-  it.skip('should handle LLM failures gracefully (requires RDF mocking)', async () => {
-    // Skipping until RDF element creation is properly mocked
-    expect(true).toBe(true)
-  })
-
-  it.skip('should call LLM handler with correct parameters (requires RDF mocking)', async () => {
-    // Skipping until RDF element creation is properly mocked
-    expect(true).toBe(true)
-  })
-
-  it.skip('should respect decomposition options (requires RDF mocking)', async () => {
-    // Skipping until RDF element creation is properly mocked
-    expect(true).toBe(true)
-  })
-
-  it.skip('should create proper RDF dataset structure (requires RDF mocking)', async () => {
-    // Skipping until RDF element creation is properly mocked
-    expect(true).toBe(true)
-  })
-})

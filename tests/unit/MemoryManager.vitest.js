@@ -169,14 +169,5 @@ describe('MemoryManager', () => {
       expect(mockLLM.generateEmbedding).toHaveBeenCalledTimes(1);
     });
     
-    it.skip('should cache concept extractions', async () => {
-      // This test might be failing due to implementation details, skip for now
-      const text = 'test concepts';
-      await manager.extractConcepts(text);
-      await manager.extractConcepts(text);
-      
-      // May need to implement proper caching in the mock
-      expect(mockLLM.generateCompletion).toHaveBeenCalled();
-    });
   });
 });

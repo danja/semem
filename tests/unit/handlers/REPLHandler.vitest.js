@@ -58,33 +58,14 @@ describe('REPLHandler', () => {
       expect(handler.config).toBe(mockConfig);
     });
 
-    it.skip('should handle initialization errors', async () => {
-      // Skipping during migration - need to check REPLHandler API
-    });
   });
 
   describe('Command Execution', () => {
-    it.skip('should execute a valid command', async () => {
-      // Skipping during migration - need to check REPLHandler API
-      // REPLHandler uses processInput instead of executeCommand
-    });
 
-    it.skip('should handle command errors', async () => {
-      // Skipping during migration - need to check REPLHandler API
-    });
 
-    it.skip('should parse command arguments', async () => {
-      // Skipping during migration - need to check REPLHandler API
-    });
   });
 
   describe('Event Handling', () => {
-    it.skip('should emit events during command execution', async () => {
-      // Skipping during migration - need to check REPLHandler API
-    });
 
-    it.skip('should emit error events', async () => {
-      // Skipping during migration - need to check REPLHandler API
-    });
   });
 });

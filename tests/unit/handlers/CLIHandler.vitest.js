@@ -94,11 +94,6 @@ describe('CLIHandler', () => {
             expect(consoleOutput.log[0]).toContain('Test response');
         });
 
-        it.skip('should handle chat errors', async () => {
-            // Skipping this test as it's causing failures in Vitest
-            // The test works fine in Jasmine but error handling is different in Vitest
-            console.log('Skipping test: handle chat errors - error propagation issues in Vitest');
-        });
     });
 
     describe('Storage Operations', () => {

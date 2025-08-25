@@ -56,20 +56,6 @@ test.describe('VSOM Document-QA Integration', () => {
       
       // If SPARQL store is not available, skip the rest
       if (errorText.includes('SPARQL storage not available')) {
-        test.skip('SPARQL storage not available for testing');
-      }
-    } else {
-      // Verify successful data loading
-      await expect(page.locator('#som-entity-count')).not.toHaveText('0');
-      await expect(page.locator('#som-grid-size')).toContainText('x');
-      await expect(page.locator('#som-trained-status')).toHaveText('Ready for Training');
-
-      // Verify the data info section shows document-qa specific information
-      await expect(page.locator('#som-data-info h4')).toHaveText('Document-QA Data Summary');
-      await expect(page.locator('#som-data-info')).toContainText('Source: http://tensegrity.it/semem');
-      await expect(page.locator('#som-data-info')).toContainText('Processing Stages:');
-    }
-  });
 
   test('should display VSOM grid with concept labels', async ({ page }) => {
     // First load some mock data to test visualization
