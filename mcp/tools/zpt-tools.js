@@ -23,7 +23,6 @@ import { ZPTDataFactory } from '../../src/zpt/ontology/ZPTDataFactory.js';
 
 // ZPT Tool Names
 const ZPTToolName = {
-  NAVIGATE: 'zpt_navigate',
   PREVIEW: 'zpt_preview',
   GET_SCHEMA: 'zpt_get_schema',
   VALIDATE_PARAMS: 'zpt_validate_params',
@@ -32,29 +31,6 @@ const ZPTToolName = {
 };
 
 // ZPT Input Schemas
-const ZPTNavigateSchema = z.object({
-  query: z.string().min(1, "Query cannot be empty"),
-  zoom: z.enum(['entity', 'unit', 'text', 'community', 'corpus', 'micro']).optional().default('entity'),
-  pan: z.object({
-    topic: z.string().optional(),
-    temporal: z.object({
-      start: z.string().optional(),
-      end: z.string().optional()
-    }).optional(),
-    geographic: z.object({
-      bbox: z.array(z.number()).length(4).optional()
-    }).optional(),
-    entity: z.array(z.string()).optional()
-  }).optional().default({}),
-  tilt: z.enum(['keywords', 'embedding', 'graph', 'temporal']).optional().default('keywords'),
-  transform: z.object({
-    maxTokens: z.number().min(100).max(16000).optional().default(4000),
-    format: z.enum(['json', 'markdown', 'structured', 'conversational']).optional().default('json'),
-    tokenizer: z.enum(['cl100k_base', 'p50k_base', 'claude', 'llama']).optional().default('cl100k_base'),
-    chunkStrategy: z.enum(['semantic', 'adaptive', 'fixed', 'sliding']).optional().default('semantic'),
-    includeMetadata: z.boolean().optional().default(true)
-  }).optional().default({})
-});
 
 const ZPTPreviewSchema = z.object({
   query: z.string().min(1, "Query cannot be empty"),
@@ -1734,20 +1710,6 @@ export function registerZPTTools(server) {
 
   const service = new ZPTNavigationService();
 
-  server.tool(
-    ZPTToolName.NAVIGATE,
-    "Navigate the knowledge space using 3D spatial metaphors (zoom, pan, tilt).",
-    ZPTNavigateSchema,
-    async (args) => {
-      await initializeServices();
-      const memoryManager = getMemoryManager();
-      const safeOps = new SafeOperations(memoryManager);
-      service.memoryManager = memoryManager;
-      service.safeOps = safeOps;
-      const result = await service.navigate(args);
-      return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
-    }
-  );
 
   server.tool(
     ZPTToolName.PREVIEW,

@@ -30,7 +30,6 @@ import { mcpConfig } from './lib/config.js';
 import { initializeServices } from './lib/initialization.js';
 
 // Import tool registrations
-import { registerMemoryTools } from './tools/memory-tools.js';
 import { registerZPTTools } from './tools/zpt-tools.js';
 
 // Import Simple Verbs - New simplified MCP interface
@@ -2743,7 +2742,6 @@ async function createServer() {
 
   // Register all tools using a consistent pattern
   mcpDebugger.info('Tools handled by centralized handler (working pattern)...');
-  // registerMemoryTools(server); // Handled by centralized handler
   // registerZPTTools(server); // TODO: Fix these using setRequestHandler pattern
   // registerResearchWorkflowTools(server); 
   // registerRagnoTools(server);
@@ -2851,7 +2849,6 @@ async function createIsolatedServer() {
 
   // Register all tools using a consistent pattern
   mcpDebugger.info('Registering all tools...');
-  // registerMemoryTools(server); // Disabled to avoid conflicts with centralized handler
   registerZPTTools(server);
   registerResearchWorkflowTools(server);
   registerRagnoTools(server);

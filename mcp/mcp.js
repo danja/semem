@@ -29,7 +29,6 @@ export {
 } from './prompts/utils.js';
 
 // Tool registration functions
-export { registerMemoryTools } from './tools/memory-tools.js';
 export { registerZPTTools } from './tools/zpt-tools.js';
 export { registerResearchWorkflowTools } from './tools/research-workflow-tools.js';
 export { registerRagnoTools } from './tools/ragno-tools.js';

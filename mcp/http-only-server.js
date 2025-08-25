@@ -48,21 +48,9 @@ export async function createHttpServer() {
   // Skip prompt registry initialization for now
   mcpDebugger.info('Skipping prompt registry initialization for HTTP server...');
 
-  // Register tools using FIXED pattern - only memory tools for now
-  mcpDebugger.info('Registering FIXED memory tools...');
-  try {
-    registerMemoryTools(server);
-    // TODO: Fix other tool files one by one
-    // registerZPTTools(server);
-    // registerResearchWorkflowTools(server);
-    // registerRagnoTools(server);
-    // registerSPARQLTools(server);
-    // registerVSOMTools(server);
-    mcpDebugger.info('Fixed memory tools registered.');
-  } catch (error) {
-    mcpDebugger.error('Tool registration failed:', error);
-    throw error;
-  }
+  // Skip tool registration for HTTP-only server - tools removed in cleanup
+  mcpDebugger.info('Skipping tool registration for HTTP-only server...');
+  // Memory tools have been deprecated in favor of Simple Verbs interface
 
   // Register all resources
   mcpDebugger.info('Registering status resources...');
