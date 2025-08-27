@@ -1328,6 +1328,9 @@ export default class SPARQLStore extends BaseStore {
         }
 
         const entityUri = `<${data.id}>`
+        
+        // Use graph from metadata if provided, otherwise use default
+        const targetGraph = (data.metadata && data.metadata.graph) ? data.metadata.graph : this.graphName;
 
         const insertQuery = `
             PREFIX ragno: <http://purl.org/stuff/ragno/>
@@ -1336,7 +1339,7 @@ export default class SPARQLStore extends BaseStore {
             PREFIX dcterms: <http://purl.org/dc/terms/>
 
             INSERT DATA {
-                GRAPH <${this.graphName}> {
+                GRAPH <${targetGraph}> {
                     ${entityUri} a ragno:Element ;
                         ragno:content "${this._escapeSparqlString(data.response || data.content || '')}" ;
                         skos:prefLabel "${this._escapeSparqlString(data.prompt || '')}" ;
@@ -1573,6 +1576,9 @@ export default class SPARQLStore extends BaseStore {
         const elementUri = `<${data.id}>`
         const timestamp = new Date().toISOString()
         
+        // Use graph from metadata if provided, otherwise use default
+        const targetGraph = (data.metadata && data.metadata.graph) ? data.metadata.graph : this.graphName;
+        
         // Determine ragno class based on content type
         let ragnoClass;
         switch (data.type) {
@@ -1597,7 +1603,7 @@ export default class SPARQLStore extends BaseStore {
             PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
             
             INSERT DATA {
-                GRAPH <${this.graphName}> {
+                GRAPH <${targetGraph}> {
                     ${elementUri} a ${ragnoClass} ;
                         ragno:content "${this._escapeSparqlString(data.content || '')}" ;
                         ragno:subType semem:${data.type || 'element'} ;

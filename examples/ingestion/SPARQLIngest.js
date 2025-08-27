@@ -99,6 +99,11 @@ class SPARQLIngestCLI {
                 short: 'c',
                 description: 'Path to configuration file'
             },
+            graph: {
+                type: 'string',
+                short: 'g',
+                description: 'Graph URI for SPARQL updates (default: http://hyperdata.it/content)'
+            },
             help: {
                 type: 'boolean',
                 short: 'h',
@@ -158,6 +163,7 @@ OPTIONS:
       --user <username>    SPARQL endpoint username
       --password <pass>    SPARQL endpoint password
   -c, --config <path>      Configuration file path
+  -g, --graph <uri>        Graph URI for SPARQL updates (default: http://hyperdata.it/content)
   -h, --help               Show this help message
 
 TEMPLATES:
@@ -291,7 +297,8 @@ For more information, see: docs/manual/sparql-ingestion.md
             auth,
             variables = {},
             fieldMappings,
-            verbose = false
+            verbose = false,
+            graph = 'http://hyperdata.it/content'
         } = options;
 
         try {
@@ -307,12 +314,13 @@ For more information, see: docs/manual/sparql-ingestion.md
             console.log(`📡 Endpoint: ${endpoint}`);
             console.log(`📋 Template: ${template}`);
             console.log(`📊 Limit: ${limit}`);
+            console.log(`🗂️  Graph: ${graph}`);
             console.log(`⚡ Mode: ${dryRun ? 'Dry Run' : (lazy ? 'Lazy Processing' : 'Full Processing')}`);
 
             if (dryRun) {
                 // Execute dry run
                 console.log('\n🧪 Executing dry run...');
-                const result = await ingester.dryRun(template, { variables, limit });
+                const result = await ingester.dryRun(template, { variables, limit, graph });
 
                 if (result.success) {
                     console.log(`\n✅ Dry Run Successful`);
@@ -351,13 +359,22 @@ For more information, see: docs/manual/sparql-ingestion.md
                 if (!this.simpleVerbsService) {
                     throw new Error('Simple verbs service not initialized');
                 }
-                return await this.simpleVerbsService.tell(tellParams);
+                // Add graph parameter to metadata
+                const enhancedParams = {
+                    ...tellParams,
+                    metadata: {
+                        ...tellParams.metadata,
+                        graph: graph
+                    }
+                };
+                return await this.simpleVerbsService.tell(enhancedParams);
             };
 
             const result = await ingester.ingestFromTemplate(template, {
                 variables,
                 limit,
                 lazy,
+                graph,
                 tellFunction,
                 progressCallback: (progress) => {
                     const percent = Math.round((progress.processed / progress.total) * 100);
@@ -454,6 +471,7 @@ For more information, see: docs/manual/sparql-ingestion.md
                 lazy: values.lazy || false,
                 dryRun: values['dry-run'] || false,
                 auth,
+                graph: values.graph || 'http://hyperdata.it/content',
                 verbose: values.verbose || false
             });
 

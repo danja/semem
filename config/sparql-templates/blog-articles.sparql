@@ -3,7 +3,7 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 PREFIX : <http://purl.org/stuff/transmissions/>
 
 SELECT DISTINCT ?uri ?title ?content ?modified ?slug ?relative ?created WHERE {
-    GRAPH ?g {
+    GRAPH <{{graph}}> {
         ?uri a schema:Article ;
             schema:headline ?title ;
             schema:articleBody ?content .

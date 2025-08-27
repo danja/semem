@@ -1357,7 +1357,11 @@ export class HybridContextManager {
 `;
         prompt += `- Create connections between different types of knowledge when relevant
 `;
-        prompt += `- Maintain a conversational yet informative tone\n\n`;
+        prompt += `- Maintain a conversational yet informative tone
+`;
+        prompt += `- NEVER mention technical terms like "undefined", "null", or describe data structures
+`;
+        prompt += `- If information is limited, say so naturally without technical jargon\n\n`;
         
         prompt += `QUESTION: ${query}\n\n`;
         
@@ -1398,7 +1402,7 @@ export class HybridContextManager {
             prompt += `\n`;
         }
         
-        prompt += `Please provide a comprehensive answer that seamlessly integrates all available knowledge while clearly attributing sources.`;
+        prompt += `Please provide a comprehensive answer that seamlessly integrates all available knowledge while clearly attributing sources. Focus on being helpful and informative while avoiding any technical terminology or references to data structures, programming concepts, or system internals.`;
         
         return prompt;
     }
@@ -1445,6 +1449,45 @@ export class HybridContextManager {
 ` +
                        `- Provide a complete picture from both perspectives`;
                        
+            case 'personal_only':
+                return `SYNTHESIS STRATEGY: Personal Experience Only
+` +
+                       `- Focus exclusively on available personal experience and context
+` +
+                       `- If personal context is insufficient, acknowledge this limitation gracefully
+` +
+                       `- Suggest ways the user can provide more relevant information
+` +
+                       `- Never describe data structures or technical details like "undefined" to the user
+` +
+                       `- Maintain a helpful, conversational tone even with limited information`;
+                       
+            case 'enhancement_only':
+                return `SYNTHESIS STRATEGY: External Knowledge Only
+` +
+                       `- Focus exclusively on authoritative external information
+` +
+                       `- If external context is insufficient, acknowledge this limitation gracefully
+` +
+                       `- Suggest reliable sources where more information might be found
+` +
+                       `- Never describe data structures or technical details like "undefined" to the user
+` +
+                       `- Maintain a helpful, conversational tone even with limited information`;
+                       
+            case 'no_context':
+                return `SYNTHESIS STRATEGY: Limited Context Response
+` +
+                       `- Acknowledge that sufficient relevant information is not currently available
+` +
+                       `- Provide general guidance on where to find the requested information
+` +
+                       `- Suggest ways to improve future queries
+` +
+                       `- Never mention technical terms like "undefined", "null", or data structure details
+` +
+                       `- Focus on being helpful despite the lack of specific information`;
+                       
             default:
                 return `SYNTHESIS STRATEGY: Comprehensive Integration
 ` +
@@ -1452,7 +1495,9 @@ export class HybridContextManager {
 ` +
                        `- Clearly distinguish between different types of sources
 ` +
-                       `- Build connections and show relationships between different knowledge types`;
+                       `- Build connections and show relationships between different knowledge types
+` +
+                       `- If information is limited, acknowledge this without technical jargon`;
         }
     }
     

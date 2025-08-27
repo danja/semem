@@ -216,6 +216,7 @@ export default class SPARQLDocumentIngester {
             variables = {},
             limit = 100,
             lazy = false,
+            graph = 'http://hyperdata.it/content',
             tellFunction,
             progressCallback
         } = options;
@@ -238,7 +239,7 @@ export default class SPARQLDocumentIngester {
 
             // Load and execute query
             const query = this.loadTemplate(templateName);
-            const queryVariables = { limit, ...variables };
+            const queryVariables = { limit, graph, ...variables };
             const bindings = await this.executeSparqlQuery(query, queryVariables);
 
             this.stats.documentsFound = bindings.length;
@@ -352,14 +353,15 @@ export default class SPARQLDocumentIngester {
     async dryRun(templateName, options = {}) {
         const {
             variables = {},
-            limit = 10  // Smaller default for preview
+            limit = 10,  // Smaller default for preview
+            graph = 'http://hyperdata.it/content'
         } = options;
 
         try {
             logger.info(`Dry run for SPARQL template: ${templateName}`);
 
             const query = this.loadTemplate(templateName);
-            const queryVariables = { limit, ...variables };
+            const queryVariables = { limit, graph, ...variables };
             const bindings = await this.executeSparqlQuery(query, queryVariables);
 
             const documents = [];

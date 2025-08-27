@@ -23,11 +23,11 @@ export default class PanDomainFilter {
             ...options
         };
         
+        this.logger = logger.getLogger('zpt:pan');
+        
         this.initializeFilterStrategies();
         this.initializeDomainPatterns();
         this.initializeMemoryDomains();
-        
-        this.logger = logger.getLogger('zpt:pan');
         this.domainHierarchy = new Map();
         this.memoryRelevanceEngine = options.memoryRelevanceEngine || null;
     }
