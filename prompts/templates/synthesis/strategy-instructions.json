@@ -1,0 +1,35 @@
+{
+  "name": "synthesis-strategy-instructions",
+  "description": "Strategy-specific instructions for hybrid context synthesis",
+  "format": "template",
+  "category": "synthesis",
+  "version": "1.0",
+  "supportedModels": ["*"],
+  "arguments": [
+    {
+      "name": "strategy",
+      "type": "string",
+      "required": true,
+      "description": "The synthesis strategy to use"
+    }
+  ],
+  "templates": {
+    "personal_primary": "SYNTHESIS STRATEGY: Personal Experience Primary\n- Start with and emphasize personal experience\n- Use external knowledge to provide context and validation\n- Show how external knowledge relates to the personal experience\n- Maintain the personal perspective as the central narrative",
+    
+    "enhancement_primary": "SYNTHESIS STRATEGY: External Knowledge Primary\n- Begin with authoritative external information\n- Incorporate personal experience as illustrative examples\n- Use personal insights to add nuance to general knowledge\n- Ensure external facts form the foundation of the response",
+    
+    "balanced": "SYNTHESIS STRATEGY: Balanced Integration\n- Weave together personal experience and external knowledge equally\n- Create smooth transitions between different types of information\n- Highlight where personal experience aligns with or differs from general knowledge\n- Provide a complete picture from both perspectives",
+    
+    "personal_only": "SYNTHESIS STRATEGY: Personal Experience Only\n- Focus exclusively on available personal experience and context\n- If personal context is insufficient, acknowledge this limitation gracefully\n- Suggest ways the user can provide more relevant information\n- Never describe data structures or technical details like \"undefined\" to the user\n- Maintain a helpful, conversational tone even with limited information",
+    
+    "enhancement_only": "SYNTHESIS STRATEGY: External Knowledge Only\n- Focus exclusively on authoritative external information\n- If external context is insufficient, acknowledge this limitation gracefully\n- Suggest reliable sources where more information might be found\n- Never describe data structures or technical details like \"undefined\" to the user\n- Maintain a helpful, conversational tone even with limited information",
+    
+    "no_context": "SYNTHESIS STRATEGY: Limited Context Response\n- Acknowledge that sufficient relevant information is not currently available\n- Provide general guidance on where to find the requested information\n- Suggest ways to improve future queries\n- Never mention technical terms like \"undefined\", \"null\", or data structure details\n- Focus on being helpful despite the lack of specific information"
+  },
+  "content": "{{lookup templates strategy}}",
+  "metadata": {
+    "purpose": "Strategy selection for hybrid context synthesis",
+    "version": "1.0",
+    "author": "Claude Code Assistant"
+  }
+}

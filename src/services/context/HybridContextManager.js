@@ -17,6 +17,7 @@ import log from 'loglevel';
 
 const logger = log.getLogger('HybridContextManager');
 import AdaptiveSearchEngine from '../search/AdaptiveSearchEngine.js';
+import { getPromptManager } from '../../prompts/index.js';
 
 export class HybridContextManager {
     constructor(options = {}) {
@@ -24,6 +25,9 @@ export class HybridContextManager {
         this.memoryManager = options.memoryManager;
         this.safeOperations = options.safeOperations;
         this.zptStateManager = options.zptStateManager;
+        
+        // Initialize prompt manager for synthesis templates
+        this.promptManager = options.promptManager || getPromptManager();
         
         // Initialize adaptive search engine for intelligent threshold management
         this.adaptiveSearchEngine = new AdaptiveSearchEngine(this.safeOperations, {
@@ -1199,7 +1203,7 @@ export class HybridContextManager {
             contextAnalysis
         );
         
-        const synthesisPrompt = this._createAdvancedSynthesisPrompt(
+        const synthesisPrompt = await this._createAdvancedSynthesisPrompt(
             query,
             synthesisComponents,
             contextAnalysis
@@ -1334,7 +1338,7 @@ export class HybridContextManager {
     }
     
     /**
-     * Create advanced synthesis prompt with clear source distinctions
+     * Create advanced synthesis prompt using the prompt system
      * 
      * @private
      * @param {string} query 
@@ -1342,25 +1346,98 @@ export class HybridContextManager {
      * @param {Object} contextAnalysis 
      * @returns {string} Advanced synthesis prompt
      */
-    _createAdvancedSynthesisPrompt(query, synthesisComponents, contextAnalysis) {
+    async _createAdvancedSynthesisPrompt(query, synthesisComponents, contextAnalysis) {
+        try {
+            // Get strategy-specific instructions
+            const strategyInstructions = await this._getStrategySpecificInstructions(contextAnalysis.selectedStrategy);
+            
+            // Prepare template variables
+            const variables = {
+                query,
+                strategy: contextAnalysis.selectedStrategy,
+                strategyInstructions,
+                personalContent: synthesisComponents.personalContent || '',
+                enhancementContent: synthesisComponents.enhancementContent || '',
+                personalInsights: synthesisComponents.keyInsights?.personal || [],
+                enhancementInsights: synthesisComponents.keyInsights?.enhancement || [],
+                crossReferences: synthesisComponents.crossReferences || []
+            };
+            
+            // Generate prompt using template system
+            const prompt = await this.promptManager.generatePrompt('hybrid-context-synthesis', variables);
+            return prompt;
+        } catch (error) {
+            logger.warn('Failed to generate synthesis prompt from template, using fallback:', error.message);
+            return this._createFallbackSynthesisPrompt(query, synthesisComponents, contextAnalysis);
+        }
+    }
+    
+    /**
+     * Get strategy-specific synthesis instructions using the prompt system
+     * 
+     * @private
+     * @param {string} strategy 
+     * @returns {Promise<string>} Strategy-specific instructions
+     */
+    async _getStrategySpecificInstructions(strategy) {
+        try {
+            const instructions = await this.promptManager.generatePrompt('synthesis-strategy-instructions', {
+                strategy
+            });
+            return instructions;
+        } catch (error) {
+            logger.warn('Failed to get strategy instructions from template, using fallback:', error.message);
+            return this._getFallbackStrategyInstructions(strategy);
+        }
+    }
+    
+    /**
+     * Fallback method for strategy instructions when prompt system fails
+     * 
+     * @private
+     * @param {string} strategy 
+     * @returns {string} Strategy-specific instructions
+     */
+    _getFallbackStrategyInstructions(strategy) {
+        const instructions = {
+            'personal_primary': 'SYNTHESIS STRATEGY: Personal Experience Primary\n- Start with and emphasize personal experience\n- Use external knowledge to provide context and validation\n- Show how external knowledge relates to the personal experience\n- Maintain the personal perspective as the central narrative',
+            
+            'enhancement_primary': 'SYNTHESIS STRATEGY: External Knowledge Primary\n- Begin with authoritative external information\n- Incorporate personal experience as illustrative examples\n- Use personal insights to add nuance to general knowledge\n- Ensure external facts form the foundation of the response',
+            
+            'balanced': 'SYNTHESIS STRATEGY: Balanced Integration\n- Weave together personal experience and external knowledge equally\n- Create smooth transitions between different types of information\n- Highlight where personal experience aligns with or differs from general knowledge\n- Provide a complete picture from both perspectives',
+            
+            'personal_only': 'SYNTHESIS STRATEGY: Personal Experience Only\n- Focus exclusively on available personal experience and context\n- If personal context is insufficient, acknowledge this limitation gracefully\n- Suggest ways the user can provide more relevant information\n- Never describe data structures or technical details like "undefined" to the user\n- Maintain a helpful, conversational tone even with limited information',
+            
+            'enhancement_only': 'SYNTHESIS STRATEGY: External Knowledge Only\n- Focus exclusively on authoritative external information\n- If external context is insufficient, acknowledge this limitation gracefully\n- Suggest reliable sources where more information might be found\n- Never describe data structures or technical details like "undefined" to the user\n- Maintain a helpful, conversational tone even with limited information',
+            
+            'no_context': 'SYNTHESIS STRATEGY: Limited Context Response\n- Acknowledge that sufficient relevant information is not currently available\n- Provide general guidance on where to find the requested information\n- Suggest ways to improve future queries\n- Never mention technical terms like "undefined", "null", or data structure details\n- Focus on being helpful despite the lack of specific information'
+        };
+        
+        return instructions[strategy] || 'SYNTHESIS STRATEGY: Comprehensive Integration\n- Use all available information to create the most complete answer possible\n- Clearly distinguish between different types of sources\n- Build connections and show relationships between different knowledge types\n- If information is limited, acknowledge this without technical jargon';
+    }
+    
+    /**
+     * Fallback method for creating synthesis prompt when template system fails
+     * 
+     * @private
+     * @param {string} query 
+     * @param {Object} synthesisComponents 
+     * @param {Object} contextAnalysis 
+     * @returns {string} Fallback synthesis prompt
+     */
+    _createFallbackSynthesisPrompt(query, synthesisComponents, contextAnalysis) {
         let prompt = `You are an expert at synthesizing information from multiple sources. Answer the following question by intelligently combining personal experience with authoritative external knowledge.\n\n`;
         
         // Add strategy-specific instructions
-        prompt += this._getStrategySpecificInstructions(contextAnalysis.selectedStrategy);
+        prompt += this._getFallbackStrategyInstructions(contextAnalysis.selectedStrategy);
         
         // Add source formatting instructions
-        prompt += `\n\nSOURCE ATTRIBUTION REQUIREMENTS:
-`;
-        prompt += `- Clearly distinguish between personal experience and external knowledge
-`;
-        prompt += `- Use phrases like "From your experience..." or "According to authoritative sources..."
-`;
-        prompt += `- Create connections between different types of knowledge when relevant
-`;
-        prompt += `- Maintain a conversational yet informative tone
-`;
-        prompt += `- NEVER mention technical terms like "undefined", "null", or describe data structures
-`;
+        prompt += `\n\nSOURCE ATTRIBUTION REQUIREMENTS:\n`;
+        prompt += `- Clearly distinguish between personal experience and external knowledge\n`;
+        prompt += `- Use phrases like "From your experience..." or "According to authoritative sources..."\n`;
+        prompt += `- Create connections between different types of knowledge when relevant\n`;
+        prompt += `- Maintain a conversational yet informative tone\n`;
+        prompt += `- NEVER mention technical terms like "undefined", "null", or describe data structures\n`;
         prompt += `- If information is limited, say so naturally without technical jargon\n\n`;
         
         prompt += `QUESTION: ${query}\n\n`;
@@ -1370,7 +1447,7 @@ export class HybridContextManager {
             prompt += `PERSONAL EXPERIENCE:\n`;
             prompt += synthesisComponents.personalContent;
             
-            if (synthesisComponents.keyInsights.personal.length > 0) {
+            if (synthesisComponents.keyInsights && synthesisComponents.keyInsights.personal && synthesisComponents.keyInsights.personal.length > 0) {
                 prompt += `\n\nKey Personal Insights:\n`;
                 synthesisComponents.keyInsights.personal.forEach((insight, idx) => {
                     prompt += `${idx + 1}. ${insight}\n`;
@@ -1384,7 +1461,7 @@ export class HybridContextManager {
             prompt += `EXTERNAL KNOWLEDGE:\n`;
             prompt += synthesisComponents.enhancementContent;
             
-            if (synthesisComponents.keyInsights.enhancement.length > 0) {
+            if (synthesisComponents.keyInsights && synthesisComponents.keyInsights.enhancement && synthesisComponents.keyInsights.enhancement.length > 0) {
                 prompt += `\n\nKey External Facts:\n`;
                 synthesisComponents.keyInsights.enhancement.forEach((insight, idx) => {
                     prompt += `${idx + 1}. ${insight}\n`;
@@ -1394,7 +1471,7 @@ export class HybridContextManager {
         }
         
         // Add cross-references if available
-        if (synthesisComponents.crossReferences.length > 0) {
+        if (synthesisComponents.crossReferences && synthesisComponents.crossReferences.length > 0) {
             prompt += `CONNECTIONS BETWEEN SOURCES:\n`;
             synthesisComponents.crossReferences.forEach((ref, idx) => {
                 prompt += `${idx + 1}. ${ref}\n`;
@@ -1405,100 +1482,6 @@ export class HybridContextManager {
         prompt += `Please provide a comprehensive answer that seamlessly integrates all available knowledge while clearly attributing sources. Focus on being helpful and informative while avoiding any technical terminology or references to data structures, programming concepts, or system internals.`;
         
         return prompt;
-    }
-    
-    /**
-     * Get strategy-specific synthesis instructions
-     * 
-     * @private
-     * @param {string} strategy 
-     * @returns {string} Strategy-specific instructions
-     */
-    _getStrategySpecificInstructions(strategy) {
-        switch (strategy) {
-            case 'personal_primary':
-                return `SYNTHESIS STRATEGY: Personal Experience Primary
-` +
-                       `- Start with and emphasize personal experience
-` +
-                       `- Use external knowledge to provide context and validation
-` +
-                       `- Show how external knowledge relates to the personal experience
-` +
-                       `- Maintain the personal perspective as the central narrative`;
-                       
-            case 'enhancement_primary':
-                return `SYNTHESIS STRATEGY: External Knowledge Primary
-` +
-                       `- Begin with authoritative external information
-` +
-                       `- Incorporate personal experience as illustrative examples
-` +
-                       `- Use personal insights to add nuance to general knowledge
-` +
-                       `- Ensure external facts form the foundation of the response`;
-                       
-            case 'balanced':
-                return `SYNTHESIS STRATEGY: Balanced Integration
-` +
-                       `- Weave together personal experience and external knowledge equally
-` +
-                       `- Create smooth transitions between different types of information
-` +
-                       `- Highlight where personal experience aligns with or differs from general knowledge
-` +
-                       `- Provide a complete picture from both perspectives`;
-                       
-            case 'personal_only':
-                return `SYNTHESIS STRATEGY: Personal Experience Only
-` +
-                       `- Focus exclusively on available personal experience and context
-` +
-                       `- If personal context is insufficient, acknowledge this limitation gracefully
-` +
-                       `- Suggest ways the user can provide more relevant information
-` +
-                       `- Never describe data structures or technical details like "undefined" to the user
-` +
-                       `- Maintain a helpful, conversational tone even with limited information`;
-                       
-            case 'enhancement_only':
-                return `SYNTHESIS STRATEGY: External Knowledge Only
-` +
-                       `- Focus exclusively on authoritative external information
-` +
-                       `- If external context is insufficient, acknowledge this limitation gracefully
-` +
-                       `- Suggest reliable sources where more information might be found
-` +
-                       `- Never describe data structures or technical details like "undefined" to the user
-` +
-                       `- Maintain a helpful, conversational tone even with limited information`;
-                       
-            case 'no_context':
-                return `SYNTHESIS STRATEGY: Limited Context Response
-` +
-                       `- Acknowledge that sufficient relevant information is not currently available
-` +
-                       `- Provide general guidance on where to find the requested information
-` +
-                       `- Suggest ways to improve future queries
-` +
-                       `- Never mention technical terms like "undefined", "null", or data structure details
-` +
-                       `- Focus on being helpful despite the lack of specific information`;
-                       
-            default:
-                return `SYNTHESIS STRATEGY: Comprehensive Integration
-` +
-                       `- Use all available information to create the most complete answer possible
-` +
-                       `- Clearly distinguish between different types of sources
-` +
-                       `- Build connections and show relationships between different knowledge types
-` +
-                       `- If information is limited, acknowledge this without technical jargon`;
-        }
     }
     
     /**

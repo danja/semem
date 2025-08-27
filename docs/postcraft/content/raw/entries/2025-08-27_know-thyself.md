@@ -32,4 +32,5 @@ cd ~/hyperdata/transmissions # my local path
 
 The Transmissions part worked ok (confirmed by querying the store via Fuseki's UI). Right now the ingestion part is running. It is taking *a very long time*.
 
-I've far from finished confirming that all the parts of the system are working correctly. A meta-issue is that the **operations are really slow**. This is understandable - there's a lot going on, what with SPARQL queries, embeddings being juggled as well as remote LLM chat completion calls (I'm using Mistral free tier). My next step has to be to set up some metrics, locate the bottlenecks... Ha, is a bit obvious without looking - remote LLM calls. I need to figure out which of these have to happen in real time, which I can have running in the background (queue/scheduler needed).
+I've far from finished confirming that all the parts of the system are working correctly. A meta-issue is that the **operations are really slow**. This is understandable - there's a lot going on, what with SPARQL queries, embeddings being juggled as well as remote LLM chat completion calls (I'm using Mistral free tier). My next step has to be to set up some metrics, locate the bottlenecks... Ha, is obvious without looking - remote LLM calls. I need to figure out which of these have to happen in real time, which I can have running in the background (queue/scheduler needed).
+

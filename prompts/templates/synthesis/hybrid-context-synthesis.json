@@ -1,0 +1,60 @@
+{
+  "name": "hybrid-context-synthesis",
+  "description": "Advanced synthesis prompt for HybridContextManager combining personal and external knowledge",
+  "format": "chat",
+  "category": "synthesis",
+  "version": "1.0",
+  "supportedModels": ["*"],
+  "arguments": [
+    {
+      "name": "query",
+      "type": "string",
+      "required": true,
+      "description": "The user's question"
+    },
+    {
+      "name": "strategy",
+      "type": "string",
+      "required": true,
+      "description": "The synthesis strategy (personal_primary, enhancement_primary, balanced, personal_only, enhancement_only, no_context)"
+    },
+    {
+      "name": "personalContent",
+      "type": "string",
+      "required": false,
+      "description": "Personal experience context"
+    },
+    {
+      "name": "enhancementContent", 
+      "type": "string",
+      "required": false,
+      "description": "External knowledge context"
+    },
+    {
+      "name": "personalInsights",
+      "type": "array",
+      "required": false,
+      "description": "Key personal insights extracted"
+    },
+    {
+      "name": "enhancementInsights",
+      "type": "array", 
+      "required": false,
+      "description": "Key external facts extracted"
+    },
+    {
+      "name": "crossReferences",
+      "type": "array",
+      "required": false,
+      "description": "Connections between sources"
+    }
+  ],
+  "systemPrompt": "You are an expert at synthesizing information from multiple sources. Answer questions by intelligently combining personal experience with authoritative external knowledge.",
+  "content": "{{#if strategyInstructions}}{{{strategyInstructions}}}{{/if}}\n\nSOURCE ATTRIBUTION REQUIREMENTS:\n- Clearly distinguish between personal experience and external knowledge\n- Use phrases like \"From your experience...\" or \"According to authoritative sources...\"\n- Create connections between different types of knowledge when relevant\n- Maintain a conversational yet informative tone\n- NEVER mention technical terms like \"undefined\", \"null\", or describe data structures\n- If information is limited, say so naturally without technical jargon\n\nQUESTION: {{query}}\n\n{{#if personalContent}}PERSONAL EXPERIENCE:\n{{personalContent}}\n\n{{#if personalInsights}}Key Personal Insights:\n{{#each personalInsights}}{{@index}}. {{this}}\n{{/each}}{{/if}}{{/if}}\n\n{{#if enhancementContent}}EXTERNAL KNOWLEDGE:\n{{enhancementContent}}\n\n{{#if enhancementInsights}}Key External Facts:\n{{#each enhancementInsights}}{{@index}}. {{this}}\n{{/each}}{{/if}}{{/if}}\n\n{{#if crossReferences}}CONNECTIONS BETWEEN SOURCES:\n{{#each crossReferences}}{{@index}}. {{this}}\n{{/each}}\n{{/if}}\n\nPlease provide a comprehensive answer that seamlessly integrates all available knowledge while clearly attributing sources. Focus on being helpful and informative while avoiding any technical terminology or references to data structures, programming concepts, or system internals.",
+  "metadata": {
+    "purpose": "Hybrid context synthesis for semantic memory queries",
+    "version": "1.0",
+    "author": "Claude Code Assistant",
+    "usage": "HybridContextManager response generation"
+  }
+}
