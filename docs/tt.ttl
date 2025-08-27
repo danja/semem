@@ -1,0 +1,224 @@
+### manifest.ttl for ###
+
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+
+@prefix : <http://purl.org/stuff/transmissions/> .
+
+###########################
+# postcraft-statics
+:removePublic a :ConfigSet ;
+    :target "public" .
+
+:copyMedia a :ConfigSet ;
+    :workingDirectory "public" ;
+    :source "content/media" ;
+    :destination "public" .
+
+:copyLayout a :ConfigSet ;
+    :workingDirectory "public" ;
+    :source "layout/base" ;
+    :destination "public" .
+
+#######################
+# for md-to-sparqlstore
+
+:dirWalker a :ConfigSet ;
+  #  :limit "3" ; # for debugging
+   :sourceDir "manual" .
+
+:readerSet a :ConfigSet ;
+    :metaField "meta" .
+
+:entryExtras a :ConfigSet ;
+ #  :loglevel "debug" ;
+    :rawDir "manual" ;
+    :renderPath "" ; # should probably come at render time
+    :baseURI <https://tensegrity.it/semem/> ;
+    :graph <http://tensegrity.it/semem> ;
+    :creatorName "Danny" ;
+    :creatorURI <http://danny.ayers.name/me> .
+
+:storeArticle a :ConfigSet ;
+# :loglevel "debug" ;
+    :delay "100" ;
+    :dataBlock "contentBlocks" ;
+    :templateFilename "postcraft/system/sparql-templates/store-article.njk" ;
+    :endpointSettings "endpoints.json" ;
+    :graph <http://tensegrity.it/semem> .
+
+###########################
+### for sparqlstore-to-html
+
+:resultIterator a :ConfigSet ;
+  #  :limit "2"; # for debugging
+    :forEach "queryResults.results.bindings" ;
+    :remove "queryResults" ;
+    :graph <http://hyperdata.it/content> .
+
+:prepArticle a :ConfigSet  ;
+    :remove "queryResults" ;
+    :rename (:prepA1 :prepA2 :prepA3 :prepA4)  .
+       # :prepA0 :pre    "currentItem.graph.value" ;
+        #        :post   "contentBlocks.graph"  .
+        :prepA1 :pre    "currentItem.uri.value" ;
+                :post   "contentBlocks.uri"  .
+        :prepA2 :pre    "currentItem.title.value" ;
+                :post   "contentBlocks.title"  .
+        :prepA3 :pre    "currentItem.created.value" ;
+                :post  "contentBlocks.created"  .
+        :prepA4 :pre    "appRunStart" ;
+                :post  "contentBlocks.published"  .
+
+
+:markdown a :ConfigSet ;
+   # :loglevel "debug" ;
+    :sourceField "currentItem.content.value" ;
+    :outputField "contentBlocks.content" .
+
+:selectArticles a :ConfigSet ;
+    :templateFilename "system/sparql-templates/select-articles.njk" ;
+    :endpointSettings "system/endpoints.json" ;
+        :graph <http://hyperdata.it/content> .
+
+:shiftHTML a :ConfigSet  ;
+    :rename ( :sh1 :sh3)  .
+        # for content
+        :sh1    :pre    "content" ;
+                :post "contentBlocks.content"  .
+        #:sh2    :pre    "graph" ;
+         #       :post "contentBlocks.graph"  .
+        :sh3    :pre    "currentItem.uri.value" ;
+                :post "contentBlocks.uri"  .
+
+:updateArticleHTML a :ConfigSet ;
+#:loglevel "debug" ;
+    :delay "100" ;
+    :dataBlock "contentBlocks" ;
+   # :escape true ;
+    :templateFilename "system/sparql-templates/save-html-chunk.njk" ;
+    :endpointSettings "system/endpoints.json" ;
+         :graph <http://hyperdata.it/content> .
+
+
+:articleContentTemplate a :ConfigSet ;
+    :templateFilename "layout/base/templates/article-content.njk" .
+   # :loglevel "debug" .
+
+
+
+:articlePageTemplate a :ConfigSet ;
+    :templateFilename "layout/base/templates/article-page.njk" .
+
+:filenameConstructor a :ConfigSet ;
+  :asPath true ;
+  :targetField "temp" ;
+  :values (:fn1 :fn2 :fn3 :fn4) .
+  :fn1 :field "targetDir" .
+  :fn2 :string "public" .
+  :fn3 :field "currentItem.relative.value" .
+  :fn4 :field "currentItem.slug.value" .
+
+:filenameExtension a :ConfigSet ;
+    :asPath false ;
+    :targetField "destinationFile" ;
+    :values (:a2 :b2 ) .
+    :a2 :field "temp" .
+    :b2 :string ".html" .
+
+
+:recordRendering a :ConfigSet ;
+#:loglevel "debug" ;
+    :delay "100" ;
+    :dataBlock "contentBlocks" ;
+    :templateFilename "system/sparql-templates/record-rendering.njk" ;
+    :endpointSettings "system/endpoints.json" ;
+        :graph <http://hyperdata.it/content> .
+
+
+
+#################################
+# for sparqlstore-to-site-indexes
+
+:recentArticles a :ConfigSet ;
+    :templateFilename "system/sparql-templates/recent-articles.njk" ;
+    :endpointSettings "system/endpoints.json" ;
+        :graph <http://hyperdata.it/content> .
+
+:indexResultIterator a :ConfigSet ;
+  :forEach "queryResults.results.bindings" .
+
+:prepRecents a :ConfigSet  ;
+    :remove "queryResults" ;
+    :rename (:pc1 :pc2 :pc3 :pu1)  .
+        :pc1   :pre    "currentItem.title.value" ;
+              :post "contentBlocks.title"  .
+        :pc2   :pre    "currentItem.html.value" ;
+              :post  "contentBlocks.html"  .
+        :pc3   :pre    "currentItem.created.value" ;
+              :post  "contentBlocks.created"  .
+
+        :pu1     :pre    "currentItem.uri.value" ;
+                :post   "contentBlocks.uri"  .
+
+:accumulator a :ConfigSet ;
+    :label "test" ;
+    :sourceField "currentItem.html.value" .
+
+#### unforks -------------
+
+### create HTML index
+
+:prepHTML a :ConfigSet  ;
+    :loglevel "debug" ;
+    :rename (:ph1 :ph2)  .
+        # for content
+        :ph1   :pre    "accumulator" ;
+              :post "contentBlocks.content"  .
+        :ph2   :pre    "dummy" ;
+              :post "dummy"  .
+
+:htmlIndex a :ConfigSet ;
+    :templateFilename "layout/base/templates/index-html.njk" .
+
+:htmlFilepath a :ConfigSet ;
+  :asPath true ;
+  :targetField "destinationFile" ;
+  :values (:hp1 :hp2 :hp3) .
+  :hp1 :field "targetDir" . ####
+  :hp2 :string "public" .
+  :hp3 :string "index.html" .
+
+:htmlField a :ConfigSet ;
+   :contentField "content" .
+
+:contentLocation  a :ConfigSet ;
+   :contentField "accumulator" .
+
+### create Atom index
+
+:prepAtom a :ConfigSet  ;
+    :rename (:pa1)  .
+        :pa1   :pre    "accumulator" ;
+              :post "contentBlocks.content"  .
+
+:atomIndex a :ConfigSet ;
+    :templateFilename "layout/base/templates/index-atom.njk" .
+
+:atomFilepath a :ConfigSet ;
+  :asPath true ;
+  :targetField "destinationFile" ;
+  :values (:ap1 :ap2 :ap3) .
+  :ap1 :field "targetPath" .
+  :ap2 :string "public" .
+  :ap3 :string "atom.xml" .
+
+  ### for postcraft-statics
+
+  :removePublic a :ConfigSet ;
+    :target "public" .
+
+:copyLayout a :ConfigSet ;
+    :source "layout/base" ;
+    :destination "public/layout" .

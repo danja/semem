@@ -1,0 +1,20 @@
+[
+    {
+        "name": "hyperdata.it query",
+        "type": "query",
+        "url": "http://localhost:3030/semem/query",
+        "credentials": {
+            "user": "admin",
+            "password": "admin123"
+        }
+    },
+    {
+        "name": "hyperdata.it update",
+        "type": "update",
+        "url": "http://localhost:3030/semem/update",
+        "credentials": {
+            "user": "admin",
+            "password": "admin123"
+        }
+    }
+]
