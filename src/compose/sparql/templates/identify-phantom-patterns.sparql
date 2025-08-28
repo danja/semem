@@ -1,0 +1,13 @@
+# Identify phantom blank node patterns and their connections
+# Template: identify-phantom-patterns
+
+SELECT ?blankNode ?connectedTo (COUNT(*) as ?connectionCount) WHERE {
+  GRAPH <${graph}> {
+    ?blankNode <http://purl.org/stuff/ragno/connectsTo> ?connectedTo .
+    FILTER(isBlank(?blankNode))
+    ${additionalFilters}
+  }
+}
+GROUP BY ?blankNode ?connectedTo
+ORDER BY DESC(?connectionCount)
+${limitClause}

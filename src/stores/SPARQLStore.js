@@ -122,6 +122,10 @@ export default class SPARQLStore extends BaseStore {
         this.inTransaction = false
         this.dimension = options.dimension || 1536
         this.queryService = new SPARQLQueryService()
+        
+        // PREVENTION: Configuration limits to prevent triple explosion
+        this.maxConceptsPerInteraction = options.maxConceptsPerInteraction || 10
+        this.maxConnectionsPerEntity = options.maxConnectionsPerEntity || 100
         this.config = config
         this.baseUri = config?.get?.('baseUri') || config?.baseUri || 'http://hyperdata.it/'
         
@@ -430,8 +434,10 @@ export default class SPARQLStore extends BaseStore {
                 }
             `
 
-            //   logger.debug(`SPARQLStore saveMemoryToHistory query = \n${insertQuery}`)
+            logger.debug(`SPARQLStore saveMemoryToHistory query = \n${insertQuery}`)
+            logger.debug(`About to execute SPARQL update to ${this.endpoint.update}`)
             await this._executeSparqlUpdate(insertQuery, this.endpoint.update)
+            logger.debug(`SPARQL update completed successfully`)
             await this.commitTransaction()
 
             logger.info(`Saved memory to SPARQL store ${this.endpoint.update} graph <${this.graphName}>. Stats: ${memoryStore.shortTermMemory.length} short-term, ${memoryStore.longTermMemory.length} long-term memories`)
@@ -550,8 +556,11 @@ export default class SPARQLStore extends BaseStore {
                 }
             }
 
+            // Use proper interaction URI instead of blank node to prevent phantom node creation
+            const interactionUri = `${this.baseUri}interaction/${id}`
+            
             return `
-            _:interaction${type}${index} a semem:Interaction ;
+            <${interactionUri}> a semem:Interaction ;
                 semem:id "${this._escapeSparqlString(id)}" ;
                 semem:prompt "${this._escapeSparqlString(prompt)}" ;
                 semem:output "${this._escapeSparqlString(output)}" ;
@@ -600,7 +609,13 @@ export default class SPARQLStore extends BaseStore {
 
         memories.forEach((interaction, index) => {
             if (Array.isArray(interaction.concepts)) {
-                interaction.concepts.forEach(concept => {
+                // Use proper interaction URI instead of blank node to prevent phantom node creation
+                const interactionUri = `${this.baseUri}interaction/${interaction.id || index}`
+                
+                // CONSTRAINT: Limit concepts per interaction to prevent connection explosion
+                const limitedConcepts = interaction.concepts.slice(0, this.maxConceptsPerInteraction);
+                
+                limitedConcepts.forEach(concept => {
                     const conceptUri = `${this.baseUri}concept/${encodeURIComponent(concept)}`
 
                     if (!seenConcepts.has(conceptUri)) {
@@ -612,9 +627,11 @@ export default class SPARQLStore extends BaseStore {
                         seenConcepts.add(conceptUri)
                     }
 
+                    // FIX: Use proper URIs instead of blank nodes to prevent phantom node explosion
+                    // Only create bidirectional connections if both entities are legitimate
                     conceptStatements.push(`
-                        _:interaction${interaction.id || index} ragno:connectsTo <${conceptUri}> .
-                        <${conceptUri}> ragno:connectsTo _:interaction${interaction.id || index} .
+                        <${interactionUri}> ragno:connectsTo <${conceptUri}> .
+                        <${conceptUri}> ragno:connectsTo <${interactionUri}> .
                     `)
                 })
             }
@@ -1343,7 +1360,7 @@ export default class SPARQLStore extends BaseStore {
                     ${entityUri} a ragno:Element ;
                         ragno:content "${this._escapeSparqlString(data.response || data.content || '')}" ;
                         skos:prefLabel "${this._escapeSparqlString(data.prompt || '')}" ;
-                        ragno:embedding "${this._escapeSparqlString(JSON.stringify(data.embedding || []))}" ;
+                        ragno:embedding "${this._escapeSparqlString(JSON.stringify(data.embedding || []))}" ; # DEPRECATED: Use ragno:hasEmbedding → ragno:vectorContent pattern instead
                         dcterms:created "${new Date().toISOString()}"^^xsd:dateTime ;
                         ragno:timestamp "${data.timestamp || new Date().toISOString()}" .
                     ${data.concepts ? data.concepts.map(concept =>
@@ -1373,17 +1390,18 @@ export default class SPARQLStore extends BaseStore {
             PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
             PREFIX dcterms: <http://purl.org/dc/terms/>
 
-            SELECT ?entity ?prompt ?content ?embedding ?timestamp ?type
+            SELECT ?entity ?prompt ?content ?embedding ?timestamp ?type ?format
             FROM <${this.graphName}>
             WHERE {
                 {
-                    # Search in regular ragno:Element objects (old format)
+                    # Search in regular ragno:Element objects (old format) - DEPRECATED
                     ?entity a ragno:Element ;
                         skos:prefLabel ?prompt ;
                         ragno:content ?content ;
                         ragno:embedding ?embedding ;
                         ragno:timestamp ?timestamp .
                     OPTIONAL { ?entity ragno:type ?type }
+                    BIND("old" AS ?format)
                 } UNION {
                     # Search in ragno:Unit chunks (new format)
                     ?entity a ragno:Unit ;
@@ -1392,7 +1410,18 @@ export default class SPARQLStore extends BaseStore {
                     ?embeddingUri ragno:vectorContent ?embedding .
                     OPTIONAL { ?entity dcterms:created ?timestamp }
                     BIND("Chunk" AS ?type)
+                    BIND("new" AS ?format)
                     BIND(CONCAT("Document chunk: ", SUBSTR(?content, 1, 50), "...") AS ?prompt)
+                } UNION {
+                    # Search in ragno:Concept embeddings (new format)
+                    ?entity a ragno:Concept ;
+                        skos:prefLabel ?prompt .
+                    ?entity ragno:hasEmbedding ?embeddingUri .
+                    ?embeddingUri ragno:vectorContent ?embedding .
+                    OPTIONAL { ?entity dcterms:created ?timestamp }
+                    BIND("Concept" AS ?type)
+                    BIND("new" AS ?format)
+                    BIND(?prompt AS ?content)
                 }
             }
             LIMIT ${limit * 2}
@@ -1428,6 +1457,16 @@ export default class SPARQLStore extends BaseStore {
                     }
 
                     if (similarity >= threshold) {
+                        const format = binding.format?.value || 'unknown';
+                        
+                        // Log deprecation warning for old format
+                        if (format === 'old') {
+                            logger.warn('DEPRECATED: Found result using old ragno:embedding format. Consider migrating to ragno:hasEmbedding → ragno:vectorContent pattern.', {
+                                entity: binding.entity.value,
+                                type: binding.type?.value
+                            });
+                        }
+                        
                         searchResults.push({
                             id: binding.entity.value,
                             prompt: binding.prompt.value,
@@ -1435,7 +1474,8 @@ export default class SPARQLStore extends BaseStore {
                             similarity: similarity,
                             timestamp: binding.timestamp.value,
                             metadata: {
-                                type: binding.type?.value || 'unknown'
+                                type: binding.type?.value || 'unknown',
+                                format: format
                             }
                         })
                     }
@@ -1444,8 +1484,19 @@ export default class SPARQLStore extends BaseStore {
                 }
             }
 
-            // Sort by similarity (highest first)
-            searchResults.sort((a, b) => b.similarity - a.similarity)
+            // Sort by format (new format first) then by similarity (highest first)
+            searchResults.sort((a, b) => {
+                // Prioritize new format over old format
+                const formatPriorityA = a.metadata.format === 'new' ? 1 : 0;
+                const formatPriorityB = b.metadata.format === 'new' ? 1 : 0;
+                
+                if (formatPriorityA !== formatPriorityB) {
+                    return formatPriorityB - formatPriorityA; // New format first
+                }
+                
+                // If same format, sort by similarity
+                return b.similarity - a.similarity;
+            })
 
             logger.info(`Found ${searchResults.length} similar items`)
             return searchResults.slice(0, limit)

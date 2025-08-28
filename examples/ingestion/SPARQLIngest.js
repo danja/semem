@@ -281,6 +281,8 @@ For more information, see: docs/manual/sparql-ingestion.md
         } catch (error) {
             console.error('❌ Interactive mode failed:', error.message);
             rl.close();
+        } finally {
+            rl.close();
         }
     }
 
@@ -420,6 +422,23 @@ For more information, see: docs/manual/sparql-ingestion.md
     }
 
     /**
+     * Cleanup connections and resources
+     */
+    async cleanup() {
+        try {
+            if (this.simpleVerbsService && this.simpleVerbsService.memoryManager) {
+                console.log('🧹 Cleaning up memory manager...');
+                await this.simpleVerbsService.memoryManager.dispose();
+            }
+            
+            // Small delay to ensure cleanup completes
+            await new Promise(resolve => setTimeout(resolve, 100));
+        } catch (error) {
+            console.error('Warning: Cleanup failed:', error.message);
+        }
+    }
+
+    /**
      * Main execution function
      */
     async run() {
@@ -444,6 +463,7 @@ For more information, see: docs/manual/sparql-ingestion.md
             // Interactive mode
             if (values.interactive) {
                 await this.runInteractive();
+                await this.cleanup();
                 return;
             }
 
@@ -481,6 +501,9 @@ For more information, see: docs/manual/sparql-ingestion.md
                 console.error(error.stack);
             }
             process.exit(1);
+        } finally {
+            // Always cleanup, even on errors
+            await this.cleanup();
         }
     }
 }

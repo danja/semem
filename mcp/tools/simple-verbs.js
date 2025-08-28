@@ -54,7 +54,7 @@ const AskSchema = z.object({
 
 const AugmentSchema = z.object({
   target: z.string().optional().default('all'),
-  operation: z.enum(['auto', 'concepts', 'attributes', 'relationships', 'process_lazy', 'chunk_documents', 'extract_concepts', 'generate_embedding', 'analyze_text']).optional().default('auto'),
+  operation: z.enum(['auto', 'concepts', 'attributes', 'relationships', 'process_lazy', 'chunk_documents', 'extract_concepts', 'generate_embedding', 'analyze_text', 'concept_embeddings']).optional().default('auto'),
   options: z.object({
     // Chunking-specific options
     maxChunkSize: z.number().optional().default(2000),
@@ -62,7 +62,13 @@ const AugmentSchema = z.object({
     overlapSize: z.number().optional().default(100),
     strategy: z.enum(['semantic', 'fixed']).optional().default('semantic'),
     minContentLength: z.number().optional().default(2000),
-    graph: z.string().optional()
+    graph: z.string().optional(),
+    // Concept embedding options
+    maxConcepts: z.number().optional().default(20),
+    embeddingModel: z.string().optional().default('nomic-embed-text'),
+    includeAttributes: z.boolean().optional().default(false),
+    batchSize: z.number().optional().default(5),
+    includeEmbeddings: z.boolean().optional().default(false)
   }).optional().default({}),
   parameters: z.object({}).optional().default({}) // Legacy support - will be merged with options
 });
@@ -550,11 +556,22 @@ class SimpleVerbsService {
             concepts = await this.safeOps.extractConcepts(content);
             prompt = `User input: ${content.substring(0, 100)}...`;
             
+            console.log('🔥 DEBUG: About to call safeOps.storeInteraction');
             result = await this.safeOps.storeInteraction(
               prompt,
               response,
               { ...metadata, type: 'tell_interaction', concepts }
             );
+            console.log('🔥 DEBUG: safeOps.storeInteraction completed');
+            
+            // DIRECT FIX: Force immediate SPARQL persistence 
+            try {
+              console.log('🔥 DEBUG: Force saving to SPARQL...');
+              await this.memoryManager.store.saveMemoryToHistory(this.memoryManager.memStore);
+              console.log('🔥 DEBUG: SPARQL force save completed');
+            } catch (sparqlError) {
+              console.error('🔥 ERROR: Force SPARQL save failed:', sparqlError);
+            }
             break;
             
           case 'document':
@@ -653,6 +670,15 @@ class SimpleVerbsService {
                   { ...metadata, type: 'tell_document', concepts }
                 );
                 console.log(`✅ Document processed successfully (${concepts.length} concepts extracted)`);
+                
+                // DIRECT FIX: Force immediate SPARQL persistence 
+                try {
+                  console.log('🔥 DEBUG: Force saving document to SPARQL...');
+                  await this.memoryManager.store.saveMemoryToHistory(this.memoryManager.memStore);
+                  console.log('🔥 DEBUG: Document SPARQL force save completed');
+                } catch (sparqlError) {
+                  console.error('🔥 ERROR: Document force SPARQL save failed:', sparqlError);
+                }
               } catch (docError) {
                 console.error(`❌ Error processing document:`, docError.message);
                 throw new Error(`Failed to process document: ${docError.message}. Document size: ${content.length} characters. Consider breaking it into smaller sections.`);
@@ -851,7 +877,95 @@ class SimpleVerbsService {
       switch (operation) {
         case 'concepts':
           // Extract concepts from target content
-          result = await this.safeOps.extractConcepts(target);
+          const extractedConcepts = await this.safeOps.extractConcepts(target);
+          
+          // If includeEmbeddings option is set, generate embeddings for concepts
+          if (mergedOptions.includeEmbeddings) {
+            console.log('🔮 [CONCEPTS] Generating embeddings for extracted concepts...');
+            try {
+              // Use the concept_embeddings logic but return in concepts format
+              const { maxConcepts = 20, embeddingModel = 'nomic-embed-text', batchSize = 5, graph } = mergedOptions;
+              const conceptsToProcess = extractedConcepts.slice(0, maxConcepts);
+              const conceptEmbeddings = [];
+              
+              // Get SPARQL configuration
+              const config = this.memoryManager.config;
+              const storageConfig = config.get('storage.options');
+              // Use graph option, or storage.options.graphName, or fallback to top-level graphName, or default
+              const targetGraph = graph || storageConfig?.graphName || config.get('graphName') || 'http://hyperdata.it/content';
+              
+              // Import utilities
+              const { URIMinter } = await import('../../src/utils/URIMinter.js');
+              const SPARQLHelper = (await import('../../src/services/sparql/SPARQLHelper.js')).default;
+              const sparqlHelper = new SPARQLHelper(storageConfig.update, {
+                user: storageConfig.user,
+                password: storageConfig.password
+              });
+              
+              // Process concepts in batches
+              for (let i = 0; i < conceptsToProcess.length; i += batchSize) {
+                const batch = conceptsToProcess.slice(i, i + batchSize);
+                for (const concept of batch) {
+                  try {
+                    const conceptEmbedding = await this.safeOps.generateEmbedding(concept);
+                    const conceptUri = URIMinter.mintURI('http://purl.org/stuff/instance/', 'concept', concept);
+                    const embeddingUri = URIMinter.mintURI('http://purl.org/stuff/instance/', 'embedding', concept);
+
+                    // Store using new ragno format
+                    const insertQuery = `
+                      PREFIX ragno: <http://purl.org/stuff/ragno/>
+                      PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+                      PREFIX dcterms: <http://purl.org/dc/terms/>
+                      PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+                      INSERT DATA {
+                          GRAPH <${targetGraph}> {
+                              <${conceptUri}> a ragno:Concept ;
+                                              skos:prefLabel "${concept.replace(/"/g, '\\"')}" ;
+                                              ragno:hasEmbedding <${embeddingUri}> ;
+                                              dcterms:created "${new Date().toISOString()}"^^xsd:dateTime .
+                              
+                              <${embeddingUri}> a ragno:IndexElement ;
+                                                ragno:embeddingModel "${embeddingModel}" ;
+                                                ragno:subType ragno:ConceptEmbedding ;
+                                                ragno:embeddingDimension ${conceptEmbedding.length} ;
+                                                ragno:vectorContent "[${conceptEmbedding.join(',')}]" .
+                          }
+                      }
+                    `;
+
+                    await sparqlHelper.executeUpdate(insertQuery);
+                    conceptEmbeddings.push({
+                      concept,
+                      uri: conceptUri,
+                      embeddingDimension: conceptEmbedding.length
+                    });
+                  } catch (error) {
+                    mcpDebugger.warn('Failed to generate embedding for concept', { concept, error: error.message });
+                  }
+                }
+              }
+              
+              result = {
+                concepts: extractedConcepts,
+                embeddedConcepts: conceptEmbeddings,
+                totalEmbeddings: conceptEmbeddings.length,
+                embeddingModel: embeddingModel,
+                augmentationType: 'concepts_with_embeddings'
+              };
+              
+              console.log(`✅ [CONCEPTS] Generated embeddings for ${conceptEmbeddings.length} concepts`);
+            } catch (embeddingError) {
+              console.warn('⚠️ [CONCEPTS] Embedding generation failed:', embeddingError.message);
+              result = {
+                concepts: extractedConcepts,
+                embeddingError: embeddingError.message,
+                augmentationType: 'concepts_embedding_failed'
+              };
+            }
+          } else {
+            result = extractedConcepts;
+          }
           break;
           
         case 'attributes':
@@ -976,7 +1090,8 @@ class SimpleVerbsService {
             
             const config = this.memoryManager.config;
             const storageConfig = config.get('storage.options');
-            const targetGraph = graph || storageConfig.graphName || 'http://hyperdata.it/content';
+            // Use graph option, or storage.options.graphName, or fallback to top-level graphName, or default
+            const targetGraph = graph || storageConfig?.graphName || config.get('graphName') || 'http://hyperdata.it/content';
             
             // Initialize services with explicit paths
             const projectRoot = path.join(process.cwd(), '..');
@@ -1225,6 +1340,170 @@ class SimpleVerbsService {
             },
             augmentationType: 'analyze_text'
           };
+          break;
+
+        case 'concept_embeddings':
+          // Extract concepts and generate embeddings using new ragno format
+          try {
+            console.log('🔮 [CONCEPT_EMBEDDINGS] Starting concept embedding generation...');
+            mcpDebugger.info('concept_embeddings operation started', { target, mergedOptions });
+
+            const {
+              maxConcepts = 20,
+              embeddingModel = 'nomic-embed-text',
+              includeAttributes = false,
+              batchSize = 5,
+              graph
+            } = mergedOptions;
+
+            // Extract concepts from target content
+            const concepts = await this.safeOps.extractConcepts(target);
+            console.log(`🔮 [CONCEPT_EMBEDDINGS] Extracted ${concepts.length} concepts`);
+
+            if (concepts.length === 0) {
+              result = {
+                conceptsEmbedded: [],
+                totalConcepts: 0,
+                totalEmbeddings: 0,
+                message: 'No concepts found to embed',
+                augmentationType: 'concept_embeddings'
+              };
+              break;
+            }
+
+            // Limit concepts if necessary
+            const conceptsToProcess = concepts.slice(0, maxConcepts);
+            const conceptEmbeddings = [];
+            const skippedConcepts = [];
+
+            // Get SPARQL configuration for storage
+            const config = this.memoryManager.config;
+            const storageConfig = config.get('storage.options');
+            // Use graph option, or storage.options.graphName, or fallback to top-level graphName, or default
+            const targetGraph = graph || storageConfig?.graphName || config.get('graphName') || 'http://hyperdata.it/content';
+
+            // Import required utilities
+            const { URIMinter } = await import('../../src/utils/URIMinter.js');
+            const SPARQLHelper = (await import('../../src/services/sparql/SPARQLHelper.js')).default;
+            
+            const sparqlHelper = new SPARQLHelper(storageConfig.update, {
+              user: storageConfig.user,
+              password: storageConfig.password
+            });
+
+            // Process concepts in batches
+            for (let i = 0; i < conceptsToProcess.length; i += batchSize) {
+              const batch = conceptsToProcess.slice(i, i + batchSize);
+              console.log(`🔮 [CONCEPT_EMBEDDINGS] Processing batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(conceptsToProcess.length / batchSize)} (${batch.length} concepts)`);
+
+              for (const concept of batch) {
+                try {
+                  // Generate embedding for concept
+                  const conceptEmbedding = await this.safeOps.generateEmbedding(concept);
+                  
+                  // Create URIs using new ragno format
+                  const conceptUri = URIMinter.mintURI('http://purl.org/stuff/instance/', 'concept', concept);
+                  const embeddingUri = URIMinter.mintURI('http://purl.org/stuff/instance/', 'embedding', concept);
+
+                  // Store using new ragno format: ragno:hasEmbedding → ragno:vectorContent
+                  const insertQuery = `
+                    PREFIX ragno: <http://purl.org/stuff/ragno/>
+                    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+                    PREFIX dcterms: <http://purl.org/dc/terms/>
+                    PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+                    INSERT DATA {
+                        GRAPH <${targetGraph}> {
+                            <${conceptUri}> a ragno:Concept ;
+                                            skos:prefLabel "${concept.replace(/"/g, '\\"')}" ;
+                                            ragno:hasEmbedding <${embeddingUri}> ;
+                                            dcterms:created "${new Date().toISOString()}"^^xsd:dateTime .
+                            
+                            <${embeddingUri}> a ragno:IndexElement ;
+                                              ragno:embeddingModel "${embeddingModel}" ;
+                                              ragno:subType ragno:ConceptEmbedding ;
+                                              ragno:embeddingDimension ${conceptEmbedding.length} ;
+                                              ragno:vectorContent "[${conceptEmbedding.join(',')}]" .
+                        }
+                    }
+                  `;
+
+                  await sparqlHelper.executeUpdate(insertQuery);
+
+                  conceptEmbeddings.push({
+                    concept: concept,
+                    conceptUri: conceptUri,
+                    embeddingUri: embeddingUri,
+                    embeddingDimension: conceptEmbedding.length,
+                    embeddingModel: embeddingModel
+                  });
+
+                  console.log(`✅ [CONCEPT_EMBEDDINGS] Stored concept: ${concept} (${conceptEmbedding.length}D)`);
+                  mcpDebugger.info('Concept embedding stored', { 
+                    concept, 
+                    conceptUri, 
+                    embeddingDimension: conceptEmbedding.length 
+                  });
+
+                } catch (conceptError) {
+                  console.error(`❌ [CONCEPT_EMBEDDINGS] Failed to process concept: ${concept}`, conceptError.message);
+                  skippedConcepts.push({
+                    concept: concept,
+                    error: conceptError.message
+                  });
+                  mcpDebugger.warn('Failed to process concept embedding', { 
+                    concept, 
+                    error: conceptError.message 
+                  });
+                }
+              }
+            }
+
+            // Generate attributes if requested
+            let attributeResults = null;
+            if (includeAttributes && conceptEmbeddings.length > 0) {
+              try {
+                console.log('🔮 [CONCEPT_EMBEDDINGS] Generating attributes for embedded concepts...');
+                const { augmentWithAttributes } = await import('../../src/ragno/augmentWithAttributes.js');
+                // Create mock graph data for attribute generation
+                const mockGraphData = {
+                  entities: conceptEmbeddings.map(ce => ({ 
+                    getURI: () => ce.conceptUri,
+                    getPreferredLabel: () => ce.concept
+                  })),
+                  dataset: null
+                };
+                attributeResults = await augmentWithAttributes(mockGraphData, this.memoryManager.llmHandler, mergedOptions);
+                console.log(`✅ [CONCEPT_EMBEDDINGS] Generated ${attributeResults.attributes?.length || 0} attributes`);
+              } catch (attrError) {
+                console.warn('⚠️ [CONCEPT_EMBEDDINGS] Attribute generation failed:', attrError.message);
+              }
+            }
+
+            result = {
+              conceptsEmbedded: conceptEmbeddings,
+              skippedConcepts: skippedConcepts,
+              totalConcepts: concepts.length,
+              totalProcessed: conceptsToProcess.length,
+              totalEmbeddings: conceptEmbeddings.length,
+              totalSkipped: skippedConcepts.length,
+              embeddingModel: embeddingModel,
+              targetGraph: targetGraph,
+              attributes: attributeResults?.attributes || null,
+              attributeCount: attributeResults?.attributes?.length || 0,
+              augmentationType: 'concept_embeddings',
+              message: `Processed ${conceptEmbeddings.length}/${conceptsToProcess.length} concepts with embeddings using new ragno format`
+            };
+
+            console.log(`✅ [CONCEPT_EMBEDDINGS] Complete: ${conceptEmbeddings.length} concepts embedded, ${skippedConcepts.length} skipped`);
+
+          } catch (embeddingError) {
+            result = {
+              error: embeddingError.message,
+              augmentationType: 'concept_embeddings_failed',
+              message: `Concept embeddings failed: ${embeddingError.message}`
+            };
+          }
           break;
           
         case 'auto':

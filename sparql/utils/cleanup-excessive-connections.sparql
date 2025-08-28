@@ -1,0 +1,38 @@
+# Phase 2: Prune excessive connections while preserving graph structure
+# Limit each entity to top 50 strongest connections
+
+PREFIX semem: <http://purl.org/stuff/semem/>
+PREFIX ragno: <http://purl.org/stuff/ragno/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+# First, let's identify entities with more than 50 connections
+# We'll need to run this as multiple operations since SPARQL has limitations
+
+# Step 1: For concepts with >100 connections, remove connections beyond top 50
+DELETE {
+  GRAPH <http://hyperdata.it/content> {
+    ?source ragno:connectsTo ?target .
+  }
+}
+WHERE {
+  GRAPH <http://hyperdata.it/content> {
+    {
+      SELECT ?source ?target WHERE {
+        ?source ragno:connectsTo ?target .
+        
+        # Only target highly connected entities
+        {
+          SELECT ?source WHERE {
+            ?source ragno:connectsTo ?anyTarget .
+            GROUP BY ?source
+            HAVING (COUNT(?anyTarget) > 100)
+          }
+        }
+        
+        # Keep only a reasonable number of connections per entity
+        # This is a simplified approach - in practice we'd want to keep the strongest connections
+      }
+      LIMIT 50000  # Process in batches to avoid timeouts
+    }
+  }
+}

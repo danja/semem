@@ -1,0 +1,12 @@
+# Count triples by predicate type to identify sources of bloat
+# Template: count-triples-by-type
+
+SELECT ?predicate (COUNT(*) as ?count) (COUNT(DISTINCT ?s) as ?distinctSubjects) WHERE {
+  GRAPH <${graph}> {
+    ?s ?predicate ?o .
+    ${typeFilter}
+  }
+}
+GROUP BY ?predicate
+ORDER BY DESC(?count)
+${limitClause}

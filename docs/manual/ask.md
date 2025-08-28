@@ -365,10 +365,189 @@ curl -u admin:admin -H "Content-Type: application/sparql-query" \
 ✅ **Multi-Pass Search**: ✅ COMPLETED - Progressive threshold relaxation for comprehensive results  
 ✅ **Dual-Store Search**: ✅ COMPLETED - MemoryManager searches both memory and SPARQL stores  
 
+## Concept-Following Enhancement (Planned)
+
+The Ask tool is being enhanced with intelligent concept-following capabilities that automatically discover and include related information based on concept relationships stored in the new ragno embedding format.
+
+### Architecture Overview
+
+The enhanced Ask tool will follow this multi-hop navigation flow:
+
+```
+User Query → Concept Extraction → Primary Search → Link Discovery → Context Expansion → LLM Generation
+```
+
+**Example Flow:**
+```
+Query: "What is machine learning?"
+  ↓
+Concepts: ["machine learning", "artificial intelligence"]  
+  ↓
+Linked Concepts: ["ADHD diagnosis", "neural networks", "deep learning"]
+  ↓
+Expanded Context: Original content + linked resource content
+  ↓
+Enhanced Response: "Machine learning is... Additionally, it's being used in areas like ADHD diagnosis..."
+```
+
+### Concept Link Discovery Strategies
+
+#### 1. Embedding Similarity Links
+- Uses vector embeddings stored in new ragno format: `ragno:hasEmbedding → ragno:vectorContent`
+- Finds concepts with high cosine similarity (>0.8 threshold)
+- Leverages existing FAISS indexing for fast retrieval
+
+#### 2. Co-occurrence Links
+- Discovers concepts mentioned together in documents
+- Uses SPARQL queries to find shared contextual relationships
+- Builds association networks from document co-mention patterns
+
+#### 3. Explicit Relationship Links
+- Follows `ragno:connectsTo` relationships
+- Traces entity-relationship-entity patterns
+- Uses structured knowledge graph connections
+
+### Enhanced Ask Parameters (Planned)
+
+```javascript
+await mcp.ask({
+  question: "What is ADHD?",
+  mode: "comprehensive",
+  useContext: true,
+  followConcepts: true,        // NEW: Enable concept-following
+  maxDepth: 2,                 // NEW: Maximum link depth
+  linkingStrategies: ["embedding", "cooccurrence"], // NEW: Link discovery methods
+  maxLinkedConcepts: 10,       // NEW: Limit linked concepts
+  relevanceThreshold: 0.7      // NEW: Minimum relevance for links
+})
+```
+
+### Implementation Components (Planned)
+
+#### ConceptLinker Service
+```javascript
+class ConceptLinker {
+  async findLinkedConcepts(concept, strategies = ['embedding', 'cooccurrence']) {
+    // Multi-strategy concept discovery using ragno embeddings
+    // Returns array of linked concepts with relevance scores
+  }
+  
+  async discoverRelationships(conceptA, conceptB) {
+    // Analyze relationship strength using vector similarity
+    // Returns relationship metadata and confidence scores  
+  }
+  
+  async buildConceptGraph(seedConcepts, maxDepth = 2) {
+    // Create navigable concept graph from seed concepts
+    // Prevents infinite loops and manages recursion depth
+  }
+}
+```
+
+#### ContextExpander Service  
+```javascript
+class ContextExpander {
+  async expandWithLinkedContent(concepts, maxDepth = 2) {
+    // Recursively gather content from linked concepts
+    // Integrates with existing HybridContextManager
+  }
+  
+  async rankRelevance(linkedConcepts, originalQuery) {
+    // Score and prioritize concepts using embedding similarity
+    // Integrates with AdaptiveSearchEngine thresholds
+  }
+}
+```
+
+### Enhanced Response Format (Planned)
+
+```json
+{
+  "success": true,
+  "verb": "ask", 
+  "question": "What is machine learning?",
+  "answer": "Machine learning is a subset of AI... It's also being used in ADHD diagnosis research...",
+  "searchMethod": "hybrid_context_with_concept_following",
+  "conceptsFollowed": [
+    {
+      "concept": "ADHD diagnosis",
+      "linkType": "embedding_similarity", 
+      "relevanceScore": 0.85,
+      "sourceDocuments": ["doc1.md", "research_paper.pdf"],
+      "linkDepth": 1
+    }
+  ],
+  "contextSources": [
+    {
+      "type": "primary",
+      "concepts": ["machine learning", "artificial intelligence"],
+      "documentCount": 5
+    },
+    {
+      "type": "linked",
+      "concepts": ["ADHD diagnosis", "neural networks"], 
+      "documentCount": 3,
+      "linkDepth": 1
+    }
+  ],
+  "linkingStrategy": {
+    "strategiesUsed": ["embedding", "cooccurrence"],
+    "totalLinksFollowed": 4,
+    "processingTime": "1.2s"
+  }
+}
+```
+
+### Integration with New Ragno Format
+
+The concept-following enhancement leverages the new ragno embedding storage:
+
+```sparql
+# Enhanced concept storage with embeddings
+?concept a ragno:Concept ;
+         skos:prefLabel "machine learning" ;
+         ragno:hasEmbedding ?embeddingUri ;
+         dcterms:created "2025-01-27T10:00:00Z"^^xsd:dateTime .
+
+?embeddingUri a ragno:IndexElement ;
+              ragno:embeddingModel "nomic-embed-text" ;
+              ragno:subType ragno:ConceptEmbedding ;
+              ragno:embeddingDimension 1536 ;
+              ragno:vectorContent "[0.1,0.2,0.3,...]" .
+```
+
+### Performance Optimizations (Planned)
+
+1. **Async Background Processing**: Non-blocking concept discovery
+2. **Caching Layer**: In-memory concept relationship cache
+3. **Circuit Breaker Pattern**: Graceful degradation when SPARQL is slow
+4. **Streaming Expansion**: Real-time concept discovery for better UX
+
+### Implementation Plan
+
+**Phase 1: SPARQL Performance Fixes** (High Priority)
+- Resolve initialization timeouts that currently block MCP requests
+- Implement connection pooling and async initialization
+
+**Phase 2: Concept Linking Infrastructure** (High Priority)  
+- Build ConceptLinker and ContextExpander services
+- Integrate with existing HybridContextManager architecture
+
+**Phase 3: Enhanced Ask Implementation** (Medium Priority)
+- Add concept-following parameters to Ask operation
+- Implement multi-hop concept navigation
+
+**Phase 4: Advanced Features** (Low Priority)
+- Concept relationship visualization
+- Adaptive link strategy selection
+- Interactive concept exploration
+
 ## Future Improvements
 
-1. **Enhancement Debugging**: Better visibility into enhancement decisions and context selection
-2. **Performance Optimization**: Cache enhancement results and optimize multi-pass search
-3. **Learning System**: Implement threshold learning based on user feedback and result quality
-4. **Advanced ZPT**: Temporal filtering and community-based search scoping
-5. **Result Ranking**: ML-based result ranking considering user preferences and context relevance
+1. **Concept-Following Enhancement**: Intelligent multi-hop concept navigation using ragno embeddings
+2. **Enhancement Debugging**: Better visibility into enhancement decisions and context selection
+3. **Performance Optimization**: Cache enhancement results and optimize multi-pass search
+4. **Learning System**: Implement threshold learning based on user feedback and result quality
+5. **Advanced ZPT**: Temporal filtering and community-based search scoping
+6. **Result Ranking**: ML-based result ranking considering user preferences and context relevance
+7. **Real-time Concept Updates**: Dynamic concept relationship learning from user interactions

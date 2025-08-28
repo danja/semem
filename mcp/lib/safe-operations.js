@@ -128,6 +128,7 @@ export class SafeOperations {
     if (!prompt || !response) {
       throw new Error('Both prompt and response are required');
     }
+    console.log('🔥 DEBUG: SafeOperations.storeInteraction called, delegating to memoryManager.storeInteraction');
     return await this.memoryManager.storeInteraction(prompt, response, metadata);
   }
 

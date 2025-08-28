@@ -2,10 +2,19 @@
 
 // Load environment variables FIRST before any other imports
 import dotenv from 'dotenv';
-dotenv.config();
-
 import path from 'path';
 import { fileURLToPath } from 'url';
+
+// Set up paths and load environment variables with explicit path
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const projectRoot = path.resolve(__dirname, '../..');
+dotenv.config({ path: path.join(projectRoot, '.env') });
+
+// Debug: Check if API keys are loaded
+console.log('🔑 MISTRAL_API_KEY loaded:', process.env.MISTRAL_API_KEY ? 'YES' : 'NO');
+console.log('🔑 CLAUDE_API_KEY loaded:', process.env.CLAUDE_API_KEY ? 'YES' : 'NO');
+
 import { setupDefaultLogging } from '../utils/LoggingConfig.js';
 import express from 'express';
 import cors from 'cors';
@@ -42,9 +51,7 @@ import DocumentAPI from '../api/features/DocumentAPI.js';
 
 // Note: Logging is now configured in the APIServer constructor
 
-// Get directory name for ES modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(path.dirname(path.dirname(__filename))); // Go up three levels to project root
+// Use the already declared __dirname from above
 
 /**
  * APIServer class that encapsulates the entire API server functionality
@@ -135,7 +142,7 @@ class APIServer {
      */
     async initializeComponents() {
         // Load configuration from config.json explicitly
-        const configPath = path.join(__dirname, 'config/config.json');
+        const configPath = path.join(projectRoot, 'config/config.json');
         this.config = new Config(configPath);
         await this.config.init();
         
@@ -258,10 +265,10 @@ class APIServer {
                 
                 if (provider.type === 'mistral' && provider.apiKey) {
                     this.logger.info('✅ Creating Mistral connector (highest priority)...');
-                    return new MistralConnector();
+                    return new MistralConnector(provider.apiKey);
                 } else if (provider.type === 'claude' && provider.apiKey) {
                     this.logger.info('✅ Creating Claude connector...');
-                    return new ClaudeConnector();
+                    return new ClaudeConnector(provider.apiKey);
                 } else if (provider.type === 'ollama') {
                     this.logger.info('✅ Creating Ollama connector (fallback)...');
                     return new OllamaConnector();

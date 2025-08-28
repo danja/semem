@@ -21,7 +21,11 @@
 The intuition is that while LLMs and associated techniques have massively advanced the field of AI and offer considerable utility, the typical approach is missing the elephant in the room: <strong>the Web</strong> - the biggest known knowledgebase in our universe. Semantic Web technologies offer data integration at a global scale, with tried & tested conceptual models for knowledge representation. <strong>There is a lot of low-hanging fruit.</strong>
 </details>
 
-## Status 2025-08-13
+## Status 2025-08-28
+
+Most of the system is functional but some systematic changes will be needed to deal with performance issues. Currently tidying up and consolidating - there was another explosion of cruft. 
+
+*previously...*
 
 MCP functionality focused down on 7 core verbs : *ask, tell, augment, zoom, pan, tilt, inspect*. See below and [this blog post](https://tensegrity.it/entries/2025-08-10_claude_simple_verbs.html) (in which Claude demonstrates an inability to count).
 

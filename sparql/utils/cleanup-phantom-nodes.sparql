@@ -1,0 +1,25 @@
+# Safe cleanup of phantom blank nodes with only decay factors
+# These nodes have no meaningful content and aren't referenced by legitimate entities
+
+PREFIX semem: <http://purl.org/stuff/semem/>
+PREFIX ragno: <http://purl.org/stuff/ragno/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+# Phase 1: Remove blank nodes that ONLY have decay factors (540,594 nodes)
+DELETE {
+  GRAPH <http://hyperdata.it/content> {
+    ?phantomNode semem:decayFactor ?decay .
+  }
+}
+WHERE {
+  GRAPH <http://hyperdata.it/content> {
+    ?phantomNode semem:decayFactor ?decay .
+    FILTER(isBlank(?phantomNode))
+    
+    # Ensure this node has NO other meaningful properties
+    FILTER NOT EXISTS { 
+      ?phantomNode ?otherProp ?otherValue . 
+      FILTER(?otherProp != semem:decayFactor)
+    }
+  }
+}

@@ -137,6 +137,12 @@ export default class MemoryManager {
     }
 
     async addInteraction(prompt, output, embedding, concepts, metadata = {}) {
+        console.log('🔥 DEBUG: MemoryManager.addInteraction called with:', {
+            promptLength: prompt?.length || 0,
+            outputLength: output?.length || 0,
+            embeddingLength: embedding?.length || 0,
+            conceptsCount: concepts?.length || 0
+        });
         try {
             const interaction = {
                 id: metadata.id || uuidv4(),
@@ -156,7 +162,9 @@ export default class MemoryManager {
             this.memStore.accessCounts.push(interaction.accessCount)
             this.memStore.conceptsList.push(interaction.concepts)
 
+            console.log('🔥 DEBUG: About to call store.saveMemoryToHistory');
             await this.store.saveMemoryToHistory(this.memStore)
+            console.log('🔥 DEBUG: saveMemoryToHistory completed successfully');
             this.logger.info('Interaction added successfully')
         } catch (error) {
             this.logger.error('Failed to add interaction:', error)
@@ -334,6 +342,11 @@ export default class MemoryManager {
     }
 
     async storeInteraction(prompt, response, metadata = {}) {
+        console.log('🔥 DEBUG: MemoryManager.storeInteraction called with:', {
+            promptLength: prompt?.length || 0,
+            responseLength: response?.length || 0,
+            metadataKeys: Object.keys(metadata || {})
+        });
         const combinedText = `${prompt} ${response}`;
         const MEMORY_CONTENT_LIMIT = 5000; // Conservative limit for in-memory processing
         
