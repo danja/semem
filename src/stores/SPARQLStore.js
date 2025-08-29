@@ -1389,8 +1389,9 @@ export default class SPARQLStore extends BaseStore {
             PREFIX ragno: <http://purl.org/stuff/ragno/>
             PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
             PREFIX dcterms: <http://purl.org/dc/terms/>
+            PREFIX semem: <http://purl.org/stuff/semem/>
 
-            SELECT ?entity ?prompt ?content ?embedding ?timestamp ?type ?format
+            SELECT ?entity ?prompt ?content ?embedding ?timestamp ?type ?format ?response
             FROM <${this.graphName}>
             WHERE {
                 {
@@ -1402,6 +1403,7 @@ export default class SPARQLStore extends BaseStore {
                         ragno:timestamp ?timestamp .
                     OPTIONAL { ?entity ragno:type ?type }
                     BIND("old" AS ?format)
+                    BIND(?content AS ?response)
                 } UNION {
                     # Search in ragno:Unit chunks (new format)
                     ?entity a ragno:Unit ;
@@ -1412,6 +1414,7 @@ export default class SPARQLStore extends BaseStore {
                     BIND("Chunk" AS ?type)
                     BIND("new" AS ?format)
                     BIND(CONCAT("Document chunk: ", SUBSTR(?content, 1, 50), "...") AS ?prompt)
+                    BIND(?content AS ?response)
                 } UNION {
                     # Search in ragno:Concept embeddings (new format)
                     ?entity a ragno:Concept ;
@@ -1422,6 +1425,17 @@ export default class SPARQLStore extends BaseStore {
                     BIND("Concept" AS ?type)
                     BIND("new" AS ?format)
                     BIND(?prompt AS ?content)
+                    BIND(?prompt AS ?response)
+                } UNION {
+                    # Search in semem:Interaction objects (memory interactions)
+                    ?entity a semem:Interaction ;
+                        semem:prompt ?prompt ;
+                        semem:output ?response ;
+                        semem:embedding ?embedding ;
+                        semem:timestamp ?timestamp .
+                    BIND("Interaction" AS ?type)
+                    BIND("memory" AS ?format)
+                    BIND(CONCAT(?prompt, " ", ?response) AS ?content)
                 }
             }
             LIMIT ${limit * 2}
@@ -1470,7 +1484,7 @@ export default class SPARQLStore extends BaseStore {
                         searchResults.push({
                             id: binding.entity.value,
                             prompt: binding.prompt.value,
-                            response: binding.content.value,
+                            response: binding.response?.value || binding.content.value,
                             similarity: similarity,
                             timestamp: binding.timestamp.value,
                             metadata: {

@@ -305,6 +305,7 @@ export default class MemoryStore {
                 .reduce((sum, c) => sum + (activatedConcepts[c] || 0), 0)
             return {
                 ...interaction,
+                similarity: similarity,
                 totalScore: similarity + activationScore
             }
         })

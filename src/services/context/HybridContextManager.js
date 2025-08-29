@@ -323,6 +323,7 @@ export class HybridContextManager {
             totalPasses: adaptiveResult.totalPasses
         });
         
+        
         logger.info('🎆 Adaptive local search completed', {
             success: adaptiveResult.success,
             results: adaptiveResult.contexts.length,
@@ -1126,7 +1127,14 @@ export class HybridContextManager {
         if (contextAnalysis.personalWeight > 0 && localContextResult.contexts) {
             const personalContexts = localContextResult.contexts
                 .slice(0, 3) // Limit to top 3 for brevity
-                .map(ctx => `${ctx.prompt}: ${ctx.response}`);
+                .map(ctx => {
+                    // Handle multiple content field formats:
+                    // - ctx.output: MemoryManager results
+                    // - ctx.content: ragno:Unit chunks 
+                    // - ctx.response: old format interactions
+                    const content = ctx.output || ctx.response || ctx.content || '';
+                    return `${ctx.prompt}: ${content}`;
+                });
             
             mergedContext.personalContent = personalContexts.join('\n\n');
             mergedContext.sources.push({

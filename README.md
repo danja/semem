@@ -23,7 +23,7 @@ The intuition is that while LLMs and associated techniques have massively advanc
 
 ## Status 2025-08-28
 
-Most of the system is functional but some systematic changes will be needed to deal with performance issues. Currently tidying up and consolidating - there was another explosion of cruft. 
+Most of the system is functional but some systematic changes will be needed to deal with performance issues. Currently tidying up and consolidating. There was another explosion of cruft, and also the setup is fragile, minor changes can cause breakage. I've updated the tests but a little more structural work is needed. 
 
 *previously...*
 

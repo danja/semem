@@ -11,24 +11,41 @@ export class ApiService {
     } else {
       this.baseUrl = baseUrl;
     }
+    
+    // Session management for MCP server
+    this.sessionId = null;
+    
     this.defaultHeaders = {
       'Content-Type': 'application/json'
     };
   }
 
   /**
-   * Make HTTP request with error handling
+   * Make HTTP request with error handling and session management
    */
   async makeRequest(endpoint, options = {}) {
     const url = `${this.baseUrl}${endpoint}`;
     
+    // Include session ID in headers if available
+    const headers = { ...this.defaultHeaders };
+    if (this.sessionId) {
+      headers['mcp-session-id'] = this.sessionId;
+    }
+    
     const config = {
-      headers: { ...this.defaultHeaders, ...options.headers },
+      headers: { ...headers, ...options.headers },
       ...options
     };
 
     try {
       const response = await fetch(url, config);
+      
+      // Extract and store session ID from response for future requests
+      const responseSessionId = response.headers.get('mcp-session-id');
+      if (responseSessionId && responseSessionId !== this.sessionId) {
+        console.log(`🔗 [WORKBENCH] Session ID updated: ${this.sessionId} → ${responseSessionId}`);
+        this.sessionId = responseSessionId;
+      }
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
