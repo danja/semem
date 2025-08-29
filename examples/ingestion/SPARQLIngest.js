@@ -504,6 +504,10 @@ For more information, see: docs/manual/sparql-ingestion.md
         } finally {
             // Always cleanup, even on errors
             await this.cleanup();
+            
+            // Force exit after cleanup
+            console.log('🔚 Exiting process...');
+            process.exit(0);
         }
     }
 }

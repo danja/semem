@@ -482,6 +482,7 @@ class SimpleVerbsService {
    * TELL - Add resources to the system with minimal processing
    */
   async tell({ content, type = 'interaction', metadata = {}, lazy = false }) {
+    // Debug removed for ES module compatibility
     await this.initialize();
     
     try {
@@ -557,6 +558,7 @@ class SimpleVerbsService {
             prompt = `User input: ${content.substring(0, 100)}...`;
             
             console.log('🔥 DEBUG: About to call safeOps.storeInteraction');
+            // Debug removed for ES module compatibility
             result = await this.safeOps.storeInteraction(
               prompt,
               response,
@@ -1136,7 +1138,7 @@ class SimpleVerbsService {
               const queryResult = await response.json();
               textElementsToProcess = queryResult.results?.bindings || [];
               
-            } else {
+            } else if (target.startsWith('http://') || target.startsWith('https://')) {
               // Process specific text element URI
               const query = `
                 PREFIX ragno: <http://purl.org/stuff/ragno/>
@@ -1166,6 +1168,25 @@ class SimpleVerbsService {
               
               const queryResult = await response.json();
               textElementsToProcess = queryResult.results?.bindings || [];
+            } else {
+              // Handle direct content text from UI - create a synthetic text element
+              console.log('📝 [CHUNK_DOCUMENTS] Processing direct content text from UI');
+              if (target.length >= minContentLength) {
+                // Generate a URI for this content using a simple hash
+                const crypto = await import('crypto');
+                const contentHash = crypto.createHash('md5').update(target).digest('hex').substring(0, 8);
+                const syntheticURI = `http://purl.org/stuff/instance/text-element-${contentHash}`;
+                
+                textElementsToProcess = [{
+                  textElement: { value: syntheticURI },
+                  content: { value: target },
+                  sourceUnit: null
+                }];
+                
+                console.log(`📝 [CHUNK_DOCUMENTS] Created synthetic TextElement: ${syntheticURI} (${target.length} chars)`);
+              } else {
+                console.log(`⚠️ [CHUNK_DOCUMENTS] Content too short: ${target.length} < ${minContentLength} chars`);
+              }
             }
 
             if (textElementsToProcess.length === 0) {
@@ -1264,7 +1285,21 @@ class SimpleVerbsService {
                   
                   // Execute the update
                   console.log('💾 [CHUNK_DOCUMENTS] Storing chunks to SPARQL...');
-                  await sparqlHelper.executeUpdate(updateQuery);
+                  console.log('📝 [CHUNK_DOCUMENTS] Update query preview (first 500 chars):', updateQuery.substring(0, 500));
+                  const updateResult = await sparqlHelper.executeUpdate(updateQuery);
+                  
+                  console.log('📊 [CHUNK_DOCUMENTS] SPARQL update result:', {
+                    success: updateResult.success,
+                    status: updateResult.status,
+                    statusText: updateResult.statusText,
+                    responseTime: updateResult.responseTime,
+                    error: updateResult.error,
+                    response: updateResult.response
+                  });
+                  
+                  if (!updateResult.success) {
+                    throw new Error(`SPARQL update failed: ${updateResult.error || updateResult.statusText || 'Unknown error'} (Status: ${updateResult.status})`);
+                  }
                   
                   chunkedResults.push({
                     textElementURI,
@@ -1274,11 +1309,13 @@ class SimpleVerbsService {
                     contentLength: content.length
                   });
                   
-                  console.log(`✅ [CHUNK_DOCUMENTS] Successfully stored ${chunkingResult.chunks.length} chunks with embeddings`);
+                  console.log(`✅ [CHUNK_DOCUMENTS] Successfully stored ${chunkingResult.chunks.length} chunks with embeddings to SPARQL`);
                   mcpDebugger.info('Document chunks stored successfully', { 
                     textElementURI, 
                     chunkCount: chunkingResult.chunks.length,
-                    chunkListURI
+                    chunkListURI,
+                    updateSuccess: updateResult.success,
+                    responseTime: updateResult.responseTime
                   });
                   
                 } catch (chunkError) {

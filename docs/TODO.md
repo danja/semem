@@ -3,3 +3,5 @@
 * move prompts to src/
 * move mcp to src/
 * move ingester to utils/
+
+hardcoded query in src/stores/SPARQLStore.js
