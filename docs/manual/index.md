@@ -77,6 +77,8 @@ The following are workflows applied to sample questions from the [BeerQA](https:
 
 **[workbench-howto.md](workbench-howto.md)** - User guide for the web-based workbench interface.
 
+**[hints.md](hints.md)** - Practical tips and troubleshooting guide for getting better search results, understanding zoom levels and similarity thresholds, and common usage patterns for the workbench interface.
+
 **[memory.md](memory.md)** - Complete guide to Semem's persistent memory system, covering conversation memory, document storage, ZPT navigation controls, workbench usage, and best practices for context-aware AI interactions that improve over time.
 
 ### Core Operation Workflows
