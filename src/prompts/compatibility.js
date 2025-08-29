@@ -11,6 +11,7 @@ import logger from 'loglevel';
 
 // Global prompt manager instance
 let globalPromptManager = null;
+let templatesLoadedPromise = null;
 
 /**
  * Get or create global prompt manager
@@ -22,6 +23,13 @@ function getPromptManager(options = {}) {
             cacheTemplates: true,
             ...options
         });
+        
+        // Load external templates asynchronously
+        templatesLoadedPromise = globalPromptManager.loadExternalTemplates()
+            .catch(error => {
+                logger.error('Failed to load external templates in compatibility layer:', error.message);
+                // Continue operation with basic templates only
+            });
     }
     return globalPromptManager;
 }

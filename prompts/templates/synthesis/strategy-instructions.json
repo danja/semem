@@ -1,7 +1,7 @@
 {
   "name": "synthesis-strategy-instructions",
   "description": "Strategy-specific instructions for hybrid context synthesis",
-  "format": "template",
+  "format": "chat",
   "category": "synthesis",
   "version": "1.0",
   "supportedModels": ["*"],

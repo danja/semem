@@ -9,7 +9,7 @@ const __dirname = path.dirname(__filename);
 export class SPARQLQueryService {
     constructor(options = {}) {
         // Calculate paths relative to project root
-        const projectRoot = path.join(__dirname, '../../..');
+        const projectRoot = path.join(__dirname, '../..');
         this.queryPath = options.queryPath || path.join(projectRoot, 'sparql/queries');
         this.templatePath = options.templatePath || path.join(projectRoot, 'sparql/templates');
         this.configPath = options.configPath || path.join(projectRoot, 'sparql/config');
