@@ -1,6 +1,6 @@
 # Semem, Know Thyself
 
-In use, [Semem]() is mostly intended to manage memories accumulated on the fly, relevant to the task at hand. A combination of uploaded docs, interaction history and inferences made. But background knowledge is desirable. Ok, there will be plenty provided by the LLM in use by Semem and there are external connectors to query Wikipedia and Wikidata. But that leaves the question of more local, maybe project-specific info. How does that get into the system? What if we want Semem to be aware of its own documentation?
+In use, [Semem](https://github.com/danja/semem/) is mostly intended to manage memories accumulated on the fly, relevant to the task at hand. A combination of uploaded docs, interaction history and inferences made. But background knowledge is desirable. Ok, there will be plenty provided by the LLM in use by Semem and there are external connectors to query Wikipedia and Wikidata. But that leaves the question of more local, maybe project-specific info. How does that get into the system? What if we want Semem to be aware of its own documentation?
 
 ## SPARQL Store as Integration Point
 
@@ -32,5 +32,5 @@ cd ~/hyperdata/transmissions # my local path
 
 The Transmissions part worked ok (confirmed by querying the store via Fuseki's UI). Right now the ingestion part is running. It is taking *a very long time*.
 
-I've far from finished confirming that all the parts of the system are working correctly. A meta-issue is that the **operations are really slow**. This is understandable - there's a lot going on, what with SPARQL queries, embeddings being juggled as well as remote LLM chat completion calls (I'm using Mistral free tier). My next step has to be to set up some metrics, locate the bottlenecks... Ha, is obvious without looking - remote LLM calls. I need to figure out which of these have to happen in real time, which I can have running in the background (queue/scheduler needed).
+I've far from finished confirming that all the parts of the system are working correctly. A meta-issue is that the **operations are really slow**. This is understandable - there's a lot going on, what with SPARQL queries, embeddings being juggled as well as remote LLM chat completion calls (I'm using Mistral free tier). My next step has to be to set up some metrics, locate the bottlenecks... Ha, is obvious without looking - remote LLM calls. I need to figure out which of these have to happen in real time, which I can have running in the background (queue/scheduler needed).  
 

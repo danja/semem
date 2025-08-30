@@ -1,2 +1,0 @@
-I would like you to create `src/stores/SPARQLStore.js`. This will use a remote SPARQL for storage, following the pattern of `src/stores/JSONStore.js`. The SPARQL endpoint URLs for update and query together with user credentials can be found in Config.js
-The core vocabularies to use in the queries should be mcp, datacube (qb) that you can find in project knowledge. skos is in there too, just in case you might need it. Feel free to use other vocabularies you know of it they seem justified. Please give me any code as complete individual full source file artifacts.
