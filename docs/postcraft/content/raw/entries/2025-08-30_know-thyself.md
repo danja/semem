@@ -8,13 +8,10 @@ Semem has facilities for querying SPARQL stores - it's a big part of the core fu
 
 Another project in the [Tensegrity Stack](https://github.com/danja/tensegrity) is [Transmissions](https://github.com/danja/transmissions), my pipeliney thing. And guess what, I've already got a pipeline for walking a directory tree, looking for markdown files and POSTing them into a SPARQL store.
 
-Claude Code has helped me put together the code to pull data from a remote SPARQL store into that of Semem. In this particular instance Semem is using a local Fuseki store, the same one I'm using with Transmissions locally. Named graphs are used to keep things independent. This does mean there'll be redundancy, but I think it'll be worth it for the sake of loose coupling.
+Claude Code has helped me put together the code to pull data from a remote SPARQL store into that of Semem. In this particular instance Semem is using a local Fuseki store, the same one I'm using with Transmissions locally. Named graphs are used to keep things independent. This does mean there'll be redundancy, but I think it'll be worth it for the sake of loose coupling. 
 
 ```sh
-node examples/ingestion/SPARQLIngest.js \
-  --endpoint "http://localhost:3030/semem/query" \
-  --template blog-articles \
-  --graph "http://tensegrity.it/semem"
+node examples/ingestion/SPARQLIngest.js --endpoint "http://localhost:3030/semem/query" --template blog-articles --graph "http://tensegrity.it/semem"
 ```
 
 ## Markdown to SPARQL Store 

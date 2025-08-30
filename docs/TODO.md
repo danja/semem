@@ -5,3 +5,5 @@
 * move ingester to utils/
 
 hardcoded query in src/stores/SPARQLStore.js
+
+rotate logs
