@@ -49,6 +49,7 @@ I have successfully implemented a comprehensive SPARQL-to-MCP document ingestion
 # Preview blog articles (from your example)
 node examples/ingestion/SPARQLIngest.js \
   --endpoint "https://fuseki.hyperdata.it/danny.ayers.name/query" \
+  --graph "http://danny.ayers.name/" \
   --template blog-articles --dry-run --limit 5
 
 # Full ingestion with authentication

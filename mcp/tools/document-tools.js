@@ -429,6 +429,10 @@ export const createSparqlIngestTool = (simpleVerbsService) => ({
       fieldMappings: {
         type: 'object',
         description: 'Custom field mappings for extracting document data'
+      },
+      graph: {
+        type: 'string',
+        description: 'Graph URI for SPARQL updates (default: http://hyperdata.it/content)'
       }
     },
     required: ['endpoint', 'template']
@@ -442,7 +446,8 @@ export const createSparqlIngestTool = (simpleVerbsService) => ({
       dryRun = false,
       auth,
       variables = {},
-      fieldMappings
+      fieldMappings,
+      graph = 'http://hyperdata.it/content'
     } = params;
 
     try {
@@ -455,7 +460,7 @@ export const createSparqlIngestTool = (simpleVerbsService) => ({
 
       // Handle dry run
       if (dryRun) {
-        const result = await ingester.dryRun(template, { variables, limit });
+        const result = await ingester.dryRun(template, { variables, limit, graph });
         return {
           success: true,
           type: 'dry_run',
@@ -476,6 +481,7 @@ export const createSparqlIngestTool = (simpleVerbsService) => ({
         variables,
         limit,
         lazy,
+        graph,
         tellFunction,
         progressCallback: (progress) => {
           // Could emit progress events here if needed
