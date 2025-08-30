@@ -1,1 +1,1 @@
-cloc --vcs=git --include-ext=ttl --include-ext=sparql --include-ext=md .
+cloc --vcs=git --read-lang-def=cloc-lang-defs.txt .

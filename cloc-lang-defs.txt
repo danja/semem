@@ -1,0 +1,9 @@
+Turtle
+    filter remove_matches ^\s*#
+    extension ttl
+    3rd_gen_scale 1.00
+SPARQL
+    filter remove_matches ^\s*#
+    extension sparql
+    extension rq
+    3rd_gen_scale 1.00
