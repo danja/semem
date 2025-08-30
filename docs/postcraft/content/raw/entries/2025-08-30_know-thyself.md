@@ -17,7 +17,7 @@ node examples/ingestion/SPARQLIngest.js \
   --graph "http://tensegrity.it/semem"
 ```
 
-## Markdown to SPARQL Store
+## Markdown to SPARQL Store 
 
 Note to self, these are the bits I've created (in the Semem codebase) for the Transmissions side of the operation.
 
