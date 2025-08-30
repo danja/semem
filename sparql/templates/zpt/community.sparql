@@ -1,0 +1,19 @@
+# ZPT community-level query for Community aggregates
+SELECT ?community ?label ?memberCount ?avgSimilarity ?cohesion WHERE {
+    GRAPH <{{graphName}}> {
+        ?community a ragno:Community ;
+                   rdfs:label ?label .
+        {
+            SELECT ?community (COUNT(?member) AS ?memberCount) 
+                   (AVG(?similarity) AS ?avgSimilarity)
+                   (AVG(?cohesion) AS ?cohesion) WHERE {
+                ?community ragno:hasMember ?member .
+                OPTIONAL { ?member semem:similarity ?similarity }
+                OPTIONAL { ?member ragno:cohesion ?cohesion }
+            }
+            GROUP BY ?community
+        }
+        {{filters}}
+    }
+}
+ORDER BY DESC(?memberCount) DESC(?cohesion) LIMIT {{limit}}

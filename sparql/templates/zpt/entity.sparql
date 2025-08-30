@@ -1,0 +1,13 @@
+# ZPT entity-level query for Entity objects
+SELECT DISTINCT ?uri ?label ?type ?prefLabel ?frequency ?centrality WHERE {
+    GRAPH <{{graphName}}> {
+        ?uri a ragno:Entity ;
+             rdfs:label ?label ;
+             rdf:type ?type .
+        OPTIONAL { ?uri skos:prefLabel ?prefLabel }
+        OPTIONAL { ?uri ragno:frequency ?frequency }
+        OPTIONAL { ?uri ragno:centrality ?centrality }
+        {{filters}}
+    }
+}
+ORDER BY DESC(?frequency) DESC(?centrality) LIMIT {{limit}}

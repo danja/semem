@@ -1,0 +1,12 @@
+# ZPT micro-level query for SemanticUnit entities
+SELECT DISTINCT ?uri ?content ?metadata ?timestamp ?similarity WHERE {
+    GRAPH <{{graphName}}> {
+        ?uri a ragno:SemanticUnit ;
+             ragno:hasContent ?content .
+        OPTIONAL { ?uri semem:metadata ?metadata }
+        OPTIONAL { ?uri dcterms:created ?timestamp }
+        OPTIONAL { ?uri semem:similarity ?similarity }
+        {{filters}}
+    }
+}
+ORDER BY DESC(?similarity) DESC(?timestamp) LIMIT {{limit}}

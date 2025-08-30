@@ -1,0 +1,13 @@
+# ZPT relationship-level query for Relationship objects
+SELECT DISTINCT ?uri ?label ?source ?target ?type ?weight WHERE {
+    GRAPH <{{graphName}}> {
+        ?uri a ragno:Relationship ;
+             rdfs:label ?label ;
+             ragno:source ?source ;
+             ragno:target ?target .
+        OPTIONAL { ?uri rdf:type ?type }
+        OPTIONAL { ?uri ragno:weight ?weight }
+        {{filters}}
+    }
+}
+ORDER BY DESC(?weight) LIMIT {{limit}}

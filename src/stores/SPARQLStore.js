@@ -2,94 +2,33 @@ import BaseStore from './BaseStore.js'
 import logger from 'loglevel'
 import { SPARQLQueryService } from '../services/sparql/SPARQLQueryService.js'
 import { v4 as uuidv4 } from 'uuid'
+import { readFileSync } from 'fs'
+import { join, dirname } from 'path'
+import { fileURLToPath } from 'url'
 
-// ZPT Query Templates for different zoom levels and data types
-const ZPT_QUERY_TEMPLATES = {
-    'micro': `
-        SELECT DISTINCT ?uri ?content ?metadata ?timestamp ?similarity WHERE {
-            GRAPH <{{graphName}}> {
-                ?uri a ragno:SemanticUnit ;
-                     ragno:hasContent ?content .
-                OPTIONAL { ?uri semem:metadata ?metadata }
-                OPTIONAL { ?uri dcterms:created ?timestamp }
-                OPTIONAL { ?uri semem:similarity ?similarity }
-                {{filters}}
-            }
+const __dirname = dirname(fileURLToPath(import.meta.url))
+
+// Load ZPT Query Templates from files
+function loadZPTQueryTemplates() {
+    const templatesDir = join(__dirname, '../../sparql/templates/zpt')
+    const templateNames = ['micro', 'entity', 'relationship', 'community', 'corpus']
+    const templates = {}
+    
+    for (const name of templateNames) {
+        try {
+            const templatePath = join(templatesDir, `${name}.sparql`)
+            templates[name] = readFileSync(templatePath, 'utf8')
+        } catch (error) {
+            logger.error(`Failed to load ZPT template ${name}:`, error)
+            throw new Error(`Could not load ZPT template: ${name}`)
         }
-        ORDER BY DESC(?similarity) DESC(?timestamp) LIMIT {{limit}}
-    `,
-    'entity': `
-        SELECT DISTINCT ?uri ?label ?type ?prefLabel ?frequency ?centrality WHERE {
-            GRAPH <{{graphName}}> {
-                ?uri a ragno:Entity ;
-                     rdfs:label ?label ;
-                     rdf:type ?type .
-                OPTIONAL { ?uri skos:prefLabel ?prefLabel }
-                OPTIONAL { ?uri ragno:frequency ?frequency }
-                OPTIONAL { ?uri ragno:centrality ?centrality }
-                {{filters}}
-            }
-        }
-        ORDER BY DESC(?frequency) DESC(?centrality) LIMIT {{limit}}
-    `,
-    'relationship': `
-        SELECT DISTINCT ?uri ?label ?source ?target ?type ?weight WHERE {
-            GRAPH <{{graphName}}> {
-                ?uri a ragno:Relationship ;
-                     rdfs:label ?label ;
-                     ragno:source ?source ;
-                     ragno:target ?target .
-                OPTIONAL { ?uri rdf:type ?type }
-                OPTIONAL { ?uri ragno:weight ?weight }
-                {{filters}}
-            }
-        }
-        ORDER BY DESC(?weight) LIMIT {{limit}}
-    `,
-    'community': `
-        SELECT ?community ?label ?memberCount ?avgSimilarity ?cohesion WHERE {
-            GRAPH <{{graphName}}> {
-                ?community a ragno:Community ;
-                           rdfs:label ?label .
-                {
-                    SELECT ?community (COUNT(?member) AS ?memberCount) 
-                           (AVG(?similarity) AS ?avgSimilarity)
-                           (AVG(?cohesion) AS ?cohesion) WHERE {
-                        ?community ragno:hasMember ?member .
-                        OPTIONAL { ?member semem:similarity ?similarity }
-                        OPTIONAL { ?member ragno:cohesion ?cohesion }
-                    }
-                    GROUP BY ?community
-                }
-                {{filters}}
-            }
-        }
-        ORDER BY DESC(?memberCount) DESC(?cohesion) LIMIT {{limit}}
-    `,
-    'corpus': `
-        SELECT ?corpus ?label ?entityCount ?unitCount ?relationshipCount ?avgConnectivity WHERE {
-            GRAPH <{{graphName}}> {
-                ?corpus a ragno:Corpus ;
-                        rdfs:label ?label .
-                {
-                    SELECT ?corpus 
-                           (COUNT(DISTINCT ?entity) AS ?entityCount)
-                           (COUNT(DISTINCT ?unit) AS ?unitCount) 
-                           (COUNT(DISTINCT ?rel) AS ?relationshipCount)
-                           (AVG(?connectivity) AS ?avgConnectivity) WHERE {
-                        OPTIONAL { ?entity a ragno:Entity }
-                        OPTIONAL { ?unit a ragno:SemanticUnit }
-                        OPTIONAL { ?rel a ragno:Relationship }
-                        OPTIONAL { ?entity ragno:connectivity ?connectivity }
-                    }
-                    GROUP BY ?corpus
-                }
-                {{filters}}
-            }
-        }
-        ORDER BY DESC(?entityCount) LIMIT {{limit}}
-    `
+    }
+    
+    return templates
 }
+
+// ZPT Query Templates for different zoom levels and data types (loaded from files)
+const ZPT_QUERY_TEMPLATES = loadZPTQueryTemplates()
 
 export default class SPARQLStore extends BaseStore {
     constructor(endpoint, options = {}, config = null) {

@@ -1,0 +1,22 @@
+# ZPT corpus-level query for Corpus statistics
+SELECT ?corpus ?label ?entityCount ?unitCount ?relationshipCount ?avgConnectivity WHERE {
+    GRAPH <{{graphName}}> {
+        ?corpus a ragno:Corpus ;
+                rdfs:label ?label .
+        {
+            SELECT ?corpus 
+                   (COUNT(DISTINCT ?entity) AS ?entityCount)
+                   (COUNT(DISTINCT ?unit) AS ?unitCount) 
+                   (COUNT(DISTINCT ?rel) AS ?relationshipCount)
+                   (AVG(?connectivity) AS ?avgConnectivity) WHERE {
+                OPTIONAL { ?entity a ragno:Entity }
+                OPTIONAL { ?unit a ragno:SemanticUnit }
+                OPTIONAL { ?rel a ragno:Relationship }
+                OPTIONAL { ?entity ragno:connectivity ?connectivity }
+            }
+            GROUP BY ?corpus
+        }
+        {{filters}}
+    }
+}
+ORDER BY DESC(?entityCount) LIMIT {{limit}}
