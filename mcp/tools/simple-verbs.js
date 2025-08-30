@@ -791,7 +791,13 @@ class SimpleVerbsService {
         localContextResults: {
           exists: !!hybridResult.localContextResults,
           isArray: Array.isArray(hybridResult.localContextResults),
-          length: hybridResult.localContextResults?.length || 0
+          length: hybridResult.localContextResults?.length || 0,
+          firstItem: hybridResult.localContextResults?.[0] ? {
+            prompt: hybridResult.localContextResults[0].prompt?.substring(0, 60) + '...',
+            response: hybridResult.localContextResults[0].response?.substring(0, 60) + '...',
+            similarity: hybridResult.localContextResults[0].similarity,
+            hasADHD: (hybridResult.localContextResults[0].response || hybridResult.localContextResults[0].prompt || '').toLowerCase().includes('adhd')
+          } : null
         },
         enhancementResults: {
           exists: !!hybridResult.enhancementResults,

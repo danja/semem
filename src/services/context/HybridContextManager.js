@@ -1125,15 +1125,42 @@ export class HybridContextManager {
 
         // Extract personal context content
         if (contextAnalysis.personalWeight > 0 && localContextResult.contexts) {
+            console.log('🔥 CONSOLE: HybridContextManager _mergeContexts processing contexts', {
+                contextCount: localContextResult.contexts.length,
+                personalWeight: contextAnalysis.personalWeight,
+                firstContext: localContextResult.contexts[0] ? {
+                    hasPrompt: !!localContextResult.contexts[0].prompt,
+                    hasOutput: !!localContextResult.contexts[0].output,
+                    hasResponse: !!localContextResult.contexts[0].response,
+                    hasContent: !!localContextResult.contexts[0].content,
+                    keys: Object.keys(localContextResult.contexts[0]),
+                    promptPreview: localContextResult.contexts[0].prompt?.substring(0, 50),
+                    outputPreview: localContextResult.contexts[0].output?.substring(0, 50),
+                    responsePreview: localContextResult.contexts[0].response?.substring(0, 50),
+                    contentPreview: localContextResult.contexts[0].content?.substring(0, 50)
+                } : 'no first context'
+            });
+            
             const personalContexts = localContextResult.contexts
                 .slice(0, 3) // Limit to top 3 for brevity
-                .map(ctx => {
+                .map((ctx, index) => {
                     // Handle multiple content field formats:
                     // - ctx.output: MemoryManager results
                     // - ctx.content: ragno:Unit chunks 
                     // - ctx.response: old format interactions
                     const content = ctx.output || ctx.response || ctx.content || '';
-                    return `${ctx.prompt}: ${content}`;
+                    const contextString = `${ctx.prompt}: ${content}`;
+                    
+                    console.log(`🔥 CONSOLE: HybridContextManager context ${index} extraction`, {
+                        hasPrompt: !!ctx.prompt,
+                        hasOutput: !!ctx.output,
+                        hasResponse: !!ctx.response,
+                        hasContent: !!ctx.content,
+                        extractedContent: content.substring(0, 100),
+                        finalString: contextString.substring(0, 100)
+                    });
+                    
+                    return contextString;
                 });
             
             mergedContext.personalContent = personalContexts.join('\n\n');
@@ -1220,8 +1247,44 @@ export class HybridContextManager {
         // Generate response using LLM with enhanced prompting
         let answer;
         if (this.safeOperations?.generateResponse) {
-            answer = await this.safeOperations.generateResponse(query, synthesisPrompt);
+            try {
+                console.log('🔥 CONSOLE: HybridContextManager about to call LLM generateResponse', {
+                    promptLength: synthesisPrompt.length,
+                    promptPreview: synthesisPrompt.substring(0, 200),
+                    hasPersonalContent: !!synthesisComponents.personalContent,
+                    personalContentLength: synthesisComponents.personalContent?.length || 0,
+                    personalContentPreview: synthesisComponents.personalContent?.substring(0, 100)
+                });
+                
+                answer = await this.safeOperations.generateResponse(query, synthesisPrompt);
+                
+                console.log('🔥 CONSOLE: HybridContextManager LLM response received', {
+                    answerLength: answer?.length || 0,
+                    answerPreview: answer?.substring(0, 200)
+                });
+                
+                logger.debug('✅ LLM response generated successfully');
+            } catch (error) {
+                console.log('🔥 CONSOLE: HybridContextManager LLM generation failed', {
+                    error: error.message,
+                    errorType: error.constructor.name,
+                    fallbackToTemplate: true
+                });
+                
+                logger.warn('⚠️ LLM response generation failed, using template fallback', { 
+                    error: error.message,
+                    errorType: error.constructor.name 
+                });
+                // Enhanced fallback with template-based synthesis
+                answer = this._createTemplateBasedResponse(query, synthesisComponents, contextAnalysis);
+                
+                console.log('🔥 CONSOLE: HybridContextManager template fallback used', {
+                    templateAnswerLength: answer?.length || 0,
+                    templateAnswerPreview: answer?.substring(0, 200)
+                });
+            }
         } else {
+            logger.debug('🔄 No LLM available, using template-based response');
             // Enhanced fallback with template-based synthesis
             answer = this._createTemplateBasedResponse(query, synthesisComponents, contextAnalysis);
         }
@@ -1296,6 +1359,12 @@ export class HybridContextManager {
         // Extract personal context components
         if (mergedContext.personalContent && contextAnalysis.personalWeight > 0) {
             components.personalContent = mergedContext.personalContent;
+            
+            console.log('🔥 CONSOLE: HybridContextManager - personalContent extracted', {
+                length: mergedContext.personalContent.length,
+                preview: mergedContext.personalContent.substring(0, 100),
+                hasADHD: mergedContext.personalContent.toLowerCase().includes('adhd')
+            });
             
             // Extract personal sources from merged context
             if (mergedContext.sources) {

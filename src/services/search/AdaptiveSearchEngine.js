@@ -77,7 +77,14 @@ export class AdaptiveSearchEngine {
         searchLogger.info('🔍 Starting adaptive search', {
             query: query.substring(0, 50) + '...',
             zoom: zptState.zoom,
+            userThreshold: options.threshold,
             hasFilters: !!(zptState.pan?.domains || zptState.pan?.keywords)
+        });
+        
+        console.log('🔍 [ADAPTIVE_DEBUG] Search starting with options:', {
+            threshold: options.threshold,
+            zoom: zptState.zoom,
+            query: query.substring(0, 30) + '...'
         });
         
         try {
@@ -89,8 +96,12 @@ export class AdaptiveSearchEngine {
             // Override with user-provided threshold if specified
             if (options.threshold !== undefined) {
                 console.log('🎯 [ADAPTIVE_SEARCH] Using user-provided threshold:', options.threshold);
+                console.log('🎯 [ADAPTIVE_SEARCH] Original expansion steps:', thresholdConfig.expansionSteps);
                 thresholdConfig.expansionSteps = [options.threshold];
                 thresholdConfig.baseThreshold = options.threshold;
+                console.log('🎯 [ADAPTIVE_SEARCH] New expansion steps:', thresholdConfig.expansionSteps);
+            } else {
+                console.log('🎯 [ADAPTIVE_SEARCH] No user threshold provided, using calculated:', thresholdConfig.expansionSteps);
             }
             
             // Step 2: Execute multi-pass search
@@ -243,11 +254,25 @@ export class AdaptiveSearchEngine {
         const passStartTime = Date.now();
         
         // Execute base similarity search
+        console.log('🔍 [SEARCH_PASS] Executing searchSimilar with:', {
+            query: query.substring(0, 30) + '...',
+            limit: limit * 2,
+            threshold: threshold
+        });
+        
         let results = await this.safeOperations.searchSimilar(
             query,
             limit * 2, // Get more results for pan filtering
             threshold
         );
+        
+        console.log('🔍 [SEARCH_PASS] searchSimilar returned:', {
+            resultCount: results?.length || 0,
+            firstResult: results[0] ? {
+                similarity: results[0].similarity,
+                prompt: results[0].prompt?.substring(0, 50)
+            } : null
+        });
         
         let panFiltersApplied = [];
         

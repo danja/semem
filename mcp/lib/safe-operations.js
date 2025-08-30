@@ -230,17 +230,99 @@ export class SafeOperations {
       // NOTE: This creates DUPLICATE search - MemoryManager already searches SPARQL store!
       // TODO: Remove this duplication to prevent result interference
       if (this.memoryManager.store && typeof this.memoryManager.store.search === 'function') {
-        console.log('🔥 CONSOLE: SafeOperations.searchSimilar - WARNING: Performing duplicate SPARQL search (MemoryManager already did this)');
+        console.log('🔥 CONSOLE: SafeOperations.searchSimilar - Performing direct SPARQL store search');
+        console.log('🔥 DEBUG: Store search parameters:', { threshold, limit, queryLength: queryText.length });
+        console.log('🔥 DEBUG: Store type:', this.memoryManager.store.constructor.name);
+        
         // Generate embedding for the query
         const queryEmbedding = await this.generateEmbedding(queryText);
+        console.log('🔥 DEBUG: Generated query embedding:', { dimensions: queryEmbedding?.length });
+        
         const chunks = await this.memoryManager.store.search(queryEmbedding, limit, threshold);
-        console.log('🔥 CONSOLE: SafeOperations.searchSimilar duplicate SPARQL search found', { chunksCount: chunks?.length || 0 });
+        console.log('🔥 CONSOLE: SafeOperations.searchSimilar direct SPARQL search found', { 
+          chunksCount: chunks?.length || 0,
+          firstChunkSimilarity: chunks?.[0]?.similarity,
+          firstChunkPrompt: chunks?.[0]?.prompt?.substring(0, 50)
+        });
         allResults.push(...chunks);
+      } else {
+        console.log('🔥 DEBUG: Store search method not available - store:', !!this.memoryManager.store, 'hasSearch:', typeof this.memoryManager.store?.search);
       }
       
-      // Remove duplicates and sort by similarity
+      // Normalize similarity scores before combining (fix scale mismatch)
+      // First, separate results by source type to normalize separately
+      const memoryManagerResults = allResults.filter(r => r.similarity > 1);
+      const sparqlResults = allResults.filter(r => r.similarity <= 1);
+      
+      // Find max for memory manager results for proper scaling
+      const maxMemoryScore = memoryManagerResults.length > 0 ? 
+        Math.max(...memoryManagerResults.map(r => r.similarity)) : 0;
+      
+      console.log('🔥 CONSOLE: Normalizing scores separately', {
+        memoryManagerCount: memoryManagerResults.length,
+        sparqlCount: sparqlResults.length,
+        maxMemoryScore,
+        memoryRange: memoryManagerResults.length > 0 ? [
+          Math.min(...memoryManagerResults.map(r => r.similarity)),
+          maxMemoryScore
+        ] : 'none',
+        sparqlRange: sparqlResults.length > 0 ? [
+          Math.min(...sparqlResults.map(r => r.similarity)),
+          Math.max(...sparqlResults.map(r => r.similarity))
+        ] : 'none'
+      });
+      
+      const normalizedResults = allResults.map(result => {
+        let normalizedSimilarity = result.similarity || 0;
+        
+        if (normalizedSimilarity > 1) {
+          // Memory Manager results: normalize by max score to 0-1 range
+          normalizedSimilarity = maxMemoryScore > 0 ? normalizedSimilarity / maxMemoryScore : 0;
+        }
+        // SPARQL results are already in 0-1 range, keep as-is
+        
+        return {
+          ...result,
+          similarity: normalizedSimilarity,
+          originalSimilarity: result.similarity
+        };
+      });
+      
+      console.log('🔥 CONSOLE: SafeOperations similarity normalization sample', {
+        originalFirst: allResults[0] ? allResults[0].similarity : 'none',
+        normalizedFirst: normalizedResults[0] ? normalizedResults[0].similarity : 'none',
+        originalADHD: allResults.find(r => r.prompt?.includes('ADHD'))?.similarity || 'not found',
+        normalizedADHD: normalizedResults.find(r => r.prompt?.includes('ADHD'))?.similarity || 'not found'
+      });
+      
+      // Filter out ZPT State Changes and other system metadata before sorting
+      const filteredResults = normalizedResults.filter(result => {
+        // Filter out ZPT State Changes - these are system metadata, not user content
+        if (result.prompt && result.prompt.includes('ZPT State Change:')) {
+          console.log('🔥 CONSOLE: Filtering out ZPT State Change', { 
+            prompt: result.prompt.substring(0, 50),
+            similarity: result.similarity 
+          });
+          return false;
+        }
+        
+        // Filter out other system-generated content if needed
+        if (result.prompt && result.prompt.includes('System:')) {
+          return false;
+        }
+        
+        return true;
+      });
+      
+      console.log('🔥 CONSOLE: Content filtering results', {
+        originalCount: normalizedResults.length,
+        filteredCount: filteredResults.length,
+        removedItems: normalizedResults.length - filteredResults.length
+      });
+      
+      // Remove duplicates and sort by normalized similarity
       const uniqueResults = Array.from(
-        new Map(allResults.map(r => [`${r.prompt}_${r.response}`, r])).values()
+        new Map(filteredResults.map(r => [`${r.prompt}_${r.response}`, r])).values()
       ).sort((a, b) => (b.similarity || 0) - (a.similarity || 0));
       
       // Limit to requested number
@@ -251,7 +333,14 @@ export class SafeOperations {
         uniqueResultsCount: uniqueResults.length, 
         finalResultsCount: results.length,
         hasResults: results.length > 0,
-        firstResult: results[0] ? { similarity: results[0].similarity, prompt: results[0].prompt?.substring(0, 50) } : 'no results'
+        firstResult: results[0] ? { 
+          similarity: results[0].similarity, 
+          prompt: results[0].prompt?.substring(0, 50),
+          hasOutput: !!results[0].output,
+          hasResponse: !!results[0].response,
+          hasContent: !!results[0].content,
+          keys: Object.keys(results[0])
+        } : 'no results'
       });
       
       const duration = Date.now() - startTime;
