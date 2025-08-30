@@ -45,6 +45,8 @@ The following are workflows applied to sample questions from the [BeerQA](https:
 
 **[prompt-management.md](prompt-management.md)** - System for managing chat completion prompts.
 
+**[ingest.md](ingest.md)** - SPARQL document ingestion system for importing content from SPARQL endpoints using configurable query templates, with CLI tool, MCP integration, and batch processing capabilities.
+
 ### Command-Line Demos
 
 **[examples](../../examples/README.md)**
