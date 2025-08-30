@@ -755,7 +755,7 @@ class SimpleVerbsService {
    * ASK - Query the system using current ZPT context with optional enhancements
    * Now uses HybridContextManager for intelligent merging of enhancement and personal context
    */
-  async ask({ question, mode = 'standard', useContext = true, useHyDE = false, useWikipedia = false, useWikidata = false }) {
+  async ask({ question, mode = 'standard', useContext = true, useHyDE = false, useWikipedia = false, useWikidata = false, threshold }) {
     await this.initialize();
     
     try {
@@ -778,7 +778,8 @@ class SimpleVerbsService {
         useContext,
         useHyDE,
         useWikipedia,
-        useWikidata
+        useWikidata,
+        threshold
       });
       
       console.log('🔥 CONSOLE: Simple-verbs ask() received result from HybridContextManager', { 

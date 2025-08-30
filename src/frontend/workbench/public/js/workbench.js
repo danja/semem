@@ -23,6 +23,7 @@ class WorkbenchApp {
     this.handleZoomChange = this.handleZoomChange.bind(this);
     this.handlePanChange = this.handlePanChange.bind(this);
     this.handleTiltChange = this.handleTiltChange.bind(this);
+    this.handleThresholdChange = this.handleThresholdChange.bind(this);
     this.handlePanelToggle = this.handlePanelToggle.bind(this);
     this.handleInspectAction = this.handleInspectAction.bind(this);
     this.updateConnectionStatus = this.updateConnectionStatus.bind(this);
@@ -135,6 +136,12 @@ class WorkbenchApp {
     DomUtils.$$('.tilt-button').forEach(button => {
       button.addEventListener('click', this.handleTiltChange);
     });
+    
+    // Threshold slider
+    const thresholdSlider = DomUtils.$('#similarity-threshold');
+    if (thresholdSlider) {
+      thresholdSlider.addEventListener('input', this.handleThresholdChange);
+    }
     
     // Pan input changes (debounced)
     const panDomains = DomUtils.$('#pan-domains');
@@ -682,7 +689,8 @@ class WorkbenchApp {
         useContext: Boolean(formData.useContext),
         useHyDE: Boolean(formData.useHyDE),
         useWikipedia: Boolean(formData.useWikipedia),
-        useWikidata: Boolean(formData.useWikidata)
+        useWikidata: Boolean(formData.useWikidata),
+        threshold: stateManager.getState().threshold
       });
       
       const duration = Date.now() - startTime;
@@ -841,6 +849,35 @@ class WorkbenchApp {
       console.error('Tilt change failed:', error);
       consoleService.error('Failed to change view style', { style, error: error.message });
       DomUtils.showToast('Failed to change view style', 'error');
+    }
+  }
+
+  async handleThresholdChange(event) {
+    const slider = event.target;
+    const threshold = parseFloat(slider.value);
+    
+    if (isNaN(threshold)) return;
+    
+    try {
+      // Update threshold display
+      const thresholdValue = DomUtils.$('#threshold-value');
+      if (thresholdValue) {
+        thresholdValue.textContent = threshold.toFixed(2);
+      }
+      
+      // Store threshold in state manager for use in ask queries
+      stateManager.setSimilarityThreshold(threshold);
+      
+      // Log threshold change
+      consoleService.info(`Similarity threshold changed to ${threshold.toFixed(2)}`, { 
+        threshold,
+        type: 'threshold_change'
+      });
+      
+    } catch (error) {
+      console.error('Threshold change failed:', error);
+      consoleService.error('Failed to change similarity threshold', { threshold, error: error.message });
+      DomUtils.showToast('Failed to change threshold', 'error');
     }
   }
 

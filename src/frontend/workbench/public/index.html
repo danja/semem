@@ -372,6 +372,28 @@
                                 <button type="button" class="zoom-button" data-level="community">Community</button>
                                 <button type="button" class="zoom-button" data-level="corpus">Corpus</button>
                             </div>
+                            
+                            <!-- Similarity Threshold Slider -->
+                            <div class="threshold-control">
+                                <label for="similarity-threshold" class="threshold-label">
+                                    <span class="threshold-icon">📊</span>
+                                    Similarity Threshold: <span id="threshold-value">0.3</span>
+                                </label>
+                                <input 
+                                    type="range" 
+                                    id="similarity-threshold" 
+                                    name="threshold"
+                                    min="0.0" 
+                                    max="1.0" 
+                                    step="0.05" 
+                                    value="0.3"
+                                    class="threshold-slider"
+                                />
+                                <div class="threshold-hints">
+                                    <span class="threshold-hint threshold-low">Broad (0.0)</span>
+                                    <span class="threshold-hint threshold-high">Precise (1.0)</span>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Pan Controls -->

@@ -86,6 +86,13 @@ export class AdaptiveSearchEngine {
                 query, zptState, options
             );
             
+            // Override with user-provided threshold if specified
+            if (options.threshold !== undefined) {
+                console.log('🎯 [ADAPTIVE_SEARCH] Using user-provided threshold:', options.threshold);
+                thresholdConfig.expansionSteps = [options.threshold];
+                thresholdConfig.baseThreshold = options.threshold;
+            }
+            
             // Step 2: Execute multi-pass search
             const searchResult = await this._executeMultiPassSearch(
                 query, zptState, thresholdConfig, options

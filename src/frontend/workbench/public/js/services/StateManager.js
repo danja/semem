@@ -17,6 +17,7 @@ export class StateManager {
         temporal: null
       },
       tilt: 'keywords',    // keywords | embedding | graph | temporal
+      threshold: 0.3,      // similarity threshold (0.0 - 1.0)
       
       // Session State
       session: {
@@ -172,6 +173,17 @@ export class StateManager {
     } finally {
       this.setLoadingState('tilt', false);
     }
+  }
+
+  /**
+   * Update similarity threshold
+   */
+  setSimilarityThreshold(threshold) {
+    this.setState({
+      threshold: Math.max(0.0, Math.min(1.0, threshold)) // Clamp between 0.0 and 1.0
+    });
+    
+    this.notifyListeners('thresholdChange', { threshold });
   }
 
   /**

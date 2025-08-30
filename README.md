@@ -11,8 +11,11 @@
 
 ![Semem Workbench](docs/images/workbench.png)
 
+ The [hints](https://danja.github.io/semem/manual/hints.html) page might help.
+
 **[Semem Documentation](https://danja.github.io/semem/)** - *sprawling*
  
+
 *click the triangles to expand the text* 
  
 <details> 

@@ -2,7 +2,7 @@ Clear the store :
 scripts/del-content-graph.sh
 
 Ingest documents :
-node examples/ingestion/SPARQLIngest.js   --endpoint "https://fuseki.hyperdata.it/danny.ayers.name/query"   --template blog-articles   --limit 5   --graph "http://danny.ayers.name/"
+node utils/SPARQLIngest.js   --endpoint "https://fuseki.hyperdata.it/danny.ayers.name/query"   --template blog-articles   --limit 5   --graph "http://danny.ayers.name/"
 
 Use ./start.sh to start the servers.
 
