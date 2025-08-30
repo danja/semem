@@ -71,7 +71,7 @@ class NavigatePlanTest {
         try {
             // Create a simple text element with content
             const textElementURI = `http://purl.org/stuff/instance/text-${Date.now()}`;
-            
+
             const insertQuery = `
                 PREFIX ragno: <http://purl.org/stuff/ragno/>
                 PREFIX dcterms: <http://purl.org/dc/terms/>
@@ -91,12 +91,12 @@ class NavigatePlanTest {
             `;
 
             await this.sparqlStore._executeSparqlUpdate(insertQuery, this.sparqlStore.endpoint.update);
-            
+
             // Create a simple entity based on content keywords
             if (type === 'document' && content.length > 100) {
                 const words = content.toLowerCase().match(/\b\w{4,}\b/g) || [];
                 const keywords = [...new Set(words)].slice(0, 5);
-                
+
                 for (const keyword of keywords) {
                     const entityURI = `http://purl.org/stuff/instance/entity-${keyword.replace(/\s+/g, '-')}`;
                     const entityQuery = `
@@ -114,7 +114,7 @@ class NavigatePlanTest {
                             }
                         }
                     `;
-                    
+
                     try {
                         await this.sparqlStore._executeSparqlUpdate(entityQuery, this.sparqlStore.endpoint.update);
                     } catch (e) {
@@ -147,7 +147,7 @@ class NavigatePlanTest {
 
             // Use enhanced ZPT navigation
             const result = await this.enhancedQueries.executeNavigation(params);
-            
+
             // Add to session history
             await this.sessionManager.addNavigationResult(params, result.results, {
                 selectionTime: Date.now() - (result.timestamp ? new Date(result.timestamp).getTime() : Date.now())
@@ -175,13 +175,13 @@ class NavigatePlanTest {
         try {
             // Phase 1: Data Preparation Using Tell
             await this.executePhase1DataPreparation();
-            
+
             // Phase 2: ZPT Combination Testing Matrix
             await this.executePhase2ZPTMatrix();
-            
+
             // Phase 3: SPARQL Persistence Verification
             await this.executePhase3Verification();
-            
+
             // Generate comprehensive report
             this.generateFinalReport();
 
@@ -210,7 +210,7 @@ class NavigatePlanTest {
 
     async testTellOperation1() {
         console.log('📄 Tell Operation 1: Upload docs/manual/zpt.md');
-        
+
         try {
             // Check if file exists, if not create placeholder content
             let content;
@@ -261,7 +261,7 @@ The ZPT (Zoom-Pan-Tilt) navigation system provides multi-dimensional exploration
 
     async testTellOperation2() {
         console.log('📄 Tell Operation 2: Upload docs/manual/ragno.md');
-        
+
         try {
             const content = `# Ragno Knowledge Graph System
 
@@ -305,7 +305,7 @@ Ragno provides comprehensive knowledge graph analytics for semantic memory syste
 
     async testTellOperation3() {
         console.log('📄 Tell Operation 3: Upload docs/manual/sparql-service.md');
-        
+
         try {
             const content = `# SPARQL Service Layer
 
@@ -349,7 +349,7 @@ The SPARQL service layer provides robust query management and templating for sem
 
     async testTellOperation4() {
         console.log('📄 Tell Operation 4: Upload docs/manual/workbench-howto.md');
-        
+
         try {
             const content = `# Semantic Memory Workbench How-To
 
@@ -470,13 +470,13 @@ The Semantic Memory Workbench provides an interactive interface for knowledge ex
 
         // 2.1 Zoom Level Testing
         await this.testZoomLevels();
-        
+
         // 2.2 Pan Filter Testing
         await this.testPanFilters();
-        
+
         // 2.3 Tilt Projection Testing
         await this.testTiltProjections();
-        
+
         // 2.4 Cross-Navigation Testing
         await this.testCrossNavigation();
 
@@ -627,7 +627,7 @@ The Semantic Memory Workbench provides an interactive interface for knowledge ex
                 pan: {},
                 tilt: 'keywords',
                 query: `Give me more detail on ${concept.corpuscles[0].label || 'the first concept'}`
-);
+            });
 
             await this.executeZPTTest({
                 name: 'C1.3: Context at Community Level',
@@ -635,7 +635,7 @@ The Semantic Memory Workbench provides an interactive interface for knowledge ex
                 pan: {},
                 tilt: 'graph',
                 query: `What topics relate to ${concept.corpuscles[0].label || 'this concept'}?`
-);
+            });
         }
 
         // C2: Pan Refinement
@@ -659,7 +659,7 @@ The Semantic Memory Workbench provides an interactive interface for knowledge ex
         // C3: Tilt Switching
         console.log('C3: Tilt Switching Test');
         const baseQuery = 'Find content about embeddings';
-        
+
         await this.executeZPTTest({
             name: 'C3.1: Keywords Tilt',
             zoom: 'unit',
@@ -687,10 +687,10 @@ The Semantic Memory Workbench provides an interactive interface for knowledge ex
 
     async executeZPTTest(testCase) {
         console.log(`  🧪 ${testCase.name}`);
-        
+
         try {
             const startTime = Date.now();
-            
+
             // Set ZPT parameters and execute ask query
             const result = await this.ask(testCase.query, {
                 zoom: testCase.zoom,
@@ -700,13 +700,13 @@ The Semantic Memory Workbench provides an interactive interface for knowledge ex
 
             const responseTime = Date.now() - startTime;
             this.testResults.performance.totalQueries++;
-            this.testResults.performance.averageResponseTime = 
-                (this.testResults.performance.averageResponseTime * (this.testResults.performance.totalQueries - 1) + responseTime) / 
+            this.testResults.performance.averageResponseTime =
+                (this.testResults.performance.averageResponseTime * (this.testResults.performance.totalQueries - 1) + responseTime) /
                 this.testResults.performance.totalQueries;
 
             this.assert(result.success || result.answer, `${testCase.name} executed successfully`);
             console.log(`    ✅ Response time: ${responseTime}ms`);
-            
+
             this.testResults.phase2.total++;
             this.testResults.phase2.passed++;
 
@@ -726,10 +726,10 @@ The Semantic Memory Workbench provides an interactive interface for knowledge ex
 
         // Check navigation sessions
         await this.verifyNavigationSessions();
-        
+
         // Check navigation views
         await this.verifyNavigationViews();
-        
+
         // Check content integration
         await this.verifyContentIntegration();
 
@@ -738,7 +738,7 @@ The Semantic Memory Workbench provides an interactive interface for knowledge ex
 
     async verifyNavigationSessions() {
         console.log('📋 Verifying navigation sessions');
-        
+
         try {
             const sessionResult = await this.sparqlStore._executeSparqlQuery(`
                 PREFIX zpt: <http://purl.org/stuff/zpt/>
@@ -755,7 +755,7 @@ The Semantic Memory Workbench provides an interactive interface for knowledge ex
 
             const sessions = (sessionResult.results || sessionResult.data.results).bindings;
             this.testData.sessions = sessions.length;
-            
+
             this.assert(sessions.length > 0, `Found ${sessions.length} navigation sessions with complete metadata`);
             this.testResults.phase3.total++;
             this.testResults.phase3.passed++;
@@ -770,7 +770,7 @@ The Semantic Memory Workbench provides an interactive interface for knowledge ex
 
     async verifyNavigationViews() {
         console.log('👁️ Verifying navigation views');
-        
+
         try {
             const viewResult = await this.sparqlStore._executeSparqlQuery(`
                 PREFIX zpt: <http://purl.org/stuff/zpt/>
@@ -785,7 +785,7 @@ The Semantic Memory Workbench provides an interactive interface for knowledge ex
             `, this.sparqlStore.endpoint.query);
 
             const views = (viewResult.results || viewResult.data.results).bindings;
-            
+
             this.assert(views.length > 0, `Found ${views.length} navigation views with complete components`);
             this.testResults.phase3.total++;
             this.testResults.phase3.passed++;
@@ -800,7 +800,7 @@ The Semantic Memory Workbench provides an interactive interface for knowledge ex
 
     async verifyContentIntegration() {
         console.log('🔗 Verifying content integration');
-        
+
         try {
             // Verify that content exists and is accessible
             const integrationResult = await this.sparqlStore._executeSparqlQuery(`
@@ -814,7 +814,7 @@ The Semantic Memory Workbench provides an interactive interface for knowledge ex
             `, this.sparqlStore.endpoint.query);
 
             const contentCount = parseInt((integrationResult.results || integrationResult.data.results).bindings[0].count.value);
-            
+
             this.assert(contentCount > 0, `Verified integration with ${contentCount} content items`);
             this.testResults.phase3.total++;
             this.testResults.phase3.passed++;
@@ -837,12 +837,12 @@ The Semantic Memory Workbench provides an interactive interface for knowledge ex
         console.log(`  Total Tests: ${this.testResults.phase1.total}`);
         console.log(`  Passed: ${this.testResults.phase1.passed}`);
         console.log(`  Failed: ${this.testResults.phase1.failed}`);
-        
+
         console.log('\n🎯 Phase 2: ZPT Matrix Testing');
         console.log(`  Total Tests: ${this.testResults.phase2.total}`);
         console.log(`  Passed: ${this.testResults.phase2.passed}`);
         console.log(`  Failed: ${this.testResults.phase2.failed}`);
-        
+
         console.log('\n🔍 Phase 3: SPARQL Verification');
         console.log(`  Total Tests: ${this.testResults.phase3.total}`);
         console.log(`  Passed: ${this.testResults.phase3.passed}`);
@@ -876,11 +876,11 @@ The Semantic Memory Workbench provides an interactive interface for knowledge ex
             console.log('\n❌ Errors Summary:');
             allErrors.forEach((error, index) => {
                 console.log(`  ${index + 1}. ${error}`);
-);
+            });
         }
 
         console.log('\n' + '='.repeat(80));
-        
+
         if (successRate >= 90) {
             console.log('🎉 NAVIGATE COMPONENTS EXERCISE PLAN: SUCCESSFUL');
         } else if (successRate >= 75) {
@@ -888,7 +888,7 @@ The Semantic Memory Workbench provides an interactive interface for knowledge ex
         } else {
             console.log('❌ NAVIGATE COMPONENTS EXERCISE PLAN: NEEDS IMPROVEMENT');
         }
-        
+
         console.log('='.repeat(80));
     }
 

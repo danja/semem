@@ -11,7 +11,7 @@
 
 ![Semem Workbench](docs/images/workbench.png)
 
-**[Semem Documentation](https://danja.github.io/semem/)** - *already out-of-date, below is more current*
+**[Semem Documentation](https://danja.github.io/semem/)** - *sprawling*
  
 *click the triangles to expand the text* 
  
