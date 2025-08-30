@@ -150,6 +150,7 @@ The main configuration file follows this structure:
     "redirect": 4110,
     "redirectTarget": 4120
   },
+  "templatesPath": "prompts/templates",
   "llmProviders": [
     {
       "type": "mistral",
@@ -203,6 +204,47 @@ The main configuration file follows this structure:
   }
 }
 ```
+
+#### Prompt Templates Configuration
+```json
+{
+  "templatesPath": "prompts/templates"
+}
+```
+
+**Configuration Options:**
+
+- **templatesPath**: Path to prompt templates directory (relative to project root or absolute path)
+  - Default: `"prompts/templates"`
+  - Example: `"custom/templates"` or `"/absolute/path/to/templates"`
+  - Used by the unified prompt management system to load external template files
+
+#### Concept Extraction Configuration
+```json
+{
+  "conceptExtraction": {
+    "maxConcepts": 3,
+    "temperature": 0.1,
+    "retries": 3,
+    "minConceptLength": 4,
+    "maxConceptLength": 80
+  }
+}
+```
+
+**Configuration Options:**
+
+- **maxConcepts**: Maximum number of concepts to extract per text chunk (default: 3)
+  - Lower values (2-3) for conservative extraction (recommended)
+  - Higher values (5-8) for comprehensive extraction
+- **temperature**: LLM temperature for concept extraction (default: 0.1)
+  - Lower values (0.1) for more focused, consistent concepts (recommended)
+  - Higher values (0.3-0.4) for more creative, diverse concepts
+- **retries**: Number of retry attempts for failed LLM calls (default: 3)
+- **minConceptLength**: Minimum character length for valid concepts (default: 4)
+- **maxConceptLength**: Maximum character length for valid concepts (default: 80)
+
+This configuration controls the sensitivity and behavior of concept extraction in the memory ingestion pipeline, allowing fine-tuning of how many concepts are extracted and their quality filtering.
 
 #### LLM Providers Array
 ```json
@@ -420,6 +462,115 @@ Providers are selected based on:
 1. **Priority number** (lower = higher priority)
 2. **Capability match** (chat vs embedding)
 3. **Availability** (API reachable and functional)
+
+#### How Priority Selection Works
+
+The system uses a **priority-based selection algorithm** that:
+
+1. **Filters by capability**: Only considers providers that have the required capability (`chat` or `embedding`)
+2. **Sorts by priority**: Orders providers by priority number (1 = highest, 2 = second, etc.)
+3. **Attempts connection**: Tries providers in order until one succeeds
+4. **Falls back gracefully**: Uses next available provider if higher priority fails
+
+#### Priority Configuration Example
+
+```json
+{
+  "llmProviders": [
+    {
+      "type": "mistral",
+      "apiKey": "${MISTRAL_API_KEY}",
+      "chatModel": "mistral-small-latest",
+      "priority": 1,
+      "capabilities": ["chat"]
+    },
+    {
+      "type": "claude", 
+      "apiKey": "${CLAUDE_API_KEY}",
+      "chatModel": "claude-3-opus-20240229",
+      "priority": 2,
+      "capabilities": ["chat"]
+    },
+    {
+      "type": "ollama",
+      "baseUrl": "http://localhost:11434",
+      "chatModel": "qwen2:1.5b",
+      "priority": 3,
+      "capabilities": ["chat", "embedding"]
+    }
+  ]
+}
+```
+
+**Selection logic for chat requests:**
+1. Try Mistral (priority 1) if `MISTRAL_API_KEY` is available
+2. If Mistral fails, try Claude (priority 2) if `CLAUDE_API_KEY` is available  
+3. If both fail, fall back to Ollama (priority 3) as local option
+
+#### Model Selection from Providers
+
+When a provider is selected, the system uses the provider's configured model:
+
+```javascript
+// Example: If Mistral is selected (priority 1)
+const selectedProvider = sortedProviders[0]; // Mistral provider object
+const modelToUse = selectedProvider.chatModel; // "mistral-small-latest"
+```
+
+This ensures that each provider uses its appropriate model name (e.g., `mistral-small-latest` for Mistral, not `qwen2:1.5b`).
+
+#### API Key Requirements
+
+**Cloud providers** (Mistral, Claude, Nomic) require valid API keys:
+- Must be set in `.env` file: `MISTRAL_API_KEY=your_key_here`
+- Config uses substitution: `"apiKey": "${MISTRAL_API_KEY}"`
+- Provider is skipped if API key is missing or empty
+
+**Local providers** (Ollama) don't require API keys:
+- Only need service to be running: `ollama serve`
+- Used as fallback when cloud providers unavailable
+
+#### Debugging Priority Selection
+
+To see which provider is selected, enable debug logging:
+
+```bash
+LOG_LEVEL=debug npm start
+```
+
+Look for log messages like:
+```
+LLM handler initialized successfully
+Using provider: mistral with model: mistral-small-latest
+```
+
+#### Common Priority Patterns
+
+**Production (Cloud Primary):**
+```json
+[
+  {"type": "mistral", "priority": 1, "capabilities": ["chat"]},
+  {"type": "claude", "priority": 2, "capabilities": ["chat"]}, 
+  {"type": "ollama", "priority": 3, "capabilities": ["chat", "embedding"]}
+]
+```
+
+**Development (Local Primary):**
+```json
+[
+  {"type": "ollama", "priority": 1, "capabilities": ["chat", "embedding"]},
+  {"type": "mistral", "priority": 2, "capabilities": ["chat"]}
+]
+```
+
+**Research (Quality Primary):**
+```json
+[
+  {"type": "claude", "priority": 1, "capabilities": ["chat"]},
+  {"type": "mistral", "priority": 2, "capabilities": ["chat"]},
+  {"type": "ollama", "priority": 3, "capabilities": ["embedding"]}
+]
+```
 
 ### Capability Types
 
@@ -877,6 +1028,7 @@ Cannot connect to https://fuseki.example.com/query
 ```
 No suitable LLM provider found for capability: chat
 Provider initialization failed: mistral
+Failed to load provider configuration, defaulting to Ollama: Mistral API key is required
 ```
 
 **Solutions:**
@@ -891,6 +1043,88 @@ Provider initialization failed: mistral
   ```bash
   ollama list
   ```
+
+#### 4a. Provider Priority Selection Issues
+
+**Symptoms:**
+```
+Using wrong provider (expected Mistral, got Ollama)
+Invalid model: qwen2:1.5b (when using Mistral)
+API key is required (when key is set in .env)
+```
+
+**Common Causes & Solutions:**
+
+**Missing API Key in Environment:**
+```bash
+# Check if API key is set
+echo $MISTRAL_API_KEY
+
+# If empty, verify .env file
+cat .env | grep MISTRAL_API_KEY
+
+# Ensure .env is loaded
+source .env  # or restart your application
+```
+
+**Wrong Model Configuration:**
+```javascript
+// ❌ Wrong: Using Ollama model name for Mistral provider
+{
+  "type": "mistral",
+  "chatModel": "qwen2:1.5b",  // This is an Ollama model!
+  "apiKey": "${MISTRAL_API_KEY}"
+}
+
+// ✅ Correct: Using appropriate model for each provider
+{
+  "type": "mistral", 
+  "chatModel": "mistral-small-latest",  // Mistral model
+  "apiKey": "${MISTRAL_API_KEY}"
+}
+```
+
+**Priority Configuration Issues:**
+```javascript
+// ❌ Wrong: Same priority numbers
+[
+  {"type": "mistral", "priority": 1},
+  {"type": "claude", "priority": 1}  // Same priority!
+]
+
+// ✅ Correct: Unique priorities
+[
+  {"type": "mistral", "priority": 1},  // Highest priority
+  {"type": "claude", "priority": 2},   // Second priority
+  {"type": "ollama", "priority": 3}    // Fallback
+]
+```
+
+**Debugging Provider Selection:**
+```bash
+# Enable debug logging to see provider selection
+LOG_LEVEL=debug node your-script.js
+
+# Look for these debug messages:
+# "LLM handler initialized successfully"
+# "Using provider: mistral with model: mistral-small-latest"
+# "Failed to load provider configuration, defaulting to..."
+```
+
+**Test Provider Connectivity:**
+```bash
+# Test Mistral API
+curl -X GET "https://api.mistral.ai/v1/models" \
+  -H "Authorization: Bearer $MISTRAL_API_KEY"
+
+# Test Claude API  
+curl -X GET "https://api.anthropic.com/v1/messages" \
+  -H "x-api-key: $CLAUDE_API_KEY" \
+  -H "anthropic-version: 2023-06-01"
+
+# Test Ollama (local)
+curl -X GET "http://localhost:11434/api/tags"
+```
 
 #### 5. Port Conflicts
 
