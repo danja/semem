@@ -47,6 +47,8 @@ The following are workflows applied to sample questions from the [BeerQA](https:
 
 **[ingest.md](ingest.md)** - SPARQL document ingestion system for importing content from SPARQL endpoints using configurable query templates, with CLI tool, MCP integration, and batch processing capabilities.
 
+**[context-management.md](context-management.md)** - Comprehensive guide to Semem's context management system covering the HybridContextManager, adaptive search, context merging, LLM integration, and intelligent response synthesis for contextually-aware information retrieval.
+
 ### Command-Line Demos
 
 **[examples](../../examples/README.md)**
