@@ -13,10 +13,10 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import readline from 'readline';
 import logger from 'loglevel';
-import Config from '../../src/Config.js';
-import SPARQLDocumentIngester from '../../src/services/ingestion/SPARQLDocumentIngester.js';
-import { getSimpleVerbsService } from '../../mcp/tools/simple-verbs.js';
-import { initializeServices } from '../../mcp/lib/initialization.js';
+import Config from '../src/Config.js';
+import SPARQLDocumentIngester from '../src/services/ingestion/SPARQLDocumentIngester.js';
+import { getSimpleVerbsService } from '../mcp/tools/simple-verbs.js';
+import { initializeServices } from '../mcp/lib/initialization.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -28,9 +28,9 @@ class SPARQLIngestCLI {
 
     async initialize() {
         try {
-            // Initialize configuration (relative path from examples/ingestion)
-            const configPath = process.cwd().endsWith('/examples/ingestion') 
-                ? '../../config/config.json' 
+            // Initialize configuration (relative path from utils)
+            const configPath = process.cwd().endsWith('/utils') 
+                ? '../config/config.json' 
                 : 'config/config.json';
                 
             this.config = new Config(configPath);
@@ -179,7 +179,7 @@ For more information, see: docs/manual/sparql-ingestion.md
      * List available templates
      */
     async listTemplates() {
-        const templateDir = join(__dirname, '../../config/sparql-templates');
+        const templateDir = join(__dirname, '../config/sparql-templates');
         
         if (!existsSync(templateDir)) {
             console.log('❌ No templates directory found');

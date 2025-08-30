@@ -1,8 +1,8 @@
 # SPARQL Document Ingestion Implementation Summary
 
-## ✅ Implementation Completed
+## ✅ Implementation Status
 
-I have successfully implemented a comprehensive SPARQL-to-MCP document ingestion system for semem. Here's what was delivered:
+A comprehensive SPARQL-to-MCP document ingestion system has been implemented for semem, providing flexible document ingestion from any SPARQL endpoint.
 
 ## 🏗️ Core Components
 
@@ -16,23 +16,25 @@ I have successfully implemented a comprehensive SPARQL-to-MCP document ingestion
 
 ### 2. SPARQL Query Templates
 **Location**: `config/sparql-templates/`
-- **blog-articles.sparql**: Based on your example from `docs/query-from-blog.md`
+- **blog-articles.sparql**: Template for blog article ingestion
 - **generic-documents.sparql**: Flexible pattern for various document types
 - **wikidata-entities.sparql**: Wikidata entity extraction template
 - Variable substitution system with `{{variable}}` syntax
 
 ### 3. MCP Tool Integration
-**Location**: `mcp/tools/document-tools.js` and `mcp/index.js`
-- **sparql_ingest_documents**: New MCP tool for Claude Code integration
+**Location**: `mcp/tools/document-tools.js`
+- **sparql_ingest_documents**: MCP tool for Claude Code integration
 - Full parameter validation and error handling
 - Dry run and lazy processing support
+- Graph parameter support for SPARQL updates
 - Integration with semem's tell method for document storage
 
 ### 4. CLI Tool
-**Location**: `examples/ingestion/SPARQLIngest.js`
+**Location**: `utils/SPARQLIngest.js` (moved from `examples/ingestion/`)
 - Interactive and batch processing modes
 - Built-in help and template listing
 - Authentication support for protected endpoints
+- Graph parameter support matching MCP tool
 - Verbose logging and comprehensive error reporting
 
 ### 5. Configuration System
@@ -46,20 +48,21 @@ I have successfully implemented a comprehensive SPARQL-to-MCP document ingestion
 ### Command Line Interface
 
 ```bash
-# Preview blog articles (from your example)
-node examples/ingestion/SPARQLIngest.js \
+# Preview blog articles
+node utils/SPARQLIngest.js \
   --endpoint "https://fuseki.hyperdata.it/danny.ayers.name/query" \
   --graph "http://danny.ayers.name/" \
   --template blog-articles --dry-run --limit 5
 
 # Full ingestion with authentication
-node examples/ingestion/SPARQLIngest.js \
+node utils/SPARQLIngest.js \
   --endpoint "https://fuseki.hyperdata.it/danny.ayers.name/query" \
   --template blog-articles --limit 10 \
+  --graph "http://hyperdata.it/content" \
   --user admin --password secret
 
 # Interactive mode for testing
-node examples/ingestion/SPARQLIngest.js --interactive
+node utils/SPARQLIngest.js --interactive
 ```
 
 ### MCP Integration
@@ -71,6 +74,7 @@ node examples/ingestion/SPARQLIngest.js --interactive
     "endpoint": "https://fuseki.hyperdata.it/danny.ayers.name/query",
     "template": "blog-articles",
     "limit": 10,
+    "graph": "http://hyperdata.it/content",
     "dryRun": true,
     "auth": {
       "user": "admin", 
