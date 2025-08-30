@@ -1149,7 +1149,26 @@ export class HybridContextManager {
                     // - ctx.content: ragno:Unit chunks 
                     // - ctx.response: old format interactions
                     const content = ctx.output || ctx.response || ctx.content || '';
-                    const contextString = `${ctx.prompt}: ${content}`;
+                    
+                    // For document chunks, just return the content without the metadata prompt
+                    // This avoids showing "Document chunk: ..." in the final response
+                    let contextString = content;
+                    
+                    // If the content is very short or empty, include some context from prompt
+                    if (!content || content.length < 20) {
+                        // Extract document title/context from prompt if available
+                        if (ctx.prompt && ctx.prompt.includes('Document:')) {
+                            const docMatch = ctx.prompt.match(/Document:\s*([^#]+)/);
+                            const titleMatch = ctx.prompt.match(/#\s*([^\n]+)/);
+                            if (docMatch && titleMatch) {
+                                contextString = `${titleMatch[1].trim()}\n\n${content}`;
+                            } else {
+                                contextString = content || ctx.prompt;
+                            }
+                        } else {
+                            contextString = content || ctx.prompt;
+                        }
+                    }
                     
                     console.log(`🔥 CONSOLE: HybridContextManager context ${index} extraction`, {
                         hasPrompt: !!ctx.prompt,
@@ -1249,14 +1268,26 @@ export class HybridContextManager {
         if (this.safeOperations?.generateResponse) {
             try {
                 console.log('🔥 CONSOLE: HybridContextManager about to call LLM generateResponse', {
-                    promptLength: synthesisPrompt.length,
-                    promptPreview: synthesisPrompt.substring(0, 200),
+                    promptType: typeof synthesisPrompt,
+                    promptKeys: typeof synthesisPrompt === 'object' ? Object.keys(synthesisPrompt) : 'not-object',
+                    promptLength: typeof synthesisPrompt === 'string' ? synthesisPrompt.length : 'not-string',
+                    promptPreview: typeof synthesisPrompt === 'string' ? synthesisPrompt.substring(0, 200) : JSON.stringify(synthesisPrompt).substring(0, 200),
                     hasPersonalContent: !!synthesisComponents.personalContent,
                     personalContentLength: synthesisComponents.personalContent?.length || 0,
                     personalContentPreview: synthesisComponents.personalContent?.substring(0, 100)
                 });
                 
-                answer = await this.safeOperations.generateResponse(query, synthesisPrompt);
+                // Create a simple, direct prompt instead of complex template
+                const directPrompt = `Answer this question using the provided context.
+
+Question: ${query}
+
+Context:
+${synthesisComponents.personalContent || 'No relevant context found.'}
+
+Please provide a direct answer to the question based on the context above. If the context contains relevant information, use it to answer. If not, say so clearly.`;
+                
+                answer = await this.safeOperations.generateResponse(directPrompt);
                 
                 console.log('🔥 CONSOLE: HybridContextManager LLM response received', {
                     answerLength: answer?.length || 0,
