@@ -1,6 +1,7 @@
 data/cache
 temp
 _site
+server-pids.txt
 
 # Playwright
 **/playwright-report/
