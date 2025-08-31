@@ -4,7 +4,53 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import { PerformanceTimer } from './LoggingConfig.js';
+
+// Performance timer with static methods for compatibility
+class PerformanceTimer {
+    static activeTimers = new Map();
+
+    static startTimer(operationName, metadata = {}) {
+        const timerId = uuidv4();
+        const startTime = process.hrtime.bigint();
+        const memoryUsage = process.memoryUsage();
+        
+        this.activeTimers.set(timerId, {
+            operationName,
+            startTime,
+            startMemory: memoryUsage,
+            metadata,
+            timestamp: new Date().toISOString()
+        });
+        
+        return timerId;
+    }
+
+    static endTimer(timerId, additionalMetadata = {}) {
+        const timer = this.activeTimers.get(timerId);
+        if (!timer) return null;
+
+        const endTime = process.hrtime.bigint();
+        const endMemory = process.memoryUsage();
+        const duration = Number(endTime - timer.startTime) / 1000000; // Convert to ms
+
+        const result = {
+            timerId,
+            operationName: timer.operationName,
+            duration,
+            startTime: timer.timestamp,
+            endTime: new Date().toISOString(),
+            memoryDelta: {
+                rss: endMemory.rss - timer.startMemory.rss,
+                heapUsed: endMemory.heapUsed - timer.startMemory.heapUsed,
+                heapTotal: endMemory.heapTotal - timer.startMemory.heapTotal
+            },
+            metadata: { ...timer.metadata, ...additionalMetadata }
+        };
+
+        this.activeTimers.delete(timerId);
+        return result;
+    }
+}
 
 // Operation type constants
 export const OperationTypes = {

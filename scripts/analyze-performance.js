@@ -1,6 +1,3 @@
-import { setupDefaultLogging } from '../src/utils/LoggingConfig.js';
-const loggers = await setupDefaultLogging();
-const logger = loggers.system;
 #!/usr/bin/env node
 /**
  * Performance log analysis script
@@ -10,7 +7,10 @@ const logger = loggers.system;
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { CURRENT_LOG_DIR, ARCHIVE_LOG_DIR } from '../src/utils/LoggingConfig.js';
+import { LOG_DIR } from '../src/utils/LoggingConfig.js';
+
+const CURRENT_LOG_DIR = path.join(LOG_DIR, 'current');
+const ARCHIVE_LOG_DIR = path.join(LOG_DIR, 'archive');
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -45,31 +45,31 @@ class PerformanceAnalyzer {
      * Read and parse log files
      */
     async loadLogData(logDirs = [CURRENT_LOG_DIR]) {
-        logger.info('Loading performance data from logs...');
+        console.log('Loading performance data from logs...');
         
         for (const logDir of logDirs) {
             if (!fs.existsSync(logDir)) {
-                logger.warn(`Log directory not found: ${logDir}`);
+                console.warn(`Log directory not found: ${logDir}`);
                 continue;
             }
 
             const files = fs.readdirSync(logDir)
-                .filter(file => file.includes('performance') && file.endsWith('.log'))
+                .filter(file => (file.includes('performance') || file.includes('semem-main') || file.includes('memory-manager')) && file.endsWith('.log'))
                 .sort()
                 .slice(-CONFIG.maxLogFiles); // Get latest files
 
-            logger.info(`Processing ${files.length} performance log files from ${logDir}`);
+            console.info(`Processing ${files.length} performance log files from ${logDir}`);
 
             for (const file of files) {
                 try {
                     await this.parseLogFile(path.join(logDir, file));
                 } catch (error) {
-                    logger.error(`Error parsing ${file}:`, error.message);
+                    console.error(`Error parsing ${file}:`, error.message);
                 }
             }
         }
 
-        logger.info(`Loaded ${this.performanceData.length} performance entries`);
+        console.info(`Loaded ${this.performanceData.length} performance entries`);
         return this.performanceData.length;
     }
 
@@ -196,7 +196,7 @@ class PerformanceAnalyzer {
      * Analyze performance patterns
      */
     analyzePerformance() {
-        logger.info('Analyzing performance patterns...');
+        console.info('Analyzing performance patterns...');
         
         const analysis = {
             summary: {
@@ -391,9 +391,9 @@ class PerformanceAnalyzer {
         const summary = this.generateSummaryReport(analysis);
         fs.writeFileSync(summaryFile, summary);
 
-        logger.info(`Analysis complete! Reports saved:`);
-        logger.info(`- Detailed: ${reportFile}`);
-        logger.info(`- Summary: ${summaryFile}`);
+        console.info(`Analysis complete! Reports saved:`);
+        console.info(`- Detailed: ${reportFile}`);
+        console.info(`- Summary: ${summaryFile}`);
 
         return { analysis, reportFile, summaryFile };
     }
@@ -464,21 +464,21 @@ class PerformanceAnalyzer {
     printQuickSummary() {
         const analysis = this.analyzePerformance();
         
-        logger.info('\n=== PERFORMANCE SUMMARY ===');
-        logger.info(`Total Operations: ${analysis.summary.totalOperations}`);
-        logger.info(`Error Rate: ${analysis.summary.errorRate}`);
+        console.info('\n=== PERFORMANCE SUMMARY ===');
+        console.info(`Total Operations: ${analysis.summary.totalOperations}`);
+        console.info(`Error Rate: ${analysis.summary.errorRate}`);
         
-        logger.info('\nOperation Performance:');
+        console.info('\nOperation Performance:');
         for (const [operationType, stats] of Object.entries(analysis.operationAnalysis)) {
             const status = stats.performanceLevel === 'good' ? '✓' : 
                           stats.performanceLevel === 'warn' ? '⚠' : '✗';
-            logger.info(`  ${status} ${operationType}: ${stats.averageDuration}ms avg (${stats.count} ops)`);
+            console.info(`  ${status} ${operationType}: ${stats.averageDuration}ms avg (${stats.count} ops)`);
         }
 
         if (analysis.performanceAlerts.length > 0) {
-            logger.info('\nAlerts:');
+            console.info('\nAlerts:');
             for (const alert of analysis.performanceAlerts) {
-                logger.info(`  [${alert.severity.toUpperCase()}] ${alert.message}`);
+                console.info(`  [${alert.severity.toUpperCase()}] ${alert.message}`);
             }
         }
     }
@@ -508,14 +508,14 @@ async function main() {
                 logDirs.push(path.join(ARCHIVE_LOG_DIR, run));
             }
         } catch (error) {
-            logger.warn('Could not access archive logs:', error.message);
+            console.warn('Could not access archive logs:', error.message);
         }
     }
 
     const entriesLoaded = await analyzer.loadLogData(logDirs);
     
     if (entriesLoaded === 0) {
-        logger.info('No performance data found in logs');
+        console.info('No performance data found in logs');
         process.exit(1);
     }
 

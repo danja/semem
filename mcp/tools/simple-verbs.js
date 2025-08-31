@@ -6,8 +6,9 @@
 
 import { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
-import { mcpDebugger } from '../lib/debug-utils.js';
+// Neutral logging using loglevel - replaced mcpDebugger for flexibility
 import path from 'path';
+import logger from 'loglevel';
 import { initializeServices, getMemoryManager } from '../lib/initialization.js';
 import { SafeOperations } from '../lib/safe-operations.js';
 
@@ -17,6 +18,35 @@ import { EnhancementCoordinator } from '../../src/services/enhancement/Enhanceme
 import { HybridContextManager } from '../../src/services/context/HybridContextManager.js';
 import { MemoryDomainManager } from '../../src/services/memory/MemoryDomainManager.js';
 import { MemoryRelevanceEngine } from '../../src/services/memory/MemoryRelevanceEngine.js';
+import { AskOperationTimer, TellOperationTimer } from '../../src/utils/PerformanceTiming.js';
+
+// Neutral logging setup - can be easily reconfigured or hooked
+// Example: verbsLogger can be enhanced with JSON formatting hooks
+const verbsLogger = logger.getLogger('simple-verbs');
+verbsLogger.setLevel(process.env.SIMPLE_VERBS_LOG_LEVEL || 'info');
+
+/* Example of adding JSON formatting hook:
+ * const originalInfo = verbsLogger.info;
+ * verbsLogger.info = function(message, data) {
+ *   if (data) {
+ *     originalInfo.call(this, JSON.stringify({ message, data, timestamp: Date.now() }));
+ *   } else {
+ *     originalInfo.call(this, message);
+ *   }
+ * };
+ */
+
+// Performance logging helper - neutral interface that can be enhanced with hooks
+const logPerformance = (operation, data) => {
+  // Default to info level - hooks can intercept and format differently  
+  verbsLogger.info(`PERF[${operation}]`, data);
+};
+
+// Operation logging helper - neutral interface for operation events
+const logOperation = (level, operation, message, data = null) => {
+  const logData = data ? { operation, message, data } : { operation, message };
+  verbsLogger[level](message, logData);
+};
 
 // Simple Verb Tool Names
 export const SimpleVerbToolNames = {
@@ -192,7 +222,7 @@ class ZPTStateManager {
     this.state.timestamp = new Date().toISOString();
     
     await this.persistState(previousState);
-    mcpDebugger.debug('ZPT State - Zoom updated', { zoom: level, query });
+    logOperation('debug', 'zoom', 'ZPT State - Zoom updated', { zoom: level, query });
     
     return this.state;
   }
@@ -211,7 +241,7 @@ class ZPTStateManager {
     this.state.timestamp = new Date().toISOString();
     
     await this.persistState(previousState);
-    mcpDebugger.debug('ZPT State - Pan updated', { pan: this.state.pan });
+    logOperation('debug', 'pan', 'ZPT State - Pan updated', { pan: this.state.pan });
     
     return this.state;
   }
@@ -229,7 +259,7 @@ class ZPTStateManager {
     this.state.timestamp = new Date().toISOString();
     
     await this.persistState(previousState);
-    mcpDebugger.debug('ZPT State - Tilt updated', { tilt: style, query });
+    logOperation('debug', 'tilt', 'ZPT State - Tilt updated', { tilt: style, query });
     
     return this.state;
   }
@@ -263,7 +293,7 @@ class ZPTStateManager {
     
     this.sessionCache.lastCacheUpdate = Date.now();
     
-    mcpDebugger.debug('Session cache updated', { 
+    logOperation('debug', 'session_cache', 'Session cache updated', { 
       id, 
       cacheSize: this.sessionCache.interactions.size,
       conceptCount: this.sessionCache.concepts.size 
@@ -357,7 +387,7 @@ class ZPTStateManager {
     };
     
     await this.persistState(previousState);
-    mcpDebugger.info('ZPT State reset to defaults');
+    logOperation('info', 'zpt_state', 'ZPT State reset to defaults');
     
     return this.state;
   }
@@ -395,7 +425,7 @@ class ZPTStateManager {
         );
       }
     } catch (error) {
-      mcpDebugger.warn('Failed to persist ZPT state', error);
+      logOperation('warn', 'zpt_state', 'Failed to persist ZPT state', { error: error.message });
       // Don't throw - state management should not break operations
     }
   }
@@ -474,7 +504,7 @@ class SimpleVerbsService {
         }
       );
       
-      mcpDebugger.info('SimpleVerbsService initialized with ZPT state management, enhancement coordinator, hybrid context manager, and memory domain services');
+      logOperation('info', 'initialization', 'SimpleVerbsService initialized with ZPT state management, enhancement coordinator, hybrid context manager, and memory domain services');
     }
   }
 
@@ -485,9 +515,20 @@ class SimpleVerbsService {
     // Debug removed for ES module compatibility
     await this.initialize();
     
+    const tellTimer = new TellOperationTimer(content);
+    tellTimer.startPhase('initialization');
+    
     try {
-      mcpDebugger.debug('Simple Verb: tell', { type, contentLength: content.length, lazy });
-      console.log('DEBUG TELL PARAMETERS:', { content: content.substring(0, 50), type, lazy, metadata });
+      logOperation('debug', 'tell', 'Tell operation started', { 
+        type, 
+        contentLength: content.length, 
+        lazy, 
+        contentPreview: content.substring(0, 50) + (content.length > 50 ? '...' : ''),
+        metadata: Object.keys(metadata)
+      });
+      
+      tellTimer.endPhase('initialization');
+      tellTimer.startPhase('content_processing');
       
       let result;
       let embedding;
@@ -528,10 +569,22 @@ class SimpleVerbsService {
           throw new Error(`Store does not have storeLazyContent method. Store type: ${this.memoryManager.store.constructor.name}`);
         }
         
-        mcpDebugger.info('Lazy tell operation completed', {
+        logOperation('info', 'tell', 'Lazy tell operation completed', {
           type,
           elementId,
           contentLength: content.length
+        });
+        
+        tellTimer.endPhase('content_processing');
+        const perfData = tellTimer.complete();
+        
+        // Log performance data in neutral format
+        logPerformance('tell', {
+          duration: perfData.totalDuration,
+          phases: perfData.phases,
+          success: true,
+          type,
+          lazy: true
         });
         
         return {
@@ -545,6 +598,7 @@ class SimpleVerbsService {
           concepts: 0,
           sessionCached: false,
           zptState: this.stateManager.getState(),
+          performance: perfData,
           message: `Successfully stored ${type} content lazily (without processing)`
         };
         
@@ -718,10 +772,23 @@ class SimpleVerbsService {
           { ...metadata, type: `tell_${type}`, storedAt: Date.now() }
         );
 
-        mcpDebugger.info('Tell operation completed with session caching', {
+        logOperation('info', 'tell', 'Tell operation completed with session caching', {
           type,
           conceptCount: concepts.length,
           sessionCacheSize: this.stateManager.sessionCache.interactions.size
+        });
+        
+        tellTimer.endPhase('content_processing');
+        const perfData = tellTimer.complete();
+        
+        // Log performance data in neutral format
+        logPerformance('tell', {
+          duration: perfData.totalDuration,
+          phases: perfData.phases,
+          success: true,
+          type,
+          lazy: false,
+          conceptCount: concepts.length
         });
         
         return {
@@ -734,18 +801,33 @@ class SimpleVerbsService {
           concepts: concepts.length,
           sessionCached: true,
           zptState: this.stateManager.getState(),
+          performance: perfData,
           message: `Successfully stored ${type} content`
         };
       }
       
     } catch (error) {
-      mcpDebugger.error('Tell verb failed', error);
+      const perfData = tellTimer.complete(error);
+      
+      // Log performance data for failed operation
+      logPerformance('tell', {
+        duration: perfData.totalDuration,
+        phases: perfData.phases,
+        success: false,
+        error: error.message,
+        type,
+        lazy
+      });
+      
+      logOperation('error', 'tell', 'Tell operation failed', { error: error.message });
+      
       return {
         success: false,
         verb: 'tell',
         type,
         lazy,
         error: error.message,
+        performance: perfData,
         zptState: this.stateManager.getState()
       };
     }
@@ -758,13 +840,23 @@ class SimpleVerbsService {
   async ask({ question, mode = 'standard', useContext = true, useHyDE = false, useWikipedia = false, useWikidata = false, threshold }) {
     await this.initialize();
     
+    const askTimer = new AskOperationTimer(question);
+    askTimer.startPhase('initialization');
+    
     try {
       const startTime = Date.now();
-      mcpDebugger.info('🔍 Starting Hybrid Ask operation', { 
-        question: question.substring(0, 100) + (question.length > 100 ? '...' : ''), 
-        mode, useContext, useHyDE, useWikipedia, useWikidata 
+      logOperation('info', 'ask', 'Ask operation started', {
+        questionPreview: question.substring(0, 100) + (question.length > 100 ? '...' : ''),
+        questionLength: question.length,
+        mode,
+        useContext,
+        useHyDE,
+        useWikipedia,
+        useWikidata
       });
-      mcpDebugger.debug('Simple Verb: ask (hybrid)', { question, mode, useContext, useHyDE, useWikipedia, useWikidata });
+      
+      askTimer.endPhase('initialization');
+      askTimer.startPhase('context_processing');
       
       // Use HybridContextManager for intelligent context processing
       console.log('🔥 CONSOLE: Simple-verbs ask() calling HybridContextManager.processQuery', { 
@@ -811,7 +903,7 @@ class SimpleVerbsService {
       this.stateManager.state.lastQuery = question;
       
       const totalDuration = Date.now() - startTime;
-      mcpDebugger.info('✅ Hybrid Ask operation complete', { 
+      logOperation('info', 'ask', '✅ Hybrid Ask operation complete', { 
         totalDuration: totalDuration + 'ms',
         success: hybridResult.success,
         mergeStrategy: hybridResult.mergeStrategy,
@@ -841,16 +933,47 @@ class SimpleVerbsService {
         sessionCacheStats: this.stateManager.getSessionCacheStats()
       };
       
+      // Complete timing and log performance data
+      const perfData = askTimer.complete();
+      result.performance = perfData;
+      
+      logPerformance('ask', {
+        duration: perfData.totalDuration,
+        phases: perfData.phases,
+        success: true,
+        questionLength: question.length,
+        contextItems: (hybridResult.localContextResults?.length || 0) + (hybridResult.enhancementResults?.length || 0),
+        mode
+      });
+      
+      return result;
+      
     } catch (error) {
+      const perfData = askTimer.complete(error);
       const totalDuration = Date.now() - startTime;
-      mcpDebugger.error('❌ Hybrid Ask operation failed', { error: error.message, totalDuration: totalDuration + 'ms' });
-      mcpDebugger.error('Hybrid Ask verb failed', error);
+      
+      // Log performance data for failed operation
+      logPerformance('ask', {
+        duration: perfData.totalDuration,
+        phases: perfData.phases,
+        success: false,
+        error: error.message,
+        questionLength: question.length,
+        mode
+      });
+      
+      logOperation('error', 'ask', 'Ask operation failed', { 
+        error: error.message, 
+        totalDuration: totalDuration + 'ms' 
+      });
+      
       return {
         success: false,
         verb: 'ask',
         question,
         error: error.message,
         hybridError: true,
+        performance: perfData,
         zptState: this.stateManager.getState(),
         sessionCacheStats: this.stateManager.getSessionCacheStats()
       };
@@ -866,7 +989,7 @@ class SimpleVerbsService {
     // Backward compatibility: merge legacy 'parameters' into 'options'
     const mergedOptions = { ...parameters, ...options };
     if (Object.keys(parameters).length > 0) {
-      mcpDebugger.debug('Legacy parameters detected, merged into options', { parameters, mergedOptions });
+      logOperation('debug', 'augment', 'Legacy parameters detected, merged into options', { parameters, mergedOptions });
     }
     
     console.log('🔄 [AUGMENT] Function called with:', { target, operation, options, parameters });
@@ -878,7 +1001,7 @@ class SimpleVerbsService {
         throw new Error(`Operation '${operation}' requires specific target content, not 'all'`);
       }
       
-      mcpDebugger.debug('Simple Verb: augment', { target, operation });
+      logOperation('debug', 'augment', 'Simple Verb: augment', { target: target.substring(0, 50), operation });
       console.log('🔄 [AUGMENT] About to enter switch statement:', { operation });
       
       let result;
@@ -950,7 +1073,7 @@ class SimpleVerbsService {
                       embeddingDimension: conceptEmbedding.length
                     });
                   } catch (error) {
-                    mcpDebugger.warn('Failed to generate embedding for concept', { concept, error: error.message });
+                    logOperation('warn', 'augment', 'Failed to generate embedding for concept', { concept, error: error.message });
                   }
                 }
               }
@@ -1035,13 +1158,13 @@ class SimpleVerbsService {
                       embeddingDimension: embedding.length
                     });
                     
-                    mcpDebugger.info('Processed lazy content', { 
+                    logOperation('info', 'augment', 'Processed lazy content', { 
                       id: item.id, 
                       conceptCount: concepts.length 
                     });
                     
                   } catch (itemError) {
-                    mcpDebugger.warn('Failed to process lazy item', { 
+                    logOperation('warn', 'augment', 'Failed to process lazy item', { 
                       id: item.id, 
                       error: itemError.message 
                     });
@@ -1080,7 +1203,7 @@ class SimpleVerbsService {
         case 'chunk_documents':
           // Chunk documents stored in SPARQL that haven't been processed yet
           console.log('🔄 [CHUNK_DOCUMENTS] Case triggered - starting chunking process');
-          mcpDebugger.info('chunk_documents case triggered', { target, mergedOptions });
+          logOperation('info', 'augment', 'chunk_documents case triggered', { target: target.substring(0, 50), mergedOptions });
           try {
             const {
               maxChunkSize = 2000,
@@ -1213,7 +1336,7 @@ class SimpleVerbsService {
                 
                 try {
                   console.log(`🧩 [CHUNK_DOCUMENTS] Processing document: ${textElementURI} (${content.length} chars)`);
-                  mcpDebugger.info('Starting document chunking', { textElementURI, contentLength: content.length });
+                  logOperation('info', 'augment', 'Starting document chunking', { textElementURI, contentLength: content.length });
                   
                   // Chunk the content
                   console.log('✂️ [CHUNK_DOCUMENTS] Chunking content...');
@@ -1223,7 +1346,7 @@ class SimpleVerbsService {
                   });
                   
                   console.log(`✂️ [CHUNK_DOCUMENTS] Created ${chunkingResult.chunks.length} chunks`);
-                  mcpDebugger.info('Document chunked successfully', { 
+                  logOperation('info', 'augment', 'Document chunked successfully', { 
                     textElementURI, 
                     chunkCount: chunkingResult.chunks.length,
                     avgChunkSize: chunkingResult.metadata?.chunking?.avgChunkSize || 'unknown'
@@ -1317,7 +1440,7 @@ class SimpleVerbsService {
                   });
                   
                   console.log(`✅ [CHUNK_DOCUMENTS] Successfully stored ${chunkingResult.chunks.length} chunks with embeddings to SPARQL`);
-                  mcpDebugger.info('Document chunks stored successfully', { 
+                  logOperation('info', 'augment', 'Document chunks stored successfully', { 
                     textElementURI, 
                     chunkCount: chunkingResult.chunks.length,
                     chunkListURI,
@@ -1390,7 +1513,7 @@ class SimpleVerbsService {
           // Extract concepts and generate embeddings using new ragno format
           try {
             console.log('🔮 [CONCEPT_EMBEDDINGS] Starting concept embedding generation...');
-            mcpDebugger.info('concept_embeddings operation started', { target, mergedOptions });
+            logOperation('info', 'augment', 'concept_embeddings operation started', { target: target.substring(0, 50), mergedOptions });
 
             const {
               maxConcepts = 20,
@@ -1483,7 +1606,7 @@ class SimpleVerbsService {
                   });
 
                   console.log(`✅ [CONCEPT_EMBEDDINGS] Stored concept: ${concept} (${conceptEmbedding.length}D)`);
-                  mcpDebugger.info('Concept embedding stored', { 
+                  logOperation('info', 'augment', 'Concept embedding stored', { 
                     concept, 
                     conceptUri, 
                     embeddingDimension: conceptEmbedding.length 
@@ -1495,7 +1618,7 @@ class SimpleVerbsService {
                     concept: concept,
                     error: conceptError.message
                   });
-                  mcpDebugger.warn('Failed to process concept embedding', { 
+                  logOperation('warn', 'augment', 'Failed to process concept embedding', { 
                     concept, 
                     error: conceptError.message 
                   });
@@ -1555,7 +1678,7 @@ class SimpleVerbsService {
           console.log('🔄 [AUGMENT] Entered default/auto case with operation:', operation);
           if (operation !== 'auto') {
             console.log('❌ [AUGMENT] WARNING: Unknown operation fell through to default case:', operation);
-            mcpDebugger.warn('Unknown augment operation fell through to default case', { operation, target });
+            logOperation('warn', 'augment', 'Unknown augment operation fell through to default case', { operation, target: target.substring(0, 50) });
           }
           
           // Automatic augmentation - extract concepts and use ZPT context
@@ -1583,7 +1706,7 @@ class SimpleVerbsService {
       };
       
     } catch (error) {
-      mcpDebugger.error('Augment verb failed', error);
+      logOperation('error', 'augment', 'Augment verb failed', { error: error.message });
       return {
         success: false,
         verb: 'augment',
@@ -1602,7 +1725,7 @@ class SimpleVerbsService {
     await this.initialize();
     
     try {
-      mcpDebugger.debug('Simple Verb: zoom', { level, query });
+      logOperation('debug', 'zoom', 'Simple Verb: zoom', { level, query });
       
       // Update state
       await this.stateManager.setZoom(level, query);
@@ -1621,7 +1744,7 @@ class SimpleVerbsService {
       if (query) {
         try {
           const navParams = this.stateManager.getNavigationParams(query);
-          mcpDebugger.debug('Zoom navigation params:', navParams);
+          logOperation('debug', 'zoom', 'Zoom navigation params', navParams);
           
           // Ensure proper parameter format for ZPT navigation
           const zptParams = {
@@ -1631,13 +1754,13 @@ class SimpleVerbsService {
             tilt: navParams.tilt || 'keywords'
           };
           
-          mcpDebugger.debug('Calling ZPT navigate with params:', zptParams);
+          logOperation('debug', 'zoom', 'Calling ZPT navigate with params', zptParams);
           const navResult = await this.zptService.navigate(zptParams);
           
           result.navigation = navResult;
           result.query = query;
         } catch (navError) {
-          mcpDebugger.warn('ZPT navigation failed in zoom verb:', navError.message);
+          logOperation('warn', 'zoom', 'ZPT navigation failed in zoom verb', { error: navError.message });
           // Navigation failed but zoom state change succeeded - this is acceptable
           result.navigation = {
             success: false,
@@ -1652,7 +1775,7 @@ class SimpleVerbsService {
       return result;
       
     } catch (error) {
-      mcpDebugger.error('Zoom verb failed', error);
+      logOperation('error', 'zoom', 'Zoom verb failed', { error: error.message });
       return {
         success: false,
         verb: 'zoom',
@@ -1670,7 +1793,7 @@ class SimpleVerbsService {
     await this.initialize();
     
     try {
-      mcpDebugger.debug('Simple Verb: pan', panParams);
+      logOperation('debug', 'pan', 'Simple Verb: pan', panParams);
       
       // Update state with pan parameters
       await this.stateManager.setPan(panParams);
@@ -1694,7 +1817,7 @@ class SimpleVerbsService {
       return result;
       
     } catch (error) {
-      mcpDebugger.error('Pan verb failed', error);
+      logOperation('error', 'pan', 'Pan verb failed', { error: error.message });
       return {
         success: false,
         verb: 'pan',
@@ -1712,7 +1835,7 @@ class SimpleVerbsService {
     await this.initialize();
     
     try {
-      mcpDebugger.debug('Simple Verb: tilt', { style, query });
+      logOperation('debug', 'tilt', 'Simple Verb: tilt', { style, query });
       
       // Update state
       await this.stateManager.setTilt(style, query);
@@ -1740,7 +1863,7 @@ class SimpleVerbsService {
       return result;
       
     } catch (error) {
-      mcpDebugger.error('Tilt verb failed', error);
+      logOperation('error', 'tilt', 'Tilt verb failed', { error: error.message });
       return {
         success: false,
         verb: 'tilt',
@@ -1758,7 +1881,7 @@ class SimpleVerbsService {
     await this.initialize();
     
     try {
-      mcpDebugger.debug('Simple Verb: inspect', { what, details });
+      logOperation('debug', 'inspect', 'Simple Verb: inspect', { what, details });
       
       let result = {
         success: true,
@@ -1821,7 +1944,7 @@ class SimpleVerbsService {
       return result;
       
     } catch (error) {
-      mcpDebugger.error('Inspect verb failed', error);
+      logOperation('error', 'inspect', 'Inspect verb failed', { error: error.message });
       return {
         success: false,
         verb: 'inspect',
@@ -1839,7 +1962,7 @@ class SimpleVerbsService {
     await this.initialize();
     
     try {
-      mcpDebugger.debug('Simple Verb: remember', { domain, domainId, importance, contentLength: content.length });
+      logOperation('debug', 'remember', 'Simple Verb: remember', { domain, domainId, importance, contentLength: content.length });
       
       // Create domain if needed
       if (domainId && domain !== 'session') {
@@ -1880,7 +2003,7 @@ class SimpleVerbsService {
       };
       
     } catch (error) {
-      mcpDebugger.error('Remember verb failed:', error);
+      logOperation('error', 'remember', 'Remember verb failed', { error: error.message });
       return {
         success: false,
         verb: 'remember',
@@ -1896,7 +2019,7 @@ class SimpleVerbsService {
     await this.initialize();
     
     try {
-      mcpDebugger.debug('Simple Verb: forget', { target, strategy, fadeFactor });
+      logOperation('debug', 'forget', 'Simple Verb: forget', { target, strategy, fadeFactor });
       
       let result;
       
@@ -1932,7 +2055,7 @@ class SimpleVerbsService {
       };
       
     } catch (error) {
-      mcpDebugger.error('Forget verb failed:', error);
+      logOperation('error', 'forget', 'Forget verb failed', { error: error.message });
       return {
         success: false,
         verb: 'forget',
@@ -1948,7 +2071,7 @@ class SimpleVerbsService {
     await this.initialize();
     
     try {
-      mcpDebugger.debug('Simple Verb: recall', { query, domains, relevanceThreshold, maxResults });
+      logOperation('debug', 'recall', 'Simple Verb: recall', { query: query.substring(0, 50), domains, relevanceThreshold, maxResults });
       
       // Build ZPT state for memory retrieval
       const zptState = {
@@ -1987,7 +2110,7 @@ class SimpleVerbsService {
       };
       
     } catch (error) {
-      mcpDebugger.error('Recall verb failed:', error);
+      logOperation('error', 'recall', 'Recall verb failed', { error: error.message });
       return {
         success: false,
         verb: 'recall',
@@ -2003,7 +2126,7 @@ class SimpleVerbsService {
     await this.initialize();
     
     try {
-      mcpDebugger.debug('Simple Verb: project_context', { projectId, action, metadata });
+      logOperation('debug', 'project_context', 'Simple Verb: project_context', { projectId, action, metadata });
       
       let result;
       
@@ -2055,7 +2178,7 @@ class SimpleVerbsService {
       };
       
     } catch (error) {
-      mcpDebugger.error('Project context verb failed:', error);
+      logOperation('error', 'project_context', 'Project context verb failed', { error: error.message });
       return {
         success: false,
         verb: 'project_context',
@@ -2071,7 +2194,7 @@ class SimpleVerbsService {
     await this.initialize();
     
     try {
-      mcpDebugger.debug('Simple Verb: fade_memory', { domain, fadeFactor, transition, preserveInstructions });
+      logOperation('debug', 'fade_memory', 'Simple Verb: fade_memory', { domain, fadeFactor, transition, preserveInstructions });
       
       const result = await this.memoryDomainManager.switchDomain(
         [domain],
@@ -2094,7 +2217,7 @@ class SimpleVerbsService {
       };
       
     } catch (error) {
-      mcpDebugger.error('Fade memory verb failed:', error);
+      logOperation('error', 'fade_memory', 'Fade memory verb failed', { error: error.message });
       return {
         success: false,
         verb: 'fade_memory',
@@ -2111,7 +2234,7 @@ const simpleVerbsService = new SimpleVerbsService();
  * Register Simple Verbs with MCP Server
  */
 export function registerSimpleVerbs(server) {
-  mcpDebugger.info('Simple MCP Verbs service initialized for centralized handler');
+  logOperation('info', 'initialization', 'Simple MCP Verbs service initialized for centralized handler');
   // Simple Verbs are now handled by the centralized tool call handler in index.js
   // This function now just initializes the service - tool registration happens centrally
 }

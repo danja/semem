@@ -1,6 +1,3 @@
-import { setupDefaultLogging } from 'LoggingConfig.js';
-const loggers = await setupDefaultLogging();
-const logger = loggers.system;
 /**
  * Dedicated log cycling and archive management utilities
  * Handles automated log rotation, compression, and cleanup
@@ -10,7 +7,11 @@ import fs from 'fs';
 import path from 'path';
 import zlib from 'zlib';
 import { promisify } from 'util';
-import { LOG_DIR, CURRENT_LOG_DIR, ARCHIVE_LOG_DIR } from './LoggingConfig.js';
+import { LOG_DIR } from './LoggingConfig.js';
+
+// Define log directory structure
+const CURRENT_LOG_DIR = path.join(LOG_DIR, 'current');
+const ARCHIVE_LOG_DIR = path.join(LOG_DIR, 'archive');
 
 const gzip = promisify(zlib.gzip);
 const gunzip = promisify(zlib.gunzip);
