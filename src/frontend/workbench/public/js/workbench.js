@@ -8,6 +8,7 @@ import { stateManager } from './services/StateManager.js';
 import { consoleService } from './services/ConsoleService.js';
 import ConsoleComponent from './components/ConsoleComponent.js';
 import MemoryComponent from './components/MemoryComponent.js';
+import ChatComponent from './components/ChatComponent.js';
 import DomUtils from './utils/DomUtils.js';
 
 class WorkbenchApp {
@@ -237,6 +238,7 @@ class WorkbenchApp {
     this.initializeDashboardComponent();
     this.initializeConsoleComponent();
     this.initializeMemoryComponent();
+    this.initializeChatComponent();
   }
 
   initializeTellComponent() {
@@ -298,6 +300,20 @@ class WorkbenchApp {
       this.components.memory.init().catch(error => {
         consoleService.error('Failed to initialize Memory Component', error);
       });
+    }
+  }
+
+  initializeChatComponent() {
+    // Initialize the chat component
+    const chatContainer = DomUtils.$('#chat-container');
+    if (chatContainer) {
+      this.components.chat = new ChatComponent();
+      this.components.chat.init().catch(error => {
+        consoleService.error('Failed to initialize Chat Component', error);
+        console.error('❌ Chat component initialization failed:', error);
+      });
+    } else {
+      console.warn('⚠️ Chat container not found, chat component not initialized');
     }
   }
 

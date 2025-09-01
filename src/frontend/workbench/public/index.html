@@ -16,22 +16,8 @@
                 <div class="session-info">
                     <h1 class="workbench-title">
                         <span class="title-icon">🧠</span>
-                        Semantic Memory
+                        Semem
                     </h1>
-                    <div class="session-stats">
-                        <span class="stat-item">
-                            <span class="stat-icon">💭</span>
-                            <span id="interactions-count">0</span> interactions
-                        </span>
-                        <span class="stat-item">
-                            <span class="stat-icon">🧩</span>
-                            <span id="concepts-count">0</span> concepts
-                        </span>
-                        <span class="stat-item">
-                            <span class="stat-icon">⚡</span>
-                            <span id="session-duration">0s</span>
-                        </span>
-                    </div>
                 </div>
                 
                 <div class="zpt-state">
@@ -45,14 +31,58 @@
                     </div>
                 </div>
                 
-                <div class="connection-status">
-                    <div class="status-indicator" id="connection-status">
-                        <span class="status-dot"></span>
-                        <span class="status-text">Connecting...</span>
-                    </div>
-                </div>
             </div>
         </header>
+
+        <!-- Chat Interface -->
+        <section id="chat-container" class="chat-container">
+            <div class="chat-header">
+                <div class="chat-title">
+                    <span class="chat-icon">💬</span>
+                    <h3>Semem Chat</h3>
+                </div>
+                <button type="button" id="chat-toggle" class="chat-toggle" aria-label="Toggle chat">
+                    <span class="toggle-text">Minimize Chat</span>
+                    <span class="toggle-icon">▼</span>
+                </button>
+            </div>
+            
+            <div id="chat-content" class="chat-content">
+                <div id="chat-messages" class="chat-messages">
+                    <!-- Chat messages will be populated by ChatComponent -->
+                </div>
+                
+                <div class="chat-input-container">
+                    <form id="chat-form" class="chat-form">
+                        <div class="input-group">
+                            <textarea 
+                                id="chat-input" 
+                                name="message"
+                                class="chat-input"
+                                placeholder="Type a message or use / for commands..."
+                                rows="1"
+                                required
+                            ></textarea>
+                            <button 
+                                type="submit" 
+                                id="chat-send" 
+                                class="chat-send-button"
+                                aria-label="Send message"
+                            >
+                                <span class="button-icon">📤</span>
+                                <span class="button-loader" style="display: none;">⏳</span>
+                            </button>
+                        </div>
+                        
+                        <div class="chat-hints">
+                            <span class="hint-item">💡 Try: /ask What is semantic memory?</span>
+                            <span class="hint-item">💡 Try: /tell Today I learned about...</span>
+                            <span class="hint-item">💡 Type naturally for conversation</span>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </section>
 
         <!-- Main Content Area -->
         <main class="main-content">
@@ -547,10 +577,18 @@
                 <!-- Console Column -->
                 <div class="verb-column console-column">
                     <div class="column-header">
-                        <h2 class="verb-title">
-                            <span class="verb-icon">📋</span>
-                            Console
-                        </h2>
+                        <div class="console-header-top">
+                            <h2 class="verb-title">
+                                <span class="verb-icon">📋</span>
+                                Console
+                            </h2>
+                            <div class="connection-status">
+                                <div class="status-indicator" id="connection-status">
+                                    <span class="status-dot"></span>
+                                    <span class="status-text">Connecting...</span>
+                                </div>
+                            </div>
+                        </div>
                         <p class="verb-description">Monitor operations and logs</p>
                     </div>
                     

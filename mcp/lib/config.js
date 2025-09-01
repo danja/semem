@@ -35,12 +35,24 @@ export async function createLLMConnector(configPath = null) {
     for (const provider of sortedProviders) {
       console.log(`Trying LLM provider: ${provider.type} (priority: ${provider.priority})`);
       
-      if (provider.type === 'mistral' && provider.apiKey) {
-        console.log('✅ Creating Mistral connector (highest priority)...');
-        return new MistralConnector(provider.apiKey);
-      } else if (provider.type === 'claude' && provider.apiKey) {
-        console.log('✅ Creating Claude connector...');
-        return new ClaudeConnector(provider.apiKey);
+      if (provider.type === 'mistral') {
+        // Get actual API key from environment variables
+        const apiKey = process.env.MISTRAL_API_KEY;
+        if (apiKey) {
+          console.log('✅ Creating Mistral connector (highest priority)...');
+          return new MistralConnector(apiKey);
+        } else {
+          console.log(`❌ Mistral provider configured but MISTRAL_API_KEY environment variable not set`);
+        }
+      } else if (provider.type === 'claude') {
+        // Get actual API key from environment variables
+        const apiKey = process.env.CLAUDE_API_KEY;
+        if (apiKey) {
+          console.log('✅ Creating Claude connector...');
+          return new ClaudeConnector(apiKey);
+        } else {
+          console.log(`❌ Claude provider configured but CLAUDE_API_KEY environment variable not set`);
+        }
       } else if (provider.type === 'ollama') {
         console.log('✅ Creating Ollama connector (fallback)...');
         return new OllamaConnector();
@@ -81,13 +93,19 @@ export async function createEmbeddingConnector(configPath = null) {
     for (const provider of sortedProviders) {
       console.log(`Trying embedding provider: ${provider.type} (priority: ${provider.priority})`);
       
-      if (provider.type === 'nomic' && provider.apiKey) {
-        console.log('✅ Creating Nomic embedding connector (highest priority)...');
-        return EmbeddingConnectorFactory.createConnector({
-          provider: 'nomic',
-          apiKey: provider.apiKey,
-          model: provider.embeddingModel || 'nomic-embed-text-v1.5'
-        });
+      if (provider.type === 'nomic') {
+        // Get actual API key from environment variables
+        const apiKey = process.env.NOMIC_API_KEY;
+        if (apiKey) {
+          console.log('✅ Creating Nomic embedding connector (highest priority)...');
+          return EmbeddingConnectorFactory.createConnector({
+            provider: 'nomic',
+            apiKey: apiKey,
+            model: provider.embeddingModel || 'nomic-embed-text-v1.5'
+          });
+        } else {
+          console.log(`❌ Nomic provider configured but NOMIC_API_KEY environment variable not set`);
+        }
       } else if (provider.type === 'ollama') {
         console.log('✅ Creating Ollama embedding connector (fallback)...');
         const ollamaBaseUrl = process.env.OLLAMA_HOST || 'http://localhost:11434';

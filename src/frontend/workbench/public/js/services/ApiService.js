@@ -131,6 +131,20 @@ export class ApiService {
   }
 
   /**
+   * CHAT - Interactive chat with slash command support and LLM inference
+   * @param {Object} params - Chat parameters
+   * @param {string} params.message - User message or command
+   * @param {Object} params.context - Optional conversation context
+   * @returns {Promise<Object>} Chat result with response content and routing information
+   */
+  async chat({ message, context = {} }) {
+    return this.makeRequest('/chat', {
+      method: 'POST',
+      body: JSON.stringify({ message, context })
+    });
+  }
+
+  /**
    * AUGMENT - Run operations on content
    * @param {Object} params - Augment parameters
    * @param {string} params.target - Target content to analyze

@@ -460,6 +460,13 @@ class SimpleVerbsService {
   }
 
   /**
+   * Get the LLM handler for chat operations
+   */
+  get llmHandler() {
+    return this.memoryManager?.llmHandler;
+  }
+
+  /**
    * Initialize service with required dependencies
    */
   async initialize() {

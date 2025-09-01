@@ -6,6 +6,7 @@
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import fs from 'fs/promises';
 
 // Load environment variables first, before any other imports
 const __filename = fileURLToPath(import.meta.url);
@@ -87,6 +88,112 @@ function createMinimalServer() {
   });
 
   return server;
+}
+
+/**
+ * Handle slash commands in chat
+ */
+async function handleChatCommand(command, simpleVerbsService) {
+  const commandParts = command.split(' ');
+  const cmd = commandParts[0].toLowerCase();
+  const args = commandParts.slice(1).join(' ').trim();
+
+  switch (cmd) {
+    case '/help':
+      return {
+        success: true,
+        messageType: 'help',
+        content: `Available Commands:
+/help          - Show this help message
+/ask [query]   - Search your semantic memory for information
+/tell [info]   - Store new information in your semantic memory
+
+Examples:
+/ask What did I learn about machine learning?
+/tell The meeting is scheduled for tomorrow at 2pm
+
+You can also chat naturally - I'll understand your intentions and route appropriately.`,
+        timestamp: new Date().toISOString()
+      };
+
+    case '/ask':
+      if (!args) {
+        return {
+          success: false,
+          messageType: 'error',
+          content: 'Please provide a question after /ask. Example: /ask What is machine learning?',
+          timestamp: new Date().toISOString()
+        };
+      }
+      
+      try {
+        await simpleVerbsService.initialize();
+        const result = await simpleVerbsService.ask({ 
+          question: args,
+          mode: 'standard',
+          useContext: true
+        });
+        
+        return {
+          success: true,
+          messageType: 'ask_result',
+          content: result.answer || 'No answer found for your question.',
+          originalMessage: command,
+          routing: 'ask_command',
+          timestamp: new Date().toISOString()
+        };
+      } catch (error) {
+        return {
+          success: false,
+          messageType: 'error',
+          content: `Error processing ask command: ${error.message}`,
+          timestamp: new Date().toISOString()
+        };
+      }
+
+    case '/tell':
+      if (!args) {
+        return {
+          success: false,
+          messageType: 'error',
+          content: 'Please provide information after /tell. Example: /tell The project deadline is next Friday.',
+          timestamp: new Date().toISOString()
+        };
+      }
+      
+      try {
+        await simpleVerbsService.initialize();
+        const result = await simpleVerbsService.tell({ 
+          content: args,
+          type: 'interaction',
+          metadata: { source: 'chat_command', command: '/tell' }
+        });
+        
+        return {
+          success: true,
+          messageType: 'tell_result',
+          content: `Information stored successfully: "${args}"`,
+          originalMessage: command,
+          routing: 'tell_command',
+          timestamp: new Date().toISOString()
+        };
+      } catch (error) {
+        return {
+          success: false,
+          messageType: 'error',
+          content: `Error storing information: ${error.message}`,
+          timestamp: new Date().toISOString()
+        };
+      }
+
+    default:
+      return {
+        success: false,
+        messageType: 'error',
+        content: `Unknown command: ${cmd}. Type /help to see available commands.`,
+        timestamp: new Date().toISOString()
+      };
+  }
 }
 
 /**
@@ -499,11 +606,159 @@ async function startOptimizedServer() {
         }
       });
 
+      // CHAT endpoint - Interactive chat with slash command support
+      app.post('/chat', async (req, res) => {
+        try {
+          const { message, context = {} } = req.body;
+          
+          console.log('🚀 [CHAT] Chat endpoint called with message:', message.substring(0, 50) + '...');
+          
+          if (!message) {
+            return res.status(400).json({ error: 'Message is required' });
+          }
+          
+          // Load system prompt
+          let systemPrompt = '';
+          try {
+            const promptPath = path.join(projectRoot, 'prompts/system/chat.md');
+            systemPrompt = await fs.readFile(promptPath, 'utf8');
+          } catch (error) {
+            console.warn('⚠️ Could not load chat system prompt:', error.message);
+            systemPrompt = 'You are a helpful assistant for the Semem semantic memory system.';
+          }
+          
+          // Check for slash commands
+          const trimmedMessage = message.trim();
+          if (trimmedMessage.startsWith('/')) {
+            const commandResult = await handleChatCommand(trimmedMessage, simpleVerbsService);
+            return res.json(commandResult);
+          }
+          
+          // For natural language, infer intention using LLM
+          await simpleVerbsService.initialize();
+          const llmHandler = simpleVerbsService.llmHandler;
+          
+          console.log('🔍 [CHAT] Debug - simpleVerbsService initialized:', !!simpleVerbsService);
+          console.log('🔍 [CHAT] Debug - memoryManager exists:', !!simpleVerbsService.memoryManager);
+          console.log('🔍 [CHAT] Debug - llmHandler exists:', !!llmHandler);
+          console.log('🔍 [CHAT] Debug - llmHandler type:', typeof llmHandler);
+          
+          if (!llmHandler) {
+            return res.json({
+              success: false,
+              messageType: 'error',
+              content: 'LLM service not available. Please check configuration.',
+              timestamp: new Date().toISOString()
+            });
+          }
+          
+          // Use LLM to determine intent and generate response
+          const chatPrompt = `${systemPrompt}
+
+User Message: ${message}
+Context: ${JSON.stringify(context, null, 2)}
+
+Based on the user's message, determine if this should be routed to:
+1. ASK endpoint (if asking for information/querying knowledge)
+2. TELL endpoint (if providing information to store)  
+3. Direct chat response (if general conversation/help)
+
+Respond with a JSON object containing:
+- action: "ask", "tell", or "chat"
+- content: the response content
+- reasoning: brief explanation of why you chose this action
+
+If action is "ask" or "tell", also include:
+- extractedQuery: the query/content to send to the endpoint`;
+
+          const llmResponse = await llmHandler.generateResponse(chatPrompt);
+          let parsedResponse;
+          
+          try {
+            // Extract JSON from the response
+            const jsonMatch = llmResponse.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+              parsedResponse = JSON.parse(jsonMatch[0]);
+            } else {
+              // Fallback: treat as direct chat
+              parsedResponse = {
+                action: 'chat',
+                content: llmResponse,
+                reasoning: 'Could not parse structured response'
+              };
+            }
+          } catch (parseError) {
+            parsedResponse = {
+              action: 'chat',
+              content: llmResponse,
+              reasoning: 'JSON parse error, treating as direct response'
+            };
+          }
+          
+          // Route based on inferred action
+          if (parsedResponse.action === 'ask' && parsedResponse.extractedQuery) {
+            const askResult = await simpleVerbsService.ask({ 
+              question: parsedResponse.extractedQuery,
+              mode: 'standard',
+              useContext: true
+            });
+            
+            return res.json({
+              success: true,
+              messageType: 'ask_result',
+              content: askResult.answer || 'No answer found.',
+              originalMessage: message,
+              routing: 'ask',
+              reasoning: parsedResponse.reasoning,
+              timestamp: new Date().toISOString()
+            });
+            
+          } else if (parsedResponse.action === 'tell' && parsedResponse.extractedQuery) {
+            const tellResult = await simpleVerbsService.tell({ 
+              content: parsedResponse.extractedQuery,
+              type: 'interaction',
+              metadata: { source: 'chat', originalMessage: message }
+            });
+            
+            return res.json({
+              success: true,
+              messageType: 'tell_result',
+              content: `Information stored successfully. ${parsedResponse.content}`,
+              originalMessage: message,
+              routing: 'tell',
+              reasoning: parsedResponse.reasoning,
+              timestamp: new Date().toISOString()
+            });
+            
+          } else {
+            // Direct chat response
+            return res.json({
+              success: true,
+              messageType: 'chat',
+              content: parsedResponse.content,
+              originalMessage: message,
+              routing: 'direct',
+              reasoning: parsedResponse.reasoning,
+              timestamp: new Date().toISOString()
+            });
+          }
+          
+        } catch (error) {
+          res.status(500).json({ 
+            success: false, 
+            verb: 'chat', 
+            error: error.message,
+            timestamp: new Date().toISOString()
+          });
+        }
+      });
+
       console.log('✅ [START] Simple Verbs REST endpoints configured:');
       console.log('   POST /tell - Add resources to the system');
       console.log('   POST /ask - Query the system');
       console.log('   POST /augment - Augment content');
       console.log('   POST /upload-document - Upload and process document files');
+      console.log('   POST /chat - Interactive chat with slash command support');
       console.log('   POST /zoom - Set abstraction level');
       console.log('   POST /pan - Set domain/filtering');
       console.log('   POST /tilt - Set view filter');
