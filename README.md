@@ -11,6 +11,8 @@
 
 ![Semem Workbench](docs/images/workbench.png)
 
+**Interactive Chat Interface**: The workbench includes a natural language chat interface with slash commands (`/ask`, `/tell`, `/help`) and automatic URL/file ingestion. See [Chat Documentation](docs/manual/chat.md) for details.
+
  The [hints](https://danja.github.io/semem/manual/hints.html) page might help.
 
 **[Semem Documentation](https://danja.github.io/semem/)** - *sprawling*
