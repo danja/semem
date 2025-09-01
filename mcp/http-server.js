@@ -163,6 +163,120 @@ You can also chat naturally - I'll understand your intentions and route appropri
       
       try {
         await simpleVerbsService.initialize();
+        
+        // Check if the content contains URLs or file paths for automatic routing to ingest
+        const urlPattern = /https?:\/\/[^\s]+/gi;
+        const hasUrls = urlPattern.test(args);
+        
+        // Check for file paths only after removing URLs to avoid conflicts
+        const textWithoutUrls = args.replace(/https?:\/\/[^\s]+/gi, '');
+        const filePathPattern = /(?:\.\/|\/|~\/|[a-zA-Z]:\\)[\w\-._\/\\]+\.[\w]+/gi;
+        const hasFilePaths = filePathPattern.test(textWithoutUrls);
+        
+        // If URLs or file paths are detected, route to document processing
+        if (hasUrls || hasFilePaths) {
+          const urlPattern2 = /https?:\/\/[^\s]+/gi;
+          const urls = args.match(urlPattern2) || [];
+          const filePathPattern2 = /(?:\.\/|\/|~\/|[a-zA-Z]:\\)[\w\-._\/\\]+\.[\w]+/gi;
+          const filePaths = textWithoutUrls.match(filePathPattern2) || [];
+          
+          // For now, handle the first detected URL or file path
+          const target = urls[0] || filePaths[0];
+          
+          if (target) {
+            try {
+              // Import DocumentProcessor for handling URLs/files
+              const { DocumentProcessor } = await import('./tools/document-tools.js');
+              const SPARQLHelper = (await import('../src/services/sparql/SPARQLHelper.js')).default;
+              const Config = (await import('../src/Config.js')).default;
+              
+              // Initialize components  
+              const config = new Config(process.env.SEMEM_CONFIG_PATH || 'config/config.json');
+              await config.init();
+              
+              const storageConfig = config.get('storage.options');
+              const sparqlHelper = new SPARQLHelper(storageConfig.update, {
+                user: storageConfig.user,
+                password: storageConfig.password
+              });
+              
+              const processor = new DocumentProcessor(config, sparqlHelper, simpleVerbsService);
+              
+              // Determine if it's a URL or file path and process accordingly
+              if (urls.length > 0) {
+                // Process as URL
+                const result = await processor.processUploadedDocument({
+                  fileUrl: target,
+                  filename: target.split('/').pop() || 'document',
+                  mediaType: 'application/octet-stream',
+                  documentType: 'url',
+                  metadata: { 
+                    source: 'chat_tell_command',
+                    originalMessage: args,
+                    detectionType: 'url'
+                  }
+                });
+                
+                return {
+                  success: true,
+                  messageType: 'tell_ingest_result',
+                  content: `URL processed and content ingested: "${target}"`,
+                  originalMessage: command,
+                  routing: 'tell_ingest_url',
+                  target: target,
+                  processingResult: result,
+                  timestamp: new Date().toISOString()
+                };
+              } else if (filePaths.length > 0) {
+                // Process as file path
+                const fs = await import('fs');
+                const path = await import('path');
+                
+                // Check if file exists
+                if (!fs.existsSync(target)) {
+                  return {
+                    success: false,
+                    messageType: 'error',
+                    content: `File not found: "${target}"`,
+                    originalMessage: command,
+                    routing: 'tell_ingest_error',
+                    timestamp: new Date().toISOString()
+                  };
+                }
+                
+                // For file paths, we need to convert to a URL or handle differently
+                // For now, store the file path information
+                const result = await simpleVerbsService.tell({ 
+                  content: `File reference: ${target}\nContext: ${args}`,
+                  type: 'file_reference',
+                  metadata: { 
+                    source: 'chat_command', 
+                    command: '/tell',
+                    detectionType: 'file_path',
+                    filePath: target,
+                    originalMessage: args
+                  }
+                });
+                
+                return {
+                  success: true,
+                  messageType: 'tell_ingest_result',
+                  content: `File path detected and referenced: "${target}"`,
+                  originalMessage: command,
+                  routing: 'tell_ingest_file',
+                  target: target,
+                  note: 'File path stored as reference. Use upload-document endpoint for full file processing.',
+                  timestamp: new Date().toISOString()
+                };
+              }
+            } catch (processingError) {
+              // Fall back to regular tell if document processing fails
+              console.warn('Document processing failed, falling back to regular tell:', processingError.message);
+            }
+          }
+        }
+        
+        // Default behavior: regular tell command
         const result = await simpleVerbsService.tell({ 
           content: args,
           type: 'interaction',
