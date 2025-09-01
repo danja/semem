@@ -101,6 +101,13 @@ export default class ChatComponent {
             });
 
             // Add response to UI
+            console.log('📋 [CHAT] Adding response message:', {
+                content: response.content?.substring(0, 100) + '...',
+                messageType: response.messageType,
+                routing: response.routing,
+                success: response.success
+            });
+            
             this.addMessage({
                 content: response.content,
                 messageType: response.messageType || 'chat',
@@ -227,6 +234,13 @@ export default class ChatComponent {
     }
 
     addMessage({ content, messageType, routing, reasoning, timestamp }) {
+        console.log('📨 [CHAT] addMessage called with:', {
+            contentLength: content?.length,
+            messageType,
+            routing,
+            timestamp
+        });
+        
         const messageElement = DomUtils.createElement('div', {
             className: `chat-message ${messageType}`
         });
@@ -266,11 +280,21 @@ export default class ChatComponent {
 
     formatMessageContent(content) {
         // Basic formatting: preserve line breaks and handle basic markdown-like syntax
-        return content
+        console.log('📝 [CHAT] Formatting content:', content);
+        
+        if (!content) {
+            console.warn('❌ [CHAT] No content to format');
+            return 'No content available';
+        }
+        
+        const formatted = content
             .replace(/\n/g, '<br>')
             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
             .replace(/\*(.*?)\*/g, '<em>$1</em>')
             .replace(/`(.*?)`/g, '<code>$1</code>');
+            
+        console.log('✅ [CHAT] Formatted content:', formatted.substring(0, 100) + '...');
+        return formatted;
     }
 
     scrollToBottom() {

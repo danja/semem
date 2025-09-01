@@ -10,36 +10,13 @@
 </head>
 <body>
     <div id="app" class="workbench-app">
-        <!-- Session Dashboard Header -->
-        <header id="session-dashboard" class="session-dashboard">
-            <div class="dashboard-content">
-                <div class="session-info">
-                    <h1 class="workbench-title">
-                        <span class="title-icon">🧠</span>
-                        Semem
-                    </h1>
-                </div>
-                
-                <div class="zpt-state">
-                    <div class="zpt-display">
-                        <span class="zpt-label">ZPT:</span>
-                        <span class="zpt-value" id="zoom-state">entity</span>
-                        <span class="zpt-separator">/</span>
-                        <span class="zpt-value" id="pan-state">all</span>
-                        <span class="zpt-separator">/</span>
-                        <span class="zpt-value" id="tilt-state">keywords</span>
-                    </div>
-                </div>
-                
-            </div>
-        </header>
 
         <!-- Chat Interface -->
         <section id="chat-container" class="chat-container">
             <div class="chat-header">
                 <div class="chat-title">
-                    <span class="chat-icon">💬</span>
-                    <h3>Semem Chat</h3>
+                    <span class="chat-icon">🧠</span>
+                    <h1>Semem</h1>
                 </div>
                 <button type="button" id="chat-toggle" class="chat-toggle" aria-label="Toggle chat">
                     <span class="toggle-text">Minimize Chat</span>
@@ -385,6 +362,16 @@
                             <span class="verb-icon">🧭</span>
                             Navigate
                         </h2>
+                        <div class="zpt-state">
+                            <div class="zpt-display">
+                                <span class="zpt-label">ZPT:</span>
+                                <span class="zpt-value" id="zoom-state">entity</span>
+                                <span class="zpt-separator">/</span>
+                                <span class="zpt-value" id="pan-state">all</span>
+                                <span class="zpt-separator">/</span>
+                                <span class="zpt-value" id="tilt-state">keywords</span>
+                            </div>
+                        </div>
                         <p class="verb-description">Control knowledge perspective</p>
                     </div>
                     
@@ -587,6 +574,22 @@
                                     <span class="status-dot"></span>
                                     <span class="status-text">Connecting...</span>
                                 </div>
+                            </div>
+                        </div>
+                        <div class="console-stats">
+                            <div class="session-stats">
+                                <span class="stat-item">
+                                    <span class="stat-icon">💭</span>
+                                    <span id="interactions-count">0</span> interactions
+                                </span>
+                                <span class="stat-item">
+                                    <span class="stat-icon">🧩</span>
+                                    <span id="concepts-count">0</span> concepts
+                                </span>
+                                <span class="stat-item">
+                                    <span class="stat-icon">⚡</span>
+                                    <span id="session-duration">0s</span>
+                                </span>
                             </div>
                         </div>
                         <p class="verb-description">Monitor operations and logs</p>

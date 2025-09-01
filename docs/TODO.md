@@ -3,8 +3,12 @@
 * clean src/frontend/_*
 * move prompts to src/
 * move mcp to src/
-* move ingester to utils/
 * use src/utils logger not console
 * repl
 * tell with filename/URL
 * danbri frontend
+* console - replace json with words, add more logging
+
+* server instance
+* proxy from server
+* docker install

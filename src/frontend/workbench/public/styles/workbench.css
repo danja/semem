@@ -1530,10 +1530,10 @@ body {
     color: var(--text-primary);
 }
 
-.chat-title h3 {
+.chat-title h1 {
     margin: 0;
-    font-size: 1.1rem;
-    font-weight: 600;
+    font-size: 1.5rem;
+    font-weight: 700;
 }
 
 .chat-icon {
@@ -1620,14 +1620,24 @@ body {
 
 .chat-message.help {
     align-self: flex-start;
-    background: #f0f9ff;
-    color: var(--text-primary);
+    background: #f8fafc;
+    color: #1f2937;
     border-left: 3px solid var(--primary-color);
+    border: 1px solid var(--border-color);
 }
 
+.chat-message.help .message-content {
+    color: #1f2937 !important;
+    font-weight: 500;
+}
+
+/* Ensure all message content is visible */
 .message-content {
+    color: inherit !important;
     line-height: var(--line-height-normal);
     white-space: pre-wrap;
+    min-height: 20px;
+    padding: var(--space-xs) 0;
 }
 
 .message-content code {
@@ -1918,4 +1928,79 @@ body {
 .console-column .status-dot {
     width: 8px;
     height: 8px;
+}
+
+/* Console stats section */
+.console-stats {
+    margin: var(--space-sm) 0;
+    padding: var(--space-sm);
+    background: var(--bg-secondary);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+}
+
+.console-stats .session-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+    justify-content: space-around;
+}
+
+.console-stats .stat-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.console-stats .stat-icon {
+    font-size: 1rem;
+}
+
+/* Responsive adjustments for console stats */
+@media (max-width: 768px) {
+    .console-stats .session-stats {
+        flex-direction: column;
+        gap: var(--space-sm);
+    }
+}
+
+/* ===== NAVIGATION PANEL ZPT STATE ===== */
+
+.navigate-column .zpt-state {
+    margin: var(--space-sm) 0;
+    padding: var(--space-sm);
+    background: var(--bg-secondary);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+}
+
+.navigate-column .zpt-display {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.navigate-column .zpt-label {
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.navigate-column .zpt-value {
+    color: var(--primary-color);
+    font-weight: 600;
+    background: rgba(37, 99, 235, 0.1);
+    padding: 0.125rem 0.25rem;
+    border-radius: 3px;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+.navigate-column .zpt-separator {
+    color: var(--text-muted);
 }
