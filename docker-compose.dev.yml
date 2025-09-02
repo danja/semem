@@ -1,0 +1,102 @@
+# Development Docker Compose - optimized for development workflow
+# Usage: docker compose -f docker-compose.dev.yml up
+
+services:
+  # Apache Jena Fuseki - SPARQL Database (lightweight config for dev)
+  fuseki-dev:
+    image: stain/jena-fuseki
+    container_name: semem-fuseki-dev
+    ports:
+      - "4050:3030"
+    volumes:
+      - fuseki_dev_data:/fuseki
+    environment:
+      - ADMIN_PASSWORD=admin
+      - JVM_ARGS=-Xmx1g
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3030/$/ping || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    networks:
+      - semem-dev-network
+
+
+  # Semem Application - Development Mode
+  semem-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+      args:
+        - NODE_ENV=development
+    container_name: semem-app-dev
+    ports:
+      - "4100:4100"  # API Server
+      - "4101:4101"  # MCP Server  
+      - "4102:4102"  # Workbench UI
+      - "9229:9229"  # Node.js Debug Port
+    volumes:
+      # Mount source code for hot reloading in development
+      - ./src:/app/src:ro
+      - ./mcp:/app/mcp:ro
+      - ./config:/app/config
+      - ./prompts:/app/prompts:ro
+      - ./bin:/app/bin:ro
+      # Development data (ephemeral)
+      - semem_dev_logs:/app/logs
+      - semem_dev_data:/app/data
+      # Development environment file
+      - ./.env:/app/.env:ro
+      # Development config with Docker service names
+      - ./config/config.docker.dev.json:/app/config/config.json:ro
+    environment:
+      - NODE_ENV=development
+      - DEBUG=semem:*
+      - NODE_OPTIONS=--inspect=0.0.0.0:9229 --max-old-space-size=2048
+    depends_on:
+      fuseki-dev:
+        condition: service_healthy
+    restart: unless-stopped
+    command: ["npm", "run", "start"]
+    # Override health check for faster development feedback
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4100/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    networks:
+      - semem-dev-network
+
+
+  # Development utilities container
+  dev-tools:
+    image: node:22-alpine
+    container_name: semem-dev-tools
+    working_dir: /app
+    volumes:
+      - .:/app
+    command: ["tail", "-f", "/dev/null"]
+    networks:
+      - semem-dev-network
+    profiles:
+      - tools
+
+volumes:
+  fuseki_dev_data:
+    driver: local
+  semem_dev_data:
+    driver: local
+  semem_dev_logs:
+    driver: local
+
+networks:
+  semem-dev-network:
+    driver: bridge
+    name: semem-dev
+    ipam:
+      config:
+        - subnet: 172.23.0.0/16

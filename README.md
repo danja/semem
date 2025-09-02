@@ -441,6 +441,249 @@ Servers are configured via `config/config.json`:
 }
 ```
 
+## 🐳 Docker Deployment
+
+Semem provides comprehensive Docker support for both development and production deployments with a multi-service architecture.
+
+> 📖 **[Complete Docker Guide](docs/manual/docker.md)** - Detailed installation, configuration, and troubleshooting instructions
+
+### Quick Start with Docker
+
+**1. Production Deployment:**
+```bash
+# Clone the repository
+git clone https://github.com/danja/semem.git
+cd semem
+
+# Copy your existing .env or create from template
+cp .env.docker.example .env
+# Edit .env with your API keys (same format as local)
+
+# Start all services
+docker compose up -d
+
+# Check service status
+docker compose ps
+docker compose logs -f semem
+```
+
+**2. Development Deployment:**
+```bash
+# Use your existing .env file (works as-is)
+docker compose -f docker-compose.dev.yml up -d
+
+# View logs
+docker compose -f docker-compose.dev.yml logs -f semem-dev
+```
+
+> ℹ️ **Need Help?** See the [Docker Guide](docs/manual/docker.md) for detailed installation steps, troubleshooting, and advanced configuration options.
+
+### Services Architecture
+
+The Docker deployment includes the following services:
+
+| Service | Description | Ports | Purpose |
+|---------|-------------|-------|---------|
+| **semem** | Main application container | 4100, 4101, 4102 | API, MCP, Workbench servers |
+| **fuseki** | Apache Jena SPARQL database | 3030 | RDF/SPARQL storage backend |
+| **nginx** | Reverse proxy (optional) | 80, 443 | SSL termination, load balancing |
+
+### Environment Configuration
+
+#### Production Environment (.env.docker)
+
+```bash
+# Core Configuration
+NODE_ENV=production
+SEMEM_API_KEY=your-secure-api-key
+SPARQL_USER=admin
+SPARQL_PASSWORD=your-secure-password
+
+# LLM Provider API Keys (configure at least one)
+MISTRAL_API_KEY=your-mistral-key
+CLAUDE_API_KEY=your-claude-key
+OPENAI_API_KEY=your-openai-key
+NOMIC_API_KEY=your-nomic-key
+
+```
+
+#### Development Environment (.env.docker.dev)
+
+The development environment uses simplified configuration with optional external API keys.
+
+### Volume Management
+
+**Persistent Data:**
+- `fuseki_data`: SPARQL database storage
+- `semem_data`: Application data and cache
+- `semem_logs`: Application logs
+
+**Configuration Management:**
+```bash
+# Production: mount configuration
+./config/config.docker.json:/app/config/config.json:ro
+
+# Development: live code editing
+./src:/app/src:ro
+./mcp:/app/mcp:ro
+```
+
+### Advanced Deployment Options
+
+#### 1. Production with SSL (using nginx profile)
+
+```bash
+# Generate SSL certificates
+mkdir -p nginx/ssl
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+  -keyout nginx/ssl/semem.key -out nginx/ssl/semem.crt
+
+# Start with reverse proxy
+docker compose --profile proxy up -d
+```
+
+
+#### 2. Multi-architecture builds
+
+```bash
+# Build for multiple architectures
+docker buildx build --platform linux/amd64,linux/arm64 -t semem:latest .
+```
+
+### Health Monitoring
+
+**Service Health Checks:**
+```bash
+# Check all services
+docker compose ps
+
+# Individual service health
+curl http://localhost:4100/health    # API server
+curl http://localhost:4102/health    # Workbench
+curl http://localhost:3030/$/ping    # Fuseki
+```
+
+**Application Logs:**
+```bash
+# Follow all logs
+docker compose logs -f
+
+# Specific service logs
+docker compose logs -f semem
+docker compose logs -f fuseki
+```
+
+### Troubleshooting
+
+#### Common Issues
+
+**1. Port conflicts:**
+```bash
+# Check port usage
+sudo lsof -i :4100,4101,4102,3030,11434
+
+# Modify ports in docker-compose.yml if needed
+```
+
+**2. Permission issues:**
+```bash
+# Fix volume permissions
+sudo chown -R 1001:1001 ./data ./logs
+```
+
+
+**3. SPARQL connection issues:**
+```bash
+# Check Fuseki status
+curl -f http://localhost:3030/$/ping
+
+# Restart Fuseki
+docker compose restart fuseki
+```
+
+#### Performance Tuning
+
+**Resource Limits:**
+```yaml
+# In docker-compose.yml
+deploy:
+  resources:
+    limits:
+      memory: 4G
+      cpus: '2.0'
+```
+
+**JVM Settings for Fuseki:**
+```bash
+# Environment variable in docker-compose.yml
+JVM_ARGS=-Xmx2g -Xms1g
+```
+
+### Development Workflow
+
+**Live Development with Docker:**
+```bash
+# Start development stack
+docker compose -f docker-compose.dev.yml up -d
+
+# Make changes to source code (auto-reloaded via volumes)
+# Rebuild only when dependencies change
+docker compose -f docker-compose.dev.yml build semem-dev
+
+# Debug with logs
+docker compose -f docker-compose.dev.yml logs -f semem-dev
+```
+
+**Development Tools:**
+```bash
+# Access development container
+docker compose -f docker-compose.dev.yml exec semem-dev bash
+
+# Run tests inside container
+docker compose -f docker-compose.dev.yml exec semem-dev npm test
+
+# Debug Node.js (port 9229 exposed)
+# Connect your IDE debugger to localhost:9229
+```
+
+### Security Considerations
+
+**Production Security:**
+- Use strong passwords for SPARQL_PASSWORD
+- Generate secure SEMEM_API_KEY  
+- Keep API keys in secure environment files
+- Use nginx with proper SSL configuration
+- Regularly update base images
+
+**Network Security:**
+```bash
+# Production: restrict external access
+# Only expose necessary ports (80, 443 via nginx)
+# Keep internal services (fuseki) on internal network
+```
+
+### Backup and Migration
+
+**Data Backup:**
+```bash
+# Backup Fuseki data
+docker run --rm -v semem_fuseki_data:/data -v $(pwd):/backup alpine tar czf /backup/fuseki-backup.tar.gz /data
+
+# Backup application data
+docker run --rm -v semem_semem_data:/data -v $(pwd):/backup alpine tar czf /backup/semem-data-backup.tar.gz /data
+```
+
+**Migration:**
+```bash
+# Export configuration
+docker compose exec semem cat /app/config/config.json > config-backup.json
+
+# Migrate to new deployment
+# 1. Copy volumes or restore from backup
+# 2. Update docker-compose.yml with new configuration
+# 3. Start services
+```
+
 ### Development and Production
 
 **Development Mode:**

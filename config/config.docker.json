@@ -1,0 +1,229 @@
+{
+  "storage": {
+    "type": "sparql",
+    "options": {
+      "query": "http://fuseki:3030/semem/sparql",
+      "update": "http://fuseki:3030/semem/update",
+      "data": "http://fuseki:3030/semem/data",
+      "graphName": "http://hyperdata.it/content",
+      "user": "${SPARQL_USER}",
+      "password": "${SPARQL_PASSWORD}"
+    }
+  },
+  "servers": {
+    "api": 4100,
+    "ui": 4150,
+    "workbench": 4102,
+    "mcp": 4101
+  },
+  "api": {
+    "key": "${SEMEM_API_KEY}"
+  },
+  "port": 4120,
+  "graphName": "http://hyperdata.it/content",
+  "chatModel": "qwen2:1.5b",
+  "embeddingModel": "nomic-embed-text:v1.5",
+  "embeddingProvider": "nomic",
+  "templatesPath": "prompts/templates",
+  "sparqlEndpoints": [
+    {
+      "label": "Docker Fuseki",
+      "user": "${SPARQL_USER}",
+      "password": "${SPARQL_PASSWORD}",
+      "urlBase": "http://fuseki:3030",
+      "dataset": "semem",
+      "query": "/semem/sparql",
+      "update": "/semem/update",
+      "upload": "/semem/upload",
+      "gspRead": "/semem/data",
+      "gspWrite": "/semem/data"
+    },
+    {
+      "label": "Hyperdata Fuseki",
+      "user": "${SPARQL_USER}",
+      "password": "${SPARQL_PASSWORD}",
+      "urlBase": "https://fuseki.hyperdata.it",
+      "dataset": "hyperdata.it",
+      "query": "/hyperdata.it/query",
+      "update": "/hyperdata.it/update",
+      "upload": "/hyperdata.it/upload",
+      "gspRead": "/hyperdata.it/data",
+      "gspWrite": "/hyperdata.it/data"
+    }
+  ],
+  "llmProviders": [
+    {
+      "type": "mistral",
+      "implementation": "hyperdata-clients",
+      "apiKey": "${MISTRAL_API_KEY}",
+      "chatModel": "mistral-small-latest",
+      "priority": 1,
+      "capabilities": [
+        "chat"
+      ],
+      "rateLimit": {
+        "delayMs": 1000,
+        "description": "Delay between API calls to avoid rate limiting"
+      },
+      "description": "Using hyperdata-clients implementation"
+    },
+    {
+      "type": "claude",
+      "implementation": "hyperdata-clients",
+      "apiKey": "${CLAUDE_API_KEY}",
+      "chatModel": "claude-3-opus-20240229",
+      "priority": 2,
+      "capabilities": [
+        "chat"
+      ],
+      "rateLimit": {
+        "delayMs": 500,
+        "description": "Delay between API calls to avoid rate limiting"
+      },
+      "description": "Using hyperdata-clients implementation"
+    },
+    {
+      "type": "nomic",
+      "apiKey": "${NOMIC_API_KEY}",
+      "embeddingModel": "nomic-embed-text:v1.5",
+      "priority": 1,
+      "capabilities": [
+        "embedding"
+      ],
+      "description": "Nomic Atlas API for cloud-based embeddings"
+    },
+    {
+      "type": "ollama",
+      "baseUrl": "http://ollama:11434",
+      "chatModel": "qwen2:1.5b",
+      "embeddingModel": "nomic-embed-text",
+      "priority": 2,
+      "capabilities": [
+        "embedding",
+        "chat"
+      ],
+      "description": "Local Ollama for embeddings and chat - fallback option"
+    }
+  ],
+  "performance": {
+    "wikidata": {
+      "rateLimit": 200,
+      "maxEntitiesPerConcept": 5,
+      "maxWikidataSearchResults": 5,
+      "minConfidence": 0.7,
+      "batchSize": 5,
+      "parallelRequests": 3,
+      "timeout": 15000
+    },
+    "wikipedia": {
+      "rateLimit": 100,
+      "defaultLimit": 20,
+      "maxLimit": 75,
+      "batchSize": 25,
+      "timeout": 10000,
+      "searchResultsLimit": 2
+    },
+    "ingestion": {
+      "earlyTerminationThreshold": 0.8,
+      "maxPagesPerQuery": 50,
+      "useRelevanceFiltering": true,
+      "skipLowConfidenceEntities": true
+    },
+    "relationships": {
+      "maxQuestionsToProcess": 5,
+      "maxWikipediaCorpusclesPerQuestion": 20,
+      "maxTriplesToGenerate": 100,
+      "semanticSimilarityThreshold": 0.4,
+      "enableBatching": true,
+      "batchSize": 10
+    }
+  },
+  "relevanceFiltering": {
+    "enabled": true,
+    "minTextSimilarity": 0.6,
+    "popularityWeight": 0.2,
+    "typeRelevanceWeight": 0.3,
+    "skipExpandedSearch": false
+  },
+  "search": {
+    "defaultThreshold": 0.5,
+    "defaultMode": "dual",
+    "defaultLimit": 10,
+    "enableContextEnrichment": true,
+    "enableProvenance": true
+  },
+  "baseUri": "http://hyperdata.it/",
+  "context": {
+    "truncationLimit": null
+  },
+  "conceptExtraction": {
+    "maxConcepts": 3,
+    "temperature": 0.1,
+    "retries": 3,
+    "minConceptLength": 4,
+    "maxConceptLength": 80,
+    "deduplication": {
+      "enabled": true,
+      "strategy": "exact",
+      "caseInsensitive": true,
+      "embeddingSimilarityThreshold": 0.9,
+      "maxExistingConceptsToCheck": 1000,
+      "description": "Concept deduplication settings to avoid creating duplicate concept corpuscles"
+    }
+  },
+  "sparqlIngestion": {
+    "templateDirectory": "config/sparql-templates",
+    "defaultTemplate": "generic-documents",
+    "defaultLimit": 50,
+    "defaultTimeout": 30000,
+    "defaultBatchSize": 50,
+    "presetEndpoints": {
+      "local-fuseki": {
+        "url": "http://fuseki:3030/semem/sparql",
+        "template": "generic-documents",
+        "auth": {
+          "user": "${SPARQL_USER}",
+          "password": "${SPARQL_PASSWORD}"
+        },
+        "description": "Local Fuseki instance in Docker"
+      },
+      "danny-blog": {
+        "url": "https://fuseki.hyperdata.it/danny.ayers.name/query",
+        "template": "blog-articles",
+        "auth": {
+          "user": "${SPARQL_USER}",
+          "password": "${SPARQL_PASSWORD}"
+        },
+        "fieldMappings": {
+          "uri": "uri",
+          "title": "title", 
+          "content": "content",
+          "created": "created",
+          "modified": "modified",
+          "slug": "slug",
+          "relative": "relative"
+        },
+        "description": "Danny Ayers' blog articles from Fuseki endpoint"
+      },
+      "wikidata": {
+        "url": "https://query.wikidata.org/sparql",
+        "template": "wikidata-entities",
+        "auth": null,
+        "timeout": 60000,
+        "description": "Wikidata SPARQL endpoint (public, no auth required)"
+      }
+    },
+    "processing": {
+      "defaultLazy": false,
+      "enableProgressReporting": true,
+      "retryFailedDocuments": 3,
+      "skipExistingDocuments": true
+    },
+    "validation": {
+      "minContentLength": 10,
+      "maxContentLength": 1000000,
+      "requiredFields": ["uri", "title", "content"],
+      "skipEmptyContent": true
+    }
+  }
+}

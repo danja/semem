@@ -1,0 +1,104 @@
+services:
+  # Apache Jena Fuseki - SPARQL Database
+  fuseki:
+    image: secoresearch/fuseki:latest
+    container_name: semem-fuseki
+    ports:
+      - "4050:3030"
+    # volumes:
+      # - fuseki_data:/fuseki
+    environment:
+      - ADMIN_PASSWORD=admin123
+      - FUSEKI_DATASET_1=semem
+      - JVM_ARGS=-Xmx2g
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3030/$/ping || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    networks:
+      - semem-network
+
+
+  # Semem Application
+  semem:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    container_name: semem-app
+    ports:
+      - "4100:4100"  # API Server
+      - "4101:4101"  # MCP Server  
+      - "4102:4102"  # Workbench UI
+    volumes:
+      - semem_data:/app/data
+      - semem_logs:/app/logs
+      - semem_config:/app/config
+      - ./config/config.docker.json:/app/config/config.json:ro
+      - ./sparql:/app/sparql:ro
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      fuseki:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4100/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    networks:
+      - semem-network
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpus: '2.0'
+        reservations:
+          memory: 2G
+          cpus: '1.0'
+
+  # Nginx Reverse Proxy (optional)
+  nginx:
+    image: nginx:alpine
+    container_name: semem-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - nginx_logs:/var/log/nginx
+    depends_on:
+      - semem
+    restart: unless-stopped
+    networks:
+      - semem-network
+    profiles:
+      - proxy
+
+
+volumes:
+  fuseki_data:
+    driver: local
+  fuseki_config:
+    driver: local
+  semem_data:
+    driver: local
+  semem_logs:
+    driver: local
+  semem_config:
+    driver: local
+  nginx_logs:
+    driver: local
+
+networks:
+  semem-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.22.0.0/16
