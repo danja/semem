@@ -62,26 +62,6 @@ services:
           memory: 2G
           cpus: '1.0'
 
-  # Nginx Reverse Proxy (optional)
-  nginx:
-    image: nginx:alpine
-    container_name: semem-nginx
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/ssl:/etc/nginx/ssl:ro
-      - nginx_logs:/var/log/nginx
-    depends_on:
-      - semem
-    restart: unless-stopped
-    networks:
-      - semem-network
-    profiles:
-      - proxy
-
-
 volumes:
   fuseki_data:
     driver: local
@@ -92,8 +72,6 @@ volumes:
   semem_logs:
     driver: local
   semem_config:
-    driver: local
-  nginx_logs:
     driver: local
 
 networks:
