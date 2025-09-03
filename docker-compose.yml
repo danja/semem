@@ -5,8 +5,8 @@ services:
     container_name: semem-fuseki
     ports:
       - "4050:3030"
-    # volumes:
-      # - fuseki_data:/fuseki
+    volumes:
+      - ./docker-data/fuseki:/fuseki
     environment:
       - ADMIN_PASSWORD=admin123
       - FUSEKI_DATASET_1=semem
@@ -34,9 +34,8 @@ services:
       - "4101:4101"  # MCP Server  
       - "4102:4102"  # Workbench UI
     volumes:
-      - semem_data:/app/data
-      - semem_logs:/app/logs
-      - semem_config:/app/config
+      - ./docker-data/semem/data:/app/data
+      - ./docker-data/semem/logs:/app/logs
       - ./config/config.docker.json:/app/config/config.json:ro
       - ./sparql:/app/sparql:ro
     environment:
@@ -62,17 +61,7 @@ services:
           memory: 2G
           cpus: '1.0'
 
-volumes:
-  fuseki_data:
-    driver: local
-  fuseki_config:
-    driver: local
-  semem_data:
-    driver: local
-  semem_logs:
-    driver: local
-  semem_config:
-    driver: local
+# Volumes section removed - using bind mounts to docker-data/ directory instead
 
 networks:
   semem-network:

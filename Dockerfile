@@ -2,14 +2,15 @@
 # Semantic Memory for Intelligent Agents
 
 # Stage 1: Builder - Install dependencies and build assets
-FROM node:22-alpine AS builder
+FROM node:22-slim AS builder
 
 # Install build dependencies for native modules
-RUN apk add --no-cache \
+RUN apt-get update && apt-get install -y \
     python3 \
     make \
     g++ \
-    py3-setuptools
+    python3-setuptools \
+    && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
 WORKDIR /app
@@ -30,15 +31,16 @@ RUN npm run build
 RUN npm prune --production
 
 # Stage 2: Runtime - Create lean production image
-FROM node:22-alpine AS runtime
+FROM node:22-slim AS runtime
 
 # Install system dependencies needed for the application
-RUN apk add --no-cache \
+RUN apt-get update && apt-get install -y \
     bash \
     curl \
     tini \
-    && addgroup -g 1001 -S semem \
-    && adduser -S semem -u 1001 -G semem
+    && rm -rf /var/lib/apt/lists/* \
+    && groupadd -g 1001 semem \
+    && useradd -u 1001 -g semem -s /bin/bash semem
 
 # Set working directory
 WORKDIR /app
@@ -91,7 +93,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
 USER semem
 
 # Use tini as init system for proper signal handling
-ENTRYPOINT ["/sbin/tini", "--", "/usr/local/bin/docker-entrypoint.sh"]
+ENTRYPOINT ["/usr/bin/tini", "--", "/usr/local/bin/docker-entrypoint.sh"]
 
 # Default command
 CMD ["npm", "start"]

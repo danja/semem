@@ -158,3 +158,6 @@ dist
 .pnp.*
 
 **/.claude/settings.local.json
+
+# Docker data persistence
+docker-data/

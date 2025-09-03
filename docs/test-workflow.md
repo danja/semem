@@ -1,10 +1,12 @@
 Clear the store :
 scripts/del-content-graph.sh
 or
-scripts/del-docker-graph.sh
+scripts/del-docker-graph.sh (for Docker deployment)
 
 Ingest documents :
 node utils/SPARQLIngest.js   --endpoint "https://fuseki.hyperdata.it/danny.ayers.name/query"   --template blog-articles   --limit 5   --graph "http://danny.ayers.name/"
+
+**Note**: For Docker deployment, endpoints and configurations need to be updated to target the containerized Fuseki instance at localhost:4050 instead of the production endpoints.
 
 Use ./start.sh to start the servers.
 
