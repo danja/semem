@@ -13,7 +13,7 @@
 @prefix :        <#> .
 
 <#service> rdf:type fuseki:Service ;
-    fuseki:name              "ds" ;   # http://host:port/ds
+    fuseki:name              "semem" ;   # http://host:port/semem
     fuseki:serviceQuery      "sparql" ;    # SPARQL query service
     fuseki:serviceUpdate     "update" ;    # SPARQL update service
     fuseki:serviceReadWriteGraphStore "data" ;     # SPARQL Graph store protocol

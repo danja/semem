@@ -7,9 +7,9 @@ services:
       - "4050:3030"
     volumes:
       - ./docker-data/fuseki:/fuseki
+      - ./config/fuseki/assembler.ttl:/fuseki-base/configuration/assembler.ttl:ro
     environment:
       - ADMIN_PASSWORD=admin123
-      - FUSEKI_DATASET_1=semem
       - JVM_ARGS=-Xmx2g
     restart: unless-stopped
     healthcheck:
@@ -38,6 +38,8 @@ services:
       - ./docker-data/semem/logs:/app/logs
       - ./config/config.docker.json:/app/config/config.json:ro
       - ./sparql:/app/sparql:ro
+    env_file:
+      - .env
     environment:
       - NODE_ENV=production
     depends_on:

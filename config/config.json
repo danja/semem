@@ -2,9 +2,9 @@
   "storage": {
     "type": "sparql",
     "options": {
-      "query": "http://localhost:3030/semem/query",
-      "update": "http://localhost:3030/semem/update",
-      "data": "http://localhost:3030/semem/data",
+      "query": "http://localhost:4050/semem/query",
+      "update": "http://localhost:4050/semem/update",
+      "data": "http://localhost:4050/semem/data",
       "graphName": "http://hyperdata.it/content",
       "user": "${SPARQL_USER}",
       "password": "${SPARQL_PASSWORD}"

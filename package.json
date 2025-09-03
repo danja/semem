@@ -195,6 +195,7 @@
     "evb": "^0.7.2",
     "express": "^4.21.2",
     "express-rate-limit": "^7.5.0",
+    "http-proxy-middleware": "^3.0.3",
     "faiss-node": "^0.5.1",
     "graphology": "^0.25.4",
     "helmet": "^8.0.0",

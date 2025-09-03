@@ -10,6 +10,12 @@ RUN apt-get update && apt-get install -y \
     make \
     g++ \
     python3-setuptools \
+    git \
+    cmake \
+    libopenblas-dev \
+    libblas-dev \
+    liblapack-dev \
+    pkg-config \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
@@ -38,6 +44,8 @@ RUN apt-get update && apt-get install -y \
     bash \
     curl \
     tini \
+    vim-common \
+    netcat-traditional \
     && rm -rf /var/lib/apt/lists/* \
     && groupadd -g 1001 semem \
     && useradd -u 1001 -g semem -s /bin/bash semem
