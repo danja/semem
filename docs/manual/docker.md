@@ -23,6 +23,36 @@ This guide provides instructions for running Semem using Docker. The Docker depl
 - **Storage**: 10GB free disk space (for models and data)
 - **Platform**: Linux, macOS, or Windows with WSL2
 
+### Native Build Dependencies
+
+Semem requires native compilation for scientific computing libraries. The Docker build process includes:
+
+**Build Dependencies:**
+- **Node.js 22+**: JavaScript runtime
+- **Python 3**: Required for node-gyp compilation
+- **C/C++ Compiler**: GCC or Clang toolchain
+- **Make**: GNU Make for build scripts
+- **CMake**: Cross-platform build system
+- **Scientific Libraries**: OpenBLAS, BLAS, LAPACK for faiss-node
+- **Git**: Required for dependency resolution
+
+**Pre-built Images:**
+The recommended approach is to use pre-built Docker images that include all compiled dependencies:
+
+```bash
+# Use pre-built image (recommended)
+docker compose pull
+docker compose up -d
+
+# This avoids the 15-20 minute build process
+```
+
+**Build Optimization Strategies:**
+- **Use Docker BuildKit**: Faster builds with better caching
+- **Multi-stage builds**: Smaller production images
+- **Build caching**: Reuse layers between builds
+- **Pre-compiled base images**: Use images with dependencies pre-installed
+
 ### Docker Installation
 
 **Linux (Ubuntu/Debian):**
