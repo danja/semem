@@ -18,7 +18,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install all dependencies (including devDependencies for building)
-RUN npm ci --include=dev --frozen-lockfile
+RUN npm install --include=dev
 
 # Copy source code
 COPY . .

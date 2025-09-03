@@ -1,5 +1,7 @@
 Clear the store :
 scripts/del-content-graph.sh
+or
+scripts/del-docker-graph.sh
 
 Ingest documents :
 node utils/SPARQLIngest.js   --endpoint "https://fuseki.hyperdata.it/danny.ayers.name/query"   --template blog-articles   --limit 5   --graph "http://danny.ayers.name/"
