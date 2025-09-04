@@ -8,14 +8,8 @@
 * tell with filename/URL
 * danbri frontend
 * console - replace json with words, add more logging
-
+* ingest via workbench
 * Config.js - remove refs to tbox, .env should handle
 
-* server instance
-* proxy from server
 
-
-33G /root/.pm2/logs/semem-mcp-out.log
-8.8G /root/.pm2/logs/semem-mcp-error.log
-4.2G /root/.pm2/pm2.log
 
