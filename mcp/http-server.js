@@ -491,15 +491,40 @@ async function startOptimizedServer() {
 
       // TELL endpoint - Add resources to the system
       app.post('/tell', async (req, res) => {
+        const requestId = Date.now().toString(36);
+        mcpDebugger.info(`HTTP Tell Request Started [${requestId}]`, {
+          contentLength: req.body?.content?.length || 0,
+          hasMetadata: !!req.body?.metadata,
+          type: req.body?.type || 'interaction',
+          lazy: req.body?.lazy || false
+        });
+        
         try {
           const { content, type = 'interaction', metadata = {}, lazy = false } = req.body;
           if (!content) {
+            mcpDebugger.warn(`HTTP Tell Request Failed - No content [${requestId}]`);
             return res.status(400).json({ error: 'Content is required' });
           }
           
+          const startTime = Date.now();
           const result = await simpleVerbsService.tell({ content, type, metadata, lazy });
+          const duration = Date.now() - startTime;
+          
+          mcpDebugger.info(`HTTP Tell Request Completed [${requestId}]`, {
+            success: result?.success,
+            stored: result?.stored,
+            concepts: result?.concepts,
+            duration: duration + 'ms',
+            contentLength: content.length
+          });
+          
           res.json(result);
         } catch (error) {
+          mcpDebugger.error(`HTTP Tell Request Error [${requestId}]`, {
+            error: error.message,
+            stack: error.stack,
+            requestBody: req.body
+          });
           res.status(500).json({ 
             success: false, 
             verb: 'tell', 
@@ -510,15 +535,40 @@ async function startOptimizedServer() {
 
       // ASK endpoint - Query the system
       app.post('/ask', async (req, res) => {
+        const requestId = Date.now().toString(36);
+        mcpDebugger.info(`HTTP Ask Request Started [${requestId}]`, {
+          questionLength: req.body?.question?.length || 0,
+          mode: req.body?.mode || 'standard',
+          useContext: req.body?.useContext !== false,
+          threshold: req.body?.threshold
+        });
+        
         try {
           const { question, mode = 'standard', useContext = true, useHyDE = false, useWikipedia = false, useWikidata = false, threshold } = req.body;
           if (!question) {
+            mcpDebugger.warn(`HTTP Ask Request Failed - No question [${requestId}]`);
             return res.status(400).json({ error: 'Question is required' });
           }
           
+          const startTime = Date.now();
           const result = await simpleVerbsService.ask({ question, mode, useContext, useHyDE, useWikipedia, useWikidata, threshold });
+          const duration = Date.now() - startTime;
+          
+          mcpDebugger.info(`HTTP Ask Request Completed [${requestId}]`, {
+            success: result?.success,
+            contextItems: result?.contextItems,
+            memories: result?.memories,
+            answerLength: result?.answer?.length || 0,
+            duration: duration + 'ms'
+          });
+          
           res.json(result);
         } catch (error) {
+          mcpDebugger.error(`HTTP Ask Request Error [${requestId}]`, {
+            error: error.message,
+            stack: error.stack,
+            question: req.body?.question?.substring(0, 100)
+          });
           res.status(500).json({ 
             success: false, 
             verb: 'ask', 

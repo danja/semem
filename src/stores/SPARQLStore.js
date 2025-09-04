@@ -450,6 +450,7 @@ export default class SPARQLStore extends BaseStore {
 
             // Add length validation to prevent string length errors
             const MAX_CONTENT_LENGTH = 50000; // Conservative limit to prevent RangeError
+            const MAX_EMBEDDING_LENGTH = 500000; // Higher limit for embedding vectors (1536 * ~20 chars per float)
             
             if (prompt.length > MAX_CONTENT_LENGTH) {
                 logger.warn(`Truncating prompt from ${prompt.length} to ${MAX_CONTENT_LENGTH} characters to prevent string length error`);
@@ -467,9 +468,12 @@ export default class SPARQLStore extends BaseStore {
                 try {
                     this.validateEmbedding(interaction.embedding)
                     const jsonStr = JSON.stringify(interaction.embedding);
-                    if (jsonStr.length > MAX_CONTENT_LENGTH) {
-                        logger.warn(`Embedding JSON too large (${jsonStr.length} chars), using empty array`);
-                        embeddingStr = '[]';
+                    if (jsonStr.length > MAX_EMBEDDING_LENGTH) {
+                        logger.warn(`Embedding JSON too large (${jsonStr.length} chars), truncating to preserve vector integrity`);
+                        // Instead of empty array, try to preserve the embedding by compressing precision
+                        const compressedEmbedding = interaction.embedding.map(x => Math.round(x * 10000) / 10000);
+                        const compressedStr = JSON.stringify(compressedEmbedding);
+                        embeddingStr = compressedStr.length > MAX_EMBEDDING_LENGTH ? '[]' : compressedStr;
                     } else {
                         embeddingStr = jsonStr;
                     }
@@ -1299,7 +1303,7 @@ export default class SPARQLStore extends BaseStore {
                     ${entityUri} a ragno:Element ;
                         ragno:content "${this._escapeSparqlString(data.response || data.content || '')}" ;
                         skos:prefLabel "${this._escapeSparqlString(data.prompt || '')}" ;
-                        ragno:embedding "${this._escapeSparqlString(JSON.stringify(data.embedding || []))}" ; # DEPRECATED: Use ragno:hasEmbedding → ragno:vectorContent pattern instead
+                        ragno:embedding """${JSON.stringify(data.embedding || [])}""" ; # DEPRECATED: Use ragno:hasEmbedding → ragno:vectorContent pattern instead
                         dcterms:created "${new Date().toISOString()}"^^xsd:dateTime ;
                         ragno:timestamp "${data.timestamp || new Date().toISOString()}" .
                     ${data.concepts ? data.concepts.map(concept =>
@@ -1403,10 +1407,18 @@ export default class SPARQLStore extends BaseStore {
                         }
                     }
 
-                    // Simple similarity calculation (cosine similarity)
-                    let similarity = 0.5 // Default similarity
-                    if (embedding.length === queryEmbedding.length && embedding.length > 0) {
-                        similarity = this._calculateCosineSimilarity(queryEmbedding, embedding)
+                    // Enhanced similarity calculation (cosine similarity)
+                    let similarity = 0.0 // Default to 0 instead of 0.5 for failed similarity
+                    if (embedding.length > 0 && queryEmbedding.length > 0) {
+                        if (embedding.length === queryEmbedding.length) {
+                            // Exact length match - use full cosine similarity
+                            similarity = this._calculateCosineSimilarity(queryEmbedding, embedding)
+                        } else {
+                            // Length mismatch - try to salvage by truncating/padding to match
+                            logger.debug(`Embedding length mismatch: query=${queryEmbedding.length}, stored=${embedding.length}, attempting repair`);
+                            const adjustedEmbedding = this._adjustEmbeddingLength(embedding, queryEmbedding.length);
+                            similarity = this._calculateCosineSimilarity(queryEmbedding, adjustedEmbedding);
+                        }
                     }
 
                     if (similarity >= threshold) {
@@ -1481,6 +1493,30 @@ export default class SPARQLStore extends BaseStore {
         if (normA === 0 || normB === 0) return 0
 
         return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB))
+    }
+
+    /**
+     * Adjust embedding vector length to match target length
+     * @param {Array<number>} embedding - Source embedding vector
+     * @param {number} targetLength - Target length to match
+     * @returns {Array<number>} Adjusted embedding vector
+     */
+    _adjustEmbeddingLength(embedding, targetLength) {
+        if (embedding.length === targetLength) {
+            return embedding;
+        }
+        
+        if (embedding.length > targetLength) {
+            // Truncate if too long
+            return embedding.slice(0, targetLength);
+        } else {
+            // Pad with zeros if too short
+            const padded = [...embedding];
+            while (padded.length < targetLength) {
+                padded.push(0);
+            }
+            return padded;
+        }
     }
 
     // Simple resilience mechanism with timeout and retries

@@ -18,9 +18,9 @@ Can you create utils/SPARQLIngestRemote.js which will carry out the same operati
 
 The data to ingest is in two stores, one with endpoint https://fuseki.hyperdata.it/hyperdata.it/query graph http://danny.ayers.name/ the other endpoint https://fuseki.hyperdata.it/danny.ayers.name/query graph http://hyperdata.it/content
 
-node utils/SPARQLIngestRemote.js --source hyperdata.it_danny --template blog-articles
+node utils/SPARQLIngestRemote.js --source hyperdata.it_danny --template blog-articles --limit 1000
 
-node utils/SPARQLIngestRemote.js --source danny.ayers.name_content --template blog-articles
+node utils/SPARQLIngestRemote.js --source danny.ayers.name_content --template blog-articles --limit 1000
 
  
 

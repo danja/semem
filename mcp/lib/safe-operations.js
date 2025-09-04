@@ -126,10 +126,37 @@ export class SafeOperations {
    */
   async storeInteraction(prompt, response, metadata = {}) {
     if (!prompt || !response) {
-      throw new Error('Both prompt and response are required');
+      const error = new Error('Both prompt and response are required');
+      mcpDebugger.error('SafeOperations.storeInteraction - Invalid parameters', {
+        promptProvided: !!prompt,
+        responseProvided: !!response,
+        metadata
+      });
+      throw error;
     }
-    console.log('🔥 DEBUG: SafeOperations.storeInteraction called, delegating to memoryManager.storeInteraction');
-    return await this.memoryManager.storeInteraction(prompt, response, metadata);
+    
+    mcpDebugger.debug('SafeOperations.storeInteraction - Starting storage operation', {
+      promptLength: prompt.length,
+      responseLength: response.length,
+      metadata
+    });
+    
+    try {
+      const result = await this.memoryManager.storeInteraction(prompt, response, metadata);
+      mcpDebugger.info('SafeOperations.storeInteraction - Storage completed successfully', {
+        success: true,
+        resultKeys: result ? Object.keys(result) : null
+      });
+      return result;
+    } catch (error) {
+      mcpDebugger.error('SafeOperations.storeInteraction - Storage failed', {
+        error: error.message,
+        stack: error.stack,
+        promptLength: prompt.length,
+        responseLength: response.length
+      });
+      throw error;
+    }
   }
 
   /**
@@ -200,11 +227,20 @@ export class SafeOperations {
    */
   async searchSimilar(queryText, limit = 10, threshold = 0.7) {
     if (!queryText || typeof queryText !== 'string' || !queryText.trim()) {
-      console.log('🔥 CONSOLE: SafeOperations.searchSimilar - invalid query, returning empty array');
+      mcpDebugger.warn('SafeOperations.searchSimilar - Invalid query parameters', {
+        queryText: queryText,
+        queryType: typeof queryText,
+        isEmpty: !queryText?.trim()
+      });
       return []; // Return empty array for invalid queries
     }
     
-    console.log('🔥 CONSOLE: SafeOperations.searchSimilar called', { queryText: queryText.substring(0, 100), limit, threshold });
+    mcpDebugger.info('SafeOperations.searchSimilar - Starting similarity search', {
+      queryPreview: queryText.substring(0, 100),
+      fullQueryLength: queryText.length,
+      limit,
+      threshold
+    });
     
     const startTime = Date.now();
     const similarityThreshold = Math.round(threshold * 100);
@@ -221,14 +257,21 @@ export class SafeOperations {
       
       // 1. Search interactions using MemoryManager (proven method)
       // Convert threshold from 0-1 scale to percentage (0-100 scale)
-      console.log('🔥 CONSOLE: SafeOperations.searchSimilar calling MemoryManager.retrieveRelevantInteractions', { similarityThreshold, limit });
+      mcpDebugger.debug('SafeOperations.searchSimilar - Calling MemoryManager for interactions', {
+        similarityThreshold,
+        limit,
+        queryLength: queryText.trim().length
+      });
       const interactions = await this.memoryManager.retrieveRelevantInteractions(queryText.trim(), similarityThreshold, 0, limit);
-      console.log('🔥 CONSOLE: SafeOperations.searchSimilar received from MemoryManager', { interactionsCount: interactions?.length || 0 });
+      mcpDebugger.debug('SafeOperations.searchSimilar - MemoryManager results received', {
+        interactionsCount: interactions?.length || 0,
+        hasValidResults: interactions && Array.isArray(interactions) && interactions.length > 0
+      });
       allResults.push(...interactions);
       
       // 2. REMOVED: Duplicate store search that was causing result interference
       // MemoryManager.retrieveRelevantInteractions already handles SPARQL store search
-      console.log('🔥 CONSOLE: Skipping duplicate SPARQL store search - using MemoryManager results only');
+      mcpDebugger.debug('SafeOperations.searchSimilar - Using MemoryManager only (duplicate search removed)');
       
       // Normalize similarity scores before combining (fix scale mismatch)
       // First, separate results by source type to normalize separately
@@ -309,11 +352,12 @@ export class SafeOperations {
       // Limit to requested number
       const results = uniqueResults.slice(0, limit);
       
-      console.log('🔥 CONSOLE: SafeOperations.searchSimilar final results', { 
+      mcpDebugger.info('SafeOperations.searchSimilar - Search completed', { 
         allResultsCount: allResults.length, 
         uniqueResultsCount: uniqueResults.length, 
         finalResultsCount: results.length,
         hasResults: results.length > 0,
+        duration: Date.now() - startTime + 'ms',
         firstResult: results[0] ? { 
           similarity: results[0].similarity, 
           prompt: results[0].prompt?.substring(0, 50),
