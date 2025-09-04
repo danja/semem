@@ -2,7 +2,7 @@
   "storage": {
     "type": "sparql",
     "options": {
-      "query": "http://fuseki-dev:3030/semem/query",
+      "query": "http://fuseki-dev:3030/semem/sparql",
       "update": "http://fuseki-dev:3030/semem/update",
       "data": "http://fuseki-dev:3030/semem/data",
       "graphName": "http://hyperdata.it/content",

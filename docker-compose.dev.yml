@@ -2,16 +2,17 @@
 # Usage: docker compose -f docker-compose.dev.yml up
 
 services:
-  # Apache Jena Fuseki - SPARQL Database (lightweight config for dev)
+  # Apache Jena Fuseki - SPARQL Database (same as production)
   fuseki-dev:
-    image: stain/jena-fuseki
+    image: secoresearch/fuseki:latest
     container_name: semem-fuseki-dev
     ports:
       - "4050:3030"
     volumes:
       - fuseki_dev_data:/fuseki
+      - ./config/fuseki/assembler.ttl:/fuseki-base/configuration/assembler.ttl:ro
     environment:
-      - ADMIN_PASSWORD=admin
+      - ADMIN_PASSWORD=admin123
       - JVM_ARGS=-Xmx1g
     restart: unless-stopped
     healthcheck:
@@ -48,10 +49,10 @@ services:
       # Development data (ephemeral)
       - semem_dev_logs:/app/logs
       - semem_dev_data:/app/data
-      # Development environment file
-      - ./.env:/app/.env:ro
       # Development config with Docker service names
       - ./config/config.docker.dev.json:/app/config/config.json:ro
+    env_file:
+      - .env
     environment:
       - NODE_ENV=development
       - DEBUG=semem:*
