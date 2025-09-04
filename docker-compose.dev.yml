@@ -58,7 +58,7 @@ services:
       - DEBUG=semem:*
       - NODE_OPTIONS=--inspect=0.0.0.0:9229 --max-old-space-size=2048
       - SPARQL_HOST=fuseki-dev
-      - SPARQL_PORT=4050
+      - SPARQL_PORT=3030
     depends_on:
       fuseki-dev:
         condition: service_healthy

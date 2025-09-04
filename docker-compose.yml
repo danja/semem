@@ -43,7 +43,7 @@ services:
     environment:
       - NODE_ENV=production
       - SPARQL_HOST=fuseki
-      - SPARQL_PORT=4050
+      - SPARQL_PORT=3030
     depends_on:
       fuseki:
         condition: service_healthy
