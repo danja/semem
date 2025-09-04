@@ -6,6 +6,7 @@ services:
       bash -c "
         mkdir -p /fuseki-base/templates /fuseki-base/logs /fuseki-base/backups /fuseki-base/system_files /fuseki-base/databases /fuseki-base/configuration &&
         cp /config/assembler.ttl /fuseki-base/configuration/assembler.ttl &&
+        cp /config/shiro.ini /fuseki-base/shiro.ini &&
         chown -R 9008:9008 /fuseki-base /fuseki &&
         chmod -R 755 /fuseki-base /fuseki &&
         echo 'Permissions fixed for Fuseki directories'
@@ -14,6 +15,7 @@ services:
       - ./docker-data/fuseki:/fuseki
       - ./docker-data/fuseki-base:/fuseki-base
       - ./config/fuseki/assembler-tdb2.ttl:/config/assembler.ttl:ro
+      - ./config/fuseki/shiro.ini:/config/shiro.ini:ro
     networks:
       - semem-network
 

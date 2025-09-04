@@ -9,6 +9,7 @@ services:
       bash -c "
         mkdir -p /fuseki-base/templates /fuseki-base/logs /fuseki-base/backups /fuseki-base/system_files /fuseki-base/databases /fuseki-base/configuration &&
         cp /config/assembler.ttl /fuseki-base/configuration/assembler.ttl &&
+        cp /config/shiro.ini /fuseki-base/shiro.ini &&
         chown -R 9008:9008 /fuseki-base /fuseki &&
         chmod -R 755 /fuseki-base /fuseki &&
         echo 'Dev permissions fixed for Fuseki directories'
@@ -17,6 +18,7 @@ services:
       - fuseki_dev_data:/fuseki
       - fuseki_dev_base:/fuseki-base
       - ./config/fuseki/assembler.ttl:/config/assembler.ttl:ro
+      - ./config/fuseki/shiro.ini:/config/shiro.ini:ro
     networks:
       - semem-dev-network
 
