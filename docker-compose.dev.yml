@@ -50,13 +50,15 @@ services:
       - semem_dev_logs:/app/logs
       - semem_dev_data:/app/data
       # Development config with Docker service names
-      - ./config/config.docker.dev.json:/app/config/config.json:ro
+      - ./config/config.json:/app/config/config.json:ro
     env_file:
       - .env
     environment:
       - NODE_ENV=development
       - DEBUG=semem:*
       - NODE_OPTIONS=--inspect=0.0.0.0:9229 --max-old-space-size=2048
+      - SPARQL_HOST=fuseki-dev
+      - SPARQL_PORT=4050
     depends_on:
       fuseki-dev:
         condition: service_healthy

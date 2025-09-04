@@ -1,6 +1,12 @@
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import fs from 'fs';
+import path from 'path';
+import dotenv from 'dotenv';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 /**
  * Configuration management for Semem system
@@ -10,10 +16,12 @@ export default class Config {
         storage: {
             type: 'sparql',
             options: {
-                update: 'http://localhost:3030/semem/update',
-                query: 'http://localhost:3030/semem/query',
-                user: 'admin',
-                password: 'admin123'
+                query: 'http://${SPARQL_HOST:-localhost}:${SPARQL_PORT:-3030}/semem/sparql',
+                update: 'http://${SPARQL_HOST:-localhost}:${SPARQL_PORT:-3030}/semem/update',
+                data: 'http://${SPARQL_HOST:-localhost}:${SPARQL_PORT:-3030}/semem/data',
+                graphName: 'http://hyperdata.it/content',
+                user: '${SPARQL_USER:-admin}',
+                password: '${SPARQL_PASSWORD:-admin123}'
             }
         },
         models: {
@@ -72,7 +80,7 @@ export default class Config {
             label: "test-mem",
             user: "admin",
             password: "admin123",
-           urlBase: "http://localhost:4030",
+           urlBase: "http://${SPARQL_HOST:-localhost}:${SPARQL_PORT:-3030}",
             dataset: "test-mem",
             query: "/test-mem",
             update: "/test-mem",
@@ -84,7 +92,7 @@ export default class Config {
     }
 
     constructor(configPath = null) {
-        this.config = { ...Config.defaults };
+        this.config = {};
         this.configFilePath = configPath || null;
         this.initialized = false;
     }
@@ -93,6 +101,12 @@ export default class Config {
         if (this.initialized) return
 
         try {
+            // Load environment variables from .env file
+            this.loadEnvironmentVariables();
+            
+            // Apply defaults after environment variables are loaded
+            this.config = { ...Config.defaults };
+            
             let fileConfig = {}
 
             // Load config file if requested
@@ -401,16 +415,9 @@ export default class Config {
     adjustForTboxEnvironment() {
         // Override storage SPARQL endpoints to use tbox Fuseki
         if (this.config.storage && this.config.storage.type === 'sparql') {
-            // Use internal docker hostname if available, otherwise external port
-            const fusekiBase = process.env.FUSEKI_URL === 'http://fuseki:3030' 
-                ? 'http://fuseki:3030' 
-                : 'http://localhost:4030';
-            
-            this.config.storage.options.query = `${fusekiBase}/semem/query`;
-            this.config.storage.options.update = `${fusekiBase}/semem/update`;
-            this.config.storage.options.data = `${fusekiBase}/semem/data`;
-            
-            console.log(`🔄 Updated storage endpoints to use: ${fusekiBase}`);
+            // Storage endpoints are now configured via environment variables in defaults
+            // and will be processed by environment variable substitution
+            console.log('📍 Standalone environment detected - using default SPARQL configuration');
         }
 
         // Update SPARQL endpoints list to prioritize tbox Fuseki
@@ -423,7 +430,7 @@ export default class Config {
                     label: 'Tbox Fuseki',
                     user: '${SPARQL_USER}',
                     password: '${SPARQL_PASSWORD}',
-                    urlBase: 'http://localhost:4030',
+                    urlBase: 'http://${SPARQL_HOST:-localhost}:${SPARQL_PORT:-3030}',
                     dataset: 'semem',
                     query: '/semem/query',
                     update: '/semem/update',
@@ -466,8 +473,12 @@ export default class Config {
         // Replace ${VAR_NAME} placeholders with environment variables
         const replaceEnvVars = (obj) => {
             if (typeof obj === 'string' && obj.includes('${')) {
-                return obj.replace(/\$\{([^}]+)\}/g, (_, varName) => {
-                    return process.env[varName] || '';
+                return obj.replace(/\$\{([^}]+)\}/g, (match, varName) => {
+                    // Handle default values: ${VAR_NAME:-default}
+                    const [envVar, defaultValue] = varName.split(':-');
+                    const result = process.env[envVar] || defaultValue || '';
+                    console.log(`🔄 Substituting ${match} -> ${result}`);
+                    return result;
                 });
             } else if (Array.isArray(obj)) {
                 return obj.map(item => replaceEnvVars(item));
@@ -483,6 +494,32 @@ export default class Config {
 
         // Apply environment variable substitution to the entire config
         this.config = replaceEnvVars(this.config);
+    }
+
+    /**
+     * Load environment variables from .env file
+     */
+    loadEnvironmentVariables() {
+        try {
+            // Get the project root directory (semem root)
+            const __filename = fileURLToPath(import.meta.url);
+            const __dirname = dirname(__filename);
+            const projectRoot = join(__dirname, '..');
+            const envPath = join(projectRoot, '.env');
+            
+            // Load .env file if it exists
+            if (fs.existsSync(envPath)) {
+                dotenv.config({ path: envPath });
+                console.log('✅ Environment variables loaded from .env file');
+            } else {
+                // Try to load from current working directory as fallback
+                dotenv.config();
+                console.log('✅ Environment variables loaded from process.cwd()/.env');
+            }
+        } catch (error) {
+            console.warn('⚠️  Could not load .env file:', error.message);
+            // Don't throw - environment variables might be set via other means
+        }
     }
 
     get(path) {

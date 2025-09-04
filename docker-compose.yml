@@ -36,12 +36,14 @@ services:
     volumes:
       - ./docker-data/semem/data:/app/data
       - ./docker-data/semem/logs:/app/logs
-      - ./config/config.docker.json:/app/config/config.json:ro
+      - ./config/config.json:/app/config/config.json:ro
       - ./sparql:/app/sparql:ro
     env_file:
       - .env
     environment:
       - NODE_ENV=production
+      - SPARQL_HOST=fuseki
+      - SPARQL_PORT=4050
     depends_on:
       fuseki:
         condition: service_healthy

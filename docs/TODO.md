@@ -9,6 +9,8 @@
 * danbri frontend
 * console - replace json with words, add more logging
 
+* Config.js - remove refs to tbox, .env should handle
+
 * server instance
 * proxy from server
-* docker install
+

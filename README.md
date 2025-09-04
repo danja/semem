@@ -496,6 +496,10 @@ The Docker deployment includes the following services:
 # Core Configuration
 NODE_ENV=production
 SEMEM_API_KEY=your-secure-api-key
+
+# SPARQL Store Configuration
+SPARQL_HOST=localhost         # SPARQL server hostname (localhost for local, fuseki for Docker)
+SPARQL_PORT=3030             # SPARQL server port (3030 for local, 4050 for Docker external access)
 SPARQL_USER=admin
 SPARQL_PASSWORD=your-secure-password
 
@@ -914,13 +918,39 @@ See [examples/README.md](examples/README.md) and [examples/mcp/README.md](exampl
   "storage": {
     "type": "sparql",
     "options": {
-      "endpoint": "https://fuseki.hyperdata.it/semem",
-      "graphName": "http://example.org/graph",
-      "user": "admin",
-      "password": "admin123"
+      "query": "http://${SPARQL_HOST:-localhost}:${SPARQL_PORT:-3030}/semem/sparql",
+      "update": "http://${SPARQL_HOST:-localhost}:${SPARQL_PORT:-3030}/semem/update",
+      "data": "http://${SPARQL_HOST:-localhost}:${SPARQL_PORT:-3030}/semem/data",
+      "graphName": "http://hyperdata.it/content",
+      "user": "${SPARQL_USER}",
+      "password": "${SPARQL_PASSWORD}"
     }
   }
 }
+```
+
+### Environment Variable Substitution
+
+Semem supports environment variable substitution in configuration files using `${VARIABLE_NAME:-default}` syntax:
+
+**SPARQL Connection Variables:**
+- `SPARQL_HOST`: SPARQL server hostname (defaults to `localhost`)
+- `SPARQL_PORT`: SPARQL server port (defaults to `3030`)
+- `SPARQL_USER`: SPARQL database username
+- `SPARQL_PASSWORD`: SPARQL database password
+
+**Usage Examples:**
+```bash
+# Local development (uses defaults: localhost:3030)
+npm start
+
+# Custom SPARQL endpoint
+export SPARQL_HOST=fuseki.example.com
+export SPARQL_PORT=8080
+npm start
+
+# Docker automatically sets: SPARQL_HOST=fuseki, SPARQL_PORT=4050
+docker compose up -d
 ```
 
 #### Session-Level Memory Cache
