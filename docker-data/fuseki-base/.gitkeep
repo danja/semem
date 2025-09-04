@@ -1,0 +1,8 @@
+# Docker volume mount point for Fuseki base directory
+# This directory will contain:
+# - Fuseki templates directory
+# - Configuration files
+# - Runtime files needed by the Fuseki container
+# 
+# The actual files are ignored by git but this placeholder
+# ensures the directory structure exists for Docker volume mounts.

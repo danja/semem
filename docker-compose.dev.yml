@@ -10,6 +10,7 @@ services:
       - "4050:3030"
     volumes:
       - fuseki_dev_data:/fuseki
+      - fuseki_dev_base:/fuseki-base
       - ./config/fuseki/assembler.ttl:/fuseki-base/configuration/assembler.ttl:ro
     environment:
       - ADMIN_PASSWORD=admin123
@@ -90,6 +91,8 @@ services:
 
 volumes:
   fuseki_dev_data:
+    driver: local
+  fuseki_dev_base:
     driver: local
   semem_dev_data:
     driver: local

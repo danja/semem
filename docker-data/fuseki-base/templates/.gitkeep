@@ -1,0 +1,3 @@
+# Fuseki templates directory
+# This is where Fuseki stores its template files.
+# The container needs write access to create files here.

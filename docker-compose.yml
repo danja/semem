@@ -7,6 +7,7 @@ services:
       - "4050:3030"
     volumes:
       - ./docker-data/fuseki:/fuseki
+      - ./docker-data/fuseki-base:/fuseki-base
       - ./config/fuseki/assembler.ttl:/fuseki-base/configuration/assembler.ttl:ro
     environment:
       - ADMIN_PASSWORD=admin123
