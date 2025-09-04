@@ -1,0 +1,8 @@
+# Docker volume mount point for Fuseki SPARQL database
+# This directory will contain:
+# - Fuseki database files
+# - Configuration files
+# - Transaction logs
+# 
+# The actual data files are ignored by git but this placeholder
+# ensures the directory structure exists for Docker volume mounts.

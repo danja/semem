@@ -159,5 +159,9 @@ dist
 
 **/.claude/settings.local.json
 
-# Docker data persistence
-docker-data/
+# Docker data persistence - ignore data files but keep directory structure
+docker-data/**
+!docker-data/
+!docker-data/*/
+!docker-data/*/*/
+!docker-data/**/.gitkeep

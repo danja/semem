@@ -1,0 +1,9 @@
+# Docker volume mount point for Semem application logs
+# This directory will contain:
+# - Application logs
+# - Debug logs
+# - Error logs
+# - Service logs
+#
+# The actual log files are ignored by git but this placeholder
+# ensures the directory structure exists for Docker volume mounts.

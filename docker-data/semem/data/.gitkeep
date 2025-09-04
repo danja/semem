@@ -1,0 +1,9 @@
+# Docker volume mount point for Semem application data
+# This directory will contain:
+# - Memory files
+# - Embeddings cache
+# - Application state
+# - Runtime data files
+#
+# The actual data files are ignored by git but this placeholder
+# ensures the directory structure exists for Docker volume mounts.
