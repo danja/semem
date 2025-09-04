@@ -1,4 +1,20 @@
 services:
+  # Permission fixer for Fuseki data directories
+  fuseki-init:
+    image: node:22-slim
+    command: >
+      bash -c "
+        mkdir -p /fuseki-base/templates /fuseki-base/logs /fuseki-base/backups /fuseki-base/system_files /fuseki-base/databases &&
+        chown -R 9008:9008 /fuseki-base /fuseki &&
+        chmod -R 755 /fuseki-base /fuseki &&
+        echo 'Permissions fixed for Fuseki directories'
+      "
+    volumes:
+      - ./docker-data/fuseki:/fuseki
+      - ./docker-data/fuseki-base:/fuseki-base
+    networks:
+      - semem-network
+
   # Apache Jena Fuseki - SPARQL Database
   fuseki:
     image: secoresearch/fuseki:latest
@@ -12,6 +28,9 @@ services:
     environment:
       - ADMIN_PASSWORD=admin123
       - JVM_ARGS=-Xmx2g
+    depends_on:
+      fuseki-init:
+        condition: service_completed_successfully
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3030/$/ping || exit 1"]

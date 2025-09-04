@@ -2,6 +2,22 @@
 # Usage: docker compose -f docker-compose.dev.yml up
 
 services:
+  # Permission fixer for Fuseki data directories (dev)
+  fuseki-init-dev:
+    image: node:22-slim
+    command: >
+      bash -c "
+        mkdir -p /fuseki-base/templates /fuseki-base/logs /fuseki-base/backups /fuseki-base/system_files /fuseki-base/databases &&
+        chown -R 9008:9008 /fuseki-base /fuseki &&
+        chmod -R 755 /fuseki-base /fuseki &&
+        echo 'Dev permissions fixed for Fuseki directories'
+      "
+    volumes:
+      - fuseki_dev_data:/fuseki
+      - fuseki_dev_base:/fuseki-base
+    networks:
+      - semem-dev-network
+
   # Apache Jena Fuseki - SPARQL Database (same as production)
   fuseki-dev:
     image: secoresearch/fuseki:latest
@@ -15,6 +31,9 @@ services:
     environment:
       - ADMIN_PASSWORD=admin123
       - JVM_ARGS=-Xmx1g
+    depends_on:
+      fuseki-init-dev:
+        condition: service_completed_successfully
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3030/$/ping || exit 1"]
