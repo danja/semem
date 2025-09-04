@@ -471,14 +471,23 @@ export default class Config {
         }
 
         // Replace ${VAR_NAME} placeholders with environment variables
+        console.log('🔍 Starting environment variable substitution...');
         const replaceEnvVars = (obj) => {
             if (typeof obj === 'string' && obj.includes('${')) {
+                console.log('🔍 Processing string:', obj);
                 return obj.replace(/\$\{([^}]+)\}/g, (match, varName) => {
                     // Handle default values: ${VAR_NAME:-default}
-                    const [envVar, defaultValue] = varName.split(':-');
-                    const result = process.env[envVar] || defaultValue || '';
-                    console.log(`🔄 Substituting ${match} -> ${result}`);
-                    return result;
+                    if (varName.includes(':-')) {
+                        const [envVar, defaultValue] = varName.split(':-');
+                        const result = process.env[envVar] || defaultValue || '';
+                        console.log(`🔄 Substituting ${match} -> ${result} (envVar: ${envVar}, env: ${process.env[envVar]}, default: ${defaultValue})`);
+                        return result;
+                    } else {
+                        // Simple variable without default
+                        const result = process.env[varName] || '';
+                        console.log(`🔄 Substituting ${match} -> ${result} (simple var: ${varName}, env: ${process.env[varName]})`);
+                        return result;
+                    }
                 });
             } else if (Array.isArray(obj)) {
                 return obj.map(item => replaceEnvVars(item));
@@ -501,6 +510,10 @@ export default class Config {
      */
     loadEnvironmentVariables() {
         try {
+            console.log('🔍 Loading environment variables...');
+            console.log('🔍 Current SPARQL_HOST:', process.env.SPARQL_HOST);
+            console.log('🔍 Current SPARQL_PORT:', process.env.SPARQL_PORT);
+            
             // Get the project root directory (semem root)
             const __filename = fileURLToPath(import.meta.url);
             const __dirname = dirname(__filename);
@@ -516,6 +529,9 @@ export default class Config {
                 dotenv.config();
                 console.log('✅ Environment variables loaded from process.cwd()/.env');
             }
+            
+            console.log('🔍 After dotenv - SPARQL_HOST:', process.env.SPARQL_HOST);
+            console.log('🔍 After dotenv - SPARQL_PORT:', process.env.SPARQL_PORT);
         } catch (error) {
             console.warn('⚠️  Could not load .env file:', error.message);
             // Don't throw - environment variables might be set via other means

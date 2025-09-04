@@ -37,7 +37,7 @@ Semem requires native compilation for scientific computing libraries. The Docker
 - **Git**: Required for dependency resolution
 
 **Build Requirements:**
-Semem requires building from source as no pre-built images are currently published. The build process includes native compilation which takes 15-20 minutes:
+Semem initially requires building from source as no pre-built images are currently published. The build process includes native compilation which takes 15-20 minutes:
 
 ```bash
 # Build is required (includes native dependency compilation)
