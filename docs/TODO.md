@@ -21,3 +21,6 @@
   sudo chown -R 1001:1001 ./docker-data/fuseki
   sudo chmod -R 755 ./docker-data/fuseki
 
+  Failed to create directory: /fuseki-base/templates
+
+
