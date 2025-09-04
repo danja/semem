@@ -1,0 +1,21 @@
+@prefix fuseki:  <http://jena.apache.org/fuseki#> .
+@prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix tdb:     <http://jena.hpl.hp.com/2008/tdb#> .
+@prefix ja:      <http://jena.hpl.hp.com/2005/11/Assembler#> .
+@prefix :        <#> .
+
+<#service> rdf:type fuseki:Service ;
+    fuseki:name              "semem" ;   # http://host:port/semem
+    fuseki:serviceQuery      "sparql" ;    # SPARQL query service
+    fuseki:serviceUpdate     "update" ;    # SPARQL update service
+    fuseki:serviceReadWriteGraphStore "data" ;     # SPARQL Graph store protocol
+    fuseki:serviceReadGraphStore    "data" ;     # SPARQL Graph store protocol (read only)
+    fuseki:dataset           <#tdb> ;
+    .
+
+<#tdb> rdf:type tdb:DatasetTDB ;
+    tdb:location "/fuseki-base/databases/tdb-simple" ;
+    # Make the default graph be the union of all named graphs.
+    tdb:unionDefaultGraph true ;
+    .

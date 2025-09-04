@@ -226,28 +226,9 @@ export class SafeOperations {
       console.log('🔥 CONSOLE: SafeOperations.searchSimilar received from MemoryManager', { interactionsCount: interactions?.length || 0 });
       allResults.push(...interactions);
       
-      // 2. Search chunks directly using the store's search method
-      // NOTE: This creates DUPLICATE search - MemoryManager already searches SPARQL store!
-      // TODO: Remove this duplication to prevent result interference
-      if (this.memoryManager.store && typeof this.memoryManager.store.search === 'function') {
-        console.log('🔥 CONSOLE: SafeOperations.searchSimilar - Performing direct SPARQL store search');
-        console.log('🔥 DEBUG: Store search parameters:', { threshold, limit, queryLength: queryText.length });
-        console.log('🔥 DEBUG: Store type:', this.memoryManager.store.constructor.name);
-        
-        // Generate embedding for the query
-        const queryEmbedding = await this.generateEmbedding(queryText);
-        console.log('🔥 DEBUG: Generated query embedding:', { dimensions: queryEmbedding?.length });
-        
-        const chunks = await this.memoryManager.store.search(queryEmbedding, limit, threshold);
-        console.log('🔥 CONSOLE: SafeOperations.searchSimilar direct SPARQL search found', { 
-          chunksCount: chunks?.length || 0,
-          firstChunkSimilarity: chunks?.[0]?.similarity,
-          firstChunkPrompt: chunks?.[0]?.prompt?.substring(0, 50)
-        });
-        allResults.push(...chunks);
-      } else {
-        console.log('🔥 DEBUG: Store search method not available - store:', !!this.memoryManager.store, 'hasSearch:', typeof this.memoryManager.store?.search);
-      }
+      // 2. REMOVED: Duplicate store search that was causing result interference
+      // MemoryManager.retrieveRelevantInteractions already handles SPARQL store search
+      console.log('🔥 CONSOLE: Skipping duplicate SPARQL store search - using MemoryManager results only');
       
       // Normalize similarity scores before combining (fix scale mismatch)
       // First, separate results by source type to normalize separately
