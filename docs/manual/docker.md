@@ -36,15 +36,15 @@ Semem requires native compilation for scientific computing libraries. The Docker
 - **Scientific Libraries**: OpenBLAS, BLAS, LAPACK for faiss-node
 - **Git**: Required for dependency resolution
 
-**Pre-built Images:**
-The recommended approach is to use pre-built Docker images that include all compiled dependencies:
+**Build Requirements:**
+Semem requires building from source as no pre-built images are currently published. The build process includes native compilation which takes 15-20 minutes:
 
 ```bash
-# Use pre-built image (recommended)
-docker compose pull
-docker compose up -d
+# Build is required (includes native dependency compilation)
+docker compose build
 
-# This avoids the 15-20 minute build process
+# Start services after build
+docker compose up -d
 ```
 
 **Build Optimization Strategies:**
@@ -139,27 +139,53 @@ cp .env.docker.example .env
 nano .env
 ```
 
-### 3. Start Services
+### 3. Build and Start
 
-**Development:**
+**Standard build process:**
 ```bash
-# Start development services
-docker compose -f docker-compose.dev.yml up -d
+# Enable BuildKit for faster builds
+export DOCKER_BUILDKIT=1
+export COMPOSE_DOCKER_CLI_BUILD=1
 
-# Monitor startup
-docker compose -f docker-compose.dev.yml logs -f
-```
+# Build with caching (15-20 minutes for first build)
+docker compose build
 
-**Production:**
-```bash
-# Start production services
+# Start services
 docker compose up -d
 
 # Monitor startup
 docker compose logs -f
 ```
 
-### 4. Access Semem
+**Subsequent runs (much faster):**
+```bash
+# If nothing changed, just start existing containers
+docker compose up -d
+
+# Only rebuild if you've modified package.json or Dockerfile
+```
+
+### 4. Development vs Production Startup
+
+**Development (with live reload):**
+```bash
+# Use development compose file
+docker compose -f docker-compose.dev.yml up -d
+
+# Monitor startup
+docker compose -f docker-compose.dev.yml logs -f
+```
+
+**Production (optimized):**
+```bash
+# Use production settings
+docker compose up -d
+
+# Monitor startup
+docker compose logs -f
+```
+
+### 5. Access Semem
 
 Once all services are running:
 
@@ -491,6 +517,61 @@ docker buildx build \
   --platform linux/amd64,linux/arm64 \
   -t semem:latest \
   --push .
+```
+
+### Build Performance Optimization
+
+**Avoiding Repeated Builds:**
+
+The Docker build process compiles native dependencies which takes 15-20 minutes. To minimize build time:
+
+```bash
+# 1. Build with aggressive caching (first time)
+export DOCKER_BUILDKIT=1
+export BUILDKIT_PROGRESS=plain
+docker compose build --build-arg BUILDKIT_INLINE_CACHE=1
+
+# 2. Subsequent runs use cached layers (much faster)
+docker compose up -d
+
+# 3. Use build cache mounts for advanced caching (requires BuildKit)
+docker buildx build --cache-from type=local,src=/tmp/.buildx-cache \
+                   --cache-to type=local,dest=/tmp/.buildx-cache \
+                   .
+```
+
+**Development Build Strategy:**
+
+For development, use volume mounts to avoid rebuilds:
+
+```bash
+# Development with live code reload
+docker compose -f docker-compose.dev.yml up -d
+
+# Code changes are reflected immediately without rebuilds
+# Only restart container for package.json changes:
+docker compose -f docker-compose.dev.yml restart semem-dev
+```
+
+**When You Must Build:**
+
+Only build from source when:
+- Modifying native dependencies in package.json
+- Changing Dockerfile or build configuration
+- Pre-built images are unavailable for your architecture
+- Contributing code that requires testing build process
+
+**Build Troubleshooting:**
+
+```bash
+# Clean build (if cache is corrupted)
+docker compose build --no-cache
+
+# Build with verbose output
+docker compose build --progress=plain
+
+# Check build context size
+docker build --dry-run .
 ```
 
 ### Production Scaling
