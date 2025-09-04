@@ -7,7 +7,8 @@ services:
     image: node:22-slim
     command: >
       bash -c "
-        mkdir -p /fuseki-base/templates /fuseki-base/logs /fuseki-base/backups /fuseki-base/system_files /fuseki-base/databases &&
+        mkdir -p /fuseki-base/templates /fuseki-base/logs /fuseki-base/backups /fuseki-base/system_files /fuseki-base/databases /fuseki-base/configuration &&
+        cp /config/assembler.ttl /fuseki-base/configuration/assembler.ttl &&
         chown -R 9008:9008 /fuseki-base /fuseki &&
         chmod -R 755 /fuseki-base /fuseki &&
         echo 'Dev permissions fixed for Fuseki directories'
@@ -15,6 +16,7 @@ services:
     volumes:
       - fuseki_dev_data:/fuseki
       - fuseki_dev_base:/fuseki-base
+      - ./config/fuseki/assembler.ttl:/config/assembler.ttl:ro
     networks:
       - semem-dev-network
 
@@ -27,7 +29,6 @@ services:
     volumes:
       - fuseki_dev_data:/fuseki
       - fuseki_dev_base:/fuseki-base
-      - ./config/fuseki/assembler.ttl:/fuseki-base/configuration/assembler.ttl:ro
     environment:
       - ADMIN_PASSWORD=admin123
       - JVM_ARGS=-Xmx1g
