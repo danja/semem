@@ -82,13 +82,30 @@ const startServers = async () => {
 // Handle manual shutdown via Ctrl+C (only if running interactively)
 if (process.stdin.isTTY) {
     process.stdin.setRawMode(true);
+    
+    // Function to restore terminal
+    const restoreTerminal = async () => {
+        if (process.stdin.isTTY) {
+            process.stdin.setRawMode(false);
+            process.stdin.pause();
+        }
+    };
+    
     process.stdin.on('data', async (data) => {
         // Ctrl+C or 'q' to quit
         if (data.toString() === '\x03' || data.toString().toLowerCase() === 'q') {
             console.log('\nShutting down servers...');
+            await restoreTerminal();
             await serverManager.stopAllServers();
             process.exit(0);
         }
+    });
+    
+    // Ensure terminal is restored on any exit
+    process.on('exit', restoreTerminal);
+    process.on('SIGTERM', async () => {
+        await restoreTerminal();
+        process.exit(0);
     });
 }
 
@@ -96,7 +113,12 @@ if (process.stdin.isTTY) {
 startServers();
 
 // Handle process termination
-process.on('SIGINT', () => {
+process.on('SIGINT', async () => {
     console.log('\nShutting down servers...');
+    if (process.stdin.isTTY) {
+        process.stdin.setRawMode(false);
+        process.stdin.pause();
+    }
+    await serverManager.stopAllServers();
     process.exit(0);
 });

@@ -21,7 +21,8 @@ echo "- Workbench UI port: $WORKBENCH_PORT"
 echo "- MCP Server port: $MCP_PORT"
 
 # Start all servers using the new start-all.js script
-node "$SCRIPT_DIR/src/servers/start-all.js" 2>&1 | tee -a "$SCRIPT_DIR/startup.log" &
+# Run in background but don't mess with terminal
+nohup node "$SCRIPT_DIR/src/servers/start-all.js" > "$SCRIPT_DIR/startup.log" 2>&1 &
 START_ALL_PID=$!
 
 # Wait a moment for servers to start

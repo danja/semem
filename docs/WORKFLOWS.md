@@ -1,3 +1,14 @@
+# Workflows for manual testing
+
+## Simple Tell/Ask
+
+Go to the workbench and -
+
+* Tell : "there are five sardines"
+* Ask : "How many fish are there?"
+
+## SPARQL Ingester
+
 Clear the store :
 scripts/del-content-graph.sh
 or
