@@ -327,21 +327,23 @@ class WorkbenchApp {
     const button = this.components.tell.button;
     const results = this.components.tell.results;
     
-    // Debug: Log form data to console
-    console.log('DEBUG: Form data extracted:', formData);
-    
     // Check if this is a file upload (document type with file selected)
     const fileInput = DomUtils.$('#document-file');
     const hasFile = fileInput && fileInput.files.length > 0;
     const isDocumentType = formData.type === 'document';
     
     const startTime = Date.now();
-    const logId = consoleService.logOperationStart('tell', {
-      type: formData.type,
-      contentLength: formData.content?.length || 0,
-      hasTags: Boolean(formData.tags),
-      hasFile: hasFile
-    });
+    
+    // Start operation with human-friendly message
+    if (isDocumentType && hasFile) {
+      consoleService.info(`🚀 Starting document upload workflow...`);
+    } else if (formData.content) {
+      const contentType = formData.type === 'fact' ? 'fact' : 
+                         formData.type === 'note' ? 'note' : 
+                         formData.type === 'idea' ? 'idea' : 'information';
+      const wordCount = formData.content.split(/\s+/).length;
+      consoleService.info(`🧠 Storing ${contentType} in semantic memory (${wordCount} words)...`);
+    }
     
     try {
       DomUtils.setButtonLoading(button, true);
@@ -360,6 +362,8 @@ class WorkbenchApp {
           throw new Error('Please provide content to store');
         }
         
+        consoleService.info(`🔄 Analyzing content and generating embeddings...`);
+        
         result = await apiService.tell({
           content: formData.content,
           type: formData.type || 'interaction',
@@ -369,7 +373,17 @@ class WorkbenchApp {
       }
       
       const duration = Date.now() - startTime;
-      consoleService.logOperationSuccess('tell', result, duration);
+      
+      // Report success with human-friendly message
+      if (result.success) {
+        if (isDocumentType) {
+          // Document upload success handled in handleDocumentUpload
+        } else if (result.concepts) {
+          consoleService.success(`✅ Content stored successfully! Extracted ${result.concepts} concepts in ${duration}ms`);
+        } else {
+          consoleService.success(`✅ Content stored successfully in semantic memory (${duration}ms)`);
+        }
+      }
       
       // Update session stats
       stateManager.updateSessionStats({
@@ -386,7 +400,7 @@ class WorkbenchApp {
       
     } catch (error) {
       const duration = Date.now() - startTime;
-      consoleService.logOperationError('tell', error, duration);
+      consoleService.error(`❌ Failed to store content: ${error.message}`);
       
       // Show user-friendly error message
       DomUtils.showMessage(results, error.message, 'error');
@@ -483,19 +497,13 @@ class WorkbenchApp {
     }
 
     // Log file selection
-    consoleService.info('File selected for upload', {
-      filename: file.name,
-      fileSize: file.size,
-      lastModified: new Date(file.lastModified).toISOString()
-    });
+    consoleService.info(`📎 Selected "${file.name}" (${this.formatFileSize(file.size)}) for upload`);
 
     // Validate file type and infer document type
     const fileType = this.getFileTypeFromExtension(file.name);
     if (!fileType) {
-      consoleService.logWarning('Unsupported file type selected', {
-        filename: file.name,
-        extension: file.name.split('.').pop()
-      });
+      const extension = file.name.split('.').pop();
+      consoleService.error(`❌ Unsupported file type ".${extension}" - please use PDF, TXT, or MD files`);
       DomUtils.showToast('Unsupported file type. Please select a PDF, TXT, or MD file.', 'error');
       this.clearSelectedFile();
       return;
@@ -504,22 +512,14 @@ class WorkbenchApp {
     // Validate file size (25MB limit for documents, especially PDFs)
     const maxSize = 25 * 1024 * 1024;
     if (file.size > maxSize) {
-      consoleService.logWarning('File too large for upload', {
-        filename: file.name,
-        fileSize: file.size,
-        maxSize: maxSize
-      });
+      consoleService.error(`❌ File too large (${this.formatFileSize(file.size)}) - maximum size is ${this.formatFileSize(maxSize)}`);
       DomUtils.showToast('File too large. Please select a file under 25MB.', 'error');
       this.clearSelectedFile();
       return;
     }
 
     // Log successful validation
-    consoleService.success('File validation passed', {
-      filename: file.name,
-      documentType: fileType,
-      fileSize: this.formatFileSize(file.size)
-    });
+    consoleService.success(`✅ File validation passed - ready to upload ${fileType.toUpperCase()} document`);
 
     // Display selected file info
     this.displaySelectedFile(file, fileType);
@@ -598,11 +598,10 @@ class WorkbenchApp {
     });
     
     try {
-      // Create a temporary file URL for the MCP service
-      console.log('🔄 [WORKBENCH UPLOAD] Step 1: Creating file URL...');
-      consoleService.info('Processing file for upload...', { step: 'file_processing' });
+      // Step 1: Process file for upload
+      consoleService.info(`📄 Preparing "${file.name}" for upload...`);
       const fileUrl = await this.createFileUrl(file);
-      console.log(`✅ [WORKBENCH UPLOAD] File URL created, length: ${fileUrl.length} chars`);
+      consoleService.info(`✅ File prepared successfully (${this.formatFileSize(file.size)})`);
       
       // Prepare upload payload
       const uploadPayload = {
@@ -618,44 +617,36 @@ class WorkbenchApp {
         }
       };
       
-      console.log('🔄 [WORKBENCH UPLOAD] Step 2: Prepared upload payload');
-      console.log(`📤 [WORKBENCH UPLOAD] Payload metadata:`, uploadPayload.metadata);
-      
-      // Call the MCP document upload service
-      console.log('🔄 [WORKBENCH UPLOAD] Step 3: Sending to MCP service...');
-      consoleService.info('Sending document to MCP service...', { 
-        step: 'mcp_upload',
-        documentType: fileType 
-      });
+      // Step 2: Upload and process document
+      consoleService.info(`🚀 Uploading ${fileType.toUpperCase()} document to semantic memory...`);
       
       const result = await apiService.uploadDocument(uploadPayload);
       
       const uploadDuration = Date.now() - uploadStartTime;
-      console.log(`✅ [WORKBENCH UPLOAD] Document upload completed in ${uploadDuration}ms`);
-      console.log('📊 [WORKBENCH UPLOAD] Result:', result);
       
-      consoleService.success('Document upload completed', {
-        filename: file.name,
-        duration: uploadDuration,
-        processed: result.success || false,
-        concepts: result.concepts || 0,
-        resultKeys: Object.keys(result || {})
-      });
+      // Step 3: Report results
+      if (result.success) {
+        const processingMessage = result.memoryIntegration === 'deferred' 
+          ? `📚 Document stored successfully. Large file will be processed in background.`
+          : result.concepts 
+            ? `✅ Document processed successfully! Extracted ${result.concepts} concepts and stored in semantic memory.`
+            : `✅ Document stored successfully in semantic memory.`;
+        
+        consoleService.success(processingMessage);
+        
+        if (result.memoryIntegration === 'deferred') {
+          consoleService.info(`💡 Run chunking tools to make large document searchable.`);
+        }
+      } else {
+        consoleService.error(`❌ Document processing failed: ${result.error || 'Unknown error'}`);
+      }
       
       return result;
     } catch (error) {
       const uploadDuration = Date.now() - uploadStartTime;
-      console.error(`❌ [WORKBENCH UPLOAD] Document upload failed after ${uploadDuration}ms:`, error);
+      consoleService.error(`❌ Failed to upload "${file.name}": ${error.message}`);
+      consoleService.error(`⏱️ Upload attempt took ${uploadDuration}ms before failing`);
       
-      consoleService.error('Document upload failed', {
-        filename: file.name,
-        duration: uploadDuration,
-        error: error.message,
-        errorStack: error.stack,
-        fileType: fileType
-      });
-      
-      console.error('Document upload failed:', error);
       throw new Error(`Failed to upload document: ${error.message}`);
     }
   }
@@ -687,17 +678,21 @@ class WorkbenchApp {
     const results = this.components.ask.results;
     
     const startTime = Date.now();
-    const logId = consoleService.logOperationStart('ask', {
-      mode: formData.mode,
-      useContext: Boolean(formData.useContext),
-      useHyDE: Boolean(formData.useHyDE),
-      useWikipedia: Boolean(formData.useWikipedia),
-      useWikidata: Boolean(formData.useWikidata),
-      questionLength: formData.question?.length || 0
-    });
+    
+    // Start operation with human-friendly message
+    const questionWords = formData.question?.split(/\s+/).length || 0;
+    const sources = [];
+    if (formData.useContext) sources.push('semantic memory');
+    if (formData.useWikipedia) sources.push('Wikipedia');
+    if (formData.useWikidata) sources.push('Wikidata');
+    
+    const sourcesText = sources.length > 0 ? ` from ${sources.join(', ')}` : '';
+    consoleService.info(`🔍 Searching for answers to your ${questionWords}-word question${sourcesText}...`);
     
     try {
       DomUtils.setButtonLoading(button, true);
+      
+      consoleService.info(`🧠 Analyzing question and finding relevant context...`);
       
       const result = await apiService.ask({
         question: formData.question,
@@ -710,7 +705,12 @@ class WorkbenchApp {
       });
       
       const duration = Date.now() - startTime;
-      consoleService.logOperationSuccess('ask', result, duration);
+      
+      // Report success with context information
+      if (result.success) {
+        const contextInfo = result.contextUsed ? ` using ${result.contextUsed} context sources` : '';
+        consoleService.success(`✅ Answer generated successfully${contextInfo} (${duration}ms)`);
+      }
       
       // Update session stats
       stateManager.updateSessionStats({
@@ -724,7 +724,7 @@ class WorkbenchApp {
       
     } catch (error) {
       const duration = Date.now() - startTime;
-      consoleService.logOperationError('ask', error, duration);
+      consoleService.error(`❌ Failed to find answer: ${error.message} (${duration}ms)`);
       console.error('Ask operation failed:', error);
       DomUtils.showToast('Failed to query: ' + apiService.getErrorMessage(error), 'error');
     } finally {
@@ -751,12 +751,29 @@ class WorkbenchApp {
     }
     
     const startTime = Date.now();
-    const logId = consoleService.logOperationStart('augment', {
-      operation: formData.operation || 'auto',
-      targetLength: target?.length || 0,
-      isProcessLazy,
-      isChunkDocuments
-    });
+    
+    // Start operation with human-friendly message
+    let operationMessage = '';
+    if (isProcessLazy) {
+      operationMessage = '🔄 Processing all lazy-stored content with embeddings and concepts...';
+    } else if (isChunkDocuments) {
+      operationMessage = '📄 Chunking large documents into searchable segments...';
+    } else {
+      const operation = formData.operation || 'auto';
+      const operationNames = {
+        'auto': 'analyzing',
+        'summarize': 'summarizing', 
+        'extract': 'extracting key information from',
+        'expand': 'expanding on',
+        'clarify': 'clarifying',
+        'relate': 'finding relationships in'
+      };
+      const action = operationNames[operation] || 'processing';
+      const targetWords = target?.split(/\s+/).length || 0;
+      operationMessage = `🔬 Now ${action} your ${targetWords}-word content...`;
+    }
+    
+    consoleService.info(operationMessage);
     
     // Build options object based on operation type
     let options = {};
@@ -783,7 +800,19 @@ class WorkbenchApp {
       });
       
       const duration = Date.now() - startTime;
-      consoleService.logOperationSuccess('augment', result, duration);
+      
+      // Report success with specific results
+      if (result.success) {
+        if (isProcessLazy) {
+          const processed = result.processed || 0;
+          consoleService.success(`✅ Processed ${processed} lazy-stored items with embeddings (${duration}ms)`);
+        } else if (isChunkDocuments) {
+          const chunks = result.chunks || 0;
+          consoleService.success(`✅ Created ${chunks} searchable document chunks (${duration}ms)`);
+        } else {
+          consoleService.success(`✅ Content analysis completed successfully (${duration}ms)`);
+        }
+      }
       
       // Show results
       this.displayAugmentResults(results, result);
@@ -800,7 +829,7 @@ class WorkbenchApp {
       
     } catch (error) {
       const duration = Date.now() - startTime;
-      consoleService.logOperationError('augment', error, duration);
+      consoleService.error(`❌ Failed to complete operation: ${error.message} (${duration}ms)`);
       console.error('Augment operation failed:', error);
       DomUtils.showToast('Failed to analyze: ' + apiService.getErrorMessage(error), 'error');
     } finally {
@@ -826,14 +855,14 @@ class WorkbenchApp {
       await stateManager.setZoom(level);
       
       const newState = stateManager.getState();
-      consoleService.logStateChange('zoom', oldState, newState);
+      consoleService.info(`🔍 Zoom level changed to "${level}" - adjusting abstraction level for search results`);
       
       // Update visual feedback
       this.updateNavigationDisplay();
       
     } catch (error) {
       console.error('Zoom change failed:', error);
-      consoleService.error('Failed to change zoom level', { level, error: error.message });
+      consoleService.error(`❌ Failed to change zoom level to "${level}": ${error.message}`);
       DomUtils.showToast('Failed to change zoom level', 'error');
     }
   }
@@ -856,14 +885,14 @@ class WorkbenchApp {
       await stateManager.setTilt(style);
       
       const newState = stateManager.getState();
-      consoleService.logStateChange('tilt', oldState, newState);
+      consoleService.info(`🎯 Tilt view changed to "${style}" - adjusting content perspective and filtering`);
       
       // Update visual feedback
       this.updateNavigationDisplay();
       
     } catch (error) {
       console.error('Tilt change failed:', error);
-      consoleService.error('Failed to change view style', { style, error: error.message });
+      consoleService.error(`❌ Failed to change view style to "${style}": ${error.message}`);
       DomUtils.showToast('Failed to change view style', 'error');
     }
   }
@@ -885,14 +914,12 @@ class WorkbenchApp {
       stateManager.setSimilarityThreshold(threshold);
       
       // Log threshold change
-      consoleService.info(`Similarity threshold changed to ${threshold.toFixed(2)}`, { 
-        threshold,
-        type: 'threshold_change'
-      });
+      const sensitivity = threshold < 0.3 ? 'more sensitive' : threshold > 0.7 ? 'less sensitive' : 'balanced';
+      consoleService.info(`⚖️ Similarity threshold set to ${(threshold * 100).toFixed(0)}% (${sensitivity} search)`);
       
     } catch (error) {
       console.error('Threshold change failed:', error);
-      consoleService.error('Failed to change similarity threshold', { threshold, error: error.message });
+      consoleService.error(`❌ Failed to change similarity threshold to ${(threshold * 100).toFixed(0)}%: ${error.message}`);
       DomUtils.showToast('Failed to change threshold', 'error');
     }
   }
@@ -910,14 +937,17 @@ class WorkbenchApp {
       await stateManager.setPan({ domains, keywords });
       
       const newState = stateManager.getState();
-      consoleService.logStateChange('pan', oldState, newState);
+      const filterDesc = domains.length > 0 || keywords.length > 0 
+        ? `filtering by ${domains.length} domains and ${keywords.length} keywords`
+        : 'removing all filters';
+      consoleService.info(`🔄 Pan filters updated - ${filterDesc}`);
       
       // Update visual feedback
       this.updateNavigationDisplay();
       
     } catch (error) {
       console.error('Pan change failed:', error);
-      consoleService.error('Failed to update filters', { domains, keywords, error: error.message });
+      consoleService.error(`❌ Failed to update pan filters: ${error.message}`);
       DomUtils.showToast('Failed to update filters', 'error');
     }
   }
@@ -964,11 +994,18 @@ class WorkbenchApp {
     DomUtils.addClass(button, 'active');
     
     const startTime = Date.now();
-    consoleService.info(`Starting inspect operation: ${inspectType}`, {
-      action: inspectType,
-      buttonElement: button.textContent.trim(),
-      timestamp: new Date().toISOString()
-    });
+    
+    // Start inspection with human-friendly message
+    const inspectMessages = {
+      'memories': '🧠 Inspecting stored memories and concepts...',
+      'providers': '🔌 Checking available AI providers and models...',
+      'config': '⚙️ Reviewing system configuration settings...',
+      'stats': '📊 Gathering system performance statistics...',
+      'health': '🩺 Performing system health diagnostic...'
+    };
+    
+    const message = inspectMessages[inspectType] || `🔍 Inspecting ${inspectType} data...`;
+    consoleService.info(message);
     
     try {
       DomUtils.setButtonLoading(button, true);
@@ -989,23 +1026,21 @@ class WorkbenchApp {
       }
       
       const duration = Date.now() - startTime;
-      consoleService.success(`Inspect ${inspectType} completed`, {
-        action: inspectType,
-        dataKeys: Object.keys(result),
-        recordCount: this.getRecordCount(result),
-        duration
-      });
+      
+      // Report inspection results
+      const recordCount = this.getRecordCount(result);
+      const resultSummary = recordCount > 0 
+        ? `found ${recordCount} items`
+        : 'completed successfully';
+      
+      consoleService.success(`✅ ${inspectType.charAt(0).toUpperCase() + inspectType.slice(1)} inspection ${resultSummary} (${duration}ms)`);
       
       // Display results
       this.displayInspectResults(inspectType, result);
       
     } catch (error) {
       const duration = Date.now() - startTime;
-      consoleService.error(`Inspect ${inspectType} failed`, {
-        action: inspectType,
-        duration,
-        error: error.message
-      });
+      consoleService.error(`❌ Failed to inspect ${inspectType}: ${error.message} (${duration}ms)`);
       
       DomUtils.showToast(`Failed to inspect ${inspectType}: ${apiService.getErrorMessage(error)}`, 'error');
     } finally {
@@ -1452,7 +1487,7 @@ class WorkbenchApp {
         tilt: state.tilt || 'keywords'
       };
       
-      consoleService.info('Executing navigation', navigationParams);
+      consoleService.info(`🗺️ Executing ZPT navigation with zoom:"${state.zoom}", pan filters, and tilt:"${state.tilt}"`);
       
       // Call ZPT navigation API
       const result = await apiService.zptNavigate({
@@ -1463,12 +1498,13 @@ class WorkbenchApp {
       // Display results
       this.displayNavigationResults(result);
       
-      consoleService.success('Navigation executed successfully', result);
+      const resultCount = result?.results?.length || result?.items?.length || 0;
+      consoleService.success(`✅ Navigation completed - found ${resultCount} relevant items`);
       DomUtils.showToast('Navigation executed successfully', 'success');
       
     } catch (error) {
       console.error('Navigation execution failed:', error);
-      consoleService.error('Navigation execution failed', { error: error.message });
+      consoleService.error(`❌ ZPT navigation failed: ${error.message}`);
       DomUtils.showToast('Navigation execution failed', 'error');
     } finally {
       // Reset button state

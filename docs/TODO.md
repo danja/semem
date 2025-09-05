@@ -18,7 +18,7 @@ The data to ingest is in two stores, one with endpoint https://fuseki.hyperdata.
 
 node utils/SPARQLIngestRemote.js --source hyperdata.it_danny --template blog-articles --limit 1000
 
-node utils/SPARQLIngestRemote.js --source danny.ayers.name_content --template blog-articles --limit 1000
+node utils/SPARQLIngestRemote.js --source danny.ayers.name_content --template blog-articles --limit 5
 
 node utils/SPARQLIngestDocker.js --source danny.ayers.name_content --template blog-articles --limit 5
 node utils/SPARQLIngestDocker.js --source hyperdata.it_danny --template blog-articles --limit 5
