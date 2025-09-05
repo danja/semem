@@ -539,7 +539,7 @@ export class AdaptiveSearchEngine {
         });
         
         // Apply final filtering based on quality threshold
-        const qualityThreshold = Math.max(0.2, this.options.minAcceptableQuality);
+        const qualityThreshold = Math.max(0.05, this.options.minAcceptableQuality);
         const qualityFiltered = sortedResults.filter(result => 
             result.qualityScore >= qualityThreshold
         );
