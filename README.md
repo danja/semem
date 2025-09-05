@@ -11,6 +11,8 @@
 
 ![Semem Workbench](docs/images/workbench.png)
 
+**🐳 Quick Start with Docker**: A complete Docker Compose setup is available for easy deployment with all dependencies included. See [Docker Setup Guide](docs/manual/docker.md) for one-command installation.
+
 **Interactive Chat Interface**: The workbench includes a natural language chat interface with slash commands (`/ask`, `/tell`, `/help`) and automatic URL/file ingestion. See [Chat Documentation](docs/manual/chat.md) for details.
 
  The [hints](https://danja.github.io/semem/manual/hints.html) page might help.
@@ -41,6 +43,13 @@ Most recent direct workflow experiment : [PDF ingestion](https://github.com/danj
 **SPARQL Document Ingestion**: Use `examples/ingestion/SPARQLIngest.js` for importing documents from SPARQL endpoints with configurable query templates (blog-articles, generic-documents, wikidata-entities). Supports batch processing, authentication, and direct integration with the semantic memory system.
 
 See also :  [blog](https://tensegrity.it) (co-written with Claude Code)
+
+## Architecture Diagrams
+
+**Core Operation Flows**: Semem's primary operations follow well-defined information flow patterns:
+
+- **📥 [Tell Operation Flow](docs/manual/tell.svg)** - Shows how content is ingested, processed through embedding generation and concept extraction, then stored in the dual SPARQL+FAISS system
+- **📤 [Ask Operation Flow](docs/manual/ask.svg)** - Illustrates the multi-pass adaptive search process, context synthesis, and LLM-powered response generation
 
 <details>
 <summary>Mostly functional but very, very sketchy. It has an MCP server, HTTP API, a crude browser UI and code APIs. A lot to do before much will be remotely useful. It is in active development in June 2025. The codebase is big and chaotic, <strong>it is not for the fainthearted</strong>.</summary>

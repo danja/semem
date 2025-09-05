@@ -43,6 +43,8 @@ The following are workflows applied to sample questions from the [BeerQA](https:
 
 **[sparql-service.md](sparql-service.md)** - SPARQL endpoint configuration and troubleshooting guide.
 
+**[sparql.md](sparql.md)** - Overview of SPARQL's role in Semem's knowledge storage and data import/export utilities for backup and migration workflows.
+
 **[prompt-management.md](prompt-management.md)** - System for managing chat completion prompts.
 
 **[ingest.md](ingest.md)** - SPARQL document ingestion system for importing content from SPARQL endpoints using configurable query templates, with CLI tool, MCP integration, and batch processing capabilities.

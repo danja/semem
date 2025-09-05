@@ -30,6 +30,16 @@ Configuration constants are centralized in `config/preferences.js` to avoid hard
 
 The configuration uses detailed comments explaining each constant's purpose. When adding new configurable values, add them to the appropriate section in `preferences.js` rather than hardcoding in source files.
 
+## Remote Server Deployment
+
+The production instance of Semem runs on Docker with the following endpoints:
+
+- **Workbench UI**: https://semem.tensegrity.it/
+- **Fuseki SPARQL**: https://semem-fuseki.tensegrity.it/
+- **MCP Server**: https://mcp.tensegrity.it/
+- **API Server**: https://api.tensegrity.it/
+
+This deployment provides a fully functional remote instance for testing and demonstration purposes.
 
 ## Blog Guidelines
 

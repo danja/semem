@@ -6,8 +6,6 @@
 * move prompts to src/
 * move mcp to src/
 * use src/utils logger not console
-* repl
-* tell with filename/URL
 * danbri frontend
 * console - replace json with words, add more logging
 * ingest via workbench
@@ -22,6 +20,8 @@ node utils/SPARQLIngestRemote.js --source hyperdata.it_danny --template blog-art
 
 node utils/SPARQLIngestRemote.js --source danny.ayers.name_content --template blog-articles --limit 1000
 
+node utils/SPARQLIngestDocker.js --source danny.ayers.name_content --template blog-articles --limit 5
+node utils/SPARQLIngestDocker.js --source hyperdata.it_danny --template blog-articles --limit 5
  
 
 

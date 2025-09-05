@@ -1,140 +1,89 @@
 graph TD
-    %% User Interface Layer
-    UI["Workbench UI<br/>Tell Form"] --> FORM_DATA["Extract Form Data<br/>content, type, lazy, tags"]
+    %% Tell Operation Information Flow - Current Architecture
+    %% HTTP Entry Points
+    A["Client Request"] -->|POST /tell| B["HTTP Server<br/>mcp/http-server.js:519"]
+    A -->|POST /api/tell| C["Workbench UI API<br/>src/frontend/js/api/api.js"]
     
-    %% Form Processing Decision
-    FORM_DATA --> FILE_CHECK{Document type<br/>with file?}
-    FILE_CHECK -->|Yes| FILE_UPLOAD["File Upload Process<br/>Convert to data URL"]
-    FILE_CHECK -->|No| API_CALL["API Service Call"]
+    %% Request Processing
+    B --> D["Simple Verbs Service<br/>mcp/tools/simple-verbs.js:tell()"]
+    C --> D
     
-    %% Network Layer
-    FILE_UPLOAD --> UPLOAD_API["API uploadDocument"]
-    API_CALL --> TELL_API["API tell method"]
-    UPLOAD_API --> WS["Workbench Server<br/>Proxy: 8086 to 4115"]
-    TELL_API --> WS
-    WS --> MCP["MCP HTTP Server<br/>Port 4115"]
+    %% Content Validation & Processing
+    D --> E["Content Validation<br/>Check required content field"]
+    E --> F["Safe Operations<br/>mcp/lib/safe-operations.js:storeInteraction()"]
     
-    %% Main Processing Entry
-    MCP --> SV["Simple Verbs Service<br/>tell method"]
-    SV --> INIT["Initialize Services<br/>await this.initialize"]
+    %% Embedding Generation Pipeline
+    F --> G["Generate Embedding<br/>SafeOperations.generateEmbedding()"]
+    G --> H["Embedding Handler<br/>src/handlers/EmbeddingHandler.js"]
+    H -->|API Call| I["External Embedding Service<br/>Nomic API / Ollama nomic-embed-text"]
+    I -->|1536-dim Vector| H
     
-    %% Storage Mode Decision
-    INIT --> STORAGE_MODE{Lazy Storage<br/>Mode?}
+    %% Concept Extraction Pipeline
+    F --> J["Extract Concepts<br/>SafeOperations.extractConcepts()"]
+    J --> K["LLM Handler<br/>src/handlers/LLMHandler.js:extractConcepts()"]
+    K -->|API Call| L["External LLM Service<br/>Mistral API / Ollama qwen2:1.5b"]
+    L -->|Extracted Concepts| K
     
-    %% Lazy Storage Path
-    STORAGE_MODE -->|Yes| LAZY_PROCESS["Lazy Processing"]
-    LAZY_PROCESS --> LAZY_ID["Generate Element ID<br/>semem:timestamp_random"]
-    LAZY_ID --> LAZY_PROMPT["Create Prompt<br/>based on content type"]
-    LAZY_PROMPT --> LAZY_DATA["Package Lazy Data<br/>id, content, type, metadata"]
-    LAZY_DATA --> LAZY_STORE["Store Lazy Content<br/>storeLazyContent"]
-    LAZY_STORE --> LAZY_RETURN["Return Success<br/>lazy: true, stored: true"]
-    
-    %% Normal Processing Path
-    STORAGE_MODE -->|No| TYPE_SWITCH{"Content<br/>Type?"}
-    
-    %% Interaction Type Processing
-    TYPE_SWITCH -->|Interaction| INT_EMBED["Generate Embedding<br/>safeOps.generateEmbedding"]
-    INT_EMBED --> INT_CONCEPTS["Extract Concepts<br/>safeOps.extractConcepts"]
-    INT_CONCEPTS --> INT_PROMPT["Create Prompt<br/>User input: content..."]
-    INT_PROMPT --> INT_STORE["Store Interaction<br/>safeOps.storeInteraction"]
-    INT_STORE --> RETURN_SUCCESS["Return Success Response"]
-    
-    %% Concept Type Processing
-    TYPE_SWITCH -->|Concept| CONCEPT_EMBED["Generate Embedding<br/>safeOps.generateEmbedding"]
-    CONCEPT_EMBED --> CONCEPT_CONCEPTS["Extract Concepts<br/>safeOps.extractConcepts"]
-    CONCEPT_CONCEPTS --> CONCEPT_PROMPT["Create Prompt<br/>Concept: metadata.name"]
-    CONCEPT_PROMPT --> CONCEPT_STORE["Store Interaction<br/>safeOps.storeInteraction"]
-    CONCEPT_STORE --> RETURN_SUCCESS
-    
-    %% Document Type Processing
-    TYPE_SWITCH -->|Document| DOC_SIZE_CHECK{"Content length<br/>> 8000 chars?"}
-    
-    %% Small Document Path
-    DOC_SIZE_CHECK -->|No| SMALL_DOC_EMBED["Generate Embedding<br/>safeOps.generateEmbedding"]
-    SMALL_DOC_EMBED --> SMALL_DOC_CONCEPTS["Extract Concepts<br/>safeOps.extractConcepts"]
-    SMALL_DOC_CONCEPTS --> SMALL_DOC_PROMPT["Create Prompt<br/>Document: metadata.title"]
-    SMALL_DOC_PROMPT --> SMALL_DOC_STORE["Store Interaction<br/>safeOps.storeInteraction"]
-    SMALL_DOC_STORE --> RETURN_SUCCESS
-    
-    %% Large Document Chunking Path
-    DOC_SIZE_CHECK -->|Yes| CHUNKER_IMPORT["Import Chunker Service<br/>Dynamic import"]
-    CHUNKER_IMPORT --> CHUNKER_CONFIG["Configure Chunker<br/>maxSize: 2000, overlap: 100"]
-    CHUNKER_CONFIG --> CHUNKING_PROCESS["Chunk Document<br/>chunker.chunk"]
-    CHUNKING_PROCESS --> CHUNK_LOOP["Process Each Chunk<br/>for loop"]
-    
-    %% Chunk Processing
-    CHUNK_LOOP --> CHUNK_EMBED["Generate Chunk Embedding<br/>safeOps.generateEmbedding"]
-    CHUNK_EMBED --> CHUNK_CONCEPTS["Extract Chunk Concepts<br/>safeOps.extractConcepts"]
-    CHUNK_CONCEPTS --> CHUNK_PROMPT["Create Chunk Prompt<br/>Document: title (Chunk N/Total)"]
-    CHUNK_PROMPT --> CHUNK_STORE["Store Chunk Interaction<br/>safeOps.storeInteraction"]
-    CHUNK_STORE --> CHUNK_CHECK{"More<br/>chunks?"}
-    CHUNK_CHECK -->|Yes| CHUNK_LOOP
-    CHUNK_CHECK -->|No| AGGREGATE_CONCEPTS["Aggregate All Concepts<br/>Remove duplicates"]
-    AGGREGATE_CONCEPTS --> DOC_SUMMARY["Create Document Summary<br/>chunks count, total concepts"]
-    DOC_SUMMARY --> RETURN_SUCCESS
-    
-    %% Safe Operations Layer
-    INT_STORE --> SO["Safe Operations Layer"]
-    CONCEPT_STORE --> SO
-    SMALL_DOC_STORE --> SO
-    CHUNK_STORE --> SO
-    SO --> SO_EMBED["Embedding Provider<br/>generateEmbedding"]
-    SO --> SO_LLM["LLM Handler<br/>extractConcepts"]
-    SO --> SO_MEMORY["Memory Manager<br/>storeMemory"]
-    
-    %% Memory Manager Processing
-    SO_MEMORY --> MM["Memory Manager<br/>storeMemory"]
-    MM --> MM_EMBEDDING["Generate Combined Embedding<br/>prompt + response"]
-    MM_EMBEDDING --> MM_DATA["Prepare Memory Data<br/>id, prompt, response, embedding"]
-    MM_DATA --> MM_DUAL_STORE["Dual Store Operation"]
+    %% Memory Storage Pipeline
+    H --> M["Memory Manager<br/>src/MemoryManager.js:storeInteraction()"]
+    K --> M
+    M --> N["Prepare Memory Data<br/>id, prompt, response, embedding, concepts"]
     
     %% Dual Storage System
-    MM_DUAL_STORE --> MEM_STORE["Memory Store<br/>FAISS Index Storage"]
-    MM_DUAL_STORE --> SPARQL_STORE["SPARQL Store<br/>RDF Triple Storage"]
+    N --> O["SPARQL Store<br/>src/stores/SPARQLStore.js:store()"]
+    N --> P["Memory Store<br/>FAISS Index storage"]
     
-    %% Memory Store Process
-    MEM_STORE --> FAISS_INDEX["Add to FAISS Index<br/>Vector similarity search"]
+    %% SPARQL RDF Creation
+    O --> Q["Create Interaction RDF<br/>semem:Interaction + UUID"]
+    Q --> R["Store Properties<br/>semem:prompt, semem:output, semem:embedding"]
+    R --> S["Store Metadata<br/>semem:timestamp, semem:decayFactor=1.0"]
+    S --> T["Store Concepts<br/>semem:concepts array"]
     
-    %% SPARQL Store Process
-    SPARQL_STORE --> RDF_CONVERT["Convert to RDF<br/>ragno:Element creation"]
-    RDF_CONVERT --> RDF_INSERT["Insert RDF Triples<br/>SPARQL UPDATE"]
-    RDF_INSERT --> SPARQL_GRAPH["Store in Graph<br/>http://hyperdata.it/content"]
+    %% SPARQL Persistence
+    T --> U["SPARQL UPDATE Query<br/>INSERT DATA into graph"]
+    U -->|HTTP POST| V["Fuseki SPARQL Endpoint<br/>localhost:4050/semem/update"]
+    V --> W["Graph Storage<br/>http://hyperdata.it/content"]
     
-    %% Lazy Storage Process
-    LAZY_STORE --> LAZY_SPARQL["SPARQL Store Only<br/>storeLazyContent"]
-    LAZY_SPARQL --> LAZY_RDF["Store as RDF<br/>Without embeddings"]
+    %% FAISS Index Storage
+    P --> X["Add Vector to Index<br/>FAISS similarity index"]
+    X --> Y["Update Index Metadata<br/>Store prompt/response mapping"]
     
-    %% Response Path
-    FAISS_INDEX --> STORAGE_SUCCESS["Storage Complete"]
-    SPARQL_GRAPH --> STORAGE_SUCCESS
-    LAZY_RDF --> LAZY_RETURN
-    STORAGE_SUCCESS --> RETURN_SUCCESS
-    RETURN_SUCCESS --> MCP_RESPONSE["MCP HTTP Response"]
-    MCP_RESPONSE --> WS_RETURN["Workbench Proxy Return"]
-    WS_RETURN --> API_RESPONSE["API Service Response"]
-    API_RESPONSE --> UI_UPDATE["UI Update<br/>Display results"]
-    LAZY_RETURN --> MCP_RESPONSE
+    %% Session & Performance Tracking
+    W --> Z["Session Cache Update<br/>Increment interactions, embeddings, concepts"]
+    Y --> Z
+    Z --> AA["Performance Metrics<br/>Duration tracking, memory usage"]
+    
+    %% Response Generation
+    AA --> BB["Success Response<br/>JSON: stored=true, concepts=N, sessionCached=true"]
+    BB --> CC["Performance Details<br/>operationId, totalDuration, phases"]
+    CC --> DD["HTTP Response<br/>200 OK with operation metadata"]
     
     %% Error Handling
-    CHUNKING_PROCESS --> CHUNK_ERROR{"Chunking<br/>Error?"}
-    CHUNK_ERROR -->|Yes| ERROR_RESPONSE["Return Error<br/>Failed to chunk document"]
-    CHUNK_EMBED --> EMBED_ERROR{"Embedding<br/>Error?"}
-    EMBED_ERROR -->|Yes| SKIP_CHUNK["Skip Chunk<br/>Log error, continue"]
-    SKIP_CHUNK --> CHUNK_CHECK
+    G --> EE{Embedding<br/>Generation Failed?}
+    EE -->|Yes| FF["Error Response<br/>Failed to generate embedding"]
+    J --> GG{Concept<br/>Extraction Failed?}
+    GG -->|Yes| HH["Error Response<br/>Failed to extract concepts"]
+    U --> II{SPARQL<br/>Update Failed?}
+    II -->|Yes| JJ["Error Response<br/>Storage failed"]
+    
+    %% Configuration Integration
+    KK["Configuration<br/>config/preferences.js"] --> G
+    KK --> J
+    KK --> O
     
     %% Styling
-    classDef ui fill:#e1f5fe
-    classDef network fill:#f3e5f5
-    classDef processing fill:#e8f5e8
-    classDef storage fill:#fce4ec
-    classDef decision fill:#fffde7
-    classDef error fill:#ffebee
-    classDef success fill:#e0f2f1
+    classDef http fill:#e1f5fe,stroke:#0277bd
+    classDef processing fill:#f3e5f5,stroke:#7b1fa2
+    classDef storage fill:#e8f5e8,stroke:#388e3c
+    classDef external fill:#ffcdd2,stroke:#d32f2f
+    classDef config fill:#fff3e0,stroke:#f57c00
+    classDef error fill:#ffebee,stroke:#c62828
+    classDef response fill:#e0f2f1,stroke:#00695c
     
-    class UI,FORM_DATA,UI_UPDATE ui
-    class WS,MCP,MCP_RESPONSE,WS_RETURN,API_RESPONSE network
-    class SV,INIT,SO,MM,CHUNKER_CONFIG,CHUNKING_PROCESS processing
-    class MEM_STORE,SPARQL_STORE,FAISS_INDEX,RDF_INSERT storage
-    class FILE_CHECK,STORAGE_MODE,TYPE_SWITCH,DOC_SIZE_CHECK,CHUNK_CHECK decision
-    class CHUNK_ERROR,EMBED_ERROR,ERROR_RESPONSE error
-    class RETURN_SUCCESS,STORAGE_SUCCESS,LAZY_RETURN success
+    class A,B,C,DD http
+    class D,E,F,G,J,M,N processing
+    class O,P,W,X storage
+    class I,L,V external
+    class KK config
+    class EE,FF,GG,HH,II,JJ error
+    class BB,CC response
