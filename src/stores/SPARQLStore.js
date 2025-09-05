@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { readFileSync } from 'fs'
 import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'
+import { SPARQL_CONFIG } from '../../config/preferences.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
@@ -1014,7 +1015,7 @@ export default class SPARQLStore extends BaseStore {
      * @param {Object} filters - Additional filters
      * @returns {Promise<Array>} Similar elements with similarity scores
      */
-    async findSimilarElements(queryEmbedding, limit = 10, threshold = 0.7, filters = {}) {
+    async findSimilarElements(queryEmbedding, limit = SPARQL_CONFIG.SIMILARITY.DEFAULT_LIMIT, threshold = SPARQL_CONFIG.SIMILARITY.FINDALL_THRESHOLD, filters = {}) {
         const embeddingStr = JSON.stringify(queryEmbedding)
         const filterClauses = this._buildFilterClauses(filters)
 
@@ -1231,13 +1232,13 @@ export default class SPARQLStore extends BaseStore {
             const embeddingCoverage = totalElements > 0 ? stats.embeddingCount / totalElements : 0
             const connectivity = stats.relationshipCount > 0 ? stats.relationshipCount / stats.entityCount : 0
 
-            const healthy = totalElements > 0 && embeddingCoverage > 0.5 && connectivity > 0.1
+            const healthy = totalElements > 0 && embeddingCoverage > SPARQL_CONFIG.HEALTH.MIN_EMBEDDING_COVERAGE && connectivity > SPARQL_CONFIG.HEALTH.MIN_CONNECTIVITY
 
             const recommendations = []
-            if (embeddingCoverage < 0.5) {
+            if (embeddingCoverage < SPARQL_CONFIG.HEALTH.MIN_EMBEDDING_COVERAGE) {
                 recommendations.push('Low embedding coverage - consider regenerating embeddings')
             }
-            if (connectivity < 0.1) {
+            if (connectivity < SPARQL_CONFIG.HEALTH.MIN_CONNECTIVITY) {
                 recommendations.push('Low graph connectivity - consider adding more relationships')
             }
             if (stats.communityCount === 0) {
@@ -1327,7 +1328,7 @@ export default class SPARQLStore extends BaseStore {
      * @param {number} threshold - Similarity threshold (not used in this basic implementation)
      * @returns {Array<Object>} Search results
      */
-    async search(queryEmbedding, limit = 10, threshold = 0.3) {
+    async search(queryEmbedding, limit = SPARQL_CONFIG.SIMILARITY.DEFAULT_LIMIT, threshold = SPARQL_CONFIG.SIMILARITY.DEFAULT_THRESHOLD) {
         const searchQuery = `
             PREFIX ragno: <http://purl.org/stuff/ragno/>
             PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
@@ -1408,7 +1409,7 @@ export default class SPARQLStore extends BaseStore {
                     }
 
                     // Enhanced similarity calculation (cosine similarity)
-                    let similarity = 0.0 // Default to 0 instead of 0.5 for failed similarity
+                    let similarity = SPARQL_CONFIG.HEALTH.FAILED_SIMILARITY_SCORE
                     if (embedding.length > 0 && queryEmbedding.length > 0) {
                         if (embedding.length === queryEmbedding.length) {
                             // Exact length match - use full cosine similarity

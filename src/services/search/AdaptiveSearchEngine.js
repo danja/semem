@@ -15,6 +15,7 @@
 
 import logger from 'loglevel';
 import ContextAwareThresholdCalculator from './ContextAwareThresholdCalculator.js';
+import { SEARCH_CONFIG } from '../../../config/preferences.js';
 
 // Use loglevel directly to avoid import issues
 const searchLogger = logger.getLogger('AdaptiveSearchEngine');
@@ -32,14 +33,14 @@ export class AdaptiveSearchEngine {
             maxResultCount: options.maxResultCount || 12,
             
             // Quality criteria
-            minAcceptableQuality: options.minAcceptableQuality || 0.3,
-            qualityImproementThreshold: options.qualityImproementThreshold || 0.1,
+            minAcceptableQuality: options.minAcceptableQuality || SEARCH_CONFIG.QUALITY.MIN_ACCEPTABLE_QUALITY,
+            qualityImproementThreshold: options.qualityImproementThreshold || SEARCH_CONFIG.QUALITY.QUALITY_IMPROVEMENT_THRESHOLD,
             
             // Pan filter integration
             enablePanFilterBoosts: options.enablePanFilterBoosts !== false,
-            keywordBoostFactor: options.keywordBoostFactor || 0.15,
-            entityBoostFactor: options.entityBoostFactor || 0.20,
-            domainBoostFactor: options.domainBoostFactor || 0.10,
+            keywordBoostFactor: options.keywordBoostFactor || SEARCH_CONFIG.BOOST_FACTORS.KEYWORD_BOOST,
+            entityBoostFactor: options.entityBoostFactor || SEARCH_CONFIG.BOOST_FACTORS.ENTITY_BOOST,
+            domainBoostFactor: options.domainBoostFactor || SEARCH_CONFIG.BOOST_FACTORS.DOMAIN_BOOST,
             
             // Performance tracking
             enableLearning: options.enableLearning !== false,
@@ -503,7 +504,7 @@ export class AdaptiveSearchEngine {
         }
         
         // Criterion 4: High confidence and sufficient results
-        if (thresholdConfig.confidence > 0.8 && 
+        if (thresholdConfig.confidence > SEARCH_CONFIG.QUALITY.HIGH_CONFIDENCE_THRESHOLD && 
             cumulativeResults.length >= this.options.minResultsPerPass) {
             return { stop: true, reason: 'high_confidence_sufficient_results' };
         }
@@ -533,13 +534,13 @@ export class AdaptiveSearchEngine {
         
         // Sort by quality score and similarity
         const sortedResults = scoredResults.sort((a, b) => {
-            const aScore = (a.qualityScore * 0.6) + ((a.adjustedSimilarity || a.similarity || 0) * 0.4);
-            const bScore = (b.qualityScore * 0.6) + ((b.adjustedSimilarity || b.similarity || 0) * 0.4);
+            const aScore = (a.qualityScore * SEARCH_CONFIG.SCORING.QUALITY_WEIGHT) + ((a.adjustedSimilarity || a.similarity || 0) * SEARCH_CONFIG.SCORING.SIMILARITY_WEIGHT);
+            const bScore = (b.qualityScore * SEARCH_CONFIG.SCORING.QUALITY_WEIGHT) + ((b.adjustedSimilarity || b.similarity || 0) * SEARCH_CONFIG.SCORING.SIMILARITY_WEIGHT);
             return bScore - aScore;
         });
         
         // Apply final filtering based on quality threshold
-        const qualityThreshold = Math.max(0.05, this.options.minAcceptableQuality);
+        const qualityThreshold = Math.max(SEARCH_CONFIG.QUALITY.QUALITY_THRESHOLD_FLOOR, this.options.minAcceptableQuality);
         const qualityFiltered = sortedResults.filter(result => 
             result.qualityScore >= qualityThreshold
         );
@@ -567,34 +568,34 @@ export class AdaptiveSearchEngine {
      * @returns {number} Quality score 0-1
      */
     _calculateResultQuality(result, query, zptState) {
-        let qualityScore = 0.5; // Base score
+        let qualityScore = SEARCH_CONFIG.SCORING.BASE_QUALITY_SCORE;
         
-        // Factor 1: Similarity score (30% weight)
+        // Factor 1: Similarity score
         const similarity = result.adjustedSimilarity || result.similarity || 0;
-        qualityScore += similarity * 0.3;
+        qualityScore += similarity * SEARCH_CONFIG.SCORING.SIMILARITY_CONTRIBUTION;
         
-        // Factor 2: Content length and completeness (20% weight)
+        // Factor 2: Content length and completeness
         const content = (result.prompt || '') + ' ' + (result.response || '');
         const lengthScore = Math.min(1.0, content.length / 200); // Normalize to 200 chars
-        qualityScore += lengthScore * 0.2;
+        qualityScore += lengthScore * SEARCH_CONFIG.SCORING.LENGTH_CONTRIBUTION;
         
-        // Factor 3: Pan filter matches (25% weight)
+        // Factor 3: Pan filter matches
         const panScore = (result.keywordBoost || 0) + (result.entityBoost || 0);
-        qualityScore += Math.min(0.25, panScore);
+        qualityScore += Math.min(SEARCH_CONFIG.SCORING.PAN_FILTER_MAX_CONTRIBUTION, panScore);
         
-        // Factor 4: Recency if timestamp available (15% weight)
+        // Factor 4: Recency if timestamp available
         if (result.timestamp || result.metadata?.timestamp) {
             const timestamp = new Date(result.timestamp || result.metadata.timestamp);
             const age = Date.now() - timestamp.getTime();
             const daysSinceCreation = age / (1000 * 60 * 60 * 24);
             const recencyScore = Math.max(0, 1 - (daysSinceCreation / 365)); // Decay over a year
-            qualityScore += recencyScore * 0.15;
+            qualityScore += recencyScore * SEARCH_CONFIG.SCORING.RECENCY_CONTRIBUTION;
         }
         
-        // Factor 5: Concept richness (10% weight)
+        // Factor 5: Concept richness
         if (result.concepts && Array.isArray(result.concepts)) {
             const conceptScore = Math.min(1.0, result.concepts.length / 5);
-            qualityScore += conceptScore * 0.1;
+            qualityScore += conceptScore * SEARCH_CONFIG.SCORING.CONCEPT_CONTRIBUTION;
         }
         
         return Math.min(1.0, qualityScore);
@@ -611,7 +612,7 @@ export class AdaptiveSearchEngine {
         if (!results || results.length === 0) return 0;
         
         const totalQuality = results.reduce((sum, result) => 
-            sum + (result.qualityScore || result.similarity || 0.3), 0
+            sum + (result.qualityScore || result.similarity || SEARCH_CONFIG.SCORING.DEFAULT_SIMILARITY_FALLBACK), 0
         );
         
         return totalQuality / results.length;
@@ -674,9 +675,9 @@ export class AdaptiveSearchEngine {
         
         // Update quality distribution
         const avgQuality = searchResult.searchStats.averageQuality;
-        if (avgQuality > 0.7) {
+        if (avgQuality > SEARCH_CONFIG.QUALITY.HIGH_QUALITY_THRESHOLD) {
             this.searchMetrics.qualityDistribution.high++;
-        } else if (avgQuality > 0.4) {
+        } else if (avgQuality > SEARCH_CONFIG.QUALITY.MEDIUM_QUALITY_THRESHOLD) {
             this.searchMetrics.qualityDistribution.medium++;
         } else {
             this.searchMetrics.qualityDistribution.low++;

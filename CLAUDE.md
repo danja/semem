@@ -20,6 +20,16 @@ When creating new code follow the patterns described in `docs/manual/infrastruct
 
 - scripts should be run from the server root
 
+## Configuration Management
+
+Configuration constants are centralized in `config/preferences.js` to avoid hardcoded values throughout the codebase. This file contains:
+
+- **SEARCH_CONFIG**: Quality thresholds, scoring weights, and boost factors for AdaptiveSearchEngine
+- **SPARQL_CONFIG**: Similarity search defaults and data health assessment thresholds  
+- **MEMORY_CONFIG**: Decay factors and persistence settings
+
+The configuration uses detailed comments explaining each constant's purpose. When adding new configurable values, add them to the appropriate section in `preferences.js` rather than hardcoding in source files.
+
 
 ## Blog Guidelines
 
