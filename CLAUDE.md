@@ -351,3 +351,4 @@ const llmHandler = new LLMHandler(llmProvider, modelConfig.chatModel);
   - Gemini's context window can handle entire codebases that would overflow Claude's context
   - When checking implementations, be specific about what you're looking for to get accurate results
   
+- use ./stop.sh and ./start.sh when testing the servers locally without docker

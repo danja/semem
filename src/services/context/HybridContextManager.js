@@ -1277,13 +1277,25 @@ export class HybridContextManager {
                     personalContentPreview: synthesisComponents.personalContent?.substring(0, 100)
                 });
                 
-                // Create a simple, direct prompt instead of complex template
+                // Create a simple, direct prompt that includes both personal and enhancement content
+                const contextParts = [];
+                
+                if (synthesisComponents.personalContent) {
+                    contextParts.push(`[PERSONAL CONTEXT]\n${synthesisComponents.personalContent}`);
+                }
+                
+                if (synthesisComponents.enhancementContent) {
+                    contextParts.push(`[EXTERNAL KNOWLEDGE]\n${synthesisComponents.enhancementContent}`);
+                }
+                
+                const contextContent = contextParts.length > 0 ? contextParts.join('\n\n---\n\n') : 'No relevant context found.';
+                
                 const directPrompt = `Answer this question using the provided context.
 
 Question: ${query}
 
 Context:
-${synthesisComponents.personalContent || 'No relevant context found.'}
+${contextContent}
 
 Please provide a direct answer to the question based on the context above. If the context contains relevant information, use it to answer. If not, say so clearly.`;
                 
