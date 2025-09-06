@@ -1,3 +1,13 @@
+  # Logs and runtime data
+  *.log
+  logs/
+  startup.log
+
+  # Development files
+  .claude/
+  .vscode/
+  .idea/
+
 # Dependencies
 node_modules
 npm-debug.log*
