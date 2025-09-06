@@ -1,4 +1,20 @@
 services:
+  # Permission fixer for Semem data and log directories  
+  semem-init:
+    image: node:22-slim
+    command: >
+      bash -c "
+        mkdir -p /app-data/data /app-data/logs &&
+        chown -R node:node /app-data &&
+        chmod -R 755 /app-data &&
+        echo 'Permissions fixed for Semem directories'
+      "
+    volumes:
+      - ./docker-data/semem/data:/app-data/data
+      - ./docker-data/semem/logs:/app-data/logs
+    networks:
+      - semem-network
+
   # Permission fixer for Fuseki data directories
   fuseki-init:
     image: node:22-slim
@@ -68,6 +84,8 @@ services:
       - SPARQL_HOST=fuseki
       - SPARQL_PORT=3030
     depends_on:
+      semem-init:
+        condition: service_completed_successfully
       fuseki:
         condition: service_healthy
     restart: unless-stopped
