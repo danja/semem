@@ -165,6 +165,7 @@ coverage/
 # Large data files that should be mounted as volumes
 data/
 storage/
+docker-data/
 
 # Generated config files (will be generated at runtime)
 config/config.docker.json
