@@ -139,7 +139,7 @@ export default class ParameterValidator {
         }
 
         // Check for unknown parameters
-        const knownParams = ['zoom', 'pan', 'tilt', 'transform'];
+        const knownParams = ['query', 'zoom', 'pan', 'tilt', 'transform'];
         const unknownParams = Object.keys(params).filter(key => !knownParams.includes(key));
         if (unknownParams.length > 0) {
             warnings.push({

@@ -8,7 +8,8 @@ export default mergeConfig(sharedConfig, defineConfig({
     include: [
       'tests/integration/sparql/**/*.test.{js,jsx,ts,tsx}',
       'tests/integration/storage/**/*.test.{js,jsx,ts,tsx}',
-      'tests/integration/ragno/**/*.test.{js,jsx,ts,tsx}'
+      'tests/integration/ragno/**/*.test.{js,jsx,ts,tsx}',
+      'tests/integration/zpt/**/*.test.{js,jsx,ts,tsx}'
     ],
     testTimeout: 60000, // Longer timeout for SPARQL operations
     hookTimeout: 120000,

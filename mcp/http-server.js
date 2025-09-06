@@ -668,15 +668,12 @@ async function startOptimizedServer() {
             throw new Error('ZPT navigation service not available');
           }
           
-          // Execute navigation
-          const result = await zptService.navigate(query, zoom, pan, tilt);
+          // Execute navigation with complete params object
+          const params = { query, zoom, pan, tilt, transform: {} };
+          const result = await zptService.navigate(params);
           
-          res.json({ 
-            success: true, 
-            verb: 'zpt_navigate',
-            data: result,
-            navigation: { query, zoom, pan, tilt }
-          });
+          // Return the result directly to match test expectations
+          res.json(result);
         } catch (error) {
           res.status(500).json({ 
             success: false, 

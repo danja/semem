@@ -17,6 +17,7 @@ export class EnhancedZPTQueries {
         this.prefixes = `
             PREFIX ragno: <http://purl.org/stuff/ragno/>
             PREFIX zpt: <http://purl.org/stuff/zpt/>
+            PREFIX semem: <http://purl.org/stuff/semem/>
             PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
             PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
             PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
@@ -82,19 +83,32 @@ export class EnhancedZPTQueries {
     }
 
     /**
-     * Entity-level zoom: Focus on ragno:Entity instances
+     * Entity-level zoom: Focus on ragno:Entity instances and semem:Interaction data
      */
     buildEntityZoomQuery() {
         return `
             SELECT DISTINCT ?item ?label ?content ?type ?isEntryPoint ?frequency WHERE {
                 GRAPH <${this.contentGraph}> {
-                    ?item a ragno:Entity ;
-                          rdfs:label ?label .
-                    
-                    OPTIONAL { ?item ragno:content ?content }
-                    OPTIONAL { ?item ragno:subType ?type }
-                    OPTIONAL { ?item ragno:isEntryPoint ?isEntryPoint }
-                    OPTIONAL { ?item ragno:frequency ?frequency }
+                    {
+                        ?item a ragno:Entity ;
+                              rdfs:label ?label .
+                        
+                        OPTIONAL { ?item ragno:content ?content }
+                        OPTIONAL { ?item ragno:subType ?type }
+                        OPTIONAL { ?item ragno:isEntryPoint ?isEntryPoint }
+                        OPTIONAL { ?item ragno:frequency ?frequency }
+                    }
+                    UNION
+                    {
+                        ?item a semem:Interaction ;
+                              semem:prompt ?label ;
+                              semem:output ?content .
+                        
+                        OPTIONAL { ?item semem:concepts ?concepts }
+                        BIND("interaction" AS ?type)
+                        BIND(false AS ?isEntryPoint)
+                        BIND(1 AS ?frequency)
+                    }
                 }
             }
             ORDER BY DESC(?frequency) DESC(?isEntryPoint)
@@ -102,18 +116,32 @@ export class EnhancedZPTQueries {
     }
 
     /**
-     * Unit-level zoom: Focus on ragno:Unit instances
+     * Unit-level zoom: Focus on ragno:Unit instances and semem:Interaction data
      */
     buildUnitZoomQuery() {
         return `
             SELECT DISTINCT ?item ?content ?created ?hasEmbedding ?textElement WHERE {
                 GRAPH <${this.contentGraph}> {
-                    ?item a ragno:Unit ;
-                          ragno:content ?content .
-                    
-                    OPTIONAL { ?item dcterms:created ?created }
-                    OPTIONAL { ?item ragno:hasEmbedding ?hasEmbedding }
-                    OPTIONAL { ?item ragno:hasTextElement ?textElement }
+                    {
+                        ?item a ragno:Unit ;
+                              ragno:content ?content .
+                        
+                        OPTIONAL { ?item dcterms:created ?created }
+                        OPTIONAL { ?item ragno:hasEmbedding ?hasEmbedding }
+                        OPTIONAL { ?item ragno:hasTextElement ?textElement }
+                    }
+                    UNION
+                    {
+                        ?item a semem:Interaction .
+                        {
+                            ?item semem:prompt ?content .
+                        } UNION {
+                            ?item semem:output ?content .
+                        }
+                        
+                        OPTIONAL { ?item semem:timestamp ?created }
+                        OPTIONAL { ?item semem:embedding ?hasEmbedding }
+                    }
                 }
             }
             ORDER BY DESC(?created)
@@ -121,17 +149,31 @@ export class EnhancedZPTQueries {
     }
 
     /**
-     * Text-level zoom: Focus on ragno:TextElement instances
+     * Text-level zoom: Focus on ragno:TextElement instances and semem:Interaction data
      */
     buildTextZoomQuery() {
         return `
             SELECT DISTINCT ?item ?content ?created ?sourceDocument WHERE {
                 GRAPH <${this.contentGraph}> {
-                    ?item a ragno:TextElement ;
-                          ragno:content ?content .
-                    
-                    OPTIONAL { ?item dcterms:created ?created }
-                    OPTIONAL { ?item ragno:hasSourceDocument ?sourceDocument }
+                    {
+                        ?item a ragno:TextElement ;
+                              ragno:content ?content .
+                        
+                        OPTIONAL { ?item dcterms:created ?created }
+                        OPTIONAL { ?item ragno:hasSourceDocument ?sourceDocument }
+                    }
+                    UNION
+                    {
+                        ?item a semem:Interaction .
+                        {
+                            ?item semem:prompt ?content .
+                        } UNION {
+                            ?item semem:output ?content .
+                        }
+                        
+                        OPTIONAL { ?item semem:timestamp ?created }
+                        BIND("memory" AS ?sourceDocument)
+                    }
                 }
             }
             ORDER BY DESC(?created)

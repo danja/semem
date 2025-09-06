@@ -1,0 +1,6589 @@
+- [hyperdata.it](http://hyperdata.it/) a Project
+  - subProjects
+    - Transmissions
+    - Squirt
+    - Semem
+    - Farelo
+    - Namespaces
+      - subProjects
+        - lingue
+          - a
+            - Ontology
+        - zpt
+          - a
+            - Ontology
+- Tensegrity Pivotmem
+  - [https://github.com/BaldissaraMatheus/Tasks.md](https://github.com/BaldissaraMatheus/Tasks.md)
+  - tbox
+    - branding
+    - tidy
+    - get prosody running
+    - get all subprojects running, with healthchecks
+      - squirt
+      - atuin
+      - semem
+      - tia
+  - Namespaces
+    - organise!
+    - project
+    - ragno
+    - zpt
+    - lingue
+  - Semem
+    - API UI
+    - skos
+  - Transmissions
+    - branding
+    - multi-pipe
+    - module-load
+    - endpoints
+    - claude json
+    - Filter
+  - squirt
+    - branding
+    - tbox, semem admin
+    - chat llm, xmpp
+  - atuin
+    - sparql gui
+      - editor
+      - endpoint manager
+      - construct -> Atuin
+  - Trestle
+    - Map to [https://github.com/BaldissaraMatheus/Tasks.md](https://github.com/BaldissaraMatheus/Tasks.md)
+      - Each item maps to a MD file, with title & description + meta in the RDF
+      - Use #:semtags in doc for types?
+      - Simplified turtle?
+      - Spurtle : spontaneous turtle
+      - 
+- Inbox
+  - [https://ia802804.us.archive.org/6/items/synthmanual-roland-tr-606-owners-manual/rolandtr-606ownersmanual.pdf](https://ia802804.us.archive.org/6/items/synthmanual-roland-tr-606-owners-manual/rolandtr-606ownersmanual.pdf)
+  - [List of lists of lists - Wikipedia](https://en.wikipedia.org/wiki/List_of_lists_of_lists?wprov=sfla1)
+    - List of lists of lists
+  - [GitHub - fl3xice/dprand: Double Pendulum Random Generator](https://github.com/fl3xice/dprand/)
+  - [https://github.com/LennoxLow/TetherTextBot](https://github.com/LennoxLow/TetherTextBot)
+  - [GitHub - AtomGraph/Web-Algebra: Suite of generic Linked Data/SPARQL as well as LinkedDataHub-specific MCP tools](https://github.com/AtomGraph/Web-Algebra?utm_source=chatgpt.com)
+  - [Simple rhythmic sounds can reshape the brain’s entire network landscape, study finds](https://www.psypost.org/simple-rhythmic-sounds-can-reshape-the-brains-entire-network-landscape-study-finds/)
+    - Simple rhythmic sounds can reshape the brain’s entire network landscape, study finds
+  - [Simple rhythmic sounds can reshape the brain’s entire network landscape, study finds](https://www.psypost.org/simple-rhythmic-sounds-can-reshape-the-brains-entire-network-landscape-study-finds/)
+    - Simple rhythmic sounds can reshape the brain’s entire network landscape, study finds
+  - [4 Popular mixing reference tracks: why they work](https://www.izotope.com/en/learn/4-popular-mixing-reference-tracks-and-why-they-work)
+    - 4 Popular mixing reference tracks: why they work
+  - [(PDF) SQUALL: a Controlled Natural Language for Querying and Updating RDF Graphs](https://www.researchgate.net/publication/281050229_SQUALL_a_Controlled_Natural_Language_for_Querying_and_Updating_RDF_Graphs)
+    - (PDF) SQUALL: a Controlled Natural Language for Querying and Updating RDF Graphs
+  - [cel-spec/doc/intro.md at master · google/cel-spec · GitHub](https://github.com/google/cel-spec/blob/master/doc%2Fintro.md)
+  - [GitHub - google/cel-spec: Common Expression Language -- specification and binary representation](https://github.com/google/cel-spec)
+  - [https://www.ericasynths.lv/shop/diy-kits-1/edu-diy-compressor/](https://www.ericasynths.lv/shop/diy-kits-1/edu-diy-compressor/)
+    - Erica Synths - EDU DIY Compressor
+  - [https://schneidersladen.de/en/happy-nerding-3x-mia-black](https://schneidersladen.de/en/happy-nerding-3x-mia-black)
+    - Happy Nerding - 3x MIA (Black) - SchneidersLaden Berlin
+  - [https://sampleswap.org/filebrowser-new.php?d=DRUMS%20(FULL%20KITS)/DRUM%20MACHINES/Roland%20R-8/](https://sampleswap.org/filebrowser-new.php?d=DRUMS%20(FULL%20KITS)/DRUM%20MACHINES/Roland%20R-8/)
+    - DOWNLOAD » DRUMS (FULL KITS)/DRUM MACHINES/Roland R-8/ (Free sounds, samples, loops)
+  - [https://www.exploding-shed.com/cubusynth-exhaust-v2/100427](https://www.exploding-shed.com/cubusynth-exhaust-v2/100427)
+    - CubuSynth - Exhaust v2 | 100427
+  - [https://www.exploding-shed.com/diy-kits/modular/effects/delay/](https://www.exploding-shed.com/diy-kits/modular/effects/delay/)
+    - Eurorack Delay DIY Kits | Exploding Shed
+  - [https://www.etsy.com/de-en/listing/1064564999/divebomb-iii-pt2399-delay-with-vactrol](https://www.etsy.com/de-en/listing/1064564999/divebomb-iii-pt2399-delay-with-vactrol)
+    - Divebomb III - PT2399 Delay With Vactrol Time Control- New Version - Etsy.de
+  - [Generative Thunderstorm by @strauss | Juno | Transient Labs](https://juno.transient.xyz/recipe/b2791f79-05d6-45f8-9492-51e15162eb68/preview)
+  - [selected | tonema](https://tonema.bandcamp.com/album/selected)
+  - [GitHub - mindverse/Second-Me: Train your AI self, amplify you, bridge the world](https://github.com/mindverse/Second-Me)
+  - [[2503.08102] AI-native Memory 2.0: Second Me](https://arxiv.org/abs/2503.08102)
+    - [2503.08102] AI-native Memory 2.0: Second Me
+  - [WFGY/ProblemMap/README.md at main · onestardao/WFGY · GitHub](https://github.com/onestardao/WFGY/blob/main/ProblemMap/README.md)
+  - [Free Bash Sound Effects Download - Pixabay](https://pixabay.com/sound-effects/search/bash/)
+    - Free Bash Sound Effects Download - Pixabay
+  - [https://amsynths.co.uk/home/synthesizers/schulze-moog-modular-replica/mix-and-attentuate/](https://amsynths.co.uk/home/synthesizers/schulze-moog-modular-replica/mix-and-attentuate/)
+  - [GitHub - openai/agents.md: AGENTS.md — a simple, open format for guiding coding agents](https://github.com/openai/agents.md)
+  - [GitHub - ComposioHQ/Rube: Rube is a Model Context Protocol (MCP) server that connects your AI tools to 500+ apps like Gmail, Slack, GitHub, and Notion. Simply install it in your AI client, authenticate once with your apps, and start asking your AI to perform real actions like "Send an email" or "Create a task."](https://github.com/ComposioHQ/Rube)
+  - [Field Notes From Shipping Real Code With Claude - diwank's space ](https://diwank.space/field-notes-from-shipping-real-code-with-claude?rdt_cid=5205533453545931600&utm_source=reddit)
+  - [
+	Roland - P-6 | Creative Sampler
+](https://www.roland.com/us/products/p-6/)
+    - Roland - P-6 | Creative Sampler
+  - 
+  - [Surge](https://surge-synthesizer.github.io/)
+    - Surge
+  - [Surge](https://surge-synthesizer.github.io/)
+    - Surge
+  - [Summer 4ibes | Electric Rhythm Cunt](https://the-erc.bandcamp.com/track/summer-4ibes)
+  - [$9 PT2399 clock sync delay - DIY Eurorack Modular Synthesizer｜HAGIWO/ハギヲ](https://note.com/solder_state/n/nf6dc0a61e26d)
+    - $9 PT2399 clock sync delay - DIY Eurorack Modular Synthesizer | HAGIWO
+  - [definition - What is a Protofield Operator? - Mathematics Stack Exchange](https://math.stackexchange.com/questions/4929611/what-is-a-protofield-operator)
+    - definition - What is a Protofield Operator? - Mathematics Stack Exchange
+  - [A-137-2](https://www.doepfer.de/a1372.htm)
+    - A-137-2
+  - [Symbolic Resonance Engine](https://v0-symbolic-resonance-engine.vercel.app/)
+  - [Sebastian Schepis - University of Connecticut](https://uconn.academia.edu/SebastianSchepis)
+  - [[2410.18196] Simulating quantum chaos without chaos](https://arxiv.org/abs/2410.18196)
+  - [Entropic Collapse](https://codepen.io/sschepis/pen/PwPJdxy/e80081bf85c68aec905605ac71c51626)
+  - [https://codepen.io/Power-Flower/pen/GgRowgg](https://codepen.io/Power-Flower/pen/GgRowgg)
+  - 
+    - Bell — 2hp
+  - [A Meta-Wind-Instrument Physical Model, and a Meta-Controller for Real-Time Performance Control](https://quod.lib.umich.edu/i/icmc/bbp2372.1992.072/--meta-wind-instrument-physical-model-and-a-meta-controller?view=image)
+    - A Meta-Wind-Instrument Physical Model, and a Meta-Controller for Real-Time Performance Control
+  - [https://quod.lib.umich.edu/i/icmc/bbp2372.1992.072/--meta-wind-instrument-physical-model-and-a-meta-controller?view=image](https://quod.lib.umich.edu/i/icmc/bbp2372.1992.072/--meta-wind-instrument-physical-model-and-a-meta-controller?view=image)
+    - A Meta-Wind-Instrument Physical Model, and a Meta-Controller for Real-Time Performance Control
+  - [$2 Wave shaper & VCA module-DIY Eurorack Modular Synthesizer｜HAGIWO/ハギヲ](https://note.com/solder_state/n/nfdc2e198255a)
+    - $2 Wave shaper & VCA module-DIY Eurorack Modular Synthesizer | HAGIWO
+  - [https://leshem-ido.medium.com/skip-gram-word2vec-algorithm-explained-85cd67a45ffa](https://leshem-ido.medium.com/skip-gram-word2vec-algorithm-explained-85cd67a45ffa)
+    - Skip-Gram Word2Vec Algorithm Explained | by Ido Leshem | Medium
+  - [I really don’t like ChatGPT’s new memory dossier](https://simonwillison.net/2025/May/21/chatgpt-new-memory/#there-s-a-version-of-this-feature-i-would-really-like)
+    - I really don’t like ChatGPT’s new memory dossier
+  - [Roland TR-606 Owner's Manual : Free Download, Borrow, and Streaming : Internet Archive](https://archive.org/details/synthmanual-roland-tr-606-owners-manual)
+    - Roland TR-606 Owner's Manual : Free Download, Borrow, and Streaming : Internet Archive
+  - [Roland TR-606 Owner's Manual : Free Download, Borrow, and Streaming : Internet Archive](https://archive.org/details/synthmanual-roland-tr-606-owners-manual)
+    - Roland TR-606 Owner's Manual : Free Download, Borrow, and Streaming : Internet Archive
+  - [https://static.roland.com/assets/media/pdf/TR-606_Software_Rhythm_Composer_eng03_W.pdf](https://static.roland.com/assets/media/pdf/TR-606_Software_Rhythm_Composer_eng03_W.pdf)
+    - TR-606_Software_Rhythm_Composer_eng03_W.pdf
+  - [High Resolution Monitor Ultra WQHD ViewFinity a 100 hz da 34" S5 S50GC | Samsung Italia](https://www.samsung.com/it/monitors/high-resolution/viewfinity-s5-s50gc-34-inch-ultra-wqhd-high-resolution-ls34c502gauxen/)
+    - High Resolution Monitor Ultra WQHD ViewFinity a 100 hz da 34" S5 S50GC | Samsung Italia
+  - [Plugins | mrelwood plugins](https://mrelwood5.wixsite.com/plugins)
+  - [QR decomposition - Wikipedia](https://en.wikipedia.org/wiki/QR_decomposition?wprov=sfla1)
+    - QR decomposition
+  - [EEG-SMT - Open Source Hardware Board](https://www.olimex.com/Products/EEG/OpenEEG/EEG-SMT/open-source-hardware)
+  - [GitHub - michaloblastni/local-neural-monitoring: Neural monitoring using the low-cost OpenEEG-SMT device. It works on Windows, Linux and Android.](https://github.com/michaloblastni/local-neural-monitoring)
+  - [https://samples.landr.com/collections/royalty-free-prophet-5](https://samples.landr.com/collections/royalty-free-prophet-5)
+    - Royalty Free Prophet 5 - Sample Pack | LANDR Samples
+  - [Behringer RD-6 Setup Guide | Sweetwater](https://www.sweetwater.com/sweetcare/articles/behringer-rd-6-setup-guide/#External-hardware-analog)
+    - Behringer RD-6 Setup Guide | Sweetwater
+  - [https://www.sweetwater.com/sweetcare/articles/behringer-rd-6-setup-guide/#External-hardware-analog](https://www.sweetwater.com/sweetcare/articles/behringer-rd-6-setup-guide/#External-hardware-analog)
+    - Behringer RD-6 Setup Guide | Sweetwater
+  - [https://www.makenoisemusic.com/wp-content/uploads/2024/03/MATHSmanual2013.pdf](https://www.makenoisemusic.com/wp-content/uploads/2024/03/MATHSmanual2013.pdf)
+    - MATHSmanual2013.pdf
+  - [https://github.com/rdf-pipeline](https://github.com/rdf-pipeline)
+  - [https://github.com/eyereasoner/eyelet](https://github.com/eyereasoner/eyelet)
+  - [Neural Networks in Trading: Parameter-Efficient Transformer with Segmented Attention (Final Part) - MQL5 Articles](https://www.mql5.com/en/articles/16483)
+    - Neural Networks in Trading: Parameter-Efficient Transformer with Segmented Attention (Final Part) - MQL5 Articles
+  - [https://cprimozic.net/blog/the-tech-behind-geotoy/](https://cprimozic.net/blog/the-tech-behind-geotoy/)
+    - The Tech Behind Geotoy - Casey Primozic's Homepage
+  - [GAIA: A Benchmark for General AI Assistants](https://ukgovernmentbeis.github.io/inspect_evals/evals/assistants/gaia/)
+    - GAIA: A Benchmark for General AI Assistants
+  - [The Precision Engine: Why Agentic RAG Is GenAI’s Next Leap - The New Stack](https://thenewstack.io/the-precision-engine-why-agentic-rag-is-genais-next-leap/)
+    - The Precision Engine: Why Agentic RAG Is GenAI’s Next Leap - The New Stack
+  - [Convo-Lang](https://learn.convo-lang.ai/#key-features)
+  - [[2203.11171] Self-Consistency Improves Chain of Thought Reasoning in Language Models](https://arxiv.org/abs/2203.11171)
+    - [2203.11171] Self-Consistency Improves Chain of Thought Reasoning in Language Models
+  - [[2203.11171] Self-Consistency Improves Chain of Thought Reasoning in Language Models](https://arxiv.org/abs/2203.11171)
+    - [2203.11171] Self-Consistency Improves Chain of Thought Reasoning in Language Models
+  - [Clarinet acoustics: an introduction](https://www.phys.unsw.edu.au/jw/clarinetacoustics.html)
+  - [Slide Rules](http://www.sliderules.mysterysystem.com/?c=.AABAKBAD2AFCP.B_AKMuOBHQfE_.CBOAAAADVC_Dh.D_9dtAlA__8_3.EFEHAJC.F__.GAAAADwAXAHn_AET_rS3__8Mfz_8AYQX__wCgAMr__wDrDgAo)
+  - [https://attachments.are.na/26773437/bec52dcf86501f4545746d3deaa6f48f.pdf?1709598008](https://attachments.are.na/26773437/bec52dcf86501f4545746d3deaa6f48f.pdf?1709598008)
+    - bec52dcf86501f4545746d3deaa6f48f.pdf
+  - [Building a Simple AI DAW, Part 2: MCP and Agents](https://blog.jonaylor.com/building-a-simple-ai-daw-part-2-mcp-and-agents)
+  - [[2508.09736] Seeing, Listening, Remembering, and Reasoning: A Multimodal Agent with Long-Term Memory](https://arxiv.org/abs/2508.09736)
+    - [2508.09736] Seeing, Listening, Remembering, and Reasoning: A Multimodal Agent with Long-Term Memory
+  - [WarmPlace.ru. SunVox Modular Music Studio](https://warmplace.ru/soft/sunvox/)
+    - WarmPlace.ru. SunVox Modular Music Studio
+  - 
+  - [WarmPlace.ru. SunVox Modular Music Studio](https://warmplace.ru/soft/sunvox/)
+    - WarmPlace.ru. SunVox Modular Music Studio
+  - [Erica Synths - EDU DIY Wavefolder](https://www.ericasynths.lv/shop/diy-kits-1/edu-diy-wavefolder/)
+    - Erica Synths - EDU DIY Wavefolder
+  - [GitHub - j-p-higgins/SoundThread: Node based GUI for The Composers Desktop Project](https://github.com/j-p-higgins/SoundThread)
+  - [CDP Home](https://www.composersdesktop.com/)
+    - CDP Home
+  - [Korn Ferry Practice Tests: Free Online Questions (2025)](https://www.psychometrictests.org/publishers/korn-ferry/)
+    - Korn Ferry Practice Tests: Free Online Questions (2025)
+  - [Korn Ferry Practice Tests: Free Online Questions (2025)](https://www.psychometrictests.org/publishers/korn-ferry/)
+    - Korn Ferry Practice Tests: Free Online Questions (2025)
+  - 
+  - [https://www.beatport.com/](https://www.beatport.com/)
+  - [Wio Tracker L1 Pro: Meshtastic Handheld w/ Solar Support Killer Price](https://adrelien.com/wio-tracker-l1-pro-meshtastic-handheld-w-solar-support-killer-price/)
+  - [Erica Synths - Hexinverter Mutant Brain](https://www.ericasynths.lv/shop/eurorack-modules/by-series/hexinverter/hexinverter-mutant-brain/)
+    - Erica Synths - Hexinverter Mutant Brain
+  - [Reddit - The heart of the internet](https://www.reddit.com/r/ProductivityApps/s/Libeh331Hu)
+  - [Mastra: The Typescript Agent framework](https://mastra.ai/)
+  - [GitHub - mcp-use/mcp-use: mcp-use is the easiest way to interact with mcp servers with custom agents](https://github.com/mcp-use/mcp-use)
+  - [https://block.github.io/goose/](https://block.github.io/goose/)
+  - [GitHub - MCPJam/inspector: Postman for MCPs - A tool for testing and debugging MCPs](https://github.com/MCPJam/inspector)
+  - [GitHub - modelcontextprotocol/inspector: Visual testing tool for MCP servers](https://github.com/modelcontextprotocol/inspector)
+  - [2508.06433] Memp: Exploring Agent Procedural Memory
+    - [2508.06433] Memp: Exploring Agent Procedural Memory https://share.google/WpXFmZrUBRzzDLAII
+  - [TakeCare | Airwindows](https://www.airwindows.com/takecare/)
+  - [GitHub - sosanzma/spade_llm: Extension for SPADE to integrate Large Language Models in agents](https://github.com/sosanzma/spade_llm)
+  - [GitHub - projectM-visualizer/projectm: projectM - Cross-platform Music Visualization Library. Open-source and Milkdrop-compatible.](https://github.com/projectM-visualizer/projectm)
+  - [https://beep8.org/b8/beep8.html?b8rom=5883dac775883187f1aea16b134b39a5.b8&](https://beep8.org/b8/beep8.html?b8rom=5883dac775883187f1aea16b134b39a5.b8&)
+  - GitHub - LHRLAB/Graph-R1: Graph-R1: Towards Agentic GraphRAG Framework via End-to-end Reinforcement Learning
+    - GitHub - LHRLAB/Graph-R1: Graph-R1: Towards Agentic GraphRAG Framework via End-to-end Reinforcement Learning https://share.google/kWIoAaL1LUf9RQ0sy
+  - [Neural Automata](https://stermere.github.io/Neural-Automata-Playground/)
+  - [
+   Automata
+  ](https://lectricpanda.com/automata.html)
+    - Automata
+  - Claude Code SDK - Anthropic
+    - Claude Code SDK - Anthropic https://share.google/8nXDjvCawKkPkA3al
+  - [GitHub - NevaMind-AI/memU: MemU is an open-source memory framework for AI companions—high accuracy, fast retrieval, low cost. It acts as an intelligent "memory folder" that adapts to different scenarios, from different companions senarios.](https://github.com/NevaMind-AI/memU)
+  - [ IEM Plug-in Suite ](https://plugins.iem.at/?utm_source=perplexity)
+  - [SPARTA - Spatial Audio Real-Time Applications](https://leomccormack.github.io/sparta-site/?utm_source=perplexity)
+  - [GitHub - Lyellr88/MARM-Systems: Protocol-based memory management for AI. Improve response accuracy, reduce drift, and stabilize context over long sessions.](https://github.com/Lyellr88/MARM-Systems)
+  - [Demucs Music Source Separation (v4) - a Hugging Face Space by abidlabs](https://huggingface.co/spaces/abidlabs/music-separation)
+    - Demucs Music Source Separation (v4) - a Hugging Face Space by abidlabs
+  - [DaVinci Resolve Download | Blackmagic Design](https://www.blackmagicdesign.com/event/davinciresolvedownload)
+    - DaVinci Resolve Download | Blackmagic Design
+  - [GitHub - Fr-e-d/ai-dev-assistant-framework: A pragmatic governance framework for AI-assisted software development. It provides structured protocols to transform any AI coding assistant into a reliable, context-aware engineering partner.](https://github.com/Fr-e-d/ai-dev-assistant-framework)
+  - [Reddit - The heart of the internet](https://www.reddit.com/r/PromptEngineering/s/gK8CG72QW8)
+  - [Musica InForma: I corvi - UN RAGAZZO DI STRADA - midi karaoke ](https://midi-karaoke-video.blogspot.com/2022/11/i-corvi-un-ragazzo-di-strada-midi.html#google_vignette)
+    - Musica InForma: I corvi - UN RAGAZZO DI STRADA - midi karaoke
+  - [Radio Music sample pack for conventional samplers &#8212; THREETOM](https://www.threetom.com/news/radio-music-sample-pack/)
+  - [GitHub - google/langextract: A Python library for extracting structured information from unstructured text using LLMs with precise source grounding and interactive visualization.](https://github.com/google/langextract)
+  - [https://github.com/ThorOdinson246/photo-particles](https://github.com/ThorOdinson246/photo-particles)
+    - GitHub - ThorOdinson246/photo-particles: Interactive JavaScript library that transforms images into animated particle clouds with physics-based movement and touch interaction
+  - [[2507.10644] From Semantic Web and MAS to Agentic AI: A Unified Narrative of the Web of Agents](https://arxiv.org/abs/2507.10644)
+  - [[2507.21206] Agentic Web: Weaving the Next Web with AI Agents](https://arxiv.org/abs/2507.21206)
+  - [Reddit - The heart of the internet](https://www.reddit.com/r/HowToAIAgent/s/KW41B1czh6)
+  - [tencent/Hunyuan-0.5B-Instruct · Hugging Face](https://huggingface.co/tencent/Hunyuan-0.5B-Instruct)
+    - tencent/Hunyuan-0.5B-Instruct · Hugging Face
+  - [Vilva - Figma for knowledge work!](https://vilva.ai/public_workspace/gxvzoy7w)
+  - [https://kilocode.ai/docs/advanced-usage/memory-bank](https://kilocode.ai/docs/advanced-usage/memory-bank)
+  - [Shader Academy](https://shaderacademy.com/explore)
+  - [Erik OOSTVEEN | Home](https://www.erikoostveen.co.uk/index.html)
+  - [GitHub - ErikOostveen/Fronttalk: The FrontTalk module brings retro speech synthesis to Eurorack in just 12HP. Powered by a tweaked Talkie Library, it delivers gritty 8-bit robo-phrases, full MIDI control, CV pitch/gate, and 4 digital glitch effects. Compact and bold, it gives your rack a voice with serious attitude.](https://github.com/ErikOostveen/Fronttalk)
+  - [Signature Sounds - Free Sound Sample Packs  | Enhance Your Music Today](https://signaturesounds.org/)
+    - Signature Sounds - Free Sound Sample Packs | Enhance Your Music Today
+  - [MCP-UI Aims To Replace ‘Old World’ Websites With AI Agent UIs - The New Stack](https://thenewstack.io/mcp-ui-aims-to-replace-old-world-websites-with-ai-agent-uis/)
+    - MCP-UI Aims To Replace ‘Old World’ Websites With AI Agent UIs - The New Stack
+  - [Paper page - Seed-Prover: Deep and Broad Reasoning for Automated Theorem Proving](https://huggingface.co/papers/2507.23726)
+    - Paper page - Seed-Prover: Deep and Broad Reasoning for Automated Theorem Proving
+  - [Paper page - SmallThinker: A Family of Efficient Large Language Models Natively
+  Trained for Local Deployment](https://huggingface.co/papers/2507.20984)
+    - Paper page - SmallThinker: A Family of Efficient Large Language Models Natively Trained for Local Deployment
+  - [KRIPKE - cannorin.net](https://www.cannorin.net/kripke)
+    - KRIPKE - cannorin.net
+  - [Breakbeat section update 06 - Rhythm Lab | Wav Samples, Loops, Breaks, Synth Presets and much more!](https://rhythm-lab.com/breakbeat-section-update-06/)
+    - Breakbeat section update 06 - Rhythm Lab | Wav Samples, Loops, Breaks, Synth Presets and much more!
+  - [SandToy](https://dsch7705.github.io/sandtoy/)
+    - SandToy
+  - [Learning Lean 4](https://leanprover-community.github.io/learn.html)
+    - Learning Lean 4
+  - [TAVELÅN vassoio - IKEA Italia](https://www.ikea.com/it/it/p/tavelan-vassoio-50465756/)
+    - TAVELÅN vassoio - IKEA Italia
+  - [[2507.14241] Promptomatix: An Automatic Prompt Optimization Framework for Large Language Models](https://arxiv.org/abs/2507.14241)
+    - [2507.14241] Promptomatix: An Automatic Prompt Optimization Framework for Large Language Models
+  - [Ubuntu Studio Audio Configuration &#8211; Ubuntu Studio](https://ubuntustudio.org/audio-configuration/)
+  - [How Memory Transforms AI Agents: Insights and Leading Solutions in 2025 - MarkTechPost](https://www.marktechpost.com/2025/07/26/how-memory-transforms-ai-agents-insights-and-leading-solutions-in-2025/)
+    - How Memory Transforms AI Agents: Insights and Leading Solutions in 2025 - MarkTechPost
+  - [[2507.07955] Dynamic Chunking for End-to-End Hierarchical Sequence Modeling](https://arxiv.org/abs/2507.07955)
+  - 
+    - 52cc Petrol Backpack Garden Multi Tool, 1 Extension Pole, Strimmer, He – Shop Online EU
+  - [https://www.exploding-shed.com/](https://www.exploding-shed.com/)
+    - Synthesizer DIY Shop | Exploding Shed
+  - [https://traycer.ai/](https://traycer.ai/)
+    - Traycer
+  - [GitHub - zilliztech/code-context: MCP plugin for semantic code search. Integrates with Claude Code, Gemini CLI, Cursor, or any AI coding agents.](https://github.com/zilliztech/code-context)
+  - [https://huggingface.co/papers/trending](https://huggingface.co/papers/trending)
+    - Trending Papers - Hugging Face
+  - [https://www.thelancet.com/journals/lanpub/article/PIIS2468-2667(25)00164-1/fulltext](https://www.thelancet.com/journals/lanpub/article/PIIS2468-2667(25)00164-1/fulltext)
+    - Daily steps and health outcomes in adults: a systematic review and dose-response meta-analysis - The Lancet Public Health
+  - [Releases · brummer10/NeuralRack · GitHub](https://github.com/brummer10/NeuralRack/releases)
+  - [[2507.15061] WebShaper: Agentically Data Synthesizing via Information-Seeking Formalization](https://arxiv.org/abs/2507.15061)
+    - [2507.15061] WebShaper: Agentically Data Synthesizing via Information-Seeking Formalization
+  - [2503.02854] (How) Do Language Models Track State?
+    - [2503.02854] (How) Do Language Models Track State? https://share.google/DcNPUq6bRA8psIwLf
+  - [Launchpad Mini [MK3] | Novation Downloads](https://downloads.novationmusic.com/novation/launchpad-mk3/launchpad-mini-mk3-0)
+  - [Manual - Mutable Instruments Documentation](https://pichenettes.github.io/mutable-instruments-documentation/modules/clouds/manual/)
+    - Manual - Mutable Instruments Documentation
+  - [Behringer Skies | MUSIC STORE professional](https://www.musicstore.com/en_OT/EUR/Behringer-Skies/art-SYN0009296-000)
+  - [DE-27 – Mörser – Panel &#038; PCB Set &#8211; Thonk &#8211; DIY Synthesizer Kits & Components](https://www.thonk.co.uk/shop/de-27-morser-panel-pcb/)
+  - [https://www.thonk.co.uk/shop/de-24-spektrum-panel-pcb/](https://www.thonk.co.uk/shop/de-24-spektrum-panel-pcb/)
+  - [Reddit - The heart of the internet](https://www.reddit.com/r/ClaudeAI/s/5nHtBssa0s)
+  - [Curtis Roads - Wikipedia](https://en.wikipedia.org/wiki/Curtis_Roads?wprov=sfla1)
+  - [Curtis Roads | Official website](https://www.curtisroads.net/)
+  - [Do a chin-up, save a cat](https://www.funwithcomputervision.com/chinup/)
+  - [Refactor plan · getsentry/sentry-mcp@cf1fe94 · GitHub](https://github.com/getsentry/sentry-mcp/commit/cf1fe9463cb7e97bac6c4570462132af3a6e4426)
+  - [How to Fine-Tune Small Language Models to Think with Reinforcement Learning | Towards Data Science](https://towardsdatascience.com/how-to-finetune-small-language-models-to-think-with-reinforcement-learning/)
+  - [[2206.12421] On The Euclidean Algorithm: Rhythm Without Recursion](https://arxiv.org/abs/2206.12421)
+  - [Prompt engineering - Wikipedia](https://en.wikipedia.org/wiki/Prompt_engineering#Graph_retrieval-augmented_generation?wprov=sfla1)
+  - [Normalcy bias - Wikipedia](https://en.wikipedia.org/wiki/Normalcy_bias?wprov=sfla1)
+  - [https://bartinstruments.com/products/b-ond](https://bartinstruments.com/products/b-ond)
+  - [Your request has been blocked. This could be
+                        due to several reasons.](https://www.microsoft.com/en-us/research/blog/graphrag-unlocking-llm-discovery-on-narrative-private-data/#_ftnref2)
+  - [ MPL RS5k manager - Drum Rack & Step Sequencer - Cockos Incorporated Forums](https://forum.cockos.com/showthread.php?t=207971)
+  - [Advanced FX browsing in REAPER](https://www.reapertips.com/post/advanced-fx-browsing-in-reaper)
+  - [GitHub - B-Bischoff/Rhythmic-diffusion: Generate visuals based on music rhythm using reaction-diffusion.](https://github.com/B-Bischoff/Rhythmic-diffusion)
+  - [GitHub - B-Bischoff/MidiPlayer: Application for exploring sound synthesis and designing custom instruments from scratch, controllable via any MIDI device.](https://github.com/B-Bischoff/MidiPlayer)
+  - [Claude Code settings - Anthropic](https://docs.anthropic.com/en/docs/claude-code/settings)
+  - [GitHub - karmatripping/KarmaViz: Music Visualization Software for Linux PCs](https://github.com/karmatripping/KarmaViz)
+  - [HexLife Explorer - Interactive Hexagonal Cellular Automata](https://sidem.github.io/HexLife/)
+  - [Forget the hype — real AI agents solve bounded problems, not open-world fantasies | VentureBeat](https://venturebeat.com/ai/forget-the-hype-real-ai-agents-solve-bounded-problems-not-open-world-fantasies/)
+  - [Download Free Orchestral based rompler plugin: PART by Orchestools](https://plugins4free.com/plugin/3612/)
+  - [https://eu.mouser.com/ProductDetail/Vector/TS169?qs=2uJXkMYZVXPYqAAhJk9hwA%3D%3D](https://eu.mouser.com/ProductDetail/Vector/TS169?qs=2uJXkMYZVXPYqAAhJk9hwA%3D%3D)
+  - [Modules — Nonlinearcircuits](https://www.nonlinearcircuits.com/modules)
+  - [Eddy Bergman.com: Synthesizer Build part-37: THOMAS HENRY VCO-555.](https://www.eddybergman.com/2020/12/synthesizer-build-part-37-thomas-henry.html)
+  - [[2410.14733] Knowledge Graph Embeddings: A Comprehensive Survey on Capturing Relation Properties](https://arxiv.org/abs/2410.14733)
+  - [Fors Pivot](https://fors.fm/pivot)
+  - [[2506.17188] Towards AI Search Paradigm](https://arxiv.org/abs/2506.17188)
+  - [GitHub - SurceBeats/Atlas: The Atlas is a procedural generation engine inspired by No Man's Sky, designed to create vast, complex galaxies and universes with customizable parameters.](https://github.com/SurceBeats/Atlas)
+  - [SamplerBox](https://www.samplerbox.org/)
+  - [Blog - SamplerBox](https://www.samplerbox.org/blog)
+  - [Claude Code: Subagent Deep Dive | Code Centre](https://cuong.io/blog/2025/06/24-claude-code-subagent-deep-dive)
+  - [Wavefolder | Eurorack DIY | Kassutronics Store](https://store.kassutronics.net/eurorack-diy-c-1/wavefolder-p-10)
+  - [Science Forum: Wikidata as a knowledge graph for the life sciences | eLife](https://elifesciences.org/articles/52614)
+  - [TABOR ⇝ euorack avalanche chaotic oscillator — Jolin - we build stuff](https://jolin.tech/modules/tabor)
+  - [Autopoiesis - Wikipedia](https://en.wikipedia.org/wiki/Autopoiesis?wprov=sfla1)
+  - [New workbook for the Ontology Engineering textbook – Keet blog](https://keet.wordpress.com/2025/06/21/new-workbook-for-the-ontology-engineering-textbook/)
+  - [How To Prepare Your API for AI Agents - The New Stack](https://thenewstack.io/how-to-prepare-your-api-for-ai-agents/)
+  - [ST Modular MIA 3U (pcb+panel only) - 3U-shop](https://www.3u-shop.de/p/st-modular-mia-3u-pcb-panel-only)
+  - [LPU Belt Explorer](https://lpubelts.com/#/locks)
+  - [https://github.com/beerqa/IRRR?tab=readme-ov-file](https://github.com/beerqa/IRRR?tab=readme-ov-file)
+  - [GitHub - mem0ai/mem0-chrome-extension: Claude Memory: Long-term memory for Claude](https://github.com/mem0ai/mem0-chrome-extension)
+  - [GitHub - hexagon5un/klangorium: Hardware and tutorials for the Hackaday / Logic Noise Klangorium demo board](https://github.com/hexagon5un/klangorium)
+  - [Envelope Circuits: a simple AR design using op amps | synthnerd](https://synthnerd.wordpress.com/2016/04/06/envelope-circuits-a-simple-ar-design-using-op-amps/)
+  - [GitHub - mxgmn/WaveFunctionCollapse: Bitmap & tilemap generation from a single example with the help of ideas from quantum mechanics](https://github.com/mxgmn/WaveFunctionCollapse)
+  - [Coding a 3D Audio Visualizer with Three.js, GSAP & Web Audio API | Codrops](https://tympanus.net/codrops/2025/06/18/coding-a-3d-audio-visualizer-with-three-js-gsap-web-audio-api/)
+  - [Coding a 3D Audio Visualizer with Three.js, GSAP & Web Audio API | Codrops](https://tympanus.net/codrops/2025/06/18/coding-a-3d-audio-visualizer-with-three-js-gsap-web-audio-api/)
+  - [GitHub - lfnoise/sapf: Sound As Pure Form - a Forth-like language for audio synthesis using lazy lists and APL-like auto-mapping.](https://github.com/lfnoise/sapf)
+  - [https://labs.leaningtech.com/blog/webvm-claude](https://labs.leaningtech.com/blog/webvm-claude)
+  - [https://github.com/strophe/strophejs](https://github.com/strophe/strophejs)
+  - [https://webvm.io/](https://webvm.io/)
+  - [GitHub - supriya-project/supriya: A Python API for SuperCollider](https://github.com/supriya-project/supriya)
+  - [GitHub - ideaweaver-ai/DeepSeek-Children-Stories-15M-model](https://github.com/ideaweaver-ai/DeepSeek-Children-Stories-15M-model)
+  - [https://ieeexplore.ieee.org/document/11022724](https://ieeexplore.ieee.org/document/11022724)
+  - [[2506.11928] LiveCodeBench Pro: How Do Olympiad Medalists Judge LLMs in Competitive Programming?](https://arxiv.org/abs/2506.11928)
+  - [The Full MCP Blueprint: Integrating Sampling into MCP Workflows](https://www.dailydoseofds.com/model-context-protocol-crash-course-part-5/)
+  - [Does MCP Kill Vector Search? — LlamaIndex - Build Knowledge Assistants over your Enterprise Data](https://www.llamaindex.ai/blog/does-mcp-kill-vector-search)
+  - [https://arxiv.org/abs/2506.08872](https://arxiv.org/abs/2506.08872)
+  - [GitHub - GeeeekExplorer/nano-vllm: Nano vLLM](https://github.com/GeeeekExplorer/nano-vllm)
+  - [https://ccrma.stanford.edu/~jos/pasp/Schroeder_Reverberators.html](https://ccrma.stanford.edu/~jos/pasp/Schroeder_Reverberators.html)
+  - [https://arxiv.org/abs/2506.12571](https://arxiv.org/abs/2506.12571)
+  - [(LoRA) Fine-Tuning FLUX.1-dev on Consumer Hardware](https://huggingface.co/blog/flux-qlora)
+  - [https://modelcontextprotocol.io/docs/concepts/prompts](https://modelcontextprotocol.io/docs/concepts/prompts)
+  - [https://www.infoworld.com/article/4007686/a-developers-guide-to-ai-protocols-mcp-a2a-and-acp.html](https://www.infoworld.com/article/4007686/a-developers-guide-to-ai-protocols-mcp-a2a-and-acp.html)
+  - [GitHub - BeehiveInnovations/zen-mcp-server: The power of Claude Code + [Gemini / OpenAI / Grok / OpenRouter / Ollama / Custom Model / All Of The Above] working as one.](https://github.com/BeehiveInnovations/zen-mcp-server)
+  - [https://community.vcvrack.com/t/vcv-rack-and-sonic-pi-together/11348](https://community.vcvrack.com/t/vcv-rack-and-sonic-pi-together/11348)
+  - [https://fontlibrary.org/en/font/thrums-serif-regular](https://fontlibrary.org/en/font/thrums-serif-regular)
+  - [https://scrapbox.io/nikkie-memos/auchenberg%2Fclaude-code-mcp](https://scrapbox.io/nikkie-memos/auchenberg%2Fclaude-code-mcp)
+  - [How I Use Claude Code | Philipp Spiess](https://spiess.dev/blog/how-i-use-claude-code)
+  - [https://arxiv.org/abs/2506.14755](https://arxiv.org/abs/2506.14755)
+  - [[2506.14234] Xolver: Multi-Agent Reasoning with Holistic Experience Learning Just Like an Olympiad Team](https://arxiv.org/abs/2506.14234)
+  - [Free Modular | A collection of free & open source DIY synthesizer module designs for Eurorack](https://freemodular.org/modules/Drift/)
+  - [Free Modular | A collection of free & open source DIY synthesizer module designs for Eurorack](https://freemodular.org/)
+  - [GitHub - Helmi/claude-simone: A project management framework for AI-assisted development with Claude Code](https://github.com/Helmi/claude-simone)
+  - [[2506.09046] Agentic Neural Networks: Self-Evolving Multi-Agent Systems via Textual Backpropagation](https://arxiv.org/abs/2506.09046)
+  - [Best 20 Linux Commands for Daily Use in Production Servers](https://www.tecmint.com/daily-linux-commands-for-sysadmins/)
+  - [Z3 Theorem Prover - Wikipedia](https://en.wikipedia.org/wiki/Z3_Theorem_Prover?wprov=sfla1)
+  - [Z3 Theorem Prover - Wikipedia](https://en.wikipedia.org/wiki/Z3_Theorem_Prover?wprov=sfla1)
+  - [AI Is rewriting the data playbook -- and knowledge graphs are page one | VentureBeat](https://venturebeat.com/ai/ai-is-rewriting-the-data-playbook-and-knowledge-graphs-are-page-one/)
+  - [Agents, APIs, and the Next Layer of the Internet | Towards Data Science](https://towardsdatascience.com/agents-apis-and-the-next-layer-of-the-internet/)
+  - [invoke/README.md at master · mercury0100/invoke · GitHub](https://github.com/mercury0100/invoke/blob/master/README.md)
+  - [I Won $10,000 in a Machine Learning Competition — Here’s My Complete Strategy | Towards Data Science](https://towardsdatascience.com/i-won-10000-in-a-machine-learning-competition-heres-my-complete-strategy/)
+  - [Lobsters](https://lobste.rs/)
+  - [Hacker News](https://news.ycombinator.com/news)
+  - [Slash commands - Anthropic](https://docs.anthropic.com/en/docs/claude-code/slash-commands)
+  - [Behringer Skies | MUSIC STORE professional](https://www.musicstore.com/en_OT/EUR/Behringer-Skies/art-SYN0009296-000)
+  - [Tube Sound OD / Briggs PAF Overdrive | La Révolution Deux](http://revolutiondeux.blogspot.com/2012/06/tube-sound-od-briggs-paf-overdrive.html)
+  - [GitHub - abhishekjairath/sonic-pi-mcp: Model Context Protocol (MCP) server for controlling Sonic Pi through AI assistants](https://github.com/abhishekjairath/sonic-pi-mcp)
+  - [All the 3D models of cjg23・Cults](https://cults3d.com/en/users/cjg23/3d-models?fbclid=IwQ0xDSwK4uDpjbGNrAri4B2V4dG4DYWVtAjExAAEeZ9nMzAiZOmxc79dpc084B74LvtfDIfdchvqCc35jgCneUuXsbCOCqCDnL4Y_aem_okq5xw_k7SNllLbX4G3YYw)
+  - [GitHub - yousshark/claude-desktop-debian: Claude Desktop for Debian-based Linux distributions](https://github.com/yousshark/claude-desktop-debian)
+  - [Devpost](https://worldslargesthackathon.devpost.com/resources#silly-sh-t-challenge)
+  - [10 Free Public APIs I’m Actually Using as a Developer in 2025 - DEV Community](https://dev.to/therealmrmumba/10-free-public-apis-im-actually-using-as-a-developer-in-2025-2p3)
+  - [Odyc.js](https://odyc.dev/?ref=producthunt)
+  - [Locality Sensitive Hashing (LSH): The Illustrated Guide | Pinecone](https://www.pinecone.io/learn/series/faiss/locality-sensitive-hashing/)
+  - [MinHash - Wikipedia](https://en.wikipedia.org/wiki/MinHash#%3A%7E%3Atext%3DIn_computer_science_and_data%2Chow_similar_two_sets_are.?wprov=sfla1)
+  - [Sonic Pi on Ubuntu - Educators - in_thread](https://in-thread.sonic-pi.net/t/sonic-pi-on-ubuntu/8267)
+  - [Mehackit Creative programming workshop with Sonic Pi](https://sonic-pi.mehackit.org/)
+  - [GitHub - sonic-pi-net/sonic-pi: Code. Music. Live.](https://github.com/sonic-pi-net/sonic-pi)
+  - [GitHub - gabrielsoule/resonarium: An expressive, semi-modular, and comprehensive physical modeling/waveguide synthesizer.](https://github.com/gabrielsoule/resonarium)
+  - [GitHub - vinayak-mehta/mcp-sonic-pi: MCP server for Sonic Pi](https://github.com/vinayak-mehta/mcp-sonic-pi)
+  - [Spinach Wikidata](https://spinach.genie.stanford.edu/)
+  - [Jules - An Asynchronous Coding Agent](https://jules.google/)
+  - [https://www.maxemitchell.com/writings/i-read-all-of-cloudflares-claude-generated-commits/](https://www.maxemitchell.com/writings/i-read-all-of-cloudflares-claude-generated-commits/)
+  - [GitHub - Zettlr/Zettlr: Your One-Stop Publication Workbench](https://github.com/Zettlr/Zettlr)
+  - [PonicSi](https://codepen.io/danbri/pen/RNPLNwN)
+  - [Solomon's shamir - Wikipedia](https://en.wikipedia.org/wiki/Solomon%27s_shamir?wprov=sfla1)
+  - [How I Automated My Machine Learning Workflow with Just 10 Lines of Python | Towards Data Science](https://towardsdatascience.com/how-i-automated-my-machine-learning-workflow-with-just-10-lines-of-python/)
+  - [https://www.w3.org/community/crdt4rdf/?utm_source=perplexity](https://www.w3.org/community/crdt4rdf/?utm_source=perplexity)
+  - [Local-First Software](https://localfirstweb.dev/)
+  - [https://www.w3.org/community/crdt4rdf/?utm_source=perplexity](https://www.w3.org/community/crdt4rdf/?utm_source=perplexity)
+  - [https://forum.nextgraph.org/](https://forum.nextgraph.org/)
+  - [GitHub - rdf-ext/documentation: RDF-Ext documentation](https://github.com/rdf-ext/documentation)
+  - [DSP on the ESP-32 With Faust - Faust Documentation
+    ](https://faustdoc.grame.fr/tutorials/esp32/)
+  - [Synthesis Toolkit - Wikipedia](https://en.wikipedia.org/wiki/Synthesis_Toolkit?wprov=sfla1)
+  - [https://en.wikipedia.org/wiki/Synthesis_Toolkit?wprov=sfla1](https://en.wikipedia.org/wiki/Synthesis_Toolkit?wprov=sfla1)
+  - [Physical modelling synthesis - Wikipedia](https://en.wikipedia.org/wiki/Physical_modelling_synthesis?wprov=sfla1)
+  - [[2506.05176] Qwen3 Embedding: Advancing Text Embedding and Reranking Through Foundation Models](https://arxiv.org/abs/2506.05176)
+  - [GitHub - Shubhamsaboo/awesome-llm-apps: Collection of awesome LLM apps with AI Agents and RAG using OpenAI, Anthropic, Gemini and opensource models.](https://github.com/Shubhamsaboo/awesome-llm-apps)
+  - [Large language models without grounding recover non-sensorimotor but not sensorimotor features of human concepts | Nature Human Behaviour](https://www.nature.com/articles/s41562-025-02203-8)
+  - [Introducing Mistral Code | Mistral AI](https://mistral.ai/news/mistral-code)
+  - [Continue](https://www.continue.dev/)
+  - [GitHub - google-ai-edge/gallery: A gallery that showcases on-device ML/GenAI use cases and allows people to try and use models locally.](https://github.com/google-ai-edge/gallery)
+  - [Autonomous coding agents: A Codex example](https://martinfowler.com/articles/exploring-gen-ai/autonomous-agents-codex-example.html)
+  - [Learn TypeScript in Y Minutes](https://learnxinyminutes.com/typescript/)
+  - [[2302.04761] Toolformer: Language Models Can Teach Themselves to Use Tools](https://arxiv.org/abs/2302.04761)
+  - [How to Design My First AI Agent | Towards Data Science](https://towardsdatascience.com/how-to-design-my-first-ai-agent/)
+  - [librosa — librosa 0.11.0 documentation](https://librosa.org/doc/latest/index.html)
+  - [https://en.wikipedia.org/wiki/Larry_Masinter?wprov=sfla1](https://en.wikipedia.org/wiki/Larry_Masinter?wprov=sfla1)
+  - [https://larrymasinter.net/MOOGopher.pdf](https://larrymasinter.net/MOOGopher.pdf)
+  - [Pharo - Welcome to Pharo!](https://pharo.org/)
+  - [https://pharo.org/](https://pharo.org/)
+  - [https://learnxinyminutes.com/smalltalk/](https://learnxinyminutes.com/smalltalk/)
+  - [Larry Masinter - Wikipedia](https://en.wikipedia.org/wiki/Larry_Masinter?wprov=sfla1)
+  - [ink/Documentation/WritingWithInk.md at master · inkle/ink · GitHub](https://github.com/inkle/ink/blob/master/Documentation%2FWritingWithInk.md)
+  - [GitHub - y-lohse/inkjs: A javascript port of inkle's ink scripting language.](https://github.com/y-lohse/inkjs)
+  - [https://web.archive.org/web/20090131062846/http://dev.joost.com/docs/widgets/index.html](https://web.archive.org/web/20090131062846/http://dev.joost.com/docs/widgets/index.html)
+  - [[2505.24863] AlphaOne: Reasoning Models Thinking Slow and Fast at Test Time](https://arxiv.org/abs/2505.24863)
+  - [GitHub - open-webui/open-webui: User-friendly AI Interface (Supports Ollama, OpenAI API, ...)](https://github.com/open-webui/open-webui)
+  - [https://github.com/open-webui/open-webui](https://github.com/open-webui/open-webui)
+  - [Attenuverter With Gain And Offset – Trevor's Repair Café](https://therepaircafe.wordpress.com/2021/04/04/attenuverter-with-gain-and-offset/)
+  - [[2205.13147] Matryoshka Representation Learning](https://arxiv.org/abs/2205.13147)
+  - [🤯Top 5 Open-Source Tools You Should Be Using🫵 - DEV Community](https://dev.to/dev_kiran/top-5-open-source-tools-you-should-be-using-52g0)
+  - [GitHub - mlcommons/croissant: Croissant is a high-level format for machine learning datasets that brings together four rich layers.](https://github.com/mlcommons/croissant)
+  - [https://www.marktechpost.com/2025/05/31/a-coding-guide-to-building-a-scalable-multi-agent-communication-systems-using-agent-communication-protocol-acp/](https://www.marktechpost.com/2025/05/31/a-coding-guide-to-building-a-scalable-multi-agent-communication-systems-using-agent-communication-protocol-acp/)
+  - [Designing Resilient Event-Driven Systems at Scale - InfoQ](https://www.infoq.com/articles/scalable-resilient-event-systems/)
+  - [GitHub - andrzejkaras/browser-extension-event-bus: Event bus for browser extensions](https://github.com/andrzejkaras/browser-extension-event-bus?utm_source=perplexity)
+  - [GitHub - knighttower/JsUtility](https://github.com/knighttower/JsUtility)
+  - [GitHub - theiconic/event-bus: EventBus is a simple JavaScript library for managing events](https://github.com/theiconic/event-bus?utm_source=perplexity)
+  - [An open-source protocol for AI agents to interact - IBM Research](https://research.ibm.com/blog/agent-communication-protocol-ai)
+  - [Eachlabs | AI Model Marketplace for Consumer App Builders](https://www.eachlabs.ai/)
+  - [RAG is dead, long live agentic retrieval — LlamaIndex - Build Knowledge Assistants over your Enterprise Data](https://www.llamaindex.ai/blog/rag-is-dead-long-live-agentic-retrieval)
+  - [KitOps](https://kitops.org/)
+  - [Vast.ai | Console](https://cloud.vast.ai/?ref_id=112020)
+  - [Scale space - Wikipedia](https://en.wikipedia.org/wiki/Scale_space?wprov=sfla1)
+  - [https://www.kth.se/profile/tony/page/scale-space-theory](https://www.kth.se/profile/tony/page/scale-space-theory)
+  - [GitHub - pschatzmann/arduino-stk: The Synthesis ToolKit in C++ (STK) Library for Arduino](https://github.com/pschatzmann/arduino-stk)
+  - [GitHub - copych/ESP32_S3_Sampler: ESP32-S3 based sampler handles gigabytes of PCM WAV files, up to 19 stereo voices polyphony, CD quality](https://github.com/copych/ESP32_S3_Sampler)
+  - [Prediction by partial matching - Wikipedia](https://en.wikipedia.org/wiki/Prediction_by_partial_matching?wprov=sfla1)
+  - [GitHub - cscott/compressjs: Pure JavaScript de/compression (bzip2, etc) for node.js, volo, and the  browser.](https://github.com/cscott/compressjs)
+  - [[2505.15778] Soft Thinking: Unlocking the Reasoning Potential of LLMs in Continuous Concept Space](https://arxiv.org/abs/2505.15778)
+  - [GitHub - dnakov/claude-mcp: Browser extension to enable MCP in claude.ai](https://github.com/dnakov/claude-mcp)
+  - [Accelerating Node.js development with mcp-node](https://blog.platformatic.dev/accelerating-nodejs-development-with-mcp-node)
+  - [[2411.06037] Sufficient Context: A New Lens on Retrieval Augmented Generation Systems](https://arxiv.org/abs/2411.06037)
+  - [https://contributor.insightmediagroup.io/?p=603887](https://contributor.insightmediagroup.io/?p=603887)
+  - [The Power of Prolog](https://www.metalevel.at/prolog)
+  - [https://www.researchgate.net/figure/Color-online-LF-blue-LF-CALM-orange-and-LF-LM-green-waveforms-including-closed_fig2_354014028](https://www.researchgate.net/figure/Color-online-LF-blue-LF-CALM-orange-and-LF-LM-green-waveforms-including-closed_fig2_354014028)
+  - [Glottopedia](http://www.glottopedia.org/index.php/Main_Page)
+  - [[2505.17063] Synthetic Data RL: Task Definition Is All You Need](https://arxiv.org/abs/2505.17063)
+  - [RunPod - The Cloud Built for AI](https://www.runpod.io/)
+  - [Configure Exxact Valence Workstation VWS-172109266](https://configurator.exxactcorp.com/configure/VWS-172109266)
+  - [GitHub - YuyaoZhangQAQ/QCompiler: This repository contains the code for the paper “Neuro-Symbolic Query Compiler”, accepted to the Findings of ACL 2025.](https://github.com/YuyaoZhangQAQ/QCompiler)
+  - [GitHub - hiyouga/LLaMA-Factory: Unified Efficient Fine-Tuning of 100+ LLMs & VLMs (ACL 2024)](https://github.com/hiyouga/LLaMA-Factory)
+  - [https://arxiv.org/abs/2505.11932](https://arxiv.org/abs/2505.11932)
+  - [https://jules.google.com/task/10140036969018880187](https://jules.google.com/task/10140036969018880187)
+  - [Jules - An Asynchronous Coding Agent](https://jules.google/)
+  - [Tim Dettmers — Making deep learning accessible.](https://timdettmers.com/)
+  - [
+            
+            On-device small language models with multimodality, RAG, and Function Calling
+            
+            
+            - Google Developers Blog
+            
+        ](https://developers.googleblog.com/en/google-ai-edge-small-language-models-multimodality-rag-function-calling/)
+  - [The Developer’s Guide to Focus in the Age of AI Distraction - DEV Community](https://dev.to/teamcamp/the-developers-guide-to-focus-in-the-age-of-ai-distraction-3k18#real-world-workflow-example)
+  - [
+            
+            Building agents with Google Gemini and open source frameworks
+            
+            
+            - Google Developers Blog
+            
+        ](https://developers.googleblog.com/en/building-agents-google-gemini-open-source-frameworks/)
+  - [Daily Logs for Devs: How a 5-Minute Habit Can 10x Your Weekly Output - DEV Community](https://dev.to/teamcamp/daily-logs-for-devs-how-a-5-minute-habit-can-10x-your-weekly-output-4peb)
+  - [CCC Event Blog](https://events.ccc.de/)
+  - [https://www.w3.org/news-events/w3c-tpac/#upcoming](https://www.w3.org/news-events/w3c-tpac/#upcoming)
+  - [KGSWC](https://kgsw.org/call_for_paper.php)
+  - [KGSWC](https://kgsw.org/)
+  - [GitHub - BaldissaraMatheus/Tasks.md: A self-hosted, Markdown file based task management board](https://github.com/BaldissaraMatheus/Tasks.md)
+  - [https://wit.ai/blog](https://wit.ai/blog)
+  - [GitHub - atomic14/diy-alexa: DIY Alexa](https://github.com/atomic14/diy-alexa)
+  - [REST - Wikipedia](https://en.wikipedia.org/wiki/REST?wprov=sfla1)
+  - [A Step-by-Step Guide to Build a Fast Semantic Search and RAG QA Engine on Web-Scraped Data Using Together AI Embeddings, FAISS Retrieval, and LangChain - MarkTechPost](https://www.marktechpost.com/2025/05/14/step-by-step-guide-to-build-a-fast-semantic-search-and-rag-qa-engine-on-web-scraped-data-using-together-ai-embeddings-faiss-retrieval-and-langchain/)
+  - [Welcome to the 🤗 Model Context Protocol (MCP) Course - Hugging Face MCP Course](https://huggingface.co/learn/mcp-course/unit0/introduction)
+  - [GitHub - IBM/analog-foundation-models: Code for paper "Analog Foundation Models"](https://github.com/IBM/analog-foundation-models)
+  - [[2505.09663] Analog Foundation Models](https://arxiv.org/abs/2505.09663)
+  - [Missing fundamental - Wikipedia](https://en.wikipedia.org/wiki/Missing_fundamental?wprov=sfla1)
+  - [(PDF) Conceptual Spaces as a Framework for Knowledge Representation](https://www.researchgate.net/publication/233707793_Conceptual_Spaces_as_a_Framework_for_Knowledge_Representation)
+  - [lightonai/GTE-ModernColBERT-v1 · Hugging Face](https://huggingface.co/lightonai/GTE-ModernColBERT-v1)
+  - [GitHub - lightonai/pylate: Late Interaction Models Training & Retrieval](https://github.com/lightonai/pylate)
+  - [The Algorithm - BERTopic](https://maartengr.github.io/BERTopic/algorithm/algorithm.html)
+  - [[1605.06650] Latent Tree Models for Hierarchical Topic Detection](https://arxiv.org/abs/1605.06650)
+  - [[1605.06650] Latent Tree Models for Hierarchical Topic Detection](https://arxiv.org/abs/1605.06650)
+  - [https://arxiv.org/abs/2212.10496](https://arxiv.org/abs/2212.10496)
+  - [GitHub - brexhq/prompt-engineering: Tips and tricks for working with Large Language Models like OpenAI's GPT-4.](https://github.com/brexhq/prompt-engineering#command-grammars)
+  - [GitHub - brexhq/prompt-engineering: Tips and tricks for working with Large Language Models like OpenAI's GPT-4.](https://github.com/brexhq/prompt-engineering#command-grammars)
+  - [  10 GitHub Repositories to Master Large Language Models - KDnuggets](https://www.kdnuggets.com/10-github-repositories-to-master-large-language-models)
+  - [ThinkNode M2 Meshtastic (LoRa) Signal Transceiver Powered By ESP32-S3 with 1.3” OLED Display](https://m.elecrow.com/pages/shop/product/details?id=208050&)
+  - [[2410.05240] Vizing's Theorem in Near-Linear Time](https://arxiv.org/abs/2410.05240)
+  - [Introduction - Agent User Interaction Protocol](https://docs.ag-ui.com/introduction)
+  - [Facial Age Test to Compute Face Age & Skin Aging](https://novoslabs.com/faceage/#test)
+  - [https://agentcommunicationprotocol.dev/introduction/welcome](https://agentcommunicationprotocol.dev/introduction/welcome)
+  - [BeeAI](https://beeai.dev/)
+  - [https://contributor.insightmediagroup.io/?p=603029](https://contributor.insightmediagroup.io/?p=603029)
+  - [https://contributor.insightmediagroup.io/?p=603029](https://contributor.insightmediagroup.io/?p=603029)
+  - [Passive exposure to task-relevant stimuli enhances categorization learning | eLife](https://elifesciences.org/articles/88406#s2)
+  - [Interpolation and differentiation of alchemical degrees of freedom in machine learning interatomic potentials | Nature Communications](https://www.nature.com/articles/s41467-025-59543-2)
+  - [https://immich.app/](https://immich.app/)
+  - [Penpot: The Design Tool for Design & Code Collaboration](https://penpot.app/)
+  - [AppFlowy](https://appflowy.com/)
+  - [HomeBank Download | Free, easy finance software, personal money management for everyone](https://www.gethomebank.org/en/downloads.php)
+  - [Hippocampal-entorhinal cognitive maps and cortical motor system represent action plans and their outcomes | Nature Communications](https://www.nature.com/articles/s41467-025-59153-y)
+  - [[2405.15071] Grokked Transformers are Implicit Reasoners: A Mechanistic Journey to the Edge of Generalization](https://arxiv.org/abs/2405.15071)
+  - [https://medium.com/data-science/line-by-line-lets-reproduce-gpt-2-section-1-b26684f98492](https://medium.com/data-science/line-by-line-lets-reproduce-gpt-2-section-1-b26684f98492)
+  - [https://github.com/sjaehn/BSEQuencer](https://github.com/sjaehn/BSEQuencer)
+  - [https://jspi.medium.com/building-a-machine-learning-server-in-2025-d27174126b18](https://jspi.medium.com/building-a-machine-learning-server-in-2025-d27174126b18)
+  - [GPU Database | TechPowerUp](https://www.techpowerup.com/gpu-specs/?mfgr=NVIDIA&sort=name)
+  - [NVIDIA RTX A6000 Specs | TechPowerUp GPU Database](https://www.techpowerup.com/gpu-specs/rtx-a6000.c3686)
+  - [AnythingLLM | The all-in-one AI application for everyone](https://anythingllm.com/)
+  - [Where to buy Nvidia's RTX 5060 Ti graphics card as 16GB and 8GB flavors hit the shelves | Tom's Hardware](https://www.tomshardware.com/pc-components/gpus/where-to-buy-nvidias-rtx-5060-ti-graphics-card-as-16gb-and-8gb-flavors-hit-the-shelves)
+  - [https://ulf.ham.gr/](https://ulf.ham.gr/)
+  - [LegoGPT: Generating Physically Stable and Buildable LEGO Designs from Text](https://avalovelace1.github.io/LegoGPT/)
+  - [https://www.tecmint.com/hardening-ubuntu-server/](https://www.tecmint.com/hardening-ubuntu-server/)
+  - [Matrix Specification](https://spec.matrix.org/latest/)
+  - [Matrix.org](https://matrix.org/)
+  - [Mixxx - Download the Best Free DJ Mixing Software App](https://mixxx.org/download/)
+  - [GitHub - binwiederhier/ntfy: Send push notifications to your phone or desktop using PUT/POST](https://github.com/binwiederhier/ntfy)
+  - [GitHub - binwiederhier/ntfy: Send push notifications to your phone or desktop using PUT/POST](https://github.com/binwiederhier/ntfy)
+  - [big-AGI logo](https://big-agi.com/)
+  - [asgeirtj (asgeirtj) / Repositories · GitHub](https://github.com/asgeirtj?tab=repositories)
+  - [Claude’s System Prompt: Chatbots Are More Than Just Models | Drew Breunig](https://www.dbreunig.com/2025/05/07/claude-s-system-prompt-chatbots-are-more-than-just-models.html)
+  - [LLM: A CLI utility and Python library for interacting with Large Language Models](https://llm.datasette.io/en/stable/)
+  - [http://www.vatican.va/content/leo-xiii/en/encyclicals/documents/hf_l-xiii_enc_15051891_rerum-novarum.html](http://www.vatican.va/content/leo-xiii/en/encyclicals/documents/hf_l-xiii_enc_15051891_rerum-novarum.html)
+  - [Kinematic self-replication in reconfigurable organisms | PNAS](https://www.pnas.org/doi/10.1073/pnas.2112672118)
+  - [https://www.pnas.org/doi/10.1073/pnas.2112672118](https://www.pnas.org/doi/10.1073/pnas.2112672118)
+  - [Xenobot - Wikipedia](https://en.wikipedia.org/wiki/Xenobot)
+  - [Team builds first living robots—that can reproduce](https://wyss.harvard.edu/news/team-builds-first-living-robots-that-can-reproduce/)
+  - [Saccharomyces cerevisiae 2.0 | Synthetic Yeast: Sc2.0](https://syntheticyeast.github.io/)
+  - [Build-a-Cell](https://www.buildacell.org/)
+  - [[2504.20752] Grokking in the Wild: Data Augmentation for Real-World Multi-Hop Reasoning with Transformers](https://arxiv.org/abs/2504.20752)
+  - [Leaderboard | WebDev Arena](https://web.lmarena.ai/leaderboard)
+  - [Function calling using LLMs](https://martinfowler.com/articles/function-call-LLM.html)
+  - [[2505.00679] Steering Large Language Models with Register Analysis for Arbitrary Style Transfer](https://arxiv.org/abs/2505.00679)
+  - [https://www.darktable.org/](https://www.darktable.org/)
+  - [[2106.13008] Autoformer: Decomposition Transformers with Auto-Correlation for Long-Term Series Forecasting](https://arxiv.org/abs/2106.13008)
+  - [GitHub - ictnlp/LLaMA-Omni2](https://github.com/ictnlp/LLaMA-Omni2)
+  - [Installation - AgentDesk - BrowserToolsMCP](https://browsertools.agentdesk.ai/installation)
+  - [Installation - AgentDesk - BrowserToolsMCP](https://browsertools.agentdesk.ai/installation)
+  - [GitHub - AgentDeskAI/browser-tools-mcp: Monitor browser logs directly from Cursor and other MCP compatible IDEs.](https://github.com/AgentDeskAI/browser-tools-mcp)
+  - [GitHub - auchenberg/claude-code-mcp: claude-code-mcp](https://github.com/auchenberg/claude-code-mcp)
+  - [servers/src/sequentialthinking at main · modelcontextprotocol/servers · GitHub](https://github.com/modelcontextprotocol/servers/tree/main/src/sequentialthinking)
+  - [
+        Can vibe coding produce production-grade software?  | Thoughtworks 
+    ](https://www.thoughtworks.com/insights/blog/generative-ai/can-vibe-coding-produce-production-grade-software)
+  - [servers/src/memory at main · modelcontextprotocol/servers · GitHub](https://github.com/modelcontextprotocol/servers/tree/main/src/memory)
+  - [This Retro-Futuristic 3D-Printed Cyberdeck Is a Handheld Shrine to the Machine God - Hackster.io](https://www.hackster.io/news/this-retro-futuristic-3d-printed-cyberdeck-is-a-handheld-shrine-to-the-machine-god-9e42603ab66b)
+  - [https://arxiv.org/abs/2412.10092](https://arxiv.org/abs/2412.10092)
+  - [https://arxiv.org/abs/2504.18070](https://arxiv.org/abs/2504.18070)
+  - [https://arxiv.org/abs/2504.19224](https://arxiv.org/abs/2504.19224)
+  - [https://arxiv.org/abs/2502.12110](https://arxiv.org/abs/2502.12110)
+  - [	Koloe / Dianji ZX-H61C V2.3 - The Retro Web
+](https://theretroweb.com/motherboards/s/koloe-dianji-zx-h61c-v2-3#bios)
+  - [[2504.20734] UniversalRAG: Retrieval-Augmented Generation over Multiple Corpora with Diverse Modalities and Granularities](https://arxiv.org/abs/2504.20734)
+  - [https://www.howtogeek.com/want-a-private-homelab-put-these-apps-at-the-top-of-your-list/](https://www.howtogeek.com/want-a-private-homelab-put-these-apps-at-the-top-of-your-list/)
+  - [Flowise - Low code LLM Apps Builder](https://flowiseai.com/)
+  - [https://keet.wordpress.com/2025/03/26/is-developing-an-ontology-from-an-llm-really-feasible/](https://keet.wordpress.com/2025/03/26/is-developing-an-ontology-from-an-llm-really-feasible/)
+  - [Probabilistic alignment of multiple networks | Nature Communications](https://www.nature.com/articles/s41467-025-59077-7)
+  - [https://immich.app/](https://immich.app/)
+  - [https://www.csounds.com/manual/html/SiggenGranular.html](https://www.csounds.com/manual/html/SiggenGranular.html)
+  - [https://monoskop.org/File:Roads_Curtis_Microsound.pdf](https://monoskop.org/File:Roads_Curtis_Microsound.pdf)
+  - [https://www.hackster.io/victorjosebarahona/tinycorder-a-multitool-device-to-sense-environment-67a266](https://www.hackster.io/victorjosebarahona/tinycorder-a-multitool-device-to-sense-environment-67a266)
+  - [GitHub - huggingface/smol-course: A course on aligning smol models.](https://github.com/huggingface/smol-course)
+  - [GitHub - mark-orion/The-Wee-O3: The Wee O3 - an ionized O2 MiniPop](https://github.com/mark-orion/The-Wee-O3)
+  - [
+            Second to fourth digit ratio: a predictor of adult penile length - PMC
+        ](https://pmc.ncbi.nlm.nih.gov/articles/PMC3739592/)
+  - [NodeRAG](https://terry-xu-666.github.io/NodeRAG_web/)
+  - [Deep Graph Neural Networks with Shallow Subgraph Samplers | OpenReview](https://openreview.net/forum?id=GIeGTl8EYx)
+  - [https://en.wikipedia.org/wiki/Leiden_algorithm?wprov=sfla1](https://en.wikipedia.org/wiki/Leiden_algorithm?wprov=sfla1)
+  - [Blog | NodeRAG](https://terry-xu-666.github.io/NodeRAG_web/blog/)
+  - [GitHub - Terry-Xu-666/NodeRAG: The official repository of NodeRAG](https://github.com/Terry-Xu-666/NodeRAG)
+  - [Auburn Sounds - Inner Pitch, highest-quality Pitch Changer](https://www.auburnsounds.com/products/InnerPitch.html)
+  - [TAL Software](https://tal-software.com/products/tal-chorus-lx)
+  - [Specification - Model Context Protocol](https://modelcontextprotocol.io/specification/2025-03-26)
+  - [MCP Gateway – kgateway](https://kgateway.dev/docs/mcp/)
+  - [GitHub - huggingface/smollm: Everything about the SmolLM2 and SmolVLM family of models](https://github.com/huggingface/smollm)
+  - [GitHub - Terry-Xu-666/NodeRAG: The official repository of NodeRAG](https://github.com/Terry-Xu-666/NodeRAG)
+  - [Msty - Using AI Models made Simple and Easy](https://msty.app/)
+  - [https://arxiv.org/abs/2504.11544](https://arxiv.org/abs/2504.11544)
+  - [Building a low-cost, precision digital oscilloscope—Part 1 - EDN](https://www.edn.com/building-a-low-cost-precision-digital-oscilloscope/)
+  - [Building a low-cost, precision digital oscilloscope—Part 1 - EDN](https://www.edn.com/building-a-low-cost-precision-digital-oscilloscope/)
+  - [
+      DSO138mini DIY Kit
+ – AccuDIY](https://accudiy.com/products/dso138mini-diy-kit)
+  - [JavaScript Rest Parameters: Because Sometimes You Just Need More Args - DEV Community](https://dev.to/lovestaco/javascript-rest-parameters-because-sometimes-you-just-need-more-args-2koj)
+  - [uLisp - Other ESP32 boards](http://www.ulisp.com/show?2AJI)
+  - [Is a convolution module possible? - MOD WIGGLER](https://modwiggler.com/forum/viewtopic.php?t=56845)
+  - [GitHub - danja/dog: DOG-1 : Danny's Obtuse Gadget](https://github.com/danja/dog)
+  - [GitHub - Fernandoantvf/ArduinoPseudoParallelProcessing: A simple way to setup parallel processing of routines in any arduino](https://github.com/Fernandoantvf/ArduinoPseudoParallelProcessing)
+  - [GitHub - jazz-soft/JZZ: MIDI library for Node.js and web-browsers](https://github.com/jazz-soft/JZZ)
+  - [projectlosangeles/Los-Angeles-MIDI-Dataset · Datasets at Hugging Face](https://huggingface.co/datasets/projectlosangeles/Los-Angeles-MIDI-Dataset)
+  - [projectlosangeles/Los-Angeles-MIDI-Dataset · Datasets at Hugging Face](https://huggingface.co/datasets/projectlosangeles/Los-Angeles-MIDI-Dataset)
+  - [GitHub - IhateCreatingUserNames2/Aira: A2A Network, Host, Register, Discover Agents in the Network, Share, Use tools.  Server is Hosted on AiraHub.py](https://github.com/IhateCreatingUserNames2/Aira)
+  - [GitHub - IhateCreatingUserNames2/Aira: A2A Network, Host, Register, Discover Agents in the Network, Share, Use tools.  Server is Hosted on AiraHub.py](https://github.com/IhateCreatingUserNames2/Aira)
+  - [google/A2A · Discussions · GitHub](https://github.com/google/A2A/discussions)
+  - [
+            
+            Announcing the Agent2Agent Protocol (A2A)
+            
+            
+            - Google Developers Blog
+            
+        ](https://developers.googleblog.com/en/a2a-a-new-era-of-agent-interoperability/)
+  - [Agent2Agent Protocol](https://google.github.io/A2A/#/)
+  - [Agent2Agent Protocol](https://google.github.io/A2A/#/)
+  - [GitHub - google/A2A: An open protocol enabling communication and interoperability between opaque agentic applications.](https://github.com/google/A2A)
+  - [GitHub - google/A2A: An open protocol enabling communication and interoperability between opaque agentic applications.](https://github.com/google/A2A)
+  - [
+            
+            Announcing the Agent2Agent Protocol (A2A)
+            
+            
+            - Google Developers Blog
+            
+        ](https://developers.googleblog.com/en/a2a-a-new-era-of-agent-interoperability/)
+  - [NoFlo | Flow-Based Programming for JavaScript](https://noflojs.org/)
+  - [A weird phrase is plaguing scientific papers – and we traced it back to a glitch in AI training data](https://theconversation.com/a-weird-phrase-is-plaguing-scientific-papers-and-we-traced-it-back-to-a-glitch-in-ai-training-data-254463)
+  - [
+  Bela Mini Starter Kit – eu.shop.bela.io
+  ](https://eu.shop.bela.io/products/bela-mini-starter-kit)
+  - [[2504.02111] Exploring LLM Reasoning Through Controlled Prompt Variations](https://arxiv.org/abs/2504.02111)
+  - [https://help.mistral.ai/en/articles/225174-what-are-the-limits-of-the-free-tier](https://help.mistral.ai/en/articles/225174-what-are-the-limits-of-the-free-tier)
+  - [Saccharomyces boulardii - Wikipedia](https://en.wikipedia.org/wiki/Saccharomyces_boulardii?wprov=sfla1)
+  - [Pricing | Otter.ai](https://otter.ai/pricing)
+  - [On the Biology of a Large Language Model](https://transformer-circuits.pub/2025/attribution-graphs/biology.html)
+  - [https://transformer-circuits.pub/2025/attribution-graphs/biology.html](https://transformer-circuits.pub/2025/attribution-graphs/biology.html)
+  - [GitHub - Hugo-COLLIN/SaveMyPhind-conversation-exporter: 🚀 Save my Chatbot: Download your Claude, Perplexity, Phind, ChatGPT and MaxAI-Google threads and pages into markdown files (unofficial). ⏩ Now available in the Chrome Web Store and the Firefox Add-ons Store!](https://github.com/Hugo-COLLIN/SaveMyPhind-conversation-exporter)
+  - [Save my Chatbot - AI Conversation Exporter - Chrome Web Store](https://chromewebstore.google.com/detail/save-my-chatbot-ai-conver/agklnagmfeooogcppjccdnoallkhgkod)
+  - [https://github.com/saeedabc/llm-text-tiling?utm_source=perplexity](https://github.com/saeedabc/llm-text-tiling?utm_source=perplexity)
+  - [[2309.00071] YaRN: Efficient Context Window Extension of Large Language Models](https://arxiv.org/abs/2309.00071)
+  - [Gemini Developer API Pricing  |  Gemini API  |  Google AI for Developers](https://ai.google.dev/gemini-api/docs/pricing)
+  - [Grit](https://docs.grit.io/)
+  - [OpenRouter](https://openrouter.ai/)
+  - [GitHub - zilliztech/GPTCache: Semantic cache for LLMs. Fully integrated with LangChain and llama_index.](https://github.com/zilliztech/GPTCache)
+  - [https://hub.docker.com/r/bitnami/oauth2-proxy](https://hub.docker.com/r/bitnami/oauth2-proxy)
+  - [https://vocab.methodandstructure.com/process-model#](https://vocab.methodandstructure.com/process-model#)
+  - [AutoView - turning your blueprint into UI components (AI Code Generator) - DEV Community](https://dev.to/samchon/autoview-turning-your-blueprint-into-ui-components-ai-code-generator-fp)
+  - [Every Backend Developer is a Great AI Developer - DEV Community](https://dev.to/samchon/every-backend-developer-is-a-great-ai-developer-338m)
+  - [Every TypeScript Developer is an AI Developer - DEV Community](https://dev.to/samchon/every-typescript-developer-is-an-ai-developer-2kan)
+  - [AutoView - turning your blueprint into UI components (AI Code Generator) - DEV Community](https://dev.to/samchon/autoview-turning-your-blueprint-into-ui-components-ai-code-generator-fp)
+  - [typia (20,000x faster validator) challenges to Agentic AI framework, with its compiler skill - DEV Community](https://dev.to/samchon/typia-20000x-faster-validator-challenges-to-agentic-ai-framework-with-its-compiler-skill-3h9i)
+  - [Agentica > Home](https://wrtnlabs.io/agentica/)
+  - [GitHub](https://typia.io/)
+  - [TypeScript - Wikipedia](https://en.wikipedia.org/wiki/TypeScript?wprov=sfla1)
+  - [Tang Dynasty horses - the essential guide - Antique Collecting](https://antique-collecting.co.uk/2021/12/09/tang-dynasty-horses-the-essential-guide/)
+  - [OpenAPI Specification - Wikipedia](https://en.wikipedia.org/wiki/OpenAPI_Specification?wprov=sfla1)
+  - [Swagger (software) - Wikipedia](https://en.wikipedia.org/wiki/Swagger_%28software%29?wprov=sfla1)
+  - [
+	CAGS Home Page
+](https://www.cpuproductions.com/CAGS/)
+  - [Microsoft announces vibe coding keyboard](https://msft.media/tabboard)
+  - [https://medium.com/@techsachin/longwriter-using-llm-agent-based-pipeline-to-scale-llms-output-window-size-to-10-000-words-33210d299e2b](https://medium.com/@techsachin/longwriter-using-llm-agent-based-pipeline-to-scale-llms-output-window-size-to-10-000-words-33210d299e2b)
+  - [https://www.destroyallsoftware.com/compendium](https://www.destroyallsoftware.com/compendium)
+  - [[2205.13147] Matryoshka Representation Learning](https://arxiv.org/abs/2205.13147)
+  - [Unveiling the Unified Landscape: Bridging Knowledge Graphs and Machine Learning | bergis universe of software, hardware and ideas](https://www.bergnet.org/2024/05/unified-landscape/)
+  - [[1403.2877] A survey of dimensionality reduction techniques](https://arxiv.org/abs/1403.2877)
+  - [Ant colony optimization algorithms - Wikipedia](https://en.wikipedia.org/wiki/Ant_colony_optimization_algorithms?wprov=sfla1)
+  - [Ted Nelson - Wikipedia](https://en.wikipedia.org/wiki/Ted_Nelson?wprov=sfla1)
+  - [[2310.02304] Self-Taught Optimizer (STOP): Recursively Self-Improving Code Generation](https://arxiv.org/abs/2310.02304)
+  - [Towards Autonomous Agents and Recursive Intelligence](https://www.emergence.ai/blog/towards-autonomous-agents-and-recursive-intelligence)
+  - [Emergence AI's new system automatically creates AI agents rapidly in realtime based on the work at hand | VentureBeat](https://venturebeat.com/ai/emergence-ais-new-system-automatically-creates-ai-agents-rapidly-in-realtime-based-on-the-work-at-hand/)
+  - [The evolution of graph learning](https://research.google/blog/the-evolution-of-graph-learning/)
+  - [[1403.6652] DeepWalk: Online Learning of Social Representations](https://arxiv.org/abs/1403.6652)
+  - [[1403.6652] DeepWalk: Online Learning of Social Representations](https://arxiv.org/abs/1403.6652)
+  - [[1403.6652] DeepWalk: Online Learning of Social Representations](https://arxiv.org/abs/1403.6652)
+  - [Dialectic - Wikipedia](https://en.wikipedia.org/wiki/Dialectic?wprov=sfla1)
+  - [[2105.06339] Graph Learning based Recommender Systems: A Review](https://arxiv.org/abs/2105.06339)
+  - [SKOS Simple Knowledge Organization System Primer](https://www.w3.org/TR/skos-primer/)
+  - [WebSocket - Wikipedia](https://en.wikipedia.org/wiki/WebSocket?wprov=sfla1)
+  - [Bluetooth - Wikipedia](https://en.wikipedia.org/wiki/Bluetooth?wprov=sfla1)
+  - [Instrumental convergence - Wikipedia](https://en.wikipedia.org/wiki/Instrumental_convergence?wprov=sfla1)
+  - [Prime Resonance Playground](https://codepen.io/sschepis/pen/gbOzyqO)
+  - [Reddit - The heart of the internet](https://www.reddit.com/r/creativecoding/s/Tfhyddnb65)
+  - [Google NotebookLM | Note Taking & Research Assistant Powered by AI](https://notebooklm.google/)
+  - [Google AI Studio](https://aistudio.google.com/)
+  - [https://web.archive.org/web/20160330102118/http://www.johngineer.com/blog/?p=648](https://web.archive.org/web/20160330102118/http://www.johngineer.com/blog/?p=648)
+  - [GitHub - BojanJurca/Esp32_oscilloscope: ESP32 oscilloscope - see the signals through Web browser the way ESP32 sees them](https://github.com/BojanJurca/Esp32_oscilloscope)
+  - [Oscilloscope Music](https://oscilloscopemusic.com/software/)
+  - [Reddit - The heart of the internet](https://www.reddit.com/r/QualityAssurance/s/q02Ib5EmGh)
+  - [Requirements Modeling Language FREE DOWNLOAD - ArgonDigital | Making Technology a Strategic Advantage](https://argondigital.com/resource/tools-templates/requirements-modeling-language-free-download/)
+  - [RML Use Case Template](https://argondigital.com/resource/tools-templates/rml-use-case-template/)
+  - [Functional requirement - Wikipedia](https://en.wikipedia.org/wiki/Functional_requirement?wprov=sfla1)
+  - [Use case - Wikipedia](https://en.wikipedia.org/wiki/Use_case?wprov=sfla1)
+  - [https://people.reed.edu/~davidp/grant/](https://people.reed.edu/~davidp/grant/)
+  - [Made with WebAssembly](https://madewithwebassembly.com/showcase/sandspiel/)
+  - [GitHub - hayk314/Sandpiles: simulation of various sandpile models](https://github.com/hayk314/Sandpiles)
+  - [GitHub - eekkaiia/lakhesis: A different take on the sandpile model](https://github.com/eekkaiia/lakhesis)
+  - [https://moderndata101.substack.com/p/the-ontology-pipeline](https://moderndata101.substack.com/p/the-ontology-pipeline)
+  - [Bunny Blake - Web Development and Multimedia Production](https://discolingua.github.io/)
+  - [Lagrangian mechanics - Wikipedia](https://en.wikipedia.org/wiki/Lagrangian_mechanics?wprov=sfla1)
+  - [Action principles - Wikipedia](https://en.wikipedia.org/wiki/Action_principles?wprov=sfla1)
+  - [Action (physics) - Wikipedia](https://en.wikipedia.org/wiki/Action_%28physics%29?wprov=sfla1)
+  - [Action principles - Wikipedia](https://en.wikipedia.org/wiki/Action_principles?wprov=sfla1)
+  - [Principle of compositionality - Wikipedia](https://en.wikipedia.org/wiki/Principle_of_compositionality?wprov=sfla1)
+  - Mondo Janga [https://randomcollective.bandcamp.com/track/mondo-janga-original-mix](https://randomcollective.bandcamp.com/track/mondo-janga-original-mix)
+  - [Genetic algorithm - Wikipedia](https://en.wikipedia.org/wiki/Genetic_algorithm?wprov=sfla1)
+  - [Reinforcement learning - Wikipedia](https://en.wikipedia.org/wiki/Reinforcement_learning?wprov=sfla1)
+  - [Reinforcement learning from human feedback - Wikipedia](https://en.wikipedia.org/wiki/Reinforcement_learning_from_human_feedback?wprov=sfla1)
+  - [Maurice Merleau-Ponty - Wikipedia](https://en.wikipedia.org/wiki/Maurice_Merleau-Ponty?wprov=sfla1)
+  - [Multi-agent reinforcement learning - Wikipedia](https://en.wikipedia.org/wiki/Multi-agent_reinforcement_learning?wprov=sfla1)
+  - [Pyramid (image processing) - Wikipedia](https://en.wikipedia.org/wiki/Pyramid_%28image_processing%29#Laplacian_pyramid?wprov=sfla1)
+  - [YouTube](https://youtube.com/watch?v=U7qa7i0K9C4&si=nxxfYwNtVKg32pgH)
+  - [[2503.09572] Plan-and-Act: Improving Planning of Agents for Long-Horizon Tasks](https://arxiv.org/abs/2503.09572)
+  - [Circuit Simulator Applet](https://www.falstad.com/circuit/jsinterface.html)
+  - [[2503.19470] ReSearch: Learning to Reason with Search for LLMs via Reinforcement Learning](https://arxiv.org/abs/2503.19470)
+  - [Paper page - ReSearch: Learning to Reason with Search for LLMs via Reinforcement
+  Learning](https://huggingface.co/papers/2503.19470)
+  - [
+            The Scaffolded Mind: Higher mental processes are grounded in early experience of the physical world - PMC
+        ](https://pmc.ncbi.nlm.nih.gov/articles/PMC2799930/)
+  - [AI and the Three Stages of Cognitive Collapse | Psychology Today](https://www.psychologytoday.com/us/blog/the-digital-self/202503/ai-and-the-three-stages-of-cognitive-collapse)
+  - [In the Post-Cognitive World, What Comes After Thinking? | Psychology Today](https://www.psychologytoday.com/us/blog/the-digital-self/202503/in-the-post-cognitive-world-what-comes-after-thinking)
+  - [Thinking About Thinking—How AI Reshapes Cognition | Psychology Today](https://www.psychologytoday.com/us/blog/the-digital-self/202503/thinking-about-thinking-how-ai-reshapes-cognition)
+  - [Decentralized Autonomous Organization (DAO): Definition, Purpose, and Example](https://www.investopedia.com/tech/what-dao/)
+  - [The Cognitive DAO—Intelligence Without a Mind | Psychology Today](https://www.psychologytoday.com/us/blog/the-digital-self/202503/the-cognitive-dao-intelligence-without-a-mind)
+  - [https://x.com/marceloterreiro/status/1883148626891047309](https://x.com/marceloterreiro/status/1883148626891047309)
+  - [https://relay.dev/docs/principles-and-architecture/thinking-in-relay/](https://relay.dev/docs/principles-and-architecture/thinking-in-relay/)
+  - [Brex’s Web Dev Revamp Makes Code LLM Friendly, by Design - The New Stack](https://thenewstack.io/brexs-web-dev-revamp-makes-code-llm-friendly-by-design/)
+  - [Offline memory consolidation during waking rest | Nature Reviews Psychology](https://www.nature.com/articles/s44159-022-00072-w)
+  - [Web of Science](https://www.webofscience.com/wos/woscc/full-record/WOS:A1990DH81800005)
+  - [Relearn Faster and Retain Longer - PubMed](https://pubmed.ncbi.nlm.nih.gov/27530500/)
+  - [Exploring the associations of daily movement behaviours and mid-life cognition: a compositional analysis of the 1970 British Cohort Study | Journal of Epidemiology & Community Health](https://jech.bmj.com/content/77/3/189)
+  - [Moderate-to-vigorous intensity cycling exercise immediately after visual learning enhances delayed recognition memory performance - ScienceDirect](https://www.sciencedirect.com/science/article/abs/pii/S146902922300122X)
+  - [EEsim: a circuit simulator – Open.Ed](https://open.ed.ac.uk/eesim-a-circuit-simulator/#:~:text=EEsim%20is%20an%20open%2Dsource,open%2Dsource%20integrated%20circuit%20hardware.)
+  - [https://hub.knime.com/knime/collections/KNIME%20for%20Generative%20AI~D4ckx2q_J5FPBQXu](https://hub.knime.com/knime/collections/KNIME%20for%20Generative%20AI~D4ckx2q_J5FPBQXu)
+  - [https://madza.hashnode.dev/9-open-source-ai-projects-you-will-be-amazed-to-discover](https://madza.hashnode.dev/9-open-source-ai-projects-you-will-be-amazed-to-discover)
+  - [GitHub - ivy-llc/ivy: Convert Machine Learning Code Between Frameworks](https://github.com/ivy-llc/ivy)
+  - [Qwen2.5-VL-32B: Smarter and Lighter](https://simonwillison.net/2025/Mar/24/qwen25-vl-32b/)
+  - [GitHub - THX2112/Eurorack-Panel-Designer: Eurorack panel design extension for Inkscape](https://github.com/THX2112/Eurorack-Panel-Designer)
+  - [Bread Modular · GitHub](https://github.com/bread-modular)
+  - [Modular MIDI · bread-modular/bread-modular Wiki · GitHub](https://github.com/bread-modular/bread-modular/wiki/Modular-MIDI)
+  - [Drive | Bread Modular](https://www.breadmodular.com/modules/drive)
+  - [Building Dynamic Libraries](https://lispcookbook.github.io/cl-cookbook/dynamic-libraries.html)
+  - [GitHub - AgentDeskAI/browser-tools-mcp: Monitor browser logs directly from Cursor and other MCP compatible IDEs.](https://github.com/AgentDeskAI/browser-tools-mcp)
+  - [Paper page - Reinforcement Learning for Reasoning in Small LLMs: What Works and What
+  Doesn't](https://huggingface.co/papers/2503.16219)
+  - [Check your risk in 30 seconds | Prostate Cancer UK](https://prostatecanceruk.org/risk-checker)
+  - [GitHub - DISTRHO/DPF: DISTRHO Plugin Framework](https://github.com/DISTRHO/DPF)
+  - [https://cardinal.kx.studio/about](https://cardinal.kx.studio/about)
+  - [Erhu - Wikipedia](https://en.wikipedia.org/wiki/Erhu?wprov=sfla1)
+  - [Thomas Campion - Wikipedia](https://en.wikipedia.org/wiki/Thomas_Campion?wprov=sfla1)
+  - [Michael Wooldridge (computer scientist) - Wikipedia](https://en.wikipedia.org/wiki/Michael_Wooldridge_%28computer_scientist%29?wprov=sfla1)
+  - [[2312.11556] StarVector: Generating Scalable Vector Graphics Code from Images and Text](https://arxiv.org/abs/2312.11556)
+  - [https://x.com/AndrewYNg/status/1902395485601853941](https://x.com/AndrewYNg/status/1902395485601853941)
+  - [Long-Term Agentic Memory with LangGraph - DeepLearning.AI](https://www.deeplearning.ai/short-courses/long-term-agentic-memory-with-langgraph/)
+  - [Engineered Meta-Cognitive Workflow Architecture for Windsurf | A sophisticated meta-prompt framework for Windsurf AI IDE](https://entrepeneur4lyf.github.io/engineered-meta-cognitive-workflow-architecture/)
+  - [Roger Fuckbythenavel and the Strange Case of the Queer Deer | Jeanne de Montbaston](https://readingmedievalbooks.wordpress.com/2015/09/30/roger-fuckbythenavel-and-the-strange-case-of-the-queer-deer/)
+  - [Web Content Accessibility Guidelines (WCAG) 2.2](https://www.w3.org/TR/WCAG22/)
+  - [Atkinson Hyperlegible Font - Braille Institute](https://www.brailleinstitute.org/freefont/)
+  - [[2503.16212] MathFusion: Enhancing Mathematic Problem-solving of LLM through Instruction Fusion](https://arxiv.org/abs/2503.16212)
+  - [GitHub - QizhiPei/MathFusion: MathFusion: Enhancing Mathematic Problem-solving of LLM through Instruction Fusion](https://github.com/QizhiPei/MathFusion)
+  - [Paper page - MathFusion: Enhancing Mathematic Problem-solving of LLM through
+  Instruction Fusion](https://huggingface.co/papers/2503.16212)
+  - [[2203.02155] Training language models to follow instructions with human feedback](https://arxiv.org/abs/2203.02155)
+  - [https://arxiv.org/abs/2203.02155](https://arxiv.org/abs/2203.02155)
+  - [[2501.12948] DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning](https://arxiv.org/abs/2501.12948)
+  - [Why GRPO is Important and How it Works | Oxen.ai](https://www.oxen.ai/blog/why-grpo-is-important-and-how-it-works)
+  - [GRPO Trainer](https://huggingface.co/docs/trl/main/en/grpo_trainer)
+  - [Skull & Circuits – Things that go bleep.](https://www.skullandcircuits.com/?v=910955a907e7)
+  - [AI Synthesis Learn to Build a DIY Synthesizer](https://aisynthesis.com/)
+  - [AI-driven weather prediction breakthrough reported | Artificial intelligence (AI) | The Guardian](https://www.theguardian.com/technology/2025/mar/20/ai-aardvark-weather-prediction-forecasting-artificial-intelligence)
+  - [
+      Avant Climbing Innovations - Gear Solutions for the Core Rock Climber
+](https://avantclimbing.com/)
+  - [GitHub - jweinst1/corplet: A binary-corpus system for word tagging](https://github.com/jweinst1/corplet)
+  - [[2503.09516] Search-R1: Training LLMs to Reason and Leverage Search Engines with Reinforcement Learning](https://arxiv.org/abs/2503.09516)
+  - [electro-music.com :: View topic - Electronotes 129 Thru Zero VCO MOD](https://electro-music.com/forum/topic-55000.html)
+  - [VCO produces positive and negative output frequencies - EDN](https://www.edn.com/vco-produces-positive-and-negative-output-frequencies/)
+  - [Quadrature Trapezoid VCO: Part 1 Discussion](https://till.com/articles/QuadTrapVCO/discussion.html)
+  - [implementing a sigmoid function in analog circuitry | a c i d b o u r b o n](https://acidbourbon.wordpress.com/2024/02/16/implementing-a-sigmoid-function-in-analog-circuitry/)
+  - [A-110 Service Manual](https://www.doepfer.de/a110_tec.htm)
+  - [A New Variation of the Classic Instrumentation Amplifier (PGIA) Offers More Design Flexibility | Analog Devices](https://www.analog.com/en/resources/technical-articles/new-variation-of-classic-in-amp-offers-more-design-flexibility.html)
+  - [Mistral Small 3.1 | Mistral AI](https://mistral.ai/news/mistral-small-3-1)
+  - [brummer10 (Hermann) · GitHub](https://github.com/brummer10)
+  - [GitHub - brummer10/NeuralRack: NeuralRack is a Neural Model and Impulse Response File loader for Linux/Windows.](https://github.com/brummer10/NeuralRack)
+  - [SHUTDOWN.gallery](https://shutdown.gallery/)
+  - [AIQ art + technology | Edgar Ladrón de Guevara - Apuntes](http://aiq.mx/exposiciones/artist_001/expo_001/)
+  - [The Rhombus Programming Language](https://rhombus-lang.org/)
+  - [GitHub - TomPast/artwork-3D-museum: A 3D museum to showcase my drawings in an immersive way using Three.js, React and TailwindCSS.](https://github.com/TomPast/artwork-3D-museum)
+  - [Analogy and the Roots of Creative Intelligence | The MIT Press Reader](https://thereader.mitpress.mit.edu/analogy-and-the-roots-of-creative-intelligence/)
+  - [Why the Latest JavaScript Frameworks Are a Waste of Time - DEV Community](https://dev.to/holasoymalva/why-the-latest-javascript-frameworks-are-a-waste-of-time-52pc)
+  - [https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax)
+  - [How GitHub engineers learn new codebases - The GitHub Blog](https://github.blog/developer-skills/application-development/how-github-engineers-learn-new-codebases/)
+  - [Sonic Visualiser](https://www.sonicvisualiser.org/)
+  - [GitHub - liuanlin-mx/MXTune: pitch correction plugin for VST](https://github.com/liuanlin-mx/MXTune)
+  - [GitHub - sasagawa888/eisl: ISLisp interpreter/compiler](https://github.com/sasagawa888/eisl)
+  - [GitHub - sasagawa888/nprolog: interpreter and compiler to be compatible with ARITY/PROLOG（MS-DOS)](https://github.com/sasagawa888/nprolog)
+  - [https://medium.com/@kenichisasagawa/the-dream-of-lisp-and-prolog-achieved-3cdc5bb13b3f](https://medium.com/@kenichisasagawa/the-dream-of-lisp-and-prolog-achieved-3cdc5bb13b3f)
+  - [Generating Fur in DirectX or OpenGL Easily - Tutorials made easy!](https://www.xbdev.net/directx3dx/specialX/Fur/index.php)
+  - [Shell Texturing - tmpvar](https://tmpvar.com/poc/shell-texturing/)
+  - [GitHub - processing/p5.js: p5.js is a client-side JS platform that empowers artists, designers, students, and anyone to learn to code and express themselves creatively on the web. It is based on the core principles of Processing. http://twitter.com/p5xjs —](https://github.com/processing/p5.js)
+  - [pipe tuning method — line upon line percussion](https://www.lineuponlinepercussion.org/pipe-tuning-method)
+  - [SHACL - Wikipedia](https://en.wikipedia.org/wiki/SHACL?wprov=sfla1)
+  - [Feasible region - Wikipedia](https://en.wikipedia.org/wiki/Feasible_region?wprov=sfla1)
+  - [https://www.cell.com/trends/cognitive-sciences/fulltext/S1364-6613(19)30295-5?_returnURL=https%3A%2F%2Flinkinghub.elsevier.com%2Fretrieve%2Fpii%2FS1364661319302955%3Fshowall%3Dtrue](https://www.cell.com/trends/cognitive-sciences/fulltext/S1364-6613(19)30295-5?_returnURL=https%3A%2F%2Flinkinghub.elsevier.com%2Fretrieve%2Fpii%2FS1364661319302955%3Fshowall%3Dtrue)
+  - [Zero-knowledge proof - Wikipedia](https://en.wikipedia.org/wiki/Zero-knowledge_proof?wprov=sfla1)
+  - [Shop | ClockworkPi](https://www.clockworkpi.com/shop)
+  - [  Measuring Prompt Effectiveness: Metrics and Methods - KDnuggets](https://www.kdnuggets.com/measuring-prompt-effectiveness-metrics-and-methods)
+  - [whimsicalraps · GitHub](https://github.com/whimsicalraps)
+  - [https://www.nonlinearcircuits.com/modules/p/4hp-envelope-follower](https://www.nonlinearcircuits.com/modules/p/4hp-envelope-follower)
+  - [https://www.nonlinearcircuits.com/modules/p/spasm](https://www.nonlinearcircuits.com/modules/p/spasm)
+  - [https://sprott.physics.wisc.edu/PUBS.HTM](https://sprott.physics.wisc.edu/PUBS.HTM)
+  - [https://nousresearch.com/](https://nousresearch.com/)
+  - [[2503.08681] Self-Taught Self-Correction for Small Language Models](https://arxiv.org/abs/2503.08681)
+  - [GitHub - VityaVitalich/STASC: [ICLR 2025 SSI-FM] Self-Taught Self-Correction for Small Language Models](https://github.com/VityaVitalich/STASC)
+  - [Browser Use, one of the tools powering Manus, is also going viral | TechCrunch](https://techcrunch.com/2025/03/12/browser-use-one-of-the-tools-powering-manus-is-also-going-viral/)
+  - [[2210.01711] The Kuramoto-Sivashinsky Equation](https://arxiv.org/abs/2210.01711)
+  - [GitHub - E-Renshaw/kuramoto-sivashinsky: A simulation of the Kuramoto-Sivashinsky Equation in Python and MATLAB](https://github.com/E-Renshaw/kuramoto-sivashinsky)
+  - [NLC Spasm - Richard Brewster's Electronic Sounds](https://pugix.com/synth/nlc-spasm/)
+  - [Structure and Interpretation of Classical Mechanics](https://tgvaughan.github.io/sicm/toc.html#SEC_Contents)
+  - [Structure and Interpretation of Classical Mechanics: Hamiltonian Mechanics](https://tgvaughan.github.io/sicm/chapter003.html)
+  - [Sprott's Books and Publications](https://sprott.physics.wisc.edu/PUBS.HTM)
+  - [A New Chaotic Jerk Circuit](https://sprott.physics.wisc.edu/pubs/paper352.htm)
+  - [SPASM — Nonlinearcircuits](https://www.nonlinearcircuits.com/modules/p/spasm)
+  - [GitHub - newdigate/freecad-eurorack-panel: parametric eurorack panel for freecad](https://github.com/newdigate/freecad-eurorack-panel)
+  - [GitHub - THX2112/Eurorack-Panel-Designer: Eurorack panel design extension for Inkscape](https://github.com/THX2112/Eurorack-Panel-Designer)
+  - [https://inkscape.org/](https://inkscape.org/)
+  - [FreeCAD: Your own 3D parametric modeler](https://www.freecad.org/)
+  - [OpenSCAD - The Programmers Solid 3D CAD Modeller](https://openscad.org/)
+  - [https://www.xda-developers.com/teamviewer-alternatives-i-keep-coming-back-to-this-free-open-source-tool/](https://www.xda-developers.com/teamviewer-alternatives-i-keep-coming-back-to-this-free-open-source-tool/)
+  - [openDAW.org](https://opendaw.org/)
+  - [GitHub - WebAR-rocks/WebAR.rocks.object: Object detection and tracking](https://github.com/WebAR-rocks/WebAR.rocks.object)
+  - [GitHub - WebAR-rocks/WebAR.rocks.train: Object detection, tracking, and 6DoF Pose Estimation  in web browser - Integrated Training Environment to train your own neural network models](https://github.com/WebAR-rocks/WebAR.rocks.train)
+  - [Logarithmic falloff formula - FMOD Engine - FMOD Forums](https://qa.fmod.com/t/logarithmic-falloff-formula/11590)
+  - [Fundamentals of CLOS](https://lispcookbook.github.io/cl-cookbook/clos.html)
+  - [Reddit - Dive into anything](https://www.reddit.com/r/KnowledgeGraph/comments/1j9npip/bpmn_engine_which_consumes_kgs/?utm_source=share&utm_medium=android_app&utm_name=androidcss&utm_term=2&utm_content=1)
+  - [GitHub - CaSkade-Automation/CaSkade-MES: SkillMEx is a novel manufacturing execution system (MES) based on semantically modelled skills of machines. SkillMEx uses a knowledge graph to manage skills and execute them. BPMN is used to model and execute complex production processes.](https://github.com/CaSkade-Automation/CaSkade-MES)
+  - [PlantUML](https://plantuml.com/)
+  - [Business Process Model and Notation - Wikipedia](https://en.wikipedia.org/wiki/Business_Process_Model_and_Notation?wprov=sfla1)
+  - [GitHub - nudibranchrecords/hedron: Perform live shows with your three.js creations](https://github.com/nudibranchrecords/hedron)
+  - [Library Genesis - Wikipedia](https://en.wikipedia.org/wiki/Library_Genesis?wprov=sfla1)
+  - [Superbooth 24: Sound Workshop Wiggler V3, expressive touch synth, first look - SYNTH ANATOMY](https://synthanatomy.com/2024/05/superbooth-24-sound-workshop-wiggler-v3.html)
+  - [Can Your Computer Run This LLM?](https://www.canirunthisllm.net/)
+  - [Wiggler — Sound Workshop](https://soundwork.shop/wiggler-1)
+  - [https://editor.p5js.org/shriracha/sketches/toQA9ZqWU](https://editor.p5js.org/shriracha/sketches/toQA9ZqWU)
+  - [Explore Creative Coding with 30 Hands-On p5.js Sketches](https://perthirtysix.com/explore-creative-coding-with-30-p5js-sketches)
+  - [Borg - Wikipedia](https://en.wikipedia.org/wiki/Borg?wprov=sfla1)
+  - [GitHub - techcow2/Tips-Tricks-for-AI-Coder: A comprehensive resource designed to help developers effectively use AI tools to develop websites, apps, and other projects.](https://github.com/techcow2/Tips-Tricks-for-AI-Coder)
+  - [Here’s how I use LLMs to help me write code](https://simonwillison.net/2025/Mar/11/using-llms-for-code/?s=09)
+  - [Digital waveguide synthesis - Wikipedia](https://en.wikipedia.org/wiki/Digital_waveguide_synthesis?wprov=sfla1)
+  - [Digital waveguide synthesis - Wikipedia](https://en.wikipedia.org/wiki/Digital_waveguide_synthesis?wprov=sfla1)
+  - [Physical modelling synthesis - Wikipedia](https://en.wikipedia.org/wiki/Physical_modelling_synthesis?wprov=sfla1)
+  - [Quick Start - Faust Documentation
+    ](https://faustdoc.grame.fr/manual/quick-start/)
+  - [Synthesizing Drums: The Bass Drum](https://www.soundonsound.com/techniques/synthesizing-drums-bass-drum)
+  - [GitHub - mannaandpoem/OpenManus: No fortress, purely open ground.  OpenManus is Coming.](https://github.com/mannaandpoem/OpenManus)
+  - [GitHub - mannaandpoem/OpenManus: No fortress, purely open ground.  OpenManus is Coming.](https://github.com/mannaandpoem/OpenManus)
+  - [Chinese AI agent Manus uses Claude Sonnet and open-source technology](https://the-decoder.com/chinese-ai-agent-manus-uses-claude-sonnet-and-open-source-technology/)
+  - [Chinese AI agent Manus uses Claude Sonnet and open-source technology](https://the-decoder.com/chinese-ai-agent-manus-uses-claude-sonnet-and-open-source-technology/)
+  - [Manus tools and prompts · GitHub](https://gist.github.com/jlia0/db0a9695b3ca7609c9b1a08dcbf872c9)
+  - [Browser Use - Enable AI to control your browser](https://browser-use.com/)
+  - [Fully In-Browser Graph RAG with Kuzu-Wasm](https://blog.kuzudb.com/post/kuzu-wasm-rag/)
+  - [What’s new in the world of LLMs, for NICAR 2025](https://simonwillison.net/2025/Mar/8/nicar-llms/)
+  - [simonw (Simon Willison) · GitHub](https://github.com/simonw)
+  - [GitHub - simonw/llm-openrouter: LLM plugin for models hosted by OpenRouter](https://github.com/simonw/llm-openrouter)
+  - [OpenRouter](https://openrouter.ai/)
+  - [Shtetl-Optimized  » Blog Archive   » Why I Am Not An Integrated Information Theorist (or, The Unconscious Expander)](https://scottaaronson.blog/?p=1799)
+  - [Consciousness or pseudo-consciousness? A clash of two paradigms | Nature Neuroscience](https://www.nature.com/articles/s41593-025-01880-y)
+  - [From Springs, Plates & Buckets To Physical Modelling](https://www.soundonsound.com/techniques/springs-plates-buckets-physical-modelling)
+  - [~ajxs/Yamaha DX7 Technical Analysis](https://ajxs.me/blog/Yamaha_DX7_Technical_Analysis.html)
+  - [ModularSynthesis - Bridechamber TZ-FM](https://modularsynthesis.com/bridechamber/tzfm/tzfm.htm)
+  - [https://ijfritz.byethost4.com/sy_cir16_teezer.htm](https://ijfritz.byethost4.com/sy_cir16_teezer.htm)
+  - [electro-music.com :: View topic - thru zero VCO](https://electro-music.com/forum/viewtopic.php?t=67015)
+  - [electro-music.com :: View topic - thru zero VCO](https://electro-music.com/forum/viewtopic.php?t=67015)
+  - [Flicker fusion threshold - Wikipedia](https://en.wikipedia.org/wiki/Flicker_fusion_threshold?wprov=sfla1)
+  - [[2303.10650] Logic of Differentiable Logics: Towards a Uniform Semantics of DL](https://arxiv.org/abs/2303.10650)
+  - [[2102.11529] Differentiable Logic Machines](https://arxiv.org/abs/2102.11529)
+  - [Differentiable Logic CA: from Game of Life to Pattern Generation](https://google-research.github.io/self-organising-systems/difflogic-ca/?hn)
+  - [Linda (coordination language) - Wikipedia](https://en.wikipedia.org/wiki/Linda_%28coordination_language%29?wprov=sfla1)
+  - [Maker Monday: DIY your own tracker hardware for around $50-$75 - CDM Create Digital Music](https://cdm.link/diy-your-own-tracker-hardware/)
+  - [Life is short](https://shorterlife.github.io/challenge/)
+  - [MilkyTracker | News](https://milkytracker.org/)
+  - [
+            The Dopamine Dilemma: Using Stimulants and Antipsychotics Concurrently - PMC
+        ](https://pmc.ncbi.nlm.nih.gov/articles/PMC2898838/)
+  - [[1911.01547] On the Measure of Intelligence](https://arxiv.org/abs/1911.01547)
+  - [GitHub - fchollet/ARC-AGI: The Abstraction and Reasoning Corpus](https://github.com/fchollet/ARC-AGI)
+  - [https://www.kaggle.com/code/michaelhodel/program-synthesis-starter-notebook](https://www.kaggle.com/code/michaelhodel/program-synthesis-starter-notebook)
+  - [ARC Prize - What is ARC-AGI?](https://arcprize.org/arc)
+  - [AI pioneer François Chollet leaves Google | TechCrunch](https://techcrunch.com/2024/11/14/ai-pioneer-francois-chollet-leaves-google/)
+  - [Dario Amodei — Machines of Loving Grace](https://darioamodei.com/machines-of-loving-grace)
+  - [Hugging Face's chief science officer worries AI is becoming 'yes-men on servers' | TechCrunch](https://techcrunch.com/2025/03/06/hugging-faces-chief-science-officer-worries-ai-is-becoming-yes-men-on-servers/)
+  - [Google's Martin Splitt Warns Against Redirecting 404s To Homepage](https://www.searchenginejournal.com/googles-martin-splitt-warns-against-redirecting-404s-to-homepage/541549/)
+  - [GitHub - beutton/browser-flight-simulator: noclip irl](https://github.com/beutton/browser-flight-simulator)
+  - [Mistral OCR | Mistral AI](https://mistral.ai/news/mistral-ocr)
+  - [ARC-AGI Without Pretraining | iliao2345](https://iliao2345.github.io/blog_posts/arc_agi_without_pretraining/arc_agi_without_pretraining.html)
+  - [[2311.13110] White-Box Transformers via Sparse Rate Reduction: Compression Is All There Is?](https://arxiv.org/abs/2311.13110)
+  - [White-Box Transformers via Sparse Rate Reduction](https://ma-lab-berkeley.github.io/CRATE/)
+  - [ARC-AGI Without Pretraining | iliao2345](https://iliao2345.github.io/blog_posts/arc_agi_without_pretraining/arc_agi_without_pretraining.html)
+  - [GitHub - robertpiosik/gemini-coder](https://github.com/robertpiosik/gemini-coder)
+  - [https://en.wikipedia.org/wiki/Local_outlier_factor?wprov=sfla1](https://en.wikipedia.org/wiki/Local_outlier_factor?wprov=sfla1)
+  - [R-tree - Wikipedia](https://en.wikipedia.org/wiki/R-tree?wprov=sfla1)
+  - [Z-order curve - Wikipedia](https://en.wikipedia.org/wiki/Z-order_curve?wprov=sfla1)
+  - [Trie - Wikipedia](https://en.wikipedia.org/wiki/Trie?wprov=sfla1)
+  - [Hilbert R-tree - Wikipedia](https://en.wikipedia.org/wiki/Hilbert_R-tree?wprov=sfla1)
+  - [https://en.wikipedia.org/wiki/R-tree?wprov=sfla1](https://en.wikipedia.org/wiki/R-tree?wprov=sfla1)
+  - [Quadtree - Wikipedia](https://en.wikipedia.org/wiki/Quadtree?wprov=sfla1)
+  - [301 Moved Permanently](http://www.drdobbs.com/architecture-and-design)
+  - [301 Moved Permanently](http://www.drdobbs.com/blogs)
+  - [301 Moved Permanently](http://www.drdobbs.com/jvm/an-algorithm-for-compressing-space-and-t/184406478)
+  - [Hash consing - Wikipedia](https://en.wikipedia.org/wiki/Hash_consing?wprov=sfla1)
+  - [Hashlife - Wikipedia](https://en.wikipedia.org/wiki/Hashlife?wprov=sfla1)
+  - [Golly Game of Life Home Page](https://golly.sourceforge.io/)
+  - [https://conwaylife.com/wiki/Tutorials/Coding_Life_simulators](https://conwaylife.com/wiki/Tutorials/Coding_Life_simulators)
+  - [https://en.wikipedia.org/wiki/Rational_choice_model?wprov=sfla1](https://en.wikipedia.org/wiki/Rational_choice_model?wprov=sfla1)
+  - [Neural codes track prior events in a narrative and predict subsequent memory for details | Communications Psychology](https://www.nature.com/articles/s44271-025-00211-y)
+  - [Encoding study reveals how the brain uses past experiences to predict the unfolding of similar events over time](https://medicalxpress.com/news/2025-03-encoding-reveals-brain-unfolding-similar.html)
+  - [Decision theory - Wikipedia](https://en.wikipedia.org/wiki/Decision_theory?wprov=sfla1)
+  - [Charles Duryea - Wikipedia](https://en.wikipedia.org/wiki/Charles_Duryea?wprov=sfla1)
+  - [[2502.04644] Agentic Reasoning: Reasoning LLMs with Tools for the Deep Research](https://arxiv.org/abs/2502.04644)
+  - [Gestalt psychology - Wikipedia](https://en.wikipedia.org/wiki/Gestalt_psychology?wprov=sfla1)
+  - [https://web.archive.org/web/20120222044129/https://ontology.buffalo.edu/smith/book/FoGT/Contents.htm](https://web.archive.org/web/20120222044129/https://ontology.buffalo.edu/smith/book/FoGT/Contents.htm)
+  - [Church Of Turing - The Landscape of Lisp](https://churchofturing.github.io/landscapeoflisp.html)
+  - [https://library.fiu.edu/breath/mudras#:~:text=Definition,Inhale%20deeply%20through%20the%20nose](https://library.fiu.edu/breath/mudras#:~:text=Definition,Inhale%20deeply%20through%20the%20nose)
+  - [GitHub - kassu/kassutronics: Projects, documentation... all things synthesizers and electronics](https://github.com/kassu/kassutronics)
+  - [Kassutronics: Precision attenuverter / mixer](https://kassu2000.blogspot.com/2018/04/precision-attenuverter-mixer.html)
+  - [Calling All Developers: How to Build MCP Plugins with Cline - Cline Blog](https://cline.bot/blog/calling-all-developers-how-to-build-mcp-plugins-with-cline)
+  - [GitHub - atc1441/ATCmiBand8fw: A custom firmware for the Xiaomi Mi Band 8](https://github.com/atc1441/ATCmiBand8fw)
+  - [https://watchy.sqfmi.com/](https://watchy.sqfmi.com/)
+  - [https://watchy.sqfmi.com/](https://watchy.sqfmi.com/)
+  - [Watchy: The Hackable $50 Smartwatch - IEEE Spectrum](https://spectrum.ieee.org/watchy-the-hackable-50-smartwatch)
+  - [GitHub - iyaja/llama-fs: A self-organizing file system with llama 3](https://github.com/iyaja/llama-fs)
+  - [AgentOps Dashboard](https://app.agentops.ai/projects)
+  - [AgentOps](https://www.agentops.ai/?utm_source=llama-fs)
+  - [Synergetics (Haken) - Wikipedia](https://en.wikipedia.org/wiki/Synergetics_%28Haken%29?wprov=sfla1)
+  - [Complex system - Wikipedia](https://en.wikipedia.org/wiki/Complex_system?wprov=sfla1)
+  - [Why we no longer use LangChain for building our AI agents](https://www.octomind.dev/blog/why-we-no-longer-use-langchain-for-building-our-ai-agents)
+  - [
+      Reaper #2 0.020” McTickler
+ – Covert Instruments ](https://covertinstruments.com/products/reaper-2-0-020)
+  - [Scrubbing videos using JavaScript · Muffin Man](https://muffinman.io/blog/scrubbing-videos-using-javascript/)
+  - [Image Online Tools](https://www.imageonlinetools.com/create-images-using-math-equations)
+  - [
+        
+            AI Agents on Knowledge Graphs to answer multihop questions - 
+        
+    ](https://www.dynocortex.com/news-and-blog/ai-agents-on-knowledge-graphs-to-answer-multihop-questions/)
+  - [Thomas Henry Designs](https://www.birthofasynth.com/Thomas_Henry/TH_main.html)
+  - [MPS Project](https://www.birthofasynth.com/Thomas_Henry/Pages/MPS_project.html)
+  - [Analog Synthesizer Books, PCBs, Parts - Magic Smoke Electronics](http://magsmoke.com/magsmoke.asp)
+  - [VCO-1](https://www.birthofasynth.com/Thomas_Henry/Pages/VCO-1.html)
+  - [Vectors | Docs](https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/vectors/)
+  - [Build Your Own Redis with C/C++ | Build Your Own Redis with
+C/C++](https://build-your-own.org/redis/#table-of-contents)
+  - [https://jagg.github.io/posts/cledis/](https://jagg.github.io/posts/cledis/)
+  - [GitHub - WujiangXu/AgenticMemory: A novel agentic memory system](https://github.com/WujiangXu/AgenticMemory)
+  - [Cabinet of curiosities - Wikipedia](https://en.wikipedia.org/wiki/Cabinet_of_curiosities?wprov=sfla1)
+  - [Zettelkasten - Wikipedia](https://en.wikipedia.org/wiki/Zettelkasten?wprov=sfla1)
+  - [[2502.12110] A-MEM: Agentic Memory for LLM Agents](https://arxiv.org/abs/2502.12110)
+  - [lonesoulsurfer (Marcus Dunn) · GitHub](https://github.com/lonesoulsurfer)
+  - [https://www.sesame.com/research/crossing_the_uncanny_valley_of_voice#demo](https://www.sesame.com/research/crossing_the_uncanny_valley_of_voice#demo)
+  - [Microservice Integration Testing a Pain? Try Shadow Testing - The New Stack](https://thenewstack.io/microservice-integration-testing-a-pain-try-shadow-testing/)
+  - [reddit.com: api documentation](https://www.reddit.com/dev/api/)
+  - [Cross-site request forgery - Wikipedia](https://en.wikipedia.org/wiki/Cross-site_request_forgery)
+  - [GitHub - maynetee/codeselect: A simple, interactive tool to select and share code with AI assistants like Claude and ChatGPT. Analyzes file relationships and generates context-rich output.](https://github.com/maynetee/codeselect)
+  - [Reddit - Dive into anything](https://www.reddit.com/r/ClaudeAI/s/nV8dWFesvh)
+  - [Supersize](https://supersize.co.il/)
+  - [PietStop — Supersize](https://supersize.co.il/pietstop)
+  - [About - Project Euler](https://projecteuler.net/)
+  - [https://onlinelibrary.wiley.com/doi/10.1002/bies.202400080](https://onlinelibrary.wiley.com/doi/10.1002/bies.202400080)
+  - [GitHub - MichiganTypeScript/typescript-types-only-wasm-runtime: A WebAssembly runtime implemented in TypeScript types](https://github.com/MichiganTypeScript/typescript-types-only-wasm-runtime)
+  - [Music From Outer Space - Your Synth-DIY Headquarters](https://musicfromouterspace.com/)
+  - [GitHub - Small-JS/SmallJS: Smalltalk development in your browser and Node.js](https://github.com/Small-JS/SmallJS)
+  - [
+            Mindfulness Meditation Training for Attention-Deficit/Hyperactivity Disorder in Adulthood: Current Empirical Support, Treatment Overview, and Future Directions - PMC
+        ](https://pmc.ncbi.nlm.nih.gov/articles/PMC4403871/)
+  - [Code review in GitHub Copilot is now in public preview - GitHub Changelog](https://github.blog/changelog/2025-02-26-code-review-in-github-copilot-is-now-in-public-preview/)
+  - [[2408.15099] No Regrets: Investigating and Improving Regret Approximations for Curriculum Discovery](https://arxiv.org/abs/2408.15099)
+  - [GitHub - amacrutherford/sampling-for-learnability: Official codebase for "Sampling For Learnability", published at NeurIPS 2024](https://github.com/amacrutherford/sampling-for-learnability)
+  - [GitHub - amacrutherford/sampling-for-learnability: Official codebase for "Sampling For Learnability", published at NeurIPS 2024](https://github.com/amacrutherford/sampling-for-learnability)
+  - [[2408.15099] No Regrets: Investigating and Improving Regret Approximations for Curriculum Discovery](https://arxiv.org/abs/2408.15099)
+  - [[2308.13289] JAX-LOB: A GPU-Accelerated limit order book simulator to unlock large scale reinforcement learning for trading](https://arxiv.org/abs/2308.13289)
+  - [Gallery](https://kinetix-env.github.io/gallery.html?editor=true)
+  - [rtcqs - Codeberg.org](https://codeberg.org/rtcqs)
+  - [rtcqs/rtcqs: rtcqs is a Python utility to analyze your system and detect possible bottlenecks that could have a negative impact on the performance of your system when working with Linux audio. - Codeberg.org](https://codeberg.org/rtcqs/rtcqs)
+  - [GitHub - marcel-licence/ML_SynthTools: ML_SynthTools](https://github.com/marcel-licence/ML_SynthTools)
+  - [GitHub - copych/AcidBox: ESP32 synth: all-in-one acid combo of two TB303's, a drum machine with fx chain, cd-quality](https://github.com/copych/AcidBox)
+  - [GitHub - RASPIAUDIO/MODULOX_BRAIN](https://github.com/RASPIAUDIO/MODULOX_BRAIN)
+  - [https://natureofcode.com/](https://natureofcode.com/)
+  - [EuroRack Dimensions](https://midisoft.de/EuroRackDimensions/EuroRack_Dimensions.html)
+  - [Learn to invest](https://www.hsbc.co.uk/wealth/insights/learn-to-invest/meet-life-goals/defining-wealth/)
+  - [Awesome Stuff and Cool Things : The Awesomer](https://theawesomer.com/)
+  - [Awesome Stuff and Cool Things : The Awesomer](https://theawesomer.com/)
+  - [Linux Studio Plugins Project](https://lsp-plug.in/)
+  - [GitHub - sfztools/sfizz: SFZ parser and synth c++ library, providing a JACK standalone client](https://github.com/sfztools/sfizz)
+  - [Shader - Shadertoy BETA](https://www.shadertoy.com/view/wcjGRW)
+  - [Pipo | Crowd Supply](https://www.crowdsupply.com/pipo-interfaces/pipo)
+  - [GitHub - tool3/contributions: 📉 github contribution visualization in 3D](https://github.com/tool3/contributions)
+  - [David Tidman - Coming soonish...](https://www.davidtidman.com/)
+  - [https://natureofcode.com/cellular-automata/](https://natureofcode.com/cellular-automata/)
+  - [Automata and noise by b.kemperle -p5.js Web Editor](https://editor.p5js.org/b.kemperle/sketches/2Pqgkonjg)
+  - [RaspiAudio Modulox Brain, pocket Synthesizer with open-source engine incl. granular - SYNTH ANATOMY](https://synthanatomy.com/2025/02/raspiaudio-modulox-brain-pocket-hardware-synth-with-open-source-engine-incl-granular.html)
+  - [[2501.12948] DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning](https://arxiv.org/abs/2501.12948)
+  - [QWOP - Wikipedia](https://en.wikipedia.org/wiki/QWOP?wprov=sfla1)
+  - [GitHub - linuxmint/timeshift: System restore tool for Linux. Creates filesystem snapshots using rsync+hardlinks, or BTRFS snapshots. Supports scheduled snapshots, multiple backup levels, and exclude filters. Snapshots can be restored while system is running or from Live CD/USB.](https://github.com/linuxmint/timeshift)
+  - [Top 10 Things Developers Want from their AI Code Assistants in 2024 – console.log()](https://redmonk.com/kholterhoff/2024/11/18/top-10-things-developers-want-from-their-ai-code-assistants-in-2024/)
+  - [https://redmonk.com/kholterhoff/2024/11/18/top-10-things-developers-want-from-their-ai-code-assistants-in-2024/](https://redmonk.com/kholterhoff/2024/11/18/top-10-things-developers-want-from-their-ai-code-assistants-in-2024/)
+  - [Pricing - Cubeo](https://www.cubeo.ai/pricing/)
+  - [GitHub - sourcegraph/cody: Type less, code more: Cody is an AI code assistant that uses advanced search and codebase context to help you write and fix code.](https://github.com/sourcegraph/cody)
+  - [Cody | AI coding assistant from Sourcegraph](https://sourcegraph.com/cody)
+  - [AI disruption – code editors are up for grabs – James Governor's Monkchips](https://redmonk.com/jgovernor/2025/02/21/ai-disruption-code-editors-are-up-for-grabs/)
+  - [AI disruption – code editors are up for grabs – James Governor's Monkchips](https://redmonk.com/jgovernor/2025/02/21/ai-disruption-code-editors-are-up-for-grabs/)
+  - [GitHub - StuckAtPrototype/Racer](https://github.com/StuckAtPrototype/Racer)
+  - [start [Chaosnet wiki]](https://chaosnet.net/)
+  - [LM-3 --- resurrecting the MIT CADR](https://tumbleweed.nu/lm-3/)
+  - [tumbleweed](https://tumbleweed.nu/)
+  - [Running Open Genera 2.0 on Linux](https://archives.loomcom.com/genera/genera-install.html)
+  - [Running Open Genera 2.0 on Linux](https://archives.loomcom.com/genera/genera-install.html)
+  - [Schlieren photography - Wikipedia](https://en.wikipedia.org/wiki/Schlieren_photography?wprov=sfla1)
+  - [Visualizing sound waves with schlieren optics | American Journal of Physics | AIP Publishing](https://pubs.aip.org/aapt/ajp/article/86/11/870/310764/Visualizing-sound-waves-with-schlieren-optics)
+  - [GitHub - ricktu288/ray-optics: A web app for creating and simulating 2D geometric optical scenes, with a gallery of (interactive) demos.](https://github.com/ricktu288/ray-optics)
+  - [Ray Optics Simulation - PhyDemo](https://phydemo.app/ray-optics/)
+  - [11 practical tips to make code reviews easier as a developer - DEV Community](https://dev.to/anmolbaranwal/11-practical-tips-to-make-code-reviews-easier-as-a-developer-16kc)
+  - [Enterprise-Grade RAG Systems](https://www.harvey.ai/blog/enterprise-grade-rag-systems)
+  - [[2411.04986] The Semantic Hub Hypothesis: Language Models Share Semantic Representations Across Languages and Modalities](https://arxiv.org/abs/2411.04986)
+  - [Why GPT can't think like us](https://techxplore.com/news/2025-02-gpt.html)
+  - [Clip Gain](https://www.soundonsound.com/techniques/clip-gain)
+  - [Reduction potential - Wikipedia](https://en.wikipedia.org/wiki/Reduction_potential?wprov=sfla1)
+  - [ OctoTools: An Agentic Framework with Extensible Tools for Complex Reasoning](https://octotools.github.io/)
+  - [GitHub - octotools/octotools: OctoTools: An agentic framework with extensible tools for complex reasoning](https://github.com/octotools/octotools)
+  - [Page Objects vs. Functional Helpers - DEV Community](https://dev.to/muratkeremozcan/page-objects-vs-functional-helpers-2akj)
+  - [Shitty Recording Studio](https://shittyrecording.studio/)
+  - [Pocket Operators - Wikipedia](https://en.wikipedia.org/wiki/Pocket_Operators?wprov=sfla1)
+  - [https://jmlbeaujour.medium.com/introducing-notebooklm-as-a-solution-for-interactive-code-exploration-704a44e690a6](https://jmlbeaujour.medium.com/introducing-notebooklm-as-a-solution-for-interactive-code-exploration-704a44e690a6)
+  - [Cell signaling - Wikipedia](https://en.wikipedia.org/wiki/Cell_signaling?wprov=sfla1)
+  - [Nod factor - Wikipedia](https://en.wikipedia.org/wiki/Nod_factor?wprov=sfla1)
+  - [Medicago truncatula - Wikipedia](https://en.wikipedia.org/wiki/Medicago_truncatula?wprov=sfla1)
+  - [https://lmstudio.ai/docs/api/sdk/lmstudioclient](https://lmstudio.ai/docs/api/sdk/lmstudioclient)
+  - [Revolutionizing software testing: Introducing LLM-powered bug catchers - Engineering at Meta](https://engineering.fb.com/2025/02/05/security/revolutionizing-software-testing-llm-powered-bug-catchers-meta-ach/)
+  - [Meta Introduces LLM-Powered Tool for Software Testing - InfoQ](https://www.infoq.com/news/2025/02/meta-ach-tool/)
+  - [How to Use an LLM-Powered Boilerplate for Building Your Own Node.js API | Towards Data Science](https://towardsdatascience.com/how-to-use-an-llm-powered-boilerplate-for-building-your-own-node-js-api/)
+  - [Home - Playing with code](https://ssloy.github.io/tinycompiler/)
+  - [AI Dev Tools: How To Containerize Agents Using Dagger - The New Stack](https://thenewstack.io/ai-dev-tools-how-to-containerize-agents-using-dagger/)
+  - [AutoGen — AutoGen](https://microsoft.github.io/autogen/stable//index.html)
+  - [https://www.marktechpost.com/2025/02/20/building-an-ideation-agent-system-with-autogen-create-ai-agents-that-brainstorm-and-debate-ideas/](https://www.marktechpost.com/2025/02/20/building-an-ideation-agent-system-with-autogen-create-ai-agents-that-brainstorm-and-debate-ideas/)
+  - [Building an Ideation Agent System with AutoGen: Create AI Agents that Brainstorm and Debate Ideas - MarkTechPost](https://www.marktechpost.com/2025/02/20/building-an-ideation-agent-system-with-autogen-create-ai-agents-that-brainstorm-and-debate-ideas/)
+  - [Trae vs Cursor: AI IDE Comparison ](https://www.builder.io/blog/cursor-vs-trae)
+  - [A Programmer's Guide to Game Design: The Major Ingredients You Should Know | HackerNoon](https://hackernoon.com/a-programmers-guide-to-game-design-the-major-ingredients-you-should-know)
+  - [GitHub - dagger/agents](https://github.com/dagger/agents)
+  - [Introducing Dagger: a new way to create CI/CD pipelines - Dagger](https://dagger.io/blog/public-launch-announcement)
+  - [https://huggingface.co/papers/2502.13347](https://huggingface.co/papers/2502.13347)
+  - [Text classification · fastText](https://fasttext.cc/docs/en/supervised-tutorial.html)
+  - [GitHub - cxcscmu/Crawl4LLM: Official repository for "Crawl4LLM: Efficient Web Crawling for LLM Pretraining"](https://github.com/cxcscmu/Crawl4LLM)
+  - [WebOrganizer](https://weborganizer.allen.ai/)
+  - [GitHub - CodeCreator/WebOrganizer: Organize the Web: Constructing Domains Enhances Pre-Training Data Curation](https://github.com/CodeCreator/WebOrganizer)
+  - [[2502.10341] Organize the Web: Constructing Domains Enhances Pre-Training Data Curation](https://arxiv.org/abs/2502.10341)
+  - [[2405.13242] Goals as Reward-Producing Programs](https://arxiv.org/abs/2405.13242)
+  - [Yaak – The API client for modern developers](https://yaak.app/)
+  - [The Dusa Programming Language](https://dusa.rocks/docs/)
+  - [Augment Code: An AI Coding Tool for 'Real' Development Work - The New Stack](https://thenewstack.io/augment-code-an-ai-coding-tool-for-real-development-work/)
+  - [[2501.18628] Indiana Jones: There Are Always Some Useful Ancient Relics](https://arxiv.org/abs/2501.18628)
+  - [Takomori](https://takomori.com/)
+  - [Trial / The Trial Game Engine](https://shirakumo.github.io/trial/)
+  - [Jérémy Ravenel on LinkedIn: What makes an ontology fail? 9 reasons.
+
+At the inauguration of SCOR… | 88 comments](https://www.linkedin.com/posts/jeremyravenel_what-makes-an-ontology-fail-9-reasons-activity-7298475256711696384-PYYR?utm_source=share&utm_medium=member_android&rcm=ACoAAAAABqsBDRBU3yDlaBy9VM8D6f77rO70qlM)
+  - [Scanlines: synthwave / cyberpunk animator](https://collidingscopes.github.io/scanlines/)
+  - [CNCF Landscape](https://landscape.cncf.io/)
+  - [Causal sets - Wikipedia](https://en.wikipedia.org/wiki/Causal_sets?wprov=sfla1)
+  - [Roguelike - Wikipedia](https://en.wikipedia.org/wiki/Roguelike?wprov=sfla1)
+  - [Nix & NixOS | Declarative builds and deployments](https://nixos.org/)
+  - [Ink & Switch](https://www.inkandswitch.com/)
+  - [Open Container Initiative - Open Container Initiative](https://opencontainers.org/)
+  - [[2502.06060] Training Language Models for Social Deduction with Multi-Agent Reinforcement Learning](https://arxiv.org/abs/2502.06060)
+  - [https://eventcatalog.dev/](https://eventcatalog.dev/)
+  - [GitHub - Zipstack/unstract: No-code LLM Platform to launch APIs and ETL Pipelines to structure unstructured documents](https://github.com/Zipstack/unstract)
+  - [Fine-tune Embedding models for Retrieval Augmented Generation (RAG)](https://www.philschmid.de/fine-tune-embedding-model-for-rag)
+  - [Philschmid](https://www.philschmid.de/)
+  - [https://www.philschmid.de/](https://www.philschmid.de/)
+  - [The Actinobacteriophage Database | DNA Master Information and Requirements](https://phagesdb.org/DNAMaster/)
+  - [WikiFreedom - Your AI-Powered Encyclopedia of Unbounded Knowledge](https://freedomgpt.com/wiki)
+  - [https://loken.design/](https://loken.design/)
+  - [Loken: An easy interactive way to prettier websites • The Register](https://www.theregister.com/2025/02/17/loken_css_synthesizer/)
+  - [https://dichasus.inue.uni-stuttgart.de/tutorials/tutorial/dissimilarity-metric-channelcharting/](https://dichasus.inue.uni-stuttgart.de/tutorials/tutorial/dissimilarity-metric-channelcharting/)
+  - [ESPARGOS - ESP32-based phase-coherent WiFi sensing device](https://espargos.net/)
+  - [[2203.09893] A Lightweight Instrument-Agnostic Model for Polyphonic Note Transcription and Multipitch Estimation](https://arxiv.org/abs/2203.09893)
+  - [https://engineering.atspotify.com/2022/06/meet-basic-pitch/](https://engineering.atspotify.com/2022/06/meet-basic-pitch/)
+  - [GitHub - DamRsn/NeuralNote: Audio Plugin for Audio to MIDI transcription using deep learning.](https://github.com/DamRsn/NeuralNote)
+  - [GitHub - tiagolr/ripplerx: A physically modeled synth](https://github.com/tiagolr/ripplerx)
+  - [We are suppliers of chemicals in western Lithuania | Lerochem](https://lerochem.eu/en/)
+  - [SODIUM SULFATE 99%, GLAUBER'S SALT (E514 food grade), kg Product size, kg 1 kg](https://lerochem.eu/en/pagrindinis/59-255-sodium-sulfate-99-glauber-s-salt-e514-food-grade-kg.html?srsltid=AfmBOooxRMkr5uovYIWYCOX4aFDXmHgvDvka62nX8hLK6InK0ydEYT-n)
+  - [Orthogonal array - Wikipedia](https://en.wikipedia.org/wiki/Orthogonal_array?wprov=sfla1)
+  - [Taguchi methods - Wikipedia](https://en.wikipedia.org/wiki/Taguchi_methods?wprov=sfla1)
+  - [Top 5 Uses of WebAssembly for Web Developers - The New Stack](https://thenewstack.io/top-5-uses-of-webassembly-for-web-developers/)
+  - [First Look at NVIDIA Jetson Orin Nano Super - The Most Affordable Generative AI Supercomputer - DEV Community](https://dev.to/ajeetraina/first-look-at-nvidia-jetson-orin-nano-super-the-most-affordable-generative-ai-supercomputer-1pe9)
+  - [Open-source collaborative wiki and documentation software | Docmost](https://docmost.com/)
+  - [GitHub - supabase/supabase: The open source Firebase alternative. Supabase gives you a dedicated Postgres database to build your web, mobile, and AI applications.](https://github.com/supabase/supabase)
+  - [Supavec - API Documentation](https://docs.supavec.com/#what-is-rag)
+  - [GitHub - taishikato/supavec: The open-source alternative to Carbon.ai. Build powerful RAG applications with any data source, at any scale.](https://github.com/taishikato/supavec)
+  - [ Supavec - The open source RAG as a service platform | Product Hunt](https://www.producthunt.com/posts/supavec)
+  - [https://www.sciencedirect.com/science/article/abs/pii/S016815912100085X](https://www.sciencedirect.com/science/article/abs/pii/S016815912100085X)
+  - [prompts/ultimate-coding-prompt-guide.md at main · VoloBuilds/prompts · GitHub](https://github.com/VoloBuilds/prompts/blob/main/ultimate-coding-prompt-guide.md)
+  - [[2502.00081] How to make a Universe](https://arxiv.org/abs/2502.00081)
+  - [Render Network](https://rendernetwork.com/)
+  - [Diffusion-limited aggregation - Wikipedia](https://en.m.wikipedia.org/wiki/Diffusion-limited_aggregation)
+  - [Par Part 2: Linear Logic - Ryan Brewer](https://ryanbrewer.dev/posts/linear-logic/)
+  - [GitHub - sadjjhcde/grmodel](https://github.com/sadjjhcde/grmodel)
+  - [Pencil2D Animation | Open Source animation software](https://www.pencil2d.org/)
+  - [Best Free Open Software for VJs: Top 10 Picks](https://vjgalaxy.com/blogs/resources-digital-assets/the-best-open-source-and-free-software-for-vjing-and-video-design)
+  - [GitHub - LimeLimeW/awesome-vjing: Awesome list for vjing/visuals-related resources](https://github.com/LimeLimeW/awesome-vjing)
+  - [Radiance VJ software - Radiance](https://radiance.video/)
+  - [Derivative |](https://derivative.ca/)
+  - [GitHub - jacobbergdahl/limopola: Limopola is an AI interface that allows you to communicate with a wide range of AI models.](https://github.com/jacobbergdahl/limopola)
+  - [GitHub - BruJu/shacled-turtle: Code Mirror 6 plugin for Turtle autocompletion based on RDFS/SHACL schemas 🐢](https://github.com/BruJu/shacled-turtle)
+  - [GitHub - rdfjs/lib-template: Template for RDFJS libraries](https://github.com/rdfjs/lib-template)
+  - [(PDF) Near Real-Time Peer-to-Peer Shared Editing on Extensible Data Types](https://www.researchgate.net/publication/310212186_Near_Real-Time_Peer-to-Peer_Shared_Editing_on_Extensible_Data_Types)
+  - [dubbii | Dubbii](https://www.dubbii.app/)
+  - [Reddit - Dive into anything](https://www.reddit.com/r/threejs/s/1GBcI9SEZU)
+  - [Eli Davis on LinkedIn: #webassembly #wasm #3dmodeling #serviceworkers | 16 comments](https://www.linkedin.com/posts/elicdavis_webassembly-wasm-3dmodeling-activity-7294728447401021442-6KTr?utm_source=share&utm_medium=member_desktop&rcm=ACoAAAyf6pMBXOPmzqTB3hoGswnGNt7EClVrIEs)
+  - [GitHub - EliCDavis/node-flow: Another Flow-based Node Graph Library](https://github.com/EliCDavis/node-flow)
+  - [GitHub - EliCDavis/polyform: Immutable mesh processing library](https://github.com/EliCDavis/polyform)
+  - [GitHub - datadotworld/cwd-benchmark-data: Data for the Chat With Your Data benchmark.](https://github.com/datadotworld/cwd-benchmark-data)
+  - [https://education.lenovo.com/digital-art-school](https://education.lenovo.com/digital-art-school)
+  - [ComfyUI | Generate video, images, audio with AI ](https://www.comfy.org/)
+  - [A Day in the Life of Americans – FlowingData](https://flowingdata.com/2015/12/15/a-day-in-the-life-of-americans/)
+  - [Git - githooks Documentation](https://git-scm.com/docs/githooks#_post_commit)
+  - [GitHub - di-sukharev/opencommit: GPT wrapper for git — generate commit messages with an LLM in 1 sec — works best with Claude 3.5 — supports local models too](https://github.com/di-sukharev/opencommit)
+  - [ 🧠 🎨 1. UMAP Visualization | 🧠🏷️ Selection of experience for memory by hippocampal sharp wave ripples ](https://winnieyangwannan.github.io/RippleTagging/projects/1_project/)
+  - [GitHub - containers/podman-compose: a script to run docker-compose.yml using podman](https://github.com/containers/podman-compose)
+  - [https://wiki.futo.org/wiki/Introduction_to_a_Self_Managed_Life:_a_13_hour_%26_28_minute_presentation_by_FUTO_software](https://wiki.futo.org/wiki/Introduction_to_a_Self_Managed_Life:_a_13_hour_%26_28_minute_presentation_by_FUTO_software)
+  - [21st Century C++ – Communications of the ACM](https://cacm.acm.org/blogcacm/21st-century-c/)
+  - [GitHub - yongchao98/CodeSteer-v1.0: Code and dataset of CodeSteer](https://github.com/yongchao98/CodeSteer-v1.0)
+  - [[2502.04350] CodeSteer: Symbolic-Augmented Language Models via Code/Text Guidance](https://arxiv.org/abs/2502.04350)
+  - [https://huggingface.co/papers/2502.04350](https://huggingface.co/papers/2502.04350)
+  - [Architecture of SQLite](https://www.sqlite.org/arch.html)
+  - [Learn SQL while solving crimes! SQL Police Department](https://sqlpd.com/)
+  - [[2111.12800] Tiny Pointers](https://arxiv.org/abs/2111.12800)
+  - [[2111.12800] Tiny Pointers](https://arxiv.org/abs/2111.12800)
+  - [[2501.02305] Optimal Bounds for Open Addressing Without Reordering](https://arxiv.org/abs/2501.02305)
+  - [Undergraduate Upends a 40-Year-Old Data Science Conjecture | Quanta Magazine](https://www.quantamagazine.org/undergraduate-upends-a-40-year-old-data-science-conjecture-20250210/)
+  - [X](https://publicdomainreview.org/collection/mellan-sudarium-of-saint-veronica/)
+  - [X](https://publicdomainreview.org/collection/mellan-sudarium-of-saint-veronica/)
+  - [Central place theory - Wikipedia](https://en.wikipedia.org/wiki/Central_place_theory?wprov=sfla1)
+  - [ElectroSmash - Dallas Rangemaster Treble Booster Circuit Analysis](https://www.electrosmash.com/dallas-rangemaster)
+  - [Digitech XBW Bass Synth Wah](https://mirosol.kapsi.fi/2015/01/digitech-xbw-bass-synth-wah/)
+  - [Ablation (artificial intelligence) - Wikipedia](https://en.wikipedia.org/wiki/Ablation_%28artificial_intelligence%29?wprov=sfla1)
+  - [Git - Branches in a Nutshell](https://git-scm.com/book/en/v2/Git-Branching-Branches-in-a-Nutshell)
+  - [Git Tips and Git Commit Best Practices · GitHub](https://gist.github.com/luismts/495d982e8c5b1a0ced4a57cf3d93cf60)
+  - [https://lmarena.ai/](https://lmarena.ai/)
+  - [Zipf's law - Wikipedia](https://en.wikipedia.org/wiki/Zipf%27s_law?wprov=sfla1)
+  - [https://www.science.org/doi/10.1126/science.adq7055](https://www.science.org/doi/10.1126/science.adq7055)
+  - [Whalesong patterns follow a universal law of human language, new research finds](https://phys.org/news/2025-02-whalesong-patterns-universal-law-human.html)
+  - [Airwindows | handsewn bespoke digital audio](https://www.airwindows.com/#)
+  - [CansAW | Airwindows](https://www.airwindows.com/cansaw/#)
+  - [Airwindows | handsewn bespoke digital audio](https://www.airwindows.com/)
+  - [CansAW | Airwindows](https://www.airwindows.com/cansaw/)
+  - [
+	REST API Documentation Tool | Swagger UI
+](https://swagger.io/tools/swagger-ui/)
+  - [The Good, the Bad, and the OpenAPI: Why Developers Love and Hate It - DEV Community](https://dev.to/lovestaco/the-good-the-bad-and-the-openapi-why-developers-love-and-hate-it-40ho)
+  - [Creating a common language | MIT News | Massachusetts Institute of Technology](https://news.mit.edu/2025/creating-common-language-kaiming-he-0207)
+  - [Human languages trade off complexity against efficiency | PLOS Complex Systems](https://journals.plos.org/complexsystems/article?id=10.1371/journal.pcsy.0000032)
+  - [Space mapping - Wikipedia](https://en.wikipedia.org/wiki/Space_mapping?wprov=sfla1)
+  - [Cognitive model - Wikipedia](https://en.wikipedia.org/wiki/Cognitive_model?wprov=sfla1)
+  - [Field of view - Wikipedia](https://en.wikipedia.org/wiki/Field_of_view?wprov=sfla1)
+  - [Emoji - Wikipedia](https://en.wikipedia.org/wiki/Emoji?wprov=sfla1)
+  - [https://v0.dev/chat/id](https://v0.dev/chat/id)
+  - [Composer / Overview – Cursor](https://docs.cursor.com/composer/overview)
+  - [r1.py script to run R1 with a min-thinking-tokens parameter](https://simonwillison.net/2025/Jan/22/r1py/)
+  - 
+  - [CPU-friendly version of vgel's r1.py script (https://gist.github.com/vgel/8a2497dc45b1ded33287fa7bb6cc1adc) · GitHub](https://gist.github.com/sebington/ece931a90048109a38b1df1fa4dc4a03)
+  - [https://docs.npmjs.com/cli/v11/configuring-npm/package-json#files](https://docs.npmjs.com/cli/v11/configuring-npm/package-json#files)
+  - [
+      Paul Miller — How to save 32TB of traffic every week with one NPM package
+    ](https://paulmillr.com/posts/chokidar-3-save-32tb-of-traffic/)
+  - [GitHub - paulmillr/chokidar: Minimal and efficient cross-platform file watching library](https://github.com/paulmillr/chokidar)
+  - [nodemon/doc/events.md at d147fb652f812eabb6a64a16353e6b9f28a04463 · remy/nodemon · GitHub](https://github.com/remy/nodemon/blob/d147fb652f812eabb6a64a16353e6b9f28a04463/doc/events.md)
+  - [nodemon](https://nodemon.io/)
+  - [SitePoint](https://www.sitepoint.com/debug-node-app-tips-tricks-tools/?utm_source=perplexity#debuggingwithlogmodules)
+  - [SitePoint](https://www.sitepoint.com/debug-node-app-tips-tricks-tools/?utm_source=perplexity)
+  - [https://medium.com/@paul_irish/debugging-node-js-nightlies-with-chrome-devtools-7c4a1b95ae27](https://medium.com/@paul_irish/debugging-node-js-nightlies-with-chrome-devtools-7c4a1b95ae27)
+  - [Chrome DevTools Protocol](https://chromedevtools.github.io/devtools-protocol/)
+  - [Trace Context](https://www.w3.org/TR/trace-context/)
+  - [https://w3c.github.io/baggage/](https://w3c.github.io/baggage/)
+  - [An OpenTelemetry backend in a Docker image: Introducing grafana/otel-lgtm | Grafana Labs
+](https://grafana.com/blog/2024/03/13/an-opentelemetry-backend-in-a-docker-image-introducing-grafana/otel-lgtm/)
+  - [Node.js | OpenTelemetry](https://opentelemetry.io/docs/languages/js/getting-started/nodejs/)
+  - [How to Create an npm Library](https://www.freecodecamp.org/news/how-to-create-an-npm-library/)
+  - [https://wiki.c2.com/?SoftwareDesignPatternsIndex](https://wiki.c2.com/?SoftwareDesignPatternsIndex)
+  - [🚀 The Ultimate, Comprehensive Guide to Debugging JavaScript Like a Pro 🔍 - DEV Community](https://dev.to/hanzla-baig/the-ultimate-comprehensive-guide-to-debugging-javascript-like-a-pro-1612)
+  - [Models | OpenRouter](https://openrouter.ai/models)
+  - [Self-RAG](https://langchain-ai.github.io/langgraph/tutorials/rag/langgraph_self_rag/#retriever)
+  - [GitHub - yip-kl/enhanced-self-rag](https://github.com/yip-kl/enhanced-self-rag)
+  - [[2310.11511] Self-RAG: Learning to Retrieve, Generate, and Critique through Self-Reflection](https://arxiv.org/abs/2310.11511)
+  - [Self-RAG](https://langchain-ai.github.io/langgraph/tutorials/rag/langgraph_self_rag/)
+  - [Supercharge Your RAG with Multi-Agent Self-RAG | Towards Data Science](https://towardsdatascience.com/supercharge-your-rag-with-multi-agent-self-rag/)
+  - [Supercharge Your RAG with Multi-Agent Self-RAG | Towards Data Science](https://towardsdatascience.com/supercharge-your-rag-with-multi-agent-self-rag/)
+  - [node-pty/examples/electron/README.md at main · microsoft/node-pty · GitHub](https://github.com/microsoft/node-pty/blob/main/examples%2Felectron%2FREADME.md)
+  - [GitHub - microsoft/node-pty: Fork pseudoterminals in Node.JS](https://github.com/microsoft/node-pty)
+  - [[2502.03275] Token Assorted: Mixing Latent and Text Tokens for Improved Language Model Reasoning](https://arxiv.org/abs/2502.03275)
+  - [Paper page - Token Assorted: Mixing Latent and Text Tokens for Improved Language
+  Model Reasoning](https://huggingface.co/papers/2502.03275)
+  - [A Complete Introduction to Using BERT Models - MachineLearningMastery.com](https://machinelearningmastery.com/a-complete-introduction-to-using-bert-models/)
+  - [GitHub - viirya/eventsim: Event data simulator. Generates a stream of pseudo-random events from a set of users, designed to simulate web traffic.](https://github.com/viirya/eventsim)
+  - [API Documentation - Earthquake Catalog](https://earthquake.usgs.gov/fdsnws/event/1/)
+  - [SeismicPortal - Standing order web services demonstration](https://www.seismicportal.eu/realtime.html)
+  - [http://511ny.org/cctv](http://511ny.org/cctv)
+  - [GitHub - bytewax/awesome-public-real-time-datasets: A list of publicly available datasets with real-time data maintained by the team at bytewax.io](https://github.com/bytewax/awesome-public-real-time-datasets)
+  - [microdaq (MicroDAQ Data Acquisition and Real-Time Processing Platform) · GitHub](https://github.com/microdaq)
+  - [Circles Sines and Signals - Frequency Interpretation](https://jackschaedler.github.io/circles-sines-signals/dft_frequency.html)
+  - [https://wokwi.com/projects/410537101412296705](https://wokwi.com/projects/410537101412296705)
+  - [GitHub - Vrekrer/DataLogger: ESP32-based temperature and humidity Wi-Fi datalogger,  configurable through SCPI.](https://github.com/Vrekrer/DataLogger)
+  - [GitHub - QwenLM/Qwen2.5-Coder: Qwen2.5-Coder is the code version of Qwen2.5, the large language model series developed by Qwen team, Alibaba Cloud.](https://github.com/QwenLM/Qwen2.5-Coder)
+  - [GitHub - nickscamara/open-deep-research: An open source deep research clone. AI Agent that reasons large amounts of web data extracted with Firecrawl](https://github.com/nickscamara/open-deep-research)
+  - [Google AI Studio](https://aistudio.google.com/)
+  - [[2501.19393] s1: Simple test-time scaling](https://arxiv.org/abs/2501.19393)
+  - [cortexso/simplescaling-s1 · Hugging Face](https://huggingface.co/cortexso/simplescaling-s1)
+  - [GitHub - simplescaling/s1: s1: Simple test-time scaling](https://github.com/simplescaling/s1)
+  - [Aphantasia - Wikipedia](https://en.wikipedia.org/wiki/Aphantasia?wprov=sfla1)
+  - [Satori-reasoning (Satori)](https://huggingface.co/Satori-reasoning)
+  - [https://github.com/satori-reasoning/Satori](https://github.com/satori-reasoning/Satori)
+  - [[2502.02508] Satori: Reinforcement Learning with Chain-of-Action-Thought Enhances LLM Reasoning via Autoregressive Search](https://arxiv.org/abs/2502.02508)
+  - [GitHub - plurai-ai/intellagent: A framework for comprehensive diagnosis and optimization of agents using simulated, realistic synthetic interactions](https://github.com/plurai-ai/intellagent)
+  - [GitHub - jina-ai/node-DeepResearch: Keep searching, reading webpages, reasoning until it finds the answer (or exceeding the token budget)](https://github.com/jina-ai/node-DeepResearch)
+  - [GitHub - nickscamara/open-deep-research: An open source deep research clone. AI Agent that reasons large amounts of web data extracted with Firecrawl](https://github.com/nickscamara/open-deep-research)
+  - [GitHub - mshumer/OpenDeepResearcher](https://github.com/mshumer/OpenDeepResearcher)
+  - [GitHub - dzhng/deep-research: My own open source implementation of OpenAI's new Deep Research agent. Get the same capability without paying $200.  You can even tweak the behavior of the agent with adjustable breadth and depth.  Run it for 5 min or 5 hours, it'll auto adjust.](https://github.com/dzhng/deep-research)
+  - [https://www.marktechpost.com/2025/02/05/4-open-source-alternatives-to-openais-200-month-deep-research-ai-agent/](https://www.marktechpost.com/2025/02/05/4-open-source-alternatives-to-openais-200-month-deep-research-ai-agent/)
+  - [GitHub - mendableai/firecrawl: 🔥 Turn entire websites into LLM-ready markdown or structured data. Scrape, crawl and extract with a single API.](https://github.com/mendableai/firecrawl)
+  - [How and Why to use LLMs for Chunk-Based Information Retrieval | Towards Data Science](https://towardsdatascience.com/how-and-why-to-use-llms-for-chunk-based-information-retrieval-5242f0133b55/)
+  - [LobeChat: Your personal AI productiv... · LobeChat](https://lobechat.com/chat)
+  - [LobeChat: Your personal AI productiv... · LobeChat](https://lobechat.com/chat)
+  - [GitHub - lobehub/lobe-chat: 🤯 Lobe Chat - an open-source, modern-design AI chat framework. Supports Multi AI Providers( OpenAI / Claude 3 / Gemini / Ollama / Qwen /  DeepSeek), Knowledge Base (file upload / knowledge management / RAG ), Multi-Modals (Vision/TTS/Plugins/Artifacts). One-click FREE deployment of your private ChatGPT/ Claude application.](https://github.com/lobehub/lobe-chat)
+  - [DBpedia Association on LinkedIn: #dbpedia #gsoc2025 #googlesummerofcode #gsoc2025 #opensource…](https://www.linkedin.com/posts/dbpedia_dbpedia-gsoc2025-googlesummerofcode-activity-7289522524848091136-ijsW?utm_source=share&utm_medium=member_android)
+  - [How and Why to use LLMs for Chunk-Based Information Retrieval | Towards Data Science](https://towardsdatascience.com/how-and-why-to-use-llms-for-chunk-based-information-retrieval-5242f0133b55/)
+  - [GitHub - peronc/LLMChunkizer: In this repository we put the code to split a document in a consistent way based on the concept of "idea"](https://github.com/peronc/LLMChunkizer)
+  - [GitHub - peronc/LLMRetriever: In this repository we put the code to perform  retrieve of documents by  LLM](https://github.com/peronc/LLMRetriever)
+  - [Efficient Document Chunking Using LLMs: Unlocking Knowledge One Block at a Time | Towards Data Science](https://towardsdatascience.com/efficient-document-chunking-using-llms-unlocking-knowledge-one-block-at-a-time-355717a88c5c/)
+  - [GitHub - OpenHealthForAll/open-health](https://github.com/OpenHealthForAll/open-health)
+  - [CGL Interactive Demos (WebAssembly)](https://jaysmito101.github.io/cgl/)
+  - [Sergey's Blog](https://www.sergey.fyi/articles/why-we-built-open-parse)
+  - [GitHub - Filimoa/open-parse: Improved file parsing for LLM’s](https://github.com/Filimoa/open-parse)
+  - [Sergey's Blog](https://www.sergey.fyi/)
+  - [Sergey's Blog](https://www.sergey.fyi/articles/gemini-flash-2)
+  - [GitHub - mikekelly/AgentK: An autoagentic AGI that is self-evolving and modular.](https://github.com/mikekelly/AgentK)
+  - [SMART criteria - Wikipedia](https://en.wikipedia.org/wiki/SMART_criteria?wprov=sfla1)
+  - [Secure code execution](https://huggingface.co/docs/smolagents/tutorials/secure_code_execution)
+  - [Secure code execution](https://huggingface.co/docs/smolagents/tutorials/secure_code_execution)
+  - [Secure code execution](https://huggingface.co/docs/smolagents/tutorials/secure_code_execution)
+  - [GitHub - avoidwork/tiny-worker: Tiny WebWorker for the Server](https://github.com/avoidwork/tiny-worker)
+  - [GitHub - laverdet/isolated-vm: Secure & isolated JS environments for nodejs](https://github.com/laverdet/isolated-vm)
+  - [Hugging Face clones OpenAI’s Deep Research in 24 hours - Ars Technica](https://arstechnica.com/ai/2025/02/after-24-hour-hackathon-hugging-faces-ai-research-agent-nearly-matches-openais-solution/)
+  - [toddle.dev - The Visual Web Framework](https://toddle.dev/)
+  - [GitHub - aeharding/voyager: Voyager — a beautiful app for Lemmy](https://github.com/aeharding/voyager)
+  - [Scherzer's theorem - Wikipedia](https://en.wikipedia.org/wiki/Scherzer%27s_theorem?wprov=sfla1)
+  - [Survival Research Laboratories - Wikipedia](https://en.wikipedia.org/wiki/Survival_Research_Laboratories?wprov=sfla1)
+  - [Design & Engineering Methodology for Organizations - Wikipedia](https://en.wikipedia.org/wiki/Design_%26_Engineering_Methodology_for_Organizations?wprov=sfla1)
+  - [Connection between Ontology and Business Rule - Hapsah](https://www.hapsah.org/connection-between-ontology-and-business-rule/)
+  - [Design & Engineering Methodology for Organizations - Wikipedia](https://en.wikipedia.org/wiki/Design_%26_Engineering_Methodology_for_Organizations?wprov=sfla1)
+  - [https://en.wikipedia.org/wiki/There_are_unknown_unknowns?wprov=sfla1](https://en.wikipedia.org/wiki/There_are_unknown_unknowns?wprov=sfla1)
+  - [Bonobos can tell when they know something you don't | New Scientist](https://www.newscientist.com/article/2466616-bonobos-can-tell-when-they-know-something-you-dont/#Echobox=1738660026)
+  - [https://guthman.gatech.edu/](https://guthman.gatech.edu/)
+  - [https://squarp.net/hapax/](https://squarp.net/hapax/)
+  - [Free Real Time Voice Changer with AI - Voice.ai](https://voice.ai/)
+  - [Postman](https://www.postman.com/api-evangelist/search/documentation/bdkqiym/duckduckgo-instant-answer-api)
+  - [GitHub - redpanda-data/benthos](https://github.com/redpanda-data/benthos)
+  - [[2501.08120] In-situ graph reasoning and knowledge expansion using Graph-PReFLexOR](https://arxiv.org/abs/2501.08120)
+  - [Cytoscape.js Layouts: Klay and Dagre](https://codepen.io/keckelt/pen/dBOMxG)
+  - [cytoscape-dagre examples - CodeSandbox](https://codesandbox.io/examples/package/cytoscape-dagre)
+  - [Theory of Change – Demo applications & examples](https://www.jointjs.com/demos/theory-of-change)
+  - [Voronoi diagrams | D3 by Observable](https://d3js.org/d3-delaunay/voronoi?utm_source=perplexity)
+  - [GitHub - gorhill/Javascript-Voronoi: A Javascript implementation of Fortune's algorithm to compute Voronoi cells](https://github.com/gorhill/Javascript-Voronoi?utm_source=perplexity)
+  - [What Are Self Organizing Maps: Beginner’s Guide To Kohonen Map | Simplilearn](https://www.simplilearn.com/self-organizing-kohonen-maps-article)
+  - [GitHub - ColinEberhardt/json-transforms: A recursive, pattern-matching, approach to transforming JSON structures.](https://github.com/ColinEberhardt/json-transforms)
+  - [Self-organizing map - Wikipedia](https://en.wikipedia.org/wiki/Self-organizing_map?wprov=sfla1)
+  - [Five Ws - Wikipedia](https://en.wikipedia.org/wiki/Five_Ws?wprov=sfla1)
+  - [GitHub - keon/awesome-nlp: :book: A curated list of resources dedicated to Natural Language Processing (NLP)](https://github.com/keon/awesome-nlp)
+  - [GitHub - TeddyWang0202/BeyondLDA: Numpy-based PLSA(plsa.py), LDA vs hLDA and vizualization(LDA_vs.hLDA.ipynb)](https://github.com/TeddyWang0202/BeyondLDA)
+  - [GitHub - kmpoon/hlta: Provides functions for hierarchical latent tree analysis on text data for hierarchical topic detection](https://github.com/kmpoon/hlta?utm_source=perplexity)
+  - [GitHub - laserwave/plsa: a python implementation of probabilistic latent semantic analysis (plsa) using EM algorithm](https://github.com/laserwave/plsa?utm_source=perplexity)
+  - [GitHub - bigartm/bigartm: Fast topic modeling platform](https://github.com/bigartm/bigartm?utm_source=perplexity)
+  - [iWeaver-AI Workflow Automation | Knowledge Management Tools](https://www.iweaver.ai/)
+  - [BADIR - Wikipedia](https://en.wikipedia.org/wiki/BADIR?wprov=sfla1)
+  - [Five Ws - Wikipedia](https://en.wikipedia.org/wiki/Five_Ws?wprov=sfla1)
+  - [Chaitin's constant - Wikipedia](https://en.wikipedia.org/wiki/Chaitin%27s_constant?wprov=sfla1)
+  - [Issue-based information system - Wikipedia](https://en.wikipedia.org/wiki/Issue-based_information_system?wprov=sfla1)
+  - [Wicked problem - Wikipedia](https://en.wikipedia.org/wiki/Wicked_problem?wprov=sfla1)
+  - [Horst Rittel - Wikipedia](https://en.wikipedia.org/wiki/Horst_Rittel?wprov=sfla1)
+  - [GitHub - grafana/docker-otel-lgtm: OpenTelemetry backend in a Docker image](https://github.com/grafana/docker-otel-lgtm)
+  - [GitHub - Waboodoo/HTTP-Shortcuts: Android app to create home screen shortcuts that trigger arbitrary HTTP requests](https://github.com/Waboodoo/HTTP-Shortcuts)
+  - [GitHub - umer0586/DroidPad: Android app for creating customizable control interfaces for Bluetooth Low energy,WebSocket, MQTT, TCP, and UDP protocols.](https://github.com/umer0586/DroidPad)
+  - [
+Old Possum's Book of Practical Cats by T. S. Eliot,
+from Project Gutenberg Canada
+](https://gutenberg.ca/ebooks/eliotts-practicalcats/eliotts-practicalcats-01-h.html)
+  - [https://github.com/cu-clear/semlink](https://github.com/cu-clear/semlink)
+  - [SemLink](https://verbs.colorado.edu/semlink/)
+  - [Use of generative AI tools to support learning | University of Oxford](https://www.ox.ac.uk/students/academic/guidance/skills/ai-study)
+  - [[2410.03867] Empowering Domain-Specific Language Models with Graph-Oriented Databases: A Paradigm Shift in Performance and Model Maintenance](https://arxiv.org/abs/2410.03867)
+  - [(PDF) Integrating Semantic Knowledge with Web Usage Mining for Personalization](https://www.researchgate.net/publication/228622058_Integrating_Semantic_Knowledge_with_Web_Usage_Mining_for_Personalization)
+  - [[2406.09621] Enhancing Knowledge Retrieval with In-Context Learning and Semantic Search through Generative AI](https://arxiv.org/abs/2406.09621)
+  - [(PDF) Ontology-Based Modelling for Learning on Bloom’s Taxonomy Comprehension Level](https://www.researchgate.net/publication/334521919_Ontology-Based_Modelling_for_Learning_on_Bloom's_Taxonomy_Comprehension_Level)
+  - [Bloom’s Taxonomy for Effective Learning: 47 Verbs for Objectives](https://www.valamis.com/hub/blooms-taxonomy?_gl=1*d7b5jp*_up*MQ..*_ga*NDgxMzI2MjI2LjE3MzgzNDQ3NTI.*_ga_WH32P1Y0T3*MTczODM0NDc1Mi4xLjAuMTczODM0NDc1Mi4wLjAuMA..#revised)
+  - [Use of generative AI tools to support learning | University of Oxford](https://www.ox.ac.uk/students/academic/guidance/skills/ai-study)
+  - [Bloom's taxonomy - Wikipedia](https://en.m.wikipedia.org/w/index.php?title=Bloom%27s_taxonomy&utm_source=perplexity)
+  - [YouTube](https://youtube.com/watch?v=TPLPpz6dD3A&si=bg53ifvKApiMamem)
+    - Get links from description
+  - [[2404.04125] No "Zero-Shot" Without Exponential Data: Pretraining Concept Frequency Determines Multimodal Model Performance](https://arxiv.org/abs/2404.04125)
+  - [DeepSeek · GitHub](https://github.com/deepseek-ai)
+  - [ Implementation of a visual editor for SHACL-based metadata schemas  - University of Twente Student Theses](https://essay.utwente.nl/96336/)
+  - [GitHub - langflow-ai/langflow: Langflow is a low-code app builder for RAG and multi-agent AI applications. It’s Python-based and agnostic to any model, API, or database.](https://github.com/langflow-ai/langflow)
+  - [[2501.14342] Chain-of-Retrieval Augmented Generation](https://arxiv.org/abs/2501.14342)
+  - [
+Mediating Objects of Socialability | On the Way to Somewhere Else](https://skipwalter.net/2011/12/27/mediating-objects-of-socialability/)
+  - [GitHub - pixijs/pixijs: The HTML5 Creation Engine: Create beautiful digital content with the fastest, most flexible 2D WebGL renderer.](https://github.com/pixijs/pixijs)
+  - [GitHub - pixijs/pixijs: The HTML5 Creation Engine: Create beautiful digital content with the fastest, most flexible 2D WebGL renderer.](https://github.com/pixijs/pixijs)
+  - [https://pixijs.com/](https://pixijs.com/)
+  - [Humanity's Last Exam](https://lastexam.ai/)
+  - [[2501.14249] Humanity's Last Exam](https://arxiv.org/abs/2501.14249)
+  - [MinIO | S3 Compatible Storage for AI](https://min.io/)
+  - [Extract, transform, load - Wikipedia](https://en.wikipedia.org/wiki/Extract%2C_transform%2C_load?wprov=sfla1)
+  - [Building an app out of RDF - Build a Solid App - Solid Community Forum](https://forum.solidproject.org/t/building-an-app-out-of-rdf/2345)
+  - [Open-R1: a fully open reproduction of DeepSeek-R1](https://huggingface.co/blog/open-r1)
+  - [GitHub - multimodal-art-projection/YuE: YuE: Open Full-song Generation Foundation Model, something similar to Suno.ai but open](https://github.com/multimodal-art-projection/YuE)
+  - [https://www.youtube.com/watch?v=tHpQmxQlWfI](https://www.youtube.com/watch?v=tHpQmxQlWfI)
+  - [Prima di continuare su YouTube](https://youtube.com/shorts/k6zxsQvUKZA?si=rJ5C12XIqzZqgLfu)
+  - [Download - QUARK](https://quark.cykik.com/)
+  - [matchering · PyPI](https://pypi.org/project/matchering/)
+  - [https://youtu.be/70LF-MIX1xw?t=757](https://youtu.be/70LF-MIX1xw?t=757)
+  - [Oberheim DMX Drums - Stock DMX Sounds : Free Download, Borrow, and Streaming : Internet Archive](https://archive.org/details/dmx-stock-dmx-sounds)
+  - [Creating Nodes : Node-RED](https://nodered.org/docs/creating-nodes/)
+  - [Default mode network - Wikipedia](https://en.wikipedia.org/wiki/Default_mode_network?wprov=sfla1)
+  - [https://apt.izzysoft.de/fdroid/index/apk/com.fibelatti.photowidget](https://apt.izzysoft.de/fdroid/index/apk/com.fibelatti.photowidget)
+  - [GitHub - fibelatti/photo-widget: Photo Widget is as simple as it can be: an Android home screen widget to display a photo or collection of photos. It is a free, no-ads, open source alternative for people who want to customize their home screen with their favorite photos.](https://github.com/fibelatti/photo-widget)
+  - [GitHub - protegeproject/webprotege: The webprotege code base](https://github.com/protegeproject/webprotege)
+  - [GitHub - tuedelue/jeed: Jodel Emoji Embedding Dataset (JEED1488)](https://github.com/tuedelue/jeed)
+  - [GitHub - niladridutt/Text_to_Emoji: Convert your text to emoji](https://github.com/niladridutt/Text_to_Emoji?utm_source=perplexity)
+  - [The Magical Number Seven, Plus or Minus Two - Wikipedia](https://en.wikipedia.org/wiki/The_Magical_Number_Seven%2C_Plus_or_Minus_Two?wprov=sfla1)
+  - [Cognitive load - Wikipedia](https://en.wikipedia.org/wiki/Cognitive_load?wprov=sfla1)
+  - [[2501.10893] Learn-by-interact: A Data-Centric Framework for Self-Adaptive Agents in Realistic Environments](https://arxiv.org/abs/2501.10893)
+  - [https://www.lesswrong.com/posts/2obqKZiCXCicFCaSs/monet-mixture-of-monosemantic-experts-for-transformers](https://www.lesswrong.com/posts/2obqKZiCXCicFCaSs/monet-mixture-of-monosemantic-experts-for-transformers)
+  - [GitHub Models introduces a new prompt editor (GA) - GitHub Changelog](https://github.blog/changelog/2025-01-23-github-models-introduces-a-new-prompt-editor-ga/)
+  - [https://towardsdatascience.com/behind-the-scenes-of-a-successful-data-analytics-project-8d45fb33e9c5](https://towardsdatascience.com/behind-the-scenes-of-a-successful-data-analytics-project-8d45fb33e9c5)
+  - [https://towardsdatascience.com/simplicity-over-black-boxes-eefc72a5c507](https://towardsdatascience.com/simplicity-over-black-boxes-eefc72a5c507)
+  - [Principle of compositionality - Wikipedia](https://en.wikipedia.org/wiki/Principle_of_compositionality?wprov=sfla1)
+  - [[2403.19995] Development of Compositionality and Generalization through Interactive Learning of Language and Action of Robots](https://arxiv.org/abs/2403.19995)
+  - [https://www.science.org/doi/10.1126/scirobotics.adp0751](https://www.science.org/doi/10.1126/scirobotics.adp0751)
+  - [https://techxplore.com/news/2025-01-embodied-ai-reveals-robots-toddlers.html](https://techxplore.com/news/2025-01-embodied-ai-reveals-robots-toddlers.html)
+  - [Tiny DeepSeek 1.5B Models Run on $99 NVIDIA Jetson Nano | NextBigFuture.com](https://www.nextbigfuture.com/2025/01/tiny-deepseek-1-5b-models-run-on-99-nvidia-jetson-nano.html)
+  - [A selfish personal argument for releasing code as Open Source](https://simonwillison.net/2025/Jan/24/selfish-open-source/)
+  - [Material Maker 1.0 - Material Maker by RodZilla](https://rodzilla.itch.io/material-maker/devlog/406223/material-maker-10)
+  - [GitHub - RodZill4/material-maker: A procedural textures authoring and 3D model painting tool based on the Godot game engine](https://github.com/RodZill4/material-maker)
+  - Effort-based decision-making tied to specific depression symptoms...
+    - Effort-based decision-making tied to specific depression symptoms https://www.psypost.org/fascinating-study-links-depression-symptoms-to-effort-based-decision-making-patterns/
+  - [OpenGL Shading Language - Wikipedia](https://en.wikipedia.org/wiki/OpenGL_Shading_Language?wprov=sfla1)
+  - [GitHub - RituYadav92/Lightweighted-CNN-for-Document-Classification: Optimized Text Document Classification](https://github.com/RituYadav92/Lightweighted-CNN-for-Document-Classification)
+  - [https://medium.com/loyal-home/what-is-cc2531-276924bf9632](https://medium.com/loyal-home/what-is-cc2531-276924bf9632)
+  - [Koenkk (Koen Kanters) · GitHub](https://github.com/Koenkk)
+  - [Zeroth Bot Dev Kit - The World's Most Accessible Humanoid for AI - Launching Soon on Kickstarter!](https://pre-launch.grandjourney.ai/?fbclid=IwY2xjawIDSw9leHRuA2FlbQIxMQABHZ2bdUzDfYdXNv45qNEfm9-YCHqG71YNUvXqDeHWpLCB2WOYozzMDVJ70g_aem_DLTdjV4pAImcdZI5oruUnQ&utm_medium=paid&utm_id=120214475178650420&utm_content=120214668792620420&utm_term=120214668792110420&utm_campaign=120214475178650420)
+  - [Web Scraping with Node.js: The Best Tools to Use](https://www.scraperapi.com/blog/best-nodejs-scraping-tools/)
+  - [eCircuitCenter](https://www.ecircuitcenter.com/Circuits/op_allpass1/op_allpass1.htm)
+  - [eCircuitCenter](https://www.ecircuitcenter.com/Circuits/op_allpass1/op_phaseshifter1.htm)
+  - [https://musicfromouterspace.com/analogsynth_new/PHASESHIFTER2007/PHASESHIFTER2007.php](https://musicfromouterspace.com/analogsynth_new/PHASESHIFTER2007/PHASESHIFTER2007.php)
+  - [tinyloops.com - Roland TB-303 Sound - Signal Flow](https://tinyloops.com/tb303/sound_signalflow.html)
+  - [Reddit - Dive into anything](https://reddit.com/r/lockpicking/w/beltranking?utm_medium=android_app&utm_source=share)
+  - [NO YELLING ON THE BUS.](https://www.naswek.com/picks.html)
+  - [Reddit - Dive into anything](https://www.reddit.com/r/lockpicking/s/Hu4EjHWzCg)
+  - [Lockpicks.svg - Google Drive](https://drive.google.com/file/d/1xxNhRpg0TihCMX0WlFVxU2inIH6XZSvj/view)
+  - [Valkyrie whip - HolyOak Whips](http://www.holyoak-whips.com/de-longis.html)
+  - [GitHub - anisharaz/devops-doc](https://github.com/anisharaz/devops-doc)
+  - [GitHub - anisharaz/devops-doc](https://github.com/anisharaz/devops-doc)
+  - [anisharaz (Anish Araz) · GitHub](https://github.com/anisharaz)
+  - ['My Little Pony: A New Generation' Review: A Fun Franchise Re-shoe](https://variety.com/2021/film/reviews/my-little-pony-a-new-generation-review-1235069513/)
+  - [Lunchtime Talk: Prototyping and Power | Pervasive Media Studio](https://pmstudio.co.uk/studio/events/2025/01/24/lunchtime-talk-prototyping-and-power)
+  - [GOV.UK](https://www.gov.uk/government/publications/composition-of-foods-integrated-dataset-cofid)
+  - [https://world.openfoodfacts.org/](https://world.openfoodfacts.org/)
+  - [Kieler · GitHub](https://github.com/kieler)
+  - [Kieler · GitHub](https://github.com/kieler)
+  - [GitHub - kieler/elkjs: ELK's layout algorithms for JavaScript](https://github.com/kieler/elkjs)
+  - [Mixcloud](https://www.mixcloud.com//)
+  - [Lisp implementations | Max Bernstein](https://bernsteinbear.com/blog/lisp/)
+  - [What’s in an e-graph? | Max Bernstein](https://bernsteinbear.com/blog/whats-in-an-egraph/)
+  - [Blog | Max Bernstein](https://bernsteinbear.com/blog/)
+  - [Max Bernstein](https://bernsteinbear.com/)
+  - [microui+fenster=small gui | Max Bernstein](https://bernsteinbear.com/blog/fenster-microui/)
+  - [https://blog.adafruit.com/2025/01/22/making-a-small-gui-with-microui-and-fenster/](https://blog.adafruit.com/2025/01/22/making-a-small-gui-with-microui-and-fenster/)
+  - [Chirping chorus rings out from an unexpected part of outer space](https://www.nature.com/articles/d41586-024-04211-6)
+  - [Whistler (radio) - Wikipedia](https://en.wikipedia.org/wiki/Whistler_%28radio%29?wprov=sfla1)
+  - [https://en.wikipedia.org/wiki/Very_low_frequency?wprov=sfla1](https://en.wikipedia.org/wiki/Very_low_frequency?wprov=sfla1)
+  - [Very low frequency - Wikipedia](https://en.wikipedia.org/wiki/Very_low_frequency?wprov=sfla1)
+  - [Extremely low frequency - Wikipedia](https://en.wikipedia.org/wiki/Extremely_low_frequency#Natural_sources?wprov=sfla1)
+  - [Auroral chorus - Wikipedia](https://en.wikipedia.org/wiki/Auroral_chorus?wprov=sfla1)
+  - [
+        
+            
+                Architectural overview of Cordova platform - Apache Cordova
+            
+        
+    ](https://cordova.apache.org/docs/en/12.x-2025.01/guide/overview/)
+  - [https://newsletter.cote.io/p/practical-agentic-ai-without-all?utm_campaign=post&utm_medium=web](https://newsletter.cote.io/p/practical-agentic-ai-without-all?utm_campaign=post&utm_medium=web)
+  - [https://newsletter.cote.io/p/practical-agentic-ai-without-all?utm_campaign=post&showWelcomeOnShare=false](https://newsletter.cote.io/p/practical-agentic-ai-without-all?utm_campaign=post&showWelcomeOnShare=false)
+  - [GitHub - facebookresearch/CodeGen: Reference implementation of code generation projects from Facebook AI Research. General toolkit to apply machine learning to code, from dataset creation to model training and evaluation. Comes with pretrained models.](https://github.com/facebookresearch/CodeGen)
+  - [https://ai.meta.com/blog/deep-learning-to-translate-between-programming-languages/](https://ai.meta.com/blog/deep-learning-to-translate-between-programming-languages/)
+  - [301 Moved Permanently](http://lena-voita.github.io/nlp_course/seq2seq_and_attention.html)
+  - [colbert-ir/colbertv2.0 · Hugging Face](https://huggingface.co/colbert-ir/colbertv2.0?utm_source=perplexity)
+  - [https://github.com/stanfordnlp/dspy](https://github.com/stanfordnlp/dspy)
+  - [[2501.06707] ELIZA Reanimated: The world's first chatbot restored on the world's first time sharing system](https://arxiv.org/abs/2501.06707)
+  - [Automated planning and scheduling - Wikipedia](https://en.wikipedia.org/wiki/Automated_planning_and_scheduling?wprov=sfla1)
+  - [GitHub - adrianagaler/Snoring-Detection: Tiny Machine Learning Snoring Detection Model for Embedded devices - Adriana Rotaru](https://github.com/adrianagaler/Snoring-Detection)
+  - [GitHub - pytorch/android-demo-app: PyTorch android examples of usage in applications](https://github.com/pytorch/android-demo-app)
+  - [GitHub - monologg/transformers-android-demo: 📲 Transformers android examples (Tensorflow Lite & Pytorch Mobile)](https://github.com/monologg/transformers-android-demo)
+  - [Rclone](https://rclone.org/)
+  - [Introduction - Round Sync Documentation](https://roundsync.com/)
+  - [Automated planning and scheduling - Wikipedia](https://en.wikipedia.org/wiki/Automated_planning_and_scheduling?wprov=sfla1)
+  - [Constraint satisfaction problem - Wikipedia](https://en.wikipedia.org/wiki/Constraint_satisfaction_problem?wprov=sfla1)
+  - [GitHub - dkhamsing/open-source-ios-apps: :iphone: Collaborative List of Open-Source iOS Apps](https://github.com/dkhamsing/open-source-ios-apps)
+  - [GitHub - rdf-ext/rdf-elements: RDF/JS Web Components](https://github.com/rdf-ext/rdf-elements)
+  - [Search Engine for Ideas | Does It Exist](https://doesitexist.io/?s=09)
+  - [x.com](https://x.com/bschne/status/1876910463155364336?t=a124VGO_SArtShrGYA0pbQ&s=09)
+  - [x.com](https://x.com/tylerangert/status/1876908399708815454?t=v8wXb4uYle7waAwmb1Fghg&s=09)
+  - [GitHub - yoheinakajima/idealist: infinite idea generator](https://github.com/yoheinakajima/idealist)
+  - [Casio F-91W - Wikipedia](https://en.wikipedia.org/wiki/Casio_F-91W?wprov=sfla1)
+  - [Home | PlainApp](https://www.plain.icu/)
+  - [Node2vec - Wikipedia](https://en.wikipedia.org/wiki/Node2vec?wprov=sfla1)
+  - [MinIO Object Storage for Container — MinIO Object Storage for Container](https://min.io/docs/minio/container/index.html)
+  - [MinIO Object Storage for Container — MinIO Object Storage for Container](https://min.io/docs/minio/container/index.html)
+  - Protocol Oriented Programming in Swift https://search.app/u1VTiu5EcJqidokWA
+    - Protocol Oriented Programming in Swift https://search.app/u1VTiu5EcJqidokWA
+  - [3.2. Data model](https://help.penpot.app/technical-guide/developer/data-model/)
+  - [GitHub - penpot/penpot: Penpot: The open-source design tool for design and code collaboration](https://github.com/penpot/penpot)
+  - [GitHub - louislam/uptime-kuma: A fancy self-hosted monitoring tool](https://github.com/louislam/uptime-kuma)
+  - [GitHub - louislam/uptime-kuma: A fancy self-hosted monitoring tool](https://github.com/louislam/uptime-kuma)
+  - [GitHub - louislam/uptime-kuma: A fancy self-hosted monitoring tool](https://github.com/louislam/uptime-kuma)
+  - [MinIO Object Storage for Container — MinIO Object Storage for Container](https://min.io/docs/minio/container/index.html)
+  - [Penpot - Design Freedom for Teams](https://design.penpot.app/#/dashboard/team/96c4bd8e-df43-800f-8005-9b52a602fb94/projects)
+  - [GitHub - penpot/penpot: Penpot: The open-source design tool for design and code collaboration](https://github.com/penpot/penpot)
+  - [https://www.xda-developers.com/raspberry-pi-projects-you-can-run-in-docker/](https://www.xda-developers.com/raspberry-pi-projects-you-can-run-in-docker/)
+  - [How to Set Up Your Linux System for AI Development](https://www.tecmint.com/setting-up-linux-for-ai-development/)
+  - [Node.js set to stabilize type stripping | InfoWorld](https://www.infoworld.com/article/3804957/node-js-set-to-stabilize-type-stripping.html)
+  - [A crash course in just-in-time (JIT) compilers - Mozilla Hacks - the Web developer blog](https://hacks.mozilla.org/2017/02/a-crash-course-in-just-in-time-jit-compilers/)
+  - [How to Set Up Your Linux System for AI Development](https://www.tecmint.com/setting-up-linux-for-ai-development/)
+  - [Gilles Deleuze - Wikipedia](https://en.wikipedia.org/wiki/Gilles_Deleuze?wprov=sfla1)
+  - [Lessons from A Philosophy of Software Design - DEV Community](https://dev.to/thawkin3/lessons-from-a-philosophy-of-software-design-4cn7)
+  - [DORA | DORA’s software delivery metrics: the four keys](https://dora.dev/guides/dora-metrics-four-keys/)
+  - [The Large Language Model Course](https://huggingface.co/blog/mlabonne/llm-course)
+  - [What is OpenTelemetry? | OpenTelemetry](https://opentelemetry.io/docs/what-is-opentelemetry/)
+  - [https://www.xda-developers.com/docker-containers-that-make-linux-perfect-for-a-home-lab/](https://www.xda-developers.com/docker-containers-that-make-linux-perfect-for-a-home-lab/)
+  - [[2109.12218] Long-Range Transformers for Dynamic Spatiotemporal Forecasting](https://arxiv.org/abs/2109.12218)
+  - [Learn to Use GitHub Actions: a Step-by-Step Guide](https://www.freecodecamp.org/news/learn-to-use-github-actions-step-by-step-guide/)
+  - [
+Pipeline
+](https://www.jenkins.io/doc/book/pipeline/#declarative-pipeline-fundamentals)
+  - [
+Pipeline
+](https://www.jenkins.io/doc/book/pipeline/#pipeline-concepts)
+  - [Mastering Docker and Jenkins: Build Robust CI/CD Pipelines Efficiently | Docker](https://www.docker.com/blog/docker-and-jenkins-build-robust-ci-cd-pipelines/)
+  - [Gnome - Wikipedia](https://en.wikipedia.org/wiki/Gnome?wprov=sfla1)
+  - [GitHub - infranodus/infranodus-vscode-extension: InfraNodus graph extension for VSCode, Windsurf AI, and Cursor AI. Use it for your Obsidian vaults or code.](https://github.com/infranodus/infranodus-vscode-extension)
+  - [http://solarbotics.net/library.html](http://solarbotics.net/library.html)
+  - [http://solarbotics.net/library.html](http://solarbotics.net/library.html)
+  - [http://solarbotics.net/library/circuits/default.htm](http://solarbotics.net/library/circuits/default.htm)
+  - [Main Page - BEAM Robotics Wiki](https://web.archive.org/web/20081208031537/http://www.beam-wiki.org/wiki/Main_Page)
+  - [BEAM robotics - Wikipedia](https://en.wikipedia.org/wiki/BEAM_robotics?wprov=sfla1)
+  - [GitHub - espressif/esp-dl: Espressif deep-learning library for AIoT applications](https://github.com/espressif/esp-dl)
+  - [Easy TinyML on ESP32 and Arduino - Hackster.io](https://www.hackster.io/news/easy-tinyml-on-esp32-and-arduino-a9dbc509f26c)
+  - https://intl..minimaxi.com/
+    - https://intl..minimaxi.com/
+  - [MiniMax - Intelligence with everyone](https://www.minimaxi.com/en)
+  - https://intl..minimaxi.com/
+    - https://intl..minimaxi.com/
+  - [Building knowledge graph agents with LlamaIndex Workflows — LlamaIndex - Build Knowledge Assistants over your Enterprise Data](https://www.llamaindex.ai/blog/building-knowledge-graph-agents-with-llamaindex-workflows)
+  - [Prima di continuare su YouTube](https://youtube.com/shorts/wxjEY075nl4?si=9OWa3P_ecmXnYofq)
+  - [Petrus Ramus - Wikipedia](https://en.wikipedia.org/wiki/Petrus_Ramus?wprov=sfla1)
+  - [YouTube](https://youtube.com/watch?v=qJFJ7jmQppI&si=rrXMvh39BGDBGRF2)
+  - [DIY WriterDecks | writerDeck](http://www.writerdeck.org/list-of-diy-writerdecks.html)
+  - [writerDeck.org | writerDeck](https://www.writerdeck.org/)
+  - [Google AI Studio](https://aistudio.google.com/)
+  - [404 Media](https://www.404media.co/)
+  - [GitHub - Kiln-AI/Kiln: The easiest tool for fine-tuning LLM models, synthetic data generation, and collaborating on datasets.](https://github.com/Kiln-AI/Kiln)
+  - [Researcher Turns Insecure License Plate Cameras Into Open Source Surveillance Tool](https://www.404media.co/researcher-turns-insecure-license-plate-cameras-into-open-source-surveillance-tool/)
+  - [Index — The Philosophical Glossary of AI](https://www.aiglossary.co.uk/index)
+  - [GitHub - emcie-co/parlant: The behavior guidance framework for customer-facing LLM agents](https://github.com/emcie-co/parlant)
+  - [Node-RED](https://nodered.org/)
+  - [GitHub - comfyanonymous/ComfyUI: The most powerful and modular diffusion model GUI, api and backend with a graph/nodes interface.](https://github.com/comfyanonymous/ComfyUI)
+  - [candycode, alternative brand design and React development agency](https://candycode.com/)
+  - [smol.ai - News and Hackathons for AI Engineers](https://smol.ai/)
+  - [Train 400x faster Static Embedding Models with Sentence Transformers](https://huggingface.co/blog/static-embeddings)
+  - [Continue](https://www.continue.dev/)
+  - [Codestral 25.01 | Mistral AI | Frontier AI in your hands](https://mistral.ai/news/codestral-2501/)
+  - [https://docs.mistral.ai/capabilities/function_calling/](https://docs.mistral.ai/capabilities/function_calling/)
+  - [Abstract Wikipedia - Meta](https://meta.wikimedia.org/wiki/Abstract_Wikipedia)
+  - [Abstract Wikipedia - Meta](https://meta.m.wikimedia.org/wiki/Abstract_Wikipedia)
+  - [Wikifunctions](https://www.wikifunctions.org/wiki/Wikifunctions:Main_Page)
+  - [GitHub - stanford-oval/spinach: SPINACH: SPARQL-Based Information Navigation for Challenging Real-World Questions](https://github.com/stanford-oval/spinach)
+  - [Spinach Wikidata](https://spinach.genie.stanford.edu/)
+  - [[2407.11417] SPINACH: SPARQL-Based Information Navigation for Challenging Real-World Questions](https://arxiv.org/abs/2407.11417)
+  - [Assicuratori e discensori | Acquista online | Bergzeit](https://www.bergzeit.it/attrezzatura/attrezzatura-per-arrampicata-e-bouldering/assicuratori-e-discensori/?p=2&sortBy=ct)
+  - [Cache Lake Country: Life in the North Woods : John J. Rowlands : Free Download, Borrow, and Streaming : Internet Archive](https://archive.org/details/cachelakecountry0000john)
+  - [Charlieplexing - Wikipedia](https://en.wikipedia.org/wiki/Charlieplexing?wprov=sfla1)
+  - [https://mitxela.com/other/recursive/recursive.htm#2](https://mitxela.com/other/recursive/recursive.htm#2)
+  - [GitHub - mitxela/recursive](https://github.com/mitxela/recursive)
+  - [Recursive Notes - mitxela.com](https://mitxela.com/projects/recursive)
+  - [mitxela.com](https://mitxela.com/)
+  - [luit - Wikipedia](https://en.wikipedia.org/wiki/Luit?wprov=sfla1)
+  - [Program overview | Meta Bug Bounty](https://bugbounty.meta.com/)
+  - [CCC | Home](https://www.ccc.de/en/)
+  - [PaliKoa v2 Pivot | Glacier Black, Inc.](https://www.glacierblack.com/product-page/palikoa-v2-pivot)
+  - [Pirana-like belay devices | CanyonZone](https://www.canyonzone.com/c-2023216/pirana-like-belay-devices/)
+  - [ropewiki](https://ropewiki.com/Main_Page)
+  - [Attention deficit hyperactivity disorder - Wikipedia](https://en.wikipedia.org/wiki/Attention_deficit_hyperactivity_disorder?wprov=sfla1)
+  - [https://linktr.ee/adhdchatter](https://linktr.ee/adhdchatter)
+  - [Thinking, Fast and Slow - Wikipedia](https://en.wikipedia.org/wiki/Thinking%2C_Fast_and_Slow?wprov=sfla1)
+  - [Epistemology - Wikipedia](https://en.wikipedia.org/wiki/Epistemology?wprov=sfla1)
+  - [https://monicasmind.com/our-greatest-invention](https://monicasmind.com/our-greatest-invention)
+  - [Model Free Methods Workshop](https://vimeo.com/36214970)
+  - [Morris worm - Wikipedia](https://en.wikipedia.org/wiki/Morris_worm?wprov=sfla1)
+  - [https://zerothprinciples.substack.com/p/the-mythical-ai-minute?utm_campaign=post&fbclid=IwY2xjawHvIcZleHRuA2FlbQIxMQABHbkGbfZcc3k-eqq_uwVMxM1JtIiaYkw1M9vb6x3ARxw8Ha42TyartzGyJg_aem_6wABtNdwSMlHEXGa-HCUiQ](https://zerothprinciples.substack.com/p/the-mythical-ai-minute?utm_campaign=post&fbclid=IwY2xjawHvIcZleHRuA2FlbQIxMQABHbkGbfZcc3k-eqq_uwVMxM1JtIiaYkw1M9vb6x3ARxw8Ha42TyartzGyJg_aem_6wABtNdwSMlHEXGa-HCUiQ)
+  - [Rules of engagement - Wikipedia](https://en.wikipedia.org/wiki/Rules_of_engagement?wprov=sfla1)
+  - [[2501.04652] Multi-task retriever fine-tuning for domain-specific and efficient RAG](https://arxiv.org/abs/2501.04652)
+  - [[2310.03214] FreshLLMs: Refreshing Large Language Models with Search Engine Augmentation](https://arxiv.org/abs/2310.03214)
+  - [How Perplexity's Online LLM Was Inspired by FreshLLMs Paper - The New Stack](https://thenewstack.io/how-perplexitys-online-llm-was-inspired-by-freshllms-paper/)
+  - [Accessing Perplexity Online LLMs Programmatically Via API - The New Stack](https://thenewstack.io/accessing-perplexity-online-llms-programmatically-via-api/)
+  - [It's Time To Start Preparing APIs for the AI Agent Era - The New Stack](https://thenewstack.io/its-time-to-start-preparing-apis-for-the-ai-agent-era/)
+  - [OpenAPI Reference](https://www.speakeasy.com/openapi#openapi-overview)
+  - [Introducing Agentic Document Workflows — LlamaIndex - Build Knowledge Assistants over your Enterprise Data](https://www.llamaindex.ai/blog/introducing-agentic-document-workflows)
+  - [Introducing Agentic Document Workflows — LlamaIndex - Build Knowledge Assistants over your Enterprise Data](https://www.llamaindex.ai/blog/introducing-agentic-document-workflows)
+  - [Cumulative distribution function - Wikipedia](https://en.wikipedia.org/wiki/Cumulative_distribution_function?wprov=sfla1)
+  - [https://www.mouser.it/new/lime-microsystems/limemicro-sdr-mini-2-usb-radio/](https://www.mouser.it/new/lime-microsystems/limemicro-sdr-mini-2-usb-radio/)
+  - [The Ashley Book of Knots - Wikipedia](https://en.wikipedia.org/wiki/The_Ashley_Book_of_Knots?wprov=sfla1)
+  - [Building generative AI applications is too hard, developers say | InfoWorld](https://www.infoworld.com/article/3633272/building-generative-ai-applications-is-too-hard-developers-say.html)
+  - [Memristor-based hardware accelerators for artificial intelligence | Nature Reviews Electrical Engineering](https://www.nature.com/articles/s44287-024-00037-6)
+  - [Efficient scaling of large language models with mixture of experts and 3D analog in-memory computing | Nature Computational Science](https://www.nature.com/articles/s43588-024-00753-x)
+  - [ICanHazPDF - Wikipedia](https://en.wikipedia.org/wiki/ICanHazPDF?wprov=sfla1)
+  - [Guerilla Open Access Manifesto - Wikipedia](https://en.wikipedia.org/wiki/Guerilla_Open_Access_Manifesto?wprov=sfla1)
+  - [Samizdat - Wikipedia](https://en.wikipedia.org/wiki/Samizdat?wprov=sfla1)
+  - [Library Genesis - Wikipedia](https://en.wikipedia.org/wiki/Library_Genesis?wprov=sfla1)
+  - [a blog about information](https://confusedofcalcutta.com/)
+  - [https://newsletter.robhaisfield.com/p/progressive-reduction](https://newsletter.robhaisfield.com/p/progressive-reduction)
+  - [https://www.tumblr.com/layervault/42361566927/progressive-reduction](https://www.tumblr.com/layervault/42361566927/progressive-reduction)
+  - [https://webpack.js.org/plugins/module-federation-plugin/](https://webpack.js.org/plugins/module-federation-plugin/)
+  - [https://huggingface.co/blog/smolagents](https://huggingface.co/blog/smolagents)
+  - [Jan: Open source ChatGPT-alternative that runs 100% offline - Jan](https://jan.ai/)
+  - [Msty - Using AI Models made Simple and Easy](https://msty.app/)
+  - [A Touch of Topological Quantum Computation in Haskell Pt. I | Hey There Buddo!](https://www.philipzucker.com/a-touch-of-topological-quantum-computation-in-haskell-pt-i/)
+  - [Anyon - Wikipedia](https://en.wikipedia.org/wiki/Anyon?wprov=sfla1)
+  - [Physicists describe exotic ‘paraparticles’ that defy categorization](https://www.nature.com/articles/d41586-025-00030-5)
+  - [https://en.wikipedia.org/wiki/Pollyanna?wprov=sfla1](https://en.wikipedia.org/wiki/Pollyanna?wprov=sfla1)
+  - [ten Tusscher, Panfilov, 2006 — Physiome Model Repository](https://models.cellml.org/exposure/de5058f16f829f91a1e4e5990a10ed71)
+  - [[2402.07250] DIMON: Learning Solution Operators of Partial Differential Equations on a Diffeomorphic Family of Domains](https://arxiv.org/abs/2402.07250)
+  - [GitHub - MinglangYin/DIMON](https://github.com/MinglangYin/DIMON)
+  - [A scalable framework for learning the geometry-dependent solution operators of partial differential equations | Nature Computational Science](https://www.nature.com/articles/s43588-024-00732-2)
+  - [
+      DWARFLAB Official Site- Introducing DWARF 3
+](https://dwarflab.com/it-it)
+  - [Krista Bourgeois -- Live (Current July 2024) - Eurorack Modular System from kbmusic on ModularGrid](https://modulargrid.net/e/racks/view/2586469)
+  - [Phonon - Wikipedia](https://en.wikipedia.org/wiki/Phonon?wprov=sfla1)
+  - [https://github.com/thelastoutpostworkshop](https://github.com/thelastoutpostworkshop)
+  - [Systems: The Purpose of a System is What It Does - Anil Dash](https://www.anildash.com//2024/05/29/systems-the-purpose-of-a-system/)
+  - [Understanding DOGE as Procurement Capture - Anil Dash](https://www.anildash.com//2025/01/04/DOGE-procurement-capture/)
+  - [https://www.pnas.org/doi/10.1073/pnas.2407652121](https://www.pnas.org/doi/10.1073/pnas.2407652121)
+  - [GitHub - adityapotdar23/Predictive-Maintenance: Developed at the IEEE CS SPIT Aeravat 1.0 AI Hackathon](https://github.com/adityapotdar23/Predictive-Maintenance?utm_source=perplexity)
+  - [Overview - Composio](https://docs.composio.dev/introduction/intro/overview)
+  - [moshi.chat](https://moshi.chat/)
+  - [
+        Cognition in brainless organisms is redefining what it means to learn | The Transmitter: Neuroscience News and Perspectives    ](https://www.thetransmitter.org/cognition/cognition-in-brainless-organisms-is-redefining-what-it-means-to-learn/)
+  - [
+        This paper changed my life | The Transmitter: Neuroscience News and Perspectives    ](https://www.thetransmitter.org/this-paper-changed-my-life/)
+  - [
+        This paper changed my life: ‘A massively parallel architecture for a self-organizing neural pattern recognition machine,’ by Carpenter and Grossberg | The Transmitter: Neuroscience News and Perspectives    ](https://www.thetransmitter.org/this-paper-changed-my-life/this-paper-changed-my-life-a-massively-parallel-architecture-for-a-self-organizing-neural-pattern-recognition-machine-by-carpenter-and-grossberg/)
+  - [DORA | DORA’s software delivery metrics: the four keys](https://dora.dev/guides/dora-metrics-four-keys/)
+  - [The SPACE of Developer Productivity - ACM Queue](https://queue.acm.org/detail.cfm?id=3454124)
+  - [SPACE, a New Framework to Understand and Measure Developer Productivity - InfoQ](https://www.infoq.com/news/2021/03/space-developer-productivity/)
+  - [DORA | DORA’s software delivery metrics: the four keys](https://dora.dev/guides/dora-metrics-four-keys/)
+  - [DX Unveils New Framework for Measuring Developer Productivity - InfoQ](https://www.infoq.com/news/2025/01/dx-core-4-framework/)
+  - [https://en.wikipedia.org/wiki/Golden_Legend?wprov=sfla1](https://en.wikipedia.org/wiki/Golden_Legend?wprov=sfla1)
+  - [Get Started | DataCamp](https://app.datacamp.com/learn/tutorials/fine-tuning-large-language-models)
+  - [https://towardsdatascience.com/the-next-frontier-in-llm-accuracy-cb2491a740d4](https://towardsdatascience.com/the-next-frontier-in-llm-accuracy-cb2491a740d4)
+  - [https://faculty.fairfield.edu/cstaecker/](https://faculty.fairfield.edu/cstaecker/)
+  - [4x4 (2019 film) - Wikipedia](https://en.wikipedia.org/wiki/4x4_%282019_film%29?wprov=sfla1)
+  - [[2412.18116] AutoDroid-V2: Boosting SLM-based GUI Agents via Code Generation](https://arxiv.org/abs/2412.18116)
+  - [AutoDroid-V2: Leveraging Small Language Models for Automated Mobile GUI Control - MarkTechPost](https://www.marktechpost.com/2025/01/01/autodroid-v2-leveraging-small-language-models-for-automated-mobile-gui-control/)
+  - [Researchers uncover a hidden cognitive strength associated with autistic traits](https://www.psypost.org/researchers-uncover-a-hidden-cognitive-strength-associated-with-autistic-traits/)
+  - [Smart Button Debounce with Fast Response](https://runtimemicro.com/Planning/Smart-Button-Debounce-Fast)
+  - [https://towardsdatascience.com/gdd-generative-driven-design-0c948fb9a735](https://towardsdatascience.com/gdd-generative-driven-design-0c948fb9a735)
+  - [
+Music Machines: TR-606/schematics
+](http://machines.hyperreal.org/manufacturers/Roland/TR-606/schematics/?0022)
+  - [ADS1256 data sheet, product information and support | TI.com](https://www.ti.com/product/ADS1256)
+  - [
+Music Machines: TR-808/schematics
+](http://machines.hyperreal.org/manufacturers/Roland/TR-808/schematics/)
+  - [Free 606 sample pack | Ryan d'Huart and Jordan Michael Francis | Ryan d'Huart](https://ryandhuart.bandcamp.com/album/free-606-sample-pack)
+  - [Types of Synthesizers: From Additive to Wavetable and All Points In Between - gearnews.com](https://www.gearnews.com/types-of-synthesizers/)
+  - [https://sinee.de/krista-bourgeois-online-masterclass](https://sinee.de/krista-bourgeois-online-masterclass)
+  - [Yjs Shared Editing](https://yjs.dev/)
+  - [Yjs · GitHub](https://github.com/yjs)
+  - [Syncthing](https://syncthing.net/)
+  - [The Syncthing Project · GitHub](https://github.com/syncthing)
+  - [mediasoup](https://mediasoup.org/)
+  - [GitHub - TakuSemba/RtmpPublisher: Rtmp client on Android. Live Video Streaming.](https://github.com/TakuSemba/RtmpPublisher)
+  - [GitHub - Thytu/Agentarium: open-source framework for creating and managing simulations populated with AI-powered agents. It provides an intuitive platform for designing complex, interactive environments where agents can act, learn, and evolve.](https://github.com/Thytu/Agentarium)
+  - [Mirror: An LLM-powered programming-by-example programming language - Austin Z. Henley](https://austinhenley.com/blog/mirrorlang.html)
+  - [GitHub - grafana/grafana: The open and composable observability and data visualization platform. Visualize metrics, logs, and traces from multiple sources like Prometheus, Loki, Elasticsearch, InfluxDB, Postgres and many more.](https://github.com/grafana/grafana)
+  - [Prometheus - Monitoring system & time series database](https://prometheus.io/)
+  - [ReAct: Synergizing Reasoning and Acting in Language Models](https://research.google/blog/react-synergizing-reasoning-and-acting-in-language-models/)
+  - [ReAct: Synergizing Reasoning and Acting in Language Models](https://react-lm.github.io/)
+  - [[2210.03629] ReAct: Synergizing Reasoning and Acting in Language Models](https://arxiv.org/abs/2210.03629)
+  - [transformers/docs/source/en/agents.md at main · huggingface/transformers · GitHub](https://github.com/huggingface/transformers/blob/main/docs%2Fsource%2Fen%2Fagents.md)
+  - [GitHub - GabrieleSgroi/multiagentic_rag](https://github.com/GabrieleSgroi/multiagentic_rag)
+  - [https://towardsdatascience.com/multi-agentic-rag-with-hugging-face-code-agents-005822122930](https://towardsdatascience.com/multi-agentic-rag-with-hugging-face-code-agents-005822122930)
+  - [[2411.03252] Spontaneous Emergence of Agent Individuality through Social Interactions in LLM-Based Communities](https://arxiv.org/abs/2411.03252)
+  - [Clade - Wikipedia](https://en.wikipedia.org/wiki/Clade?wprov=sfla1)
+  - [Extinction debt - Wikipedia](https://en.wikipedia.org/wiki/Extinction_debt?wprov=sfla1)
+  - [GitHub - langgenius/dify: Dify is an open-source LLM app development platform. Dify's intuitive interface combines AI workflow, RAG pipeline, agent capabilities, model management, observability features and more, letting you quickly go from prototype to production.](https://github.com/langgenius/dify)
+  - [raylib | A simple and easy-to-use library to enjoy videogames programming](https://www.raylib.com/)
+  - [Working on GNU Linux · raysan5/raylib Wiki · GitHub](https://github.com/raysan5/raylib/wiki/Working-on-GNU-Linux)
+  - [Reddit - Dive into anything](https://www.reddit.com/r/LocalLLaMA/s/XBqlfKbkr7)
+  - [Honey-Roasted Almonds Recipe](https://www.allrecipes.com/recipe/229881/honey-roasted-almonds/)
+  - [Inflection point - Wikipedia](https://en.wikipedia.org/wiki/Inflection_point?wprov=sfla1)
+  - [South Atlantic Anomaly - Wikipedia](https://en.wikipedia.org/wiki/South_Atlantic_Anomaly?wprov=sfla1)
+  - [[2412.18319] Mulberry: Empowering MLLM with o1-like Reasoning and Reflection via Collective Monte Carlo Tree Search](https://arxiv.org/abs/2412.18319)
+  - [prill - Wiktionary, the free dictionary](https://en.wiktionary.org/wiki/prill)
+  - [Saga Norén - Wikipedia](https://en.wikipedia.org/wiki/Saga_Nor%C3%A9n?wprov=sfla1)
+  - [Home | Let's build stuff.](https://stealthvalley.com/)
+  - [Hoisting - MDN Web Docs Glossary: Definitions of Web-related terms | MDN](https://developer.mozilla.org/en-US/docs/Glossary/Hoisting)
+  - [GitHub - tauri-apps/tauri: Build smaller, faster, and more secure desktop and mobile applications with a web frontend.](https://github.com/tauri-apps/tauri)
+  - [Tauri · GitHub](https://github.com/tauri-apps)
+  - [01-intro](https://www.seas.upenn.edu/~cis1940/spring13/lectures/01-intro.html#:~:text=Wholemeal%20programming%20means%20to%20think,rather%20than%20a%20single%20path.)
+  - [Rule of least power - Wikipedia](https://en.wikipedia.org/wiki/Rule_of_least_power?wprov=sfla1)
+  - [17 Mindblowing Github Repositories You Never Knew Existed - DEV Community](https://dev.to/kafeel_ahmad/17-mindblowing-github-repositories-you-never-knew-existed-555g)
+  - [Pileus (hat) - Wikipedia](https://en.wikipedia.org/wiki/Pileus_%28hat%29?wprov=sfla1)
+  - [Nålebinding - Wikipedia](https://en.wikipedia.org/wiki/N%C3%A5lebinding?wprov=sfla1)
+  - [Berners Street hoax - Wikipedia](https://en.wikipedia.org/wiki/Berners_Street_hoax?wprov=sfla1)
+  - [Model Context Protocol | Hacker News](https://news.ycombinator.com/item?id=42237424)
+  - [Bass Transcription: Bobby Vega’s “Gosh” – No Treble](https://www.notreble.com/buzz/2015/11/12/bass-transcription-bobby-vegas-gosh/)
+  - [GitHub - clacktronics/EuroClack_BYOM_Modules](https://github.com/clacktronics/EuroClack_BYOM_Modules)
+  - [This is a bound book you can build into a complete modular system - CDM Create Digital Music](https://cdm.link/diy-book-modular/)
+  - [x.com](https://x.com/_avichawla/status/1872167965652926487?t=CLrkW6tYh3Fl3DJxzbKvrg&s=09)
+  - [Quantum scar - Wikipedia](https://en.wikipedia.org/wiki/Quantum_scar?wprov=sfla1)
+  - [[1506.06917] Bill2d - a software package for classical two-dimensional Hamiltonian systems](https://arxiv.org/abs/1506.06917)
+  - [Tampere University Computational Physics Public Repositories / Bill2d · GitLab](https://gitlab.com/compphys-public/bill2d)
+  - [Dynamical billiards - Wikipedia](https://en.wikipedia.org/wiki/Dynamical_billiards?wprov=sfla1)
+  - [Direct visualization of relativistic quantum scars in graphene quantum dots | Nature](https://www.nature.com/articles/s41586-024-08190-6)
+  - [[2403.18081] Antiscarring in Chaotic Quantum Wells](https://arxiv.org/abs/2403.18081)
+  - [The Revolution will be Automated — Nye Warburton](https://mirror.xyz/nyewarburton.eth/fHxCu_xF7lqci741FkdhfXtStjZjCdBmFQqbL-JL4QI)
+  - [https://www.newsletter.swirlai.com/p/building-ai-agents-from-scratch-part](https://www.newsletter.swirlai.com/p/building-ai-agents-from-scratch-part)
+  - [https://en.wikipedia.org/wiki/Pan%E2%80%93tilt%E2%80%93zoom_camera?wprov=sfla1](https://en.wikipedia.org/wiki/Pan%E2%80%93tilt%E2%80%93zoom_camera?wprov=sfla1)
+  - [OODA loop - Wikipedia](https://en.wikipedia.org/wiki/OODA_loop?wprov=sfla1)
+  - [Baddeley's model of working memory - Wikipedia](https://en.wikipedia.org/wiki/Baddeley%27s_model_of_working_memory?wprov=sfla1)
+  - [ConferenceCall 2024 03 06 - Ontolog Forum](https://ontologforum.com/index.php/ConferenceCall_2024_03_06)
+  - [Bonn–Oberkassel dog - Wikipedia](https://en.wikipedia.org/wiki/Bonn%E2%80%93Oberkassel_dog?wprov=sfla1)
+  - [BRINTA GRANULAR SAMPLER | NEW !!  on ERROR ! EURORACK. and more   WELCOM | www.errorinstruments.com](https://www.errorinstruments.com/a-86942053/new-on-error-eurorack-and-more-welcom/brinta-granular-sampler/#description)
+  - [Claude for Desktop | Hacker News](https://news.ycombinator.com/item?id=42007649)
+  - [GitHub - litongjava/tauri-claude: Claude Desktop](https://github.com/litongjava/tauri-claude)
+  - [GitHub - mixelpixx/Claude-MPC-Servers: Model Context Protocol Servers - Targeting Windows 10 & 11 Use](https://github.com/mixelpixx/Claude-MPC-Servers)
+  - [Reddit - Dive into anything](https://www.reddit.com/r/ClaudeAI/s/Qb0oGHCMiq)
+  - [Package anthropic-quickstarts · GitHub](https://github.com/anthropics/anthropic-quickstarts/pkgs/container/anthropic-quickstarts)
+  - [GitHub - microsoft/markitdown: Python tool for converting files and office documents to Markdown.](https://github.com/microsoft/markitdown)
+  - [The jank programming language](https://compiler-research.org/blogs/jank_intro/)
+  - [The jank programming language](https://compiler-research.org/blogs/jank_intro/)
+  - [What is Swagger | Swagger Docs](https://swagger.io/docs/specification/v2_0/what-is-swagger/)
+  - [What should the string height be on a Les Paul? - Mastering Guitar - Quora](https://masteringguitar.quora.com/What-should-the-string-height-be-on-a-Les-Paul#:~:text=It%20should%20be%205%2F64,E%20%3D%201%2F64%22.)
+  - [METALEVELS.EU](https://www.metalevels.eu/)
+  - [https://ollama.com/blog/tool-support](https://ollama.com/blog/tool-support)
+  - [How To Add Tool Support to AI Agents for Performing Actions - The New Stack](https://thenewstack.io/how-to-add-tool-support-to-ai-agents-for-performing-actions/)
+  - [ReACT Agent Model — Klu](https://klu.ai/glossary/react-agent-model)
+  - [DSPy](https://dspy.ai/)
+  - [GitHub - stanfordnlp/dspy: DSPy: The framework for programming—not prompting—language models](https://github.com/stanfordnlp/dspy)
+  - [Model Context Protocol Ontology Specification](https://hyperdata.it/xmlns/mcp/)
+  - [So many tokens, so little time: Introducing a faster, more flexible byte-pair tokenizer - The GitHub Blog](https://github.blog/ai-and-ml/llms/so-many-tokens-so-little-time-introducing-a-faster-more-flexible-byte-pair-tokenizer/)
+  - [Viroid-like colonists of human microbiomes | bioRxiv](https://www.biorxiv.org/content/10.1101/2024.01.20.576352v1)
+  - [How to debug Node.js using Chrome DevTools and watchers - LogRocket Blog](https://blog.logrocket.com/debug-node-js-chrome-devtools-watchers/)
+  - [‘Like Depeche Mode, but evil’: the sweaty, sexual music of 80s EBM | Music | The Guardian](https://www.theguardian.com/music/2024/dec/17/music-80s-ebm-electronic-body-music)
+  - [ollama/docs/api.md at main · ollama/ollama · GitHub](https://github.com/ollama/ollama/blob/main/docs%2Fapi.md)
+  - [RxJS](https://rxjs.dev/)
+  - [Tracking down high memory usage in Node.js - DEV Community](https://dev.to/gkampitakis/tracking-down-high-memory-usage-in-nodejs-2lbn)
+  - [Process | Node.js v23.4.0 Documentation](https://nodejs.org/api/process.html#signal-events)
+  - [[2412.08821] Large Concept Models: Language Modeling in a Sentence Representation Space](https://arxiv.org/abs/2412.08821#)
+  - [GitHub - facebookresearch/fairseq2: FAIR Sequence Modeling Toolkit 2](https://github.com/facebookresearch/fairseq2)
+  - [GitHub - facebookresearch/large_concept_model: Large Concept Models: Language modeling in a sentence representation space](https://github.com/facebookresearch/large_concept_model)
+  - [GitHub - marmust/REAN-architecture: language model architecture that relies on outputting next token embedding vector, and not 1hot](https://github.com/marmust/REAN-architecture)
+  - [GitHub - justcallmekoko/ESP32Marauder: A suite of WiFi/Bluetooth offensive and defensive tools for the ESP32](https://github.com/justcallmekoko/ESP32Marauder)
+  - [Buy The Thought Emporium a Coffee. ko-fi.com/thoughtemporium - Ko-fi ❤️ Where creators get support from fans through donations, memberships, shop sales and more! The original 'Buy Me a Coffee' Page.](https://ko-fi.com/thoughtemporium)
+  - [Chaitin's constant - Wikipedia](https://en.wikipedia.org/wiki/Chaitin%27s_constant?wprov=sfla1)
+  - [GitHub - smarr/JsSOM: JsSOM - The SOM (Simple Object Machine) Smalltalk implemented in JavaScript](https://github.com/smarr/JsSOM)
+  - [SOM: Simple Object Machine](http://som-st.github.io/)
+  - [GitHub - rochus-keller/Smalltalk: Parser, code model, interpreter and navigable browser for the original Xerox Smalltalk-80 v2 sources and virtual image file](https://github.com/rochus-keller/Smalltalk)
+  - [Luon/testcases/Smalltalk80 at master · rochus-keller/Luon · GitHub](https://github.com/rochus-keller/Luon/tree/master/testcases/Smalltalk80)
+  - [GitHub - rochus-keller/Luon: A compiler and IDE for the Luon programming language - a liaison beween Lua and Oberon+ - targeting LuaJIT](https://github.com/rochus-keller/Luon)
+  - [Luon/testcases/Smalltalk80 at master · rochus-keller/Luon · GitHub](https://github.com/rochus-keller/Luon/tree/master/testcases/Smalltalk80)
+  - [New LLM optimization technique slashes memory costs up to 75% | VentureBeat](https://venturebeat.com/ai/new-llm-optimization-technique-slashes-memory-costs-up-to-75/)
+  - [ | ZOOM](https://zoomcorp.com/it/it/multi-effects/guitar-effects/g3/)
+  - [https://www.vintagesynth.com/clavia/nord-micro-modular](https://www.vintagesynth.com/clavia/nord-micro-modular)
+  - [GitHub - iftah-og/spec_size](https://github.com/iftah-og/spec_size)
+  - [Reddit - Dive into anything](https://www.reddit.com/r/KnowledgeGraph/s/mikVCQQsbl)
+  - [SmallJS playground](https://small-js.org/Playground/Playground.html)
+  - [Events - Advent of Code 2024](https://adventofcode.com/2024/events)
+  - [GitHub - FunctionPoint/AoC2024: Advent of Code 2024 in SmallJS](https://github.com/FunctionPoint/AoC2024)
+  - [GitHub - oobabooga/text-generation-webui: A Gradio web UI for Large Language Models with support for multiple inference backends.](https://github.com/oobabooga/text-generation-webui)
+  - [GeoHack - File:Kundasang Sabah Cabbage-roundabout-01.jpg](https://geohack.toolforge.org/geohack.php?pagename=File:Kundasang_Sabah_Cabbage-roundabout-01.jpg&params=005.985708_N_0116.574501_E_globe:Earth_class:object_type:object_region:MY-12_&language=en)
+  - [English as She Is Spoke - Wikipedia](https://en.wikipedia.org/wiki/English_as_She_Is_Spoke?wprov=sfla1)
+  - [https://towardsdatascience.com/dragin-dynamic-retrieval-augmented-generation-based-on-the-information-needs-of-large-language-dbdb9aabc1ef](https://towardsdatascience.com/dragin-dynamic-retrieval-augmented-generation-based-on-the-information-needs-of-large-language-dbdb9aabc1ef)
+  - [GitHub - npm/node-semver: The semver parser for node (the one npm uses)](https://github.com/npm/node-semver)
+  - [Semantic Versioning 2.0.0 | Semantic Versioning](https://semver.org/)
+  - [servers/src/memory/README.md at main · modelcontextprotocol/servers · GitHub](https://github.com/modelcontextprotocol/servers/blob/main/src%2Fmemory%2FREADME.md)
+  - [https://www.mcpservers.ai/](https://www.mcpservers.ai/)
+  - [Reddit - Dive into anything](https://www.reddit.com/r/OpenAI/s/ZuqhfJEOxV)
+  - [plocate Is A Much Faster locate (Drop-In Replacement For mlocate) - Linux Uprising Blog](https://www.linuxuprising.com/2021/09/plocate-is-much-faster-locate-drop-in.html)
+  - [https://example.com/project/lightllm/](https://example.com/project/lightllm/)
+  - [
+        Aider Composer - Visual Studio Marketplace
+    ](https://marketplace.visualstudio.com/items?itemName=lee2py.aider-composer)
+  - [GitHub - bugbakery/audapolis: an editor for spoken-word audio with automatic transcription](https://github.com/bugbakery/audapolis)
+  - [Vosk Installation](https://alphacephei.com/vosk/install)
+  - [Kaldi: Kaldi for Dummies tutorial](https://kaldi-asr.org/doc/kaldi_for_dummies.html#kaldi_for_dummies_audio)
+  - [vosk-api/training at master · alphacep/vosk-api · GitHub](https://github.com/alphacep/vosk-api/tree/master/training#data-preparation)
+  - [GitHub - kaldi-asr/kaldi: kaldi-asr/kaldi is the official location of the Kaldi project.](https://github.com/kaldi-asr/kaldi)
+  - [VOSK Models](https://alphacephei.com/vosk/models)
+  - [GitHub - tj/commander.js: node.js command-line interfaces made easy](https://github.com/tj/commander.js)
+  - [Creating a TypeScript CLI for Your Monorepo - DEV Community](https://dev.to/zirkelc/creating-a-typescript-cli-for-your-monorepo-5aa)
+  - [OntologySummit2024/Synthesis - Ontolog Forum](https://ontologforum.org/index.php/OntologySummit2024/Synthesis)
+  - [A Psychologist Shares 4 ‘New’ Types Of Déjà Vu](https://www.forbes.com/sites/traversmark/2024/02/15/a-psychologist-shares-4-new-types-of-dj-vu/)
+  - [A Psychologist Shares 4 ‘New’ Types Of Déjà Vu](https://www.forbes.com/sites/traversmark/2024/02/15/a-psychologist-shares-4-new-types-of-dj-vu/)
+  - [YouTube](https://youtube.com/watch?v=Ed1gsyxxwM0&si=LdjP_fBOiQmyLtI-)
+  - [A three step recipe for designing auxetic materials on demand | Communications Physics](https://www.nature.com/articles/s42005-022-00876-5)
+  - [Lunatic Ramblings](https://alexhontz.com/blog/2_InformationTheory.html)
+  - [Alex Hontz](https://alexhontz.com/)
+  - [GitHub - 2swap/boids-algorithm: Flocking simulation using Boids algorithm.](https://github.com/2swap/boids-algorithm)
+  - [GitHub - 2swap/Mitosis: Winning submission for a biology/art contest](https://github.com/2swap/Mitosis)
+  - [GitHub - 2swap/Anki: All my anki stuffs](https://github.com/2swap/Anki)
+  - [GitHub - 2swap/FractalDive: Don't let the naysayers fool you, the Mandelbrot Set is actually 6-dimensional.](https://github.com/2swap/FractalDive)
+  - [GitHub - 2swap/swaptube: youtube video renderer](https://github.com/2swap/swaptube)
+  - [
+Scopus preview -  
+Scopus - Welcome to Scopus
+](https://www.scopus.com/home.uri?zone=header&origin=)
+  - [GitHub - 2swap/FractalDive: Don't let the naysayers fool you, the Mandelbrot Set is actually 6-dimensional.](https://github.com/2swap/FractalDive)
+  - [GitHub - 2swap/swaptube: youtube video renderer](https://github.com/2swap/swaptube)
+  - [https://orcid.org/0000-0003-1842-0233](https://orcid.org/0000-0003-1842-0233)
+  - [Auxetics - Wikipedia](https://en.wikipedia.org/wiki/Auxetics?wprov=sfla1)
+  - [https://www.lsu.edu/deafness/HearingRange.html](https://www.lsu.edu/deafness/HearingRange.html)
+  - [DL2MAN.de – home of the (tr)uSDX](https://dl2man.de/)
+  - [Reddit - Dive into anything](https://www.reddit.com/r/PromptEngineering/s/EeC641cTdT)
+  - [Wolfram Demonstrations Project](https://demonstrations.wolfram.com/ChaosInTheShiftMap/)
+  - [Functional near-infrared spectroscopy - Wikipedia](https://en.wikipedia.org/wiki/Functional_near-infrared_spectroscopy?wprov=sfla1)
+  - [Investigating the interaction between EEG and fNIRS: A multimodal network analysis of brain connectivity - ScienceDirect](https://www.sciencedirect.com/science/article/pii/S1877750324002096)
+  - [https://www.loc.gov/standards/mads/](https://www.loc.gov/standards/mads/)
+  - [Warp: The intelligent terminal](https://www.warp.dev/)
+  - [GitHub - VanceVagell/kv4p-ht: Open source handheld ham radio project KV4P-HT](https://github.com/VanceVagell/kv4p-ht)
+  - [Quickstart - kv4p HT](https://www.kv4p.com/quick_start.html)
+  - [Pattern: Saga](https://microservices.io/patterns/data/saga.html)
+  - [[2410.19697] IPPON: Common Sense Guided Informative Path Planning for Object Goal Navigation](https://arxiv.org/abs/2410.19697)
+  - [[0706.3639] A Collection of Definitions of Intelligence](https://arxiv.org/abs/0706.3639)
+  - [ChatGPT Is a Blurry JPEG of the Web | The New Yorker](https://www.newyorker.com/tech/annals-of-technology/chatgpt-is-a-blurry-jpeg-of-the-web)
+  - [[0706.3639] A Collection of Definitions of Intelligence](https://arxiv.org/abs/0706.3639)
+  - [https://medium.com/api-center/the-engine-of-application-state-92bfdce0d41c](https://medium.com/api-center/the-engine-of-application-state-92bfdce0d41c)
+  - [https://www.jsonrpc.org/specification](https://www.jsonrpc.org/specification)
+  - [https://www.atarimagazines.com/creative/v9n7/122_Variable_speech.php](https://www.atarimagazines.com/creative/v9n7/122_Variable_speech.php)
+  - [https://sound-au.com/project202.htm](https://sound-au.com/project202.htm)
+  - [https://sound-au.com/project202.htm](https://sound-au.com/project202.htm)
+  - [https://web.archive.org/web/20210506165346/https://sound-au.com/articles/high-z.htm](https://web.archive.org/web/20210506165346/https://sound-au.com/articles/high-z.htm)
+  - [Piezo Preamps](https://sound-au.com/project202.htm)
+  - [GitHub - modelcontextprotocol/specification: The specification of the Model Context Protocol](https://github.com/modelcontextprotocol/specification)
+  - [Model Context Protocol · GitHub](https://github.com/modelcontextprotocol)
+  - [Newsroom \ Anthropic](https://www.anthropic.com/news)
+  - [Newsroom \ Anthropic](https://www.anthropic.com/news)
+  - [GitHub - cumulo-autumn/StreamDiffusion: StreamDiffusion: A Pipeline-Level Solution for Real-Time Interactive Generation](https://github.com/cumulo-autumn/StreamDiffusion)
+  - [Derivative |](https://derivative.ca/)
+  - [3D-Visuo-Tactile](https://binghao-huang.github.io/3D-ViTac/)
+  - [GitHub - binghao-huang/3D-ViTac_Tactile_Hardware](https://github.com/binghao-huang/3D-ViTac_Tactile_Hardware)
+  - [3D-Visuo-Tactile](https://binghao-huang.github.io/3D-ViTac/)
+  - [Architectural Intelligence – The Next AI - InfoQ](https://www.infoq.com/articles/architectural-intelligence/)
+  - [Retrieval-Augmented Generation (RAG): Deep Dive into 25 Different Types of RAG - MarkTechPost](https://www.marktechpost.com/2024/11/25/retrieval-augmented-generation-rag-deep-dive-into-25-different-types-of-rag/)
+  - [GitHub - cstefanache/cstefanache.github.io](https://github.com/cstefanache/cstefanache.github.io)
+  - [https://github.com/aws/graph-notebook](https://github.com/aws/graph-notebook)
+  - [Valor civile - Wikipedia](https://it.wikipedia.org/wiki/Valor_civile?wprov=sfla1)
+  - [Think, Architect, and Sustain Your Serverless Applications As [Set] Pieces! - InfoQ](https://www.infoq.com/presentations/serverless-set-pieces/)
+  - [https://zachholman.com/talk/move-fast-break-nothing/?ref=blog.pragmaticengineer.com](https://zachholman.com/talk/move-fast-break-nothing/?ref=blog.pragmaticengineer.com)
+  - [Software Architecture is Overrated, Clear and Simple Design is Underrated - The Pragmatic Engineer](https://blog.pragmaticengineer.com/software-architecture-is-overrated/#getting-better-at-designing-systems)
+  - [GraphGeeks](https://www.graphgeeks.org/)
+  - [GitHub - graphgeeks-lab/awesome-graph-universe: A curated list of resources for graph-related topics, including graph databases, analytics and science](https://github.com/graphgeeks-lab/awesome-graph-universe)
+  - [A Philosophy of Software Design: My Take (and a Book Review) - The Pragmatic Engineer](https://blog.pragmaticengineer.com/a-philosophy-of-software-design-review/)
+  - [GitHub - fermyon/spin: Spin is the open source developer tool for building and running serverless applications powered by WebAssembly.](https://github.com/fermyon/spin)
+  - [GitHub - laverdet/isolated-vm: Secure & isolated JS environments for nodejs](https://github.com/laverdet/isolated-vm)
+  - [GitHub - laverdet/isolated-vm: Secure & isolated JS environments for nodejs](https://github.com/laverdet/isolated-vm)
+  - [Getting Started — Celery 5.5.0rc2 documentation](https://docs.celeryq.dev/en/main/getting-started/index.html)
+  - [Home | AMQP](https://www.amqp.org/node/7)
+  - [Broccoli/notebooks/demo/Broccoli_readme_en.md at master · Wei1234c/Broccoli · GitHub](https://github.com/Wei1234c/Broccoli/blob/master/notebooks%2Fdemo%2FBroccoli_readme_en.md)
+  - [GitHub - Wei1234c/Broccoli: Broccoli - distributed task queues for ESP32 cluster](https://github.com/Wei1234c/Broccoli)
+  - [FCFZ: Fully Compatible Flipper Zero - Hackster.io](https://www.hackster.io/zst123/fcfz-fully-compatible-flipper-zero-e686ba)
+  - [https://minejima.jp/ISLispHyperDraft/islisp-v23.html](https://minejima.jp/ISLispHyperDraft/islisp-v23.html)
+  - [GitHub - sasagawa888/eisl: ISLisp interpreter/compiler](https://github.com/sasagawa888/eisl)
+  - [Reddit - Dive into anything](https://www.reddit.com/r/fossdroid/s/W8Q009oZji)
+  - [https://www.guysandstthomas.nhs.uk/health-information/fibroscan-for-liver-inflammation](https://www.guysandstthomas.nhs.uk/health-information/fibroscan-for-liver-inflammation)
+  - [fast-graphrag/CONTRIBUTING.md at main · circlemind-ai/fast-graphrag · GitHub](https://github.com/circlemind-ai/fast-graphrag/blob/main/CONTRIBUTING.md)
+  - [[2405.14831] HippoRAG: Neurobiologically Inspired Long-Term Memory for Large Language Models](https://arxiv.org/abs/2405.14831)
+  - [GitHub - circlemind-ai/fast-graphrag: RAG that intelligently adapts to your use case, data, and queries](https://github.com/circlemind-ai/fast-graphrag)
+  - [GitHub - circlemind-ai/fast-graphrag: RAG that intelligently adapts to your use case, data, and queries](https://github.com/circlemind-ai/fast-graphrag)
+  - [Circlemind: Circlemind is an open-source RAG using knowledge graphs and PageRank. | Y Combinator](https://www.ycombinator.com/companies/circlemind)
+  - [[2411.10109] Generative Agent Simulations of 1,000 People](https://arxiv.org/abs/2411.10109)
+  - [Boffins build AI agents that respond like real people • The Register](https://www.theregister.com/2024/11/24/ai_based_on_people/)
+  - [What is DevOps and Why Should You Care?](https://www.cloudbees.com/blog/what-devops)
+  - [The Origins of DevOps: What’s in a Name? - DevOps.com](https://devops.com/the-origins-of-devops-whats-in-a-name/)
+  - [Manifesto for Agile Software Development
+](https://agilemanifesto.org/)
+  - [Funky Break - ''Impeach The President'' | Sample Focus](https://samplefocus.com/samples/funky-break-impeach-the-president)
+  - [Funky Break - ''Impeach The President'' | Sample Focus](https://samplefocus.com/samples/funky-break-impeach-the-president)
+  - [Inside JavaScript Engines: How Browsers Bring Your Code to Life - DEV Community](https://dev.to/mukhilpadmanabhan/inside-javascript-engines-how-browsers-bring-your-code-to-life-h1)
+  - [ISCA Archive](https://www.isca-archive.org/)
+  - [ISCA Archive - Development of a formant-based analysis-synthesis system and generation of high quality liquid sounds of Japanese](https://www.isca-archive.org/icslp_2000/nishizawa00_icslp.html)
+  - [Features – libssh](https://www.libssh.org/features/)
+  - [libssh: The Tutorial](https://api.libssh.org/master/libssh_tutorial.html)
+  - [Toraiz Chordcat Is a Chord Generator Groovebox for Less Than $200 - gearnews.com](https://www.gearnews.com/toraiz-chordcat/)
+  - [VLF Ground Loop Breaker with audio tranformer](http://www.vlf.it/vinassa2/ground-loop-breaker.html)
+  - [RADIO WAVES below 22 kHz](http://www.vlf.it/)
+  - [Fulmini e tuoni in tempo reale - Portogallo, Spagna, Francia, Italia](https://www.blitzortung.org/it/live_lightning_maps.php)
+  - [https://scitechdaily.com/artificial-intelligence-predicts-earthquakes-with-unprecedented-accuracy/](https://scitechdaily.com/artificial-intelligence-predicts-earthquakes-with-unprecedented-accuracy/)
+  - [Earthquake Forecasting Using Big Data and Artificial Intelligence: A 30‐Week Real‐Time Case Study in China | Bulletin of the Seismological Society of America | GeoScienceWorld](https://pubs.geoscienceworld.org/ssa/bssa/article-abstract/113/6/2461/627949/Earthquake-Forecasting-Using-Big-Data-and)
+  - [https://datasciencetoday.net/index.php/en-us/nlp/211-paper-dissected-bert-pre-training-of-deep-bidirectional-transformers-for-language-understanding-explained](https://datasciencetoday.net/index.php/en-us/nlp/211-paper-dissected-bert-pre-training-of-deep-bidirectional-transformers-for-language-understanding-explained)
+  - [Praxis (process) - Wikipedia](https://en.wikipedia.org/wiki/Praxis_%28process%29?wprov=sfla1)
+  - [ACID - Wikipedia](https://en.wikipedia.org/wiki/ACID?wprov=sfla1)
+  - [Atomicity (database systems) - Wikipedia](https://en.wikipedia.org/wiki/Atomicity_%28database_systems%29?wprov=sfla1)
+  - [Monitor (synchronization) - Wikipedia](https://en.wikipedia.org/wiki/Monitor_%28synchronization%29?wprov=sfla1)
+  - [Lock (computer science) - Wikipedia](https://en.wikipedia.org/wiki/Lock_%28computer_science%29?wprov=sfla1)
+  - [Actor model - Wikipedia](https://en.wikipedia.org/wiki/Actor_model?wprov=sfla1)
+  - [https://datasciencetoday.net/index.php/en-us/nlp/211-paper-dissected-bert-pre-training-of-deep-bidirectional-transformers-for-language-understanding-explained](https://datasciencetoday.net/index.php/en-us/nlp/211-paper-dissected-bert-pre-training-of-deep-bidirectional-transformers-for-language-understanding-explained)
+  - [nlp - What is purpose of the [CLS] token and why is its encoding output important? - Data Science Stack Exchange](https://datascience.stackexchange.com/questions/66207/what-is-purpose-of-the-cls-token-and-why-is-its-encoding-output-important#66209)
+  - [[2309.16588] Vision Transformers Need Registers](https://arxiv.org/abs/2309.16588)
+  - [GitHub - facebookresearch/dinov2: PyTorch code and models for the DINOv2 self-supervised learning method.](https://github.com/facebookresearch/dinov2)
+  - [https://github.com/facebookresearch/dino](https://github.com/facebookresearch/dino)
+  - [[2104.14294] Emerging Properties in Self-Supervised Vision Transformers](https://arxiv.org/abs/2104.14294)
+  - [GitHub - google-research/scenic: Scenic: A Jax Library for Computer Vision Research and Beyond](https://github.com/google-research/scenic)
+  - [[2410.13638] Scaling Wearable Foundation Models](https://arxiv.org/abs/2410.13638)
+  - [https://arxiv.org/abs/2410.13638](https://arxiv.org/abs/2410.13638)
+  - [http://research.google/blog/scaling-wearable-foundation-models/](http://research.google/blog/scaling-wearable-foundation-models/)
+  - [http://research.google/blog/scaling-wearable-foundation-models/](http://research.google/blog/scaling-wearable-foundation-models/)
+  - [Effective Neovim setup for web development towards 2024](https://www.devas.life/effective-neovim-setup-for-web-development-towards-2024/)
+  - [Situationist International - Wikipedia](https://en.wikipedia.org/wiki/Situationist_International?wprov=sfla1)
+  - [Situated - Wikipedia](https://en.wikipedia.org/wiki/Situated?wprov=sfla1)
+  - [Embodied cognition - Wikipedia](https://en.wikipedia.org/wiki/Embodied_cognition?wprov=sfla1)
+  - [Lexicon - Wikipedia](https://en.wikipedia.org/wiki/Lexicon?wprov=sfla1)
+  - [Embodied bilingual language - Wikipedia](https://en.wikipedia.org/wiki/Embodied_bilingual_language?wprov=sfla1)
+  - [Transducer - Wikipedia](https://en.wikipedia.org/wiki/Transducer?wprov=sfla1)
+  - [Functional programming - Wikipedia](https://en.wikipedia.org/wiki/Functional_programming?wprov=sfla1)
+  - [GitHub - LazyVim/LazyVim: Neovim config for the lazy](https://github.com/LazyVim/LazyVim)
+  - [Say Goodbye to Your IDE: Meet LazyVim](https://catalins.tech/lazyvim/)
+  - [Pareto efficiency - Wikipedia](https://en.wikipedia.org/wiki/Pareto_efficiency?wprov=sfla1)
+  - [ Shape Rotation 101: An Intro to Einsum and Jax Transformers](https://huggingface.co/blog/dejavucoder/einsum)
+  - [GitHub - hpi-swa-lab/Squeak-SemanticText: ChatGPT, embedding search, and retrieval-augmented generation for Squeak/Smalltalk](https://github.com/hpi-swa-lab/Squeak-SemanticText)
+  - [Reddit - Dive into anything](https://www.reddit.com/r/smalltalk/s/zxLra4XaPp)
+  - [Hardware Design and Development | NVIDIA Developer](https://developer.nvidia.com/hardware-design-and-development)
+  - [Jetson TK1](https://demotomohiro.github.io/hardware/jetson_tk1/index.html)
+  - [Linux for Tegra R21.8 | NVIDIA Developer](https://developer.nvidia.com/linux-tegra-r218)
+  - [Linux for Tegra R21.8 | NVIDIA Developer](https://developer.nvidia.com/linux-tegra-r218)
+  - [GitHub - skoona/SknLD2410: ESP32 Program that explores the LD2410 mmWave Human Detection Sensor](https://github.com/skoona/SknLD2410)
+  - [GitHub - skoona/WebServos: ESP32 Controlling analog-feedback servos.](https://github.com/skoona/WebServos)
+  - [GitHub - Serial-Studio/Serial-Studio: Multi-purpose serial data visualization & processing program](https://github.com/Serial-Studio/Serial-Studio)
+  - [GitHub - soubhik-khan/HLK-LD2410C](https://github.com/soubhik-khan/HLK-LD2410C)
+  - [GitHub - Kreshnik/d2lang-js: An unofficial interface for building D2 diagram files in javascript.](https://github.com/Kreshnik/d2lang-js)
+  - [https://d2lang.com/tour/cheat-sheet/](https://d2lang.com/tour/cheat-sheet/)
+  - [Pseudorandom number generator - Wikipedia](https://en.wikipedia.org/wiki/Pseudorandom_number_generator?wprov=sfla1)
+  - [http://prize.hutter1.net/](http://prize.hutter1.net/)
+  - [Hutter Prize - Wikipedia](https://en.wikipedia.org/wiki/Hutter_Prize?wprov=sfla1)
+  - [[cs/0701125] Universal Algorithmic Intelligence: A mathematical top->down approach](https://arxiv.org/abs/cs/0701125)
+  - [Gödel machine - Wikipedia](https://en.wikipedia.org/wiki/G%C3%B6del_machine?wprov=sfla1)
+  - [Epicurus - Wikipedia](https://en.wikipedia.org/wiki/Epicurus#Epistemology?wprov=sfla1)
+  - [Solomonoff's theory of inductive inference - Wikipedia](https://en.wikipedia.org/wiki/Solomonoff%27s_theory_of_inductive_inference?wprov=sfla1)
+  - [AIXI - Wikipedia](https://en.wikipedia.org/wiki/AIXI?wprov=sfla1)
+  - [Markov decision process - Wikipedia](https://en.wikipedia.org/wiki/Markov_decision_process?wprov=sfla1)
+  - [Marcus Hutter - Wikipedia](https://en.wikipedia.org/wiki/Marcus_Hutter?wprov=sfla1)
+  - [Artificial General Intelligence Is Already Here](https://www.noemamag.com/artificial-general-intelligence-is-already-here)
+  - [Artificial general intelligence - Wikipedia](https://en.wikipedia.org/wiki/Artificial_general_intelligence?wprov=sfla1)
+  - [potpie - ai agents for your codebase in minutes](https://potpie.ai/)
+  - [GitHub - TheBlewish/Automated-AI-Web-Researcher-Ollama: A python program that turns an LLM, running on Ollama, into an automated researcher, which will with a single query determine focus areas to investigate, do websearches and scrape content from various relevant websites and do research for you all on its own! And more, not limited to but including saving the findings for you!](https://github.com/TheBlewish/Automated-AI-Web-Researcher-Ollama)
+  - [Google - Unlock Global Communication with Gemma | Kaggle](https://www.kaggle.com/competitions/gemma-language-tuning)
+  - [OSF | Sign in](https://osf.io/dashboard)
+  - [https://pubs.aip.org/asa/jasa/article/156/5/3468/3321514/The-alveolar-trill-is-perceived-as-jagged-rough-by](https://pubs.aip.org/asa/jasa/article/156/5/3468/3321514/The-alveolar-trill-is-perceived-as-jagged-rough-by)
+  - [GitHub - Doriandarko/claude-engineer: Claude Engineer is an interactive command-line interface (CLI) that leverages the power of Anthropic's Claude-3.5-Sonnet model to assist with software development tasks. This tool combines the capabilities of a large language model with practical file system operations and web search functionality.](https://github.com/Doriandarko/claude-engineer)
+  - [ChatGPT and Claude.ai - Chat Productivity Techniques – LLMindset.co.uk](https://llmindset.co.uk/posts/2024/07/chatgpt-claude-productivity-techniques/)
+  - [Use XML tags to structure your prompts - Anthropic](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/use-xml-tags)
+  - [Posts – LLMindset.co.uk](https://llmindset.co.uk/posts/)
+  - [Formal Concept Analysis Homepage](https://upriss.github.io/fca/fca.html)
+  - [Formal concept analysis - Wikipedia](https://en.wikipedia.org/wiki/Formal_concept_analysis?wprov=sfla1)
+  - [Hasse diagram - Wikipedia](https://en.wikipedia.org/wiki/Hasse_diagram?wprov=sfla1)
+  - [https://www.johnold.org/LJOLD/InformationCartography/information_cartography.htm](https://www.johnold.org/LJOLD/InformationCartography/information_cartography.htm)
+  - [Knowledge Exploration Technologies Laboratory](https://upriss.github.io/ketlab/index.html)
+  - [Ontology](https://www.jfsowa.com/ontology/)
+  - [GitHub - karelklima/workflowy: WorkFlowy API for Deno and Node](https://github.com/karelklima/workflowy)
+  - [The Semantic Web](https://www.lassila.org/publications/2001/SciAm.html)
+  - get transcript : [https://www.youtube.com/watch?v=gCo5zKXOuUE](https://www.youtube.com/watch?v=gCo5zKXOuUE)
+  - [https://www.ipam.ucla.edu/programs/workshops/workshop-iii-naturalistic-approaches-to-artificial-intelligence/?tab=overview](https://www.ipam.ucla.edu/programs/workshops/workshop-iii-naturalistic-approaches-to-artificial-intelligence/?tab=overview)
+  - [Creating your first schema](https://json-schema.org/learn/getting-started-step-by-step)
+  - [https://gautam75.medium.com/fine-tuning-llama-3-1-8b-for-function-calling-using-lora-159b9ee66060](https://gautam75.medium.com/fine-tuning-llama-3-1-8b-for-function-calling-using-lora-159b9ee66060)
+  - [Tool Use, Unified](https://huggingface.co/blog/unified-tool-use)
+  - [Function Calling - Qwen](https://qwen.readthedocs.io/en/latest/framework/function_call.html)
+  - [https://gautam75.medium.com/fine-tuning-llama-3-1-8b-for-function-calling-using-lora-159b9ee66060](https://gautam75.medium.com/fine-tuning-llama-3-1-8b-for-function-calling-using-lora-159b9ee66060)
+  - [Tree-sitter｜Introduction](https://tree-sitter.github.io/tree-sitter/)
+  - [GitHub - terrastruct/d2: D2 is a modern diagram scripting language that turns text to diagrams.](https://github.com/terrastruct/d2)
+  - [Microservices - Wikipedia](https://en.wikipedia.org/wiki/Microservices?wprov=sfla1)
+  - [Mirror: An LLM-powered programming-by-example programming language - Austin Z. Henley](https://austinhenley.com/blog/mirrorlang.html)
+  - [Mirror: An LLM-powered programming-by-example programming language - Austin Z. Henley](https://austinhenley.com/blog/mirrorlang.html)
+  - [GitHub - AZHenley/Mirror: An LLM-powered programming-by-example programming language.](https://github.com/AZHenley/Mirror)
+  - [Game Engines Database](https://enginesdatabase.com/?software_license=1&size=1&development_platforms=3&programming_languages=13&genre_tags=2&genre_tags=3)
+  - [Game Engines Database](https://enginesdatabase.com/engine/babylonjs/)
+  - [GitHub - kieler/elkjs: ELK's layout algorithms for JavaScript](https://github.com/kieler/elkjs)
+  - [GitHub - kieler/elkjs: ELK's layout algorithms for JavaScript](https://github.com/kieler/elkjs)
+  - [AWS Launches Multi-Agent Orchestrator for Managing AI Agents](https://analyticsindiamag.com/ai-news-updates/aws-launches-multi-agent-orchestrator-for-managing-ai-agents/)
+  - [Introduction - AgentOps](https://docs.agentops.ai/v1/introduction)
+  - [Introduction - AgentOps](https://docs.agentops.ai/v1/introduction)
+  - [Serendipity - Wikipedia](https://en.wikipedia.org/wiki/Serendipity?wprov=sfla1)
+  - [Serendipity - The Sri Lankan connection. 
+](https://www.linkedin.com/pulse/serendipity-sri-lankan-connection-avik-chatterjee?utm_source=share&utm_medium=member_android&utm_campaign=share_via)
+    - Serendipity - The Sri Lankan connection. 
+  - [GitHub - terrastruct/d2: D2 is a modern diagram scripting language that turns text to diagrams.](https://github.com/terrastruct/d2)
+  - [GitHub - fermyon/spin: Spin is the open source developer tool for building and running serverless applications powered by WebAssembly.](https://github.com/fermyon/spin)
+  - [Taking Spin for a spin | Fermyon Developer](https://developer.fermyon.com/spin/v2/quickstart)
+  - [Meet Memoripy: A Python Library that Brings Real Memory Capabilities to AI Applications - MarkTechPost](https://www.marktechpost.com/2024/11/17/meet-memoripy-a-python-library-that-brings-real-memory-capabilities-to-ai-applications/)
+  - [GitHub - caspianmoon/memoripy: An AI memory layer with short- and long-term storage, semantic clustering, and optional memory decay for context-aware applications.](https://github.com/caspianmoon/memoripy)
+  - [GitHub - bRAGAI/bRAG-langchain: Everything you need to know to build your own RAG application](https://github.com/bRAGAI/bRAG-langchain)
+  - [Reddit - Dive into anything](https://www.reddit.com/r/ClaudeAI/s/N7oJS6mZW6)
+  - [Daniel Spoerri obituary | Art | The Guardian](https://www.theguardian.com/artanddesign/2024/nov/17/daniel-spoerri-obituary)
+  - [Shorthand Symbols For Tarot Journal Winners - Interrobang Tarot - Interrobang Tarot](https://www.interrobangtarot.com/blog/shorthand-symbols-for-tarot-journal-winners)
+  - [Visconti Tarot | Beinecke Rare Book & Manuscript Library](https://beinecke.library.yale.edu/collections/highlights/visconti-tarot)
+  - [Glossary of blogging - Wikipedia](https://en.wikipedia.org/wiki/Glossary_of_blogging?wprov=sfla1)
+  - [GitHub - dishant0406/lazyweb: A Web app that includes all the usefull websites which you might require for your next project](https://github.com/dishant0406/lazyweb)
+  - [Ora Lassila](https://lassila.org/)
+  - [Charles Sanders Peirce - Wikipedia](https://en.wikipedia.org/wiki/Charles_Sanders_Peirce?wprov=sfla1)
+  - [https://en.wikipedia.org/wiki/Semiotics?wprov=sfla1](https://en.wikipedia.org/wiki/Semiotics?wprov=sfla1)
+  - [Auto-fixer.md · GitHub](https://gist.github.com/ruvnet/a84d2ba9077a989da37dbe3cf6524c43)
+  - [Forth (programming language) - Wikipedia](https://en.wikipedia.org/wiki/Forth_%28programming_language%29?wprov=sfla1)
+  - [Reddit - Dive into anything](https://www.reddit.com/r/LocalLLaMA/s/J4hs413XCK)
+  - [RunPod - The Cloud Built for AI](https://www.runpod.io/)
+  - [Juan Sequeda on LinkedIn: One year ago today, Dean Allemang Bryon Jacob and I released our paper "A… | 33 comments](https://www.linkedin.com/posts/juansequeda_one-year-ago-today-dean-allemang-bryon-jacob-activity-7262886661951229955-zCCN?utm_source=share&utm_medium=member_android)
+  - [Coding Horror](https://blog.codinghorror.com/)
+  - [Script Kit: Shortcut to Everything](https://www.scriptkit.com/)
+  - [GitHub - semantic-release/semantic-release: :package::rocket: Fully automated version management and package publishing](https://github.com/semantic-release/semantic-release)
+  - [An Argument for Automation](https://kentcdodds.com/blog/automation)
+  - [https://plopjs.com/documentation/](https://plopjs.com/documentation/)
+  - [GitHub - plopjs/plop: Consistency Made Simple](https://github.com/plopjs/plop)
+  - [GitHub - SBoudrias/Inquirer.js: A collection of common interactive command line user interfaces.](https://github.com/SBoudrias/Inquirer.js)
+  - [https://github.com/remy/nodemon](https://github.com/remy/nodemon)
+  - [midrissi (IDRISSI Mohamed) · GitHub](https://github.com/midrissi)
+  - [https://github.com/midrissi/func-loc](https://github.com/midrissi/func-loc)
+  - [GitHub - ChromeDevTools/awesome-chrome-devtools: Awesome tooling and resources in the Chrome DevTools & DevTools Protocol ecosystem](https://github.com/ChromeDevTools/awesome-chrome-devtools#chrome-devtools-protocol)
+  - [https://github.com/ChromeDevTools/awesome-chrome-devtools#chrome-devtools-protocol](https://github.com/ChromeDevTools/awesome-chrome-devtools#chrome-devtools-protocol)
+  - [https://github.com/ChromeDevTools/awesome-chrome-devtools#chrome-devtools-protocol](https://github.com/ChromeDevTools/awesome-chrome-devtools#chrome-devtools-protocol)
+  - [GitHub - bcoe/c8: output coverage reports using Node.js' built in coverage](https://github.com/bcoe/c8)
+  - [https://github.com/sfninja/thetool#type-profiler](https://github.com/sfninja/thetool#type-profiler)
+  - [GitHub - ChromeDevTools/awesome-chrome-devtools: Awesome tooling and resources in the Chrome DevTools & DevTools Protocol ecosystem](https://github.com/ChromeDevTools/awesome-chrome-devtools#chrome-devtools-protocol)
+  - [https://github.com/oguimbal/smartloc](https://github.com/oguimbal/smartloc)
+  - [GitHub - bastl-instruments/sysex-playback: Electron app to playback MIDI files containing SysEx messages to a MIDI port](https://github.com/bastl-instruments/sysex-playback)
+  - [Bastl Instruments · GitHub](https://github.com/bastl-instruments)
+  - [https://www.gearnews.com/bastl-instruments-kastle-2-fx-wizard/](https://www.gearnews.com/bastl-instruments-kastle-2-fx-wizard/)
+  - [GitHub - mikejihbe/metrics: A metrics library for Node.js](https://github.com/mikejihbe/metrics)
+  - [GitHub - kyutai-labs/moshi](https://github.com/kyutai-labs/moshi)
+  - [OuteTTS 0.1 350M](https://www.outeai.com/blog/outetts-0.1-350m)
+  - [How to Create Vector Embeddings in Node.js | DataStax](https://www.datastax.com/blog/how-to-create-vector-embeddings-in-node-js)
+  - [https://arxiv.org/abs/1906.00300](https://arxiv.org/abs/1906.00300)
+  - [https://medium.com/@287961061/dense-retrieval-in-rag-must-read-papers-before-implementation-2a91b4e72298](https://medium.com/@287961061/dense-retrieval-in-rag-must-read-papers-before-implementation-2a91b4e72298)
+  - [https://daveshap.substack.com/](https://daveshap.substack.com/)
+  - [ACE_Framework/ACE_Framework.md at main · daveshap/ACE_Framework · GitHub](https://github.com/daveshap/ACE_Framework/blob/main/ACE_Framework.md)
+  - [GitHub - daveshap/SparsePrimingRepresentations: Public repo to document some SPR stuff](https://github.com/daveshap/SparsePrimingRepresentations)
+  - [GitHub - daveshap/SparsePrimingRepresentations: Public repo to document some SPR stuff](https://github.com/daveshap/SparsePrimingRepresentations)
+  - [https://medium.com/@kachari.bikram42/from-search-to-synthesis-enhancing-rag-with-bm25-and-reciprocal-rank-fusion-872d21dc4ca7](https://medium.com/@kachari.bikram42/from-search-to-synthesis-enhancing-rag-with-bm25-and-reciprocal-rank-fusion-872d21dc4ca7)
+  - [Deploying a llama.cpp Container](https://huggingface.co/docs/inference-endpoints/guides/llamacpp_container)
+  - [Document Classification with H2O VL Mississippi: A Quick Guide](https://h2o.ai/blog/2024/document-classification-with-h2o-vl-mississippi--a-quick-guide/)
+  - [Asghar Ghorbani's Resume](https://a-ghorbani.github.io/resume/)
+  - [H2OVL Mississippi | H2O.ai](https://h2o.ai/platform/mississippi/)
+  - [Document Classification with H2O VL Mississippi: A Quick Guide](https://h2o.ai/blog/2024/document-classification-with-h2o-vl-mississippi--a-quick-guide/)
+  - [https://metrobundler.dev/](https://metrobundler.dev/)
+  - [Blog](https://machinelearningmastery.com/blog/)
+  - [Journal of Medical Internet Research - Facilitating Thought Progression to Reduce Depressive Symptoms: Randomized Controlled Trial](https://www.jmir.org/2024/1/e56201)
+  - [https://github.com/Waboodoo/HTTP-Shortcuts](https://github.com/Waboodoo/HTTP-Shortcuts)
+  - [GitHub - ente-io/ente: Fully open source, End to End Encrypted alternative to Google Photos and Apple Photos](https://github.com/ente-io/ente)
+  - [GitHub - gabefair/Archive-Webpage: Publicly archive any website](https://github.com/gabefair/Archive-Webpage)
+  - [https://github.com/gabefair/Share-2-Archive-Today](https://github.com/gabefair/Share-2-Archive-Today)
+  - [http://archive.today/](http://archive.today/)
+  - [GitHub - Genymobile/scrcpy: Display and control your Android device](https://github.com/Genymobile/scrcpy)
+  - [Plugins - Zellij User Guide](https://zellij.dev/documentation/plugins.html)
+  - [GitHub - zellij-org/zellij: A terminal workspace with batteries included](https://github.com/zellij-org/zellij)
+  - [
+        
+            Zellij Roadmap
+        
+    ](https://zellij.dev/roadmap/)
+  - [
+      TPU     – Gateworks
+
+    ](https://trac.gateworks.com/wiki/TPU)
+  - [Mini PCIe Accelerator | Coral](https://coral.ai/products/pcie-accelerator/)
+  - [API Best Practices | Protocol Buffers Documentation](https://protobuf.dev/programming-guides/api/)
+  - [Language Guide (proto 3) | Protocol Buffers Documentation](https://protobuf.dev/programming-guides/proto3/#json)
+  - [OTLP Specification 1.3.2 | OpenTelemetry](https://opentelemetry.io/docs/specs/otlp/#otlphttp)
+  - [JavaScript zero-code instrumentation | OpenTelemetry](https://opentelemetry.io/docs/zero-code/js/)
+  - [OTLP Specification 1.3.2 | OpenTelemetry](https://opentelemetry.io/docs/specs/otlp/)
+  - [Jaeger: open source, distributed tracing platform](https://www.jaegertracing.io/)
+  - [Jaeger v2 released: OpenTelemetry in the core! | CNCF](https://www.cncf.io/blog/2024/11/12/jaeger-v2-released-opentelemetry-in-the-core/)
+  - [Overview | Protocol Buffers Documentation](https://protobuf.dev/overview/)
+  - [Penis and Prepuce | Veterian Key](https://veteriankey.com/penis-and-prepuce/)
+  - [Muntzing - Wikipedia](https://en.wikipedia.org/wiki/Muntzing?wprov=sfla1)
+  - [Ablation (artificial intelligence) - Wikipedia](https://en.wikipedia.org/wiki/Ablation_%28artificial_intelligence%29#%3A%7E%3Atext%3DIn_artificial_intelligence_%28AI%29%2C%2Cresultant_performance_of_the_system.?wprov=sfla1)
+  - [GitHub - Aider-AI/aider: aider is AI pair programming in your terminal](https://github.com/Aider-AI/aider)
+  - [GitHub - pschatzmann/arduino-audio-tools: Arduino Audio Tools (a powerful Audio library not only for Arduino)](https://github.com/pschatzmann/arduino-audio-tools)
+  - [Heavy Compiler Collection (hvcc) | hvcc](https://wasted-audio.github.io/hvcc/)
+  - [GitHub - jlswbs/ESP32_PureData](https://github.com/jlswbs/ESP32_PureData)
+  - [electro-music.com :: View topic - ESP32 microcontroller and PureData](https://electro-music.com/forum/post-455741.html)
+  - [[1804.09996] Link and code: Fast indexing with graphs and compact regression codes](https://arxiv.org/abs/1804.09996)
+  - [[2404.12457] RAGCache: Efficient Knowledge Caching for Retrieval-Augmented Generation](https://arxiv.org/abs/2404.12457)
+  - [RAGCache: Optimizing Retrieval-Augmented Generation with Dynamic Caching - MarkTechPost](https://www.marktechpost.com/2024/11/10/ragcache-optimizing-retrieval-augmented-generation-with-dynamic-caching/)
+  - [Linux DAW is a one-stop catalog of free and proprietary plug-ins for Linux - CDM Create Digital Music](https://cdm.link/linux-plugin-guide/)
+  - [Goin Down South Tab by Rl Burnside | Songsterr Tabs with Rhythm](https://www.songsterr.com/a/wsa/rl-burnside-goin-down-south-tab-s78831)
+  - [One pattern to express them all? Towards Generalized Patterns for Ontology Design in the Digital Humanities](https://zenodo.org/records/14063917)
+  - [Continue](https://www.continue.dev/)
+  - [https://github.com/cline/cline](https://github.com/cline/cline)
+  - [Fullerene - Wikipedia](https://en.wikipedia.org/wiki/Fullerene?wprov=sfla1)
+  - [World Wide Web Wanderer - Wikipedia](https://en.wikipedia.org/wiki/World_Wide_Web_Wanderer?wprov=sfla1)
+  - [A Crash Course on Building RAG Systems – Part 2 (With Implementation)](https://www.dailydoseofds.com/a-crash-course-on-building-rag-systems-part-2-with-implementations/)
+  - [Surprising precision: Nearly half of "earworms" match original pitch perfectly](https://www.psypost.org/surprising-precision-nearly-half-of-earworms-match-original-pitch-perfectly/)
+  - [Surprising precision: Nearly half of "earworms" match original pitch perfectly](https://www.psypost.org/surprising-precision-nearly-half-of-earworms-match-original-pitch-perfectly/#google_vignette)
+  - [https://community.openai.com/t/format-of-training-and-validating-dataset-inside/732907](https://community.openai.com/t/format-of-training-and-validating-dataset-inside/732907)
+  - [https://towardsdatascience.com/random-forest-explained-a-visual-guide-with-code-examples-9f736a6e1b3c](https://towardsdatascience.com/random-forest-explained-a-visual-guide-with-code-examples-9f736a6e1b3c)
+  - [Bootstrap aggregating - Wikipedia](https://en.wikipedia.org/wiki/Bootstrap_aggregating?wprov=sfla1)
+  - [Random forest - Wikipedia](https://en.wikipedia.org/wiki/Random_forest?wprov=sfla1)
+  - [Crows hold grudges against individual humans for up to 17 years - Earth.com](https://www.earth.com/news/crows-hold-grudges-for-up-to-17-years/)
+  - [Loihi  - Intel - WikiChip](https://en.wikichip.org/wiki/intel/loihi)
+  - [IRC-people - W3C Wiki](https://www.w3.org/wiki/IRC-people)
+  - [ Arnaud's Blog](https://lehors.wordpress.com/)
+  - [https://www.jwz.org/xscreensaver/google.html](https://www.jwz.org/xscreensaver/google.html)
+  - [Random forest - Wikipedia](https://en.wikipedia.org/wiki/Random_forest?wprov=sfla1)
+  - [https://towardsdatascience.com/random-forest-explained-a-visual-guide-with-code-examples-9f736a6e1b3c](https://towardsdatascience.com/random-forest-explained-a-visual-guide-with-code-examples-9f736a6e1b3c)
+  - [How do I open a browser window in a visual studio code extension? - Stack Overflow](https://stackoverflow.com/questions/37077591/how-do-i-open-a-browser-window-in-a-visual-studio-code-extension)
+  - [I turned JS into a compiled language (for fun and Wasm) — surma.dev](https://surma.dev/things/compile-js/)
+  - [Node.js and WebAssembly: A Powerful Combination for Server-Side Performance - DEV Community](https://dev.to/rohitlohar45/nodejs-and-webassembly-a-powerful-combination-for-server-side-performance-4apf)
+  - [LVX - Meris](https://www.meris.us/product/lvx/)
+  - [Shopping Cart  - Kosmic Kitchen](https://www.kosmickitchen.eu/checkout/cart/)
+  - [Spores for microscopy - Medicinal Mushroom Onlineshop - Tyroler Glückspilze](https://gluckspilze.com/Spores-for-microscopy)
+  - [How to grow magic truffles Psilocybe Mexicana and Tampanensis](https://shroomok.com/en/wiki/How_to_grow_magic_truffles_Psilocybe_Mexicana_and_Tampanensis)
+  - [Magic Truffles Hollandia - Primal Focus](https://primalfocus.eu/product/magic-truffles-hollandia-15-grams/)
+  - [Shop - Primal Focus](https://primalfocus.eu/products/)
+  - [bioRxiv.org - the preprint server for Biology](https://www.biorxiv.org/)
+  - [Develop serverless WebAssembly apps with Spin](https://www.fermyon.com/spin)
+  - [Taking Spin for a spin | Fermyon Developer](https://developer.fermyon.com/spin/v2/quickstart?_gl=1*jpc2ww*_ga*MTc5MDAxMDQ1MS4xNzMwODQ3NTU5*_ga_DXM7W0VBXS*MTczMDg0NzU1OC4xLjAuMTczMDg0NzU3OS4zOS4wLjA.)
+  - [Serverless Applications](https://www.fermyon.com/serverless-guide/serverless-applications)
+  - [Lightweight Kubernetes and Wasm is a Perfect Combo - DEV Community](https://dev.to/fermyon/lightweight-kubernetes-and-wasm-is-a-perfect-combo-5h11)
+  - [Despite its impressive output, generative AI doesn't have a coherent understanding of the world, researchers suggest](https://techxplore.com/news/2024-11-output-generative-ai-doesnt-coherent.html)
+  - [+23.200 Celtic Dog With Knots Illustrazioni stock, grafiche vettoriali royalty-free e clip art - iStock](https://www.istockphoto.com/it/illustrazioni/celtic-dog-with-knots)
+  - [Deterministic finite automaton - Wikipedia](https://en.wikipedia.org/wiki/Deterministic_finite_automaton?wprov=sfla1)
+  - [Myhill–Nerode theorem - Wikipedia](https://en.wikipedia.org/wiki/Myhill%E2%80%93Nerode_theorem?wprov=sfla1)
+  - [+23.200 Celtic Dog With Knots Illustrazioni stock, grafiche vettoriali royalty-free e clip art - iStock](https://www.istockphoto.com/it/illustrazioni/celtic-dog-with-knots)
+  - [https://github.com/cyberkernelofficial/docker-in-termux](https://github.com/cyberkernelofficial/docker-in-termux)
+  - [https://github.com/phoenixbyrd/Termux_XFCE](https://github.com/phoenixbyrd/Termux_XFCE)
+  - [How to Build A Text Summarizer Using Huggingface Transformers](https://www.freecodecamp.org/news/how-to-build-a-text-summarizer-using-huggingface-transformers/)
+  - [LODsyndesis](https://demos.isl.ics.forth.gr/lodsyndesis/)
+  - [The RDF Data Cube Vocabulary](https://www.w3.org/TR/vocab-data-cube/)
+  - [GitHub - simonw/openai-to-sqlite: Save OpenAI API results to a SQLite database](https://github.com/simonw/openai-to-sqlite)
+  - [Using embeddings from Python - LLM](https://llm.datasette.io/en/stable/embeddings/python-api.html#sql-schema)
+  - [Embeddings: What they are and why they matter](https://simonwillison.net/2023/Oct/23/embeddings/)
+  - [LLM now provides tools for working with embeddings](https://simonwillison.net/2023/Sep/4/llm-embeddings/)
+  - [LLM: A CLI utility and Python library for interacting with Large Language Models](https://llm.datasette.io/en/stable/)
+  - [GitHub - simonw/llm-claude-3: LLM plugin for interacting with the Claude 3 family of models](https://github.com/simonw/llm-claude-3)
+  - [Disaster Response dataset: how to upload a csv to Argilla | Loom](https://www.loom.com/share/952c157c60b6495a95a9ce14a5e54b03?sid=451abac0-8eb8-4920-b0b4-e184bcc6cbc4)
+  - [Prime Intellect Compute: Rent high performance GPUs at lowest rates](https://www.primeintellect.ai/competitor?utm_source=twitter&utm_medium=cpc&utm_campaign=HD-Prospecting-NA-ROW-Followerlookalike&utm_content=Followerlookalike&twclid=21ui9matllqafr10xd9gjp7mrt)
+  - [https://luthieros.com/product/monochord-of-pythagoras/](https://luthieros.com/product/monochord-of-pythagoras/)
+  - [Research | Intelligent Instruments Lab](https://iil.is/research)
+  - [Notochord | Intelligent Instruments Lab](https://iil.is/research/notochord)
+  - [J.S.Bach Cantatas](https://suzumidi.com/eng/bach6.htm)
+  - [GitHub - jesseduffield/lazygit: simple terminal UI for git commands](https://github.com/jesseduffield/lazygit)
+  - [[2209.14290] FiD-Light: Efficient and Effective Retrieval-Augmented Text Generation](https://arxiv.org/abs/2209.14290)
+  - [[2007.01282] Leveraging Passage Retrieval with Generative Models for Open Domain Question Answering](https://arxiv.org/abs/2007.01282)
+  - [Evaluating Retrieval Quality in Retrieval-Augmented Generation | Proceedings of the 47th International ACM SIGIR Conference on Research and Development in Information Retrieval](https://dl.acm.org/doi/10.1145/3626772.3657957)
+  - [GitHub - alirezasalemi7/eRAG: Codes and packages for the paper titled Evaluating Retrieval Quality in Retrieval-Augmented Generation.](https://github.com/alirezasalemi7/eRAG)
+  - [What is Podman? — Podman  documentation](https://docs.podman.io/en/latest/index.html)
+  - [Zed - The editor for what's next](https://zed.dev/)
+  - [YouTube](https://youtube.com/watch?v=xQBree_Y8Zw&si=wh31n23SOZdXn70I)
+  - [   Turning a GitHub page into a Progressive Web App | Christian Heilmann](https://christianheilmann.com/2022/01/13/turning-a-github-page-into-a-progressive-web-app/)
+  - [GitHub - pkalogiros/360-Image-Slider](https://github.com/pkalogiros/360-Image-Slider)
+  - [GitHub - pkalogiros/BubblesJS: Captions, Subtitles, Accessible Audio Descriptions to HTML5](https://github.com/pkalogiros/BubblesJS)
+  - [GitHub - pkalogiros/AudioMass: Free full-featured web-based audio & waveform editing tool](https://github.com/pkalogiros/AudioMass)
+  - [GitHub - zeke/red-panda-svg](https://github.com/zeke/red-panda-svg)
+  - [Noiz Studio](https://noiz.ai/#/tts/creation)
+  - [Connectionism - Wikipedia](https://en.wikipedia.org/wiki/Connectionism?wprov=sfla1)
+  - [Linguistic relativity - Wikipedia](https://en.wikipedia.org/wiki/Linguistic_relativity?wprov=sfla1)
+  - [GitHub - MFDGaming/ubuntu-in-termux: This is a script by which you can install Ubuntu in your termux application without a rooted device](https://github.com/MFDGaming/ubuntu-in-termux)
+  - [[2410.19627] Knowledge Graph Enhanced Language Agents for Recommendation](https://arxiv.org/abs/2410.19627)
+  - [Termux Wiki](https://wiki.termux.com/wiki/Main_Page)
+  - [MobMuPlat - Mobile Music Platform](https://danieliglesia.com/mobmuplat/)
+  - [Pure Data - Wikipedia](https://en.wikipedia.org/wiki/Pure_Data?wprov=sfla1)
+  - [MobMuPlat - Mobile Music Platform](https://danieliglesia.com/mobmuplat/)
+  - [GitHub - monkeyswarm/MobMuPlat: MobMuPlat is an iOS & Android app to host PureData patches with custom visual interfaces and hardware access.](https://github.com/monkeyswarm/MobMuPlat)
+  - [ PdDroidParty downloads](https://droidparty.net/downloads)
+  - [LV2 - Wikipedia](https://en.wikipedia.org/wiki/LV2?wprov=sfla1)
+  - [ARM architecture family - Wikipedia](https://en.wikipedia.org/wiki/ARM_architecture_family?wprov=sfla1)
+  - [A brief summary of language model finetuning - Stack Overflow](https://stackoverflow.blog/2025/10/31/a-brief-summary-of-language-model-finetuning/)
+  - [SmolLM2 - a HuggingFaceTB Collection](https://huggingface.co/collections/HuggingFaceTB/smollm2-6723884218bcda64b34d7db9)
+  - [SmolLM2 Released: The New Series (0.1B, 0.3B, and 1.7B) of Small Language Models for On-Device Applications and Outperforms Meta Llama 3.2 1B - MarkTechPost](https://www.marktechpost.com/2024/10/31/smollm2-released-the-new-series-0-1b-0-3b-and-1-7b-of-small-language-models-for-on-device-applications-and-outperforms-meta-llama-3-2-1b/)
+  - [https://www.marktechpost.com/2024/10/31/smollm2-released-the-new-series-0-1b-0-3b-and-1-7b-of-small-language-models-for-on-device-applications-and-outperforms-meta-llama-3-2-1b/](https://www.marktechpost.com/2024/10/31/smollm2-released-the-new-series-0-1b-0-3b-and-1-7b-of-small-language-models-for-on-device-applications-and-outperforms-meta-llama-3-2-1b/)
+  - [https://setac.onlinelibrary.wiley.com/doi/full/10.1002/etc.5973](https://setac.onlinelibrary.wiley.com/doi/full/10.1002/etc.5973)
+  - [https://towardsdatascience.com/time-moe-the-latest-foundation-forecasting-model-47eaebb78837](https://towardsdatascience.com/time-moe-the-latest-foundation-forecasting-model-47eaebb78837)
+  - [https://www.sciencedirect.com/science/article/abs/pii/S0149763424003774](https://www.sciencedirect.com/science/article/abs/pii/S0149763424003774)
+  - [Ontology: the future of AI | Ross Dawson posted on the topic | LinkedIn](https://www.linkedin.com/posts/futuristkeynotespeaker_ontology-is-a-strong-candidate-for-word-activity-7245390586038362112-8KsA?utm_source=share&utm_medium=member_android)
+  - [AI Use Case Example: Solving News Reading Challenges via OPML, RSS, and Atom Feeds Processing](https://www.linkedin.com/pulse/ai-use-case-example-solving-news-reading-challenges-via-idehen-hztre?utm_source=share&utm_medium=member_android&utm_campaign=share_via)
+    - AI Use Case Example: Solving News Reading Challenges via OPML, RSS, and Atom Feeds Processing
+  - [https://blog.stackademic.com/build-your-own-local-llm-api-with-ollama-js-a-step-by-step-guide-fe9a576820b9](https://blog.stackademic.com/build-your-own-local-llm-api-with-ollama-js-a-step-by-step-guide-fe9a576820b9)
+  - [https://ollama.com/library/nomic-embed-text](https://ollama.com/library/nomic-embed-text)
+  - [https://ollama.com/library/paraphrase-multilingual](https://ollama.com/library/paraphrase-multilingual)
+  - [https://js.langchain.com/docs/integrations/vectorstores/faiss/#overview](https://js.langchain.com/docs/integrations/vectorstores/faiss/#overview)
+  - [https://langchain-ai.github.io/langgraphjs/#step-by-step-breakdown](https://langchain-ai.github.io/langgraphjs/#step-by-step-breakdown)
+  - [Pregel – DDI](https://michaelnielsen.org/ddi/pregel/)
+  - [GitHub - mnielsen/Pregel: Toy single-machine implementation of the Pregel graph-based framework](https://github.com/mnielsen/Pregel)
+  - [https://langchain-ai.github.io/langgraphjs/#overview](https://langchain-ai.github.io/langgraphjs/#overview)
+  - [Apache Beam®](https://beam.apache.org/)
+  - [Security through obscurity - Wikipedia](https://en.wikipedia.org/wiki/Security_through_obscurity?wprov=sfla1)
+  - [GitHub - stanfordnlp/dspy: DSPy: The framework for programming—not prompting—foundation models](https://github.com/stanfordnlp/dspy)
+  - [GitHub - guidance-ai/guidance: A guidance language for controlling large language models.](https://github.com/guidance-ai/guidance)
+  - [🚨💥 Top 5 Trending Open-source LLM Tools & Frameworks You Must Know About ✨🚀 - DEV Community](https://dev.to/guybuildingai/top-5-trending-open-source-llm-tools-frameworks-you-must-know-about-1fk7)
+  - [Scale-free network - Wikipedia](https://en.wikipedia.org/wiki/Scale-free_network?wprov=sfla1)
+  - [[2409.12029] Biological arrow of time: Emergence of tangled information hierarchies and self-modelling dynamics](https://arxiv.org/abs/2409.12029)
+  - [[2409.02740] Convolutional Neural Networks for Automated Cellular Automaton Classification](https://arxiv.org/abs/2409.02740)
+  - [[2409.02740] Convolutional Neural Networks for Automated Cellular Automaton Classification](https://arxiv.org/abs/2409.02740)
+  - [[2409.12029] Biological arrow of time: Emergence of tangled information hierarchies and self-modelling dynamics](https://arxiv.org/abs/2409.12029)
+  - [[2410.02536] Intelligence at the Edge of Chaos](https://arxiv.org/abs/2410.02536)
+  - [Lenia](https://chakazul.github.io/lenia.html)
+  - [Lenia - Wikipedia](https://en.wikipedia.org/wiki/Lenia?wprov=sfla1)
+  - [[1111.1567] Generalization of Conway's "Game of Life" to a continuous domain - SmoothLife](https://arxiv.org/abs/1111.1567)
+  - [OCA:SmoothLife - LifeWiki](https://conwaylife.com/wiki/OCA:SmoothLife)
+  - [Coupled map lattice - Wikipedia](https://en.wikipedia.org/wiki/Coupled_map_lattice?wprov=sfla1)
+  - [Continuous spatial automaton - Wikipedia](https://en.wikipedia.org/wiki/Continuous_spatial_automaton?wprov=sfla1)
+  - [YouTube](https://youtu.be/Wuy0AjzRc7o?si=vZpH08Cqax7kwCXn)
+  - [On the Egyptian Boomerang and its Affinities.](https://zenodo.org/records/1717077)
+  - [Claudio Acquaviva - Wikipedia](https://en.wikipedia.org/wiki/Claudio_Acquaviva?wprov=sfla1)
+  - [https://www.michaeljking.com/kravik-lyre.htm](https://www.michaeljking.com/kravik-lyre.htm)
+  - [GitHub - Marker-Inc-Korea/AutoRAG: AutoML tool for RAG](https://github.com/Marker-Inc-Korea/AutoRAG)
+  - [https://www.marktechpost.com/2024/10/29/autorag-an-automated-tool-for-optimizing-retrieval-augmented-generation-pipelines/](https://www.marktechpost.com/2024/10/29/autorag-an-automated-tool-for-optimizing-retrieval-augmented-generation-pipelines/)
+  - [Release early, release often - Wikipedia](https://en.wikipedia.org/wiki/Release_early%2C_release_often?wprov=sfla1)
+  - [A landscape of consciousness: Neurophysiologist presents diverse theories and taxonomy of proposed solutions](https://phys.org/news/2024-10-landscape-consciousness-neurophysiologist-diverse-theories.html)
+  - [Fooocus - Wikipedia](https://en.wikipedia.org/wiki/Fooocus?wprov=sfla1)
+  - [GitHub - nlpbook/nlpbook: Applied Natural Language Processing in the Enterprise - An O'Reilly Media Publication](https://github.com/nlpbook/nlpbook)
+  - [GitHub - iyaja/llama-fs: A self-organizing file system with llama 3](https://github.com/iyaja/llama-fs)
+  - [https://moondream.ai/](https://moondream.ai/)
+  - [https://github.com/vikhyat/moondream](https://github.com/vikhyat/moondream)
+  - [https://kieler.github.io/klayjs-d3/examples/interactive/](https://kieler.github.io/klayjs-d3/examples/interactive/)
+  - [https://kieler.github.io/klayjs-d3/examples/interactive/](https://kieler.github.io/klayjs-d3/examples/interactive/)
+  - [GitHub - cytoscape/cytoscape.js-elk: The ELK layout algorithm adapter for Cytoscape.js](https://github.com/cytoscape/cytoscape.js-elk)
+  - [wildmat - Wikipedia](https://en.wikipedia.org/wiki/Wildmat?wprov=sfla1)
+  - [[2410.09713] Agentic Information Retrieval](https://arxiv.org/abs/2410.09713)
+  - [comfyui - Cerca con Google](https://www.google.com/search?q=comfyui&oq=comfy&gs_lcrp=EgZjaHJvbWUqBwgBEAAYgAQyCQgAEEUYORiABDIHCAEQABiABDIHCAIQABiABDIHCAMQABiABDIHCAQQABiABDIHCAUQABiABDIHCAYQABiABDIHCAcQABiABDITCAgQLhivARjHARiABBiYBRibBTIHCAkQABiABDIHCAoQABiABDIHCAsQABiABDIHCAwQABiABDIHCA0QABiABDIHCA4QABiABNIBCDQ2MjFqMGo5qAIOsAIB&client=ms-android-hct&sourceid=chrome-mobile&ie=UTF-8&chrome_dse_attribution=1)
+  - [GitHub - sergree/matchering: 🎚️ Open Source Audio Matching and Mastering](https://github.com/sergree/matchering)
+  - [Chrysippus - Wikipedia](https://en.wikipedia.org/wiki/Chrysippus?wprov=sfla1)
+  - [https://www.science.org/doi/10.1126/sciadv.adn3268](https://www.science.org/doi/10.1126/sciadv.adn3268)
+  - [Kubernetes and Docker Container Management Software](https://www.portainer.io/)
+  - [https://apt.izzysoft.de/fdroid/index/info](https://apt.izzysoft.de/fdroid/index/info)
+  - [QEMU](https://www.qemu.org/)
+  - [https://apt.izzysoft.de/fdroid/index/info](https://apt.izzysoft.de/fdroid/index/info)
+  - [J-Cut & Kolt Siewerts - The Flute Tune (Soulpride Remix) music box melody](https://musicboxmaniacs.com/explore/melody/j-cut-kolt-siewerts-the-flute-tune-soulpride-remix_51342/)
+  - [Omniglot - the encyclopedia of writing systems and languages](https://www.omniglot.com/index.htm)
+  - [✨8 Powerful Open-Source tools for Creating Accessible Web Apps ✨ - DEV Community](https://dev.to/tolgee_i18n/8-powerful-open-source-tools-for-creating-accessible-web-apps-ig3)
+  - [GitHub - aaronaanderson/Terrain: Open Source Wave Terrain Synth](https://github.com/aaronaanderson/Terrain)
+  - [The 3 AI Use Cases: Gods, Interns, and Cogs | Drew Breunig](https://www.dbreunig.com/2024/10/18/the-3-ai-use-cases-gods-interns-and-cogs.html)
+  - [Understanding RAG III: Fusion Retrieval and Reranking - MachineLearningMastery.com](https://machinelearningmastery.com/understanding-rag-iii-fusion-retrieval-and-reranking/)
+  - [[2007.01282] Leveraging Passage Retrieval with Generative Models for Open Domain Question Answering](https://arxiv.org/abs/2007.01282)
+  - [Liliputing](https://liliputing.com/)
+  - [https://towardsdatascience.com/ai-agent-workflows-a-complete-guide-on-whether-to-build-with-langgraph-or-langchain-117025509fa0](https://towardsdatascience.com/ai-agent-workflows-a-complete-guide-on-whether-to-build-with-langgraph-or-langchain-117025509fa0)
+  - [[2407.06023] Distilling System 2 into System 1](https://arxiv.org/abs/2407.06023)
+  - [[2404.11018] Many-Shot In-Context Learning](https://arxiv.org/abs/2404.11018)
+  - [DeepMind researchers discover impressive learning capabilities in long-context LLMs | VentureBeat](https://venturebeat.com/ai/deepmind-researchers-discover-impressive-learning-capabilities-in-long-context-llms/)
+  - [[2410.12153] Layer-of-Thoughts Prompting (LoT): Leveraging LLM-Based Retrieval with Constraint Hierarchies](https://arxiv.org/abs/2410.12153)
+  - [Sprotty](https://sprotty.org/)
+  - [GitHub - kieler/elkjs: ELK's layout algorithms for JavaScript](https://github.com/kieler/elkjs)
+  - [GitHub - eclipse-sprotty/sprotty: A diagramming framework for the web](https://github.com/eclipse-sprotty/sprotty)
+  - [GitHub - kieler/elkjs: ELK's layout algorithms for JavaScript](https://github.com/kieler/elkjs)
+  - [FAQ - Rete.js](https://retejs.org/docs/faq#undefined)
+  - [Build your own summary tool! | The Tokenizer](https://thetokenizer.com/2013/04/28/build-your-own-summary-tool/#comments)
+  - [Build your own summary tool! | The Tokenizer](https://thetokenizer.com/2013/04/28/build-your-own-summary-tool/)
+  - [Node-summary](https://jbrooksuk.github.io/node-summary/)
+  - [https://flow.org/](https://flow.org/)
+  - [https://towardsdatascience.com/ai-agent-workflows-a-complete-guide-on-whether-to-build-with-langgraph-or-langchain-117025509fa0](https://towardsdatascience.com/ai-agent-workflows-a-complete-guide-on-whether-to-build-with-langgraph-or-langchain-117025509fa0)
+  - ['Special privileges' for VS Code GitHub Copilot extension show Microsoft's advantage over competitors, claim users • DEVCLASS](https://devclass.com/2024/10/23/special-privileges-for-vs-code-github-copilot-extension-show-microsofts-advantage-over-competitors-claim-users/)
+  - [[2407.06023] Distilling System 2 into System 1](https://arxiv.org/abs/2407.06023)
+  - [[2311.11829] System 2 Attention (is something you might need too)](https://arxiv.org/abs/2311.11829)
+  - [New technique helps LLMs improve reasoning by ignoring irrelevant information | VentureBeat](https://venturebeat.com/ai/new-technique-helps-llms-improve-reasoning-by-ignoring-irrelevant-information/)
+  - [Meta researchers distill System 2 thinking into LLMs, improving performance on complex reasoning | VentureBeat](https://venturebeat.com/ai/meta-researchers-distill-system-2-thinking-into-llms-improving-performance-on-complex-reasoning/)
+  - [[2410.08328] Agents Thinking Fast and Slow: A Talker-Reasoner Architecture](https://arxiv.org/abs/2410.08328)
+  - [https://arxiv.org/abs/2410.08328](https://arxiv.org/abs/2410.08328)
+  - [DeepMind's Talker-Reasoner framework brings System 2 thinking to AI agents | VentureBeat](https://venturebeat.com/ai/deepminds-talker-reasoner-framework-brings-system-2-thinking-to-ai-agents/)
+  - [https://huggingface.co/spaces/danja/gradio_multi_file_rag](https://huggingface.co/spaces/danja/gradio_multi_file_rag)
+  - [Deep learning resilience inference for complex networked systems | Nature Communications](https://www.nature.com/articles/s41467-024-53303-4)
+  - [Powerful Workflow Automation Software & Tools - n8n](https://n8n.io/)
+  - [https://27bslash6.com/overdue.html](https://27bslash6.com/overdue.html)
+  - [https://shsbbs.net/bbs.html](https://shsbbs.net/bbs.html)
+  - [https://docs.graphlit.dev/](https://docs.graphlit.dev/)
+  - [Comparison of Knowledge Graph Generation Across LLMs - Graphlit](https://www.graphlit.com/blog/comparison-of-knowledge-graph-generation)
+  - [[2005.01389] Knowledge Graph Validation](https://arxiv.org/abs/2005.01389)
+  - [Reddit - Dive into anything](https://www.reddit.com/r/istrutturare/s/ROQtHweL0O)
+  - [https://www.reddit.com/r/mixingmastering/s/XYmeK0oypE](https://www.reddit.com/r/mixingmastering/s/XYmeK0oypE)
+  - [Stéphane Ducasse :: Free Online Books](http://stephane.ducasse.free.fr/FreeBooks.html)
+  - [Platform](https://ngrok.com/our-product/platform)
+  - [GitHub - aishe-ai/core: LLM Assistent with Chat Integration](https://github.com/aishe-ai/core#flowchart)
+  - [GitHub - langgenius/dify: Dify is an open-source LLM app development platform. Dify's intuitive interface combines AI workflow, RAG pipeline, agent capabilities, model management, observability features and more, letting you quickly go from prototype to production.](https://github.com/langgenius/dify)
+  - [Reddit - Dive into anything](https://www.reddit.com/r/LangChain/s/MMJItAUZ34)
+  - [Release v0.8.0 · Vali-98/ChatterUI · GitHub](https://github.com/Vali-98/ChatterUI/releases/tag/v0.8.0)
+  - [Release v0.8.0 · Vali-98/ChatterUI · GitHub](https://github.com/Vali-98/ChatterUI/releases/tag/v0.8.0)
+  - [
+        Cline (prev. Claude Dev) - Visual Studio Marketplace
+    ](https://marketplace.visualstudio.com/items?itemName=saoudrizwan.claude-dev)
+  - [Reddit - Dive into anything](https://www.reddit.com/r/LocalLLaMA/s/6OzcW5cDxV)
+  - [GitHub - pytorch/executorch: On-device AI across mobile, embedded and edge for PyTorch](https://github.com/pytorch/executorch)
+  - [Smarter than 'Ctrl+F': Linking Directly to Web Page Content](https://alfy.blog/2024/10/19/linking-directly-to-web-page-content.html)
+  - [Lobsters](https://lobste.rs/)
+  - [How to Kill a Decentralised Network (such as the Fediverse) | Lobsters](https://lobste.rs/s/302ahc/how_kill_decentralised_network_such_as)
+  - [mistral.rs/docs/TOOL_CALLING.md at master · EricLBuehler/mistral.rs · GitHub](https://github.com/EricLBuehler/mistral.rs/blob/master/docs/TOOL_CALLING.md)
+  - [  Creating Interactive Dashboards with D3.js - KDnuggets](https://www.kdnuggets.com/creating-interactive-dashboards-with-d3-js)
+  - [GitHub - facebookresearch/lingua: Meta Lingua: a lean, efficient, and easy-to-hack codebase to research LLMs.](https://github.com/facebookresearch/lingua)
+  - [Using Web Workers - Web APIs | MDN](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers)
+  - [Notes on the new Claude analysis JavaScript code execution tool](https://simonwillison.net/2024/Oct/24/claude-analysis-tool/)
+  - [
+Principia Mathematica (Stanford Encyclopedia of Philosophy)
+](https://plato.stanford.edu/entries/principia-mathematica/#SOPM)
+  - [Principia Mathematica - Wikipedia](https://en.wikipedia.org/wiki/Principia_Mathematica?wprov=sfla1)
+  - [Mirrors for princes - Wikipedia](https://en.wikipedia.org/wiki/Mirrors_for_princes?wprov=sfla1)
+  - [Metacognition - Wikipedia](https://en.wikipedia.org/wiki/Metacognition?wprov=sfla1)
+  - [Initial explorations of Anthropic’s new Computer Use capability](https://simonwillison.net/2024/Oct/22/computer-use/)
+  - [The Mythology and Folklore Database](https://mythologydatabase.com/)
+  - [Aarne–Thompson–Uther Index - Wikipedia](https://en.wikipedia.org/wiki/Aarne%E2%80%93Thompson%E2%80%93Uther_Index?wprov=sfla1)
+  - [Instructional design - Wikipedia](https://en.wikipedia.org/wiki/Instructional_design?wprov=sfla1)
+  - [
+            Measuring Cognitive Load in Embodied Learning Settings - PMC
+        ](https://pmc.ncbi.nlm.nih.gov/articles/PMC5539229/)
+  - [https://onlinelibrary.wiley.com/doi/10.1207/s15516709cog1202_4](https://onlinelibrary.wiley.com/doi/10.1207/s15516709cog1202_4)
+  - [Cognitive load - Wikipedia](https://en.wikipedia.org/wiki/Cognitive_load?wprov=sfla1)
+  - [George Berkeley - Wikipedia](https://en.wikipedia.org/wiki/George_Berkeley?wprov=sfla1)
+  - [Blocks world - Wikipedia](https://en.wikipedia.org/wiki/Blocks_world?wprov=sfla1)
+  - [Synesthesia Battery | Home](https://synesthete.ircn.jp/home)
+  - [Japanese/Kana/Lessons/Katakana/Lesson 5 - Wikibooks, open books for an open world](https://en.wikibooks.org/wiki/Japanese/Kana/Lessons/Katakana/Lesson_5#:~:text=%E3%83%8C%E3%83%BC%E3%83%89%E3%83%AB%20(nuudoru)%20noodle)
+  - [Capacities – A studio for your mind](https://capacities.io/)
+  - [arXiv · GitHub](https://github.com/arXiv)
+  - [[2408.13296] The Ultimate Guide to Fine-Tuning LLMs from Basics to Breakthroughs: An Exhaustive Review of Technologies, Research, Best Practices, Applied Research Challenges and Opportunities](https://arxiv.org/abs/2408.13296)
+  - [Netbook Asus EeePC Seashell  | eBay](https://www.ebay.it/itm/186739431242)
+  - [Begena - Wikipedia](https://en.wikipedia.org/wiki/Begena?wprov=sfla1)
+  - [Krar - Wikipedia](https://en.wikipedia.org/wiki/Krar?wprov=sfla1)
+  - [RDF Process Profile](https://web.archive.org/web/20021009222134/http://www.isacat.net/citnames/2001/04/rpp.htm)
+  - [RFC 7763: The text/markdown Media Type](https://www.rfc-editor.org/rfc/rfc7763)
+  - [Everything I built with Claude Artifacts this week](https://simonwillison.net/2024/Oct/21/claude-artifacts/#url-to-markdown-with-jina-reader)
+  - [The Structure of the Flute:How is the sound produced?  - Musical Instrument Guide - Yamaha Corporation](https://www.yamaha.com/en/musical_instrument_guide/flute/mechanism/mechanism002.html)
+  - [https://newt.phys.unsw.edu.au/jw/fluteacoustics.html#:~:text=The%20jet%20of%20air%20from,air%20can%20illustrate%20this%20motion.)](https://newt.phys.unsw.edu.au/jw/fluteacoustics.html#:~:text=The%20jet%20of%20air%20from,air%20can%20illustrate%20this%20motion.))
+  - [https://www.facebook.com/share/AvarF19bATVLCG3t/](https://www.facebook.com/share/AvarF19bATVLCG3t/)
+  - [Lapwing - Wikipedia](https://en.wikipedia.org/wiki/Lapwing?wprov=sfla1)
+  - [Traveller (role-playing game) - Wikipedia](https://en.wikipedia.org/wiki/Traveller_%28role-playing_game%29?wprov=sfla1)
+  - [Building files-to-prompt entirely using Claude 3 Opus](https://simonwillison.net/2024/Apr/8/files-to-prompt/)
+  - [Language is primarily a tool for communication rather than thought | Nature](https://www.nature.com/articles/s41586-024-07522-w)
+  - [Can you think without words? Neuroscientist explains why language isn't required for deep thinking](https://www.zmescience.com/medicine/mind-and-brain/thinking-without-language/)
+  - [Learning without feedback: Neuroscientist helps uncover the influence of unsupervised learning on humans and machines](https://medicalxpress.com/news/2024-10-feedback-neuroscientist-uncover-unsupervised-humans.html)
+  - [https://www.fastcompany.com/91211038/this-tiktok-inspired-dopamine-menu-has-boosted-my-productivity](https://www.fastcompany.com/91211038/this-tiktok-inspired-dopamine-menu-has-boosted-my-productivity)
+  - [Semantic Turkey: A Semantic Web Knowledge Management and Acquisition Platform
+		](https://semanticturkey.uniroma2.it/doc/)
+  - [Show HN: TrustGraph – Do More with AI with Less (Open Source AI Infrastructure) | Hacker News](https://news.ycombinator.com/item?id=41765150)
+  - [https://open.substack.com/pub/avichawla/p/5-chunking-strategies-for-rag?utm_source=share&utm_medium=android&r=1w2qg8](https://open.substack.com/pub/avichawla/p/5-chunking-strategies-for-rag?utm_source=share&utm_medium=android&r=1w2qg8)
+  - [GitHub - hesamsheikh/ml-retreat: intermediate to advanced AI learning path](https://github.com/hesamsheikh/ml-retreat)
+  - [Neuro-symbolic AI - Wikipedia](https://en.wikipedia.org/wiki/Neuro-symbolic_AI?wprov=sfla1)
+  - [The next wave of AI won’t be driven by LLMs. Here’s what investors should focus on | Fortune](https://fortune.com/2024/10/18/next-wave-ai-llms-investor-focus-tech/)
+  - [Ernst Haeckel - Wikipedia](https://en.wikipedia.org/wiki/Ernst_Haeckel?wprov=sfla1)
+  - [Storebuild.ai](https://storebuild.ai/)
+  - [Kuramoto–Sivashinsky equation - Wikipedia](https://en.wikipedia.org/wiki/Kuramoto%E2%80%93Sivashinsky_equation?wprov=sfla1)
+  - [Ontological Core — The Knowledge Graph Guys](https://www.knowledge-graph-guys.com/blog/your-ontological-core)
+  - [https://mortenhf.dk/2004/07/foaf-output.phps](https://mortenhf.dk/2004/07/foaf-output.phps)
+  - [The ODI](https://theodi.org/)
+  - [GitHub](https://weaviate.io/blog/introduction-to-rag)
+  - [Generative learning for forecasting the dynamics of high-dimensional complex systems | Nature Communications](https://www.nature.com/articles/s41467-024-53165-w)
+  - [The Kuramoto–Sivashinsky Equation (Part 1) | Azimuth](https://johncarlosbaez.wordpress.com/2021/10/17/conjectures-on-the-kuramoto-sevashinsky-equation/)
+  - [The Best Way for Sampling Audio With ESP32 : 5 Steps - Instructables](https://www.instructables.com/The-Best-Way-for-Sampling-Audio-With-ESP32/)
+  - [Dr.EYE: Create the Things You Wish Existed - CiferTech](https://cifertech.net/dr-eye-create-the-things-you-wish-existed/)
+  - [Danny Ayers | creating Music, Arts, Software | Patreon](https://www.patreon.com/danja)
+  - [Attention deficit hyperactivity disorder - Wikipedia](https://en.wikipedia.org/wiki/Attention_deficit_hyperactivity_disorder?wprov=sfla1)
+  - [The Rights of Persons with Disabilities in the Case-law of the European Court of Human Rights - Europe des Droits & Libertés](https://www.europedeslibertes.eu/article/the-rights-of-persons-with-disabilities-in-the-case-law-of-the-european-court-of-human-rights/)
+  - [ongoing by Tim Bray · UCI](https://www.tbray.org/ongoing/When/200x/2005/12/23/UPI)
+  - [https://www.tbray.org/ongoing/When/200x/2005/12/23/UPI](https://www.tbray.org/ongoing/When/200x/2005/12/23/UPI)
+  - [Two Hard Things](https://martinfowler.com/bliki/TwoHardThings.html)
+  - [Lean startup - Wikipedia](https://en.wikipedia.org/wiki/Lean_startup?wprov=sfla1)
+  - [Pilot experiment - Wikipedia](https://en.wikipedia.org/wiki/Pilot_experiment?wprov=sfla1)
+  - [Privacy Policy](https://x.com/en/privacy/previous/version_16)
+  - [ChatGPT JSON transcript to Markdown / Simon Willison | Observable](https://observablehq.com/@simonw/chatgpt-json-transcript-to-markdown)
+  - [Share Claude conversations by converting their JSON to Markdown](https://simonwillison.net/2024/Aug/8/convert-claude-json-to-markdown/)
+  - [Self-concept - Wikipedia](https://en.wikipedia.org/wiki/Self-concept?wprov=sfla1)
+  - [Self-concept - Wikipedia](https://en.wikipedia.org/wiki/Self-concept?wprov=sfla1)
+  - [Consciousness - Wikipedia](https://en.wikipedia.org/wiki/Consciousness?wprov=sfla1)
+  - [GitHub - TEN-framework/TEN-Agent: TEN Agent is the world’s first real-time multimodal agent integrated with the OpenAI Realtime API, RTC, and features weather checks, web search, vision, and RAG capabilities.](https://github.com/TEN-framework/TEN-Agent)
+  - [XTTS - a Hugging Face Space by coqui](https://huggingface.co/spaces/coqui/xtts)
+  - [GitHub - howdyai/botkit-cms: An open tool for designing, building and managing interactive dialog systems](https://github.com/howdyai/botkit-cms)
+  - [GitHub - howdyai/botkit: Botkit is an open source developer tool for building chat bots, apps and custom integrations for major messaging platforms.](https://github.com/howdyai/botkit)
+  - [GitHub - howdyai/botkit: Botkit is an open source developer tool for building chat bots, apps and custom integrations for major messaging platforms.](https://github.com/howdyai/botkit)
+  - [GitHub - axa-group/nlp.js: An NLP library for building bots, with entity extraction, sentiment analysis, automatic language identify, and so more](https://github.com/axa-group/nlp.js)
+  - [GitHub - axa-group/nlp.js: An NLP library for building bots, with entity extraction, sentiment analysis, automatic language identify, and so more](https://github.com/axa-group/nlp.js)
+  - [https://code.visualstudio.com/api/language-extensions/language-server-extension-guide](https://code.visualstudio.com/api/language-extensions/language-server-extension-guide)
+  - [Language Server Extension Guide | Visual Studio Code Extension API](https://code.visualstudio.com/api/language-extensions/language-server-extension-guide)
+  - [GitHub - microsoft/language-server-protocol: Defines a common protocol for language servers.](https://github.com/microsoft/language-server-protocol)
+  - [GitHub - atom-community/atom-languageclient: Provide integration support for adding Language Server Protocol servers to Atom.](https://github.com/atom-community/atom-languageclient)
+  - [GitHub - atom-community/atom-languageclient: Provide integration support for adding Language Server Protocol servers to Atom.](https://github.com/atom-community/atom-languageclient)
+  - [GitHub - flow/flow-for-vscode: Flow for Visual Studio Code](https://github.com/flow/flow-for-vscode)
+  - [Apple study exposes deep cracks in LLMs’ “reasoning” capabilities - Ars Technica](https://arstechnica.com/ai/2024/10/llms-cant-perform-genuine-logical-reasoning-apple-researchers-suggest/)
+  - [Communication theory - Wikipedia](https://en.wikipedia.org/wiki/Communication_theory?wprov=sfla1)
+  - [Models of communication - Wikipedia](https://en.wikipedia.org/wiki/Models_of_communication?wprov=sfla1)
+  - [Shannon–Weaver model - Wikipedia](https://en.wikipedia.org/wiki/Shannon%E2%80%93Weaver_model?wprov=sfla1)
+  - [Symbolic communication - Wikipedia](https://en.wikipedia.org/wiki/Symbolic_communication?wprov=sfla1)
+  - [Symbolic convergence theory - Wikipedia](https://en.wikipedia.org/wiki/Symbolic_convergence_theory?wprov=sfla1)
+  - [The Meme Machine](https://archive.nytimes.com/www.nytimes.com/books/first/b/blackmore-meme.html)
+  - [You Can Copy Off Me](https://archive.nytimes.com/www.nytimes.com/books/99/04/25/reviews/990425.25wrightt.html)
+  - [The Meme Machine - Wikipedia](https://en.wikipedia.org/wiki/The_Meme_Machine?wprov=sfla1)
+  - [Meme - Wikipedia](https://en.wikipedia.org/wiki/Meme?wprov=sfla1)
+  - [Motivation - Wikipedia](https://en.wikipedia.org/wiki/Motivation?wprov=sfla1)
+  - [Shaping (psychology) - Wikipedia](https://en.wikipedia.org/wiki/Shaping_%28psychology%29?wprov=sfla1)
+  - [Motivation - Wikipedia](https://en.wikipedia.org/wiki/Motivation?wprov=sfla1)
+  - [Decomposition (computer science) - Wikipedia](https://en.wikipedia.org/wiki/Decomposition_%28computer_science%29?wprov=sfla1)
+  - [Function model - Wikipedia](https://en.wikipedia.org/wiki/Function_model?wprov=sfla1)
+  - [Decomposition (computer science) - Wikipedia](https://en.wikipedia.org/wiki/Decomposition_%28computer_science%29?wprov=sfla1)
+  - [Problem solving - Wikipedia](https://en.wikipedia.org/wiki/Problem_solving?wprov=sfla1)
+  - [Valence (psychology) - Wikipedia](https://en.wikipedia.org/wiki/Valence_%28psychology%29?wprov=sfla1)
+  - [YouTube](https://youtube.com/watch?v=isiVdlz8bDY&si=I5qWp5lf-T57SZvm)
+  - [The efficacy of acamprosate and naltrexone in the treatment of alcohol dependence, Europe versus the rest of the world: a meta-analysis - PubMed](https://pubmed.ncbi.nlm.nih.gov/25664494/)
+  - [The Knowledge Graph Guys](https://www.knowledge-graph-guys.com/)
+  - [https://en.wikipedia.org/wiki/Kanban_%28development%29?wprov=sfla1](https://en.wikipedia.org/wiki/Kanban_%28development%29?wprov=sfla1)
+  - [Esoteric programming language - Wikipedia](https://en.wikipedia.org/wiki/Esoteric_programming_language?wprov=sfla1)
+  - [https://pulsar.apache.org/docs/client-libraries-node/](https://pulsar.apache.org/docs/client-libraries-node/)
+  - [https://pulsar.apache.org/docs/getting-started-standalone/](https://pulsar.apache.org/docs/getting-started-standalone/)
+  - [GitHub - Mozilla-Ocho/llamafile: Distribute and run LLMs with a single file.](https://github.com/Mozilla-Ocho/llamafile)
+  - [diagram-module-new](https://trustgraph.ai/)
+  - [GitHub - apache/pulsar: Apache Pulsar - distributed pub-sub messaging system](https://github.com/apache/pulsar)
+  - [GitHub - trustgraph-ai/trustgraph: Your Exclusive AI Engine for Data Enhancement 🔒🚂🕵️](https://github.com/trustgraph-ai/trustgraph)
+  - [RUN_COMMAND Intent · termux/termux-app Wiki · GitHub](https://github.com/termux/termux-app/wiki/RUN_COMMAND-Intent/06f1de1b262d7612497e76463d8cc34ba7f49832)
+  - [The Roots of Lisp](https://www.paulgraham.com/rootsoflisp.html)
+  - [A Month in Siena by Hisham Matar (Omnibus) - BBC Sounds](https://www.bbc.co.uk/sounds/play/m0023xr0?partner=uk.co.bbc&origin=share-mobile)
+  - [[2410.07176] Astute RAG: Overcoming Imperfect Retrieval Augmentation and Knowledge Conflicts for Large Language Models](https://arxiv.org/abs/2410.07176)
+  - [https://www.tumblr.com/incorrectshakespeare](https://www.tumblr.com/incorrectshakespeare)
+  - [incorrect shakespeare quotes](https://incorrectshakespeare.tumblr.com/post/103379606336/and-fuck-you-helena-fuck-you-you-shitty-glob-of)
+  - [https://www.marktechpost.com/2024/10/11/openai-releases-swarm-an-experimental-ai-framework-for-building-orchestrating-and-deploying-multi-agent-systems/](https://www.marktechpost.com/2024/10/11/openai-releases-swarm-an-experimental-ai-framework-for-building-orchestrating-and-deploying-multi-agent-systems/)
+  - [https://huggingface.co/jxm/cde-small-v1](https://huggingface.co/jxm/cde-small-v1)
+  - [New technique makes RAG systems much better at retrieving the right documents | VentureBeat](https://venturebeat.com/ai/new-technique-makes-rag-systems-much-better-at-retrieving-the-right-documents/)
+  - [OpenAI outlines plan for AGI — 5 steps to reach superintelligence | Tom's Guide](https://www.tomsguide.com/ai/chatgpt/openai-has-5-steps-to-agi-and-were-only-a-third-of-the-way-there)
+  - [OpenAI’s 5 Levels Of ‘Super AI’ (AGI To Outperform Human Capability)](https://www.forbes.com/sites/jodiecook/2024/07/16/openais-5-levels-of-super-ai-agi-to-outperform-human-capability/)
+  - [Artificial general intelligence - Wikipedia](https://en.wikipedia.org/wiki/Artificial_general_intelligence?wprov=sfla1)
+  - [The Five Levels of AI: Has OpenAI's 'Strawberry' Reached Level 2?](https://gpt.gekko.de/openai-strawberry-reached-level-2/)
+  - [Decoding the Five Levels of OpenAI AGI Roadmap - Fusion Chat](https://fusionchat.ai/news/decoding-the-five-levels-of-openai-agi-roadmap)
+  - [Engineering flexible machine learning systems by traversing functionally invariant paths | Nature Machine Intelligence](https://www.nature.com/articles/s42256-024-00902-x)
+  - [https://www.xda-developers.com/the-best-open-source-productivity-software-free-tools-to-boost-your-workflow/](https://www.xda-developers.com/the-best-open-source-productivity-software-free-tools-to-boost-your-workflow/)
+  - [La Battaglia di Passo del Giogo | Gotica Toscana aps](https://www.goticatoscana.eu/en/portfolio/cronologia-battaglie-linea-gotica/)
+  - [Salvia divinorum: dai riti degli sciamani alla farmacologia molecolare](https://ricerca.univaq.it/handle/11697/28101?mode=full.14)
+  - [https://en.wikipedia.org/wiki/Tim_Smit?wprov=sfla1](https://en.wikipedia.org/wiki/Tim_Smit?wprov=sfla1)
+  - [https://mail.gnu.org/archive/html/dotgnu-general/2003-03/msg00259.html](https://mail.gnu.org/archive/html/dotgnu-general/2003-03/msg00259.html)
+  - [https://github.com/danja/seki/blob/master/misc/data-getters/output.html](https://github.com/danja/seki/blob/master/misc/data-getters/output.html)
+  - [Archive.org - Is Internet Archive Wayback Machine Down Right Now?](https://www.isitdownrightnow.com/archive.org.html)
+  - [https://en.wikipedia.org/wiki/DARPA_Agent_Markup_Language?wprov=sfla1](https://en.wikipedia.org/wiki/DARPA_Agent_Markup_Language?wprov=sfla1)
+  - [DAML.org](https://www.daml.org/index.html)
+  - [DAML Services Home Page ](https://www.daml.org/services/owl-s/)
+  - [SPARQL 1.1 Service Description](https://www.w3.org/TR/sparql11-service-description/)
+  - [OWL-S - Wikipedia](https://en.wikipedia.org/wiki/OWL-S?wprov=sfla1)
+  - [OWL-S: Semantic Markup for Web Services](https://www.w3.org/submissions/2004/SUBM-OWL-S-20041122/)
+  - [Web Services @ W3C](https://www.w3.org/2002/ws/)
+  - [Web Service Definition Language (WSDL)](https://www.w3.org/TR/2001/NOTE-wsdl-20010315)
+  - [ANN : RDF Process Profile (RPP)](http://lists.xml.org/archives/xml-dev/200104/msg00335.html)
+  - [https://www.bbc.co.uk/sounds/play/m0023ydg?partner=uk.co.bbc&origin=share-mobile](https://www.bbc.co.uk/sounds/play/m0023ydg?partner=uk.co.bbc&origin=share-mobile)
+  - [123: Party Games - Page 94: The Private Eye Podcast | Podcast on Spotify](https://open.spotify.com/episode/37r474oCAWGUEsgpLj5kXv)
+  - [https://open.spotify.com/episode/37r474oCAWGUEsgpLj5kXv](https://open.spotify.com/episode/37r474oCAWGUEsgpLj5kXv)
+  - [A visual programming environment for audio experimentation, prototyping and education ⋅ plugdata](https://plugdata.org/)
+  - [http://woodblock.com/encyclopedia/entries/011_10/chap_4.html#:~:text=In%20preparing%20an%20engraving%20block,they%20are%20exactly%20type%20high.](http://woodblock.com/encyclopedia/entries/011_10/chap_4.html#:~:text=In%20preparing%20an%20engraving%20block,they%20are%20exactly%20type%20high.)
+  - [Blue plaque](https://www.corington.co.uk/projects/blueplaque/)
+  - [Comprehensive Guide to Using Claude Effectively](https://www.linkedin.com/pulse/comprehensive-guide-using-claude-effectively-david-kohav-8qzjf?utm_source=share&utm_medium=member_android&utm_campaign=share_via)
+    - Comprehensive Guide to Using Claude Effectively
+  - [[2404.09305] OWLOOP: Interfaces for Mapping OWL Axioms into OOP Hierarchies](https://arxiv.org/abs/2404.09305)
+  - [GitHub - buoncubi/owloop: An Object Oriented Programming (OOP) interface for Ontology Web language (OWL) ontologies.](https://github.com/buoncubi/owloop)
+  - [https://lod-cloud.net/dataset/opencyc](https://lod-cloud.net/dataset/opencyc)
+  - [GitHub - asanchez75/opencyc](https://github.com/asanchez75/opencyc)
+  - [Reddit - Dive into anything](https://www.reddit.com/r/ClaudeAI/comments/1egxxmz/not_enough_people_are_getting_creative_with/)
+  - [https://newsletter.maartengrootendorst.com/p/a-visual-guide-to-mixture-of-experts](https://newsletter.maartengrootendorst.com/p/a-visual-guide-to-mixture-of-experts)
+  - [Reddit - Dive into anything](https://www.reddit.com/r/LocalLLaMA/s/zRk8Y7fyry)
+  - [Transformer Neural Networks: A Step-by-Step Breakdown | Built In](https://builtin.com/artificial-intelligence/transformer-neural-network)
+  - [Continuous integration - Wikipedia](https://en.wikipedia.org/wiki/Continuous_integration?wprov=sfla1)
+  - [GitHub - ollama/ollama-js: Ollama JavaScript library](https://github.com/ollama/ollama-js)
+  - [Zyphra/Zamba2-1.2B-instruct · Hugging Face](https://huggingface.co/Zyphra/Zamba2-1.2B-instruct)
+  - [Wisdom - Wikipedia](https://en.wikipedia.org/wiki/Wisdom#Sapience?wprov=sfla1)
+  - [Sentience - Wikipedia](https://en.wikipedia.org/wiki/Sentience?wprov=sfla1)
+  - [Action language - Wikipedia](https://en.wikipedia.org/wiki/Action_language?wprov=sfla1)
+  - [Automated planning and scheduling - Wikipedia](https://en.wikipedia.org/wiki/Automated_planning_and_scheduling?wprov=sfla1)
+  - [https://en.wikipedia.org/wiki/Constraint_satisfaction_problem?wprov=sfla1](https://en.wikipedia.org/wiki/Constraint_satisfaction_problem?wprov=sfla1)
+  - [Praxis (process) - Wikipedia](https://en.wikipedia.org/wiki/Praxis_%28process%29?wprov=sfla1)
+  - [Play (activity) - Wikipedia](https://en.wikipedia.org/wiki/Play_%28activity%29?wprov=sfla1)
+  - [Etruscan alphabet - Wikipedia](https://en.wikipedia.org/wiki/Etruscan_alphabet?wprov=sfla1)
+  - [Rock Drawings in Valcamonica - Wikipedia](https://en.wikipedia.org/wiki/Rock_Drawings_in_Valcamonica?wprov=sfla1)
+  - [How To Enable ESP NOW Long Range Mode in Arduino - ESP32 Forum](https://esp32.com/viewtopic.php?t=33291)
+  - [Prompt engineering - Wikipedia](https://en.wikipedia.org/wiki/Prompt_engineering#Graph_retrieval-augmented_generation?wprov=sfla1)
+  - [Prompt engineering - Wikipedia](https://en.wikipedia.org/wiki/Prompt_engineering#Graph_retrieval-augmented_generation?wprov=sfla1)
+  - [Retrieval-augmented generation - Wikipedia](https://en.wikipedia.org/wiki/Retrieval-augmented_generation?wprov=sfla1)
+  - [https://en.wikipedia.org/wiki/Getting_Things_Done?wprov=sfla1](https://en.wikipedia.org/wiki/Getting_Things_Done?wprov=sfla1)
+  - [NLTK :: Natural Language Toolkit](https://www.nltk.org/)
+  - [https://github.com/langchain-ai/langchain/blob/master/libs/text-splitters/langchain_text_splitters/nltk.py](https://github.com/langchain-ai/langchain/blob/master/libs/text-splitters/langchain_text_splitters/nltk.py)
+  - [GitHub - flairNLP/flair: A very simple framework for state-of-the-art Natural Language Processing (NLP)](https://github.com/flairNLP/flair)
+  - [https://towardsdatascience.com/rag-101-chunking-strategies-fdc6f6c2aaec](https://towardsdatascience.com/rag-101-chunking-strategies-fdc6f6c2aaec)
+  - [GitHub - qdrant/qdrant: Qdrant - High-performance, massive-scale Vector Database for the next generation of AI. Also available in the cloud https://cloud.qdrant.io/](https://github.com/qdrant/qdrant)
+  - [Keirsey Temperament Sorter - Wikipedia](https://en.wikipedia.org/wiki/Keirsey_Temperament_Sorter?wprov=sfla1)
+  - [Ergodicity - Wikipedia](https://en.wikipedia.org/wiki/Ergodicity?wprov=sfla1)
+  - [Obleas Authentic Recipe | TasteAtlas](https://www.tasteatlas.com/oblea/recipe)
+  - [Google Colab](https://colab.research.google.com/github/sanchit-gandhi/notebooks/blob/main/fine_tune_whisper.ipynb)
+  - [GitHub - ggerganov/whisper.cpp: Port of OpenAI's Whisper model in C/C++](https://github.com/ggerganov/whisper.cpp)
+  - [Using a Pre-trained Model — Mozilla DeepSpeech 0.9.3 documentation](https://deepspeech.readthedocs.io/en/r0.9/USING.html#using-the-node-js-electron-js-package)
+  - [Welcome to DeepSpeech’s documentation! — Mozilla DeepSpeech 0.9.3 documentation](https://deepspeech.readthedocs.io/en/r0.9/?badge=latest)
+  - [GitHub - KoljaB/RealtimeSTT: A robust, efficient, low-latency speech-to-text library with advanced voice activity detection, wake word activation and instant transcription.](https://github.com/KoljaB/RealtimeSTT)
+  - [Analog multiplier - circuit flaw or wrong simulation? | Electronics Forum (Circuits, Projects and Microcontrollers)](https://www.electro-tech-online.com/threads/analog-multiplier-circuit-flaw-or-wrong-simulation.141239/)
+  - [Reddit - Dive into anything](https://www.reddit.com/r/synthdiy/s/tzxSIq15lz)
+  - [Getting Things Done - Wikipedia](https://en.wikipedia.org/wiki/Getting_Things_Done?wprov=sfla1)
+  - [Comparison of audio synthesis environments - Wikipedia](https://en.wikipedia.org/wiki/Comparison_of_audio_synthesis_environments?wprov=sfla1)
+  - [Vitamin D - Wikipedia](https://en.wikipedia.org/wiki/Vitamin_D?wprov=sfla1)
+  - [[2409.15336] Socially-Minded Intelligence: How Individuals, Groups, and AI Systems Can Make Each-Other Smarter (or Not)](https://arxiv.org/abs/2409.15336)
+  - [https://www.webkb.org/doc/wn/](https://www.webkb.org/doc/wn/)
+  - [https://ragaboutit.com/understanding-claude-projects-a-comprehensive-guide/](https://ragaboutit.com/understanding-claude-projects-a-comprehensive-guide/)
+  - [Getting Things Done - Wikipedia](https://en.wikipedia.org/wiki/Getting_Things_Done?wprov=sfla1)
+  - [Claude Exporter - Extract chat convos easily - Chrome Web Store](https://chromewebstore.google.com/detail/claude-exporter-extract-c/elhmfakncmnghlnabnolalcjkdpfjnin)
+  - [De Havilland Mosquito - Wikipedia](https://en.wikipedia.org/wiki/De_Havilland_Mosquito?wprov=sfla1)
+  - [Nudge theory - Wikipedia](https://en.wikipedia.org/wiki/Nudge_theory?wprov=sfla1)
+  - [Emma Goldman - Wikipedia](https://en.wikipedia.org/wiki/Emma_Goldman?wprov=sfla1)
+  - [Chicago idea - Wikipedia](https://en.wikipedia.org/wiki/Chicago_idea?wprov=sfla1)
+  - [Propaganda of the deed - Wikipedia](https://en.wikipedia.org/wiki/Propaganda_of_the_deed?wprov=sfla1)
+  - [Exquisite corpse - Wikipedia](https://en.wikipedia.org/wiki/Exquisite_corpse?wprov=sfla1)
+  - [https://nodejs-mobile.github.io/docs/guide/guide-android/getting-started/](https://nodejs-mobile.github.io/docs/guide/guide-android/getting-started/)
+  - [GitHub - nodejs-mobile/nodejs-mobile: Full-fledged Node.js on Android and iOS](https://github.com/nodejs-mobile/nodejs-mobile)
+  - [(PDF) A Survey on Ontologies for Agents | Ricardo Sanz - Academia.edu](https://www.academia.edu/2623764/A_Survey_on_Ontologies_for_Agents)
+  - [[2306.10061] The Ontology for Agents, Systems and Integration of Services: OASIS version 2](https://arxiv.org/abs/2306.10061)
+  - [View article](https://scholar.google.com/citations?view_op=view_citation&hl=en&user=tYimqvsAAAAJ&citation_for_view=tYimqvsAAAAJ:eQOLeE2rZwMC)
+  - [Valentina Tamma - Google Scholar](https://scholar.google.com/citations?user=tYimqvsAAAAJ&hl=en)
+  - [BESTIARIO D’ITALIA: Leggende della Toscana – Monster Movie](https://monstermovieitalia.com/2020/01/16/bestiario-italia-leggende-toscana/)
+  - [Gold code - Wikipedia](https://en.wikipedia.org/wiki/Gold_code?wprov=sfla1)
+  - [Web Coverage Processing Service - Wikipedia](https://en.wikipedia.org/wiki/Web_Coverage_Processing_Service?wprov=sfla1)
+  - [GitHub - ParthaPRay/esp_mkr_fastapi_ollama: This repo contains the codes about calling FastAPI web server running Ollama for responding back to the prompt served by ESP8266, ESP32 and Arduino MKR 1000](https://github.com/ParthaPRay/esp_mkr_fastapi_ollama)
+  - [ParthaPRay (ParthaPRay) / Repositories · GitHub](https://github.com/ParthaPRay?tab=repositories)
+  - [GitHub - ParthaPRay/LLM-Learning-Sources: This repo contains a list of channels and sources from where LLMs should be learned](https://github.com/ParthaPRay/LLM-Learning-Sources)
+  - [GitHub - gsantner/markor: Text editor - Notes & ToDo (for Android) - Markdown, todo.txt, plaintext, math, ..](https://github.com/gsantner/markor)
+  - [GitHub - goldbergyoni/nodebestpractices: :white_check_mark:  The Node.js best practices list (July 2024)](https://github.com/goldbergyoni/nodebestpractices)
+  - [GitHub - mvbasov/OMN: This is simple, lightweight and open source Android application to create and organize everyday notes.](https://github.com/mvbasov/OMN)
+  - [GitHub - mvbasov/lWS: lightweight Web Server (lWS) for Android](https://github.com/mvbasov/lWS)
+  - [
+        Continue - Codestral, Claude, and more - Visual Studio Marketplace
+    ](https://marketplace.visualstudio.com/items?itemName=Continue.continue#:~:text=Continue%20is%20the%20leading%20open,inside%20VS%20Code%20and%20JetBrains)
+  - [Reddit - Dive into anything](https://www.reddit.com/r/pulsaredit/s/ridudFvL5b)
+  - [https://github.com/GNOME/tinysparql](https://github.com/GNOME/tinysparql)
+  - [GitHub - TheAiSingularity/graphrag-local-ollama: Local models support for Microsoft's graphrag using ollama (llama3, mistral, gemma2 phi3)- LLM & Embedding extraction](https://github.com/TheAiSingularity/graphrag-local-ollama)
+  - [ollama/README.md at main · ollama/ollama · GitHub](https://github.com/ollama/ollama/blob/main/README.md)
+  - [Plate Reverb — Voltek Labs](https://www.voltek-labs.net/plate-reverb)
+  - [Git Large File Storage | Git Large File Storage (LFS) replaces large files such as audio samples, videos, datasets, and graphics with text pointers inside Git, while storing the file contents on a remote server like GitHub.com or GitHub Enterprise.](https://git-lfs.com/)
+  - [tus - resumable file uploads](https://tus.io/)
+  - [Gorilla](https://gorilla.cs.berkeley.edu/)
+  - [GitHub - guidance-ai/guidance: A guidance language for controlling large language models.](https://github.com/guidance-ai/guidance)
+  - [Home | Tampermonkey](https://www.tampermonkey.net/index.php?browser=chrome&locale=en)
+  - [https://towardsdatascience.com/the-art-of-prompt-design-prompt-boundaries-and-token-healing-3b2448b0be38](https://towardsdatascience.com/the-art-of-prompt-design-prompt-boundaries-and-token-healing-3b2448b0be38)
+  - [Reddit - Dive into anything](https://www.reddit.com/r/LocalLLaMA/s/b1yLLrRo9J)
+  - [Fine tuning for function calling | OpenAI Cookbook](https://cookbook.openai.com/examples/fine_tuning_for_function_calling)
+  - [[2409.15790] Small Language Models: Survey, Measurements, and Insights](https://arxiv.org/abs/2409.15790)
+  - [https://stackoverflow.com/questions/73973700/smooth-continuous-css-animation-blob-flow](https://stackoverflow.com/questions/73973700/smooth-continuous-css-animation-blob-flow)
+  - [« Pour le pluralisme algorithmique ! »](https://www.lemonde.fr/idees/article/2024/09/25/pour-le-pluralisme-algorithmique_6332830_3232.html)
+  - [GoodRelations - W3C Wiki](https://www.w3.org/wiki/GoodRelations)
+  - [GoodRelations - W3C Wiki](https://www.w3.org/wiki/GoodRelations)
+  - [GoodRelations - Wikipedia](https://en.wikipedia.org/wiki/GoodRelations?wprov=sfla1)
+  - [Data Flywheels for LLM Applications](https://sh-reya.com/blog/ai-engineering-flywheel/#a-framework-for-creating-a-flywheel)
+  - [Jones Cylindrical Shuttle Sewing Machine](https://ismacs.net/jones/cylindrical_shuttle.html)
+  - [Jones Family CS machines Part 1 - Fiddlebase](https://www.fiddlebase.com/british-machines/jones-co/jones-family-cs-machines-part-1/)
+  - [Search eLibrary :: SSRN](https://papers.ssrn.com/sol3/results.cfm)
+  - [https://papers.ssrn.com/sol3/results.cfm](https://papers.ssrn.com/sol3/results.cfm)
+  - [GitHub - fedwiki/wiki-plugin-transport: Federated Wiki Plugin - Transport](https://github.com/fedwiki/wiki-plugin-transport)
+  - [make a new plugin](http://plugins.fed.wiki.org/view/about-plugins/view/make-plugin-script/view/make-a-new-plugin)
+  - [http://plugins.fed.wiki.org/view/about-plugins](http://plugins.fed.wiki.org/view/about-plugins)
+  - [wiki-storage-couchdb/lib/couchdb.js at master · fedwiki/wiki-storage-couchdb · GitHub](https://github.com/fedwiki/wiki-storage-couchdb/blob/master/lib%2Fcouchdb.js)
+  - [https://github.com/danja/sparql-diamonds](https://github.com/danja/sparql-diamonds)
+  - [wiki-storage-leveldb/lib at master · fedwiki/wiki-storage-leveldb · GitHub](https://github.com/fedwiki/wiki-storage-leveldb/tree/master/lib)
+  - [Federated Wiki · GitHub](https://github.com/fedwiki)
+  - [https://wiki.c2.com/?PivotLanguage](https://wiki.c2.com/?PivotLanguage)
+  - [https://wiki.c2.com/?AgileSoftwareDevelopment](https://wiki.c2.com/?AgileSoftwareDevelopment)
+  - [Radio 4 Extra - Listen Live - BBC Sounds](https://www.bbc.co.uk/sounds/play/live:bbc_radio_four_extra?partner=uk.co.bbc&origin=share-mobile)
+  - [Simon (game) - Wikipedia](https://en.wikipedia.org/wiki/Simon_%28game%29?wprov=sfla1)
+  - [sileod/attempto-nli · Datasets at Hugging Face](https://huggingface.co/datasets/sileod/attempto-nli)
+  - [Gupshup Documentation](https://docs.gupshup.io/)
+  - [Reddit - Dive into anything](https://www.reddit.com/r/LocalLLaMA/s/bjKeXeelR1)
+  - [YouTube](https://youtube.com/watch?v=soqTT0o1ZKo&si=dYWHrfvfQpkkLToH)
+  - [GitHub - sanjeevanahilan/nanoChatGPT: A crude RLHF layer on top of nanoGPT with Gumbel-Softmax trick](https://github.com/sanjeevanahilan/nanoChatGPT)
+  - [GitHub - sanjeevanahilan/nanoChatGPT: A crude RLHF layer on top of nanoGPT with Gumbel-Softmax trick](https://github.com/sanjeevanahilan/nanoChatGPT)
+  - [GitHub - karpathy/nanoGPT: The simplest, fastest repository for training/finetuning medium-sized GPTs.](https://github.com/karpathy/nanoGPT)
+  - [https://medium.com/liber-ai/what-is-a-neural-sparql-machine-c35945a5d278](https://medium.com/liber-ai/what-is-a-neural-sparql-machine-c35945a5d278)
+  - [Neural Abstract Machines & Program Induction workshop v2 @ ICML 2018](https://uclnlp.github.io/nampi/)
+  - [AKSW - Neural SPARQL Machines](https://aksw.org/Projects/NeuralSPARQLMachines)
+  - [GitHub - LiberAI/NSpM: 🤖 Neural SPARQL Machines for Knowledge Graph Question Answering.](https://github.com/LiberAI/NSpM)
+  - [GitHub - ktym/d3sparql: JavaScript library for executing SPARQL query and transforming resulted JSON for visualization in D3.js](https://github.com/ktym/d3sparql)
+  - [https://www.linkedin.com/feed/update/urn:li:ugcPost:7243941895356203010?commentUrn=urn%3Ali%3Acomment%3A%28ugcPost%3A7243941895356203010%2C7244634303505035264%29&dashCommentUrn=urn%3Ali%3Afsd_comment%3A%287244634303505035264%2Curn%3Ali%3AugcPost%3A7243941895356203010%29](https://www.linkedin.com/feed/update/urn:li:ugcPost:7243941895356203010?commentUrn=urn%3Ali%3Acomment%3A%28ugcPost%3A7243941895356203010%2C7244634303505035264%29&dashCommentUrn=urn%3Ali%3Afsd_comment%3A%287244634303505035264%2Curn%3Ali%3AugcPost%3A7243941895356203010%29)
+  - [Nine FAQs about Knowledge Graphs for the Enterprise](https://www.linkedin.com/pulse/nine-faqs-knowledge-graphs-enterprise-matthew-petrillo-vu5fe?utm_source=share&utm_medium=member_android&utm_campaign=share_via)
+    - Nine FAQs about Knowledge Graphs for the Enterprise
+  - [GitHub - currentslab/awesome-vector-search: Collections of vector search related libraries, service and research papers](https://github.com/currentslab/awesome-vector-search)
+  - [GitHub - llmware-ai/llmware: Unified framework for building enterprise RAG pipelines with small, specialized models](https://github.com/llmware-ai/llmware)
+  - [Reddit - Dive into anything](https://www.reddit.com/r/LocalLLaMA/s/i4N3eoL5OK)
+  - [https://smol-complete.vercel.app/](https://smol-complete.vercel.app/)
+  - [301 Moved Permanently](http://bair.berkeley.edu/blog/2024/05/29/tiny-agent/)
+  - [GitHub - cfahlgren1/webllm-chat](https://github.com/cfahlgren1/webllm-chat)
+  - [natural-functions/natural-functions-demo.ipynb at main · cfahlgren1/natural-functions · GitHub](https://github.com/cfahlgren1/natural-functions/blob/main/natural-functions-demo.ipynb)
+  - [https://ollama.com/calebfahlgren/natural-functions](https://ollama.com/calebfahlgren/natural-functions)
+  - [Reddit - Dive into anything](https://www.reddit.com/r/LocalLLaMA/s/sYwGIpNABb)
+  - [GitHub - ggozad/oterm: a text-based terminal client for Ollama](https://github.com/ggozad/oterm)
+  - [GitHub - deepfates/concat: query, rank and answer questions from a bookwyrm 🐈‍⬛](https://github.com/deepfates/concat)
+  - [GitHub - deepfates/bookwyrm: ingest, index, and encode information into one long file 🐉](https://github.com/deepfates/bookwyrm)
+  - [deepfates (deepfates) / Repositories · GitHub](https://github.com/deepfates?tab=repositories)
+  - [GitHub - deepfates/hnsw: Hierarchical Navigable Small Worlds in the browser](https://github.com/deepfates/hnsw)
+  - [Reddit - Dive into anything](https://www.reddit.com/r/vectordatabase/s/cpF5sY5VmS)
+  - [GitHub - facebookresearch/faiss: A library for efficient similarity search and clustering of dense vectors.](https://github.com/facebookresearch/faiss)
+  - [QtGraphs](https://www.qt.io/blog/qtgraphs)
+  - [Online courses that inspire](https://wisey-adhd.com/adhd-quiz?utm_source=google&utm_medium=gdn&utm_campaign=21707743636&utm_term=168301777158&utm_content=713706628013&utm_placement=www.synthtopia.com&utm_kw=&gad_source=5&gclid=EAIaIQobChMIms3u_PDbiAMVfbODBx2TRwGhEAEYASAAEgIgXPD_BwE)
+  - [Open Source Insights](https://deps.dev/project/github/facebookresearch%2Fllama-recipes)
+  - [Tony Seale on LinkedIn: AI runs on data. If you want to train your AI, you need to give it the… | 69 comments](https://www.linkedin.com/posts/tonyseale_ai-runs-on-data-if-you-want-to-train-your-activity-7240268022731403264-qh2z?utm_source=share&utm_medium=member_android)
+  - [https://www.workovereasy.com/2017/08/29/how-to-make-a-repeating-pattern-two-ways/](https://www.workovereasy.com/2017/08/29/how-to-make-a-repeating-pattern-two-ways/)
+  - [https://academictorrents.com/browse.php?search=stuck_in_the_matrix%2C+Watchful1%2C+RaiderBDev](https://academictorrents.com/browse.php?search=stuck_in_the_matrix%2C+Watchful1%2C+RaiderBDev)
+  - [PRAW 7.7.1 documentation](https://praw.readthedocs.io/en/stable/)
+  - [GitHub - AkariAsai/self-rag: This includes the original implementation of SELF-RAG: Learning to Retrieve, Generate and Critique through self-reflection by Akari Asai, Zeqiu Wu, Yizhong Wang, Avirup Sil, and Hannaneh Hajishirzi.](https://github.com/AkariAsai/self-rag)
+  - [GitHub - facebookresearch/contriever: Contriever: Unsupervised Dense Information Retrieval with Contrastive Learning](https://github.com/facebookresearch/contriever)
+  - [casper-hansen (Casper) · GitHub](https://github.com/casper-hansen)
+  - [GitHub - casper-hansen/Web-Scraping-Reddit: Web scraping Reddit without using Reddit API, and making a dataset, and using the dataset for a machine learning project.](https://github.com/casper-hansen/Web-Scraping-Reddit)
+  - [GitHub - anonfaded/FadCam: Seamless background video recorder for Android – ad-free and open-source, with customizable options.](https://github.com/anonfaded/FadCam)
+  - [GitHub - Dimowner/AudioRecorder: Audio Recording Android application](https://github.com/Dimowner/AudioRecorder)
+  - [GitHub - FossifyOrg/Voice-Recorder: An easy way of recording any discussion or sounds without ads or internet access](https://github.com/FossifyOrg/Voice-Recorder)
+  - [GitHub - Leonidius20/RecordingStudio: Audio recorder app for Android](https://github.com/Leonidius20/RecordingStudio)
+  - [Cats prefer species-appropriate music - ScienceDirect](https://www.sciencedirect.com/science/article/abs/pii/S016815911500060X)
+  - [Cats prefer species-appropriate music - ScienceDirect](https://www.sciencedirect.com/science/article/abs/pii/S016815911500060X)
+  - [https://www.hackster.io/lilygottgo/lilygo-t-watch-2020-f07bd4](https://www.hackster.io/lilygottgo/lilygo-t-watch-2020-f07bd4)
+  - [
+      T-Watch 2020 400mAh
+ – LILYGO®](https://www.lilygo.cc/products/t-watch-2020-400ah)
+  - [Gadgetbridge](https://gadgetbridge.org/)
+  - [GitHub - sharandac/My-TTGO-Watch: A GUI named hedge for smartwatch like devices based on ESP32. Currently support for T-Watch2020 (V1,V2,V3), T-Watch2021, M5Paper, M5Core2 and native Linux support for testing.](https://github.com/sharandac/My-TTGO-Watch)
+  - [GitHub - Xinyuan-LilyGO/TTGO_TWatch_Library](https://github.com/Xinyuan-LilyGO/TTGO_TWatch_Library)
+  - [https://towardsdatascience.com/a-visual-exploration-of-semantic-text-chunking-6bb46f728e30](https://towardsdatascience.com/a-visual-exploration-of-semantic-text-chunking-6bb46f728e30)
+  - [Introducing Contextual Retrieval \ Anthropic](https://www.anthropic.com/news/contextual-retrieval)
+  - [Models - Hugging Face](https://huggingface.co/models?other=base_model:quantized:mistralai/Mistral-Small-Instruct-2409)
+  - [Mistral launches a free tier for developers to test its AI models | TechCrunch](https://techcrunch.com/2024/09/17/mistral-launches-a-free-tier-for-developers-to-test-its-ai-models/)
+  - [https://en.wikipedia.org/wiki/Clapp_oscillator?wprov=sfla1](https://en.wikipedia.org/wiki/Clapp_oscillator?wprov=sfla1)
+  - [GitHub - GaudiLabs/OpenThereminV4: Open Source Theremin Instrument](https://github.com/GaudiLabs/OpenThereminV4)
+  - [
+Theremin World -  
+     Schematics 
+](http://www.thereminworld.com/schematics)
+  - [Clapp oscillator - Wikipedia](https://en.wikipedia.org/wiki/Clapp_oscillator?wprov=sfla1)
+  - [http://www.hanssummers.com/varicap/varicapdiode.html](http://www.hanssummers.com/varicap/varicapdiode.html)
+  - [[Guide] Social media preview with open graph meta tags - svaerm](https://svaerm.com/en/blog/open-graph-meta-tags/)
+  - [https://developers.facebook.com/docs/plugins/like-button/](https://developers.facebook.com/docs/plugins/like-button/)
+  - [HTML snippet within body of post for social media sharing (SOLVED) - Using Ghost - Ghost Forum](https://forum.ghost.org/t/html-snippet-within-body-of-post-for-social-media-sharing-solved/37801)
+  - [https://sh-reya.com/blog/ai-engineering-flywheel/](https://sh-reya.com/blog/ai-engineering-flywheel/)
+  - [JandaSec](https://jandasec.com/)
+  - [Paper page - Kolmogorov-Arnold Transformer](https://huggingface.co/papers/2409.10594)
+  - [https://towardsdatascience.com/teaching-your-model-to-learn-from-itself-8b5ef13eb173](https://towardsdatascience.com/teaching-your-model-to-learn-from-itself-8b5ef13eb173)
+  - [x.com](https://x.com/IntuitMachine/status/1835458935081644468?t=hcgriTZ3X5LSb_KS3fTs-w&s=09)
+  - [GitHub - zorazrw/agent-workflow-memory: AWM: Agent Workflow Memory](https://github.com/zorazrw/agent-workflow-memory)
+  - [https://arxiv.org/abs/2409.07429](https://arxiv.org/abs/2409.07429)
+  - [https://www.eyelevel.ai/](https://www.eyelevel.ai/)
+  - [[2402.04253] AnyTool: Self-Reflective, Hierarchical Agents for Large-Scale API Calls](https://arxiv.org/abs/2402.04253)
+  - [GitHub - dyabel/AnyTool](https://github.com/dyabel/AnyTool)
+  - [Org mode for GNU Emacs](https://orgmode.org/)
+  - [Efficacy of Silexan in patients with anxiety disorders: a meta-analysis of randomized, placebo-controlled trials | European Archives of Psychiatry and Clinical Neuroscience](https://link.springer.com/article/10.1007/s00406-022-01547-w)
+  - [Introducing Community Tools on HuggingChat](https://huggingface.co/blog/community-tools)
+  - [Breaking up is hard to do: Chunking in RAG applications - Stack Overflow](https://stackoverflow.blog/2024/06/06/breaking-up-is-hard-to-do-chunking-in-rag-applications/)
+  - [https://www.reddit.com/r/SaaS/s/oOSMYxt6jE](https://www.reddit.com/r/SaaS/s/oOSMYxt6jE)
+  - [How genes shape personality traits: New links discovered](https://medicalxpress.com/news/2024-09-genes-personality-traits-links.html)
+  - [Types of Synthesizers: From Additive to Wavetable and All Points In Between - gearnews.com](https://www.gearnews.com/types-of-synthesizers/)
+  - [GitHub - brummer10/Ratatouille.lv2: Ratatouille is a Neural Model loader and mixer for Linux/Windows](https://github.com/brummer10/Ratatouille.lv2)
+  - [GitHub - mod-audio/mod-desktop: MOD Audio for the desktop](https://github.com/mod-audio/mod-desktop)
+  - [https://frugal-horn.com/spawn.html](https://frugal-horn.com/spawn.html)
+  - [darktable](https://www.darktable.org/)
+  - [Ansel](https://ansel.photos/en/)
+  - [Photopea | Online Photo Editor](https://www.photopea.com/)
+  - [ආයුබෝවන් - Wiktionary, the free dictionary](https://en.wiktionary.org/wiki/%E0%B6%86%E0%B6%BA%E0%B7%94%E0%B6%B6%E0%B7%9D%E0%B7%80%E0%B6%B1%E0%B7%8A#Sinhalese)
+  - [Oaxacan Wood Carving Julia Fuentes Cat Feline Oaxaca Mexican Folk Art Alebrije  | eBay](https://www.ebay.it/itm/186308758761)
+  - [REFRACTOMETER : DIGITAL MEASUREMENT PRINCIPLE | contrologic](https://web.archive.org/web/20191220192234/http://contrologic.co.th/web/refractometer-digital-measurement-principle/)
+  - [GitHub - gsantner/markor: Text editor - Notes & ToDo (for Android) - Markdown, todo.txt, plaintext, math, ..](https://github.com/gsantner/markor)
+  - [GitHub - mvbasov/OMN: This is simple, lightweight and open source Android application to create and organize everyday notes.](https://github.com/mvbasov/OMN)
+  - [GitHub - mvbasov/lWS: lightweight Web Server (lWS) for Android](https://github.com/mvbasov/lWS)
+  - [https://towardsdatascience.com/transformer-diffusion-transfusion-d18d219f2a12](https://towardsdatascience.com/transformer-diffusion-transfusion-d18d219f2a12)
+  - [How ChatGPT scanned 170k lines of code in seconds and saved me hours of work | ZDNET](https://www.zdnet.com/article/how-chatgpt-scanned-170k-lines-of-code-in-seconds-and-saved-me-hours-of-work/#google_vignette)
+  - [Validation of the Mind Excessively Wandering Scale and the Relationship of Mind Wandering to Impairment in Adult ADHD - PMC](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6429624/)
+  - [Skyscraper Tsunami Unleashed by Seismic Anomaly Never Seen Before : ScienceAlert](https://www.sciencealert.com/skyscraper-tsunami-unleashed-by-seismic-anomaly-never-seen-before)
+  - [GitHub - todotxt/todo.txt: ‼️ A complete primer on the whys and hows of todo.txt.](https://github.com/todotxt/todo.txt)
+  - [[2312.10997] Retrieval-Augmented Generation for Large Language Models: A Survey](https://arxiv.org/abs/2312.10997)
+  - [GraphRAG - Build, scale, and manage user-facing Retrieval-Augmented Generation applications.](https://r2r-docs.sciphi.ai/cookbooks/graphrag)
+  - [I got tired of procrastination, so I built this AI tool to make me productive! 🫡 - DEV Community](https://dev.to/composiodev/i-got-tired-of-procrastination-so-i-built-this-ai-tool-to-make-me-productive-32ld)
+  - [GitHub - ComposioHQ/composio: Composio equip's your AI agents & LLMs with 100+ high-quality integrations via function calling](https://github.com/ComposioHQ/composio)
+  - [kaanerdenn (Ali Kaan Erden) · GitHub](https://github.com/kaanerdenn)
+  - ["Rule of Saint Benedict": A medieval blueprint for modern time management - Big Think](https://bigthink.com/thinking/rule-of-saint-benedict-oliver-burkemans/)
+  - [Anthropic experts share top tips for effective AI prompting](https://the-decoder.com/anthropic-experts-share-top-tips-for-effective-ai-prompting/)
+  - [So, You Want To Write A Book](https://www.forbes.com/sites/shephyken/2024/09/08/so-you-want-to-write-a-book/)
+  - [https://towardsdatascience.com/data-science-at-home-solving-the-nanny-schedule-puzzle-with-monte-carlo-and-genetic-algorithms-eb4b63ada9fe](https://towardsdatascience.com/data-science-at-home-solving-the-nanny-schedule-puzzle-with-monte-carlo-and-genetic-algorithms-eb4b63ada9fe)
+  - [https://trango.com/products/rock-prodigy-elite-package](https://trango.com/products/rock-prodigy-elite-package)
+  - [Rock Climbing | Uphill Athlete](https://uphillathlete.com/rock-climbing/)
+  - [How to Do Core: Scott's Killer Core Routine | Uphill Athlete](https://uphillathlete.com/videos/how-to-do-core/)
+  - [Training for Ice and Mixed Climbing | Uphill Athlete](https://uphillathlete.com/ice-climbing/training-ice-mixed-climbing/)
+  - [Man Arrested for Creating Fake Bands With AI, Then Making $10 Million by Listening to Their Songs With Bots](https://futurism.com/man-arrested-fake-bands-streams-ai?s=09)
+  - [Big lie - Wikipedia](https://en.wikipedia.org/wiki/Big_lie?wprov=sfla1)
+  - [Credo quia absurdum - Wikipedia](https://en.wikipedia.org/wiki/Credo_quia_absurdum?wprov=sfla1)
+  - [Synthtopia – Synthesizer and electronic music news, synth and music software reviews and more!](https://www.synthtopia.com/)
+  - [Entangled Life by Merlin Sheldrake (Omnibus) - BBC Sounds](https://www.bbc.co.uk/sounds/play/m0022sck?partner=uk.co.bbc&origin=share-mobile)
+  - [Homepage | Institute for Health Metrics and Evaluation](https://www.healthdata.org/)
+  - [Node.js TCP client and server example · GitHub](https://gist.github.com/tedmiston/5935757)
+  - [c# - TcpListener in NodeJS - Stack Overflow](https://stackoverflow.com/questions/76523775/tcplistener-in-nodejs#76616209)
+  - [Starting Grants 2024: Examples of projects | ERC](https://erc.europa.eu/news-events/news/starting-grants-2024-examples-projects)
+  - [Pulsar, the best code editor](https://optimizedbyotto.com/post/pulsar-best-text-file-and-code-editor/)
+  - [Reddit - Dive into anything](https://www.reddit.com/r/AskElectronics/s/WiGtQgW8t6)
+  - [[2409.00587] FLUX that Plays Music](https://arxiv.org/abs/2409.00587?s=09)
+  - [GitHub - feizc/FluxMusic: Text-to-Music Generation with Rectified Flow Transformer](https://github.com/feizc/FluxMusic)
+  - [Home | Linux Show Player](https://www.linux-show-player.org/)
+  - [Welcome to Metanet Software Inc](https://www.metanetsoftware.com/)
+  - [NotebookLM | Note Taking & Research Assistant Powered by AI](https://notebooklm.google/)
+  - [Friend Links](https://sascha-kirch.github.io/blog_friend_links.html)
+  - [Paper page - VisionTS: Visual Masked Autoencoders Are Free-Lunch Zero-Shot Time
+  Series Forecasters](https://huggingface.co/papers/2408.17253)
+  - [GitHub - cytoscape/cytoscape.js-klay: The Klay layout algorithm for Cytoscape.js](https://github.com/cytoscape/cytoscape.js-klay)
+  - [Geneaquilts](https://aviz.fr/Research/Geneaquilts)
+  - [Tangled tree visualization / Matteo Abrate | Observable](https://observablehq.com/@nitaku/tangled-tree-visualization-ii)
+  - [NetworkX: an overview - Graph Consulting](https://graphsandnetworks.com/networkx-an-overview/)
+  - [Software for Complex Networks — NetworkX 3.3 documentation](https://networkx.org/documentation/stable/index.html)
+  - [NetworkX — NetworkX  documentation](https://networkx.org/)
+  - [Using a space as a backend? - Spaces - Hugging Face Forums](https://discuss.huggingface.co/t/using-a-space-as-a-backend/37258)
+  - [ADHD Masking: Does Hiding Your Symptoms Help or Harm? - ADDA - Attention Deficit Disorder Association](https://add.org/adhd-masking/)
+  - [Symptoms in individuals with adult-onset ADHD are masked during childhood | European Archives of Psychiatry and Clinical Neuroscience](https://link.springer.com/article/10.1007/s00406-018-0893-3)
+  - [Attention deficit hyperactivity disorder - Wikipedia](https://en.wikipedia.org/wiki/Attention_deficit_hyperactivity_disorder?wprov=sfla1)
+  - [Genetics of attention deficit hyperactivity disorder - PMC](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6477889/)
+  - [How take notes + my Obsidian setup | Sebastian De Deyne](https://sebastiandedeyne.com/how-take-notes-my-obsidian-setup)
+  - [(PDF) FSS - Flow Short Scale ( English Version)](https://www.researchgate.net/publication/373975862_FSS_-_Flow_Short_Scale_English_Version)
+  - [LONDON COLLECTION - Collection of 3D Models by Micropolitan](https://thangs.com/designer/Micropolitan/collection/LONDON%20COLLECTION-63491)
+  - [Reddit - Dive into anything](https://www.reddit.com/r/ADHD/s/Q4LIevsy57)
+  - [Meet Melty, Open Source Alternative to Cursor](https://analyticsindiamag.com/ai-news-updates/meet-melty-open-source-alternative-to-cursor/)
+  - [GitHub - ratatui/ratatui: Rust library that's all about cooking up terminal user interfaces (TUIs) 👨‍🍳🐀](https://github.com/ratatui/ratatui)
+  - [GitHub - rsadsb/adsb_deku: ✈️ Rust ADS-B decoder + tui radar application](https://github.com/rsadsb/adsb_deku)
+  - [GitHub - kcat/openal-soft: OpenAL Soft is a software implementation of the OpenAL 3D audio API.](https://github.com/kcat/openal-soft)
+  - [Generating Rain With Pure Synthesis | Audiokinetic Blog](https://blog.audiokinetic.com/en/generating-rain-with-pure-synthesis/)
+  - [Synthesising Moving Sounds – ScienceOpen](https://www.scienceopen.com/hosted-document?doi=10.14236/ewic/AD1998.12)
+  - [Progressive web apps | MDN](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps)
+  - [
+        
+            
+                Architectural overview of Cordova platform - Apache Cordova
+            
+        
+    ](https://cordova.apache.org/docs/en/12.x/guide/overview/)
+  - [index | SuperCollider](https://supercollider.github.io/)
+  - [Reddit - Dive into anything](https://www.reddit.com/r/Parkour/s/4hYNdrvhRv)
+  - [Sort out your life! 100 tiny tricks to help with everything from digital overwhelm to lumpy sugar and unpaid bills | Time management | The Guardian](https://www.theguardian.com/lifeandstyle/article/2024/sep/03/sort-out-your-life-100-tiny-tricks-to-help-with-everything-from-digital-overwhelm-to-lumpy-sugar-and-unpaid-bills)
+  - [Hunting in Tuscany | Tuscany Guide](https://www.tuscany.guide/explore-tuscany/review/339-activities/340-sport/2423-hunting-in-tuscany#:~:text=It%20is%20considered%20that%20the,different%20seasons%20for%20each%20animal.)
+  - [GitHub - shiftkey/desktop: Fork of GitHub Desktop to support various Linux distributions](https://github.com/shiftkey/desktop)
+  - [Reddit - Dive into anything](https://www.reddit.com/r/AndroidQuestions/s/kRzwd6oVGz)
+  - [Reddit - Dive into anything](https://www.reddit.com/r/industrialmusic/s/4YTBlut241)
+  - [DIY Hangboard: Level Up your Climbing Training | REI Co-op Journal](https://www.rei.com/blog/climb/diy-hangboard)
+  - 
+  - [HTML details Tag](https://www.w3schools.com/tags/tag_details.asp)
+  - [GitHub - wwmm/easyeffects: Limiter, compressor, convolver, equalizer and auto volume and many other plugins for PipeWire applications](https://github.com/wwmm/easyeffects)
+  - [
+Ask AI Questions · Free AI Search Engine · iAsk.Ai is a Free Answer Engine, Enabling Users to Ask ChatGPT AI Any Question (iAsk)
+    ](https://iask.ai/)
+  - [https://homework.study.com/explanation/the-fermentation-of-sugar-to-produce-ethyl-alcohol-occurs-by-the-following-reaction-c-6h-12-o-6-to-2c-2h-5oh-plus-2co-2-what-mass-of-ethyl-alcohol-can-be-made-from-1-00-kg-of-sugar.html#:~:text=1Kg%20%3D1000%20g%20of%20sugar,of%20ethyl%20alcohol%20on%20fermentation.](https://homework.study.com/explanation/the-fermentation-of-sugar-to-produce-ethyl-alcohol-occurs-by-the-following-reaction-c-6h-12-o-6-to-2c-2h-5oh-plus-2co-2-what-mass-of-ethyl-alcohol-can-be-made-from-1-00-kg-of-sugar.html#:~:text=1Kg%20%3D1000%20g%20of%20sugar,of%20ethyl%20alcohol%20on%20fermentation.)
+  - [GitHub - SBoudrias/Inquirer.js: A collection of common interactive command line user interfaces.](https://github.com/SBoudrias/Inquirer.js)
+  - [‘We have been mistaken for terrorists’: Italy’s most controversial rap group fight persecution | Music | The Guardian](https://www.theguardian.com/music/2023/feb/01/italy-most-controversial-rap-group-p38-la-gang)
+  - [[1210.4752] Discrete Signal Processing on Graphs](https://arxiv.org/abs/1210.4752)
+  - [[1210.4752] Discrete Signal Processing on Graphs](https://arxiv.org/abs/1210.4752)
+  - [Bash Shell Scripting/Whiptail - Wikibooks, open books for an open world](https://en.wikibooks.org/wiki/Bash_Shell_Scripting/Whiptail)
+  - [AppFlowy.IO](https://www.appflowy.io/)
+  - [bash - whiptail or dialog - Unix & Linux Stack Exchange](https://unix.stackexchange.com/questions/64627/whiptail-or-dialog)
+  - [Clark W Fobes Debut Student Clarinet Mouthpiece | Music & Arts](https://www.musicarts.com/clark-w-fobes-debut-student-clarinet-mouthpiece-main0028307)
+  - [Analog Paradigm | Home](https://analogparadigm.com/)
+  - [Reddit - Dive into anything](https://www.reddit.com/r/ObsidianMD/s/FTXrJqsLBm)
+  - [Hyperthymesia - Wikipedia](https://en.wikipedia.org/wiki/Hyperthymesia?wprov=sfla1)
+  - [[2408.00114] Inductive or Deductive? Rethinking the Fundamental Reasoning Abilities of LLMs](https://arxiv.org/abs/2408.00114)
+  - [Reddit - Dive into anything](https://www.reddit.com/r/LocalLLaMA/s/lxFdc6hBrj)
+  - [What Is OpenTelemetry? The Ultimate Guide - The New Stack](https://thenewstack.io/what-is-opentelemetry-the-ultimate-guide/)
+  - [Sci-Hub: knowledge as a human right](https://sci-hub.se/)
+  - [https://love2d.org/](https://love2d.org/)
+  - [Gamification - Wikipedia](https://en.wikipedia.org/wiki/Gamification?wprov=sfla1)
+  - [[2312.00752] Mamba: Linear-Time Sequence Modeling with Selective State Spaces](https://arxiv.org/abs/2312.00752)
+  - [Reddit - Dive into anything](https://www.reddit.com/r/ADHD/s/yfLml0z3TZ)
+  - [GitHub - THUDM/LongWriter: LongWriter: Unleashing 10,000+ Word Generation from Long Context LLMs](https://github.com/THUDM/LongWriter)
+  - [Paper page - LongWriter: Unleashing 10,000+ Word Generation from Long Context LLMs](https://huggingface.co/papers/2408.07055)
+  - [Mask - Wikipedia](https://en.wikipedia.org/wiki/Mask?wprov=sfla1)
+  - [https://www.reddit.com/r/linux4noobs/s/w4EJ8LVDtB](https://www.reddit.com/r/linux4noobs/s/w4EJ8LVDtB)
+  - [LLMs-from-scratch/ch07/04_preference-tuning-with-dpo/dpo-from-scratch.ipynb at main · rasbt/LLMs-from-scratch · GitHub](https://github.com/rasbt/LLMs-from-scratch/blob/main/ch07%2F04_preference-tuning-with-dpo%2Fdpo-from-scratch.ipynb)
+  - [Scientists Identify Neural Network Vital For Creativity in The Brain : ScienceAlert](https://www.sciencealert.com/scientists-identify-neural-network-vital-for-creativity-in-the-brain)
+  - [Camel - Wikipedia](https://en.wikipedia.org/wiki/Camel?wprov=sfla1)
+  - [Camel - Wikipedia](https://en.wikipedia.org/wiki/Camel?wprov=sfla1)
+  - [Horses can plan ahead and think strategically, scientists find | Animal behaviour | The Guardian](https://www.theguardian.com/science/article/2024/aug/12/horses-can-plan-ahead-and-think-strategically-scientists-find)
+  - [J.C 🎵 | 🎸La Muerte Del Comandante - Luis R Conriquez, Novillos De La Sierra (Bass Cover)🎸
+-
+-
+-
+-
+#bass #bajoloche #tololoche #tolo #viral... | Instagram](https://www.instagram.com/p/C90yRsYSTPi/?img_index=1)
+  - [Google Image Result](https://images.app.goo.gl/Y6FDNzu5yzrEbqnn9)
+  - [https://www.reddit.com/r/BassGuitar/s/PGupGKRHUf](https://www.reddit.com/r/BassGuitar/s/PGupGKRHUf)
+  - [Reddit - Dive into anything](https://www.reddit.com/r/SideProject/s/hwlD6cMTxd)
+  - [9 Natural Viagra Supplements for Erectile Dysfunction UK 2024](https://www.menshealth.com/uk/sex/better-sex/a745821/natural-viagra/)
+  - [https://www.menshealth.com/uk/sex/better-sex/a745821/natural-viagra/](https://www.menshealth.com/uk/sex/better-sex/a745821/natural-viagra/)
+  - [KGSWC](https://kgsw.org/important_date.html)
+  - [GitHub - comfyanonymous/ComfyUI: The most powerful and modular diffusion model GUI, api and backend with a graph/nodes interface.](https://github.com/comfyanonymous/ComfyUI)
+  - [Comfy Org](https://www.comfy.org/)
+  - [Zeigarnik effect - Wikipedia](https://en.wikipedia.org/wiki/Zeigarnik_effect?wprov=sfla1)
+  - [Artificial Empathy - A Roadmap for Human Aligned Artificial General Intelligence](https://app.gumroad.com/d/f099f7be33bdc36f4ec5b656f39b4c1e)
+  - [Existence - Wikipedia](https://en.wikipedia.org/wiki/Existence?wprov=sfla1)
+  - [Kappa effect - Wikipedia](https://en.wikipedia.org/wiki/Kappa_effect?wprov=sfla1)
+  - [Time perception - Wikipedia](https://en.wikipedia.org/wiki/Time_perception?wprov=sfla1)
+  - [
+        rdf process - ANN : RDF Process Profile (RPP)
+    ](https://www.stylusstudio.com/xmldev/handler.asp?/xmldev/200104/post50330.html)
+  - [RDF Process Profile](https://web.archive.org/web/20021009222134/http://www.isacat.net/citnames/2001/04/rpp.htm)
+  - [A survey: knowledge graph entity alignment research based on graph embedding | Artificial Intelligence Review](https://link.springer.com/article/10.1007/s10462-024-10866-4)
+  - [Artificial Fluency - Large Language Models & Language as a Living Process](https://intuitionmachine.gumroad.com/l/fluency)
+  - [LangChain Introduces LangGraph Studio: The First Agent IDE for Visualizing, Interacting with, and Debugging Complex Agentic Applications - MarkTechPost](https://www.marktechpost.com/2024/08/03/langchain-introduces-langgraph-studio-the-first-agent-ide-for-visualizing-interacting-with-and-debugging-complex-agentic-applications/)
+  - [Adapter](https://refactoring.guru/design-patterns/adapter)
+  - [Securing Verifiable Credentials using JOSE and COSE](https://www.w3.org/TR/vc-jose-cose/)
+  - [JSON Web Token - Wikipedia](https://en.wikipedia.org/wiki/JSON_Web_Token?wprov=sfla1)
+  - [GitHub - pocketbase/js-sdk: PocketBase JavaScript SDK](https://github.com/pocketbase/js-sdk)
+  - [PocketBase - Open Source backend in 1 file](https://pocketbase.io/)
+  - [Netflix Open Sources Maestro, a Next-Gen Data Workflow Engine - The New Stack](https://thenewstack.io/netflix-open-sources-maestro-a-next-gen-data-workflow-engine/)
+  - [Turbo Edit - a Hugging Face Space by turboedit](https://huggingface.co/spaces/turboedit/turbo_edit)
+  - [hallo — marylousharrock](https://marylousharrock.com/hallo)
+  - [PracticalSessions2024/1_reasoning at main · eemlcommunity/PracticalSessions2024 · GitHub](https://github.com/eemlcommunity/PracticalSessions2024/tree/main/1_reasoning)
+  - [GitHub - mvbasov/lWS: lightweight Web Server (lWS) for Android](https://github.com/mvbasov/lWS)
+  - [Open Markdown Notes (OMN) | F-Droid - Free and Open Source Android App Repository](https://f-droid.org/packages/net.basov.omn.fdroid/#:~:text=This%20is%20simple%2C%20lightweight%20and,and%20displayed%20as%20HTML%20pages.)
+  - [Google Scholar](https://scholar.google.com/scholar?hl=en&as_sdt=0%2C5&q=omega+3++hepatic+steatosis&btnG=#d=gs_qabs&t=1722588878034&u=%23p%3D3hJW47sS3d0J)
+  - [Omega 3 – Omega 6: What is right for the liver? - ScienceDirect](https://www.sciencedirect.com/science/article/abs/pii/S0168827807004667)
+  - [Google Scholar](https://scholar.google.com/scholar?hl=en&as_sdt=0%2C5&q=vitamin+E+fatty+liver&btnG=#d=gs_qabs&t=1722588143418&u=%23p%3DpBwDGPcJ1NoJ)
+  - [Silibinin (Milk Thistle) potentiates ethanol-dependent hepatocellular carcinoma progression in male mice - PMC](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3449310/#R18)
+  - [Treatment options for alcoholic and non-alcoholic fatty liver disease: A review - PMC](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5643281/)
+  - [Silymarin: An option to treat non-alcoholic fatty liver disease - PMC](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5743515/)
+  - [Treatment options for alcoholic and non-alcoholic fatty liver disease: A review - PMC](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5643281/)
+  - [
+		AN OPEN CLINICAL STUDY ON THE EFFICACY OF WITHANIA SOMNIFERA MOTHER TINCTURE IN THE MANAGEMENT OF HYPERLIPIDEMIA 
+							| International Journal of Indigenous Herbs and Drugs
+			](https://saapjournals.org/index.php/herbsanddrugs/article/view/97)
+  - [https://www.tandfonline.com/doi/full/10.1080/19390211.2020.1741484](https://www.tandfonline.com/doi/full/10.1080/19390211.2020.1741484)
+  - [Google Scholar](https://scholar.google.com/scholar?q=related:z4tL2kBwivwJ:scholar.google.com/&hl=en&as_sdt=0,5)
+  - [Google Scholar](https://scholar.google.com/scholar?hl=en&as_sdt=0%2C5&q=vitamin+C+alcohol&btnG=#d=gs_qabs&t=1722587127859&u=%23p%3DXmI6q4Z7ENYJ)
+  - [Hepatoprotective effect of silymarin - PMC](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3959115/)
+  - [Milk thistle nomenclature: why it matters in cancer research and pharmacokinetic studies - PubMed](https://pubmed.ncbi.nlm.nih.gov/17548790/)
+  - [Silibinin (Milk Thistle) potentiates ethanol-dependent hepatocellular carcinoma progression in male mice - PMC](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3449310/)
+  - [L-Cysteine Containing Vitamin Supplement Which Prevents or Alleviates Alcohol-related Hangover Symptoms: Nausea, Headache, Stress and Anxiety | Alcohol and Alcoholism | Oxford Academic](https://academic.oup.com/alcalc/article/55/6/660/5893464)
+  - [A dual effect of N-acetylcysteine on acute ethanol-induced liver damage in mice - PubMed](https://pubmed.ncbi.nlm.nih.gov/16439183/#:~:text=When%20administered%20after%20ethanol%2C%20NAC,acute%20ethanol%2Dinduced%20liver%20damage)
+  - [N-Acetylcysteine and Acetylsalicylic Acid Inhibit Alcohol Consumption by Different Mechanisms: Combined Protection - PMC](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7412547/)
+  - [LiverTox - NCBI Bookshelf](https://www.ncbi.nlm.nih.gov/books/NBK547852/)
+  - [[2407.04153] Mixture of A Million Experts](https://arxiv.org/abs/2407.04153?s=09)
+  - [WFH Brian - WFH Brian on AI, Business, Knowledge Management, Organization & more.](https://wfhbrian.com/)
+  - [ 
+    Browse Articles
+  | npj Complexity](https://www.nature.com/npjcomplex/articles?)
+  - [Antifragility in complex dynamical systems | npj Complexity](https://www.nature.com/articles/s44260-024-00014-y)
+  - [GitHub - mveco/RDFGraphGen: RDFGraphGen: A Synthetic RDF Graph Generator based on SHACL Constraints.](https://github.com/mveco/RDFGraphGen)
+  - [GitHub - brianpetro/jsbrains: A collection of low-to-no dependency modules for building smart apps with JavaScript](https://github.com/brianpetro/jsbrains/tree/main)
+  - [GitHub - brianpetro/jsbrains: A collection of low-to-no dependency modules for building smart apps with JavaScript](https://github.com/brianpetro/jsbrains/tree/main)
+  - [GitHub - brianpetro/obsidian-smart-connections: Chat with your notes & see links to related content with AI embeddings. Use local models or 100+ via APIs like Claude, Gemini, ChatGPT & Llama 3](https://github.com/brianpetro/obsidian-smart-connections)
+  - ["The future of analogue synthesis": Moog officially announces long-rumoured Muse synthesizer | MusicRadar](https://www.musicradar.com/news/moog-muse-official-announcement)
+  - [Backing up Termux - Termux Wiki](https://wiki.termux.com/wiki/Backing_up_Termux)
+  - [https://medium.com/@vvalouch/sunday-fun-machine-learning-on-mobile-phone-f5f6f55a4a4d](https://medium.com/@vvalouch/sunday-fun-machine-learning-on-mobile-phone-f5f6f55a4a4d)
+  - [GitHub - juniperfdel/Termux-Science: How to install various science packages: numpy, pandas, astropy, and jupyter notebook in termux as of January 2023](https://github.com/juniperfdel/Termux-Science)
+  - [This ChatGPT game handled all my demands, until I tried a massacre - Polygon](https://www.polygon.com/review/24209670/chatgpt-deepgame-generative-ai-gaming)
+  - [AGI: ARC Prize Offers $1 Million to Inspire AI Development - IEEE Spectrum](https://spectrum.ieee.org/artificial-general-intelligence-2668800608)
+  - [https://www.marktechpost.com/2024/07/29/recursive-introspection-rise-a-machine-learning-approach-for-fine-tuning-llms-to-improve-their-own-responses-over-multiple-turns-sequentially/](https://www.marktechpost.com/2024/07/29/recursive-introspection-rise-a-machine-learning-approach-for-fine-tuning-llms-to-improve-their-own-responses-over-multiple-turns-sequentially/)
+  - [https://towardsdatascience.com/integrating-microsoft-graphrag-into-neo4j-e0d4fa00714c](https://towardsdatascience.com/integrating-microsoft-graphrag-into-neo4j-e0d4fa00714c)
+  - [Strange loop - Wikipedia](https://en.wikipedia.org/wiki/Strange_loop?wprov=sfla1)
+  - [HyperCard: What Could Have Been «  Isegoria](http://www.isegoria.net/2008/05/hypercard-what-could-have-been/)
+  - [ongoing by Tim Bray · The RDF.net Challenge](https://www.tbray.org/ongoing/When/200x/2003/05/21/RDFNet)
+  - [Open Hardware Monitor - Core temp, fan speed and voltages in a free software gadget](https://openhardwaremonitor.org/)
+  - [Git](https://www.npmjs.com/package/terminal-kit)
+  - [GitHub - hakash/termit: The TERMinal edITor - embeddable CLI editor](https://github.com/hakash/termit)
+  - [GitHub - hakash/termit: The TERMinal edITor - embeddable CLI editor](https://github.com/hakash/termit)
+  - [Meet Termit - A NodeJS based terminal editor - DEV Community](https://dev.to/hakash/meet-termit-a-nodejs-based-terminal-editor-5024)
+  - [JavaScript modules - JavaScript | MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules#browser_compatibility)
+  - [https://www.fullstackfoundations.com/blog/commonjs-vs-es6](https://www.fullstackfoundations.com/blog/commonjs-vs-es6)
+  - [The PayPal Technology Blog - Medium](https://www.paypal-engineering.com/2015/08/07/1450/)
+  - [Working with submodules - The GitHub Blog](https://github.blog/open-source/git/working-with-submodules/)
+  - [Git Submodules basic explanation · GitHub](https://gist.github.com/gitaarik/8735255)
+  - [simonw (Simon Willison) · GitHub](https://github.com/simonw)
+  - [Porting from RequireJS to ES6 - DEV Community](https://dev.to/tythos/porting-from-requirejs-to-es6-ip)
+  - [https://simonwillison.net/2024/May/8/slop/](https://simonwillison.net/2024/May/8/slop/)
+  - [Web3 is Bullshit](https://www.stephendiehl.com/blog/web3-bullshit.html)
+  - [Method of loci - Wikipedia](https://en.wikipedia.org/wiki/Method_of_loci?wprov=sfla1)
+  - [Get fit in two minutes! 17 micro-workouts that will change your life – even if you’re stuck in the office | Health & wellbeing | The Guardian](https://www.theguardian.com/lifeandstyle/article/2024/jul/28/get-fit-in-two-minutes-17-micro-workouts-that-will-change-your-life-even-if-youre-stuck-in-the-office)
+  - [Disinformation ads, Systemic Risks and the Digital Services Act – Who Targets Me](https://whotargets.me/en/disinformation-ads-systemic-risks-and-the-digital-services-act/)
+  - [ink/Documentation/WritingWithInk.md at master · inkle/ink · GitHub](https://github.com/inkle/ink/blob/master/Documentation%2FWritingWithInk.md)
+  - [ink - inkle's narrative scripting language](https://www.inklestudios.com/ink/)
+  - [Ollama](https://ollama.com/search?c=tools)
+  - [dblp: Danny Ayers](https://dblp.org/pid/46/6676)
+  - [https://www.google.com/url?sa=t&source=web&rct=j&opi=89978449&url=http://ndl.ethernet.edu.et/bitstream/123456789/40843/1/551.Mihaly%2520Csikszentmihalyi.pdf&ved=2ahUKEwj29pbowMOHAxXxZ0EAHUDSMrkQFnoECA4QAQ&usg=AOvVaw21PkiTKIMbaHlLZd9Fju18](https://www.google.com/url?sa=t&source=web&rct=j&opi=89978449&url=http://ndl.ethernet.edu.et/bitstream/123456789/40843/1/551.Mihaly%2520Csikszentmihalyi.pdf&ved=2ahUKEwj29pbowMOHAxXxZ0EAHUDSMrkQFnoECA4QAQ&usg=AOvVaw21PkiTKIMbaHlLZd9Fju18)
+  - [https://stackoverflow.com/a/50067080](https://stackoverflow.com/a/50067080) rdf
+  - [Evolution of the Italian pasta ripiena: the first steps toward a scientific classification | Discover Food](https://link.springer.com/article/10.1007/s44187-024-00136-1?s=09)
+  - [Evolution of the Italian pasta ripiena: the first steps toward a scientific classification | Discover Food](https://link.springer.com/article/10.1007/s44187-024-00136-1?s=09)
+  - [What's That Noise? (1988) | Ravensbourne University London](https://www.ravensbourne.ac.uk/bbc-motion-graphics-archive/whats-noise-1988)
+  - [TaskGen: An Open-Sourced Agentic Framework that Uses an AI Agent to Solve an Arbitrary Task by Breaking it Down into Subtasks - MarkTechPost](https://www.marktechpost.com/2024/07/24/taskgen-an-open-sourced-agentic-framework-that-uses-an-ai-agent-to-solve-an-arbitrary-task-by-breaking-it-down-into-subtasks/)
+  - [GitHub - topoteretes/cognee: Deterministic LLMs Outputs for AI Applications and AI Agents](https://github.com/topoteretes/cognee)
+  - [https://www.congee.ai/blog/2023/12/05/going-beyond-langchain--weaviate-level-4-towards-production/](https://www.congee.ai/blog/2023/12/05/going-beyond-langchain--weaviate-level-4-towards-production/)
+  - [Cognee - We help you build deterministic AI memory](https://www.cognee.ai/)
+  - [What exactly is Glamorous Toolkit v1.0?](https://lepiter.io/feenk/what-exactly-is-glamorous-toolkit-v1-0--7sex44dze2dqlocqxwfz8ju0i/)
+  - [Structured Procrastination 
+	 	](https://structuredprocrastination.com/)
+    -  https://www.theguardian.com/lifeandstyle/2012/sep/07/change-your-life-procrastination-burkeman
+    - it doesn't let you forget a truth that most productivity gurus ignore: that just because something found its way on to your to-do list, it doesn't necessarily follow that it needs to be done.
+  - [x.com](https://x.com/nymproject/status/1816014294154125561?t=GWDIY2L6jDfguq2ziVto6A&s=09)
+    - Hhalpin vid
+  - [Constraints - Sublucid Geometry](https://zalo.github.io/blog/constraints/)
+  - [Tips for creating a transcript file - YouTube Help](https://support.google.com/youtube/answer/2734799?hl=en#:~:text=Format%20your%20transcript%20file,on%20your%20computer%20like%20Notepad.)
+  - [GitHub - giorgioroffo/large_language_models_open_suite: LLMSuite - a public toolbox designed to facilitate practice with large language models](https://github.com/giorgioroffo/large_language_models_open_suite)
+  - [Griptape | Build, Deploy, and Scale AI Applications](https://www.griptape.ai/)
+  - [GitHub - jina-ai/dev-gpt: Your Virtual Development Team](https://github.com/jina-ai/dev-gpt)
+  - [GitHub - brucepro/Memoir: Memoir+ a persona extension for Text Gen Web UI. That includes memory, emotions, command handling and more.](https://github.com/brucepro/Memoir)
+  - [Charlie Holtz](https://www.charlieholtz.com/)
+  - [Plan Pricing | Modal](https://modal.com/pricing)
+  - [Supermaven: Free AI Code Completion](https://supermaven.com/)
+  - [introduction to microbiology lab manual pdf - Google Search](https://www.google.com/search?q=introduction+to+microbiology+lab+manual+pdf&oq=introduction+to+microbiology+lab+manual+pdf&gs_lcrp=EgZjaHJvbWUyBggAEEUYOTIHCAEQIRigATIHCAIQIRigAdIBCTIyNjM3ajBqNKgCAbACAQ&client=ms-android-hct&sourceid=chrome-mobile&ie=UTF-8&chrome_dse_attribution=1)
+  - [Flipper Zero — Portable Multi-tool Device for Geeks](https://flipperzero.one/?utm_source=facebook&utm_medium=cpm_inter&utm_campaign=prospecting_cbo_eu&utm_content=static_subghz_01&utm_term=winners-01&utm_id=120201121533860189&utm_source_platform=FacebookAds&fbclid=IwZXh0bgNhZW0BMAABHVvhMOgONx_aJX0YrAYK4B0-g9avPVS5UOyRGBQz31l_CMC_YngatJitNQ_aem_M_udirmWQlOkbJFceg2Cug&campaign_id=120201121533820189&ad_id=120201121533880189&sfnsn=scwspmo)
+  - [GitHub - facebookresearch/MobileLLM: MobileLLM Optimizing Sub-billion Parameter Language Models for On-Device Use Cases. In ICML 2024.](https://github.com/facebookresearch/MobileLLM)
+  - [SmolLM - blazingly fast and remarkably powerful](https://huggingface.co/blog/smollm)
+  - [Ladybird](https://ladybird.org/)
+  - [norns: update 231114 - Monome - lines](https://llllllll.co/t/norns-update-231114/64915)
+  - [x.com](https://x.com/reach_vb/status/1749130868533207403?t=aFapJ6R_qhYXM5dGwfBxdA&s=09)
+  - [Researchers at Stanford Introduces In-Context Vectors (ICV): A Scalable and Efficient AI Approach for Fine-Tuning Large Language Models - MarkTechPost](https://www.marktechpost.com/2024/07/13/researchers-at-stanford-introduces-in-context-vectors-icv-a-scalable-and-efficient-ai-approach-for-fine-tuning-large-language-models/)
+  - [[2311.06668] In-context Vectors: Making In Context Learning More Effective and Controllable Through Latent Space Steering](https://arxiv.org/abs/2311.06668)
+  - [GitHub - shengliu66/ICV: Code for In-context Vectors: Making In Context Learning More Effective and Controllable Through Latent Space Steering](https://github.com/shengliu66/ICV)
+  - [shadcn/ui](https://ui.shadcn.com/)
+  - [https://tidalcycles.org/](https://tidalcycles.org/)
+  - [Yearly - Tidal Club](https://club.tidalcycles.org/top)
+  - [howto_co34pt_liveCode – Resources about how I live code in SuperCollider – TOPLAP](https://blog.toplap.org/2017/05/08/howto_co34pt_livecode-resources-about-how-i-live-code-in-supercollider/)
+  - [Perspiration - Wikipedia](https://en.wikipedia.org/wiki/Perspiration?wprov=sfla1)
+  - [Disk diffusion test - Wikipedia](https://en.wikipedia.org/wiki/Disk_diffusion_test?wprov=sfla1)
+  - [Shop | ClockworkPi](https://www.clockworkpi.com/shop)
+  - [Open Cobalt - Wikipedia](https://en.wikipedia.org/wiki/Open_Cobalt?wprov=sfla1)
+  - [Actor model - Wikipedia](https://en.wikipedia.org/wiki/Actor_model?wprov=sfla1)
+  - [Stack Overflow Developer Survey 2023](https://survey.stackoverflow.co/2023#overview)
+  - [GitHub - technoblogy/ulisp-esp: A version of the Lisp programming language for ESP32-based boards.](https://github.com/technoblogy/ulisp-esp)
+  - [Racket](https://racket-lang.org/)
+  - [Newspeak](https://newspeaklanguage.org/)
+  - [GitHub - OpenSmalltalk/opensmalltalk-vm: Cross-platform virtual machine for Squeak, Pharo, Cuis, and Newspeak.](https://github.com/OpenSmalltalk/opensmalltalk-vm)
+  - [Renaissance: Harness Emergence to Avoid the Concurrency Trap](https://stefan-marr.de/renaissance/)
+  - [GitHub - aknabi/smalltalkje: An embedded Little Smalltalk for ESP32 with SSD1306 OLED and M5StickC support (and stilll runs on Macs, Linux)... more embedded support planned](https://github.com/aknabi/smalltalkje)
+  - [Amber Smalltalk](https://amber-lang.net/)
+  - [Reddit - Dive into anything](https://www.reddit.com/r/Homebrewing/s/Ss79fcKFVS)
+  - [GitHub - BasedHardware/Friend: AI wearable necklace](https://github.com/BasedHardware/Friend)
+  - [Daily Papers - Hugging Face](https://huggingface.co/papers?s=09)
+  - [termuxpy/README.en.md at master · NatanVilchis/termuxpy · GitHub](https://github.com/NatanVilchis/termuxpy/blob/master/README.en.md)
+  - [Graphical Environment - Termux Wiki](https://wiki.termux.com/wiki/Graphical_Environment)
+  - [Package Management - Termux Wiki](https://wiki.termux.com/wiki/Package_Management#:~:text=The%20main%20Termux%20repository%20is,with%20name%20ending%20in%20%2Drepo%20.)
+  - [ghc (Gasglow Haskell compiler)  and cabal-install (package manager) packages segfault · Issue #18646 · termux/termux-packages · GitHub](https://github.com/termux/termux-packages/issues/18646)
+  - [GitHub - codefrau/SqueakJS: A Squeak Smalltalk VM in Javascript](https://github.com/codefrau/SqueakJS)
+  - [SqueakJS by Vanessa Freudenberg](https://squeak.js.org/)
+  - [GitHub - Azathothas/Termux-Packages: Markdown List (Table), JSON & YAML of all the officially Available Packages in the Termux Registry :: https://termux-packages.ajam.dev](https://github.com/Azathothas/Termux-Packages)
+  - [GitHub - termux/termux-gui: A plugin for Termux to use native Android GUI components from CLI applications.](https://github.com/termux/termux-gui)
+  - [The 10 Coolest Open-Source Software Tools Of 2024 (So Far)](https://www.crn.com/news/software/2024/the-10-coolest-open-source-software-tools-of-2024-so-far)
+  - [Poster 24x24 | Chris Staeckers shop](https://chris-staecker.myspreadshop.com/napiers+location+arithmetic+board+1617+replica-A66849afbdb32e840eb1d1cea?productType=1300&sellable=x5J5VXrXnJCk3oVll1v9-1300-201)
+  - [Thin penis: Size and sex tips](https://www.medicalnewstoday.com/articles/thin-penis#average-girth)
+  - [Table 1 Previous reports on penile dimensions](https://www.nature.com/articles/3901569/tables/1)
+  - [
+    
+      
+        Representation Engineering Mistral-7B an Acid Trip
+      
+    
+  ](https://vgel.me/posts/representation-engineering/)
+  - [GitHub - vgel/repeng: A library for making RepE control vectors](https://github.com/vgel/repeng)
+  - [GitHub - timbk/BetaBoard: A simple and low cost particle detector for teaching](https://github.com/timbk/BetaBoard)
+  - [GitHub - ozel/DIY_particle_detector: A mobile low-cost spectrometer for measuring radioactivity and the energy of ionising radiation like alpha particles and electrons](https://github.com/ozel/DIY_particle_detector)
+  - [Reddit - Dive into anything](https://www.reddit.com/r/Bass/s/0Q0H9oM0u7)
+  - [SIGBOVIK 2024](https://www.lulu.com/shop/harry-bovik/sigbovik-2024/paperback/product-v8kn2y8.html)
+  - [Dog intelligence - Wikipedia](https://en.wikipedia.org/wiki/Dog_intelligence?wprov=sfla1)
+  - [The Intelligence of Dogs - Wikipedia](https://en.wikipedia.org/wiki/The_Intelligence_of_Dogs?wprov=sfla1)
+  - [The Association for Computational Heresy](https://sigbovik.org/)
+  - [Tom Murphy 7's Invincible Web Page](http://tom7.org/)
+  - [blog/posts/2018-05-19.md at master · frankmcsherry/blog · GitHub](https://github.com/frankmcsherry/blog/blob/master/posts/2018-05-19.md)
+  - [Building a Simple Web App with Rust and WebAssembly: A Step-by-Step Guide | HackerNoon](https://hackernoon.com/building-a-simple-web-app-with-rust-and-webassembly-a-step-by-step-guide)
+  - [llama.ttf](https://fuglede.github.io/llama.ttf/)
+  - [https://github.com/HypoX64/DeepMosaics](https://github.com/HypoX64/DeepMosaics)
+  - [Free Voice Isolator and Background Noise Remover | ElevenLabs](https://elevenlabs.io/voice-isolator)
+  - [ESP32-CAM AI-Thinker Pinout Guide: GPIOs Usage Explained | Random Nerd Tutorials](https://randomnerdtutorials.com/esp32-cam-ai-thinker-pinout/)
+  - [[2402.19379] Wisdom of the Silicon Crowd: LLM Ensemble Prediction Capabilities Rival Human Crowd Accuracy](https://arxiv.org/abs/2402.19379?s=09)
+  - [https://www.reddit.com/r/MachineLearning/s/EGdaOxPjxR](https://www.reddit.com/r/MachineLearning/s/EGdaOxPjxR)
+  - [Roman numeral analysis - Wikipedia](https://en.wikipedia.org/wiki/Roman_numeral_analysis?wprov=sfla1)
+  - [https://medium.com/@datajournal/data-flywheel-explained-f78e97ed8261](https://medium.com/@datajournal/data-flywheel-explained-f78e97ed8261)
+  - [Data Flywheels for LLM Applications](https://sh-reya.com/blog/ai-engineering-flywheel/)
+  - [Mesop](https://google.github.io/mesop/)
+  - [[2406.04692] Mixture-of-Agents Enhances Large Language Model Capabilities](https://arxiv.org/abs/2406.04692)
+  - [GitHub - togethercomputer/MoA: Together Mixture-Of-Agents (MoA) –  65.1% on AlpacaEval with OSS models](https://github.com/togethercomputer/MoA)
+  - [Shodan Search Engine](https://www.shodan.io/)
+  - [alphaXiv](https://alphaxiv.org/)
+  - [https://www.xda-developers.com/how-to-use-obsidian-to-create-a-personal-knowledge-management-system/](https://www.xda-developers.com/how-to-use-obsidian-to-create-a-personal-knowledge-management-system/)
+  - [Gnaural: A Binaural-Beat Audio Generator](https://gnaural.sourceforge.net/)
+  - [OLMo - Open Language Model by AI2](https://allenai.org/olmo)
+  - [https://eckstein-shop.de/HIMALAYAMatrix-CoreESP32EntwicklerboardmitESP32-BitWiFi2BBluetoothIoTDEVBoardEN](https://eckstein-shop.de/HIMALAYAMatrix-CoreESP32EntwicklerboardmitESP32-BitWiFi2BBluetoothIoTDEVBoardEN)
+  - [GitHub - Olverine/TerminalGraphics: A program that displays 3d graphics in a terminal window](https://github.com/Olverine/TerminalGraphics)
+  - [Shoot the Moon Tremolo - EffDub Audio](https://effdubaudio.com/shoot-the-moon-tremolo/)
+  - [GitHub - jaime-varela/arxivFilterEmailer: filters arxiv daily results and emails](https://github.com/jaime-varela/arxivFilterEmailer)
+  - [Reddit - Dive into anything](https://www.reddit.com/r/MachineLearning/s/lMN7JkkBBc)
+    - Filtering papers
+  - [Careers \ Anthropic](https://www.anthropic.com/careers)
+  - [Keystone – The Ultimate Assembler](https://www.keystone-engine.org/)
+  - [Reddit - Dive into anything](https://www.reddit.com/r/Earthquakes/s/fcMGvMz9kh)
+    - Quake map
+  - [How to Make a Minecraft Server | DigitalOcean](https://www.digitalocean.com/community/tutorials/how-to-create-a-minecraft-server-on-ubuntu-22-04)
+  - [Claude Artifacts is the greatest innovation in AI this year — 5 prompts to try it now | Tom's Guide](https://www.tomsguide.com/ai/claude-artifacts-is-the-greatest-innovation-in-ai-this-year-5-prompts-to-try-it-now)
+  - [SWI-Prolog in the browser using WASM - Wiki - SWI-Prolog](https://swi-prolog.discourse.group/t/swi-prolog-in-the-browser-using-wasm/5650)
+  - [SWI-Prolog in the browser using WASM - Wiki - SWI-Prolog](https://swi-prolog.discourse.group/t/swi-prolog-in-the-browser-using-wasm/5650)
+  - [Delayed sleep phase disorder - Wikipedia](https://en.wikipedia.org/wiki/Delayed_sleep_phase_disorder?wprov=sfla1)
+  - [ReVanced](https://revanced.app/)
+  - [Magic Color Picker](https://text2color.com/picker.html)
+  - [AI Code Assistant Tools](https://www.neonrev.com/categories/code-generator/code-assistant/)
+  - [GitHub - floccusaddon/floccus: :cloud: Sync your bookmarks privately across browsers and devices](https://github.com/floccusaddon/floccus)
+  - [GitHub - termux/proot-distro: An utility for managing installations of the Linux distributions in Termux.](https://github.com/termux/proot-distro)
+  - [Reddit - Dive into anything](https://www.reddit.com/r/semanticweb/s/gTb2WwRck7)
+  - [ipiv's Morph - img2vid AnimateDiff LCM / Hyper-SD - v3.0 (Hyper-SD + v3 mm) | Stable Diffusion Workflows | Civitai](https://civitai.com/models/372584/ipivs-morph-img2vid-animatediff-lcm-hyper-sd)
+  - [GitHub - rabbibotton/clog: CLOG - The Common Lisp Omnificent GUI](https://github.com/rabbibotton/clog)
+  - [Polyfill supply chain attack hits 100K+ sites](https://sansec.io/research/polyfill-supply-chain-attack)
+  - [Exploiting V8 at openECSC Ʊ lyra's epic blog](https://lyra.horse/blog/2024/05/exploiting-v8-at-openecsc/)
+  - [Orwell’s Roses: Rebecca Solnit on How Nature Sustains Us, Beauty as Fuel for Change, and the Value of the Meaningless Things That Give Our Lives Meaning – The Marginalian](https://www.themarginalian.org/2021/12/10/orwells-roses-rebecca-solnit/)
+  - [The Race to Restore Content Distribution](https://spyglass.org/activitypub-ghost-publishing/)
+  - [https://codepen.io/danbri/full/VwONzGW](https://codepen.io/danbri/full/VwONzGW)
+  - [Brent Barghahn - Redpoint Rope Soloing Revised [2023]](https://www.brentbarghahn.com/climbing-blog/redpoint-rope-soloing-revised-2023)
+  - [LastQuake](https://m.emsc.eu/)
+  - [VMAM007-068 - Joel Sartore](https://www.joelsartore.com/video/vmam007-068/)
+  - [What are Ontologies? | Ontotext Fundamentals Series](https://www.ontotext.com/knowledgehub/fundamentals/what-are-ontologies/)
+  - [GitHub - Epicalable/ComDash: ComDash is an All-in-one Stunning Web-based Dashboard for News, Weathers and More for Users using Html, CSS and JavaScript.](https://github.com/Epicalable/ComDash)
+  - [The Swallow's Tail - Wikipedia](https://en.wikipedia.org/wiki/The_Swallow%27s_Tail?wprov=sfla1)
+  - [Weightlifting at retirement age keeps legs strong years later, study finds | Health | The Guardian](https://www.theguardian.com/society/article/2024/jun/18/weightlifting-at-retirement-age-keeps-legs-strong-years-later-study-finds)
+  - [[2404.16130] From Local to Global: A Graph RAG Approach to Query-Focused Summarization](https://arxiv.org/abs/2404.16130)
+  - [[2402.09090] Software in the natural world: A computational approach to hierarchical emergence](https://arxiv.org/abs/2402.09090)
+  - [Anarchy and democracy | Sophie Scott-Brown](https://iai.tv/video/anarchy-and-democracy-sophie-scott-brown)
+  - [People are disrupting natural 'salt cycle' on a global scale, new study shows | NSF - National Science Foundation](https://new.nsf.gov/news/people-are-disrupting-natural-salt-cycle-global#:~:text=Geologic%20and%20hydrologic%20processes%20bring,also%20intensify%20salinization%2C%20which%20harms)
+  - [How light can vaporize water without the need for heat | MIT News | Massachusetts Institute of Technology](https://news.mit.edu/2024/how-light-can-vaporize-water-without-heat-0423)
+  - [https://www.nature.com/articles/s41567-022-01788-5](https://www.nature.com/articles/s41567-022-01788-5)
+  - [[2405.02957] Agent Hospital: A Simulacrum of Hospital with Evolvable Medical Agents](https://arxiv.org/abs/2405.02957)
+  - [GPU Cloud - VMs for Deep Learning | Lambda](https://lambdalabs.com/service/gpu-cloud?utm_source=two-minute-papers&utm_campaign=relevant-videos&utm_medium=video)
+  - [https://github.com/facebookresearch/nougat](https://github.com/facebookresearch/nougat)
+  - [GitHub - VikParuchuri/marker: Convert PDF to markdown quickly with high accuracy](https://github.com/VikParuchuri/marker)
+  - [GitHub - gnat/surreal: 🗿 Mini jQuery alternative. Dependency-free animations. Locality of Behavior.  Use one element or arrays transparently. Pairs with htmx. Vanilla querySelector() but better!](https://github.com/gnat/surreal)
+  - [Pop!_OS by System76](https://pop.system76.com/)
+  - [Reddit - Dive into anything](https://www.reddit.com/r/bioinformatics/s/x4BKYwYs4I)
+  - [William Davies · Antimarket: Capitalism Decarbonised](https://www.lrb.co.uk/the-paper/v46/n07/william-davies/antimarket)
+  - [https://www.payscale.com/research/IT/Job=Android_Software_Developer/Salary](https://www.payscale.com/research/IT/Job=Android_Software_Developer/Salary)
+  - [x.com](https://x.com/BBacktesting/status/1797706465144377544?t=Xzhqgi7qwmdWuoESiAvLig&s=09)
+  - [GitHub - typesense/typesense: Open Source alternative to Algolia + Pinecone and an Easier-to-Use alternative to ElasticSearch ⚡ 🔍 ✨ Fast, typo tolerant, in-memory fuzzy Search Engine for building delightful search experiences](https://github.com/typesense/typesense)
+  - [GitHub - assafelovic/gpt-researcher: GPT based autonomous agent that does online comprehensive research on any given topic](https://github.com/assafelovic/gpt-researcher)
+  - [Jina AI · GitHub](https://github.com/jina-ai)
+  - [ai-workshop-code/Web_scraping_for_LLM_in_2024.ipynb at main · trancethehuman/ai-workshop-code · GitHub](https://github.com/trancethehuman/ai-workshop-code/blob/main/Web_scraping_for_LLM_in_2024.ipynb)
+  - [Edge Impulse · GitHub](https://github.com/edgeimpulse)
+  - [Oxford Semantic Technologies Knowledge Graph & AI | RDFox](https://www.oxfordsemantic.tech/)
+  - [GitHub - BasedHardware/Friend: AI wearable necklace](https://github.com/BasedHardware/Friend)
+  - [DIY quadcopter : get the attitude – AB-Art Ben](https://abartben.wordpress.com/2015/03/18/diy-quadcopter-get-the-attitude/)
+  - [Talk to Dogs | Sarama App](https://www.sarama.app/)
+  - [Codeium · Free AI Code Completion & Chat](https://codeium.com/?referrer=fireship)
+  - [The ASRS-5 | Embrace Autism](https://embrace-autism.com/asrs-5/#test)
+  - [
+      How to use surgical EQ to clean up your mixes
+ – Smuggled Audio](https://smuggledaudio.com/blogs/news/how-to-use-surgical-eq-to-clean-up-your-mixes)
+  - [https://www.spitfireaudio.com/virtual-instruments/bbc-symphony-orchestra-discover](https://www.spitfireaudio.com/virtual-instruments/bbc-symphony-orchestra-discover)
+  - [Introduction — Owlready2 0.46 documentation](https://owlready2.readthedocs.io/en/latest/intro.html#short-example-what-can-i-do-with-owlready)
+  - [Using "box shadows" and clip-path together | CSS-Tricks - CSS-Tricks](https://css-tricks.com/using-box-shadows-and-clip-path-together/)
+  - [GitHub - abi/screenshot-to-code: Drop in a screenshot and convert it to clean code (HTML/Tailwind/React/Vue)](https://github.com/abi/screenshot-to-code)
+  - [Web Components Overview | Microsoft Learn](https://learn.microsoft.com/en-us/fluent-ui/web-components/components/overview)
+  - [webcomponents.org - Discuss & share web components](https://www.webcomponents.org/introduction#what-are-web-components-)
+  - [GitHub - iyaja/llama-fs: A self-organizing file system with llama 3](https://github.com/iyaja/llama-fs)
+  - [Pricing and Suite Membership | DIKTATORIAL Suite](https://diktatorial.com/pricing)
+  - [GitHub - wozeparrot/tinygrad-on-esp32: run tinygrad kernels on esp32](https://github.com/wozeparrot/tinygrad-on-esp32)
+  - [GitHub - tinygrad/tinygrad: You like pytorch? You like micrograd? You love tinygrad! ❤️](https://github.com/tinygrad/tinygrad)
+  - [https://www.reddit.com/r/pulsaredit/s/V4T7Yu6nxt](https://www.reddit.com/r/pulsaredit/s/V4T7Yu6nxt)
+  - [Langlands program - Wikipedia](https://en.wikipedia.org/wiki/Langlands_program?wprov=sfla1)
+  - [GitHub - weaviate/Verba: Retrieval Augmented Generation (RAG) chatbot powered by Weaviate](https://github.com/weaviate/Verba)
+  - [GitHub - danielmiessler/fabric: fabric is an open-source framework for augmenting humans using AI. It provides a modular framework for solving specific problems using a crowdsourced set of AI prompts that can be used anywhere.](https://github.com/danielmiessler/fabric)
+  - [https://fastify.io/](https://fastify.io/)
+  - [Notion – The all-in-one workspace for your notes, tasks, wikis, and databases.](https://aplaceofmind.notion.site/It-s-Lambdas-All-the-Way-Down-eb33012f54bb4708af001e0214910698)
+  - [mxbai-embed-large](https://ollama.com/library/mxbai-embed-large)
+  - [GitHub - DannyMoerkerke/file-tree: A file tree web component using the File System Access API](https://github.com/dannymoerkerke/file-tree)
+  - [Storybook](https://storybook.js.org/docs/get-started/)
+  - [Accordion - Dell Design System](https://www.delldesignsystem.com/components/accordion/)
+  - [https://component.gallery/components/accordion/](https://component.gallery/components/accordion/)
+  - [Christmas Pudding – K-Type](https://www.k-type.com/fonts/christmas-pudding/)
+  - [Two-way data binding and reactivity with 15 lines of vanilla JavaScript | Go Make Things](https://gomakethings.com/two-way-data-binding-and-reactivity-with-15-lines-of-vanilla-javascript/)
+  - [Two-way data binding and reactivity with 15 lines of vanilla JavaScript | Go Make Things](https://gomakethings.com/two-way-data-binding-and-reactivity-with-15-lines-of-vanilla-javascript/)
+  - [Build a Single Page Application (SPA) Site With Vanilla.js | Developer for Life](https://blog.jeremylikness.com/blog/build-a-spa-site-with-vanillajs/)
+  - [Client-side JavaScript Databinding without a Framework | Developer for Life](https://blog.jeremylikness.com/blog/client-side-javascript-databinding-without-a-framework/)
+  - [AlphaCodium | State-of-the-art Code Generation with AlphaCodium | CodiumAI](https://www.codium.ai/products/alpha-codium/)
+  - [GitHub](https://www.librechat.ai/)
+  - [No Inner Voice? New Study Reveals Its Impact on Memory - Neuroscience News](https://neurosciencenews.com/anendophasia-inner-voice-memory-26107/)
+  - [License to Call: Introducing Transformers Agents 2.0](https://huggingface.co/blog/agents)
+  - [Peacock Sounds & Calls | Wild Ambience Nature Sounds](https://wildambience.com/wildlife-sounds/indian-peafowl/)
+  - [https://blog.dailydoseofds.com/p/active-learning](https://blog.dailydoseofds.com/p/active-learning)
+  - [hands-on-llms/modules/streaming_pipeline/README.md at main · iusztinpaul/hands-on-llms · GitHub](https://github.com/iusztinpaul/hands-on-llms/blob/main/modules%2Fstreaming_pipeline%2FREADME.md)
+  - [https://paulabartabajo.substack.com/p/real-time-embeddings-for-llm-apps](https://paulabartabajo.substack.com/p/real-time-embeddings-for-llm-apps)
+  - [FastGen: Cutting GPU Memory Costs Without Compromising on LLM Quality - MarkTechPost](https://www.marktechpost.com/2024/05/12/fastgen-cutting-gpu-memory-costs-without-compromising-on-llm-quality/)
+  - [pgvector: Fewer dimensions are better](https://supabase.com/blog/fewer-dimensions-are-better-pgvector)
+  - [Oobleck’s weird behavior is now predictable | MIT News | Massachusetts Institute of Technology](https://news.mit.edu/2019/oobleck-behavior-predict-cornstarch-1006)
+  - [pgvector javascript - Cerca con Google](https://www.google.com/search?q=pgvector+javascript&oq=pgvector+javascript&gs_lcrp=EgZjaHJvbWUyBggAEEUYOdIBCTE2NjY3ajBqN6gCD7ACAQ&client=ms-android-hct&sourceid=chrome-mobile&ie=UTF-8&chrome_dse_attribution=1)
+  - [GitHub - currentslab/awesome-vector-search: Collections of vector search related libraries, service and research papers](https://github.com/currentslab/awesome-vector-search)
+  - [https://docs.timescale.com/use-timescale/latest/extensions/pgvector/?ref=timescale.com](https://docs.timescale.com/use-timescale/latest/extensions/pgvector/?ref=timescale.com)
+  - [https://docs.timescale.com/use-timescale/latest/extensions/pgvector/?ref=timescale.com](https://docs.timescale.com/use-timescale/latest/extensions/pgvector/?ref=timescale.com)
+  - [PostgreSQL as a Vector Database: Create, Store, and Query OpenAI Embeddings With pgvector](https://www.timescale.com/blog/postgresql-as-a-vector-database-create-store-and-query-openai-embeddings-with-pgvector/)
+  - [PostgreSQL: Documentation: 16: 21.10. LDAP Authentication](https://www.postgresql.org/docs/current/auth-ldap.html)
+  - [https://towardsdatascience.com/similarity-search-part-4-hierarchical-navigable-small-world-hnsw-2aad4fe87d37](https://towardsdatascience.com/similarity-search-part-4-hierarchical-navigable-small-world-hnsw-2aad4fe87d37)
+  - [Postgres Is Now a Vector Database, Too - The New Stack](https://thenewstack.io/postgres-is-now-a-vector-database-too/)
+  - [GitHub - currentslab/awesome-vector-search: Collections of vector search related libraries, service and research papers](https://github.com/currentslab/awesome-vector-search)
+  - [Lora - Frase ricercata | Componenti elettronici. Distributore e negozio online - Transfer Multisort Elektronik | Moduli comunicazione | Elementi e componentistica, parti elettroniche / TME](https://www.tme.eu/it/katalog/moduli-comunicazione_113192/?queryPhrase=Lora)
+  - [Alpine.js](https://alpinejs.dev/)
+  - [
+  Bulma: Free, open source, and modern CSS framework based on Flexbox
+
+](https://bulma.io/)
+  - [Creative text flows using CSS shapes - LogRocket Blog](https://blog.logrocket.com/creative-text-flows-using-css-shapes/)
+  - [PCF8574 GPIO Extender - With Arduino and NodeMCU : 15 Steps - Instructables](https://www.instructables.com/PCF8574-GPIO-Extender-With-Arduino-and-NodeMCU/)
+  - [GitHub - typesense/typesense: Open Source alternative to Algolia + Pinecone and an Easier-to-Use alternative to ElasticSearch ⚡ 🔍 ✨ Fast, typo tolerant, in-memory fuzzy Search Engine for building delightful search experiences](https://github.com/typesense/typesense)
+  - [Lunr: A bit like Solr, but much smaller and not as bright](https://lunrjs.com/)
+  - [512KB Club | A showcase of lightweight websites.](https://512kb.club/)
+  - [EncycloSearch](https://encyclosearch.org/)
+  - [Bruno Simon](https://bruno-simon.com/)
+  - [About HandWiki Encyclopedia - HandWiki](https://handwiki.org/wiki/HandWiki:About)
+  - [Method of loci - Wikipedia](https://en.wikipedia.org/wiki/Method_of_loci?wprov=sfla1)
+  - [Active Theory · Creative Digital Experiences](https://activetheory.net/work)
+  - [Pioneer – Corn. Revolutionized.](https://cornrevolution.resn.global/#science)
+  - [Stripe | Infrastruttura finanziaria per Internet](https://stripe.com/it)
+  - [The Boat | SBS](https://www.sbs.com.au/theboat/)
+  - [japan-guide.com - Japan Travel and Living Guide](https://www.japan-guide.com/)
+  - [McMaster-Carr](https://www.mcmaster.com/)
+  - [Globe.GL | globe.gl](https://globe.gl/)
+  - [GitHub - nordicgiant2/awesome-landing-page: A series of beautiful and practical landing page templates](https://github.com/nordicgiant2/awesome-landing-page)
+  - [Best Motherfucking Website](https://bestmotherfucking.website/)
+  - [Best Motherfucking Website](https://bestmotherfucking.website/)
+  - [Better Motherfucking Website](http://bettermotherfuckingwebsite.com/)
+  - [Dieter Rams: 10 Timeless Commandments for Good Design | IxDF](https://www.interaction-design.org/literature/article/dieter-rams-10-timeless-commandments-for-good-design#:~:text=Good%20design%20is%20as%20little,to%20purity%2C%20back%20to%20simplicity.)
+  - [Motherfucking Website](https://motherfuckingwebsite.com/)
+  - [Secret Llama](https://secretllama.com/)
+  - [MBTI Personality Types 500 Dataset | Kaggle](https://www.kaggle.com/datasets/zeyadkhalid/mbti-personality-types-500-dataset)
+  - [Flowframes - Fast Video Interpolation for any GPU by N00MKRAD](https://nmkd.itch.io/flowframes)
+  - [LiftKit: The Universal Design System for Modern UI's by Chainlift](https://www.chainlift.io/liftkit)
+  - [Zed - Code at the speed of thought](https://zed.dev/)
+  - [https://newsletter.cote.io/p/buy-your-platform-dont-build-it?r=2d4o&utm_campaign=post&utm_medium=web&s=09](https://newsletter.cote.io/p/buy-your-platform-dont-build-it?r=2d4o&utm_campaign=post&utm_medium=web&s=09)
+  - [Foam Vs Dendron](https://wiki.dendron.so/notes/p5fMTi-6zOyX1TwhL6dM0/)
+  - [YAML-LD](https://json-ld.github.io/yaml-ld/spec/)
+  - [Musings on Building a Generative AI Product](https://www.linkedin.com/blog/engineering/generative-ai/musings-on-building-a-generative-ai-product?s=09)
+  - [Adrenaline](https://useadrenaline.com/)
+  - [Learn How to Use Chroma DB: A Step-by-Step Guide | DataCamp](https://www.datacamp.com/tutorial/chromadb-tutorial-step-by-step-guide)
+  - [Microframework - Wikipedia](https://en.wikipedia.org/wiki/Microframework?wprov=sfla1)
+  - [https://github.com/mmaorc](https://github.com/mmaorc)
+  - [Refactoring and Design Patterns](https://refactoring.guru/)
+  - [ REAPER Update Utility - Cockos Incorporated Forums](https://forum.cockos.com/showthread.php?t=242922)
+  - [[2401.08565] Tuning Language Models by Proxy](https://arxiv.org/abs/2401.08565)
+  - [Anima/air_llm at main · lyogavin/Anima · GitHub](https://github.com/lyogavin/Anima/tree/main/air_llm)
+  - [LLM-FineTuning-Large-Language-Models/layered_inference_with_airllm_70B_LLM_Inference_on_a_Single_4GB_GPU.ipynb at main · rohan-paul/LLM-FineTuning-Large-Language-Models · GitHub](https://github.com/rohan-paul/LLM-FineTuning-Large-Language-Models/blob/main/layered_inference_with_airllm_70B_LLM_Inference_on_a_Single_4GB_GPU.ipynb)
+  - [unitoftime (Jacob) · GitHub](https://github.com/unitoftime)
+  - [Planarity - Jason Davies](https://www.jasondavies.com/planarity/)
+  - [Nushell](https://www.nushell.sh/)
+  - [Nunjucks](https://mozilla.github.io/nunjucks/)
+  - [Eleventy is a simpler static site generator](https://www.11ty.dev/)
+  - [https://www.reddit.com/r/node/s/CfcrD81FaV](https://www.reddit.com/r/node/s/CfcrD81FaV)
+  - [HTCPCP Vocabulary in RDF](https://cstrobbe.gitlab.io/WC3/TR/2008/RFC-htcpcp-in-rdf-20080401/)
+  - [IP over Avian Carriers - Wikipedia](https://en.wikipedia.org/wiki/IP_over_Avian_Carriers?wprov=sfla1)
+  - [https://www.ietf.org/rfc/rfc2235.txt](https://www.ietf.org/rfc/rfc2235.txt)
+  - ["Number of different devices" fail to keep Trump awake in court | Salon.com](https://www.salon.com/2024/05/01/number-of-different-devices-fail-to-keep-awake-in/)
+  - [https://konfigthis.com/blog/workflow-builder-apis/](https://konfigthis.com/blog/workflow-builder-apis/)
+  - [https://konfigthis.com/blog/htmx/](https://konfigthis.com/blog/htmx/)
+  - [Codebuddy: Not just an AI coding assistant](https://codebuddy.ca/)
+  - [GitHub - HeyPuter/puter: 🌐 The Internet OS! Free, Open-Source, and Self-Hostable.](https://github.com/HeyPuter/puter)
+  - [GitHub - gnat/surreal: 🗿 Mini jQuery alternative. Dependency-free animations. Locality of Behavior.  Use one element or arrays transparently. Pairs with htmx. Vanilla querySelector() but better!](https://github.com/gnat/surreal)
+  - [Lit · GitHub](https://github.com/lit)
+  - [Blogging Roller: Dave Johnson on open web technologies, social software and software development](https://rollerweblogger.org/roller/)
+  - [   REST APIs must be hypertext-driven » Untangled](https://roy.gbiv.com/untangled/2008/rest-apis-must-be-hypertext-driven)
+  - [Richardson Maturity Model](https://martinfowler.com/articles/richardsonMaturityModel.html)
+  - [There Is No Right Way: API Example Using REST](https://thereisnorightway.blogspot.com/2012/05/api-example-using-rest.html)
+  - [The APIs for the Sun Cloud: Wiki: Home — Project Kenai](https://web.archive.org/web/20170409132237/https://kenai.com/projects/suncloudapis/pages/Home)
+  - [hateoas - Is That REST API Really RPC? Roy Fielding Seems to Think So - Stack Overflow](https://stackoverflow.com/questions/1164154/is-that-rest-api-really-rpc-roy-fielding-seems-to-think-so)
+  - [VanJS - A 1.0kB No-JSX Framework Based on Vanilla JavaScript](https://vanjs.org/)
+  - [The Stanford Natural Language Processing Group ](https://nlp.stanford.edu/software/openie.html)
+  - [Proxy - JavaScript | MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy)
+  - [GitHub - vanjs-org/van: 🍦 VanJS: World's smallest reactive UI framework. Incredibly Powerful, Insanely Small - Everyone can build a useful UI app in an hour.](https://github.com/vanjs-org/van)
+  - [GitHub - linkdd/doceaser: Interactive documentation with Markdown and HTMX made easier](https://github.com/linkdd/doceaser)
+  - [GitHub - ernestmarcinko/htmx-serverless: HTMX Serverless XHR requests. A frontend tool to define custom responses to XHR requests based on the request Path.](https://github.com/ernestmarcinko/htmx-serverless/tree/main)
+  - [Function.prototype.bind() - JavaScript | MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/bind)
+  - [Using data attributes - Learn web development | MDN](https://developer.mozilla.org/en-US/docs/Learn/HTML/Howto/Use_data_attributes)
+  - [Client-Side Scripting](https://hypermedia.systems/client-side-scripting/)
+  - [Replacing Google Analytics with Self-Hosted Analytics](https://putyourlightson.com/articles/replacing-google-analytics-with-self-hosted-analytics)
+  - [htmx has a JavaScript API, btw](https://putyourlightson.com/articles/htmx-has-a-javascript-api-btw)
+  - [
+	API Resources
+](https://swagger.io/resources/open-api/)
+  - [Godocument - Introduction](https://godocument.dev/)
+  - [https://codeium.com/](https://codeium.com/)
+  - [GitHub - EricLBuehler/mistral.rs: Blazingly fast LLM inference.](https://github.com/EricLBuehler/mistral.rs)
+  - [OSWorld: Benchmarking Multimodal Agents for Open-Ended Tasks in Real Computer Environments](https://os-world.github.io/?s=09)
+  - [LMSYS Org](https://lmsys.org/)
+  - [GitHub - kingjulio8238/memary: Longterm Memory for Autonomous Agents.](https://github.com/kingjulio8238/memary)
+  - [Teensy® 4.1](https://www.pjrc.com/store/teensy41.html)
+  - [Patchbox OS and Pisound — Audiobus Forum](https://forum.audiob.us/discussion/46949/patchbox-os-and-pisound)
+  - [https://llllllll.co/](https://llllllll.co/)
+  - [microsoft/Phi-3-mini-128k-instruct · Hugging Face](https://huggingface.co/microsoft/Phi-3-mini-128k-instruct)
+  - [GitHub - mihaifm/linq: linq.js - LINQ for JavaScript](https://github.com/mihaifm/linq)
+  - [Sign in - Google Accounts](https://takeout.google.com/)
+  - [https://reaper.blog/2014/09/js-effect-spotlight-sequencer-megababy/](https://reaper.blog/2014/09/js-effect-spotlight-sequencer-megababy/)
+  - [ McSequencer - Step Sequencer for REAPER - Cockos Incorporated Forums](https://forums.cockos.com/showthread.php?t=286577)
+  - [Use Google Drive for desktop - Google Drive Help](https://support.google.com/drive/answer/10838124?hl=en)
+  - [Hidden Noise Reduction Tool in Reaper | Home Brew Audio](https://www.homebrewaudio.com/9603/reafir-madness-hidden-noise-reduction-tool-in-reaper/)
+  - [How to Fix Pixelated/Grainy Videos? 5 Tips and Tricks](https://4ddig.tenorshare.com/video-error/how-to-fix-pixelated-videos.html#f4)
+  - [5 Proven Methods to Fix Pixelated or Grainy Videos [2024]](https://repairit.wondershare.com/video-repair/how-to-fix-pixelated-videos.html)
+  - [gorilla/berkeley-function-call-leaderboard/model_handler/constant.py at main · ShishirPatil/gorilla · GitHub](https://github.com/ShishirPatil/gorilla/blob/main/berkeley-function-call-leaderboard%2Fmodel_handler%2Fconstant.py)
+  - [GitHub - phidatahq/phidata: Add memory, knowledge and tools to LLMs](https://github.com/phidatahq/phidata)
+  - [phidata/cookbook/llms/ollama/tools at main · phidatahq/phidata · GitHub](https://github.com/phidatahq/phidata/tree/main/cookbook%2Fllms%2Follama%2Ftools)
+  - [GitHub - chimezie/mlx-tuning-fork: Very basic framework for parameterized large language model (Q)LoRa fine-tuning using mlx, mlx_lm, and OgbujiPT.  Architecture for systematic running of easily parameterized fine-tunes](https://github.com/chimezie/mlx-tuning-fork)
+  - [Stanford CS 224N | Natural Language Processing with Deep Learning](https://web.stanford.edu/class/cs224n/)
+  - [GitHub - mikecvet/beam: LLM Beam Search Example Implementation](https://github.com/mikecvet/beam)
+  - [Together AI](https://www.together.ai/?s=09)
+  - [fofr/video-morpher – Run with an API on Replicate](https://replicate.com/fofr/video-morpher?s=09)
+  - Read this story from Gathnex on Medium:...
+    - Read this story from Gathnex on Medium: https://gathnex.medium.com/build-your-own-production-ready-retrival-augmented-genration-system-at-zero-cost-b619c26c10c1
+  - Read this story from Gathnex on Medium:...
+    - Read this story from Gathnex on Medium: https://gathnex.medium.com/how-to-deploy-llm-for-free-of-cost-6e7947d9b64a
+  - [Native Speech Recognition In Pure Javascript](https://codepen.io/kvinbabbar/pen/jgPwpR)
+  - [ TTSpeech ](https://henryhale.github.io/ttspeech/)
+  - [https://rohanfaiyaz.com/post/how-to-make-accesible-autocomplete/](https://rohanfaiyaz.com/post/how-to-make-accesible-autocomplete/)
+  - [DEV Community](https://dev.to/)
+  - [Read screen aloud](https://help.ubuntu.com/stable/ubuntu-help/a11y-screen-reader.html.en)
+  - [Log in or Sign Up | Linktree](https://linktr.ee/admin?welcome=true)
+  - [ Home - DeploySolo ](https://deploysolo.com/)
+  - [ Home - DeploySolo ](https://deploysolo.com/)
+  - [GitHub - wdebeaum/svg-whiteboard: A simple drawing application written as a standalone webpage.](https://github.com/wdebeaum/svg-whiteboard)
+  - [Writing a TodoMVC App With Modern Vanilla JavaScript – Frontend Masters Boost](https://frontendmasters.com/blog/vanilla-javascript-todomvc/)
+  - [RDF + JS = ❤](https://rdfjs.dev/)
+  - [Serpentinite - Wikipedia](https://en.wikipedia.org/wiki/Serpentinite?wprov=sfla1)
+  - [Serpentinite - Wikipedia](https://en.wikipedia.org/wiki/Serpentinite?wprov=sfla1)
+  - [Accelerating Systems with Real-time AI Solutions - Groq](https://wow.groq.com/#apply)
+  - [https://drchrislevy.github.io/posts/intro_modal/intro_modal.html](https://drchrislevy.github.io/posts/intro_modal/intro_modal.html)
+  - [http://research.google/blog/patchscopes-a-unifying-framework-for-inspecting-hidden-representations-of-language-models/](http://research.google/blog/patchscopes-a-unifying-framework-for-inspecting-hidden-representations-of-language-models/)
+  - [Reddit - Dive into anything](https://www.reddit.com/r/TechnoProduction/s/MzAPiEniI9)
+  - [Ragazzo Di Strada chords with lyrics by Corvi for guitar and ukulele @ Guitaretab](https://www.guitaretab.com/c/corvi/379672.html)
+  - [https://posthog.com/pricing](https://posthog.com/pricing)
+  - [Freedev.ai](https://www.freedev.ai/?rdt_cid=4279428227803822890)
+  - [Tutorial: Oopsy Daisy — An Introduction, Part 1 | Cycling '74](https://cycling74.com/tutorials/oopsydaisy-patch-an-introduction)
+  - [Electrosmith Daisy Seed Development Board (Pre Soldered) - Elevator Sound](https://www.elevatorsound.com/product/electrosmith-daisy-seed-development-board/)
+  - [Udio | Era of Harmony by danbri](https://www.udio.com/songs/9V94BoGu9ABv6wPj8Hp12C)
+  - [Inigo Quilez :: computer graphics, mathematics, shaders, fractals, demoscene and more](https://iquilezles.org/articles/morenoise/)
+  - [http://www.jenitennison.com/2011/07/05/what-do-uris-mean-anyway.html](http://www.jenitennison.com/2011/07/05/what-do-uris-mean-anyway.html)
+  - [Recursive Functions of Symbolic Expressions and
+Their Computation by Machine, Part I](https://web.archive.org/web/20131010134641/http://www-formal.stanford.edu/jmc/recursive/recursive.html)
+  - [Building a Neural Network in Pure Lisp Without Built-In Numbers Using Only Atoms and Lists | Woodrush’s Blog](https://woodrush.github.io/blog/posts/2022-01-16-neural-networks-in-pure-lisp.html)
+  - [aimacode · GitHub](https://github.com/aimacode)
+  - [Reddit - Dive into anything](https://www.reddit.com/r/embedded/s/n3biuQV4gn)
+    - Pc terminal for esp 
+  - [OCR PDFs and images directly in your browser](https://tools.simonwillison.net/ocr)
+  - [Semantic Scholar | AI-Powered Research Tool](https://www.semanticscholar.org/)
+  - [uLisp - Seeed Studio XIAO nRF52840](http://www.ulisp.com/show?4AT6)
+  - [YouTube](https://youtu.be/MtN1YnoL46Q?si=rouOV9sNQcAzjLgt)
+  - [https://meshtastic.org/](https://meshtastic.org/)
+  - [Reddit - Dive into anything](https://www.reddit.com/r/LocalLLaMA/s/oqjc1ikVSc)
+  - [Fullmetal.Ai](https://www.fullmetal.ai/)
+  - [How do mixture-of-experts layers affect transformer models? - Stack Overflow](https://stackoverflow.blog/2024/04/04/how-do-mixture-of-experts-layers-affect-transformer-models/)
+  - [How do mixture-of-experts layers affect transformer models? - Stack Overflow](https://stackoverflow.blog/2024/04/04/how-do-mixture-of-experts-layers-affect-transformer-models/)
+  - [Open-Source AI Cookbook - Hugging Face Open-Source AI Cookbook](https://huggingface.co/learn/cookbook/index)
+  - [
+    
+      
+        Representation Engineering Mistral-7B an Acid Trip
+      
+    
+  ](https://vgel.me/posts/representation-engineering/)
+  - [https://www.cell.com/cell/fulltext/S0092-8674(18)31108-5?_returnURL=https%3A%2F%2Flinkinghub.elsevier.com%2Fretrieve%2Fpii%2FS0092867418311085%3Fshowall%3Dtrue](https://www.cell.com/cell/fulltext/S0092-8674(18)31108-5?_returnURL=https%3A%2F%2Flinkinghub.elsevier.com%2Fretrieve%2Fpii%2FS0092867418311085%3Fshowall%3Dtrue)
+  - [https://www.reddit.com/r/node/s/VQ3POFTZFl](https://www.reddit.com/r/node/s/VQ3POFTZFl)
+  - [ESP-Drone: Building An ESP32-Based Quadcopter For Not Much Cash | Hackaday](https://hackaday.com/2024/03/31/esp-drone-building-an-esp32-based-quadcopter-for-not-much-cash/)
+  - [DIY WiFi-Controlled Drone with ESP32 and Arduino](https://circuitdigest.com/microcontroller-projects/DIY-wifi-controlled-drone)
+  - [GitHub - XiaoxinHe/Awesome-Graph-LLM: A collection of AWESOME things about Graph-Related LLMs.](https://github.com/XiaoxinHe/Awesome-Graph-LLM)
+  - [node.js - How To Execute Custom Actions with ChatGPT Assistants API - Stack Overflow](https://stackoverflow.com/questions/78018805/how-to-execute-custom-actions-with-chatgpt-assistants-api)
+  - [https://www.radwell.co.uk/cart](https://www.radwell.co.uk/cart)
+  - [16x Prompt - ChatGPT for Coding](https://prompt.16x.engineer/)
+  - [Moirai: A Time Series Foundation Model for Universal Forecasting](https://blog.salesforceairesearch.com/moirai/)
+  - HOUSE Of ALL - has a bbc session
+  - Cuckoo In The Nest
+  - [[1812.11118] Reconciling modern machine learning practice and the bias-variance trade-off](https://arxiv.org/abs/1812.11118)
+  - [https://www.bbc.co.uk/news/av/world-68707739](https://www.bbc.co.uk/news/av/world-68707739)
+    - Spaghetti 
+  - [Top Twitter Abbreviations You Need to Know | Social Media Today](https://www.socialmediatoday.com/content/top-twitter-abbreviations-you-need-know#:~:text=%E2%80%A2%20CT%20%3D%20Cuttweet.,%E2%80%A2%20DM%20%3D%20Direct%20message.)
+  - [JULIAN DIBBELL](http://www.juliandibbell.com/texts/bungle_vv.html)
+  - [Reddit - Dive into anything](https://www.reddit.com/r/ChatGPTCoding/s/kKONu9is9n)
+  - 
+  - [Overview | Adafruit AS7341 10-Channel Light / Color Sensor Breakout | Adafruit Learning System](https://learn.adafruit.com/adafruit-as7341-10-channel-light-color-sensor-breakout/overview)
+  - [Monolith First](https://martinfowler.com/bliki/MonolithFirst.html)
+  - [Radiacode 102 & 103: Nuclear Radiation Detector and Spectrometer](https://www.radiacode.com/?ref=2u7a21caf7r&utm_source=youtube&utm_medium=integration&utm_campaign=Actionlab&from=tracker#detector-dosimeter)
+  - [How does a Cesium Iodide (CsI(Tl)) detector work? | 5 Answers from Research papers](https://typeset.io/questions/how-does-a-cesium-iodide-csi-tl-detector-work-18to4y44pe)
+  - [Tutorials | Derivative](https://derivative.ca/tutorials)
+  - [ActivityPub Rocks!](https://activitypub.rocks/)
+  - [https://huggingface.co/posts/thomwolf/706415412818350](https://huggingface.co/posts/thomwolf/706415412818350)
+  - [stereoDrift.github.io/musicVisualizerScript.js at main · stereoDrift/stereoDrift.github.io · GitHub](https://github.com/stereoDrift/stereoDrift.github.io/blob/main/musicVisualizerScript.js)
+  - [https://www.reddit.com/r/SideProject/s/mEJwtom9WX](https://www.reddit.com/r/SideProject/s/mEJwtom9WX)
+    - Link shortener
+  - [Phishing.Database/phishing-domains-NEW-today.txt at master · mitchellkrogza/Phishing.Database · GitHub](https://github.com/mitchellkrogza/Phishing.Database/blob/master/phishing-domains-NEW-today.txt)
+  - [SideQuest: Oculus Quest Games & Apps including AppLab Games ( Oculus App Lab )](https://sidequestvr.com/setup-howto)
+  - [YouTube](https://m.youtube.com/watch?si=bOQkHB3pUJVX5Q_x&v=XFVkGXt4Q9A&feature=youtu.be)
+  - [graphoflife (Stefan Beeler) · GitHub](https://github.com/graphoflife)
+  - [Data Regions | Aisyah Ramkhelawan | Miniature Recs](https://miniaturerecs.bandcamp.com/album/data-regions)
+  - [[2403.13799] Reverse Training to Nurse the Reversal Curse](https://arxiv.org/abs/2403.13799)
+  - [https://www.reddit.com/r/TechnoProduction/s/tgO8yw35fu](https://www.reddit.com/r/TechnoProduction/s/tgO8yw35fu)
+    - Techno
+  - [Why Curry Helps – Hugh F D Jackson](https://hughfdjackson.com/javascript/why-curry-helps/)
+  - [jsdoc3 - Is there a detailed documentation on how to create own jsdoc templates? - Stack Overflow](https://stackoverflow.com/questions/37510551/is-there-a-detailed-documentation-on-how-to-create-own-jsdoc-templates#39595382)
+  - [OpenFlexure Microscope](https://openflexure.org/projects/microscope/)
+  - [Launch Your Startup in Days, Not Weeks | ShipFast](https://shipfa.st/)
+  - [PUMA Open Source Multimodality 3D Printed Microscope](https://focalplane.biologists.com/2021/10/26/puma-open-source-multimodality-3d-printed-microscope/)
+  - [ MIDI scripting - Cockos Incorporated Forums](https://forum.cockos.com/showthread.php?t=206221)
+  - [https://app.suno.ai/playlist/79b448be-6a17-466e-9d80-75ffe551cf03/](https://app.suno.ai/playlist/79b448be-6a17-466e-9d80-75ffe551cf03/)
+  - [The Grug Brained Developer](https://grugbrain.dev/)
+  - 
+  - [Blaukraut Releases FREE Charlatan Synthesizer For Windows And Linux - Bedroom Producers Blog](https://bedroomproducersblog.com/2024/03/19/blaukraut-charlatan-3/)
+  - [GitHub - bluszcz/awesome-xmpp: A curated list of delightful XMPP related resources.](https://github.com/bluszcz/awesome-xmpp)
+  - [unhosted web apps: using solid](https://unhosted.org/using-solid/)
+  - [WebID-OIDC - Authentication question from Alexandre Bourlier on 2019-07-10 (public-solid@w3.org from July 2019)](https://lists.w3.org/Archives/Public/public-solid/2019Jul/0001.html)
+  - [Solid, WebID and OpenID Connect (Cryptography, Observatory, WordPress) —  Kaspars Dambis](https://kaspars.net/blog/solid-webid-oidc)
+  - [Community Solid Server evaluation - CodiMD](https://codimd.web.cern.ch/p/2cJoWzYaS?print-pdf#/)
+  - [https://www.codedump.xyz/py/ZfkQmMk8I7ecLbIk](https://www.codedump.xyz/py/ZfkQmMk8I7ecLbIk)
+    - Claude script
+  - [Welcome to vLLM! — vLLM](https://docs.vllm.ai/en/latest/)
+  - [Step-by-Step Guide to Open-Source Implementation of Generative Fill: Part 1 - PyImageSearch](https://pyimagesearch.com/2024/03/18/step-by-step-guide-to-open-source-implementation-of-generative-fill-part-1/)
+  - [Data Bending Util](https://go.brianellissound.com/databend/index.html)
+  - [GitHub - stereoDrift/stereoDrift.github.io](https://github.com/stereoDrift/stereoDrift.github.io/tree/main)
+  - [Data Bending Util](https://go.brianellissound.com/databend/index.html)
+  - [ Convolution Reverb/Impulse Responses: Any included with Reaper? - Cockos Incorporated Forums](https://forum.cockos.com/showthread.php?t=188066)
+  - [Reddit - Dive into anything](https://www.reddit.com/r/webdev/s/unfDeYexJR)
+    - Domain reg
+  - [NATRON](https://natrongithub.github.io/)
+  - [GitHub - NatronGitHub/Natron: Open-source video compositing software. Node-graph based. Similar in functionalities to Adobe After Effects and Nuke by The Foundry.](https://github.com/NatronGitHub/Natron)
+  - [Wayback Machine APIs | Internet Archive](https://archive.org/help/wayback_api.php)
+  - [Logisim](http://www.cburch.com/logisim/)
+  - [SRENITY ONLINE](https://www.srenity.online/)
+  - [GT 730 4GB & Cuda on Debian 10 - GPU-Accelerated Libraries - NVIDIA Developer Forums](https://forums.developer.nvidia.com/t/gt-730-4gb-cuda-on-debian-10/157735)
+  - [GT 730 4GB & Cuda on Debian 10 - GPU-Accelerated Libraries - NVIDIA Developer Forums](https://forums.developer.nvidia.com/t/gt-730-4gb-cuda-on-debian-10/157735)
+  - [GitHub - unslothai/unsloth: 2-5X faster 70% less memory QLoRA & LoRA finetuning](https://github.com/unslothai/unsloth)
+  - [Reddit - Dive into anything](https://www.reddit.com/r/LocalLLaMA/s/0mmTQ1I1yT)
+    - Finetuning
+  - Read this story from Gathnex on Medium:...
+    - Read this story from Gathnex on Medium: https://gathnex.medium.com/how-to-deploy-llm-for-free-of-cost-6e7947d9b64a
+  - Read this story from Yeyu Huang on...
+    - Read this story from Yeyu Huang on Medium: https://levelup.gitconnected.com/how-to-host-your-own-api-of-open-language-models-for-free-92cdaa6e8b64
+  - [https://rapidops.medium.com/9-best-javascript-techniques-for-network-graph-visualization-f5f377419b1a](https://rapidops.medium.com/9-best-javascript-techniques-for-network-graph-visualization-f5f377419b1a)
+  - [Fine-Tuning LLaMA 2: A Step-by-Step Guide to Customizing the Large Language Model | DataCamp](https://www.datacamp.com/tutorial/fine-tuning-llama-2)
+  - [Reddit - Dive into anything](https://www.reddit.com/r/LocalLLaMA/s/tFrmHdrX7Z)
+    - Fine-tuning gguf
+  - [TheBloke/Orca-2-13B-SFT_v5-GGUF · Hugging Face](https://huggingface.co/TheBloke/Orca-2-13B-SFT_v5-GGUF)
+  - [How to Store Embeddings in Vector Search and Implement RAG - The New Stack](https://thenewstack.io/how-to-store-embeddings-in-vector-search-and-implement-rag/)
+  - [https://towardsdatascience.com/moirai-salesforces-foundation-model-for-time-series-forecasting-4eff6c34093d](https://towardsdatascience.com/moirai-salesforces-foundation-model-for-time-series-forecasting-4eff6c34093d)
+  - [https://x.com/alexalbert__/status/1769417059794870541?t=mWsPwBXzZ1mytlh2xZNm9g&s=09](https://x.com/alexalbert__/status/1769417059794870541?t=mWsPwBXzZ1mytlh2xZNm9g&s=09)
+  - [https://towardsdatascience.com/moirai-salesforces-foundation-model-for-time-series-forecasting-4eff6c34093d](https://towardsdatascience.com/moirai-salesforces-foundation-model-for-time-series-forecasting-4eff6c34093d)
+  - [GitHub - explodinggradients/ragas: Evaluation framework for your Retrieval Augmented Generation (RAG) pipelines](https://github.com/explodinggradients/ragas)
+  - [https://github.com/vasturiano/3d-force-graph](https://github.com/vasturiano/3d-force-graph)
+  - [Best Practices for Publishing Linked Data](https://www.w3.org/TR/ld-bp/)
+  - [The FAIR Guiding Principles for scientific data management and stewardship | Scientific Data](https://www.nature.com/articles/sdata201618)
+  - [Axios vs Fetch: Which is best for HTTP requests in 2024?](https://apidog.com/blog/axios-vs-fetch#:~:text=Axios%20provides%20the%20data%20in,response%20has%20an%20error%20status.)
+  - [RFC 9264: Linkset: Media Types and a Link Relation Type for Link Sets](https://www.rfc-editor.org/rfc/rfc9264.html)
+  - [Email Fields, an RDF Schema](https://www.w3.org/2000/04/maillog2rdf/email)
+  - [OLMo - Open Language Model by AI2](https://allenai.org/olmo)
+  - [Google Directory - Wikipedia](https://en.wikipedia.org/wiki/Google_Directory?wprov=sfla1)
+  - [mgoin/Orca-2-13b-pruned50-quant-ds · Hugging Face](https://huggingface.co/mgoin/Orca-2-13b-pruned50-quant-ds)
+  - [Reddit - Dive into anything](https://www.reddit.com/r/LocalLLaMA/s/F57UzjwYVa)
+    - Multiple qloras
+  - [Reddit - Dive into anything](https://www.reddit.com/r/LocalLLaMA/s/l4UvAqdOAM)
+    - Qlora
+  - [Reddit - Dive into anything](https://www.reddit.com/r/LocalLLaMA/s/e4zGoerZ3o)
+    - Qlora unstructured text
+  - [Weights & Biases](https://wandb.ai/capecape/alpaca_ft/reports/How-to-Fine-Tune-an-LLM-Part-1-Preparing-a-Dataset-for-Instruction-Tuning--Vmlldzo1NTcxNzE2)
+  - [https://www.confessionsofadataguy.com/engineering-lessons-learned-from-llm-fine-tuning/](https://www.confessionsofadataguy.com/engineering-lessons-learned-from-llm-fine-tuning/)
+  - [Reddit - Dive into anything](https://www.reddit.com/r/LocalLLaMA/s/rxH1CZyZt0)
+    - QA from mailing list
+  - [List of web directories - Wikipedia](https://en.wikipedia.org/wiki/List_of_web_directories?wprov=sfla1)
+  - [Keystone Interface](https://martinfowler.com/bliki/KeystoneInterface.html)
+  - [500 Lines or LessWeb Spreadsheet](https://aosabook.org/en/500L/web-spreadsheet.html)
+  - [500 Lines or LessBlockcode: A Visual Programming Toolkit](https://aosabook.org/en/500L/blockcode-a-visual-programming-toolkit.html)
+  - [The Architecture of Open Source Applications](https://aosabook.org/en/)
+  - [GitHub - bendytree/explainjs: A JavaScript library that creates a side-by-side view of your code with your explanations.](https://github.com/bendytree/explainjs)
+  - [javascript - Making a short alias for document.querySelectorAll - Stack Overflow](https://stackoverflow.com/questions/13383886/making-a-short-alias-for-document-queryselectorall)
+  - [You Might Not Need jQuery](https://youmightnotneedjquery.com/)
+  - [https://jestjs.io/](https://jestjs.io/)
+  - [Signal >> Documentation](https://signal.org/docs/)
+  - [GitHub - signalapp/libsignal: Home to the Signal Protocol as well as other cryptographic primitives which make Signal possible.](https://github.com/signalapp/libsignal)
+  - [Git](https://www.npmjs.com/package/signal-js)
+  - [https://tetr.app/](https://tetr.app/)
+  - [Notes on getting CUDA running on ubuntu 16.04LTS for a GeForce GT730 - Linux - NVIDIA Developer Forums](https://forums.developer.nvidia.com/t/notes-on-getting-cuda-running-on-ubuntu-16-04lts-for-a-geforce-gt730/124118)
+  - [ZigZag® and Its Structure](https://xanadu.com/zigzag/ZZdnld/)
+  - [
+        Harmonic Percolator - make one!](https://treasuresshop.top/ProductDetail.aspx?iid=236587655&pr=71.88)
+    - Fuzz thing
+  - [Reddit - Dive into anything](https://www.reddit.com/r/LocalLLaMA/s/ygUyKFgAzw)
+    - Quant models
+  - [javascript - Scrapy like tool for Nodejs? - Stack Overflow](https://stackoverflow.com/questions/26652110/scrapy-like-tool-for-nodejs)
+  - [https://cheerio.js.org/docs/basics/loading](https://cheerio.js.org/docs/basics/loading)
+  - [Lighthouse](https://chrome.google.com/webstore/detail/lighthouse/blipmdconlkpinefehnmjammfjpmpbjk)
+  - [[ pheuron electrobient music : impulse responses ]](https://www.pheuron.de/music_ir.php)
+  - [GitHub - jessetane/queue: Asynchronous function queue with adjustable concurrency](https://github.com/jessetane/queue)
+  - 
+  - [https://www.youtube.com/watch?v=inQN5JpVxyo](https://www.youtube.com/watch?v=inQN5JpVxyo)
+  - [https://github.com/werman/noise-suppression-for-voice](https://github.com/werman/noise-suppression-for-voice)
+  - [GitHub - frank0631/semantic-web-scraper](https://github.com/frank0631/semantic-web-scraper)
+  - [semantic-web-scraper/app/frank_mega_urls.txt at master · frank0631/semantic-web-scraper · GitHub](https://github.com/frank0631/semantic-web-scraper/blob/master/app%2Ffrank_mega_urls.txt)
+  - [https://github.com/TNTwise/REAL-Video-Enhancer?tab=readme-ov-file](https://github.com/TNTwise/REAL-Video-Enhancer?tab=readme-ov-file)
+  - 
+  - lpc plugin [https://github.com/lewark/lpc.lv2](https://github.com/lewark/lpc.lv2)
+  - Read this story from Cameron R. Wolfe,...
+    - Read this story from Cameron R. Wolfe, Ph.D. on Medium: https://towardsdatascience.com/easily-train-a-specialized-llm-peft-lora-qlora-llama-adapter-and-more-aedb5be39244
+  - [Scrapy | A Fast and Powerful Scraping and Web Crawling Framework](https://scrapy.org/)
+  - [GitHub - apify/crawlee: Crawlee—A web scraping and browser automation library for Node.js to build reliable crawlers. In JavaScript and TypeScript. Extract data for AI, LLMs, RAG, or GPTs. Download HTML, PDF, JPG, PNG, and other files from websites. Works with Puppeteer, Playwright, Cheerio, JSDOM, and raw HTTP. Both headful and headless mode. With proxy rotation.](https://github.com/apify/crawlee)
+  - [GitHub - tautologistics/node-htmlparser: Forgiving HTML/XML/RSS Parser in JS for *both* Node and Browsers](https://github.com/tautologistics/node-htmlparser)
+  - [GitHub - btg5679/javascript-openai-web-crawler: Javascript AI-powered Web Crawler & Content-based Q&A System using OpenAI](https://github.com/btg5679/javascript-openai-web-crawler)
+  - [The rdfweb-dev Archives](https://web.archive.org/web/20070704202243/http://rdfweb.org/pipermail/rdfweb-dev/)
+  - [An Introduction to FOAF](https://www.xml.com/pub/a/2004/02/04/foaf.html)
+  - [Semantically Interlinked Online Communities - Wikipedia](https://en.wikipedia.org/wiki/Semantically_Interlinked_Online_Communities?wprov=sfla1)
+  - [Danbri FOAF talk, Social Web Camp, WWW2009 | PPT](https://www.slideshare.net/danbri/danbri-foaf-talk-social-web-camp-www2009)
+  - [FoafDowntime - W3C Wiki](https://www.w3.org/wiki/FoafDowntime)
+  - [GitHub - Helixform/CodeCursor: An extension for using Cursor in Visual Studio Code.](https://github.com/Helixform/CodeCursor)
+  - [GitHub - jbrooksuk/node-summary: Node module that summarizes text using a naive summarization algorithm](https://github.com/jbrooksuk/node-summary)
+  - [GitHub - htacg/tidy-html5: The granddaddy of HTML tools, with support for modern standards](https://github.com/htacg/tidy-html5)
+  - [https://www.google.com/url?sa=t&source=web&rct=j&opi=89978449&url=https://medium.com/%40ben.burtenshaw/tiny-language-models-summarising-text-at-low-latencies-c1fbab509673&ved=2ahUKEwi8_ubHmuWEAxVhVPEDHdQ8CHoQFnoECB4QAQ&usg=AOvVaw0Z6x5TALKQ7HXpQQYy-rhb](https://www.google.com/url?sa=t&source=web&rct=j&opi=89978449&url=https://medium.com/%40ben.burtenshaw/tiny-language-models-summarising-text-at-low-latencies-c1fbab509673&ved=2ahUKEwi8_ubHmuWEAxVhVPEDHdQ8CHoQFnoECB4QAQ&usg=AOvVaw0Z6x5TALKQ7HXpQQYy-rhb)
+    - Summarizer
+  - [Paper page - GaLore: Memory-Efficient LLM Training by Gradient Low-Rank Projection](https://huggingface.co/papers/2403.03507)
+  - [https://www.reddit.com/r/Ubuntu/s/ya9JT1GkDJ](https://www.reddit.com/r/Ubuntu/s/ya9JT1GkDJ)
+    - Nemo
+  - [Category:Singing synthesis | Vocal Synthesizer Wiki | Fandom](https://vocalsynth.fandom.com/wiki/Category:Singing_synthesis)
+  - [GitHub - subidit/typophilia: Awesome list of free fonts and curated typographic resources. 💝](https://github.com/subidit/typophilia)
+  - [https://monome.org/docs/norns/shield/](https://monome.org/docs/norns/shield/)
+  - [https://www.strumentimusicali.net/product_info.php/products_id/98573/korg-nu-tekt-nts-1-digital-kit.html](https://www.strumentimusicali.net/product_info.php/products_id/98573/korg-nu-tekt-nts-1-digital-kit.html)
+  - [Barnaby Walters • How to Build a Chien](https://waterpigs.co.uk/articles/chien/)
+    - Hurdy gurdy
+  - [A Poster for Neural Circuit Diagrams](https://www.vtabbott.io/ncd-poster/)
+  - [Reverb-O-Matic (100 FXs/Reverbs) - #36 by Dud - DIY STUFF - Look Mum No Computer Thingies](https://lookmumnocomputer.discourse.group/t/reverb-o-matic-100-fxs-reverbs/1856/36)
+  - [Google Colab](https://colab.research.google.com/drive/1HoJWXruUCTKq1TCoHhhcclcAMXZIQMhg?usp=sharing)
+  - [Logseq: A privacy-first, open-source knowledge base](https://logseq.com/)
+  - [Logseq: A privacy-first, open-source knowledge base](https://logseq.com/)
+  - [FRVR AI: Streamline your game production](https://www.frvr.ai/)
+  - [
+Sound Synthesis | Algoritmarte	](https://www.algoritmarte.com/category/soundsynthesis/)
+  - [
+CHOMPI: A Magical Tape Music Instrument by CHOMPI CLUB — Kickstarter
+](https://www.kickstarter.com/projects/chompiclub/chompi-a-magical-tape-music-instrument)
+  - [https://www.reddit.com/r/generative/s/tI0wpo5TH5](https://www.reddit.com/r/generative/s/tI0wpo5TH5)
+  - [https://www.reddit.com/r/dnbproduction/s/3LcGnlRT57](https://www.reddit.com/r/dnbproduction/s/3LcGnlRT57)
+  - [
+Cyclic Cellular Automata part 2 … an interesting variant | Algoritmarte	](https://www.algoritmarte.com/cyclic-cellular-automata-part-2/)
+  - [GitHub - mthaier/Python-Pillow-Scripts: generative art/experimental filters I made with Python](https://github.com/mthaier/Python-Pillow-Scripts?tab=readme-ov-file)
+  - [https://github.com/mthaier/CoolThings](https://github.com/mthaier/CoolThings)
+  - [Logseq: A privacy-first, open-source knowledge base](https://logseq.com/)
+  - [Reddit - Dive into anything](https://www.reddit.com/r/machinelearningnews/s/JDlAFrInnB)
+    - Ai book
+  - [Southside - Trap God  Drum Kit 2024 | Sosouthernsoundkits](https://www.sosouthernsoundkits.com/product-page/southside-trap-god-drum-kit-2024)
+  - 
+  - [Curl Noise](https://al-ro.github.io/projects/curl/)
+  - [DummyJSON/src/data at master · Ovi/DummyJSON · GitHub](https://github.com/Ovi/DummyJSON/tree/master/src/data)
+  - [Rotis - Wikipedia](https://en.wikipedia.org/wiki/Rotis?wprov=sfla1)
+  - [GitHub - probonopd/font-leutkirch](https://github.com/probonopd/font-leutkirch)
+  - [Home · oobabooga/text-generation-webui Wiki · GitHub](https://github.com/oobabooga/text-generation-webui/wiki)
+  - [GitHub - artidoro/qlora: QLoRA: Efficient Finetuning of Quantized LLMs](https://github.com/artidoro/qlora)
+  - [
+        ChatGPT - Visual Studio Marketplace
+    ](https://marketplace.visualstudio.com/items?itemName=zhang-renyang.chat-gpt)
+  - [GitHub - Pythagora-io/gpt-pilot: Dev tool that writes scalable apps from scratch while the developer oversees the implementation](https://github.com/Pythagora-io/gpt-pilot)
+  - [Building a deep learning rig | part-1 - Samsja](https://samsja.github.io/blogs/rig/part_1/)
+  - [Reddit - Dive into anything](https://www.reddit.com/r/Reaper/s/CG4lYV0X51)
+    - Reaper samplers
+  - [Pulsar, the best code editor](https://optimizedbyotto.com/post/pulsar-best-text-file-and-code-editor/)
+  - [Reddit - Dive into anything](https://www.reddit.com/r/Reaper/s/piPrBkAURv)
+    - Reaper J's plugins
+  - [What is a word? - lingbuzz/007920](https://lingbuzz.net/lingbuzz/007920)
+  - [The Scientist and Engineer's Guide to Digital Signal Processing](https://www.dspguide.com/)
+  - [
+		Rise and Fall of a CCA - OpenProcessing](https://openprocessing.org/sketch/2185536/)
+  - [Data | Seshat](https://seshatdatabank.info/data)
+  - [https://play.google.com/store/apps/details?id=com.elf.koalasampler](https://play.google.com/store/apps/details?id=com.elf.koalasampler)
+  - [unsloth (Unsloth)](https://huggingface.co/unsloth)
+  - [Google Image Result](https://www.google.com/imgres?imgurl=https%3A%2F%2Fdt7v1i9vyp3mf.cloudfront.net%2Fstyles%2Fheader%2Fs3%2Fimagelibrary%2Fs%2Fsynth15-0301-81HPF.4Dh_4UvAEgBUVdwVACyIsqndvz.gif&tbnid=eIyPLVUZNFGX6M&vet=1&imgrefurl=https%3A%2F%2Fwww.soundonsound.com%2Ftechniques%2Fformant-synthesis&docid=_6OKcslV-NZFUM&w=620&h=397&source=sh%2Fx%2Fim%2Fm4%2F2&kgs=b9f1775f176b00d2)
+  - [https://www.reddit.com/r/LocalLLaMA/s/SFMeMRd6dT](https://www.reddit.com/r/LocalLLaMA/s/SFMeMRd6dT)
+    - Model benchmark
+  - [https://www.blog.dailydoseofds.com/p/transfer-learning-vs-fine-tuning](https://www.blog.dailydoseofds.com/p/transfer-learning-vs-fine-tuning)
+  - [GitHub - danielbeeke/grapoi-inspector](https://github.com/danielbeeke/grapoi-inspector)
+  - [Database, Map & Submit – Dead Drops](https://deaddrops.com/english/db-map/comment-page-21/#comments)
+  - [YouTube](https://youtube.com/shorts/yE9a2h5ZRqA?si=YBiRz3dQyNkB4qHK)
+    - That is embarrassing
+  - [Lecture 4: Conditionals and A-Normal Form](https://course.ccs.neu.edu/cs4410sp20/lec_anf_notes.html)
+    - Nice css
+  - [Three-address code - Wikipedia](https://en.wikipedia.org/wiki/Three-address_code#%3A%7E%3Atext%3DIn_computer_science%2C_three-address%2Cassignment_and_a_binary_operator.?wprov=sfla1)
+  - [Reddit - Dive into anything](https://www.reddit.com/r/foley/s/NccdgqJDCN)
+    - Donkey
+  - [YouTube](https://www.youtube.com/playlist?list=PLwYL9_SRAk8EXSZPSTm9lm2kD_Z1RzUgm)
+    - toki pona 
+  - [Reddit - Dive into anything](https://www.reddit.com/r/cellular_automata/s/UtGJeJpLNf)
+    - Cellular automata
+  - [https://www.el-atril.com/midis/Rossini.html#google_vignette](https://www.el-atril.com/midis/Rossini.html#google_vignette)
+  - [Machine Learners Guide to Real World - “Strive not to be a success, but rather to be of value” - Albert Einstein](https://muhtasham.github.io/blog/)
+  - [https://www.reddit.com/r/linux/s/kd5fhLNTAM](https://www.reddit.com/r/linux/s/kd5fhLNTAM)
+  - [Piezo contact microphone hi-Z amplifier – low noise version – Richard Mudhar](http://www.richardmudhar.com/piezo-contact-microphone-hi-z-amplifier-low-noise-version/)
+  - 
+  - [GitHub - n4ze3m/page-assist: Use your locally running AI models to assist you in your web browsing](https://github.com/n4ze3m/page-assist)
+  - [https://x.com/maxisawesome538/status/1755379312235303240?t=ZxQ3d6qieqP-SAl1ncYJPQ&s=09](https://x.com/maxisawesome538/status/1755379312235303240?t=ZxQ3d6qieqP-SAl1ncYJPQ&s=09)
+    - Funny vid
+  - [Lumina: Research at the speed of ↵ ](https://www.lumina-chat.com/)
+  - [RunPod Endpoints](https://www.runpod.io/endpoints)
+  - [Reddit - Dive into anything](https://www.reddit.com/r/LocalLLaMA/s/ON9wULY9To)
+    - Function calling
+  - [Related resources from around the web | OpenAI Cookbook](https://cookbook.openai.com/articles/related_resources)
+  - [Bulk Prompts for ChatGPT - JumboGPT](https://gojumbogpt.com/)
+  - [Reddit - Dive into anything](https://www.reddit.com/r/LocalLLaMA/s/Ms1IJoBaFv)
+    - 1gb model
+  - [VCC 2024 - Past Winners](https://sites.google.com/view/vcc-2024/past-winners)
+  - [Heiko Hamann's Personal Page - Langton's Ant in 3D](https://heikohamann.de/langtonsAnt/langtons_ant_3d.html)
+  - [GitHub - MrCamoga/Langton-s-Ant: Efficient implementation of Langton's Ant cellular automata for cooperative highway search](https://github.com/MrCamoga/Langton-s-Ant)
+  - [Reddit - Dive into anything](https://www.reddit.com/r/LocalLLaMA/s/khAvFSmQNd)
+    - Me asking cheap hosts
+  - [Google Colab](https://colab.research.google.com/drive/1KJiwwyCK_WO6QEwTLwCjsz7RcbSNBCoB?usp=sharing)
+    - Summarizer
+  - [A review of solar hybrid photovoltaic-thermal (PV-T) collector...](https://publikationen.bibliothek.kit.edu/1000157967)
+  - [GitHub - dezoito/ollama-grid-search: A Rust based tool to evaluate LLM models and model params, when using Ollama for inference.](https://github.com/dezoito/ollama-grid-search)
+  - [Is it possible to open developer tools console in Chrome on Android phone? - Stack Overflow](https://stackoverflow.com/questions/37256331/is-it-possible-to-open-developer-tools-console-in-chrome-on-android-phone)
+  - [GitHub - solid-contrib/solid-node-client: a nodejs client for Solid](https://github.com/solid-contrib/solid-node-client)
+  - [GitHub - jeff-zucker/sparql-fiddle: a JavaScript SPARQL API and online fiddle](https://github.com/jeff-zucker/sparql-fiddle)
+  - [GitHub - mozilla/pdfjs-dist: Generic build of PDF.js library.](https://github.com/mozilla/pdfjs-dist)
+  - [GitHub - mozilla/pdf.js: PDF Reader in JavaScript](https://github.com/mozilla/pdf.js)
+  - [[2312.16171] Principled Instructions Are All You Need for Questioning LLaMA-1/2, GPT-3.5/4](https://arxiv.org/abs/2312.16171)
+  - [[2310.11511] Self-RAG: Learning to Retrieve, Generate, and Critique through Self-Reflection](https://arxiv.org/abs/2310.11511)
+  - [HackerOne](https://hackerone.com/bug-bounty-programs)
+  - [udlbook](https://udlbook.github.io/udlbook/)
+  - [https://boidsxr.github.io/](https://boidsxr.github.io/)
+  - [https://jaxry.github.io/wave-function-collapse/](https://jaxry.github.io/wave-function-collapse/)
+  - [GitHub - fils/DDICDI: Some explorations with DDI related to cross domain integration](https://github.com/fils/DDICDI)
+  - [GitHub - iongpt/qlora-llama2-orca: Fine tuning LLaMA 2with Orca dataset format](https://github.com/iongpt/qlora-llama2-orca)
+  - [pwa-example · GitHub Topics · GitHub](https://github.com/topics/pwa-example)
+  - [https://towardsdatascience.com/optimizing-small-language-models-on-a-free-t4-gpu-008c37700d57](https://towardsdatascience.com/optimizing-small-language-models-on-a-free-t4-gpu-008c37700d57)
+  - [Design Smell: Temporal Coupling](https://blog.ploeh.dk/2011/05/24/DesignSmellTemporalCoupling/)
+  - [Reddit - Dive into anything](https://www.reddit.com/r/ChatGPTCoding/s/1R0cncr2L0)
+  - [https://github.com/simonw/pluggy](https://github.com/simonw/pluggy)
+  - [Data Annotation | Your New Remote Job](https://www.dataannotation.tech/)
+  - [EleutherAI](https://www.eleuther.ai/)
+  - [GitHub - EleutherAI/lm-evaluation-harness: A framework for few-shot evaluation of language models.](https://github.com/EleutherAI/lm-evaluation-harness)
+  - [EIDF Data Science Cloud service for research | Edinburgh International Data Facility](https://edinburgh-international-data-facility.ed.ac.uk/news-events/eidf-data-science-cloud-service-for-research)
+  - [Llama Hub](https://llamahub.ai/?tab=llama_packs)
+  - [GitHub - run-llama/llama-hub: A library of data loaders for LLMs made by the community -- to be used with LlamaIndex and/or LangChain](https://github.com/run-llama/llama-hub)
+  - [MKEditor - The Simple Markdown Editor.](https://mkeditoross.github.io/)
+  - https://medium.com/@robertgrosse/how-es6-classes-really-work-and-how-to-build-your-own-fd6085eb326a
+  - [GitHub - satellitecomponent/Neurite: Neurite: Fractal Mind Map](https://github.com/satellitecomponent/Neurite)
+  - [Next Generation Unix Tools · Daniel’s blog](http://www.storytotell.org/post/next-generation-unix-tools/)
+  - [Tacit programming - Wikipedia](https://en.wikipedia.org/wiki/Tacit_programming?wprov=sfla1)
+  - [Jsoftware](https://www.jsoftware.com/#/)
+  - [https://www.jsoftware.com/help/learning/10.htm](https://www.jsoftware.com/help/learning/10.htm)
+    - Learning J
+  - [Daniel’s blog](http://www.storytotell.org/)
+  - [Best Protein Flapjack Recipe | Holland & Barrett](https://www.hollandandbarrett.com/the-health-hub/food-drink/recipes/best-protein-flapjack-recipe/)
+  - [GitHub - lit/lit: Lit is a simple library for building fast, lightweight web components.](https://github.com/lit/lit)
+  - [GitHub - lit/lit: Lit is a simple library for building fast, lightweight web components.](https://github.com/lit/lit)
+  - [GitHub - antoniogarrote/rdfstore-js: JS RDF store with SPARQL support](https://github.com/antoniogarrote/rdfstore-js)
+  - [CRDTs Turned Inside Out](https://interjectedfuture.com/crdts-turned-inside-out/)
+  - [https://news.ycombinator.com/news](https://news.ycombinator.com/news)
+  - [AI App Store (Cortex) | FreedomGPT](https://chat.freedomgpt.com/ai-cortex)
+  - [https://x.com/paulg/status/1425147126032519172?t=Q-X034yt9WHsJKIhkhXxLg&s=09](https://x.com/paulg/status/1425147126032519172?t=Q-X034yt9WHsJKIhkhXxLg&s=09)
+  - [Update for Docear’s “Google Scholar Parser” Library to Fetch Metadata for PDF files – ISG Siegen](https://isg.beel.org/blog/2017/10/05/update-for-the-google-scholar-parser-library-to-fetch-metadata-for-pdf-files/)
+  - [Download « Docear](https://docear.org/software/download/)
+  - [ keynav  -  retire your mouse. 
+ - semicomplete](https://www.semicomplete.com/projects/keynav/)
+  - [GitHub - ccs4ever/Dimscape: A multi-dimensional database navigator and editor](https://github.com/ccs4ever/Dimscape)
+  - [Tiny Excel-like app in vanilla JS - JSFiddle - Code Playground](https://jsfiddle.net/ondras/hYfN3/)
+  - [Git](https://www.npmjs.com/package/sync-directory?activeTab=code)
+  - [Automatically sync two directories with node.js. · GitHub](https://gist.github.com/rioki/3713041)
+  - [Extending PyTorch with Custom Activation Functions - GeeksforGeeks](https://www.geeksforgeeks.org/extending-pytorch-with-custom-activation-functions/)
+  - [SiLU — PyTorch 2.1 documentation](https://pytorch.org/docs/stable/generated/torch.nn.SiLU.html)
+  - [KiKaBeN - SwiGLU: GLU Variants Improve Transformer (2020)](https://kikaben.com/swiglu-2020/)
+  - [Gated Linear Units and Variants](https://nn.labml.ai/transformers/glu_variants/simple.html)
+  - [GitHub - labmlai/annotated_deep_learning_paper_implementations: 🧑‍🏫 60 Implementations/tutorials of deep learning papers with side-by-side notes 📝; including transformers (original, xl, switch, feedback, vit, ...), optimizers (adam, adabelief, sophia, ...), gans(cyclegan, stylegan2, ...), 🎮 reinforcement learning (ppo, dqn), capsnet, distillation, ... 🧠](https://github.com/labmlai/annotated_deep_learning_paper_implementations)
+  - [main.py · JoeStrout/simple-llama-finetuner at main](https://huggingface.co/spaces/JoeStrout/simple-llama-finetuner/blob/main/main.py#L226)
+  - [https://www.reddit.com/r/LocalLLaMA/s/V8VUPntXPw](https://www.reddit.com/r/LocalLLaMA/s/V8VUPntXPw)
+  - [GitHub - hkproj/pytorch-llama: LLaMA 2 implemented from scratch in PyTorch](https://github.com/hkproj/pytorch-llama)
+  - [
+    
+      PyTorch compile to speed up inference on Llama 2 | PyTorch
+    
+  ](https://pytorch.org/blog/pytorch-compile-to-speed-up-inference/)
+  - [GitHub - hkproj/pytorch-llama: LLaMA 2 implemented from scratch in PyTorch](https://github.com/hkproj/pytorch-llama/tree/main)
+  - [Neural Networks Fail to Learn Periodic Functions and How to Fix It | Papers With Code](https://paperswithcode.com/paper/neural-networks-fail-to-learn-periodic)
+  - [https://app.kits.ai/subscriptions](https://app.kits.ai/subscriptions)
+    - Ai voice
+  - [Share data between apps - Progressive web apps | MDN](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/How_to/Share_data_between_apps)
+  - [GitHub - wdebeaum/svg-whiteboard: A simple drawing application written as a standalone webpage.](https://github.com/wdebeaum/svg-whiteboard)
+  - [https://wiki.c2.com/](https://wiki.c2.com/)
+    - C2 Wiki
+  - [https://www.reddit.com/r/ChatGPTPro/s/qZL2SFKYr6](https://www.reddit.com/r/ChatGPTPro/s/qZL2SFKYr6)
+    - Prompts
+  - [Progressive web app structure - Progressive web apps | MDN](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Tutorials/js13kGames/App_structure)
+  - [Progressive web app structure - Progressive web apps | MDN](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Tutorials/js13kGames/App_structure)
+  - [GitHub - zazuko/graph-explorer: Graph Explorer can be used to explore RDF graphs in SPARQL endpoints or on the web.](https://github.com/zazuko/graph-explorer)
+  - [GitHub - aisynth/diffmoog](https://github.com/aisynth/diffmoog)
+  - [Painter man - Creation](http://www.bettyloumusic.com/painterman.htm)
+  - [https://bitmidi.com/painter-man-mid](https://bitmidi.com/painter-man-mid)
+  - [SemFacet](https://www.cs.ox.ac.uk/isg/tools/SemFacet/)
+  - [GitHub - anvaka/ngraph: Beautiful Graphs](https://github.com/anvaka/ngraph)
+  - [GitHub - metaphacts/ontodia: Ontodia data diagraming library](https://github.com/metaphacts/ontodia)
+  - [Home · metaphacts/ontodia Wiki · GitHub](https://github.com/metaphacts/ontodia/wiki)
+  - [GitHub - DanieleBubb/VRKG-CollaborativeExploration: A Virtual Reality application for Meta Quest Pro to collaboratively import, discuss and interact with a fully 3D representation of a Knowledge Graph](https://github.com/DanieleBubb/VRKG-CollaborativeExploration)
+  - [GitHub - metaphacts/ontodia: Ontodia data diagraming library](https://github.com/metaphacts/ontodia)
+  - [GitHub - dvorka/ngraph: Beautiful Graphs](https://github.com/dvorka/ngraph)
+  - [GitHub - dvorka/MITIE: MITIE: library and tools for information extraction](https://github.com/dvorka/MITIE)
+  - [GitHub - dvorka/awesome-markdown-repositories: A collection of Markdown repositories.](https://github.com/dvorka/awesome-markdown-repositories)
+  - [GitHub - dvorka/mindforger: Thinking notebook and Markdown editor.](https://github.com/dvorka/mindforger)
+  - [GitHub - fenfire-org/fenfire-org.github.io: Public site](https://github.com/fenfire-org/fenfire-org.github.io)
+  - [GitHub - timthelion/fenfire: Graph-based notetaking system](https://github.com/timthelion/fenfire)
+  - [GitHub - m-thalmann/treejs: A simple JavaScript library, to display a TreeView like in the windows filebrowser](https://github.com/m-thalmann/treejs)
+  - [Exposing Components - Components.js Documentation](https://componentsjs.readthedocs.io/en/latest/getting_started/basics/exposing_components/)
+  - [GitHub - zazuko/rdfjs-elements: Web components for RDF/JS libraries](https://github.com/zazuko/rdfjs-elements)
+  - [garrettmills/es6-di - es6-di - Platform Gitea: Git with a cup of tea](https://code.garrettmills.dev/garrettmills/es6-di)
+  - [JavaScript Class Inheritance](https://www.w3schools.com/js/js_class_inheritance.asp)
+  - Emissions-style heavy dub [https://soundcloud.com/crackmagazine/heavy-dub-mixed-by-zonal?si=1c8e9e0e3ae94ac0a88c8aba1ca5f259&utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing](https://soundcloud.com/crackmagazine/heavy-dub-mixed-by-zonal?si=1c8e9e0e3ae94ac0a88c8aba1ca5f259&utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing)
+  - [How to Get Custom Songs in Beat Saber for Meta (Oculus) Quest](https://www.lifewire.com/get-custom-songs-on-beat-saber-for-oculus-quest-or-quest-2-5113243#:~:text=BMBF%20includes%20a%20built%2Din,Saber%2C%20and%20select%20LOG%20IN.)
+  - [Warm-up - The Climbing Doctor](https://theclimbingdoctor.com/warm-up/)
+  - [Festival](https://www.cstr.ed.ac.uk/projects/festival/)
+  - [GitHub - almostEric/FrozenWasteland: Plugins for VCV Rack](https://github.com/almostEric/FrozenWasteland)
+  - [Mariko Aoki phenomenon - Wikipedia](https://en.wikipedia.org/wiki/Mariko_Aoki_phenomenon?wprov=sfla1)
+  - [[2401.06532] INTERS: Unlocking the Power of Large Language Models in Search with Instruction Tuning](https://arxiv.org/abs/2401.06532)
+  - [Reaper Backup 101: How To Create Reaper Backup Files](https://promixacademy.com/blog/reaper-backup/#:~:text=Setting%20Up%20Auto%20Backup%20In%20Reaper&text=%2C%20select%20%E2%80%9CPreferences.-,%E2%80%9C,files%20and%20under%20what%20conditions.)
+  - [Beatmapper](https://beatmapper.app/)
+  - [Difficulty File (v3) | BSMG Wiki](https://bsmg.wiki/mapping/difficulty-format-v3.html)
+    - Beat sabre
+  - [https://www.reddit.com/r/LocalLLaMA/s/LYN4COti7L](https://www.reddit.com/r/LocalLLaMA/s/LYN4COti7L) merge
+  - [TheBloke/phi-2-GGUF · Hugging Face](https://huggingface.co/TheBloke/phi-2-GGUF)
+  - [Moddable Blog | Introducing an Expanding Keyboard for Small Screens](https://www.moddable.com/blog/expanding-keyboard/)
+  - [GitHub - binzume/esp32quickjs: QuickJS JavaScript Engine for ESP32](https://github.com/binzume/esp32quickjs)
+  - [GitHub - bytecodealliance/javy: JS to WebAssembly toolchain](https://github.com/bytecodealliance/javy)
+  - [Firecracker: start a VM in less than a second](https://jvns.ca/blog/2021/01/23/firecracker--start-a-vm-in-less-than-a-second/)
+  - [https://healeycodes.com/sandboxing-javascript-code](https://healeycodes.com/sandboxing-javascript-code)
+  - [Ace - The High Performance Code Editor for the Web](https://ace.c9.io/)
+  - [Ymacs -- An Emacs-like editor for the Web](https://brettcvz.github.io/ymacs/demo/)
+  - [GitHub - mishoo/ymacs: Ymacs is an^W the most Emacs-like code/text editor for the Web](https://github.com/mishoo/ymacs)
+  - [olduse.net](https://olduse.net/)
+  - [GitHub - EdwardDixon/snake: Inspired by "Neural Networks Fail to Learn Periodic Functions and How to Fix It"](https://github.com/EdwardDixon/snake)
+  - [Backup · wekan/wekan Wiki · GitHub](https://github.com/wekan/wekan/wiki/Backup#cloud-backup-with-rclone)
+  - https://twitter.com/jaseweston/status/1748158323369611577?t=nCpOtvr9nUQzVg9hkk3C-Q&s=19
+  - [GitHub - scazzy/kanban-board: Quick tiny vanilla js code for good looking (and working) kanban board](https://github.com/scazzy/kanban-board)
+  - [Verifica copertura internet adsl e fibra ottica Castiglione di Garfagnana | ComparaSemplice.it](https://www.comparasemplice.it/verifica-copertura-adsl/castiglione-di-garfagnana)
+  - [Verifica copertura fibra ottica Castiglione di Garfagnana (LU) | Segugio.it](https://tariffe.segugio.it/copertura-fibra-ottica-adsl/verifica-copertura-castiglione-di-garfagnana-lu.aspx)
+  - [MadMode: walk-n-talk? | Code](https://www.madmode.com/2023/walk-n-talk)
+  - [Verifica copertura internet fibra ottica Lucca (LU) | Facile.it](https://www.facile.it/adsl/copertura-fibra-ottica/toscana/lucca.html)
+  - [OWL verbalizer demo](http://attempto.ifi.uzh.ch/site/docs/owl_to_ace.html)
+  - https://medium.com/@greyboi/ddgsearch-search-duckduckgo-scrape-the-results-in-python-18f5265f1aa6
+  - [duck-duck-scrape/src/spices/dictionary/definition.ts at f3d14f2a7cf9ca77f965f490f1904aea6f6569aa · Snazzah/duck-duck-scrape · GitHub](https://github.com/Snazzah/duck-duck-scrape/blob/f3d14f2/src%2Fspices%2Fdictionary%2Fdefinition.ts#L5)
+  - [Brave Search API | Brave](https://brave.com/search/api/)
+  - [GitHub - microsoft/Lightweight-Low-Resource-NMT: Official code for "Too Brittle To Touch: Comparing the Stability of Quantization and Distillation Towards Developing Lightweight Low-Resource MT Models" to appear in WMT 2022.](https://github.com/microsoft/Lightweight-Low-Resource-NMT)
+  - [
+    
+      OpenNMT - Open-Source Neural Machine Translation
+    
+  ](https://opennmt.net/)
+  - [GitHub - rolandocoto/bribri-coling2020](https://github.com/rolandocoto/bribri-coling2020)
+  - [GitHub - microsoft/Lightweight-Low-Resource-NMT: Official code for "Too Brittle To Touch: Comparing the Stability of Quantization and Distillation Towards Developing Lightweight Low-Resource MT Models" to appear in WMT 2022.](https://github.com/microsoft/Lightweight-Low-Resource-NMT)
+  - [GitHub - libeineu/GPKD: The codebase of paper：Learning Light-Weight Translation Models from Deep Transformer, which is accepted by AAAI2021 conference.](https://github.com/libeineu/GPKD)
+  - [OpenProject · GitHub](https://github.com/opf)
+  - [How do I copy files with specific file extension to a folder in my python (version 2.5) script? - Stack Overflow](https://stackoverflow.com/questions/296173/how-do-i-copy-files-with-specific-file-extension-to-a-folder-in-my-python-versi)
+  - [GitHub - facebookresearch/audiocraft: Audiocraft is a library for audio processing and generation with deep learning. It features the state-of-the-art EnCodec audio compressor / tokenizer, along with MusicGen, a simple and controllable music generation LM with textual and melodic conditioning.](https://github.com/facebookresearch/audiocraft)
+  - [GitHub - davanstrien/haiku-dpo](https://github.com/davanstrien/haiku-dpo)
+  - [Fine-tune Llama 2 with DPO](https://huggingface.co/blog/dpo-trl#dpo-vs-ppo)
+  - [Multi-Hop Question Answering with LLMs & Knowledge Graphs](https://www.linkedin.com/pulse/multi-hop-question-answering-llms-knowledge-graphs-wisecube?utm_source=share&utm_medium=member_android&utm_campaign=share_via)
+    - Multi-Hop Question Answering with LLMs & Knowledge Graphs
+  - [GitHub - whitead/paper-qa: LLM Chain for answering questions from documents with citations](https://github.com/whitead/paper-qa)
+  - [ToolQA: A Dataset for LLM Question Answering with External Tools | Papers With Code](https://paperswithcode.com/paper/toolqa-a-dataset-for-llm-question-answering)
+  - [Fine-Tuning a Language Model for Question Answering: A Comprehensive Guide - Solutyics](https://solutyics.com/fine-tuning-a-language-model-for-question-answering-a-comprehensive-guide/)
+  - [https://quantumobile.com/rd-blog/how-to-build-question-answering-system-using-llm/](https://quantumobile.com/rd-blog/how-to-build-question-answering-system-using-llm/)
+  - [https://schema.org/version/latest/schemaorg-current-http.jsonld](https://schema.org/version/latest/schemaorg-current-http.jsonld)
+  - [Dies irae - Wikipedia](https://en.wikipedia.org/wiki/Dies_irae?wprov=sfla1)
+  - [Ankou - Wikipedia](https://en.wikipedia.org/wiki/Ankou#%3A%7E%3Atext%3DThe_Ankou_is_the_henchman%2Clost_souls_on_his_land.?wprov=sfla1)
+  - [YouTube](https://youtube.com/shorts/lmVakNtCYwQ?si=CZ2nWqmsbmRNeBWK)
+  - https://medium.com/@Tonyseale/building-your-own-schema-org-7600a90e690a
+  - [Is there any standard for JSON API response format? - Stack Overflow](https://stackoverflow.com/questions/12806386/is-there-any-standard-for-json-api-response-format#14538774)
+  - [https://stackoverflow.com/questions/12806386/is-there-any-standard-for-json-api-response-format#14538774](https://stackoverflow.com/questions/12806386/is-there-any-standard-for-json-api-response-format#14538774)
+  - [https://en.wikipedia.org/wiki/Open_Data_Protocol?wprov=sfla1](https://en.wikipedia.org/wiki/Open_Data_Protocol?wprov=sfla1)
+  - [rdflib | Dart Package](https://pub.dev/packages/rdflib)
+  - [https://flutterci.com/](https://flutterci.com/)
+  - [https://dev.to/ianito/how-to-emulate-ios-on-linux-with-docker-4gj3](https://dev.to/ianito/how-to-emulate-ios-on-linux-with-docker-4gj3)
+  - [https://github.com/sickcodes/Docker-OSX](https://github.com/sickcodes/Docker-OSX)
+  - [Visual Studio Code | Flutter](https://docs.flutter.dev/tools/vs-code)
+  - [share_plus | Flutter Package](https://pub.dev/packages/share_plus)
+  - [radio-browser.info](https://www.radio-browser.info/)
+  - [TheBloke/Mixtral-8x7B-Instruct-v0.1-GGUF · Hugging Face](https://huggingface.co/TheBloke/Mixtral-8x7B-Instruct-v0.1-GGUF)
+  - [GitHub - PAIR-code/umap-js: JavaScript implementation of UMAP](https://github.com/PAIR-code/umap-js)
+  - [Patchscopes ](https://pair-code.github.io/interpretability/patchscopes/)
+  - [https://github.com/niieani/gpt-tokenizer](https://github.com/niieani/gpt-tokenizer)
+  - [AI Horde](https://stablehorde.net/)
+  - [https://kaitchup.substack.com/p/fine-tune-llms-on-your-cpu-with-qlora](https://kaitchup.substack.com/p/fine-tune-llms-on-your-cpu-with-qlora)
+    - Fine-tuning on cpu
+  - [SPARQL queries, GPTs and Large Language Models – where are we currently? | Wisecube AI – Semantic Discovery in Biomedicine](https://www.wisecube.ai/blog/sparql-queries-gpts-and-large-language-models-where-are-we-currently/)
+  - [https://medium.aiplanet.com/implement-contextual-compression-and-filtering-in-rag-pipeline-4e9d4a92aa8f](https://medium.aiplanet.com/implement-contextual-compression-and-filtering-in-rag-pipeline-4e9d4a92aa8f)
+  - [TheBloke/OrcaMaid-v3-13B-32k-GGUF · Hugging Face](https://huggingface.co/TheBloke/OrcaMaid-v3-13B-32k-GGUF)
+  - https://towardsdatascience.com/merge-large-language-models-with-mergekit-2118fb392b54
+  - [GitHub - kivyfreakt/sandpile: Python implementation of the Sandpile Model](https://github.com/kivyfreakt/sandpile)
+  - [GitHub - eekkaiia/lakhesis: A different take on the sandpile model](https://github.com/eekkaiia/lakhesis)
+  - https://en.wikipedia.org/wiki/Particle_swarm_optimization
+  - [gguf · PyPI](https://pypi.org/project/gguf/)
+  - [Fine-tune a pretrained model](https://huggingface.co/docs/transformers/training)
+  - [Orca2/Orca2.ipynb at main · antonio-f/Orca2 · GitHub](https://github.com/antonio-f/Orca2/blob/main/Orca2.ipynb)
+  - [Time Series Made Easy in Python — darts  documentation](https://unit8co.github.io/darts/index.html)
+  - [How to fine-tune a Transformer?](https://radekosmulski.com/how-to-fine-tune-a-transformer/)
+  - [How to fine-tune a Transformer (pt. 2, LoRA)](https://radekosmulski.com/how-to-fine-tune-a-tranformer-pt-2/)
+  - [jan Lope](https://jan-lope.github.io/)
+  - [Toki Pona Parser - A Tool for Spelling, Grammar Check and Ambiguity Check of Toki Pona Sentences | Toki_Pona-Parser](https://jan-lope.github.io/Toki_Pona-Parser/)
+  - [Enrico Franconi / Free University of Bozen-Bolzano](https://www.unibz.it/en/faculties/engineering/academic-staff/person/943-enrico-franconi)
+  - [Unix Drivers | NVIDIA](https://www.nvidia.com/en-us/drivers/unix/)
+  - [[2401.00812] If LLM Is the Wizard, Then Code Is the Wand: A Survey on How Code Empowers Large Language Models to Serve as Intelligent Agents](https://arxiv.org/abs/2401.00812)
+  - [Home](https://research.myshell.ai/open-voice)
+    - OpenVoice
+  - [OpenVoice - a Hugging Face Space by myshell-ai](https://huggingface.co/spaces/myshell-ai/OpenVoice)
+  - [Chatend - The Cloud You Can Talk To](https://www.chatend.ai/)
+  - [npms](https://npms.io/search?q=The%20Graph)
+    - The Graph search
+  - [Metascraper: Unified metadata from the web](https://metascraper.js.org/#/)
+  - [https://christopheviau.com/d3list/](https://christopheviau.com/d3list/)
+  - [https://examples.rdf-ext.org/rdf-elements/](https://examples.rdf-ext.org/rdf-elements/)
+    - Browser components
+  - [https://ontologist.substack.com/p/the-role-of-the-ontologist-in-the?utm_campaign=post](https://ontologist.substack.com/p/the-role-of-the-ontologist-in-the?utm_campaign=post)
+  - [What Generative AI Means for Business](https://www.gartner.com/en/insights/generative-ai-for-business)
+  - [The Open Interpreter Project](https://openinterpreter.com/)
+- 
+- [https://blog.iandavis.com/2017/10/microfunctions/](https://blog.iandavis.com/2017/10/microfunctions/)
+- You could use SqueakJS in a browser, which should have rough support for Android, too. It should also not be too hard to convert it into a PWA.
+- 
+- Touch it once gtd
+- Look for "mid century modern geometric".
+- Emoticons, "is typing..." Other chat innovation? Prosody. Ask ai? Interstices. Swipe left tinder. Kana, Toki pona
+- RAG walkthrough : [https://twitter.com/akshay_pachaar/status/1790721365806600518](https://twitter.com/akshay_pachaar/status/1790721365806600518)
+- RDF
+  - [SEMANTICS-2024](https://2024-eu.semantics.cc/page/news?page=2024-04-15)
+  - [Think Machine — Multidimensional Mind Mapping](https://thinkmachine.com/?rdt_cid=5055394951945395809)
+  - [SPARQL | Europeana PRO](https://pro.europeana.eu/page/sparql)
+  - [https://x.com/kvistgaard/status/1720078326449213725?t=mIsUQld3C4vx7jkLPizoJQ&s=09](https://x.com/kvistgaard/status/1720078326449213725?t=mIsUQld3C4vx7jkLPizoJQ&s=09)
+  - [https://github.com/SPARQL-Anything/sparql.anything](https://github.com/SPARQL-Anything/sparql.anything)
+  - [https://sparql-anything.cc/](https://sparql-anything.cc/)
+- AI
+  - [GitHub - netease-youdao/QAnything: Question and Answer based on Anything.](https://github.com/netease-youdao/QAnything)
+  - [Prompting Command R](https://docs.cohere.com/docs/prompting-command-r)
+  - [GitHub - plandex-ai/plandex: An AI coding engine for building complex, real-world software with LLMs](https://github.com/plandex-ai/plandex)
+  - [Welcome to Double - Double, the AI Coding Copilot](https://docs.double.bot/introduction)
+  - [Vector Embeddings for Developers: The Basics | Pinecone](https://www.pinecone.io/learn/vector-embeddings-for-developers/)
+  - [[2404.11584] The Landscape of Emerging AI Agent Architectures for Reasoning, Planning, and Tool Calling: A Survey](https://arxiv.org/abs/2404.11584)
+  - [GitHub - intel/neural-speed: An innovative library for efficient LLM inference via low-bit quantization](https://github.com/intel/neural-speed)
+  - [Your Personalized AI Assistant.](https://you.com/?s=09)
+  - [https://towardsdatascience.com/deep-dive-into-self-attention-by-hand-%EF%B8%8E-f02876e49857](https://towardsdatascience.com/deep-dive-into-self-attention-by-hand-%EF%B8%8E-f02876e49857)
+  - Agents
+    - papers
+      - Lego agent paper : [https://www.google.com/url?sa=t&source=web&rct=j&opi=89978449&url=https://aclanthology.org/2023.findings-emnlp.613.pdf&ved=2ahUKEwjw6PbhidOFAxUzlP0HHfLEBpoQFnoECCcQAQ&usg=AOvVaw3kdn-NooAi9mfVxPB2hUFA](https://www.google.com/url?sa=t&source=web&rct=j&opi=89978449&url=https://aclanthology.org/2023.findings-emnlp.613.pdf&ved=2ahUKEwjw6PbhidOFAxUzlP0HHfLEBpoQFnoECCcQAQ&usg=AOvVaw3kdn-NooAi9mfVxPB2hUFA)
+  - Prompts
+    - [GitHub - stanfordnlp/dspy: DSPy: The framework for programming—not prompting—foundation models](https://github.com/stanfordnlp/dspy)
+    - [https://towardsdatascience.com/supercharging-prompt-engineering-via-symbolic-program-search-c6c353bc80a4](https://towardsdatascience.com/supercharging-prompt-engineering-via-symbolic-program-search-c6c353bc80a4)
+- Music
+  - [GitHub - SpektroAudio/Patchbook: Markup language and parser for writing and distributing patches for modular synthesizers.](https://github.com/SpektroAudio/Patchbook)
+  - [Browse Patches | PATCH & TWEAK](http://editor.patchandtweak.com/)
+  - [Pulsar Synthesis | Nathan Ho](https://nathan.ho.name/posts/pulsar-synthesis/)
+  - [GitHub - marcinpiet/nuPG_1.0: the New Pulsar Generator (nuPG) 1.0](https://github.com/marcinpiet/nuPG_1.0)
+- Misc
+  - [Roko's basilisk - Wikipedia](https://en.wikipedia.org/wiki/Roko%27s_basilisk?wprov=sfla1)
+  - [https://www.lesswrong.com/](https://www.lesswrong.com/)
+  - [Ostomachion - Wikipedia](https://en.wikipedia.org/wiki/Ostomachion?wprov=sfla1)
+- Treadmill
+  - [Apache PDFBox |  A Java PDF Library](https://pdfbox.apache.org/)
+  - PDF tools
+    - [Zotero | Your personal research assistant](https://www.zotero.org/)
+    - [GitHub - inukshuk/anystyle-cli: AnyStyle Command Line Interface](https://github.com/inukshuk/anystyle-cli)
+  - [https://www.stackhawk.com/blog/nodejs-command-injection-examples-and-prevention/](https://www.stackhawk.com/blog/nodejs-command-injection-examples-and-prevention/)
+  - [GitHub - VT-CHCI/google-scholar: nodejs module for searching google scholar](https://github.com/VT-CHCI/google-scholar)
+- Coding
+  - [Cheat Sheet](https://docs.emmet.io/cheat-sheet/)
+  - [https://github.com/emmetio/emmet](https://github.com/emmetio/emmet)
+  - [GitHub - emmetio/emmet: The essential toolkit for web-developers](https://github.com/emmetio/emmet)
+  - [GitHub - docpad/docpad: Empower your website frontends with layouts, meta-data, pre-processors (markdown, jade, coffeescript, etc.), partials, skeletons, file watching, querying, and an amazing plugin system. DocPad will streamline your web development process allowing you to craft powerful static sites quicker than ever before.](https://github.com/docpad/docpad)
+  - [https://gulpjs.com/](https://gulpjs.com/)
+  - [https://ahrefs.com/](https://ahrefs.com/)
+  - [Free Fonts! Legit Free & Quality » Font Squirrel](https://www.fontsquirrel.com/)
+  - [GitHub - Icelk/strange-attractor-renderer: A multithreaded strange attractor renderer](https://github.com/Icelk/strange-attractor-renderer)
+  - [GitHub - serpapi/awesome-seo-tools: Curated list of awesome SEO tools](https://github.com/serpapi/awesome-seo-tools)
+  - Read this story from Kevin Basset on Medium: https://javascript.plainenglish.io/create-a-pwa-from-scratch-with-vanilla-javascript-c726c5b2f9e0
+  - [How to Build a PWA in Vanilla JavaScript  | DigitalOcean](https://www.digitalocean.com/community/tutorials/js-vanilla-pwa)
+  - [Attractor - Wikipedia](https://en.m.wikipedia.org/wiki/Attractor)
+  - [GitHub - rabbibotton/clog: CLOG - The Common Lisp Omnificent GUI](https://github.com/rabbibotton/clog)
+  - Javascript
+    - [https://levelup.gitconnected.com/javascript-features-that-most-developers-dont-know-36a00c35aa98](https://levelup.gitconnected.com/javascript-features-that-most-developers-dont-know-36a00c35aa98)
+  - Misc
+    - [GitHub - digikar99/emacs-noob at slime-company](https://github.com/digikar99/emacs-noob/tree/slime-company)
+    - [https://www.netflix.com/humans.txt](https://www.netflix.com/humans.txt)
+  - SEO
+    - [https://search.censys.io/](https://search.censys.io/)
+- 
+- [https://coral.ai/products/](https://coral.ai/products/) - little edge boards
+- https://pub.towardsai.net/advanced-rag-techniques-an-illustrated-overview-04d193d8fec6
+- Choss
+- Music
+  - tasty
+    - add burundi
+      - 
+    - add lee perry [https://www.youtube.com/watch?v=XTxTH8M-Wyc](https://www.youtube.com/watch?v=XTxTH8M-Wyc)
+  - [https://soundcloud.com/crackmagazine/heavy-dub-mixed-by-zonal](https://soundcloud.com/crackmagazine/heavy-dub-mixed-by-zonal)
+    - 27:50
+    - 1:03:56
+  - [https://xwax.org/](https://xwax.org/)
+- HKMSish Apps
+  - [https://www.jabref.org/](https://www.jabref.org/)
+  - [https://docs.freeplane.org/](https://docs.freeplane.org/)
+- Views
+  - Navigation
+    - suppport multiple cursors
+    - ZigZag-style, use a viewport over spreadsheet window
+    - [https://apps.ankiweb.net/](https://apps.ankiweb.net/)
+  - Editing/detail
+- https://reaperaccessibility.com/wiki/Loop_or_beat_slicing_using_reaSamploMatic
+- 
+- Misc TODO
+- SHACL tutorial, Holger on linked in
+- Get GitHub copilot 
+- ELFQuake
+  - Sandpile
+- **AI**
+  - Misc Ideas
+  - Attempo agent
+  - Training
+    - Toki PONA
+    - 
+
+# **HKMS Redux : **dogfood & LLMs edition
+
+## **Postcraft **: static site (blog, pages)
+
+- makesite.js
+- 
+- **Farelo** : Project Management
+  - Vocab
+  - 
+  - 
+- wiki
+- **@DATE --- ABOVE - after 2024-01-04**
+- Music
+  - Holga Czukay
+  - [https://youtu.be/ljbLpEMjBxs?t=770](https://youtu.be/ljbLpEMjBxs?t=770)
+- **TODO**
+  - Admin
+    - check linode
+    - electric bill
+    - danbri bank details
+- Farelo
+  - **SparqlPress2**
+    - [https://github.com/danja/sparqlpress2](https://github.com/danja/sparqlpress2)
+  - **HKMS**
+    - **Diced**
+      - [https://github.com/danja/Diced](https://github.com/danja/Diced)
+    - [https://github.com/oxigraph/oxigraph](https://github.com/oxigraph/oxigraph) - Rust SPARQL store
+    - Problem statement : what am I trying to solve
+      - information overload
+      - decision fatigue [https://en.wikipedia.org/wiki/Decision_fatigue](https://en.wikipedia.org/wiki/Decision_fatigue)
+    - **Static Site**
+      - **clonio**
+        - [https://github.com/danja/clonio](https://github.com/danja/clonio)
+        - Util for cloning/mirroring/scraping dynamically-generated pages and sites
+      - [danja.github.io](http://danja.github.io/)
+      - **docker-hyperdata**
+        - [https://github.com/danja/docker-hyperdata](https://github.com/danja/docker-hyperdata)
+    - SPARQL Babies
+      - same as other bits, done from scratch for video
+      - also make VSCode & Atom plugin 
+    - **foolicious**
+      - [https://github.com/danja/foolicious](https://github.com/danja/foolicious)
+    - **foowiki**
+      - [https://github.com/danja/foowiki](https://github.com/danja/foowiki)
+      - [https://github.com/danja/foowiki-heroku](https://github.com/danja/foowiki-heroku)
+    - **NewsMonitor**
+      - [https://github.com/danja/NewsMonitor](https://github.com/danja/NewsMonitor)
+    - **schema-editor**
+      - [https://github.com/danja/schema-editor](https://github.com/danja/schema-editor)
+    - **Thiki**
+      - [https://github.com/danja/thiki](https://github.com/danja/thiki)
+    - **Trellis**
+      - [https://github.com/danja/trellis](https://github.com/danja/trellis)
+    - **XMLNS**
+      - [https://github.com/danja/xmlns](https://github.com/danja/xmlns)
+  - **Fun Stuff**
+    - Robotics
+      - Servo easing functions
+        - [http://robertpenner.com/easing/](http://robertpenner.com/easing/)
+        - [https://web.archive.org/web/20150315010428/http://upshots.org/actionscript/jsas-understanding-easing](https://web.archive.org/web/20150315010428/http://upshots.org/actionscript/jsas-understanding-easing)
+      - Mini Draw
+        - [https://github.com/danja/mini-draw](https://github.com/danja/mini-draw)
+        - [https://www.instructables.com/Mini-Drawing-Bot-Live-Android-App-Trignomentry/](https://www.instructables.com/Mini-Drawing-Bot-Live-Android-App-Trignomentry/)
+      - robot arm
+        - [https://en.wikipedia.org/wiki/Braitenberg_vehicle](https://en.wikipedia.org/wiki/Braitenberg_vehicle)
+      - servo cat toy
+    - ultrasonics
+      - DL4covidUltrasound
+    - 'scope' with piezo transducers, mirror, laser
+      - https://forum.arduino.cc/index.php?topic=410245.0
+    - infinite bounce
+    - chaotic pendulum
+    - Joule thief
+    - LISP machine
+      - [http://www.ulisp.com/](http://www.ulisp.com/)
+  - **ELFQuake**
+    - [https://github.com/danja/elfquake](https://github.com/danja/elfquake)
+  - **Analog Computer**
+    - Analog computer - slime mould - plasmodium c
+    - [https://github.com/danja/analog-computer](https://github.com/danja/analog-computer)
+  - **Ultrasonics**
+    - [https://github.com/danja/ultrasonics](https://github.com/danja/ultrasonics)
+  - **Sound Machine**
+    - [sound-machine](https://github.com/danja/sound-machine)
+    - [https://github.com/danja/sound-machine-mega2560](https://github.com/danja/sound-machine-mega2560)
+    - [https://github.com/danja/sample-library](https://github.com/danja/sample-library)
+    - [https://github.com/danja/synth](https://github.com/danja/synth)
+    - infinite player
+      - just a small jack out, shuffle button, fractal music
+  - **Chatterbox**
+    - TODO
+      - Disable/Enable
+      - System Update
+    - Tutorials
+      - [https://en.wikipedia.org/wiki/Headless_software](https://en.wikipedia.org/wiki/Headless_software)
+    - Transistor level shifter
+      - [https://wiki.analog.com/university/courses/electronics/text/chapter-9](https://wiki.analog.com/university/courses/electronics/text/chapter-9)
+      - [https://www.ti.com/lit/an/sloa097/sloa097.pdf](https://www.ti.com/lit/an/sloa097/sloa097.pdf)
+      - [https://www.youtube.com/watch?v=OlhN7ADpKds](https://www.youtube.com/watch?v=OlhN7ADpKds)
+    - Admin
+    - Software
+      - Oscillators
+      - Filters
+      - Patchbay
+      - Control Handlers
+        - Disable/Enable
+          - All controllers
+          - Just for JTAG?
+      - MIDI
+      - Web
+      - System Update
+        - OTA?
+          - [https://hackaday.com/2019/03/21/library-makes-esp-over-the-air-updates-easy/](https://hackaday.com/2019/03/21/library-makes-esp-over-the-air-updates-easy/)
+          - [https://github.com/krdarrah/ESP32_GUI_Programmer](https://github.com/krdarrah/ESP32_GUI_Programmer)
+          - [https://github.com/scottchiefbaker/ESP-WebOTA](https://github.com/scottchiefbaker/ESP-WebOTA)
+        - File upload?
+        - Access point?
+        - Card reader?
+    - Hardware
+      - Core
+        - BOM
+          - Case
+          - Stripboard etc.
+          - ESP32 controller
+          - UDA1334A DAC
+          - MIDI In interface
+          - Power Supply
+      - Controls
+        - BOM as core, plus
+          - Case
+            - A4 laminated front panel
+            - hobby box
+          - Audio amplifier
+          - Loudspeaker
+          - Power LED
+          - Power toggle switch
+          - Speaker on/off toggle switch
+          - 4 x control toggle switches
+          - 8 x control push switches
+          - 2 x volume level pots
+          - 4 x control pots 
+          - Control joystick
+      - PCB
+        - @TODO make a  
+  - **Test Gear**
+    - PSU
+      - [https://github.com/danja/bench-psu](https://github.com/danja/bench-psu)
+    - Sweep generator
+      - AD9833 DDS Signal Generator Module 0-12.5MHz Square / Triangle / Sine Wave
+      - [https://www.banggood.com/AD9833-DDS-Signal-Generator-Module-0-12_5MHz-Square-Triangle-Sine-Wave-p-1161804.html](https://www.banggood.com/AD9833-DDS-Signal-Generator-Module-0-12_5MHz-Square-Triangle-Sine-Wave-p-1161804.html)
+  - **T-Watch-2020**
+    - [https://github.com/danja/T-Watch-2020](https://github.com/danja/T-Watch-2020)
+  - **Monet**
+    - Colour-matching Android app
+    - [https://github.com/danja/monet](https://github.com/danja/monet)
+  - **Video**
+    - Vague ideas
+      - A Day
+        - Quasi one shot, film a day in my life
+        - use all cameras
+        - make timelapse
+      - Everything's Connected
+        - systems thinking talk : start with excavator toy, go onto analog computing, neural networks... 
+- frequency-domain photon migration (FDPM)
+- https://www.researchgate.net/publication/3451129_Mini-FDPM_and_heterodyne_mini-FDPM_Handheld_non-invasive_breast_cancer_detectors_based_on_frequency-domain_photon_migration
+- **FINISHED/RETIRED**
+  - **WebBeep**
+    - [https://github.com/danja/WebBeep](https://github.com/danja/WebBeep)
+  - [https://github.com/danja/touch-sensitive](https://github.com/danja/touch-sensitive)
+  - [TM1638lite](https://github.com/danja/TM1638lite)
+  - [https://github.com/danja/dog](https://github.com/danja/dog)
+  - **Seki**
+    - [https://github.com/danja/seki](https://github.com/danja/seki)
+    - [https://github.com/danja/seki2](https://github.com/danja/seki2)
+    - [https://github.com/danja/seki2-fuseki](https://github.com/danja/seki2-fuseki)
+    - [https://github.com/danja/seki2-openshift](https://github.com/danja/seki2-openshift)
+  - **Gradino**
+    - blog engine
+    - [https://github.com/danja/Gradino](https://github.com/danja/Gradino)
+  - **wp-koob**
+    - wtf? random writing on web platform [https://github.com/danja/wp-koob](https://github.com/danja/wp-koob)
+  - **dork**
+    - Description of Runtime Klasses
+    - [https://github.com/danja/dork](https://github.com/danja/dork)
+- **--------------------------------------------**
+- **--------------------------------------------**
+- Work-work
+  - Fix laptop
+  - Diced
+    - Environment - get Thiki compiling
+    - Disposable prototype?
+- Creative
+  - Paint cat (Marinella)
+  - Carve hares (N & L)
+  - Spurtles (D & D)
+  - Carve cat? Putlog + base - yes cat reaching (MAA)
+- **--- ABOVE - after 2020-02-03 ---**
+- Question. Hypothesize. Experiment. Analyze. Conclude. 
+- 
+- Android
+  - Cellular notes
+    - Favourite Apps
+      - OpenHub - githug browser, can snag Clone URL
+      - MGit - can clone from github given URL
+- Video
+  - Ideas
+    - workshop
+      - sharpening tips
+        - pen mark
+        - loupe
+      - intro to carving
+    - office
+      - intro to semweb
+      - layman's intro to machine learning
+  - Promotion
+    - Target Lists/Forums
+      - Slingshots
+      - Music - soundcloud
+      - Woodcarving
+      - Tech
+      - Electronics
+      - ELFQuake
+- 
+- 2019-10-02
+- ABOVE IS 2019
+- Work-work
+  - https://www.linkedin.com/in/danja/
+  - https://stackoverflow.com/jobs?med=clc
+  - https://electricdruid.net/help-wanted/
+  - Gallery owner met in Castiglione : [mrjrbiggs@btinternet.com](mailto:mrjrbiggs@btinternet.com) Julian Biggs
+- https://www.aliexpress.com/item/Ignition-Coil-Spark-Plug-Fit-1E36F-33CC-CG330-TL33-Brush-Cutter-Grass-Strimmer-Engine/32811933950.html
+- Circuits
+  - http://www.ka-electronics.com/images/pdf/
+- http://www.synthfool.com/docs/Moog/The_Theremin_1954.pdf
+- http://ia800700.us.archive.org/14/items/synthmanual-roland-tr-808-service-notes/rolandtr-808servicenotes.pdf
+- http://www.ka-electronics.com/images/pdf/Lefferts_LED_Used_as_Voltage_Reference_ED_Feb_15_1975.pdf
+- 
+- http://www.decariashop.com/index.php?page=shop.product_details&flypage=flypage-ask.tpl&product_id=6983&category_id=108&option=com_virtuemart&Itemid=1
+- Ham Radio
+  - http://www.hamgoodies.co.uk/slimjim
+    - http://www.m0pzt.com/slimjim/
+  - http://vk2zoi.com/articles/half-wave-flower-pot/
+  - https://www.radioworld.co.uk/used_ham_radio_equipment/analyzers__swr_meters?sort=price_asc&page=1
+  - http://web.tiscalinet.it/vcoletti/ref/repeaters.html
+  - http://www.m0pzt.com/
+- Site
+  - https://github.com/gulpjs/gulp/tree/v3.9.1/docs/writing-a-plugin
+- Synth
+  - Component Sources
+    - https://www.soundtronics.co.uk - delay line
+    - https://electricdruid.net/product/as3340-vco/ - classic chips, cheap!
+    - https://www.thonk.co.uk/  - ditto, cheaper!
+  - ANS synth http://warmplace.ru/soft/ans/
+  - Utils
+    - resistor calc : http://www.qsl.net/in3otd/parallr.html
+  - http://sensorium.github.io/Mozzi/
+  - http://www.timstinchcombe.co.uk/index.php?pge=trisin
+  - Chatterbox
+    - http://www.csounds.com/manual/html/MiscFormants.html
+    - has Chatterbox - http://yusynth.net/index_en.php?&arg=1
+  - MIDI https://www.midi.org/specifications
+  - cheapish sequencer http://store.synthrotek.com/Division-6-Dual-Mini-Sequencer-PCB-Panel-and-ICs_p_744.html
+  - https://mutable-instruments.net
+  - https://boingboing.net/2018/01/06/interesting-vintage-documentar.html
+- DOG
+  - DOG-1
+    - Arduino
+      - hardware
+        - https://www.allaboutcircuits.com/technical-articles/understanding-arduino-uno-hardware-design/
+        - http://www.instructables.com/id/Connecting-a-4-x-4-Membrane-Keypad-to-an-Arduino/
+        - 
+      - assembly
+        - https://medium.com/jungletronics/meeting-assembly-hello-world-arduino-blinking-code-330386652309
+        - https://en.wikipedia.org/wiki/Atmel_AVR_instruction_set
+        - https://en.wikipedia.org/wiki/Atmel_AVR
+        - http://ww1.microchip.com/downloads/en/DeviceDoc/Atmel-0856-AVR-Instruction-Set-Manual.pdf
+        - various pretty good intro notes : http://teaching.idallen.com/dat2343/10f/notes/
+          - little man computer http://www.peterhigginson.co.uk/lmc/
+      - https://oscarliang.com/arduino-difference-byte-uint8-t-unsigned-cha/
+    - Forth Primitives
+      - EXIT LIT EXECUTE BRANCH 0BRANCH (LOOP) (DO) U* U/ AND OR XOR LEAVE R> >R R 0= 0< + D+ MINUS DMINUS OVER DROP SWAP DUP @ C@ ! C! (DOES)
+    - Algorithms
+      - https://en.wikipedia.org/wiki/Linear-feedback_shift_register
+      - http://www.obelisk.me.uk/6502/algorithms.html
+      - https://www.codeproject.com/Articles/1116188/Basic-Practices-in-Assembly-Language-Programming
+      - 6502 TRICKS AND TRAPS - http://stardot.org.uk/forums/viewtopic.php?t=5245
+    - 
+    - SECD
+      - http://skelet.ludost.net/sec/collection.html
+    - References
+      - Little Man Computer https://en.wikipedia.org/wiki/Little_man_computer
+      - Card sim 
+        - https://en.wikipedia.org/wiki/CARDboard_Illustrative_Aid_to_Computation
+        - https://www.cs.drexel.edu/~bls96/museum/cardiac.html
+        - https://www.cs.drexel.edu/~bls96/museum/cardsim.html
+      - https://en.wikipedia.org/wiki/Addressing_mode
+      - https://en.wikipedia.org/wiki/PDP-11_architecture#General_register_addressing_modes
+      - Mark 1 (forthy) http://www.aholme.co.uk/Mk1/Architecture.htm
+      - http://www.6502.org/
+      - http://www.masswerk.at/6502/6502_instruction_set.html#ROR
+      - http://wilsonminesco.com/6502primer/PgmTips.html
+      - http://skilldrick.github.io/easy6502/
+      - http://www.8bit-era.cz/6800.html
+      - 6502 ADC/SBC http://forum.6502.org/viewtopic.php?f=2&t=2944
+      - http://www.6502.org/tutorials/vflag.html
+      - http://www.righto.com/2012/12/the-6502-overflow-flag-explained.html
+      - https://en.wikipedia.org/wiki/Little_man_computer
+      - https://en.wikipedia.org/wiki/MIX
+      - https://www.gnu.org/software/mdk/manual/html_node/index.html
+      - https://www-cs-faculty.stanford.edu/~knuth/mmop.html
+      - Stacks
+        - https://sites.google.com/site/libby8dev/fignition
+        - https://sites.google.com/site/libby8dev/fignition/documentation/understand-it/bytecodes
+        - https://en.wikipedia.org/wiki/Stack_(abstract_data_type)
+        - http://www.forth.org/
+        - http://galileo.phys.virginia.edu/classes/551.jvn.fall01/primer.htm#stacks
+  - Scamp Book
+    - "Retro Computing on the Arduino"?
+      - Introduction
+      - A Brief History
+      - Arduino Basics
+      - MK14 : 1977
+      - 
+    - Apps
+      - random number gen
+        - https://en.wikipedia.org/wiki/Linear-feedback_shift_register
+      - calculator
+      - games
+        - lunar lander
+        - noughts & crosses
+        - space invaders!
+    - References
+      - Retro Computing on the Arduino https://forum.arduino.cc/index.php?topic=470391.0
+      - https://www.raspberrypi.org/forums/viewtopic.php?t=180598
+      - http://mymk14.co.uk/
+      - http://www.oldcomputermuseum.com/mini_scamp.html
+      - http://www.techlib.com/area_50/Readers/Karen/micro.htm#PIC14
+      - 
+    - Business
+      - https://www.forbes.com/sites/laurashin/2014/10/27/freelancers-heres-how-to-set-your-rates
+      - https://makezine.com/contribute/
+- Arduino General
+  - Sounds
+    - ADC oversampling https://www.electricrcaircraftguy.com/2014/05/using-arduino-unos-built-in-16-bit-adc.html
+    - DDS sine wave http://forum.arduino.cc/index.php/topic,64217.0.html
+    - http://interface.khm.de/index.php/lab/interfaces-advanced/arduino-dds-sinewave-generator/
+    - http://vk4ffab.info/2017/06/28/so-you-want-to-make-a-sine-wave-in-arduino/
+    - dual PWM http://www.openmusiclabs.com/learning/digital/pwm-dac/dual-pwm-circuits/index.html
+    - http://sensorium.github.io/Mozzi/
+  - tone(), bit of MIDI 
+    - http://itp.nyu.edu/physcomp/labs/labs-arduino-digital-and-analog/tone-output-using-an-arduino/
+  - Interrupts
+    - https://www.pjrc.com/teensy/td_libs_TimerOne.html
+    - frequency meter http://arduino.datamaster2003.com/f-measurements.htm
+  - Serial
+    - http://forum.arduino.cc/index.php?topic=396450.0
+    - http://forum.arduino.cc/index.php?topic=225329.msg1810764#msg1810764
+  - http://www.werkstattworkshop.com/arduino
+  - https://learn.adafruit.com/multi-tasking-the-arduino-part-1/
+  - https://learn.adafruit.com/multi-tasking-the-arduino-part-2
+  - https://learn.adafruit.com/multi-tasking-the-arduino-part-3
+  - http://arduino.land/FAQ/content/7/43/en/breaking-a-sketch-into-multiple-files.html
+  - https://arduinodilettante.wordpress.com/2011/03/10/multiple-file-sketches/
+  - http://arduino.land/FAQ/content/1/3/en/what-does-the-ide-change-in-my-sketch.html
+  - https://github.com/sudar/Arduino-Makefile
+  - 
+- Lockpicking
+  - Learning
+    - https://lock-lab.com/
+  - Tools
+    - https://www.sparrowslockpicks.com/
+    - https://www.thinkpeterson.com/
+    - https://www.southord.com/
+    - https://art-of-lockpicking.com/
+    - http://www.ratyoke.com/ - $130!
+  - Pick templates
+    - https://lock-lab.com/resources/6365-2/
+  - Forums
+    - https://www.lockpicking101.com/
+    - https://www.uklocksport.co.uk/
+  - repinning
+    - http://learnlockpicking.com/product/7-pin-ultimate-adversary-practice-lock/
+    - https://locksaway.co.uk/ultimate-challenge-cutaway-6-pin-euro
+    - https://www.ebay.co.uk/itm/Professional-12-in-1-HUK-Lock-Disassembly-Tool-Locksmith-Tools-Kit/162099609870?hash=item25bde3c10e:g:oHUAAOSwepJXWrqa
+- ELFQuake
+  - http://mfurkanbahat.blogspot.co.uk/2014/11/artificial-horizon-and-compass-using.html
+  - http://78.46.38.217:80/vlf15
+  - weak signal propagation http://wsprnet.org/drupal/
+- free smalltalk books https://web.archive.org/web/20090201094825/http://stephane.ducasse.free.fr:80/FreeBooks.html
+- *BELOW HERE IS 2015/ABOVE IS 2018*
+- LDOW2015
+  - http://www.www2015.it
+  - http://events.linkeddata.org/ldow2015/
+  - Linked Data Applications
+  - application showcases including browsers and search engines
+  - The Agent Paradigm and Linked Data
+    - it's possible to lift a load of ideas from the AI literature
+    - bots
+    - Services vs. Agents
+      - client-*server*
+      - are not strictly invoked for a task, but activate themselves
+        - push vs. pull
+        - messaging
+      - At the low end, with one or two senses, a single action, and an absurdly simple control structure (mind?) we find a thermostat. [franklin]
+      - tasks
+      - how to trigger actions
+        - Each is situated in, and is a part on some environment. Each senses its environment and act autonomously upon it. [franklin]
+        - HTTP message
+          - probably indirect
+        - cron etc.
+        - plan-matching
+        - forward/backward chaining
+      - agents in an environment
+      - Russell and Norvig put it this way: "The notion of an agent is meant to be a tool for analyzing systems, not an absolute characterization that divides the world into agents and non-agents." [1995, page 33] 
+      - location (see Bigraphs) - humans are good at remembering location, Roman room
+    - Microservices
+      - http://martinfowler.com/articles/microservices.html
+    - Don't Scare the Horses
+    - REST
+    - 5-Star
+    - LDP
+    - History/Related Systems
+      - Tuplespace
+        - Linda
+        - Seneca
+      - Danny 2007 model - looks like a computer
+      -  agents sound just like computer programs. How are they different?
+        - http://www.msci.memphis.edu/~franklin/AgentProg.html
+    - Linked Data Agents
+    - Requirements
+      - Compact Core
+      - Simple Modular Extensibility
+    - Formats & Protocols
+    - Components
+      - Access Control
+      - Router
+      - Templater
+      - HTTP Client
+      - HTTP Server
+      - SPARQL Store
+      - Code Runner
+    - Research Directions
+      - Proof of Concept
+        - Server-side : Seki
+        - Client-side FooWiki
+        - http://wifo5-03.informatik.uni-mannheim.de/pubby/
+      - Modelling
+        - UML
+        - High Abstraction
+        - Bigraphs
+    - versioning
+    - cross-site scripting
+    - Mobile agents on the Internet may be beyond calling back by the user. [franklin]
+    - SPARQL injection
+- Seki2 Setup
+  - Tools
+    - git/github
+    - yeoman - init scaffolding
+    - bower - front end package management
+    - npm - back end package management
+    - grunt -task runner
+      - grunt-nice-package (for npms)
+    - PhantomJS
+    - qunit
+    - nodeunit
+  - Process
+    - git submodules
+  - Contents
+    - Apache2
+    - Fuseki
+    - FooWiki
+    - usermanagement
+    - router
+    - 
+- http://writingexercises.co.uk/random-words-exercises.php
+- get MATE extras
+- free ebooks (scroll) http://www.tecmint.com/things-to-do-after-installing-ubuntu-14-10/
+- Sites 2014-11-05
+  - Android
+  - Seki
+  - Server
+  - hosting : https://www.linode.com/
+    - + $100 for docs https://www.linode.com/docs/contribute
+- To read up/learn
+  - titanium - android
+  - node - android
+  - https://www.kaggle.com/how
+  - https://www.udacity.com/
+  - https://courses.edx.org/dashboard
+  - https://www.coursera.org/course/ml
+  - sweet ontology nasa
+  - Category Theory
+    - http://yannesposito.com/Scratch/en/blog/Category-Theory-Presentation/
+    - figure out CT + RDF/OWL + Agents
+      - Agents http://math.mit.edu/~dspivak/informatics/grants/AFOSR--Proposal.pdf
+  - text https://gate.ac.uk/
+  - machine learning http://code.cogbits.com/wiki/doku.php?id=tutorial_basics
+    - http://www.ipam.ucla.edu/programs/summer-schools/graduate-summer-school-deep-learning-feature-learning/
+  - real time (browser) comms http://www.webrtc.org/
+- Wiki (Seki)
+- Thiki (Android/Desktop/Seki Wiki)
+  - persistence :
+    - copy to file
+    - Dropbox
+    - GitHub
+    - SPARQL
+  - data
+    - in the first instance, folder containing Markdown text files (as in ema-personal-wiki) plus a Turtle metadta file
+  - http://swip.inrialpes.fr/
+  - (review Seki-Wiki notes)
+  - Desktop
+    - use Scute!? 
+    - Java client using filesystem (Dropbox)
+    - markdown processor
+      - https://github.com/myabc/markdownj
+      - https://github.com/sirthias/pegdown
+    - integrate Jena
+  - Android
+    - base on ema-personal-wiki
+    - integrate Jena
+    - backlinks
+    - versioning
+    - tags
+    - bloggish data
+  - Seki
+    - get file posting working
+    - make editor
+    - integrate with other views (blog, outliner)
+    - (make Desktop Dropbox workalike?)
+- Fusepool
+  - http://en.wikipedia.org/wiki/Lateral_thinking
+  - direct subclass : http://answers.semanticweb.com/questions/14699/get-immediate-subclasses-of-a-class
+  - opinion mining
+    - gvghjvj
+  - sentiment analysis (re. drugs?)
+  - minimum viable product
+  - Users
+    - medical professionals
+    - pharm industry
+    - lay users
+    - journalists
+  - https://github.com/michael/ken
+  - https://superfeedr.com/
+  - encoding/charset
+    - http://illegalargumentexception.blogspot.it/2009/05/java-rough-guide-to-character-encoding.html
+    - http://www.java2s.com/Code/Java/I18N/Howtoautodetectafilesencoding.htm
+    - http://stackoverflow.com/questions/499010/java-how-to-determine-the-correct-charset-encoding-of-a-stream
+    - http://ecmanaut.blogspot.it/2006/07/encoding-decoding-utf8-in-javascript.html
+    - http://monsur.hossa.in/2012/07/20/utf-8-in-javascript.html
+    - http://updates.html5rocks.com/2012/06/How-to-convert-ArrayBuffer-to-and-from-String
+    - http://www.java2s.com/Code/Java/I18N/CharsetToolkit.htm
+    - http://stackoverflow.com/questions/3043710/java-inputstream-encoding-charset
+- State of the Net conf, Trieste 12-14th June
+  - http://sotn.it/about/
+- WWW2015
+  - http://iswc2014.semdev.org/
+  - Browser UI demo
+    - sparqlxml2json.js
+    - GET from dbPedia
+    - POST to Fuseki
+    - ToDo list
+      - first minimal
+      - then outliner
+    - .mobile versions
+  - serendipity ~ emergent behaviour
+  - module boundaries well defined - http
+  - protocol = contract
+  - minimal glue code
+  - web sites are degenerate agents
+    - installing
+      - http://xkcd.com/1367/
+  - funding!
+- Dev Practices
+  - functional tests via client API
+  - start small with well-known functionality
+    - static file serving
+    - use case : blog engine
+    - - at least one off-the-self running app, demonstrater, useful
+  - dogfood, scratching own itches
+  - avoid kitchen sink
+    - https://en.wikipedia.org/wiki/Cohesion_%28computer_science%29
+  - docs
+- Seki - status 2014-04-034
+  - http://chrissaad.com/
+  - code annotation/review tool
+    - extend docco
+    - issue tracking
+    - https://www.atlassian.com/software/crucible/overview
+  - RDF explorer built using Ajax/SPARQL
+    - call it Telamon (Ajax's dad)? / *Prosecco* / Spumante / Frizzante
+  - http://chrest.info/
+  - http://blog.workflowy.com/2014/07/10/new-feature-select-multiple-lines-in-your-workflowy-lists/
+  - StoryBook vocab - check the views
+    - https://web.archive.org/web/20120429054019/http://www.novelist.ch/joomla/index.php/en/features
+    - https://web.archive.org/web/20120521005902/http://www.novelist.ch/joomla/index.php/en/storybook-memoria
+  - hosting : https://www.heroku.com
+  - https://github.com/danmactough/node-feedparser
+  - https://help.github.com/articles/writing-on-github#task-lists
+  - http://theinternetwishlist.com/
+  - need to finish json & html handlers/tests
+  - usermanagement, have sparl, add user form
+    - use hinclude for user list
+  - voting thing for choosing chess pieces
+  - must-have
+    - http://en.wikipedia.org/wiki/Optimistic_concurrency_control
+    - check http://www.slideshare.net/alehors/www2014-linked-data-platform-20140410-33367843
+    - https://dvcs.w3.org/hg/ldpwg/raw-file/default/ldp.html
+    - http://www.w3.org/2012/ldp/wiki/Main_Page
+  - http://www.omnigroup.com/omnioutliner
+  - deploy to Heroku
+    - https://devcenter.heroku.com/categories/billing
+  - Squebi interface
+  - Spark File
+    - needs 2-column
+    - https://medium.com/p/8d6e7df7ae58
+    - http://lifehacker.com/5941997/defrag-your-brain-with-a-spark-file/all
+  - borrow architecture
+    - http://opensemanticframework.org/overviews/osf-overview-and-architecture
+  - http://theinternetwishlist.com/
+  - panic button - when overwhelmed with too many items (better, a slider?)
+  - https://github.com/michael/ken
+  - StoryBook
+    - http://sourceforge.net/projects/ostorybook/
+    - http://ostorybook.wordpress.com/docsen_v4_introduction/
+  - Atomagotchi
+    - http://romanatwoodvlogs.com/digidrops-generations-new-digital-pet/
+  - My Portfolio
+  - http://try.discourse.org/
+- Etsy - similar
+  - http://www.behance.net/gallery/Hand-Carved-Wooden-Chess-Sets-by-Jim-Arnold/2361810
+  - http://www.yessy.com/jimarnold/index.html?i=887&s=on1b3i550ikwdiuntju02z45
+  - auction - https://www.quibids.com
+- nice home page/CV : http://aurelio.audero.it/projects
+- MQTT
+  - http://mqtt.org/documentation
+  - https://github.com/adamvr/MQTT.js/
+  - https://github.com/mcollina/mosca
+- http://www.alexa.com/topsites
+- http://www.google-melange.com/gsoc/projects/list/google/gsoc2014
+- Downscaling semweb papers http://ceur-ws.org/Vol-844/
+- bergi - https://www.bergnet.org/people/bergi/files/documents/2014-02-14/index.html#/
+- http://www.gradle.org/overview
+- http://en.wikipedia.org/wiki/Project_management_triangle
+- http://etchjs.com/
+  - 
+- http://blogs.atlassian.com/2013/03/git-submodules-workflows-tips/
+- https://github.com/substack/stream-handbook
+- http://www.pandaclub.ch/tools/editor/
+- https://github.com/antoniogarrote/rdfstore-js
+- gpick (on Squeak colours)
+- http://www.peer-server.com/
+- Interstices
+  - egg banjo
+- http://www.haskell.org/haskellwiki/Yampa
+- https://medium.com/code-adventures/a940ee20862d
+- http://learnxinyminutes.com/
+- https://probmods.org/
+- repeatedly hear "We switched from X to Y. X didn't work and Y works." Would prefer "Our purpose is P. Y served that purpose better than X"
+- clojure
+  - https://code.google.com/p/counterclockwise/
+  - check agents
+- agents - ability to clone (or destroy) themselves automatically
+  - https://github.com/stagas/drama
+  - http://en.wikipedia.org/wiki/Actor_model
+  - https://github.com/mental/webactors
+  - https://github.com/Gozala/actor
+  - https://nodejsmodules.org/tags/actors
+- site components
+  - list : http://www.stratecomm.com/faqs/components/
+  - http://app.imcreator.com/edit
+- https://www.firebase.com/docs/data-structure.html
+- spreadsheet http://jsfiddle.net/ondras/hYfN3/
+- https://www.gov.uk/designprinciples
+- Reference
+  - Tech
+    - RDFa parser in clojure/JS https://github.com/niklasl/clj-rdfa
+    - http://msgpack.org/
+    - Data-Driven Documents
+      - http://d3js.org/
+    - https://www.facebook.com/notes/facebook-engineering/under-the-hood-the-entities-graph/10151490531588920
+    - unhosted
+      - What are servers/clients best for?
+        - server
+          - data - space!
+          - intensive processing
+        - client
+          - comms? because it's nearer the user
+      - https://unhosted.org/
+      - http://remotestorage.io/
+    - UX manifesto http://www.sketchin.ch/en/manifesto/
+    - Evolutionary forms & User Intent
+      - http://searchengineland.com/google-hummingbird-when-evolutionary-becomes-revolutionary-173740
+    - https://github.com/topliceanu/text-summarization
+    - https://github.com/sockethub/sockethub
+    - https://sharesome.5apps.com/?
+    - https://5apps.com/deploy/apps/527fb1d0288528228700045d/deployments
+    - https://github.com/skddc/sharesome
+    - http://john.onolan.org/ghost
+    - http://www.w3.org/wiki/IntegrityIsJobOne
+    - https://github.com/indexzero/http-agent
+    - https://github.com/einars/js-beautify
+    - https://github.com/commonsmachinery/rdfa-glue.js
+    - https://github.com/digitalbazaar/jsonld.js/blob/master/js/request.js
+    - http://tiddlypocketbook.com/
+    - http://activitystrea.ms/
+    - http://indiewebcamp.com/webmention
+    - https://github.com/einaros/ws
+    - https://trello.com/tour
+    - yes! http://boagworld.com/demos/sitemap/
+    - Javascript / node.js / browser
+      - http://www.fieg.nl/infinite-ajax-scroll-a-jquery-plugin
+      - executable node.js
+        - https://github.com/crcn/nexe
+      - Triplestore wrapper for HTML5 WebStorage
+        - http://www.w3.org/2013/04/semweb-html5/triplestoreJS/
+      - Visualization
+        - http://jowl.ontologyonline.org/
+      - Javascript tutorials
+        - http://javascript.crockford.com/private.html
+        - http://dailyjs.com/2012/06/18/js101-this/
+      - node.js modules in the browser
+        - http://browserify.org/
+      - functional prog
+        - replace loops with transformations
+      - http://rdfa.info/play/ - has visualization
+    - http://en.wikipedia.org/wiki/Comparison_of_web_application_frameworks
+    - http://stackoverflow.com/questions/1911015/how-to-debug-node-js-applications
+    - http://dailyjs.com/2010/01/08/learning-javascript/
+  - Misc
+    - http://webseitz.fluxent.com/wiki/WikiLog
+    - http://www.angelacolter.com/breadcrumbs/
+    - https://github.com/Widen/fine-uploader
+    - http://boagworld.com/design/user-personas/
+  - LazyWeb
+    - http://www.ironicsans.com/ideas/
+  - 
+- Seki/Trellis is it's own tutorial
+  - bootstrap/dogfood components
+    - vocab/data editor
+    - interstices - upper ontologies, wordnet etc
+- 
+- HTTP Patch
+- merge this into IBIS
+  - http://subforum.org/ecm/
+  - http://www.slideshare.net/gilesphillips/evolutionary-conceptual-models-midwest-ux-2012
+- agents over websockets
+- github pages (for everything!)
+- semanticCMS http://magnode.org
+- File System indexing/search
+  - run HTTP server at fs / ??
+  - https://github.com/andreyvit/fsmonitor.js
+    - trigger HTTP messages on changes
+  - Stanbol for analysing
+  - RDF representation
+  - HTML projection - make FS linky
+- what functionality can be moved server -> browser
+  - ditto browser -> browser
+  - generic solution : location-agnostic, portable code, cf Fielding 5.1.7 Code-On-Demand
+  - node.js ftw
+  - http://programmers.stackexchange.com/questions/123718/how-do-i-add-another-script-engine-to-web-browsers-under-linux-windows-mac
+- TODO
+  - Seki
+    - analytics
+    - check https://www.quantcast.com/learning-center/guides/webmeasurement
+    - ttracker
+  - Seki - sign in with twitter
+    - https://dev.twitter.com/docs/auth/implementing-sign-twitter
+    - http://bytespider.github.com/jsOAuth/
+  - DuckDuckGo API
+  - Tent
+    - http://tent.io/docs
+  - Jena vid: http://vimeo.com/14569996
+  - kernels: http://videolectures.net/mlss07_scholkopf_intkmet/
+  - ToBlog
+    - RWW, JSON, surface area and agents
+      - the better things are described, the more reusable they are
+      - http://www.w3.org/Submission/2012/02/
+      - http://lists.w3.org/Archives/Public/public-rww/2012Apr/0025.html
+    - Lone Wolf dev in a community
+      - https://www.facebook.com/danny.ayers/posts/10150666977117475
+      - https://plus.google.com/u/0/104323674441008487802/posts/KYwmT2qE9VL
+      - http://iamsamy.blogspot.it/2012/04/where-is-casual-programming.html
+  - SPICE vocab
+  - Resume
+    - graph of interests
+    - timeline?
+    - http://patametadata.blogspot.it/2012/04/semantic-html-resume.html
+  - Real World
+    - Font
+  - http://141.89.225.43/patchr/
+  - agent model!
+    - js in models http://www.ilrt.org/discovery/2001/03/rdf-moo/
+    - called from HTML or node engine etc.
+  - microdata/RDFa templater
+  - SWIB hook to remote store - fuseki GUI
+  - transclusion - apply to <a href="..." rel="include"
+  - https://hacks.mozilla.org/2011/11/insertadjacenthtml-enables-faster-html-snippet-injection/
+  - little language based on XML proc
+  - Distributed Comments : custom trackback (as comments alternative)
+    - enter URL of your comment (it should be publicly-readable)
+    - enter title to display on link
+    - enter your name or alias
+    - enter your personal URI (optional)
+      - requirements : the target must include a link to the post you are commenting on
+    - comment on Twitter, FB, G+
+    - allow me to add related links
+  - Pub-Sub on URI templates
+    - a feed tells you there's been a change in a resource "range"
+  - RWW list mail - WebID and APIs
+  - 2012-12
+    - + no-links rendering
+    - "Web Outline" - links-only rendering
+  - Daily
+    - 1/2 hr sites
+    - 1/2 hr reading
+  - General
+    - Mailing List
+      - add links
+        - github pages
+        - blog
+        - etc.
+        - fix danny.ayers.name
+        - Position Statement
+        - FOAF
+        - dating page
+    - G+ pages for all domains & projects
+- Real-World Projects
+  - New Place
+    - Roof
+      - fix leaks
+    - Garden
+      - tidy
+      - plant veg.
+    - Chicken Shed
+      - fix up
+    - Bedroom
+      - skirting board/conduit
+      - decorate
+    - Bedroom
+      - fixup window
+    - Bathroom
+      - internal window
+      - decorate
+    - Shower Room
+      - fixup window
+      - fix mirror
+      - decorate
+    - Lab
+      - clear out
+      - fixup window
+      - decorate
+    - Lab
+      - fix boiler
+      - plumb in sink
+      - plumb in washing machine
+      - new radiator
+    - Back Stairwell
+      - decorate
+    - Music Room
+      - decorate
+    - Soppalco
+      - top rails
+      - banister
+    - Living Room
+      - small window
+      - de-gap floor
+      - big windows
+    - Front Stairwell
+      - rails
+      - banister
+      - skirting board
+    - Kitchen
+      - plumb in dishwasher
+      - cooker
+      - shelves
+      - tidy woodwork
+      - cement window
+    - Dog Garden
+      - mow
+    - Human Garden
+      - fence
+    - Field
+      - tidy
+    - Drive
+      - tidy
+      - gravel
+    - Workshop
+      - fixup doors
+      - fixup steps
+    - Back Wall
+      - window grille
+    - Garden
+      - tidy
+      - landscape
+    - Yard
+      - tidy
+    - Pizza Oven
+      - fix
+    - Wall
+      - clear ivy
+    - Workshop
+      - tidy
+    - Cantina
+      - clear
+      - new radiator
+      - shelves
+      - flood prevention
+    - Other
+      - geometra : get in my name & signoff
+      - phone/net connection
+      - Sky dish
+      - furnish
+      - move in!
+  - Chess set
+    - King`s height should be about 9.5 cm. The diameter of the King`s base should measure 40 to 50% of its height.
+    - the size of a square should be twice the diameter of a pawn’s base. It is recommended that a side of the square should measure 5 to 6.5 cm
+    - The size of a table should have a minimum length of twice the length of the chessboard and a width of 15 – 20 cm more than the chessboard. It is recommended to use tables with a minimum size of 120 x 80 cm for top level FIDE tournaments.
+    -  the size of a square should be twice the diameter of a pawn’s base. It is recommended that a side of the square should measure 5 to 6.5 cm.
+    - The King`s height should be about 9.5 cm (3 3/4"). The diameter of the King`s base should measure 40 to 50% of its height.
+      > dsdfsdfsd
+    - Pieces
+      - King - 3&3/4 x 1&3/4 ... 9.5 x 4.5
+      - Queen - 3&1/2 x 1&3/4 ... 8.9 x 4.5
+      - Bishop - 3 x 1&1/2 ... 7.6 x 3.8
+      - Knight - 2&3/4 x 1&1/2 ... 7 x 3.8
+      - Rook - 2&1/2 x 1&1/2 ... 6.4 x 3.8
+      - Pawn - 2 x 1&1/4 ... 5 x 3.2
+    - Lewis
+      - red & white, The heights of the pawns range from 3.5 to 5.8 cm, while the other pieces are between 7 and 10.2 cm. 
+      - moulds £19 http://www.plastercraftingforfun.com/product_details.php?products_id=3 
+    - bishop with trunk & tusks
+  - Analog Computer
+    - http://www.rapidonline.com/Cables-Connectors/4mm-Panel-Mounting-Test-Sockets-83058
+  - 3D Codex Seraphinianus
+    - http://onestonedcrow.blogspot.it/2010/02/codex-seraphinianus.html
+- Software Projects
+  - Another
+  - Seki
+    - TODO 2013-11-27
+      - Bugs
+        - no handling for creation without /pages/
+          - (JSONHandler called)
+          - (need handlers for whole graphs PUT/GET)
+          - /graphs?
+      - Tests
+        - add rdfs:label to test data
+        - create (POST) page needs check for exists? 409 Conflict
+        - add tests for Bootstrap (--init) - especially around SparqlUtils.js
+        - TemplatingResponseHandler needs update (DELETE/INSERT)
+      - Refactoring
+        - rearrange icons (destructive last)
+          - up/down on LEFT
+        - check client against https://github.com/jpillora/jquery.rest
+        -  * TODO remove ...Template from  template names
+        - namespace Trellis 
+          - http://www.adequatelygood.com/JavaScript-Module-Pattern-In-Depth.html
+          - http://elegantcode.com/2011/01/26/basic-javascript-part-8-namespaces/
+          - http://www.sitepoint.com/my-favorite-javascript-design-pattern/
+          - extra :
+          - http://javascriptweblog.wordpress.com/2010/12/07/namespacing-in-javascript/
+          - http://www.kenneth-truyers.net/2013/04/27/javascript-namespaces-and-modules/
+          - http://www.yuiblog.com/blog/2007/06/12/module-pattern/
+        - move to underscore templating
+        - bring in new fonts (where?)
+          - in danny/fonts/web
+        - colours - check http://flatuicolors.com/
+          - Use buttons for the primary action and links for secondary actions
+          - demonstrates how to distinguish primary and secondary buttons in his blog UI template on Dribbble. http://dribbble.com/shots/968433-Freebie-PSD-Flat-UI-Kit-2-Blog/attachments/111312
+          - http://www.colourlovers.com/palettes/most-favorites/all-time/meta
+      - Features
+        - add pseudo-page ..../index which will produce a file listing for that dir (and in Turtle?)
+        - implement usermanagement
+          - http://requirejs.org/
+          - usermanager as single-page app?
+          - Backbone.js for user forms?
+          - https://github.com/powmedia/backbone-forms
+          - UI 
+            - www/admin/users.html
+            - incorporate VIE/create/backbone
+          - backend
+            - write ASK queries, hook up to auth
+        - Trellis
+          - handlers for whole graphs PUT/GET
+          - wire up - templates/trellis.ftl
+          - make a couple of cards
+            - post
+            - task
+            - comment
+            - ontology
+          - use jQuery accordian
+          - note - browser tabs look very like card catalogues
+          - Constructs:
+            - Card
+            - Box
+            - single-click add a 
+              - Link
+              - Note
+              - Person
+              - Upload (sniff type)
+          - write up Trellis constructs
+        - Misc
+          - swap DC elements for DC terms
+          - caching
+        - Blog 
+          - data CONSTRUCT
+          - Backbone.js for entries?
+      - refactor
+        - move handlers to /handlers
+          - one for each media type/method combination
+          - pull out commonalities
+        - get rid of verbosity
+        - pull apart Seki.js
+      - TESTS!
+      - docs
+      - set up as blog
+      - ETags etc.
+        - http://www.tbray.org/ongoing/When/200x/2007/07/31/Design-for-the-Web
+        - http://www.dehora.net/journal/2007/07/earned_value.html
+        - http://www.w3.org/1999/04/Editing/
+      - dynamic updating - from browser to backend, check http://meteor.com
+        - "full DB API on the client"
+      - http://sw.deri.org/2007/07/sitemapextension/
+      - auth : http://nxg.me.uk/projects/agast/
+    - @packrat@ - compulsive hoarder ""
+    - UI
+      - need principles/guidelines
+      - slider for global expand/collapse
+      - novel stuff
+        - stream/dialogue/threads - completely different UI?
+        - left panel acts as view chooser for right panel (both editable)
+          - see http://www.dementialab.org/discovery-lab/
+        - author-driven UI?
+          - offer a quasi-3D way of ^ switching view/prompting menu/dialog...
+          - ... by embedding things macro-ish like ^ 
+          - (typed links even!)
+          - writer can just type them
+          - reader can click for menus/rotate perspective
+          - sliders!
+          - change font if it has children
+      - property inspectors/available actions
+      - shortcut keys
+        - https://github.com/chrisdone/jquery-console
+        -  Bash style Ctrl+R history searching of recent commands
+      - copy-paste to scratch pad - no mouse involved
+      - Finding next task
+        - 1. select "TODO"
+        - 2. (optional) select Project
+        - 3. select task - order by priority/date
+        - // TODO bullets into categories A, B or C. A means 'will loose significant value if not done today', B means 'important, but will not loose significant value if not done today', C means 'optional'
+        - 
+    - single-page controls
+      - where googlebot not needed
+      - http://addyosmani.com/blog/building-spas-jquerys-best-friends/
+      - admin-ish subsections built as single-page apps
+    - note sentence hihlighting : http://www.sitepoint.com/getting-started-flat-ui-design/
+    - http://www.gnu.org/prep/standards/html_node/Style-of-Change-Logs.html#Style-of-Change-Logs
+    - “add”, “remove”, “update”, “refactor”, “fix”,
+    - Agendum/ agenda a list of things to be considered or done
+    - https://github.com/mhausenblas/turtled
+    - http://www.w3.org/TR/void/
+    - http://www.joyent.com/developers/node/design
+    - Comms
+      - HTTP
+      - WebSockets
+      - Sockets
+      - BitTorrent
+      - IM
+        - IRC
+      - email
+    - Views
+      - Outline
+      - Office
+        - Formatted Docs
+        - Spreadsheets
+          - https://github.com/mleibman/SlickGrid
+          - http://jlord.github.io/sheetsee.js/
+        - Presentation
+    - caching!
+    - comments
+      - on original post
+      - comment on comment
+      - fork to new thread
+    - http://www.slideshare.net/tetsurotoyoda/reverse-mashup-proposal
+    - Site Spider
+      - extract page titles
+      - tags
+      - convert to outlines
+    - nools-connect-routing
+      - DSL for nools for HTTP routing
+    - Trellis
+      - saving done via Web Worker?
+        - http://www.html5rocks.com/en/tutorials/workers/basics/
+      - http://api.jquery.com/unload/
+      - http://mikehillyer.com/articles/managing-hierarchical-data-in-mysql/
+      - http://useless-factor.blogspot.it/2008/01/matching-diffing-and-merging-xml.html
+      - 
+        - ontology editor
+          - (WikiWords as tags)
+          - tags to category tree
+      - http://en.wikipedia.org/wiki/Nested_set_model
+      - Task as List (proc vocab?)
+        - Project Vocab
+          - http://www.techrepublic.com/article/mini-glossary-project-management-terms-you-should-know/
+          - file:///home/danny/workspace/xmlns/project/index.htm
+        - Proc
+          - file:///home/danny/workspace/xmlns/proc/index.ttl
+          - http://en.wikipedia.org/wiki/Functional_reactive_programming
+        - extra terms
+          - tests : make executable
+            - preconditions
+            - postconditions
+        - examples
+          - delicious extractor
+            - pull off 
+      - TO DO
+        - General
+          - Save
+            - ordered serialise
+          - Load
+        - Workflowy cloning
+          - Basic
+            - Expand 
+            - Collapse
+            - Indent
+            - Outdent
+            - (or hit 'enter' on an empty line)
+            - Move
+            - Delete
+            - Keyboard shortcuts	(Help
+          - Nice
+            - Search
+            - Zoom in
+            - Zoom ou
+            - Switch between pages	 control + ; : 186
+            - Complete
+            - Star page	 control + shift + ∗
+            - Show/hide completed	 control + o
+            - Add a note
+        - Other Priority
+          - Block-select
+          - Cut
+          - Copy
+          - Paste
+          - two-outline view
+            - http://layout.jquery-dev.net/
+            - http://css-tricks.com/snippets/html/left-right-halves-layout/
+        - Other Nice
+          - more control over expand/contract?
+          - bold/underline/italics/colour - keypress
+          - Export
+          - Turtle
+          - HTML
+          - JSON
+          - OPML
+          - http://community.wikidot.com/howto:create-and-use-tag-tree
+      - outliner: one with infinite scroll
+        - a la Squeak sidebars
+          - http://srobbin.com/jquery-plugins/pageslide/
+          - Tools
+            - scratchpad
+            - Dashboard
+            - SPARQL Endpoint
+            - metrics
+            - code editor
+            - shell (-like)
+            - importer
+            - spider
+            - process manager
+              - code runner...
+            - audio recorder
+            - metadata collector
+            - file manager
+              - http://en.wikipedia.org/wiki/File_browser
+              - Norton Commander style?
+            - bookmarklets
+            - protocol adapters/proxies
+            - stream filters
+          - Views
+            - (filters)
+            - force-directed etc.
+            - Blog
+            - Document (book)
+            - IM/IRC etc
+            - Trellis
+            - Wiki
+            - Photo
+            - Calendar
+        - pop-out 2nd List
+        - pop-out Card
+        - pop-out Help (F1 - try on Chrome)
+      - Standard icons - that mean same across different views
+        - card ([])
+        - help (?)
+        - advanced (+) or (...)
+        - cut/copy/paste
+        - back button
+        - 
+      - Things I want to do
+        - Write CV
+      - GTD
+        - http://web.archive.org/web/20120314155329/http://www.actionmethod.com/methodology
+      - Timeline
+        - hide until/show periodically - reminders!
+      - what common list/hierarchical relations are there?
+        - time
+        - dependency
+        - part/whole - mereology
+          - http://www.w3.org/2001/sw/BestPractices/OEP/SimplePartWhole/
+      - outlinify existing html page
+        - https://code.google.com/p/h5o/
+        - http://www.whatwg.org/specs/web-apps/current-work/multipage/sections.html#outlines
+        - https://code.google.com/p/h5o/
+      - call nodes "Dots" as in things to join
+      - Reference
+        - https://sites.google.com/site/onlineoutliners/
+        - http://www.atpm.com/12.07/atpo.shtml
+        - http://www.theoutlinerofgiants.com/outliners#3650051
+    - Use remoteStorage-style for binary storage
+    - chat + shared, live-editable doc 
+    - code in browser, coderunner https://github.com/MatthewMueller/coderunner
+      - uses Linux VM sandbox (via docker) OR NOT..
+    - https://github.com/coreh/nide
+    - source editor
+      - nide uses codemirror
+      - http://codemirror.net/
+    - http://www.concurix.com/debug
+    - App Scenarios
+      - user can choose the features they want, modes of comms people can contact them with?
+      - Feed Reader
+        - build for App.net, allow use in Seki
+        - Salmon protocol : https://code.google.com/p/salmon-protocol/
+        - RDF model
+          - http://schema.org/Article
+          - http://schema.rdfs.org/mappings/sioc
+        - api-driven
+          - JSON
+        - requirements
+          - Minimal
+            - add feed URI
+            - list feed URIs
+            - delete feed URI
+            - anyFeed 2 JSON (Universal Feedparser)
+            - poll feeds
+            - get entries
+          - Basic
+            - Etags & Last-modified
+          - Advanced
+            - detect feed URI (from HTML)/bookmarklet
+            - import OPML
+            - export OPML
+          - 
+      - availability - I'm online - preferred mode of comms:
+        - ping
+        - short
+        - long
+      - http://hillside.net/plop/plop2003/Papers/weiss-web.pdf
+      - UX Patterns
+        - http://quince.infragistics.com/UX-Design-Patterns.aspx
+        - http://www.quora.com/What-are-the-best-online-UX-design-pattern-resources
+        - http://ui-patterns.com/patterns/ShoppingCart
+        - 
+      - Shopping Cart
+      - 
+    - Principles
+      - http://www.w3.org/TR/webarch/
+      - a cache of a global address space. Fetch what you like, read/execute : http://moronlab.blogspot.it/2010/01/urbit-functional-programming-from.html?showComment=1263570771214#c6454142774827414532
+      - Algebraic types and immutability: Yuck. Your Haskellian / type-theoretical mis-spent youth is showing. Actual computers contain rewritable storage and will likely always contain it. This is something to be celebrated, not a set of genitalia to be shamefully hidden behind a Christian fig leaf.
+      - Least Effort!
+        - but : a computer system should maximally reward learning : http://www.loper-os.org/?p=861
+      - start with View
+      - make views potentially editable
+      - don't break the Back button
+      - Application State is held on the client
+        - Fielding : http://groups.yahoo.com/neo/groups/rest-discuss/conversations/topics/3583
+        - on shopping carts : http://groups.yahoo.com/neo/groups/rest-discuss/conversations/topics/4832
+        - cookies http://www.ics.uci.edu/~fielding/pubs/dissertation/evaluation.htm#sec_6_3_4_2
+        - gosling : http://1997.webhistory.org/www.lists/www-talk.1995q3/0354.html
+    - handling anyJSON (/any form-encoded)
+      - best : send JSON-LD
+      - next : include a baseURI
+      - minimal : server assumes a baseUR
+    - as Platform
+      - host apps internally
+      - make separate/standalone
+        - with a little bit of node shim
+    - Blog design
+      - nice : http://justinkozuch.com/post/pinterest-hacked-what-do-i-do/
+      - http://makemydesignflat.com/
+      - "Ask Me Anything" http://www.goatslacker.com/
+    - Documentation
+      - http://yui.github.io/yuidoc/
+    - https://code.google.com/p/linked-data-api/wiki/Specification
+    - local storage
+      - http://www.w3.org/2013/04/semweb-html5/triplestoreJS/
+      - https://github.com/jarednova/jquery-total-storage
+      - http://www.jstorage.info/
+    - cleaning blog data
+      - http://stackoverflow.com/questions/15063870/jtidy-java-api-toconvert-html-to-xhtml
+      - http://jena.apache.org/tutorials/rdf_api.html#ch-Reading RDF
+      - http://stackoverflow.com/questions/4302567/passing-a-file-as-a-command-line-argument-and-reading-its-lines
+    - http://mnot.github.io/hinclude/
+    - http://tools.ietf.org/html/rfc6570 // uris templates
+    - https://github.com/gf3/sandbox
+    - WebHooks (andBlackjack!)
+    - make pluginslooklike FB/iPhone apps store
+    - move config to json files (so Icanmakeexecutable)
+    - http://www.slideshare.net/gkellogg1/jsonld-and-mongodb
+      - http://greggkellogg.net/2012/08/json-ld-and-mongodb/
+    - read up on streams :
+      - https://github.com/joyent/node/wiki/Api-changes-between-v0.8-and-v0.10
+    - Rules :
+      - replacing typical dispatching/filtering approaches because a *lot* of wiring will be required
+      - inputs : path, method, headers - especially 'Content-Type' and 'Accept', 'Authorization' (to get user specs for access control)
+      - outputs : handler, target store, sparql template, output template, per-user logging
+      - also reasoning over RDF data, FOAF smushing etc. (later)
+    - https://drive.google.com/keep/
+    - http://about.travis-ci.org/docs/user/languages/javascript-with-nodejs/
+    - https://github.com/jed/authom
+    - https://github.com/jed/hyperspider
+    - per-account access log (c.f. spammed twitter)
+    - "stop making me sign up" https://medium.com/design-startups/3c390ea15d1
+    - http://arstechnica.com/gadgets/2013/09/fancy-node-js-based-blogging-app-ghost-goes-live-to-backers/
+    - http://en.wikipedia.org/wiki/Platform-enabled_website
+    - http://www.concurix.com
+    - http://en.wikipedia.org/wiki/Comparison_of_text_editors#Basic_features
+    - jsonld.js uses request - big package, might be useful
+    - try on Google App Engine
+    - -------------------------------------
+    - dynamic, contextual UI
+      - http://en.wikipedia.org/wiki/Context-sensitive_user_interface
+      - http://www.youtube.com/watch?feature=player_embedded&v=LfEcHi3tmKY
+    - entity extraction
+      - build non-common word/Name Like Phrase list
+      - assign type to each word/Name Like Phrase
+      - auto-lookup in dbPedia
+      - check manually
+    - http://gruntjs.com/
+    - Agents : NoFlow
+    - Protocols/Sockets/chat
+      - http://socket.io/
+      - http://incompl.github.io/cloak/
+      - http://weblog.bocoup.com/building-multiplayer-html5-games-with-cloak/
+    - Danny Uses
+      - programming language etc. encyclopedia
+        - lot and lot of links
+      - creative writing
+      - studio documentation
+      - wood tools
+      - blogging
+      - wiki
+      - delicious clone
+      - pinterest clone
+    - Mish: like a big jumbled mess in a drawer, and he presto...all tidied and sorted and labelled!
+    - Minimum Viable Product?
+    - Seki Rev 0 March 2013
+      - Think Smalltalk
+        - What was I thinking?
+      - add TinyMCE/RDFaCE
+        - need to port proxy.php to node
+        - make quasi-Wiki
+          - apply optional date & title for bloggish
+            - create URI from date?
+            - change manage
+        - with Tidy for parse errors
+          - http://ejohn.org/blog/pure-javascript-html-parser/
+      - add ACE code editor
+        - make Javascript install/runnable
+          - how to sandbox? ACL?
+          - Try this out! include a hook in the node.js source
+            - switch on/off in config.features {}
+        - search box
+        - CSS/HTML/freemarker/javascript/turtle/text/sparql
+        - template editor
+        - Do you want to store changes?
+      - bookmarking a la delicious
+        - make vocab
+        - bookmarklet
+        - import delicious links
+        - import OPML/ accept RSS feeds
+        - pump data to delicious API
+          - http://mashupguide.net/1.0/html/ch14s02.xhtml
+            - The add Submethod
+          - https://delicious.com/developers/addnewbookmark
+          - https://github.com/bnoguchi/everyauth#readme
+      - Tribulator data browser TabulatorNG
+        - http://mbraak.github.com/jqTree
+        - http://jqueryui.com/accordion/ for content
+      - add sources 
+        - http://dannyayers.com/sparql?query=
+        - dbPedia
+      - refactor out verbosity
+      - merge itemTemplate and contentTemplate
+      - replace creativeMap with editor
+      - sort out config
+      - add tests
+      - write up changes & next to-do
+        - https://github.com/danja/seki/commits/master
+    - Seki Rev 1
+      - auth - check what Connect offers
+      - check http://createjs.org/ as alternative to tinyMCE
+        - add manual annotations
+      - ACL
+      - upload files
+      - package for npm
+      - http://lab.hakim.se/reveal-js
+      - docs/screencast
+        - 2-part 
+          - user
+          - dev
+      - timeline view
+        - gannt chart
+          - http://bl.ocks.org/dk8996/5538271
+      - ETag and Last-Modified 
+        - http://www.intertwingly.net/blog/2006/11/22/Detecting-Not-Modified-Reliably
+      - version control
+        - when editing an existing doc, offer "Archive previous version" checkbox
+        - http://example.org/Example_2013-03-31Z12:30
+      - purplify
+        -  add <a name="" /> markers to every paragraph (a node ID NID123)
+        - http://www.mnot.net/blog/2004/05/30/fragid_redux - has css
+        - http://web.archive.org/web/20050309004010/http://simon.incutio.com/archive/2004/05/30/plinks - has js
+        - tim bray :
+          - <p id="p-21">
+          - http://www.tbray.org/ongoing/ongoing.js
+          - http://www.tbray.org/ongoing/When/200x/2004/05/29/PurpleNumbers#p-25
+          - http://www.tbray.org/ongoing/When/200x/2004/05/31/PurpleAgain
+            - hash and/or pilcrow?
+        - make every <h4> etc. into a target
+      - twitter clone
+        - http://net.tutsplus.com/tutorials/html-css-techniques/build-a-twitter-clone-from-scratch-the-design/
+      - dataset metadata
+        - http://blog.ldodds.com/2013/03/04/what-does-a-dataset-contain/
+      - turtle mode for ACE 
+        - http://ace.ajax.org/tool/mode_creator.html
+      - markdown editor
+        - https://github.com/evilstreak/markdown-js#readme
+        - https://github.com/kates/html2markdown
+        - https://code.google.com/p/pagedown/wiki/PageDown
+    - Seki Requirements
+      - Inspirations 
+        - Unix : kernel, shell, utilities
+        - Smalltalk
+        - emacs
+        - imagine a world where many people have ideas and can turn those ideas into reality, without having to join a large organisation and give up a part of the value that they create 
+          - 
+      - Core
+        - templating infrastructure
+        - RESTful API
+          - media types
+        - editors for primary media types
+        - admin interface
+        - authentication
+        - call external stores
+        - support reflection a la Smalltalk
+          - http://en.wikipedia.org/wiki/Reflection_(computer_science)
+        - support plugins
+          - add media type
+        - support themes
+          - at least two very different
+      - comprehensive tests
+      - comprehensive documentation
+      - demos
+        - CMS
+          - blog
+          - bookmarker
+          - wiki
+        - pipeline - call external services
+      - npm packaged
+    - Seki Apps
+      - Facebook App
+        - archive people's timelines
+        - searchable
+      - iPhone App?
+      - Periodic table
+        - maybe not - already got this
+          - http://www.ptable.com/
+        - http://www.rsc.org/periodic-table
+        - http://www.csrri.iit.edu/periodic-table.html
+        - prime with Wikipedia
+      - Almanac!
+        - http://en.wikipedia.org/wiki/Almanac
+        - http://www.almanac.com/
+        - prime with Wikipedia
+        - add a little bit of info every day
+        - http://www.infoplease.com/almanacs.html
+          - check the sidebar
+      - Algorithm reference/of the week
+      - Adaptive Case Management
+        - http://calipso.abiss.gr/
+        - http://en.wikipedia.org/wiki/Advanced_case_management
+          - "The tasks required by a case usually involve creating a case folder or container for all required artifacts."
+        - is Business process management but dynamic, unstructured
+        - people, roles, workflows, tasks and assets
+        - http://acmisis.wordpress.com/what-is-adaptive-case-management-acm/
+        - 
+      - Dribbble https://dribbble.com
+        - Join Dribbble today and you’ll be able to…
+        - Find & follow
+        - Discover designers and the projects they’re working on.
+        - Save your faves
+        - Create an inspiration stream from your favorite shots.
+        - Create buckets
+        - Save and organize shots from any designer into Buckets.
+        - Go Pro and hire designers
+        - Purchase a Pro account to Find Designers by location and skills, contact members about work opportunities, make member lists, and more.
+    - Fuseki in a Box
+      - startup: 
+        - run locally
+        - connect to existing store
+      - panes
+        - add triples (model dropt-down)
+        - delete triples " + clear model
+        - query
+      - add IdeaGraph-style drop box for Upload to Cloud
+      - - nah, better: a directory that eats whatever you drop into it
+      - http://www.activestate.com/blog/2012/03/install-stackato-micro-cloud-one-command
+    - Seki misc
+      - Google Drive API - use as model
+        - https://developers.google.com/api-client-library/javascript/samples/samples
+        - 
+      - rules
+        - https://github.com/C2FO/nools
+        - http://blog.dougamartin.com/2012/05/getting-started-with-nools.html
+        - http://www.agfa.com/w3c/euler/rdfs-rules.n3
+      - move to bergi's node-rdf https://github.com/bergos/node-rdf
+      - look into https://github.com/amdjs/amdjs-api/wiki/AMD
+      - https://twitter.com/#!/juansequeda/status/191909820486533120
+      - https://twitter.com/#!/Swissdat/status/191912356958310400
+      - TODO
+        - read http://www.w3.org/2011/09/LinkedData/Report
+        - http://www.html5rocks.com/en/mobile/responsivedesign/
+        - http://www.w3.org/TR/Content-in-RDF10/
+        - think about multi-instance (agent model)
+        - admin utilities: save/drop/load commands
+          - bake/unbake done
+          - would need to disable auto-file-read where graphs are out of sync
+          - make manifest file too
+        - bookmarklet
+          - tweak post form
+          - support bookmark? type
+          - support images
+        - Admin Utilities 
+          - graph copy, delete, rename
+            - cool URIs note
+        - Use XHTML fragments, deliver using AHAH
+          - http://domscripting.com/presentations/xtech2006/
+            - http://duganchen.ca/single-page-web-app-architecture-done-right/
+            - https://github.com/mpuig/hijax
+          - https://github.com/ded/Reqwest
+        - set up support for GET "application/json"
+          - JSONHandler
+          - separate query section from serving section
+        - refactor GET "text/html" to shape of JSONHandler
+        - move current handling of RDF to RDFHandler
+          - ?? named graphs straight proxy to Fuseki?
+        - proxy SPARQL & HTTP Update to Fuseki
+          - Accept type
+            - may be tricky with SPARQL SELECT vs. CONSTRUCT
+            - plus PUT etc.
+        - use mustache templating
+          - https://github.com/janl/mustache.js#readme
+        - work on headers: cache-control etc.
+        - mock authentication
+        - prepare for client-side RDF
+        - put http-proxy based router on input, 
+          - Accept: RDF -> auth -> Public
+          - Accept: HTML -> Seki -> auth -> Public
+        - start test framework
+          - Proc
+          - http://vocab.deri.ie/rdforms
+          - http://www.w3.org/2009/sparql/docs/tests/
+        - reorganize packages
+        - merge dev branch back into main
+        - make packageable
+          - http://howtonode.org/how-to-module
+          - package.json
+          - npm?
+        - make use of subdomains: *.photomatt.net. 14400 IN A 64.246.62.114
+        - test on server
+          - try with Scute
+        - implement I Ching service
+          - Special Pages (a la Wiki) e.g. list of resources (a la hypermedia discovery)
+        - tweak assembler to create another dataset, to support one Public + one Private
+        - implement authentication/authorization
+          - (see Seki on G+)
+          - Basic over HTTP for now
+          - ACL based on 
+            - http://www.w3.org/ns/auth/acl#
+            - see also http://ns.inria.fr/s4ac/v2/s4ac_v2.html
+            - roles as in Dominik's papers 
+              - http://www.w3.org/community/rww/wiki/AccessControl
+            - Bergi's vocab 
+              - http://ns.bergnet.org/tac/0.1/triple-access-control#
+            - SPIN
+              - http://spinrdf.org/spin.html
+              - http://spinrdf.org/sp.html
+          - http://trueg.wordpress.com/2012/03/19/you-do-not-need-to-know-rdf-or-foaf-to-use-webid/
+        - RemoteStorage (and similar) support
+          - http://tutorial.unhosted.5apps.com/
+          - http://www.firebase.com/how-it-works.html
+          - https://github.com/unhosted/openphoto#readme
+        - panopticlick auth check?
+          - https://www.eff.org/deeplinks/2010/01/primer-information-theory-and-privacy
+        - tweak input router to HTTPS as appropriate
+        - test with Virtuoso
+        - play with templates
+          - Go templates:
+            - https://plus.google.com/u/0/105544220472422222613/posts/UaU2pCTUFuk
+          - incorporate URI templates?
+          - DSL? 
+            - property paths
+            - pipelines
+            - affordances
+              - javascript in model
+        - look into deployment in Cloud
+          - http://www.amundsen.com/blog/archives/1116
+        - map to agent model
+          - https://secure.flickr.com/photos/danja/6788357883/
+          - https://secure.flickr.com/photos/danja/5558883807/
+        - pick another app to implement 
+          - incorporate project vocab
+            - bookmarker
+              - http://techcrunch.com/2012/04/12/fetchnotes-launches-a-simple-cloud-based-note-taking-service-that-twitter-users-will-love/
+              - +notes : tag QI (quick idea :)
+            - listy thing
+              - http://www.atpm.com/10.03/atpo.shtml
+              - http://en.wikipedia.org/wiki/Outliner
+              - more direct move-to-outline (two page?)
+              - http://www.theoutlinerofgiants.com
+          - remember federation
+          - /stuff namespace
+            - http://open.vocab.org/
+        - something using VoID
+        - http://demo.lod2.eu/lod2demo
+        - http://data.totl.net/
+        - http://www.windley.com/archives/2012/03/ways_not_places.shtml
+        - http://wiki.webhooks.org/w/page/13385124/FrontPage
+        - http://code.google.com/p/elda/source/browse/elda-testing-webapp/src/test/java/com/epimorphics/lda/systemtest/ResponseStatusTests.java
+        - http://www.snee.com/bobdc.blog/2012/03/playing-with-sparql-graph-stor.html
+      - Seki meta
+        - http://www.opensearch.org/Home
+        - Sitemap
+        - robots.txt
+        - VoiD & SPARQL descriptions (w3c)
+          - check lov
+        -  Atom APP service document
+      - Write WADL, use for Java client generation
+        - http://apigee.com/docs/console-go/content/wadl-reference
+        - CONSOLE
+          - https://apigee.com/togo
+          -  : http://apigee.com/docs/api-platform/content/set-apigee-api-console
+        - https://wadl.java.net/
+        - http://bitworking.org/news/193/Do-we-need-WADL
+      - https://github.com/danja/seki and https://plus.google.com/b/102910670341143019851/
+      - Goals/Purpose/Aims?
+        - loosely-coupled platform
+        - facilitate connectivity
+          - minimizing impedance mismatch
+        - multi-instance
+        - everything is configurable
+          - monitor everything
+            - analytics
+        - test everything
+        - support information processing
+          - doc management, data management, message management
+        - refactor description
+          - current : Seki is a front-end to an independent SPARQL server using node.js
+          - new : Personal Linked Data Platform ??
+        - support all my planned apps :)
+          - yak shaving not bikeshedding!
+        - a target : Linked Data Profile - http://www.w3.org/Submission/2012/02/
+          - also http://www.w3.org/2012/ldp/charter#scope
+          - http://www.w3.org/2001/sw/wiki/TurtlePatch
+        - transparent federated queries
+          - point the query part at different stores
+            - also different for R/W
+        - caching ?? (watch get/update ratio, vary cache size correspondingly)
+        - scale 
+          - aim for ~10 million triples as typical usage
+          - dbPedia ~ 1 billion triples
+            - http://www.w3.org/wiki/RdfStoreBenchmarking
+          - re-read Fuseki & TDB docs
+            - optimiser
+      - First Application : serve I Ching data
+        - Aim (MVP)
+          - provide RDF and HTML representations of all (public) resources at individual deref'able URLs
+          - HTML representation will support link-based navigation and representation editing through forms
+        - clean source data, convert to rough RDF/XML (nearly done)
+        - load data
+          - one model for all hexagrams
+          - one model for vocabs (pipeline input)
+        - serve data
+          - page templates
+        - edit data via HTML forms
+      - Play
+        - visualizations: check: http://mbostock.github.com/d3/ex/
+        - graph viz vihttp://bl.ocks.org/rkirsling/5001347
+      - Requirements (based on suggestions from @ephemerian and @kendall)
+        - I/O - that's what it's all about
+        - views/editing
+          - initially add hoc
+          - later Fresnel?
+            - http://www.w3.org/2005/04/fresnel-info/manual/ ?
+        - authentication 
+          - Basic over HTTPS
+          - https://github.com/magnetik/node-webid
+        - authorization 
+          - Private store contains ACL
+          - initially 
+            - Private store admin R/W only, inaccessible directly
+            - Public anyone R admin W
+        - logging 
+          - text - for debugging (must be a node util available)
+          - RDF model - for analytics
+        - federation
+          - it should be trivial to run federated queries
+          - SPARQL repository - prepared queries for e.g. selecting by shared interests
+        - bake/unbake
+        - caching
+        - text search
+        - throttling
+        - versioning
+          - layer on top
+        - support for Linked Data API
+          - http://code.google.com/p/linked-data-api/
+        - WebDAV
+      - Test Framework
+        - http://www.w3.org/2009/sparql/docs/tests/
+        - implementation
+          - use zombie for HTML bits
+          - // what would an RDF zombie look like?
+        - Design
+          - https://github.com/danja/seki/blob/dev/src/tests/notes.txt
+      - Common Graphs
+        - ACL
+        - event logs
+        - registry of other services/Seki instances (federation!)
+          - VoID
+        - SPARQL repository
+      - Nice to have
+        - data validation
+        - rules/reasoning/explanation/statistical stuff (much later!)
+      - UI - use more screen horizontally, with window-thing : http://www.wdyl.com/#linked+data
+      - Reference
+        - http://www.w3.org/community/rww/wiki/AccessControl
+        - http://dvcs.w3.org/hg/cors/raw-file/tip/Overview.html
+        - http://trueg.wordpress.com/2012/03/15/webid-a-guide-for-the-clueless/
+        - http://roy.gbiv.com/untangled/2008/rest-apis-must-be-hypertext-driven
+        - http://www.w3.org/TR/HTTP-in-RDF10/
+        - http://prescod.net/rest/mistakes/
+        - http://javascript.infogami.com/Javascript_in_Ten_Minutes
+        - http://backbonejs.org/
+        - https://github.com/antoniogarrote/rdfstore-js
+        - http://howtonode.org/traitsjs
+        - http://betterexplained.com/articles/how-to-make-a-bookmarklet-for-your-web-application/
+        - https://github.com/shapeshed/nodejsbook.io.examples
+        - http://nodeguide.com/beginner.html
+        - http://css-tricks.com/snippets/html/post-data-to-an-iframe/
+        - 
+        - visualization
+          - you've got hypertext :
+            - http://journals.tdl.org/jodi/article/viewArticle/133/131
+          - pathetic fallacy
+            - http://swui.semanticweb.org/swui06/papers/Karger/Pathetic_Fallacy.html
+          - http://jesusabdullah.github.com/2011/02/26/plolt.html
+          - http://solutoire.com/flotr/
+          - http://bost.ocks.org/mike/hive/
+          - http://code.google.com/p/sgvizler/
+          - https://github.com/alangrafu/visualRDF#readme
+          - http://codinginparadise.org/projects/svgweb/docs/QuickStart.html
+          - http://mbostock.github.com/d3/ex/force.html
+      - App Ideas (see separate list)
+        - Data augmenter units
+          - http://api.duckduckgo.com/
+        - SPARQL repository
+        - blog
+        - Wiki
+          - https://www.jottit.com
+        - projects
+          - https://trello.com/
+        - general purpose recommender
+          - create a theme
+          - add items
+          - if you like this -> you'll like that
+        - SVG Whiteboard
+        - federated...
+        - http://ifttt.com/
+        - http://notebookjs.me/#
+        - allow Listy Thing *Pages*
+        - http://techcrunch.com/2012/04/12/fetchnotes-launches-a-simple-cloud-based-note-taking-service-that-twitter-users-will-love/
+        - webfinger thing
+          - http://tools.ietf.org/html/draft-jones-simple-web-discovery-02
+        - the dreaded RSS aggregator
+          - https://github.com/danmactough/node-feedparser
+        - http://ipython.org/ipython-doc/dev/interactive/htmlnotebook.html
+        - http://oli.web.cmu.edu/openlearning/forstudents/freecourses/media-programming
+        - http://bionicteaching.com/?p=2176
+        - Courseware
+          - http://sakaiproject.org/
+          - start by taking *exactly this* and expressing it in RDF
+            - http://www.inf.unibz.it/~franconi/dl/course/
+          - http://labs.mondeca.com/dataset/lov/details/vocabulary_crsw.html
+          - create a genuine course?
+        - natural history square metre
+          - microscope slide
+  - Spikes Next Rev
+    - scrape
+      - http://www.c2.com/cgi/wiki?TopType
+      - lambdatultimate
+      - http://webseitz.fluxent.com/wiki/FrontPage
+  - JEdwards Next Rev
+    - click on fie open
+  - RDF data viz service
+    - simple data derived from well-know terms via SPARQL query
+    - rendering done in-browser (quasi-Ajax)
+      - http://stackoverflow.com/questions/7034/graph-visualization-code-in-javascript
+    - include at least force-directed (with good nav - usable for 1000+? items)
+    - query/DB given as URI(s)
+    - demo - one specific endpoint
+      - show online DB containing details of semweb researchers, companies, tools, services
+      - entries can be added via URI -check 
+  - Project Management
+    -  Issue tracking
+      - http://www.w3.org/2005/01/wf/flow.n3 -  Finite state automaton ontology
+    - checkworkflows bookfor Task model etc.
+    - http://www.edwardtufte.com/bboard/q-and-a-fetch-msg?msg_id=000076
+  - Services
+    - https://github.com/castagna/SARQ - SARQ - Free Text Indexing for SPARQL
+    - http://www.decafbad.com/twiki/bin/view/Main/AgentFrank
+  - Virtual Machines
+    - http://www.docker.io/
+    - http://www.vagrantup.com/
+  - Expert System ToDo list app
+    - (include workflowdependencies)
+    - add task :
+      - sliders for characteristics
+      - indoor-outdoor
+    - scale probability according to conditions
+    - http://martinfowler.com/bliki/RulesEngine.html
+    - http://docs.jboss.org/drools/release/5.3.0.Final/drools-expert-docs/html/ch01.html
+  - Build a catalogue site
+    - del.icio.us
+    - Lambda the Ultimate
+    - programming blogs : http://www.loper-os.org/
+    - duckduckgo scrape
+    - keyword extraction
+      - alchemy API
+  - SPICE Vocabulary : Resources
+    - Vocabulary homepage : http://purl.org/stuff/spice
+    - SPICE Reference
+      - Wikipedia : http://en.wikipedia.org/wiki/SPICE 
+      - The SPICE Page : http://bwrc.eecs.berkeley.edu/classes/icbook/spice/
+      - (Core) Circuit Elements : http://bwrc.eecs.berkeley.edu/classes/icbook/spice/UserGuide/elements_fr.html
+        - this may be scrapable for data
+    - RDF
+      - A Quick Intro (rather old, but still valid) http://www.rdfabout.com/quickintro.xpd
+      - RDF at the W3C (specifications etc) : http://www.w3.org/RDF/
+  - Scute Next Rev
+  - Site Next Rev
+    - services
+      - http://aksw.org/Projects/SPARQL2NL.html
+      - http://rdf-translator.appspot.com/
+      - http://mnot.github.com/redbot/
+  - Web Beeps
+    - Process Modelling
+      - http://www.w3.org/TR/xproc/
+      - self-replicating thing..?
+      - http://www.garshol.priv.no/blog/225.html
+    - more write-up
+    - "mail Web Beeps"
+    - bit of promo - podcasters
+    - recorder widget
+    - "add beep widget to your site"
+    - 
+    - vocab
+      - real-time vs. not
+      - monitoring - durations? heartbeat?
+    - Turtle generation
+      - describe() - visitor pattern?
+    - Cache-control
+    - http://code.google.com/p/rdf-pipeline/
+  - Each rev is ~ a week
+  - WebBeep Next Rev
+  - Little Ideas
+    - self-contained editable page
+    - auto-generate painting by numbers
+      - http://www.stoik.com/products/hobby/stoik-color-by-number/
+    - contextbot
+      - http://xkcd.com/1085/
+  - Old
+    - JSON-LD context for OS Search API results
+    - danbri :
+      - What if you wanted to amend RDFa and Microdata to allow markup element trees to be qualified,e.g. by time?
+      - http://www.w3.org/wiki/WebSchemas/TemporallyScopedMarkup ... how would that translate into a quads structure?
+      - WebSchemas/TemporallyScopedMarkup - W3C Wiki
+  - Interstices
+    - make model
+    - crawler for seeding images?
+    - sliders UI
+    - Mechanical Turk for seeding data?
+    - 
+  - Proc
+    - Agent Model
+      - agents message each other
+        - an agent is a computer = a computing unit
+          - diagram of computer
+          - http://www.c-jump.com/CIS77/CPU/VonNeumann/lecture.html
+    - XProc mapping (informative)
+    - Implementations
+      - framework for Executable RDF
+      - http://www.ifttt.com/
+      - Beeps - demo GA
+      - Synth 
+        - modules separated by HTTP!
+      - Neural nets (check available libs), classifiers etc
+        - http://harthur.github.com/brain/
+      - Data consumers
+        - anything2RDF set up declaratively, componentized
+          - Virtuososponges
+        - bit like Fresnel
+      - Data producers
+        - RDF2anything
+      - streaming things : xmpp, ircbot etc
+        - emailer?
+      - Testing
+        - Vocab Validator : Data Stars
+          - http://pedantic-web.org/tools.html
+          - remember Vapour
+          - RDF lint
+          - http://ebiquity.umbc.edu/blogger/2012/03/04/lov-secrets-of-the-real-ontologies-of-the-lod-cloud/
+          - http://greggkellogg.net/2012/03/18/a-new-rdfa-test-harness
+          - term for steward? https://plus.google.com/114406186864069390644/posts/8d239nCmf8d
+        - Seki see Seki
+      - zip compression chain - demo GA
+      - http://www.nada.kth.se/~viggo/problemlist/compendium.html
+    - Video!
+    - Parameters - refactor nitRandom
+    - Visualization
+      - http://code.google.com/p/sgvizler/
+      - http://code.google.com/apis/chart/interactive/docs/gallery/orgchart.html#Data_Format
+    - Dedicated editor
+    - Mad Ideas
+      - make a computer http://www.c-jump.com/CIS77/CPU/VonNeumann/lecture.html
+  - Project vocab
+    - https://plus.google.com/107429617152575897589/posts/7pj84m9LT56
+  - XMLNS
+    - creative 404s
+    - vocab wiki
+    - VoID
+  - Sites
+    - Get everything nicely organised and linked
+    - add discrete adverts & analytics
+    - add RDF for everything - especially images, mp3 & vids
+    - microdata/RDFa on index pages (at least)
+      - templater?
+    - integrate with blog data
+    - 
+    - Stuff
+      - Woodcarving
+        - Jigs
+        - Knifes
+        - Tips
+      - Misc
+        - stone carving & paintings
+      - Tech
+  - Blog
+    - remove @en from HTML!!!
+    - http://marshallk.com/add-one-line-to-your-blog-or-twitter-could-become-your-primary-identity
+    - mode switch: skimming/reading
+    - ACK button (a la Like, +1)
+    - http://www.addthis.com/features#.T2chE4xSQ-o
+    - pinterest buttons
+    - http://sharethis.com/
+    - normal | mobile version | navigation page | data | flesh version
+    - next/previous
+    - add left sidebar
+    - improve font, see http://www.tbray.org/ongoing/misc/Colophon
+    - link to Web Beep (My Projects)
+      - Web Beep for this post (next to title)
+    - fix G+ button
+    - fix archives
+    - http://labs.mondeca.com/sparqlEndpointsStatus/index.html
+    - Google Ads, analytics *everywhere*
+    - comments!!!
+    - add hit count property?
+    - add word count property
+    - wtf to do with http://hyperdata.org/microblog/
+    - "Buy Me a Coffee" - see
+    - VoID
+    - Red Pill/Green Pill
+    - http://aksw.org/Projects/RDFaCE
+    - oEmbed (for twitter)
+    - http://tinyurl.com/89g24gr
+  - ShareJS
+    - http://sharejs.org/
+    - http://lifehacker.com/5899346/co+meeting-is-google-wave+inspired-group-collaboration-tool
+    - remote pair programming
+    - Collaborative Comments : 
+      - blog sidebar
+        - live edit
+        - freeze button (with auth) - adds as comment
+    - Wiki
+    - Shared Lists
+      - on JSON objects? Turtle?
+      - http://plcmcl2-things.blogspot.com/
+        - http://the23thingsproject.pbworks.com/w/page/20848476/FrontPage
+          - 22 Design an Application
+    - see also
+      - http://flowingdata.com/2012/03/19/live-coding-implemented/
+      - http://ace.ajax.org/
+      - http://gabrielflor.it/
+  - App Ideas
+    - Local server
+      - server-side component acts as proxy
+      - when disconnect, server offers cached
+    - analyze coverage of existing apps (a la Interstices)
+    - Idea Capture!
+      - include prj:helps etc
+    - Where are you?
+      - situated agents http://en.wikipedia.org/wiki/Situated
+      - agents a bit like tamagotchi
+      - quasi MOO
+      - rooms a la MUD
+        - like library rooms
+        - like IRC but associated with web resources
+        - when you are in a particular room, you can talk to others in that room
+        - MyRooms?
+      - post link bookmarklet a la del.icio.us
+      - background link follower/crawler
+      - notify when two people are nearby
+    - Link Aggregator
+      - http://www.linkrdr.com/links/add_feed/
+      - add subscription list : OPML/twitter/whatever
+      - accumulate contained links
+    - Listy Thing
+      - http://plcmcl2-things.blogspot.com/ 23 things
+      - http://danja.tiddlyspace.com/
+    - http://smiy.sourceforge.net/olo/spec/orderedlistontology.html
+    - http://notebookjs.me/#
+    - auto-comparison of items in different lists based on text search (like a two-way search)
+      - allow symlinking across: sameAs/seeAlso  (actualy sameTopicAs, dc:related?)
+    - Web Presentation : pages are slides
+      - preset
+        - put focus of a page on the link to next slide
+      - pre-recorded sequence of URLs (each a "slide")
+      - can record audio+cues to run
+    - Clonable
+      - http://www.clonestop.com/
+      - http://www.scriptcopy.com/
+      - StackOverflow clone
+        - https://github.com/anantgarg/Qwench
+      - quasi-REST auth: http://stackoverflow.com/questions/319530/restful-authentication
+    - Copy, Transform, Combine (remix vid)
+    - Pinterest, not just pictures
+      - https://pinboard.in/
+    - "Story Behind"/ find sources
+      - take a piece like: http://online.wsj.com/article/SB10001424052970203646004577213010291701378.html
+      - find the papers
+        - possibly;
+        - http://www.brainmusic.org/MBB91%20Webpage/Sloboda_1991.pdf
+        - http://psy2.ucsd.edu/~vjkpublications/pdf/2010%20The%20influence%20of%20affect%20on%20music%20choice%20Ch.25,%20H-book%20of%20M-E.pdf
+        - http://www.getcited.org/pub/102502981
+    - Why Wasn't I Consulted
+      - http://www.ftrain.com/wwic.html
+    - Least Interesting People
+      - along the lines of Facebook recommendations, but who you should unsubscribe from
+    - I did X because of Y
+      - e.g. I learnt how to use SPARQL because of <this post>
+    - Hearing test
+      - https://plus.google.com/u/0/112609322932428633493/posts/NKcC8DKoyHb
+    - https://piazza.com/
+    - Big Plans
+      - Personal Web Server Proxy service
+      - Algorithm repository
+      - lazyweb
+  - Principle - ??
+    - what's shown on blog is determined by a SPARQL query (+?)
+    - as the query is changed, what's shown changes in real time
+    - // and apply to layout
+    - which components are visible?
+  - Modules
+    - make pipelines a la beeps
+    - http://www.snee.com/bobdc.blog/2012/02/pull-rdf-metadata-out-of-jpegs.html
+    - http://apigee.com/about/products/free API toolkit
+  - Scute
+    - Make usable as a text editor
+      - Ctrl-S saves etc.
+      - sort out tabs
+        - one model per tab?
+      - format source (do tabs)
+      - open Recent (files)
+      - smarten up scratchpad
+        - http://www.jwz.org/doc/x-cut-and-paste.html
+    - Vocab Authoring Assistant (term reuse)
+      - point it to proposed vocab in Current graph
+      - give it an empty New graph 
+      - point it to known candidate vocabs - call them Existing
+        - ditto lov, sindice etc.
+      - for each of your terms:
+        - offer similar terms from Existing (with full descriptions)
+          - need similarity measure - algorithms?
+        - offer options:
+          - sameAs term in Existing
+            - (replace) 
+              - add advisory annotation to New
+            - (reference)
+              - add Current term, with sameAs Existing to New
+          - similar to existing
+            - creating statement in New involving term from Current, subClass | superClass / subProperty | superProperty Existing term
+            - copy relevant triples from Current to New
+          - genuinely new term
+            - copy relevant triples from Current to New 
+      - (save New) 
+      - check, if ok replace Current with New
+      - (later add doc generation tools - specgen or whatever)
+    - gnome-do style mode switcher
+      - better define modes - modeless UI!
+    - undo() - Command pattern
+    - evolve scratchpad into clipboard
+      - everything that goes on the system clipboard goes on the scratchpad
+      - gets minimized to icon
+      - mouseover to show contents, click to copy to clipboard
+    - make Help editable
+    -  a serious programming environment ought to be an intimately-personalized affair, like eyeglasses or a hearing aid
+  - Named Graph (including agent stuff)
+    - JS nodes corresponding to methods for use in browser?
+    - simplest thing that could possible work!
+      - Affordances - document (graph)-level triples
+  - Manuel
+    - as new kind of browser
+    - as game - link follower = game player
+      - two windows:
+        - Adventure-like text interactions
+          - change text colour for media type (doc web/data web)
+        - low-level net interactions 
+        - goals - answering a specifc question
+          - get folks to add Easter Eggs to data sets?
+    - potted queries etc. in online repository
+      - keyed off current URI (e.g. SPARQL endpoints)
+      - annotated -title, creator, date, description
+    - http://datatracker.ietf.org/doc/draft-gregorio-uritemplate/?include_text=1
+    - x = construct(endpointURI, query)
+      - http://talideon.com/weblog/2005/07/javascript-memoization.cfm
+  - hyperdata.org
+    - Docs
+      - simple intro to linked data (hypermedia-oriented)
+        - add follow-your-nose bits
+        - resources are linked
+        - the links describe the nature of the resources
+    - Seki demonstration
+    - Data Sources
+      - Vocabs
+        - http://labs.mondeca.com/dataset/lov/index.html#VocabListTable
+        - https://github.com/danbri/Zoo/tree/master/zoo.foaf.tv/zoo/data
+        - see also http://www.w3.org/2010/02/rdfa/profile/data/
+      - Freebase data
+        - http://basekb.com/
+    - 'prentice piece
+      - Originally, the term masterpiece referred to a piece of work produced by an apprentice or journeyman aspiring to become a master craftsman in the old European guild system.
+    - App registry: all things that produce/consume RDF, VoID etc, how to connect
+  - Tokens
+    - http://dannyayers.com/stuff/token-thing/source.html
+    - icon on a page is a token : ■
+      - you can drag that token to the bookmarks bar
+      - (it's actually a link or script)
+    - empty box on a page is a token receiver : □
+      - you can drag a token from the bookmarks bar into the receiver
+      - (it's actually an <input> field)
+    - what to pass across?
+      - form associated with the token that you fill in
+      - when you pass the token along, it passes the data from the form fields
+    - http://en.wikipedia.org/wiki/Geometric_Shapes
+    - http://en.wikipedia.org/wiki/Information_card
+  - minify Turtle
+    - I bet that by replacing every possible repeated URL (racine?) with a prefix, using minimal prefixes and removing any unnecessary whitespace it'd be possible to halve the size of most Turtle files in the wild.
+    - It would blow the human-readability, but then you could always throw in a HTTP X- header or whatever for the small stuff for wherever it was needed, otherwise just supply it normal.
+    - Kurt: I've written routines for converting turtle to prefixed notation and putting it into a condensed format where repeated objects are stored on a comma delimited line, predcates use semi-colon based lines to reduce the repetition of subjects and otherwise to get it into a cleaner notation. It no doubt adds a bit to the overall ingest, but it makes debugging turtle files MUCH easier.
+  - Online Analogue Computer
+    - JSON process runner
+      - http://sriku.org/blog/2012/04/14/creating-dsls-in-javascript-using-j-expressions/
+    - graph drawing
+      - http://jsplumbtoolkit.com/home/jquery.html
+      - http://stackoverflow.com/questions/14725834/flowchart-with-jsplumb?rq=1
+    - http://www.jointjs.com
+    - http://bl.ocks.org/metormote/6392996
+- https://github.com/visionmedia/git-extras
+- SPARQL-based store sync
+  - http://www.w3.org/DesignIssues/Diff
+  - Symmetric Concise Bounded Description (SCBD)
+    - http://www.w3.org/Submission/CBD/#alternatives
+  - RDF Molecules
+    - http://ebiquity.umbc.edu/get/a/publication/178.pdf
+  - Minimum Self-contained Graph (MSG)
+    - http://semedia.deit.univpm.it/submissions/ESWC2005_Poster/ESWC2005_signignRDF.pdf
+- Writing Projects
+  - The Web Platform book
+    - A guide for architects and developers on how to make best use of what the Web has to offer
+    - Notes
+      - for each chapter 
+        - compile list of links
+          - specs
+          - related docs
+          - related software
+        - code demos
+        - howt
+        - summary
+    - Introduction
+      - http://homepages.cwi.nl/~steven/Talks/2013/01-11-future-internet/
+      - http://www.w3.org/TR/ws-gloss/
+      - http://en.wikipedia.org/wiki/Separation_of_concerns
+      - Motivation
+        - Proposal Description
+          - With a gentle change in mindset, established well-known standards can be used to decouple system components and simultaneously simplify development and maintenance within the organization. A side effect is expanded opportunities for community development. The link is the key.
+        - most developers want to build a product that thrives in its environment - and that environment is the Web
+        - bringing well-known benefits of modularity (such as resilience, simplified development and maintenance) to the Web
+        - small, distributed projects linkable into a greater whole
+        - better exploiting Web standards
+    - 
+    - Precursors
+      - pre-Web
+        - Unix philosophy of small cooperating tools with standardized inputs and outputs. It is this philosophy, and the architecture based on it, that has allowed open source projects to be assembled into larger systems such as Linux, without explicit coordination between developers.
+        - The Unix Way
+          - http://www.pappp.net/?p=969
+          -  "Write programs that do one thing and do it well. Write programs to work together. Write programs to handle text streams, because that is a universal interface."
+          - keep it simple
+          - everything is a file
+          - programs that do oe thig ad do it well
+          - programs that work together
+            - doesn't work for graphic apps
+          - portability over efficiency
+          - data i flat text files
+            - for reusability
+          - use software leverage (reuse)
+          - use shell scripts for portability & leverage
+          - user knows what they are doing (rm)
+          - seperate policy from mechaism (what, how, who does what)
+            - kernel vs privileged code vs user space
+            - kernel has minimum
+          - seperate interface from engiens
+          - Linux
+            - favour config files over scripts
+              - reduces repetition
+            - ease of machine manipulability over human 
+              - auto-configure, see Puppet
+            - (dbus, inetd)
+          - Perl, Larry Wall : Manipulexity vs. Whipupitude
+            - "I realized at that point that there was a huge ecological niche between the C language and Unix shells. C was good for manipulating complex things  - you can call it 'manipulexity.' And the shells were good at whipping up things - what I call 'whipupitude.' But there was this big blank area where neither C nor shell were good, and that's where I aimed Perl." 
+        - http://groveronline.com/2013/10/oreilly-webcast-the-linux-way-and-natural-selection-among-distros/
+        - http://www.pappp.net/?p=969
+      - intelligent, autonomous agents 
+        - acts on behalf of user
+        - philosopher's stone of AI
+    - Web as Platform Revisited
+      - gartner curve etc. what fell off?
+      - In 2004, the term began its rise in popularity when O'Reilly Media and MediaLive hosted the first Web 2.0 conference. In their opening remarks, John Battelle and Tim O'Reilly outlined their definition of the "Web as Platform",
+      - Centralized, Decentralized and Distributed systems
+        - Paul Baran http://networkcultures.org/wpmu/unlikeus/resources/articles/what-is-a-federated-network/
+      - Mashups and APIs
+      - Javascript, JSON and Ajax
+        - Ajax as another abstraction of HTTP
+      - Web APIs Are Just Web Sites
+      - Top-down vs. bottom-up
+    - Hypermedia
+      - "Hypermedia Types are MIME media types that contain native hyper-linking semantics that induce application flow. For example, HTML is a hypermedia type; XML is not." Mike Amundsen (2010)
+      - REST, WebArch
+        - http://www.w3.org/TR/webarch/
+      - Content Negotiation
+      - Decoupling
+        - Decoupling CMSs
+          - http://decoupledcms.org/
+            - (come back to this in Linked Data section)
+            - client -> server JSON-LD 
+            - server -> client HTML+RDFa
+              - RDFa used as part of templating system
+              - bonus is it's reusable by 3rd parties
+          - can be extended to decouple data
+      - first coined 1965 Ted Nelson
+    - Services as Agents
+      - failings of RPC (e.g. SOAP)
+        - http://www.edshare.soton.ac.uk/9340/1/01_-_Overview_and_Introduction.pdf
+        - tightly coupled
+        - many APIs not really RESTful
+        - JSON with URLs is not hypermedia, is in effect proprietary
+      - functional programming - reducing side effects
+      - FIPA
+      - modularization - osgi
+      - http://en.wikipedia.org/wiki/Software_agent
+      - http://en.wikipedia.org/wiki/Intelligent_agent
+      - approx general model for a Web agent
+        - not very intelligent!
+        - HTTP client and server as I/O, indexed local store with query/search facility, app-specific behaviour
+        - virtually all Web systems can be seen as (possibly degenerate) forms
+        - may be used in Centralized, Decentralized and Distributed networks
+        - client-in-server
+        - server-in-browser
+      - in-browser JS behaviour can be viewed as a relocatable agent
+        - REST : Code-On-Demand
+        - relocatable server-side code?
+          - open issues : security etc.
+        - working with other Patterns
+          - MVC
+          - http://en.wikipedia.org/wiki/Data_access_object
+      - https://ifttt.com/
+      - browser code server side
+        - http://phantomjs.org/
+      - https://github.com/jed/browserver-client
+      - https://github.com/jed/browserver-node
+      - another on the internet can initiate actions in the browser
+    - URLs are the Key (literally)
+      - "follow your nose" protocol
+      - Web-wide pluggability, URLs as integration points
+      - URLs as database identifiers
+      - HTTP based agents can negotiate to other protocols if appropriate
+        - WebSockets should be useful
+      - http://www.berjon.com/blog/2013/06/linked-data.html
+      - http://www.plasticbag.org/files/native/native_to_a_web_of_data.pdf
+      - http://www.jenitennison.com/blog/node/159
+    - Data on the Web
+      - Linked Data
+        - old semweb 
+          - URIs for identifiers of things, concepts
+          - triple model
+          - triplestore as DB replacement
+          - not very webby
+          - RDF/XML
+        - new semweb 
+          - *URLs* for things, concepts
+          - "follow your nose" for discovery
+          - triples + named graphs
+          - SPARQL
+          - more focus on R/W Web
+          - Turtle
+          - RDFa - microformats on steroids
+            - http://manu.sporny.org/2013/microdata-downward-spiral/
+            - Yahoo, Google, US and UK governments, Drupal, Facebook, Newsweek, Tesco just to name a few. Bestbuy in the US reports that it improved their Google rank tremendously, gave a 30% increase in traffic, and a 15% increase in click-throughs. Last time it was measured, nearly 4% of websites used RDFa "fastest growing format on the web".
+            - http://tripletalk.wordpress.com/2011/01/25/rdfa-deployment-across-the-web/
+            - vs. mircodata
+              - danbri : The RDFa data tends to be rather thin, but seen on more domains, because it's mostly OGP - short bit of text, long bit of text, a category, an image, a link. Microdata tends to be mostly Schema.org, and carries more items per page, and more inter-relationships, but it's seen on fewer domains. Do we care more to see graph markup on more domains, or richer descriptions on those that do use it?
+          - JSON-LD
+            - http://manu.sporny.org/2013/json-ld-is-the-bees-knees/
+        - open data
+          - LOD cloud
+          - dbPedia
+          - http://staff.science.uva.nl/~marx/teaching/DataAnalytics/UvA2sep2013.pdf
+        - timbl's 5 stars
+          - ★ make your stuff available on the Web (whatever format) under an open license
+          - ★★	make it available as structured data (e.g., Excel instead of image scan of a table)
+          - ★★★	use non-proprietary formats (e.g., CSV instead of Excel)
+          - ★★★★	use URIs to denote things, so that people can point at your stuff	
+          - ★★★★★	link your data to other data to provide context
+        - Semantic Web revised
+          - "Don't make me think about linked data " http://www.berjon.com/blog/2013/06/linked-data.html
+          - Google knowledgebase
+          - Schema.org
+        - URIs as identifiers/locators not limited to HTTP
+    - Putting it all together
+    - Appendices
+      - A Relevant specs
+      - 
+    - js solutions
+      - create.js
+      - node.js
+      - Seki - decoupled data
+  - Fluent proposal
+    - WebHooks
+      - http://en.wikipedia.org/wiki/Hooking
+      - http://en.wikipedia.org/wiki/Webhook
+      - https://www.webscript.io/
+      - https://webhooks.pbworks.com/w/page/13385124/FrontPage
+      - 2007 http://progrium.com/blog/2007/05/03/web-hooks-to-revolutionize-the-web/
+      - http://progrium.com/blog/2012/11/19/from-webhooks-to-the-evented-web/
+    - http://www.edwardtufte.com/tufte/advocate_flatland2
+    - http://seriouspony.com/blog/2013/10/4/presentation-skills-considered-harmful
+    - http://homepages.cwi.nl/~steven/Talks/2013/01-11-future-internet/
+    - http://www.w3.org/TR/ws-gloss/
+    - Motivation
+      - Proposal Description
+        - With a gentle change in mindset, established well-known standards can be used to decouple system components and simultaneously simplify development and maintenance within the organization. A side effect is expanded opportunities for community development. The link is the key.
+      - most developers want to build a product that thrives in its environment - and that environment is the Web
+      - bringing well-known benefits of modularity (such as resilience, simplified development and maintenance) to the Web
+      - small, distributed projects linkable into a greater whole
+      - better exploiting Web standards
+    - History
+      - pre-Web
+        - Unix philosophy of small cooperating tools with standardized inputs and outputs. It is this philosophy, and the architecture based on it, that has allowed open source projects to be assembled into larger systems such as Linux, without explicit coordination between developers.
+        - The Unix Way
+          -  "Write programs that do one thing and do it well. Write programs to work together. Write programs to handle text streams, because that is a universal interface."
+          - keep it simple
+          - everything is a file
+          - programs that do oe thig ad do it well
+          - programs that work together
+            - doesn't work for graphic apps
+          - portability over efficiency
+          - data i flat text files
+            - for reusability
+          - use software leverage (reuse)
+          - use shell scripts for portability & leverage
+          - user knows what they are doing (rm)
+          - seperate policy from mechaism (what, how, who does what)
+            - kernel vs privileged code vs user space
+            - kernel has minimum
+          - seperate interface from engiens
+          - Linux
+            - favour config files over scripts
+              - reduces repetition
+            - ease of machine manipulability over human 
+              - auto-configure, see Puppet
+            - (dbus, inetd)
+          - Perl, Larry Wall : Manipulexity vs. Whipupitude
+            - "I realized at that point that there was a huge ecological niche between the C language and Unix shells. C was good for manipulating complex things  - you can call it 'manipulexity.' And the shells were good at whipping up things - what I call 'whipupitude.' But there was this big blank area where neither C nor shell were good, and that's where I aimed Perl." 
+        - http://groveronline.com/2013/10/oreilly-webcast-the-linux-way-and-natural-selection-among-distros/
+        - http://www.pappp.net/?p=969
+      - intelligent, autonomous agents 
+        - acts on behalf of user
+        - philosopher's stone of AI
+    - Web as Platform Revisited
+      - gartner curve etc. what fell off?
+      - In 2004, the term began its rise in popularity when O'Reilly Media and MediaLive hosted the first Web 2.0 conference. In their opening remarks, John Battelle and Tim O'Reilly outlined their definition of the "Web as Platform",
+      - Centralized, Decentralized and Distributed systems
+        - Paul Baran http://networkcultures.org/wpmu/unlikeus/resources/articles/what-is-a-federated-network/
+      - Mashups and APIs
+      - Javascript, JSON and Ajax
+        - Ajax as another abstraction of HTTP
+      - Web APIs Are Just Web Sites
+      - Top-down vs. bottom-up
+    - Decoupling
+      - allows system evolution
+      - REST, WebArch
+        - http://www.w3.org/TR/webarch/
+      - Hypermedia
+        - first coined 1965 Ted Nelson
+        - "Hypermedia Types are MIME media types that contain native hyper-linking semantics that induce application flow. For example, HTML is a hypermedia type; XML is not." Mike Amundsen (2010)
+      - Content Negotiation
+      - Decoupling CMSs
+        - http://decoupledcms.org/
+          - (come back to this in Linked Data section)
+          - client -> server JSON-LD 
+          - server -> client HTML+RDFa
+            - RDFa used as part of templating system
+            - bonus is it's reusable by 3rd parties
+        - can be extended to decouple data
+    - Services or Agents?
+      - failings of RPC (e.g. SOAP)
+        - tightly coupled
+        - many APIs not really RESTful
+        - JSON with URLs is not hypermedia, is in effect proprietary
+      - functional programming - reducing side effects
+      - http://en.wikipedia.org/wiki/Software_agent
+      - http://en.wikipedia.org/wiki/Intelligent_agent
+      - approx general model for a Web agent
+        - not very intelligent!
+        - HTTP client and server as I/O, indexed local store with query/search facility, app-specific behaviour
+        - virtually all Web systems can be seen as (possibly degenerate) forms
+        - may be used in Centralized, Decentralized and Distributed networks
+        - client-in-server
+        - server-in-browser
+      - in-browser JS behaviour can be viewed as a relocatable agent
+        - REST : Code-On-Demand
+        - relocatable server-side code?
+          - open issues : security etc.
+        - working with other Patterns
+          - MVC
+          - http://en.wikipedia.org/wiki/Data_access_object
+      - https://ifttt.com/
+      - browser code server side
+        - http://phantomjs.org/
+      - https://github.com/jed/browserver-client
+      - https://github.com/jed/browserver-node
+      - another on the internet can initiate actions in the browser
+    - URLs are the Key (literally)
+      - "follow your nose" protocol
+      - Web-wide pluggability, URLs as integration points
+      - URLs as database identifiers
+      - HTTP based agents can negotiate to other protocols if appropriate
+        - WebSockets should be useful
+      - http://www.berjon.com/blog/2013/06/linked-data.html
+      - http://www.plasticbag.org/files/native/native_to_a_web_of_data.pdf
+      - http://www.jenitennison.com/blog/node/159
+    - Linked Data
+      - old semweb 
+        - URIs for identifiers of things, concepts
+        - triple model
+        - triplestore as DB replacement
+        - not very webby
+        - RDF/XML
+      - new semweb 
+        - *URLs* for things, concepts
+        - "follow your nose" for discovery
+        - triples + named graphs
+        - SPARQL
+        - more focus on R/W Web
+        - Turtle
+        - RDFa - microformats on steroids
+          - http://manu.sporny.org/2013/microdata-downward-spiral/
+          - Yahoo, Google, US and UK governments, Drupal, Facebook, Newsweek, Tesco just to name a few. Bestbuy in the US reports that it improved their Google rank tremendously, gave a 30% increase in traffic, and a 15% increase in click-throughs. Last time it was measured, nearly 4% of websites used RDFa "fastest growing format on the web".
+          - http://tripletalk.wordpress.com/2011/01/25/rdfa-deployment-across-the-web/
+          - vs. mircodata
+            - danbri : The RDFa data tends to be rather thin, but seen on more domains, because it's mostly OGP - short bit of text, long bit of text, a category, an image, a link. Microdata tends to be mostly Schema.org, and carries more items per page, and more inter-relationships, but it's seen on fewer domains. Do we care more to see graph markup on more domains, or richer descriptions on those that do use it?
+        - JSON-LD
+          - http://manu.sporny.org/2013/json-ld-is-the-bees-knees/
+      - open data
+        - LOD cloud
+        - dbPedia
+        - http://staff.science.uva.nl/~marx/teaching/DataAnalytics/UvA2sep2013.pdf
+      - timbl's 5 stars
+        - ★ make your stuff available on the Web (whatever format) under an open license
+        - ★★	make it available as structured data (e.g., Excel instead of image scan of a table)
+        - ★★★	use non-proprietary formats (e.g., CSV instead of Excel)
+        - ★★★★	use URIs to denote things, so that people can point at your stuff	
+        - ★★★★★	link your data to other data to provide context
+      - Semantic Web revised
+        - "Don't make me think about linked data " http://www.berjon.com/blog/2013/06/linked-data.html
+        - Google knowledgebase
+        - Schema.org
+      - URIs as identifiers/locators not limited to HTTP
+    - js solutions
+      - create.js
+      - node.js
+      - Seki - decoupled data
+  - Salzburg
+    - Emerging Solutions
+      - Danny Ayers
+      - License
+    - changing reality
+    - Contents
+      - A Brief History
+      - Core Semantic Web notions
+      - Emerging Systems
+    - Prehistory 
+      - Neats
+      - Scruffies
+      - http://en.wikipedia.org/wiki/Neats_vs._scruffies
+    - People, World, Software
+    - Abraham Maslow [image] 1943
+      - http://en.wikipedia.org/wiki/Maslow's_hierarchy_of_needs
+    - Knowledge Hierarchy, David Skyrme 1999 
+      - http://www.skyrme.com/
+    - TimBL proposal 1989
+      - http://www.w3.org/History/1989/proposal.html
+    - Jorge Luis Borges Library of Babel
+      - http://en.wikipedia.org/wiki/Library_of_Babel
+    - All about the documents
+    - Search
+    - Sergey Brin, around 2002
+      - "Look, putting angle brackets around things is not a technology, by itself. I'd rather make progress by having computers understand what humans write, than by forcing humans to write in ways computers can understand."
+      - http://jonudell.net/udell/2002-09-19-googles-sergey-brin.html
+    - Document metadata
+      - PICS [image]
+      - Platform for Internet Content Selection
+      - Rating for censorship
+      - Local interest
+      - Education level/value
+      - http://www.w3.org/PICS/
+    - Briefly
+      - RDF as data language
+      - OWL etc.
+      - SPARQL
+      - Linked Data
+      - Doc metadata NG
+    - "It's all about the docs"
+    - "No, it's all about the things"
+      - birds flying into glass
+    - "Ok, maybe the docs are important after all"
+    - Synthesis
+    - Semantic Web : Core Concepts
+    - All models are wrong, but some are useful.
+      - http://en.wikipedia.org/wiki/George_E._P._Box
+    - RDF
+    - Language : Vocabulary, Grammar and Syntax
+    - Knowledge Representation
+    - Data Model
+      - Entity-Relationship
+    - Triples
+      - subject property object
+    - "my dog's name is Basil, he is a Hovawart"
+      - turtle
+    - Open World Assumption
+      - Comparable to 404 Not Found
+      - Missing isn't broken 
+    - Vocabs/Ontologies
+      - Hovawart subClassOf Dog
+    - Vocab Specification
+      - language spec, e.g. HTML, Atom
+      - registry
+      - distributed
+      - 
+    - Relaxation of constraints
+    - schema.org : quasi-centralized
+      - Google Rich Snippets
+    - Syntaxes
+      - ntriples/quads
+      - Turtle
+      - RDF/XML
+      - RDFa
+      - GRDDL
+      - Microformats
+      - Microdata
+      - JSON-LD
+    - The Web
+      - state machine
+      - pages are states
+    - Meaning Triangle
+      - http://en.wikipedia.org/wiki/Triangle_of_reference
+    - Anything can be identified with a URI
+    - Anything important should be identified with a URI
+      - globally unique
+      - express authority
+      - resolvable
+      - linkable
+    - Floaty Web
+    - Follow your nose
+    - Named Graphs
+    - Links are Data
+      - table
+      - silo
+    - SPARQL
+      - example
+    - Linked Data
+      - component parts of statements can be treated as links. 
+      - each statement can be considered a (typed) link :
+      - subject --property--> object
+      - http://linkeddatabook.com/book
+    - Linked Open Data 5 Stars
+      - ★ make your stuff available on the Web (whatever format) under an open license
+      - ★★	make it available as structured data (e.g., Excel instead of image scan of a table)
+      - ★★★ use non-proprietary formats (e.g., CSV instead of Excel)
+      - ★★★★ use URIs to identify things, so that people can point at your stuff
+      - ★★★★★ link your data to other data to provide context
+      - http://5stardata.info/
+      - http://www.w3.org/DesignIssues/LinkedData.html
+    - Linked Data Cloud
+    - Other semantics - NLP, entity extraction
+    - *******
+    - Serendipity
+    - Sundial
+    - Astronomical Model - Orreries
+      - http://en.wikipedia.org/wiki/Orrery
+    - For a language to be useful, it needs agents
+    - agents
+    - REST Constraints include:
+      - http://www.ics.uci.edu/~fielding/pubs/dissertation/rest_arch_style.htm
+      - Chapters 5 and 6
+      - Web APIs Are Just Web Sites 
+      - see also Introduction to a REST API Style http://www.youtube.com/watch?v=6UXc71O7htc
+    - Manipulation of resources through representations
+      - representations are Web Pages 
+      - note media type
+    - Uniform Interface
+    - Self-descriptive messages
+      - headers plus body
+    - Identification of resources
+    - Hypermedia as the engine of application state
+      - State Machines
+      - States are Web Pages
+      - Transitions are hyperlinks
+      - Web pages include links
+    - Hypermedia needs links
+    - Tyranny of the Browser
+      - probably ok for the future
+    - Relaxation of constraints #2
+      - Rich Internet Applications
+      - "Apps" vs. hypermedia
+    - Read/Write Web
+    - POSTing
+      - form-encoded
+      - WebDAV
+      - Ajax/JSON
+      - Atom Publishing Protocol
+      - SPARQL 1.1 Update
+    - Affordances 
+      - interaction model
+      - follow your nose
+      - Eric Wilde http://dret.typepad.com/
+      - Mike Amundsen http://www.amundsen.com/blog/
+    - Separation of Concerns
+      - data model
+      - interaction model
+    - Reducing friction
+    - driven by Open Source
+      - get
+      - fork
+      - hack
+      - share
+      - danny vid http://www.youtube.com/watch?v=sGqJbB4lhvY
+      - github etc
+    - *******
+    - Interesting Initiatives
+    - Read/Write Web
+    - Federated Social Web
+    - Web Intents
+      - http://webintents.org/
+    - Linked Data Platform WG
+      - http://www.w3.org/2012/ldp/charter
+    - Unhosted
+      - http://unhosted.org
+    - Semantic Web in a Box
+    - The Big Intuition 
+      - A Semantic Web-friendly application costs no more to develop than a traditional one
+      - Short term : increased surface area, good for SEO
+      - Longer term : easy reuse
+    - Blue Oceans
+      - no two companies are offering the same product or service
+      - capturing new demand rather than competing for existing market-share
+      - innovation!
+      - http://en.wikipedia.org/wiki/Blue_Ocean_Strategy
+      - http://www.talis.com/nodalities/pdf/nodalities_issue2.pdf
+  - Salzburg
+    - http://wiki.iks-project.eu/index.php/Workshops/Salzburg2012
+    - http://www.iks-project.eu/
+    - investigate IKS projects
+    - apply to my blog
+    - https://docs.google.com/document/d/1XzdsjCfPylcyOoNtDfAgz15HwRdCD-0e0ixh21_U0y0/edit?hl=en_US&pli=1
+  - Maximising surface area :
+    - reduce friction
+    - for wider distribution
+    - simplify addition of content/data
+      - multiple modes
+  - Agents
+    - motivation :
+      - merging best bitzs of Web Services, Agents & functional programming
+      - performance
+      - managing complexity
+    - messages (data) can be functions (functional programming), all nouns, not really verbs
+    - in the same way the messaging protocol can be negotiated, functions can be negotiated to optimized versions, e.g. table lookup
+    - no (shared mutable) state - use monoids, monads
+      - needs associativity & identity
+    - composition from small parts (to control complexity) - composability operator - degree symbol Ctrl+⇧ Shift+UB0. °
+    - in a trivial way, media type can correspond to function types f: T -> T
+      - what about functions around? need argument, result types...
+        - put it in turtle!
+        - f receives X;
+        - produces Y;
+        - codeType C;
+        - inline "some code" .
+          - or code <resource>
+  - Specs
+    - http://tools.ietf.org/html/draft-ietf-httpbis-p2-semantics-24
+  - Creative Writing
+    - http://typem4murder.blogspot.it/2010/12/poes-5-rules.html
+    - http://murderby4.blogspot.it/2010/06/13-types-of-mysteries.html
+  - A Manifesto for Web Agents (/hyperdata manifesto?)
+    - PXD : A Manifester on Desktop
+    - Manifesto design
+      -  thesis, antithesis, synthesis (Hegel)
+      - use Seki - manifesto is also demonstration
+      - main text has plain English overview
+      - link/outline collapse of technical details
+      - ditto of simple explanations
+      - include glossary
+      - big linkage
+    - Core values and beliefs
+      - communication is good, so anything which reduces friction, misunderstanding is likely to be beneficial
+      - support diversity, through uniformity
+        - Lego analogy - single colour/shape bricks
+      - inclusive
+      - Everythings Amazing & Nobodys Happy
+        - http://www.youtube.com/watch?v=8r1CZTLk-Gk
+      - Connolly's bane - http://www.ninebynine.org/SWAD-E/Scenario-HomeNetwork/HomeNetwork/HomeNetwork-347.htm
+        - "The bane of my existence is doing things I know the computer could do for me."
+        - extend: not knowing what my computer could do for me
+          - what if someone from 1980 was shown a web browser?
+      - http://www.slideshare.net/jurgenappelo/complexity-versus-lean
+      - serendipity
+        - Re. ontologies: "Does it answer a business question or—better—does it anticipate & address the next question.” - https://twitter.com/#!/kerfors/status/190058712705142784
+        - Interesting quote from an AI course: "The value of a piece of information is proportional to the chance that you will act on it times the benefit of acting on it." - James Simmons FB
+        - (failure of analogies, language - need words to think about things (who?))
+      - google's ten things : http://www.google.com/about/company/philosophy/
+    - progressive enhancement: server-side too
+    - omni-functional vs.do one thing only and do it well
+      - http://home.zcubes.com/
+    - there are more activities than browsing
+    - current top apps/sites
+      - http://gizmodo.com/5890602/the-most-popular-iphone-and-ipad-apps-of-all-time
+      - http://www.alexa.com/topsites
+    - interactions/affordances - hypermedia
+      - iframes by danbri, via Flickr pinned
+    - visibility of data
+      - Tantek
+    - every resource should have one canonical internal representation (for DRY)
+      - this should be advertised if possible (Link header? q factors)
+    - measure everything, iterate
+    - http://peterfox.com.au/manifesto_write.htm
+    - http://www.ninebynine.org/SWAD-E/Scenario-HomeNetwork/HomeNetwork/HomeNetwork-347.htm
+  - One-Liners
+    - the better things are described, the more reusable they are
+    - Cyber Sutra!
+  - IEEE Piece
+    - If computers were human
+      - world turned upsde down
+      - layered abstraction the other way up, starting with humans
+      - yay! http://wronghands1.wordpress.com/2012/03/01/the-outernet/
+    - 
+    - Affordances
+    - http://www.makemedia.com/blog/2012/03/15/what-is-the-future-for-web-intents/
+    - Dark Ages
+      - ??? taking a photo rather than experiencing the moment ???
+    - embodied AI
+      - http://en.wikipedia.org/wiki/Embodied_cognition
+  - Affordances
+    - RDFPub
+      - http://www.amundsen.com/blog/archives/1083
+      - http://tools.ietf.org/html/rfc5023#section-5
+    - http://www.aaronsw.com/weblog/000931
+    - http://www.bbc.co.uk/news/business-16968125
+      - TiddlyWiki
+    - Named Graphs as modular programs
+      - components are literal javascript functions 
+        - possibly tied to queries
+        - https://github.com/antoniogarrote/rdfstore-js
+        - http://code.google.com/p/rdfquery/
+      - Entity/Component
+        - http://piemaster.net/2011/07/entity-component-primer/
+    - [gesture] does get on resource, including found triples in current graph
+    - http://stateless.co/hal_specification.html
+    - Intents
+      - http://designpush.pbworks.com/w/page/48061310/FrontPage
+      - http://www.makemedia.com/blog/2012/03/15/what-is-the-future-for-web-intents/
+  - Zoom!
+    - the different kinds of info we need when working on a project
+    - remote control joystick analogy?
+  - Creative Writing
+    - http://www.ted.com/talks/andrew_stanton_the_clues_to_a_great_story.html
+    - http://www.katsommers.com/projects/how-not-to-write-a-novel/
+  - Jottings
+    - Cloud = commodification of infrastructure (but - p@ : RaisetheUnitofcurrencytobeapplication&servicesinsteadofinfrastructure
+    - 
+  - "How Should the Web Work?"
+    - open a browser, start typing
+    - modes stuff?
+    - why do I go to gmail.com when I want to see things related to [danny.ayers@gmail.com](mailto:danny.ayers@gmail.com)?
+- Misc Project Ideas
+  - cartoon reader : do ocr on text, identify character in pic
+  - true random number generator - USB
+    - http://arduino.cc/en/Main/ArduinoBoardNano
+    - http://www.createthis.com/products/create-this-arduino-nano-enclosure-3d-printed
+  - syntheton
+  - Plan A
+    - one person takes each app to MVP
+    - "make it happen"
+    - Golden Rules
+      - incremental improvements must always be possible
+        - when switching work activity, leave things so they can be restarted without effort
+- Personal
+  - Acamprosate, also known as N-acetyl homotaurine[2] and by the brand name Campral, 
+- General Reading
+  - https://medium.com/how-to-use-the-internet/3fb3669cc794
+  - http://www.hypebot.com/hypebot/2013/09/what-social-media-is-doing-to-music-hint-its-not-good.html
+- **🔨 The Project**
+  - ==❓Why?==
+    - *Outline the purpose of the project. What went into deciding to do it?*
+  - ==🏁 Outcomes==
+    - *Outline the specific, ideally measurable, outcomes you hope to achieve from this project. Reviewing these can help keep you focused and avoid mission drift. Plus, you can come back after the project is done and use these outcomes to evaluate your success.*
+  - ==🤝 People==
+    - *List the people responsible for the project, using @mentions. You can then filter tasks by person. You may also want to share the project with them.*
+    - @jesse @rodolfo @irena 
+  - ==🗄 Resources==
+    - *A place for any resources and artifacts you create or rely on during the project *
+  - ==✅ Tasks ==
+    - 🤔 Inbox
+      - *Put your tasks here when you think of them. Then move them to "To do" when you're ready to work on them. @rodolfo *
+      - *Tag them if you like, for example #marketing , so you can filter your tasks by type.*
+      - *Here's another tag: #product Click a tag to filter for it. @jesse *
+    - 😉 To do
+      - *Move tasks from here to "Doing" and then "Done" when appropriate #product @irena *
+    - 🤪 Doing 
+      - 🎓 Learning to use Workflowy
+    - 😎 Done
+  - ==📓 Journal==
+    - *Often times you just want to think things through, sort of brain dump, but it doesn't fit into a task or a resource yet. Or you want to just keep a log of activity. Come in here and make some bullets for days, and write your heart out.*
+    - ﻿﻿2025-02-15﻿ 
+      - Just a random day, for example
+    - ﻿﻿2025-02-14﻿ 
+      - Another example day

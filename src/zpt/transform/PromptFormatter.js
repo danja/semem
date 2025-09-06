@@ -309,7 +309,7 @@ export default class PromptFormatter {
 
         // Metadata
         if (options.includeMetadata) {
-            const metadataText = this.formatMetadataForLLM(projection.metadata, analysis);
+            const metadataText = this.formatMetadataForLLM(projection.metadata || {}, analysis);
             structured += template.metadata.replace('{metadata}', metadataText);
         }
 

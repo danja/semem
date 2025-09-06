@@ -33,6 +33,7 @@ export default class ParameterNormalizer {
         }
 
         const normalized = {
+            query: params.query, // Preserve original query
             zoom: this.normalizeZoom(params.zoom),
             pan: this.normalizePan(params.pan),
             tilt: this.normalizeTilt(params.tilt),

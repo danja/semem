@@ -277,11 +277,11 @@ export default class MetadataEncoder {
         return {
             processingTime: {
                 selection: selection.selectionTime || 0,
-                projection: projection.processingTime || 0,
-                formatting: formatting.processingTime || 0,
+                projection: projection?.processingTime || 0,
+                formatting: formatting?.processingTime || 0,
                 total: (selection.selectionTime || 0) + 
-                       (projection.processingTime || 0) + 
-                       (formatting.processingTime || 0)
+                       (projection?.processingTime || 0) + 
+                       (formatting?.processingTime || 0)
             },
             tokenCount: {
                 estimated: formatting.tokenEstimate || 0,
