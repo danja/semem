@@ -20,6 +20,7 @@ console.log('🔑 CLAUDE_API_KEY loaded:', process.env.CLAUDE_API_KEY ? 'YES' : 
 
 import express from 'express';
 import cors from 'cors';
+import session from 'express-session';
 import { randomUUID } from 'crypto';
 import { createHttpTerminator } from 'http-terminator';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
@@ -446,6 +447,15 @@ async function startOptimizedServer() {
     // Configure Express middleware
     console.log('🔧 [START] Configuring Express middleware...');
     app.use(cors());
+    
+    // Session middleware for tracking conversation context
+    app.use(session({
+      secret: process.env.SESSION_SECRET || 'semem-chat-session-' + randomUUID(),
+      resave: false,
+      saveUninitialized: false,
+      cookie: { secure: false, maxAge: 1000 * 60 * 60 } // 1 hour
+    }));
+    
     // Increase JSON payload limit for document uploads (PDFs can be several MB)
     app.use(express.json({ limit: '50mb' }));
     // Also handle URL-encoded data with increased limits
@@ -795,6 +805,49 @@ async function startOptimizedServer() {
             return res.json(commandResult);
           }
           
+          // Check if user is responding to a previous no-context query with a positive response
+          if (req.session && req.session.lastFailedQuery) {
+            const positiveResponses = ['yes', 'yeah', 'sure', 'ok', 'okay', 'please', 'do it', 'go ahead', 'search', 'try it'];
+            const messageWords = trimmedMessage.toLowerCase().split(/\s+/);
+            
+            // Check if message contains positive response words
+            const isPositiveResponse = positiveResponses.some(response => 
+              messageWords.some(word => word.includes(response) || response.includes(word))
+            );
+            
+            if (isPositiveResponse) {
+              console.log('🔍 [CHAT] Detected positive response for enhanced search:', req.session.lastFailedQuery);
+              
+              // Store the query before clearing it
+              const queryToEnhance = req.session.lastFailedQuery;
+              
+              // Clear the session query
+              delete req.session.lastFailedQuery;
+              
+              // Run enhanced ask with all enhancements enabled
+              const enhancedResult = await simpleVerbsService.ask({ 
+                question: queryToEnhance,
+                mode: 'standard',
+                useContext: true,
+                useHyDE: true,
+                useWikipedia: true,
+                useWikidata: true
+              });
+              
+              return res.json({
+                success: true,
+                messageType: 'enhanced_result',
+                content: enhancedResult.answer || 'No enhanced results found.',
+                originalMessage: message,
+                originalQuery: queryToEnhance,
+                routing: 'enhanced_search',
+                enhancementsUsed: ['HyDE', 'Wikipedia', 'Wikidata'],
+                contextItems: enhancedResult.contextItems || 0,
+                timestamp: new Date().toISOString()
+              });
+            }
+          }
+          
           // For natural language, infer intention using LLM
           await simpleVerbsService.initialize();
           const llmHandler = simpleVerbsService.llmHandler;
@@ -864,6 +917,50 @@ If action is "ask" or "tell", also include:
               useContext: true
             });
             
+            // Check if context was found - be more explicit about no-context scenarios
+            const hasContext = (askResult.contextItems && askResult.contextItems > 0) || 
+                              (askResult.usedContext === true) || 
+                              (askResult.memories && askResult.memories > 0);
+            
+            console.log('🔍 [CHAT] Context analysis:', {
+              contextItems: askResult.contextItems,
+              usedContext: askResult.usedContext,
+              memories: askResult.memories,
+              hasContext,
+              answer: askResult.answer?.substring(0, 100) + '...'
+            });
+            
+            if (!hasContext || !askResult.answer || 
+                askResult.answer.includes('No relevant information found') || 
+                askResult.answer.includes('No answer found') ||
+                askResult.answer.includes('I don\'t have information') ||
+                askResult.answer.includes('cannot provide') ||
+                askResult.answer.includes('does not contain relevant information') ||
+                askResult.answer.includes('provided context does not contain') ||
+                (askResult.contextItems === 0 && askResult.memories === 0)) {
+              // No context found - provide fallback LLM response and ask about enhanced search
+              const fallbackPrompt = `Please answer the following question using your general knowledge: ${parsedResponse.extractedQuery}`;
+              const fallbackResponse = await llmHandler.generateResponse(fallbackPrompt);
+              
+              // Store the query for potential enhanced search
+              req.session = req.session || {};
+              req.session.lastFailedQuery = parsedResponse.extractedQuery;
+              
+              return res.json({
+                success: true,
+                messageType: 'no_context_fallback',
+                content: `Based on my general knowledge: ${fallbackResponse}
+
+**I couldn't find relevant information in your personal knowledge base for this query.** Would you like me to search external sources (Wikipedia, Wikidata, and enhanced search methods) for more comprehensive information?`,
+                fallbackUsed: true,
+                originalMessage: message,
+                originalQuery: parsedResponse.extractedQuery,
+                routing: 'ask_fallback',
+                reasoning: parsedResponse.reasoning,
+                timestamp: new Date().toISOString()
+              });
+            }
+            
             return res.json({
               success: true,
               messageType: 'ask_result',
@@ -914,12 +1011,61 @@ If action is "ask" or "tell", also include:
         }
       });
 
+      // ENHANCED CHAT endpoint - For when user wants enhanced query with HyDE, Wikipedia, Wikidata
+      app.post('/chat/enhanced', async (req, res) => {
+        try {
+          const { query, useHyDE = false, useWikipedia = false, useWikidata = false } = req.body;
+          
+          console.log('🚀 [ENHANCED-CHAT] Enhanced chat endpoint called with query:', query.substring(0, 50) + '...');
+          
+          if (!query) {
+            return res.status(400).json({ error: 'Query is required' });
+          }
+          
+          // Run enhanced ask with all requested enhancements
+          await simpleVerbsService.initialize();
+          const enhancedResult = await simpleVerbsService.ask({ 
+            question: query,
+            mode: 'standard',
+            useContext: true,
+            useHyDE,
+            useWikipedia,
+            useWikidata
+          });
+          
+          return res.json({
+            success: true,
+            messageType: 'enhanced_result',
+            content: enhancedResult.answer || 'No enhanced answer found.',
+            originalQuery: query,
+            routing: 'enhanced_ask',
+            enhancementsUsed: {
+              hyde: useHyDE,
+              wikipedia: useWikipedia,
+              wikidata: useWikidata
+            },
+            contextItems: enhancedResult.contextItems || 0,
+            enhancementStats: enhancedResult.enhancementStats,
+            timestamp: new Date().toISOString()
+          });
+          
+        } catch (error) {
+          res.status(500).json({ 
+            success: false, 
+            verb: 'enhanced_chat', 
+            error: error.message,
+            timestamp: new Date().toISOString()
+          });
+        }
+      });
+
       console.log('✅ [START] Simple Verbs REST endpoints configured:');
       console.log('   POST /tell - Add resources to the system');
       console.log('   POST /ask - Query the system');
       console.log('   POST /augment - Augment content');
       console.log('   POST /upload-document - Upload and process document files');
       console.log('   POST /chat - Interactive chat with slash command support');
+      console.log('   POST /chat/enhanced - Enhanced chat with HyDE, Wikipedia, Wikidata');
       console.log('   POST /zoom - Set abstraction level');
       console.log('   POST /pan - Set domain/filtering');
       console.log('   POST /tilt - Set view filter');

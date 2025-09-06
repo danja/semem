@@ -145,6 +145,22 @@ export class ApiService {
   }
 
   /**
+   * ENHANCED CHAT - Enhanced query with HyDE, Wikipedia, and Wikidata
+   * @param {Object} params - Enhanced chat parameters
+   * @param {string} params.query - Query to search with enhancements
+   * @param {boolean} params.useHyDE - Whether to use HyDE enhancement
+   * @param {boolean} params.useWikipedia - Whether to use Wikipedia enhancement
+   * @param {boolean} params.useWikidata - Whether to use Wikidata enhancement
+   * @returns {Promise<Object>} Enhanced chat result
+   */
+  async enhancedChat({ query, useHyDE = false, useWikipedia = false, useWikidata = false }) {
+    return this.makeRequest('/chat/enhanced', {
+      method: 'POST',
+      body: JSON.stringify({ query, useHyDE, useWikipedia, useWikidata })
+    });
+  }
+
+  /**
    * AUGMENT - Run operations on content
    * @param {Object} params - Augment parameters
    * @param {string} params.target - Target content to analyze
