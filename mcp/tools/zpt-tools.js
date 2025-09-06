@@ -646,12 +646,15 @@ class ZPTNavigationService {
       );
 
       // Ensure we always return an array for content.data with required fields
+      const transformedData = Array.isArray(transformResult.content) ? transformResult.content : 
+                              (transformResult.content ? [transformResult.content] : []);
+      
       const content = {
-        data: Array.isArray(transformResult.chunks) ? transformResult.chunks : [],
+        data: transformedData,
         success: true,
         zoom: currentZoom, // Include zoom level in response
         estimatedResults: Math.max(
-          Array.isArray(transformResult.chunks) ? transformResult.chunks.length : 1, // Ensure at least 1
+          transformedData.length, // Use actual transformed data length
           selectionResult.metadata?.estimatedResults || 1, // Ensure at least 1
           1 // Final fallback
         ),

@@ -11,7 +11,7 @@ import Config from '../../../src/Config.js';
 const TEST_CONFIG = {
   MCP_PORT: process.env.MCP_PORT || 4101,
   MCP_URL: process.env.MCP_URL || `http://localhost:${process.env.MCP_PORT || 4101}`,
-  TIMEOUT: 60000, // 60 second timeout for integration tests (longer due to ZPT complexity)
+  TIMEOUT: 120000, // 120 second timeout for integration tests (longer due to ZPT complexity and data seeding)
   SETUP_DELAY: 2000, // 2 second delay between setup operations
 };
 

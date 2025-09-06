@@ -34,12 +34,23 @@ export default class FilterBuilder {
                 SELECT DISTINCT ?uri ?label ?type ?prefLabel ?embedding ?metadata
                 WHERE {
                     GRAPH <${this.graphName}> {
-                        ?uri a ragno:Entity ;
-                             rdfs:label ?label ;
-                             rdf:type ?type .
-                        OPTIONAL { ?uri skos:prefLabel ?prefLabel }
-                        OPTIONAL { ?uri semem:embedding ?embedding }
-                        OPTIONAL { ?uri semem:metadata ?metadata }
+                        {
+                            ?uri a ragno:Entity ;
+                                 rdfs:label ?label ;
+                                 rdf:type ?type .
+                            OPTIONAL { ?uri skos:prefLabel ?prefLabel }
+                            OPTIONAL { ?uri semem:embedding ?embedding }
+                            OPTIONAL { ?uri semem:metadata ?metadata }
+                        }
+                        UNION
+                        {
+                            ?uri a semem:Interaction ;
+                                 semem:prompt ?label .
+                            OPTIONAL { ?uri semem:output ?prefLabel }
+                            OPTIONAL { ?uri semem:embedding ?embedding }
+                            OPTIONAL { ?uri semem:metadata ?metadata }
+                            BIND("interaction" AS ?type)
+                        }
                         {{FILTERS}}
                     }
                 }
@@ -50,12 +61,27 @@ export default class FilterBuilder {
                 SELECT DISTINCT ?uri ?content ?entity ?unit ?embedding ?metadata
                 WHERE {
                     GRAPH <${this.graphName}> {
-                        ?uri a ragno:SemanticUnit ;
-                             ragno:hasContent ?content .
-                        OPTIONAL { ?uri ragno:relatedTo ?entity }
-                        OPTIONAL { ?uri ragno:partOf ?unit }
-                        OPTIONAL { ?uri semem:embedding ?embedding }
-                        OPTIONAL { ?uri semem:metadata ?metadata }
+                        {
+                            ?uri a ragno:SemanticUnit ;
+                                 ragno:hasContent ?content .
+                            OPTIONAL { ?uri ragno:relatedTo ?entity }
+                            OPTIONAL { ?uri ragno:partOf ?unit }
+                            OPTIONAL { ?uri semem:embedding ?embedding }
+                            OPTIONAL { ?uri semem:metadata ?metadata }
+                        }
+                        UNION
+                        {
+                            ?uri a semem:Interaction .
+                            {
+                                ?uri semem:prompt ?content .
+                            } UNION {
+                                ?uri semem:output ?content .
+                            }
+                            OPTIONAL { ?uri semem:embedding ?embedding }
+                            OPTIONAL { ?uri semem:metadata ?metadata }
+                            BIND("memory" AS ?entity)
+                            BIND("interaction" AS ?unit)
+                        }
                         {{FILTERS}}
                     }
                 }
@@ -66,12 +92,27 @@ export default class FilterBuilder {
                 SELECT DISTINCT ?uri ?text ?source ?position ?embedding ?metadata
                 WHERE {
                     GRAPH <${this.graphName}> {
-                        ?uri a ragno:TextElement ;
-                             ragno:hasText ?text .
-                        OPTIONAL { ?uri ragno:sourceDocument ?source }
-                        OPTIONAL { ?uri ragno:position ?position }
-                        OPTIONAL { ?uri semem:embedding ?embedding }
-                        OPTIONAL { ?uri semem:metadata ?metadata }
+                        {
+                            ?uri a ragno:TextElement ;
+                                 ragno:hasText ?text .
+                            OPTIONAL { ?uri ragno:sourceDocument ?source }
+                            OPTIONAL { ?uri ragno:position ?position }
+                            OPTIONAL { ?uri semem:embedding ?embedding }
+                            OPTIONAL { ?uri semem:metadata ?metadata }
+                        }
+                        UNION
+                        {
+                            ?uri a semem:Interaction .
+                            {
+                                ?uri semem:prompt ?text .
+                            } UNION {
+                                ?uri semem:output ?text .
+                            }
+                            OPTIONAL { ?uri semem:embedding ?embedding }
+                            OPTIONAL { ?uri semem:metadata ?metadata }
+                            BIND("memory" AS ?source)
+                            BIND(0 AS ?position)
+                        }
                         {{FILTERS}}
                     }
                 }

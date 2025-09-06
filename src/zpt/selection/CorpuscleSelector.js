@@ -405,6 +405,12 @@ export default class CorpuscleSelector {
             if (rdfType.includes('TextElement') || rdfType.includes('Text')) return 'text';
             if (rdfType.includes('Community')) return 'community';
             if (rdfType.includes('Corpus')) return 'corpus';
+            if (rdfType === 'interaction') return 'interaction';
+        }
+        
+        // Check if it's a semem:Interaction by URI pattern
+        if (binding.uri?.value && binding.uri.value.includes('/interaction/')) {
+            return 'interaction';
         }
         
         return zoomLevel; // Fallback to zoom level
