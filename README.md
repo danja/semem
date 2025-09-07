@@ -15,6 +15,8 @@
 
 **Interactive Chat Interface**: The workbench includes a natural language chat interface with slash commands (`/ask`, `/tell`, `/help`) and automatic URL/file ingestion. See [Chat Documentation](docs/manual/chat.md) for details.
 
+**🧠 Persistent Memory System**: Every chat interaction is automatically stored in the SPARQL knowledge graph with semantic embeddings. The system retrieves relevant past conversations to inform future responses, creating a continuously learning memory that persists across sessions. Memory flows: Chat UI → ChatAPI → MemoryManager → SPARQL store with embeddings → retrieval for future context.
+
  The [hints](https://danja.github.io/semem/manual/hints.html) page might help.
 
 **[Semem Documentation](https://danja.github.io/semem/)** - *sprawling*

@@ -253,23 +253,8 @@ export default class MemoryManager {
             // Sort by similarity score (descending)
             uniqueResults.sort((a, b) => (b.similarity || 0) - (a.similarity || 0));
             
-            // Persist any memory classification changes (promotion to long-term)
-            // Skip memory persistence if content is too large to prevent string length errors
-            try {
-                await this.store.saveMemoryToHistory(this.memStore);
-            } catch (error) {
-                if (error.code === 'CONTENT_TOO_LARGE' || error.message.includes('string length')) {
-                    this.logger.warn('Skipping memory persistence due to oversized content', {
-                        error: error.message,
-                        shortTermCount: this.memStore?.shortTermMemory?.length || 0,
-                        longTermCount: this.memStore?.longTermMemory?.length || 0
-                    });
-                    // Continue without persisting - memory is still available in current session
-                } else {
-                    // Re-throw other errors
-                    throw error;
-                }
-            }
+            // NOTE: Removed saveMemoryToHistory() call from retrieveRelevantInteractions()
+            // This method should only retrieve, not persist. Persistence happens in addInteraction().
             
             console.log('🔥 CONSOLE: Combined search results', {
                 memStoreResults: memStoreResults.length,

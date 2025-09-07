@@ -141,7 +141,7 @@ export default class ChatAPI extends BaseAPI {
             return {
                 response,
                 conversationId: conversation.id,
-                memoryIds: relevantMemories.map(m => m.interaction.id || '')
+                memoryIds: relevantMemories.map(m => m.interaction?.id || m.id || '')
                     .filter(id => id !== '')
             };
         } catch (error) {
@@ -261,7 +261,7 @@ export default class ChatAPI extends BaseAPI {
 
             // Create context from relevant memories
             const context = relevantMemories.map(m =>
-                `${m.interaction.prompt} ${m.interaction.output}`
+                `${m.interaction?.prompt || m.prompt} ${m.interaction?.output || m.response}`
             ).join('\n\n');
 
             // Generate completion
@@ -274,7 +274,7 @@ export default class ChatAPI extends BaseAPI {
             this._emitMetric('chat.completion.count', 1);
             return {
                 completion,
-                memoryIds: relevantMemories.map(m => m.interaction.id || '')
+                memoryIds: relevantMemories.map(m => m.interaction?.id || m.id || '')
                     .filter(id => id !== '')
             };
         } catch (error) {
@@ -323,8 +323,9 @@ export default class ChatAPI extends BaseAPI {
         const context = {
             conversation: conversation.history,
             relevantMemories: relevantMemories.map(memory => ({
-                prompt: memory.interaction.prompt,
-                response: memory.interaction.output,
+                // Handle both structures: memory.interaction.* (MemoryStore) and memory.* (SPARQLStore)
+                prompt: memory.interaction?.prompt || memory.prompt,
+                response: memory.interaction?.output || memory.response,
                 similarity: memory.similarity
             }))
         };
