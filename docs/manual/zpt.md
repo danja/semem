@@ -9,25 +9,23 @@ The ZPT navigation system provides a spatial metaphor for exploring knowledge sp
 ZPT navigation operates using three primary parameters:
 
 **Zoom**: Controls the level of abstraction for content selection:
-- `entity` - Individual concepts and named entities
+- `entity` - Individual entities and stored interactions (default)
 - `unit` - Semantic units and text passages  
 - `text` - Raw text elements and fragments
 - `community` - Topic clusters and concept groups
 - `corpus` - Entire corpus view
-- `micro` - Sub-entity components
 
 **Pan**: Defines filtering and domain constraints:
-- `topic` - Specific subject matter or query terms
-- `domains` - Subject domain restrictions (e.g., 'ai', 'science')
-- `temporal` - Time-based constraints (start/end dates)
-- `geographic` - Spatial boundaries (bounding boxes)
-- `entity` - Entity-based filtering
+- `domains` - Subject domain filters (comma-separated: "ai, science, technology")
+- `keywords` - Keyword filters (comma-separated: "machine learning, neural")
+- Currently supports domain and keyword filtering through the workbench UI
 
 **Tilt**: Selects the analytical projection method:
-- `keywords` - Keyword-based analysis and matching
+- `keywords` - Keyword-based analysis and matching (default)
 - `embedding` - Vector similarity using embeddings
-- `graph` - Graph structure and connectivity analysis
+- `graph` - Graph structure and connectivity analysis  
 - `temporal` - Time-based organization and sequencing
+- `memory` - Memory-based perspective
 
 ### Ontology Integration
 
@@ -38,59 +36,220 @@ The system uses formal ZPT ontology URIs (`http://purl.org/stuff/zpt/`) instead 
 - Provenance tracking uses W3C PROV-O for complete audit trails
 - Cross-graph queries enable integration with corpus data
 
+## Workbench Integration
+
+### Navigate Column in Workbench UI
+
+The ZPT system is integrated into the Semantic Memory Workbench through a dedicated "Navigate" column that provides interactive controls for all three navigation dimensions.
+
+#### Current ZPT State Display
+At the top of the Navigate column, the current ZPT state is shown in the format:
+```
+ZPT: entity / all / keywords
+```
+This displays your current zoom level, pan filters, and tilt perspective.
+
+#### Interactive Controls
+
+**Zoom Controls (🔍 Abstraction Level)**:
+- **Entity** (default): Shows individual stored interactions and entities from your knowledge base
+- **Unit**: Displays semantic units and text passages
+- **Text**: Shows raw text elements and fragments  
+- **Community**: Displays topic clusters and concept groups
+- **Corpus**: Shows entire corpus view
+
+**Similarity Threshold Slider (📊)**:
+- Range: 0.0 (Broad) to 1.0 (Precise)
+- Default: 0.3
+- Controls how similar content must be to be included in results
+- Lower values = more results, potentially less relevant
+- Higher values = fewer results, more precisely matched
+
+**Pan Controls (🎯 Domain Filters)**:
+- **Domains**: Enter comma-separated domain filters (e.g., "ai, science, technology")
+- **Keywords**: Enter comma-separated keyword filters (e.g., "machine learning, neural")
+- Changes apply automatically with 500ms debounce
+
+**Tilt Controls (👁️ View Style)**:
+- **Keywords** (default): Keyword-based analysis and matching
+- **Embedding**: Vector similarity using embeddings
+- **Graph**: Graph structure and connectivity analysis
+- **Temporal**: Time-based organization and sequencing  
+- **Memory**: Memory-based perspective
+
+#### Navigation Execution
+
+Click the **"Execute Navigation"** button (🧭) to run the ZPT navigation with your current settings. Results appear in the navigation results area showing:
+
+- **Current Perspective**: Summary of active zoom/pan/tilt settings
+- **Navigation Results**: Content matching your ZPT parameters
+- **Result Metadata**: Count of items found, similarity scores, etc.
+
+### Usage Tips
+
+**Getting Started**:
+1. Start with default settings (entity/keywords) to see your stored content
+2. Use the similarity threshold to fine-tune result relevance
+3. Add domain or keyword filters to narrow results
+4. Switch tilt modes to see different analytical perspectives
+
+**Common Workflows**:
+- **Broad Exploration**: Use corpus zoom with low similarity threshold
+- **Focused Search**: Use entity zoom with high similarity threshold and specific keywords
+- **Conceptual Analysis**: Use embedding tilt with medium similarity threshold
+- **Topic Discovery**: Use community zoom with keyword filters
+
+**Performance Optimization**:
+- Start with higher similarity thresholds and lower them if needed
+- Use specific domain/keyword filters to reduce search space
+- Entity and unit zoom levels are generally faster than community/corpus
+
+### Troubleshooting Common Issues
+
+**No Results Found**:
+- Lower the similarity threshold (try 0.1-0.2 for broad exploration)
+- Remove domain/keyword filters to see all available content  
+- Switch to entity zoom level to see stored interactions
+- Check that you have content in your knowledge base using the Ask or Tell verbs first
+
+**Too Many Results**:
+- Increase similarity threshold (try 0.6-0.8 for precision)
+- Add specific domain or keyword filters
+- Use unit or text zoom levels for more granular content
+
+**Slow Navigation**:
+- Increase similarity threshold to reduce result set size
+- Add pan filters to limit search space
+- Use entity/unit zoom instead of community/corpus
+- Check SPARQL endpoint performance
+
+**Unexpected Results**:
+- Verify your pan filters are correctly formatted (comma-separated)
+- Try different tilt modes (embedding vs keywords) for different perspectives
+- Check the Current Perspective display to confirm your settings
+- Use the Inspect verb to examine available content types
+
+### Advanced Usage Patterns
+
+**Content Discovery Workflow**:
+1. Start with corpus zoom + low threshold to understand available content
+2. Switch to community zoom to identify topic clusters  
+3. Drill down with entity zoom + specific filters
+4. Use unit/text zoom for detailed content examination
+
+**Comparative Analysis**:
+1. Set specific domain filters (e.g., "machine learning")
+2. Compare results across different tilt modes
+3. Adjust similarity thresholds to find optimal balance
+4. Use temporal tilt to see evolution of topics over time
+
+**Quality Control**:
+1. Use high similarity thresholds (0.7+) with entity zoom
+2. Apply specific keyword filters for precision
+3. Review results using embedding tilt for semantic coherence
+4. Cross-reference with Ask verb for validation
+
 ## System Architecture
 
 ### Core Components
 
-**CorpuscleSelector**: Main orchestrator for parameter-based content selection from Ragno corpus data. Validates parameters, executes selection based on tilt type, and stores navigation metadata.
+**CorpuscleSelector**: Main orchestrator for parameter-based content selection. Queries SPARQL store for entities matching zoom level (entities, interactions, etc.) and applies pan filtering.
 
-**ParameterValidator**: Validates navigation parameters against ZPT ontology terms and parameter combination constraints.
+**FilterBuilder**: Builds SPARQL queries from ZPT parameters. Handles union queries to search both `ragno:Entity` and `semem:Interaction` types for comprehensive results.
 
-**ParameterNormalizer**: Converts raw navigation parameters to standardized internal representation and creates parameter hashes for caching.
+**CorpuscleTransformer**: Transforms selected corpuscles into display formats, handling token limits and content chunking.
 
-**CorpuscleTransformer**: Transforms selected corpuscles into specified output formats while respecting token limits and optimization requirements.
+**ParameterValidator**: Validates navigation parameters against supported values and combinations.
 
-**ZPTDataFactory**: Creates RDF-compliant navigation sessions and views using RDF-Ext, handles ontology URI generation and dataset management.
-
-**NamespaceUtils**: Manages string-to-URI conversion using ZPT ontology mappings and provides namespace resolution services.
+**ParameterNormalizer**: Converts string parameters to standardized internal representation.
 
 ### Data Flow
 
-1. **Parameter Processing**: Raw navigation parameters are validated and normalized
-2. **Selection Execution**: Content selection based on zoom level and tilt projection
-3. **Result Processing**: Selected corpuscles are filtered, ranked, and post-processed
-4. **Metadata Storage**: Navigation sessions and views are stored as RDF using SPARQL INSERT
-5. **Response Generation**: Results are transformed to requested format with metadata
+1. **UI Interaction**: User adjusts zoom, pan, and tilt controls in workbench Navigate column
+2. **Parameter Collection**: System collects current ZPT state and user query
+3. **SPARQL Query Building**: FilterBuilder creates appropriate SPARQL queries based on zoom level
+4. **Content Selection**: CorpuscleSelector executes queries against SPARQL store
+5. **Result Processing**: Selected content is filtered by similarity threshold and pan criteria  
+6. **Content Transformation**: Results are formatted for display in workbench UI
+7. **UI Update**: Navigation results and current perspective are updated
+
+### Current Data Sources
+
+The ZPT system currently queries:
+- **semem:Interaction** entities (stored via `/tell` endpoint)
+- **ragno:Entity** entities (from Ragno corpus processing)
+- **Embeddings** for similarity-based navigation
+- **Metadata** for filtering and ranking
 
 ## Navigation Operations
 
 ### Basic Navigation
 
-Navigation begins with parameter specification. The system validates parameters against ontology constraints and normalizes them for processing:
+Navigation in the workbench starts with the Navigate column interface. The default query is "Navigate knowledge space" and users control perspective through the ZPT controls:
 
+**Example Navigation Flow**:
+1. Set zoom level to "entity" (default)
+2. Add domain filters: "ai, machine learning" 
+3. Set tilt to "embedding" for semantic similarity
+4. Adjust similarity threshold to 0.5 for more precise matching
+5. Click "Execute Navigation" to run the search
+
+**API Usage** (for programmatic access):
 ```javascript
-const params = {
-  query: 'machine learning applications',
-  zoom: 'entity',
-  pan: { topic: 'artificial intelligence', domains: ['ai', 'tech'] },
-  tilt: 'embedding'
-};
+const result = await apiService.zptNavigate({
+  query: "machine learning applications",
+  zoom: "entity",
+  pan: { domains: "ai, tech", keywords: "neural, algorithm" },
+  tilt: "embedding"
+});
 ```
 
-These parameters are converted to formal ontology URIs:
-- `zoom: 'entity'` becomes `zpt:EntityLevel`
-- `tilt: 'embedding'` becomes `zpt:EmbeddingProjection`
-- Domain strings are mapped to domain-specific URIs
+### Zoom Level Behavior
+
+Each zoom level queries different types of content from the SPARQL store:
+
+**Entity Level** (Default):
+- Queries both `ragno:Entity` and `semem:Interaction` types
+- Includes stored interactions from `/tell` operations  
+- Includes entities extracted from corpus processing
+- Returns: URI, label, type, prefLabel, embedding, metadata
+- Best for: Exploring specific concepts and stored knowledge
+
+**Unit Level**:
+- Queries `ragno:SemanticUnit` entities
+- Focuses on semantic units and text passages
+- Returns structured text segments with metadata
+- Best for: Analyzing semantic chunks and passages
+
+**Text Level**: 
+- Queries `ragno:TextElement` entities
+- Shows raw text fragments and elements
+- Returns lowest-level text content
+- Best for: Examining source text and detailed content
+
+**Community Level**:
+- Queries `ragno:Community` entities  
+- Shows topic clusters and concept groups
+- Returns community metadata and member relations
+- Best for: Topic-based exploration and clustering analysis
+
+**Corpus Level**:
+- Queries `ragno:Corpus` entities
+- Provides corpus-wide view and statistics
+- Returns high-level corpus metadata
+- Best for: Understanding overall content structure
 
 ### Selection Methods
 
-**Embedding-based Selection**: Uses vector similarity between query embeddings and corpus content. Requires EmbeddingHandler for generating query embeddings and calculating cosine similarity with stored embeddings.
+**Keywords Tilt** (Default): Text-based matching using keyword extraction and frequency analysis. Scores content based on keyword overlap and term frequency.
 
-**Keyword Selection**: Performs text-based matching using keyword extraction and frequency analysis. Scores content based on keyword overlap and term frequency.
+**Embedding Tilt**: Vector similarity using embeddings. Generates query embeddings and calculates cosine similarity with stored content embeddings.
 
-**Graph Selection**: Leverages graph structure for content selection using connectivity metrics, centrality measures, and relationship analysis.
+**Graph Tilt**: Graph structure analysis using connectivity metrics, centrality measures, and relationship analysis.
 
-**Temporal Selection**: Orders content based on temporal metadata such as creation time, modification time, or explicit temporal annotations.
+**Temporal Tilt**: Time-based organization using creation time, modification time, or temporal annotations.
+
+**Memory Tilt**: Memory-based perspective incorporating relevance scoring and memory decay factors.
 
 ### Cross-Zoom Navigation
 
@@ -133,31 +292,51 @@ Cross-graph queries enable integration between navigation metadata and corpus co
 
 ## API Integration
 
-### MCP Tools
+### HTTP Endpoints
 
-The system provides MCP (Model Context Protocol) tools for AI assistant integration:
+**POST /zpt/navigate** - Main navigation endpoint used by workbench
+```json
+{
+  "query": "Navigate knowledge space",
+  "zoom": "entity", 
+  "pan": {"domains": "ai, tech", "keywords": "neural"},
+  "tilt": "embedding"
+}
+```
 
-**zpt_navigate**: Executes full navigation workflows with parameter validation and result transformation.
+### MCP Tools (for AI Assistant Integration)
 
-**zpt_preview**: Provides lightweight navigation previews for parameter exploration.
+The system provides MCP (Model Context Protocol) tools accessible via the MCP server:
 
-**zpt_validate_params**: Validates parameter combinations against ontology constraints.
+**zpt_preview** - Provides lightweight navigation previews for parameter exploration
+**zpt_validate_params** - Validates parameter combinations against supported values  
+**zpt_get_options** - Returns available navigation options for given contexts
+**zpt_analyze_corpus** - Analyzes corpus structure and navigation readiness
 
-**zpt_get_options**: Returns available navigation options for given contexts.
+### Workbench Integration
 
-**zpt_analyze_corpus**: Analyzes corpus structure and navigation readiness.
-
-### Parameter Conversion
-
-MCP tools automatically handle parameter conversion from string-based inputs to formal ontology URIs. This maintains backward compatibility while enabling formal semantic processing.
+The Navigate column in the workbench provides the primary user interface:
+- Interactive ZPT controls with real-time state updates
+- Visual feedback for current zoom/pan/tilt settings
+- Results displayed in structured format with metadata
+- Integration with other workbench verbs (Tell, Ask, Augment)
 
 ### Response Formats
 
-Navigation results support multiple output formats:
-- JSON structured data
-- Markdown formatted text
-- Conversational natural language
-- Structured data with metadata
+Navigation results include:
+```json
+{
+  "success": true,
+  "results": [...],
+  "metadata": {
+    "zoom": "entity",
+    "pan": {"domains": "ai"},
+    "tilt": "embedding", 
+    "resultCount": 42,
+    "processingTime": "245ms"
+  }
+}
+```
 
 ## Configuration and Setup
 
