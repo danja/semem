@@ -18,13 +18,15 @@ ZPT navigation operates using three primary parameters:
 **Pan**: Defines filtering and domain constraints:
 - `domains` - Subject domain filters (comma-separated: "ai, science, technology")
 - `keywords` - Keyword filters (comma-separated: "machine learning, neural")
-- Currently supports domain and keyword filtering through the workbench UI
+- `concepts` - Concept-based filters using extracted concept labels
+- Currently supports domain, keyword, and concept filtering through the workbench UI
 
 **Tilt**: Selects the analytical projection method:
 - `keywords` - Keyword-based analysis and matching (default)
 - `embedding` - Vector similarity using embeddings
 - `graph` - Graph structure and connectivity analysis  
 - `temporal` - Time-based organization and sequencing
+- `concept` - Concept-based analysis using RDF concept extraction
 - `memory` - Memory-based perspective
 
 ### Ontology Integration
@@ -74,7 +76,8 @@ This displays your current zoom level, pan filters, and tilt perspective.
 - **Keywords** (default): Keyword-based analysis and matching
 - **Embedding**: Vector similarity using embeddings
 - **Graph**: Graph structure and connectivity analysis
-- **Temporal**: Time-based organization and sequencing  
+- **Temporal**: Time-based organization and sequencing
+- **Concept**: Concept-based analysis using RDF concept extraction  
 - **Memory**: Memory-based perspective
 
 #### Navigation Execution
@@ -96,8 +99,10 @@ Click the **"Execute Navigation"** button (🧭) to run the ZPT navigation with 
 **Common Workflows**:
 - **Broad Exploration**: Use corpus zoom with low similarity threshold
 - **Focused Search**: Use entity zoom with high similarity threshold and specific keywords
-- **Conceptual Analysis**: Use embedding tilt with medium similarity threshold
+- **Conceptual Analysis**: Use concept tilt with medium similarity threshold for RDF-based concept extraction
+- **Semantic Analysis**: Use embedding tilt with medium similarity threshold for vector-based similarity
 - **Topic Discovery**: Use community zoom with keyword filters
+- **Concept Discovery**: Use concept tilt with entity zoom to extract and analyze conceptual relationships
 
 **Performance Optimization**:
 - Start with higher similarity thresholds and lower them if needed
@@ -178,6 +183,8 @@ Click the **"Execute Navigation"** button (🧭) to run the ZPT navigation with 
 The ZPT system currently queries:
 - **semem:Interaction** entities (stored via `/tell` endpoint)
 - **ragno:Entity** entities (from Ragno corpus processing)
+- **ragno:Concept** entities (extracted via concept tilt functionality)
+- **Concept relationships** stored as RDF triples with confidence scores
 - **Embeddings** for similarity-based navigation
 - **Metadata** for filtering and ranking
 
@@ -196,11 +203,24 @@ Navigation in the workbench starts with the Navigate column interface. The defau
 
 **API Usage** (for programmatic access):
 ```javascript
+// Standard navigation with concept filtering
 const result = await apiService.zptNavigate({
   query: "machine learning applications",
   zoom: "entity",
-  pan: { domains: "ai, tech", keywords: "neural, algorithm" },
-  tilt: "embedding"
+  pan: { 
+    domains: "ai, tech", 
+    keywords: "neural, algorithm",
+    concepts: "machine learning, artificial intelligence"
+  },
+  tilt: "concept"
+});
+
+// Concept extraction and storage
+const conceptResult = await apiService.zptNavigate({
+  query: "Extract concepts from philosophical texts",
+  zoom: "entity",
+  pan: { domains: "philosophy" },
+  tilt: "concept"  // Will extract and store concepts as ragno:Concept entities
 });
 ```
 
@@ -249,7 +269,39 @@ Each zoom level queries different types of content from the SPARQL store:
 
 **Temporal Tilt**: Time-based organization using creation time, modification time, or temporal annotations.
 
+**Concept Tilt**: RDF-based concept extraction and analysis using the ragno vocabulary. Extracts concepts from content, builds conceptual relationships, stores them as `ragno:Concept` entities in SPARQL, and provides concept-based navigation with confidence scoring and category organization.
+
 **Memory Tilt**: Memory-based perspective incorporating relevance scoring and memory decay factors.
+
+### Concept-Based Navigation
+
+The ZPT system includes comprehensive RDF-based concept functionality that enables conceptual analysis and navigation:
+
+**Concept Extraction**: Automatically extracts concepts from text content using LLM-based analysis and stores them as `ragno:Concept` entities in the SPARQL store.
+
+**Concept Storage**: Concepts are stored with full RDF metadata including:
+- **Labels and URIs**: Standardized concept identification using `http://purl.org/stuff/ragno/concept/` namespace
+- **Confidence Scores**: Extraction confidence values for quality assessment
+- **Categories**: Concept categorization (Philosophy, Science, Technology, etc.)  
+- **Relationships**: Conceptual relationships between related concepts
+- **Provenance**: Source entity tracking and temporal metadata
+
+**Concept Filtering**: Advanced pan filtering strategies using concept data:
+- **Direct Filtering**: Match corpuscles containing specific concept labels
+- **Categorical Filtering**: Filter by concept categories (e.g., "Philosophy", "Science")
+- **Relational Filtering**: Include content related to target concepts through relationships
+- **Similarity Filtering**: Use semantic similarity between concepts with configurable thresholds
+
+**Concept Tilt Projection**: When using concept tilt, the system:
+1. Extracts concepts from selected corpuscles using LLM analysis
+2. Builds concept maps with relationships and confidence scores
+3. Stores concepts as RDF entities in SPARQL with full metadata
+4. Returns structured concept data including statistics and categorization
+
+**API Methods**: Programmatic concept access through SPARQLStore:
+- `storeConcepts(concepts, sourceEntityUri)` - Store extracted concepts as RDF entities
+- `storeConceptRelationships(relationships)` - Store conceptual relationships
+- `queryConceptsByFilter(filters)` - Query concepts by category, confidence, or relationships
 
 ### Cross-Zoom Navigation
 
@@ -299,10 +351,15 @@ Cross-graph queries enable integration between navigation metadata and corpus co
 {
   "query": "Navigate knowledge space",
   "zoom": "entity", 
-  "pan": {"domains": "ai, tech", "keywords": "neural"},
-  "tilt": "embedding"
+  "pan": {"domains": "ai, tech", "keywords": "neural", "concepts": "machine learning, neural networks"},
+  "tilt": "concept"
 }
 ```
+
+**Concept-Specific Endpoints**:
+- **POST /concepts/extract** - Extract concepts from text content
+- **POST /concepts/store** - Store concepts as RDF entities in SPARQL
+- **GET /concepts/query** - Query concepts by filters (category, confidence, etc.)
 
 ### MCP Tools (for AI Assistant Integration)
 
@@ -338,15 +395,42 @@ Navigation results include:
 }
 ```
 
+## Testing and Validation
+
+### Concept Integration Test Suite
+
+The ZPT system includes comprehensive testing for concept functionality:
+
+**Unit Tests**:
+- `tests/unit/zpt/concept-tilt-projector.test.js` - Tests concept tilt projection functionality
+- `tests/unit/zpt/concept-filtering-search.test.js` - Tests concept-based filtering strategies  
+- `tests/unit/stores/rdf-concept-storage.test.js` - Tests concept storage in SPARQLStore
+
+**Integration Tests**: Run with `INTEGRATION_TESTS=true` to test against live SPARQL endpoints:
+- Live concept extraction and storage operations
+- Performance testing with batch concept processing
+- Real-world concept filtering scenarios
+
+**Test Execution**:
+```bash
+# Run unit tests only (fast, mocked dependencies)
+npx vitest run tests/unit/zpt/concept-*.test.js tests/unit/stores/rdf-concept-storage.test.js
+
+# Run integration tests (requires live SPARQL store at localhost:3030)
+INTEGRATION_TESTS=true npx vitest run tests/unit/zpt/concept-*.test.js tests/unit/stores/rdf-concept-storage.test.js
+```
+
+**Test Coverage**: The test suite validates concept extraction, RDF storage, filtering strategies, URI generation, relationship building, and error handling.
+
 ## Configuration and Setup
 
 ### Required Components
 
-**SPARQL Endpoint**: Required for navigation metadata storage and cross-graph queries. Supports both local Fuseki instances and remote endpoints.
+**SPARQL Endpoint**: Required for navigation metadata storage, concept storage as RDF entities, and cross-graph queries. Supports both local Fuseki instances and remote endpoints.
 
 **Embedding Handler**: Required for embedding-based navigation using vector similarity calculations.
 
-**LLM Handler**: Required for concept extraction and response generation in navigation workflows.
+**LLM Handler**: Required for concept extraction, response generation, and concept tilt functionality. Must support concept extraction from text content.
 
 ### Storage Configuration
 

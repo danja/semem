@@ -1,5 +1,6 @@
 * add links to workbench
 * throttling for API calls - working on server?
+* interactions aren't being stored
 * update Claude.md incorporate tips from https://diwank.space/field-notes-from-shipping-real-code-with-claude
 * check FAISS is being used on concepts (with backlinks)
 * clean src/frontend/_*
