@@ -1,11 +1,16 @@
 /**
  * Builds SPARQL queries and filters from normalized ZPT parameters
  */
+import fs from 'fs';
+import path from 'path';
+
 export default class FilterBuilder {
     constructor(options = {}) {
         this.graphName = options.graphName || 'http://hyperdata.it/content';
+        this.templateCache = new Map(); // Cache for loaded templates
         this.initializeNamespaces();
         this.initializeQueryTemplates();
+        this.loadConceptQueries();
     }
 
     /**
@@ -153,6 +158,62 @@ export default class FilterBuilder {
     }
 
     /**
+     * Load concept-specific SPARQL query templates from external files
+     */
+    loadConceptQueries() {
+        try {
+            const templateDir = path.join(process.cwd(), 'sparql', 'queries', 'zpt');
+            
+            // Load concept extraction template
+            const conceptExtractionPath = path.join(templateDir, 'concept-extraction.sparql');
+            if (fs.existsSync(conceptExtractionPath)) {
+                this.templates.conceptExtraction = fs.readFileSync(conceptExtractionPath, 'utf8');
+                this.templateCache.set('concept-extraction', this.templates.conceptExtraction);
+            }
+            
+            // Load concept navigation template  
+            const conceptNavigationPath = path.join(templateDir, 'concept-navigation.sparql');
+            if (fs.existsSync(conceptNavigationPath)) {
+                this.templates.conceptNavigation = fs.readFileSync(conceptNavigationPath, 'utf8');
+                this.templateCache.set('concept-navigation', this.templates.conceptNavigation);
+            }
+            
+            // Load concept relationships template
+            const conceptRelationshipsPath = path.join(templateDir, 'concept-relationships.sparql');
+            if (fs.existsSync(conceptRelationshipsPath)) {
+                this.templates.conceptRelationships = fs.readFileSync(conceptRelationshipsPath, 'utf8');
+                this.templateCache.set('concept-relationships', this.templates.conceptRelationships);
+            }
+            
+        } catch (error) {
+            console.warn('Could not load concept query templates:', error.message);
+            // Fallback to inline templates if external files not available
+            this.initializeFallbackConceptTemplates();
+        }
+    }
+
+    /**
+     * Initialize fallback concept templates if external files not available
+     */
+    initializeFallbackConceptTemplates() {
+        // Simple fallback concept extraction query
+        this.templates.conceptExtraction = `
+            SELECT DISTINCT ?concept ?label ?type ?confidence
+            WHERE {
+                GRAPH <${this.graphName}> {
+                    ?concept a ragno:Concept ;
+                             rdfs:label ?label ;
+                             rdf:type ?type .
+                    OPTIONAL { ?concept ragno:confidence ?confidence }
+                    {{CONCEPT_FILTERS}}
+                }
+            }
+            ORDER BY DESC(?confidence)
+            LIMIT \${maxResults}
+        `;
+    }
+
+    /**
      * Build complete SPARQL query from normalized parameters
      * @param {Object} normalizedParams - Normalized ZPT parameters
      * @returns {Object} Query configuration
@@ -215,7 +276,48 @@ export default class FilterBuilder {
             filterClauses.push(this.buildGeographicFilter(panParams.geographic));
         }
 
+        // Concept filter
+        if (panParams.concepts) {
+            filterClauses.push(this.buildConceptFilter(panParams.concepts));
+        }
+
         return filterClauses.length > 0 ? filterClauses.join(' ') : '';
+    }
+
+    /**
+     * Build concept-based query using external templates
+     */
+    buildConceptQuery(normalizedParams) {
+        const template = this.templates.conceptExtraction || this.templates.conceptNavigation;
+        
+        if (!template) {
+            throw new Error('Concept templates not loaded');
+        }
+
+        // Build concept-specific filters
+        const conceptFilters = this.buildConceptFilters(normalizedParams.pan);
+        const panFilters = this.buildFilters(normalizedParams.pan);
+        const similarityFilters = this.buildSimilarityFilters(normalizedParams);
+
+        // Substitute placeholders in template
+        const query = this.prefixes + template
+            .replace(/\${graphName}/g, this.graphName)
+            .replace('{{CONCEPT_FILTERS}}', conceptFilters)
+            .replace('{{PAN_FILTERS}}', panFilters)
+            .replace('{{SIMILARITY_FILTERS}}', similarityFilters)
+            .replace(/\${maxResults}/g, normalizedParams.transform?.limit || 100);
+
+        return {
+            query,
+            zoomLevel: 'concept',
+            filters: normalizedParams.pan,
+            tilt: normalizedParams.tilt,
+            metadata: {
+                complexity: 'concept-based',
+                type: 'concept-extraction',
+                cacheKey: this.buildCacheKey(normalizedParams, 'concept')
+            }
+        };
     }
 
     /**
@@ -303,6 +405,86 @@ export default class FilterBuilder {
             filterClauses.push(`
                 FILTER (ABS(?lat - ${lat}) <= ${radius/111} && 
                         ABS(?lon - ${lon}) <= ${radius/111})
+            `);
+        }
+
+        return filterClauses.join(' ');
+    }
+
+    /**
+     * Build concept filter clause
+     */
+    buildConceptFilter(conceptFilter) {
+        const { concepts, mode = 'any' } = conceptFilter;
+        
+        if (!concepts || concepts.length === 0) {
+            return '';
+        }
+
+        const conceptUris = concepts.map(c => typeof c === 'string' ? c : c.uri);
+        const filterClauses = [];
+
+        if (mode === 'any') {
+            // Entity must be related to at least one of the specified concepts
+            filterClauses.push(`
+                ?uri ragno:hasConceptualRelation ?concept .
+                ?concept rdfs:label ?conceptLabel .
+                FILTER (?concept IN (${conceptUris.map(c => `<${c}>`).join(', ')}) ||
+                        ?conceptLabel IN (${concepts.map(c => `"${typeof c === 'string' ? c : c.label}"`).join(', ')}))
+            `);
+        } else if (mode === 'all') {
+            // Entity must be related to all specified concepts (more restrictive)
+            concepts.forEach((concept, index) => {
+                const conceptVar = `?concept${index}`;
+                filterClauses.push(`
+                    ?uri ragno:hasConceptualRelation ${conceptVar} .
+                    ${conceptVar} rdfs:label "${typeof concept === 'string' ? concept : concept.label}" .
+                `);
+            });
+        }
+
+        return filterClauses.join(' ');
+    }
+
+    /**
+     * Build concept-specific filters for concept extraction queries
+     */
+    buildConceptFilters(panParams) {
+        const filterClauses = [];
+
+        if (panParams.conceptCategory) {
+            filterClauses.push(`FILTER (?type = ragno:${panParams.conceptCategory})`);
+        }
+
+        if (panParams.minConfidence) {
+            filterClauses.push(`FILTER (?confidence >= ${panParams.minConfidence})`);
+        }
+
+        if (panParams.conceptDomains) {
+            const domains = panParams.conceptDomains.map(d => `"${d}"`).join(', ');
+            filterClauses.push(`
+                ?concept ragno:belongsToDomain ?domain .
+                FILTER (?domain IN (${domains}))
+            `);
+        }
+
+        return filterClauses.join(' ');
+    }
+
+    /**
+     * Build similarity filters for concept matching
+     */
+    buildSimilarityFilters(normalizedParams) {
+        const filterClauses = [];
+        const threshold = normalizedParams.similarity?.threshold;
+
+        if (threshold && normalizedParams.tilt?.representation === 'embedding') {
+            filterClauses.push(`
+                OPTIONAL { 
+                    ?concept ragno:hasEmbedding ?embeddingResource .
+                    ?embeddingResource ragno:similarityScore ?simScore 
+                }
+                FILTER (!BOUND(?simScore) || ?simScore >= ${threshold})
             `);
         }
 

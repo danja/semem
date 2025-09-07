@@ -1,0 +1,36 @@
+SELECT DISTINCT ?concept ?label ?type ?embedding ?frequency ?confidence ?relatedEntity
+WHERE {
+    GRAPH <${graphName}> {
+        ?concept a ragno:Concept ;
+                 rdfs:label ?label ;
+                 rdf:type ?type .
+        
+        # Get concept embeddings if available
+        OPTIONAL { 
+            ?concept ragno:hasEmbedding ?embeddingResource .
+            ?embeddingResource ragno:vectorData ?embedding 
+        }
+        
+        # Get concept frequency/confidence metrics
+        OPTIONAL { ?concept ragno:frequency ?frequency }
+        OPTIONAL { ?concept ragno:confidence ?confidence }
+        
+        # Get related entities through conceptual relations
+        OPTIONAL { 
+            ?concept ragno:hasConceptualRelation ?relatedEntity .
+            ?relatedEntity a ?entityType .
+            FILTER(?entityType IN (ragno:Entity, semem:Interaction))
+        }
+        
+        # Apply concept-specific filters
+        {{CONCEPT_FILTERS}}
+        
+        # Apply domain/keyword filters from pan
+        {{PAN_FILTERS}}
+        
+        # Apply similarity thresholds for concept matching
+        {{SIMILARITY_FILTERS}}
+    }
+}
+ORDER BY DESC(?confidence) DESC(?frequency)
+LIMIT ${maxResults}

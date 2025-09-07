@@ -1,0 +1,31 @@
+SELECT DISTINCT ?uri ?label ?type ?prefLabel ?embedding ?metadata ?conceptType ?conceptConfidence
+WHERE {
+    GRAPH <${graphName}> {
+        # Main entity/interaction selection
+        {
+            ?uri a ragno:Entity ;
+                 rdfs:label ?label ;
+                 rdf:type ?type .
+            OPTIONAL { ?uri skos:prefLabel ?prefLabel }
+            OPTIONAL { ?uri semem:embedding ?embedding }
+            OPTIONAL { ?uri semem:metadata ?metadata }
+        }
+        UNION
+        {
+            ?uri a semem:Interaction ;
+                 semem:prompt ?label .
+            OPTIONAL { ?uri semem:output ?prefLabel }
+            OPTIONAL { ?uri semem:embedding ?embedding }
+            OPTIONAL { ?uri semem:metadata ?metadata }
+            BIND("interaction" AS ?type)
+        }
+        
+        # Concept-based filtering - entities must be related to specified concepts
+        ${conceptFilterClause}
+        
+        # Standard ZPT filters
+        {{FILTERS}}
+    }
+}
+{{ORDER_BY}}
+{{LIMIT}}

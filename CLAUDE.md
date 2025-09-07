@@ -352,3 +352,4 @@ const llmHandler = new LLMHandler(llmProvider, modelConfig.chatModel);
   - When checking implementations, be specific about what you're looking for to get accurate results
   
 - use ./stop.sh and ./start.sh when testing the servers locally without docker
+- sparql queries and llm prompts should not appear inline in the code. They should be placed in the sparql and prompts directories following the same patterns as existing files, with templating if appropriate

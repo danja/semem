@@ -49,6 +49,13 @@ export default class TiltProjector {
                 processor: this.projectToTemporal.bind(this),
                 requirements: ['temporalAnalyzer'],
                 metadata: ['timestamp', 'sequence', 'duration']
+            },
+            concept: {
+                name: 'Concept Graph Projection',
+                outputType: 'conceptual',
+                processor: this.projectToConcepts.bind(this),
+                requirements: ['conceptExtractor', 'sparqlStore'],
+                metadata: ['concept', 'confidence', 'relationships', 'category']
             }
         };
     }
@@ -108,6 +115,20 @@ export default class TiltProjector {
                 example: {
                     events: [{ timestamp: '2024-01-01', event: 'Creation', data: {} }],
                     timeline: [{ start: '2024-01-01', end: '2024-12-31' }]
+                }
+            },
+            conceptual: {
+                schema: {
+                    concepts: 'object[]',
+                    relationships: 'object[]',
+                    categories: 'object[]',
+                    confidence: 'number?',
+                    metadata: 'object?'
+                },
+                example: {
+                    concepts: [{ label: 'Machine Learning', type: 'technical', confidence: 0.9, uri: 'http://example.org/ml' }],
+                    relationships: [{ source: 'ml', target: 'ai', type: 'partOf', strength: 0.8 }],
+                    categories: [{ name: 'technical', count: 5 }]
                 }
             }
         };
@@ -878,6 +899,138 @@ export default class TiltProjector {
                 config: this.config
             }
         };
+    }
+
+    /**
+     * Project corpuscles to concept representation using RDF-based concept extraction
+     */
+    async projectToConcepts(corpuscles, tiltParams, context) {
+        const { conceptExtractor, sparqlStore } = context;
+        
+        if (!conceptExtractor || !sparqlStore) {
+            throw new Error('Concept projection requires conceptExtractor and sparqlStore in context');
+        }
+
+        const concepts = [];
+        const relationships = [];
+        const categories = new Map(); // category -> count
+        const conceptMap = new Map(); // conceptLabel -> concept object
+        
+        // Extract concepts from each corpuscle
+        for (const corpuscle of corpuscles) {
+            try {
+                const corpuscleText = this.extractTextContent(corpuscle);
+                const extractedConcepts = await conceptExtractor.extractConcepts(corpuscleText);
+                
+                for (const concept of extractedConcepts) {
+                    const conceptKey = concept.label.toLowerCase();
+                    
+                    if (conceptMap.has(conceptKey)) {
+                        // Update existing concept frequency/confidence
+                        const existing = conceptMap.get(conceptKey);
+                        existing.frequency = (existing.frequency || 1) + 1;
+                        existing.confidence = Math.max(existing.confidence || 0, concept.confidence || 0);
+                        existing.sources.add(corpuscle.uri);
+                    } else {
+                        // Add new concept
+                        const conceptObj = {
+                            label: concept.label,
+                            type: concept.type || 'general',
+                            category: concept.category || 'uncategorized',
+                            confidence: concept.confidence || 0,
+                            frequency: 1,
+                            uri: this.generateConceptURI(concept.label),
+                            sources: new Set([corpuscle.uri]),
+                            relationships: concept.relationships || []
+                        };
+                        
+                        conceptMap.set(conceptKey, conceptObj);
+                        concepts.push(conceptObj);
+                    }
+                    
+                    // Track categories
+                    const category = concept.category || 'uncategorized';
+                    categories.set(category, (categories.get(category) || 0) + 1);
+                }
+            } catch (error) {
+                console.warn(`Failed to extract concepts from corpuscle ${corpuscle.uri}:`, error);
+            }
+        }
+
+        // Build relationships between concepts
+        for (const concept of concepts) {
+            for (const relatedLabel of concept.relationships) {
+                const relatedKey = relatedLabel.toLowerCase();
+                if (conceptMap.has(relatedKey)) {
+                    const related = conceptMap.get(relatedKey);
+                    relationships.push({
+                        source: concept.label,
+                        target: related.label,
+                        type: 'related',
+                        strength: this.calculateRelationshipStrength(concept, related),
+                        sourceUri: concept.uri,
+                        targetUri: related.uri
+                    });
+                }
+            }
+        }
+
+        // Calculate overall confidence
+        const overallConfidence = concepts.length > 0 
+            ? concepts.reduce((sum, c) => sum + (c.confidence || 0), 0) / concepts.length 
+            : 0;
+
+        return {
+            concepts: concepts.map(c => ({
+                ...c,
+                sources: Array.from(c.sources) // Convert Set to Array
+            })),
+            relationships,
+            categories: Array.from(categories.entries()).map(([name, count]) => ({ name, count })),
+            confidence: overallConfidence,
+            statistics: {
+                conceptCount: concepts.length,
+                relationshipCount: relationships.length,
+                categoryCount: categories.size,
+                avgConfidence: overallConfidence,
+                corpusclesCovered: corpuscles.length
+            }
+        };
+    }
+
+    /**
+     * Extract text content from corpuscle for concept extraction
+     */
+    extractTextContent(corpuscle) {
+        // Try various fields that might contain text
+        return corpuscle.content || 
+               corpuscle.text || 
+               corpuscle.label || 
+               corpuscle.prefLabel || 
+               corpuscle.title || 
+               String(corpuscle.uri || '');
+    }
+
+    /**
+     * Generate a URI for a concept based on its label
+     */
+    generateConceptURI(label) {
+        const sanitized = label.toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-+|-+$/g, '');
+        return `http://purl.org/stuff/ragno/concept/${sanitized}`;
+    }
+
+    /**
+     * Calculate relationship strength between two concepts
+     */
+    calculateRelationshipStrength(concept1, concept2) {
+        const sharedSources = Array.from(concept1.sources).filter(s => concept2.sources.has(s));
+        const totalSources = new Set([...concept1.sources, ...concept2.sources]).size;
+        
+        if (totalSources === 0) return 0;
+        
+        return sharedSources.length / totalSources;
     }
 
     formatOutput(projection, outputType) {

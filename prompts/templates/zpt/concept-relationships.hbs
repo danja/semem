@@ -1,0 +1,27 @@
+{{#if chatFormat}}
+[
+  {
+    "role": "user", 
+    "content": "Analyze the relationships between these concepts and determine how they should be connected in a knowledge graph:\n\nConcepts:\n{{#each concepts}}- {{this.label}} ({{this.category}})\n{{/each}}\n\nContext: \"{{context}}\"\n\nGenerate relationships as JSON array:\n[\n  {\n    \"source\": \"source concept label\",\n    \"target\": \"target concept label\", \n    \"relation\": \"relationship type\",\n    \"strength\": 0.0-1.0,\n    \"bidirectional\": true/false\n  }\n]\n\nRelationship types:\n- similarity: concepts are similar/related\n- hierarchy: parent/child relationship  \n- process: temporal/causal sequence\n- association: contextual connection\n- dependency: one requires the other\n\nFocus on strong, meaningful relationships that would be useful for semantic navigation."
+  }
+]
+{{else}}
+Analyze relationships between these concepts for knowledge graph construction.
+
+Concepts:
+{{#each concepts}}
+- {{this.label}} ({{this.category}})
+{{/each}}
+
+Context: "{{context}}"
+
+Generate relationship JSON array with structure:
+- source: source concept label
+- target: target concept label  
+- relation: similarity|hierarchy|process|association|dependency
+- strength: confidence score 0.0-1.0
+- bidirectional: boolean
+
+Focus on strong relationships useful for semantic navigation.
+Return only JSON array.
+{{/if}}

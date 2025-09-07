@@ -1322,6 +1322,180 @@ export default class SPARQLStore extends BaseStore {
     }
 
     /**
+     * Store extracted concepts as proper RDF entities with relationships
+     * @param {Array} concepts - Array of concept objects from extraction
+     * @param {string} sourceEntityUri - URI of the entity these concepts were extracted from
+     */
+    async storeConcepts(concepts, sourceEntityUri) {
+        if (!concepts || !Array.isArray(concepts) || concepts.length === 0) {
+            return;
+        }
+
+        const conceptStatements = [];
+        const relationshipStatements = [];
+
+        for (const concept of concepts) {
+            const conceptUri = this.generateConceptURI(concept.label);
+            
+            // Store concept as ragno:Concept entity
+            conceptStatements.push(`
+                <${conceptUri}> a ragno:Concept ;
+                    rdfs:label "${this._escapeSparqlString(concept.label)}" ;
+                    ragno:confidence "${concept.confidence || 0.5}"^^xsd:decimal ;
+                    ragno:frequency "${concept.frequency || 1}"^^xsd:integer ;
+                    ragno:conceptCategory "${concept.category || 'general'}" ;
+                    ragno:extractedFrom <${sourceEntityUri}> ;
+                    dcterms:created "${new Date().toISOString()}"^^xsd:dateTime .
+            `);
+
+            // Create conceptual relationship between source entity and concept
+            relationshipStatements.push(`
+                <${sourceEntityUri}> ragno:hasConceptualRelation <${conceptUri}> .
+            `);
+
+            // Store concept embedding if available
+            if (concept.embedding && Array.isArray(concept.embedding)) {
+                const embeddingUri = `${conceptUri}/embedding`;
+                conceptStatements.push(`
+                    <${conceptUri}> ragno:hasEmbedding <${embeddingUri}> .
+                    <${embeddingUri}> a ragno:ConceptEmbedding ;
+                        ragno:vectorData """${JSON.stringify(concept.embedding)}""" ;
+                        ragno:dimension "${concept.embedding.length}"^^xsd:integer .
+                `);
+            }
+        }
+
+        const insertQuery = `
+            PREFIX ragno: <http://purl.org/stuff/ragno/>
+            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+            PREFIX dcterms: <http://purl.org/dc/terms/>
+
+            INSERT DATA {
+                GRAPH <${this.graphName}> {
+                    ${conceptStatements.join('\n')}
+                    ${relationshipStatements.join('\n')}
+                }
+            }
+        `;
+
+        await this._executeSparqlUpdate(insertQuery, this.endpoint.update);
+        logger.info(`Stored ${concepts.length} concepts for entity ${sourceEntityUri}`);
+    }
+
+    /**
+     * Store concept relationships discovered through analysis
+     * @param {Array} relationships - Array of relationship objects
+     */
+    async storeConceptRelationships(relationships) {
+        if (!relationships || !Array.isArray(relationships) || relationships.length === 0) {
+            return;
+        }
+
+        const relationshipStatements = [];
+
+        for (const rel of relationships) {
+            const sourceUri = this.generateConceptURI(rel.source);
+            const targetUri = this.generateConceptURI(rel.target);
+            const relationshipUri = `${sourceUri}/relationship/${encodeURIComponent(rel.target)}`;
+
+            relationshipStatements.push(`
+                <${sourceUri}> ragno:hasConceptualRelation <${targetUri}> .
+                <${relationshipUri}> a ragno:ConceptualRelationship ;
+                    ragno:source <${sourceUri}> ;
+                    ragno:target <${targetUri}> ;
+                    ragno:relationType "${rel.type || 'related'}" ;
+                    ragno:relationStrength "${rel.strength || 0.5}"^^xsd:decimal ;
+                    ragno:bidirectional "${rel.bidirectional || false}"^^xsd:boolean ;
+                    dcterms:created "${new Date().toISOString()}"^^xsd:dateTime .
+            `);
+        }
+
+        const insertQuery = `
+            PREFIX ragno: <http://purl.org/stuff/ragno/>
+            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+            PREFIX dcterms: <http://purl.org/dc/terms/>
+
+            INSERT DATA {
+                GRAPH <${this.graphName}> {
+                    ${relationshipStatements.join('\n')}
+                }
+            }
+        `;
+
+        await this._executeSparqlUpdate(insertQuery, this.endpoint.update);
+        logger.info(`Stored ${relationships.length} concept relationships`);
+    }
+
+    /**
+     * Generate a consistent URI for a concept based on its label
+     */
+    generateConceptURI(label) {
+        const sanitized = label.toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-+|-+$/g, '');
+        return `http://purl.org/stuff/ragno/concept/${sanitized}`;
+    }
+
+    /**
+     * Query concepts by category, confidence, or relationships
+     */
+    async queryConceptsByFilter(filters = {}) {
+        const filterClauses = [];
+        
+        if (filters.category) {
+            filterClauses.push(`FILTER (?category = "${filters.category}")`);
+        }
+        
+        if (filters.minConfidence) {
+            filterClauses.push(`FILTER (?confidence >= ${filters.minConfidence})`);
+        }
+        
+        if (filters.relatedTo) {
+            const relatedUri = this.generateConceptURI(filters.relatedTo);
+            filterClauses.push(`?concept ragno:hasConceptualRelation <${relatedUri}> .`);
+        }
+
+        const query = `
+            PREFIX ragno: <http://purl.org/stuff/ragno/>
+            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+            SELECT DISTINCT ?concept ?label ?category ?confidence ?frequency ?embedding
+            WHERE {
+                GRAPH <${this.graphName}> {
+                    ?concept a ragno:Concept ;
+                             rdfs:label ?label ;
+                             ragno:conceptCategory ?category ;
+                             ragno:confidence ?confidence ;
+                             ragno:frequency ?frequency .
+                    
+                    OPTIONAL { 
+                        ?concept ragno:hasEmbedding ?embResource .
+                        ?embResource ragno:vectorData ?embedding 
+                    }
+                    
+                    ${filterClauses.join('\n                    ')}
+                }
+            }
+            ORDER BY DESC(?confidence) DESC(?frequency)
+            LIMIT ${filters.limit || 100}
+        `;
+
+        const result = await this._executeSparqlQuery(query, this.endpoint.query);
+        
+        return result.results.bindings.map(binding => ({
+            uri: binding.concept?.value,
+            label: binding.label?.value,
+            category: binding.category?.value,
+            confidence: parseFloat(binding.confidence?.value || 0),
+            frequency: parseInt(binding.frequency?.value || 1),
+            embedding: binding.embedding?.value ? JSON.parse(binding.embedding.value) : null
+        }));
+    }
+
+    /**
      * Search for similar items using basic string matching
      * @param {Array<number>} queryEmbedding - Query embedding vector
      * @param {number} limit - Maximum number of results

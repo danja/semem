@@ -1,0 +1,47 @@
+CONSTRUCT {
+    ?concept1 ragno:hasConceptualRelation ?concept2 .
+    ?concept1 ragno:relationType ?relationType .
+    ?concept1 ragno:relationStrength ?strength .
+    ?concept2 ragno:relationType ?relationType .
+}
+WHERE {
+    GRAPH <${graphName}> {
+        # Find concepts that co-occur in the same entities/interactions
+        ?concept1 a ragno:Concept .
+        ?concept2 a ragno:Concept .
+        
+        FILTER(?concept1 != ?concept2)
+        
+        # Both concepts related to the same entity/interaction
+        ?entity ragno:hasConceptualRelation ?concept1 .
+        ?entity ragno:hasConceptualRelation ?concept2 .
+        
+        # Calculate relationship strength based on co-occurrence
+        {
+            SELECT ?concept1 ?concept2 (COUNT(*) AS ?cooccurrence)
+            WHERE {
+                ?e ragno:hasConceptualRelation ?concept1 .
+                ?e ragno:hasConceptualRelation ?concept2 .
+                FILTER(?concept1 != ?concept2)
+            }
+            GROUP BY ?concept1 ?concept2
+        }
+        
+        # Determine relationship type based on context
+        OPTIONAL {
+            ?concept1 ragno:conceptCategory ?cat1 .
+            ?concept2 ragno:conceptCategory ?cat2 .
+            BIND(IF(?cat1 = ?cat2, "similarity", "association") AS ?relationType)
+        }
+        
+        # Calculate strength score
+        BIND(?cooccurrence / ${maxCooccurrence} AS ?strength)
+        
+        # Filter by minimum relationship strength
+        FILTER(?strength >= ${minRelationStrength})
+        
+        # Apply concept scope filters
+        {{CONCEPT_SCOPE_FILTERS}}
+    }
+}
+LIMIT ${maxRelationships}

@@ -1,0 +1,22 @@
+{{#if chatFormat}}
+[
+  {
+    "role": "user",
+    "content": "Extract key concepts from the following text and structure them as RDF-compatible entities. Focus on concepts that would be useful for semantic navigation and knowledge graph construction.\n\nText: \"{{text}}\"\n\nExtract concepts as a JSON array of objects with the following structure:\n[\n  {\n    \"label\": \"concept name\",\n    \"type\": \"concept category (e.g., 'technical', 'domain', 'process', 'entity')\",\n    \"confidence\": 0.0-1.0,\n    \"category\": \"semantic category\",\n    \"relationships\": [\"related concept 1\", \"related concept 2\"]\n  }\n]\n\nGuidelines:\n- Extract {{maxConcepts}} most important concepts\n- Focus on concepts that would be valuable for semantic search\n- Include confidence scores based on importance/clarity\n- Identify relationships between concepts\n- Prefer specific over general concepts"
+  }
+]
+{{else}}
+Extract key concepts from the following text and structure them as RDF-compatible entities.
+
+Text: "{{text}}"
+
+Instructions:
+- Extract the {{maxConcepts}} most important concepts
+- Focus on concepts useful for semantic navigation
+- Structure as JSON array with: label, type, confidence (0.0-1.0), category, relationships
+- Categories: technical, domain, process, entity, abstract
+- Include relationships between concepts
+- Prioritize specific over general concepts
+
+Return only the JSON array, no additional text.
+{{/if}}

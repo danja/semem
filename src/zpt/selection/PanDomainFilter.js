@@ -49,6 +49,12 @@ export default class PanDomainFilter {
                 transitive: this.createTransitiveEntityFilter.bind(this),
                 typed: this.createTypedEntityFilter.bind(this)
             },
+            concept: {
+                direct: this.createDirectConceptFilter.bind(this),
+                categorical: this.createCategoricalConceptFilter.bind(this),
+                relational: this.createRelationalConceptFilter.bind(this),
+                similarity: this.createSimilarityConceptFilter.bind(this)
+            },
             temporal: {
                 exact: this.createExactTemporalFilter.bind(this),
                 range: this.createRangeTemporalFilter.bind(this),
@@ -1036,6 +1042,147 @@ export default class PanDomainFilter {
     }
 
     /**
+     * Concept filtering methods
+     */
+    createDirectConceptFilter(concepts) {
+        const conceptLabels = concepts.map(c => typeof c === 'string' ? c : c.label);
+        const conceptUris = concepts.map(c => typeof c === 'string' ? c : c.uri).filter(Boolean);
+        
+        return {
+            type: 'concept-direct',
+            selectivity: this.estimateConceptSelectivity(concepts, 'direct'),
+            filter: (corpuscle) => {
+                // Check if corpuscle is directly related to any of the specified concepts
+                const corpuscleConcepts = this.extractCorpuscleConcepts(corpuscle);
+                return corpuscleConcepts.some(concept => 
+                    conceptLabels.includes(concept.label) || 
+                    conceptUris.includes(concept.uri)
+                );
+            }
+        };
+    }
+
+    createCategoricalConceptFilter(concepts) {
+        const categories = [...new Set(concepts.map(c => c.category).filter(Boolean))];
+        
+        return {
+            type: 'concept-categorical',
+            selectivity: this.estimateConceptSelectivity(concepts, 'categorical'),
+            filter: (corpuscle) => {
+                const corpuscleConcepts = this.extractCorpuscleConcepts(corpuscle);
+                return corpuscleConcepts.some(concept => 
+                    categories.includes(concept.category)
+                );
+            }
+        };
+    }
+
+    createRelationalConceptFilter(concepts) {
+        const conceptLabels = concepts.map(c => typeof c === 'string' ? c : c.label);
+        
+        return {
+            type: 'concept-relational',
+            selectivity: this.estimateConceptSelectivity(concepts, 'relational'),
+            filter: (corpuscle) => {
+                const corpuscleConcepts = this.extractCorpuscleConcepts(corpuscle);
+                
+                // Check if corpuscle concepts have relationships to target concepts
+                return corpuscleConcepts.some(concept => {
+                    const relationships = concept.relationships || [];
+                    return relationships.some(rel => conceptLabels.includes(rel));
+                });
+            }
+        };
+    }
+
+    createSimilarityConceptFilter(concepts, threshold = 0.7) {
+        return {
+            type: 'concept-similarity',
+            selectivity: this.estimateConceptSelectivity(concepts, 'similarity'),
+            filter: (corpuscle) => {
+                const corpuscleConcepts = this.extractCorpuscleConcepts(corpuscle);
+                
+                // Use semantic similarity to match concepts (simplified implementation)
+                return concepts.some(targetConcept => {
+                    return corpuscleConcepts.some(corpuscleConcept => {
+                        const similarity = this.calculateConceptSimilarity(corpuscleConcept, targetConcept);
+                        return similarity >= threshold;
+                    });
+                });
+            }
+        };
+    }
+
+    /**
+     * Extract concepts from a corpuscle
+     */
+    extractCorpuscleConcepts(corpuscle) {
+        // Try to get concepts from various possible fields
+        if (corpuscle.concepts && Array.isArray(corpuscle.concepts)) {
+            return corpuscle.concepts;
+        }
+        
+        if (corpuscle.metadata && corpuscle.metadata.concepts) {
+            try {
+                return Array.isArray(corpuscle.metadata.concepts) ? 
+                    corpuscle.metadata.concepts : 
+                    JSON.parse(corpuscle.metadata.concepts);
+            } catch (e) {
+                return [];
+            }
+        }
+        
+        // Fallback: create pseudo-concept from corpuscle content
+        const label = corpuscle.label || corpuscle.content || corpuscle.uri;
+        if (label) {
+            return [{
+                label: String(label),
+                category: 'extracted',
+                confidence: 0.5
+            }];
+        }
+        
+        return [];
+    }
+
+    /**
+     * Calculate semantic similarity between two concepts (simplified)
+     */
+    calculateConceptSimilarity(concept1, concept2) {
+        const label1 = String(concept1.label || '').toLowerCase();
+        const label2 = String(concept2.label || '').toLowerCase();
+        
+        // Simple string similarity as fallback
+        if (label1 === label2) return 1.0;
+        if (label1.includes(label2) || label2.includes(label1)) return 0.8;
+        
+        // Could be enhanced with actual embedding similarity if available
+        const words1 = label1.split(/\s+/);
+        const words2 = label2.split(/\s+/);
+        const commonWords = words1.filter(w => words2.includes(w));
+        const totalWords = new Set([...words1, ...words2]).size;
+        
+        return totalWords > 0 ? commonWords.length / totalWords : 0;
+    }
+
+    /**
+     * Estimate selectivity for concept filters
+     */
+    estimateConceptSelectivity(concepts, filterType) {
+        const baseSelectivity = {
+            'direct': 0.2,      // Most selective
+            'categorical': 0.4, // Medium selective
+            'relational': 0.6,  // Less selective (includes related)
+            'similarity': 0.7   // Least selective (fuzzy matching)
+        };
+        
+        const conceptCount = concepts.length;
+        const countFactor = Math.min(1.0, conceptCount / 10); // More concepts = less selective
+        
+        return Math.max(0.1, baseSelectivity[filterType] * (1 - countFactor * 0.3));
+    }
+
+    /**
      * Get filter configuration for documentation
      */
     getFilterDocumentation() {
@@ -1047,7 +1194,8 @@ export default class PanDomainFilter {
                 topic: 0.3,
                 entity: 0.2,
                 temporal: 0.4,
-                geographic: 0.3
+                geographic: 0.3,
+                concept: 0.4
             }
         };
     }
