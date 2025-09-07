@@ -1,6 +1,6 @@
 * add links to workbench
 * throttling for API calls - working on server?
-* interactions aren't being stored
+* interactions aren't being stored - default should be yes
 * update Claude.md incorporate tips from https://diwank.space/field-notes-from-shipping-real-code-with-claude
 * check FAISS is being used on concepts (with backlinks)
 * clean src/frontend/_*
@@ -28,7 +28,14 @@ node utils/SPARQLIngestRemote.js --source hyperdata.it_danny --template blog-art
 node utils/SPARQLIngestRemote.js --source danny.ayers.name_content --template blog-articles --limit 5
 
 node utils/SPARQLIngestDocker.js --source danny.ayers.name_content --template blog-articles --limit 5
-node utils/SPARQLIngestDocker.js --source hyperdata.it_danny --template blog-articles --limit 5
- 
 
+
+ 
+# MANUAL
+cd ~/hyperdata/transmissions # my local path
+./scripts/del-hyperdata.sh
+./trans md-to-sparqlstore ~/hyperdata/semem/docs
+./trans sparqlstore-to-html  ~/hyperdata/semem/docs
+# on server
+node utils/SPARQLIngestDocker.js --source hyperdata.it_danny --template blog-articles --limit 1000
 

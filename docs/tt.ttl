@@ -36,7 +36,7 @@
     :rawDir "manual" ;
     :renderPath "" ; # should probably come at render time
     :baseURI <https://tensegrity.it/semem/> ;
-    :graph <http://tensegrity.it/semem> ;
+    :graph <http://hyperdata.it/content> ;
     :creatorName "Danny" ;
     :creatorURI <http://danny.ayers.name/me> .
 
@@ -46,7 +46,7 @@
     :dataBlock "contentBlocks" ;
     :templateFilename "postcraft/system/sparql-templates/store-article.njk" ;
     :endpointSettings "endpoints.json" ;
-    :graph <http://tensegrity.it/semem> .
+    :graph <http://hyperdata.it/content> .
 
 ###########################
 ### for sparqlstore-to-html
