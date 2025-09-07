@@ -2,20 +2,16 @@
 
 **Semantic Web Memory for Intelligent Agents**
 
-**Status 2025-08-23 :** mostly working, many loose ends, not ready for use in the wild yet. GUI rebuilt from scratch.
-
-*TODO : Doc for the HyDE algorithm*
-
 ## Introduction
 
 This manual provides comprehensive documentation for Semem, a Node.js toolkit that integrates large language models (LLMs) with Semantic Web technologies (RDF/SPARQL) for intelligent memory management and knowledge graph processing. The manual bridges the high-level overview in the [README](../../README.md) with detailed technical documentation, serving as the primary reference for users, developers, and researchers working with Semem.
 
 Semem combines three core systems:
-- **🧠 Semantic Memory**: Vector embeddings and intelligent context retrieval
-- **🕸️ Knowledge Graphs**: Knowledge graphrepresentation and augmentation based around the [Ragno Ontology](https://github.com/danja/ragno)
+- **🧠 Semantic Memory**: Vector embeddings and intelligent context retrieval with conversational AI interface
+- **🕸️ Knowledge Graphs**: Knowledge graph representation and augmentation based around the [Ragno Ontology](https://github.com/danja/ragno)
 - **🧭 Dimensional Navigation**: ZPT (Zoom, Pan, Tilt) knowledge exploration using the [ZPT Ontology](https://github.com/danja/zpt)
 
-The system provides multiple interfaces (direct SDK, HTTP API, MCP protocol, web UI) and supports various deployment scenarios from local development to production semantic web infrastructure.
+The system provides multiple interfaces (conversational chat, web workbench, HTTP API, MCP protocol, direct SDK) and supports various deployment scenarios from local development to production semantic web infrastructure. The interactive chat interface provides natural language access to all system capabilities with automatic enhancement via external knowledge sources (Wikipedia, Wikidata, HyDE).
 
 ## Contents
 
@@ -81,7 +77,11 @@ The following are workflows applied to sample questions from the [BeerQA](https:
 
 **[gui.md](gui.md)** - Web-based user interface documentation covering the VSOM visualization system, SPARQL browser, interactive console, memory management interface, and administrative tools for system monitoring and configuration.
 
-**[workbench-howto.md](workbench-howto.md)** - User guide for the web-based workbench interface.
+**[workbench-howto.md](workbench-howto.md)** - Complete user guide for the web-based workbench interface, including the interactive chat system, semantic memory verbs (Tell, Ask, Augment, Navigate, Inspect), enhanced search features, and troubleshooting guide.
+
+**[enhancements.md](enhancements.md)** - Comprehensive guide to knowledge enhancements (Wikipedia, Wikidata, HyDE) covering chat integration, Ask verb usage, enhancement workflows, multi-source coordination, MCP support, and best practices for external knowledge integration.
+
+**[zpt.md](zpt.md)** - Complete ZPT (Zoom-Pan-Tilt) navigation system documentation covering workbench integration, zoom level behaviors, pan filtering, tilt perspectives, troubleshooting, and advanced usage patterns.
 
 **[hints.md](hints.md)** - Practical tips and troubleshooting guide for getting better search results, understanding zoom levels and similarity thresholds, and common usage patterns for the workbench interface.
 
@@ -128,10 +128,12 @@ Semem's layered architecture enables flexible deployment and integration:
 
 1. **Quick Setup**: Follow [config.md](config.md) for initial configuration
 2. **Choose Interface**: 
+   - **New Users**: Start with conversational chat in the workbench ([workbench-howto.md](workbench-howto.md))
+   - **Enhanced Knowledge**: Use enhancements for external knowledge integration ([enhancements.md](enhancements.md))
    - **Developers**: Use HTTP API ([http-api-endpoints.md](http-api-endpoints.md))
    - **AI Integration**: Use MCP protocol ([mcp-tutorial.md](mcp-tutorial.md))
-   - **Interactive Use**: Use web UI ([gui.md](gui.md))
-3. **Explore Capabilities**: Start with basic memory operations, then knowledge graphs and navigation
+   - **Advanced UI**: Use full web interface ([gui.md](gui.md))
+3. **Explore Capabilities**: Start with natural language chat, then explore semantic memory verbs and knowledge navigation
 
 ## See Also
 
