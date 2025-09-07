@@ -1,95 +1,126 @@
 graph TD
-    %% User Interface Layer
-    UI["Workbench UI<br/>Ask Form"] --> API["API Service<br/>POST /ask"]
+    %% Ask Operation Information Flow - Current Architecture
+    %% HTTP Entry Points
+    A[Client Request] -->|POST /ask| B["HTTP Server<br/>mcp/http-server.js:537"]
+    A -->|POST /api/ask| C["Workbench UI API<br/>src/frontend/js/api/api.js"]
     
-    %% Network Layer
-    API --> WS["Workbench Server<br/>Proxy: 8086 to 4115"]
-    WS --> MCP["MCP HTTP Server<br/>Port 4115"]
+    %% Request Processing
+    B --> D["Simple Verbs Service<br/>mcp/tools/simple-verbs.js:ask()"]
+    C --> D
     
-    %% Main Processing
-    MCP --> SV["Simple Verbs Service<br/>ask method"]
+    %% Question Validation & Processing
+    D --> E["Question Validation<br/>Check required question field"]
+    E --> F["Hybrid Context Manager<br/>src/services/context/HybridContextManager.js:processQuery()"]
     
-    %% Decision Point
-    SV --> DC{useContext?}
-    DC -->|Yes| HCM["HybridContextManager<br/>processQuery"]
-    DC -->|No| LLM_ONLY["Direct LLM Response"]
+    %% Context Processing Pipeline
+    F --> G["Initialize Session<br/>Create/retrieve session cache"]
+    G --> H["Concurrent Search Launch<br/>Local context + Enhancement search"]
     
-    %% Hybrid Context Manager Flow
-    HCM --> CONCURRENT["Concurrent Search Execution"]
+    %% Local Context Search Branch
+    H --> I["Adaptive Search Engine<br/>src/services/search/AdaptiveSearchEngine.js:executeAdaptiveSearch()"]
+    I --> J["Generate Query Embedding<br/>SafeOperations.generateEmbedding()"]
+    J -->|API Call| K["External Embedding Service<br/>Nomic API / Ollama nomic-embed-text"]
+    K -->|1536-dim Vector| J
     
-    %% Enhancement Path
-    CONCURRENT --> ENH_SEARCH["Enhancement Search"]
-    ENH_SEARCH --> ENH_CHECK{Enhancement<br/>Requested?}
-    ENH_CHECK -->|Yes| EC["Enhancement Coordinator<br/>Wikidata/Wikipedia/HyDE"]
-    ENH_CHECK -->|No| ENH_SKIP["Skip Enhancement"]
-    EC --> ENH_RESULT["Enhancement Results"]
-    ENH_SKIP --> ENH_RESULT
+    %% Multi-Pass Search Execution
+    J --> L["Context-Aware Threshold Calculator<br/>Calculate initial thresholds by zoom level"]
+    L --> M["Multi-Pass Search Loop<br/>Progressive threshold relaxation"]
+    M --> N["Search Pass Execution<br/>Call SafeOperations.searchSimilar()"]
     
-    %% Local Context Path
-    CONCURRENT --> LOCAL_SEARCH["Local Context Search"]
-    LOCAL_SEARCH --> ASE["AdaptiveSearchEngine<br/>executeAdaptiveSearch"]
+    %% Safe Operations Search
+    N --> O["Memory Manager<br/>src/MemoryManager.js:retrieveRelevantInteractions()"]
+    O --> P["Dual Store Search<br/>FAISS Index + SPARQL Store"]
     
-    %% Adaptive Search Engine Process
-    ASE --> TC["ThresholdCalculator<br/>calculateOptimalThreshold"]
-    TC --> ZPT_ANALYSIS["ZPT State Analysis<br/>zoom/pan/tilt factors"]
-    ZPT_ANALYSIS --> QUERY_ANALYSIS["Query Complexity Analysis<br/>length, entities, concepts"]
-    QUERY_ANALYSIS --> BASE_THRESHOLD["Base Threshold<br/>0.2-0.45 based on zoom"]
+    %% SPARQL Similarity Search
+    P --> Q["SPARQL Store Search<br/>src/stores/SPARQLStore.js:search()"]
+    Q --> R["SPARQL Query Generation<br/>Support multiple RDF patterns"]
+    R --> S["Similarity Query Execution<br/>Cosine similarity calculation"]
+    S -->|HTTP POST| T["Fuseki SPARQL Endpoint<br/>localhost:4050/semem/sparql"]
+    T --> U["Vector Similarity Results<br/>semem:Interaction matches"]
     
-    %% Multi-Pass Search
-    BASE_THRESHOLD --> MULTI_PASS["Multi-Pass Search Loop<br/>Progressive Relaxation"]
-    MULTI_PASS --> SO["SafeOperations<br/>searchSimilar"]
-    SO --> MM["MemoryManager<br/>retrieveRelevantInteractions"]
+    %% FAISS Index Search
+    P --> V["Memory Store Search<br/>FAISS index similarity search"]
+    V --> W["Vector Search Results<br/>Top-K nearest neighbors"]
     
-    %% Dual Store Search
-    MM --> DUAL_SEARCH["Dual Store Search"]
-    DUAL_SEARCH --> MEM_STORE["Memory Store<br/>In-process interactions"]
-    DUAL_SEARCH --> SPARQL_STORE["SPARQL Store<br/>Chunked documents + entities"]
+    %% Result Processing & Quality Assessment
+    U --> X["Combine Search Results<br/>Merge SPARQL + FAISS results"]
+    W --> X
+    X --> Y["Result Quality Scoring<br/>AdaptiveSearchEngine._calculateResultQuality()"]
+    Y --> Z["Quality Threshold Filtering<br/>config/preferences.js SEARCH_CONFIG.QUALITY"]
     
-    %% Store Results
-    MEM_STORE --> MEM_RESULTS["Memory Results"]
-    SPARQL_STORE --> SPARQL_RESULTS["SPARQL Results<br/>ragno:Element + ragno:Unit"]
+    %% Configuration-Driven Filtering
+    AA["Configuration<br/>config/preferences.js"] --> Z
+    AA --> L
+    AA --> S
     
-    %% Combine Results
-    MEM_RESULTS --> COMBINE["Combine & Deduplicate"]
-    SPARQL_RESULTS --> COMBINE
-    COMBINE --> THRESHOLD_CHECK{"Results >= Target Count?"}
+    %% Multi-Pass Search Control
+    Z --> BB["Stopping Criteria Evaluation<br/>Quality/quantity thresholds"]
+    BB --> CC{Continue<br/>Search?}
+    CC -->|Yes| DD["Relax Thresholds<br/>Next search pass"]
+    DD --> M
+    CC -->|No| EE["Result Optimization<br/>Final quality sorting & limiting"]
     
-    %% Threshold Relaxation
-    THRESHOLD_CHECK -->|"No, Pass < Max"| RELAX["Relax Threshold<br/>threshold *= 0.85"]
-    RELAX --> MULTI_PASS
-    THRESHOLD_CHECK -->|"Yes or Max Pass"| LOCAL_RESULTS["Local Context Results"]
+    %% Context Synthesis
+    EE --> FF["Context Merging<br/>HybridContextManager._mergeContexts()"]
+    FF --> GG["Strategy Selection<br/>personal_only/enhanced/no_context"]
+    GG --> HH["LLM Prompt Generation<br/>Create synthesis prompt with context"]
     
-    %% Context Analysis and Merging
-    ENH_RESULT --> CONTEXT_ANALYSIS["Context Analysis<br/>analyzeContextRelevance"]
-    LOCAL_RESULTS --> CONTEXT_ANALYSIS
-    CONTEXT_ANALYSIS --> WEIGHTING["Context Weighting<br/>Personal vs Enhancement"]
-    WEIGHTING --> MERGE["Merge Contexts<br/>mergeContexts"]
+    %% Response Generation
+    HH --> II["LLM Handler<br/>src/handlers/LLMHandler.js:generateResponse()"]
+    II -->|API Call| JJ["External LLM Service<br/>Mistral API / Ollama qwen2:1.5b"]
+    JJ -->|Generated Answer| II
     
-    %% Response Synthesis
-    MERGE --> SYNTHESIS["Response Synthesis<br/>synthesizeResponse"]
-    SYNTHESIS --> UNIFIED["Unified Response"]
+    %% Session & Performance Tracking
+    II --> KK["Session Cache Update<br/>Update interaction counts, embeddings"]
+    KK --> LL["Context Analysis<br/>Calculate relevance scores, strategy used"]
+    LL --> MM["ZPT State Management<br/>zoom/pan/tilt state tracking"]
     
-    %% Return Path
-    UNIFIED --> SV_RETURN["Simple Verbs Return<br/>contextItems: 5, memories: 5"]
-    LLM_ONLY --> SV_RETURN
-    SV_RETURN --> MCP_RETURN["MCP HTTP Response"]
-    MCP_RETURN --> WS_RETURN["Workbench Proxy"]
-    WS_RETURN --> API_RETURN["API Response"]
-    API_RETURN --> UI_UPDATE["UI Update<br/>Display Results"]
+    %% Response Assembly
+    MM --> NN["Success Response Assembly<br/>answer, contextItems, memories, analysis"]
+    NN --> OO["Performance Metrics<br/>Search method, timing, session stats"]
+    OO --> PP["HTTP Response<br/>200 OK with comprehensive results"]
+    
+    %% Enhancement Search Branch (Parallel)
+    H --> QQ["Enhancement Context Search<br/>Future: external knowledge integration"]
+    QQ --> RR["Enhancement Results<br/>Currently returns empty/disabled"]
+    RR --> FF
+    
+    %% Error Handling Paths
+    J --> SS{Embedding<br/>Generation Failed?}
+    SS -->|Yes| TT["Error Response<br/>Failed to generate query embedding"]
+    
+    N --> UU{Search<br/>Execution Failed?}
+    UU -->|Yes| VV["Fallback Search<br/>Simple search with relaxed parameters"]
+    VV --> X
+    
+    II --> WW{LLM Response<br/>Generation Failed?}
+    WW -->|Yes| XX["Error Response<br/>Failed to generate answer"]
+    
+    S --> YY{SPARQL<br/>Query Failed?}
+    YY -->|Yes| ZZ["Partial Results<br/>Use FAISS results only"]
+    ZZ --> X
+    
+    %% No Context Found Path
+    EE --> AAA{Context<br/>Found?}
+    AAA -->|No| BBB["No Context Strategy<br/>Generate answer without context"]
+    BBB --> II
+    AAA -->|Yes| FF
     
     %% Styling
-    classDef ui fill:#e1f5fe
-    classDef network fill:#f3e5f5
-    classDef processing fill:#e8f5e8
-    classDef search fill:#fff3e0
-    classDef storage fill:#fce4ec
-    classDef decision fill:#fffde7
-    classDef results fill:#e0f2f1
+    classDef http fill:#e1f5fe,stroke:#0277bd
+    classDef processing fill:#f3e5f5,stroke:#7b1fa2
+    classDef search fill:#e8f5e8,stroke:#388e3c
+    classDef external fill:#ffcdd2,stroke:#d32f2f
+    classDef config fill:#fff3e0,stroke:#f57c00
+    classDef error fill:#ffebee,stroke:#c62828
+    classDef response fill:#e0f2f1,stroke:#00695c
+    classDef decision fill:#fffde7,stroke:#ff8f00
     
-    class UI,API,UI_UPDATE ui
-    class WS,MCP,MCP_RETURN,WS_RETURN,API_RETURN network
-    class SV,HCM,ASE,TC,SO,MM,SYNTHESIS processing
-    class ENH_SEARCH,EC,LOCAL_SEARCH,MULTI_PASS,DUAL_SEARCH search
-    class MEM_STORE,SPARQL_STORE,MEM_RESULTS,SPARQL_RESULTS storage
-    class DC,ENH_CHECK,THRESHOLD_CHECK decision
-    class ENH_RESULT,LOCAL_RESULTS,UNIFIED,SV_RETURN results
+    class A,B,C,PP http
+    class D,E,F,G,H,I,L,M,N,O,FF,GG,HH,KK,LL,MM,NN,OO processing
+    class P,Q,R,S,V,W,X,Y,Z,EE search
+    class K,JJ,T external
+    class AA config
+    class SS,TT,UU,VV,WW,XX,YY,ZZ error
+    class NN,OO,PP response
+    class CC,AAA,BB decision

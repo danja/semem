@@ -1,0 +1,2544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: services/context/HybridContextManager.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: services/context/HybridContextManager.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * HybridContextManager - Intelligent merging of enhancement services with personal context
+ * 
+ * This service orchestrates the combination of external knowledge (Wikidata, Wikipedia, HyDE)
+ * with personal/local context from chunked documents, using ZPT navigation state to guide
+ * the integration process.
+ * 
+ * Key Features:
+ * - Concurrent processing of enhancement and local search
+ * - ZPT-guided scope and filtering
+ * - Intelligent context weighting based on relevance
+ * - Unified response synthesis
+ * - Enhancement result caching for future reuse
+ */
+
+import log from 'loglevel';
+
+const logger = log.getLogger('HybridContextManager');
+import AdaptiveSearchEngine from '../search/AdaptiveSearchEngine.js';
+import { getPromptManager } from '../../prompts/index.js';
+
+export class HybridContextManager {
+    constructor(options = {}) {
+        this.enhancementCoordinator = options.enhancementCoordinator;
+        this.memoryManager = options.memoryManager;
+        this.safeOperations = options.safeOperations;
+        this.zptStateManager = options.zptStateManager;
+        
+        // Initialize prompt manager for synthesis templates
+        this.promptManager = options.promptManager || getPromptManager();
+        
+        // Initialize adaptive search engine for intelligent threshold management
+        this.adaptiveSearchEngine = new AdaptiveSearchEngine(this.safeOperations, {
+            enableLearning: options.enableLearning !== false,
+            maxPasses: options.maxSearchPasses || 3,
+            targetResultCount: options.targetResultCount || 5,
+            enablePanFilterBoosts: options.enablePanFilterBoosts !== false
+        });
+        
+        // Configuration settings
+        this.settings = {
+            // Context weighting factors
+            personalWeight: options.personalWeight || 0.6,
+            enhancementWeight: options.enhancementWeight || 0.4,
+            
+            // Quality thresholds
+            minPersonalRelevance: options.minPersonalRelevance || 0.3,
+            minEnhancementQuality: options.minEnhancementQuality || 0.4,
+            
+            // Response length controls
+            maxCombinedLength: options.maxCombinedLength || 8000,
+            personalContextLimit: options.personalContextLimit || 4000,
+            enhancementContextLimit: options.enhancementContextLimit || 4000,
+            
+            // Processing options
+            enableConcurrentSearch: options.enableConcurrentSearch !== false,
+            fallbackToSingleSource: options.fallbackToSingleSource !== false,
+            
+            ...options.settings
+        };
+
+        // Statistics tracking
+        this.stats = {
+            totalQueries: 0,
+            hybridResponses: 0,
+            personalOnlyResponses: 0,
+            enhancementOnlyResponses: 0,
+            failedMerges: 0,
+            averagePersonalRelevance: 0,
+            averageEnhancementQuality: 0
+        };
+    }
+
+    /**
+     * Process query with hybrid context approach
+     * 
+     * @param {string} query - User question
+     * @param {Object} options - Enhancement and search options
+     * @returns {Promise&lt;Object>} Merged context result
+     */
+    async processQuery(query, options = {}) {
+        const startTime = Date.now();
+        this.stats.totalQueries++;
+        
+        
+        console.log('🔥 [HYBRID_CONTEXT] Starting query processing', {
+            query: query.substring(0, 50) + '...',
+            useContext: options.useContext,
+            useHyDE: options.useHyDE,
+            useWikipedia: options.useWikipedia,
+            useWikidata: options.useWikidata,
+            mode: options.mode
+        });
+        
+        logger.info('🔄 Processing query with hybrid context approach', { 
+            query: query.substring(0, 100) + '...',
+            enableEnhancements: this._hasEnhancements(options),
+            useLocalContext: options.useContext 
+        });
+
+        try {
+            // Get current ZPT state to guide search scope
+            const zptState = this._getZPTState(options);
+            
+            // Run enhancement and local search concurrently
+            console.log('🚀 [HYBRID_CONTEXT] Starting concurrent search for enhancements and local context');
+            const [enhancementResult, localContextResult] = await this._runConcurrentSearch(
+                query, 
+                options, 
+                zptState
+            );
+            
+            console.log('🚀 [HYBRID_CONTEXT] Concurrent search completed', {
+                enhancementSuccess: enhancementResult?.success,
+                enhancementResultsCount: enhancementResult?.results?.length || 0,
+                localContextSuccess: !!localContextResult,
+                localContextCount: localContextResult?.contexts?.length || 0
+            });
+
+            // Analyze and weight the results
+            const contextAnalysis = this._analyzeContextRelevance(
+                query,
+                enhancementResult,
+                localContextResult,
+                zptState
+            );
+
+            // Merge contexts intelligently
+            const mergedContext = this._mergeContexts(
+                enhancementResult,
+                localContextResult,
+                contextAnalysis,
+                zptState
+            );
+
+            // Store enhancement results for future reuse (async, non-blocking)
+            if (enhancementResult.success) {
+                this._storeEnhancementResults(query, enhancementResult, zptState)
+                    .catch(error => logger.warn('⚠️ Failed to store enhancement results', { error: error.message }));
+            }
+
+            // Generate unified response
+            console.log('🤝 [HYBRID_CONTEXT] Synthesizing unified response', {
+                mergedContextLength: mergedContext?.combinedContent?.length || 0,
+                strategy: contextAnalysis.selectedStrategy
+            });
+            
+            const unifiedResponse = await this._synthesizeResponse(
+                query,
+                mergedContext,
+                contextAnalysis,
+                options
+            );
+            
+            console.log('✅ [HYBRID_CONTEXT] Response synthesis completed', {
+                answerLength: unifiedResponse?.answer?.length || 0,
+                hasAnswer: !!unifiedResponse?.answer
+            });
+
+            const processingTime = Date.now() - startTime;
+            this._updateStats(contextAnalysis);
+
+            logger.info('✅ Hybrid context processing completed', {
+                processingTime: processingTime + 'ms',
+                hasPersonalContext: !!localContextResult?.contexts?.length,
+                hasEnhancementContext: !!enhancementResult?.success,
+                mergeStrategy: contextAnalysis.selectedStrategy
+            });
+
+            // DEBUG: Log the actual structure we're working with
+            console.log('🔥 CONSOLE: HybridContextManager return data structure check', {
+                localContextResult: localContextResult ? Object.keys(localContextResult) : 'null',
+                localContextResultContexts: localContextResult?.contexts ? {
+                    exists: true,
+                    isArray: Array.isArray(localContextResult.contexts),
+                    length: localContextResult.contexts.length,
+                    type: typeof localContextResult.contexts
+                } : 'no contexts property',
+                enhancementResult: enhancementResult ? Object.keys(enhancementResult) : 'null',
+                enhancementResultResults: enhancementResult?.results ? {
+                    exists: true,
+                    isArray: Array.isArray(enhancementResult.results),
+                    length: enhancementResult.results.length
+                } : 'no results property'
+            });
+
+            return {
+                success: true,
+                query,
+                answer: unifiedResponse.answer,
+                contextType: 'hybrid',
+                personalContextUsed: contextAnalysis.personalWeight > 0,
+                enhancementContextUsed: contextAnalysis.enhancementWeight > 0,
+                contextAnalysis,
+                mergedContext,
+                processingTime,
+                zptState,
+                localContextResults: localContextResult?.contexts || [],
+                enhancementResults: enhancementResult?.results || [],
+                stats: {
+                    personalContextItems: localContextResult?.contexts?.length || 0,
+                    enhancementSources: enhancementResult?.metadata?.servicesUsed || [],
+                    totalContextLength: mergedContext?.combinedContent?.length || 0
+                }
+            };
+
+        } catch (error) {
+            logger.error('❌ Hybrid context processing failed:', error.message);
+            
+            // Fallback to single source if enabled
+            if (this.settings.fallbackToSingleSource) {
+                return this._handleFallback(query, options, error);
+            }
+            
+            throw new Error(`Hybrid context processing failed: ${error.message}`);
+        }
+    }
+
+    /**
+     * Run enhancement and local context search concurrently
+     * 
+     * @private
+     * @param {string} query 
+     * @param {Object} options 
+     * @param {Object} zptState 
+     * @returns {Promise&lt;Array>} [enhancementResult, localContextResult]
+     */
+    async _runConcurrentSearch(query, options, zptState) {
+        const searches = [];
+        
+        // Enhancement search (if requested) - check cache first, then live enhancement
+        if (this._hasEnhancements(options) &amp;&amp; this.enhancementCoordinator) {
+            const enhancementOptions = this._adaptEnhancementOptionsForZPT(options, zptState);
+            searches.push(
+                this._searchCachedEnhancements(query, options)
+                    .then(cachedResult => {
+                        if (cachedResult &amp;&amp; cachedResult.success) {
+                            logger.info('🚀 Using cached enhancement result for query');
+                            return cachedResult;
+                        }
+                        
+                        // No cache hit - proceed with live enhancement
+                        logger.debug('🔄 No cache hit, proceeding with live enhancement');
+                        return this.enhancementCoordinator.enhanceQuery(query, enhancementOptions);
+                    })
+                    .catch(error => {
+                        logger.warn('Enhancement search (cached + live) failed, continuing with local only:', error.message);
+                        return { success: false, error: error.message };
+                    })
+            );
+        } else {
+            searches.push(Promise.resolve({ success: false, reason: 'not_requested' }));
+        }
+
+        // Local context search using adaptive engine
+        logger.debug('🔍 Local context search check', { 
+            useContext: options.useContext, 
+            hasSafeOps: !!this.safeOperations,
+            hasAdaptiveEngine: !!this.adaptiveSearchEngine
+        });
+        
+        if (options.useContext &amp;&amp; this.safeOperations) {
+            console.log('🔍 [HYBRID_CONTEXT] Starting adaptive local context search');
+            logger.debug('🚀 Executing adaptive local context search');
+            // Pass options directly - AdaptiveSearchEngine handles ZPT adaptation internally
+            searches.push(
+                this._searchLocalContext(query, options)
+                    .catch(error => {
+                        console.log('❌ [HYBRID_CONTEXT] Local context search failed:', error.message);
+                        logger.warn('Adaptive local context search failed:', error.message);
+                        return { success: false, error: error.message, contexts: [] };
+                    })
+            );
+        } else {
+            console.log('⚠️ [HYBRID_CONTEXT] Skipping local context search', { 
+                useContext: options.useContext, 
+                hasSafeOps: !!this.safeOperations,
+                reason: !options.useContext ? 'useContext=false' : 'no safeOperations'
+            });
+            logger.debug('⚠️ Skipping local context search', { 
+                useContext: options.useContext, 
+                hasSafeOps: !!this.safeOperations,
+                reason: !options.useContext ? 'useContext=false' : 'no safeOperations'
+            });
+            searches.push(Promise.resolve({ success: false, reason: 'not_requested', contexts: [] }));
+        }
+
+        return Promise.all(searches);
+    }
+
+    /**
+     * Search local context using AdaptiveSearchEngine with intelligent thresholds
+     * Enhanced with ZPT-guided filtering, multi-pass search, and learning optimization
+     * 
+     * @private
+     * @param {string} query 
+     * @param {Object} options 
+     * @returns {Promise&lt;Object>} Advanced local search results
+     */
+    async _searchLocalContext(query, options) {
+        console.log('🎆 [HYBRID_CONTEXT] Searching local context with adaptive engine');
+        logger.debug('🎆 Searching local context with adaptive engine');
+        
+        // Get ZPT state for filtering
+        const zptState = this._getZPTState(options);
+        
+        // Execute adaptive search with intelligent threshold management
+        console.log('🎯 [HYBRID_CONTEXT] Executing adaptive search with ZPT state:', {
+            zoom: zptState?.zoom,
+            panDomains: zptState?.pan?.domains,
+            panKeywords: zptState?.pan?.keywords
+        });
+        
+        const adaptiveResult = await this.adaptiveSearchEngine.executeAdaptiveSearch(
+            query, 
+            zptState, 
+            options
+        );
+        
+        console.log('✅ [HYBRID_CONTEXT] Adaptive search completed', {
+            success: adaptiveResult.success,
+            contextsFound: adaptiveResult.contexts?.length || 0,
+            totalPasses: adaptiveResult.totalPasses
+        });
+        
+        
+        logger.info('🎆 Adaptive local search completed', {
+            success: adaptiveResult.success,
+            results: adaptiveResult.contexts.length,
+            passes: adaptiveResult.totalPasses,
+            avgQuality: adaptiveResult.searchStats?.averageQuality || 0,
+            processingTime: adaptiveResult.searchStats?.processingTime || 0
+        });
+
+        return {
+            success: adaptiveResult.success,
+            contexts: adaptiveResult.contexts || [],
+            searchMethod: 'adaptive_intelligent_search',
+            totalFound: adaptiveResult.contexts?.length || 0,
+            adaptiveStats: {
+                totalPasses: adaptiveResult.totalPasses,
+                thresholdConfig: adaptiveResult.thresholdConfig,
+                searchStats: adaptiveResult.searchStats,
+                panFilterBoosts: adaptiveResult.thresholdConfig?.panBoosts,
+                queryAnalysis: adaptiveResult.thresholdConfig?.queryAnalysis
+            },
+            zptState: zptState
+        };
+    }
+
+    /**
+     * Analyze relevance and quality of different context sources
+     * 
+     * @private
+     * @param {string} query 
+     * @param {Object} enhancementResult 
+     * @param {Object} localContextResult 
+     * @param {Object} zptState 
+     * @returns {Object} Context analysis with weights and strategy
+     */
+    _analyzeContextRelevance(query, enhancementResult, localContextResult, zptState) {
+        const analysis = {
+            hasPersonalContext: localContextResult.success &amp;&amp; localContextResult.contexts.length > 0,
+            hasEnhancementContext: enhancementResult.success &amp;&amp; enhancementResult.enhancedAnswer,
+            personalRelevance: 0,
+            enhancementQuality: 0,
+            personalWeight: 0,
+            enhancementWeight: 0,
+            selectedStrategy: 'none'
+        };
+
+        // Calculate personal context relevance
+        if (analysis.hasPersonalContext) {
+            analysis.personalRelevance = this._calculatePersonalRelevance(
+                query, 
+                localContextResult.contexts
+            );
+        }
+
+        // Calculate enhancement quality score
+        if (analysis.hasEnhancementContext) {
+            analysis.enhancementQuality = this._calculateEnhancementQuality(
+                enhancementResult
+            );
+        }
+
+        // Determine merge strategy and weights
+        analysis.selectedStrategy = this._selectMergeStrategy(analysis, zptState);
+        const weights = this._calculateContextWeights(analysis, zptState);
+        analysis.personalWeight = weights.personal;
+        analysis.enhancementWeight = weights.enhancement;
+
+        logger.debug('📊 Context relevance analysis', {
+            strategy: analysis.selectedStrategy,
+            personalRelevance: analysis.personalRelevance,
+            enhancementQuality: analysis.enhancementQuality,
+            weights: { 
+                personal: analysis.personalWeight, 
+                enhancement: analysis.enhancementWeight 
+            }
+        });
+
+        return analysis;
+    }
+
+    /**
+     * Calculate relevance score for personal context
+     * 
+     * @private
+     * @param {string} query 
+     * @param {Array} contexts 
+     * @returns {number} Relevance score 0-1
+     */
+    _calculatePersonalRelevance(query, contexts) {
+        if (!contexts || contexts.length === 0) return 0;
+        
+        // Simple relevance calculation based on similarity scores
+        const avgSimilarity = contexts.reduce((sum, ctx) => sum + (ctx.similarity || 0), 0) / contexts.length;
+        
+        // Boost score if contexts contain query keywords
+        const queryWords = query.toLowerCase().split(/\s+/);
+        let keywordBonus = 0;
+        
+        for (const context of contexts) {
+            const content = (context.prompt + ' ' + context.response).toLowerCase();
+            const matches = queryWords.filter(word => content.includes(word)).length;
+            keywordBonus += matches / queryWords.length;
+        }
+        
+        keywordBonus = keywordBonus / contexts.length; // Average across contexts
+        
+        return Math.min(avgSimilarity + (keywordBonus * 0.2), 1.0);
+    }
+
+    /**
+     * Calculate quality score for enhancement results
+     * 
+     * @private
+     * @param {Object} enhancementResult 
+     * @returns {number} Quality score 0-1
+     */
+    _calculateEnhancementQuality(enhancementResult) {
+        if (!enhancementResult.success || !enhancementResult.enhancedAnswer) return 0;
+        
+        let qualityScore = 0.5; // Base score for successful enhancement
+        
+        // Boost for multiple services used
+        const servicesUsed = enhancementResult.stats?.successfulServices || 0;
+        qualityScore += Math.min(servicesUsed * 0.1, 0.3);
+        
+        // Boost for longer, detailed responses
+        const answerLength = enhancementResult.enhancedAnswer.length;
+        if (answerLength > 1000) qualityScore += 0.1;
+        if (answerLength > 2000) qualityScore += 0.1;
+        
+        return Math.min(qualityScore, 1.0);
+    }
+
+    /**
+     * Select optimal merge strategy based on context analysis
+     * 
+     * @private
+     * @param {Object} analysis 
+     * @param {Object} zptState 
+     * @returns {string} Selected strategy
+     */
+    _selectMergeStrategy(analysis, zptState) {
+        // No context available
+        if (!analysis.hasPersonalContext &amp;&amp; !analysis.hasEnhancementContext) {
+            return 'no_context';
+        }
+        
+        // Only one source available
+        if (!analysis.hasPersonalContext) return 'enhancement_only';
+        if (!analysis.hasEnhancementContext) return 'personal_only';
+        
+        // Both sources available - choose based on quality and ZPT state
+        const personalQuality = analysis.personalRelevance;
+        const enhancementQuality = analysis.enhancementQuality;
+        
+        // ZPT zoom level influences strategy
+        if (zptState.zoom === 'entity') {
+            // Entity-level favors personal context
+            return personalQuality >= this.settings.minPersonalRelevance ? 'personal_primary' : 'balanced';
+        } else if (zptState.zoom === 'corpus') {
+            // Corpus-level favors enhancement context  
+            return enhancementQuality >= this.settings.minEnhancementQuality ? 'enhancement_primary' : 'balanced';
+        }
+        
+        // Default balanced approach
+        return 'balanced';
+    }
+
+    /**
+     * Calculate sophisticated context weights based on multiple factors and ZPT state
+     * 
+     * @private
+     * @param {Object} analysis 
+     * @param {Object} zptState 
+     * @returns {Object} Detailed weights and rationale for personal and enhancement context
+     */
+    _calculateContextWeights(analysis, zptState) {
+        logger.debug('⚖️ Calculating sophisticated context weights', {
+            strategy: analysis.selectedStrategy,
+            personalRelevance: analysis.personalRelevance,
+            enhancementQuality: analysis.enhancementQuality,
+            zoomLevel: zptState.zoom
+        });
+        
+        const strategy = analysis.selectedStrategy;
+        
+        // Handle explicit single-source strategies first
+        if (strategy === 'personal_only') {
+            return { 
+                personal: 1.0, 
+                enhancement: 0.0, 
+                rationale: 'Explicit personal-only strategy',
+                confidence: 1.0
+            };
+        }
+        if (strategy === 'enhancement_only') {
+            return { 
+                personal: 0.0, 
+                enhancement: 1.0, 
+                rationale: 'Explicit enhancement-only strategy',
+                confidence: 1.0
+            };
+        }
+        
+        // For hybrid strategies, calculate sophisticated weights
+        const weights = this._calculateMultiFactorWeights(analysis, zptState);
+        
+        // Apply strategy-specific adjustments
+        let finalWeights;
+        switch (strategy) {
+            case 'personal_primary':
+                finalWeights = this._adjustWeights(weights, { personalBias: 0.2, enhancementBias: -0.1 });
+                finalWeights.rationale = `Personal-primary strategy with quality adjustment (P:${finalWeights.personal.toFixed(2)}, E:${finalWeights.enhancement.toFixed(2)})`;
+                break;
+                
+            case 'enhancement_primary':
+                finalWeights = this._adjustWeights(weights, { personalBias: -0.1, enhancementBias: 0.2 });
+                finalWeights.rationale = `Enhancement-primary strategy with quality adjustment (P:${finalWeights.personal.toFixed(2)}, E:${finalWeights.enhancement.toFixed(2)})`;
+                break;
+                
+            case 'balanced':
+            default:
+                finalWeights = weights;
+                finalWeights.rationale = `Dynamic balanced weighting based on quality, recency, ZPT state, and coverage (P:${finalWeights.personal.toFixed(2)}, E:${finalWeights.enhancement.toFixed(2)})`;
+                break;
+        }
+        
+        logger.debug('⚖️ Context weights calculated', {
+            strategy,
+            personalWeight: finalWeights.personal,
+            enhancementWeight: finalWeights.enhancement,
+            confidence: finalWeights.confidence,
+            factors: finalWeights.factors
+        });
+        
+        return finalWeights;
+    }
+    
+    /**
+     * Calculate multi-factor weights considering quality, ZPT state, recency, and coverage
+     * 
+     * @private
+     * @param {Object} analysis 
+     * @param {Object} zptState 
+     * @returns {Object} Sophisticated weight calculation
+     */
+    _calculateMultiFactorWeights(analysis, zptState) {
+        const factors = {
+            qualityScore: { personal: 0, enhancement: 0 },
+            zptAlignment: { personal: 0, enhancement: 0 },
+            recency: { personal: 0, enhancement: 0 },
+            coverage: { personal: 0, enhancement: 0 },
+            confidence: { personal: 0, enhancement: 0 }
+        };
+        
+        // Factor 1: Basic Quality Scores (40% weight)
+        const qualityWeight = 0.4;
+        factors.qualityScore.personal = (analysis.personalRelevance || 0) * qualityWeight;
+        factors.qualityScore.enhancement = (analysis.enhancementQuality || 0) * qualityWeight;
+        
+        // Factor 2: ZPT State Alignment (25% weight)
+        const zptWeight = 0.25;
+        const zptAlignment = this._calculateZPTAlignment(analysis, zptState);
+        factors.zptAlignment.personal = zptAlignment.personal * zptWeight;
+        factors.zptAlignment.enhancement = zptAlignment.enhancement * zptWeight;
+        
+        // Factor 3: Recency Bias (15% weight)
+        const recencyWeight = 0.15;
+        const recencyBias = this._calculateRecencyBias(analysis);
+        factors.recency.personal = recencyBias.personal * recencyWeight;
+        factors.recency.enhancement = recencyBias.enhancement * recencyWeight;
+        
+        // Factor 4: Content Coverage (15% weight)
+        const coverageWeight = 0.15;
+        const coverageBias = this._calculateCoverageBias(analysis);
+        factors.coverage.personal = coverageBias.personal * coverageWeight;
+        factors.coverage.enhancement = coverageBias.enhancement * coverageWeight;
+        
+        // Factor 5: Confidence/Authority (5% weight)
+        const confidenceWeight = 0.05;
+        const confidenceBias = this._calculateConfidenceBias(analysis);
+        factors.confidence.personal = confidenceBias.personal * confidenceWeight;
+        factors.confidence.enhancement = confidenceBias.enhancement * confidenceWeight;
+        
+        // Sum all factors
+        const personalTotal = Object.values(factors).reduce((sum, factor) => sum + factor.personal, 0);
+        const enhancementTotal = Object.values(factors).reduce((sum, factor) => sum + factor.enhancement, 0);
+        const grandTotal = personalTotal + enhancementTotal;
+        
+        // Normalize to weights that sum to 1.0
+        let personal, enhancement;
+        if (grandTotal === 0) {
+            personal = 0.5;
+            enhancement = 0.5;
+        } else {
+            personal = personalTotal / grandTotal;
+            enhancement = enhancementTotal / grandTotal;
+        }
+        
+        // Ensure minimum thresholds (no source should be completely ignored unless explicitly requested)
+        const minWeight = 0.05;
+        if (personal > 0 &amp;&amp; personal &lt; minWeight) personal = minWeight;
+        if (enhancement > 0 &amp;&amp; enhancement &lt; minWeight) enhancement = minWeight;
+        
+        // Re-normalize if needed
+        const adjustedTotal = personal + enhancement;
+        if (adjustedTotal > 1.0) {
+            personal = personal / adjustedTotal;
+            enhancement = enhancement / adjustedTotal;
+        }
+        
+        // Calculate confidence in our weighting decision
+        const confidence = Math.min(1.0, Math.abs(personalTotal - enhancementTotal) + 0.3); // Higher confidence for clearer differences
+        
+        return {
+            personal,
+            enhancement,
+            confidence,
+            factors: {
+                quality: { personal: factors.qualityScore.personal, enhancement: factors.qualityScore.enhancement },
+                zptAlignment: { personal: factors.zptAlignment.personal, enhancement: factors.zptAlignment.enhancement },
+                recency: { personal: factors.recency.personal, enhancement: factors.recency.enhancement },
+                coverage: { personal: factors.coverage.personal, enhancement: factors.coverage.enhancement },
+                confidenceFactor: { personal: factors.confidence.personal, enhancement: factors.confidence.enhancement }
+            },
+            totals: { personal: personalTotal, enhancement: enhancementTotal }
+        };
+    }
+    
+    /**
+     * Calculate how well each context type aligns with current ZPT state
+     * 
+     * @private
+     * @param {Object} analysis 
+     * @param {Object} zptState 
+     * @returns {Object} ZPT alignment scores
+     */
+    _calculateZPTAlignment(analysis, zptState) {
+        let personalAlignment = 0.5; // Base score
+        let enhancementAlignment = 0.5; // Base score
+        
+        // Zoom level preferences
+        switch (zptState.zoom) {
+            case 'entity':
+                // Entity level: prefer personal context (specific experiences)
+                personalAlignment += 0.3;
+                enhancementAlignment += 0.1;
+                break;
+            case 'unit':
+            case 'text':
+                // Unit/text level: balanced preference with slight personal bias
+                personalAlignment += 0.2;
+                enhancementAlignment += 0.15;
+                break;
+            case 'community':
+                // Community level: slight enhancement preference (broader context)
+                personalAlignment += 0.1;
+                enhancementAlignment += 0.2;
+                break;
+            case 'corpus':
+            case 'micro':
+                // Corpus level: prefer enhancement (comprehensive knowledge)
+                personalAlignment += 0.05;
+                enhancementAlignment += 0.3;
+                break;
+        }
+        
+        // Pan filter considerations
+        if (zptState.pan) {
+            // If specific entities/keywords are filtered, personal context might be more relevant
+            const hasSpecificFilters = (zptState.pan.entities &amp;&amp; zptState.pan.entities.length > 0) ||
+                                     (zptState.pan.keywords &amp;&amp; zptState.pan.keywords.length > 0);
+            if (hasSpecificFilters) {
+                personalAlignment += 0.1;
+            }
+            
+            // If domain filters are set, enhancement might provide better coverage
+            if (zptState.pan.domains &amp;&amp; zptState.pan.domains.length > 0) {
+                enhancementAlignment += 0.1;
+            }
+        }
+        
+        // Tilt style considerations
+        switch (zptState.tilt) {
+            case 'graph':
+                // Graph tilt: enhancement might provide better relationship data
+                enhancementAlignment += 0.1;
+                break;
+            case 'embedding':
+                // Embedding tilt: both are semantic, slight personal preference for lived experience
+                personalAlignment += 0.05;
+                break;
+            case 'temporal':
+                // Temporal tilt: personal context often has better temporal grounding
+                personalAlignment += 0.1;
+                break;
+            case 'keywords':
+                // Keywords: both can provide good keyword matches
+                // No adjustment
+                break;
+        }
+        
+        // Clamp to valid range [0, 1]
+        personalAlignment = Math.min(1.0, Math.max(0.0, personalAlignment));
+        enhancementAlignment = Math.min(1.0, Math.max(0.0, enhancementAlignment));
+        
+        return { personal: personalAlignment, enhancement: enhancementAlignment };
+    }
+    
+    /**
+     * Calculate recency bias (newer information preferred)
+     * 
+     * @private
+     * @param {Object} analysis 
+     * @returns {Object} Recency bias scores
+     */
+    _calculateRecencyBias(analysis) {
+        // Personal context typically has better temporal/recency information
+        // Enhancement context from APIs might be more current for factual information
+        
+        return {
+            personal: 0.6, // Personal experiences are timestamped and contextual
+            enhancement: 0.4 // Enhancement data might be more current but less personal
+        };
+    }
+    
+    /**
+     * Calculate coverage bias (comprehensive vs specific)
+     * 
+     * @private
+     * @param {Object} analysis 
+     * @returns {Object} Coverage bias scores
+     */
+    _calculateCoverageBias(analysis) {
+        // Enhancement typically provides broader coverage
+        // Personal context provides deeper, more specific coverage
+        
+        const personalContexts = analysis.personalContexts || [];
+        const personalCoverage = Math.min(1.0, personalContexts.length / 3); // Normalize by expected count
+        
+        return {
+            personal: personalCoverage * 0.7, // Personal is specific but potentially limited
+            enhancement: 0.8 // Enhancement typically provides comprehensive coverage
+        };
+    }
+    
+    /**
+     * Calculate confidence/authority bias
+     * 
+     * @private
+     * @param {Object} analysis 
+     * @returns {Object} Confidence bias scores
+     */
+    _calculateConfidenceBias(analysis) {
+        return {
+            personal: 0.7, // Personal context has high confidence for personal experiences
+            enhancement: 0.8 // Enhancement from authoritative sources has high confidence
+        };
+    }
+    
+    /**
+     * Apply strategy-specific bias adjustments to weights
+     * 
+     * @private
+     * @param {Object} weights 
+     * @param {Object} biases 
+     * @returns {Object} Adjusted weights
+     */
+    _adjustWeights(weights, biases) {
+        let personal = weights.personal + (biases.personalBias || 0);
+        let enhancement = weights.enhancement + (biases.enhancementBias || 0);
+        
+        // Ensure weights stay in [0, 1] range
+        personal = Math.min(1.0, Math.max(0.0, personal));
+        enhancement = Math.min(1.0, Math.max(0.0, enhancement));
+        
+        // Normalize to sum to 1.0
+        const total = personal + enhancement;
+        if (total > 0) {
+            personal = personal / total;
+            enhancement = enhancement / total;
+        }
+        
+        return {
+            personal,
+            enhancement,
+            confidence: weights.confidence,
+            factors: weights.factors
+        };
+    }
+    
+    /**
+     * Store enhancement results in SPARQL for future reuse
+     * 
+     * @private
+     * @param {string} query Original query
+     * @param {Object} enhancementResult Enhancement results
+     * @param {Object} zptState Current ZPT state
+     * @returns {Promise&lt;void>}
+     */
+    async _storeEnhancementResults(query, enhancementResult, zptState) {
+        logger.debug('💾 Storing enhancement results for future reuse');
+        
+        try {
+            if (!this.memoryManager?.store) {
+                logger.warn('⚠️ No store available for enhancement caching');
+                return;
+            }
+            
+            const store = this.memoryManager.store;
+            
+            // Create unique ID for this enhancement cache entry
+            const enhancementId = `enhancement_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+            
+            // Determine enhancement type and extract relevant content
+            const enhancementData = this._extractEnhancementData(enhancementResult);
+            
+            // Generate embedding for the enhancement content for future semantic search
+            let enhancementEmbedding;
+            try {
+                enhancementEmbedding = await this.safeOperations.generateEmbedding(
+                    enhancementData.content || enhancementResult.enhancedAnswer || query
+                );
+            } catch (embeddingError) {
+                logger.warn('⚠️ Failed to generate embedding for enhancement results', { error: embeddingError.message });
+                enhancementEmbedding = null;
+            }
+            
+            // Prepare enhancement metadata
+            const enhancementMetadata = {
+                type: 'enhancement_cache',
+                enhancementType: enhancementResult.enhancementType || 'mixed',
+                sourceQuery: query,
+                servicesUsed: enhancementResult.metadata?.servicesUsed || [],
+                enhancementSources: enhancementData.sources || [],
+                zptContext: {
+                    zoom: zptState.zoom,
+                    pan: zptState.pan || {},
+                    tilt: zptState.tilt
+                },
+                cacheInfo: {
+                    createdAt: new Date().toISOString(),
+                    ttl: this._calculateEnhancementTTL(enhancementData.sources),
+                    expiresAt: new Date(Date.now() + this._calculateEnhancementTTL(enhancementData.sources) * 1000).toISOString()
+                },
+                quality: {
+                    enhancementQuality: this._calculateEnhancementQuality(enhancementResult),
+                    confidence: enhancementResult.confidence || 0.8,
+                    servicesCount: enhancementResult.stats?.successfulServices || 0
+                }
+            };
+            
+            // Store as interaction for semantic search
+            const prompt = `Enhancement Query: ${query}`;
+            const response = enhancementResult.enhancedAnswer || enhancementData.content || 'Enhancement results cached';
+            
+            if (typeof store.store === 'function') {
+                // Use the store's main storage method
+                await store.store({
+                    id: enhancementId,
+                    prompt,
+                    response,
+                    embedding: enhancementEmbedding,
+                    concepts: enhancementData.concepts || [],
+                    metadata: enhancementMetadata
+                });
+                
+                logger.info('💾 Enhancement results stored successfully', {
+                    enhancementId,
+                    enhancementType: enhancementResult.enhancementType,
+                    servicesUsed: enhancementMetadata.servicesUsed.length,
+                    ttl: enhancementMetadata.cacheInfo.ttl,
+                    hasEmbedding: !!enhancementEmbedding
+                });
+                
+            } else if (typeof store.storeEnhancementCache === 'function') {
+                // Use specialized enhancement storage if available
+                await store.storeEnhancementCache({
+                    id: enhancementId,
+                    query,
+                    enhancementResult,
+                    embedding: enhancementEmbedding,
+                    metadata: enhancementMetadata
+                });
+                
+                logger.info('💾 Enhancement results stored via specialized method', {
+                    enhancementId,
+                    enhancementType: enhancementResult.enhancementType
+                });
+                
+            } else {
+                logger.warn('⚠️ Store does not support enhancement caching');
+            }
+            
+        } catch (error) {
+            logger.error('❌ Failed to store enhancement results', {
+                error: error.message,
+                query: query.substring(0, 50) + '...'
+            });
+            // Don't throw - enhancement storage failure shouldn't break the main flow
+        }
+    }
+    
+    /**
+     * Extract structured data from enhancement results
+     * 
+     * @private
+     * @param {Object} enhancementResult 
+     * @returns {Object} Structured enhancement data
+     */
+    _extractEnhancementData(enhancementResult) {
+        const data = {
+            content: '',
+            sources: [],
+            concepts: []
+        };
+        
+        // Extract content and sources based on enhancement type
+        if (enhancementResult.enhancedAnswer) {
+            data.content = enhancementResult.enhancedAnswer;
+        }
+        
+        // Extract sources from enhancement metadata
+        if (enhancementResult.context?.enhancements) {
+            const enhancements = enhancementResult.context.enhancements;
+            
+            if (enhancements.wikidata) {
+                data.sources.push({
+                    type: 'wikidata',
+                    content: enhancements.wikidata,
+                    reliability: 0.9
+                });
+            }
+            
+            if (enhancements.wikipedia) {
+                data.sources.push({
+                    type: 'wikipedia',
+                    content: enhancements.wikipedia,
+                    reliability: 0.85
+                });
+            }
+            
+            if (enhancements.hyde) {
+                data.sources.push({
+                    type: 'hyde',
+                    content: enhancements.hyde,
+                    reliability: 0.7
+                });
+            }
+        }
+        
+        // Extract concepts if available
+        if (enhancementResult.concepts) {
+            data.concepts = Array.isArray(enhancementResult.concepts) ? 
+                enhancementResult.concepts : [enhancementResult.concepts];
+        }
+        
+        // If no explicit content, use the main enhanced answer
+        if (!data.content &amp;&amp; data.sources.length > 0) {
+            data.content = data.sources.map(s => s.content).join('\n\n');
+        }
+        
+        return data;
+    }
+    
+    /**
+     * Calculate TTL for enhancement cache based on source types
+     * 
+     * @private
+     * @param {Array} sources Enhancement sources
+     * @returns {number} TTL in seconds
+     */
+    _calculateEnhancementTTL(sources) {
+        // Default TTL: 7 days
+        let baseTTL = 7 * 24 * 60 * 60; // 7 days in seconds
+        
+        if (!sources || sources.length === 0) {
+            return baseTTL;
+        }
+        
+        // Adjust TTL based on source types
+        let adjustmentFactor = 1.0;
+        
+        sources.forEach(source => {
+            switch (source.type) {
+                case 'wikidata':
+                    // Wikidata is relatively stable - longer TTL
+                    adjustmentFactor = Math.max(adjustmentFactor, 1.5);
+                    break;
+                case 'wikipedia':
+                    // Wikipedia changes more frequently - medium TTL
+                    adjustmentFactor = Math.max(adjustmentFactor, 1.2);
+                    break;
+                case 'hyde':
+                    // HyDE is generated content - shorter TTL
+                    adjustmentFactor = Math.max(adjustmentFactor, 0.8);
+                    break;
+            }
+        });
+        
+        return Math.floor(baseTTL * adjustmentFactor);
+    }
+    
+    /**
+     * Search for cached enhancement results for similar queries
+     * 
+     * @private
+     * @param {string} query 
+     * @param {Object} options 
+     * @returns {Promise&lt;Object|null>} Cached enhancement result or null
+     */
+    async _searchCachedEnhancements(query, options) {
+        logger.debug('🔎 Searching for cached enhancement results');
+        
+        try {
+            if (!this.safeOperations) {
+                return null;
+            }
+            
+            // Search for similar enhancement cache entries
+            const cacheResults = await this.safeOperations.searchSimilar(
+                `Enhancement Query: ${query}`,
+                3, // limit to top 3 matches
+                0.8 // high threshold for cache hits
+            );
+            
+            if (!cacheResults || cacheResults.length === 0) {
+                logger.debug('🔎 No cached enhancement results found');
+                return null;
+            }
+            
+            // Filter for enhancement cache entries that haven't expired
+            const validCacheEntries = cacheResults.filter(result => {
+                const metadata = result.metadata;
+                if (!metadata || metadata.type !== 'enhancement_cache') {
+                    return false;
+                }
+                
+                // Check if cache entry has expired
+                if (metadata.cacheInfo?.expiresAt) {
+                    const expiresAt = new Date(metadata.cacheInfo.expiresAt);
+                    if (new Date() > expiresAt) {
+                        logger.debug('🕰️ Cache entry expired, skipping', {
+                            expiresAt: expiresAt.toISOString(),
+                            age: Math.floor((Date.now() - expiresAt.getTime()) / 1000 / 60) + ' minutes'
+                        });
+                        return false;
+                    }
+                }
+                
+                return true;
+            });
+            
+            if (validCacheEntries.length === 0) {
+                logger.debug('🔎 No valid (non-expired) cached enhancement results found');
+                return null;
+            }
+            
+            // Return the best match
+            const bestMatch = validCacheEntries[0];
+            logger.info('🚀 Using cached enhancement result', {
+                similarity: bestMatch.similarity,
+                cacheAge: Math.floor((Date.now() - new Date(bestMatch.metadata?.cacheInfo?.createdAt).getTime()) / 1000 / 60) + ' minutes',
+                enhancementType: bestMatch.metadata?.enhancementType
+            });
+            
+            return {
+                success: true,
+                cached: true,
+                enhancedAnswer: bestMatch.response,
+                enhancementType: bestMatch.metadata?.enhancementType || 'cached',
+                cacheMetadata: bestMatch.metadata,
+                similarity: bestMatch.similarity
+            };
+            
+        } catch (error) {
+            logger.warn('⚠️ Failed to search cached enhancements', { error: error.message });
+            return null;
+        }
+    }
+
+    /**
+     * Merge contexts according to selected strategy and weights
+     * 
+     * @private
+     * @param {Object} enhancementResult 
+     * @param {Object} localContextResult 
+     * @param {Object} contextAnalysis 
+     * @param {Object} zptState 
+     * @returns {Object} Merged context
+     */
+    _mergeContexts(enhancementResult, localContextResult, contextAnalysis, zptState) {
+        const mergedContext = {
+            strategy: contextAnalysis.selectedStrategy,
+            personalContent: '',
+            enhancementContent: '',
+            combinedContent: '',
+            sources: []
+        };
+
+        // Extract personal context content
+        if (contextAnalysis.personalWeight > 0 &amp;&amp; localContextResult.contexts) {
+            console.log('🔥 CONSOLE: HybridContextManager _mergeContexts processing contexts', {
+                contextCount: localContextResult.contexts.length,
+                personalWeight: contextAnalysis.personalWeight,
+                firstContext: localContextResult.contexts[0] ? {
+                    hasPrompt: !!localContextResult.contexts[0].prompt,
+                    hasOutput: !!localContextResult.contexts[0].output,
+                    hasResponse: !!localContextResult.contexts[0].response,
+                    hasContent: !!localContextResult.contexts[0].content,
+                    keys: Object.keys(localContextResult.contexts[0]),
+                    promptPreview: localContextResult.contexts[0].prompt?.substring(0, 50),
+                    outputPreview: localContextResult.contexts[0].output?.substring(0, 50),
+                    responsePreview: localContextResult.contexts[0].response?.substring(0, 50),
+                    contentPreview: localContextResult.contexts[0].content?.substring(0, 50)
+                } : 'no first context'
+            });
+            
+            const personalContexts = localContextResult.contexts
+                .slice(0, 3) // Limit to top 3 for brevity
+                .map((ctx, index) => {
+                    // Handle multiple content field formats:
+                    // - ctx.output: MemoryManager results
+                    // - ctx.content: ragno:Unit chunks 
+                    // - ctx.response: old format interactions
+                    const content = ctx.output || ctx.response || ctx.content || '';
+                    
+                    // For document chunks, just return the content without the metadata prompt
+                    // This avoids showing "Document chunk: ..." in the final response
+                    let contextString = content;
+                    
+                    // If the content is very short or empty, include some context from prompt
+                    if (!content || content.length &lt; 20) {
+                        // Extract document title/context from prompt if available
+                        if (ctx.prompt &amp;&amp; ctx.prompt.includes('Document:')) {
+                            const docMatch = ctx.prompt.match(/Document:\s*([^#]+)/);
+                            const titleMatch = ctx.prompt.match(/#\s*([^\n]+)/);
+                            if (docMatch &amp;&amp; titleMatch) {
+                                contextString = `${titleMatch[1].trim()}\n\n${content}`;
+                            } else {
+                                contextString = content || ctx.prompt;
+                            }
+                        } else {
+                            contextString = content || ctx.prompt;
+                        }
+                    }
+                    
+                    console.log(`🔥 CONSOLE: HybridContextManager context ${index} extraction`, {
+                        hasPrompt: !!ctx.prompt,
+                        hasOutput: !!ctx.output,
+                        hasResponse: !!ctx.response,
+                        hasContent: !!ctx.content,
+                        extractedContent: content.substring(0, 100),
+                        finalString: contextString.substring(0, 100)
+                    });
+                    
+                    return contextString;
+                });
+            
+            mergedContext.personalContent = personalContexts.join('\n\n');
+            mergedContext.sources.push({
+                type: 'personal',
+                weight: contextAnalysis.personalWeight,
+                itemCount: localContextResult.contexts.length
+            });
+        }
+
+        // Extract enhancement content
+        if (contextAnalysis.enhancementWeight > 0 &amp;&amp; enhancementResult.enhancedAnswer) {
+            mergedContext.enhancementContent = enhancementResult.enhancedAnswer;
+            mergedContext.sources.push({
+                type: 'enhancement',
+                weight: contextAnalysis.enhancementWeight,
+                services: enhancementResult.stats?.successfulServices || 0
+            });
+        }
+
+        // Combine content based on strategy
+        mergedContext.combinedContent = this._combineContent(
+            mergedContext.personalContent,
+            mergedContext.enhancementContent,
+            contextAnalysis
+        );
+
+        return mergedContext;
+    }
+
+    /**
+     * Combine personal and enhancement content intelligently
+     * 
+     * @private
+     * @param {string} personalContent 
+     * @param {string} enhancementContent 
+     * @param {Object} contextAnalysis 
+     * @returns {string} Combined content
+     */
+    _combineContent(personalContent, enhancementContent, contextAnalysis) {
+        const parts = [];
+        
+        if (personalContent &amp;&amp; contextAnalysis.personalWeight > 0) {
+            parts.push(`[PERSONAL CONTEXT]\n${personalContent}`);
+        }
+        
+        if (enhancementContent &amp;&amp; contextAnalysis.enhancementWeight > 0) {
+            parts.push(`[EXTERNAL KNOWLEDGE]\n${enhancementContent}`);
+        }
+        
+        return parts.join('\n\n---\n\n');
+    }
+
+    /**
+     * Synthesize unified response from merged context with sophisticated integration
+     * 
+     * @private
+     * @param {string} query 
+     * @param {Object} mergedContext 
+     * @param {Object} contextAnalysis 
+     * @param {Object} options 
+     * @returns {Promise&lt;Object>} Synthesized response
+     */
+    async _synthesizeResponse(query, mergedContext, contextAnalysis, options) {
+        logger.debug('🎨 Synthesizing unified response', {
+            strategy: contextAnalysis.selectedStrategy,
+            personalWeight: contextAnalysis.personalWeight,
+            enhancementWeight: contextAnalysis.enhancementWeight
+        });
+        
+        // Create sophisticated synthesis prompt
+        const synthesisComponents = this._prepareSynthesisComponents(
+            query,
+            mergedContext,
+            contextAnalysis
+        );
+        
+        const synthesisPrompt = await this._createAdvancedSynthesisPrompt(
+            query,
+            synthesisComponents,
+            contextAnalysis
+        );
+
+        // Generate response using LLM with enhanced prompting
+        let answer;
+        if (this.safeOperations?.generateResponse) {
+            try {
+                console.log('🔥 CONSOLE: HybridContextManager about to call LLM generateResponse', {
+                    promptType: typeof synthesisPrompt,
+                    promptKeys: typeof synthesisPrompt === 'object' ? Object.keys(synthesisPrompt) : 'not-object',
+                    promptLength: typeof synthesisPrompt === 'string' ? synthesisPrompt.length : 'not-string',
+                    promptPreview: typeof synthesisPrompt === 'string' ? synthesisPrompt.substring(0, 200) : JSON.stringify(synthesisPrompt).substring(0, 200),
+                    hasPersonalContent: !!synthesisComponents.personalContent,
+                    personalContentLength: synthesisComponents.personalContent?.length || 0,
+                    personalContentPreview: synthesisComponents.personalContent?.substring(0, 100)
+                });
+                
+                // Create a simple, direct prompt that includes both personal and enhancement content
+                const contextParts = [];
+                
+                if (synthesisComponents.personalContent) {
+                    contextParts.push(`[PERSONAL CONTEXT]\n${synthesisComponents.personalContent}`);
+                }
+                
+                if (synthesisComponents.enhancementContent) {
+                    contextParts.push(`[EXTERNAL KNOWLEDGE]\n${synthesisComponents.enhancementContent}`);
+                }
+                
+                const contextContent = contextParts.length > 0 ? contextParts.join('\n\n---\n\n') : 'No relevant context found.';
+                
+                const directPrompt = `Answer this question using the provided context.
+
+Question: ${query}
+
+Context:
+${contextContent}
+
+Please provide a direct answer to the question based on the context above. If the context contains relevant information, use it to answer. If not, say so clearly.`;
+                
+                answer = await this.safeOperations.generateResponse(directPrompt);
+                
+                console.log('🔥 CONSOLE: HybridContextManager LLM response received', {
+                    answerLength: answer?.length || 0,
+                    answerPreview: answer?.substring(0, 200)
+                });
+                
+                logger.debug('✅ LLM response generated successfully');
+            } catch (error) {
+                console.log('🔥 CONSOLE: HybridContextManager LLM generation failed', {
+                    error: error.message,
+                    errorType: error.constructor.name,
+                    fallbackToTemplate: true
+                });
+                
+                logger.warn('⚠️ LLM response generation failed, using template fallback', { 
+                    error: error.message,
+                    errorType: error.constructor.name 
+                });
+                // Enhanced fallback with template-based synthesis
+                answer = this._createTemplateBasedResponse(query, synthesisComponents, contextAnalysis);
+                
+                console.log('🔥 CONSOLE: HybridContextManager template fallback used', {
+                    templateAnswerLength: answer?.length || 0,
+                    templateAnswerPreview: answer?.substring(0, 200)
+                });
+            }
+        } else {
+            logger.debug('🔄 No LLM available, using template-based response');
+            // Enhanced fallback with template-based synthesis
+            answer = this._createTemplateBasedResponse(query, synthesisComponents, contextAnalysis);
+        }
+        
+        // Post-process to ensure proper source attribution
+        const enhancedAnswer = this._enhanceSourceAttribution(answer, synthesisComponents, contextAnalysis);
+
+        logger.info('🎨 Response synthesis completed', {
+            answerLength: enhancedAnswer.length,
+            hasPersonalContent: !!synthesisComponents.personalContent,
+            hasEnhancementContent: !!synthesisComponents.enhancementContent,
+            strategy: contextAnalysis.selectedStrategy
+        });
+
+        // Prepare result arrays for simple-verbs compatibility
+        const localContextResults = synthesisComponents.personalSources || [];
+        const enhancementResults = synthesisComponents.enhancementSources || [];
+        
+        console.log('🔥 CONSOLE: HybridContextManager returning results', {
+            localContextResultsCount: localContextResults.length,
+            enhancementResultsCount: enhancementResults.length,
+            totalContextItems: localContextResults.length + enhancementResults.length,
+            localContextResultsType: Array.isArray(localContextResults) ? 'array' : typeof localContextResults,
+            enhancementResultsType: Array.isArray(enhancementResults) ? 'array' : typeof enhancementResults,
+            personalSourcesFromSynthesis: synthesisComponents.personalSources ? synthesisComponents.personalSources.length : 'undefined',
+            enhancementSourcesFromSynthesis: synthesisComponents.enhancementSources ? synthesisComponents.enhancementSources.length : 'undefined'
+        });
+        
+        return {
+            success: true,
+            answer: enhancedAnswer,
+            synthesisPrompt,
+            synthesisComponents,
+            method: 'advanced_hybrid_synthesis',
+            // These fields are expected by simple-verbs.js
+            localContextResults,
+            enhancementResults,
+            localContextUsed: localContextResults.length > 0,
+            enhancementUsed: enhancementResults.length > 0,
+            // Legacy compatibility
+            sourceAttribution: {
+                personalSources: synthesisComponents.personalSources?.length || 0,
+                enhancementSources: synthesisComponents.enhancementSources?.length || 0,
+                crossReferences: synthesisComponents.crossReferences?.length || 0
+            }
+        };
+    }
+    
+    /**
+     * Prepare structured synthesis components from merged context
+     * 
+     * @private
+     * @param {string} query 
+     * @param {Object} mergedContext 
+     * @param {Object} contextAnalysis 
+     * @returns {Object} Structured synthesis components
+     */
+    _prepareSynthesisComponents(query, mergedContext, contextAnalysis) {
+        const components = {
+            personalContent: '',
+            enhancementContent: '',
+            personalSources: [],
+            enhancementSources: [],
+            crossReferences: [],
+            keyInsights: {
+                personal: [],
+                enhancement: [],
+                connections: []
+            }
+        };
+        
+        // Extract personal context components
+        if (mergedContext.personalContent &amp;&amp; contextAnalysis.personalWeight > 0) {
+            components.personalContent = mergedContext.personalContent;
+            
+            console.log('🔥 CONSOLE: HybridContextManager - personalContent extracted', {
+                length: mergedContext.personalContent.length,
+                preview: mergedContext.personalContent.substring(0, 100),
+                hasADHD: mergedContext.personalContent.toLowerCase().includes('adhd')
+            });
+            
+            // Extract personal sources from merged context
+            if (mergedContext.sources) {
+                components.personalSources = mergedContext.sources.filter(source => 
+                    source.type === 'personal' || source.source === 'local_context'
+                );
+            }
+            
+            // Extract key personal insights
+            components.keyInsights.personal = this._extractKeyInsights(
+                mergedContext.personalContent, 'personal'
+            );
+        }
+        
+        // Extract enhancement context components
+        if (mergedContext.enhancementContent &amp;&amp; contextAnalysis.enhancementWeight > 0) {
+            components.enhancementContent = mergedContext.enhancementContent;
+            
+            // Extract enhancement sources
+            if (mergedContext.sources) {
+                components.enhancementSources = mergedContext.sources.filter(source => 
+                    source.type === 'enhancement' || ['wikidata', 'wikipedia', 'hyde'].includes(source.source)
+                );
+            }
+            
+            // Extract key enhancement insights
+            components.keyInsights.enhancement = this._extractKeyInsights(
+                mergedContext.enhancementContent, 'enhancement'
+            );
+        }
+        
+        // Identify cross-references and connections between personal and external knowledge
+        if (components.personalContent &amp;&amp; components.enhancementContent) {
+            components.crossReferences = this._identifyCrossReferences(
+                components.keyInsights.personal,
+                components.keyInsights.enhancement,
+                query
+            );
+            
+            components.keyInsights.connections = this._findKnowledgeConnections(
+                components.personalContent,
+                components.enhancementContent,
+                query
+            );
+        }
+        
+        return components;
+    }
+    
+    /**
+     * Create advanced synthesis prompt using the prompt system
+     * 
+     * @private
+     * @param {string} query 
+     * @param {Object} synthesisComponents 
+     * @param {Object} contextAnalysis 
+     * @returns {string} Advanced synthesis prompt
+     */
+    async _createAdvancedSynthesisPrompt(query, synthesisComponents, contextAnalysis) {
+        try {
+            // Get strategy-specific instructions
+            const strategyInstructions = await this._getStrategySpecificInstructions(contextAnalysis.selectedStrategy);
+            
+            // Prepare template variables
+            const variables = {
+                query,
+                strategy: contextAnalysis.selectedStrategy,
+                strategyInstructions,
+                personalContent: synthesisComponents.personalContent || '',
+                enhancementContent: synthesisComponents.enhancementContent || '',
+                personalInsights: synthesisComponents.keyInsights?.personal || [],
+                enhancementInsights: synthesisComponents.keyInsights?.enhancement || [],
+                crossReferences: synthesisComponents.crossReferences || []
+            };
+            
+            // Generate prompt using template system
+            const prompt = await this.promptManager.generatePrompt('hybrid-context-synthesis', variables);
+            return prompt;
+        } catch (error) {
+            logger.warn('Failed to generate synthesis prompt from template, using fallback:', error.message);
+            return this._createFallbackSynthesisPrompt(query, synthesisComponents, contextAnalysis);
+        }
+    }
+    
+    /**
+     * Get strategy-specific synthesis instructions using the prompt system
+     * 
+     * @private
+     * @param {string} strategy 
+     * @returns {Promise&lt;string>} Strategy-specific instructions
+     */
+    async _getStrategySpecificInstructions(strategy) {
+        try {
+            const instructions = await this.promptManager.generatePrompt('synthesis-strategy-instructions', {
+                strategy
+            });
+            return instructions;
+        } catch (error) {
+            logger.warn('Failed to get strategy instructions from template, using fallback:', error.message);
+            return this._getFallbackStrategyInstructions(strategy);
+        }
+    }
+    
+    /**
+     * Fallback method for strategy instructions when prompt system fails
+     * 
+     * @private
+     * @param {string} strategy 
+     * @returns {string} Strategy-specific instructions
+     */
+    _getFallbackStrategyInstructions(strategy) {
+        const instructions = {
+            'personal_primary': 'SYNTHESIS STRATEGY: Personal Experience Primary\n- Start with and emphasize personal experience\n- Use external knowledge to provide context and validation\n- Show how external knowledge relates to the personal experience\n- Maintain the personal perspective as the central narrative',
+            
+            'enhancement_primary': 'SYNTHESIS STRATEGY: External Knowledge Primary\n- Begin with authoritative external information\n- Incorporate personal experience as illustrative examples\n- Use personal insights to add nuance to general knowledge\n- Ensure external facts form the foundation of the response',
+            
+            'balanced': 'SYNTHESIS STRATEGY: Balanced Integration\n- Weave together personal experience and external knowledge equally\n- Create smooth transitions between different types of information\n- Highlight where personal experience aligns with or differs from general knowledge\n- Provide a complete picture from both perspectives',
+            
+            'personal_only': 'SYNTHESIS STRATEGY: Personal Experience Only\n- Focus exclusively on available personal experience and context\n- If personal context is insufficient, acknowledge this limitation gracefully\n- Suggest ways the user can provide more relevant information\n- Never describe data structures or technical details like "undefined" to the user\n- Maintain a helpful, conversational tone even with limited information',
+            
+            'enhancement_only': 'SYNTHESIS STRATEGY: External Knowledge Only\n- Focus exclusively on authoritative external information\n- If external context is insufficient, acknowledge this limitation gracefully\n- Suggest reliable sources where more information might be found\n- Never describe data structures or technical details like "undefined" to the user\n- Maintain a helpful, conversational tone even with limited information',
+            
+            'no_context': 'SYNTHESIS STRATEGY: Limited Context Response\n- Acknowledge that sufficient relevant information is not currently available\n- Provide general guidance on where to find the requested information\n- Suggest ways to improve future queries\n- Never mention technical terms like "undefined", "null", or data structure details\n- Focus on being helpful despite the lack of specific information'
+        };
+        
+        return instructions[strategy] || 'SYNTHESIS STRATEGY: Comprehensive Integration\n- Use all available information to create the most complete answer possible\n- Clearly distinguish between different types of sources\n- Build connections and show relationships between different knowledge types\n- If information is limited, acknowledge this without technical jargon';
+    }
+    
+    /**
+     * Fallback method for creating synthesis prompt when template system fails
+     * 
+     * @private
+     * @param {string} query 
+     * @param {Object} synthesisComponents 
+     * @param {Object} contextAnalysis 
+     * @returns {string} Fallback synthesis prompt
+     */
+    _createFallbackSynthesisPrompt(query, synthesisComponents, contextAnalysis) {
+        let prompt = `You are an expert at synthesizing information from multiple sources. Answer the following question by intelligently combining personal experience with authoritative external knowledge.\n\n`;
+        
+        // Add strategy-specific instructions
+        prompt += this._getFallbackStrategyInstructions(contextAnalysis.selectedStrategy);
+        
+        // Add source formatting instructions
+        prompt += `\n\nSOURCE ATTRIBUTION REQUIREMENTS:\n`;
+        prompt += `- Clearly distinguish between personal experience and external knowledge\n`;
+        prompt += `- Use phrases like "From your experience..." or "According to authoritative sources..."\n`;
+        prompt += `- Create connections between different types of knowledge when relevant\n`;
+        prompt += `- Maintain a conversational yet informative tone\n`;
+        prompt += `- NEVER mention technical terms like "undefined", "null", or describe data structures\n`;
+        prompt += `- If information is limited, say so naturally without technical jargon\n\n`;
+        
+        prompt += `QUESTION: ${query}\n\n`;
+        
+        // Add personal context section
+        if (synthesisComponents.personalContent) {
+            prompt += `PERSONAL EXPERIENCE:\n`;
+            prompt += synthesisComponents.personalContent;
+            
+            if (synthesisComponents.keyInsights &amp;&amp; synthesisComponents.keyInsights.personal &amp;&amp; synthesisComponents.keyInsights.personal.length > 0) {
+                prompt += `\n\nKey Personal Insights:\n`;
+                synthesisComponents.keyInsights.personal.forEach((insight, idx) => {
+                    prompt += `${idx + 1}. ${insight}\n`;
+                });
+            }
+            prompt += `\n`;
+        }
+        
+        // Add external knowledge section
+        if (synthesisComponents.enhancementContent) {
+            prompt += `EXTERNAL KNOWLEDGE:\n`;
+            prompt += synthesisComponents.enhancementContent;
+            
+            if (synthesisComponents.keyInsights &amp;&amp; synthesisComponents.keyInsights.enhancement &amp;&amp; synthesisComponents.keyInsights.enhancement.length > 0) {
+                prompt += `\n\nKey External Facts:\n`;
+                synthesisComponents.keyInsights.enhancement.forEach((insight, idx) => {
+                    prompt += `${idx + 1}. ${insight}\n`;
+                });
+            }
+            prompt += `\n`;
+        }
+        
+        // Add cross-references if available
+        if (synthesisComponents.crossReferences &amp;&amp; synthesisComponents.crossReferences.length > 0) {
+            prompt += `CONNECTIONS BETWEEN SOURCES:\n`;
+            synthesisComponents.crossReferences.forEach((ref, idx) => {
+                prompt += `${idx + 1}. ${ref}\n`;
+            });
+            prompt += `\n`;
+        }
+        
+        prompt += `Please provide a comprehensive answer that seamlessly integrates all available knowledge while clearly attributing sources. Focus on being helpful and informative while avoiding any technical terminology or references to data structures, programming concepts, or system internals.`;
+        
+        return prompt;
+    }
+    
+    /**
+     * Extract key insights from content
+     * 
+     * @private
+     * @param {string} content 
+     * @param {string} type 
+     * @returns {Array} Key insights
+     */
+    _extractKeyInsights(content, type) {
+        if (!content) return [];
+        
+        // Simple extraction based on sentence structure and key phrases
+        const sentences = content.split(/[.!?]+/).filter(s => s.trim().length > 20);
+        const insights = [];
+        
+        sentences.forEach(sentence => {
+            const trimmed = sentence.trim();
+            if (trimmed.length &lt; 30) return;
+            
+            // Look for insight indicators
+            const insightIndicators = {
+                personal: ['I found', 'my experience', 'I noticed', 'for me', 'I learned', 'I discovered'],
+                enhancement: ['research shows', 'studies indicate', 'according to', 'evidence suggests', 'data reveals']
+            };
+            
+            const indicators = insightIndicators[type] || [];
+            const hasIndicator = indicators.some(indicator => 
+                trimmed.toLowerCase().includes(indicator.toLowerCase())
+            );
+            
+            if (hasIndicator || trimmed.length > 60) {
+                insights.push(trimmed);
+            }
+        });
+        
+        // Limit to top 3 insights
+        return insights.slice(0, 3);
+    }
+    
+    /**
+     * Identify cross-references between personal and enhancement insights
+     * 
+     * @private
+     * @param {Array} personalInsights 
+     * @param {Array} enhancementInsights 
+     * @param {string} query 
+     * @returns {Array} Cross-references
+     */
+    _identifyCrossReferences(personalInsights, enhancementInsights, query) {
+        const crossReferences = [];
+        
+        // Look for conceptual overlaps
+        const queryKeywords = this._extractKeywords(query);
+        
+        personalInsights.forEach(personalInsight => {
+            const personalKeywords = this._extractKeywords(personalInsight);
+            
+            enhancementInsights.forEach(enhancementInsight => {
+                const enhancementKeywords = this._extractKeywords(enhancementInsight);
+                
+                // Check for keyword overlap
+                const overlap = personalKeywords.filter(keyword => 
+                    enhancementKeywords.includes(keyword) || 
+                    queryKeywords.includes(keyword)
+                );
+                
+                if (overlap.length >= 2) {
+                    crossReferences.push(
+                        `Personal experience of "${personalInsight.substring(0, 50)}..." aligns with external knowledge about "${enhancementInsight.substring(0, 50)}..." regarding ${overlap.slice(0, 2).join(' and ')}`
+                    );
+                }
+            });
+        });
+        
+        return crossReferences.slice(0, 3); // Limit to top 3 cross-references
+    }
+    
+    /**
+     * Find knowledge connections between personal and enhancement content
+     * 
+     * @private
+     * @param {string} personalContent 
+     * @param {string} enhancementContent 
+     * @param {string} query 
+     * @returns {Array} Knowledge connections
+     */
+    _findKnowledgeConnections(personalContent, enhancementContent, query) {
+        const connections = [];
+        
+        // Simple keyword-based connection finding
+        const queryKeywords = this._extractKeywords(query);
+        const personalKeywords = this._extractKeywords(personalContent);
+        const enhancementKeywords = this._extractKeywords(enhancementContent);
+        
+        // Find common themes
+        const commonKeywords = personalKeywords.filter(keyword => 
+            enhancementKeywords.includes(keyword)
+        );
+        
+        commonKeywords.forEach(keyword => {
+            if (queryKeywords.includes(keyword)) {
+                connections.push(`Both personal experience and external sources discuss ${keyword} in relation to the question`);
+            }
+        });
+        
+        return connections.slice(0, 2); // Limit connections
+    }
+    
+    /**
+     * Extract keywords from text for connection analysis
+     * 
+     * @private
+     * @param {string} text 
+     * @returns {Array} Keywords
+     */
+    _extractKeywords(text) {
+        if (!text) return [];
+        
+        // Simple keyword extraction
+        const words = text.toLowerCase()
+            .replace(/[^a-z0-9\s]/g, ' ')
+            .split(/\s+/)
+            .filter(word => word.length > 3)
+            .filter(word => !['the', 'and', 'for', 'are', 'but', 'not', 'you', 'all', 'can', 'had', 'her', 'was', 'one', 'our', 'out', 'day', 'get', 'has', 'him', 'his', 'how', 'its', 'may', 'new', 'now', 'old', 'see', 'two', 'who', 'boy', 'did', 'man', 'way', 'with', 'have', 'this', 'will', 'your', 'from', 'they', 'know', 'want', 'been', 'good', 'much', 'some', 'time', 'very', 'when', 'come', 'here', 'just', 'like', 'long', 'make', 'many', 'over', 'such', 'take', 'than', 'them', 'well', 'were', 'what'].includes(word));
+        
+        // Count frequency and return top keywords
+        const frequency = {};
+        words.forEach(word => {
+            frequency[word] = (frequency[word] || 0) + 1;
+        });
+        
+        return Object.keys(frequency)
+            .sort((a, b) => frequency[b] - frequency[a])
+            .slice(0, 10);
+    }
+    
+    /**
+     * Create template-based response when LLM is not available
+     * 
+     * @private
+     * @param {string} query 
+     * @param {Object} synthesisComponents 
+     * @param {Object} contextAnalysis 
+     * @returns {string} Template-based response
+     */
+    _createTemplateBasedResponse(query, synthesisComponents, contextAnalysis) {
+        let response = '';
+        
+        if (contextAnalysis.selectedStrategy === 'personal_primary') {
+            if (synthesisComponents.personalContent) {
+                response += `Based on your experience:\n${synthesisComponents.personalContent}\n\n`;
+            }
+            if (synthesisComponents.enhancementContent) {
+                response += `Additional context from authoritative sources:\n${synthesisComponents.enhancementContent}`;
+            }
+        } else if (contextAnalysis.selectedStrategy === 'enhancement_primary') {
+            if (synthesisComponents.enhancementContent) {
+                response += `According to authoritative sources:\n${synthesisComponents.enhancementContent}\n\n`;
+            }
+            if (synthesisComponents.personalContent) {
+                response += `This aligns with your personal experience:\n${synthesisComponents.personalContent}`;
+            }
+        } else {
+            // Balanced approach
+            if (synthesisComponents.personalContent) {
+                response += `From your experience:\n${synthesisComponents.personalContent}\n\n`;
+            }
+            if (synthesisComponents.enhancementContent) {
+                response += `External knowledge provides additional context:\n${synthesisComponents.enhancementContent}`;
+            }
+        }
+        
+        return response || 'No sufficient context available to answer the question.';
+    }
+    
+    /**
+     * Enhance source attribution in the generated response
+     * 
+     * @private
+     * @param {string} answer 
+     * @param {Object} synthesisComponents 
+     * @param {Object} contextAnalysis 
+     * @returns {string} Enhanced answer with better attribution
+     */
+    _enhanceSourceAttribution(answer, synthesisComponents, contextAnalysis) {
+        if (!answer) return answer;
+        
+        // Add source summary at the end if multiple sources were used
+        if (synthesisComponents.personalSources.length > 0 &amp;&amp; synthesisComponents.enhancementSources.length > 0) {
+            const sourceCount = synthesisComponents.personalSources.length + synthesisComponents.enhancementSources.length;
+            answer += `\n\n*This response combines insights from your personal experience with information from ${synthesisComponents.enhancementSources.length} external authoritative source${synthesisComponents.enhancementSources.length === 1 ? '' : 's'}.*`;
+        }
+        
+        return answer;
+    }
+
+    /**
+     * Create synthesis prompt for unified response generation
+     * 
+     * @private
+     * @param {string} query 
+     * @param {Object} mergedContext 
+     * @param {Object} contextAnalysis 
+     * @returns {string} Synthesis prompt
+     */
+    _createSynthesisPrompt(query, mergedContext, contextAnalysis) {
+        let prompt = `Answer the following question using the provided context sources. `;
+        
+        // Add strategy-specific instructions
+        switch (contextAnalysis.selectedStrategy) {
+            case 'personal_primary':
+                prompt += `Focus primarily on the personal experience while incorporating relevant external knowledge for context.`;
+                break;
+            case 'enhancement_primary':
+                prompt += `Focus primarily on authoritative external knowledge while noting any relevant personal insights.`;
+                break;
+            case 'balanced':
+                prompt += `Provide a balanced answer that integrates both personal experience and external knowledge, clearly distinguishing sources.`;
+                break;
+            default:
+                prompt += `Use all available context to provide a comprehensive answer.`;
+        }
+        
+        prompt += `\n\nQuestion: ${query}\n\nContext:\n${mergedContext.combinedContent}`;
+        
+        return prompt;
+    }
+
+    /**
+     * Adapt enhancement options based on ZPT state
+     * 
+     * @private
+     * @param {Object} options 
+     * @param {Object} zptState 
+     * @returns {Object} Adapted options
+     */
+    _adaptEnhancementOptionsForZPT(options, zptState) {
+        const adaptedOptions = { ...options };
+        
+        logger.debug('🎯 Adapting enhancement options with ZPT state', { 
+            zoom: zptState.zoom, 
+            panFilters: Object.keys(zptState.pan || {}),
+            tilt: zptState.tilt 
+        });
+        
+        // Adjust enhancement scope based on zoom level
+        switch (zptState.zoom) {
+            case 'entity':
+                // Entity-level: precise, detailed information about specific things
+                adaptedOptions.maxResults = 2;
+                adaptedOptions.focusLevel = 'precise';
+                adaptedOptions.detailLevel = 'high';
+                adaptedOptions.preferDefinitions = true;
+                break;
+                
+            case 'unit':
+                // Unit-level: focused on semantic chunks and relationships
+                adaptedOptions.maxResults = 3;
+                adaptedOptions.focusLevel = 'contextual';
+                adaptedOptions.detailLevel = 'medium';
+                adaptedOptions.includeRelationships = true;
+                break;
+                
+            case 'text':
+                // Text-level: document-oriented, narrative context
+                adaptedOptions.maxResults = 4;
+                adaptedOptions.focusLevel = 'narrative';
+                adaptedOptions.detailLevel = 'medium';
+                adaptedOptions.preferSummaries = true;
+                break;
+                
+            case 'community':
+                // Community-level: thematic, broader connections
+                adaptedOptions.maxResults = 5;
+                adaptedOptions.focusLevel = 'thematic';
+                adaptedOptions.detailLevel = 'broad';
+                adaptedOptions.includeRelatedTopics = true;
+                break;
+                
+            case 'corpus':
+            case 'micro':
+            default:
+                // Corpus-level: comprehensive, wide-ranging context
+                adaptedOptions.maxResults = 6;
+                adaptedOptions.focusLevel = 'comprehensive';
+                adaptedOptions.detailLevel = 'broad';
+                adaptedOptions.includeBackground = true;
+                break;
+        }
+        
+        // Apply pan domain/topic filters to enhancement queries
+        if (zptState.pan) {
+            if (zptState.pan.domains &amp;&amp; zptState.pan.domains.length > 0) {
+                adaptedOptions.domainFilter = zptState.pan.domains;
+                adaptedOptions.constrainToDomains = true;
+                logger.debug('📂 Applied domain filters', { domains: zptState.pan.domains });
+            }
+            
+            if (zptState.pan.keywords &amp;&amp; zptState.pan.keywords.length > 0) {
+                adaptedOptions.keywordFilter = zptState.pan.keywords;
+                adaptedOptions.boostKeywords = true;
+                logger.debug('🔑 Applied keyword filters', { keywords: zptState.pan.keywords });
+            }
+            
+            if (zptState.pan.entities &amp;&amp; zptState.pan.entities.length > 0) {
+                adaptedOptions.entityFilter = zptState.pan.entities;
+                adaptedOptions.focusOnEntities = true;
+                logger.debug('🏷️ Applied entity filters', { entities: zptState.pan.entities });
+            }
+            
+            if (zptState.pan.temporal) {
+                adaptedOptions.temporalFilter = zptState.pan.temporal;
+                if (zptState.pan.temporal.start || zptState.pan.temporal.end) {
+                    adaptedOptions.constrainToTimeframe = true;
+                    logger.debug('⏰ Applied temporal filters', { temporal: zptState.pan.temporal });
+                }
+            }
+        }
+        
+        // Adapt enhancement strategy based on tilt style
+        switch (zptState.tilt) {
+            case 'graph':
+                adaptedOptions.emphasizeRelationships = true;
+                adaptedOptions.includeConnections = true;
+                adaptedOptions.responseFormat = 'structured';
+                break;
+                
+            case 'embedding':
+                adaptedOptions.prioritizeSemantics = true;
+                adaptedOptions.useDeepSimilarity = true;
+                adaptedOptions.responseFormat = 'contextual';
+                break;
+                
+            case 'temporal':
+                adaptedOptions.emphasizeTimeline = true;
+                adaptedOptions.includeHistory = true;
+                adaptedOptions.responseFormat = 'chronological';
+                break;
+                
+            case 'keywords':
+            default:
+                adaptedOptions.emphasizeKeyTerms = true;
+                adaptedOptions.responseFormat = 'keyword_focused';
+                break;
+        }
+        
+        logger.debug('🎯 Enhancement options adapted for ZPT', { 
+            maxResults: adaptedOptions.maxResults,
+            focusLevel: adaptedOptions.focusLevel,
+            hasFilters: !!(adaptedOptions.domainFilter || adaptedOptions.keywordFilter || adaptedOptions.entityFilter),
+            tiltStyle: zptState.tilt
+        });
+        
+        return adaptedOptions;
+    }
+
+    /**
+     * Adapt local search options based on ZPT state
+     * 
+     * @private
+     * @param {Object} options 
+     * @param {Object} zptState 
+     * @returns {Object} Adapted options
+     */
+    _adaptLocalSearchForZPT(options, zptState) {
+        const adaptedOptions = { ...options };
+        
+        logger.debug('🎯 Adapting local search with ZPT state', { 
+            zoom: zptState.zoom, 
+            panFilters: Object.keys(zptState.pan || {}),
+            tilt: zptState.tilt 
+        });
+        
+        // Adjust search parameters based on zoom level
+        switch (zptState.zoom) {
+            case 'entity':
+                // Entity-level: high precision, specific matches
+                adaptedOptions.limit = 3;
+                adaptedOptions.threshold = 0.45; // High threshold for precise matches
+                adaptedOptions.searchScope = 'precise';
+                adaptedOptions.preferExactMatches = true;
+                break;
+                
+            case 'unit':
+                // Unit-level: semantic chunks, medium precision
+                adaptedOptions.limit = 5;
+                adaptedOptions.threshold = 0.35; // Medium-high threshold
+                adaptedOptions.searchScope = 'semantic_chunks';
+                adaptedOptions.preferChunks = true;
+                break;
+                
+            case 'text':
+                // Text-level: document sections, balanced approach
+                adaptedOptions.limit = 6;
+                adaptedOptions.threshold = 0.3; // Medium threshold
+                adaptedOptions.searchScope = 'document_sections';
+                adaptedOptions.groupByDocument = true;
+                break;
+                
+            case 'community':
+                // Community-level: thematic groups, broader search
+                adaptedOptions.limit = 8;
+                adaptedOptions.threshold = 0.25; // Lower threshold
+                adaptedOptions.searchScope = 'thematic_groups';
+                adaptedOptions.includeRelatedConcepts = true;
+                break;
+                
+            case 'corpus':
+            case 'micro':
+            default:
+                // Corpus-level: comprehensive search, cast wide net
+                adaptedOptions.limit = 10;
+                adaptedOptions.threshold = 0.2; // Low threshold for broad discovery
+                adaptedOptions.searchScope = 'comprehensive';
+                adaptedOptions.includeLowSimilarity = true;
+                break;
+        }
+        
+        // Apply pan filters to constrain local search
+        if (zptState.pan) {
+            const filters = [];
+            
+            if (zptState.pan.domains &amp;&amp; zptState.pan.domains.length > 0) {
+                adaptedOptions.domainConstraints = zptState.pan.domains;
+                filters.push(`domains:${zptState.pan.domains.length}`);
+            }
+            
+            if (zptState.pan.keywords &amp;&amp; zptState.pan.keywords.length > 0) {
+                adaptedOptions.keywordBoosts = zptState.pan.keywords;
+                // Boost similarity for content containing these keywords
+                adaptedOptions.keywordBoostFactor = 0.1; // Add 0.1 to similarity if keywords match
+                filters.push(`keywords:${zptState.pan.keywords.length}`);
+            }
+            
+            if (zptState.pan.entities &amp;&amp; zptState.pan.entities.length > 0) {
+                adaptedOptions.entityConstraints = zptState.pan.entities;
+                filters.push(`entities:${zptState.pan.entities.length}`);
+            }
+            
+            if (zptState.pan.temporal) {
+                adaptedOptions.temporalConstraints = zptState.pan.temporal;
+                filters.push('temporal');
+            }
+            
+            if (filters.length > 0) {
+                logger.debug('🔍 Applied pan filters to local search', { filters: filters.join(', ') });
+            }
+        }
+        
+        // Adapt search strategy based on tilt style
+        switch (zptState.tilt) {
+            case 'graph':
+                // Graph tilt: emphasize relationships and connections
+                adaptedOptions.searchStrategy = 'relationship_aware';
+                adaptedOptions.includeRelatedNodes = true;
+                adaptedOptions.expandConnections = true;
+                break;
+                
+            case 'embedding':
+                // Embedding tilt: pure semantic similarity
+                adaptedOptions.searchStrategy = 'semantic_similarity';
+                adaptedOptions.usePureEmbedding = true;
+                adaptedOptions.ignoreKeywordMatches = false;
+                break;
+                
+            case 'temporal':
+                // Temporal tilt: time-aware search
+                adaptedOptions.searchStrategy = 'temporal_aware';
+                adaptedOptions.sortByTime = true;
+                adaptedOptions.groupByTimeframe = true;
+                break;
+                
+            case 'keywords':
+            default:
+                // Keywords tilt: traditional keyword-enhanced search
+                adaptedOptions.searchStrategy = 'keyword_enhanced';
+                adaptedOptions.boostKeywordMatches = true;
+                adaptedOptions.hybridKeywordSemantic = true;
+                break;
+        }
+        
+        logger.debug('🎯 Local search options adapted for ZPT', { 
+            limit: adaptedOptions.limit,
+            threshold: adaptedOptions.threshold,
+            searchScope: adaptedOptions.searchScope,
+            strategy: adaptedOptions.searchStrategy,
+            hasConstraints: !!(adaptedOptions.domainConstraints || adaptedOptions.keywordBoosts || adaptedOptions.entityConstraints)
+        });
+        
+        return adaptedOptions;
+    }
+
+    /**
+     * Get current ZPT state from session or defaults
+     * 
+     * @private
+     * @param {Object} options 
+     * @returns {Object} ZPT state
+     */
+    _getZPTState(options) {
+        let zptState;
+        
+        // Try to get from ZPT state manager if available
+        if (this.zptStateManager?.getState) {
+            zptState = this.zptStateManager.getState();
+            logger.debug('🧭 Retrieved ZPT state from session', {
+                zoom: zptState.zoom,
+                panFilters: Object.keys(zptState.pan || {}),
+                tilt: zptState.tilt,
+                lastQuery: zptState.lastQuery?.substring(0, 50) + (zptState.lastQuery?.length > 50 ? '...' : ''),
+                sessionId: zptState.sessionId
+            });
+        } else {
+            // Default ZPT state with comprehensive structure
+            zptState = {
+                zoom: 'entity',
+                pan: {
+                    domains: [],
+                    keywords: [],
+                    entities: [],
+                    temporal: null
+                },
+                tilt: 'keywords',
+                lastQuery: '',
+                sessionId: null,
+                timestamp: new Date().toISOString()
+            };
+            
+            logger.debug('🧭 Using default ZPT state (no session manager available)');
+        }
+        
+        // Validate and normalize ZPT state
+        zptState = this._validateZPTState(zptState);
+        
+        return zptState;
+    }
+    
+    /**
+     * Validate and normalize ZPT state structure
+     * 
+     * @private
+     * @param {Object} zptState 
+     * @returns {Object} Validated ZPT state
+     */
+    _validateZPTState(zptState) {
+        const validZoomLevels = ['entity', 'unit', 'text', 'community', 'corpus', 'micro'];
+        const validTiltStyles = ['keywords', 'embedding', 'graph', 'temporal'];
+        
+        // Ensure zoom is valid
+        if (!validZoomLevels.includes(zptState.zoom)) {
+            logger.warn('⚠️ Invalid zoom level, defaulting to entity', { zoom: zptState.zoom });
+            zptState.zoom = 'entity';
+        }
+        
+        // Ensure tilt is valid
+        if (!validTiltStyles.includes(zptState.tilt)) {
+            logger.warn('⚠️ Invalid tilt style, defaulting to keywords', { tilt: zptState.tilt });
+            zptState.tilt = 'keywords';
+        }
+        
+        // Ensure pan is an object with expected structure
+        if (!zptState.pan || typeof zptState.pan !== 'object') {
+            zptState.pan = {};
+        }
+        
+        // Normalize pan arrays
+        if (zptState.pan.domains &amp;&amp; !Array.isArray(zptState.pan.domains)) {
+            zptState.pan.domains = [zptState.pan.domains].filter(Boolean);
+        }
+        if (zptState.pan.keywords &amp;&amp; !Array.isArray(zptState.pan.keywords)) {
+            zptState.pan.keywords = [zptState.pan.keywords].filter(Boolean);
+        }
+        if (zptState.pan.entities &amp;&amp; !Array.isArray(zptState.pan.entities)) {
+            zptState.pan.entities = [zptState.pan.entities].filter(Boolean);
+        }
+        
+        // Validate temporal structure if present
+        if (zptState.pan.temporal &amp;&amp; typeof zptState.pan.temporal !== 'object') {
+            logger.warn('⚠️ Invalid temporal filter structure, removing', { temporal: zptState.pan.temporal });
+            delete zptState.pan.temporal;
+        }
+        
+        logger.debug('✅ ZPT state validated and normalized', {
+            zoom: zptState.zoom,
+            tilt: zptState.tilt,
+            panFilters: {
+                domains: zptState.pan.domains?.length || 0,
+                keywords: zptState.pan.keywords?.length || 0,
+                entities: zptState.pan.entities?.length || 0,
+                temporal: !!zptState.pan.temporal
+            }
+        });
+        
+        return zptState;
+    }
+    
+    /**
+     * Apply ZPT filters to search results to enhance relevance
+     * 
+     * @private
+     * @param {Array} results 
+     * @param {Object} zptState 
+     * @param {string} query 
+     * @returns {Array} Filtered and re-ranked results
+     */
+    _applyZPTFiltersToResults(results, zptState, query) {
+        if (!results || results.length === 0) {
+            return results;
+        }
+        
+        logger.debug('🎨 Applying ZPT filters to results', {
+            resultCount: results.length,
+            zoom: zptState.zoom,
+            hasFilters: !!(zptState.pan?.domains || zptState.pan?.keywords || zptState.pan?.entities)
+        });
+        
+        let filteredResults = [...results];
+        
+        // Apply pan domain filters
+        if (zptState.pan?.domains &amp;&amp; zptState.pan.domains.length > 0) {
+            filteredResults = filteredResults.filter(result => {
+                const content = (result.prompt || '') + ' ' + (result.response || '');
+                return zptState.pan.domains.some(domain => 
+                    content.toLowerCase().includes(domain.toLowerCase())
+                );
+            });
+            
+            logger.debug('📂 Applied domain filters', {
+                domains: zptState.pan.domains,
+                beforeCount: results.length,
+                afterCount: filteredResults.length
+            });
+        }
+        
+        // Apply keyword boosts and filters
+        if (zptState.pan?.keywords &amp;&amp; zptState.pan.keywords.length > 0) {
+            filteredResults = filteredResults.map(result => {
+                const content = (result.prompt || '') + ' ' + (result.response || '');
+                let boost = 0;
+                
+                zptState.pan.keywords.forEach(keyword => {
+                    const keywordRegex = new RegExp(keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&amp;'), 'gi');
+                    const matches = (content.match(keywordRegex) || []).length;
+                    boost += matches * 0.05; // Small boost per keyword match
+                });
+                
+                return {
+                    ...result,
+                    similarity: (result.similarity || 0) + boost,
+                    keywordBoost: boost
+                };
+            });
+            
+            // Re-sort after keyword boosts
+            filteredResults.sort((a, b) => (b.similarity || 0) - (a.similarity || 0));
+            
+            logger.debug('🔑 Applied keyword boosts', {
+                keywords: zptState.pan.keywords,
+                averageBoost: filteredResults.reduce((sum, r) => sum + (r.keywordBoost || 0), 0) / filteredResults.length
+            });
+        }
+        
+        // Apply entity filters
+        if (zptState.pan?.entities &amp;&amp; zptState.pan.entities.length > 0) {
+            // Boost results that mention the specified entities
+            filteredResults = filteredResults.map(result => {
+                const content = (result.prompt || '') + ' ' + (result.response || '');
+                let entityBoost = 0;
+                
+                zptState.pan.entities.forEach(entity => {
+                    const entityRegex = new RegExp(entity.replace(/[.*+?^${}()|[\]\\]/g, '\\$&amp;'), 'gi');
+                    if (entityRegex.test(content)) {
+                        entityBoost += 0.1; // Stronger boost for entity matches
+                    }
+                });
+                
+                return {
+                    ...result,
+                    similarity: (result.similarity || 0) + entityBoost,
+                    entityBoost: entityBoost
+                };
+            });
+            
+            // Re-sort after entity boosts
+            filteredResults.sort((a, b) => (b.similarity || 0) - (a.similarity || 0));
+            
+            logger.debug('🏷️ Applied entity boosts', {
+                entities: zptState.pan.entities,
+                boostedCount: filteredResults.filter(r => r.entityBoost > 0).length
+            });
+        }
+        
+        // Apply temporal filters if specified
+        if (zptState.pan?.temporal) {
+            const temporal = zptState.pan.temporal;
+            let startTime = null;
+            let endTime = null;
+            
+            if (temporal.start) {
+                try {
+                    startTime = new Date(temporal.start);
+                } catch (e) {
+                    logger.warn('⚠️ Invalid temporal start time', { start: temporal.start });
+                }
+            }
+            
+            if (temporal.end) {
+                try {
+                    endTime = new Date(temporal.end);
+                } catch (e) {
+                    logger.warn('⚠️ Invalid temporal end time', { end: temporal.end });
+                }
+            }
+            
+            if (startTime || endTime) {
+                const beforeCount = filteredResults.length;
+                filteredResults = filteredResults.filter(result => {
+                    // Check if result has timestamp information
+                    const timestamp = result.timestamp || result.metadata?.timestamp || result.metadata?.storedAt;
+                    if (!timestamp) {
+                        return true; // Keep results without timestamps
+                    }
+                    
+                    try {
+                        const resultTime = new Date(timestamp);
+                        let inRange = true;
+                        
+                        if (startTime &amp;&amp; resultTime &lt; startTime) {
+                            inRange = false;
+                        }
+                        if (endTime &amp;&amp; resultTime > endTime) {
+                            inRange = false;
+                        }
+                        
+                        return inRange;
+                    } catch (e) {
+                        return true; // Keep results with invalid timestamps
+                    }
+                });
+                
+                logger.debug('⏰ Applied temporal filters', {
+                    start: temporal.start,
+                    end: temporal.end,
+                    beforeCount,
+                    afterCount: filteredResults.length
+                });
+            }
+        }
+        
+        // Apply zoom-level result limiting
+        const zoomLimits = {
+            entity: 3,
+            unit: 5,
+            text: 6,
+            community: 8,
+            corpus: 10,
+            micro: 10
+        };
+        
+        const limit = zoomLimits[zptState.zoom] || 5;
+        if (filteredResults.length > limit) {
+            filteredResults = filteredResults.slice(0, limit);
+            logger.debug('✂️ Applied zoom-level limiting', {
+                zoom: zptState.zoom,
+                limit,
+                finalCount: filteredResults.length
+            });
+        }
+        
+        logger.debug('🎨 ZPT filters applied to results', {
+            originalCount: results.length,
+            finalCount: filteredResults.length,
+            filteringReduction: ((results.length - filteredResults.length) / results.length * 100).toFixed(1) + '%'
+        });
+        
+        return filteredResults;
+    }
+
+    /**
+     * Check if enhancement options are requested
+     * 
+     * @private
+     * @param {Object} options 
+     * @returns {boolean}
+     */
+    _hasEnhancements(options) {
+        return options.useHyDE || options.useWikipedia || options.useWikidata;
+    }
+
+    /**
+     * Handle fallback when hybrid processing fails
+     * 
+     * @private
+     * @param {string} query 
+     * @param {Object} options 
+     * @param {Error} error 
+     * @returns {Object} Fallback result
+     */
+    async _handleFallback(query, options, error) {
+        logger.warn('🔄 Falling back to single-source approach', { error: error.message });
+        
+        // Try local context first
+        if (options.useContext &amp;&amp; this.safeOperations) {
+            try {
+                const localResult = await this._searchLocalContext(query, options);
+                if (localResult.success) {
+                    return {
+                        success: true,
+                        query,
+                        answer: localResult.contexts.map(c => `${c.prompt}: ${c.response}`).join('\n\n'),
+                        contextType: 'personal_fallback',
+                        fallbackReason: error.message
+                    };
+                }
+            } catch (localError) {
+                logger.warn('Local fallback also failed:', localError.message);
+            }
+        }
+        
+        // Final fallback - no context
+        return {
+            success: false,
+            query,
+            error: 'Both hybrid and fallback approaches failed',
+            originalError: error.message
+        };
+    }
+
+    /**
+     * Update statistics based on processing results
+     * 
+     * @private
+     * @param {Object} contextAnalysis 
+     */
+    _updateStats(contextAnalysis) {
+        switch (contextAnalysis.selectedStrategy) {
+            case 'balanced':
+            case 'personal_primary':
+            case 'enhancement_primary':
+                this.stats.hybridResponses++;
+                break;
+            case 'personal_only':
+                this.stats.personalOnlyResponses++;
+                break;
+            case 'enhancement_only':
+                this.stats.enhancementOnlyResponses++;
+                break;
+            default:
+                this.stats.failedMerges++;
+        }
+        
+        // Update running averages
+        const totalProcessed = this.stats.hybridResponses + this.stats.personalOnlyResponses + this.stats.enhancementOnlyResponses;
+        this.stats.averagePersonalRelevance = (
+            (this.stats.averagePersonalRelevance * (totalProcessed - 1)) + contextAnalysis.personalRelevance
+        ) / totalProcessed;
+        
+        this.stats.averageEnhancementQuality = (
+            (this.stats.averageEnhancementQuality * (totalProcessed - 1)) + contextAnalysis.enhancementQuality
+        ) / totalProcessed;
+    }
+
+    /**
+     * Get current processing statistics
+     * 
+     * @returns {Object} Current statistics
+     */
+    getStats() {
+        return { ...this.stats };
+    }
+
+    /**
+     * Reset statistics counters
+     */
+    resetStats() {
+        this.stats = {
+            totalQueries: 0,
+            hybridResponses: 0,
+            personalOnlyResponses: 0,
+            enhancementOnlyResponses: 0,
+            failedMerges: 0,
+            averagePersonalRelevance: 0,
+            averageEnhancementQuality: 0
+        };
+    }
+}
+
+export default HybridContextManager;</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-services_document.html">services/document</a></li></ul><h3>Classes</h3><ul><li><a href="APIServer.html">APIServer</a></li><li><a href="ApiService.html">ApiService</a></li><li><a href="AskOperationTimer.html">AskOperationTimer</a></li><li><a href="BaseVisualization.html">BaseVisualization</a></li><li><a href="ChatManager.html">ChatManager</a></li><li><a href="ClientConnector.html">ClientConnector</a></li><li><a href="Clustering.html">Clustering</a></li><li><a href="CommunityElement.html">CommunityElement</a></li><li><a href="ConsoleService.html">ConsoleService</a></li><li><a href="DomUtils.html">DomUtils</a></li><li><a href="EmbeddingCreator.html">EmbeddingCreator</a></li><li><a href="EmbeddingService.html">EmbeddingService</a></li><li><a href="FeatureFlags.html">FeatureFlags</a></li><li><a href="FeatureMaps.html">FeatureMaps</a></li><li><a href="GradualMigration.html">GradualMigration</a></li><li><a href="GraphAPI.html">GraphAPI</a></li><li><a href="HTML2MD.html">HTML2MD</a></li><li><a href="LogCyclingManager.html">LogCyclingManager</a></li><li><a href="MCPClient.html">MCPClient</a></li><li><a href="MCPPromptsCompat.html">MCPPromptsCompat</a></li><li><a href="MemoryAdvancedSearch.html">MemoryAdvancedSearch</a></li><li><a href="MemoryClustersViz.html">MemoryClustersViz</a></li><li><a href="MemoryGraphViz.html">MemoryGraphViz</a></li><li><a href="MemoryTimelineViz.html">MemoryTimelineViz</a></li><li><a href="MemoryVisualizationManager.html">MemoryVisualizationManager</a></li><li><a href="MigrationHelper.html">MigrationHelper</a></li><li><a href="OperationTimer.html">OperationTimer</a></li><li><a href="OperationTracker.html">OperationTracker</a></li><li><a href="Processor.html">Processor</a></li><li><a href="PromptContext.html">PromptContext</a></li><li><a href="PromptFormatterCompat.html">PromptFormatterCompat</a></li><li><a href="PromptMetrics.html">PromptMetrics</a></li><li><a href="PromptOptions.html">PromptOptions</a></li><li><a href="PromptResult.html">PromptResult</a></li><li><a href="PromptTemplate.html">PromptTemplate</a></li><li><a href="PromptTemplatesCompat.html">PromptTemplatesCompat</a></li><li><a href="PromptValidation.html">PromptValidation</a></li><li><a href="RagnoAPIServer.html">RagnoAPIServer</a></li><li><a href="SOMGrid.html">SOMGrid</a></li><li><a href="SPARQLService.html">SPARQLService</a></li><li><a href="SearchAPIEnhanced.html">SearchAPIEnhanced</a></li><li><a href="SearchServer.html">SearchServer</a></li><li><a href="SearchService.html">SearchService</a></li><li><a href="StructuredLogger.html">StructuredLogger</a></li><li><a href="StructuredLoggerFactory.html">StructuredLoggerFactory</a></li><li><a href="TabManager.html">TabManager</a></li><li><a href="TellOperationTimer.html">TellOperationTimer</a></li><li><a href="TrainingViz.html">TrainingViz</a></li><li><a href="UIServer.html">UIServer</a></li><li><a href="VSOMController.html">VSOMController</a></li><li><a href="VSOMService.html">VSOMService</a></li><li><a href="VSOMVisualization.html">VSOMVisualization</a></li><li><a href="ZPTDataFactory.html">ZPTDataFactory</a></li><li><a href="ZPTQueryBuilder.html">ZPTQueryBuilder</a></li><li><a href="module.html#.exports">exports</a></li><li><a href="module.exports_module.exports.html">exports</a></li></ul><h3>Global</h3><ul><li><a href="global.html#INCOMPLETE_PATTERNS">INCOMPLETE_PATTERNS</a></li><li><a href="global.html#NamespaceUtils">NamespaceUtils</a></li><li><a href="global.html#PromptTemplates">PromptTemplates</a></li><li><a href="global.html#SPARQL_PREFIXES">SPARQL_PREFIXES</a></li><li><a href="global.html#UnifiedPromptSystem">UnifiedPromptSystem</a></li><li><a href="global.html#ZPTQueryTemplates">ZPTQueryTemplates</a></li><li><a href="global.html#ZPTQueryUtils">ZPTQueryUtils</a></li><li><a href="global.html#ZPTUtils">ZPTUtils</a></li><li><a href="global.html#ZPT_STRING_MAPPINGS">ZPT_STRING_MAPPINGS</a></li><li><a href="global.html#ZPT_URI_MAPPINGS">ZPT_URI_MAPPINGS</a></li><li><a href="global.html#_adjustEmbeddingLength">_adjustEmbeddingLength</a></li><li><a href="global.html#_analyzeQuery">_analyzeQuery</a></li><li><a href="global.html#_buildContext">_buildContext</a></li><li><a href="global.html#_buildFilterClauses">_buildFilterClauses</a></li><li><a href="global.html#_calculateCosineSimilarity">_calculateCosineSimilarity</a></li><li><a href="global.html#_calculateFinalScore">_calculateFinalScore</a></li><li><a href="global.html#_callChat">_callChat</a></li><li><a href="global.html#_callCompletion">_callCompletion</a></li><li><a href="global.html#_createConversation">_createConversation</a></li><li><a href="global.html#_createCorpusInterface">_createCorpusInterface</a></li><li><a href="global.html#_createResult">_createResult</a></li><li><a href="global.html#_determineStrategy">_determineStrategy</a></li><li><a href="global.html#_emitMetric">_emitMetric</a></li><li><a href="global.html#_escapeProperty">_escapeProperty</a></li><li><a href="global.html#_escapeTripleQuotedString">_escapeTripleQuotedString</a></li><li><a href="global.html#_estimateServiceRelevance">_estimateServiceRelevance</a></li><li><a href="global.html#_estimateTokens">_estimateTokens</a></li><li><a href="global.html#_executeArticleLookup">_executeArticleLookup</a></li><li><a href="global.html#_executeBatchSearch">_executeBatchSearch</a></li><li><a href="global.html#_executeCategorySearch">_executeCategorySearch</a></li><li><a href="global.html#_executeConceptDiscovery">_executeConceptDiscovery</a></li><li><a href="global.html#_executeConceptResearch">_executeConceptResearch</a></li><li><a href="global.html#_executeEntityLookup">_executeEntityLookup</a></li><li><a href="global.html#_executeEntitySearch">_executeEntitySearch</a></li><li><a href="global.html#_executeIngest">_executeIngest</a></li><li><a href="global.html#_executeNavigationFallback">_executeNavigationFallback</a></li><li><a href="global.html#_executeParallelSearches">_executeParallelSearches</a></li><li><a href="global.html#_executeSPARQLQuery">_executeSPARQLQuery</a></li><li><a href="global.html#_executeSPARQLUpdate">_executeSPARQLUpdate</a></li><li><a href="global.html#_executeSearch">_executeSearch</a></li><li><a href="global.html#_executeSequentialSearches">_executeSequentialSearches</a></li><li><a href="global.html#_executeServiceSearch">_executeServiceSearch</a></li><li><a href="global.html#_extractCommonResources">_extractCommonResources</a></li><li><a href="global.html#_formatEntity">_formatEntity</a></li><li><a href="global.html#_formatRDFObject">_formatRDFObject</a></li><li><a href="global.html#_formatRelationship">_formatRelationship</a></li><li><a href="global.html#_formatSemanticUnit">_formatSemanticUnit</a></li><li><a href="global.html#_getConversation">_getConversation</a></li><li><a href="global.html#_getWorkflowMetadata">_getWorkflowMetadata</a></li><li><a href="global.html#_handleError">_handleError</a></li><li><a href="global.html#_initializeZPTComponents">_initializeZPTComponents</a></li><li><a href="global.html#_logStep">_logStep</a></li><li><a href="global.html#_measureTime">_measureTime</a></li><li><a href="global.html#_mergeConfig">_mergeConfig</a></li><li><a href="global.html#_normalizeResults">_normalizeResults</a></li><li><a href="global.html#_parseJsonValue">_parseJsonValue</a></li><li><a href="global.html#_parseQueryResults">_parseQueryResults</a></li><li><a href="global.html#_parseSPARQLResults">_parseSPARQLResults</a></li><li><a href="global.html#_rankAndMergeResults">_rankAndMergeResults</a></li><li><a href="global.html#_sanitizeParams">_sanitizeParams</a></li><li><a href="global.html#_searchEntities">_searchEntities</a></li><li><a href="global.html#_searchSemantic">_searchSemantic</a></li><li><a href="global.html#_selectServices">_selectServices</a></li><li><a href="global.html#_serializeTriples">_serializeTriples</a></li><li><a href="global.html#_simpleMergeResults">_simpleMergeResults</a></li><li><a href="global.html#_storeRDFInSPARQL">_storeRDFInSPARQL</a></li><li><a href="global.html#_triplesToJSON">_triplesToJSON</a></li><li><a href="global.html#_updateAverage">_updateAverage</a></li><li><a href="global.html#_validateFile">_validateFile</a></li><li><a href="global.html#_validateInput">_validateInput</a></li><li><a href="global.html#_validateParams">_validateParams</a></li><li><a href="global.html#_validateResources">_validateResources</a></li><li><a href="global.html#adaptiveChunking">adaptiveChunking</a></li><li><a href="global.html#addAltLabel">addAltLabel</a></li><li><a href="global.html#addAlternativeName">addAlternativeName</a></li><li><a href="global.html#addAttribute">addAttribute</a></li><li><a href="global.html#addChunkOverlap">addChunkOverlap</a></li><li><a href="global.html#addChunkRelationships">addChunkRelationships</a></li><li><a href="global.html#addContent">addContent</a></li><li><a href="global.html#addEntityConnection">addEntityConnection</a></li><li><a href="global.html#addEntityMention">addEntityMention</a></li><li><a href="global.html#addEvidence">addEvidence</a></li><li><a href="global.html#addHypothesisToRDF">addHypothesisToRDF</a></li><li><a href="global.html#addInstructions">addInstructions</a></li><li><a href="global.html#addKeyword">addKeyword</a></li><li><a href="global.html#addLabel">addLabel</a></li><li><a href="global.html#addNamespace">addNamespace</a></li><li><a href="global.html#addNode">addNode</a></li><li><a href="global.html#addNodeToIndex">addNodeToIndex</a></li><li><a href="global.html#addNodesBatch">addNodesBatch</a></li><li><a href="global.html#addNodesToIndex">addNodesToIndex</a></li><li><a href="global.html#addProvenance">addProvenance</a></li><li><a href="global.html#addRelationshipTo">addRelationshipTo</a></li><li><a href="global.html#addSource">addSource</a></li><li><a href="global.html#addToContext">addToContext</a></li><li><a href="global.html#addTooltip">addTooltip</a></li><li><a href="global.html#addTriple">addTriple</a></li><li><a href="global.html#addType">addType</a></li><li><a href="global.html#addUnitConnection">addUnitConnection</a></li><li><a href="global.html#addZoom">addZoom</a></li><li><a href="global.html#adjustForTboxEnvironment">adjustForTboxEnvironment</a></li><li><a href="global.html#advancedEstimation">advancedEstimation</a></li><li><a href="global.html#aggregateCommunities">aggregateCommunities</a></li><li><a href="global.html#aggregationPhase">aggregationPhase</a></li><li><a href="global.html#analyzeCompleteness">analyzeCompleteness</a></li><li><a href="global.html#analyzeConfidenceDistribution">analyzeConfidenceDistribution</a></li><li><a href="global.html#analyzeContentType">analyzeContentType</a></li><li><a href="global.html#analyzeNavigation">analyzeNavigation</a></li><li><a href="global.html#analyzeQuery">analyzeQuery</a></li><li><a href="global.html#analyzeTextStructure">analyzeTextStructure</a></li><li><a href="global.html#applyContentAdjustments">applyContentAdjustments</a></li><li><a href="global.html#applyDeduplication">applyDeduplication</a></li><li><a href="global.html#applyDiversityFilter">applyDiversityFilter</a></li><li><a href="global.html#applyEntityFilter">applyEntityFilter</a></li><li><a href="global.html#applyEntityFilters">applyEntityFilters</a></li><li><a href="global.html#applyFilters">applyFilters</a></li><li><a href="global.html#applyFormatting">applyFormatting</a></li><li><a href="global.html#applyGeographicFilter">applyGeographicFilter</a></li><li><a href="global.html#applyMemoryDomainFilter">applyMemoryDomainFilter</a></li><li><a href="global.html#applyMemoryFilter">applyMemoryFilter</a></li><li><a href="global.html#applyPrivacyFilters">applyPrivacyFilters</a></li><li><a href="global.html#applyRanking">applyRanking</a></li><li><a href="global.html#applyRelevanceFiltering">applyRelevanceFiltering</a></li><li><a href="global.html#applyTemporalFilter">applyTemporalFilter</a></li><li><a href="global.html#applyTokenizerAdjustments">applyTokenizerAdjustments</a></li><li><a href="global.html#applyTopicFilter">applyTopicFilter</a></li><li><a href="global.html#applyTypeFiltering">applyTypeFiltering</a></li><li><a href="global.html#attemptRecovery">attemptRecovery</a></li><li><a href="global.html#augmentWithAttributes">augmentWithAttributes</a></li><li><a href="global.html#balanceChunkSizes">balanceChunkSizes</a></li><li><a href="global.html#batchCountTokens">batchCountTokens</a></li><li><a href="global.html#batchInsertData">batchInsertData</a></li><li><a href="global.html#batchResearch">batchResearch</a></li><li><a href="global.html#beerqaTemplates">beerqaTemplates</a></li><li><a href="global.html#buildAggregationQuery">buildAggregationQuery</a></li><li><a href="global.html#buildBatchConceptInsert">buildBatchConceptInsert</a></li><li><a href="global.html#buildBatchFrequencyUpdate">buildBatchFrequencyUpdate</a></li><li><a href="global.html#buildBatchRelationshipUpdate">buildBatchRelationshipUpdate</a></li><li><a href="global.html#buildCacheKey">buildCacheKey</a></li><li><a href="global.html#buildCommunities">buildCommunities</a></li><li><a href="global.html#buildCompletenessFunction">buildCompletenessFunction</a></li><li><a href="global.html#buildConceptFilter">buildConceptFilter</a></li><li><a href="global.html#buildConceptFilters">buildConceptFilters</a></li><li><a href="global.html#buildConceptQuery">buildConceptQuery</a></li><li><a href="global.html#buildConnectivityFunction">buildConnectivityFunction</a></li><li><a href="global.html#buildConstraints">buildConstraints</a></li><li><a href="global.html#buildContext">buildContext</a></li><li><a href="global.html#buildCriteria">buildCriteria</a></li><li><a href="global.html#buildDiversityFunction">buildDiversityFunction</a></li><li><a href="global.html#buildEntityDetailsQuery">buildEntityDetailsQuery</a></li><li><a href="global.html#buildEntityExtractionPrompt">buildEntityExtractionPrompt</a></li><li><a href="global.html#buildEntityFilter">buildEntityFilter</a></li><li><a href="global.html#buildEntityRule">buildEntityRule</a></li><li><a href="global.html#buildExactMatchQuery">buildExactMatchQuery</a></li><li><a href="global.html#buildFilters">buildFilters</a></li><li><a href="global.html#buildFormattingContext">buildFormattingContext</a></li><li><a href="global.html#buildGeographicFilter">buildGeographicFilter</a></li><li><a href="global.html#buildGeographicRule">buildGeographicRule</a></li><li><a href="global.html#buildGraphFromRDF">buildGraphFromRDF</a></li><li><a href="global.html#buildGraphTraversalQuery">buildGraphTraversalQuery</a></li><li><a href="global.html#buildLimit">buildLimit</a></li><li><a href="global.html#buildOptimizationRules">buildOptimizationRules</a></li><li><a href="global.html#buildOrderBy">buildOrderBy</a></li><li><a href="global.html#buildPrimaryRules">buildPrimaryRules</a></li><li><a href="global.html#buildQuery">buildQuery</a></li><li><a href="global.html#buildRecencyFunction">buildRecencyFunction</a></li><li><a href="global.html#buildRelevanceFunction">buildRelevanceFunction</a></li><li><a href="global.html#buildScoringRules">buildScoringRules</a></li><li><a href="global.html#buildSecondaryRules">buildSecondaryRules</a></li><li><a href="global.html#buildSelectClause">buildSelectClause</a></li><li><a href="global.html#buildSelectionResult">buildSelectionResult</a></li><li><a href="global.html#buildSimilarityFilters">buildSimilarityFilters</a></li><li><a href="global.html#buildSimilarityQuery">buildSimilarityQuery</a></li><li><a href="global.html#buildTemporalFilter">buildTemporalFilter</a></li><li><a href="global.html#buildTemporalRule">buildTemporalRule</a></li><li><a href="global.html#buildTopicFilter">buildTopicFilter</a></li><li><a href="global.html#buildTopicRule">buildTopicRule</a></li><li><a href="global.html#buildTransformationContext">buildTransformationContext</a></li><li><a href="global.html#buildTransitionMatrix">buildTransitionMatrix</a></li><li><a href="global.html#buildTypeFilter">buildTypeFilter</a></li><li><a href="global.html#calculateAttributeConfidence">calculateAttributeConfidence</a></li><li><a href="global.html#calculateCacheHitRate">calculateCacheHitRate</a></li><li><a href="global.html#calculateCentroid">calculateCentroid</a></li><li><a href="global.html#calculateChunkSize">calculateChunkSize</a></li><li><a href="global.html#calculateClusterCentroid">calculateClusterCentroid</a></li><li><a href="global.html#calculateCommunityCohesion">calculateCommunityCohesion</a></li><li><a href="global.html#calculateComplexity">calculateComplexity</a></li><li><a href="global.html#calculateConceptSimilarity">calculateConceptSimilarity</a></li><li><a href="global.html#calculateConfidence">calculateConfidence</a></li><li><a href="global.html#calculateContentSimilarity">calculateContentSimilarity</a></li><li><a href="global.html#calculateCosineSimilarity">calculateCosineSimilarity</a></li><li><a href="global.html#calculateDistance">calculateDistance</a></li><li><a href="global.html#calculateHexagonalDistance">calculateHexagonalDistance</a></li><li><a href="global.html#calculateHybridScore">calculateHybridScore</a></li><li><a href="global.html#calculateLearningRate">calculateLearningRate</a></li><li><a href="global.html#calculateMapDistance">calculateMapDistance</a></li><li><a href="global.html#calculateMemoryImportance">calculateMemoryImportance</a></li><li><a href="global.html#calculateModularity">calculateModularity</a></li><li><a href="global.html#calculateModularityGain">calculateModularityGain</a></li><li><a href="global.html#calculateNeighborhoodRadius">calculateNeighborhoodRadius</a></li><li><a href="global.html#calculateNodeSimilarity">calculateNodeSimilarity</a></li><li><a href="global.html#calculateQualityMetrics">calculateQualityMetrics</a></li><li><a href="global.html#calculateQuantizationError">calculateQuantizationError</a></li><li><a href="global.html#calculateQueryConfidence">calculateQueryConfidence</a></li><li><a href="global.html#calculateRectangularDistance">calculateRectangularDistance</a></li><li><a href="global.html#calculateRelationshipStrength">calculateRelationshipStrength</a></li><li><a href="global.html#calculateSemanticConnectivity">calculateSemanticConnectivity</a></li><li><a href="global.html#calculateSummaryConfidence">calculateSummaryConfidence</a></li><li><a href="global.html#calculateTopographicError">calculateTopographicError</a></li><li><a href="global.html#calculateWeightedScore">calculateWeightedScore</a></li><li><a href="global.html#canResolveFusekiHostname">canResolveFusekiHostname</a></li><li><a href="global.html#checkAPIHealth">checkAPIHealth</a></li><li><a href="global.html#checkContentSimilarity">checkContentSimilarity</a></li><li><a href="global.html#checkContextLimits">checkContextLimits</a></li><li><a href="global.html#checkConvergence">checkConvergence</a></li><li><a href="global.html#checkDependencyHealth">checkDependencyHealth</a></li><li><a href="global.html#checkRateLimit">checkRateLimit</a></li><li><a href="global.html#checkSystemHealth">checkSystemHealth</a></li><li><a href="global.html#chunk">chunk</a></li><li><a href="global.html#chunkCorpuscles">chunkCorpuscles</a></li><li><a href="global.html#chunkDocument">chunkDocument</a></li><li><a href="global.html#chunkHierarchicalText">chunkHierarchicalText</a></li><li><a href="global.html#chunkText">chunkText</a></li><li><a href="global.html#classifyError">classifyError</a></li><li><a href="global.html#cleanHtml">cleanHtml</a></li><li><a href="global.html#cleanSnippet">cleanSnippet</a></li><li><a href="global.html#cleanup">cleanup</a></li><li><a href="global.html#cleanupPartialInitialization">cleanupPartialInitialization</a></li><li><a href="global.html#clear">clear</a></li><li><a href="global.html#clearCache">clearCache</a></li><li><a href="global.html#clearCaches">clearCaches</a></li><li><a href="global.html#clearGraph">clearGraph</a></li><li><a href="global.html#clearStatistics">clearStatistics</a></li><li><a href="global.html#clearVectorIndex">clearVectorIndex</a></li><li><a href="global.html#clone">clone</a></li><li><a href="global.html#cluster">cluster</a></li><li><a href="global.html#clusterHypotheticalEntities">clusterHypotheticalEntities</a></li><li><a href="global.html#combineResults">combineResults</a></li><li><a href="global.html#combineSearchResults">combineSearchResults</a></li><li><a href="global.html#combinedResearch">combinedResearch</a></li><li><a href="global.html#compileTrainingResults">compileTrainingResults</a></li><li><a href="global.html#compose">compose</a></li><li><a href="global.html#compress">compress</a></li><li><a href="global.html#compressMetadata">compressMetadata</a></li><li><a href="global.html#computeBetweennessCentrality">computeBetweennessCentrality</a></li><li><a href="global.html#computeCommunityStatistics">computeCommunityStatistics</a></li><li><a href="global.html#computeGraphStatistics">computeGraphStatistics</a></li><li><a href="global.html#computeKCore">computeKCore</a></li><li><a href="global.html#computeLeidenClustering">computeLeidenClustering</a></li><li><a href="global.html#computeSimilarityLinks">computeSimilarityLinks</a></li><li><a href="global.html#conditional">conditional</a></li><li><a href="global.html#connectElements">connectElements</a></li><li><a href="global.html#connectTo">connectTo</a></li><li><a href="global.html#connects">connects</a></li><li><a href="global.html#convert">convert</a></li><li><a href="global.html#convertBuffer">convertBuffer</a></li><li><a href="global.html#convertDocument">convertDocument</a></li><li><a href="global.html#convertEntity">convertEntity</a></li><li><a href="global.html#convertParametersToZPTURIs">convertParametersToZPTURIs</a></li><li><a href="global.html#convertParams">convertParams</a></li><li><a href="global.html#convertString">convertString</a></li><li><a href="global.html#convertToCSV">convertToCSV</a></li><li><a href="global.html#coordinatesToIndex">coordinatesToIndex</a></li><li><a href="global.html#cosineDistance">cosineDistance</a></li><li><a href="global.html#countRules">countRules</a></li><li><a href="global.html#countTokens">countTokens</a></li><li><a href="global.html#create">create</a></li><li><a href="global.html#createAdaptiveChunk">createAdaptiveChunk</a></li><li><a href="global.html#createAttribute">createAttribute</a></li><li><a href="global.html#createAttributeRelationships">createAttributeRelationships</a></li><li><a href="global.html#createBackup">createBackup</a></li><li><a href="global.html#createBatches">createBatches</a></li><li><a href="global.html#createBidirectional">createBidirectional</a></li><li><a href="global.html#createCacheKey">createCacheKey</a></li><li><a href="global.html#createClearGraphQuery">createClearGraphQuery</a></li><li><a href="global.html#createColorScale">createColorScale</a></li><li><a href="global.html#createCompactRepresentation">createCompactRepresentation</a></li><li><a href="global.html#createCompatibilityMappings">createCompatibilityMappings</a></li><li><a href="global.html#createConnector">createConnector</a></li><li><a href="global.html#createCorpuscleForUnit">createCorpuscleForUnit</a></li><li><a href="global.html#createCrossReference">createCrossReference</a></li><li><a href="global.html#createDeleteInsertQuery">createDeleteInsertQuery</a></li><li><a href="global.html#createDirectConceptFilter">createDirectConceptFilter</a></li><li><a href="global.html#createDirectEntityFilter">createDirectEntityFilter</a></li><li><a href="global.html#createDropGraphQuery">createDropGraphQuery</a></li><li><a href="global.html#createEmbeddingConnector">createEmbeddingConnector</a></li><li><a href="global.html#createEmbeddings">createEmbeddings</a></li><li><a href="global.html#createEmptyResult">createEmptyResult</a></li><li><a href="global.html#createEmptyResults">createEmptyResults</a></li><li><a href="global.html#createEntity">createEntity</a></li><li><a href="global.html#createExactTemporalFilter">createExactTemporalFilter</a></li><li><a href="global.html#createExactTopicFilter">createExactTopicFilter</a></li><li><a href="global.html#createHypothesisPrompt">createHypothesisPrompt</a></li><li><a href="global.html#createHypothesisRelationships">createHypothesisRelationships</a></li><li><a href="global.html#createHypothesisUnit">createHypothesisUnit</a></li><li><a href="global.html#createInsertDataQuery">createInsertDataQuery</a></li><li><a href="global.html#createInsertQuery">createInsertQuery</a></li><li><a href="global.html#createInstance">createInstance</a></li><li><a href="global.html#createInterCommunityRelationships">createInterCommunityRelationships</a></li><li><a href="global.html#createLegend">createLegend</a></li><li><a href="global.html#createLiteral">createLiteral</a></li><li><a href="global.html#createNamedNode">createNamedNode</a></li><li><a href="global.html#createNamespace">createNamespace</a></li><li><a href="global.html#createNamespaceObject">createNamespaceObject</a></li><li><a href="global.html#createNeighborhoodFunction">createNeighborhoodFunction</a></li><li><a href="global.html#createOverview">createOverview</a></li><li><a href="global.html#createParameterHash">createParameterHash</a></li><li><a href="global.html#createPointGeographicFilter">createPointGeographicFilter</a></li><li><a href="global.html#createPromptContext">createPromptContext</a></li><li><a href="global.html#createPromptManager">createPromptManager</a></li><li><a href="global.html#createRagnoStructure">createRagnoStructure</a></li><li><a href="global.html#createRelationship">createRelationship</a></li><li><a href="global.html#createResponsiveSVG">createResponsiveSVG</a></li><li><a href="global.html#createSOMInstance">createSOMInstance</a></li><li><a href="global.html#createSemanticChunk">createSemanticChunk</a></li><li><a href="global.html#createTextUnit">createTextUnit</a></li><li><a href="global.html#createTooltip">createTooltip</a></li><li><a href="global.html#createURI">createURI</a></li><li><a href="global.html#createUnit">createUnit</a></li><li><a href="global.html#cubeToOffset">cubeToOffset</a></li><li><a href="global.html#debounce">debounce</a></li><li><a href="global.html#decode">decode</a></li><li><a href="global.html#decomposeCorpus">decomposeCorpus</a></li><li><a href="global.html#decomposeText">decomposeText</a></li><li><a href="global.html#deduplicateByContent">deduplicateByContent</a></li><li><a href="global.html#deduplicateByURI">deduplicateByURI</a></li><li><a href="global.html#deduplicateHybrid">deduplicateHybrid</a></li><li><a href="global.html#deleteDocument">deleteDocument</a></li><li><a href="global.html#deleteInstance">deleteInstance</a></li><li><a href="global.html#detectCommunities">detectCommunities</a></li><li><a href="global.html#detectTboxEnvironment">detectTboxEnvironment</a></li><li><a href="global.html#detectTopicDomain">detectTopicDomain</a></li><li><a href="global.html#determineCorpuscleType">determineCorpuscleType</a></li><li><a href="global.html#determineResponseType">determineResponseType</a></li><li><a href="global.html#displayError">displayError</a></li><li><a href="global.html#displayRecallResults">displayRecallResults</a></li><li><a href="global.html#dispose">dispose</a></li><li><a href="global.html#dropGraph">dropGraph</a></li><li><a href="global.html#dryRun">dryRun</a></li><li><a href="global.html#encode">encode</a></li><li><a href="global.html#encodeStructured">encodeStructured</a></li><li><a href="global.html#enhanceClustersWithCentrality">enhanceClustersWithCentrality</a></li><li><a href="global.html#enhanceNavigation">enhanceNavigation</a></li><li><a href="global.html#enhanceSearchResults">enhanceSearchResults</a></li><li><a href="global.html#enrichGraph">enrichGraph</a></li><li><a href="global.html#enrichWithContext">enrichWithContext</a></li><li><a href="global.html#enrichWithEmbeddings">enrichWithEmbeddings</a></li><li><a href="global.html#ensureInitialized">ensureInitialized</a></li><li><a href="global.html#escapeString">escapeString</a></li><li><a href="global.html#estimateConceptSelectivity">estimateConceptSelectivity</a></li><li><a href="global.html#estimateConfidence">estimateConfidence</a></li><li><a href="global.html#estimateCost">estimateCost</a></li><li><a href="global.html#estimateMemoryUsage">estimateMemoryUsage</a></li><li><a href="global.html#estimateResults">estimateResults</a></li><li><a href="global.html#estimateSegmentSize">estimateSegmentSize</a></li><li><a href="global.html#estimateSelectivity">estimateSelectivity</a></li><li><a href="global.html#estimateTokenCount">estimateTokenCount</a></li><li><a href="global.html#estimateTokensPerResult">estimateTokensPerResult</a></li><li><a href="global.html#estimateTopicSelectivity">estimateTopicSelectivity</a></li><li><a href="global.html#euclideanDistance">euclideanDistance</a></li><li><a href="global.html#execute">execute</a></li><li><a href="global.html#executeNavigationPipeline">executeNavigationPipeline</a></li><li><a href="global.html#executeOperation">executeOperation</a></li><li><a href="global.html#executeQuery">executeQuery</a></li><li><a href="global.html#executeResearch">executeResearch</a></li><li><a href="global.html#executeSPARQLQuery">executeSPARQLQuery</a></li><li><a href="global.html#executeSPARQLUpdate">executeSPARQLUpdate</a></li><li><a href="global.html#executeSelect">executeSelect</a></li><li><a href="global.html#executeSparqlQuery">executeSparqlQuery</a></li><li><a href="global.html#executeStageWithTimeout">executeStageWithTimeout</a></li><li><a href="global.html#executeTemplate">executeTemplate</a></li><li><a href="global.html#executeUpdate">executeUpdate</a></li><li><a href="global.html#executeUpdates">executeUpdates</a></li><li><a href="global.html#executeWithTimeout">executeWithTimeout</a></li><li><a href="global.html#expandCluster">expandCluster</a></li><li><a href="global.html#expandQueryTerms">expandQueryTerms</a></li><li><a href="global.html#exportAllResultsToRDF">exportAllResultsToRDF</a></li><li><a href="global.html#exportCommunitiesToRDF">exportCommunitiesToRDF</a></li><li><a href="global.html#exportEnrichmentResults">exportEnrichmentResults</a></li><li><a href="global.html#exportGraph">exportGraph</a></li><li><a href="global.html#exportResultsToRDF">exportResultsToRDF</a></li><li><a href="global.html#exportToDataset">exportToDataset</a></li><li><a href="global.html#exportToRDF">exportToRDF</a></li><li><a href="global.html#exportVisualization">exportVisualization</a></li><li><a href="global.html#extractAndResearchConcepts">extractAndResearchConcepts</a></li><li><a href="global.html#extractBasicInfo">extractBasicInfo</a></li><li><a href="global.html#extractClientInfo">extractClientInfo</a></li><li><a href="global.html#extractClientIp">extractClientIp</a></li><li><a href="global.html#extractCommunityKeywords">extractCommunityKeywords</a></li><li><a href="global.html#extractConcepts">extractConcepts</a></li><li><a href="global.html#extractContent">extractContent</a></li><li><a href="global.html#extractContentString">extractContentString</a></li><li><a href="global.html#extractCorpuscleConcepts">extractCorpuscleConcepts</a></li><li><a href="global.html#extractEntitiesFromDataset">extractEntitiesFromDataset</a></li><li><a href="global.html#extractEntitiesFromHypothesis">extractEntitiesFromHypothesis</a></li><li><a href="global.html#extractEntitiesFromUnit">extractEntitiesFromUnit</a></li><li><a href="global.html#extractEntityData">extractEntityData</a></li><li><a href="global.html#extractKeywords">extractKeywords</a></li><li><a href="global.html#extractLimit">extractLimit</a></li><li><a href="global.html#extractMetadata">extractMetadata</a></li><li><a href="global.html#extractNamespace">extractNamespace</a></li><li><a href="global.html#extractNavigationMetadata">extractNavigationMetadata</a></li><li><a href="global.html#extractPerformanceMetadata">extractPerformanceMetadata</a></li><li><a href="global.html#extractProvenanceContext">extractProvenanceContext</a></li><li><a href="global.html#extractProvenanceMetadata">extractProvenanceMetadata</a></li><li><a href="global.html#extractQualityMetadata">extractQualityMetadata</a></li><li><a href="global.html#extractRelationshipContext">extractRelationshipContext</a></li><li><a href="global.html#extractScore">extractScore</a></li><li><a href="global.html#extractSourceContext">extractSourceContext</a></li><li><a href="global.html#extractSubgraph">extractSubgraph</a></li><li><a href="global.html#extractTechnicalMetadata">extractTechnicalMetadata</a></li><li><a href="global.html#extractTextContent">extractTextContent</a></li><li><a href="global.html#feedbackTemplates">feedbackTemplates</a></li><li><a href="global.html#fetchWithTimeout">fetchWithTimeout</a></li><li><a href="global.html#filterCorpuscles">filterCorpuscles</a></li><li><a href="global.html#filterSmallCommunities">filterSmallCommunities</a></li><li><a href="global.html#findBestMatchingUnits">findBestMatchingUnits</a></li><li><a href="global.html#findConnectedComponents">findConnectedComponents</a></li><li><a href="global.html#findCrossTypeNodes">findCrossTypeNodes</a></li><li><a href="global.html#findEntitiesByLabel">findEntitiesByLabel</a></li><li><a href="global.html#findEntitiesByWikipediaTitle">findEntitiesByWikipediaTitle</a></li><li><a href="global.html#findEntityCluster">findEntityCluster</a></li><li><a href="global.html#findLazyContent">findLazyContent</a></li><li><a href="global.html#findNextBoundary">findNextBoundary</a></li><li><a href="global.html#findSemanticBoundaries">findSemanticBoundaries</a></li><li><a href="global.html#findSimilarElements">findSimilarElements</a></li><li><a href="global.html#findSimilarNodes">findSimilarNodes</a></li><li><a href="global.html#findSingleBMU">findSingleBMU</a></li><li><a href="global.html#findUnitsWithoutCorpuscles">findUnitsWithoutCorpuscles</a></li><li><a href="global.html#fixedSizeChunking">fixedSizeChunking</a></li><li><a href="global.html#flushSyncQueue">flushSyncQueue</a></li><li><a href="global.html#format">format</a></li><li><a href="global.html#formatAsAnalytical">formatAsAnalytical</a></li><li><a href="global.html#formatAsConversational">formatAsConversational</a></li><li><a href="global.html#formatAsJSON">formatAsJSON</a></li><li><a href="global.html#formatAsMarkdown">formatAsMarkdown</a></li><li><a href="global.html#formatAsStructured">formatAsStructured</a></li><li><a href="global.html#formatContentAsMarkdown">formatContentAsMarkdown</a></li><li><a href="global.html#formatContentNaturally">formatContentNaturally</a></li><li><a href="global.html#formatErrorResponse">formatErrorResponse</a></li><li><a href="global.html#formatGroupSummary">formatGroupSummary</a></li><li><a href="global.html#formatHealthResponse">formatHealthResponse</a></li><li><a href="global.html#formatMetadataAsMarkdown">formatMetadataAsMarkdown</a></li><li><a href="global.html#formatMetricsResponse">formatMetricsResponse</a></li><li><a href="global.html#formatNavigationParameters">formatNavigationParameters</a></li><li><a href="global.html#formatNavigationResponse">formatNavigationResponse</a></li><li><a href="global.html#formatOptionsResponse">formatOptionsResponse</a></li><li><a href="global.html#formatPreviewResponse">formatPreviewResponse</a></li><li><a href="global.html#formatRDFObject">formatRDFObject</a></li><li><a href="global.html#formatSI">formatSI</a></li><li><a href="global.html#formatSchemaResponse">formatSchemaResponse</a></li><li><a href="global.html#formatSingleInteraction">formatSingleInteraction</a></li><li><a href="global.html#formatStructured">formatStructured</a></li><li><a href="global.html#formatSuccessResponse">formatSuccessResponse</a></li><li><a href="global.html#formatTimeAgo">formatTimeAgo</a></li><li><a href="global.html#fromSimpleObject">fromSimpleObject</a></li><li><a href="global.html#gatherCommunityContext">gatherCommunityContext</a></li><li><a href="global.html#gatherEntityContext">gatherEntityContext</a></li><li><a href="global.html#gaussianRandom">gaussianRandom</a></li><li><a href="global.html#generateCacheKey">generateCacheKey</a></li><li><a href="global.html#generateChat">generateChat</a></li><li><a href="global.html#generateChatResponse">generateChatResponse</a></li><li><a href="global.html#generateChatStream">generateChatStream</a></li><li><a href="global.html#generateClusters">generateClusters</a></li><li><a href="global.html#generateCommunitySummary">generateCommunitySummary</a></li><li><a href="global.html#generateCompletion">generateCompletion</a></li><li><a href="global.html#generateConceptURI">generateConceptURI</a></li><li><a href="global.html#generateCorpuscleId">generateCorpuscleId</a></li><li><a href="global.html#generateCorpuscleTriples">generateCorpuscleTriples</a></li><li><a href="global.html#generateEmbedding">generateEmbedding</a></li><li><a href="global.html#generateEntityAttribute">generateEntityAttribute</a></li><li><a href="global.html#generateErrorSuggestions">generateErrorSuggestions</a></li><li><a href="global.html#generateFuzzyPatterns">generateFuzzyPatterns</a></li><li><a href="global.html#generateHypotheses">generateHypotheses</a></li><li><a href="global.html#generateNodeAssignments">generateNodeAssignments</a></li><li><a href="global.html#generateNodeEmbedding">generateNodeEmbedding</a></li><li><a href="global.html#generatePrompt">generatePrompt</a></li><li><a href="global.html#generateQuestions">generateQuestions</a></li><li><a href="global.html#generateReport">generateReport</a></li><li><a href="global.html#generateResponse">generateResponse</a></li><li><a href="global.html#generateResultId">generateResultId</a></li><li><a href="global.html#generateSampleData">generateSampleData</a></li><li><a href="global.html#generateSampleEntities">generateSampleEntities</a></li><li><a href="global.html#generateSingleHypothesis">generateSingleHypothesis</a></li><li><a href="global.html#generateTriplesFromQuads">generateTriplesFromQuads</a></li><li><a href="global.html#generateURI">generateURI</a></li><li><a href="global.html#generateUnitTriples">generateUnitTriples</a></li><li><a href="global.html#get">get</a></li><li><a href="global.html#getAPIRouteHandlers">getAPIRouteHandlers</a></li><li><a href="global.html#getAggregationConfig">getAggregationConfig</a></li><li><a href="global.html#getAggregationFields">getAggregationFields</a></li><li><a href="global.html#getAggregationGroupBy">getAggregationGroupBy</a></li><li><a href="global.html#getAggregationMetrics">getAggregationMetrics</a></li><li><a href="global.html#getAll">getAll</a></li><li><a href="global.html#getAllCustomMetadata">getAllCustomMetadata</a></li><li><a href="global.html#getAllNamespaces">getAllNamespaces</a></li><li><a href="global.html#getAllStatistics">getAllStatistics</a></li><li><a href="global.html#getAllTrainingStatus">getAllTrainingStatus</a></li><li><a href="global.html#getAllTypes">getAllTypes</a></li><li><a href="global.html#getAlternativeNames">getAlternativeNames</a></li><li><a href="global.html#getAttributes">getAttributes</a></li><li><a href="global.html#getAvailableFormats">getAvailableFormats</a></li><li><a href="global.html#getAvailableInstructions">getAvailableInstructions</a></li><li><a href="global.html#getAvailableModels">getAvailableModels</a></li><li><a href="global.html#getAvailableServices">getAvailableServices</a></li><li><a href="global.html#getAvailableStrategies">getAvailableStrategies</a></li><li><a href="global.html#getAvailableTemplates">getAvailableTemplates</a></li><li><a href="global.html#getAvailableTokenizers">getAvailableTokenizers</a></li><li><a href="global.html#getBaseFields">getBaseFields</a></li><li><a href="global.html#getCacheKey">getCacheKey</a></li><li><a href="global.html#getCacheStats">getCacheStats</a></li><li><a href="global.html#getCachedResult">getCachedResult</a></li><li><a href="global.html#getCategory">getCategory</a></li><li><a href="global.html#getClusters">getClusters</a></li><li><a href="global.html#getCommunities">getCommunities</a></li><li><a href="global.html#getConfidence">getConfidence</a></li><li><a href="global.html#getConnectedElements">getConnectedElements</a></li><li><a href="global.html#getConnectedUnits">getConnectedUnits</a></li><li><a href="global.html#getContent">getContent</a></li><li><a href="global.html#getContextRecommendation">getContextRecommendation</a></li><li><a href="global.html#getContextTruncationLimit">getContextTruncationLimit</a></li><li><a href="global.html#getCorpus">getCorpus</a></li><li><a href="global.html#getCorpuscleType">getCorpuscleType</a></li><li><a href="global.html#getDefaultConfig">getDefaultConfig</a></li><li><a href="global.html#getDefaultFieldMappings">getDefaultFieldMappings</a></li><li><a href="global.html#getDefaultTiltURI">getDefaultTiltURI</a></li><li><a href="global.html#getDefaultWeights">getDefaultWeights</a></li><li><a href="global.html#getDefaultZoomURI">getDefaultZoomURI</a></li><li><a href="global.html#getDefaults">getDefaults</a></li><li><a href="global.html#getDocument">getDocument</a></li><li><a href="global.html#getEmbedding">getEmbedding</a></li><li><a href="global.html#getEndpointInfo">getEndpointInfo</a></li><li><a href="global.html#getEndpoints">getEndpoints</a></li><li><a href="global.html#getEnhancedEntityContext">getEnhancedEntityContext</a></li><li><a href="global.html#getEntities">getEntities</a></li><li><a href="global.html#getEntity">getEntity</a></li><li><a href="global.html#getEntityProperties">getEntityProperties</a></li><li><a href="global.html#getEntityRelationships">getEntityRelationships</a></li><li><a href="global.html#getErrorStats">getErrorStats</a></li><li><a href="global.html#getEvidence">getEvidence</a></li><li><a href="global.html#getExecutionStats">getExecutionStats</a></li><li><a href="global.html#getFeatureMaps">getFeatureMaps</a></li><li><a href="global.html#getFilterDocumentation">getFilterDocumentation</a></li><li><a href="global.html#getFirstSeen">getFirstSeen</a></li><li><a href="global.html#getFormatInfo">getFormatInfo</a></li><li><a href="global.html#getFrequency">getFrequency</a></li><li><a href="global.html#getGraphStatistics">getGraphStatistics</a></li><li><a href="global.html#getGraphStats">getGraphStats</a></li><li><a href="global.html#getGridState">getGridState</a></li><li><a href="global.html#getHealth">getHealth</a></li><li><a href="global.html#getHexagonalVisualCoords">getHexagonalVisualCoords</a></li><li><a href="global.html#getInfo">getInfo</a></li><li><a href="global.html#getInstanceHierarchy">getInstanceHierarchy</a></li><li><a href="global.html#getInstructionInfo">getInstructionInfo</a></li><li><a href="global.html#getJSONLDContext">getJSONLDContext</a></li><li><a href="global.html#getKeywords">getKeywords</a></li><li><a href="global.html#getLanguage">getLanguage</a></li><li><a href="global.html#getLastAccessed">getLastAccessed</a></li><li><a href="global.html#getLegacyAdapter">getLegacyAdapter</a></li><li><a href="global.html#getLength">getLength</a></li><li><a href="global.html#getMentionedEntities">getMentionedEntities</a></li><li><a href="global.html#getMetadata">getMetadata</a></li><li><a href="global.html#getMetadataProperty">getMetadataProperty</a></li><li><a href="global.html#getMetrics">getMetrics</a></li><li><a href="global.html#getModelConfig">getModelConfig</a></li><li><a href="global.html#getModelInfo">getModelInfo</a></li><li><a href="global.html#getName">getName</a></li><li><a href="global.html#getNamespace">getNamespace</a></li><li><a href="global.html#getNavigationStatistics">getNavigationStatistics</a></li><li><a href="global.html#getNeighbors">getNeighbors</a></li><li><a href="global.html#getNodeMappings">getNodeMappings</a></li><li><a href="global.html#getNodeMetadata">getNodeMetadata</a></li><li><a href="global.html#getNodeType">getNodeType</a></li><li><a href="global.html#getNodeWeights">getNodeWeights</a></li><li><a href="global.html#getNodesByType">getNodesByType</a></li><li><a href="global.html#getOntologyInfo">getOntologyInfo</a></li><li><a href="global.html#getOntologyTerms">getOntologyTerms</a></li><li><a href="global.html#getOptimalResultLimit">getOptimalResultLimit</a></li><li><a href="global.html#getOptions">getOptions</a></li><li><a href="global.html#getOtherEntity">getOtherEntity</a></li><li><a href="global.html#getPPRScore">getPPRScore</a></li><li><a href="global.html#getParameterSummary">getParameterSummary</a></li><li><a href="global.html#getParserInfo">getParserInfo</a></li><li><a href="global.html#getPerformanceStats">getPerformanceStats</a></li><li><a href="global.html#getPosition">getPosition</a></li><li><a href="global.html#getPrefLabel">getPrefLabel</a></li><li><a href="global.html#getPreferredLabel">getPreferredLabel</a></li><li><a href="global.html#getPrefixes">getPrefixes</a></li><li><a href="global.html#getPrefixesAsObject">getPrefixesAsObject</a></li><li><a href="global.html#getPrimaryTypes">getPrimaryTypes</a></li><li><a href="global.html#getProcessingStatus">getProcessingStatus</a></li><li><a href="global.html#getProjectionDocumentation">getProjectionDocumentation</a></li><li><a href="global.html#getPromptManager">getPromptManager</a></li><li><a href="global.html#getProvenance">getProvenance</a></li><li><a href="global.html#getQuery">getQuery</a></li><li><a href="global.html#getQueryStats">getQueryStats</a></li><li><a href="global.html#getQuestionStatistics">getQuestionStatistics</a></li><li><a href="global.html#getQuestionsForResearch">getQuestionsForResearch</a></li><li><a href="global.html#getRagnoLocalName">getRagnoLocalName</a></li><li><a href="global.html#getRecommendations">getRecommendations</a></li><li><a href="global.html#getRecommendedTilt">getRecommendedTilt</a></li><li><a href="global.html#getRelationshipType">getRelationshipType</a></li><li><a href="global.html#getRelationships">getRelationships</a></li><li><a href="global.html#getRouteHandlers">getRouteHandlers</a></li><li><a href="global.html#getRuleSelectivity">getRuleSelectivity</a></li><li><a href="global.html#getSPARQLPrefixes">getSPARQLPrefixes</a></li><li><a href="global.html#getSchema">getSchema</a></li><li><a href="global.html#getSearchStrategies">getSearchStrategies</a></li><li><a href="global.html#getSelectionStrategy">getSelectionStrategy</a></li><li><a href="global.html#getSession">getSession</a></li><li><a href="global.html#getSessions">getSessions</a></li><li><a href="global.html#getSimilarityScore">getSimilarityScore</a></li><li><a href="global.html#getSourceDocument">getSourceDocument</a></li><li><a href="global.html#getSourceEntity">getSourceEntity</a></li><li><a href="global.html#getStatistics">getStatistics</a></li><li><a href="global.html#getStats">getStats</a></li><li><a href="global.html#getStatus">getStatus</a></li><li><a href="global.html#getStrategyInfo">getStrategyInfo</a></li><li><a href="global.html#getSubType">getSubType</a></li><li><a href="global.html#getSummary">getSummary</a></li><li><a href="global.html#getSupportedExtensions">getSupportedExtensions</a></li><li><a href="global.html#getSupportedProviders">getSupportedProviders</a></li><li><a href="global.html#getTargetEntity">getTargetEntity</a></li><li><a href="global.html#getTargetTypes">getTargetTypes</a></li><li><a href="global.html#getTemplate">getTemplate</a></li><li><a href="global.html#getTemplateMetadata">getTemplateMetadata</a></li><li><a href="global.html#getTemporal">getTemporal</a></li><li><a href="global.html#getText">getText</a></li><li><a href="global.html#getTiltFields">getTiltFields</a></li><li><a href="global.html#getTiltOutputFormat">getTiltOutputFormat</a></li><li><a href="global.html#getTiltProcessingType">getTiltProcessingType</a></li><li><a href="global.html#getTokenizerInfo">getTokenizerInfo</a></li><li><a href="global.html#getTopKNodes">getTopKNodes</a></li><li><a href="global.html#getTopology">getTopology</a></li><li><a href="global.html#getTopologyInfo">getTopologyInfo</a></li><li><a href="global.html#getTrainingStatus">getTrainingStatus</a></li><li><a href="global.html#getTriples">getTriples</a></li><li><a href="global.html#getTriplesWithPredicate">getTriplesWithPredicate</a></li><li><a href="global.html#getTurtlePrefixes">getTurtlePrefixes</a></li><li><a href="global.html#getTypes">getTypes</a></li><li><a href="global.html#getURI">getURI</a></li><li><a href="global.html#getUnits">getUnits</a></li><li><a href="global.html#getView">getView</a></li><li><a href="global.html#getViews">getViews</a></li><li><a href="global.html#getVisualizationCoordinates">getVisualizationCoordinates</a></li><li><a href="global.html#getWeight">getWeight</a></li><li><a href="global.html#getWikidataNamespaces">getWikidataNamespaces</a></li><li><a href="global.html#getWikidataProperties">getWikidataProperties</a></li><li><a href="global.html#getZoomDescriptions">getZoomDescriptions</a></li><li><a href="global.html#getZoomGranularity">getZoomGranularity</a></li><li><a href="global.html#getZoomLevelDocumentation">getZoomLevelDocumentation</a></li><li><a href="global.html#getZoomMapping">getZoomMapping</a></li><li><a href="global.html#groupNodesByType">groupNodesByType</a></li><li><a href="global.html#handleDomainSwitch">handleDomainSwitch</a></li><li><a href="global.html#handleDualSearch">handleDualSearch</a></li><li><a href="global.html#handleEntityDetails">handleEntityDetails</a></li><li><a href="global.html#handleError">handleError</a></li><li><a href="global.html#handleExactSearch">handleExactSearch</a></li><li><a href="global.html#handleFadeMemory">handleFadeMemory</a></li><li><a href="global.html#handleForget">handleForget</a></li><li><a href="global.html#handleGraphStats">handleGraphStats</a></li><li><a href="global.html#handleHealth">handleHealth</a></li><li><a href="global.html#handleMemoryFilter">handleMemoryFilter</a></li><li><a href="global.html#handleMetrics">handleMetrics</a></li><li><a href="global.html#handleNavigate">handleNavigate</a></li><li><a href="global.html#handleOptions">handleOptions</a></li><li><a href="global.html#handlePreview">handlePreview</a></li><li><a href="global.html#handleProjectContext">handleProjectContext</a></li><li><a href="global.html#handleRecall">handleRecall</a></li><li><a href="global.html#handleRemember">handleRemember</a></li><li><a href="global.html#handleRequest">handleRequest</a></li><li><a href="global.html#handleSchema">handleSchema</a></li><li><a href="global.html#handleSearchStats">handleSearchStats</a></li><li><a href="global.html#handleSearchStatus">handleSearchStatus</a></li><li><a href="global.html#handleSimilaritySearch">handleSimilaritySearch</a></li><li><a href="global.html#handleTraversalSearch">handleTraversalSearch</a></li><li><a href="global.html#hasFilters">hasFilters</a></li><li><a href="global.html#hasNode">hasNode</a></li><li><a href="global.html#hasRelationshipWith">hasRelationshipWith</a></li><li><a href="global.html#hasStructure">hasStructure</a></li><li><a href="global.html#hasType">hasType</a></li><li><a href="global.html#hashObject">hashObject</a></li><li><a href="global.html#healthCheck">healthCheck</a></li><li><a href="global.html#hierarchicalChunking">hierarchicalChunking</a></li><li><a href="global.html#highlightQuery">highlightQuery</a></li><li><a href="global.html#identifyImportantEntities">identifyImportantEntities</a></li><li><a href="global.html#identifyRetrievableNodes">identifyRetrievableNodes</a></li><li><a href="global.html#incrementFrequency">incrementFrequency</a></li><li><a href="global.html#indexContent">indexContent</a></li><li><a href="global.html#indexToCoordinates">indexToCoordinates</a></li><li><a href="global.html#ingest">ingest</a></li><li><a href="global.html#ingestDocument">ingestDocument</a></li><li><a href="global.html#ingestFromTemplate">ingestFromTemplate</a></li><li><a href="global.html#init">init</a></li><li><a href="global.html#initChatForms">initChatForms</a></li><li><a href="global.html#initMCPClient">initMCPClient</a></li><li><a href="global.html#initRangeInputs">initRangeInputs</a></li><li><a href="global.html#initSettingsForm">initSettingsForm</a></li><li><a href="global.html#initTabs">initTabs</a></li><li><a href="global.html#initialize">initialize</a></li><li><a href="global.html#initializeApp">initializeApp</a></li><li><a href="global.html#initializeAtuin">initializeAtuin</a></li><li><a href="global.html#initializeBoundaryDetectors">initializeBoundaryDetectors</a></li><li><a href="global.html#initializeChunkingStrategies">initializeChunkingStrategies</a></li><li><a href="global.html#initializeCompressionLevels">initializeCompressionLevels</a></li><li><a href="global.html#initializeConfig">initializeConfig</a></li><li><a href="global.html#initializeDefaultRules">initializeDefaultRules</a></li><li><a href="global.html#initializeDefaults">initializeDefaults</a></li><li><a href="global.html#initializeDocumentProcessing">initializeDocumentProcessing</a></li><li><a href="global.html#initializeDomainPatterns">initializeDomainPatterns</a></li><li><a href="global.html#initializeEmbeddingHandler">initializeEmbeddingHandler</a></li><li><a href="global.html#initializeEncodingStrategies">initializeEncodingStrategies</a></li><li><a href="global.html#initializeEndpoints">initializeEndpoints</a></li><li><a href="global.html#initializeErrorCodes">initializeErrorCodes</a></li><li><a href="global.html#initializeErrorTypes">initializeErrorTypes</a></li><li><a href="global.html#initializeFallbackConceptTemplates">initializeFallbackConceptTemplates</a></li><li><a href="global.html#initializeFilterStrategies">initializeFilterStrategies</a></li><li><a href="global.html#initializeFormats">initializeFormats</a></li><li><a href="global.html#initializeFormatters">initializeFormatters</a></li><li><a href="global.html#initializeInstructions">initializeInstructions</a></li><li><a href="global.html#initializeLLMHandler">initializeLLMHandler</a></li><li><a href="global.html#initializeLegacyAdapters">initializeLegacyAdapters</a></li><li><a href="global.html#initializeLinearWeights">initializeLinearWeights</a></li><li><a href="global.html#initializeMemoryDomains">initializeMemoryDomains</a></li><li><a href="global.html#initializeMetadataSchemas">initializeMetadataSchemas</a></li><li><a href="global.html#initializeModelMappings">initializeModelMappings</a></li><li><a href="global.html#initializeNamespaces">initializeNamespaces</a></li><li><a href="global.html#initializeOutputFormats">initializeOutputFormats</a></li><li><a href="global.html#initializePCAWeights">initializePCAWeights</a></li><li><a href="global.html#initializePipeline">initializePipeline</a></li><li><a href="global.html#initializeProjectionStrategies">initializeProjectionStrategies</a></li><li><a href="global.html#initializePromptSystem">initializePromptSystem</a></li><li><a href="global.html#initializeQueryTemplates">initializeQueryTemplates</a></li><li><a href="global.html#initializeRandomWeights">initializeRandomWeights</a></li><li><a href="global.html#initializeRecoveryStrategies">initializeRecoveryStrategies</a></li><li><a href="global.html#initializeSPARQLServices">initializeSPARQLServices</a></li><li><a href="global.html#initializeSchemas">initializeSchemas</a></li><li><a href="global.html#initializeSelectionStrategies">initializeSelectionStrategies</a></li><li><a href="global.html#initializeTemplates">initializeTemplates</a></li><li><a href="global.html#initializeTokenizers">initializeTokenizers</a></li><li><a href="global.html#initializeValidators">initializeValidators</a></li><li><a href="global.html#initializeWeights">initializeWeights</a></li><li><a href="global.html#initializeZoomMappings">initializeZoomMappings</a></li><li><a href="global.html#integrateWithGraphAnalytics">integrateWithGraphAnalytics</a></li><li><a href="global.html#integrateWithHyde">integrateWithHyde</a></li><li><a href="global.html#involves">involves</a></li><li><a href="global.html#isAvailable">isAvailable</a></li><li><a href="global.html#isCode">isCode</a></li><li><a href="global.html#isEntryPoint">isEntryPoint</a></li><li><a href="global.html#isProviderSupported">isProviderSupported</a></li><li><a href="global.html#isRagnoClass">isRagnoClass</a></li><li><a href="global.html#isRagnoProperty">isRagnoProperty</a></li><li><a href="global.html#isRagnoURI">isRagnoURI</a></li><li><a href="global.html#isRelevantAt">isRelevantAt</a></li><li><a href="global.html#isStopWord">isStopWord</a></li><li><a href="global.html#isSupported">isSupported</a></li><li><a href="global.html#isTboxFusekiAvailable">isTboxFusekiAvailable</a></li><li><a href="global.html#isValidCoordinate">isValidCoordinate</a></li><li><a href="global.html#legacyFormatChatPrompt">legacyFormatChatPrompt</a></li><li><a href="global.html#limitResults">limitResults</a></li><li><a href="global.html#listDocuments">listDocuments</a></li><li><a href="global.html#listExternalTemplateFiles">listExternalTemplateFiles</a></li><li><a href="global.html#listInstances">listInstances</a></li><li><a href="global.html#listTemplates">listTemplates</a></li><li><a href="global.html#loadChatProviders">loadChatProviders</a></li><li><a href="global.html#loadConceptQueries">loadConceptQueries</a></li><li><a href="global.html#loadConfigFromServer">loadConfigFromServer</a></li><li><a href="global.html#loadData">loadData</a></li><li><a href="global.html#loadDocQAData">loadDocQAData</a></li><li><a href="global.html#loadEnvironmentVariables">loadEnvironmentVariables</a></li><li><a href="global.html#loadExternalTemplate">loadExternalTemplate</a></li><li><a href="global.html#loadExternalTemplates">loadExternalTemplates</a></li><li><a href="global.html#loadFromEntities">loadFromEntities</a></li><li><a href="global.html#loadFromRagno">loadFromRagno</a></li><li><a href="global.html#loadFromSPARQL">loadFromSPARQL</a></li><li><a href="global.html#loadFromVectorIndex">loadFromVectorIndex</a></li><li><a href="global.html#loadIndex">loadIndex</a></li><li><a href="global.html#loadMemoryState">loadMemoryState</a></li><li><a href="global.html#loadSettings">loadSettings</a></li><li><a href="global.html#loadTemplate">loadTemplate</a></li><li><a href="global.html#loadTemplatesFromPromptTemplates">loadTemplatesFromPromptTemplates</a></li><li><a href="global.html#loadUnitsToSPARQL">loadUnitsToSPARQL</a></li><li><a href="global.html#loadVectorIndex">loadVectorIndex</a></li><li><a href="global.html#localMovingPhase">localMovingPhase</a></li><li><a href="global.html#logProcessingSummary">logProcessingSummary</a></li><li><a href="global.html#logTrainingProgress">logTrainingProgress</a></li><li><a href="global.html#lookupEntity">lookupEntity</a></li><li><a href="global.html#manhattanDistance">manhattanDistance</a></li><li><a href="global.html#markQuestionResearched">markQuestionResearched</a></li><li><a href="global.html#matchEndpoint">matchEndpoint</a></li><li><a href="global.html#matchesFilters">matchesFilters</a></li><li><a href="global.html#memorize">memorize</a></li><li><a href="global.html#mergeSmallChunks">mergeSmallChunks</a></li><li><a href="global.html#migrate">migrate</a></li><li><a href="global.html#migrateDocument">migrateDocument</a></li><li><a href="global.html#migrateDocuments">migrateDocuments</a></li><li><a href="global.html#migrateExistingSystem">migrateExistingSystem</a></li><li><a href="global.html#migrateMCPRegistry">migrateMCPRegistry</a></li><li><a href="global.html#migrateNavigation">migrateNavigation</a></li><li><a href="global.html#migratePromptTemplates">migratePromptTemplates</a></li><li><a href="global.html#navigate">navigate</a></li><li><a href="global.html#normalize">normalize</a></li><li><a href="global.html#normalizeContent">normalizeContent</a></li><li><a href="global.html#normalizeCoordinates">normalizeCoordinates</a></li><li><a href="global.html#normalizeEntityFilter">normalizeEntityFilter</a></li><li><a href="global.html#normalizeError">normalizeError</a></li><li><a href="global.html#normalizeGeographicFilter">normalizeGeographicFilter</a></li><li><a href="global.html#normalizeMinMax">normalizeMinMax</a></li><li><a href="global.html#normalizePan">normalizePan</a></li><li><a href="global.html#normalizePath">normalizePath</a></li><li><a href="global.html#normalizeScoreArray">normalizeScoreArray</a></li><li><a href="global.html#normalizeScores">normalizeScores</a></li><li><a href="global.html#normalizeSigmoid">normalizeSigmoid</a></li><li><a href="global.html#normalizeTemplate">normalizeTemplate</a></li><li><a href="global.html#normalizeTemporalFilter">normalizeTemporalFilter</a></li><li><a href="global.html#normalizeTilt">normalizeTilt</a></li><li><a href="global.html#normalizeTopicFilter">normalizeTopicFilter</a></li><li><a href="global.html#normalizeTransform">normalizeTransform</a></li><li><a href="global.html#normalizeZScore">normalizeZScore</a></li><li><a href="global.html#normalizeZoom">normalizeZoom</a></li><li><a href="global.html#offsetToCube">offsetToCube</a></li><li><a href="global.html#optimizeCriteria">optimizeCriteria</a></li><li><a href="global.html#optimizeIndex">optimizeIndex</a></li><li><a href="global.html#optimizeTokenUsage">optimizeTokenUsage</a></li><li><a href="global.html#optimizeVectorIndex">optimizeVectorIndex</a></li><li><a href="global.html#parse">parse</a></li><li><a href="global.html#parseBody">parseBody</a></li><li><a href="global.html#parseComponents">parseComponents</a></li><li><a href="global.html#parseCookies">parseCookies</a></li><li><a href="global.html#parseEntityExtractionResponse">parseEntityExtractionResponse</a></li><li><a href="global.html#parseFormBody">parseFormBody</a></li><li><a href="global.html#parseHeaders">parseHeaders</a></li><li><a href="global.html#parseJsonBody">parseJsonBody</a></li><li><a href="global.html#parseJsonResponse">parseJsonResponse</a></li><li><a href="global.html#parseMultipartBody">parseMultipartBody</a></li><li><a href="global.html#parseMultipartPart">parseMultipartPart</a></li><li><a href="global.html#parseQueryParams">parseQueryParams</a></li><li><a href="global.html#parseQueryResults">parseQueryResults</a></li><li><a href="global.html#performClustering">performClustering</a></li><li><a href="global.html#performExactMatch">performExactMatch</a></li><li><a href="global.html#performHealthCheck">performHealthCheck</a></li><li><a href="global.html#performPPRTraversal">performPPRTraversal</a></li><li><a href="global.html#performQuickRecall">performQuickRecall</a></li><li><a href="global.html#performVectorSimilarity">performVectorSimilarity</a></li><li><a href="global.html#populateSettingsFromConfig">populateSettingsFromConfig</a></li><li><a href="global.html#populateVectorIndexFromSPARQL">populateVectorIndexFromSPARQL</a></li><li><a href="global.html#postProcessChunks">postProcessChunks</a></li><li><a href="global.html#postProcessCorpuscles">postProcessCorpuscles</a></li><li><a href="global.html#preciseTokenCount">preciseTokenCount</a></li><li><a href="global.html#preloadTemplates">preloadTemplates</a></li><li><a href="global.html#preview">preview</a></li><li><a href="global.html#process">process</a></li><li><a href="global.html#processBatch">processBatch</a></li><li><a href="global.html#processConcepts">processConcepts</a></li><li><a href="global.html#processEntityData">processEntityData</a></li><li><a href="global.html#processIterations">processIterations</a></li><li><a href="global.html#processQuery">processQuery</a></li><li><a href="global.html#processRelationships">processRelationships</a></li><li><a href="global.html#processResults">processResults</a></li><li><a href="global.html#processSPARQLResults">processSPARQLResults</a></li><li><a href="global.html#processSparqlData">processSparqlData</a></li><li><a href="global.html#processUnitsInBatches">processUnitsInBatches</a></li><li><a href="global.html#project">project</a></li><li><a href="global.html#projectToConcepts">projectToConcepts</a></li><li><a href="global.html#projectToEmbedding">projectToEmbedding</a></li><li><a href="global.html#projectToGraph">projectToGraph</a></li><li><a href="global.html#projectToKeywords">projectToKeywords</a></li><li><a href="global.html#projectToTemporal">projectToTemporal</a></li><li><a href="global.html#pruneContext">pruneContext</a></li><li><a href="global.html#query">query</a></li><li><a href="global.html#queryByZoomLevel">queryByZoomLevel</a></li><li><a href="global.html#queryConceptsByFilter">queryConceptsByFilter</a></li><li><a href="global.html#queryCorpuscles">queryCorpuscles</a></li><li><a href="global.html#queryDocumentChunks">queryDocumentChunks</a></li><li><a href="global.html#queryDocuments">queryDocuments</a></li><li><a href="global.html#queryHypotheses">queryHypotheses</a></li><li><a href="global.html#queryHypotheticalContent">queryHypotheticalContent</a></li><li><a href="global.html#queryUnits">queryUnits</a></li><li><a href="global.html#queueSync">queueSync</a></li><li><a href="global.html#quickStart">quickStart</a></li><li><a href="global.html#rankByScore">rankByScore</a></li><li><a href="global.html#rankBySimilarity">rankBySimilarity</a></li><li><a href="global.html#rankByType">rankByType</a></li><li><a href="global.html#rankByWeightedScore">rankByWeightedScore</a></li><li><a href="global.html#rankHybrid">rankHybrid</a></li><li><a href="global.html#readRawBody">readRawBody</a></li><li><a href="global.html#recordIteration">recordIteration</a></li><li><a href="global.html#recoverFromValidationError">recoverFromValidationError</a></li><li><a href="global.html#recursive">recursive</a></li><li><a href="global.html#refinementPhase">refinementPhase</a></li><li><a href="global.html#register">register</a></li><li><a href="global.html#registerBatch">registerBatch</a></li><li><a href="global.html#registerTemplate">registerTemplate</a></li><li><a href="global.html#reloadExternalTemplates">reloadExternalTemplates</a></li><li><a href="global.html#removeNamespace">removeNamespace</a></li><li><a href="global.html#removeNode">removeNode</a></li><li><a href="global.html#removeNodeFromIndex">removeNodeFromIndex</a></li><li><a href="global.html#removeTriple">removeTriple</a></li><li><a href="global.html#researchConcepts">researchConcepts</a></li><li><a href="global.html#reset">reset</a></li><li><a href="global.html#resetStatistics">resetStatistics</a></li><li><a href="global.html#resetStats">resetStats</a></li><li><a href="global.html#resolve">resolve</a></li><li><a href="global.html#resolveEntityNamesToURIs">resolveEntityNamesToURIs</a></li><li><a href="global.html#resolveSyntax">resolveSyntax</a></li><li><a href="global.html#restoreFromBackup">restoreFromBackup</a></li><li><a href="global.html#retrieveInteractions">retrieveInteractions</a></li><li><a href="global.html#runDeepPPR">runDeepPPR</a></li><li><a href="global.html#runEntityClustering">runEntityClustering</a></li><li><a href="global.html#runFullAnalysis">runFullAnalysis</a></li><li><a href="global.html#runFullMigration">runFullMigration</a></li><li><a href="global.html#runFullPipeline">runFullPipeline</a></li><li><a href="global.html#runHydeGeneration">runHydeGeneration</a></li><li><a href="global.html#runPPR">runPPR</a></li><li><a href="global.html#runSemanticSearch">runSemanticSearch</a></li><li><a href="global.html#runShallowPPR">runShallowPPR</a></li><li><a href="global.html#runTargetedAnalysis">runTargetedAnalysis</a></li><li><a href="global.html#runVSOMAnalysis">runVSOMAnalysis</a></li><li><a href="global.html#sanitizeData">sanitizeData</a></li><li><a href="global.html#sanitizeErrorMessage">sanitizeErrorMessage</a></li><li><a href="global.html#saveIndex">saveIndex</a></li><li><a href="global.html#saveVectorIndex">saveVectorIndex</a></li><li><a href="global.html#scoreByGraph">scoreByGraph</a></li><li><a href="global.html#scoreByKeywords">scoreByKeywords</a></li><li><a href="global.html#search">search</a></li><li><a href="global.html#searchByConcepts">searchByConcepts</a></li><li><a href="global.html#searchByText">searchByText</a></li><li><a href="global.html#searchByTypes">searchByTypes</a></li><li><a href="global.html#searchByWikipediaTitle">searchByWikipediaTitle</a></li><li><a href="global.html#searchContent">searchContent</a></li><li><a href="global.html#searchExact">searchExact</a></li><li><a href="global.html#searchGraph">searchGraph</a></li><li><a href="global.html#searchSimilarity">searchSimilarity</a></li><li><a href="global.html#searchTraversal">searchTraversal</a></li><li><a href="global.html#searchWikipedia">searchWikipedia</a></li><li><a href="global.html#seededRandom">seededRandom</a></li><li><a href="global.html#select">select</a></li><li><a href="global.html#selectByEmbedding">selectByEmbedding</a></li><li><a href="global.html#selectByGraph">selectByGraph</a></li><li><a href="global.html#selectByKeywords">selectByKeywords</a></li><li><a href="global.html#selectByTemporal">selectByTemporal</a></li><li><a href="global.html#selectEnhanced">selectEnhanced</a></li><li><a href="global.html#selectOptimalStrategy">selectOptimalStrategy</a></li><li><a href="global.html#semanticChunking">semanticChunking</a></li><li><a href="global.html#sendError">sendError</a></li><li><a href="global.html#sendSuccess">sendSuccess</a></li><li><a href="global.html#setAllMetadata">setAllMetadata</a></li><li><a href="global.html#setCategory">setCategory</a></li><li><a href="global.html#setConfidence">setConfidence</a></li><li><a href="global.html#setContent">setContent</a></li><li><a href="global.html#setCorpus">setCorpus</a></li><li><a href="global.html#setEmbedding">setEmbedding</a></li><li><a href="global.html#setEmbeddingHandler">setEmbeddingHandler</a></li><li><a href="global.html#setEntity">setEntity</a></li><li><a href="global.html#setEntryPoint">setEntryPoint</a></li><li><a href="global.html#setFirstSeen">setFirstSeen</a></li><li><a href="global.html#setFrequency">setFrequency</a></li><li><a href="global.html#setLLMHandler">setLLMHandler</a></li><li><a href="global.html#setLanguage">setLanguage</a></li><li><a href="global.html#setLastAccessed">setLastAccessed</a></li><li><a href="global.html#setLength">setLength</a></li><li><a href="global.html#setMetadataProperty">setMetadataProperty</a></li><li><a href="global.html#setName">setName</a></li><li><a href="global.html#setNodeWeights">setNodeWeights</a></li><li><a href="global.html#setPPRScore">setPPRScore</a></li><li><a href="global.html#setPosition">setPosition</a></li><li><a href="global.html#setPrefLabel">setPrefLabel</a></li><li><a href="global.html#setProvenance">setProvenance</a></li><li><a href="global.html#setRelationshipType">setRelationshipType</a></li><li><a href="global.html#setSPARQLEndpoint">setSPARQLEndpoint</a></li><li><a href="global.html#setSimilarityScore">setSimilarityScore</a></li><li><a href="global.html#setSourceDocument">setSourceDocument</a></li><li><a href="global.html#setSourceEntity">setSourceEntity</a></li><li><a href="global.html#setSubType">setSubType</a></li><li><a href="global.html#setSummary">setSummary</a></li><li><a href="global.html#setTargetEntity">setTargetEntity</a></li><li><a href="global.html#setTemperature">setTemperature</a></li><li><a href="global.html#setTemporal">setTemporal</a></li><li><a href="global.html#setText">setText</a></li><li><a href="global.html#setVectorIndex">setVectorIndex</a></li><li><a href="global.html#setWeight">setWeight</a></li><li><a href="global.html#setupDebug">setupDebug</a></li><li><a href="global.html#setupErrorHandling">setupErrorHandling</a></li><li><a href="global.html#setupEventListeners">setupEventListeners</a></li><li><a href="global.html#setupFailsafeTimeout">setupFailsafeTimeout</a></li><li><a href="global.html#setupQuickActions">setupQuickActions</a></li><li><a href="global.html#showLoading">showLoading</a></li><li><a href="global.html#shuffleArray">shuffleArray</a></li><li><a href="global.html#shutdown">shutdown</a></li><li><a href="global.html#shutdownAll">shutdownAll</a></li><li><a href="global.html#simpleHash">simpleHash</a></li><li><a href="global.html#splitLargeSection">splitLargeSection</a></li><li><a href="global.html#stopAllTraining">stopAllTraining</a></li><li><a href="global.html#stopTraining">stopTraining</a></li><li><a href="global.html#store">store</a></li><li><a href="global.html#storeCommunity">storeCommunity</a></li><li><a href="global.html#storeConceptRelationships">storeConceptRelationships</a></li><li><a href="global.html#storeConcepts">storeConcepts</a></li><li><a href="global.html#storeDocument">storeDocument</a></li><li><a href="global.html#storeEmbeddingInRDF">storeEmbeddingInRDF</a></li><li><a href="global.html#storeEntity">storeEntity</a></li><li><a href="global.html#storeInteraction">storeInteraction</a></li><li><a href="global.html#storeLazyContent">storeLazyContent</a></li><li><a href="global.html#storeNavigationData">storeNavigationData</a></li><li><a href="global.html#storeRelationship">storeRelationship</a></li><li><a href="global.html#storeSemanticUnit">storeSemanticUnit</a></li><li><a href="global.html#storeSession">storeSession</a></li><li><a href="global.html#storeZPTDataInSPARQL">storeZPTDataInSPARQL</a></li><li><a href="global.html#streamChatResponse">streamChatResponse</a></li><li><a href="global.html#summarizeContext">summarizeContext</a></li><li><a href="global.html#summarizeFilters">summarizeFilters</a></li><li><a href="global.html#supportsTilt">supportsTilt</a></li><li><a href="global.html#switchToProject">switchToProject</a></li><li><a href="global.html#timeOperation">timeOperation</a></li><li><a href="global.html#toNTriples">toNTriples</a></li><li><a href="global.html#toSimpleObject">toSimpleObject</a></li><li><a href="global.html#toTurtle">toTurtle</a></li><li><a href="global.html#tokenAwareChunking">tokenAwareChunking</a></li><li><a href="global.html#toroidalDistance">toroidalDistance</a></li><li><a href="global.html#touch">touch</a></li><li><a href="global.html#trackActiveRequest">trackActiveRequest</a></li><li><a href="global.html#train">train</a></li><li><a href="global.html#trainSOM">trainSOM</a></li><li><a href="global.html#trainingStep">trainingStep</a></li><li><a href="global.html#transform">transform</a></li><li><a href="global.html#transformDocQAToVSOM">transformDocQAToVSOM</a></li><li><a href="global.html#transformToCorpuscles">transformToCorpuscles</a></li><li><a href="global.html#transformToDocument">transformToDocument</a></li><li><a href="global.html#transformToUnits">transformToUnits</a></li><li><a href="global.html#traverseGraph">traverseGraph</a></li><li><a href="global.html#unifiedSearch">unifiedSearch</a></li><li><a href="global.html#unregister">unregister</a></li><li><a href="global.html#updateConfig">updateConfig</a></li><li><a href="global.html#updateDomainDisplay">updateDomainDisplay</a></li><li><a href="global.html#updateGraph">updateGraph</a></li><li><a href="global.html#updateLazyToProcessed">updateLazyToProcessed</a></li><li><a href="global.html#updateMemoryDisplay">updateMemoryDisplay</a></li><li><a href="global.html#updateMemoryStats">updateMemoryStats</a></li><li><a href="global.html#updateMetrics">updateMetrics</a></li><li><a href="global.html#updateModified">updateModified</a></li><li><a href="global.html#updateProjectDisplay">updateProjectDisplay</a></li><li><a href="global.html#updateRequestStats">updateRequestStats</a></li><li><a href="global.html#updateSearchStatistics">updateSearchStatistics</a></li><li><a href="global.html#updateUI">updateUI</a></li><li><a href="global.html#updateWeights">updateWeights</a></li><li><a href="global.html#uploadDocument">uploadDocument</a></li><li><a href="global.html#validate">validate</a></li><li><a href="global.html#validateCompatibility">validateCompatibility</a></li><li><a href="global.html#validateConfig">validateConfig</a></li><li><a href="global.html#validateConfiguration">validateConfiguration</a></li><li><a href="global.html#validateContentType">validateContentType</a></li><li><a href="global.html#validateCorpus">validateCorpus</a></li><li><a href="global.html#validateCriteria">validateCriteria</a></li><li><a href="global.html#validateDependencies">validateDependencies</a></li><li><a href="global.html#validateGeographic">validateGeographic</a></li><li><a href="global.html#validateInput">validateInput</a></li><li><a href="global.html#validateJsonStructure">validateJsonStructure</a></li><li><a href="global.html#validateMetadata">validateMetadata</a></li><li><a href="global.html#validateMigration">validateMigration</a></li><li><a href="global.html#validateModel">validateModel</a></li><li><a href="global.html#validateNormalized">validateNormalized</a></li><li><a href="global.html#validateOntology">validateOntology</a></li><li><a href="global.html#validateOptions">validateOptions</a></li><li><a href="global.html#validatePan">validatePan</a></li><li><a href="global.html#validateQuery">validateQuery</a></li><li><a href="global.html#validateRagnoURI">validateRagnoURI</a></li><li><a href="global.html#validateRequest">validateRequest</a></li><li><a href="global.html#validateSearchRequest">validateSearchRequest</a></li><li><a href="global.html#validateTemporal">validateTemporal</a></li><li><a href="global.html#validateTilt">validateTilt</a></li><li><a href="global.html#validateTransform">validateTransform</a></li><li><a href="global.html#validateZoom">validateZoom</a></li><li><a href="global.html#verifyComponentsReady">verifyComponentsReady</a></li><li><a href="global.html#withRateLimit">withRateLimit</a></li><li><a href="global.html#withTiming">withTiming</a></li><li><a href="global.html#zptDataFactory">zptDataFactory</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.4</a> on Sun Sep 07 2025 14:33:02 GMT+0200 (Central European Summer Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

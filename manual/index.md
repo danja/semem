@@ -1,117 +1,145 @@
-# Semem Manual
+# Semem Technical Manual
 
 **Semantic Web Memory for Intelligent Agents**
 
-**Status 2025-08-23 :** mostly working, many loose ends, not ready for use in the wild yet. GUI rebuilt from scratch.
-
-*TODO : Doc for the HyDE algorithm*
-
 ## Introduction
 
-This manual provides comprehensive documentation for Semem, a Node.js toolkit that integrates large language models (LLMs) with Semantic Web technologies (RDF/SPARQL) for intelligent memory management and knowledge graph processing. The manual bridges the high-level overview in the [README](../../README.md) with detailed technical documentation, serving as the primary reference for users, developers, and researchers working with Semem.
+Semem is a sophisticated Node.js toolkit that bridges artificial intelligence and semantic web technologies, providing intelligent memory management and knowledge graph processing capabilities for AI applications. This manual serves as the definitive technical reference for users, developers, and researchers working with Semem's advanced semantic memory systems.
 
-Semem combines three core systems:
-- **🧠 Semantic Memory**: Vector embeddings and intelligent context retrieval
-- **🕸️ Knowledge Graphs**: Knowledge graphrepresentation and augmentation based around the [Ragno Ontology](https://github.com/danja/ragno)
-- **🧭 Dimensional Navigation**: ZPT (Zoom, Pan, Tilt) knowledge exploration using the [ZPT Ontology](https://github.com/danja/zpt)
+### Core Architecture
 
-The system provides multiple interfaces (direct SDK, HTTP API, MCP protocol, web UI) and supports various deployment scenarios from local development to production semantic web infrastructure.
+Semem integrates three foundational systems:
 
-## Contents
+- **🧠 Semantic Memory System**: Advanced vector embeddings with intelligent context retrieval, featuring conversational AI interfaces and adaptive search algorithms
+- **🕸️ Knowledge Graph Processing**: Comprehensive RDF/SPARQL-based knowledge representation and augmentation using the [Ragno Ontology](https://github.com/danja/ragno)
+- **🧭 Multi-Dimensional Navigation**: ZPT (Zoom-Pan-Tilt) knowledge exploration system based on the [ZPT Ontology](https://github.com/danja/zpt)
 
-**[algorithms.md](algorithms.md)**
+### Primary Interfaces
 
-### Demonstrators
+#### Web Workbench
+The **Semem Workbench** provides a comprehensive web-based interface featuring:
+- **Interactive Chat**: Natural language conversation with automatic context enhancement
+- **Semantic Verbs**: Structured operations (Tell, Ask, Augment, Navigate, Inspect, Console)
+- **Document Processing**: Support for PDF, text, and markdown file ingestion
+- **External Enhancement**: Automatic integration with Wikipedia, Wikidata, and HyDE systems
 
-Examples are categorised in the `examples` dir. Most should work, though there are a lot, revisions to the core code causes breakage and it takes me a while to get around to checking things. Some are in a rational order.
+#### Model Context Protocol (MCP) Server
 
-The following are workflows applied to sample questions from the [BeerQA](https://beerqa.github.io/) dataset, each run through a series of scripts. They get increasingly sophisticated/more productive :
+**NB. some of the docs are out of date. For sanity's sake the MCP has been streamlined down to 7 core tools, most of the others are deprecated.**
 
-* **[beerqa.md](beerqa.md)** 
-* **[beerqa-2.md](beerqa-2.md)** 
-* **[beerqa-wikidata.md](beerqa-wikidata.md)** 
-* **[beerqa-feedback.md](beerqa-feedback.md)**
-* **[flow.md](flow.md)** - **🆕 Flow Components System** - Complete refactored workflow using standardized component APIs, comprehensive type definitions, and a modular 10-stage pipeline that implements the full BeerQA iterative feedback workflow with clean, reusable components.
+The **MCP Protocol Server** enables seamless AI integration through:
+- **35+ Specialized Tools**: Comprehensive toolkit for memory operations, knowledge graph construction, and navigation
+- **15 Resource Endpoints**: Real-time access to system documentation and operational status
+- **Memory Workflows**: Persistent conversation memory with intelligent context management
+- **Knowledge Construction**: Automated entity extraction, relationship modeling, and community detection
+- **3D Navigation**: Multi-dimensional exploration of knowledge spaces with filtering and projection capabilities
 
-### Core Configuration and Setup
+#### Additional Interfaces
+- **HTTP REST API**: 43 endpoints for programmatic access to all system capabilities
+- **Direct SDK**: Node.js library for embedded applications
+- **Command-Line Tools**: Utilities for batch processing and system administration
 
-**[config.md](config.md)** - Complete system configuration guide covering config.json and .env setup, storage backends (memory, JSON, SPARQL), LLM provider configuration (Mistral, Claude, Ollama, Nomic), server deployment (SDK, HTTP API, MCP, UI), and production deployment patterns.
+### Key Capabilities
 
-**[servers.md](servers.md)** - Server architecture guide explaining the purpose and role of API Server (4100), MCP Server (4101), and Workbench UI (4102), including proxy configuration and startup procedures.
+- **Persistent Memory**: Conversations and knowledge persist across sessions with intelligent decay and prioritization
+- **Adaptive Search**: Context-aware retrieval with quality scoring and multi-source enhancement
+- **Knowledge Augmentation**: Automatic concept extraction, entity linking, and relationship discovery
+- **Scalable Storage**: Support for in-memory, JSON file, and SPARQL triple store backends
+- **Multi-Provider LLM Support**: Compatible with Mistral, Claude, Ollama, OpenAI, and other providers
 
-**[provider-config.md](provider-config.md)** - LLM and embedding provider configuration details.
+## Manual Contents
 
-**[sparql-service.md](sparql-service.md)** - SPARQL endpoint configuration and troubleshooting guide.
+### I. System Configuration and Deployment
 
-**[prompt-management.md](prompt-management.md)** - System for managing chat completion prompts.
+**[System Configuration](config.md)** - Complete setup guide covering config.json and environment variables, storage backend configuration (memory, JSON, SPARQL), LLM provider integration (Mistral, Claude, Ollama, Nomic), and production deployment patterns.
 
-**[ingest.md](ingest.md)** - SPARQL document ingestion system for importing content from SPARQL endpoints using configurable query templates, with CLI tool, MCP integration, and batch processing capabilities.
+**[Server Architecture](servers.md)** - Multi-server deployment guide detailing the API Server (port 4100), MCP Server (port 4101), and Workbench UI (port 4102), including proxy configuration and service orchestration.
 
-**[context-management.md](context-management.md)** - Comprehensive guide to Semem's context management system covering the HybridContextManager, adaptive search, context merging, LLM integration, and intelligent response synthesis for contextually-aware information retrieval.
+**[LLM Provider Configuration](provider-config.md)** - Comprehensive guide to configuring language model and embedding providers with authentication, capability detection, and fallback strategies.
 
-### Command-Line Demos
+**[SPARQL Service Setup](sparql-service.md)** - SPARQL endpoint configuration, troubleshooting guide, and triple store integration patterns for knowledge persistence.
 
-**[examples](../../examples/README.md)**
+**[SPARQL Integration](sparql.md)** - Advanced SPARQL usage in Semem including custom queries, data import/export utilities, backup strategies, and migration workflows.
 
-### Integration and Protocols
+**[Prompt Management](prompt-management.md)** - Centralized system for managing chat completion prompts, templates, and context injection strategies.
 
-**[mcp-tutorial.md](mcp-tutorial.md)** - Comprehensive workflow-focused guide for using Semem through the Model Context Protocol (MCP), covering 35+ tools, 15 resources, memory management workflows, knowledge graph construction, 3D navigation, and real-world use cases for academic research, business intelligence, and content analysis.
+### II. User Interfaces and Interaction
 
-**[mcp-list.md](mcp-list.md)** - Complete reference for all MCP tools and resources, detailing the 35+ tools across semantic memory, Ragno knowledge graphs, ZPT navigation, and system management, plus 15 resources for documentation and system status.
+**[Web Workbench Guide](workbench-howto.md)** - Complete user manual for the web-based workbench interface, covering semantic memory verbs (Tell, Ask, Augment, Navigate, Inspect), interactive chat system, and enhanced search capabilities.
 
-**[http-api-endpoints.md](http-api-endpoints.md)** - Detailed documentation of all 43 HTTP API endpoints covering system health, memory operations, chat interfaces, Ragno knowledge graph processing, ZPT navigation, VSOM visualization, and administrative functions with OpenAPI schemas and usage examples.
+**[MCP Protocol Tutorial](mcp-tutorial.md)** - Workflow-focused guide for AI integration through the Model Context Protocol, covering 35+ specialized tools, memory management workflows, knowledge graph construction, and real-world applications.
 
-### Knowledge Graph Processing
+**[MCP Tools Reference](mcp-list.md)** - Complete technical reference for all MCP tools and resources, detailing capabilities across semantic memory, Ragno knowledge graphs, ZPT navigation, and system administration.
 
-**[ragno.md](ragno.md)** - Technical documentation for the Ragno knowledge graph system covering corpus decomposition, entity extraction, relationship modeling, community detection, and RDF export following the Ragno ontology for semantic web integration.
+**[HTTP REST API](http-api-endpoints.md)** - Comprehensive documentation of all 43 API endpoints with OpenAPI schemas, authentication patterns, and usage examples for programmatic integration.
 
-**[ragno-rdf.md](ragno-rdf.md)** - RDF and SPARQL technical reference for Ragno knowledge graphs, including ontology definitions, SPARQL query patterns, data modeling conventions, and integration with external semantic web systems and triple stores.
+**[GUI Components](gui.md)** - Advanced web interface documentation covering VSOM visualization, SPARQL browser, interactive console, and administrative monitoring tools.
 
-### 3D Knowledge Navigation
+### III. Knowledge Processing and Enhancement
 
-**[zpt-mcp.md](zpt-mcp.md)** - User-focused guide for 3-dimensional knowledge graph navigation using MCP tools, covering ZPT concepts (Zoom, Pan, Tilt), navigation workflows, multi-dimensional filtering, and real-world exploration scenarios for research, business analysis, and content discovery.
+**[Context Management](context-management.md)** - Advanced guide to Semem's HybridContextManager, adaptive search algorithms, context merging strategies, and intelligent response synthesis.
 
-**[zpt-json.md](zpt-json.md)** - Technical analysis of the ZPT subsystem architecture, including parameter processing, selection algorithms, transformation layers, token management, and API implementation details for developers extending ZPT functionality.
+**[Knowledge Enhancement](enhancements.md)** - External knowledge integration covering Wikipedia, Wikidata, and HyDE (Hypothetical Document Embeddings) with multi-source coordination and best practices.
 
-### System Components and User Interfaces
+**[Document Ingestion](ingest.md)** - SPARQL-based document ingestion system with configurable query templates, CLI tools, batch processing capabilities, and MCP integration.
 
-**[connectors.md](connectors.md)** - LLM provider connector documentation covering implementation patterns for Ollama, Claude, Mistral, OpenAI, and other providers, including authentication, capability detection, error handling, and fallback strategies.
+**[Memory Systems](memory.md)** - Persistent memory architecture covering conversation continuity, document storage, context-aware interactions, and memory decay strategies.
 
-**[gui.md](gui.md)** - Web-based user interface documentation covering the VSOM visualization system, SPARQL browser, interactive console, memory management interface, and administrative tools for system monitoring and configuration.
+### IV. Knowledge Graph Processing (Ragno)
 
-**[workbench-howto.md](workbench-howto.md)** - User guide for the web-based workbench interface.
+**[Ragno Knowledge Graphs](ragno.md)** - Technical documentation for knowledge graph construction, corpus decomposition, entity extraction, relationship modeling, and community detection algorithms.
 
-**[hints.md](hints.md)** - Practical tips and troubleshooting guide for getting better search results, understanding zoom levels and similarity thresholds, and common usage patterns for the workbench interface.
+**[Ragno RDF Integration](ragno-rdf.md)** - RDF and SPARQL technical reference covering ontology definitions, query patterns, data modeling conventions, and semantic web integration.
 
-**[memory.md](memory.md)** - Complete guide to Semem's persistent memory system, covering conversation memory, document storage, ZPT navigation controls, workbench usage, and best practices for context-aware AI interactions that improve over time.
+### V. Multi-Dimensional Navigation (ZPT)
 
-### Core Operation Workflows
+**[ZPT Navigation System](zpt.md)** - Complete ZPT (Zoom-Pan-Tilt) documentation covering workbench integration, abstraction levels, domain filtering, perspective transformation, and advanced usage patterns.
 
-**[tell.md](tell.md)** - Comprehensive Tell workflow documentation covering content storage, type handling, document processing, concept extraction, and technical architecture with detailed flow diagrams.
+**[ZPT MCP Integration](zpt-mcp.md)** - User guide for 3-dimensional knowledge exploration through MCP tools, covering navigation workflows, multi-dimensional filtering, and exploration scenarios.
 
-**[ASK.md](../ASK.md)** - Enhanced Ask workflow covering query processing, HyDE integration, Wikipedia/Wikidata enhancement, adaptive search algorithms, and context-aware response generation.
+**[ZPT Architecture](zpt-json.md)** - Technical analysis of ZPT subsystem internals including parameter processing, selection algorithms, transformation layers, and API implementation details.
 
-**[augment.md](augment.md)** - Complete Augment workflow documentation detailing concept extraction, attribute analysis, relationship discovery, lazy processing, document chunking, and Ragno framework integration.
+### VI. Core Operations and Workflows
 
-**[vsom.md](vsom.md)** - Vector Self-Organizing Map visualization system documentation.
+**[Tell Operation](tell.md)** - Comprehensive documentation of the Tell workflow covering content storage, type classification, document processing, concept extraction, and technical architecture.
 
-### Development and Infrastructure
+**[Ask Operation](../ASK.md)** - Enhanced Ask workflow covering query processing, HyDE integration, Wikipedia/Wikidata enhancement, adaptive search, and context-aware response generation.
 
-**[infrastructure.md](infrastructure.md)** - Development patterns and coding guidelines for extending the system.
+**[Augment Operation](augment.md)** - Complete Augment workflow documentation detailing concept extraction, attribute analysis, relationship discovery, lazy processing, and Ragno integration.
 
-**[tests.md](tests.md)** - Testing infrastructure documentation covering test categories, service dependencies, SPARQL test store setup, and test execution patterns with automatic service availability checking.
+### VII. Visualization and Analytics
 
-**[context-window.md](context-window.md)** - Context window management and text chunking strategies.
+**[VSOM Visualization](vsom.md)** - Vector Self-Organizing Map system for knowledge visualization, pattern recognition, and interactive exploration of semantic spaces.
 
-**[index-cache.md](index-cache.md)** - Vector index caching and performance optimization.
+**[Usage Hints and Tips](hints.md)** - Practical guidance for optimizing search results, understanding similarity thresholds, zoom level behaviors, and effective workbench usage patterns.
 
-**[decompose.md](decompose.md)** - Text corpus decomposition into semantic units.
+### VIII. Development and Extension
 
-**[corpuscle-ranking.md](corpuscle-ranking.md)** - Ranking algorithms for semantic corpuscles.
+**[Development Infrastructure](infrastructure.md)** - Coding guidelines, architectural patterns, and best practices for extending Semem functionality with new components and integrations.
 
-**[graph-analytics.md](graph-analytics.md)** - Knowledge graph analytics and community detection.
+**[Testing Framework](tests.md)** - Comprehensive testing infrastructure covering unit tests, integration tests, service dependencies, SPARQL test stores, and automated test execution.
 
-**[flow-optimize.md](flow-optimize.md)** - Workflow optimization strategies.
+**[System Connectors](connectors.md)** - Implementation patterns for LLM provider connectors including authentication, capability detection, error handling, and fallback strategies.
+
+### IX. Advanced Topics and Algorithms
+
+**[Core Algorithms](algorithms.md)** - Mathematical foundations and algorithmic details underlying Semem's semantic processing capabilities.
+
+**[Context Window Management](context-window.md)** - Advanced context window strategies, text chunking algorithms, and memory optimization techniques.
+
+**[Vector Index Caching](index-cache.md)** - Performance optimization through intelligent vector index caching and memory management strategies.
+
+**[Corpus Decomposition](decompose.md)** - Advanced text processing for breaking documents into semantic units with boundary detection and coherence preservation.
+
+**[Corpuscle Ranking](corpuscle-ranking.md)** - Sophisticated ranking algorithms for semantic corpuscles based on relevance, importance, and contextual significance.
+
+**[Graph Analytics](graph-analytics.md)** - Knowledge graph analysis techniques including community detection, centrality measures, and structural pattern recognition.
+
+**[Workflow Optimization](flow-optimize.md)** - Performance tuning strategies for large-scale knowledge processing and memory management workflows.
+
+### X. Examples and Tutorials
+
+**[Code Examples](../../examples/README.md)** - Practical code examples, command-line demonstrations, and integration patterns for common use cases.
 
 ## Architecture Overview
 
@@ -126,10 +154,12 @@ Semem's layered architecture enables flexible deployment and integration:
 
 1. **Quick Setup**: Follow [config.md](config.md) for initial configuration
 2. **Choose Interface**: 
+   - **New Users**: Start with conversational chat in the workbench ([workbench-howto.md](workbench-howto.md))
+   - **Enhanced Knowledge**: Use enhancements for external knowledge integration ([enhancements.md](enhancements.md))
    - **Developers**: Use HTTP API ([http-api-endpoints.md](http-api-endpoints.md))
    - **AI Integration**: Use MCP protocol ([mcp-tutorial.md](mcp-tutorial.md))
-   - **Interactive Use**: Use web UI ([gui.md](gui.md))
-3. **Explore Capabilities**: Start with basic memory operations, then knowledge graphs and navigation
+   - **Advanced UI**: Use full web interface ([gui.md](gui.md))
+3. **Explore Capabilities**: Start with natural language chat, then explore semantic memory verbs and knowledge navigation
 
 ## See Also
 
