@@ -1564,6 +1564,64 @@ body {
     transition: transform 0.2s ease;
 }
 
+/* Header Links */
+.header-links {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+}
+
+.header-link {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: var(--space-xs) var(--space-sm);
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.header-link:hover {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border-color: var(--primary-color);
+}
+
+.header-link .link-icon {
+    flex-shrink: 0;
+    transition: transform 0.2s ease;
+}
+
+.header-link:hover .link-icon {
+    transform: scale(1.1);
+}
+
+.header-link .link-text {
+    font-weight: 500;
+}
+
+.github-link:hover {
+    color: #333;
+    border-color: #333;
+}
+
+.docs-link:hover {
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+@media (prefers-color-scheme: dark) {
+    .github-link:hover {
+        color: #f0f6ff;
+        border-color: #f0f6ff;
+    }
+}
+
 .chat-content {
     display: flex;
     flex-direction: column;

@@ -17,17 +17,7 @@ The system provides multiple interfaces (conversational chat, web workbench, HTT
 
 **[algorithms.md](algorithms.md)**
 
-### Demonstrators
 
-Examples are categorised in the `examples` dir. Most should work, though there are a lot, revisions to the core code causes breakage and it takes me a while to get around to checking things. Some are in a rational order.
-
-The following are workflows applied to sample questions from the [BeerQA](https://beerqa.github.io/) dataset, each run through a series of scripts. They get increasingly sophisticated/more productive :
-
-* **[beerqa.md](beerqa.md)** 
-* **[beerqa-2.md](beerqa-2.md)** 
-* **[beerqa-wikidata.md](beerqa-wikidata.md)** 
-* **[beerqa-feedback.md](beerqa-feedback.md)**
-* **[flow.md](flow.md)** - **🆕 Flow Components System** - Complete refactored workflow using standardized component APIs, comprehensive type definitions, and a modular 10-stage pipeline that implements the full BeerQA iterative feedback workflow with clean, reusable components.
 
 ### Core Configuration and Setup
 
