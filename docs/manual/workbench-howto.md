@@ -27,10 +27,16 @@ The Semantic Memory Workbench provides an intuitive web interface for managing s
 
 ## Interface Overview
 
-### Main Navigation
-- **🧠 Semantic Memory**: Core operations (Tell, Ask, Navigate)
-- **📊 System Monitor**: Performance and health metrics
-- **⚙️ Settings**: Model and endpoint configuration
+### Main Components
+- **💬 Chat Interface**: Interactive conversational AI with semantic memory integration (left panel)
+- **🧠 Semantic Memory Verbs**: Core operations organized as interactive columns (Tell, Ask, Augment, Navigate, Inspect)
+- **📊 Session Dashboard**: Performance and health metrics (top header)
+
+### Chat Interface (Left Panel)
+- **Interactive Conversation**: Natural language chat with semantic memory awareness
+- **Slash Commands**: Quick access to specific operations (/ask, /tell, /help)
+- **Contextual Responses**: Answers informed by your stored knowledge
+- **Enhanced Search**: Automatic fallback to external sources when no local context found
 
 ### Session Dashboard (Top Header)
 - **Session Cache**: Real-time statistics for interactions, concepts, embeddings
@@ -39,6 +45,51 @@ The Semantic Memory Workbench provides an intuitive web interface for managing s
 - **ZPT State**: Current Zoom-Pan-Tilt navigation parameters
 
 ## Core Operations
+
+### 💬 Chat - Interactive AI Assistant
+
+The Chat interface provides a conversational way to interact with your semantic memory system. It's located in the left panel and offers both natural language conversation and command-based operations.
+
+#### Natural Language Conversation
+Simply type naturally and the AI will:
+- **Understand Intent**: Automatically determine if you want to store information, ask questions, or have a general conversation
+- **Use Your Knowledge**: Answers are informed by your personal knowledge base
+- **Provide Context**: Responses include relevant information from your stored content
+- **Fallback Intelligence**: When no relevant personal knowledge is found, provides general knowledge answers and offers enhanced search
+
+#### Slash Commands
+Use specific commands for direct operations:
+- **`/ask [question]`**: Search your semantic memory
+  - Example: `/ask What did I learn about machine learning?`
+- **`/tell [information]`**: Store new information
+  - Example: `/tell The meeting is scheduled for tomorrow at 2pm`
+- **`/help`**: Show available commands and usage examples
+
+#### Enhanced Search Feature
+When the system can't find relevant information in your personal knowledge base:
+
+1. **Fallback Response**: Provides answer based on general knowledge
+2. **Enhancement Offer**: Asks if you want to search external sources
+3. **Automatic Enhancement**: Responds "yes" to trigger search across:
+   - **Wikipedia**: General knowledge articles
+   - **Wikidata**: Structured knowledge entities
+   - **HyDE**: Hypothetical Document Embeddings for better query expansion
+
+**Example Enhanced Search Flow**:
+```
+You: "What is the capital of Kazakhstan?"
+Chat: "Based on my general knowledge: Nur-Sultan (formerly Astana)...
+       I couldn't find relevant information in your personal knowledge base. 
+       Would you like me to search external sources for more comprehensive information?"
+You: "yes"
+Chat: "Based on enhanced search: Nur-Sultan, now officially called Astana again as of 2022..."
+```
+
+#### Usage Tips
+- **Conversational**: Type naturally - "Tell me about..." or "What do you know about..."
+- **Commands**: Use `/` prefix for specific operations
+- **Context**: Your chat history provides context for follow-up questions
+- **Enhanced Search**: Always available when personal knowledge is insufficient
 
 ### 📝 Tell - Store Knowledge
 Store information in semantic memory:
@@ -71,13 +122,17 @@ When "Document" type is selected, additional upload controls appear:
 **Text/Concept Example**: Enter "Machine learning is a subset of AI" to store a concept.
 
 ### ❓ Ask - Query Knowledge
-Search your semantic memory:
+Search your semantic memory with optional external enhancements:
 
 1. **Query**: Enter natural language questions
-2. **Search**: Click "🔍 Search Knowledge" to retrieve answers
-3. **Results**: View contextual responses based on stored knowledge
+2. **Enhancement Options**: Choose external knowledge sources:
+   - **HyDE**: Hypothetical Document Embeddings for better query expansion
+   - **Wikipedia**: Search Wikipedia for additional information
+   - **Wikidata**: Query structured knowledge entities
+3. **Search**: Click "🔍 Search Memory" to retrieve answers
+4. **Results**: View contextual responses based on stored knowledge and enhancements
 
-**Example**: Ask "What is machine learning?" to retrieve related stored concepts.
+**Example**: Ask "What is machine learning?" to retrieve related stored concepts, or enable Wikipedia for broader context.
 
 > 📖 **Detailed Documentation**: For comprehensive Ask workflow details, enhanced search features, and technical implementation, see [`docs/ASK.md`](../ask.md) and the [Ask workflow diagram](ask.png).
 
@@ -200,6 +255,18 @@ Debug session state and performance:
 - Monitor Console panel for detailed error messages
 - Ensure SPARQL backend is available and connected
 
+**Chat Not Responding**
+- Verify MCP server is running and connected (check connection status in header)
+- Ensure LLM provider is configured in Settings → Models
+- Check that API keys are properly configured in environment variables
+- Try refreshing the page or reconnecting to the server
+
+**Enhanced Search Not Working**
+- Verify internet connection for external knowledge sources
+- Check that enhancement options are enabled in Ask verb or chat responds "yes"
+- Monitor network tab for failed requests to Wikipedia/Wikidata APIs
+- Ensure embedding provider is configured for HyDE functionality
+
 ### Browser Compatibility
 - **Required**: Modern browsers with ES modules support
 - **Recommended**: Chrome 80+, Firefox 72+, Safari 13.1+, Edge 80+
@@ -209,11 +276,13 @@ Debug session state and performance:
 
 ### Integration with Backend
 The workbench communicates with the MCP server via HTTP proxy:
+- **POST /chat**: Interactive conversation with semantic memory integration
+- **POST /chat/enhanced**: Enhanced queries with external knowledge sources
 - **POST /tell**: Store content and concepts in semantic memory
-- **POST /ask**: Query knowledge with contextual responses
+- **POST /ask**: Query knowledge with contextual responses and optional enhancements
 - **POST /augment**: Extract concepts and analyze text
 - **POST /upload-document**: Process and store PDF, TXT, MD documents
-- **POST /zoom, /pan, /tilt**: ZPT navigation operations
+- **POST /zpt/navigate**: ZPT navigation operations with zoom/pan/tilt parameters
 - **GET /health**: Check server connectivity and status
 
 ### Custom Configuration
