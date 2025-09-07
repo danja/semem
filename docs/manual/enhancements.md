@@ -12,6 +12,17 @@ The enhancement system provides three complementary knowledge sources:
 
 These enhancements work seamlessly with your personal knowledge base, only activating when local context is insufficient.
 
+## How Concept Extraction Supports Enhancements
+
+**Important**: The system's primary retrieval mechanism uses **embedding-based semantic similarity**, not concept matching. Extracted concepts serve specific purposes:
+
+- **Enhancement Triggers**: Concepts extracted from your queries are used to search external sources (Wikipedia, Wikidata)
+- **Metadata Storage**: Concepts are stored as searchable metadata alongside your content
+- **UI Filtering**: You can search within extracted concepts using the workbench interface
+- **External Research**: Concepts drive the research queries sent to external knowledge graphs
+
+**Your personal knowledge retrieval** uses vector embeddings for semantic similarity, while **external enhancements** use extracted concepts to formulate precise search queries.
+
 ## Using Enhancements in the Workbench
 
 ### Chat Interface (Primary Method)
@@ -142,11 +153,12 @@ HyDE enhancement uses advanced query expansion to improve semantic matching and 
 
 **HyDE Workflow**:
 1. **Query Analysis**: Analyzes the semantic intent of your question
-2. **Hypothetical Document Generation**: Creates hypothetical documents that would answer your query
-3. **Embedding Generation**: Converts hypothetical documents to semantic vectors
-4. **Semantic Search**: Uses embeddings to find semantically similar content
-5. **Relevance Scoring**: Ranks results by semantic similarity
-6. **Enhanced Matching**: Finds relevant information beyond keyword matching
+2. **Concept Extraction**: Extracts key concepts from your query using LLM
+3. **Hypothetical Document Generation**: Creates hypothetical documents that would answer your query
+4. **Embedding Generation**: Converts hypothetical documents to semantic vectors
+5. **Semantic Search**: Uses embeddings to find semantically similar content (not concept matching)
+6. **Relevance Scoring**: Ranks results by vector similarity scores
+7. **Enhanced Matching**: Finds relevant information beyond keyword matching
 
 **Example HyDE Queries**:
 - "How do neural networks learn patterns?"
@@ -155,10 +167,12 @@ HyDE enhancement uses advanced query expansion to improve semantic matching and 
 - "How does economic inequality affect social stability?"
 
 **HyDE Benefits**:
-- **Semantic Understanding**: Matches meaning, not just keywords
-- **Conceptual Bridging**: Connects related concepts across domains
+- **Semantic Understanding**: Matches meaning through embeddings, not discrete concepts
+- **Conceptual Bridging**: Connects related concepts across domains via vector similarity
 - **Query Expansion**: Finds relevant information using broader semantic context
 - **Abstract Reasoning**: Handles complex, multi-layered questions
+
+**Technical Note**: HyDE ultimately relies on embedding similarity for matching, with extracted concepts serving as intermediate steps in the query expansion process.
 
 ## Enhancement Coordination
 
@@ -186,6 +200,38 @@ The enhancement system includes quality controls:
 - **Confidence Scoring**: Results include relevance and confidence indicators
 - **Redundancy Checking**: Prevents duplicate information across sources
 - **Coherence Validation**: Ensures consistent information across enhancements
+
+## Architecture: How Personal vs. Enhanced Search Works
+
+### Personal Knowledge Base Search
+
+**Primary Method**: Vector embedding similarity
+- Your stored content is converted to high-dimensional vectors (embeddings)
+- Query embeddings are compared using cosine similarity
+- Most relevant content retrieved based on semantic similarity scores
+- **Concepts are stored as metadata** but not used for retrieval ranking
+
+**ZPT Navigation**: RDF entity type filtering
+- Navigates using SPARQL queries on RDF types (`ragno:Entity`, `semem:Interaction`)
+- Filters by zoom level (entity, unit, text, community, corpus)
+- Pan filters apply domain/keyword text matching, not concept matching
+- Tilt perspectives use embedding, keyword, graph, or temporal projections
+
+### Enhancement Search
+
+**Concept-Driven External Search**:
+1. **Concept Extraction**: LLM extracts 3-5 key concepts from your query
+2. **External Queries**: Concepts used to formulate searches for:
+   - Wikipedia article searches using extracted terms
+   - Wikidata SPARQL queries for specific entities
+   - HyDE hypothetical document generation
+3. **Result Integration**: External results combined with personal knowledge
+4. **Final Ranking**: Uses embeddings for semantic coherence
+
+**Why This Architecture**:
+- **Embeddings** provide better semantic matching than discrete concept lists
+- **Concepts** are human-readable and work well for external API queries
+- **Combined approach** leverages strengths of both methods
 
 ## MCP Integration
 
@@ -264,12 +310,20 @@ await simpleVerbsService.ask({
 - Fact-checking and verification needs
 - Research and exploration tasks
 - Educational and learning contexts
+- Queries that need current/factual information from authoritative sources
 
 **Personal Knowledge Sufficient For**:
 - Project-specific information
 - Personal notes and reflections
 - Organizational knowledge
 - Domain-specific expertise you've stored
+- Content where semantic similarity matching works well
+
+**Understanding the Search Flow**:
+1. **Personal search** uses embedding similarity on your stored content
+2. **If insufficient context found**, system offers enhanced search
+3. **Enhanced search** extracts concepts and queries external sources
+4. **Final answer** integrates personal + enhanced content using embeddings
 
 ### Optimization Tips
 
