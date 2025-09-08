@@ -1,10 +1,9 @@
 /**
- * Simple Verbs for AI memory systems
- * Provides semantic MCP verbs: tell, ask, augment with ZPT navigation
- * Uses Zod for validation and provides centralized tool call handling
+ * Simple Verbs Index - Main Entry Point
+ * Re-exports all Simple Verbs components for easy importing
  */
 
-// Import all components from modular files
+// Export all schemas and tool names
 export {
   SimpleVerbToolNames,
   TellSchema,
@@ -21,16 +20,20 @@ export {
   FadeMemorySchema
 } from './VerbSchemas.js';
 
+// Export logging utilities
 export {
   verbsLogger,
   logPerformance,
   logOperation
 } from './VerbsLogger.js';
 
+// Export state manager
 export { ZPTStateManager } from './ZptStateManager.js';
 
+// Export main service
 export { SimpleVerbsService } from './SimpleVerbsService.js';
 
+// Export registration functions
 export {
   registerSimpleVerbs,
   getSimpleVerbsService,

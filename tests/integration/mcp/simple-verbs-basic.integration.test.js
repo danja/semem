@@ -112,6 +112,20 @@ describe.skipIf(!process.env.INTEGRATION_TESTS)('Simple Verbs Basic Integration 
     service.sparqlHelper = mockSparqlHelper;
     service.config = mockConfig;
     service.stateManager = new ZPTStateManager();
+    
+    // Set up SafeOperations with mock methods
+    service.safeOps = {
+      generateEmbedding: mockMemoryManager.embeddingHandler.generateEmbedding,
+      extractConcepts: mockMemoryManager.llmHandler.extractConcepts,
+      storeInteraction: vi.fn().mockImplementation(async (prompt, response, metadata) => {
+        return {
+          id: 'mock-interaction-id',
+          success: true,
+          timestamp: Date.now()
+        };
+      })
+    };
+    
     service.initialized = true;
 
     console.log('✓ Basic integration test setup complete');
