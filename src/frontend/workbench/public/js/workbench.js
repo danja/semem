@@ -685,6 +685,7 @@ class WorkbenchApp {
     if (formData.useContext) sources.push('semantic memory');
     if (formData.useWikipedia) sources.push('Wikipedia');
     if (formData.useWikidata) sources.push('Wikidata');
+    if (formData.useWebSearch) sources.push('Web Search');
     
     const sourcesText = sources.length > 0 ? ` from ${sources.join(', ')}` : '';
     consoleService.info(`🔍 Searching for answers to your ${questionWords}-word question${sourcesText}...`);
@@ -701,6 +702,7 @@ class WorkbenchApp {
         useHyDE: Boolean(formData.useHyDE),
         useWikipedia: Boolean(formData.useWikipedia),
         useWikidata: Boolean(formData.useWikidata),
+        useWebSearch: Boolean(formData.useWebSearch),
         threshold: stateManager.getState().threshold
       });
       

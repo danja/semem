@@ -37,7 +37,8 @@ export const AskSchema = z.object({
   useContext: z.boolean().optional().default(true),
   useHyDE: z.boolean().optional().default(false),
   useWikipedia: z.boolean().optional().default(false),
-  useWikidata: z.boolean().optional().default(false)
+  useWikidata: z.boolean().optional().default(false),
+  useWebSearch: z.boolean().optional().default(false)
 });
 
 export const AugmentSchema = z.object({

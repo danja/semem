@@ -438,7 +438,7 @@ import {
    * ASK - Query the system using current ZPT context with optional enhancements
    * Now uses HybridContextManager for intelligent merging of enhancement and personal context
    */
-  async ask({ question, mode = 'standard', useContext = true, useHyDE = false, useWikipedia = false, useWikidata = false, threshold }) {
+  async ask({ question, mode = 'standard', useContext = true, useHyDE = false, useWikipedia = false, useWikidata = false, useWebSearch = false, threshold }) {
     await this.initialize();
     
     const askTimer = new AskOperationTimer(question);
@@ -472,6 +472,7 @@ import {
         useHyDE,
         useWikipedia,
         useWikidata,
+        useWebSearch,
         threshold
       });
       

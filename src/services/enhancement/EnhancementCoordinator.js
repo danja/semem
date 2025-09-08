@@ -10,6 +10,7 @@ import logger from 'loglevel';
 import HyDEService from './HyDEService.js';
 import WikipediaService from './WikipediaService.js';
 import WikidataService from './WikidataService.js';
+import WebSearchService from './WebSearchService.js';
 
 export class EnhancementCoordinator {
     constructor(options = {}) {
@@ -23,9 +24,10 @@ export class EnhancementCoordinator {
             maxCombinedContextLength: options.maxCombinedContextLength || 8000,
             enableConcurrentProcessing: options.enableConcurrentProcessing !== false,
             contextWeights: {
-                hyde: options.hydeWeight || 0.3,
-                wikipedia: options.wikipediaWeight || 0.4,
-                wikidata: options.wikidataWeight || 0.3
+                hyde: options.hydeWeight || 0.25,
+                wikipedia: options.wikipediaWeight || 0.3,
+                wikidata: options.wikidataWeight || 0.25,
+                webSearch: options.webSearchWeight || 0.2
             },
             fallbackOnError: options.fallbackOnError !== false,
             ...options.settings
@@ -43,7 +45,8 @@ export class EnhancementCoordinator {
             serviceUsage: {
                 hyde: 0,
                 wikipedia: 0,
-                wikidata: 0
+                wikidata: 0,
+                webSearch: 0
             },
             averageResponseTime: 0,
             lastEnhancementTime: null
@@ -82,6 +85,14 @@ export class EnhancementCoordinator {
                 ...options.wikidataOptions
             });
 
+            // Initialize Web Search service
+            this.services.webSearch = new WebSearchService({
+                sparqlHelper: this.sparqlHelper,
+                embeddingHandler: this.embeddingHandler,
+                config: this.config,
+                ...options.webSearchOptions
+            });
+
             logger.info('✅ Enhancement services initialized successfully');
 
         } catch (error) {
@@ -98,11 +109,12 @@ export class EnhancementCoordinator {
      * @param {boolean} options.useHyDE - Enable HyDE enhancement
      * @param {boolean} options.useWikipedia - Enable Wikipedia enhancement
      * @param {boolean} options.useWikidata - Enable Wikidata enhancement
+     * @param {boolean} options.useWebSearch - Enable web search enhancement
      * @returns {Object} Comprehensive enhancement result
      */
     async enhanceQuery(query, options = {}) {
         logger.info(`🔍 Coordinating query enhancement: "${query}"`);
-        logger.info(`Enhancement options: HyDE(${!!options.useHyDE}), Wikipedia(${!!options.useWikipedia}), Wikidata(${!!options.useWikidata})`);
+        logger.info(`Enhancement options: HyDE(${!!options.useHyDE}), Wikipedia(${!!options.useWikipedia}), Wikidata(${!!options.useWikidata}), WebSearch(${!!options.useWebSearch})`);
 
         const startTime = Date.now();
         this.stats.totalEnhancements++;
@@ -113,6 +125,7 @@ export class EnhancementCoordinator {
             if (options.useHyDE && this.services.hyde) servicesToUse.push('hyde');
             if (options.useWikipedia && this.services.wikipedia) servicesToUse.push('wikipedia');
             if (options.useWikidata && this.services.wikidata) servicesToUse.push('wikidata');
+            if (options.useWebSearch && this.services.webSearch) servicesToUse.push('webSearch');
 
             if (servicesToUse.length === 0) {
                 logger.warn('No enhancement services requested');

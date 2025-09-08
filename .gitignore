@@ -1,3 +1,4 @@
+*.png
 data/cache
 temp
 _site

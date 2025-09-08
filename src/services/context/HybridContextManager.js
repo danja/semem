@@ -2390,7 +2390,7 @@ Please provide a direct answer to the question based on the context above. If th
      * @returns {boolean}
      */
     _hasEnhancements(options) {
-        return options.useHyDE || options.useWikipedia || options.useWikidata;
+        return options.useHyDE || options.useWikipedia || options.useWikidata || options.useWebSearch;
     }
 
     /**

@@ -4,11 +4,12 @@ Knowledge enhancements extend your personal semantic memory by integrating exter
 
 ## Overview
 
-The enhancement system provides three complementary knowledge sources:
+The enhancement system provides four complementary knowledge sources:
 
 1. **Wikipedia**: General knowledge articles and encyclopedic information
 2. **Wikidata**: Structured knowledge entities, relationships, and factual data
-3. **HyDE (Hypothetical Document Embeddings)**: Advanced query expansion for better semantic matching
+3. **Web Search**: Real-time web search using DuckDuckGo for current information
+4. **HyDE (Hypothetical Document Embeddings)**: Advanced query expansion for better semantic matching
 
 These enhancements work seamlessly with your personal knowledge base, only activating when local context is insufficient.
 
@@ -16,7 +17,7 @@ These enhancements work seamlessly with your personal knowledge base, only activ
 
 **Important**: The system's primary retrieval mechanism uses **embedding-based semantic similarity**, not concept matching. Extracted concepts serve specific purposes:
 
-- **Enhancement Triggers**: Concepts extracted from your queries are used to search external sources (Wikipedia, Wikidata)
+- **Enhancement Triggers**: Concepts extracted from your queries are used to search external sources (Wikipedia, Wikidata, Web Search)
 - **Metadata Storage**: Concepts are stored as searchable metadata alongside your content
 - **UI Filtering**: You can search within extracted concepts using the workbench interface
 - **External Research**: Concepts drive the research queries sent to external knowledge graphs
@@ -71,13 +72,16 @@ The Ask verb provides explicit control over individual enhancements:
    - ☐ **HyDE**: Hypothetical Document Embeddings
    - ☐ **Wikipedia**: Wikipedia knowledge integration  
    - ☐ **Wikidata**: Wikidata entities and relationships
+   - ☐ **Web Search**: DuckDuckGo web search integration
 3. **Execute Search**: Click "🔍 Search Memory"
 4. **Review Results**: Enhanced answers appear with source attribution
 
-**Best Practice**: Enable all three for comprehensive coverage, or select specific sources based on your query type:
+**Best Practice**: Enable all four for comprehensive coverage, or select specific sources based on your query type:
 - **Factual queries**: Wikipedia + Wikidata
-- **Conceptual queries**: Wikipedia + HyDE
+- **Conceptual queries**: Wikipedia + HyDE  
 - **Entity relationships**: Wikidata + HyDE
+- **Current information**: Web Search + Wikipedia
+- **Real-time queries**: Web Search + HyDE
 
 ## Enhancement Workflows
 
@@ -174,6 +178,46 @@ HyDE enhancement uses advanced query expansion to improve semantic matching and 
 
 **Technical Note**: HyDE ultimately relies on embedding similarity for matching, with extracted concepts serving as intermediate steps in the query expansion process.
 
+### Web Search Integration
+
+Web Search enhancement provides access to real-time information from the web through DuckDuckGo, ensuring your queries can access current events, recent developments, and up-to-date information not available in static knowledge sources.
+
+**When Web Search Activates**:
+- Queries about current events and recent news
+- Time-sensitive information requests
+- Real-time data and statistics
+- Recent developments in any field
+- Information that changes frequently
+
+**Web Search Workflow**:
+1. **Query Processing**: Your question is analyzed and search terms extracted
+2. **DuckDuckGo Search**: Performs web search using DuckDuckGo API
+3. **Content Retrieval**: Fetches relevant web page content and snippets
+4. **Relevance Filtering**: Scores and filters results by relevance to your query
+5. **Content Processing**: Extracts and summarizes key information from web sources
+6. **Real-time Integration**: Combines web results with personal knowledge and other enhancements
+
+**Example Web Search Queries**:
+- "What are the latest developments in AI regulation?"
+- "Current stock price of Tesla"
+- "What happened in the news today?"
+- "Recent climate change research findings"
+- "Latest software vulnerabilities discovered this week"
+
+**Web Search Results Include**:
+- Real-time information and current data
+- Recent news articles and developments
+- Up-to-date statistics and figures
+- Current market information and trends
+- Fresh content from authoritative web sources
+- Time-stamped information with source attribution
+
+**Performance Features**:
+- **Rate Limiting**: Respectful API usage with built-in throttling
+- **Caching**: Intelligent caching of recent search results
+- **Relevance Scoring**: Advanced scoring to surface most relevant content
+- **Source Attribution**: Clear indication of information sources and timestamps
+
 ## Enhancement Coordination
 
 ### Multi-Source Integration
@@ -182,7 +226,8 @@ When all enhancements are active, the system coordinates responses to provide co
 
 1. **Wikipedia** provides general knowledge and context
 2. **Wikidata** contributes factual precision and structured data
-3. **HyDE** ensures semantic completeness and conceptual understanding
+3. **Web Search** delivers real-time information and current developments
+4. **HyDE** ensures semantic completeness and conceptual understanding
 
 **Example Coordinated Response**:
 ```
@@ -190,6 +235,7 @@ Query: "Tell me about Marie Curie's Nobel Prizes"
 
 Wikipedia: Biographical context, historical significance, scientific contributions
 Wikidata: Precise dates (1903, 1911), award categories (Physics, Chemistry), co-recipients
+Web Search: Recent commemorations, current research building on her work, modern perspectives
 HyDE: Conceptual connections to radioactivity research, gender barriers in science
 ```
 
@@ -275,9 +321,10 @@ await simpleVerbsService.ask({
 **Response Times**:
 - **Personal Knowledge**: < 1 second
 - **Wikipedia**: 2-5 seconds
-- **Wikidata**: 1-3 seconds  
+- **Wikidata**: 1-3 seconds
+- **Web Search**: 2-6 seconds
 - **HyDE**: 3-7 seconds
-- **Combined**: 5-10 seconds
+- **Combined**: 6-12 seconds
 
 **Optimization**:
 - Results are cached for repeated queries
@@ -295,6 +342,12 @@ await simpleVerbsService.ask({
 - Structured data may not cover all topics comprehensively
 - Query complexity limited by SPARQL capabilities
 - Entity recognition dependent on Wikidata coverage
+
+**Web Search**:
+- Results depend on DuckDuckGo's search quality and availability
+- Limited to publicly accessible web content
+- May include outdated or cached information from search results
+- Subject to rate limiting and API availability
 
 **HyDE**:
 - Requires high-quality embedding models
