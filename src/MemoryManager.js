@@ -6,6 +6,7 @@ import ContextManager from './ContextManager.js'
 import EmbeddingHandler from './handlers/EmbeddingHandler.js'
 import CacheManager from './handlers/CacheManager.js'
 import LLMHandler from './handlers/LLMHandler.js'
+import { WorkflowLogger, workflowLoggerRegistry } from './utils/WorkflowLogger.js'
 
 /**
  * Manages semantic memory operations, embeddings, and LLM interactions
@@ -29,6 +30,8 @@ export default class MemoryManager {
     }) {
         // Initialize logging for MemoryManager
         this.logger = configureLogging('memory-manager');
+        this.workflowLogger = new WorkflowLogger('MemoryManager');
+        workflowLoggerRegistry.register('MemoryManager', this.workflowLogger);
         
         if (!llmProvider) {
             throw new Error('LLM provider is required')
@@ -137,13 +140,31 @@ export default class MemoryManager {
     }
 
     async addInteraction(prompt, output, embedding, concepts, metadata = {}) {
-        console.log('🔥 DEBUG: MemoryManager.addInteraction called with:', {
-            promptLength: prompt?.length || 0,
-            outputLength: output?.length || 0,
-            embeddingLength: embedding?.length || 0,
-            conceptsCount: concepts?.length || 0
-        });
+        // Start workflow tracking for memory persistence
+        const operationId = this.workflowLogger.startOperation(
+            null,
+            'memory',
+            'Storing interaction in knowledge graph',
+            {
+                promptLength: prompt?.length || 0,
+                outputLength: output?.length || 0,
+                embeddingDimensions: embedding?.length || 0,
+                conceptsCount: concepts?.length || 0,
+                conversationId: metadata.conversationId
+            }
+        );
+
+        const opLogger = this.workflowLogger.createOperationLogger(operationId);
+
         try {
+            // Step 1: Create structured interaction object
+            opLogger.step(
+                'create_interaction',
+                '📋 Creating interaction object',
+                `[MemoryManager] Structuring interaction with ID: ${metadata.id || 'auto-generated'}`,
+                { interactionId: metadata.id }
+            );
+
             const interaction = {
                 id: metadata.id || uuidv4(),
                 prompt,
@@ -156,86 +177,175 @@ export default class MemoryManager {
                 ...metadata
             }
 
+            // Step 2: Add to in-memory store
+            opLogger.step(
+                'add_to_memory',
+                '🧠 Adding to short-term memory store',
+                `[MemoryManager] Adding interaction to memStore - current size: ${this.memStore.shortTermMemory.length}`,
+                { 
+                    currentMemorySize: this.memStore.shortTermMemory.length,
+                    interactionId: interaction.id
+                }
+            );
+
             this.memStore.shortTermMemory.push(interaction)
             this.memStore.embeddings.push(interaction.embedding)
             this.memStore.timestamps.push(interaction.timestamp)
             this.memStore.accessCounts.push(interaction.accessCount)
             this.memStore.conceptsList.push(interaction.concepts)
 
-            console.log('🔥 DEBUG: About to call store.saveMemoryToHistory');
+            // Step 3: Persist to storage backend
+            opLogger.step(
+                'persist_to_storage',
+                '💾 Persisting to SPARQL knowledge graph',
+                `[MemoryManager] store.saveMemoryToHistory() - persisting ${this.memStore.shortTermMemory.length} interactions`,
+                { 
+                    storageType: this.store.constructor.name,
+                    totalInteractions: this.memStore.shortTermMemory.length
+                }
+            );
+
             await this.store.saveMemoryToHistory(this.memStore)
-            console.log('🔥 DEBUG: saveMemoryToHistory completed successfully');
+
+            opLogger.complete(
+                'Interaction stored successfully in knowledge graph',
+                {
+                    interactionId: interaction.id,
+                    embeddingDimensions: embedding?.length || 0,
+                    conceptsStored: concepts?.length || 0,
+                    totalMemories: this.memStore.shortTermMemory.length
+                }
+            );
+
             this.logger.info('Interaction added successfully')
         } catch (error) {
+            opLogger.fail(error, {
+                promptLength: prompt?.length || 0,
+                outputLength: output?.length || 0,
+                embeddingLength: embedding?.length || 0,
+                conceptsCount: concepts?.length || 0
+            });
+
             this.logger.error('Failed to add interaction:', error)
             throw error
         }
     }
 
     async retrieveRelevantInteractions(query, similarityThreshold = 40, excludeLastN = 0, limit = null) {
-        this.logger.info('🔥 UPDATED MemoryManager.retrieveRelevantInteractions called with:', {
-            query,
-            similarityThreshold,
-            excludeLastN,
-            limit,
-            hasMemStore: !!this.memStore,
-            memStoreMemoryLength: this.memStore?.shortTermMemory?.length || 0
-        });
-        console.log('🔥 CONSOLE: Updated MemoryManager code is being executed!', { query });
+        // Start workflow tracking for memory retrieval
+        const operationId = this.workflowLogger.startOperation(
+            null,
+            'search',
+            'Searching for relevant memories',
+            {
+                query: query.substring(0, 100) + (query.length > 100 ? '...' : ''),
+                similarityThreshold,
+                excludeLastN,
+                limit,
+                memoryStoreSize: this.memStore?.shortTermMemory?.length || 0
+            }
+        );
+
+        const opLogger = this.workflowLogger.createOperationLogger(operationId);
         
         try {
-            this.logger.info('Generating embedding for query...');
+            // Step 1: Generate query embedding
+            opLogger.step(
+                'generate_embedding',
+                '🎯 Generating query embedding',
+                '[MemoryManager] embeddingHandler.generateEmbedding() - creating vector representation'
+            );
+            
             const queryEmbedding = await this.embeddingHandler.generateEmbedding(query);
-            this.logger.info('Embedding generated successfully, dimensions:', queryEmbedding?.length || 'unknown');
             
+            opLogger.step(
+                'embedding_generated',
+                `✅ Generated ${queryEmbedding?.length || 0}D embedding vector`,
+                `[MemoryManager] Embedding generated - dimensions: ${queryEmbedding?.length || 'unknown'}`,
+                { embeddingDimensions: queryEmbedding?.length || 0 }
+            );
+            
+            // Step 2: Extract query concepts (if LLM available)
             let queryConcepts = [];
-            
-            // Only extract concepts if we have a chat-capable LLM handler
             if (this.llmHandler) {
-                this.logger.info('Extracting concepts using LLM handler...');
+                opLogger.step(
+                    'extract_concepts',
+                    '💡 Extracting query concepts',
+                    '[MemoryManager] llmHandler.extractConcepts() - identifying key concepts'
+                );
+                
                 queryConcepts = await this.llmHandler.extractConcepts(query);
-                this.logger.info('Concepts extracted:', queryConcepts);
+                
+                opLogger.step(
+                    'concepts_extracted',
+                    `🔍 Extracted ${queryConcepts.length} concepts`,
+                    `[MemoryManager] Concepts extracted: ${queryConcepts.join(', ')}`,
+                    { conceptCount: queryConcepts.length, concepts: queryConcepts }
+                );
             } else {
-                this.logger.debug('No chat provider available for concept extraction - using embedding-only search');
+                opLogger.step(
+                    'skip_concepts',
+                    '⚡ Skipping concept extraction (no LLM available)',
+                    '[MemoryManager] No chat provider available for concept extraction - using embedding-only search'
+                );
             }
             
-            this.logger.info('Calling memStore.retrieve with params:', {
-                queryEmbeddingLength: queryEmbedding?.length || 0,
-                queryConceptsLength: queryConcepts?.length || 0,
-                similarityThreshold,
-                excludeLastN
-            });
+            // Step 3: Search memory store
+            opLogger.step(
+                'search_memory_store',
+                '🧠 Searching in-memory store',
+                `[MemoryManager] memStore.retrieve() - searching ${this.memStore?.shortTermMemory?.length || 0} memories`,
+                { memoryStoreSize: this.memStore?.shortTermMemory?.length || 0 }
+            );
             
-            // Search both memory store and SPARQL store for complete coverage
             const memStoreResults = await this.memStore.retrieve(queryEmbedding, queryConcepts, similarityThreshold, excludeLastN);
-            
-            // Also search SPARQL store for chunked documents and other stored content
+
+            // Step 4: Search SPARQL store
             let sparqlResults = [];
-            console.log('🔥 CONSOLE: Checking SPARQL store availability', { hasStore: !!this.store, hasSearchMethod: !!(this.store && typeof this.store.search === 'function') });
-            
             if (this.store && typeof this.store.search === 'function') {
-                console.log('🔥 CONSOLE: Searching SPARQL store for chunked documents...');
-                this.logger.info('Searching SPARQL store for chunked documents...');
+                opLogger.step(
+                    'search_sparql_store',
+                    '🗃️ Searching SPARQL knowledge graph',
+                    `[MemoryManager] store.search() - searching persistent knowledge graph with ${this.store.constructor.name}`,
+                    { storageType: this.store.constructor.name }
+                );
+                
                 try {
-                    // Convert threshold from percentage to decimal if needed
                     const threshold = similarityThreshold > 1 ? similarityThreshold / 100 : similarityThreshold;
-                    const searchLimit = limit || 10; // Default limit for SPARQL search
-                    
-                    console.log('🔥 CONSOLE: SPARQL search parameters', { threshold, searchLimit, queryEmbeddingLength: queryEmbedding.length });
+                    const searchLimit = limit || 10;
                     
                     sparqlResults = await this.store.search(queryEmbedding, searchLimit, threshold);
                     
-                    console.log('🔥 CONSOLE: SPARQL store search completed', { resultsCount: sparqlResults.length });
-                    this.logger.info(`SPARQL store search found ${sparqlResults.length} results`);
+                    opLogger.step(
+                        'sparql_results_found',
+                        `📥 Found ${sparqlResults.length} results in knowledge graph`,
+                        `[MemoryManager] SPARQL search completed - ${sparqlResults.length} results found`,
+                        { sparqlResultCount: sparqlResults.length }
+                    );
                 } catch (error) {
-                    console.log('🔥 CONSOLE: SPARQL store search failed', { error: error.message });
-                    this.logger.warn('SPARQL store search failed:', error.message);
+                    opLogger.step(
+                        'sparql_search_failed',
+                        `⚠️ SPARQL search failed: ${error.message}`,
+                        `[MemoryManager] SPARQL store search failed: ${error.message}`,
+                        { error: error.message }
+                    );
                 }
             } else {
-                console.log('🔥 CONSOLE: SPARQL store not available or search method missing');
+                opLogger.step(
+                    'skip_sparql_search',
+                    '⚡ Skipping SPARQL search (not available)',
+                    '[MemoryManager] SPARQL store not available or search method missing'
+                );
             }
             
-            // Combine results from both sources
+            // Step 5: Combine and deduplicate results
+            opLogger.step(
+                'combine_results',
+                `🔄 Combining results (${memStoreResults.length} + ${sparqlResults.length})`,
+                `[MemoryManager] Combining ${memStoreResults.length} memory results with ${sparqlResults.length} SPARQL results`,
+                { memoryResults: memStoreResults.length, sparqlResults: sparqlResults.length }
+            );
+            
             const combinedResults = [...memStoreResults, ...sparqlResults];
             
             // Remove duplicates based on content similarity
@@ -250,40 +360,56 @@ export default class MemoryManager {
                 }
             }
             
-            // Sort by similarity score (descending)
+            // Step 6: Sort by similarity score
             uniqueResults.sort((a, b) => (b.similarity || 0) - (a.similarity || 0));
             
-            // NOTE: Removed saveMemoryToHistory() call from retrieveRelevantInteractions()
-            // This method should only retrieve, not persist. Persistence happens in addInteraction().
+            opLogger.step(
+                'deduplicated',
+                `📊 Deduplicated to ${uniqueResults.length} unique results`,
+                `[MemoryManager] After deduplication: ${uniqueResults.length} unique results, sorted by similarity`,
+                { 
+                    uniqueResults: uniqueResults.length,
+                    duplicatesRemoved: combinedResults.length - uniqueResults.length,
+                    topSimilarities: uniqueResults.slice(0, 3).map(r => r.similarity?.toFixed(3))
+                }
+            );
             
-            console.log('🔥 CONSOLE: Combined search results', {
-                memStoreResults: memStoreResults.length,
-                sparqlResults: sparqlResults.length,
-                uniqueResults: uniqueResults.length,
-                firstResultKeys: uniqueResults?.[0] ? Object.keys(uniqueResults[0]) : 'no results',
-                firstResult: uniqueResults?.[0] ? { similarity: uniqueResults[0].similarity, prompt: uniqueResults[0].prompt?.substring(0, 100) } : 'no results'
-            });
-            
-            this.logger.info('Combined search results:', {
-                memStoreResults: memStoreResults.length,
-                sparqlResults: sparqlResults.length,
-                uniqueResults: uniqueResults.length,
-                firstResultKeys: uniqueResults?.[0] ? Object.keys(uniqueResults[0]) : 'no results'
-            });
-            
-            const results = uniqueResults;
-            console.log('🔥 CONSOLE: Final results being returned', { count: results.length, hasResults: results.length > 0 });
-            
-            // Apply limit if specified
+            // Step 7: Apply limit if specified
+            let finalResults = uniqueResults;
             if (limit && typeof limit === 'number' && limit > 0) {
-                const limitedResults = results.slice(0, limit);
-                this.logger.info(`Applied limit ${limit}, final result count: ${limitedResults.length}`);
-                return limitedResults;
+                finalResults = uniqueResults.slice(0, limit);
+                
+                opLogger.step(
+                    'apply_limit',
+                    `✂️ Applied limit: ${finalResults.length}/${uniqueResults.length} results`,
+                    `[MemoryManager] Applied result limit - returning ${finalResults.length} of ${uniqueResults.length} results`,
+                    { limit, totalResults: uniqueResults.length, returnedResults: finalResults.length }
+                );
             }
+
+            // Complete operation successfully
+            opLogger.complete(
+                `Found ${finalResults.length} relevant memories`,
+                {
+                    totalResults: finalResults.length,
+                    memoryStoreResults: memStoreResults.length,
+                    sparqlStoreResults: sparqlResults.length,
+                    topSimilarities: finalResults.slice(0, 3).map(r => r.similarity?.toFixed(3)),
+                    queryEmbeddingDims: queryEmbedding?.length || 0,
+                    conceptsUsed: queryConcepts.length
+                }
+            );
+
+            return finalResults;
             
-            this.logger.info(`Returning ${results?.length || 0} results`);
-            return results;
         } catch (error) {
+            opLogger.fail(error, {
+                query: query.substring(0, 100),
+                similarityThreshold,
+                excludeLastN,
+                limit
+            });
+            
             this.logger.error('Failed to retrieve interactions:', {
                 message: error.message,
                 stack: error.stack,

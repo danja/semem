@@ -1,6 +1,7 @@
 import BaseAPI from '../common/BaseAPI.js';
 import { v4 as uuidv4 } from 'uuid';
 import { EventEmitter } from 'events';
+import { WorkflowLogger, workflowLoggerRegistry } from '../../utils/WorkflowLogger.js';
 
 /**
  * Chat API handler for generating chat responses with memory context
@@ -13,6 +14,8 @@ export default class ChatAPI extends BaseAPI {
         this.conversationCache = new Map();
         this.similarityThreshold = config.similarityThreshold || 0.7;
         this.contextWindow = config.contextWindow || 5;
+        this.workflowLogger = new WorkflowLogger('ChatAPI');
+        workflowLoggerRegistry.register('ChatAPI', this.workflowLogger);
     }
 
     async initialize() {
@@ -78,24 +81,73 @@ export default class ChatAPI extends BaseAPI {
             throw new Error('Prompt is required');
         }
 
+        // Start workflow tracking
+        const operationId = this.workflowLogger.startOperation(
+            null,
+            'chat',
+            'Processing chat request',
+            { 
+                prompt: prompt.substring(0, 100) + (prompt.length > 100 ? '...' : ''),
+                useMemory,
+                temperature,
+                model: model || 'default'
+            }
+        );
+
+        const opLogger = this.workflowLogger.createOperationLogger(operationId);
+
         try {
-            // Get or create conversation
+            // Step 1: Get or create conversation
+            opLogger.step(
+                'get_conversation',
+                '📝 Setting up conversation context',
+                `[ChatAPI] _getConversation(${conversationId || 'new'})`
+            );
             const conversation = this._getConversation(conversationId);
 
-            // Get relevant memories if needed
+            // Step 2: Get relevant memories if needed
             let relevantMemories = [];
             if (useMemory) {
+                opLogger.step(
+                    'retrieve_memories',
+                    '🧠 Searching for relevant memories',
+                    `[ChatAPI] memoryManager.retrieveRelevantInteractions() - threshold: ${this.similarityThreshold}`
+                );
+                
                 relevantMemories = await this.memoryManager.retrieveRelevantInteractions(
                     prompt,
                     this.similarityThreshold
                 );
+
+                opLogger.step(
+                    'memories_found',
+                    `📥 Found ${relevantMemories.length} relevant memories`,
+                    `[ChatAPI] Retrieved ${relevantMemories.length} memories with similarities: ${relevantMemories.map(m => m.similarity?.toFixed(3)).join(', ')}`,
+                    { memoryCount: relevantMemories.length, similarities: relevantMemories.map(m => m.similarity) }
+                );
+            } else {
+                opLogger.step(
+                    'skip_memories',
+                    '⚡ Skipping memory retrieval',
+                    '[ChatAPI] useMemory=false, proceeding without memory context'
+                );
             }
 
-            // Create context from conversation history and relevant memories
+            // Step 3: Build context
+            opLogger.step(
+                'build_context',
+                '🏗️ Building conversation context',
+                `[ChatAPI] _buildContext() - conversation history: ${conversation.history.length} messages, memories: ${relevantMemories.length}`
+            );
             const context = this._buildContext(conversation, relevantMemories);
 
-            // Generate response
-            // Generate response with the specified model or use default
+            // Step 4: Generate response using LLM
+            opLogger.step(
+                'generate_response',
+                `🤖 Generating response with ${model || 'default'} model`,
+                `[ChatAPI] llmHandler.generateResponse() - model: ${model || 'default'}, temperature: ${temperature}`
+            );
+            
             const response = await this.llmHandler.generateResponse(
                 prompt,
                 context,
@@ -105,9 +157,14 @@ export default class ChatAPI extends BaseAPI {
                 }
             );
             
-            this.logger.log(`Generated response using model: ${model || 'default'}`);
+            opLogger.step(
+                'response_generated',
+                `✅ Generated ${response.length} character response`,
+                `[ChatAPI] LLM response generated - length: ${response.length}, model: ${model || 'default'}`,
+                { responseLength: response.length, model: model || 'default' }
+            );
 
-            // Update conversation history
+            // Step 5: Update conversation history
             conversation.history.push({ role: 'user', content: prompt });
             conversation.history.push({ role: 'assistant', content: response });
 
@@ -116,13 +173,33 @@ export default class ChatAPI extends BaseAPI {
                 conversation.history = conversation.history.slice(-this.contextWindow * 2);
             }
 
-            // Store in memory if enabled
+            // Step 6: Store in memory if enabled
             if (useMemory) {
+                opLogger.step(
+                    'generate_embeddings',
+                    '🎯 Generating embeddings for storage',
+                    '[ChatAPI] memoryManager.generateEmbedding() - creating vector representation'
+                );
+                
                 const embedding = await this.memoryManager.generateEmbedding(
                     `${prompt} ${response}`
                 );
+
+                opLogger.step(
+                    'extract_concepts',
+                    '💡 Extracting semantic concepts',
+                    '[ChatAPI] memoryManager.extractConcepts() - identifying key concepts'
+                );
+                
                 const concepts = await this.memoryManager.extractConcepts(
                     `${prompt} ${response}`
+                );
+
+                opLogger.step(
+                    'store_interaction',
+                    '💾 Storing interaction in knowledge graph',
+                    `[ChatAPI] memoryManager.addInteraction() - embedding dims: ${embedding.length}, concepts: ${concepts.length}`,
+                    { embeddingDimensions: embedding.length, conceptCount: concepts.length }
                 );
 
                 await this.memoryManager.addInteraction(
@@ -137,14 +214,35 @@ export default class ChatAPI extends BaseAPI {
                 );
             }
 
-            this._emitMetric('chat.generate.count', 1);
-            return {
+            // Complete operation successfully
+            const result = {
                 response,
                 conversationId: conversation.id,
                 memoryIds: relevantMemories.map(m => m.interaction?.id || m.id || '')
                     .filter(id => id !== '')
             };
+
+            opLogger.complete(
+                'Chat response generated successfully',
+                { 
+                    conversationId: conversation.id,
+                    memoryIdsCount: result.memoryIds.length,
+                    responseLength: response.length
+                }
+            );
+
+            this._emitMetric('chat.generate.count', 1);
+            return result;
+            
         } catch (error) {
+            // Fail operation with detailed error info
+            opLogger.fail(error, {
+                prompt: prompt.substring(0, 100),
+                useMemory,
+                temperature,
+                model: model || 'default'
+            });
+
             this._emitMetric('chat.generate.errors', 1);
             throw error;
         }

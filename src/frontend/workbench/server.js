@@ -35,6 +35,19 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Proxy workflow logs to API server (different path to avoid conflicts)
+app.use('/workflow-logs/stream', createProxyMiddleware({
+  target: 'http://localhost:4100/api/logs/stream',
+  changeOrigin: true,
+  ws: false, // Server-sent events use HTTP, not WebSocket
+  pathRewrite: {
+    '^/workflow-logs/stream': '' // Remove /workflow-logs/stream prefix
+  },
+  onProxyReq: (proxyReq, req, res) => {
+    console.log(`🔄 [WORKFLOW LOGS PROXY] ${req.method} ${req.originalUrl} -> http://localhost:4100/api/logs/stream${req.url.replace('/workflow-logs/stream', '')}`);
+  }
+}));
+
 // Proxy API requests to MCP server  
 app.use('/api', createProxyMiddleware({
   target: MCP_SERVER_URL,

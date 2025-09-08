@@ -18,11 +18,17 @@ export class ConsoleComponent {
     this.isAutoScrollEnabled = true;
     this.currentFilter = 'all';
     
+    // Workflow progress tracking
+    this.activeOperations = new Map(); // Track active workflow operations
+    this.operationElements = new Map(); // Track DOM elements for operations
+    
     // Bind methods
     this.handleClearClick = this.handleClearClick.bind(this);
     this.handleAutoScrollToggle = this.handleAutoScrollToggle.bind(this);
     this.handleLevelFilterChange = this.handleLevelFilterChange.bind(this);
     this.handleConsoleEvent = this.handleConsoleEvent.bind(this);
+    this.createWorkflowOperationCard = this.createWorkflowOperationCard.bind(this);
+    this.updateWorkflowProgress = this.updateWorkflowProgress.bind(this);
   }
 
   /**
@@ -145,6 +151,14 @@ export class ConsoleComponent {
    * @returns {HTMLElement} Log entry element
    */
   createLogElement(logEntry) {
+    // Check if this is a workflow log from backend
+    const isWorkflowLog = logEntry.details?.source === 'backend-workflow';
+    
+    if (isWorkflowLog) {
+      return this.createWorkflowLogElement(logEntry);
+    }
+    
+    // Standard log element for non-workflow logs
     const timestamp = consoleService.formatTimestamp(logEntry.timestamp);
     
     const logElement = DomUtils.createElement('div', {
@@ -183,6 +197,216 @@ export class ConsoleComponent {
     }
 
     return logElement;
+  }
+
+  /**
+   * Create workflow-specific log element with progress tracking
+   * @param {Object} logEntry - Workflow log entry data
+   * @returns {HTMLElement} Workflow log element
+   */
+  createWorkflowLogElement(logEntry) {
+    const details = logEntry.details || {};
+    const operationId = details.operationId;
+    
+    // If this is an operation start, create a new workflow card
+    if (details.type === 'operation-start' || logEntry.message.includes('Processing') || logEntry.message.includes('Starting')) {
+      return this.createWorkflowOperationCard(logEntry, operationId);
+    }
+    
+    // If this is part of an existing operation, update the progress
+    if (operationId && this.activeOperations.has(operationId)) {
+      this.updateWorkflowProgress(operationId, logEntry);
+      return null; // Don't create separate log entry, update the card instead
+    }
+    
+    // Create a workflow step element
+    return this.createWorkflowStepElement(logEntry);
+  }
+
+  /**
+   * Create a workflow operation card for tracking progress
+   * @param {Object} logEntry - Initial log entry
+   * @param {string} operationId - Operation identifier
+   * @returns {HTMLElement} Operation card element
+   */
+  createWorkflowOperationCard(logEntry, operationId = null) {
+    const timestamp = consoleService.formatTimestamp(logEntry.timestamp);
+    const details = logEntry.details || {};
+    
+    // Generate operation ID if not provided
+    const opId = operationId || `op-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
+    
+    const cardElement = DomUtils.createElement('div', {
+      className: `workflow-operation-card ${logEntry.level}`,
+      'data-operation-id': opId,
+      'data-log-id': logEntry.id
+    });
+
+    // Card header
+    const headerEl = DomUtils.createElement('div', {
+      className: 'workflow-card-header'
+    });
+
+    // Operation icon and title
+    const titleEl = DomUtils.createElement('div', {
+      className: 'workflow-card-title'
+    }, logEntry.message);
+
+    // Progress indicator
+    const progressEl = DomUtils.createElement('div', {
+      className: 'workflow-progress'
+    });
+    
+    const progressBarEl = DomUtils.createElement('div', {
+      className: 'workflow-progress-bar'
+    });
+    
+    const progressFillEl = DomUtils.createElement('div', {
+      className: 'workflow-progress-fill',
+      style: 'width: 10%'
+    });
+    
+    progressBarEl.appendChild(progressFillEl);
+    progressEl.appendChild(progressBarEl);
+
+    // Timestamp
+    const timestampEl = DomUtils.createElement('div', {
+      className: 'workflow-card-timestamp'
+    }, timestamp);
+
+    headerEl.appendChild(titleEl);
+    headerEl.appendChild(progressEl);
+    headerEl.appendChild(timestampEl);
+
+    // Steps container
+    const stepsEl = DomUtils.createElement('div', {
+      className: 'workflow-steps'
+    });
+
+    // Add initial step
+    const initialStep = DomUtils.createElement('div', {
+      className: 'workflow-step active'
+    }, '⏳ ' + logEntry.message);
+    
+    stepsEl.appendChild(initialStep);
+
+    // Assemble card
+    cardElement.appendChild(headerEl);
+    cardElement.appendChild(stepsEl);
+
+    // Track the operation
+    this.activeOperations.set(opId, {
+      id: opId,
+      startTime: logEntry.timestamp,
+      steps: [logEntry.message],
+      element: cardElement,
+      progressElement: progressFillEl,
+      stepsElement: stepsEl,
+      status: 'active'
+    });
+
+    this.operationElements.set(opId, cardElement);
+
+    return cardElement;
+  }
+
+  /**
+   * Update workflow operation progress
+   * @param {string} operationId - Operation identifier
+   * @param {Object} logEntry - Progress log entry
+   */
+  updateWorkflowProgress(operationId, logEntry) {
+    const operation = this.activeOperations.get(operationId);
+    if (!operation) return;
+
+    const details = logEntry.details || {};
+    
+    // Add new step
+    operation.steps.push(logEntry.message);
+    
+    // Create step element
+    const stepEl = DomUtils.createElement('div', {
+      className: 'workflow-step active'
+    });
+    
+    // Determine step icon based on message content
+    let icon = '⏳';
+    if (logEntry.message.includes('✅') || logEntry.message.includes('Success') || logEntry.message.includes('completed')) {
+      icon = '✅';
+      operation.status = 'completed';
+    } else if (logEntry.message.includes('❌') || logEntry.message.includes('Failed') || logEntry.message.includes('Error')) {
+      icon = '❌';
+      operation.status = 'failed';
+    } else if (logEntry.message.includes('⚠️') || logEntry.message.includes('Warning')) {
+      icon = '⚠️';
+    } else if (logEntry.message.includes('🔍') || logEntry.message.includes('Search')) {
+      icon = '🔍';
+    } else if (logEntry.message.includes('💾') || logEntry.message.includes('Stor')) {
+      icon = '💾';
+    } else if (logEntry.message.includes('🎯') || logEntry.message.includes('Generat')) {
+      icon = '🎯';
+    }
+    
+    stepEl.textContent = icon + ' ' + logEntry.message;
+    operation.stepsElement.appendChild(stepEl);
+
+    // Update progress bar
+    const progressPercent = Math.min(100, (operation.steps.length / 8) * 100); // Assume max 8 steps
+    operation.progressElement.style.width = `${progressPercent}%`;
+
+    // Update card status
+    operation.element.className = `workflow-operation-card ${operation.status}`;
+
+    // If operation completed, mark as finished after a delay
+    if (operation.status === 'completed' || operation.status === 'failed') {
+      setTimeout(() => {
+        operation.element.classList.add('finished');
+        this.activeOperations.delete(operationId);
+      }, 2000);
+    }
+  }
+
+  /**
+   * Create a workflow step element
+   * @param {Object} logEntry - Log entry data
+   * @returns {HTMLElement} Step element
+   */
+  createWorkflowStepElement(logEntry) {
+    const timestamp = consoleService.formatTimestamp(logEntry.timestamp);
+    
+    const stepElement = DomUtils.createElement('div', {
+      className: `workflow-step-entry ${logEntry.level}`,
+      'data-log-id': logEntry.id
+    });
+
+    // Step content
+    const contentEl = DomUtils.createElement('div', {
+      className: 'workflow-step-content'
+    });
+
+    // Message with icon
+    const messageEl = DomUtils.createElement('span', {
+      className: 'workflow-step-message'
+    }, logEntry.message);
+
+    // Timestamp
+    const timestampEl = DomUtils.createElement('span', {
+      className: 'workflow-step-timestamp'
+    }, timestamp);
+
+    contentEl.appendChild(messageEl);
+    contentEl.appendChild(timestampEl);
+    stepElement.appendChild(contentEl);
+
+    // Add technical details if present
+    if (logEntry.details?.technical) {
+      const technicalEl = DomUtils.createElement('div', {
+        className: 'workflow-step-technical'
+      }, logEntry.details.technical);
+      stepElement.appendChild(technicalEl);
+    }
+
+    return stepElement;
   }
 
   /**

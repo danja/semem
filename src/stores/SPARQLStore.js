@@ -6,6 +6,7 @@ import { readFileSync } from 'fs'
 import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'
 import { SPARQL_CONFIG } from '../../config/preferences.js'
+import { WorkflowLogger, workflowLoggerRegistry } from '../utils/WorkflowLogger.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
@@ -78,6 +79,10 @@ export default class SPARQLStore extends BaseStore {
             enableFallbacks: options.enableFallbacks !== false,
             ...options.resilience
         }
+        
+        // Workflow logging for SPARQL operations
+        this.workflowLogger = new WorkflowLogger('SPARQLStore')
+        workflowLoggerRegistry.register('SPARQLStore', this.workflowLogger)
     }
 
     async _executeSparqlQuery(query, endpoint) {
@@ -336,9 +341,48 @@ export default class SPARQLStore extends BaseStore {
             throw new Error('Transaction already in progress')
         }
 
+        // Start workflow tracking for SPARQL persistence
+        const operationId = this.workflowLogger.startOperation(
+            null,
+            'storage',
+            'Persisting memories to SPARQL knowledge graph',
+            {
+                shortTermMemories: memoryStore.shortTermMemory.length,
+                longTermMemories: memoryStore.longTermMemory.length,
+                totalMemories: memoryStore.shortTermMemory.length + memoryStore.longTermMemory.length,
+                graphName: this.graphName,
+                endpoint: this.endpoint.update
+            }
+        );
+
+        const opLogger = this.workflowLogger.createOperationLogger(operationId);
+
         try {
+            // Step 1: Verify connection
+            opLogger.step(
+                'verify_connection',
+                '🔌 Verifying SPARQL endpoint connection',
+                `[SPARQLStore] verify() - checking connectivity to ${this.endpoint.update}`,
+                { endpoint: this.endpoint.update }
+            );
             await this.verify()
+
+            // Step 2: Begin transaction
+            opLogger.step(
+                'begin_transaction',
+                '🚀 Starting database transaction',
+                '[SPARQLStore] beginTransaction() - ensuring atomic operation',
+                { transactionId: this.transactionId }
+            );
             await this.beginTransaction()
+
+            // Step 3: Clear existing interactions
+            opLogger.step(
+                'clear_existing',
+                '🧹 Clearing existing interactions from graph',
+                `[SPARQLStore] DELETE operation on graph <${this.graphName}>`,
+                { graphName: this.graphName }
+            );
 
             const clearQuery = `
                 PREFIX ragno: <http://purl.org/stuff/ragno/>
@@ -357,6 +401,17 @@ export default class SPARQLStore extends BaseStore {
             `
             await this._executeSparqlUpdate(clearQuery, this.endpoint.update)
 
+            // Step 4: Generate RDF triples
+            opLogger.step(
+                'generate_rdf',
+                '🏗️ Generating RDF triples for memories',
+                `[SPARQLStore] _generateInsertStatements() - creating triples for ${memoryStore.shortTermMemory.length + memoryStore.longTermMemory.length} interactions`,
+                { 
+                    shortTermTriples: memoryStore.shortTermMemory.length,
+                    longTermTriples: memoryStore.longTermMemory.length
+                }
+            );
+
             const insertQuery = `
                 PREFIX ragno: <http://purl.org/stuff/ragno/>
                 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
@@ -374,20 +429,64 @@ export default class SPARQLStore extends BaseStore {
                 }
             `
 
+            // Step 5: Execute INSERT operation
+            opLogger.step(
+                'execute_insert',
+                '📤 Executing SPARQL INSERT operation',
+                `[SPARQLStore] _executeSparqlUpdate() - inserting ${memoryStore.shortTermMemory.length + memoryStore.longTermMemory.length} interactions with embeddings`,
+                { 
+                    queryLength: insertQuery.length,
+                    totalInteractions: memoryStore.shortTermMemory.length + memoryStore.longTermMemory.length
+                }
+            );
+
             logger.debug(`SPARQLStore saveMemoryToHistory query = \n${insertQuery}`)
-            logger.debug(`About to execute SPARQL update to ${this.endpoint.update}`)
             await this._executeSparqlUpdate(insertQuery, this.endpoint.update)
-            logger.debug(`SPARQL update completed successfully`)
+
+            // Step 6: Commit transaction
+            opLogger.step(
+                'commit_transaction',
+                '✅ Committing transaction to knowledge graph',
+                '[SPARQLStore] commitTransaction() - finalizing atomic operation',
+                { graphName: this.graphName }
+            );
             await this.commitTransaction()
+
+            // Complete operation successfully
+            opLogger.complete(
+                `Successfully persisted ${memoryStore.shortTermMemory.length + memoryStore.longTermMemory.length} memories to SPARQL store`,
+                {
+                    shortTermMemories: memoryStore.shortTermMemory.length,
+                    longTermMemories: memoryStore.longTermMemory.length,
+                    totalMemories: memoryStore.shortTermMemory.length + memoryStore.longTermMemory.length,
+                    graphName: this.graphName,
+                    endpoint: this.endpoint.update
+                }
+            );
 
             logger.info(`Saved memory to SPARQL store ${this.endpoint.update} graph <${this.graphName}>. Stats: ${memoryStore.shortTermMemory.length} short-term, ${memoryStore.longTermMemory.length} long-term memories`)
         } catch (error) {
+            // Step 7: Handle errors and rollback
+            opLogger.step(
+                'rollback_transaction',
+                '🔄 Rolling back transaction due to error',
+                `[SPARQLStore] rollbackTransaction() - error: ${error.message}`,
+                { error: error.message }
+            );
             await this.rollbackTransaction()
             
             // Handle string length errors specifically
             if (error instanceof RangeError && error.message.includes('string length')) {
                 const detailedError = new Error(`String length error in SPARQL store: ${error.message}. This usually indicates content is too large for processing. Consider chunking the content first.`);
                 detailedError.code = 'CONTENT_TOO_LARGE';
+                
+                opLogger.fail(detailedError, {
+                    errorType: 'CONTENT_TOO_LARGE',
+                    shortTermCount: memoryStore.shortTermMemory.length,
+                    longTermCount: memoryStore.longTermMemory.length,
+                    suggestion: 'Consider chunking large content before storing'
+                });
+
                 logger.error('String length error in SPARQL store - content too large:', {
                     originalError: error.message,
                     shortTermCount: memoryStore.shortTermMemory.length,
@@ -397,6 +496,14 @@ export default class SPARQLStore extends BaseStore {
                 throw detailedError;
             }
             
+            // Handle general errors
+            opLogger.fail(error, {
+                shortTermMemories: memoryStore.shortTermMemory.length,
+                longTermMemories: memoryStore.longTermMemory.length,
+                endpoint: this.endpoint.update,
+                graphName: this.graphName
+            });
+
             logger.error('Error saving to SPARQL store:', error)
             throw error
         }

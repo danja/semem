@@ -33,6 +33,7 @@ import LLMHandler from '../handlers/LLMHandler.js';
 import EmbeddingHandler from '../handlers/EmbeddingHandler.js';
 import CacheManager from '../handlers/CacheManager.js';
 import APIRegistry from '../api/common/APIRegistry.js';
+import { workflowLoggerRegistry } from '../utils/WorkflowLogger.js';
 import InMemoryStore from '../stores/InMemoryStore.js';
 import { createAuthenticateRequest } from '../api/http/middleware/auth.js';
 import { errorHandler, NotFoundError } from '../api/http/middleware/error.js';
@@ -592,6 +593,57 @@ class APIServer {
         apiRouter.post('/search/analyze', this.authenticateRequest, this.createHandler('unified-search-api', 'analyze'));
         apiRouter.get('/search/services', this.createHandler('unified-search-api', 'services'));
         apiRouter.get('/search/strategies', this.createHandler('unified-search-api', 'strategies'));
+
+        // Real-time log streaming endpoint (SSE) - auth via query param for EventSource compatibility
+        apiRouter.get('/logs/stream', (req, res) => {
+            // Check authentication via query parameter since EventSource can't send custom headers
+            const apiKey = req.query.api_key;
+            if (!apiKey || apiKey !== process.env.SEMEM_API_KEY) {
+                res.status(401).json({ error: 'Unauthorized - API key required' });
+                return;
+            }
+            // Set up Server-Sent Events headers
+            res.writeHead(200, {
+                'Content-Type': 'text/event-stream',
+                'Cache-Control': 'no-cache',
+                'Connection': 'keep-alive',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Headers': 'Cache-Control'
+            });
+
+            // Send initial connection event
+            res.write(`data: ${JSON.stringify({
+                type: 'connection',
+                message: 'Connected to workflow log stream',
+                timestamp: new Date().toISOString(),
+                serverId: process.pid
+            })}\n\n`);
+
+            // Use the global workflow logger registry
+            workflowLoggerRegistry.addGlobalStream(res);
+
+            // Handle client disconnect
+            req.on('close', () => {
+                workflowLoggerRegistry.removeGlobalStream(res);
+            });
+
+            // Send periodic heartbeat to keep connection alive
+            const heartbeat = setInterval(() => {
+                try {
+                    res.write(`data: ${JSON.stringify({
+                        type: 'heartbeat',
+                        timestamp: new Date().toISOString()
+                    })}\n\n`);
+                } catch (error) {
+                    clearInterval(heartbeat);
+                }
+            }, 30000); // Every 30 seconds
+
+            // Clean up heartbeat on disconnect
+            req.on('close', () => {
+                clearInterval(heartbeat);
+            });
+        });
 
         // Service Discovery endpoint
         apiRouter.get('/services', (req, res) => {

@@ -11,12 +11,20 @@ export class ConsoleService {
     this.levelFilter = 'all';
     this.listeners = new Set();
     
+    // Backend log streaming
+    this.eventSource = null;
+    this.streamConnected = false;
+    
     // Bind methods
     this.log = this.log.bind(this);
     this.info = this.info.bind(this);
     this.success = this.success.bind(this);
     this.warning = this.warning.bind(this);
     this.error = this.error.bind(this);
+    this.connectToBackendStream = this.connectToBackendStream.bind(this);
+    
+    // Auto-connect to backend workflow logs
+    this.connectToBackendStream();
   }
 
   /**
@@ -371,9 +379,81 @@ export class ConsoleService {
   }
 
   /**
+   * Connect to backend workflow log stream
+   */
+  connectToBackendStream() {
+    if (this.eventSource) {
+      return; // Already connected
+    }
+
+    try {
+      // Connect via workbench proxy to API server for workflow logs
+      const streamUrl = '/workflow-logs/stream?api_key=semem-docker-dev-key';
+      
+      this.info('🔄 Connecting to backend workflow logs...');
+      this.eventSource = new EventSource(streamUrl);
+      
+      this.eventSource.onopen = () => {
+        this.streamConnected = true;
+        this.success('✅ Connected to backend workflow logs');
+      };
+
+      this.eventSource.onmessage = (event) => {
+        try {
+          const logMessage = JSON.parse(event.data);
+          
+          if (logMessage.type === 'log') {
+            // Display workflow logs with special formatting
+            const level = this.mapBackendLogLevel(logMessage.level);
+            const message = `🔧 ${logMessage.humanMessage || logMessage.message}`;
+            const details = {
+              component: logMessage.component,
+              technical: logMessage.technicalMessage,
+              source: 'backend-workflow',
+              ...logMessage.data
+            };
+            
+            this.log(level, message, details);
+          }
+        } catch (error) {
+          console.error('Error parsing backend log:', error);
+        }
+      };
+
+      this.eventSource.onerror = () => {
+        this.streamConnected = false;
+        this.warning('⚠️ Backend workflow log connection lost');
+        this.eventSource = null;
+      };
+
+    } catch (error) {
+      this.error('❌ Failed to connect to backend workflow logs', { error: error.message });
+    }
+  }
+
+  /**
+   * Map backend log levels to console log levels
+   */
+  mapBackendLogLevel(backendLevel) {
+    const levelMap = {
+      'info': 'info',
+      'debug': 'info', 
+      'warn': 'warning',
+      'warning': 'warning',
+      'error': 'error',
+      'success': 'success'
+    };
+    return levelMap[backendLevel] || 'info';
+  }
+
+  /**
    * Clean up resources
    */
   destroy() {
+    if (this.eventSource) {
+      this.eventSource.close();
+      this.eventSource = null;
+    }
     this.logs = [];
     this.listeners.clear();
   }
