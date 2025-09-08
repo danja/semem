@@ -16,7 +16,7 @@
 * hardcoded prompt in mcp/http-server.js plus does not contain any relevant information about Matisse. Therefore, I cannot answer the question
 * string matching on result types in src/zpt/selection/CorpuscleSelector.js
 * migrate webpack to vite
-
+* refactor files > 1000 lines src/frontend/workbench/public/js/workbench.js
 
 
 Can you create utils/SPARQLIngestRemote.js which will carry out the same operation as utils/SPARQLIngest.js but against a remote Semem install. For now the credentials will be the same. The Semem endpoints are at MCP : https://mcp.tensegrity.it/ API : https://api.tensegrity.it/ Fuseki : https://semem-fuseki.tensegrity.it/ Workbench : https://semem.tensegrity.it/

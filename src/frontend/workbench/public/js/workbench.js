@@ -1249,19 +1249,27 @@ class WorkbenchApp {
       return;
     }
     
-    titleElement.textContent = `${inspectType.charAt(0).toUpperCase() + inspectType.slice(1)} Inspection`;
+    // Set title with enhanced styling
+    const titles = {
+      'session': '📊 Session Analytics Dashboard',
+      'concepts': '🧩 Concept Network Analysis', 
+      'all': '🔍 Comprehensive System Analytics'
+    };
+    
+    titleElement.textContent = titles[inspectType] || `${inspectType.charAt(0).toUpperCase() + inspectType.slice(1)} Inspection`;
     
     let html = '';
     
+    // Use enhanced analytics display methods
     switch (inspectType) {
       case 'session':
-        html = this.formatSessionResults(result);
+        html = this.formatEnhancedSessionResults(result);
         break;
       case 'concepts':
-        html = this.formatConceptsResults(result);
+        html = this.formatEnhancedConceptResults(result);
         break;
       case 'all':
-        html = this.formatAllDataResults(result);
+        html = this.formatEnhancedSystemResults(result);
         break;
       default:
         html = this.formatGenericResults(result);
@@ -1364,6 +1372,408 @@ class WorkbenchApp {
     return `
       <div class="generic-results">
         <pre class="json-data">${JSON.stringify(result, null, 2)}</pre>
+      </div>
+    `;
+  }
+
+  formatEnhancedSessionResults(result) {
+    const analytics = result.sessionAnalytics || {};
+    const interactions = analytics.totalInteractions || 0;
+    const memoryEfficiency = Math.round((analytics.memoryEfficiency || 0) * 100);
+    const avgResponseTime = analytics.averageResponseTime || 0;
+    const recentActivity = analytics.recentActivityPattern || 'Normal';
+
+    return `
+      <div class="analytics-dashboard">
+        <div class="dashboard-header">
+          <h2>📊 Session Analytics Dashboard</h2>
+          <div class="last-updated">Last updated: ${new Date().toLocaleString()}</div>
+        </div>
+        
+        <div class="metrics-grid">
+          <div class="metric-card primary">
+            <div class="metric-icon">💬</div>
+            <div class="metric-value">${interactions}</div>
+            <div class="metric-label">Total Interactions</div>
+            <div class="metric-trend ${interactions > 10 ? 'up' : 'neutral'}">
+              ${interactions > 10 ? '↗' : '→'} Active session
+            </div>
+          </div>
+          
+          <div class="metric-card ${memoryEfficiency > 80 ? 'success' : memoryEfficiency > 60 ? 'warning' : 'danger'}">
+            <div class="metric-icon">🧠</div>
+            <div class="metric-value">${memoryEfficiency}%</div>
+            <div class="metric-label">Memory Efficiency</div>
+            <div class="metric-trend">
+              ${memoryEfficiency > 80 ? '🟢 Excellent' : memoryEfficiency > 60 ? '🟡 Good' : '🔴 Needs attention'}
+            </div>
+          </div>
+          
+          <div class="metric-card info">
+            <div class="metric-icon">⚡</div>
+            <div class="metric-value">${avgResponseTime}ms</div>
+            <div class="metric-label">Avg Response Time</div>
+            <div class="metric-trend ${avgResponseTime < 1000 ? 'up' : 'down'}">
+              ${avgResponseTime < 1000 ? '🟢 Fast' : '🟡 Moderate'}
+            </div>
+          </div>
+          
+          <div class="metric-card secondary">
+            <div class="metric-icon">📈</div>
+            <div class="metric-value">${recentActivity}</div>
+            <div class="metric-label">Activity Pattern</div>
+            <div class="metric-trend neutral">Recent behavior</div>
+          </div>
+        </div>
+
+        ${analytics.memoryBreakdown ? this.formatMemoryBreakdown(analytics.memoryBreakdown) : ''}
+        ${analytics.interactionHistory ? this.formatInteractionHistory(analytics.interactionHistory) : ''}
+        ${result.recommendations ? this.formatRecommendations(result.recommendations, 'session') : ''}
+      </div>
+    `;
+  }
+
+  formatEnhancedConceptResults(result) {
+    const concepts = result.conceptAnalytics || {};
+    const totalConcepts = concepts.totalConcepts || 0;
+    const uniqueConcepts = concepts.uniqueConcepts || 0;
+    const conceptDiversity = Math.round((concepts.diversityScore || 0) * 100);
+    const topConcepts = concepts.topConcepts || [];
+
+    return `
+      <div class="analytics-dashboard">
+        <div class="dashboard-header">
+          <h2>🧩 Concept Network Analysis</h2>
+          <div class="last-updated">Last updated: ${new Date().toLocaleString()}</div>
+        </div>
+        
+        <div class="metrics-grid">
+          <div class="metric-card primary">
+            <div class="metric-icon">🎯</div>
+            <div class="metric-value">${totalConcepts}</div>
+            <div class="metric-label">Total Concepts</div>
+            <div class="metric-trend up">Knowledge base size</div>
+          </div>
+          
+          <div class="metric-card success">
+            <div class="metric-icon">🔗</div>
+            <div class="metric-value">${uniqueConcepts}</div>
+            <div class="metric-label">Unique Concepts</div>
+            <div class="metric-trend up">Distinct knowledge</div>
+          </div>
+          
+          <div class="metric-card ${conceptDiversity > 70 ? 'success' : conceptDiversity > 40 ? 'warning' : 'info'}">
+            <div class="metric-icon">🌈</div>
+            <div class="metric-value">${conceptDiversity}%</div>
+            <div class="metric-label">Diversity Score</div>
+            <div class="metric-trend">
+              ${conceptDiversity > 70 ? '🟢 High variety' : conceptDiversity > 40 ? '🟡 Moderate' : '🔵 Focused'}
+            </div>
+          </div>
+          
+          <div class="metric-card info">
+            <div class="metric-icon">📊</div>
+            <div class="metric-value">${topConcepts.length}</div>
+            <div class="metric-label">Top Concepts</div>
+            <div class="metric-trend neutral">Most frequent</div>
+          </div>
+        </div>
+
+        ${this.formatTopConcepts(topConcepts)}
+        ${concepts.relationshipMap ? this.formatRelationshipMap(concepts.relationshipMap) : ''}
+        ${concepts.conceptClusters ? this.formatConceptClusters(concepts.conceptClusters) : ''}
+        ${result.recommendations ? this.formatRecommendations(result.recommendations, 'concepts') : ''}
+      </div>
+    `;
+  }
+
+  formatEnhancedSystemResults(result) {
+    const system = result.systemHealth || {};
+    const memory = result.memoryAnalytics || {};
+    const performance = result.performanceAnalytics || {};
+    
+    const overallHealth = this.calculateOverallHealth(system);
+    const memoryUsage = Math.round((memory.utilizationPercentage || 0) * 100);
+    const avgLatency = performance.averageLatency || 0;
+    const throughput = performance.requestsPerSecond || 0;
+
+    return `
+      <div class="analytics-dashboard system">
+        <div class="dashboard-header">
+          <h2>🔍 Comprehensive System Analytics</h2>
+          <div class="system-status ${overallHealth.status}">
+            ${overallHealth.icon} System ${overallHealth.label}
+          </div>
+          <div class="last-updated">Last updated: ${new Date().toLocaleString()}</div>
+        </div>
+        
+        <div class="system-overview">
+          <div class="health-indicator ${overallHealth.status}">
+            <div class="health-circle">
+              <div class="health-percentage">${overallHealth.score}%</div>
+            </div>
+            <div class="health-label">Overall System Health</div>
+          </div>
+        </div>
+
+        <div class="metrics-grid system-grid">
+          <div class="metric-card ${memoryUsage > 80 ? 'danger' : memoryUsage > 60 ? 'warning' : 'success'}">
+            <div class="metric-icon">🧠</div>
+            <div class="metric-value">${memoryUsage}%</div>
+            <div class="metric-label">Memory Usage</div>
+            <div class="metric-trend">
+              ${memoryUsage > 80 ? '🔴 High' : memoryUsage > 60 ? '🟡 Moderate' : '🟢 Optimal'}
+            </div>
+          </div>
+          
+          <div class="metric-card ${avgLatency > 2000 ? 'danger' : avgLatency > 1000 ? 'warning' : 'success'}">
+            <div class="metric-icon">⚡</div>
+            <div class="metric-value">${avgLatency}ms</div>
+            <div class="metric-label">Average Latency</div>
+            <div class="metric-trend">
+              ${avgLatency > 2000 ? '🔴 Slow' : avgLatency > 1000 ? '🟡 Moderate' : '🟢 Fast'}
+            </div>
+          </div>
+          
+          <div class="metric-card info">
+            <div class="metric-icon">🚀</div>
+            <div class="metric-value">${throughput.toFixed(1)}</div>
+            <div class="metric-label">Requests/sec</div>
+            <div class="metric-trend up">System throughput</div>
+          </div>
+          
+          <div class="metric-card secondary">
+            <div class="metric-icon">📈</div>
+            <div class="metric-value">${system.componentsHealthy || 0}</div>
+            <div class="metric-label">Healthy Components</div>
+            <div class="metric-trend up">Active services</div>
+          </div>
+        </div>
+
+        ${this.formatSystemComponents(system)}
+        ${this.formatPerformanceCharts(performance)}
+        ${result.recommendations ? this.formatRecommendations(result.recommendations, 'system') : ''}
+        ${this.formatSystemActions()}
+      </div>
+    `;
+  }
+
+  // Helper methods for enhanced dashboard formatting
+  formatMemoryBreakdown(breakdown) {
+    return `
+      <div class="memory-breakdown">
+        <h3>🧠 Memory Breakdown</h3>
+        <div class="breakdown-grid">
+          <div class="breakdown-item">
+            <span class="label">Short Term:</span>
+            <span class="value">${breakdown.shortTerm || 0}</span>
+          </div>
+          <div class="breakdown-item">
+            <span class="label">Long Term:</span>
+            <span class="value">${breakdown.longTerm || 0}</span>
+          </div>
+          <div class="breakdown-item">
+            <span class="label">Cache Hits:</span>
+            <span class="value">${breakdown.cacheHits || 0}%</span>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  formatInteractionHistory(history) {
+    if (!history || !Array.isArray(history)) return '';
+    
+    const recentHistory = history.slice(-5);
+    return `
+      <div class="interaction-history">
+        <h3>💬 Recent Interactions</h3>
+        <div class="history-timeline">
+          ${recentHistory.map(item => `
+            <div class="timeline-item">
+              <div class="timeline-time">${new Date(item.timestamp).toLocaleTimeString()}</div>
+              <div class="timeline-content">${item.summary || item.prompt?.substring(0, 50) + '...'}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  formatRecommendations(recommendations, type) {
+    if (!recommendations || !Array.isArray(recommendations)) return '';
+    
+    const typeIcons = {
+      session: '💡',
+      concepts: '🔧',
+      system: '🚀'
+    };
+    
+    return `
+      <div class="recommendations">
+        <h3>${typeIcons[type] || '💡'} Recommendations</h3>
+        <div class="recommendation-list">
+          ${recommendations.map(rec => `
+            <div class="recommendation-item ${rec.priority || 'normal'}">
+              <div class="rec-icon">${rec.priority === 'high' ? '🔴' : rec.priority === 'medium' ? '🟡' : '🟢'}</div>
+              <div class="rec-content">
+                <div class="rec-title">${rec.title || rec.message}</div>
+                <div class="rec-description">${rec.description || ''}</div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  formatTopConcepts(concepts) {
+    if (!concepts || !Array.isArray(concepts)) return '';
+    
+    return `
+      <div class="top-concepts">
+        <h3>🎯 Top Concepts</h3>
+        <div class="concept-list">
+          ${concepts.map(concept => `
+            <div class="concept-item">
+              <div class="concept-name">${concept.name || concept}</div>
+              <div class="concept-frequency">${concept.frequency || concept.count || 0}</div>
+              <div class="concept-bar">
+                <div class="concept-fill" style="width: ${Math.min((concept.frequency || concept.count || 0) * 10, 100)}%"></div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  formatRelationshipMap(relationships) {
+    if (!relationships) return '';
+    
+    return `
+      <div class="relationship-map">
+        <h3>🔗 Concept Relationships</h3>
+        <div class="relationship-network">
+          ${Object.entries(relationships).slice(0, 10).map(([concept, relations]) => `
+            <div class="relationship-node">
+              <div class="node-center">${concept}</div>
+              <div class="node-connections">
+                ${relations.slice(0, 3).map(rel => `
+                  <div class="connection">${rel.target || rel}</div>
+                `).join('')}
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  formatConceptClusters(clusters) {
+    if (!clusters || !Array.isArray(clusters)) return '';
+    
+    return `
+      <div class="concept-clusters">
+        <h3>🌐 Concept Clusters</h3>
+        <div class="cluster-grid">
+          ${clusters.map(cluster => `
+            <div class="cluster-card">
+              <div class="cluster-name">${cluster.name}</div>
+              <div class="cluster-size">${cluster.concepts?.length || cluster.size || 0} concepts</div>
+              <div class="cluster-strength">Strength: ${Math.round((cluster.strength || 0) * 100)}%</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  calculateOverallHealth(system) {
+    const components = system.components || {};
+    const total = Object.keys(components).length || 4; // Default assumption of 4 components
+    const healthy = system.componentsHealthy || Object.values(components).filter(c => c.status === 'healthy').length;
+    
+    const score = Math.round((healthy / total) * 100);
+    
+    if (score >= 90) return { score, status: 'success', icon: '🟢', label: 'Excellent' };
+    if (score >= 70) return { score, status: 'warning', icon: '🟡', label: 'Good' };
+    if (score >= 50) return { score, status: 'danger', icon: '🔴', label: 'Needs Attention' };
+    return { score, status: 'critical', icon: '💀', label: 'Critical' };
+  }
+
+  formatSystemComponents(system) {
+    const components = system.components || {};
+    
+    return `
+      <div class="system-components">
+        <h3>⚙️ System Components</h3>
+        <div class="component-grid">
+          ${Object.entries(components).map(([name, info]) => `
+            <div class="component-card ${info.status || 'unknown'}">
+              <div class="component-name">${name}</div>
+              <div class="component-status">${info.status === 'healthy' ? '🟢' : info.status === 'warning' ? '🟡' : '🔴'} ${info.status || 'Unknown'}</div>
+              <div class="component-metrics">
+                ${info.responseTime ? `<div>Response: ${info.responseTime}ms</div>` : ''}
+                ${info.uptime ? `<div>Uptime: ${info.uptime}</div>` : ''}
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  formatPerformanceCharts(performance) {
+    const latencyData = performance.latencyDistribution || {};
+    
+    return `
+      <div class="performance-charts">
+        <h3>📊 Performance Metrics</h3>
+        <div class="chart-container">
+          <div class="latency-chart">
+            <h4>Response Time Distribution</h4>
+            <div class="chart-bars">
+              <div class="chart-bar">
+                <div class="bar-label">p50</div>
+                <div class="bar-fill" style="height: ${Math.min((latencyData.p50 || 0) / 10, 100)}%"></div>
+                <div class="bar-value">${latencyData.p50 || 0}ms</div>
+              </div>
+              <div class="chart-bar">
+                <div class="bar-label">p95</div>
+                <div class="bar-fill" style="height: ${Math.min((latencyData.p95 || 0) / 10, 100)}%"></div>
+                <div class="bar-value">${latencyData.p95 || 0}ms</div>
+              </div>
+              <div class="chart-bar">
+                <div class="bar-label">p99</div>
+                <div class="bar-fill" style="height: ${Math.min((latencyData.p99 || 0) / 10, 100)}%"></div>
+                <div class="bar-value">${latencyData.p99 || 0}ms</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  formatSystemActions() {
+    return `
+      <div class="system-actions">
+        <h3>🛠️ System Actions</h3>
+        <div class="action-buttons">
+          <button class="action-btn primary" onclick="workbench.clearCache()">
+            🗑️ Clear Cache
+          </button>
+          <button class="action-btn secondary" onclick="workbench.optimizeMemory()">
+            🔧 Optimize Memory
+          </button>
+          <button class="action-btn info" onclick="workbench.exportDiagnostics()">
+            📋 Export Diagnostics
+          </button>
+          <button class="action-btn warning" onclick="workbench.restartServices()">
+            🔄 Restart Services
+          </button>
+        </div>
       </div>
     `;
   }
