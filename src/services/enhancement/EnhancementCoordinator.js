@@ -113,6 +113,12 @@ export class EnhancementCoordinator {
      * @returns {Object} Comprehensive enhancement result
      */
     async enhanceQuery(query, options = {}) {
+        console.log('🔍 CONSOLE: EnhancementCoordinator starting with services:', {
+            useHyDE: !!options.useHyDE,
+            useWikipedia: !!options.useWikipedia,
+            useWikidata: !!options.useWikidata,
+            useWebSearch: !!options.useWebSearch
+        });
         logger.info(`🔍 Coordinating query enhancement: "${query}"`);
         logger.info(`Enhancement options: HyDE(${!!options.useHyDE}), Wikipedia(${!!options.useWikipedia}), Wikidata(${!!options.useWikidata}), WebSearch(${!!options.useWebSearch})`);
 
@@ -128,6 +134,7 @@ export class EnhancementCoordinator {
             if (options.useWebSearch && this.services.webSearch) servicesToUse.push('webSearch');
 
             if (servicesToUse.length === 0) {
+                console.log('⚠️ CONSOLE: No enhancement services requested - using original query only');
                 logger.warn('No enhancement services requested');
                 return {
                     success: true,
@@ -140,6 +147,7 @@ export class EnhancementCoordinator {
             }
 
             // Execute enhancements
+            console.log(`🚀 CONSOLE: Running ${servicesToUse.length} enhancement services:`, servicesToUse);
             let enhancementResults;
             if (this.settings.enableConcurrentProcessing && servicesToUse.length > 1) {
                 enhancementResults = await this.executeConcurrentEnhancements(query, servicesToUse, options);
@@ -388,20 +396,67 @@ export class EnhancementCoordinator {
                         }
                     }
                     break;
+
+                case 'webSearch':
+                    console.log('🌐 CONSOLE: EnhancementCoordinator processing web search results', {
+                        hasResults: !!(result.results && result.results.length > 0),
+                        resultCount: result.results?.length || 0,
+                        hasContextualInfo: !!result.contextualInfo,
+                        firstResult: result.results?.[0] ? {
+                            title: result.results[0].title,
+                            hasDescription: !!result.results[0].description,
+                            url: result.results[0].url,
+                            keys: Object.keys(result.results[0])
+                        } : 'none'
+                    });
+                    
+                    if (result.results && result.results.length > 0) {
+                        const webSummaries = result.results
+                            .slice(0, 3)
+                            .map((item, i) => `${i + 1}. ${item.title}: ${item.description || 'No description'}`)
+                            .join('\n');
+                        console.log('🌐 CONSOLE: Web search summaries created', { webSummaries });
+                        contextSections.push(webSummaries); // Remove the "WEB SEARCH RESULTS:" header to make it more natural
+                    }
+                    if (result.contextualInfo) {
+                        console.log('🌐 CONSOLE: Adding contextual info', { 
+                            length: result.contextualInfo.length,
+                            preview: result.contextualInfo.substring(0, 100) 
+                        });
+                        contextSections.push(result.contextualInfo);
+                    }
+                    break;
             }
         }
 
         // Combine sections and check length
         const fullContext = contextSections.join('\n');
         
+        console.log('🔥 CONSOLE: EnhancementCoordinator final context composition', {
+            sectionCount: contextSections.length,
+            sections: contextSections.map((section, i) => ({ 
+                index: i, 
+                length: section.length,
+                preview: section.substring(0, 100) 
+            })),
+            fullContextLength: fullContext.length,
+            fullContextPreview: fullContext.substring(0, 300)
+        });
+        
         // Truncate if too long
         if (fullContext.length > this.settings.maxCombinedContextLength) {
             const truncatedContext = fullContext.substring(0, this.settings.maxCombinedContextLength) + '\n[Context truncated due to length...]';
             combinedContext.combinedPrompt = truncatedContext;
             combinedContext.metadata.truncated = true;
+            console.log('⚠️ CONSOLE: Context truncated due to length', {
+                originalLength: fullContext.length,
+                truncatedLength: truncatedContext.length,
+                maxAllowed: this.settings.maxCombinedContextLength
+            });
         } else {
             combinedContext.combinedPrompt = fullContext;
             combinedContext.metadata.truncated = false;
+            console.log('✅ CONSOLE: Context not truncated', { length: fullContext.length });
         }
 
         combinedContext.metadata.totalLength = combinedContext.combinedPrompt.length;

@@ -113,9 +113,10 @@ export class ApiService {
    * @param {boolean} params.useHyDE - Whether to use HyDE enhancement
    * @param {boolean} params.useWikipedia - Whether to use Wikipedia enhancement
    * @param {boolean} params.useWikidata - Whether to use Wikidata enhancement
+   * @param {boolean} params.useWebSearch - Whether to use Web Search enhancement
    * @returns {Promise<Object>} Ask result with answer and related content
    */
-  async ask({ question, mode = 'standard', useContext = true, useHyDE = false, useWikipedia = false, useWikidata = false, threshold }) {
+  async ask({ question, mode = 'standard', useContext = true, useHyDE = false, useWikipedia = false, useWikidata = false, useWebSearch = false, threshold }) {
     return this.makeRequest('/ask', {
       method: 'POST',
       body: JSON.stringify({ 
@@ -125,6 +126,7 @@ export class ApiService {
         useHyDE,
         useWikipedia,
         useWikidata,
+        useWebSearch,
         threshold
       })
     });

@@ -92,6 +92,14 @@ export class HybridContextManager {
             mode: options.mode
         });
         
+        console.log('🔄 CONSOLE: HybridContextManager processQuery called with options:', {
+            useContext: options.useContext,
+            useHyDE: options.useHyDE,
+            useWikipedia: options.useWikipedia,
+            useWikidata: options.useWikidata,
+            useWebSearch: options.useWebSearch,
+            hasEnhancements: this._hasEnhancements(options)
+        });
         logger.info('🔄 Processing query with hybrid context approach', { 
             query: query.substring(0, 100) + '...',
             enableEnhancements: this._hasEnhancements(options),
@@ -197,6 +205,7 @@ export class HybridContextManager {
                 zptState,
                 localContextResults: localContextResult?.contexts || [],
                 enhancementResults: enhancementResult?.results || [],
+                enhancements: this._extractEnhancementDetails(enhancementResult),
                 stats: {
                     personalContextItems: localContextResult?.contexts?.length || 0,
                     enhancementSources: enhancementResult?.metadata?.servicesUsed || [],
@@ -230,6 +239,12 @@ export class HybridContextManager {
         
         // Enhancement search (if requested) - check cache first, then live enhancement
         if (this._hasEnhancements(options) && this.enhancementCoordinator) {
+            console.log('🔍 CONSOLE: Starting enhancement search with services:', {
+                useHyDE: options.useHyDE,
+                useWikipedia: options.useWikipedia, 
+                useWikidata: options.useWikidata,
+                useWebSearch: options.useWebSearch
+            });
             const enhancementOptions = this._adaptEnhancementOptionsForZPT(options, zptState);
             searches.push(
                 this._searchCachedEnhancements(query, options)
@@ -240,6 +255,7 @@ export class HybridContextManager {
                         }
                         
                         // No cache hit - proceed with live enhancement
+                        console.log('🚀 CONSOLE: Cache miss - running live enhancements');
                         logger.debug('🔄 No cache hit, proceeding with live enhancement');
                         return this.enhancementCoordinator.enhanceQuery(query, enhancementOptions);
                     })
@@ -1274,30 +1290,42 @@ export class HybridContextManager {
                     promptPreview: typeof synthesisPrompt === 'string' ? synthesisPrompt.substring(0, 200) : JSON.stringify(synthesisPrompt).substring(0, 200),
                     hasPersonalContent: !!synthesisComponents.personalContent,
                     personalContentLength: synthesisComponents.personalContent?.length || 0,
-                    personalContentPreview: synthesisComponents.personalContent?.substring(0, 100)
+                    personalContentPreview: synthesisComponents.personalContent?.substring(0, 100),
+                    hasEnhancementContent: !!synthesisComponents.enhancementContent,
+                    enhancementContentLength: synthesisComponents.enhancementContent?.length || 0,
+                    enhancementContentPreview: synthesisComponents.enhancementContent?.substring(0, 100)
                 });
                 
-                // Create a simple, direct prompt that includes both personal and enhancement content
+                // Create a cleaner, more natural prompt that blends contexts without explicit section headers
                 const contextParts = [];
                 
                 if (synthesisComponents.personalContent) {
-                    contextParts.push(`[PERSONAL CONTEXT]\n${synthesisComponents.personalContent}`);
+                    console.log('🔥 CONSOLE: Adding personal content to context');
+                    contextParts.push(synthesisComponents.personalContent);
                 }
                 
                 if (synthesisComponents.enhancementContent) {
-                    contextParts.push(`[EXTERNAL KNOWLEDGE]\n${synthesisComponents.enhancementContent}`);
+                    console.log('🔥 CONSOLE: Adding enhancement content to context (from web search, Wikipedia, etc.)');
+                    contextParts.push(synthesisComponents.enhancementContent);
                 }
                 
-                const contextContent = contextParts.length > 0 ? contextParts.join('\n\n---\n\n') : 'No relevant context found.';
+                const contextContent = contextParts.length > 0 ? contextParts.join('\n\n') : 'No relevant context found.';
                 
-                const directPrompt = `Answer this question using the provided context.
+                console.log('🔥 CONSOLE: Final context composition', {
+                    totalParts: contextParts.length,
+                    combinedLength: contextContent.length,
+                    contextPreview: contextContent.substring(0, 300)
+                });
+                
+                // More natural prompt that encourages synthesis rather than verbatim reproduction
+                const directPrompt = `Please answer this question naturally, drawing insights from the available information:
 
-Question: ${query}
+"${query}"
 
-Context:
+Available information:
 ${contextContent}
 
-Please provide a direct answer to the question based on the context above. If the context contains relevant information, use it to answer. If not, say so clearly.`;
+Provide a helpful, synthesized answer based on the information above. Focus on directly answering the question rather than repeating the source material.`;
                 
                 answer = await this.safeOperations.generateResponse(directPrompt);
                 
@@ -2391,6 +2419,107 @@ Please provide a direct answer to the question based on the context above. If th
      */
     _hasEnhancements(options) {
         return options.useHyDE || options.useWikipedia || options.useWikidata || options.useWebSearch;
+    }
+
+    /**
+     * Extract enhancement details from EnhancementCoordinator result
+     * 
+     * @private
+     * @param {Object} enhancementResult - Result from EnhancementCoordinator
+     * @returns {Array} Array of enhancement details
+     */
+    _extractEnhancementDetails(enhancementResult) {
+        if (!enhancementResult || !enhancementResult.success) {
+            return [];
+        }
+
+        const enhancements = [];
+        
+        // Debug: Log the structure we're working with
+        logger.debug('Extracting enhancement details from:', {
+            hasIndividualResults: !!enhancementResult.individualResults,
+            hasMetadata: !!enhancementResult.metadata,
+            servicesUsed: enhancementResult.metadata?.servicesUsed
+        });
+        
+        // Extract from individual results if available
+        if (enhancementResult.individualResults && enhancementResult.individualResults.successful) {
+            for (const serviceResult of enhancementResult.individualResults.successful) {
+                const enhancement = {
+                    type: serviceResult.serviceName,
+                    success: true,
+                    source: serviceResult.serviceName
+                };
+
+                // Add service-specific data based on the service type
+                switch (serviceResult.serviceName) {
+                    case 'webSearch':
+                        if (serviceResult.result && serviceResult.result.results) {
+                            enhancement.results = serviceResult.result.results.map(item => ({
+                                title: item.title,
+                                url: item.url,
+                                snippet: item.snippet,
+                                relevanceScore: item.relevanceScore
+                            }));
+                            enhancement.count = serviceResult.result.results.length;
+                        }
+                        break;
+                        
+                    case 'wikipedia':
+                        if (serviceResult.result && serviceResult.result.wikipediaResults) {
+                            enhancement.results = serviceResult.result.wikipediaResults.map(item => ({
+                                title: item.title,
+                                url: item.url,
+                                content: item.content?.substring(0, 200) + '...'
+                            }));
+                            enhancement.count = serviceResult.result.wikipediaResults.length;
+                        }
+                        break;
+                        
+                    case 'wikidata':
+                        if (serviceResult.result && serviceResult.result.wikidataResults) {
+                            enhancement.results = serviceResult.result.wikidataResults.map(item => ({
+                                entity: item.entity,
+                                label: item.label,
+                                description: item.description
+                            }));
+                            enhancement.count = serviceResult.result.wikidataResults.length;
+                        }
+                        break;
+                        
+                    case 'hyde':
+                        if (serviceResult.result && serviceResult.result.hydeResults) {
+                            enhancement.results = [{
+                                expandedQuery: serviceResult.result.expandedQuery,
+                                concepts: serviceResult.result.concepts
+                            }];
+                            enhancement.count = 1;
+                        }
+                        break;
+                        
+                    default:
+                        enhancement.results = [serviceResult.result];
+                        enhancement.count = 1;
+                }
+
+                enhancements.push(enhancement);
+            }
+        }
+        
+        // If no individual results, create a basic enhancement entry from metadata
+        if (enhancements.length === 0 && enhancementResult.metadata && enhancementResult.metadata.servicesUsed) {
+            for (const serviceName of enhancementResult.metadata.servicesUsed) {
+                enhancements.push({
+                    type: serviceName,
+                    success: true,
+                    source: serviceName,
+                    count: 1,
+                    results: []
+                });
+            }
+        }
+
+        return enhancements;
     }
 
     /**

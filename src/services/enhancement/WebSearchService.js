@@ -61,6 +61,7 @@ export class WebSearchService {
      * @returns {Promise<Object>} Enhancement results
      */
     async enhance(query, options = {}) {
+        console.log('🌐 CONSOLE: WebSearchService starting DuckDuckGo search for:', query.substring(0, 50) + '...');
         const startTime = Date.now();
         
         try {
