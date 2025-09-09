@@ -5,13 +5,16 @@ PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX prov: <http://www.w3.org/ns/prov#>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 
-# Extract all entities from the Semem knowledge base
-# This creates a clean entity-centric view with key properties
+# Extract all elements from the Semem knowledge base
+# This creates a clean element-centric view with key properties
+# Updated to work with actual data structure (ragno:Element + skos:Concept)
 CONSTRUCT {
-    ?entity rdf:type ragno:Entity ;
+    ?element rdf:type ragno:Element ;
+            rdf:type skos:Concept ;
             rdfs:label ?label ;
+            skos:prefLabel ?prefLabel ;
             ragno:content ?content ;
-            ragno:entityType ?entityType ;
+            ragno:connectsTo ?connection ;
             ragno:hasEmbedding ?embedding ;
             ragno:weight ?weight ;
             ragno:centrality ?centrality ;
@@ -23,27 +26,28 @@ CONSTRUCT {
 }
 WHERE {
     GRAPH <${graphURI}> {
-        ?entity a ragno:Entity .
+        ?element a ragno:Element .
         
-        # Core entity properties
-        OPTIONAL { ?entity rdfs:label ?label }
-        OPTIONAL { ?entity ragno:content ?content }
-        OPTIONAL { ?entity ragno:entityType ?entityType }
-        OPTIONAL { ?entity ragno:hasEmbedding ?embedding }
-        OPTIONAL { ?entity ragno:weight ?weight }
-        OPTIONAL { ?entity ragno:centrality ?centrality }
-        OPTIONAL { ?entity ragno:confidence ?confidence }
-        OPTIONAL { ?entity dcterms:created ?created }
-        OPTIONAL { ?entity prov:wasDerivedFrom ?source }
+        # Core element properties
+        OPTIONAL { ?element rdfs:label ?label }
+        OPTIONAL { ?element skos:prefLabel ?prefLabel }
+        OPTIONAL { ?element ragno:content ?content }
+        OPTIONAL { ?element ragno:connectsTo ?connection }
+        OPTIONAL { ?element ragno:hasEmbedding ?embedding }
+        OPTIONAL { ?element ragno:weight ?weight }
+        OPTIONAL { ?element ragno:centrality ?centrality }
+        OPTIONAL { ?element ragno:confidence ?confidence }
+        OPTIONAL { ?element dcterms:created ?created }
+        OPTIONAL { ?element prov:wasDerivedFrom ?source }
         
         # Trace to source document
         OPTIONAL {
-            ?entity prov:wasDerivedFrom+ ?sourceDoc .
+            ?element prov:wasDerivedFrom+ ?sourceDoc .
             ?sourceDoc a ragno:Unit .
             FILTER(CONTAINS(STR(?sourceDoc), "doc-") || CONTAINS(STR(?sourceDoc), "document"))
         }
         
-        # Infer domain from entity content or source
+        # Infer domain from element content or source
         OPTIONAL {
             BIND(
                 IF(CONTAINS(LCASE(COALESCE(?content, "")), "climate") || 

@@ -3,45 +3,32 @@ PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX dcterms: <http://purl.org/dc/terms/>
 
-# Extract all relationships from the knowledge base
-# Creates a graph view focusing on entity-to-entity connections
+# Extract all connections from the knowledge base
+# Creates a graph view focusing on element-to-interaction connections
+# Updated to work with actual data structure (ragno:connectsTo relationships)
 CONSTRUCT {
-    ?relationship rdf:type ragno:Relationship ;
-                  ragno:hasSourceEntity ?sourceEntity ;
-                  ragno:hasTargetEntity ?targetEntity ;
-                  ragno:relationshipType ?relType ;
-                  ragno:weight ?weight ;
-                  ragno:description ?description ;
-                  ragno:navigationScore ?navScore ;
-                  ragno:conceptMatches ?conceptMatches ;
-                  ragno:sourceCorpus ?sourceCorpus ;
-                  dcterms:created ?created ;
-                  ragno:confidence ?confidence .
+    ?source ragno:connectsTo ?target ;
+            rdf:type ragno:Element .
+    ?target rdf:type ?targetType ;
+            dcterms:created ?created .
     
     # Create simplified direct relationships for easier traversal
-    ?sourceEntity ragno:relatedTo ?targetEntity ;
-                  ragno:relationshipType ?relType ;
-                  ragno:relationshipWeight ?weight .
+    ?source ragno:relatedTo ?target ;
+            ragno:connectionType "connectsTo" .
 }
 WHERE {
     GRAPH <${graphURI}> {
-        ?relationship a ragno:Relationship .
+        ?source ragno:connectsTo ?target .
         
-        # Core relationship properties
-        ?relationship ragno:hasSourceEntity ?sourceEntity ;
-                     ragno:hasTargetEntity ?targetEntity .
+        # Get source type (should be ragno:Element)
+        OPTIONAL { ?source rdf:type ragno:Element }
         
-        OPTIONAL { ?relationship ragno:relationshipType ?relType }
-        OPTIONAL { ?relationship ragno:weight ?weight }
-        OPTIONAL { ?relationship ragno:description ?description }
-        OPTIONAL { ?relationship ragno:navigationScore ?navScore }
-        OPTIONAL { ?relationship ragno:conceptMatches ?conceptMatches }
-        OPTIONAL { ?relationship ragno:sourceCorpus ?sourceCorpus }
-        OPTIONAL { ?relationship dcterms:created ?created }
-        OPTIONAL { ?relationship ragno:confidence ?confidence }
+        # Get target type and properties  
+        OPTIONAL { ?target rdf:type ?targetType }
+        OPTIONAL { ?target dcterms:created ?created }
         
-        # Filter out self-relationships
-        FILTER(?sourceEntity != ?targetEntity)
+        # Filter out self-connections (though unlikely with this data structure)
+        FILTER(?source != ?target)
     }
 }
-ORDER BY DESC(?weight) ?created
+ORDER BY ?source ?created

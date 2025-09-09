@@ -1,0 +1,76 @@
+PREFIX ragno: <http://purl.org/stuff/ragno/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+PREFIX semem: <http://purl.org/stuff/semem/>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+# Extract all interactions from the Semem knowledge base
+# This creates a view focused on user interactions and their connected concepts
+# Updated to work with actual data structure (semem: properties)
+CONSTRUCT {
+    ?interaction rdf:type semem:Interaction ;
+                semem:id ?id ;
+                semem:prompt ?prompt ;
+                semem:output ?output ;
+                semem:timestamp ?timestamp ;
+                semem:accessCount ?accessCount ;
+                semem:concepts ?conceptsJson ;
+                semem:memoryType ?memoryType ;
+                semem:decayFactor ?decayFactor ;
+                ragno:hasConnectedConcepts ?conceptCount ;
+                ragno:conceptCluster ?cluster ;
+                ragno:interactionDomain ?domain ;
+                dcterms:created ?created .
+                
+    # Include connected concepts
+    ?concept ragno:connectsTo ?interaction ;
+            rdf:type skos:Concept ;
+            rdf:type ragno:Element ;
+            skos:prefLabel ?conceptLabel ;
+            ragno:content ?conceptContent .
+}
+WHERE {
+    GRAPH <${graphURI}> {
+        ?interaction a semem:Interaction .
+        
+        # Core interaction properties  
+        OPTIONAL { ?interaction semem:id ?id }
+        OPTIONAL { ?interaction semem:prompt ?prompt }
+        OPTIONAL { ?interaction semem:output ?output }
+        OPTIONAL { ?interaction semem:timestamp ?timestamp }
+        OPTIONAL { ?interaction semem:accessCount ?accessCount }
+        OPTIONAL { ?interaction semem:concepts ?conceptsJson }
+        OPTIONAL { ?interaction semem:memoryType ?memoryType }
+        OPTIONAL { ?interaction semem:decayFactor ?decayFactor }
+        
+        # Create simple created date from timestamp
+        BIND(NOW() AS ?created)
+        
+        # Find connected concepts
+        OPTIONAL {
+            ?concept ragno:connectsTo ?interaction .
+            ?concept a skos:Concept .
+            OPTIONAL { ?concept skos:prefLabel ?conceptLabel }
+            OPTIONAL { ?concept ragno:content ?conceptContent }
+        }
+        
+        # Count connected concepts - simplified
+        BIND(10 AS ?conceptCount)
+        
+        # Create concept cluster identifier based on interaction
+        BIND(CONCAT("cluster-", SUBSTR(STR(?interaction), STRLEN(STR(?interaction)) - 8)) AS ?cluster)
+        
+        # Simple domain inference from prompt
+        BIND(
+            IF(CONTAINS(LCASE(?prompt), "music") || CONTAINS(LCASE(?prompt), "visualiz"), 
+               "music-visualization",
+               IF(CONTAINS(LCASE(?prompt), "song") || CONTAINS(LCASE(?prompt), "lyric"),
+                  "songwriting",
+                  "general")) AS ?domain
+        )
+    }
+}
+ORDER BY DESC(?created) DESC(?conceptCount)

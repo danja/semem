@@ -4,18 +4,19 @@ This directory contains CONSTRUCT queries designed to extract different views an
 
 ## Query Overview
 
-| Query | Purpose | Output Focus |
-|-------|---------|--------------|
-| `01-extract-entities.sparql` | Extract all entities with metadata | Entity-centric view with properties, domains, and provenance |
-| `02-extract-relationships.sparql` | Extract relationship networks | Graph view of entity-to-entity connections |
-| `03-extract-concepts.sparql` | Extract concept hierarchy | Concept-based knowledge organization |
-| `04-extract-documents.sparql` | Extract document structure | Document decomposition and text element hierarchy |
-| `05-extract-embeddings.sparql` | Extract embedding space | Vector space view with clustering information |
-| `06-extract-memory-interactions.sparql` | Extract user interactions | Conversation history and semantic memory operations |
-| `07-extract-knowledge-domains.sparql` | Extract domain organization | Domain-specific content clustering |
-| `08-extract-provenance-chains.sparql` | Extract processing provenance | Content derivation and transformation tracking |
-| `09-extract-zpt-navigation.sparql` | Extract ZPT navigation structure | Multi-dimensional knowledge space navigation |
-| `10-extract-community-clusters.sparql` | Extract semantic communities | Community detection and cluster analysis |
+| Query | Purpose | Output Focus | Status |
+|-------|---------|--------------|--------|
+| `01-extract-entities.sparql` | Extract all elements with metadata | Element-centric view with properties, domains, and content | ✅ **Working** - Updated for actual data structure |
+| `02-extract-relationships.sparql` | Extract connection networks | Graph view of element-to-interaction connections | ✅ **Working** - Updated for ragno:connectsTo relationships |
+| `03-extract-concepts.sparql` | Extract concept hierarchy | Concept-based knowledge organization | ⚠️ **Needs Update** - Original query doesn't match data structure |
+| `04-extract-documents.sparql` | Extract document structure | Document decomposition and text element hierarchy | ⚠️ **Needs Update** - Original query doesn't match data structure |
+| `05-extract-embeddings.sparql` | Extract embedding space | Vector space view with clustering information | ⚠️ **Needs Update** - Original query doesn't match data structure |
+| `06-extract-memory-interactions.sparql` | Extract user interactions | Conversation history and semantic memory operations | ⚠️ **Needs Update** - Original query doesn't match data structure |
+| `07-extract-knowledge-domains.sparql` | Extract domain organization | Domain-specific content clustering | ⚠️ **Needs Update** - Original query doesn't match data structure |
+| `08-extract-provenance-chains.sparql` | Extract processing provenance | Content derivation and transformation tracking | ⚠️ **Needs Update** - Original query doesn't match data structure |
+| `09-extract-zpt-navigation.sparql` | Extract ZPT navigation structure | Multi-dimensional knowledge space navigation | ⚠️ **Needs Update** - Original query doesn't match data structure |
+| `10-extract-community-clusters.sparql` | Extract semantic communities | Community detection and cluster analysis | ⚠️ **Needs Update** - Original query doesn't match data structure |
+| `11-extract-interactions.sparql` | Extract user interactions with full metadata | Complete interaction view with prompts, outputs, concepts, and domain classification | ✅ **Working** - New query tailored to actual semem:Interaction structure |
 
 ## Usage
 
@@ -308,6 +309,53 @@ Queries can be executed with different output formats:
 - Consider materialized views for frequently accessed patterns
 - Index on key properties: `ragno:content`, `dcterms:created`, `prov:wasDerivedFrom`
 
+## Working Queries (Tested 2025-09-09)
+
+The following queries have been tested against a live Semem SPARQL endpoint and work with the actual data structure:
+
+### ✅ **01-extract-entities.sparql** - Element Extraction
+- **Status**: Working - Updated for ragno:Element + skos:Concept structure
+- **Returns**: 27+ elements including concepts and enhancement queries
+- **Key Features**: Extracts prefLabels, content, connections, and domain inference
+- **Sample Output**: Concepts like "Semem", "visualization", "tune" with full metadata
+
+### ✅ **02-extract-relationships.sparql** - Connection Networks  
+- **Status**: Working - Updated for ragno:connectsTo relationships
+- **Returns**: Element-to-interaction connections with simplified traversal properties
+- **Key Features**: Maps concept-interaction relationships with connection types
+- **Sample Output**: Concepts connected to specific interactions with bidirectional links
+
+### ✅ **11-extract-interactions.sparql** - Full Interaction Analysis (New)
+- **Status**: Working - Custom query for semem:Interaction structure
+- **Returns**: Complete interaction metadata including prompts, outputs, concepts, timestamps
+- **Key Features**: Domain classification, concept clustering, full conversation context
+- **Sample Output**: 
+  - "Music-visualization" domain: Hillside Media Visualizer interaction
+  - "Songwriting" domain: Italian song translation interaction
+  - Full prompts, outputs, concept arrays, and metadata
+
+### Example Usage for Working Queries
+
+```bash
+# Extract all elements (concepts, enhancements)
+curl -X POST http://localhost:3030/semem/query \
+  -H "Content-Type: application/sparql-query" \
+  -H "Accept: text/turtle" \
+  --data-binary @01-extract-entities.sparql
+
+# Extract connection networks
+curl -X POST http://localhost:3030/semem/query \
+  -H "Content-Type: application/sparql-query" \
+  -H "Accept: text/turtle" \
+  --data-binary @02-extract-relationships.sparql
+
+# Extract full interactions with AI analysis
+curl -X POST http://localhost:3030/semem/query \
+  -H "Content-Type: application/sparql-query" \
+  -H "Accept: text/turtle" \
+  --data-binary @11-extract-interactions.sparql
+```
+
 ## Troubleshooting
 
 ### Common Issues
@@ -316,6 +364,16 @@ Queries can be executed with different output formats:
 2. **Timeout**: Add LIMIT clauses or filter conditions
 3. **Memory Issues**: Process in batches or use streaming
 4. **Missing Properties**: Check ontology alignment and data completeness
+5. **Data Structure Mismatch**: Many original queries expect different ontology patterns than actual data
+
+### Current Data Structure (2025-09-09)
+
+The actual Semem knowledge base contains:
+- **ragno:Element** (27) - Concepts and enhancement queries
+- **skos:Concept** (20) - Semantic concepts  
+- **semem:Interaction** (2) - User interactions with full metadata
+- **ragno:TextElement** (5) - Text processing elements
+- **ragno:Unit** (4) - Corpus units
 
 ### Debugging
 
@@ -329,4 +387,12 @@ SELECT DISTINCT ?type (COUNT(?s) AS ?count)
 WHERE { GRAPH <${graphURI}> { ?s a ?type } }
 GROUP BY ?type
 ORDER BY DESC(?count)
+
+# Test connectivity patterns
+SELECT ?source ?prop ?target WHERE { 
+  GRAPH <${graphURI}> { 
+    ?source ?prop ?target .
+    FILTER(CONTAINS(STR(?prop), "connect") || CONTAINS(STR(?prop), "relat"))
+  } 
+} LIMIT 10
 ```
