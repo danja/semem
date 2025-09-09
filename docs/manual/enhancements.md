@@ -190,12 +190,12 @@ Web Search enhancement provides access to real-time information from the web thr
 - Information that changes frequently
 
 **Web Search Workflow**:
-1. **Query Processing**: Your question is analyzed and search terms extracted
-2. **DuckDuckGo Search**: Performs web search using DuckDuckGo API
-3. **Content Retrieval**: Fetches relevant web page content and snippets
-4. **Relevance Filtering**: Scores and filters results by relevance to your query
-5. **Content Processing**: Extracts and summarizes key information from web sources
-6. **Real-time Integration**: Combines web results with personal knowledge and other enhancements
+1. **Query Processing**: Your question is analyzed and search terms extracted using LLM concept extraction
+2. **DuckDuckGo Search**: Performs web search using `duck-duck-scrape` library with SafeSearch enabled
+3. **Content Retrieval**: Fetches search result titles, descriptions, and URLs from DuckDuckGo
+4. **Relevance Filtering**: Scores and filters results by relevance to your query using similarity matching
+5. **Content Processing**: Extracts and summarizes key information from search results
+6. **Contextual Integration**: Generates contextual information and combines web results with personal knowledge and other enhancements
 
 **Example Web Search Queries**:
 - "What are the latest developments in AI regulation?"
@@ -214,9 +214,17 @@ Web Search enhancement provides access to real-time information from the web thr
 
 **Performance Features**:
 - **Rate Limiting**: Respectful API usage with built-in throttling
-- **Caching**: Intelligent caching of recent search results
+- **Caching**: Intelligent caching of recent search results for 15 minutes
 - **Relevance Scoring**: Advanced scoring to surface most relevant content
 - **Source Attribution**: Clear indication of information sources and timestamps
+- **Progress Logging**: Real-time console feedback showing web search progress and results
+- **SafeSearch**: Moderate SafeSearch filtering enabled by default for appropriate content
+
+**Technical Implementation**:
+- **Library**: Uses `duck-duck-scrape` v2.2.7 for reliable DuckDuckGo API access
+- **Service Architecture**: Follows established enhancement service patterns with dependency injection
+- **Error Handling**: Comprehensive error handling with fallback mechanisms
+- **Result Processing**: Extracts titles, descriptions, and URLs with relevance filtering
 
 ## Enhancement Coordination
 
@@ -292,6 +300,7 @@ await simpleVerbsService.ask({
   question: "Your question here",
   useWikipedia: true,
   useWikidata: true,
+  useWebSearch: true,
   useHyDE: true
 });
 ```
@@ -304,9 +313,10 @@ await simpleVerbsService.ask({
 ### Configuration and Setup
 
 **Required Components**:
-- **Internet Connection**: For Wikipedia and Wikidata access
+- **Internet Connection**: For Wikipedia, Wikidata, and Web Search access
 - **Embedding Service**: For HyDE functionality (Ollama or cloud providers)
 - **LLM Service**: For query processing and response generation
+- **Node.js Dependencies**: `duck-duck-scrape` package for web search functionality
 
 **Configuration Options**:
 - Enhancement timeout settings
