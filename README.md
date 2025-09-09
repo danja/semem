@@ -223,7 +223,7 @@ The modern web-based interface implementing the 7 Simple Verbs:
 
 **Core Panels:**
 - **Tell**: Store content with lazy/immediate processing options
-- **Ask**: Query knowledge with HyDE, Wikipedia, and Wikidata enhancements  
+- **Ask**: Query knowledge with HyDE, Wikipedia, Wikidata, and Web Search enhancements  
 - **Augment**: Extract concepts and process lazy content
 - **Navigate**: ZPT (Zoom/Pan/Tilt) knowledge space navigation with real-time feedback
 - **Inspect**: Debug system state and session cache
@@ -252,7 +252,7 @@ The original UI system includes VSOM visualization and SPARQL browser (via `npm 
 - **🎯 Zoom, Pan Tilt (ZPT)**: Knowledge navigation and processing with persistent state management
 - **🔌 Model Context Protocol (MCP)**: JSON-RPC 2.0 API for seamless LLM and agent integration with workflow orchestration
 - **🚀 MCP Prompts**: 8 pre-built workflow templates for complex multi-step operations
-- **🔍 Advanced Algorithms**: HyDE, VSOM, graph analytics, community detection, and Personal PageRank
+- **🔍 Advanced Algorithms**: HyDE, Web Search integration, VSOM, graph analytics, community detection, and Personal PageRank
 - **📊 Interactive Visualizations**: VSOM (Vector Self-Organizing Maps) for high-dimensional data exploration
 - **🔗 Multi-Provider LLM Support**: Ollama, Claude, Mistral, and other providers via unified connector system
 - **📊 Multiple Storage Backends**: In-memory, JSON, and SPARQL/RDF with caching optimization
@@ -870,6 +870,17 @@ Enhances retrieval by generating hypothetical answers using LLMs, with uncertain
 
 ```bash
 node examples/ragno/Hyde.js
+```
+
+### Web Search Integration
+Provides real-time information access through DuckDuckGo web search, enabling queries about current events, recent developments, and time-sensitive information not available in static knowledge sources.
+
+```bash
+# Web search is integrated into the enhancement system
+# Available through Ask interface with useWebSearch option
+curl -X POST http://localhost:4105/ask \
+  -H "Content-Type: application/json" \
+  -d '{"question": "Latest AI developments", "useWebSearch": true}'
 ```
 
 ### VSOM (Vectorized Self-Organizing Maps)
