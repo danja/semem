@@ -3,20 +3,35 @@ import UIServer from '../../../../../src/services/search/UIServer.js';
 import { EventEmitter } from 'events';
 
 // Mock logger to suppress test output
-vi.mock('loglevel', () => ({
-  default: {
-    info: vi.fn(),
-    error: vi.fn(),
-    warn: vi.fn(),
+vi.mock('loglevel', () => {
+  const mockLogger = {
+    trace: vi.fn(),
     debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
     setLevel: vi.fn()
-  },
-  info: vi.fn(),
-  error: vi.fn(),
-  warn: vi.fn(),
-  debug: vi.fn(),
-  setLevel: vi.fn()
-}));
+  };
+  
+  return {
+    default: {
+      trace: vi.fn(),
+      debug: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+      setLevel: vi.fn(),
+      getLogger: vi.fn(() => mockLogger)
+    },
+    trace: vi.fn(),
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    setLevel: vi.fn(),
+    getLogger: vi.fn(() => mockLogger)
+  };
+});
 
 // Import logger after mock is set up
 import logger from 'loglevel';
