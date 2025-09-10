@@ -6,66 +6,44 @@ PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 PREFIX semem: <http://purl.org/semem/>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
+# Updated query to work with actual Semem data structure (ragno:Element + skos:Concept)
 SELECT DISTINCT 
-    ?conceptCorpuscle 
+    ?concept 
     ?conceptLabel 
     ?conceptContent 
-    ?sourceTextElement 
-    ?conceptUnit
     ?created
     ?hasEmbedding
-    ?collectionCorpuscle
-    ?sourceUnit
-    ?documentTitle
-    ?documentFile
+    ?connectionTarget
+    ?interactionId
+    ?interactionPrompt
 WHERE {
     GRAPH <${graphURI}> {
-        # Find concept corpuscles
-        ?conceptCorpuscle a ragno:Corpuscle ;
-                         rdfs:label ?conceptLabel ;
-                         ragno:content ?conceptContent ;
-                         dcterms:created ?created ;
-                         prov:wasDerivedFrom ?sourceTextElement .
+        # Find concept elements (ragno:Element + skos:Concept)
+        ?concept a ragno:Element ;
+                 a skos:Concept ;
+                 skos:prefLabel ?conceptLabel ;
+                 ragno:content ?conceptContent .
         
         # Check if it has an embedding
         OPTIONAL {
-            ?conceptCorpuscle ragno:embedding ?embedding .
+            ?concept ragno:hasEmbedding ?embedding .
             BIND(true as ?hasEmbedding)
         }
         
-        # Find the corresponding Unit (if exists)
+        # Find what this concept connects to (interactions)
         OPTIONAL {
-            ?conceptCorpuscle skos:member ?conceptUnit .
-            ?conceptUnit a ragno:Unit .
+            ?concept ragno:connectsTo ?connectionTarget .
+            
+            # If it connects to an interaction, get interaction details
+            OPTIONAL {
+                ?connectionTarget a semem:Interaction ;
+                                 semem:id ?interactionId ;
+                                 semem:prompt ?interactionPrompt .
+            }
         }
         
-        # Find collection corpuscle that contains this concept
-        OPTIONAL {
-            ?collectionCorpuscle a ragno:Corpuscle ;
-                               skos:member ?conceptUnit .
-            ?collectionCorpuscle prov:wasDerivedFrom ?sourceTextElement .
-            
-            # Ensure it's actually a collection (not the individual concept corpuscle)
-            FILTER(?collectionCorpuscle != ?conceptCorpuscle)
-        }
-        
-        # Trace back to source document through Chunk -> TextElement -> Unit -> Document
-        OPTIONAL {
-            # Chunk (sourceTextElement) was derived from TextElement
-            ?sourceTextElement prov:wasDerivedFrom ?intermediateTextElement .
-            ?intermediateTextElement a ragno:TextElement .
-            
-            # TextElement was derived from Unit
-            ?intermediateTextElement prov:wasDerivedFrom ?sourceUnit .
-            ?sourceUnit a ragno:Unit .
-            
-            # Get document title and file information from Unit
-            OPTIONAL { ?sourceUnit rdfs:label ?documentTitle }
-            OPTIONAL { ?sourceUnit semem:sourceFile ?documentFile }
-        }
-        
-        # Filter for concept corpuscles (labels start with "Concept:")
-        FILTER(STRSTARTS(STR(?conceptLabel), "Concept:"))
+        # Get creation timestamp (may not exist for concepts)
+        OPTIONAL { ?concept dcterms:created ?created }
     }
 }
 ORDER BY ?created ?conceptLabel

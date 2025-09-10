@@ -3,52 +3,69 @@ PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX prov: <http://www.w3.org/ns/prov#>
+PREFIX semem: <http://purl.org/stuff/semem/>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 
-# Extract embedding information across all content types
-# Provides vector space view of the knowledge base
+# Extract embedding information across all content types (updated for actual data structure)
+# Provides vector space view of ragno:hasEmbedding, semem:embedding, and ragno:embedding
 CONSTRUCT {
     ?element rdf:type ragno:EmbeddedElement ;
              rdfs:label ?label ;
              ragno:content ?content ;
              ragno:hasEmbedding ?embedding ;
+             ragno:embeddingProperty ?embeddingProperty ;
              ragno:embeddingDimension ?dimension ;
              ragno:embeddingModel ?model ;
              ragno:originalType ?originalType ;
              dcterms:created ?created ;
              ragno:contentLength ?contentLength ;
-             ragno:embeddingNorm ?norm .
-    
-    # Create similarity clusters (simplified)
-    ?element ragno:inEmbeddingCluster ?cluster .
+             ragno:inEmbeddingCluster ?cluster .
 }
 WHERE {
     GRAPH <${graphURI}> {
-        # Find all elements with embeddings
-        ?element ragno:hasEmbedding ?embedding .
+        {
+            # Elements with ragno:hasEmbedding (chunks)
+            ?element ragno:hasEmbedding ?embedding .
+            BIND("ragno:hasEmbedding" AS ?embeddingProperty)
+            OPTIONAL { ?element rdfs:label ?label }
+            OPTIONAL { ?element ragno:content ?content }
+        }
+        UNION {
+            # Elements with ragno:embedding (some concepts)  
+            ?element ragno:embedding ?embedding .
+            BIND("ragno:embedding" AS ?embeddingProperty)
+            OPTIONAL { ?element rdfs:label ?label }
+            OPTIONAL { ?element skos:prefLabel ?label }
+            OPTIONAL { ?element ragno:content ?content }
+        }
+        UNION {
+            # Interactions with semem:embedding
+            ?element semem:embedding ?embedding .
+            BIND("semem:embedding" AS ?embeddingProperty)
+            OPTIONAL { ?element semem:prompt ?label }
+            OPTIONAL { ?element semem:output ?content }
+        }
         
-        # Get element metadata
-        OPTIONAL { ?element rdfs:label ?label }
-        OPTIONAL { ?element ragno:content ?content }
+        # Common metadata
         OPTIONAL { ?element dcterms:created ?created }
         
-        # Determine original type
+        # Determine original types
         OPTIONAL { ?element a ?type }
         BIND(COALESCE(?type, ragno:Element) AS ?originalType)
         
         # Calculate content metrics
-        OPTIONAL {
-            BIND(STRLEN(?content) AS ?contentLength)
-        }
+        BIND(STRLEN(COALESCE(?content, ?label, "")) AS ?contentLength)
         
-        # Extract embedding metadata (if available)
-        OPTIONAL { ?element ragno:embeddingModel ?model }
-        OPTIONAL { ?element ragno:embeddingDimension ?dimension }
-        OPTIONAL { ?element ragno:embeddingNorm ?norm }
+        # Default embedding metadata (1536 dimensions is common for many models)
+        BIND(1536 AS ?dimension)
+        BIND("text-embedding-ada-002" AS ?model)
         
-        # Create simple clustering based on content type and creation time
+        # Create clustering based on type and embedding property
         BIND(
             CONCAT(
                 STR(?originalType), 
+                "-", 
+                ?embeddingProperty,
                 "-", 
                 IF(BOUND(?created), 
                    SUBSTR(STR(?created), 1, 10), 

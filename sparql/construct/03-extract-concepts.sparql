@@ -4,66 +4,125 @@ PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX prov: <http://www.w3.org/ns/prov#>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-PREFIX semem: <http://purl.org/semem/>
+PREFIX semem: <http://purl.org/stuff/semem/>
 
-# Extract concept-based knowledge from corpuscles
-# Focuses on extracted concepts and their semantic relationships
+# Extract concept-based knowledge from skos:Concept instances (updated for actual data structure)
+# Focuses on extracted concepts and their semantic relationships with interactions
 CONSTRUCT {
-    ?conceptCorpuscle rdf:type ragno:Concept ;
-                      rdfs:label ?cleanLabel ;
-                      ragno:content ?content ;
-                      ragno:hasEmbedding ?embedding ;
-                      dcterms:created ?created ;
-                      prov:wasDerivedFrom ?sourceElement ;
-                      ragno:belongsToUnit ?conceptUnit ;
-                      ragno:sourceDocument ?documentTitle ;
-                      ragno:sourceFile ?documentFile ;
-                      ragno:processingStage "concept-extraction" .
+    ?concept rdf:type ragno:ConceptNode ;
+             rdf:type skos:Concept ;
+             rdfs:label ?conceptLabel ;
+             skos:prefLabel ?conceptLabel ;
+             ragno:content ?content ;
+             ragno:hasEmbedding ?embedding ;
+             dcterms:created ?created ;
+             ragno:connectsTo ?interaction ;
+             ragno:interactionAnchor ?interaction ;
+             ragno:sourcePrompt ?prompt ;
+             ragno:sourceOutput ?output ;
+             ragno:processingStage "concept-extraction" ;
+             ragno:conceptType ?conceptType ;
+             ragno:semanticDomain ?domain .
     
-    # Create concept hierarchy relationships
-    ?conceptUnit ragno:contains ?conceptCorpuscle ;
-                 rdf:type ragno:ConceptCollection .
+    # Create concept hierarchy and collection relationships
+    ?conceptCollection rdf:type ragno:ConceptCollection ;
+                      rdfs:label ?collectionLabel ;
+                      ragno:contains ?concept ;
+                      ragno:memberCount ?memberCount ;
+                      ragno:collectionType ?collectionType .
+    
+    # Create concept-to-concept relationships
+    ?concept ragno:relatedTo ?relatedConcept ;
+             ragno:relationshipType ?relationshipType ;
+             ragno:relationshipStrength ?relationshipStrength .
 }
 WHERE {
     GRAPH <${graphURI}> {
-        # Find concept corpuscles (labels start with "Concept:")
-        ?conceptCorpuscle a ragno:Corpuscle ;
-                         rdfs:label ?conceptLabel ;
-                         ragno:content ?content ;
-                         dcterms:created ?created ;
-                         prov:wasDerivedFrom ?sourceElement .
+        # Find skos:Concept instances  
+        ?concept a skos:Concept ;
+                skos:prefLabel ?conceptLabel .
         
-        FILTER(STRSTARTS(STR(?conceptLabel), "Concept:"))
+        # Get optional concept properties
+        OPTIONAL { ?concept ragno:content ?content }
+        OPTIONAL { ?concept ragno:hasEmbedding ?embedding }
+        OPTIONAL { ?concept dcterms:created ?created }
         
-        # Clean up the concept label
-        BIND(SUBSTR(?conceptLabel, 9) AS ?cleanLabel)
-        
-        # Check for embeddings
+        # Find connected interactions
         OPTIONAL {
-            ?conceptCorpuscle ragno:hasEmbedding ?embedding .
-        }
-        
-        # Find the corresponding Unit (concept collection)
-        OPTIONAL {
-            ?conceptCorpuscle skos:member ?conceptUnit .
-            ?conceptUnit a ragno:Unit .
-        }
-        
-        # Trace back to source document
-        OPTIONAL {
-            ?sourceElement prov:wasDerivedFrom ?intermediateElement .
-            ?intermediateElement a ragno:TextElement ;
-                               prov:wasDerivedFrom ?sourceUnit .
-            ?sourceUnit a ragno:Unit .
+            ?concept ragno:connectsTo ?interaction .
+            ?interaction a semem:Interaction ;
+                        semem:prompt ?prompt ;
+                        semem:output ?output .
             
-            # Get document metadata
-            OPTIONAL { ?sourceUnit rdfs:label ?documentTitle }
-            OPTIONAL { 
-                { ?sourceUnit semem:sourceFile ?documentFile } 
-                UNION 
-                { ?sourceUnit <http://purl.org/semem/sourceFile> ?documentFile }
+            # Determine semantic domain from interaction content
+            BIND(
+                IF(CONTAINS(LCASE(?prompt), "music") || CONTAINS(LCASE(?prompt), "song"), "music",
+                   IF(CONTAINS(LCASE(?prompt), "visualization"), "visualization",
+                      IF(CONTAINS(LCASE(?prompt), "personal") || CONTAINS(LCASE(?prompt), "adhd"), "personal",
+                         "general"))) AS ?domain
+            )
+        }
+        
+        # Determine concept type based on content and label
+        BIND(
+            IF(CONTAINS(LCASE(?conceptLabel), "music") || CONTAINS(LCASE(?conceptLabel), "song") || CONTAINS(LCASE(?conceptLabel), "lyrics"), "musical",
+               IF(CONTAINS(LCASE(?conceptLabel), "visual") || CONTAINS(LCASE(?conceptLabel), "media"), "visual",
+                  IF(STRLEN(?conceptLabel) > 15, "compound", "simple"))) AS ?conceptType
+        )
+        
+        # Create concept collections based on shared interactions
+        {
+            SELECT ?interaction ?interactionPrompt 
+                   (COUNT(DISTINCT ?relatedConcept) AS ?memberCount)
+            WHERE {
+                ?relatedConcept a skos:Concept ;
+                               ragno:connectsTo ?interaction .
+                ?interaction semem:prompt ?interactionPrompt .
             }
+            GROUP BY ?interaction ?interactionPrompt
+            HAVING(COUNT(DISTINCT ?relatedConcept) > 1)
+        }
+        
+        # Create collection metadata
+        BIND(IRI(CONCAT("http://purl.org/stuff/semem/collection/", REPLACE(STR(?interaction), ".*/([^/]+)$", "$1"))) AS ?conceptCollection)
+        
+        BIND(
+            CONCAT("Concept Collection: ", 
+                   IF(STRLEN(?interactionPrompt) > 50, 
+                      CONCAT(SUBSTR(?interactionPrompt, 1, 50), "..."),
+                      ?interactionPrompt),
+                   " (", STR(?memberCount), " concepts)") AS ?collectionLabel
+        )
+        
+        BIND(
+            IF(?memberCount >= 10, "large",
+               IF(?memberCount >= 5, "medium", "small")) AS ?collectionType
+        )
+        
+        # Find concept-to-concept relationships (shared interactions)
+        OPTIONAL {
+            ?relatedConcept a skos:Concept ;
+                           ragno:connectsTo ?sharedInteraction .
+            ?concept ragno:connectsTo ?sharedInteraction .
+            FILTER(?concept != ?relatedConcept)
+            
+            BIND("shared-interaction" AS ?relationshipType)
+            
+            # Calculate relationship strength based on shared interactions
+            {
+                SELECT ?concept ?relatedConcept (COUNT(DISTINCT ?shared) AS ?sharedCount) WHERE {
+                    ?concept ragno:connectsTo ?shared .
+                    ?relatedConcept ragno:connectsTo ?shared .
+                    FILTER(?concept != ?relatedConcept)
+                }
+                GROUP BY ?concept ?relatedConcept
+            }
+            
+            BIND(
+                IF(?sharedCount >= 2, 0.8,
+                   IF(?sharedCount >= 1, 0.5, 0.2)) AS ?relationshipStrength
+            )
         }
     }
 }
-ORDER BY ?documentTitle ?created ?cleanLabel
+ORDER BY ?domain ?conceptType ?conceptLabel

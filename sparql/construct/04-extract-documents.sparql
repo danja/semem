@@ -4,106 +4,59 @@ PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX prov: <http://www.w3.org/ns/prov#>
 PREFIX olo: <http://purl.org/ontology/olo/core#>
-PREFIX semem: <http://purl.org/semem/>
+PREFIX semem: <http://purl.org/stuff/semem/>
 
-# Extract document structure with text elements and chunks
-# Provides hierarchical view of document decomposition
+# Extract document structure with chunks (updated for actual data structure)
+# Updated to work with ragno:Unit+ragno:TextElement chunks derived from interactions
 CONSTRUCT {
-    ?document rdf:type ragno:Document ;
+    ?document rdf:type semem:Interaction ;
               rdfs:label ?documentTitle ;
-              ragno:content ?documentContent ;
-              ragno:sourceFile ?sourceFile ;
-              dcterms:created ?created ;
-              ragno:hasTextElements ?textElementCount ;
+              semem:prompt ?prompt ;
+              semem:output ?output ;
+              dcterms:created ?documentCreated ;
               ragno:hasChunks ?chunkCount ;
-              ragno:processingStage ?stage .
+              ragno:processingStage "chunked" .
     
-    ?textElement rdf:type ragno:TextElement ;
-                 rdfs:label ?textLabel ;
-                 ragno:content ?textContent ;
-                 ragno:belongsToDocument ?document ;
-                 prov:wasDerivedFrom ?document ;
-                 olo:index ?textIndex ;
-                 ragno:hasEmbedding ?textEmbedding .
-    
-    ?chunk rdf:type ragno:Chunk ;
+    ?chunk rdf:type ragno:Unit ;
+           rdf:type ragno:TextElement ;
            rdfs:label ?chunkLabel ;
            ragno:content ?chunkContent ;
-           ragno:belongsToTextElement ?textElement ;
-           prov:wasDerivedFrom ?textElement ;
+           ragno:belongsToDocument ?document ;
+           prov:wasDerivedFrom ?document ;
            olo:index ?chunkIndex ;
-           ragno:hasEmbedding ?chunkEmbedding ;
-           ragno:chunkSize ?chunkSize .
+           ragno:hasEmbedding ?embedding ;
+           dcterms:extent ?chunkSize ;
+           dcterms:created ?chunkCreated .
 }
 WHERE {
     GRAPH <${graphURI}> {
-        # Find document units
-        ?document a ragno:Unit .
-        FILTER(CONTAINS(STR(?document), "doc-") || CONTAINS(STR(?document), "document"))
+        # Find chunks (ragno:Unit + ragno:TextElement)
+        ?chunk a ragno:Unit, ragno:TextElement ;
+               prov:wasDerivedFrom ?document .
         
-        # Document properties
-        OPTIONAL { ?document rdfs:label ?documentTitle }
-        OPTIONAL { ?document ragno:content ?documentContent }
-        OPTIONAL { 
-            { ?document semem:sourceFile ?sourceFile }
-            UNION
-            { ?document <http://purl.org/semem/sourceFile> ?sourceFile }
-        }
-        OPTIONAL { ?document dcterms:created ?created }
+        # Chunk properties
+        OPTIONAL { ?chunk rdfs:label ?chunkLabel }
+        OPTIONAL { ?chunk ragno:content ?chunkContent }
+        OPTIONAL { ?chunk olo:index ?chunkIndex }
+        OPTIONAL { ?chunk ragno:hasEmbedding ?embedding }
+        OPTIONAL { ?chunk dcterms:extent ?chunkSize }
+        OPTIONAL { ?chunk dcterms:created ?chunkCreated }
         
-        # Determine processing stage
-        BIND(
-            IF(EXISTS { ?document ragno:hasEmbedding ?emb }, 
-               "embedded",
-               IF(EXISTS { ?textChunk prov:wasDerivedFrom+ ?document },
-                  "chunked", 
-                  "ingested")) AS ?stage
-        )
+        # Document properties (if it's an interaction)
+        OPTIONAL { ?document semem:prompt ?prompt }
+        OPTIONAL { ?document semem:output ?output }
+        OPTIONAL { ?document semem:id ?documentTitle }
+        OPTIONAL { ?document dcterms:created ?documentCreated }
         
-        # Find text elements derived from this document
-        OPTIONAL {
-            ?textElement a ragno:TextElement ;
-                        prov:wasDerivedFrom ?document .
-            
-            OPTIONAL { ?textElement rdfs:label ?textLabel }
-            OPTIONAL { ?textElement ragno:content ?textContent }
-            OPTIONAL { ?textElement olo:index ?textIndex }
-            OPTIONAL { ?textElement ragno:hasEmbedding ?textEmbedding }
-        }
-        
-        # Find chunks derived from text elements
-        OPTIONAL {
-            ?chunk a ragno:Unit, ragno:TextElement ;
-                   prov:wasDerivedFrom ?textElement ;
-                   olo:index ?chunkIndex .
-            
-            OPTIONAL { ?chunk rdfs:label ?chunkLabel }
-            OPTIONAL { ?chunk ragno:content ?chunkContent }
-            OPTIONAL { ?chunk ragno:hasEmbedding ?chunkEmbedding }
-            
-            # Calculate chunk size
-            OPTIONAL {
-                BIND(STRLEN(?chunkContent) AS ?chunkSize)
-            }
-        }
-        
-        # Count elements for summary
+        # Count chunks for this document
         {
-            SELECT ?document 
-                   (COUNT(DISTINCT ?te) AS ?textElementCount)
-                   (COUNT(DISTINCT ?ch) AS ?chunkCount)
+            SELECT ?document (COUNT(DISTINCT ?ch) AS ?chunkCount)
             WHERE {
-                OPTIONAL { 
-                    ?te a ragno:TextElement ;
-                        prov:wasDerivedFrom ?document .
-                }
-                OPTIONAL {
-                    ?ch a ragno:Unit, ragno:TextElement ;
-                        prov:wasDerivedFrom+ ?document .
-                }
+                ?ch a ragno:Unit, ragno:TextElement ;
+                    prov:wasDerivedFrom ?document .
             }
             GROUP BY ?document
         }
     }
 }
-ORDER BY ?created ?documentTitle
+ORDER BY ?documentCreated ?chunkCreated

@@ -3,141 +3,105 @@ PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX prov: <http://www.w3.org/ns/prov#>
-PREFIX semem: <http://purl.org/semem/>
+PREFIX semem: <http://purl.org/stuff/semem/>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 
-# Extract semantic memory interactions (tell/ask operations)
-# Provides conversation and interaction history view
+# Extract semantic memory interactions (updated for actual semem:Interaction structure)
+# Provides conversation history and semantic memory operations view
 CONSTRUCT {
     ?interaction rdf:type semem:MemoryInteraction ;
                  rdfs:label ?interactionLabel ;
                  semem:interactionType ?interactionType ;
                  semem:prompt ?prompt ;
-                 semem:response ?response ;
+                 semem:response ?output ;
                  semem:hasEmbedding ?embedding ;
-                 dcterms:created ?timestamp ;
-                 semem:processingMode ?mode ;
-                 semem:conceptsExtracted ?concepts ;
+                 semem:timestamp ?timestamp ;
                  semem:sessionId ?sessionId ;
+                 semem:conceptsExtracted ?conceptsJson ;
+                 semem:conceptCount ?conceptCount ;
+                 semem:domain ?domain ;
                  prov:wasGeneratedBy ?agent .
     
-    # Link interactions to extracted concepts
-    ?interaction semem:generatedConcept ?concept .
+    # Link interactions to connected concepts
+    ?interaction semem:relatedToConcept ?concept .
     
-    # Create interaction chains
+    # Create interaction chains (temporal ordering)
     ?interaction semem:followedBy ?nextInteraction .
 }
 WHERE {
     GRAPH <${graphURI}> {
-        # Find memory interaction elements
-        ?interaction ragno:content ?content .
+        # Find semem:Interaction instances
+        ?interaction a semem:Interaction .
         
-        # Filter for memory interactions (those with prompt/response structure)
-        FILTER(
-            CONTAINS(LCASE(?content), "prompt:") || 
-            CONTAINS(LCASE(?content), "response:") ||
-            CONTAINS(LCASE(?content), "question:") ||
-            CONTAINS(LCASE(?content), "answer:")
-        )
+        # Get core interaction properties
+        ?interaction semem:prompt ?prompt ;
+                    semem:output ?output ;
+                    semem:timestamp ?timestamp .
         
-        # Extract interaction metadata
-        OPTIONAL { ?interaction rdfs:label ?label }
-        OPTIONAL { ?interaction dcterms:created ?timestamp }
-        OPTIONAL { ?interaction ragno:hasEmbedding ?embedding }
-        OPTIONAL { ?interaction prov:wasGeneratedBy ?agent }
+        # Optional properties
+        OPTIONAL { ?interaction semem:id ?interactionId }
+        OPTIONAL { ?interaction semem:embedding ?embedding }
+        OPTIONAL { ?interaction semem:concepts ?conceptsJson }
+        OPTIONAL { ?interaction semem:domain ?domain }
         
-        # Parse content to extract prompt and response
+        # Determine interaction type from prompt content
         BIND(
-            IF(CONTAINS(?content, "prompt:"),
-               SUBSTR(?content, STRLEN("prompt:") + 1),
-               IF(CONTAINS(?content, "question:"),
-                  SUBSTR(?content, STRLEN("question:") + 1),
-                  ?content)) AS ?prompt
-        )
-        
-        BIND(
-            IF(CONTAINS(?content, "response:"),
-               SUBSTR(?content, STRLEN("response:") + 1),
-               IF(CONTAINS(?content, "answer:"),
-                  SUBSTR(?content, STRLEN("answer:") + 1),
-                  "")) AS ?response
-        )
-        
-        # Determine interaction type
-        BIND(
-            IF(CONTAINS(LCASE(?content), "tell") || CONTAINS(LCASE(?label), "tell"),
+            IF(CONTAINS(LCASE(?prompt), "document:"),
                "tell",
-               IF(CONTAINS(LCASE(?content), "ask") || CONTAINS(LCASE(?label), "ask"),
+               IF(CONTAINS(LCASE(?prompt), "query") || CONTAINS(LCASE(?prompt), "question"),
                   "ask",
-                  IF(CONTAINS(LCASE(?content), "augment"),
+                  IF(CONTAINS(LCASE(?prompt), "augment") || CONTAINS(LCASE(?prompt), "enhance"),
                      "augment",
-                     "unknown"))) AS ?interactionType
+                     "document"))) AS ?interactionType
         )
         
-        # Create interaction label
+        # Create descriptive label
         BIND(
             CONCAT(?interactionType, " - ", 
-                   IF(STRLEN(?prompt) > 50, 
-                      CONCAT(SUBSTR(?prompt, 1, 50), "..."), 
-                      ?prompt)) AS ?interactionLabel
+                   COALESCE(?interactionId,
+                            IF(STRLEN(?prompt) > 60, 
+                               CONCAT(SUBSTR(?prompt, 1, 60), "..."), 
+                               ?prompt))) AS ?interactionLabel
         )
         
-        # Determine processing mode
+        # Extract session ID from URI
         BIND(
-            IF(CONTAINS(LCASE(?content), "lazy"),
-               "lazy",
-               "immediate") AS ?mode
-        )
-        
-        # Extract session ID from URI or metadata
-        BIND(
-            IF(CONTAINS(STR(?interaction), "session"),
-               REPLACE(STR(?interaction), ".*session[/-]([^/]+).*", "$1"),
+            IF(CONTAINS(STR(?interaction), "interaction/"),
+               REPLACE(STR(?interaction), ".*/interaction/([^/]+).*", "$1"),
                "default") AS ?sessionId
         )
         
-        # Find related concepts (if any)
+        # Count concepts (approximate from JSON array)
+        BIND(
+            IF(BOUND(?conceptsJson),
+               IF(STRLEN(?conceptsJson) > 10,
+                  FLOOR((STRLEN(?conceptsJson) - STRLEN(REPLACE(?conceptsJson, ",", ""))) / 2) + 1,
+                  0),
+               0) AS ?conceptCount
+        )
+        
+        # Find concepts connected to this interaction
         OPTIONAL {
-            ?concept a ragno:Corpuscle ;
-                    prov:wasDerivedFrom ?interaction .
-            FILTER(STRSTARTS(STR(?concept), "Concept:"))
+            ?concept a skos:Concept ;
+                    ragno:connectsTo ?interaction .
         }
         
-        # Create concept extraction summary
-        {
-            SELECT ?interaction (GROUP_CONCAT(?conceptLabel; separator=", ") AS ?concepts)
-            WHERE {
-                OPTIONAL {
-                    ?relatedConcept a ragno:Corpuscle ;
-                                   rdfs:label ?conceptLabel ;
-                                   prov:wasDerivedFrom ?interaction .
-                    FILTER(STRSTARTS(?conceptLabel, "Concept:"))
-                }
-            }
-            GROUP BY ?interaction
-        }
-        
-        # Create interaction chains (temporal ordering)
+        # Create interaction temporal chains
         OPTIONAL {
-            ?nextInteraction ragno:content ?nextContent ;
-                           dcterms:created ?nextTimestamp .
-            FILTER(
-                ?nextTimestamp > ?timestamp &&
-                (CONTAINS(LCASE(?nextContent), "prompt:") || 
-                 CONTAINS(LCASE(?nextContent), "response:"))
-            )
+            ?nextInteraction a semem:Interaction ;
+                           semem:timestamp ?nextTimestamp .
+            FILTER(?nextTimestamp > ?timestamp)
             
             # Find the immediate next interaction
             FILTER NOT EXISTS {
-                ?intermediateInteraction ragno:content ?intContent ;
-                                       dcterms:created ?intTimestamp .
-                FILTER(
-                    ?intTimestamp > ?timestamp &&
-                    ?intTimestamp < ?nextTimestamp &&
-                    (CONTAINS(LCASE(?intContent), "prompt:") || 
-                     CONTAINS(LCASE(?intContent), "response:"))
-                )
+                ?intermediateInteraction a semem:Interaction ;
+                                       semem:timestamp ?intTimestamp .
+                FILTER(?intTimestamp > ?timestamp && ?intTimestamp < ?nextTimestamp)
             }
         }
+        
+        # Default agent
+        BIND("semem-system" AS ?agent)
     }
 }
 ORDER BY ?timestamp

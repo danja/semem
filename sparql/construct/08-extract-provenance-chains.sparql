@@ -4,114 +4,138 @@ PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX prov: <http://www.w3.org/ns/prov#>
 PREFIX olo: <http://purl.org/ontology/olo/core#>
+PREFIX semem: <http://purl.org/stuff/semem/>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 
-# Extract provenance chains showing content derivation paths
-# Tracks how knowledge flows from documents through processing stages
+# Extract provenance chains showing content derivation paths (updated for actual data structure)
+# Tracks how knowledge flows from interactions through chunks to concepts
 CONSTRUCT {
     ?element rdf:type ragno:ProvenanceElement ;
-             rdfs:label ?label ;
+             rdfs:label ?elementLabel ;
              ragno:content ?content ;
              ragno:processingStage ?stage ;
              ragno:processingLevel ?level ;
              prov:wasDerivedFrom ?source ;
-             prov:wasGeneratedBy ?process ;
              dcterms:created ?created ;
              ragno:derivationPath ?path ;
-             ragno:originalSource ?rootSource .
+             ragno:originalSource ?rootSource ;
+             ragno:derivationChain ?chainInfo .
     
     # Create simplified derivation relationships
     ?element ragno:derivedFrom ?source ;
              ragno:derivationLevel ?level .
     
-    # Create processing stage flows
-    ?process rdf:type ragno:ProcessingStage ;
-             rdfs:label ?processLabel ;
-             ragno:stageType ?processType ;
-             ragno:inputType ?inputType ;
-             ragno:outputType ?outputType .
+    # Create processing flow information
+    ?derivation rdf:type ragno:DerivationStep ;
+                ragno:fromType ?sourceType ;
+                ragno:toType ?targetType ;
+                ragno:stepType ?stepType ;
+                ragno:stepDescription ?stepDescription .
 }
 WHERE {
     GRAPH <${graphURI}> {
-        ?element prov:wasDerivedFrom+ ?source .
+        # Find elements with derivation relationships
+        ?element prov:wasDerivedFrom ?source .
         
         # Core element properties
-        OPTIONAL { ?element rdfs:label ?label }
+        OPTIONAL { ?element rdfs:label ?elementLabel }
         OPTIONAL { ?element ragno:content ?content }
         OPTIONAL { ?element dcterms:created ?created }
-        OPTIONAL { ?element prov:wasGeneratedBy ?process }
         
-        # Determine processing stage based on element type and relationships
+        # Get element types
+        OPTIONAL { ?element rdf:type ?elementType }
+        OPTIONAL { ?source rdf:type ?sourceElementType }
+        
+        # Determine element types and processing stages
         BIND(
-            IF(?element a ragno:Unit && CONTAINS(STR(?element), "doc-"),
-               "document-ingestion",
-               IF(?element a ragno:TextElement,
-                  "text-extraction", 
-                  IF(?element a ragno:Unit && ?element a ragno:TextElement,
-                     "chunk-creation",
-                     IF(?element a ragno:Corpuscle && STRSTARTS(STR(?element), "Concept:"),
-                        "concept-extraction",
-                        IF(?element a ragno:Entity,
-                           "entity-extraction",
-                           IF(?element a ragno:Relationship,
-                              "relationship-creation",
-                              "unknown-processing")))))) AS ?stage
+            IF(?elementType = semem:Interaction,
+               "interaction-creation",
+               IF(?elementType = ragno:Unit || ?elementType = ragno:TextElement,
+                  "chunk-extraction",
+                  IF(?elementType = skos:Concept,
+                     "concept-derivation",
+                     IF(?elementType = ragno:Element,
+                        "element-processing",
+                        "unknown-processing")))) AS ?stage
         )
         
-        # Calculate processing level (depth from original source)
+        # Determine source and target types
+        BIND(
+            IF(?sourceElementType = semem:Interaction, "Interaction",
+               IF(?sourceElementType = ragno:Unit || ?sourceElementType = ragno:TextElement, "Chunk",
+                  IF(?sourceElementType = skos:Concept, "Concept",
+                     IF(?sourceElementType = ragno:Element, "Element",
+                        "Unknown")))) AS ?sourceType
+        )
+        
+        BIND(
+            IF(?elementType = semem:Interaction, "Interaction",
+               IF(?elementType = ragno:Unit || ?elementType = ragno:TextElement, "Chunk",
+                  IF(?elementType = skos:Concept, "Concept",
+                     IF(?elementType = ragno:Element, "Element",
+                        "Unknown")))) AS ?targetType
+        )
+        
+        # Create step descriptions
+        BIND(
+            CONCAT(?sourceType, " → ", ?targetType) AS ?stepType
+        )
+        
+        BIND(
+            IF(?stage = "chunk-extraction", "Text decomposition into semantic chunks",
+               IF(?stage = "concept-derivation", "Concept extraction from interaction content",
+                  IF(?stage = "element-processing", "Element processing and enhancement",
+                     "Content transformation and processing"))) AS ?stepDescription
+        )
+        
+        # Calculate processing level (how many derivation steps from root)
         {
             SELECT ?element (COUNT(?intermediate) AS ?level) WHERE {
-                ?element prov:wasDerivedFrom* ?intermediate .
-                ?intermediate prov:wasDerivedFrom+ ?root .
-                FILTER NOT EXISTS { ?root prov:wasDerivedFrom ?parent }
+                {
+                    SELECT ?element ?intermediate WHERE {
+                        ?element prov:wasDerivedFrom* ?intermediate .
+                        ?intermediate prov:wasDerivedFrom+ ?root .
+                        FILTER NOT EXISTS { ?root prov:wasDerivedFrom ?parent }
+                    }
+                }
             }
             GROUP BY ?element
         }
         
-        # Find the root source (document level)
-        OPTIONAL {
-            ?element prov:wasDerivedFrom+ ?rootSource .
-            FILTER NOT EXISTS { ?rootSource prov:wasDerivedFrom ?parent }
+        # Find the root source (interaction level typically)
+        {
+            SELECT ?element ?rootSource WHERE {
+                ?element prov:wasDerivedFrom* ?rootSource .
+                FILTER NOT EXISTS { ?rootSource prov:wasDerivedFrom ?parent }
+            }
         }
         
-        # Create derivation path
+        # Create derivation path string
         BIND(
             CONCAT(
-                STR(?rootSource), 
-                " → ",
+                "Level ", STR(?level), ": ",
+                COALESCE(STR(?rootSource), "Unknown"), 
+                " ⟶ ",
                 ?stage,
-                " → ",
-                STR(?element)
+                " ⟶ ",
+                COALESCE(?elementLabel, STR(?element))
             ) AS ?path
         )
         
-        # Create process information
-        OPTIONAL {
-            ?process rdf:type ?processType .
-            
-            BIND(
-                CONCAT("Process: ", STR(?processType)) AS ?processLabel
-            )
-            
-            # Determine input/output types
-            BIND(
-                IF(?stage = "text-extraction", "Document", 
-                   IF(?stage = "chunk-creation", "TextElement",
-                      IF(?stage = "concept-extraction", "Chunk",
-                         IF(?stage = "entity-extraction", "Chunk",
-                            "Unknown")))) AS ?inputType
-            )
-            
-            BIND(
-                IF(?stage = "text-extraction", "TextElement", 
-                   IF(?stage = "chunk-creation", "Chunk",
-                      IF(?stage = "concept-extraction", "Concept",
-                         IF(?stage = "entity-extraction", "Entity",
-                            "Unknown")))) AS ?outputType
-            )
-        }
+        # Create chain information
+        BIND(
+            CONCAT(
+                "Derivation: ",
+                ?sourceType,
+                " generated ",
+                ?targetType,
+                " via ",
+                ?stage
+            ) AS ?chainInfo
+        )
         
-        # Filter for elements with clear provenance
-        FILTER(BOUND(?source))
+        # Create derivation URI for additional metadata
+        BIND(IRI(CONCAT(STR(?element), "/derivation/", REPLACE(STR(?source), "[^a-zA-Z0-9]", ""))) AS ?derivation)
     }
 }
 ORDER BY ?level ?created

@@ -1,6 +1,18 @@
 # SPARQL CONSTRUCT Queries for Semem Knowledge Base
 
-This directory contains CONSTRUCT queries designed to extract different views and aspects of the Semem knowledge base. Each query creates a focused RDF graph representing a specific perspective on the stored semantic knowledge.
+This document describes the CONSTRUCT queries designed to extract different views and aspects of the Semem knowledge base. Each query creates a focused RDF graph representing a specific perspective on the stored semantic knowledge.
+
+## SPARQL Directory Structure
+
+The Semem project contains the following SPARQL query directories:
+
+- **`sparql/construct/`** - CONSTRUCT queries for knowledge extraction (documented in this file)
+- **`sparql/queries/`** - SELECT queries for data retrieval and analysis
+- **`sparql/queries/search/`** - Specialized search queries including semantic search
+- **`sparql/queries/admin/`** - Administrative and maintenance queries
+- **`sparql/templates/`** - Template queries with placeholder variables
+
+All queries use template variables (e.g., `${graphURI}`) that should be replaced with actual values before execution.
 
 ## Query Overview
 
@@ -8,14 +20,14 @@ This directory contains CONSTRUCT queries designed to extract different views an
 |-------|---------|--------------|--------|
 | `01-extract-entities.sparql` | Extract all elements with metadata | Element-centric view with properties, domains, and content | ✅ **Working** - Updated for actual data structure |
 | `02-extract-relationships.sparql` | Extract connection networks | Graph view of element-to-interaction connections | ✅ **Working** - Updated for ragno:connectsTo relationships |
-| `03-extract-concepts.sparql` | Extract concept hierarchy | Concept-based knowledge organization | ⚠️ **Needs Update** - Original query doesn't match data structure |
-| `04-extract-documents.sparql` | Extract document structure | Document decomposition and text element hierarchy | ⚠️ **Needs Update** - Original query doesn't match data structure |
-| `05-extract-embeddings.sparql` | Extract embedding space | Vector space view with clustering information | ⚠️ **Needs Update** - Original query doesn't match data structure |
-| `06-extract-memory-interactions.sparql` | Extract user interactions | Conversation history and semantic memory operations | ⚠️ **Needs Update** - Original query doesn't match data structure |
-| `07-extract-knowledge-domains.sparql` | Extract domain organization | Domain-specific content clustering | ⚠️ **Needs Update** - Original query doesn't match data structure |
-| `08-extract-provenance-chains.sparql` | Extract processing provenance | Content derivation and transformation tracking | ⚠️ **Needs Update** - Original query doesn't match data structure |
-| `09-extract-zpt-navigation.sparql` | Extract ZPT navigation structure | Multi-dimensional knowledge space navigation | ⚠️ **Needs Update** - Original query doesn't match data structure |
-| `10-extract-community-clusters.sparql` | Extract semantic communities | Community detection and cluster analysis | ⚠️ **Needs Update** - Original query doesn't match data structure |
+| `03-extract-concepts.sparql` | Extract concept hierarchy | Concept-based knowledge organization | ✅ **Working** - Updated for skos:Concept with interaction anchoring and relationship mapping |
+| `04-extract-documents.sparql` | Extract document structure | Document decomposition and text element hierarchy | ✅ **Working** - Updated for ragno:Unit+ragno:TextElement chunks from interactions |
+| `05-extract-embeddings.sparql` | Extract embedding space | Vector space view with clustering information | ✅ **Working** - Updated for multiple embedding properties (ragno:hasEmbedding, semem:embedding, ragno:embedding) |
+| `06-extract-memory-interactions.sparql` | Extract user interactions | Conversation history and semantic memory operations | ✅ **Working** - Updated for semem:Interaction with temporal chains and concept links |
+| `07-extract-knowledge-domains.sparql` | Extract domain organization | Domain-specific content clustering | ⚠️ **Partial** - Domain structure working, but test data lacks semem:domain properties |
+| `08-extract-provenance-chains.sparql` | Extract processing provenance | Content derivation and transformation tracking | ✅ **Working** - Updated for prov:wasDerivedFrom chains from interactions to chunks |
+| `09-extract-zpt-navigation.sparql` | Extract ZPT navigation structure | Multi-dimensional knowledge space navigation | ✅ **Working** - Updated for ZPT coordinate system with zoom/pan/tilt dimensions |
+| `10-extract-community-clusters.sparql` | Extract semantic communities | Community detection and cluster analysis | ✅ **Working** - Updated for connection-based clustering around interaction anchors |
 | `11-extract-interactions.sparql` | Extract user interactions with full metadata | Complete interaction view with prompts, outputs, concepts, and domain classification | ✅ **Working** - New query tailored to actual semem:Interaction structure |
 
 ## Usage
@@ -325,6 +337,65 @@ The following queries have been tested against a live Semem SPARQL endpoint and 
 - **Key Features**: Maps concept-interaction relationships with connection types
 - **Sample Output**: Concepts connected to specific interactions with bidirectional links
 
+### ✅ **03-extract-concepts.sparql** - Concept Hierarchy (Updated)
+- **Status**: Working - Updated for skos:Concept with interaction anchoring and relationship mapping
+- **Returns**: Enhanced concept nodes with semantic classification, relationship networks, and interaction context
+- **Key Features**: Concept type classification (visual, musical, simple, compound), interaction anchoring, inter-concept relationships, semantic domain assignment
+- **Sample Output**:
+  - 20 concepts enhanced as ragno:ConceptNode with skos:Concept preservation  
+  - Rich relationship networks showing concept-to-concept connections via shared interactions
+  - Semantic domains (music, visualization, personal, general) and concept types
+  - Full interaction context with source prompts and outputs
+
+### ✅ **04-extract-documents.sparql** - Document Structure (Updated)
+- **Status**: Working - Updated for ragno:Unit+ragno:TextElement chunks from interactions
+- **Returns**: Document hierarchy showing interactions and their chunked decomposition
+- **Key Features**: Shows semem:Interaction → ragno:Unit+ragno:TextElement derivation with chunk indexing, embeddings, and content
+- **Sample Output**: "Document: ADHD and Me" interaction with 4 indexed chunks showing full content and metadata
+
+### ✅ **05-extract-embeddings.sparql** - Embedding Space (Updated)
+- **Status**: Working - Updated for multiple embedding properties
+- **Returns**: Vector space view with 1536-dimensional embeddings and clustering information
+- **Key Features**: Extracts ragno:hasEmbedding, semem:embedding, and ragno:embedding with content length analysis and cluster assignments
+- **Sample Output**: Interactions and chunks with full embedding vectors, processing metadata, and cluster classifications
+
+### ✅ **06-extract-memory-interactions.sparql** - Memory Operations (Updated)
+- **Status**: Working - Updated for semem:Interaction with temporal chains and concept links
+- **Returns**: Semantic memory operations with conversation history and concept extraction
+- **Key Features**: Temporal interaction chains (followedBy), concept counting, domain classification, session tracking
+- **Sample Output**: Interaction chains showing conversation flow with concept analysis and connection networks
+
+### ⚠️ **07-extract-knowledge-domains.sparql** - Domain Organization (Partial)
+- **Status**: Partial - Domain structure working, but test data lacks semem:domain properties
+- **Returns**: Knowledge domains with metadata, colors, and content counts (currently showing 0 counts)
+- **Key Features**: Domain framework ready with "Music & Audio Visualization", "Songwriting & Lyrics" etc. with full descriptions
+- **Note**: Query structure works correctly but needs data with explicit domain assignments
+
+### ✅ **08-extract-provenance-chains.sparql** - Provenance Tracking (Updated)
+- **Status**: Working - Updated for prov:wasDerivedFrom chains from interactions to chunks
+- **Returns**: Content derivation paths showing knowledge flow from interactions through processing stages
+- **Key Features**: Processing level calculation, derivation path strings, step descriptions, source tracking
+- **Sample Output**: 4 chunks at Level 1 derived from interaction with "Text decomposition into semantic chunks" processing
+
+### ✅ **09-extract-zpt-navigation.sparql** - ZPT Navigation (Updated)
+- **Status**: Working - Updated for ZPT coordinate system with zoom/pan/tilt dimensions
+- **Returns**: Multi-dimensional knowledge space navigation with ZPT coordinates for all content elements
+- **Key Features**: 5 zoom levels (corpus→interaction→chunk→concept→element), 4 pan domains, 4 tilt perspectives, navigation scoring
+- **Sample Output**: 
+  - Interactions with high discoverability (score 5.0) in vector tilt view
+  - Chunks with embeddings (score 3.5) in content-type pan domain
+  - Concepts with graph connections across semantic domains
+  - Complete navigation paths with weights and descriptions
+
+### ✅ **10-extract-community-clusters.sparql** - Community Detection (Updated)
+- **Status**: Working - Updated for connection-based clustering around interaction anchors
+- **Returns**: Semantic communities with membership analysis and inter-community connections
+- **Key Features**: Connection-based clustering, member roles (core/active/peripheral), cohesion scoring, community metadata
+- **Sample Output**:
+  - "Songwriting Community" (10 concepts) with lyrics, song, verse, chorus concepts
+  - "General Content Community" (10 concepts) with visualization, music, technical concepts
+  - Member roles and scores, community stability metrics, interaction anchors
+
 ### ✅ **11-extract-interactions.sparql** - Full Interaction Analysis (New)
 - **Status**: Working - Custom query for semem:Interaction structure
 - **Returns**: Complete interaction metadata including prompts, outputs, concepts, timestamps
@@ -333,6 +404,18 @@ The following queries have been tested against a live Semem SPARQL endpoint and 
   - "Music-visualization" domain: Hillside Media Visualizer interaction
   - "Songwriting" domain: Italian song translation interaction
   - Full prompts, outputs, concept arrays, and metadata
+
+## Additional Working Queries (Non-Construct)
+
+These related queries from `sparql/queries/` have also been updated and tested:
+
+### ✅ **list-concepts.sparql** - Concept Listing
+- **Returns**: All 20 skos:Concept instances with connection information
+- **Sample Output**: Concepts like "Hillside", "visualization", "lyrics" with interaction links
+
+### ✅ **semantic-search.sparql** - Vector Similarity Search  
+- **Returns**: Interactions with 1536-dimension embedding vectors for similarity matching
+- **Key Features**: Multiple search strategies (ragno:embedding, semem:embedding, indirect via concepts)
 
 ### Example Usage for Working Queries
 

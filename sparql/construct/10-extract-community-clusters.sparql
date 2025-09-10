@@ -3,11 +3,11 @@ PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX prov: <http://www.w3.org/ns/prov#>
-PREFIX semem: <http://purl.org/semem/>
+PREFIX semem: <http://purl.org/stuff/semem/>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 
-# Extract community clusters and their semantic relationships
-# Creates community-level view for knowledge organization
+# Extract community clusters and their semantic relationships (updated for actual data structure)
+# Creates communities based on ragno:connectsTo relationships and semantic similarity
 CONSTRUCT {
     ?community rdf:type ragno:Community ;
                rdfs:label ?communityLabel ;
@@ -17,170 +17,171 @@ CONSTRUCT {
                ragno:memberCount ?memberCount ;
                ragno:centralConcepts ?centralConcepts ;
                ragno:communityKeywords ?keywords ;
-               ragno:averageEmbedding ?centroid ;
-               dcterms:created ?clusterTime .
+               ragno:interactionAnchor ?anchorInteraction ;
+               dcterms:created ?clusterTime ;
+               ragno:description ?description .
     
     # Community membership relationships
     ?member ragno:belongsToCommunity ?community ;
             ragno:membershipScore ?membershipScore ;
-            ragno:roleInCommunity ?role .
+            ragno:roleInCommunity ?role ;
+            ragno:memberType ?memberType .
     
     # Inter-community relationships
     ?community ragno:connectedTo ?otherCommunity ;
                ragno:connectionType ?connectionType ;
                ragno:connectionStrength ?connectionStrength .
     
-    # Community evolution over time
-    ?community ragno:evolvedFrom ?previousCommunity ;
-               ragno:evolutionType ?evolutionType ;
-               ragno:stabilityScore ?stability .
+    # Community stability metrics
+    ?community ragno:stabilityScore ?stability ;
+               ragno:densityScore ?density ;
+               ragno:diversityIndex ?diversity .
 }
 WHERE {
     GRAPH <${graphURI}> {
-        # Identify semantic clusters based on shared concepts and relationships
+        # Create communities based on interaction anchors and their connected concepts
         {
-            SELECT ?communityType ?centralConcept
-                   (GROUP_CONCAT(DISTINCT ?concept; separator=", ") AS ?centralConcepts)
-                   (COUNT(DISTINCT ?member) AS ?memberCount)
+            SELECT ?interaction ?interactionPrompt 
+                   (GROUP_CONCAT(DISTINCT ?conceptLabel; separator=", ") AS ?centralConcepts)
+                   (COUNT(DISTINCT ?concept) AS ?memberCount)
             WHERE {
-                # Group entities by shared semantic properties
-                ?member ragno:content ?memberContent .
-                
-                # Extract central concepts for clustering
-                BIND(
-                    IF(CONTAINS(LCASE(?memberContent), "climate") && CONTAINS(LCASE(?memberContent), "system"),
-                       "climate-systems",
-                       IF(CONTAINS(LCASE(?memberContent), "urban") && CONTAINS(LCASE(?memberContent), "planning"),
-                          "urban-development",
-                          IF(CONTAINS(LCASE(?memberContent), "neural") && CONTAINS(LCASE(?memberContent), "network"),
-                             "neural-systems",
-                             IF(CONTAINS(LCASE(?memberContent), "algorithm") && CONTAINS(LCASE(?memberContent), "learning"),
-                                "machine-learning",
-                                IF(CONTAINS(LCASE(?memberContent), "memory") && CONTAINS(LCASE(?memberContent), "semantic"),
-                                   "semantic-memory",
-                                   "general-concepts"))))) AS ?communityType
-                )
-                
-                # Extract key concepts
-                BIND(
-                    IF(CONTAINS(LCASE(?memberContent), "feedback"), "feedback",
-                       IF(CONTAINS(LCASE(?memberContent), "network"), "network",
-                          IF(CONTAINS(LCASE(?memberContent), "system"), "system",
-                             IF(CONTAINS(LCASE(?memberContent), "process"), "process",
-                                "concept")))) AS ?concept
-                )
-                
-                BIND(?concept AS ?centralConcept)
+                # Find interactions with connected concepts
+                ?interaction a semem:Interaction ;
+                            semem:prompt ?interactionPrompt .
+                ?concept a skos:Concept ;
+                        skos:prefLabel ?conceptLabel ;
+                        ragno:connectsTo ?interaction .
             }
-            GROUP BY ?communityType ?centralConcept
-            HAVING(COUNT(DISTINCT ?member) > 1)
+            GROUP BY ?interaction ?interactionPrompt
+            HAVING(COUNT(DISTINCT ?concept) > 0)
         }
         
+        # Determine community type based on interaction content
+        BIND(
+            IF(CONTAINS(LCASE(?interactionPrompt), "music") || CONTAINS(LCASE(?interactionPrompt), "visualization"),
+               "music-visualization",
+               IF(CONTAINS(LCASE(?interactionPrompt), "lyrics") || CONTAINS(LCASE(?interactionPrompt), "song"),
+                  "songwriting",
+                  IF(CONTAINS(LCASE(?interactionPrompt), "adhd") || CONTAINS(LCASE(?interactionPrompt), "personal"),
+                     "personal-narrative",
+                     "general-content"))) AS ?communityType
+        )
+        
         # Create community URIs
-        BIND(IRI(CONCAT(STR(semem:), "community-", ?communityType)) AS ?community)
+        BIND(IRI(CONCAT("http://purl.org/stuff/semem/community/", ?communityType)) AS ?community)
         
         # Create community labels
         BIND(
             CONCAT("Community: ", 
-                   REPLACE(?communityType, "-", " "),
-                   " (", STR(?memberCount), " members)") AS ?communityLabel
+                   REPLACE(REPLACE(?communityType, "-", " "), "([a-z])([A-Z])", "$1 $2"),
+                   " (", STR(?memberCount), " concepts)") AS ?communityLabel
         )
         
-        # Set clustering algorithm and parameters
-        BIND("semantic-similarity" AS ?algorithm)
+        # Set clustering metadata
+        BIND("connection-based" AS ?algorithm)
         BIND(NOW() AS ?clusterTime)
+        BIND(?interaction AS ?anchorInteraction)
         
-        # Calculate cohesion score based on shared concepts
+        # Create descriptions
         BIND(
-            IF(?memberCount > 10, 0.9,
-               IF(?memberCount > 5, 0.7,
-                  IF(?memberCount > 2, 0.5, 0.3))) AS ?cohesion
+            IF(?communityType = "music-visualization", "Community centered around music creation and visualization concepts",
+               IF(?communityType = "songwriting", "Community focused on songwriting, lyrics, and musical composition",
+                  IF(?communityType = "personal-narrative", "Community built around personal stories and experiences",
+                     "General content community with diverse topics"))) AS ?description
         )
         
-        # Extract community keywords
+        # Calculate cohesion score based on concept density
         BIND(
-            CONCAT(?centralConcepts, ",", 
-                   REPLACE(?communityType, "-", ",")) AS ?keywords
+            IF(?memberCount >= 10, 0.9,
+               IF(?memberCount >= 5, 0.7,
+                  IF(?memberCount >= 2, 0.5, 0.3))) AS ?cohesion
         )
         
-        # Find community members with scores
+        # Extract community keywords from concepts
+        BIND(CONCAT(?centralConcepts, ",", ?communityType) AS ?keywords)
+        
+        # Find community members (concepts connected to the anchor interaction)
         OPTIONAL {
-            ?member ragno:content ?memberContent .
+            ?member a skos:Concept ;
+                   ragno:connectsTo ?interaction .
+                   
+            OPTIONAL { ?member skos:prefLabel ?memberLabel }
+            OPTIONAL { ?member ragno:content ?memberContent }
             
-            # Calculate membership score
+            # Determine member type
+            OPTIONAL { ?member rdf:type ?memberRDFType }
             BIND(
-                IF(CONTAINS(LCASE(?memberContent), "climate") && ?communityType = "climate-systems", 0.9,
-                   IF(CONTAINS(LCASE(?memberContent), "urban") && ?communityType = "urban-development", 0.9,
-                      IF(CONTAINS(LCASE(?memberContent), "neural") && ?communityType = "neural-systems", 0.9,
-                         IF(CONTAINS(LCASE(?memberContent), "algorithm") && ?communityType = "machine-learning", 0.9,
-                            IF(CONTAINS(LCASE(?memberContent), "memory") && ?communityType = "semantic-memory", 0.9,
-                               0.3))))) AS ?membershipScore
+                IF(?memberRDFType = skos:Concept, "concept",
+                   IF(?memberRDFType = ragno:Element, "element", "unknown")) AS ?memberType
             )
             
-            FILTER(?membershipScore > 0.5)
-            
-            # Determine role in community
+            # Calculate membership score based on connection strength
             BIND(
-                IF(?membershipScore > 0.8, "core",
-                   IF(?membershipScore > 0.6, "active", "peripheral")) AS ?role
+                IF(BOUND(?memberContent) && STRLEN(?memberContent) > 10, 0.8,
+                   IF(BOUND(?memberLabel), 0.6, 0.4)) AS ?membershipScore
+            )
+            
+            # Determine role based on content richness
+            BIND(
+                IF(?membershipScore >= 0.7, "core",
+                   IF(?membershipScore >= 0.5, "active", "peripheral")) AS ?role
             )
         }
         
-        # Find inter-community connections
+        # Find inter-community connections (shared concepts between interactions)
         OPTIONAL {
-            ?otherCommunity rdf:type ragno:Community .
+            ?otherInteraction a semem:Interaction .
+            ?sharedConcept ragno:connectsTo ?interaction ;
+                          ragno:connectsTo ?otherInteraction .
+            FILTER(?interaction != ?otherInteraction)
+            
+            # Get other community type
+            OPTIONAL { ?otherInteraction semem:prompt ?otherPrompt }
+            BIND(
+                IF(CONTAINS(LCASE(?otherPrompt), "music") || CONTAINS(LCASE(?otherPrompt), "visualization"),
+                   "music-visualization",
+                   IF(CONTAINS(LCASE(?otherPrompt), "lyrics") || CONTAINS(LCASE(?otherPrompt), "song"),
+                      "songwriting",
+                      IF(CONTAINS(LCASE(?otherPrompt), "adhd") || CONTAINS(LCASE(?otherPrompt), "personal"),
+                         "personal-narrative",
+                         "general-content"))) AS ?otherCommunityType
+            )
+            
+            BIND(IRI(CONCAT("http://purl.org/stuff/semem/community/", ?otherCommunityType)) AS ?otherCommunity)
+            
             FILTER(?community != ?otherCommunity)
             
-            # Find shared members or concepts
-            ?sharedMember ragno:belongsToCommunity ?community ;
-                         ragno:belongsToCommunity ?otherCommunity .
+            BIND("shared-concepts" AS ?connectionType)
             
-            BIND("shared-members" AS ?connectionType)
-            
-            # Calculate connection strength based on shared elements
+            # Count shared concepts for connection strength
             {
-                SELECT ?community ?otherCommunity (COUNT(?shared) AS ?sharedCount) WHERE {
-                    ?shared ragno:belongsToCommunity ?community ;
-                           ragno:belongsToCommunity ?otherCommunity .
+                SELECT ?interaction ?otherInteraction (COUNT(DISTINCT ?shared) AS ?sharedCount) WHERE {
+                    ?shared ragno:connectsTo ?interaction ;
+                           ragno:connectsTo ?otherInteraction .
+                    FILTER(?interaction != ?otherInteraction)
                 }
-                GROUP BY ?community ?otherCommunity
+                GROUP BY ?interaction ?otherInteraction
             }
             
             BIND(
-                IF(?sharedCount > 3, 0.8,
-                   IF(?sharedCount > 1, 0.5, 0.2)) AS ?connectionStrength
-            )
-            
-            FILTER(?connectionStrength > 0.3)
-        }
-        
-        # Community evolution tracking
-        OPTIONAL {
-            # Find temporal predecessors (simplified)
-            ?previousCommunity rdf:type ragno:Community ;
-                             dcterms:created ?prevTime .
-            
-            FILTER(?prevTime < ?clusterTime)
-            
-            # Determine evolution type
-            BIND(
-                IF(?memberCount > 5, "growth",
-                   IF(?memberCount < 3, "consolidation", "stable")) AS ?evolutionType
-            )
-            
-            # Calculate stability based on member consistency
-            BIND(
-                IF(?cohesion > 0.7, 0.8,
-                   IF(?cohesion > 0.5, 0.6, 0.4)) AS ?stability
+                IF(?sharedCount >= 3, 0.8,
+                   IF(?sharedCount >= 2, 0.6, 0.4)) AS ?connectionStrength
             )
         }
         
-        # Calculate community centroid (simplified)
-        OPTIONAL {
-            BIND(
-                CONCAT("embedding-centroid-", ?communityType) AS ?centroid
-            )
-        }
+        # Calculate stability and density metrics
+        BIND(
+            IF(?cohesion >= 0.7, 0.8,
+               IF(?cohesion >= 0.5, 0.6, 0.4)) AS ?stability
+        )
+        
+        BIND(
+            IF(?memberCount > 0, ?memberCount / 20.0, 0.1) AS ?density
+        )
+        
+        BIND(
+            IF(?communityType = "general-content", 0.9, 0.5) AS ?diversity
+        )
     }
 }
 ORDER BY DESC(?memberCount) ?communityType

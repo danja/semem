@@ -1,7 +1,13 @@
+PREFIX ragno: <http://purl.org/stuff/ragno/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX semem: <http://purl.org/stuff/semem/>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+
 SELECT ?uri ?embedding ?embeddingVector ?label ?type ?content WHERE {
     GRAPH <${graphName}> {
         {
-            # Search ragno vocabulary (preferred for documents)
+            # Search ragno vocabulary (for elements with embedding URIs)
             ?uri ragno:embedding ?embedding ;
                  rdfs:label ?label .
             OPTIONAL { ?uri rdf:type ?type }
@@ -11,7 +17,7 @@ SELECT ?uri ?embedding ?embeddingVector ?label ?type ?content WHERE {
                 ?embedding ragno:vectorContent ?embeddingVector 
             }
         } UNION {
-            # Search ragno hasEmbedding (alternative property)
+            # Search ragno hasEmbedding (alternative property for concepts)
             ?uri ragno:hasEmbedding ?embedding ;
                  rdfs:label ?label .
             OPTIONAL { ?uri rdf:type ?type }  
@@ -21,11 +27,22 @@ SELECT ?uri ?embedding ?embeddingVector ?label ?type ?content WHERE {
                 ?embedding ragno:vectorContent ?embeddingVector 
             }
         } UNION {
-            # Search semem vocabulary (legacy support - embedding is vector literal)
-            ?uri semem:embedding ?embedding ;
-                 rdfs:label ?label .
+            # Search semem vocabulary (interactions with embedding literals)
+            ?uri semem:embedding ?embedding .
             OPTIONAL { ?uri rdf:type ?type }
-            OPTIONAL { ?uri semem:response ?content }
+            OPTIONAL { ?uri semem:prompt ?label }
+            OPTIONAL { ?uri semem:output ?content }
+            # For semem embeddings, the embedding IS the vector (literal array)
+            BIND(?embedding AS ?embeddingVector)
+        } UNION {
+            # Search concepts that connect to interactions (indirect embedding access)
+            ?uri a skos:Concept ;
+                 skos:prefLabel ?label ;
+                 ragno:content ?content ;
+                 ragno:connectsTo ?interaction .
+            ?interaction semem:embedding ?embedding .
+            OPTIONAL { ?uri rdf:type ?type }
+            BIND(?embedding AS ?embeddingVector)
         }
         ${filters}
     }

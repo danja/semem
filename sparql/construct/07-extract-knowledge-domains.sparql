@@ -4,177 +4,237 @@ PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX prov: <http://www.w3.org/ns/prov#>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-PREFIX semem: <http://purl.org/semem/>
+PREFIX semem: <http://purl.org/stuff/semem/>
 
-# Extract knowledge domains and their content organization
-# Creates domain-centric view with content clustering
+# Extract knowledge domains and their content organization (updated for actual data structure)
+# Creates domain-centric view based on semem:domain properties and content analysis
 CONSTRUCT {
     ?domain rdf:type semem:KnowledgeDomain ;
             rdfs:label ?domainLabel ;
             semem:domainType ?domainType ;
-            semem:hasDocuments ?documentCount ;
-            semem:hasEntities ?entityCount ;
+            semem:hasInteractions ?interactionCount ;
+            semem:hasElements ?elementCount ;
             semem:hasConcepts ?conceptCount ;
-            semem:hasRelationships ?relationshipCount ;
+            semem:hasChunks ?chunkCount ;
             semem:primaryKeywords ?keywords ;
-            semem:color ?domainColor .
+            semem:color ?domainColor ;
+            semem:description ?description .
     
-    ?document semem:belongsToDomain ?domain ;
-              semem:domainRelevance ?relevance .
+    ?interaction semem:belongsToDomain ?domain ;
+                 semem:domainRelevance ?relevance .
     
-    ?entity semem:inDomain ?domain ;
-            semem:domainScore ?score .
+    ?element semem:inDomain ?domain ;
+             semem:domainScore ?score .
     
     ?concept semem:relatedToDomain ?domain ;
              semem:domainWeight ?weight .
+             
+    ?chunk semem:partOfDomain ?domain ;
+           semem:chunkRelevance ?chunkRelevance .
 }
 WHERE {
     GRAPH <${graphURI}> {
-        # Define knowledge domains based on content analysis
-        VALUES (?domainType ?domainLabel ?keywords ?domainColor) {
-            ("climate-science" "Climate Science & Environmental Systems" "climate,ocean,warming,temperature,greenhouse,carbon,atmosphere" "#2E86AB")
-            ("urban-planning" "Urban Planning & Sustainable Cities" "urban,city,planning,development,infrastructure,transport,sustainable" "#A23B72")
-            ("neuroscience" "Neuroscience & Cognitive Science" "neuron,brain,cognitive,memory,learning,neural,consciousness,perception" "#F18F01")
-            ("machine-learning" "Machine Learning & AI" "algorithm,model,training,data,neural,artificial,intelligence,learning" "#C73E1D")
-            ("general" "General Knowledge" "concept,information,knowledge,data,system,process,analysis" "#6C757D")
+        # Use actual domains from interactions plus inferred domains
+        {
+            # Extract existing domains from interactions
+            SELECT DISTINCT ?domainType WHERE {
+                ?interaction a semem:Interaction ;
+                            semem:domain ?domainType .
+            }
         }
+        UNION 
+        {
+            # Add inferred domains based on content analysis
+            VALUES ?domainType {
+                "music-visualization"
+                "songwriting"
+                "personal-narrative"
+                "technology-documentation"
+                "general"
+            }
+        }
+        
+        # Define domain metadata
+        BIND(
+            IF(?domainType = "music-visualization", "Music & Audio Visualization",
+            IF(?domainType = "songwriting", "Songwriting & Lyrics",
+            IF(?domainType = "personal-narrative", "Personal Stories & Experiences",
+            IF(?domainType = "technology-documentation", "Technology & Development",
+                "General Content")))) AS ?domainLabel
+        )
+        
+        BIND(
+            IF(?domainType = "music-visualization", "#FF6B6B",
+            IF(?domainType = "songwriting", "#4ECDC4",
+            IF(?domainType = "personal-narrative", "#45B7D1",
+            IF(?domainType = "technology-documentation", "#96CEB4",
+                "#95A5A6")))) AS ?domainColor
+        )
+        
+        BIND(
+            IF(?domainType = "music-visualization", "music,visualization,audio,synth,tune,sound",
+            IF(?domainType = "songwriting", "lyrics,song,verse,chorus,poetry,rhyme",
+            IF(?domainType = "personal-narrative", "personal,story,experience,life,narrative",
+            IF(?domainType = "technology-documentation", "code,development,programming,system,documentation",
+                "general,content,information,knowledge")))) AS ?keywords
+        )
+        
+        BIND(
+            IF(?domainType = "music-visualization", "Content related to music creation, audio visualization, and sound synthesis",
+            IF(?domainType = "songwriting", "Content about lyric writing, song composition, and musical poetry",
+            IF(?domainType = "personal-narrative", "Personal stories, experiences, and reflective narratives",
+            IF(?domainType = "technology-documentation", "Technical documentation, code development, and system descriptions",
+                "General knowledge and miscellaneous content")))) AS ?description
+        )
         
         # Create domain URI
-        BIND(IRI(CONCAT(STR(semem:), "domain-", ?domainType)) AS ?domain)
+        BIND(IRI(CONCAT("http://purl.org/stuff/semem/domain/", ?domainType)) AS ?domain)
         
-        # Find documents belonging to each domain
+        # Find interactions belonging to each domain
         OPTIONAL {
-            ?document a ragno:Unit .
-            FILTER(CONTAINS(STR(?document), "doc-") || CONTAINS(STR(?document), "document"))
+            ?interaction a semem:Interaction .
             
-            ?document ragno:content ?docContent .
-            
-            # Calculate domain relevance based on keyword matching
-            BIND(
-                (IF(CONTAINS(LCASE(?docContent), "climate"), 1, 0) +
-                 IF(CONTAINS(LCASE(?docContent), "ocean"), 1, 0) +
-                 IF(CONTAINS(LCASE(?docContent), "warming"), 1, 0) +
-                 IF(CONTAINS(LCASE(?docContent), "urban"), 1, 0) +
-                 IF(CONTAINS(LCASE(?docContent), "city"), 1, 0) +
-                 IF(CONTAINS(LCASE(?docContent), "planning"), 1, 0) +
-                 IF(CONTAINS(LCASE(?docContent), "neuron"), 1, 0) +
-                 IF(CONTAINS(LCASE(?docContent), "brain"), 1, 0) +
-                 IF(CONTAINS(LCASE(?docContent), "cognitive"), 1, 0) +
-                 IF(CONTAINS(LCASE(?docContent), "algorithm"), 1, 0) +
-                 IF(CONTAINS(LCASE(?docContent), "model"), 1, 0) +
-                 IF(CONTAINS(LCASE(?docContent), "training"), 1, 0)) AS ?relevanceScore
-            )
-            
-            # Assign to domain with highest relevance
-            FILTER(
-                (?domainType = "climate-science" && (
-                    CONTAINS(LCASE(?docContent), "climate") ||
-                    CONTAINS(LCASE(?docContent), "ocean") ||
-                    CONTAINS(LCASE(?docContent), "warming")
-                )) ||
-                (?domainType = "urban-planning" && (
-                    CONTAINS(LCASE(?docContent), "urban") ||
-                    CONTAINS(LCASE(?docContent), "city") ||
-                    CONTAINS(LCASE(?docContent), "planning")
-                )) ||
-                (?domainType = "neuroscience" && (
-                    CONTAINS(LCASE(?docContent), "neuron") ||
-                    CONTAINS(LCASE(?docContent), "brain") ||
-                    CONTAINS(LCASE(?docContent), "cognitive")
-                )) ||
-                (?domainType = "machine-learning" && (
-                    CONTAINS(LCASE(?docContent), "algorithm") ||
-                    CONTAINS(LCASE(?docContent), "model") ||
-                    CONTAINS(LCASE(?docContent), "training")
-                )) ||
-                (?domainType = "general" && ?relevanceScore = 0)
-            )
-            
-            BIND(?relevanceScore AS ?relevance)
+            # Direct domain assignment
+            {
+                ?interaction semem:domain ?domainType .
+                BIND(1.0 AS ?relevance)
+            }
+            UNION
+            {
+                # Inferred domain assignment based on content
+                ?interaction semem:prompt ?prompt ;
+                           semem:output ?output .
+                           
+                BIND(CONCAT(?prompt, " ", ?output) AS ?fullContent)
+                
+                BIND(
+                    IF(?domainType = "music-visualization" && (
+                        CONTAINS(LCASE(?fullContent), "music") ||
+                        CONTAINS(LCASE(?fullContent), "visualization") ||
+                        CONTAINS(LCASE(?fullContent), "synth") ||
+                        CONTAINS(LCASE(?fullContent), "audio")
+                    ), 0.8,
+                    IF(?domainType = "songwriting" && (
+                        CONTAINS(LCASE(?fullContent), "lyrics") ||
+                        CONTAINS(LCASE(?fullContent), "song") ||
+                        CONTAINS(LCASE(?fullContent), "verse") ||
+                        CONTAINS(LCASE(?fullContent), "chorus")
+                    ), 0.8,
+                    IF(?domainType = "personal-narrative" && (
+                        CONTAINS(LCASE(?fullContent), "adhd") ||
+                        CONTAINS(LCASE(?fullContent), "personal") ||
+                        CONTAINS(LCASE(?fullContent), "diagnosis")
+                    ), 0.8,
+                    IF(?domainType = "technology-documentation" && (
+                        CONTAINS(LCASE(?fullContent), "code") ||
+                        CONTAINS(LCASE(?fullContent), "github") ||
+                        CONTAINS(LCASE(?fullContent), "development")
+                    ), 0.8,
+                    0.1)))) AS ?relevance
+                )
+                
+                FILTER(?relevance > 0.5)
+                FILTER NOT EXISTS { ?interaction semem:domain ?existingDomain }
+            }
         }
         
-        # Find entities in each domain
+        # Find elements/concepts in each domain
         OPTIONAL {
-            ?entity a ragno:Entity ;
-                   ragno:content ?entityContent .
+            ?element a ragno:Element .
+            OPTIONAL { ?element skos:prefLabel ?elementLabel }
+            OPTIONAL { ?element ragno:content ?elementContent }
             
-            # Calculate domain score for entities
-            BIND(
-                IF(?domainType = "climate-science" && (
-                    CONTAINS(LCASE(?entityContent), "climate") ||
-                    CONTAINS(LCASE(?entityContent), "ocean") ||
-                    CONTAINS(LCASE(?entityContent), "warming")
-                ), 0.9,
-                IF(?domainType = "urban-planning" && (
-                    CONTAINS(LCASE(?entityContent), "urban") ||
-                    CONTAINS(LCASE(?entityContent), "city")
-                ), 0.9,
-                IF(?domainType = "neuroscience" && (
-                    CONTAINS(LCASE(?entityContent), "brain") ||
-                    CONTAINS(LCASE(?entityContent), "neural")
-                ), 0.9,
-                IF(?domainType = "machine-learning" && (
-                    CONTAINS(LCASE(?entityContent), "algorithm") ||
-                    CONTAINS(LCASE(?entityContent), "model")
-                ), 0.9,
-                0.1)))) AS ?score
-            )
-            
-            FILTER(?score > 0.5)
+            # Check if element connects to interactions in this domain
+            {
+                ?element ragno:connectsTo ?relatedInteraction .
+                ?relatedInteraction a semem:Interaction ;
+                                  semem:domain ?domainType .
+                BIND(0.9 AS ?score)
+            }
+            UNION
+            {
+                # Content-based assignment
+                BIND(COALESCE(?elementContent, ?elementLabel, "") AS ?content)
+                BIND(
+                    IF(?domainType = "music-visualization" && CONTAINS(LCASE(?content), "music"), 0.7,
+                    IF(?domainType = "songwriting" && CONTAINS(LCASE(?content), "lyric"), 0.7,
+                       0.2)) AS ?score
+                )
+                FILTER(?score > 0.5)
+            }
         }
         
         # Find concepts related to each domain
         OPTIONAL {
-            ?concept a ragno:Corpuscle ;
-                    rdfs:label ?conceptLabel ;
-                    ragno:content ?conceptContent .
+            ?concept a skos:Concept ;
+                    skos:prefLabel ?conceptLabel .
+            OPTIONAL { ?concept ragno:content ?conceptContent }
             
-            FILTER(STRSTARTS(?conceptLabel, "Concept:"))
-            
-            # Calculate domain weight for concepts
-            BIND(
-                IF(?domainType = "climate-science" && (
-                    CONTAINS(LCASE(?conceptContent), "climate") ||
-                    CONTAINS(LCASE(?conceptContent), "environment")
-                ), 0.8,
-                IF(?domainType = "urban-planning" && (
-                    CONTAINS(LCASE(?conceptContent), "urban") ||
-                    CONTAINS(LCASE(?conceptContent), "infrastructure")
-                ), 0.8,
-                IF(?domainType = "neuroscience" && (
-                    CONTAINS(LCASE(?conceptContent), "cognitive") ||
-                    CONTAINS(LCASE(?conceptContent), "memory")
-                ), 0.8,
-                0.2))) AS ?weight
-            )
-            
-            FILTER(?weight > 0.5)
+            # Check if concept connects to interactions in this domain
+            {
+                ?concept ragno:connectsTo ?relatedInteraction .
+                ?relatedInteraction a semem:Interaction ;
+                                  semem:domain ?domainType .
+                BIND(0.9 AS ?weight)
+            }
+            UNION
+            {
+                # Content-based assignment
+                BIND(COALESCE(?conceptContent, ?conceptLabel, "") AS ?content)
+                BIND(
+                    IF(?domainType = "music-visualization" && (
+                        CONTAINS(LCASE(?content), "music") ||
+                        CONTAINS(LCASE(?content), "visualization")
+                    ), 0.8,
+                    IF(?domainType = "songwriting" && (
+                        CONTAINS(LCASE(?content), "song") ||
+                        CONTAINS(LCASE(?content), "lyrics")
+                    ), 0.8,
+                    0.2)) AS ?weight
+                )
+                FILTER(?weight > 0.5)
+            }
+        }
+        
+        # Find chunks related to each domain
+        OPTIONAL {
+            ?chunk a ragno:Unit, ragno:TextElement ;
+                  prov:wasDerivedFrom ?sourceInteraction .
+            ?sourceInteraction a semem:Interaction ;
+                             semem:domain ?domainType .
+            BIND(0.8 AS ?chunkRelevance)
         }
         
         # Count domain content
         {
             SELECT ?domain ?domainType
-                   (COUNT(DISTINCT ?doc) AS ?documentCount)
-                   (COUNT(DISTINCT ?ent) AS ?entityCount)
+                   (COUNT(DISTINCT ?int) AS ?interactionCount)
+                   (COUNT(DISTINCT ?elem) AS ?elementCount)
                    (COUNT(DISTINCT ?conc) AS ?conceptCount)
-                   (COUNT(DISTINCT ?rel) AS ?relationshipCount)
+                   (COUNT(DISTINCT ?ch) AS ?chunkCount)
             WHERE {
+                # Count interactions
                 OPTIONAL {
-                    ?doc a ragno:Unit .
-                    FILTER(CONTAINS(STR(?doc), "doc-"))
-                    # Domain matching logic here (simplified)
+                    ?int a semem:Interaction ;
+                        semem:domain ?domainType .
                 }
+                # Count elements
                 OPTIONAL {
-                    ?ent a ragno:Entity .
-                    # Domain matching logic here (simplified)
+                    ?elem a ragno:Element ;
+                         ragno:connectsTo ?relInt .
+                    ?relInt semem:domain ?domainType .
                 }
+                # Count concepts
                 OPTIONAL {
-                    ?conc a ragno:Corpuscle .
-                    # Domain matching logic here (simplified)
+                    ?conc a skos:Concept ;
+                         ragno:connectsTo ?relInt2 .
+                    ?relInt2 semem:domain ?domainType .
                 }
+                # Count chunks
                 OPTIONAL {
-                    ?rel a ragno:Relationship .
-                    # Domain matching logic here (simplified)
+                    ?ch a ragno:Unit, ragno:TextElement ;
+                       prov:wasDerivedFrom ?relInt3 .
+                    ?relInt3 semem:domain ?domainType .
                 }
             }
             GROUP BY ?domain ?domainType

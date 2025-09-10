@@ -61,6 +61,8 @@ The **MCP Protocol Server** enables seamless AI integration through:
 
 **[SPARQL Integration](sparql.md)** - Advanced SPARQL usage in Semem including custom queries, data import/export utilities, backup strategies, and migration workflows.
 
+**[SPARQL CONSTRUCT Queries](sparql-construct.md)** - Comprehensive documentation of all 11 CONSTRUCT queries for knowledge extraction, including entities, relationships, concepts, documents, embeddings, interactions, provenance, navigation, and community clustering.
+
 **[Prompt Management](prompt-management.md)** - Centralized system for managing chat completion prompts, templates, and context injection strategies.
 
 ### II. User Interfaces and Interaction
