@@ -29,7 +29,7 @@ CONSTRUCT {
     ?interaction semem:followedBy ?nextInteraction .
 }
 WHERE {
-    GRAPH <${graphURI}> {
+    GRAPH ?g {
         # Find semem:Interaction instances
         ?interaction a semem:Interaction .
         

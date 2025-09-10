@@ -17,7 +17,7 @@ CONSTRUCT {
             ragno:connectionType "connectsTo" .
 }
 WHERE {
-    GRAPH <${graphURI}> {
+    GRAPH ?g {
         ?source ragno:connectsTo ?target .
         
         # Get source type (should be ragno:Element)

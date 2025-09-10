@@ -1,6 +1,6 @@
 {
   "name": "semem",
-  "version": "1.4.2",
+  "version": "1.5.0",
   "description": "Semantic Web Memory for Intelligent Agents",
   "author": "Danny Ayers <danny.ayers@gmail.com> (https://danny.ayers.name)",
   "license": "MIT",
@@ -184,7 +184,7 @@
     "@anthropic-ai/sdk": "^0.36.3",
     "@langchain/core": "^0.3.19",
     "@langchain/openai": "^0.3.14",
-    "@modelcontextprotocol/inspector": "^0.14.3",
+    "@modelcontextprotocol/inspector": "^0.16.6",
     "@modelcontextprotocol/sdk": "^1.13.1",
     "@opendocsg/pdf2md": "^0.2.1",
     "@rdfjs/namespace": "^2.0.1",

@@ -22,7 +22,7 @@ CONSTRUCT {
              ragno:inEmbeddingCluster ?cluster .
 }
 WHERE {
-    GRAPH <${graphURI}> {
+    GRAPH ?g {
         {
             # Elements with ragno:hasEmbedding (chunks)
             ?element ragno:hasEmbedding ?embedding .

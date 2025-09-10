@@ -33,7 +33,7 @@ CONSTRUCT {
            semem:chunkRelevance ?chunkRelevance .
 }
 WHERE {
-    GRAPH <${graphURI}> {
+    GRAPH ?g {
         # Use actual domains from interactions plus inferred domains
         {
             # Extract existing domains from interactions

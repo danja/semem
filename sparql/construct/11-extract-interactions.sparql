@@ -33,7 +33,7 @@ CONSTRUCT {
             ragno:content ?conceptContent .
 }
 WHERE {
-    GRAPH <${graphURI}> {
+    GRAPH ?g {
         ?interaction a semem:Interaction .
         
         # Core interaction properties  

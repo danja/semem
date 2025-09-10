@@ -37,7 +37,7 @@ CONSTRUCT {
              ragno:relationshipStrength ?relationshipStrength .
 }
 WHERE {
-    GRAPH <${graphURI}> {
+    GRAPH ?g {
         # Find skos:Concept instances  
         ?concept a skos:Concept ;
                 skos:prefLabel ?conceptLabel .

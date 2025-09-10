@@ -38,7 +38,7 @@ CONSTRUCT {
                ragno:diversityIndex ?diversity .
 }
 WHERE {
-    GRAPH <${graphURI}> {
+    GRAPH ?g {
         # Create communities based on interaction anchors and their connected concepts
         {
             SELECT ?interaction ?interactionPrompt 

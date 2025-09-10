@@ -51,7 +51,7 @@ CONSTRUCT {
              zpt:pathDescription ?pathDescription .
 }
 WHERE {
-    GRAPH <${graphURI}> {
+    GRAPH ?g {
         # Define ZPT Zoom Levels based on actual data structure
         VALUES (?abstraction ?zoomLabel ?order ?zoomDescription) {
             ("corpus" "Corpus Level - Complete Knowledge Base" 1 "Overview of entire semantic knowledge base")

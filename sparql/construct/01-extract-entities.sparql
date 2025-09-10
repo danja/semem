@@ -25,7 +25,7 @@ CONSTRUCT {
             ragno:inDomain ?domain .
 }
 WHERE {
-    GRAPH <${graphURI}> {
+    GRAPH ?g {
         ?element a ragno:Element .
         
         # Core element properties

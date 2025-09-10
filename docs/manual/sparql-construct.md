@@ -12,7 +12,7 @@ The Semem project contains the following SPARQL query directories:
 - **`sparql/queries/admin/`** - Administrative and maintenance queries
 - **`sparql/templates/`** - Template queries with placeholder variables
 
-All queries use template variables (e.g., `${graphURI}`) that should be replaced with actual values before execution.
+All queries use the SPARQL variable `?g` to match any named graph in the dataset, making them ready to execute without template substitution.
 
 ## Query Overview
 
@@ -34,15 +34,15 @@ All queries use template variables (e.g., `${graphURI}`) that should be replaced
 
 ### Basic Usage
 
-Replace `${graphURI}` with your actual graph URI (e.g., `http://hyperdata.it/content`):
+The queries are ready to execute directly without template substitution:
 
 ```sparql
 # Example for extracting entities
 PREFIX ragno: <http://purl.org/stuff/ragno/>
 # ... (query content)
 WHERE {
-    GRAPH <http://hyperdata.it/content> {
-        # ... query logic
+    GRAPH ?g {
+        # Query automatically works across all named graphs
     }
 }
 ```
@@ -252,18 +252,20 @@ const results = await sparqlService.executeQuery(entityQuery);
 
 ## Common Patterns
 
-### Variable Substitution
+### Graph Variable Usage
 
-All queries use `${graphURI}` as a template variable:
+All queries use the SPARQL variable `?g` which automatically matches any named graph:
 
-```bash
-# Replace in script
-sed 's/${graphURI}/http:\/\/hyperdata.it\/content/g' 01-extract-entities.sparql > query.sparql
-
-# Or use environment variable
-export GRAPH_URI="http://hyperdata.it/content"
-envsubst < 01-extract-entities.sparql > query.sparql
+```sparql
+WHERE {
+    GRAPH ?g {
+        # Matches all named graphs in the dataset
+        ?subject ?predicate ?object .
+    }
+}
 ```
+
+This approach makes queries flexible and ready to execute without preprocessing.
 
 ### Combining Queries
 
@@ -424,19 +426,19 @@ These related queries from `sparql/queries/` have also been updated and tested:
 curl -X POST http://localhost:3030/semem/query \
   -H "Content-Type: application/sparql-query" \
   -H "Accept: text/turtle" \
-  --data-binary @01-extract-entities.sparql
+  --data-binary @sparql/construct/01-extract-entities.sparql
 
 # Extract connection networks
 curl -X POST http://localhost:3030/semem/query \
   -H "Content-Type: application/sparql-query" \
   -H "Accept: text/turtle" \
-  --data-binary @02-extract-relationships.sparql
+  --data-binary @sparql/construct/02-extract-relationships.sparql
 
 # Extract full interactions with AI analysis
 curl -X POST http://localhost:3030/semem/query \
   -H "Content-Type: application/sparql-query" \
   -H "Accept: text/turtle" \
-  --data-binary @11-extract-interactions.sparql
+  --data-binary @sparql/construct/11-extract-interactions.sparql
 ```
 
 ## Troubleshooting

@@ -29,7 +29,7 @@ CONSTRUCT {
            dcterms:created ?chunkCreated .
 }
 WHERE {
-    GRAPH <${graphURI}> {
+    GRAPH ?g {
         # Find chunks (ragno:Unit + ragno:TextElement)
         ?chunk a ragno:Unit, ragno:TextElement ;
                prov:wasDerivedFrom ?document .

@@ -33,7 +33,7 @@ CONSTRUCT {
                 ragno:stepDescription ?stepDescription .
 }
 WHERE {
-    GRAPH <${graphURI}> {
+    GRAPH ?g {
         # Find elements with derivation relationships
         ?element prov:wasDerivedFrom ?source .
         
