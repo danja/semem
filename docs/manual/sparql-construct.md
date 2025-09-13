@@ -2,6 +2,9 @@
 
 This document describes the CONSTRUCT queries designed to extract different views and aspects of the Semem knowledge base. Each query creates a focused RDF graph representing a specific perspective on the stored semantic knowledge.
 
+**Useful URLs**
+* https://semem-fuseki.tensegrity.it/semem
+
 ## SPARQL Directory Structure
 
 The Semem project contains the following SPARQL query directories:
@@ -12,9 +15,9 @@ The Semem project contains the following SPARQL query directories:
 - **`sparql/queries/admin/`** - Administrative and maintenance queries
 - **`sparql/templates/`** - Template queries with placeholder variables
 
-All queries use the SPARQL variable `?g` to match any named graph in the dataset, making them ready to execute without template substitution.
+The CONSTRUCT queries use the SPARQL variable `?g` to match any named graph in the dataset, making them ready to execute without template substitution.
 
-## Query Overview
+## CONSTRUCT Query Overview
 
 | Query | Purpose | Output Focus | Status |
 |-------|---------|--------------|--------|
@@ -53,12 +56,14 @@ WHERE {
 # Extract entities
 curl -X POST http://localhost:3030/semem/query \
   -H "Content-Type: application/sparql-query" \
-  -d @01-extract-entities.sparql
+  -H "Accept: text/turtle" \
+  --data-binary @sparql/construct/01-extract-entities.sparql
 
 # Extract relationships  
 curl -X POST http://localhost:3030/semem/query \
   -H "Content-Type: application/sparql-query" \
-  -d @02-extract-relationships.sparql
+  -H "Accept: text/turtle" \
+  --data-binary @sparql/construct/02-extract-relationships.sparql
 ```
 
 ### Via Semem API

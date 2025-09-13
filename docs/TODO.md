@@ -1,4 +1,6 @@
-* add links to workbench
+
+* fix tests
+* add github mit logos
 * throttling for API calls - working on server?
 * interactions aren't being stored - default should be yes
 * update Claude.md incorporate tips from https://diwank.space/field-notes-from-shipping-real-code-with-claude

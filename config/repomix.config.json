@@ -1,6 +1,6 @@
 {
     "output": {
-        "filePath": "./repomix-semem-dev.md",
+        "filePath": "./docs/repomix-semem-dev.md",
         "headerText": "Semem repo - Development essentials",
         "removeComments": true
     },
@@ -87,10 +87,6 @@
         "src/types/MemoryTypes.js",
         "src/types/api.ts",
         "src/types/index.ts",
-        "examples/CheckLLMProviders.js",
-        "examples/ContextManagement.js",
-        "examples/HTTPCalls.js",
-        "examples/RagnoPipelineDemo.js",
         "servers/api-server.js",
         "package.json",
         "README.md",

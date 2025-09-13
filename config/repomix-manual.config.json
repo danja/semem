@@ -1,0 +1,17 @@
+{
+    "output": {
+        "filePath": "./docs/repomix-semem-manual.md",
+        "headerText": "Semem repo - docs",
+        "removeComments": true
+    },
+    "include": [
+        "README.md",
+        "docs/manual/*.md"
+    ],
+    "ignore": {
+        "useDefaultPatterns": true,
+        "customPatterns": [
+            "**/node_modules/**"
+        ]
+    }
+}
