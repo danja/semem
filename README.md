@@ -254,7 +254,7 @@ The original UI system includes VSOM visualization and SPARQL browser (via `npm 
 - **🚀 MCP Prompts**: 8 pre-built workflow templates for complex multi-step operations
 - **🔍 Advanced Algorithms**: HyDE, Web Search integration, VSOM, graph analytics, community detection, and Personal PageRank
 - **📊 Interactive Visualizations**: VSOM (Vector Self-Organizing Maps) for high-dimensional data exploration
-- **🔗 Multi-Provider LLM Support**: Ollama, Claude, Mistral, and other providers via unified connector system
+- **🔗 Multi-Provider LLM Support**: Groq (default), Ollama, Claude, Mistral, and other providers via unified connector system
 - **📊 Multiple Storage Backends**: In-memory, JSON, and SPARQL/RDF with caching optimization
 
 ## 🗣️ Simple Verbs Interface
@@ -750,14 +750,20 @@ cp example.env .env
 
 ### Prerequisites
 
-1. **Ollama** (recommended for local processing):
+1. **Groq API Key** (recommended for fast cloud inference):
+   ```bash
+   # Set your API key in .env
+   GROQ_API_KEY=your-groq-api-key
+   ```
+
+2. **Ollama** (optional for local processing):
    ```bash
    # Install required models
    ollama pull qwen2:1.5b         # For chat/text generation
    ollama pull nomic-embed-text   # For embeddings
    ```
 
-2. **Optional - SPARQL Endpoint** (for advanced features):
+3. **SPARQL Endpoint** (core semantic storage):
    ```bash
    # Using Docker
    docker run -d --name fuseki -p 3030:3030 stain/jena-fuseki
@@ -1005,17 +1011,26 @@ Configure multiple providers in `config/config.json`:
 {
   "llmProviders": [
     {
+      "type": "groq",
+      "apiKey": "${GROQ_API_KEY}",
+      "chatModel": "llama-3.1-8b-instant",
+      "priority": 1,
+      "capabilities": ["chat"]
+    },
+    {
+      "type": "mistral",
+      "apiKey": "${MISTRAL_API_KEY}",
+      "chatModel": "mistral-small-latest",
+      "priority": 2,
+      "capabilities": ["chat"]
+    },
+    {
       "type": "ollama",
       "baseUrl": "http://localhost:11434",
       "chatModel": "qwen2:1.5b",
       "embeddingModel": "nomic-embed-text",
+      "priority": 2,
       "capabilities": ["chat", "embedding"]
-    },
-    {
-      "type": "claude",
-      "apiKey": "${CLAUDE_API_KEY}",
-      "chatModel": "claude-3-sonnet-20240229",
-      "capabilities": ["chat"]
     }
   ]
 }
