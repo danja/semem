@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VSOM Navigation - Semem</title>
+    <meta name="description" content="Visual Self-Organizing Map for Semantic Memory Navigation">
+    <link rel="stylesheet" href="styles/vsom-standalone.css">
+    <link rel="stylesheet" href="styles/vsom-components.css">
+</head>
+<body>
+    <div id="app" class="vsom-app">
+        <!-- Header -->
+        <header class="vsom-header">
+            <div class="header-content">
+                <h1 class="app-title">
+                    <span class="app-icon">🗺️</span>
+                    VSOM Navigation
+                </h1>
+                <div class="header-info">
+                    <div class="connection-status">
+                        <span class="status-dot" id="connection-status"></span>
+                        <span class="status-text" id="status-text">Connecting...</span>
+                    </div>
+                    <div class="session-info">
+                        <span class="info-item">
+                            <span class="info-icon">💭</span>
+                            <span id="interactions-count">0</span> interactions
+                        </span>
+                        <span class="info-item">
+                            <span class="info-icon">⚡</span>
+                            <span id="session-duration">0s</span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Left Panel: ZPT Controls -->
+            <aside class="left-panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">
+                        <span class="panel-icon">🧭</span>
+                        ZPT Navigation
+                    </h2>
+                </div>
+                
+                <div class="zpt-controls" id="zpt-controls">
+                    <!-- ZPT State Display -->
+                    <div class="zpt-state-display">
+                        <div class="zpt-current">
+                            <span class="zpt-label">Current:</span>
+                            <span class="zpt-value" id="current-zoom">entity</span>
+                            <span class="zpt-separator">/</span>
+                            <span class="zpt-value" id="current-pan">all</span>
+                            <span class="zpt-separator">/</span>
+                            <span class="zpt-value" id="current-tilt">keywords</span>
+                        </div>
+                    </div>
+
+                    <!-- Zoom Controls -->
+                    <div class="control-section">
+                        <h3 class="control-title">
+                            <span class="control-icon">🔍</span>
+                            Zoom
+                        </h3>
+                        <div class="zoom-controls">
+                            <button class="zoom-button active" data-level="entity">Entity</button>
+                            <button class="zoom-button" data-level="unit">Unit</button>
+                            <button class="zoom-button" data-level="text">Text</button>
+                            <button class="zoom-button" data-level="community">Community</button>
+                            <button class="zoom-button" data-level="corpus">Corpus</button>
+                        </div>
+                    </div>
+
+                    <!-- Pan Controls -->
+                    <div class="control-section">
+                        <h3 class="control-title">
+                            <span class="control-icon">🎯</span>
+                            Pan
+                        </h3>
+                        <div class="pan-controls">
+                            <div class="form-group">
+                                <label for="pan-domains">Domains</label>
+                                <input type="text" id="pan-domains" placeholder="AI, technology..." />
+                            </div>
+                            <div class="form-group">
+                                <label for="pan-keywords">Keywords</label>
+                                <input type="text" id="pan-keywords" placeholder="machine learning..." />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tilt Controls -->
+                    <div class="control-section">
+                        <h3 class="control-title">
+                            <span class="control-icon">👁️</span>
+                            Tilt
+                        </h3>
+                        <div class="tilt-controls">
+                            <button class="tilt-button active" data-style="keywords">Keywords</button>
+                            <button class="tilt-button" data-style="embedding">Embedding</button>
+                            <button class="tilt-button" data-style="graph">Graph</button>
+                            <button class="tilt-button" data-style="temporal">Temporal</button>
+                        </div>
+                    </div>
+
+                    <!-- Similarity Threshold -->
+                    <div class="control-section">
+                        <h3 class="control-title">
+                            <span class="control-icon">📊</span>
+                            Threshold: <span id="threshold-value">0.3</span>
+                        </h3>
+                        <input type="range" id="similarity-threshold" min="0.0" max="1.0" step="0.05" value="0.3" class="threshold-slider" />
+                        <div class="threshold-hints">
+                            <span class="hint-low">Broad (0.0)</span>
+                            <span class="hint-high">Precise (1.0)</span>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Center Panel: VSOM Visualization -->
+            <section class="center-panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">
+                        <span class="panel-icon">🗺️</span>
+                        Interaction Map
+                    </h2>
+                    <div class="map-controls">
+                        <button class="control-button" id="refresh-map">
+                            <span class="button-icon">🔄</span>
+                            Refresh
+                        </button>
+                        <button class="control-button" id="auto-layout">
+                            <span class="button-icon">🎯</span>
+                            Auto Layout
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="vsom-container">
+                    <div id="vsom-grid" class="vsom-grid">
+                        <div class="loading-overlay" id="vsom-loading">
+                            <div class="loading-spinner"></div>
+                            <div class="loading-text">Loading interactions...</div>
+                        </div>
+                        <div class="placeholder" id="vsom-placeholder">
+                            <div class="placeholder-icon">🗺️</div>
+                            <div class="placeholder-text">Your interactions will appear here</div>
+                            <div class="placeholder-subtext">Perform some tell/ask operations in the workbench to see them mapped</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Right Panel: Data Info -->
+            <aside class="right-panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">
+                        <span class="panel-icon">📊</span>
+                        Data Info
+                    </h2>
+                </div>
+                
+                <div class="data-panel" id="data-panel">
+                    <!-- Session Stats -->
+                    <div class="info-section">
+                        <h3 class="info-title">Session</h3>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <span class="info-label">Interactions:</span>
+                                <span class="info-value" id="total-interactions">0</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Concepts:</span>
+                                <span class="info-value" id="total-concepts">0</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Duration:</span>
+                                <span class="info-value" id="total-duration">0s</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- VSOM Stats -->
+                    <div class="info-section">
+                        <h3 class="info-title">VSOM</h3>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <span class="info-label">Nodes:</span>
+                                <span class="info-value" id="vsom-nodes">0</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Grid Size:</span>
+                                <span class="info-value" id="vsom-grid-size">0x0</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Trained:</span>
+                                <span class="info-value" id="vsom-trained">No</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Interactions -->
+                    <div class="info-section">
+                        <h3 class="info-title">Recent Interactions</h3>
+                        <div class="interaction-list" id="interaction-list">
+                            <div class="no-interactions">
+                                <span class="no-data-icon">💭</span>
+                                <span class="no-data-text">No interactions yet</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </main>
+
+        <!-- Status Bar -->
+        <footer class="status-bar">
+            <div class="status-left">
+                <span class="status-item">
+                    <span class="status-icon">🔗</span>
+                    <span id="api-status">Connected</span>
+                </span>
+            </div>
+            <div class="status-right">
+                <span class="status-item">
+                    <span class="status-icon">⏱️</span>
+                    Last update: <span id="last-update">Never</span>
+                </span>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Scripts -->
+    <script type="module" src="js/vsom-standalone.js"></script>
+</body>
+</html>

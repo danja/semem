@@ -92,8 +92,62 @@ export class DocumentProcessor {
         }
       } else if (content.length > MEMORY_INTEGRATION_LIMIT) {
         console.log(`📄 Document too large (${content.length} chars > ${MEMORY_INTEGRATION_LIMIT}) for immediate memory integration.`);
-        console.log(`✨ Document stored in SPARQL. Use ChunkDocuments.js to create searchable chunks with embeddings.`);
-        memoryResult = { deferred: true, reason: 'document_too_large' };
+        console.log(`🔄 Automatically chunking document for semantic processing...`);
+        
+        try {
+          // Import chunker service
+          const Chunker = (await import('../../src/services/document/Chunker.js')).default;
+          const chunker = new Chunker({
+            maxChunkSize: 2000,
+            minChunkSize: 100,
+            overlapSize: 100
+          });
+          
+          // Chunk the document content
+          const chunks = await chunker.chunkText(content, {
+            sourceURI: result.textURI,
+            metadata: processedMetadata
+          });
+          
+          console.log(`📝 Created ${chunks.length} chunks from document`);
+          
+          // Process each chunk through memory integration
+          let totalConcepts = 0;
+          for (let i = 0; i < chunks.length; i++) {
+            const chunk = chunks[i];
+            if (this.simpleVerbsService) {
+              try {
+                const chunkResult = await this.simpleVerbsService.tell({
+                  content: chunk.content,
+                  type: 'document_chunk',
+                  metadata: {
+                    ...processedMetadata,
+                    chunkIndex: i,
+                    totalChunks: chunks.length,
+                    parentDocument: filename,
+                    chunkURI: chunk.uri
+                  }
+                });
+                totalConcepts += chunkResult.concepts || 0;
+              } catch (chunkError) {
+                console.warn(`⚠️ Failed to process chunk ${i + 1}:`, chunkError.message);
+              }
+            }
+          }
+          
+          conceptsExtracted = totalConcepts;
+          console.log(`✅ Document chunking complete. Extracted ${conceptsExtracted} concepts from ${chunks.length} chunks.`);
+          memoryResult = { 
+            chunked: true, 
+            chunkCount: chunks.length, 
+            concepts: conceptsExtracted 
+          };
+          
+        } catch (chunkingError) {
+          console.error(`❌ Document chunking failed:`, chunkingError.message);
+          console.log(`✨ Document stored in SPARQL. Manual chunking may be required.`);
+          memoryResult = { deferred: true, reason: 'chunking_failed', error: chunkingError.message };
+        }
       } else {
         console.warn('⚠️ Simple verbs service not available for memory integration');
       }

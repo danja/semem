@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VSOM Debug Test</title>
+</head>
+<body>
+    <h1>VSOM Component Debug</h1>
+    <div id="test-container"></div>
+    <div id="error-output" style="color: red; white-space: pre-wrap; font-family: monospace;"></div>
+    
+    <script type="module">
+        const errorOutput = document.getElementById('error-output');
+        
+        window.addEventListener('error', (event) => {
+            errorOutput.textContent += `Error: ${event.error.message}\nStack: ${event.error.stack}\n\n`;
+        });
+        
+        window.addEventListener('unhandledrejection', (event) => {
+            errorOutput.textContent += `Unhandled Promise Rejection: ${event.reason}\n\n`;
+        });
+        
+        try {
+            console.log('Testing VSOMUtils import...');
+            const { default: VSOMUtils } = await import('./js/utils/VSOMUtils.js');
+            console.log('VSOMUtils imported successfully:', VSOMUtils);
+            console.log('VSOMUtils.debounce exists:', typeof VSOMUtils.debounce);
+            
+            if (typeof VSOMUtils.debounce === 'function') {
+                console.log('Testing debounce function...');
+                const testFunc = () => console.log('debounced!');
+                const debouncedFunc = VSOMUtils.debounce(testFunc, 100);
+                console.log('Debounce created successfully:', typeof debouncedFunc);
+                debouncedFunc();
+            }
+            
+            console.log('Testing ZPTControls import...');
+            const { default: ZPTControls } = await import('./js/components/ZPTControls.js');
+            console.log('ZPTControls imported successfully:', ZPTControls);
+            
+            console.log('Creating test container...');
+            const container = document.getElementById('test-container');
+            container.innerHTML = `
+                <div id="zpt-controls">
+                    <input id="pan-domains" type="text" />
+                    <input id="pan-keywords" type="text" />
+                    <div id="threshold-value">0.3</div>
+                    <div id="current-zoom">entity</div>
+                    <div id="current-pan">all</div>
+                    <div id="current-tilt">keywords</div>
+                </div>
+            `;
+            
+            console.log('Creating ZPTControls instance...');
+            const zptControls = new ZPTControls(container.querySelector('#zpt-controls'), {
+                onZPTChange: (changes) => console.log('ZPT changed:', changes)
+            });
+            
+            console.log('ZPTControls created successfully!');
+            errorOutput.textContent += 'SUCCESS: All components loaded without errors!\n';
+            
+        } catch (error) {
+            console.error('Test failed:', error);
+            errorOutput.textContent += `Test Error: ${error.message}\nStack: ${error.stack}\n`;
+        }
+    </script>
+</body>
+</html>

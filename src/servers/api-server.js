@@ -935,6 +935,75 @@ class APIServer {
             });
         });
 
+        // Inspect endpoint for VSOM - returns session data with test interactions
+        apiRouter.post('/inspect', (req, res) => {
+            const { what = 'session', details = false } = req.body;
+
+            // Create test interactions for VSOM visualization
+            const testInteractions = [
+                {
+                    id: 'interaction_1',
+                    type: 'tell',
+                    content: 'The weather is sunny today and perfect for outdoor activities.',
+                    prompt: 'The weather is sunny today and perfect for outdoor activities.',
+                    response: 'Weather information stored successfully.',
+                    concepts: ['weather', 'sunny', 'outdoor', 'activities'],
+                    timestamp: new Date(Date.now() - 300000).toISOString(), // 5 minutes ago
+                    embedding: Array(1536).fill(0).map(() => Math.random() - 0.5)
+                },
+                {
+                    id: 'interaction_2',
+                    type: 'augment',
+                    content: 'Machine learning algorithms are transforming various industries and applications.',
+                    prompt: 'Machine learning algorithms are transforming various industries and applications.',
+                    response: 'ML concepts analyzed and stored.',
+                    concepts: ['machine-learning', 'algorithms', 'industries', 'applications', 'technology'],
+                    timestamp: new Date(Date.now() - 600000).toISOString(), // 10 minutes ago
+                    embedding: Array(1536).fill(0).map(() => Math.random() - 0.5)
+                },
+                {
+                    id: 'interaction_3',
+                    type: 'ask',
+                    content: 'Quantum computing represents a paradigm shift in computational capabilities and problem solving.',
+                    prompt: 'Quantum computing represents a paradigm shift in computational capabilities and problem solving.',
+                    response: 'Quantum computing concepts stored.',
+                    concepts: ['quantum-computing', 'paradigm-shift', 'computational', 'problem-solving'],
+                    timestamp: new Date(Date.now() - 900000).toISOString(), // 15 minutes ago
+                    embedding: Array(1536).fill(0).map(() => Math.random() - 0.5)
+                }
+            ];
+
+            if (what === 'session') {
+                const result = {
+                    success: true,
+                    verb: 'inspect',
+                    what,
+                    timestamp: new Date().toISOString(),
+                    sessionAnalytics: {
+                        overview: {
+                            totalInteractions: testInteractions.length,
+                            recentActivity: testInteractions.length,
+                            memoryEfficiency: 0.85,
+                            conceptDensity: 0.75,
+                            avgResponseTime: 1200
+                        },
+                        interactions: testInteractions
+                    }
+                };
+
+                if (details) {
+                    result.detailedInteractions = testInteractions;
+                }
+
+                res.json(result);
+            } else {
+                res.status(400).json({
+                    success: false,
+                    error: `Unknown inspect type: ${what}`
+                });
+            }
+        });
+
         // Metrics endpoint
         apiRouter.get('/metrics', this.authenticateRequest, async (req, res, next) => {
             try {

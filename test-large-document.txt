@@ -1,0 +1,19 @@
+This is a test document that is intentionally large enough to trigger the chunking mechanism in the document processing system. 
+
+The document needs to exceed 2000 characters to activate the automatic chunking feature. This content discusses various aspects of semantic memory systems, VSOM visualization techniques, and document processing workflows.
+
+Semantic memory systems are crucial for organizing and retrieving information based on meaning and context. They enable applications to understand relationships between different pieces of content and provide intelligent search capabilities.
+
+Visual Self-Organizing Maps (VSOM) represent a powerful visualization technique for displaying semantic relationships spatially. By mapping similar concepts to nearby locations in a visual space, users can intuitively navigate through complex information landscapes.
+
+Document processing workflows must handle various challenges including content extraction, chunking, embedding generation, and storage optimization. Large documents require special handling to ensure they can be effectively searched and retrieved.
+
+The chunking process divides large documents into manageable segments while preserving semantic coherence. This ensures that each chunk contains meaningful units of information that can be independently processed and embedded.
+
+Embedding generation transforms textual content into high-dimensional vector representations that capture semantic meaning. These embeddings enable similarity calculations and clustering operations that power semantic search functionality.
+
+Storage optimization ensures that processed content can be efficiently retrieved and updated. Modern systems often use graph databases or triple stores to maintain complex relationships between entities, concepts, and document structures.
+
+Quality assurance in document processing involves validating that content is properly extracted, chunks are appropriately sized, and embeddings accurately represent semantic content. Robust error handling ensures that processing failures are gracefully managed without losing important information.
+
+Integration testing verifies that all components of the document processing pipeline work together seamlessly, from initial upload through final storage and retrieval operations.

@@ -139,9 +139,13 @@ import {
       if (lazy) {
         // Lazy storage - store content as-is without processing
         const elementId = `semem:${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
-        prompt = type === 'document' ? `Document: ${metadata.title || 'Untitled'}` :
-                type === 'concept' ? `Concept: ${metadata.name || 'Unnamed'}` :
-                `User input: ${content.substring(0, 100)}...`;
+        // Create meaningful titles from content when metadata is missing
+        const getDocumentTitle = () => metadata.title || `Document: ${content.substring(0, 50).replace(/\n/g, ' ').trim()}...`;
+        const getConceptName = () => metadata.name || `${content.substring(0, 30).replace(/\n/g, ' ').trim()}`;
+        
+        prompt = type === 'document' ? getDocumentTitle() :
+                type === 'concept' ? `Concept: ${getConceptName()}` :
+                (content.length > 200 ? `${content.substring(0, 200)}...` : content);
         
         const lazyData = {
           id: elementId,
@@ -209,7 +213,8 @@ import {
             // Store as semantic memory interaction
             embedding = await this.safeOps.generateEmbedding(content);
             concepts = await this.safeOps.extractConcepts(content);
-            prompt = `User input: ${content.substring(0, 100)}...`;
+            // Store full content, but create a reasonable prompt for display
+            prompt = content.length > 200 ? `${content.substring(0, 200)}...` : content;
             
             console.log('🔥 DEBUG: About to call safeOps.storeInteraction');
             // Debug removed for ES module compatibility
@@ -2381,7 +2386,10 @@ import {
       summary: `${i.prompt?.substring(0, 50)}...`,
       concepts: i.concepts?.length || 0,
       timestamp: i.timestamp,
-      responseTime: i.responseTime || 0
+      responseTime: i.responseTime || 0,
+      // Include full content for VSOM visualization (using correct field names from session cache)
+      content: i.response || '',
+      prompt: i.prompt || ''
     }));
   }
 
