@@ -77,6 +77,7 @@ describe('LLM Chat API Integration (Config-Driven)', { skip: shouldSkip }, () =>
 
             const testScript = `
 import LLMHandler from './src/handlers/LLMHandler.js';
+import GroqConnector from './src/connectors/GroqConnector.js';
 import MistralConnector from './src/connectors/MistralConnector.js';
 import OllamaConnector from './src/connectors/OllamaConnector.js';
 import ClaudeConnector from './src/connectors/ClaudeConnector.js';
@@ -86,7 +87,9 @@ const apiKey = '${providerConfig.apiKey || ''}';
 const model = '${providerConfig.chatModel}';
 
 let llmProvider;
-if (providerType === 'mistral' && apiKey) {
+if (providerType === 'groq' && apiKey) {
+    llmProvider = new GroqConnector(apiKey);
+} else if (providerType === 'mistral' && apiKey) {
     llmProvider = new MistralConnector(apiKey);
 } else if (providerType === 'claude' && apiKey) {
     llmProvider = new ClaudeConnector(apiKey);
@@ -181,6 +184,7 @@ try {
 
             const testScript = `
 import LLMHandler from './src/handlers/LLMHandler.js';
+import GroqConnector from './src/connectors/GroqConnector.js';
 import MistralConnector from './src/connectors/MistralConnector.js';
 import OllamaConnector from './src/connectors/OllamaConnector.js';
 import ClaudeConnector from './src/connectors/ClaudeConnector.js';
@@ -190,7 +194,9 @@ const apiKey = '${providerConfig.apiKey || ''}';
 const model = '${providerConfig.chatModel}';
 
 let llmProvider;
-if (providerType === 'mistral' && apiKey) {
+if (providerType === 'groq' && apiKey) {
+    llmProvider = new GroqConnector(apiKey);
+} else if (providerType === 'mistral' && apiKey) {
     llmProvider = new MistralConnector(apiKey);
 } else if (providerType === 'claude' && apiKey) {
     llmProvider = new ClaudeConnector(apiKey);

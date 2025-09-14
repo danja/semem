@@ -53,11 +53,26 @@
   ],
   "llmProviders": [
     {
+      "type": "groq",
+      "implementation": "hyperdata-clients",
+      "apiKey": "${GROQ_API_KEY}",
+      "chatModel": "llama-3.1-8b-instant",
+      "priority": 1,
+      "capabilities": [
+        "chat"
+      ],
+      "rateLimit": {
+        "delayMs": 100,
+        "description": "Delay between API calls to avoid rate limiting"
+      },
+      "description": "Using hyperdata-clients implementation for fast inference"
+    },
+    {
       "type": "mistral",
       "implementation": "hyperdata-clients",
       "apiKey": "${MISTRAL_API_KEY}",
       "chatModel": "mistral-small-latest",
-      "priority": 1,
+      "priority": 2,
       "capabilities": [
         "chat"
       ],
@@ -72,7 +87,7 @@
       "implementation": "hyperdata-clients",
       "apiKey": "${CLAUDE_API_KEY}",
       "chatModel": "claude-3-opus-20240229",
-      "priority": 2,
+      "priority": 3,
       "capabilities": [
         "chat"
       ],

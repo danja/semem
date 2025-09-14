@@ -29,6 +29,7 @@ import EmbeddingConnectorFactory from '../connectors/EmbeddingConnectorFactory.j
 import OllamaConnector from '../connectors/OllamaConnector.js';
 import ClaudeConnector from '../connectors/ClaudeConnector.js';
 import MistralConnector from '../connectors/MistralConnector.js';
+import GroqConnector from '../connectors/GroqConnector.js';
 import LLMHandler from '../handlers/LLMHandler.js';
 import EmbeddingHandler from '../handlers/EmbeddingHandler.js';
 import CacheManager from '../handlers/CacheManager.js';
@@ -264,8 +265,11 @@ class APIServer {
             for (const provider of sortedProviders) {
                 this.logger.info(`Trying LLM provider: ${provider.type} (priority: ${provider.priority})`);
                 
-                if (provider.type === 'mistral' && provider.apiKey) {
-                    this.logger.info('✅ Creating Mistral connector (highest priority)...');
+                if (provider.type === 'groq' && provider.apiKey) {
+                    this.logger.info('✅ Creating Groq connector (highest priority)...');
+                    return new GroqConnector(provider.apiKey);
+                } else if (provider.type === 'mistral' && provider.apiKey) {
+                    this.logger.info('✅ Creating Mistral connector...');
                     return new MistralConnector(provider.apiKey);
                 } else if (provider.type === 'claude' && provider.apiKey) {
                     this.logger.info('✅ Creating Claude connector...');

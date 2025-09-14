@@ -1,8 +1,9 @@
-time to migrate - can you create src/connectors/GroqConnector.js following the pattern of src/connectors/MistralConnector.js with the endpoint URL https://api.groq.com/openai/v1/chat/completions together with anything else that needs to be updated then modify config/config.json  to make the default chat provider Groq using model llama-3.1-8b-instant
+time to migrate - can you create src/connectors/GroqConnector.js following the pattern of src/connectors/MistralConnector.js with the endpoint URL https://api.groq.com/openai/v1/chat/completions together with anything else that needs to be updated then modify config/config.json  to make the default chat provider Groq using model llama-3.1-8b-instant 
 
   INTEGRATION_TESTS=true npx vitest run tests/integration/llm/ChatAPIIntegration.test.js --reporter=verbose 
 * fix tests
 * add github mit logos
+* refactor src/connectors
 * throttling for API calls - working on server?
 * interactions aren't being stored - default should be yes
 * update Claude.md incorporate tips from https://diwank.space/field-notes-from-shipping-real-code-with-claude
