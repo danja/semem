@@ -53,7 +53,10 @@ class VSOMStandaloneApp {
             
             // Setup event listeners
             this.setupEventListeners();
-            
+
+            // Clear any existing tooltips from previous sessions
+            VSOMUtils.hideTooltip();
+
             // Initial data load
             await this.refreshData();
             
@@ -147,42 +150,191 @@ class VSOMStandaloneApp {
         try {
             this.showLoading(true);
 
-            // Get current session data
-            const sessionData = await this.services.api.getSessionData();
-            const zptState = await this.services.api.getZPTState();
+            // Clear any existing tooltips before refresh
+            VSOMUtils.hideTooltip();
 
-            // Process interactions for VSOM
-            const interactions = sessionData.detailedInteractions || sessionData.interactions || [];
-            const vsomData = await this.services.processor.processInteractions(interactions, {
-                zoom: zptState.zoom || this.state.zoom,
-                pan: zptState.pan || this.state.pan,
-                tilt: zptState.tilt || this.state.tilt,
-                threshold: zptState.threshold || this.state.threshold
-            });
-            
+            // Get comprehensive data from multiple sources including SPARQL store
+            const [sessionData, conceptsData, zptState, sparqlData, entitiesData, memoryData] = await Promise.allSettled([
+                this.services.api.getSessionData(),
+                this.services.api.getConceptsData(),
+                this.services.api.getZPTState(),
+                this.services.api.getSPARQLData(),
+                this.services.api.getEntities(),
+                this.services.api.getMemoryItems()
+            ]);
+
+            // Extract successful results
+            const session = sessionData.status === 'fulfilled' ? sessionData.value : {};
+            const concepts = conceptsData.status === 'fulfilled' ? conceptsData.value : {};
+            const zpt = zptState.status === 'fulfilled' ? zptState.value : {};
+            const sparql = sparqlData.status === 'fulfilled' ? sparqlData.value : {};
+            const entities = entitiesData.status === 'fulfilled' ? entitiesData.value : {};
+            const memory = memoryData.status === 'fulfilled' ? memoryData.value : {};
+
+            // Aggregate all available data sources including SPARQL
+            const aggregatedData = this.aggregateDataSources(session, concepts, zpt, sparql, entities, memory);
+
+            // Current ZPT parameters
+            const currentZPT = {
+                zoom: zpt.zoom || this.state.zoom,
+                pan: zpt.pan || this.state.pan,
+                tilt: zpt.tilt || this.state.tilt,
+                threshold: zpt.threshold || this.state.threshold
+            };
+
+            // Process all data for VSOM visualization
+            const vsomData = await this.services.processor.processInteractions(aggregatedData.items, currentZPT);
+
             // Update state
             this.updateState({
-                interactions,
+                interactions: aggregatedData.interactions,
                 vsomData,
-                zoom: zptState.zoom || this.state.zoom,
-                pan: zptState.pan || this.state.pan,
-                tilt: zptState.tilt || this.state.tilt,
-                threshold: zptState.threshold || this.state.threshold,
+                concepts: aggregatedData.concepts,
+                aggregatedData,
+                zoom: currentZPT.zoom,
+                pan: currentZPT.pan,
+                tilt: currentZPT.tilt,
+                threshold: currentZPT.threshold,
                 lastUpdate: new Date()
             });
-            
+
             // Update components
             await this.updateComponents();
-            
+
             this.showLoading(false);
-            
+
         } catch (error) {
             console.error('Failed to refresh data:', error);
             this.showToast('Failed to refresh data: ' + error.message, 'error');
             this.showLoading(false);
         }
     }
-    
+
+    /**
+     * Aggregate data from multiple sources based on ZPT scope
+     */
+    aggregateDataSources(sessionData, conceptsData, zptState) {
+        const interactions = sessionData.sessionCache?.interactions || sessionData.detailedInteractions || sessionData.interactions || [];
+        const conceptAnalytics = conceptsData.conceptAnalytics || {};
+        const concepts = Array.isArray(conceptAnalytics.topConcepts) ? conceptAnalytics.topConcepts : [];
+        const relationships = conceptsData.conceptRelationships || [];
+
+        // Create visualizable items from all sources
+        const items = [];
+
+        // Add interactions as entities
+        interactions.forEach(interaction => {
+            items.push({
+                ...interaction,
+                type: interaction.type || 'interaction',
+                source: 'session',
+                visualType: 'entity'
+            });
+        });
+
+        // Add concepts as semantic units
+        concepts.forEach((concept, index) => {
+            items.push({
+                id: `concept_${index}`,
+                type: 'concept',
+                content: concept.concept || concept.name,
+                concepts: [concept.concept || concept.name],
+                frequency: concept.count || concept.frequency || 1,
+                source: 'concepts',
+                visualType: 'unit',
+                x: index % 5,
+                y: Math.floor(index / 5),
+                size: Math.max(6, Math.min(20, (concept.count || 1) * 2)),
+                color: '#4CAF50',
+                metadata: {
+                    quality: Math.min(1, (concept.count || 1) / 10),
+                    importance: Math.min(1, (concept.frequency || 0.1) * 2)
+                }
+            });
+        });
+
+        // Add relationships as connections
+        relationships.forEach((rel, index) => {
+            items.push({
+                id: `relationship_${index}`,
+                type: 'relationship',
+                content: `${rel.source} → ${rel.target}`,
+                concepts: [rel.source, rel.target],
+                source: 'relationships',
+                visualType: 'connection',
+                x: index % 5,
+                y: Math.floor(index / 5),
+                size: 8,
+                color: '#FF9800',
+                metadata: {
+                    strength: rel.strength || 0.5,
+                    quality: rel.confidence || 0.7
+                }
+            });
+        });
+
+        // If no data, create placeholder entities to show the visualization is working
+        if (items.length === 0) {
+            const placeholders = this.createPlaceholderData();
+            items.push(...placeholders);
+        }
+
+        return {
+            items,
+            interactions,
+            concepts,
+            relationships,
+            totalItems: items.length,
+            sources: {
+                interactions: interactions.length,
+                concepts: concepts.length,
+                relationships: relationships.length
+            }
+        };
+    }
+
+    /**
+     * Create placeholder data when no real data is available
+     */
+    createPlaceholderData() {
+        const placeholders = [];
+        const placeholderTypes = [
+            { type: 'system', content: 'VSOM Navigation System', color: '#2196F3' },
+            { type: 'memory', content: 'Semantic Memory Store', color: '#9C27B0' },
+            { type: 'concept', content: 'Knowledge Graph', color: '#4CAF50' },
+            { type: 'interaction', content: 'Ready for Data', color: '#FF5722' },
+            { type: 'analytics', content: 'Analytics Engine', color: '#E91E63' },
+            { type: 'processing', content: 'Data Processing', color: '#FF9800' },
+            { type: 'storage', content: 'Storage Layer', color: '#795548' },
+            { type: 'query', content: 'Query Interface', color: '#607D8B' },
+            { type: 'embedding', content: 'Embedding Service', color: '#009688' },
+            { type: 'semantic', content: 'Semantic Analysis', color: '#8BC34A' }
+        ];
+
+        placeholderTypes.forEach((item, index) => {
+            placeholders.push({
+                id: `placeholder_${index}`,
+                type: item.type,
+                content: item.content,
+                concepts: [item.type, 'placeholder', 'semem'],
+                source: 'placeholder',
+                visualType: 'entity',
+                // Don't set x,y coordinates here - let DataProcessor position them properly
+                size: 8 + Math.random() * 8, // Varied sizes
+                color: item.color,
+                opacity: 0.8,
+                timestamp: new Date().toISOString(),
+                metadata: {
+                    quality: 0.5, // Default quality for placeholder
+                    importance: 0.5, // Default importance for placeholder
+                    isPlaceholder: true
+                }
+            });
+        });
+
+        return placeholders;
+    }
+
     async updateComponents() {
         // Update VSOM Grid
         if (this.components.grid && this.state.vsomData) {

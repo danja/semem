@@ -353,3 +353,9 @@ const llmHandler = new LLMHandler(llmProvider, modelConfig.chatModel);
   
 - use ./stop.sh and ./start.sh when testing the servers locally without docker
 - sparql queries and llm prompts should not appear inline in the code. They should be placed in the sparql and prompts directories following the same patterns as existing files, with templating if appropriate
+- default ports :\
+  - 4100: API server
+  - 4101: MCP server
+  - 4102: Workbench
+  - 4103: VSOM standalone
+- always work on live data, not simulations. Only use mock implementations in tests, and only there if absolutely appropriate.

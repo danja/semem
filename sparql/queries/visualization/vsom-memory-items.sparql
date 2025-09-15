@@ -1,0 +1,16 @@
+PREFIX semem: <http://purl.org/stuff/semem/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+# Query to get memory items for VSOM visualization
+SELECT ?item ?prompt ?response ?concepts ?timestamp ?quality ?importance WHERE {
+    ?item a semem:MemoryItem .
+    OPTIONAL { ?item semem:prompt ?prompt }
+    OPTIONAL { ?item semem:response ?response }
+    OPTIONAL { ?item semem:concepts ?concepts }
+    OPTIONAL { ?item semem:timestamp ?timestamp }
+    OPTIONAL { ?item semem:quality ?quality }
+    OPTIONAL { ?item semem:importance ?importance }
+}
+ORDER BY DESC(?timestamp)
+LIMIT {{limit}}

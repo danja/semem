@@ -72,9 +72,20 @@ class VSOMStandaloneServer {
             });
         });
         
+        // Serve SPARQL query files
+        this.app.use('/sparql', express.static(path.join(projectRoot, 'sparql'), {
+            maxAge: '1h',
+            etag: true,
+            setHeaders: (res, path) => {
+                if (path.endsWith('.sparql')) {
+                    res.setHeader('Content-Type', 'application/sparql-query');
+                }
+            }
+        }));
+
         // API proxy routes (forward to main MCP server)
         this.setupApiProxy();
-        
+
         // SPA fallback - serve index.html for any non-API routes
         this.app.get('*', (req, res) => {
             // Skip API routes

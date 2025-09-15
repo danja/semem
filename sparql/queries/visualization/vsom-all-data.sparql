@@ -1,0 +1,22 @@
+PREFIX semem: <http://purl.org/stuff/semem/>
+PREFIX ragno: <http://purl.org/stuff/ragno/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+# Query to get all visualizable data for VSOM
+SELECT ?s ?p ?o ?type ?content ?concepts ?timestamp WHERE {
+    ?s ?p ?o .
+    OPTIONAL { ?s rdf:type ?type }
+    OPTIONAL { ?s semem:content ?content }
+    OPTIONAL { ?s semem:concepts ?concepts }
+    OPTIONAL { ?s semem:timestamp ?timestamp }
+    FILTER (
+        ?s a ragno:Entity ||
+        ?s a semem:MemoryItem ||
+        ?s a semem:Concept ||
+        ?s a semem:Document ||
+        ?s a semem:TextElement
+    )
+}
+ORDER BY DESC(?timestamp)
+LIMIT {{limit}}

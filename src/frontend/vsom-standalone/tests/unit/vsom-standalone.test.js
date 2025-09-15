@@ -103,7 +103,7 @@ describe('VSOM Standalone Application', () => {
             expect(VSOMUtils.formatDuration(1000)).toBe('1s');
             expect(VSOMUtils.formatDuration(60000)).toBe('1m 0s');
             expect(VSOMUtils.formatDuration(3661000)).toBe('1h 1m');
-            expect(VSOMUtils.formatDuration(86461000)).toBe('1d 1h');
+            expect(VSOMUtils.formatDuration(86461000)).toBe('1d 0h');
         });
 
         it('should format relative time correctly', () => {
@@ -162,6 +162,102 @@ describe('VSOM Standalone Application', () => {
             expect(processor.interactionTypes.ask).toBeDefined();
         });
 
+        it('should support enhanced interaction types', () => {
+            // Test that enhanced interaction types are defined
+            expect(processor.interactionTypes.upload).toBeDefined();
+            expect(processor.interactionTypes.decompose).toBeDefined();
+            expect(processor.interactionTypes.search).toBeDefined();
+            expect(processor.interactionTypes.analyze).toBeDefined();
+            expect(processor.interactionTypes.chunk).toBeDefined();
+            expect(processor.interactionTypes.embed).toBeDefined();
+            expect(processor.interactionTypes.context).toBeDefined();
+            expect(processor.interactionTypes.memory).toBeDefined();
+        });
+
+        it('should extract semantic information from interactions', () => {
+            const interaction = {
+                id: '1',
+                type: 'tell',
+                content: 'Complex semantic content with multiple concepts',
+                concepts: ['semantic', 'content', 'concepts'],
+                metadata: {
+                    quality: 0.8,
+                    importance: 0.7,
+                    depth: 0.6,
+                    complexity: 0.5
+                }
+            };
+
+            const semanticInfo = processor.extractSemanticInfo(interaction);
+
+            expect(semanticInfo.conceptCount).toBe(3);
+            expect(semanticInfo.contentLength).toBe(interaction.content.length);
+            expect(semanticInfo.averageWordLength).toBeGreaterThan(0);
+            expect(semanticInfo.uniqueWords).toBeGreaterThan(0);
+        });
+
+        it('should calculate quality metrics correctly', () => {
+            const interaction = {
+                metadata: {
+                    quality: 0.8,
+                    importance: 0.7,
+                    depth: 0.6,
+                    complexity: 0.5
+                }
+            };
+
+            const qualityMetrics = processor.calculateQualityMetrics(interaction);
+
+            expect(qualityMetrics.overall).toBeCloseTo(0.65); // Average
+            expect(qualityMetrics.quality).toBe(0.8);
+            expect(qualityMetrics.importance).toBe(0.7);
+            expect(qualityMetrics.depth).toBe(0.6);
+            expect(qualityMetrics.complexity).toBe(0.5);
+        });
+
+        it('should analyze concepts with frequency', () => {
+            const concepts = ['test', 'concept', 'test', 'analysis', 'test'];
+
+            const conceptAnalysis = processor.analyzeConcepts(concepts);
+
+            expect(conceptAnalysis.total).toBe(5);
+            expect(conceptAnalysis.unique).toBe(3);
+            expect(conceptAnalysis.frequencies.test).toBe(3);
+            expect(conceptAnalysis.frequencies.concept).toBe(1);
+            expect(conceptAnalysis.topConcepts[0]).toEqual({ concept: 'test', count: 3 });
+        });
+
+        it('should extract temporal information', () => {
+            const now = new Date();
+            const interaction = {
+                timestamp: now.toISOString(),
+                metadata: { processingTime: 500 }
+            };
+
+            const temporalInfo = processor.extractTemporalInfo(interaction);
+
+            expect(temporalInfo.timestamp).toBe(now.toISOString());
+            expect(temporalInfo.processingTime).toBe(500);
+            expect(temporalInfo.timeOfDay).toBeDefined();
+            expect(temporalInfo.dayOfWeek).toBeDefined();
+        });
+
+        it('should extract relationship information', () => {
+            const interaction = {
+                concepts: ['AI', 'machine learning', 'neural networks'],
+                metadata: {
+                    relatedInteractions: ['id1', 'id2'],
+                    similarityScores: [0.8, 0.6]
+                }
+            };
+
+            const relationshipInfo = processor.extractRelationshipInfo(interaction);
+
+            expect(relationshipInfo.conceptPairs).toBeDefined();
+            expect(relationshipInfo.relatedCount).toBe(2);
+            expect(relationshipInfo.averageSimilarity).toBe(0.7);
+        });
+
         it('should process empty interactions', async () => {
             const result = await processor.processInteractions([]);
             
@@ -184,7 +280,7 @@ describe('VSOM Standalone Application', () => {
             expect(processor.calculateGridSize(0)).toBe(1);
             expect(processor.calculateGridSize(9)).toBe(3);
             expect(processor.calculateGridSize(16)).toBe(5); // With padding
-            expect(processor.calculateGridSize(100)).toBe(12);
+            expect(processor.calculateGridSize(100)).toBe(11);
         });
 
         it('should apply ZPT filters correctly', () => {
@@ -215,12 +311,52 @@ describe('VSOM Standalone Application', () => {
             ];
 
             const nodes = await processor.transformToNodes(interactions, {});
-            
+
             expect(nodes).toHaveLength(1);
             expect(nodes[0].type).toBe('tell');
             expect(nodes[0].content).toBe('Test content');
             expect(nodes[0].concepts).toEqual(['test']);
             expect(nodes[0].color).toBeDefined();
+        });
+
+        it('should handle interactions with null/undefined concepts gracefully', () => {
+            const interactionWithNullConcepts = {
+                id: '1',
+                type: 'tell',
+                content: 'Test content',
+                concepts: null
+            };
+
+            const interactionWithUndefinedConcepts = {
+                id: '2',
+                type: 'ask',
+                content: 'Question content'
+                // concepts undefined
+            };
+
+            const semanticInfo1 = processor.extractSemanticInfo(interactionWithNullConcepts);
+            const semanticInfo2 = processor.extractSemanticInfo(interactionWithUndefinedConcepts);
+
+            expect(semanticInfo1.conceptCount).toBe(0);
+            expect(semanticInfo2.conceptCount).toBe(0);
+
+            const relationshipInfo1 = processor.extractRelationshipInfo(interactionWithNullConcepts);
+            const relationshipInfo2 = processor.extractRelationshipInfo(interactionWithUndefinedConcepts);
+
+            expect(relationshipInfo1.conceptPairs).toEqual([]);
+            expect(relationshipInfo2.conceptPairs).toEqual([]);
+        });
+
+        it('should handle non-array concepts in analyzeConcepts', () => {
+            const stringConcepts = 'test,concept,analysis';
+            const nullConcepts = null;
+            const undefinedConcepts = undefined;
+            const numberConcepts = 5;
+
+            expect(processor.analyzeConcepts(stringConcepts).total).toBe(0);
+            expect(processor.analyzeConcepts(nullConcepts).total).toBe(0);
+            expect(processor.analyzeConcepts(undefinedConcepts).total).toBe(0);
+            expect(processor.analyzeConcepts(numberConcepts).total).toBe(0);
         });
     });
 
@@ -329,7 +465,7 @@ describe('VSOM Standalone Application', () => {
 
         it('should update data and render visualization', async () => {
             await grid.init();
-            
+
             const mockData = {
                 nodes: [
                     {
@@ -345,9 +481,200 @@ describe('VSOM Standalone Application', () => {
             };
 
             await grid.updateData(mockData);
-            
+
             expect(grid.data).toBe(mockData);
             expect(grid.nodesGroup.children.length).toBe(1);
+        });
+
+        it('should render nodes with quality-based visual indicators', async () => {
+            await grid.init();
+
+            const mockData = {
+                nodes: [
+                    {
+                        id: 'node1',
+                        x: 1,
+                        y: 1,
+                        type: 'tell',
+                        content: 'High quality content',
+                        concepts: ['test'],
+                        quality: 0.9,
+                        importance: 0.8
+                    },
+                    {
+                        id: 'node2',
+                        x: 2,
+                        y: 2,
+                        type: 'ask',
+                        content: 'Low quality content',
+                        concepts: ['test'],
+                        quality: 0.3,
+                        importance: 0.2
+                    }
+                ],
+                gridSize: 5
+            };
+
+            await grid.updateData(mockData);
+
+            // Check that nodes have quality attributes
+            const nodes = grid.nodesGroup.querySelectorAll('circle');
+            expect(nodes.length).toBe(2);
+
+            const highQualityNode = Array.from(nodes).find(node =>
+                node.getAttribute('data-quality') === '0.9'
+            );
+            const lowQualityNode = Array.from(nodes).find(node =>
+                node.getAttribute('data-quality') === '0.3'
+            );
+
+            expect(highQualityNode).toBeDefined();
+            expect(lowQualityNode).toBeDefined();
+
+            // High quality nodes should have larger radius
+            const highRadius = parseFloat(highQualityNode.getAttribute('r'));
+            const lowRadius = parseFloat(lowQualityNode.getAttribute('r'));
+            expect(highRadius).toBeGreaterThan(lowRadius);
+        });
+
+        it('should support semantic clustering visualization', async () => {
+            await grid.init();
+
+            const mockData = {
+                nodes: [
+                    {
+                        id: 'node1',
+                        x: 1,
+                        y: 1,
+                        type: 'tell',
+                        concepts: ['AI', 'machine learning'],
+                        semanticCluster: 'cluster1'
+                    },
+                    {
+                        id: 'node2',
+                        x: 1,
+                        y: 2,
+                        type: 'tell',
+                        concepts: ['AI', 'neural networks'],
+                        semanticCluster: 'cluster1'
+                    },
+                    {
+                        id: 'node3',
+                        x: 3,
+                        y: 3,
+                        type: 'tell',
+                        concepts: ['web', 'JavaScript'],
+                        semanticCluster: 'cluster2'
+                    }
+                ],
+                gridSize: 5
+            };
+
+            grid.options.showSemanticClusters = true;
+            await grid.updateData(mockData);
+
+            // Check that clustering data is processed
+            expect(grid.clusterData).toBeDefined();
+            expect(Object.keys(grid.clusterData).length).toBeGreaterThan(0);
+        });
+
+        it('should render node connections based on similarity', async () => {
+            await grid.init();
+
+            const mockData = {
+                nodes: [
+                    {
+                        id: 'node1',
+                        x: 1,
+                        y: 1,
+                        concepts: ['AI', 'machine learning']
+                    },
+                    {
+                        id: 'node2',
+                        x: 2,
+                        y: 2,
+                        concepts: ['AI', 'neural networks']
+                    }
+                ],
+                gridSize: 5
+            };
+
+            grid.options.showConnections = true;
+            grid.options.connectionThreshold = 0.5;
+            await grid.updateData(mockData);
+
+            // Check that connections are calculated
+            expect(grid.connections).toBeDefined();
+        });
+
+        it('should support temporal flow visualization', async () => {
+            await grid.init();
+
+            const now = Date.now();
+            const mockData = {
+                nodes: [
+                    {
+                        id: 'node1',
+                        x: 1,
+                        y: 1,
+                        timestamp: new Date(now - 120000).toISOString(),
+                        temporalOrder: 1
+                    },
+                    {
+                        id: 'node2',
+                        x: 2,
+                        y: 2,
+                        timestamp: new Date(now - 60000).toISOString(),
+                        temporalOrder: 2
+                    },
+                    {
+                        id: 'node3',
+                        x: 3,
+                        y: 3,
+                        timestamp: new Date(now).toISOString(),
+                        temporalOrder: 3
+                    }
+                ],
+                gridSize: 5
+            };
+
+            grid.options.showTemporalFlow = true;
+            await grid.updateData(mockData);
+
+            // Check that temporal data is processed
+            expect(grid.temporalData).toBeDefined();
+            expect(grid.temporalData.length).toBe(3);
+        });
+
+        it('should display enhanced tooltips on node hover', async () => {
+            await grid.init();
+
+            const mockData = {
+                nodes: [
+                    {
+                        id: 'node1',
+                        x: 1,
+                        y: 1,
+                        type: 'tell',
+                        content: 'Rich content with metadata',
+                        concepts: ['test', 'semantic'],
+                        quality: 0.8,
+                        importance: 0.7,
+                        processingSteps: ['chunk', 'embed', 'analyze'],
+                        timestamp: new Date().toISOString()
+                    }
+                ],
+                gridSize: 5
+            };
+
+            await grid.updateData(mockData);
+
+            // Simulate hover event
+            const node = grid.nodesGroup.querySelector('circle');
+            expect(node).toBeDefined();
+
+            // Check that node has enhanced tooltip data
+            expect(node.getAttribute('data-tooltip-type')).toBe('enhanced');
         });
     });
 
@@ -409,10 +736,190 @@ describe('VSOM Standalone Application', () => {
             const tellInteraction = { type: 'tell' };
             const askInteraction = { content: 'What is this?' };
             const uploadInteraction = { content: 'uploaded file.pdf' };
-            
+
             expect(dataPanel.detectInteractionType(tellInteraction)).toBe('tell');
             expect(dataPanel.detectInteractionType(askInteraction)).toBe('ask');
             expect(dataPanel.detectInteractionType(uploadInteraction)).toBe('upload');
+        });
+
+        it('should analyze semantic patterns in interactions', async () => {
+            await dataPanel.init();
+
+            const interactions = [
+                {
+                    concepts: ['JavaScript', 'programming', 'web'],
+                    metadata: { quality: 0.8 }
+                },
+                {
+                    concepts: ['JavaScript', 'advanced', 'programming'],
+                    metadata: { quality: 0.9 }
+                },
+                {
+                    concepts: ['Python', 'programming', 'data'],
+                    metadata: { quality: 0.7 }
+                }
+            ];
+
+            const semanticAnalysis = dataPanel.analyzeSemantics(interactions);
+
+            expect(semanticAnalysis.conceptFrequency.JavaScript).toBe(2);
+            expect(semanticAnalysis.conceptFrequency.programming).toBe(3);
+            expect(semanticAnalysis.totalConcepts).toBe(8);
+            expect(semanticAnalysis.uniqueConcepts).toBe(6);
+            expect(semanticAnalysis.averageConceptsPerInteraction).toBeCloseTo(2.67);
+        });
+
+        it('should handle interactions with null/undefined concepts in semantic analysis', async () => {
+            await dataPanel.init();
+
+            const interactions = [
+                {
+                    concepts: ['JavaScript', 'programming'],
+                    metadata: { quality: 0.8 }
+                },
+                {
+                    concepts: null,
+                    metadata: { quality: 0.9 }
+                },
+                {
+                    concepts: undefined,
+                    metadata: { quality: 0.7 }
+                },
+                {
+                    concepts: 'not-an-array',
+                    metadata: { quality: 0.6 }
+                }
+            ];
+
+            const semanticAnalysis = dataPanel.analyzeSemantics(interactions);
+
+            expect(semanticAnalysis.conceptFrequency.JavaScript).toBe(1);
+            expect(semanticAnalysis.conceptFrequency.programming).toBe(1);
+            expect(semanticAnalysis.totalConcepts).toBe(2);
+            expect(semanticAnalysis.uniqueConcepts).toBe(2);
+        });
+
+        it('should handle null/undefined concepts in processing pipeline analysis', async () => {
+            await dataPanel.init();
+
+            const interactions = [
+                {
+                    concepts: ['test'],
+                    metadata: { processingSteps: ['chunk'] }
+                },
+                {
+                    concepts: null,
+                    metadata: { processingSteps: ['embed'] }
+                },
+                {
+                    concepts: undefined,
+                    metadata: { processingSteps: ['analyze'] }
+                }
+            ];
+
+            // This should not throw errors
+            expect(() => {
+                dataPanel.analyzeProcessingPipeline(interactions);
+            }).not.toThrow();
+        });
+
+        it('should calculate quality distribution metrics', async () => {
+            await dataPanel.init();
+
+            const interactions = [
+                { metadata: { quality: 0.9 } },
+                { metadata: { quality: 0.7 } },
+                { metadata: { quality: 0.8 } },
+                { metadata: { quality: 0.6 } },
+                { metadata: { quality: 0.95 } }
+            ];
+
+            const qualityMetrics = dataPanel.calculateQualityDistribution(interactions);
+
+            expect(qualityMetrics.average).toBeCloseTo(0.79);
+            expect(qualityMetrics.min).toBe(0.6);
+            expect(qualityMetrics.max).toBe(0.95);
+            expect(qualityMetrics.distribution.high).toBe(3); // >= 0.8
+            expect(qualityMetrics.distribution.medium).toBe(1); // 0.6-0.8
+            expect(qualityMetrics.distribution.low).toBe(1); // < 0.6
+        });
+
+        it('should analyze processing pipeline completion', async () => {
+            await dataPanel.init();
+
+            const interactions = [
+                {
+                    metadata: {
+                        processingSteps: ['chunk', 'embed', 'analyze'],
+                        completedSteps: ['chunk', 'embed', 'analyze']
+                    }
+                },
+                {
+                    metadata: {
+                        processingSteps: ['chunk', 'embed'],
+                        completedSteps: ['chunk']
+                    }
+                },
+                {
+                    metadata: {
+                        processingSteps: ['upload', 'chunk', 'embed'],
+                        completedSteps: ['upload', 'chunk', 'embed']
+                    }
+                }
+            ];
+
+            const processingStats = dataPanel.analyzeProcessingPipeline(interactions);
+
+            expect(processingStats.totalSteps).toBe(8);
+            expect(processingStats.completedSteps).toBe(7);
+            expect(processingStats.completionRate).toBeCloseTo(87.5);
+            expect(processingStats.stepFrequency.chunk).toBe(3);
+            expect(processingStats.stepFrequency.embed).toBe(3);
+        });
+
+        it('should analyze temporal patterns', async () => {
+            await dataPanel.init();
+
+            const now = Date.now();
+            const interactions = [
+                { timestamp: new Date(now - 60000).toISOString() }, // 1 minute ago
+                { timestamp: new Date(now - 120000).toISOString() }, // 2 minutes ago
+                { timestamp: new Date(now - 300000).toISOString() } // 5 minutes ago
+            ];
+
+            const temporalAnalysis = dataPanel.analyzeTemporalPatterns(interactions);
+
+            expect(temporalAnalysis.timespan).toBeGreaterThan(240000); // > 4 minutes
+            expect(temporalAnalysis.averageInterval).toBeGreaterThan(100000); // > 1.5 minutes
+            expect(temporalAnalysis.totalInteractions).toBe(3);
+            expect(temporalAnalysis.interactionsPerMinute).toBeGreaterThan(0);
+        });
+
+        it('should render concept cloud visualization', async () => {
+            await dataPanel.init();
+
+            const concepts = [
+                { concept: 'JavaScript', count: 5 },
+                { concept: 'programming', count: 3 },
+                { concept: 'web', count: 2 },
+                { concept: 'development', count: 1 }
+            ];
+
+            // Create a mock container for concept cloud
+            const conceptCloudContainer = document.createElement('div');
+            conceptCloudContainer.id = 'concept-cloud';
+            dataPanel.container.appendChild(conceptCloudContainer);
+
+            dataPanel.renderConceptCloud(concepts, '#concept-cloud');
+
+            const cloudItems = conceptCloudContainer.querySelectorAll('.concept-item');
+            expect(cloudItems.length).toBe(4);
+
+            // Check that largest concept has appropriate styling
+            const jsItem = Array.from(cloudItems).find(item =>
+                item.textContent.includes('JavaScript')
+            );
+            expect(jsItem).toBeDefined();
         });
     });
 
@@ -525,7 +1032,7 @@ describe('VSOM Standalone Application', () => {
         it('should coordinate between components', async () => {
             const processor = new DataProcessor();
             const apiService = new VSOMApiService();
-            
+
             // Mock API response
             fetch.mockResolvedValueOnce({
                 ok: true,
@@ -537,12 +1044,52 @@ describe('VSOM Standalone Application', () => {
                     }
                 })
             });
-            
+
             const interactions = await apiService.getInteractionHistory();
             const vsomData = await processor.processInteractions(interactions.interactions);
-            
+
             expect(vsomData.nodes).toHaveLength(1);
             expect(vsomData.nodes[0].type).toBe('tell');
+        });
+
+        it('should handle malformed concept data throughout the pipeline', async () => {
+            const processor = new DataProcessor();
+
+            // Import main app module
+            const { default: VSOMStandaloneApp } = await import('../../public/js/vsom-standalone.js');
+
+            // Mock API responses with malformed data
+            fetch.mockResolvedValueOnce({
+                ok: true,
+                json: async () => ({
+                    sessionCache: {
+                        interactions: [
+                            { id: '1', type: 'tell', content: 'Test', concepts: null },
+                            { id: '2', type: 'ask', content: 'Question', concepts: 'not-array' }
+                        ]
+                    }
+                })
+            });
+
+            fetch.mockResolvedValueOnce({
+                ok: true,
+                json: async () => ({
+                    conceptAnalytics: {
+                        topConcepts: null // This could be null/undefined
+                    }
+                })
+            });
+
+            const app = new VSOMStandaloneApp();
+
+            // This should not throw errors when aggregating data
+            expect(() => {
+                app.aggregateDataSources(
+                    { sessionCache: { interactions: [{ concepts: null }] } },
+                    { conceptAnalytics: { topConcepts: null } },
+                    {}
+                );
+            }).not.toThrow();
         });
 
         it('should handle ZPT state changes affecting data processing', async () => {

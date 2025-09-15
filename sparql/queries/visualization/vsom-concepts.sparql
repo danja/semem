@@ -1,0 +1,20 @@
+PREFIX semem: <http://purl.org/stuff/semem/>
+PREFIX ragno: <http://purl.org/stuff/ragno/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+# Query to get concepts for VSOM visualization
+SELECT ?concept ?name ?frequency ?relations ?category WHERE {
+    ?concept a semem:Concept .
+    OPTIONAL { ?concept rdfs:label ?name }
+    OPTIONAL { ?concept semem:frequency ?frequency }
+    OPTIONAL { ?concept semem:category ?category }
+    OPTIONAL {
+        SELECT ?concept (COUNT(?rel) as ?relations) WHERE {
+            { ?concept semem:relatedTo ?rel } UNION { ?rel semem:relatedTo ?concept }
+        }
+        GROUP BY ?concept
+    }
+}
+ORDER BY DESC(?frequency)
+LIMIT {{limit}}

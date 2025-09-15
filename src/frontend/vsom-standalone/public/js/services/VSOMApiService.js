@@ -4,11 +4,14 @@
  * Follows patterns from workbench ApiService.js
  */
 
+import SPARQLQueryLoader from '../utils/SPARQLQueryLoader.js';
+
 export default class VSOMApiService {
     constructor(baseUrl = '/api') {
         this.baseUrl = baseUrl;
         this.sessionId = null;
-        
+        this.queryLoader = new SPARQLQueryLoader();
+
         this.defaultHeaders = {
             'Content-Type': 'application/json'
         };
@@ -117,6 +120,68 @@ export default class VSOMApiService {
             method: 'POST',
             body: JSON.stringify({ what: 'all', details: true })
         });
+    }
+
+    /**
+     * Query SPARQL store directly for memory data
+     */
+    async getSPARQLData(query = null, variables = {}) {
+        let sparqlQuery;
+
+        if (query) {
+            sparqlQuery = query;
+        } else {
+            // Load default query from template
+            sparqlQuery = await this.queryLoader.loadQuery('visualization/vsom-all-data.sparql', variables);
+        }
+
+        try {
+            // Query Fuseki directly
+            const encodedQuery = encodeURIComponent(sparqlQuery);
+            const response = await fetch(`http://localhost:3030/semem/query?query=${encodedQuery}`, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/sparql-results+json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`SPARQL query failed: ${response.status}`);
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.warn('SPARQL query failed, falling back to memory manager:', error);
+            // Fallback to memory manager API
+            return this.makeRequest('/memory/search', {
+                method: 'POST',
+                body: JSON.stringify({ query: '*', limit: 100 })
+            });
+        }
+    }
+
+    /**
+     * Get entities from SPARQL store
+     */
+    async getEntities(variables = {}) {
+        const entitiesQuery = await this.queryLoader.loadQuery('visualization/vsom-entities.sparql', variables);
+        return this.getSPARQLData(entitiesQuery);
+    }
+
+    /**
+     * Get memory items from SPARQL store
+     */
+    async getMemoryItems(variables = {}) {
+        const memoryQuery = await this.queryLoader.loadQuery('visualization/vsom-memory-items.sparql', variables);
+        return this.getSPARQLData(memoryQuery);
+    }
+
+    /**
+     * Get concepts from SPARQL store
+     */
+    async getSPARQLConcepts(variables = {}) {
+        const conceptsQuery = await this.queryLoader.loadQuery('visualization/vsom-concepts.sparql', variables);
+        return this.getSPARQLData(conceptsQuery);
     }
     
     /**
@@ -242,21 +307,144 @@ export default class VSOMApiService {
     }
     
     /**
-     * Perform VSOM clustering
+     * Perform VSOM clustering on live semantic data
      */
     async performVSOMClustering(instanceId, options = {}) {
+        try {
+            // Get semantic data from SPARQL store for clustering
+            const sparqlData = await this.getSPARQLData();
+            const entitiesData = await this.getEntities();
+
+            // Perform actual semantic clustering based on concept similarity
+            const clusters = await this.performSemanticClustering(sparqlData, entitiesData, options);
+
+            return {
+                success: true,
+                clusters: clusters.clusters,
+                statistics: clusters.statistics
+            };
+        } catch (error) {
+            console.error('VSOM clustering failed:', error);
+            return {
+                success: false,
+                error: error.message,
+                clusters: [],
+                statistics: {
+                    totalClusters: 0,
+                    averageClusterSize: 0,
+                    largestCluster: 0,
+                    smallestCluster: 0
+                }
+            };
+        }
+    }
+    
+    /**
+     * Perform actual semantic clustering based on concept similarity
+     */
+    async performSemanticClustering(sparqlData, entitiesData, options = {}) {
+        const concepts = [];
+        const entities = [];
+
+        // Extract concepts and entities from SPARQL data
+        if (sparqlData.success && sparqlData.data) {
+            concepts.push(...(sparqlData.data.concepts || []));
+            entities.push(...(sparqlData.data.entities || []));
+        }
+
+        // Extract from entities data
+        if (entitiesData.success && entitiesData.entities) {
+            entities.push(...entitiesData.entities);
+        }
+
+        // Group entities by shared concepts for clustering
+        const clusters = this.clusterBySharedConcepts(entities, concepts, options);
+
         return {
-            success: true,
-            clusters: this.generateMockClusters(),
+            clusters: clusters,
             statistics: {
-                totalClusters: 3,
-                averageClusterSize: 5,
-                largestCluster: 8,
-                smallestCluster: 2
+                totalClusters: clusters.length,
+                averageClusterSize: clusters.length > 0 ? clusters.reduce((sum, c) => sum + c.entities.length, 0) / clusters.length : 0,
+                largestCluster: clusters.length > 0 ? Math.max(...clusters.map(c => c.entities.length)) : 0,
+                smallestCluster: clusters.length > 0 ? Math.min(...clusters.map(c => c.entities.length)) : 0
             }
         };
     }
-    
+
+    /**
+     * Cluster entities based on shared concepts
+     */
+    clusterBySharedConcepts(entities, concepts, options = {}) {
+        const clusters = new Map();
+        const minSharedConcepts = options.minSharedConcepts || 1;
+
+        // Group entities that share concepts
+        for (const entity of entities) {
+            const entityConcepts = Array.isArray(entity.concepts) ? entity.concepts : [];
+
+            if (entityConcepts.length === 0) continue;
+
+            // Find or create cluster based on primary concepts
+            const primaryConcepts = entityConcepts.slice(0, 2).sort(); // Use first 2 concepts as cluster key
+            const clusterKey = primaryConcepts.join('_') || 'miscellaneous';
+
+            if (!clusters.has(clusterKey)) {
+                clusters.set(clusterKey, {
+                    id: `cluster_${clusterKey}`,
+                    primaryConcepts: primaryConcepts,
+                    entities: [],
+                    concepts: new Set(),
+                    centroid: null // Will be calculated based on actual semantic positions if available
+                });
+            }
+
+            const cluster = clusters.get(clusterKey);
+            cluster.entities.push(entity.id || entity.uri || entity);
+
+            // Add all concepts to cluster
+            entityConcepts.forEach(concept => cluster.concepts.add(concept));
+        }
+
+        // Convert to array and calculate final cluster properties
+        return Array.from(clusters.values()).map((cluster, index) => ({
+            id: cluster.id,
+            primaryConcepts: cluster.primaryConcepts,
+            entities: cluster.entities,
+            concepts: Array.from(cluster.concepts),
+            size: cluster.entities.length,
+            strength: this.calculateClusterStrength(cluster),
+            centroid: this.calculateSemanticCentroid(cluster, index)
+        })).filter(cluster => cluster.size >= minSharedConcepts);
+    }
+
+    /**
+     * Calculate cluster strength based on concept overlap
+     */
+    calculateClusterStrength(cluster) {
+        if (cluster.entities.length <= 1) return 1.0;
+
+        // Strength based on concept density and entity count
+        const conceptDensity = cluster.concepts.size / cluster.entities.length;
+        const sizeFactor = Math.min(cluster.entities.length / 10, 1); // Normalize size
+
+        return Math.min(conceptDensity * sizeFactor, 1.0);
+    }
+
+    /**
+     * Calculate semantic centroid for cluster positioning
+     */
+    calculateSemanticCentroid(cluster, clusterIndex) {
+        // Use cluster index and concept hash for consistent positioning
+        // In a full VSOM implementation, this would use actual embedding vectors
+        const conceptHash = cluster.primaryConcepts.join('').split('').reduce((hash, char) =>
+            ((hash << 5) - hash) + char.charCodeAt(0), 0);
+
+        const x = (Math.abs(conceptHash) % 10) + (clusterIndex % 3) * 4;
+        const y = Math.floor(clusterIndex / 3) * 3 + (Math.abs(conceptHash) % 3);
+
+        return [x, y];
+    }
+
     /**
      * Navigate using ZPT parameters
      */
@@ -349,35 +537,6 @@ export default class VSOMApiService {
         return map;
     }
     
-    /**
-     * Generate mock clusters for testing
-     * @private
-     */
-    generateMockClusters() {
-        return [
-            {
-                id: 'cluster1',
-                centroid: [2, 3],
-                entities: ['entity1', 'entity2', 'entity3'],
-                size: 3,
-                strength: 0.8
-            },
-            {
-                id: 'cluster2',
-                centroid: [6, 7],
-                entities: ['entity4', 'entity5'],
-                size: 2,
-                strength: 0.6
-            },
-            {
-                id: 'cluster3',
-                centroid: [8, 2],
-                entities: ['entity6', 'entity7', 'entity8', 'entity9'],
-                size: 4,
-                strength: 0.9
-            }
-        ];
-    }
     
     /**
      * Get formatted error message

@@ -145,6 +145,9 @@ export default class VSOMUtils {
      */
     static showTooltip(data, event) {
         VSOMUtils.hideTooltip(); // Remove any existing tooltip
+
+        // Add a small delay to ensure previous tooltips are fully removed
+        setTimeout(() => {
         
         const tooltip = document.createElement('div');
         tooltip.className = 'vsom-tooltip';
@@ -162,16 +165,26 @@ export default class VSOMUtils {
         
         tooltip.style.left = `${Math.max(10, Math.min(x, window.innerWidth - rect.width - 10))}px`;
         tooltip.style.top = `${Math.max(10, y)}px`;
+        }, 10); // Small delay to ensure cleanup
     }
     
     /**
      * Hide tooltip
      */
     static hideTooltip() {
-        const tooltip = document.getElementById('vsom-tooltip');
-        if (tooltip) {
-            tooltip.remove();
+        // Remove all possible tooltips to ensure proper cleanup
+        const vsomTooltip = document.getElementById('vsom-tooltip');
+        if (vsomTooltip) {
+            vsomTooltip.remove();
         }
+
+        // Also remove any tooltips with class name
+        const classTooltips = document.querySelectorAll('.vsom-tooltip');
+        classTooltips.forEach(tooltip => {
+            if (tooltip.parentNode) {
+                tooltip.parentNode.removeChild(tooltip);
+            }
+        });
     }
     
     /**
