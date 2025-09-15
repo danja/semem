@@ -1,6 +1,6 @@
 /**
  * API Service for Semantic Memory Workbench
- * Handles communication with MCP HTTP server endpoints
+ * Handles communication with API server and MCP server endpoints
  */
 
 export class ApiService {
@@ -11,10 +11,10 @@ export class ApiService {
     } else {
       this.baseUrl = baseUrl;
     }
-    
+
     // Session management for MCP server
     this.sessionId = null;
-    
+
     this.defaultHeaders = {
       'Content-Type': 'application/json'
     };
@@ -94,12 +94,12 @@ export class ApiService {
   async uploadDocument({ fileUrl, filename, mediaType, documentType, metadata = {} }) {
     return this.makeRequest('/upload-document', {
       method: 'POST',
-      body: JSON.stringify({ 
-        fileUrl, 
-        filename, 
-        mediaType, 
-        documentType, 
-        metadata 
+      body: JSON.stringify({
+        fileUrl,
+        filename,
+        mediaType,
+        documentType,
+        metadata
       })
     });
   }
