@@ -15,8 +15,8 @@ class VSOMStandaloneApp {
         this.components = {};
         this.services = {};
         this.state = {
-            // ZPT State
-            zoom: 'entity',
+            // ZPT State - Start at corpus level to show communities
+            zoom: 'corpus',
             pan: { domains: '', keywords: '' },
             tilt: 'keywords',
             threshold: 0.3,
@@ -153,17 +153,19 @@ class VSOMStandaloneApp {
             // Clear any existing tooltips before refresh
             VSOMUtils.hideTooltip();
 
-            // Get comprehensive data from multiple sources including SPARQL store
-            const [sessionData, conceptsData, zptState, sparqlData, entitiesData, memoryData] = await Promise.allSettled([
-                this.services.api.getSessionData(),
-                this.services.api.getConceptsData(),
-                this.services.api.getZPTState(),
-                this.services.api.getSPARQLData(),
-                this.services.api.getEntities(),
-                this.services.api.getMemoryItems()
+            // Get current contextual scope (same as prompt synthesis) + supporting data
+            const [contextualScope, sessionData, conceptsData, zptState, sparqlData, entitiesData, memoryData] = await Promise.allSettled([
+                this.services.api.getContextualScope(), // Primary: current context scope
+                this.services.api.getSessionData(),     // Supporting: interaction history
+                this.services.api.getConceptsData(),    // Supporting: concept analysis
+                this.services.api.getZPTState(),        // Supporting: navigation state
+                this.services.api.getSPARQLData(),      // Supporting: SPARQL results
+                this.services.api.getEntities(),        // Supporting: entity data
+                this.services.api.getMemoryItems()      // Supporting: memory items
             ]);
 
             // Extract successful results
+            const contextScope = contextualScope.status === 'fulfilled' ? contextualScope.value : {};
             const session = sessionData.status === 'fulfilled' ? sessionData.value : {};
             const concepts = conceptsData.status === 'fulfilled' ? conceptsData.value : {};
             const zpt = zptState.status === 'fulfilled' ? zptState.value : {};
@@ -171,8 +173,8 @@ class VSOMStandaloneApp {
             const entities = entitiesData.status === 'fulfilled' ? entitiesData.value : {};
             const memory = memoryData.status === 'fulfilled' ? memoryData.value : {};
 
-            // Aggregate all available data sources including SPARQL
-            const aggregatedData = this.aggregateDataSources(session, concepts, zpt, sparql, entities, memory);
+            // Aggregate data prioritizing contextual scope that would be used for prompt synthesis
+            const aggregatedData = this.aggregateDataSources(session, concepts, zpt, sparql, entities, memory, contextScope);
 
             // Current ZPT parameters
             const currentZPT = {
@@ -211,29 +213,131 @@ class VSOMStandaloneApp {
     }
 
     /**
-     * Aggregate data from multiple sources based on ZPT scope
+     * Aggregate data from multiple sources based on ZPT scope and contextual relevance
+     * Now prioritizes data that would be used for prompt synthesis at current ZPT state
      */
-    aggregateDataSources(sessionData, conceptsData, zptState) {
+    aggregateDataSources(sessionData, conceptsData, zptState, sparqlData, entitiesData, memoryData, contextScope) {
+        // Primary data: What's currently in contextual scope (for prompt synthesis)
+        const contextualInfo = contextScope.contextual || {};
+        const isContextualScope = contextScope.success && contextualInfo.items > 0;
+
+        console.log('🔍 VSOM Data Sources:', {
+            contextualScope: isContextualScope,
+            contextItems: contextualInfo.items || 0,
+            memories: contextualInfo.memories || 0,
+            zptState: contextualInfo.zptState?.zoom || 'unknown'
+        });
+
+        // Supporting data: Traditional sources
         const interactions = sessionData.sessionCache?.interactions || sessionData.detailedInteractions || sessionData.interactions || [];
         const conceptAnalytics = conceptsData.conceptAnalytics || {};
         const concepts = Array.isArray(conceptAnalytics.topConcepts) ? conceptAnalytics.topConcepts : [];
         const relationships = conceptsData.conceptRelationships || [];
 
-        // Create visualizable items from all sources
-        const items = [];
+        // SPARQL and entity data
+        const sparqlResults = sparqlData.data || {};
+        const entityResults = entitiesData.entities || [];
+        const memoryResults = memoryData.memories || [];
 
-        // Add interactions as entities
-        interactions.forEach(interaction => {
+        // Create visualizable items based on zoom level
+        const items = [];
+        const currentZoom = contextualInfo.zptState?.zoom || zptState.zoom || 'corpus';
+
+        console.log('🔍 Current zoom level:', currentZoom);
+
+        // Special handling for corpus-level zoom: Show communities as nodes
+        if (currentZoom === 'corpus') {
+            console.log('🏘️ Creating corpus-level community nodes');
+
+            // Create communities based on concept clustering and entity relationships
+            const communities = this.createCorpusCommunities(interactions, concepts, entityResults, memoryResults);
+
+            communities.forEach((community, index) => {
+                items.push({
+                    id: `community_${index}`,
+                    type: 'community',
+                    content: community.name,
+                    concepts: community.concepts,
+                    source: 'corpus',
+                    visualType: 'community',
+                    x: (index % 4) * 2,
+                    y: Math.floor(index / 4) * 2,
+                    size: Math.max(12, Math.min(24, community.size * 2)),
+                    color: community.color,
+                    metadata: {
+                        quality: community.coherence || 0.7,
+                        importance: community.size / 20,
+                        memberCount: community.size,
+                        topics: community.topics,
+                        strength: community.strength || 0.6
+                    }
+                });
+            });
+
+            console.log(`🏘️ Created ${communities.length} community nodes`);
+
+            // Return early for corpus level - don't add other data types
+            return {
+                items,
+                interactions: [],
+                concepts: communities.map(c => ({ concept: c.name, count: c.size })),
+                relationships: [],
+                summary: {
+                    totalItems: items.length,
+                    communities: communities.length,
+                    zoomLevel: 'corpus'
+                }
+            };
+        }
+
+        // Priority 1: Data that would be in contextual scope for prompt synthesis (for non-corpus levels)
+        if (isContextualScope) {
+            // Add contextual indicators
+            items.push({
+                id: 'contextual_scope_indicator',
+                type: 'context_scope',
+                content: `Contextual Scope (${contextualInfo.items} items, ${contextualInfo.memories} memories)`,
+                concepts: ['context', 'scope', 'prompt-synthesis'],
+                source: 'contextual',
+                visualType: 'scope_indicator',
+                x: 0,
+                y: 0,
+                size: 12 + Math.min(8, contextualInfo.items),
+                color: '#FF5722', // Orange for contextual scope
+                metadata: {
+                    quality: Math.min(1, contextualInfo.items / 10),
+                    importance: 0.9, // High importance for contextual data
+                    contextual: true,
+                    analysis: contextualInfo.analysis,
+                    searchMethod: contextualInfo.searchMethod
+                }
+            });
+        }
+
+        // Priority 2: Interactions (filtered by contextual relevance if available)
+        const relevantInteractions = isContextualScope ?
+            interactions.slice(0, Math.max(5, Math.floor(contextualInfo.items / 2))) : // Limit when context available
+            interactions;
+
+        relevantInteractions.forEach((interaction, index) => {
             items.push({
                 ...interaction,
                 type: interaction.type || 'interaction',
                 source: 'session',
-                visualType: 'entity'
+                visualType: 'entity',
+                metadata: {
+                    ...(interaction.metadata || {}),
+                    contextualRelevance: isContextualScope ? 0.7 : 0.5
+                }
             });
         });
 
-        // Add concepts as semantic units
-        concepts.forEach((concept, index) => {
+        // Priority 3: Concepts (prioritize those that might be contextually relevant)
+        const relevantConcepts = isContextualScope ?
+            concepts.slice(0, Math.max(3, Math.floor(contextualInfo.items / 3))) : // Limit when context available
+            concepts.slice(0, 10); // Always limit concepts for performance
+
+        relevantConcepts.forEach((concept, index) => {
             items.push({
                 id: `concept_${index}`,
                 type: 'concept',
@@ -245,10 +349,57 @@ class VSOMStandaloneApp {
                 x: index % 5,
                 y: Math.floor(index / 5),
                 size: Math.max(6, Math.min(20, (concept.count || 1) * 2)),
-                color: '#4CAF50',
+                color: isContextualScope ? '#66BB6A' : '#4CAF50', // Brighter green when contextual
                 metadata: {
                     quality: Math.min(1, (concept.count || 1) / 10),
-                    importance: Math.min(1, (concept.frequency || 0.1) * 2)
+                    importance: Math.min(1, (concept.frequency || 0.1) * 2),
+                    contextualRelevance: isContextualScope ? 0.6 : 0.3
+                }
+            });
+        });
+
+        // Priority 4: SPARQL results (entities and memory items from current context)
+        if (sparqlResults.entities && Array.isArray(sparqlResults.entities)) {
+            sparqlResults.entities.slice(0, Math.min(5, contextualInfo.items || 5)).forEach((entity, index) => {
+                items.push({
+                    id: `sparql_entity_${index}`,
+                    type: 'entity',
+                    content: entity.content || entity.uri || `Entity ${index}`,
+                    concepts: entity.concepts || [],
+                    source: 'sparql',
+                    visualType: 'entity',
+                    x: (index + 5) % 5,
+                    y: Math.floor((index + 5) / 5),
+                    size: 10,
+                    color: '#3F51B5', // Indigo for SPARQL entities
+                    metadata: {
+                        quality: 0.8,
+                        importance: isContextualScope ? 0.8 : 0.5,
+                        contextualRelevance: isContextualScope ? 0.9 : 0.4,
+                        uri: entity.uri
+                    }
+                });
+            });
+        }
+
+        // Priority 5: Memory items (from semantic search)
+        memoryResults.slice(0, Math.min(3, contextualInfo.memories || 3)).forEach((memory, index) => {
+            items.push({
+                id: `memory_${index}`,
+                type: 'memory',
+                content: memory.content || memory.prompt || `Memory ${index}`,
+                concepts: memory.concepts || [],
+                source: 'memory',
+                visualType: 'memory',
+                x: (index + 8) % 5,
+                y: Math.floor((index + 8) / 5),
+                size: 9,
+                color: '#9C27B0', // Purple for memories
+                metadata: {
+                    quality: memory.quality || 0.7,
+                    importance: isContextualScope ? 0.7 : 0.4,
+                    contextualRelevance: isContextualScope ? 0.8 : 0.3,
+                    similarity: memory.similarity
                 }
             });
         });
@@ -273,11 +424,7 @@ class VSOMStandaloneApp {
             });
         });
 
-        // If no data, create placeholder entities to show the visualization is working
-        if (items.length === 0) {
-            const placeholders = this.createPlaceholderData();
-            items.push(...placeholders);
-        }
+        // No placeholder data - only show live data
 
         return {
             items,
@@ -294,45 +441,97 @@ class VSOMStandaloneApp {
     }
 
     /**
-     * Create placeholder data when no real data is available
+     * Create corpus-level communities from live semantic memory data
      */
-    createPlaceholderData() {
-        const placeholders = [];
-        const placeholderTypes = [
-            { type: 'system', content: 'VSOM Navigation System', color: '#2196F3' },
-            { type: 'memory', content: 'Semantic Memory Store', color: '#9C27B0' },
-            { type: 'concept', content: 'Knowledge Graph', color: '#4CAF50' },
-            { type: 'interaction', content: 'Ready for Data', color: '#FF5722' },
-            { type: 'analytics', content: 'Analytics Engine', color: '#E91E63' },
-            { type: 'processing', content: 'Data Processing', color: '#FF9800' },
-            { type: 'storage', content: 'Storage Layer', color: '#795548' },
-            { type: 'query', content: 'Query Interface', color: '#607D8B' },
-            { type: 'embedding', content: 'Embedding Service', color: '#009688' },
-            { type: 'semantic', content: 'Semantic Analysis', color: '#8BC34A' }
-        ];
-
-        placeholderTypes.forEach((item, index) => {
-            placeholders.push({
-                id: `placeholder_${index}`,
-                type: item.type,
-                content: item.content,
-                concepts: [item.type, 'placeholder', 'semem'],
-                source: 'placeholder',
-                visualType: 'entity',
-                // Don't set x,y coordinates here - let DataProcessor position them properly
-                size: 8 + Math.random() * 8, // Varied sizes
-                color: item.color,
-                opacity: 0.8,
-                timestamp: new Date().toISOString(),
-                metadata: {
-                    quality: 0.5, // Default quality for placeholder
-                    importance: 0.5, // Default importance for placeholder
-                    isPlaceholder: true
-                }
-            });
+    createCorpusCommunities(interactions, concepts, entities, memories) {
+        console.log('🏘️ Creating live corpus communities from:', {
+            interactions: interactions.length,
+            concepts: concepts.length,
+            entities: entities.length,
+            memories: memories.length
         });
 
-        return placeholders;
+        const communities = [];
+        const colors = ['#E91E63', '#9C27B0', '#673AB7', '#3F51B5', '#2196F3', '#00BCD4', '#009688', '#4CAF50', '#8BC34A', '#CDDC39', '#FFC107', '#FF9800'];
+
+        // Community 1: Memory-based community (live memories from semantic search)
+        if (memories.length > 0) {
+            communities.push({
+                name: `Memory Community`,
+                concepts: ['memory', 'semantic-search', 'embeddings'],
+                size: memories.length,
+                color: colors[0],
+                topics: memories.slice(0, 3).map(m => (m.content || m.prompt || 'Memory').substring(0, 30)),
+                coherence: 0.8,
+                strength: 0.7,
+                members: memories.slice(0, 5).map(m => m.content || m.prompt || 'Memory item')
+            });
+        }
+
+        // Community 2: Concept-based community (live extracted concepts)
+        if (concepts.length > 0) {
+            communities.push({
+                name: `Concept Community`,
+                concepts: concepts.slice(0, 5).map(c => c.concept || c.name || c),
+                size: concepts.length,
+                color: colors[1],
+                topics: concepts.slice(0, 3).map(c => c.concept || c.name || c),
+                coherence: 0.7,
+                strength: 0.6,
+                members: concepts.slice(0, 5).map(c => c.concept || c.name || c)
+            });
+        }
+
+        // Community 3: Entity-based community (live SPARQL entities)
+        if (entities.length > 0) {
+            communities.push({
+                name: `Entity Community`,
+                concepts: ['entities', 'sparql', 'knowledge-graph'],
+                size: entities.length,
+                color: colors[2],
+                topics: entities.slice(0, 3).map(e => (e.content || e.uri || 'Entity').substring(0, 30)),
+                coherence: 0.75,
+                strength: 0.8,
+                members: entities.slice(0, 5).map(e => e.uri || e.content || 'Entity')
+            });
+        }
+
+        // Community 4: Interaction-based community (live session interactions)
+        if (interactions.length > 0) {
+            const interactionTypes = [...new Set(interactions.map(i => i.type || 'interaction'))];
+            communities.push({
+                name: `Interaction Community`,
+                concepts: ['interactions', 'session', 'dialogue'],
+                size: interactions.length,
+                color: colors[3],
+                topics: interactionTypes,
+                coherence: 0.6,
+                strength: 0.5,
+                members: interactions.slice(0, 5).map(i => (i.content || i.prompt || 'Interaction').substring(0, 30))
+            });
+        }
+
+        // Community 5: Document-based community (live document content)
+        const documentPattern = [...interactions, ...memories].filter(item => {
+            const content = item.content || item.prompt || '';
+            return content.length > 200 || content.includes('document') || content.includes('text') || content.includes('PDF');
+        });
+
+        if (documentPattern.length > 0) {
+            communities.push({
+                name: `Document Community`,
+                concepts: ['documents', 'text-processing', 'corpus'],
+                size: documentPattern.length,
+                color: colors[4],
+                topics: documentPattern.slice(0, 3).map(d => (d.content || d.prompt || '').substring(0, 30)),
+                coherence: 0.65,
+                strength: 0.6,
+                members: documentPattern.slice(0, 5).map(d => (d.content || d.prompt || '').substring(0, 50) + '...')
+            });
+        }
+
+        console.log(`🏘️ Created ${communities.length} live corpus communities:`, communities.map(c => `${c.name} (${c.size} items)`));
+        return communities;
     }
 
     async updateComponents() {
@@ -519,17 +718,12 @@ class VSOMStandaloneApp {
     
     showLoading(show) {
         const loading = document.getElementById('vsom-loading');
-        const placeholder = document.getElementById('vsom-placeholder');
 
         if (loading) {
             loading.style.display = show ? 'flex' : 'none';
         }
 
-        if (placeholder) {
-            // Show placeholder only when not loading AND no interactions
-            const hasInteractions = this.state.interactions && this.state.interactions.length > 0;
-            placeholder.style.display = (!show && !hasInteractions) ? 'flex' : 'none';
-        }
+        // No placeholder elements - only show live data visualization
     }
     
     showToast(message, type = 'info') {

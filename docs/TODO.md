@@ -30,7 +30,7 @@ node utils/SPARQLIngestRemote.js --source danny.ayers.name_content --template bl
 
 node utils/SPARQLIngestDocker.js --source danny.ayers.name_content --template blog-articles --limit 5
 
-
+claude mcp add playwright npx '@playwright/mcp@latest'
  
 # MANUAL
 cd ~/hyperdata/transmissions # my local path

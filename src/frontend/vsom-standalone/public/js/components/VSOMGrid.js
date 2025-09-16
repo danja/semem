@@ -1081,7 +1081,7 @@ export default class VSOMGrid {
 
             // Secondary label (concepts)
             if (node.concepts && Array.isArray(node.concepts) && node.concepts.length > 0) {
-                const conceptsText = node.concepts.slice(0, 3).join(', ');
+                let conceptsText = node.concepts.slice(0, 3).join(', ');
                 if (conceptsText.length > 30) {
                     conceptsText = conceptsText.substring(0, 30) + '...';
                 }

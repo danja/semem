@@ -91,7 +91,50 @@ export default class VSOMApiService {
             method: 'GET'
         });
     }
-    
+
+    /**
+     * Get contextual data that would be used for prompt synthesis at current ZPT state
+     * This returns the same scope of data that would be included in an ask operation
+     */
+    async getContextualScope(options = {}) {
+        try {
+            // Use ask endpoint with a minimal question to get context metadata
+            const response = await this.makeRequest('/ask', {
+                method: 'POST',
+                body: JSON.stringify({
+                    question: options.query || '__VSOM_CONTEXT_REQUEST__', // Special query for context
+                    mode: 'comprehensive',
+                    useContext: true,
+                    useHyDE: false,
+                    threshold: options.threshold || 0.3
+                })
+            });
+
+            if (response.success) {
+                // Extract contextual scope information from ask response
+                return {
+                    success: true,
+                    contextual: {
+                        items: response.contextItems || 0,
+                        memories: response.memories || 0,
+                        sessionResults: response.sessionResults || 0,
+                        persistentResults: response.persistentResults || 0,
+                        analysis: response.contextAnalysis || {},
+                        zptState: response.zptState || {},
+                        searchMethod: response.searchMethod || 'unknown',
+                        sessionCacheStats: response.sessionCacheStats || {}
+                    },
+                    scope: 'contextual_prompt_synthesis'
+                };
+            } else {
+                throw new Error(response.error || 'Failed to get contextual scope');
+            }
+        } catch (error) {
+            console.warn('Failed to get contextual scope:', error.message);
+            return { success: false, error: error.message, contextual: { items: 0, memories: 0 } };
+        }
+    }
+
     /**
      * Get current session data including interactions
      */
