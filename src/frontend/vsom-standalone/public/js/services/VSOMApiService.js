@@ -102,7 +102,7 @@ export default class VSOMApiService {
             const response = await this.makeRequest('/ask', {
                 method: 'POST',
                 body: JSON.stringify({
-                    question: options.query || '__VSOM_CONTEXT_REQUEST__', // Special query for context
+                    question: options.query || 'What information is available in the current context?', // Query for context scope
                     mode: 'comprehensive',
                     useContext: true,
                     useHyDE: false,
@@ -196,9 +196,8 @@ export default class VSOMApiService {
         } catch (error) {
             console.warn('SPARQL query failed, falling back to memory manager:', error);
             // Fallback to memory manager API
-            return this.makeRequest('/memory/search', {
-                method: 'POST',
-                body: JSON.stringify({ query: '*', limit: 100 })
+            return this.makeRequest('/memory/search?query=*&limit=100', {
+                method: 'GET'
             });
         }
     }

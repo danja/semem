@@ -3,12 +3,12 @@
  * Main entry point for the standalone VSOM page
  */
 
-import VSOMGrid from './components/VSOMGrid.js';
-import DataPanel from './components/DataPanel.js';
-import ZPTControls from './components/ZPTControls.js';
-import VSOMApiService from './services/VSOMApiService.js';
-import DataProcessor from './services/DataProcessor.js';
-import VSOMUtils from './utils/VSOMUtils.js';
+import VSOMGrid from './components/VSOMGrid.js?v=1726493600';
+import DataPanel from './components/DataPanel.js?v=1726493600';
+import ZPTControls from './components/ZPTControls.js?v=1726493600';
+import VSOMApiService from './services/VSOMApiService.js?v=1726493600';
+import DataProcessor from './services/DataProcessor.js?v=1726493600';
+import VSOMUtils from './utils/VSOMUtils.js?v=1726493600';
 
 class VSOMStandaloneApp {
     constructor() {
@@ -155,7 +155,7 @@ class VSOMStandaloneApp {
 
             // Get current contextual scope (same as prompt synthesis) + supporting data
             const [contextualScope, sessionData, conceptsData, zptState, sparqlData, entitiesData, memoryData] = await Promise.allSettled([
-                this.services.api.getContextualScope(), // Primary: current context scope
+                this.services.api.getContextualScope({ query: 'What information is available in the current context?' }), // Primary: current context scope
                 this.services.api.getSessionData(),     // Supporting: interaction history
                 this.services.api.getConceptsData(),    // Supporting: concept analysis
                 this.services.api.getZPTState(),        // Supporting: navigation state

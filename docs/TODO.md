@@ -1,3 +1,15 @@
+node src/frontend/vsom-standalone/server.js
+
+
+The SPARQL store is still empty, which means the data is only in the memory store, not persisted to SPARQL. This explains why the VSOM can't find corpus communities - it's
+  trying to query SPARQL but the data isn't there.
+
+  The issue is that the system architecture notes state "The memory and json storage backends are being phased out, sparql storage should be used throughout", but the API is still
+   using memory storage.
+
+Figure out how best to move the API from using memory storage to data persisted in the SPARQL store. This has to be done following best practices. A list should be made of any code that still uses in-memory or JSON storage. This code will subsequently removed, so ensure all bases are covered.
+Save the plan and keep progress reports in docs/MORE-SPARQL.md
+
 * fix tests
 * add github mit logos
 * refactor src/connectors
