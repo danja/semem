@@ -16,7 +16,7 @@ global.fetch = fetch;
 globalThis.fetch = fetch;
 
 // Test configuration
-const WORKBENCH_BASE_URL = 'http://localhost:3000';
+const WORKBENCH_BASE_URL = 'http://localhost:4102';
 const API_BASE_URL = `${WORKBENCH_BASE_URL}/api`;
 
 // Skip all tests if INTEGRATION_TESTS is not set
