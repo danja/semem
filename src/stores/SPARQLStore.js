@@ -2539,12 +2539,45 @@ export default class SPARQLStore extends BaseStore {
             // Rebuild FAISS index with loaded embeddings
             if (this.embeddings.length > 0) {
                 this.index = new faiss.IndexFlatL2(this.dimension)
-                for (const embedding of this.embeddings) {
+                let addedCount = 0;
+                let skippedCount = 0;
+
+                for (let i = 0; i < this.embeddings.length; i++) {
+                    const embedding = this.embeddings[i];
+                    let processedEmbedding = null;
+
                     if (Array.isArray(embedding) && embedding.length === this.dimension) {
-                        this.index.add(embedding)
+                        // Check if embedding contains valid numbers
+                        const hasValidNumbers = embedding.some(val => typeof val === 'number' && !isNaN(val) && val !== 0);
+                        if (hasValidNumbers) {
+                            processedEmbedding = embedding;
+                        } else {
+                            console.log(`⚠️ [SPARQLStore] Embedding ${i} is all zeros or invalid, creating default`);
+                            // Create a small random embedding to maintain position mapping
+                            processedEmbedding = new Array(this.dimension).fill(0).map(() => Math.random() * 0.001 - 0.0005);
+                        }
+                    } else {
+                        console.log(`⚠️ [SPARQLStore] Invalid embedding ${i}: ${Array.isArray(embedding) ? embedding.length : typeof embedding}D (expected ${this.dimension}D), creating default`);
+                        // Create a small random embedding to maintain position mapping
+                        processedEmbedding = new Array(this.dimension).fill(0).map(() => Math.random() * 0.001 - 0.0005);
+                    }
+
+                    try {
+                        this.index.add(processedEmbedding);
+                        addedCount++;
+                    } catch (error) {
+                        console.log(`❌ [SPARQLStore] Failed to add embedding ${i} to FAISS: ${error.message}`);
+                        // Even if FAISS add fails, we need to maintain position, so add a zero vector
+                        try {
+                            this.index.add(new Array(this.dimension).fill(0.0001));
+                            addedCount++;
+                        } catch (fallbackError) {
+                            console.log(`❌ [SPARQLStore] Fallback embedding also failed for ${i}: ${fallbackError.message}`);
+                            skippedCount++;
+                        }
                     }
                 }
-                console.log(`🔧 [SPARQLStore] Rebuilt FAISS index with ${this.embeddings.length} vectors - positions synchronized with shortTermMemory`);
+                console.log(`🔧 [SPARQLStore] Rebuilt FAISS index: ${addedCount} added, ${skippedCount} skipped, ${this.embeddings.length} total embeddings`);
 
                 // Verify synchronization
                 if (this.index.ntotal() !== this.shortTermMemory.length) {
