@@ -67,7 +67,7 @@ export default class SPARQLStore extends BaseStore {
             user: options.user || 'admin',
             password: options.password || 'admin'
         }
-        this.graphName = options.graphName || 'http://hyperdata.it/content'
+        this.graphName = options.graphName || 'http://tensegrity.it/semem/content'
         this.inTransaction = false
         this.dimension = options.dimension || 768  // Default for nomic-embed-text (should be set via config)
         this.queryService = new SPARQLQueryService()
@@ -76,7 +76,7 @@ export default class SPARQLStore extends BaseStore {
         this.maxConceptsPerInteraction = options.maxConceptsPerInteraction || 10
         this.maxConnectionsPerEntity = options.maxConnectionsPerEntity || 100
         this.config = config
-        this.baseUri = config?.get?.('baseUri') || config?.baseUri || 'http://hyperdata.it/'
+        this.baseUri = config?.get?.('baseUri') || config?.baseUri || 'http://tensegrity.it/semem/'
 
         // Simple resilience configuration (opt-in)
         this.resilience = {
@@ -290,17 +290,19 @@ export default class SPARQLStore extends BaseStore {
                 }
                 UNION
                 {
-                    # Old format: ragno:Element objects
+                    # Old format: ragno:Element objects with legacy embedding property
                     ?interaction a ragno:Element ;
                         ragno:embedding ?embedding .
                     OPTIONAL { ?interaction skos:prefLabel ?prompt }
-                    OPTIONAL { ?interaction ragno:content ?output }
+                    OPTIONAL { ?interaction ragno:content ?content }
                     OPTIONAL { ?interaction dcterms:created ?timestamp }
                     BIND(CONCAT("element-", SUBSTR(STR(?interaction), 1+STRLEN(STR(?interaction))-8)) AS ?id)
                     BIND(0 AS ?accessCount)
                     BIND("[]" AS ?concepts)
                     BIND(1.0 AS ?decayFactor)
                     BIND("short-term" AS ?memoryType)
+                    # Use prompt as output when ragno:content is null (for simple definitions)
+                    BIND(IF(BOUND(?content), ?content, ?prompt) AS ?output)
                 }
             }`
 

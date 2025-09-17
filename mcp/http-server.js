@@ -666,7 +666,17 @@ async function startOptimizedServer() {
                 personalWeight: 0.5,
                 enhancementWeight: 0.5,
                 selectedStrategy: results.length > 0 ? "personal_context" : "no_context"
-              }
+              },
+              // DEBUG: Include search results to debug content mapping
+              debugSearchResults: results.slice(0, 3).map(r => ({
+                id: r.id,
+                prompt: r.prompt,
+                response: r.response,
+                content: r.content,
+                similarity: r.similarity,
+                source: r.source,
+                metadata: r.metadata
+              }))
             };
           } catch (error) {
             console.error('❌ [MCP] Ask operation failed:', error);
