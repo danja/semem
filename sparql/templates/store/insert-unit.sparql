@@ -1,0 +1,15 @@
+PREFIX ragno: <http://purl.org/stuff/ragno/>
+PREFIX semem: <http://purl.org/stuff/semem/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+INSERT DATA {
+    GRAPH <{{graphName}}> {
+        {{unitUri}} a ragno:SemanticUnit ;
+            ragno:hasContent "{{content}}" ;
+            rdfs:label "{{label}}" ;
+            semem:embedding """{{embedding}}""" ;
+            dcterms:created "{{timestamp}}"^^xsd:dateTime .
+    }
+}

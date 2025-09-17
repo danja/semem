@@ -1,0 +1,13 @@
+PREFIX ragno: <http://purl.org/stuff/ragno/>
+PREFIX semem: <http://purl.org/stuff/semem/>
+
+DELETE {
+    GRAPH <{{graphName}}> {
+        ?interaction ?p ?o
+    }
+} WHERE {
+    GRAPH <{{graphName}}> {
+        ?interaction a semem:Interaction ;
+                     ?p ?o
+    }
+}

@@ -1,0 +1,27 @@
+PREFIX semem: <http://purl.org/stuff/semem/>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+# First clear any existing current flags
+DELETE {
+    GRAPH <{{graphName}}> {
+        ?indexUri semem:current "true"^^xsd:boolean .
+    }
+} WHERE {
+    GRAPH <{{graphName}}> {
+        ?indexUri a semem:FAISSIndex ;
+                  semem:current "true"^^xsd:boolean .
+    }
+};
+
+# Then insert the new index data
+INSERT DATA {
+    GRAPH <{{graphName}}> {
+        <{{indexUri}}> a semem:FAISSIndex ;
+                     semem:dimension "{{dimension}}"^^xsd:integer ;
+                     semem:indexData "{{indexData}}" ;
+                     semem:indexSize "{{indexSize}}"^^xsd:integer ;
+                     semem:current "true"^^xsd:boolean ;
+                     dcterms:created "{{timestamp}}"^^xsd:dateTime .
+    }
+}

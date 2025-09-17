@@ -1,0 +1,12 @@
+PREFIX ragno: <http://purl.org/stuff/ragno/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+SELECT ?source ?target ?label ?type WHERE {
+    GRAPH <{{graphName}}> {
+        ?source ragno:connectsTo ?target .
+        ?source rdfs:label ?sourceLabel .
+        ?target rdfs:label ?targetLabel .
+        OPTIONAL { ?source rdfs:label ?label }
+        OPTIONAL { ?source ragno:relationshipType ?type }
+    }
+}

@@ -7,6 +7,7 @@ import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'
 import { SPARQL_CONFIG } from '../../config/preferences.js'
 import { WorkflowLogger, workflowLoggerRegistry } from '../utils/WorkflowLogger.js'
+import SPARQLTemplateLoader from './SPARQLTemplateLoader.js'
 
 // Enhanced SPARQL Store imports for in-memory capabilities
 import faiss from 'faiss-node'
@@ -90,6 +91,9 @@ export default class SPARQLStore extends BaseStore {
         // Workflow logging for SPARQL operations
         this.workflowLogger = new WorkflowLogger('SPARQLStore')
         workflowLoggerRegistry.register('SPARQLStore', this.workflowLogger)
+
+        // Initialize SPARQL template loader
+        this.templateLoader = new SPARQLTemplateLoader()
 
         // ============================================================================
         // IN-MEMORY CAPABILITIES - Integrated from MemoryStore
@@ -221,19 +225,26 @@ export default class SPARQLStore extends BaseStore {
         this.graphName = await Promise.resolve(this.graphName)
         try {
             try {
-                const createQuery = `
-                    PREFIX ragno: <http://purl.org/stuff/ragno/>
-                    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-                    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-                    PREFIX semem: <http://purl.org/stuff/semem/>
-                    
-                    CREATE SILENT GRAPH <${this.graphName}>;
-                    INSERT DATA { GRAPH <${this.graphName}> {
-                        <${this.graphName}> a ragno:Corpus ;
-                            rdfs:label "Semem Memory Store" ;
-                            skos:prefLabel "Semem Memory Store"@en
-                    }}
-                `
+                let createQuery = await this.templateLoader.loadAndInterpolate('store', 'init-graph', {
+                    graphName: this.graphName
+                })
+
+                if (!createQuery) {
+                    // Fallback to inline query if template not found
+                    createQuery = `
+                        PREFIX ragno: <http://purl.org/stuff/ragno/>
+                        PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+                        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+                        PREFIX semem: <http://purl.org/stuff/semem/>
+
+                        CREATE SILENT GRAPH <${this.graphName}>;
+                        INSERT DATA { GRAPH <${this.graphName}> {
+                            <${this.graphName}> a ragno:Corpus ;
+                                rdfs:label "Semem Memory Store" ;
+                                skos:prefLabel "Semem Memory Store"@en
+                        }}
+                    `
+                }
                 logger.error('[VERIFY] Creating graph', this.endpoint.update, { endpoint: this.endpoint.update, graph: this.graphName }) //  { endpoint: this.endpoint.update, createQuery }
                 await this._executeSparqlUpdate(createQuery, this.endpoint.update)
             } catch (error) {
@@ -259,20 +270,38 @@ export default class SPARQLStore extends BaseStore {
             PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
             PREFIX semem: <http://purl.org/stuff/semem/>
             PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+            PREFIX dcterms: <http://purl.org/dc/terms/>
 
             SELECT ?id ?prompt ?output ?embedding ?timestamp ?accessCount ?concepts ?decayFactor ?memoryType
             FROM <${this.graphName}>
             WHERE {
-                ?interaction a semem:Interaction ;
-                    semem:id ?id ;
-                    semem:prompt ?prompt ;
-                    semem:output ?output ;
-                    semem:embedding ?embedding ;
-                    semem:timestamp ?timestamp ;
-                    semem:accessCount ?accessCount ;
-                    semem:decayFactor ?decayFactor ;
-                    semem:memoryType ?memoryType .
-                OPTIONAL { ?interaction semem:concepts ?concepts }
+                {
+                    # New format: semem:Interaction objects
+                    ?interaction a semem:Interaction ;
+                        semem:id ?id ;
+                        semem:prompt ?prompt ;
+                        semem:output ?output ;
+                        semem:embedding ?embedding ;
+                        semem:timestamp ?timestamp ;
+                        semem:accessCount ?accessCount ;
+                        semem:decayFactor ?decayFactor ;
+                        semem:memoryType ?memoryType .
+                    OPTIONAL { ?interaction semem:concepts ?concepts }
+                }
+                UNION
+                {
+                    # Old format: ragno:Element objects
+                    ?interaction a ragno:Element ;
+                        ragno:embedding ?embedding .
+                    OPTIONAL { ?interaction skos:prefLabel ?prompt }
+                    OPTIONAL { ?interaction ragno:content ?output }
+                    OPTIONAL { ?interaction dcterms:created ?timestamp }
+                    BIND(CONCAT("element-", SUBSTR(STR(?interaction), 1+STRLEN(STR(?interaction))-8)) AS ?id)
+                    BIND(0 AS ?accessCount)
+                    BIND("[]" AS ?concepts)
+                    BIND(1.0 AS ?decayFactor)
+                    BIND("short-term" AS ?memoryType)
+                }
             }`
 
         try {

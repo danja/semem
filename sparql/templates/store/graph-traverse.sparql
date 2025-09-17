@@ -1,0 +1,20 @@
+PREFIX ragno: <http://purl.org/stuff/ragno/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+SELECT DISTINCT ?node ?label ?type ?distance WHERE {
+    GRAPH <{{graphName}}> {
+        <{{startNodeId}}> ({{propertyPath}}){0,{{depth}}} ?node .
+        ?node rdfs:label ?label .
+        OPTIONAL { ?node rdf:type ?type }
+
+        # Calculate distance (approximation)
+        {
+            SELECT ?node (COUNT(?intermediate) AS ?distance) WHERE {
+                <{{startNodeId}}> ({{propertyPath}})* ?intermediate .
+                ?intermediate ({{propertyPath}})* ?node .
+            }
+            GROUP BY ?node
+        }
+    }
+} ORDER BY ?distance ?label

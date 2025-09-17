@@ -1,0 +1,12 @@
+PREFIX semem: <http://purl.org/stuff/semem/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+SELECT ?indexData ?indexSize WHERE {
+    GRAPH <{{graphName}}> {
+        ?indexUri a semem:FAISSIndex ;
+                  semem:dimension "{{dimension}}"^^xsd:integer ;
+                  semem:indexData ?indexData ;
+                  semem:indexSize ?indexSize ;
+                  semem:current "true"^^xsd:boolean .
+    }
+}

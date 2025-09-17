@@ -1,0 +1,15 @@
+PREFIX ragno: <http://purl.org/stuff/ragno/>
+PREFIX semem: <http://purl.org/stuff/semem/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+
+SELECT ?element ?content ?label ?type ?created WHERE {
+    GRAPH <{{graphName}}> {
+        ?element semem:processingStatus "lazy" ;
+                 ragno:content ?content ;
+                 rdfs:label ?label ;
+                 dcterms:created ?created .
+        OPTIONAL { ?element ragno:subType ?type }
+    }
+}
+ORDER BY ?created

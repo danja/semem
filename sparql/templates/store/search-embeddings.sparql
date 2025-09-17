@@ -1,0 +1,32 @@
+PREFIX ragno: <http://purl.org/stuff/ragno/>
+PREFIX semem: <http://purl.org/stuff/semem/>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+
+SELECT ?entity ?prompt ?content ?embedding ?timestamp ?type ?format ?response
+FROM <{{graphName}}>
+WHERE {
+    {
+        # Search in regular ragno:Element objects (old format) - DEPRECATED
+        ?entity a ragno:Element ;
+                ragno:embedding ?embedding .
+        OPTIONAL { ?entity ragno:content ?content }
+        OPTIONAL { ?entity skos:prefLabel ?prompt }
+        OPTIONAL { ?entity dcterms:created ?timestamp }
+        BIND("interaction" AS ?type)
+        BIND("element" AS ?format)
+        BIND(COALESCE(?content, ?prompt, "") AS ?response)
+    }
+    UNION
+    {
+        # Search in semem:Interaction objects (new format)
+        ?entity a semem:Interaction ;
+                semem:prompt ?prompt ;
+                semem:output ?response ;
+                semem:embedding ?embedding .
+        OPTIONAL { ?entity dcterms:created ?timestamp }
+        OPTIONAL { ?entity semem:memoryType ?type }
+        BIND("interaction" AS ?format)
+        BIND(?response AS ?content)
+    }
+}

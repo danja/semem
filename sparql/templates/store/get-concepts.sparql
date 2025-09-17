@@ -1,0 +1,16 @@
+PREFIX ragno: <http://purl.org/stuff/ragno/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+SELECT DISTINCT ?concept ?label ?category ?confidence ?frequency ?embedding
+WHERE {
+    GRAPH <{{graphName}}> {
+        ?concept a ragno:Concept ;
+                 rdfs:label ?label ;
+                 ragno:conceptCategory ?category ;
+                 ragno:confidence ?confidence ;
+                 ragno:frequency ?frequency .
+        OPTIONAL { ?concept ragno:embedding ?embedding }
+    }
+}
+ORDER BY DESC(?frequency) DESC(?confidence)

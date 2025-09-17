@@ -1,0 +1,18 @@
+PREFIX ragno: <http://purl.org/stuff/ragno/>
+PREFIX semem: <http://purl.org/stuff/semem/>
+
+SELECT
+    (COUNT(DISTINCT ?entity) AS ?entityCount)
+    (COUNT(DISTINCT ?unit) AS ?unitCount)
+    (COUNT(DISTINCT ?relationship) AS ?relationshipCount)
+    (COUNT(DISTINCT ?community) AS ?communityCount)
+    (COUNT(DISTINCT ?embedding) AS ?embeddingCount)
+WHERE {
+    GRAPH <{{graphName}}> {
+        OPTIONAL { ?entity a ragno:Entity }
+        OPTIONAL { ?unit a ragno:SemanticUnit }
+        OPTIONAL { ?relationship a ragno:Relationship }
+        OPTIONAL { ?community a ragno:Community }
+        OPTIONAL { ?any semem:embedding ?embedding }
+    }
+}

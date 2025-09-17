@@ -1,0 +1,16 @@
+PREFIX ragno: <http://purl.org/stuff/ragno/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+INSERT DATA {
+    GRAPH <{{graphName}}> {
+        {{relationshipUri}} a ragno:Relationship ;
+            rdfs:label "{{label}}" ;
+            ragno:source <{{source}}> ;
+            ragno:target <{{target}}> ;
+            ragno:relationshipType "{{type}}" ;
+            ragno:confidence "{{confidence}}"^^xsd:decimal ;
+            dcterms:created "{{timestamp}}"^^xsd:dateTime .
+    }
+}

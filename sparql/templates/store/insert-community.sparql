@@ -1,0 +1,15 @@
+PREFIX ragno: <http://purl.org/stuff/ragno/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+INSERT DATA {
+    GRAPH <{{graphName}}> {
+        {{communityUri}} a ragno:Community ;
+            rdfs:label "{{label}}" ;
+            ragno:cohesion "{{cohesion}}"^^xsd:decimal ;
+            ragno:size "{{size}}"^^xsd:integer ;
+            dcterms:created "{{timestamp}}"^^xsd:dateTime .
+        {{memberStatements}}
+    }
+}

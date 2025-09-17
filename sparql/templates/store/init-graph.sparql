@@ -1,0 +1,11 @@
+PREFIX ragno: <http://purl.org/stuff/ragno/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+
+CREATE SILENT GRAPH <{{graphName}}>;
+INSERT DATA { GRAPH <{{graphName}}> {
+    <{{graphName}}> a ragno:Corpus ;
+        rdfs:label "Semem Memory Store" ;
+        skos:prefLabel "Semem Memory Store"@en
+}}

@@ -1,0 +1,13 @@
+PREFIX semem: <http://purl.org/stuff/semem/>
+
+DELETE {
+    GRAPH <{{graphName}}> {
+        ?indexUri ?p ?o .
+    }
+}
+WHERE {
+    GRAPH <{{graphName}}> {
+        ?indexUri a semem:FAISSIndex ;
+                  ?p ?o .
+    }
+}

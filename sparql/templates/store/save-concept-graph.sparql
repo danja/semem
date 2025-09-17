@@ -1,0 +1,27 @@
+PREFIX semem: <http://purl.org/stuff/semem/>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+# First clear any existing current flags
+DELETE {
+    GRAPH <{{graphName}}> {
+        ?graphUri semem:current "true"^^xsd:boolean .
+    }
+} WHERE {
+    GRAPH <{{graphName}}> {
+        ?graphUri a semem:ConceptGraph ;
+                  semem:current "true"^^xsd:boolean .
+    }
+};
+
+# Then insert the new concept graph
+INSERT DATA {
+    GRAPH <{{graphName}}> {
+        <{{graphUri}}> a semem:ConceptGraph ;
+                     semem:graphData """{{graphData}}""" ;
+                     semem:nodeCount "{{nodeCount}}"^^xsd:integer ;
+                     semem:edgeCount "{{edgeCount}}"^^xsd:integer ;
+                     semem:current "true"^^xsd:boolean ;
+                     dcterms:created "{{timestamp}}"^^xsd:dateTime .
+    }
+}
