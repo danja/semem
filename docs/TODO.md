@@ -24,7 +24,9 @@ The SPARQL store is still empty, which means the data is only in the memory stor
 Figure out how best to move the API from using memory storage to data persisted in the SPARQL store. This has to be done following best practices. A list should be made of any code that still uses in-memory or JSON storage. This code will subsequently removed, so ensure all bases are covered.
 Save the plan and keep progress reports in docs/MORE-SPARQL.md
 
+* mcp server should be logging to file under logs/ using the logger library and only logs of the last 3 runs should be kept
 * redundant ask/tell in api server
+* SimpleVerbsService is probably redundant
 * src/stores/SPARQLStore.js contains queries
 * fix tests
 * add github mit logos

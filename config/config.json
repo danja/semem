@@ -101,6 +101,7 @@
       "type": "nomic",
       "apiKey": "${NOMIC_API_KEY}",
       "embeddingModel": "nomic-embed-text:v1.5",
+      "embeddingDimension": 768,
       "priority": 1,
       "capabilities": [
         "embedding"
@@ -112,6 +113,7 @@
       "baseUrl": "http://localhost:11434",
       "chatModel": "qwen2:1.5b",
       "embeddingModel": "nomic-embed-text",
+      "embeddingDimension": 768,
       "priority": 2,
       "capabilities": [
         "embedding",

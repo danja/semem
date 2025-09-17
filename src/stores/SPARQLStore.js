@@ -68,7 +68,7 @@ export default class SPARQLStore extends BaseStore {
         }
         this.graphName = options.graphName || 'http://hyperdata.it/content'
         this.inTransaction = false
-        this.dimension = options.dimension || 1536
+        this.dimension = options.dimension || 768  // Default for nomic-embed-text (should be set via config)
         this.queryService = new SPARQLQueryService()
 
         // PREVENTION: Configuration limits to prevent triple explosion
@@ -1459,6 +1459,18 @@ export default class SPARQLStore extends BaseStore {
         `
 
         await this._executeSparqlUpdate(insertQuery, this.endpoint.update)
+
+        // **FIX**: Also add to FAISS index for similarity search
+        if (Array.isArray(data.embedding) && data.embedding.length === this.dimension) {
+            this.index.add(data.embedding)
+            logger.info(`Added embedding to FAISS index: ${data.embedding.length}D`)
+
+            // Schedule index persistence
+            this._scheduleIndexPersistence()
+        } else if (data.embedding) {
+            logger.warn(`Embedding dimension mismatch: expected ${this.dimension}, got ${data.embedding.length}`)
+        }
+
         logger.info(`Stored entity ${data.id} in SPARQL store`)
     }
 
@@ -1643,7 +1655,11 @@ export default class SPARQLStore extends BaseStore {
      * @param {number} threshold - Similarity threshold (not used in this basic implementation)
      * @returns {Array<Object>} Search results
      */
+    // TODO: LEGACY METHOD - Consider removing after SearchService implementation is complete
+    // This method only searches SPARQL-stored embeddings and doesn't include FAISS index
+    // Use SearchService for unified search across both SPARQL and FAISS
     async search(queryEmbedding, limit = SPARQL_CONFIG.SIMILARITY.DEFAULT_LIMIT, threshold = SPARQL_CONFIG.SIMILARITY.DEFAULT_THRESHOLD) {
+        logger.info(`🔍 Search called with embedding length: ${queryEmbedding.length}, limit: ${limit}, threshold: ${threshold}`);
         const searchQuery = `
             PREFIX ragno: <http://purl.org/stuff/ragno/>
             PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
@@ -1725,17 +1741,25 @@ export default class SPARQLStore extends BaseStore {
 
                     // Enhanced similarity calculation (cosine similarity)
                     let similarity = SPARQL_CONFIG.HEALTH.FAILED_SIMILARITY_SCORE
+                    logger.info(`📐 Processing embedding: queryLen=${queryEmbedding.length}, storedLen=${embedding.length}, entity=${binding.entity.value}`)
+
                     if (embedding.length > 0 && queryEmbedding.length > 0) {
                         if (embedding.length === queryEmbedding.length) {
                             // Exact length match - use full cosine similarity
                             similarity = this._calculateCosineSimilarity(queryEmbedding, embedding)
+                            logger.info(`✅ Exact length match similarity: ${similarity}`)
                         } else {
                             // Length mismatch - try to salvage by truncating/padding to match
-                            logger.debug(`Embedding length mismatch: query=${queryEmbedding.length}, stored=${embedding.length}, attempting repair`);
+                            logger.info(`⚠️ Embedding length mismatch: query=${queryEmbedding.length}, stored=${embedding.length}, attempting repair`);
                             const adjustedEmbedding = this._adjustEmbeddingLength(embedding, queryEmbedding.length);
                             similarity = this._calculateCosineSimilarity(queryEmbedding, adjustedEmbedding);
+                            logger.info(`🔧 Adjusted length similarity: ${similarity}`)
                         }
+                    } else {
+                        logger.info(`❌ Empty embeddings: queryLen=${queryEmbedding.length}, storedLen=${embedding.length}`)
                     }
+
+                    logger.info(`🎯 Final similarity: ${similarity}, threshold: ${threshold}, passes: ${similarity >= threshold}`);
 
                     if (similarity >= threshold) {
                         const format = binding.format?.value || 'unknown';
