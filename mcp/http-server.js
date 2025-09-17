@@ -914,6 +914,28 @@ async function startOptimizedServer() {
         }
       });
 
+      // DEBUG endpoint - Quick memory inspection
+      app.get('/debug/memory', async (req, res) => {
+        try {
+          res.json({
+            success: true,
+            shortTermMemoryCount: storage.shortTermMemory?.length || 0,
+            shortTermMemoryItems: storage.shortTermMemory?.slice(-5).map((item, index) => ({
+              index,
+              id: item.id,
+              prompt: (item.prompt || '').substring(0, 100),
+              response: (item.response || '').substring(0, 100),
+              content: (item.content || '').substring(0, 100),
+              embedding: item.embedding ? `${item.embedding.length}D vector` : 'no embedding'
+            })) || [],
+            faissIndexSize: storage.index?.ntotal() || 0,
+            timestamp: new Date().toISOString()
+          });
+        } catch (error) {
+          res.status(500).json({ success: false, error: error.message });
+        }
+      });
+
       // INSPECT endpoint - Debug and monitor system state
       app.post('/inspect', async (req, res) => {
         try {

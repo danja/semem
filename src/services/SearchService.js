@@ -95,13 +95,20 @@ export class SearchService {
                     let content = "Recently stored content";
 
                     // Access in-memory arrays from SPARQLStore if they exist
-                    if (this.memoryStore.shortTermMemory && index < this.memoryStore.shortTermMemory.length) {
+                    if (this.memoryStore.shortTermMemory && index >= 0 && index < this.memoryStore.shortTermMemory.length) {
                         const memoryItem = this.memoryStore.shortTermMemory[index];
                         if (memoryItem) {
                             prompt = memoryItem.prompt || prompt;
                             response = memoryItem.response || response;
                             content = memoryItem.content || memoryItem.prompt || content;
+
+                            // Debug: Log successful mapping
+                            console.log(`✅ [SearchService] FAISS index ${index} mapped to content: "${content.substring(0, 50)}..."`);
+                        } else {
+                            console.log(`⚠️ [SearchService] FAISS index ${index} found null memoryItem`);
                         }
+                    } else {
+                        console.log(`⚠️ [SearchService] FAISS index ${index} out of bounds (shortTermMemory length: ${this.memoryStore.shortTermMemory?.length || 0})`);
                     }
 
                     faissResults.push({

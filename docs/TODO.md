@@ -24,10 +24,17 @@ The SPARQL store is still empty, which means the data is only in the memory stor
 Figure out how best to move the API from using memory storage to data persisted in the SPARQL store. This has to be done following best practices. A list should be made of any code that still uses in-memory or JSON storage. This code will subsequently removed, so ensure all bases are covered.
 Save the plan and keep progress reports in docs/MORE-SPARQL.md
 
+now do calls to the server, a Tell "wormalade is marmalade made from worms" followed by an Ask "what is wormalade?" 
+
+
+yields Based on the given context information, the relevant context is [Context 1
+   (relevance: 82.7%)] - Enhancement Query: wormalade. - so the system is not yet working end-to-end
+
 * mcp server should be logging to file under logs/ using the logger library and only logs of the last 3 runs should be kept
 * redundant ask/tell in api server
 * SimpleVerbsService is probably redundant
 * src/stores/SPARQLStore.js contains queries
+* mcp/lib/PromptSynthesis.js contains prompt
 * fix tests
 * add github mit logos
 * refactor src/connectors

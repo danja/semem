@@ -2189,6 +2189,13 @@ export default class SPARQLStore extends BaseStore {
      * Load FAISS index from SPARQL store if it exists
      */
     async _loadIndexFromStore() {
+        // CRITICAL FIX: Always rebuild FAISS index from shortTermMemory to ensure consistent mapping
+        // Persisted FAISS indices cause position mismatches with shortTermMemory array
+        logger.info('Skipping persisted FAISS index - will rebuild from shortTermMemory for consistent mapping');
+        this.index = new faiss.IndexFlatL2(this.dimension)
+        return false
+
+        // Previous implementation below - disabled to fix mapping issues
         const indexQuery = `
             PREFIX semem: <http://purl.org/stuff/semem/>
             PREFIX ragno: <http://purl.org/stuff/ragno/>
@@ -2214,16 +2221,61 @@ export default class SPARQLStore extends BaseStore {
                 const indexSize = parseInt(binding.indexSize.value)
 
                 // Deserialize FAISS index from base64 data
-                const indexBuffer = Buffer.from(indexData, 'base64')
-                this.index = faiss.IndexFlatL2.read(indexBuffer)
+                if (!indexData || typeof indexData !== 'string') {
+                    logger.warn('Invalid index data retrieved from SPARQL, creating new index');
+                    this.index = new faiss.IndexFlatL2(this.dimension)
+                    return false
+                }
+
+                try {
+                    const indexBuffer = Buffer.from(indexData, 'base64')
+                    this.index = faiss.IndexFlatL2.fromBuffer(indexBuffer)
+                } catch (deserializeError) {
+                    logger.warn('Failed to deserialize FAISS index, will create new one:', deserializeError.message);
+                    this.index = new faiss.IndexFlatL2(this.dimension)
+                    return false
+                }
 
                 logger.info(`Loaded FAISS index from SPARQL store: ${indexSize} vectors, dimension ${this.dimension}`)
                 return true
             }
         } catch (error) {
-            logger.warn('Could not load FAISS index from store:', error)
+            logger.warn('Could not load FAISS index from store, will create new index:', error.message)
+            // Create new index when loading fails
+            this.index = new faiss.IndexFlatL2(this.dimension)
+
+            // Clear corrupted index data from SPARQL store to prevent future errors
+            try {
+                await this._clearCorruptedIndexData()
+            } catch (clearError) {
+                logger.warn('Failed to clear corrupted index data:', clearError.message)
+            }
         }
         return false
+    }
+
+    /**
+     * Clear corrupted FAISS index data from SPARQL store
+     */
+    async _clearCorruptedIndexData() {
+        const clearQuery = `
+            PREFIX semem: <http://purl.org/stuff/semem/>
+
+            DELETE {
+                GRAPH <${this.graphName}> {
+                    ?indexUri ?p ?o .
+                }
+            }
+            WHERE {
+                GRAPH <${this.graphName}> {
+                    ?indexUri a semem:FAISSIndex ;
+                              ?p ?o .
+                }
+            }
+        `
+
+        await this._executeSparqlUpdate(clearQuery, this.endpoint.update)
+        logger.info('Cleared corrupted FAISS index data from SPARQL store')
     }
 
     /**
@@ -2463,7 +2515,18 @@ export default class SPARQLStore extends BaseStore {
                         this.index.add(embedding)
                     }
                 }
-                logger.info(`Rebuilt FAISS index with ${this.embeddings.length} vectors`)
+                console.log(`🔧 [SPARQLStore] Rebuilt FAISS index with ${this.embeddings.length} vectors - positions synchronized with shortTermMemory`);
+
+                // Verify synchronization
+                if (this.index.ntotal() !== this.shortTermMemory.length) {
+                    console.log(`⚠️ [SPARQLStore] FAISS index size (${this.index.ntotal()}) doesn't match shortTermMemory size (${this.shortTermMemory.length})`);
+                }
+
+                // Debug: Log first few shortTermMemory items
+                for (let i = 0; i < Math.min(3, this.shortTermMemory.length); i++) {
+                    const item = this.shortTermMemory[i];
+                    console.log(`🔍 [SPARQLStore] shortTermMemory[${i}]: "${(item.prompt || item.content || 'unknown').substring(0, 50)}..."`);
+                }
             }
 
             // Load concept graph
