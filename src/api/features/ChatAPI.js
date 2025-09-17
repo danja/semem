@@ -421,7 +421,7 @@ export default class ChatAPI extends BaseAPI {
         const context = {
             conversation: conversation.history,
             relevantMemories: relevantMemories.map(memory => ({
-                // Handle both structures: memory.interaction.* (MemoryStore) and memory.* (SPARQLStore)
+                // MIGRATION: Enhanced SPARQLStore now provides unified memory structure
                 prompt: memory.interaction?.prompt || memory.prompt,
                 response: memory.interaction?.output || memory.response,
                 similarity: memory.similarity

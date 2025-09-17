@@ -93,12 +93,21 @@ export const SPARQL_CONFIG = {
         // Used in: src/stores/SPARQLStore.js (search method signature, line ~1331)
         // Used in: src/stores/SPARQLStore.js (findSimilarElements method signature, line ~1018)
         DEFAULT_LIMIT: 10,                  // Default number of results to return
-        
+
         // Used in: src/stores/SPARQLStore.js (search method signature, line ~1331)
         DEFAULT_THRESHOLD: 0.3,             // Default similarity threshold for search
-        
+
         // Used in: src/stores/SPARQLStore.js (findSimilarElements method signature, line ~1018)
-        FINDALL_THRESHOLD: 0.7              // Higher threshold for findSimilarElements
+        FINDALL_THRESHOLD: 0.7,             // Higher threshold for findSimilarElements
+
+        // Protection against segfaults and memory exhaustion
+        // Used in: src/stores/SPARQLStore.js (findSimilarElements method)
+        MAX_QUERY_LIMIT: 100,               // Maximum limit to prevent excessive memory usage
+        MAX_RESULTS_TO_PROCESS: 200,        // Maximum results to process to prevent memory exhaustion
+        QUERY_TIMEOUT_MS: 30000,            // Query timeout in milliseconds to prevent hanging
+        MAX_PROCESSING_ITERATIONS: 200,     // Maximum iterations to prevent infinite loops
+        MAX_EMBEDDING_STRING_LENGTH: 100000, // Maximum length of embedding JSON string (100KB)
+        MAX_EMBEDDING_DIMENSIONS: 10000     // Maximum dimensions in embedding vector
     },
 
     /**

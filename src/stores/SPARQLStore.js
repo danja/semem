@@ -8,6 +8,13 @@ import { fileURLToPath } from 'url'
 import { SPARQL_CONFIG } from '../../config/preferences.js'
 import { WorkflowLogger, workflowLoggerRegistry } from '../utils/WorkflowLogger.js'
 
+// Enhanced SPARQL Store imports for in-memory capabilities
+import faiss from 'faiss-node'
+import { kmeans } from 'ml-kmeans'
+import graphology from 'graphology'
+import { vectorOps } from '../Utils.js'
+const { Graph } = graphology
+
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
 // Load ZPT Query Templates from files
@@ -63,13 +70,13 @@ export default class SPARQLStore extends BaseStore {
         this.inTransaction = false
         this.dimension = options.dimension || 1536
         this.queryService = new SPARQLQueryService()
-        
+
         // PREVENTION: Configuration limits to prevent triple explosion
         this.maxConceptsPerInteraction = options.maxConceptsPerInteraction || 10
         this.maxConnectionsPerEntity = options.maxConnectionsPerEntity || 100
         this.config = config
         this.baseUri = config?.get?.('baseUri') || config?.baseUri || 'http://hyperdata.it/'
-        
+
         // Simple resilience configuration (opt-in)
         this.resilience = {
             enabled: options.enableResilience === true, // Default disabled for backward compatibility
@@ -79,49 +86,54 @@ export default class SPARQLStore extends BaseStore {
             enableFallbacks: options.enableFallbacks !== false,
             ...options.resilience
         }
-        
+
         // Workflow logging for SPARQL operations
         this.workflowLogger = new WorkflowLogger('SPARQLStore')
         workflowLoggerRegistry.register('SPARQLStore', this.workflowLogger)
+
+        // ============================================================================
+        // IN-MEMORY CAPABILITIES - Integrated from MemoryStore
+        // ============================================================================
+
+        // Initialize FAISS index for fast similarity search
+        this.initializeIndex()
+
+        // In-memory structures for performance
+        this.shortTermMemory = []
+        this.longTermMemory = []
+        this.embeddings = []
+        this.timestamps = []
+        this.accessCounts = []
+        this.conceptsList = []
+
+        // Concept graph for spreading activation
+        this.graph = new Graph({ multi: true, allowSelfLoops: false })
+        this.semanticMemory = new Map()
+        this.clusterLabels = []
+
+        // Memory classification configuration
+        this.promotionThreshold = config?.get?.('memory.promotionThreshold') || 5.0
+        this.classificationChance = config?.get?.('memory.classificationChance') || 0.1
+
+        // Cache for loaded data to avoid frequent SPARQL queries
+        this._memoryCache = {
+            lastLoaded: 0,
+            cacheTimeoutMs: options.cacheTimeoutMs || 300000, // 5 minutes
+            loaded: false
+        }
     }
 
     async _executeSparqlQuery(query, endpoint) {
         const auth = Buffer.from(`${this.credentials.user}:${this.credentials.password}`).toString('base64')
-        logger.log(`endpoint = ${endpoint}`)
-        
-        // Use resilience wrapper only if enabled
-        if (this.resilience.enabled) {
-            return this.executeWithResilience(async () => {
-                logger.debug('[SPARQL QUERY]', endpoint) // { endpoint, query }
-                const response = await this.withTimeout(
-                    fetch(endpoint, {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Basic ${auth}`,
-                            'Content-Type': 'application/sparql-query',
-                            'Accept': 'application/json'
-                        },
-                        body: query,
-                        credentials: 'include'
-                    }),
-                    this.resilience.timeoutMs
-                )
 
-                if (!response.ok) {
-                    const errorText = await response.text()
-                    logger.error('[SPARQL QUERY FAIL]', { endpoint, query, status: response.status, errorText })
-                    throw new Error(`SPARQL query failed: ${response.status} - ${errorText}`)
-                }
-
-                const json = await response.json()
-                logger.error('[SPARQL QUERY SUCCESS]', endpoint) // , { endpoint, query, json }
-                return json
-            }, 'query')
-        }
-
-        // Original implementation for backward compatibility
         try {
-            logger.debug('[SPARQL QUERY]', endpoint) // { endpoint, query }
+            logger.debug('[SPARQL QUERY]', endpoint)
+
+            // Ensure fetch is available
+            if (typeof fetch === 'undefined') {
+                throw new Error('fetch is not available in this environment')
+            }
+
             const response = await fetch(endpoint, {
                 method: 'POST',
                 headers: {
@@ -133,6 +145,10 @@ export default class SPARQLStore extends BaseStore {
                 credentials: 'include'
             })
 
+            if (!response) {
+                throw new Error('fetch returned null/undefined response')
+            }
+
             if (!response.ok) {
                 const errorText = await response.text()
                 logger.error('[SPARQL QUERY FAIL]', { endpoint, query, status: response.status, errorText })
@@ -140,10 +156,10 @@ export default class SPARQLStore extends BaseStore {
             }
 
             const json = await response.json()
-            logger.error('[SPARQL QUERY SUCCESS]', endpoint) // , { endpoint, query, json }
+            logger.debug('[SPARQL QUERY SUCCESS]', endpoint)
             return json
         } catch (error) {
-            logger.error('SPARQL query error:', { endpoint, query, error })
+            logger.error('SPARQL query error:', { endpoint, query, error: error.message })
             throw error
         }
     }
@@ -151,38 +167,14 @@ export default class SPARQLStore extends BaseStore {
     async _executeSparqlUpdate(update, endpoint) {
         const auth = Buffer.from(`${this.credentials.user}:${this.credentials.password}`).toString('base64')
 
-        // Use resilience wrapper only if enabled
-        if (this.resilience.enabled) {
-            return this.executeWithResilience(async () => {
-                logger.debug('[SPARQL UPDATE]', endpoint) //  { endpoint, update }
-                const response = await this.withTimeout(
-                    fetch(endpoint, {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Basic ${auth}`,
-                            'Content-Type': 'application/sparql-update',
-                            'Accept': 'application/json'
-                        },
-                        body: update,
-                        credentials: 'include'
-                    }),
-                    this.resilience.timeoutMs
-                )
-
-                if (!response.ok) {
-                    const errorText = await response.text()
-                    logger.error('[SPARQL UPDATE FAIL]', { endpoint, update, status: response.status, errorText })
-                    throw new Error(`SPARQL update failed: ${response.status} - ${errorText}`)
-                }
-
-                logger.error('[SPARQL UPDATE SUCCESS]', endpoint) // { endpoint, update}
-                return response
-            }, 'update')
-        }
-
-        // Original implementation for backward compatibility
         try {
-            logger.debug('[SPARQL UPDATE]', endpoint) //  { endpoint, update }
+            logger.debug('[SPARQL UPDATE]', endpoint)
+
+            // Ensure fetch is available
+            if (typeof fetch === 'undefined') {
+                throw new Error('fetch is not available in this environment')
+            }
+
             const response = await fetch(endpoint, {
                 method: 'POST',
                 headers: {
@@ -194,16 +186,20 @@ export default class SPARQLStore extends BaseStore {
                 credentials: 'include'
             })
 
+            if (!response) {
+                throw new Error('fetch returned null/undefined response')
+            }
+
             if (!response.ok) {
                 const errorText = await response.text()
                 logger.error('[SPARQL UPDATE FAIL]', { endpoint, update, status: response.status, errorText })
                 throw new Error(`SPARQL update failed: ${response.status} - ${errorText}`)
             }
 
-            logger.error('[SPARQL UPDATE SUCCESS]', endpoint) // { endpoint, update}
+            logger.debug('[SPARQL UPDATE SUCCESS]', endpoint)
             return response
         } catch (error) {
-            logger.error('SPARQL update error:', { endpoint, update, error })
+            logger.error('SPARQL update error:', { endpoint, update, error: error.message })
             throw error
         }
     }
@@ -221,6 +217,7 @@ export default class SPARQLStore extends BaseStore {
     }
 
     async verify() {
+        console.log('[DEBUG] verify() called')
         this.graphName = await Promise.resolve(this.graphName)
         try {
             try {
@@ -1123,6 +1120,10 @@ export default class SPARQLStore extends BaseStore {
      * @returns {Promise<Array>} Similar elements with similarity scores
      */
     async findSimilarElements(queryEmbedding, limit = SPARQL_CONFIG.SIMILARITY.DEFAULT_LIMIT, threshold = SPARQL_CONFIG.SIMILARITY.FINDALL_THRESHOLD, filters = {}) {
+        // Add protective limits to prevent segfaults using configuration
+        const maxLimit = Math.min(limit, SPARQL_CONFIG.SIMILARITY.MAX_QUERY_LIMIT)
+        const maxResultsToProcess = Math.min(limit * 2, SPARQL_CONFIG.SIMILARITY.MAX_RESULTS_TO_PROCESS)
+
         const embeddingStr = JSON.stringify(queryEmbedding)
         const filterClauses = this._buildFilterClauses(filters)
 
@@ -1135,25 +1136,58 @@ export default class SPARQLStore extends BaseStore {
         const query = queryTemplate
             .replace('${graphName}', this.graphName)
             .replace('${filters}', filterClauses)
-            .replace('${limit}', limit * 2)
+            .replace('${limit}', maxResultsToProcess)
 
         try {
-            const result = await this._executeSparqlQuery(query, this.endpoint.query)
-            const similarElements = []
+            // Add timeout to prevent hanging queries using configuration
+            const queryPromise = this._executeSparqlQuery(query, this.endpoint.query)
+            const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('Query timeout')), SPARQL_CONFIG.SIMILARITY.QUERY_TIMEOUT_MS)
+            )
 
-            for (const binding of result.results.bindings) {
+            const result = await Promise.race([queryPromise, timeoutPromise])
+            const similarElements = []
+            let processedCount = 0
+
+            // Limit processing to prevent memory exhaustion using configuration
+            const bindingsToProcess = result.results.bindings.slice(0, maxResultsToProcess)
+
+            for (const binding of bindingsToProcess) {
+                // Add progress check to prevent hanging loops using configuration
+                if (processedCount++ > SPARQL_CONFIG.SIMILARITY.MAX_PROCESSING_ITERATIONS) {
+                    logger.warn(`Limiting similarity search processing to ${SPARQL_CONFIG.SIMILARITY.MAX_PROCESSING_ITERATIONS} results to prevent memory issues`)
+                    break
+                }
                 try {
                     let embedding = []
-                    
+
                     // Handle two embedding formats:
                     // 1. semem vocabulary: embedding value is JSON array string
                     // 2. ragno vocabulary: embedding is URI, embeddingVector has the actual vector
                     if (binding.embeddingVector?.value && binding.embeddingVector.value !== 'undefined') {
                         // Ragno format: embedding stored as URI reference with vector data
-                        embedding = JSON.parse(binding.embeddingVector.value.trim())
+                        const embeddingStr = binding.embeddingVector.value.trim()
+                        // Add protection against extremely large JSON strings that could cause segfaults
+                        if (embeddingStr.length > SPARQL_CONFIG.SIMILARITY.MAX_EMBEDDING_STRING_LENGTH) {
+                            logger.warn(`Skipping embedding parsing - string too large: ${embeddingStr.length} chars`)
+                            continue
+                        }
+                        embedding = JSON.parse(embeddingStr)
                     } else if (binding.embedding?.value && binding.embedding.value !== 'undefined' && binding.embedding.type === 'literal') {
                         // Semem format: embedding value is the JSON array string
-                        embedding = JSON.parse(binding.embedding.value.trim())
+                        const embeddingStr = binding.embedding.value.trim()
+                        // Add protection against extremely large JSON strings that could cause segfaults
+                        if (embeddingStr.length > SPARQL_CONFIG.SIMILARITY.MAX_EMBEDDING_STRING_LENGTH) {
+                            logger.warn(`Skipping embedding parsing - string too large: ${embeddingStr.length} chars`)
+                            continue
+                        }
+                        embedding = JSON.parse(embeddingStr)
+                    }
+
+                    // Additional protection: check embedding array size
+                    if (embedding.length > SPARQL_CONFIG.SIMILARITY.MAX_EMBEDDING_DIMENSIONS) {
+                        logger.warn(`Skipping embedding - vector too large: ${embedding.length} dimensions`)
+                        continue
                     }
 
                     if (embedding.length === queryEmbedding.length && embedding.length > 0) {
@@ -2099,5 +2133,729 @@ export default class SPARQLStore extends BaseStore {
      */
     _escapeProperty(property) {
         return property.replace(/[^a-zA-Z0-9_]/g, '_')
+    }
+
+    // ============================================================================
+    // IN-MEMORY CAPABILITIES - Enhanced methods from MemoryStore
+    // ============================================================================
+
+    /**
+     * Initialize FAISS index for fast similarity search
+     * Loads existing index from SPARQL store if available
+     */
+    initializeIndex() {
+        try {
+            this.index = new faiss.IndexFlatL2(this.dimension)
+            if (!this.index || !this.index.getDimension) {
+                throw new Error('Failed to initialize FAISS index')
+            }
+            logger.info(`Initialized FAISS index with dimension ${this.dimension}`)
+
+            // Schedule index loading from SPARQL store
+            this._loadIndexFromStore().catch(error => {
+                logger.warn('Failed to load existing FAISS index from SPARQL store:', error)
+            })
+        } catch (error) {
+            logger.error('FAISS index initialization failed:', error)
+            throw new Error('Failed to initialize FAISS index: ' + error.message)
+        }
+    }
+
+    /**
+     * Load FAISS index from SPARQL store if it exists
+     */
+    async _loadIndexFromStore() {
+        const indexQuery = `
+            PREFIX semem: <http://purl.org/stuff/semem/>
+            PREFIX ragno: <http://purl.org/stuff/ragno/>
+            PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+            SELECT ?indexData ?indexSize WHERE {
+                GRAPH <${this.graphName}> {
+                    ?indexUri a semem:FAISSIndex ;
+                              semem:dimension "${this.dimension}"^^xsd:integer ;
+                              semem:indexData ?indexData ;
+                              semem:indexSize ?indexSize ;
+                              semem:current "true"^^xsd:boolean .
+                }
+            }
+            LIMIT 1
+        `
+
+        try {
+            const result = await this._executeSparqlQuery(indexQuery, this.endpoint.query)
+            if (result.results.bindings.length > 0) {
+                const binding = result.results.bindings[0]
+                const indexData = binding.indexData.value
+                const indexSize = parseInt(binding.indexSize.value)
+
+                // Deserialize FAISS index from base64 data
+                const indexBuffer = Buffer.from(indexData, 'base64')
+                this.index = faiss.IndexFlatL2.read(indexBuffer)
+
+                logger.info(`Loaded FAISS index from SPARQL store: ${indexSize} vectors, dimension ${this.dimension}`)
+                return true
+            }
+        } catch (error) {
+            logger.warn('Could not load FAISS index from store:', error)
+        }
+        return false
+    }
+
+    /**
+     * Persist FAISS index to SPARQL store
+     */
+    async _persistIndexToStore() {
+        try {
+            // Serialize FAISS index to binary data
+            const indexBuffer = this.index.toBuffer()
+            const indexData = indexBuffer.toString('base64')
+            const indexSize = this.index.ntotal()
+
+            // Clear any existing current index
+            const clearQuery = `
+                PREFIX semem: <http://purl.org/stuff/semem/>
+                PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+                DELETE {
+                    GRAPH <${this.graphName}> {
+                        ?indexUri semem:current "true"^^xsd:boolean .
+                    }
+                } WHERE {
+                    GRAPH <${this.graphName}> {
+                        ?indexUri a semem:FAISSIndex ;
+                                  semem:current "true"^^xsd:boolean .
+                    }
+                }
+            `
+            await this._executeSparqlUpdate(clearQuery, this.endpoint.update)
+
+            // Store new index
+            const indexUri = `${this.baseUri}faiss-index/${Date.now()}`
+            const insertQuery = `
+                PREFIX semem: <http://purl.org/stuff/semem/>
+                PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+                PREFIX dcterms: <http://purl.org/dc/terms/>
+
+                INSERT DATA {
+                    GRAPH <${this.graphName}> {
+                        <${indexUri}> a semem:FAISSIndex ;
+                                     semem:dimension "${this.dimension}"^^xsd:integer ;
+                                     semem:indexData "${indexData}" ;
+                                     semem:indexSize "${indexSize}"^^xsd:integer ;
+                                     semem:current "true"^^xsd:boolean ;
+                                     dcterms:created "${new Date().toISOString()}"^^xsd:dateTime .
+                    }
+                }
+            `
+            await this._executeSparqlUpdate(insertQuery, this.endpoint.update)
+
+            logger.info(`Persisted FAISS index to SPARQL store: ${indexSize} vectors`)
+        } catch (error) {
+            logger.error('Failed to persist FAISS index to store:', error)
+            throw error
+        }
+    }
+
+    /**
+     * Update concept graph with new relationships
+     * Graph state is maintained in memory and periodically persisted
+     */
+    updateGraph(concepts) {
+        // Add new nodes if they don't exist
+        for (const concept of concepts) {
+            if (!this.graph.hasNode(concept)) {
+                this.graph.addNode(concept)
+            }
+        }
+
+        // Add or update edges between concepts
+        for (const concept1 of concepts) {
+            for (const concept2 of concepts) {
+                if (concept1 !== concept2) {
+                    // Check for existing edges between the nodes
+                    const existingEdges = this.graph.edges(concept1, concept2)
+
+                    if (existingEdges.length > 0) {
+                        // Update weight of first existing edge
+                        const edgeWeight = this.graph.getEdgeAttribute(existingEdges[0], 'weight')
+                        this.graph.setEdgeAttribute(existingEdges[0], 'weight', edgeWeight + 1)
+                    } else {
+                        // Create new edge with weight 1
+                        this.graph.addEdge(concept1, concept2, { weight: 1 })
+                    }
+                }
+            }
+        }
+
+        // Schedule graph persistence (debounced to avoid too frequent updates)
+        this._scheduleGraphPersistence()
+    }
+
+    /**
+     * Debounced graph persistence to SPARQL store
+     */
+    _scheduleGraphPersistence() {
+        if (this._graphPersistenceTimer) {
+            clearTimeout(this._graphPersistenceTimer)
+        }
+
+        this._graphPersistenceTimer = setTimeout(async () => {
+            try {
+                await this._persistGraphToStore()
+            } catch (error) {
+                logger.error('Failed to persist concept graph:', error)
+            }
+        }, 30000) // 30 second debounce
+    }
+
+    /**
+     * Persist concept graph to SPARQL store
+     */
+    async _persistGraphToStore() {
+        const graphData = {
+            nodes: this.graph.nodes(),
+            edges: this.graph.edges().map(edge => {
+                const [source, target] = this.graph.extremities(edge)
+                return {
+                    source,
+                    target,
+                    weight: this.graph.getEdgeAttribute(edge, 'weight')
+                }
+            })
+        }
+
+        const graphUri = `${this.baseUri}concept-graph/${Date.now()}`
+        const insertQuery = `
+            PREFIX semem: <http://purl.org/stuff/semem/>
+            PREFIX ragno: <http://purl.org/stuff/ragno/>
+            PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+            PREFIX dcterms: <http://purl.org/dc/terms/>
+
+            INSERT DATA {
+                GRAPH <${this.graphName}> {
+                    <${graphUri}> a semem:ConceptGraph ;
+                                 semem:graphData """${JSON.stringify(graphData)}""" ;
+                                 semem:nodeCount "${graphData.nodes.length}"^^xsd:integer ;
+                                 semem:edgeCount "${graphData.edges.length}"^^xsd:integer ;
+                                 semem:current "true"^^xsd:boolean ;
+                                 dcterms:created "${new Date().toISOString()}"^^xsd:dateTime .
+                }
+            }
+        `
+
+        // Clear previous current graph
+        const clearQuery = `
+            PREFIX semem: <http://purl.org/stuff/semem/>
+            PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+            DELETE {
+                GRAPH <${this.graphName}> {
+                    ?graphUri semem:current "true"^^xsd:boolean .
+                }
+            } WHERE {
+                GRAPH <${this.graphName}> {
+                    ?graphUri a semem:ConceptGraph ;
+                              semem:current "true"^^xsd:boolean .
+                }
+            }
+        `
+
+        await this._executeSparqlUpdate(clearQuery, this.endpoint.update)
+        await this._executeSparqlUpdate(insertQuery, this.endpoint.update)
+
+        logger.info(`Persisted concept graph: ${graphData.nodes.length} nodes, ${graphData.edges.length} edges`)
+    }
+
+    /**
+     * Load concept graph from SPARQL store
+     */
+    async _loadGraphFromStore() {
+        const graphQuery = `
+            PREFIX semem: <http://purl.org/stuff/semem/>
+            PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+            SELECT ?graphData WHERE {
+                GRAPH <${this.graphName}> {
+                    ?graphUri a semem:ConceptGraph ;
+                              semem:current "true"^^xsd:boolean ;
+                              semem:graphData ?graphData .
+                }
+            }
+            LIMIT 1
+        `
+
+        try {
+            const result = await this._executeSparqlQuery(graphQuery, this.endpoint.query)
+            if (result.results.bindings.length > 0) {
+                const binding = result.results.bindings[0]
+                const graphData = JSON.parse(binding.graphData.value)
+
+                // Rebuild graph from stored data
+                this.graph.clear()
+                graphData.nodes.forEach(node => this.graph.addNode(node))
+                graphData.edges.forEach(edge => {
+                    this.graph.addEdge(edge.source, edge.target, { weight: edge.weight })
+                })
+
+                logger.info(`Loaded concept graph: ${graphData.nodes.length} nodes, ${graphData.edges.length} edges`)
+                return true
+            }
+        } catch (error) {
+            logger.warn('Could not load concept graph from store:', error)
+        }
+        return false
+    }
+
+    /**
+     * Ensure memory cache is loaded and current
+     */
+    async _ensureMemoryLoaded() {
+        const now = Date.now()
+        if (this._memoryCache.loaded &&
+            (now - this._memoryCache.lastLoaded) < this._memoryCache.cacheTimeoutMs) {
+            return // Cache is still valid
+        }
+
+        logger.info('Loading memory data from SPARQL store...')
+
+        try {
+            // Load memory interactions
+            const [shortTerm, longTerm] = await this.loadHistory()
+            this.shortTermMemory = shortTerm
+            this.longTermMemory = longTerm
+
+            // Rebuild in-memory structures
+            this.embeddings = shortTerm.map(item => item.embedding)
+            this.timestamps = shortTerm.map(item => item.timestamp)
+            this.accessCounts = shortTerm.map(item => item.accessCount || 1)
+            this.conceptsList = shortTerm.map(item => item.concepts || [])
+
+            // Rebuild FAISS index with loaded embeddings
+            if (this.embeddings.length > 0) {
+                this.index = new faiss.IndexFlatL2(this.dimension)
+                for (const embedding of this.embeddings) {
+                    if (Array.isArray(embedding) && embedding.length === this.dimension) {
+                        this.index.add(embedding)
+                    }
+                }
+                logger.info(`Rebuilt FAISS index with ${this.embeddings.length} vectors`)
+            }
+
+            // Load concept graph
+            await this._loadGraphFromStore()
+
+            // Update cache metadata
+            this._memoryCache.loaded = true
+            this._memoryCache.lastLoaded = now
+
+            logger.info(`Loaded ${shortTerm.length} short-term and ${longTerm.length} long-term memories`)
+        } catch (error) {
+            logger.error('Failed to load memory from SPARQL store:', error)
+            throw error
+        }
+    }
+
+    /**
+     * Enhanced store method that maintains in-memory structures
+     */
+    async storeWithMemory(data) {
+        // Store to SPARQL (persistent)
+        await this.store(data)
+
+        // Update in-memory structures for fast access
+        await this._ensureMemoryLoaded()
+
+        // Add to in-memory cache
+        const interaction = {
+            id: data.id,
+            prompt: data.prompt || '',
+            response: data.response || data.content || '',
+            embedding: data.embedding || [],
+            timestamp: data.timestamp || Date.now(),
+            accessCount: 1,
+            concepts: data.concepts || [],
+            decayFactor: 1.0
+        }
+
+        this.shortTermMemory.push(interaction)
+        this.embeddings.push(interaction.embedding)
+        this.timestamps.push(interaction.timestamp)
+        this.accessCounts.push(1)
+        this.conceptsList.push(interaction.concepts)
+
+        // Update FAISS index
+        if (Array.isArray(interaction.embedding) && interaction.embedding.length === this.dimension) {
+            this.index.add(interaction.embedding)
+        }
+
+        // Update concept graph
+        if (interaction.concepts.length > 0) {
+            this.updateGraph(interaction.concepts)
+        }
+
+        // Schedule index persistence
+        this._scheduleIndexPersistence()
+
+        logger.info(`Stored interaction ${data.id} in both SPARQL and memory cache`)
+    }
+
+    /**
+     * Debounced index persistence
+     */
+    _scheduleIndexPersistence() {
+        if (this._indexPersistenceTimer) {
+            clearTimeout(this._indexPersistenceTimer)
+        }
+
+        this._indexPersistenceTimer = setTimeout(async () => {
+            try {
+                await this._persistIndexToStore()
+            } catch (error) {
+                logger.error('Failed to persist FAISS index:', error)
+            }
+        }, 60000) // 1 minute debounce
+    }
+
+    /**
+     * Enhanced retrieve method with in-memory performance
+     */
+    async retrieve(queryEmbedding, queryConcepts = [], similarityThreshold = 40, excludeLastN = 0) {
+        await this._ensureMemoryLoaded()
+
+        if (this.shortTermMemory.length === 0) {
+            logger.info('No interactions available')
+            return []
+        }
+
+        logger.info('Retrieving relevant interactions from memory...')
+        const relevantInteractions = []
+        const currentTime = Date.now()
+        const decayRate = 0.0001
+        const relevantIndices = new Set()
+
+        const normalizedQuery = vectorOps.normalize(queryEmbedding.flat())
+        const normalizedEmbeddings = this.embeddings.map(e => vectorOps.normalize(Array.from(e)))
+
+        for (let idx = 0; idx < this.shortTermMemory.length - excludeLastN; idx++) {
+            const similarity = vectorOps.cosineSimilarity(normalizedQuery, normalizedEmbeddings[idx]) * 100
+            const timeDiff = (currentTime - this.timestamps[idx]) / 1000
+            const decayFactor = this.shortTermMemory[idx].decayFactor * Math.exp(-decayRate * timeDiff)
+            const reinforcementFactor = Math.log1p(this.accessCounts[idx])
+            const adjustedSimilarity = similarity * decayFactor * reinforcementFactor
+
+            if (adjustedSimilarity >= similarityThreshold) {
+                relevantIndices.add(idx)
+                this.accessCounts[idx]++
+                this.timestamps[idx] = currentTime
+                this.shortTermMemory[idx].decayFactor *= 1.1
+
+                relevantInteractions.push({
+                    similarity: adjustedSimilarity,
+                    interaction: this.shortTermMemory[idx],
+                    concepts: this.conceptsList[idx]
+                })
+            }
+        }
+
+        // Apply decay to non-relevant interactions
+        this.shortTermMemory.forEach((item, idx) => {
+            if (!relevantIndices.has(idx)) {
+                item.decayFactor *= 0.9
+            }
+        })
+
+        const activatedConcepts = await this.spreadingActivation(queryConcepts)
+
+        // Classify memories periodically during retrieval operations
+        if (Math.random() < this.classificationChance) {
+            this.classifyMemory()
+        }
+
+        return this.combineResults(relevantInteractions, activatedConcepts, normalizedQuery)
+    }
+
+    /**
+     * Memory classification for short-term to long-term promotion
+     */
+    classifyMemory() {
+        const currentTime = Date.now()
+        const promotionCandidates = []
+
+        this.shortTermMemory.forEach((interaction, idx) => {
+            if (this.longTermMemory.some(ltm => ltm.id === interaction.id)) {
+                return // Skip if already in long-term memory
+            }
+
+            // Calculate multi-factor importance score
+            const importanceScore = this.calculateMemoryImportance(interaction, idx, currentTime)
+
+            // Promote to long-term if importance score exceeds threshold
+            if (importanceScore >= this.promotionThreshold) {
+                promotionCandidates.push({
+                    interaction,
+                    index: idx,
+                    score: importanceScore
+                })
+            }
+        })
+
+        // Sort candidates by importance score and promote top candidates
+        promotionCandidates
+            .sort((a, b) => b.score - a.score)
+            .forEach(candidate => {
+                this.longTermMemory.push(candidate.interaction)
+                logger.info(`Promoted interaction ${candidate.interaction.id} to long-term memory (score: ${candidate.score.toFixed(2)})`)
+            })
+
+        // Persist memory changes back to SPARQL store
+        if (promotionCandidates.length > 0) {
+            this._scheduleMemoryPersistence()
+        }
+    }
+
+    /**
+     * Calculate multi-factor importance score for memory classification
+     */
+    calculateMemoryImportance(interaction, idx, currentTime) {
+        const accessCount = this.accessCounts[idx] || 1
+        const lastAccess = this.timestamps[idx] || interaction.timestamp
+        const decayFactor = interaction.decayFactor || 1.0
+        const concepts = interaction.concepts || []
+        const content = interaction.prompt + ' ' + (interaction.output || interaction.response || '')
+
+        // Factor 1: Access Frequency (0-3 points)
+        const accessScore = Math.min(3.0, Math.log1p(accessCount) * 1.3)
+
+        // Factor 2: Recency (0-2 points)
+        const timeDiff = (currentTime - lastAccess) / (1000 * 60 * 60) // hours
+        const recencyScore = Math.max(0, 2.0 * Math.exp(-timeDiff / 24)) // 24-hour half-life
+
+        // Factor 3: Reinforcement Strength (0-2 points)
+        const reinforcementScore = Math.min(2.0, (decayFactor - 1.0) * 4.0)
+
+        // Factor 4: Concept Richness (0-2 points)
+        const conceptScore = Math.min(2.0, concepts.length * 0.25)
+
+        // Factor 5: Content Complexity (0-1 points)
+        const complexityScore = Math.min(1.0, content.length / 1000)
+
+        // Factor 6: Semantic Connectivity (0-1 points)
+        const connectivityScore = this.calculateSemanticConnectivity(interaction, concepts)
+
+        return accessScore + recencyScore + reinforcementScore +
+               conceptScore + complexityScore + connectivityScore
+    }
+
+    /**
+     * Calculate semantic connectivity score
+     */
+    calculateSemanticConnectivity(interaction, concepts) {
+        if (concepts.length === 0) return 0
+
+        let totalOverlap = 0
+        let comparedMemories = 0
+
+        this.shortTermMemory.forEach(other => {
+            if (other.id === interaction.id) return
+
+            const otherConcepts = other.concepts || []
+            if (otherConcepts.length === 0) return
+
+            const intersection = concepts.filter(c => otherConcepts.includes(c)).length
+            const union = new Set([...concepts, ...otherConcepts]).size
+            const overlap = union > 0 ? intersection / union : 0
+
+            totalOverlap += overlap
+            comparedMemories++
+        })
+
+        return comparedMemories > 0 ? Math.min(1.0, totalOverlap / comparedMemories * 3) : 0
+    }
+
+    /**
+     * Spreading activation algorithm for concept networks
+     */
+    async spreadingActivation(queryConcepts) {
+        const activatedNodes = new Map()
+        const initialActivation = 1.0
+        const decayFactor = 0.5
+
+        queryConcepts.forEach(concept => {
+            activatedNodes.set(concept, initialActivation)
+        })
+
+        // Spread activation for 2 steps
+        for (let step = 0; step < 2; step++) {
+            const newActivations = new Map()
+
+            for (const [node, activation] of activatedNodes) {
+                if (this.graph.hasNode(node)) {
+                    this.graph.forEachNeighbor(node, (neighbor, attributes) => {
+                        if (!activatedNodes.has(neighbor)) {
+                            const weight = attributes.weight
+                            const newActivation = activation * decayFactor * weight
+                            newActivations.set(neighbor,
+                                (newActivations.get(neighbor) || 0) + newActivation)
+                        }
+                    })
+                }
+            }
+
+            newActivations.forEach((value, key) => {
+                activatedNodes.set(key, value)
+            })
+        }
+
+        return Object.fromEntries(activatedNodes)
+    }
+
+    /**
+     * K-means clustering of interactions
+     */
+    clusterInteractions() {
+        if (this.embeddings.length < 2) return
+
+        const embeddingsMatrix = this.embeddings.map(e => Array.from(e))
+        const numClusters = Math.min(10, this.embeddings.length)
+
+        const { clusters } = kmeans(embeddingsMatrix, numClusters)
+        this.clusterLabels = clusters
+
+        this.semanticMemory.clear()
+        clusters.forEach((label, idx) => {
+            if (!this.semanticMemory.has(label)) {
+                this.semanticMemory.set(label, [])
+            }
+            this.semanticMemory.get(label).push({
+                embedding: this.embeddings[idx],
+                interaction: this.shortTermMemory[idx]
+            })
+        })
+
+        logger.info(`Clustered ${this.embeddings.length} interactions into ${numClusters} clusters`)
+    }
+
+    /**
+     * Combine similarity and activation results
+     */
+    combineResults(relevantInteractions, activatedConcepts, normalizedQuery) {
+        const combined = relevantInteractions.map(({ similarity, interaction, concepts }) => {
+            const activationScore = Array.from(concepts)
+                .reduce((sum, c) => sum + (activatedConcepts[c] || 0), 0)
+            return {
+                ...interaction,
+                similarity: similarity,
+                totalScore: similarity + activationScore
+            }
+        })
+
+        combined.sort((a, b) => b.totalScore - a.totalScore)
+
+        // Add semantic memory results
+        const semanticResults = this.retrieveFromSemanticMemory(normalizedQuery)
+        return [...combined, ...semanticResults]
+    }
+
+    /**
+     * Retrieve from clustered semantic memory
+     */
+    retrieveFromSemanticMemory(normalizedQuery) {
+        if (this.semanticMemory.size === 0) return []
+
+        // Find best matching cluster
+        let bestCluster = -1
+        let bestSimilarity = -1
+
+        this.semanticMemory.forEach((items, label) => {
+            const centroid = this.calculateCentroid(items.map(i => i.embedding))
+            const similarity = vectorOps.cosineSimilarity(normalizedQuery, centroid)
+
+            if (similarity > bestSimilarity) {
+                bestSimilarity = similarity
+                bestCluster = label
+            }
+        })
+
+        if (bestCluster === -1) return []
+
+        // Get top 5 interactions from best cluster
+        return this.semanticMemory.get(bestCluster)
+            .map(({ embedding, interaction }) => ({
+                ...interaction,
+                similarity: vectorOps.cosineSimilarity(normalizedQuery,
+                    vectorOps.normalize(Array.from(embedding)))
+            }))
+            .sort((a, b) => b.similarity - a.similarity)
+            .slice(0, 5)
+    }
+
+    /**
+     * Calculate centroid of embedding vectors
+     */
+    calculateCentroid(embeddings) {
+        const sum = embeddings.reduce((acc, curr) => {
+            const arr = Array.from(curr)
+            return acc.map((val, idx) => val + arr[idx])
+        }, new Array(this.dimension).fill(0))
+
+        return sum.map(val => val / embeddings.length)
+    }
+
+    /**
+     * Schedule memory persistence to SPARQL store
+     */
+    _scheduleMemoryPersistence() {
+        if (this._memoryPersistenceTimer) {
+            clearTimeout(this._memoryPersistenceTimer)
+        }
+
+        this._memoryPersistenceTimer = setTimeout(async () => {
+            try {
+                // Create a mock memory store object for compatibility with existing persistence method
+                const mockMemoryStore = {
+                    shortTermMemory: this.shortTermMemory,
+                    longTermMemory: this.longTermMemory
+                }
+                await this.saveMemoryToHistory(mockMemoryStore)
+            } catch (error) {
+                logger.error('Failed to persist memory to SPARQL store:', error)
+            }
+        }, 120000) // 2 minute debounce
+    }
+
+    /**
+     * Cleanup method to clear timers and persist final state
+     */
+    async cleanup() {
+        // Clear any pending timers
+        if (this._graphPersistenceTimer) {
+            clearTimeout(this._graphPersistenceTimer)
+        }
+        if (this._indexPersistenceTimer) {
+            clearTimeout(this._indexPersistenceTimer)
+        }
+        if (this._memoryPersistenceTimer) {
+            clearTimeout(this._memoryPersistenceTimer)
+        }
+
+        // Persist final state
+        try {
+            await this._persistGraphToStore()
+            await this._persistIndexToStore()
+
+            const mockMemoryStore = {
+                shortTermMemory: this.shortTermMemory,
+                longTermMemory: this.longTermMemory
+            }
+            await this.saveMemoryToHistory(mockMemoryStore)
+
+            logger.info('Enhanced SPARQLStore cleanup completed successfully')
+        } catch (error) {
+            logger.error('Error during SPARQLStore cleanup:', error)
+        }
+
+        // Call parent cleanup
+        await super.close()
     }
 }

@@ -137,16 +137,21 @@ export default class SearchAPI extends BaseAPI {
                         });
                         
                         results = memories
-                            .filter(item => item && typeof item === 'object' && item.interaction)
+                            .filter(item => {
+                                // Handle both old structure (item.interaction) and Enhanced SPARQLStore structure (flat)
+                                return item && typeof item === 'object' &&
+                                       (item.interaction || (item.prompt || item.response || item.id));
+                            })
                             .map(item => {
                                 try {
-                                    const interaction = item.interaction || {};
+                                    // Handle both structures: nested (item.interaction) and flat (Enhanced SPARQLStore)
+                                    const interaction = item.interaction || item;
                                     return {
                                         id: interaction.id || uuidv4(),
-                                        title: (interaction.metadata && interaction.metadata.title) || 
-                                              (interaction.prompt && interaction.prompt.slice(0, 50)) || 
+                                        title: (interaction.metadata && interaction.metadata.title) ||
+                                              (interaction.prompt && interaction.prompt.slice(0, 50)) ||
                                               'Untitled',
-                                        content: `${interaction.prompt || ''}\n${interaction.output || ''}`,
+                                        content: `${interaction.prompt || ''}\n${interaction.response || interaction.output || ''}`,
                                         similarity: typeof item.similarity === 'number' ? item.similarity : 0,
                                         type: (interaction.metadata && interaction.metadata.type) || 'memory',
                                         metadata: interaction.metadata || {}

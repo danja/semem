@@ -35,7 +35,7 @@ import EmbeddingHandler from '../handlers/EmbeddingHandler.js';
 import CacheManager from '../handlers/CacheManager.js';
 import APIRegistry from '../api/common/APIRegistry.js';
 import { workflowLoggerRegistry } from '../utils/WorkflowLogger.js';
-import InMemoryStore from '../stores/InMemoryStore.js';
+// MIGRATION: InMemoryStore removed - using enhanced SPARQLStore exclusively
 import { createAuthenticateRequest } from '../api/http/middleware/auth.js';
 import { errorHandler, NotFoundError } from '../api/http/middleware/error.js';
 import { requestLogger } from '../api/http/middleware/logging.js';
@@ -182,28 +182,41 @@ class APIServer {
 
         const llmHandler = new LLMHandler(llmProvider, modelConfig.chatModel);
 
-        // Initialize storage based on config
-        let storage;
+        // MIGRATION: Initialize enhanced SPARQLStore exclusively
+        // Legacy JSON and InMemory storage are no longer supported
         const storageType = this.config.get('storage.type');
         this.logger.info(`💾 [STORAGE] Storage type: ${storageType}`);
-        
+
+        let storage;
         if (storageType === 'sparql') {
-            this.logger.info('💾 [STORAGE] Importing SPARQLStore...');
+            this.logger.info('💾 [STORAGE] Importing Enhanced SPARQLStore...');
             const { default: SPARQLStore } = await import('../stores/SPARQLStore.js');
-            this.logger.info('💾 [STORAGE] Getting storage options...');
-            const storageOptions = this.config.get('storage.options');
-            this.logger.info('💾 [STORAGE] Creating SPARQLStore instance with options:', storageOptions);
-            storage = new SPARQLStore(storageOptions);
-            this.logger.info('✅ [STORAGE] SPARQLStore created');
-        } else if (storageType === 'json') {
-            const { default: JSONStore } = await import('../stores/JSONStore.js');
-            const storageOptions = this.config.get('storage.options');
-            storage = new JSONStore(storageOptions.path);
-            this.logger.info(`Initialized JSON store at path: ${storageOptions.path}`);
+
+            const storageOptions = this.config.get('storage.options') || {};
+
+            // Enhanced SPARQLStore configuration with in-memory capabilities
+            const enhancedOptions = {
+                ...storageOptions,
+                dimension, // Pass embedding dimension for FAISS index
+                enableResilience: true, // Enable retry and timeout features
+                maxRetries: 3,
+                timeoutMs: 30000,
+                cacheTimeoutMs: 300000, // 5 minute cache timeout
+                maxConceptsPerInteraction: 10,
+                maxConnectionsPerEntity: 100
+            };
+
+            this.logger.info('💾 [STORAGE] Creating Enhanced SPARQLStore with in-memory capabilities:', {
+                endpoint: storageOptions.endpoint || 'configured',
+                dimension,
+                features: ['FAISS indexing', 'Concept graphs', 'Memory classification', 'Semantic clustering']
+            });
+
+            storage = new SPARQLStore(storageOptions.endpoint || storageOptions, enhancedOptions, this.config);
+            this.logger.info('✅ [STORAGE] Enhanced SPARQLStore created with unified memory + persistence');
         } else {
-            // Default to in-memory
-            storage = new InMemoryStore();
-            this.logger.info('Initialized in-memory store');
+            // MIGRATION: No fallback to legacy storage - SPARQL is now required
+            throw new Error(`Unsupported storage type: ${storageType}. Only 'sparql' storage is supported. Legacy 'json' and 'memory' storage have been removed in favor of enhanced SPARQLStore.`);
         }
 
         // Initialize memory manager with the configured storage
@@ -597,6 +610,117 @@ class APIServer {
         apiRouter.post('/search/analyze', this.authenticateRequest, this.createHandler('unified-search-api', 'analyze'));
         apiRouter.get('/search/services', this.createHandler('unified-search-api', 'services'));
         apiRouter.get('/search/strategies', this.createHandler('unified-search-api', 'strategies'));
+
+        // Workbench API routes (bridging to existing functionality)
+        // TELL endpoint - bridges to memory API
+        apiRouter.post('/tell', this.authenticateRequest, async (req, res, next) => {
+            const startTime = Date.now();
+            this.logger.info(`🔵 [API] POST /tell - Starting request`);
+
+            try {
+                const { content, type = 'interaction', lazy = false, metadata = {} } = req.body;
+
+                if (!content) {
+                    this.logger.warn(`🔴 [API] POST /tell - Error: Content is required`);
+                    return res.status(400).json({
+                        success: false,
+                        error: 'Content is required'
+                    });
+                }
+
+                // Create interaction object for memory storage
+                const interaction = {
+                    prompt: content,
+                    response: `Stored ${type}`, // Simple response for storage
+                    concepts: [], // Will be extracted by memory API
+                    timestamp: Date.now(),
+                    metadata: { ...metadata, type, lazy }
+                };
+
+                // Store using memory API
+                const memoryApi = this.apiContext.apis['memory-api'];
+                const result = await memoryApi.storeInteraction(interaction);
+
+                const duration = Date.now() - startTime;
+                this.logger.info(`🟢 [API] POST /tell - Success (${duration}ms)`);
+
+                res.json({
+                    success: true,
+                    result,
+                    message: 'Content stored successfully'
+                });
+            } catch (error) {
+                const duration = Date.now() - startTime;
+                this.logger.error(`🔴 [API] POST /tell - Error (${duration}ms):`, error.message);
+                next(error);
+            }
+        });
+
+        // ASK endpoint - bridges to unified search API
+        apiRouter.post('/ask', this.authenticateRequest, async (req, res, next) => {
+            const startTime = Date.now();
+            this.logger.info(`🔵 [API] POST /ask - Starting request`);
+
+            try {
+                const {
+                    question,
+                    mode = 'standard',
+                    useContext = true,
+                    useHyDE = false,
+                    useWikipedia = false,
+                    useWikidata = false,
+                    useWebSearch = false,
+                    threshold = 0.1
+                } = req.body;
+
+                if (!question) {
+                    this.logger.warn(`🔴 [API] POST /ask - Error: Question is required`);
+                    return res.status(400).json({
+                        success: false,
+                        error: 'Question is required'
+                    });
+                }
+
+                this.logger.info(`🔵 [API] POST /ask - Question: "${question.substring(0, 50)}..."`);
+
+                // Use unified search API for comprehensive search
+                const searchApi = this.apiContext.apis['unified-search-api'];
+                const searchOptions = {
+                    query: question,
+                    threshold,
+                    useContext,
+                    enhancementOptions: {
+                        useHyDE,
+                        useWikipedia,
+                        useWikidata,
+                        useWebSearch
+                    },
+                    mode
+                };
+
+                const searchResult = await searchApi.unifiedSearch(searchOptions);
+
+                const duration = Date.now() - startTime;
+                this.logger.info(`🟢 [API] POST /ask - Success (${duration}ms) - ${searchResult.results?.length || 0} results`);
+
+                // Format response for workbench
+                res.json({
+                    success: true,
+                    answer: searchResult.answer || 'Based on the provided memory context, there is no specific information available about your question. The context does not mention relevant details. Therefore, I cannot provide an informed answer to your question. If you have any other questions or need information on a different topic, feel free to ask!',
+                    results: searchResult.results || [],
+                    context: searchResult.context || [],
+                    metadata: {
+                        mode,
+                        searchDuration: searchResult.duration,
+                        resultsCount: searchResult.results?.length || 0
+                    }
+                });
+            } catch (error) {
+                const duration = Date.now() - startTime;
+                this.logger.error(`🔴 [API] POST /ask - Error (${duration}ms):`, error.message);
+                next(error);
+            }
+        });
 
         // Real-time log streaming endpoint (SSE) - auth via query param for EventSource compatibility
         apiRouter.get('/logs/stream', (req, res) => {

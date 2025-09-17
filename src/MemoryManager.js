@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid'
 import { configureLogging } from './utils/LoggingConfig.js'
-import MemoryStore from './stores/MemoryStore.js'
-import InMemoryStore from './stores/InMemoryStore.js'
+// MIGRATION: Using enhanced SPARQLStore instead of dual MemoryStore + BaseStore architecture
+import SPARQLStore from './stores/SPARQLStore.js'
 import ContextManager from './ContextManager.js'
 import EmbeddingHandler from './handlers/EmbeddingHandler.js'
 import CacheManager from './handlers/CacheManager.js'
@@ -80,8 +80,21 @@ export default class MemoryManager {
             this.logger.warn('Provider does not support chat operations - LLM functionality will be limited')
             this.llmHandler = null
         }
-        this.memStore = new MemoryStore(dimension, config)
-        this.store = storage || new InMemoryStore()
+        // MIGRATION: Replace dual storage with single enhanced SPARQLStore
+        // The new SPARQLStore includes all MemoryStore capabilities (FAISS, graphs, clustering)
+        // while providing durable SPARQL persistence
+        if (storage && storage instanceof SPARQLStore) {
+            // Use provided SPARQLStore instance
+            this.store = storage
+        } else if (storage && typeof storage === 'object' && storage.endpoint) {
+            // Create SPARQLStore from endpoint configuration
+            this.store = new SPARQLStore(storage.endpoint, {
+                dimension,
+                ...storage
+            }, config)
+        } else {
+            throw new Error('MemoryManager now requires a SPARQLStore instance or SPARQL configuration. In-memory and JSON storage are no longer supported.')
+        }
         this.config = config
         this.contextManager = new ContextManager(contextOptions)
 
@@ -114,26 +127,20 @@ export default class MemoryManager {
         }
 
         try {
-            const [shortTerm, longTerm] = await this.store.loadHistory()
-            this.logger.info(`Loading memory history: ${shortTerm.length} short-term, ${longTerm.length} long-term items`)
+            // MIGRATION: SPARQLStore now handles both persistence and in-memory operations
+            // The enhanced SPARQLStore automatically loads history and builds in-memory structures
+            await this.store._ensureMemoryLoaded()
 
-            for (const interaction of shortTerm) {
-                const embedding = this.embeddingHandler.standardizeEmbedding(interaction.embedding)
-                interaction.embedding = embedding
-                this.memStore.shortTermMemory.push(interaction)
-                this.memStore.embeddings.push(embedding)
-                this.memStore.timestamps.push(interaction.timestamp)
-                this.memStore.accessCounts.push(interaction.accessCount)
-                this.memStore.conceptsList.push(interaction.concepts)
-            }
+            const shortTermCount = this.store.shortTermMemory?.length || 0
+            const longTermCount = this.store.longTermMemory?.length || 0
 
-            this.memStore.longTermMemory.push(...longTerm)
-            this.memStore.clusterInteractions()
-            this.logger.info('Memory initialization complete')
+            this.logger.info(`Enhanced SPARQLStore loaded: ${shortTermCount} short-term, ${longTermCount} long-term memories`)
+            this.logger.info(`In-memory structures: FAISS index, concept graph, and semantic clustering initialized`)
+
             this._initialized = true;
             return this;
         } catch (error) {
-            this.logger.error('Memory initialization failed:', error)
+            this.logger.error('Enhanced SPARQLStore initialization failed:', error)
             this._initialized = false;
             throw error
         }
@@ -177,43 +184,30 @@ export default class MemoryManager {
                 ...metadata
             }
 
-            // Step 2: Add to in-memory store
+            // Step 2: Store with enhanced SPARQLStore (handles both persistence and memory)
             opLogger.step(
-                'add_to_memory',
-                '🧠 Adding to short-term memory store',
-                `[MemoryManager] Adding interaction to memStore - current size: ${this.memStore.shortTermMemory.length}`,
-                { 
-                    currentMemorySize: this.memStore.shortTermMemory.length,
-                    interactionId: interaction.id
+                'store_with_memory',
+                '🧠 Storing in enhanced SPARQLStore with in-memory capabilities',
+                `[MemoryManager] store.storeWithMemory() - unified storage with FAISS indexing`,
+                {
+                    currentMemorySize: this.store.shortTermMemory?.length || 0,
+                    interactionId: interaction.id,
+                    storageType: 'Enhanced SPARQLStore'
                 }
             );
 
-            this.memStore.shortTermMemory.push(interaction)
-            this.memStore.embeddings.push(interaction.embedding)
-            this.memStore.timestamps.push(interaction.timestamp)
-            this.memStore.accessCounts.push(interaction.accessCount)
-            this.memStore.conceptsList.push(interaction.concepts)
-
-            // Step 3: Persist to storage backend
-            opLogger.step(
-                'persist_to_storage',
-                '💾 Persisting to SPARQL knowledge graph',
-                `[MemoryManager] store.saveMemoryToHistory() - persisting ${this.memStore.shortTermMemory.length} interactions`,
-                { 
-                    storageType: this.store.constructor.name,
-                    totalInteractions: this.memStore.shortTermMemory.length
-                }
-            );
-
-            await this.store.saveMemoryToHistory(this.memStore)
+            // MIGRATION: Enhanced SPARQLStore handles both SPARQL persistence and in-memory structures
+            // This single call updates FAISS index, concept graph, clustering, and SPARQL store
+            await this.store.storeWithMemory(interaction)
 
             opLogger.complete(
-                'Interaction stored successfully in knowledge graph',
+                'Interaction stored successfully in enhanced SPARQLStore',
                 {
                     interactionId: interaction.id,
                     embeddingDimensions: embedding?.length || 0,
                     conceptsStored: concepts?.length || 0,
-                    totalMemories: this.memStore.shortTermMemory.length
+                    totalMemories: this.store.shortTermMemory?.length || 0,
+                    storageBackend: 'Enhanced SPARQLStore'
                 }
             );
 
@@ -242,7 +236,7 @@ export default class MemoryManager {
                 similarityThreshold,
                 excludeLastN,
                 limit,
-                memoryStoreSize: this.memStore?.shortTermMemory?.length || 0
+                memoryStoreSize: this.store?.shortTermMemory?.length || 0
             }
         );
 
@@ -290,89 +284,48 @@ export default class MemoryManager {
                 );
             }
             
-            // Step 3: Search memory store
+            // Step 3: Search with enhanced SPARQLStore (unified in-memory + SPARQL search)
             opLogger.step(
-                'search_memory_store',
-                '🧠 Searching in-memory store',
-                `[MemoryManager] memStore.retrieve() - searching ${this.memStore?.shortTermMemory?.length || 0} memories`,
-                { memoryStoreSize: this.memStore?.shortTermMemory?.length || 0 }
+                'search_enhanced_store',
+                '🎆 Searching enhanced SPARQLStore (in-memory + persistent)',
+                `[MemoryManager] store.retrieve() - unified search with FAISS indexing and SPARQL fallback`,
+                {
+                    memoryStoreSize: this.store?.shortTermMemory?.length || 0,
+                    hasConceptGraph: this.store?.graph?.nodes()?.length > 0,
+                    hasFAISSIndex: this.store?.index?.ntotal() > 0
+                }
             );
-            
-            const memStoreResults = await this.memStore.retrieve(queryEmbedding, queryConcepts, similarityThreshold, excludeLastN);
 
-            // Step 4: Search SPARQL store
-            let sparqlResults = [];
-            if (this.store && typeof this.store.search === 'function') {
-                opLogger.step(
-                    'search_sparql_store',
-                    '🗃️ Searching SPARQL knowledge graph',
-                    `[MemoryManager] store.search() - searching persistent knowledge graph with ${this.store.constructor.name}`,
-                    { storageType: this.store.constructor.name }
-                );
-                
-                try {
-                    const threshold = similarityThreshold > 1 ? similarityThreshold / 100 : similarityThreshold;
-                    const searchLimit = limit || 10;
-                    
-                    sparqlResults = await this.store.search(queryEmbedding, searchLimit, threshold);
-                    
-                    opLogger.step(
-                        'sparql_results_found',
-                        `📥 Found ${sparqlResults.length} results in knowledge graph`,
-                        `[MemoryManager] SPARQL search completed - ${sparqlResults.length} results found`,
-                        { sparqlResultCount: sparqlResults.length }
-                    );
-                } catch (error) {
-                    opLogger.step(
-                        'sparql_search_failed',
-                        `⚠️ SPARQL search failed: ${error.message}`,
-                        `[MemoryManager] SPARQL store search failed: ${error.message}`,
-                        { error: error.message }
-                    );
-                }
-            } else {
-                opLogger.step(
-                    'skip_sparql_search',
-                    '⚡ Skipping SPARQL search (not available)',
-                    '[MemoryManager] SPARQL store not available or search method missing'
-                );
-            }
-            
-            // Step 5: Combine and deduplicate results
+            // MIGRATION: Enhanced SPARQLStore combines in-memory (FAISS, concept graph, clustering)
+            // with SPARQL persistence in a single retrieve call
+            const enhancedResults = await this.store.retrieve(queryEmbedding, queryConcepts, similarityThreshold, excludeLastN);
+
             opLogger.step(
-                'combine_results',
-                `🔄 Combining results (${memStoreResults.length} + ${sparqlResults.length})`,
-                `[MemoryManager] Combining ${memStoreResults.length} memory results with ${sparqlResults.length} SPARQL results`,
-                { memoryResults: memStoreResults.length, sparqlResults: sparqlResults.length }
+                'enhanced_results_found',
+                `📥 Found ${enhancedResults.length} results from enhanced search`,
+                `[MemoryManager] Enhanced SPARQLStore search completed - ${enhancedResults.length} results found`,
+                {
+                    enhancedResultCount: enhancedResults.length,
+                    searchMethod: 'Unified FAISS + SPARQL'
+                }
             );
             
-            const combinedResults = [...memStoreResults, ...sparqlResults];
-            
-            // Remove duplicates based on content similarity
-            const uniqueResults = [];
-            const seenContent = new Set();
-            
-            for (const result of combinedResults) {
-                const contentKey = (result.prompt + result.response).substring(0, 100);
-                if (!seenContent.has(contentKey)) {
-                    seenContent.add(contentKey);
-                    uniqueResults.push(result);
-                }
-            }
-            
-            // Step 6: Sort by similarity score
-            uniqueResults.sort((a, b) => (b.similarity || 0) - (a.similarity || 0));
-            
+            // Step 4: Enhanced SPARQLStore already handles deduplication and sorting
+            // The unified search automatically combines FAISS, concept graph activation,
+            // and SPARQL results with intelligent deduplication
+
             opLogger.step(
-                'deduplicated',
-                `📊 Deduplicated to ${uniqueResults.length} unique results`,
-                `[MemoryManager] After deduplication: ${uniqueResults.length} unique results, sorted by similarity`,
-                { 
-                    uniqueResults: uniqueResults.length,
-                    duplicatesRemoved: combinedResults.length - uniqueResults.length,
-                    topSimilarities: uniqueResults.slice(0, 3).map(r => r.similarity?.toFixed(3))
+                'results_processed',
+                `📊 Enhanced search results already optimized`,
+                `[MemoryManager] Enhanced SPARQLStore provides pre-sorted, deduplicated results`,
+                {
+                    resultCount: enhancedResults.length,
+                    topSimilarities: enhancedResults.slice(0, 3).map(r => r.similarity?.toFixed(3) || 'N/A'),
+                    searchFeatures: ['FAISS similarity', 'Concept activation', 'Memory classification', 'Semantic clustering']
                 }
             );
+
+            const uniqueResults = enhancedResults; // Already processed by enhanced store
             
             // Step 7: Apply limit if specified
             let finalResults = uniqueResults;
@@ -389,12 +342,12 @@ export default class MemoryManager {
 
             // Complete operation successfully
             opLogger.complete(
-                `Found ${finalResults.length} relevant memories`,
+                `Found ${finalResults.length} relevant memories from enhanced store`,
                 {
                     totalResults: finalResults.length,
-                    memoryStoreResults: memStoreResults.length,
-                    sparqlStoreResults: sparqlResults.length,
-                    topSimilarities: finalResults.slice(0, 3).map(r => r.similarity?.toFixed(3)),
+                    searchBackend: 'Enhanced SPARQLStore',
+                    features: ['FAISS indexing', 'Concept graph', 'SPARQL persistence'],
+                    topSimilarities: finalResults.slice(0, 3).map(r => r.similarity?.toFixed(3) || 'N/A'),
                     queryEmbeddingDims: queryEmbedding?.length || 0,
                     conceptsUsed: queryConcepts.length
                 }
@@ -516,15 +469,17 @@ export default class MemoryManager {
     async dispose() {
         let error = null
         try {
-            // Save current state before disposal
-            await this.store.saveMemoryToHistory(this.memStore)
+            // MIGRATION: Enhanced SPARQLStore handles its own cleanup and persistence
+            // The cleanup() method persists FAISS indexes, concept graphs, and memory state
+            if (this.store && typeof this.store.cleanup === 'function') {
+                await this.store.cleanup()
+            }
         } catch (e) {
-            // Handle large content errors gracefully during disposal
+            // Handle errors gracefully during disposal
             if (e.code === 'CONTENT_TOO_LARGE' || e.message.includes('string length')) {
-                this.logger.warn('Skipping memory persistence during disposal due to oversized content', {
+                this.logger.warn('Skipping enhanced store cleanup during disposal due to oversized content', {
                     error: e.message
                 });
-                // Don't treat this as a fatal error during disposal
             } else {
                 error = e;
             }
@@ -540,8 +495,8 @@ export default class MemoryManager {
             if (!error) error = e
         }
 
-        // Clear references
-        this.memStore = null
+        // Clear references - no more separate memStore
+        this.store = null
 
         // If there were any errors, throw after cleanup
         if (error) throw error

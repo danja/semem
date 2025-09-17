@@ -11,7 +11,7 @@
  * - Entry point classification for graph traversal
  * - Frequency tracking and provenance information
  * - Connection management with other entities via relationships
- * - Integration with existing RagnoMemoryStore patterns
+ * - Integration with enhanced SPARQLStore patterns
  */
 
 import rdf from 'rdf-ext'
@@ -361,7 +361,7 @@ export default class Entity extends RDFElement {
     }
 
     /**
-     * Convert to simple object representation (for RagnoMemoryStore compatibility)
+     * Convert to simple object representation (for enhanced SPARQLStore compatibility)
      * @returns {Object} Simple object representation
      */
     toSimpleObject() {
@@ -380,7 +380,7 @@ export default class Entity extends RDFElement {
     }
 
     /**
-     * Create entity from simple object (migration helper for RagnoMemoryStore)
+     * Create entity from simple object (migration helper for enhanced SPARQLStore)
      * @param {Object} obj - Simple object representation
      * @param {Object} [options] - Additional options
      * @returns {Entity} RDF-based entity
@@ -410,13 +410,13 @@ export default class Entity extends RDFElement {
     }
 
     /**
-     * Generate URI for entity based on name (useful for RagnoMemoryStore integration)
+     * Generate URI for entity based on name (useful for enhanced SPARQLStore integration)
      * @param {string} name - Entity name
      * @param {string} [baseURI] - Base URI
      * @returns {string} Generated URI
      */
     static generateURI(name, baseURI = 'http://example.org/ragno/') {
-        // Create a stable URI based on the name (for consistency with RagnoMemoryStore)
+        // Create a stable URI based on the name (for consistency with enhanced SPARQLStore)
         const normalizedName = name.toLowerCase()
             .replace(/[^a-z0-9]/g, '_')
             .replace(/_+/g, '_')

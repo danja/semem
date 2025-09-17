@@ -1,5 +1,19 @@
+npx vitest run tests/integration/sparql/enhanced-sparql-core.test.js --reporter=verbose
+
 node src/frontend/vsom-standalone/server.js
 
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT * WHERE {
+  graph ?g{
+    ?sub ?pred ?obj ;
+    ?p2 ?o2 .
+  FILTER (regex(str(?obj), "wormalade", "i"))
+  } .
+} 
+
+src/ragno/Entity.js)
+ static generateURI(name, baseURI = 'http://example.org/ragno/') {
 
 The SPARQL store is still empty, which means the data is only in the memory store, not persisted to SPARQL. This explains why the VSOM can't find corpus communities - it's
   trying to query SPARQL but the data isn't there.
@@ -10,6 +24,8 @@ The SPARQL store is still empty, which means the data is only in the memory stor
 Figure out how best to move the API from using memory storage to data persisted in the SPARQL store. This has to be done following best practices. A list should be made of any code that still uses in-memory or JSON storage. This code will subsequently removed, so ensure all bases are covered.
 Save the plan and keep progress reports in docs/MORE-SPARQL.md
 
+* redundant ask/tell in api server
+* src/stores/SPARQLStore.js contains queries
 * fix tests
 * add github mit logos
 * refactor src/connectors
