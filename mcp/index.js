@@ -2741,12 +2741,12 @@ async function createServer() {
   mcpDebugger.info('🌟 Simple MCP Verbs registered successfully - these provide the primary interface');
 
   // Register all tools using a consistent pattern
-  mcpDebugger.info('Tools handled by centralized handler (working pattern)...');
-  // registerZPTTools(server); // TODO: Fix these using setRequestHandler pattern
-  // registerResearchWorkflowTools(server); 
-  // registerRagnoTools(server);
-  // registerSPARQLTools(server);
-  // registerVSOMTools(server);
+  mcpDebugger.info('Registering all tools...');
+  registerZPTTools(server);
+  registerResearchWorkflowTools(server);
+  registerRagnoTools(server);
+  registerSPARQLTools(server);
+  registerVSOMTools(server);
   mcpDebugger.info('All complex tools registered (legacy/advanced interface).');
 
   // Register all resources

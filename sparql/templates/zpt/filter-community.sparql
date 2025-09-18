@@ -1,0 +1,14 @@
+# ZPT FilterBuilder community-level query
+SELECT DISTINCT ?uri ?label ?description ?members ?metadata
+WHERE {
+    GRAPH <{{graphName}}> {
+        ?uri a ragno:Community ;
+             rdfs:label ?label .
+        OPTIONAL { ?uri rdfs:comment ?description }
+        OPTIONAL { ?uri ragno:hasMember ?members }
+        OPTIONAL { ?uri semem:metadata ?metadata }
+        {{filters}}
+    }
+}
+{{orderBy}}
+{{limit}}

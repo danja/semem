@@ -1,0 +1,30 @@
+# ZPT FilterBuilder text-level query
+SELECT DISTINCT ?uri ?text ?source ?position ?embedding ?metadata
+WHERE {
+    GRAPH <{{graphName}}> {
+        {
+            ?uri a ragno:TextElement ;
+                 ragno:hasText ?text .
+            OPTIONAL { ?uri ragno:sourceDocument ?source }
+            OPTIONAL { ?uri ragno:position ?position }
+            OPTIONAL { ?uri semem:embedding ?embedding }
+            OPTIONAL { ?uri semem:metadata ?metadata }
+        }
+        UNION
+        {
+            ?uri a semem:Interaction .
+            {
+                ?uri semem:prompt ?text .
+            } UNION {
+                ?uri semem:output ?text .
+            }
+            OPTIONAL { ?uri semem:embedding ?embedding }
+            OPTIONAL { ?uri semem:metadata ?metadata }
+            BIND("memory" AS ?source)
+            BIND(0 AS ?position)
+        }
+        {{filters}}
+    }
+}
+{{orderBy}}
+{{limit}}

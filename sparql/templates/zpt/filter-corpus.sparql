@@ -1,0 +1,14 @@
+# ZPT FilterBuilder corpus-level query
+SELECT DISTINCT ?uri ?label ?description ?created ?modified
+WHERE {
+    GRAPH <{{graphName}}> {
+        ?uri a ragno:Corpus ;
+             rdfs:label ?label .
+        OPTIONAL { ?uri rdfs:comment ?description }
+        OPTIONAL { ?uri dcterms:created ?created }
+        OPTIONAL { ?uri dcterms:modified ?modified }
+        {{filters}}
+    }
+}
+{{orderBy}}
+{{limit}}

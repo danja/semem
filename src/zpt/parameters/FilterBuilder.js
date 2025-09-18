@@ -3,13 +3,15 @@
  */
 import fs from 'fs';
 import path from 'path';
+import SPARQLTemplateLoader from '../../stores/SPARQLTemplateLoader.js';
 
 export default class FilterBuilder {
     constructor(options = {}) {
         this.graphName = options.graphName || 'http://hyperdata.it/content';
         this.templateCache = new Map(); // Cache for loaded templates
+        this.templateLoader = new SPARQLTemplateLoader();
+        this.templates = {}; // Initialize templates object for concept queries
         this.initializeNamespaces();
-        this.initializeQueryTemplates();
         this.loadConceptQueries();
     }
 
@@ -31,10 +33,34 @@ export default class FilterBuilder {
     }
 
     /**
-     * Initialize SPARQL query templates for different zoom levels
+     * Get SPARQL query template for the specified zoom level
+     * @param {string} zoomLevel - The zoom level (entity, unit, text, community, corpus)
+     * @returns {Promise<string>} The template content
      */
-    initializeQueryTemplates() {
-        this.templates = {
+    async getQueryTemplate(zoomLevel) {
+        try {
+            const template = await this.templateLoader.loadAndInterpolate('zpt', `filter-${zoomLevel}`, {
+                graphName: this.graphName
+            });
+
+            if (template) {
+                return template;
+            }
+
+            // Fallback to existing templates for backward compatibility
+            console.warn(`Template filter-${zoomLevel} not found, using fallback`);
+            return this.getFallbackTemplate(zoomLevel);
+        } catch (error) {
+            console.warn(`Error loading template for ${zoomLevel}:`, error.message);
+            return this.getFallbackTemplate(zoomLevel);
+        }
+    }
+
+    /**
+     * Get fallback template for cases where external template files are not available
+     */
+    getFallbackTemplate(zoomLevel) {
+        const templates = {
             entity: `
                 SELECT DISTINCT ?uri ?label ?type ?prefLabel ?embedding ?metadata
                 WHERE {
@@ -56,11 +82,11 @@ export default class FilterBuilder {
                             OPTIONAL { ?uri semem:metadata ?metadata }
                             BIND("interaction" AS ?type)
                         }
-                        {{FILTERS}}
+                        {{filters}}
                     }
                 }
-                {{ORDER_BY}}
-                {{LIMIT}}
+                {{orderBy}}
+                {{limit}}
             `,
             unit: `
                 SELECT DISTINCT ?uri ?content ?entity ?unit ?embedding ?metadata
@@ -87,11 +113,11 @@ export default class FilterBuilder {
                             BIND("memory" AS ?entity)
                             BIND("interaction" AS ?unit)
                         }
-                        {{FILTERS}}
+                        {{filters}}
                     }
                 }
-                {{ORDER_BY}}
-                {{LIMIT}}
+                {{orderBy}}
+                {{limit}}
             `,
             text: `
                 SELECT DISTINCT ?uri ?text ?source ?position ?embedding ?metadata
@@ -118,11 +144,11 @@ export default class FilterBuilder {
                             BIND("memory" AS ?source)
                             BIND(0 AS ?position)
                         }
-                        {{FILTERS}}
+                        {{filters}}
                     }
                 }
-                {{ORDER_BY}}
-                {{LIMIT}}
+                {{orderBy}}
+                {{limit}}
             `,
             community: `
                 SELECT DISTINCT ?uri ?label ?description ?members ?metadata
@@ -133,11 +159,11 @@ export default class FilterBuilder {
                         OPTIONAL { ?uri rdfs:comment ?description }
                         OPTIONAL { ?uri ragno:hasMember ?members }
                         OPTIONAL { ?uri semem:metadata ?metadata }
-                        {{FILTERS}}
+                        {{filters}}
                     }
                 }
-                {{ORDER_BY}}
-                {{LIMIT}}
+                {{orderBy}}
+                {{limit}}
             `,
             corpus: `
                 SELECT DISTINCT ?uri ?label ?description ?created ?modified
@@ -148,13 +174,15 @@ export default class FilterBuilder {
                         OPTIONAL { ?uri rdfs:comment ?description }
                         OPTIONAL { ?uri dcterms:created ?created }
                         OPTIONAL { ?uri dcterms:modified ?modified }
-                        {{FILTERS}}
+                        {{filters}}
                     }
                 }
-                {{ORDER_BY}}
-                {{LIMIT}}
+                {{orderBy}}
+                {{limit}}
             `
         };
+
+        return templates[zoomLevel] || templates.entity;
     }
 
     /**
@@ -216,12 +244,12 @@ export default class FilterBuilder {
     /**
      * Build complete SPARQL query from normalized parameters
      * @param {Object} normalizedParams - Normalized ZPT parameters
-     * @returns {Object} Query configuration
+     * @returns {Promise<Object>} Query configuration
      */
-    buildQuery(normalizedParams) {
+    async buildQuery(normalizedParams) {
         const zoomLevel = normalizedParams.zoom.level;
-        const template = this.templates[zoomLevel];
-        
+        const template = await this.getQueryTemplate(zoomLevel);
+
         if (!template) {
             throw new Error(`Unsupported zoom level: ${zoomLevel}`);
         }
@@ -231,11 +259,11 @@ export default class FilterBuilder {
         const orderBy = this.buildOrderBy(normalizedParams.tilt);
         const limit = this.buildLimit(normalizedParams.transform);
 
-        // Substitute placeholders
+        // Substitute placeholders - use consistent naming with templates
         const query = this.prefixes + template
-            .replace('{{FILTERS}}', filters)
-            .replace('{{ORDER_BY}}', orderBy)
-            .replace('{{LIMIT}}', limit);
+            .replace('{{filters}}', filters)
+            .replace('{{orderBy}}', orderBy)
+            .replace('{{limit}}', limit);
 
         return {
             query,
@@ -529,13 +557,13 @@ export default class FilterBuilder {
     /**
      * Build similarity search query for embedding-based tilt
      */
-    buildSimilarityQuery(normalizedParams, queryEmbedding) {
+    async buildSimilarityQuery(normalizedParams, queryEmbedding) {
         if (normalizedParams.tilt.representation !== 'embedding') {
             throw new Error('Similarity query only supported for embedding tilt');
         }
 
-        const baseQuery = this.buildQuery(normalizedParams);
-        
+        const baseQuery = await this.buildQuery(normalizedParams);
+
         // Add similarity computation
         const similarityQuery = `
             ${this.prefixes}
@@ -562,9 +590,9 @@ export default class FilterBuilder {
     /**
      * Build aggregation query for community-level zoom
      */
-    buildAggregationQuery(normalizedParams) {
+    async buildAggregationQuery(normalizedParams) {
         if (normalizedParams.zoom.level !== 'community') {
-            return this.buildQuery(normalizedParams);
+            return await this.buildQuery(normalizedParams);
         }
 
         const aggregationQuery = `
