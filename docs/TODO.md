@@ -46,8 +46,8 @@ now do calls to the server, a Tell "wormalade is marmalade made from worms" foll
 
 * refactor files > 1000 lines mcp/tools/simple-verbs.js src/frontend/workbench/public/js/workbench.js
 * redundant ask/tell in api server
+* got both src/prompts/TemplateLoader.js and mcp/lib/PromptTemplateLoader.js - the former is newer
 * SimpleVerbsService is probably redundant
-* src/stores/SPARQLStore.js contains queries
 * mcp/lib/PromptSynthesis.js contains prompt
 * hardcoded query in src/zpt/parameters/FilterBuilder.js 
 * hardcoded prompt in mcp/http-server.js plus does not contain any relevant information about Matisse. Therefore, I cannot answer the question

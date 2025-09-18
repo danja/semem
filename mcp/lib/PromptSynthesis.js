@@ -3,9 +3,12 @@
  * Handles LLM-based response synthesis from search results and context
  */
 
+import { PromptTemplateLoader } from './PromptTemplateLoader.js';
+
 export class PromptSynthesis {
   constructor(llmHandler) {
     this.llmHandler = llmHandler;
+    this.templateLoader = new PromptTemplateLoader();
   }
 
   /**
@@ -22,14 +25,14 @@ export class PromptSynthesis {
 
     // If no search results, provide a direct response
     if (!searchResults || searchResults.length === 0) {
-      return this._generateNoContextResponse(question);
+      return await this._generateNoContextResponse(question);
     }
 
     // Build context from search results
     const context = this._buildContextFromResults(searchResults);
 
     // Create synthesis prompt
-    const synthesisPrompt = this._createSynthesisPrompt(question, context, options);
+    const synthesisPrompt = await this._createSynthesisPrompt(question, context, options);
 
     // Generate response using LLM
     try {
@@ -38,7 +41,7 @@ export class PromptSynthesis {
     } catch (error) {
       console.error('❌ LLM synthesis failed:', error);
       // Fallback to best search result
-      return this._createFallbackResponse(question, searchResults);
+      return await this._createFallbackResponse(question, searchResults);
     }
   }
 
@@ -61,14 +64,23 @@ export class PromptSynthesis {
    * Create a synthesis prompt for the LLM
    * @private
    */
-  _createSynthesisPrompt(question, context, options = {}) {
+  async _createSynthesisPrompt(question, context, options = {}) {
     const { mode = 'standard', useContext = true } = options;
 
     if (!useContext || !context.trim()) {
-      return `Please answer this question based on your knowledge: ${question}`;
+      const template = await this.templateLoader.loadAndInterpolate('mcp', 'synthesis-no-context', {
+        question: question
+      });
+      return template || `Please answer this question based on your knowledge: ${question}`;
     }
 
-    return `Based on the following context information, please provide a comprehensive answer to the question.
+    const template = await this.templateLoader.loadAndInterpolate('mcp', 'synthesis-with-context', {
+      context: context,
+      question: question
+    });
+
+    // Fallback to inline prompt if template not found
+    return template || `Based on the following context information, please provide a comprehensive answer to the question.
 
 Context Information:
 ${context}
@@ -89,8 +101,12 @@ Answer:`;
    * Generate a response when no context is available
    * @private
    */
-  _generateNoContextResponse(question) {
-    return `I don't have any specific information about "${question}" in my current knowledge base. This could mean:
+  async _generateNoContextResponse(question) {
+    const template = await this.templateLoader.loadAndInterpolate('mcp', 'no-context-response', {
+      question: question
+    });
+
+    return template || `I don't have any specific information about "${question}" in my current knowledge base. This could mean:
 
 1. The information hasn't been stored yet
 2. The question doesn't match any stored content
@@ -106,13 +122,13 @@ You might want to try:
    * Create a fallback response from search results when LLM synthesis fails
    * @private
    */
-  _createFallbackResponse(question, results) {
+  async _createFallbackResponse(question, results) {
     const bestResult = results[0];
     if (bestResult && (bestResult.content || bestResult.prompt || bestResult.response)) {
       const content = bestResult.content || bestResult.prompt || bestResult.response;
       return `Based on stored information: ${content}`;
     }
 
-    return this._generateNoContextResponse(question);
+    return await this._generateNoContextResponse(question);
   }
 }
