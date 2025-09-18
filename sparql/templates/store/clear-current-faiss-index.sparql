@@ -1,0 +1,13 @@
+PREFIX semem: <http://purl.org/stuff/semem/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+DELETE {
+    GRAPH <{{graphName}}> {
+        ?indexUri semem:current "true"^^xsd:boolean .
+    }
+} WHERE {
+    GRAPH <{{graphName}}> {
+        ?indexUri a semem:FAISSIndex ;
+                  semem:current "true"^^xsd:boolean .
+    }
+}

@@ -1,0 +1,24 @@
+PREFIX ragno: <http://purl.org/stuff/ragno/>
+PREFIX semem: <http://purl.org/stuff/semem/>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+DELETE {
+    GRAPH <{{graphName}}> {
+        {{elementUri}} semem:processingStatus "lazy" ;
+                      ragno:isEntryPoint false .
+    }
+}
+INSERT {
+    GRAPH <{{graphName}}> {
+        {{elementUri}} semem:processingStatus "processed" ;
+                      ragno:isEntryPoint true ;
+                      ragno:embedding "{{embeddingStr}}" .
+        {{conceptsStatements}}
+    }
+}
+WHERE {
+    GRAPH <{{graphName}}> {
+        {{elementUri}} semem:processingStatus "lazy" .
+    }
+}

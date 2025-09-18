@@ -225,33 +225,18 @@ export default class SPARQLStore extends BaseStore {
         this.graphName = await Promise.resolve(this.graphName)
         try {
             try {
-                let createQuery = await this.templateLoader.loadAndInterpolate('store', 'init-graph', {
+                const createQuery = await this.templateLoader.loadAndInterpolate('store', 'init-graph', {
                     graphName: this.graphName
                 })
-
-                if (!createQuery) {
-                    // Fallback to inline query if template not found
-                    createQuery = `
-                        PREFIX ragno: <http://purl.org/stuff/ragno/>
-                        PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-                        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-                        PREFIX semem: <http://purl.org/stuff/semem/>
-
-                        CREATE SILENT GRAPH <${this.graphName}>;
-                        INSERT DATA { GRAPH <${this.graphName}> {
-                            <${this.graphName}> a ragno:Corpus ;
-                                rdfs:label "Semem Memory Store" ;
-                                skos:prefLabel "Semem Memory Store"@en
-                        }}
-                    `
-                }
                 logger.error('[VERIFY] Creating graph', this.endpoint.update, { endpoint: this.endpoint.update, graph: this.graphName }) //  { endpoint: this.endpoint.update, createQuery }
                 await this._executeSparqlUpdate(createQuery, this.endpoint.update)
             } catch (error) {
                 logger.debug('Graph creation skipped:', error.message)
             }
 
-            const checkQuery = `ASK { GRAPH <${this.graphName}> { ?s ?p ?o } }`
+            const checkQuery = await this.templateLoader.loadAndInterpolate('store', 'verify-graph', {
+                graphName: this.graphName
+            })
             logger.error('[VERIFY] ASKing graph', this.endpoint.query, { endpoint: this.endpoint.query, graph: this.graphName }) // { endpoint: this.endpoint.query, checkQuery }
             const result = await this._executeSparqlQuery(checkQuery, this.endpoint.query)
             return result.boolean
@@ -264,47 +249,9 @@ export default class SPARQLStore extends BaseStore {
     async loadHistory() {
         await this.verify()
 
-        const query = `
-            PREFIX ragno: <http://purl.org/stuff/ragno/>
-            PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-            PREFIX semem: <http://purl.org/stuff/semem/>
-            PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
-            PREFIX dcterms: <http://purl.org/dc/terms/>
-
-            SELECT ?id ?prompt ?output ?embedding ?timestamp ?accessCount ?concepts ?decayFactor ?memoryType
-            FROM <${this.graphName}>
-            WHERE {
-                {
-                    # New format: semem:Interaction objects
-                    ?interaction a semem:Interaction ;
-                        semem:id ?id ;
-                        semem:prompt ?prompt ;
-                        semem:output ?output ;
-                        semem:embedding ?embedding ;
-                        semem:timestamp ?timestamp ;
-                        semem:accessCount ?accessCount ;
-                        semem:decayFactor ?decayFactor ;
-                        semem:memoryType ?memoryType .
-                    OPTIONAL { ?interaction semem:concepts ?concepts }
-                }
-                UNION
-                {
-                    # Old format: ragno:Element objects with legacy embedding property
-                    ?interaction a ragno:Element ;
-                        ragno:embedding ?embedding .
-                    OPTIONAL { ?interaction skos:prefLabel ?prompt }
-                    OPTIONAL { ?interaction ragno:content ?content }
-                    OPTIONAL { ?interaction dcterms:created ?timestamp }
-                    BIND(CONCAT("element-", SUBSTR(STR(?interaction), 1+STRLEN(STR(?interaction))-8)) AS ?id)
-                    BIND(0 AS ?accessCount)
-                    BIND("[]" AS ?concepts)
-                    BIND(1.0 AS ?decayFactor)
-                    BIND("short-term" AS ?memoryType)
-                    # Use prompt as output when ragno:content is null (for simple definitions)
-                    BIND(IF(BOUND(?content), ?content, ?prompt) AS ?output)
-                }
-            }`
+        const query = await this.templateLoader.loadAndInterpolate('store', 'load-memory', {
+            graphName: this.graphName
+        })
 
         try {
             const result = await this._executeSparqlQuery(query, this.endpoint.query)
@@ -412,21 +359,9 @@ export default class SPARQLStore extends BaseStore {
                 { graphName: this.graphName }
             );
 
-            const clearQuery = `
-                PREFIX ragno: <http://purl.org/stuff/ragno/>
-                PREFIX semem: <http://purl.org/stuff/semem/>
-                
-                DELETE {
-                    GRAPH <${this.graphName}> {
-                        ?interaction ?p ?o
-                    }
-                } WHERE {
-                    GRAPH <${this.graphName}> {
-                        ?interaction a semem:Interaction ;
-                            ?p ?o
-                    }
-                }
-            `
+            const clearQuery = await this.templateLoader.loadAndInterpolate('store', 'clear-existing', {
+                graphName: this.graphName
+            })
             await this._executeSparqlUpdate(clearQuery, this.endpoint.update)
 
             // Step 4: Generate RDF triples
@@ -440,22 +375,17 @@ export default class SPARQLStore extends BaseStore {
                 }
             );
 
-            const insertQuery = `
-                PREFIX ragno: <http://purl.org/stuff/ragno/>
-                PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-                PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-                PREFIX semem: <http://purl.org/stuff/semem/>
-                PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+            const insertStatements = [
+                this._generateInsertStatements(memoryStore.shortTermMemory, 'short-term'),
+                this._generateInsertStatements(memoryStore.longTermMemory, 'long-term'),
+                this._generateConceptStatements(memoryStore.shortTermMemory),
+                this._generateConceptStatements(memoryStore.longTermMemory)
+            ].join('\n        ')
 
-                INSERT DATA {
-                    GRAPH <${this.graphName}> {
-                        ${this._generateInsertStatements(memoryStore.shortTermMemory, 'short-term')}
-                        ${this._generateInsertStatements(memoryStore.longTermMemory, 'long-term')}
-                        ${this._generateConceptStatements(memoryStore.shortTermMemory)}
-                        ${this._generateConceptStatements(memoryStore.longTermMemory)}
-                    }
-                }
-            `
+            const insertQuery = await this.templateLoader.loadAndInterpolate('store', 'insert-memory', {
+                graphName: this.graphName,
+                insertStatements: insertStatements
+            })
 
             // Step 5: Execute INSERT operation
             opLogger.step(
@@ -843,32 +773,26 @@ export default class SPARQLStore extends BaseStore {
         const entityUri = `<${entity.id}>`
         const embeddingStr = Array.isArray(entity.embedding) ? JSON.stringify(entity.embedding) : '[]'
 
-        const insertQuery = `
-            PREFIX ragno: <http://purl.org/stuff/ragno/>
-            PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-            PREFIX dcterms: <http://purl.org/dc/terms/>
-            PREFIX semem: <http://purl.org/stuff/semem/>
-            PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+        const optionalStatements = [
+            entity.description ? `${entityUri} rdfs:comment "${this._escapeSparqlString(entity.description)}" .` : '',
+            entity.metadata ? Object.entries(entity.metadata).map(([key, value]) =>
+                `${entityUri} ragno:${key} "${this._escapeSparqlString(String(value))}" .`
+            ).join('\n        ') : ''
+        ].filter(s => s).join('\n        ')
 
-            INSERT DATA {
-                GRAPH <${this.graphName}> {
-                    ${entityUri} a ragno:Entity ;
-                        rdfs:label "${this._escapeSparqlString(entity.label || entity.name || '')}" ;
-                        rdf:type ragno:${entity.subType || 'Entity'} ;
-                        skos:prefLabel "${this._escapeSparqlString(entity.prefLabel || entity.label || '')}" ;
-                        semem:embedding """${embeddingStr}""" ;
-                        dcterms:created "${new Date().toISOString()}"^^xsd:dateTime ;
-                        ragno:frequency "${entity.frequency || 1}"^^xsd:integer ;
-                        ragno:centrality "${entity.centrality || 0.0}"^^xsd:decimal ;
-                        ragno:isEntryPoint "${entity.isEntryPoint || false}"^^xsd:boolean .
-                    ${entity.description ? `${entityUri} rdfs:comment "${this._escapeSparqlString(entity.description)}" .` : ''}
-                    ${entity.metadata ? Object.entries(entity.metadata).map(([key, value]) =>
-                        `${entityUri} ragno:${key} "${this._escapeSparqlString(String(value))}" .`
-                    ).join('\n') : ''}
-                }
-            }
-        `
+        const insertQuery = await this.templateLoader.loadAndInterpolate('store', 'insert-entity', {
+            graphName: this.graphName,
+            entityUri: entityUri,
+            label: this._escapeSparqlString(entity.label || entity.name || ''),
+            subType: entity.subType || 'Entity',
+            prefLabel: this._escapeSparqlString(entity.prefLabel || entity.label || ''),
+            embeddingStr: embeddingStr,
+            timestamp: new Date().toISOString(),
+            frequency: entity.frequency || 1,
+            centrality: entity.centrality || 0.0,
+            isEntryPoint: entity.isEntryPoint || false,
+            optionalStatements: optionalStatements
+        })
 
         await this._executeSparqlUpdate(insertQuery, this.endpoint.update)
         logger.info(`Stored ragno:Entity ${entity.id}`)
@@ -2090,41 +2014,20 @@ export default class SPARQLStore extends BaseStore {
      */
     async updateLazyToProcessed(elementId, embedding = [], concepts = []) {
         const elementUri = `<${elementId}>`
-        const embeddingStr = JSON.stringify(embedding)
-        const conceptsStr = concepts.map(c => `"${this._escapeSparqlString(c)}"`).join(', ')
-        
-        const updateQuery = `
-            PREFIX ragno: <http://purl.org/stuff/ragno/>
-            PREFIX semem: <http://purl.org/stuff/semem/>
-            PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-            PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
-            
-            DELETE {
-                GRAPH <${this.graphName}> {
-                    ${elementUri} semem:processingStatus "lazy" ;
-                                  ragno:isEntryPoint false .
-                }
-            }
-            INSERT {
-                GRAPH <${this.graphName}> {
-                    ${elementUri} semem:processingStatus "processed" ;
-                                  ragno:isEntryPoint true ;
-                                  ragno:embedding "${this._escapeSparqlString(embeddingStr)}" .
-                    ${concepts.length > 0 ? 
-                        concepts.map(concept => 
-                            `${elementUri} skos:related "${this._escapeSparqlString(concept)}" .`
-                        ).join('\n                    ')
-                        : ''
-                    }
-                }
-            }
-            WHERE {
-                GRAPH <${this.graphName}> {
-                    ${elementUri} semem:processingStatus "lazy" .
-                }
-            }
-        `
-        
+        const embeddingStr = this._escapeSparqlString(JSON.stringify(embedding))
+        const conceptsStatements = concepts.length > 0 ?
+            concepts.map(concept =>
+                `${elementUri} skos:related "${this._escapeSparqlString(concept)}" .`
+            ).join('\n        ')
+            : ''
+
+        const updateQuery = await this.templateLoader.loadAndInterpolate('store', 'update-element-lazy-processed', {
+            graphName: this.graphName,
+            elementUri: elementUri,
+            embeddingStr: embeddingStr,
+            conceptsStatements: conceptsStatements
+        })
+
         await this._executeSparqlUpdate(updateQuery, this.endpoint.update)
     }
 
@@ -2289,21 +2192,9 @@ export default class SPARQLStore extends BaseStore {
      * Clear corrupted FAISS index data from SPARQL store
      */
     async _clearCorruptedIndexData() {
-        const clearQuery = `
-            PREFIX semem: <http://purl.org/stuff/semem/>
-
-            DELETE {
-                GRAPH <${this.graphName}> {
-                    ?indexUri ?p ?o .
-                }
-            }
-            WHERE {
-                GRAPH <${this.graphName}> {
-                    ?indexUri a semem:FAISSIndex ;
-                              ?p ?o .
-                }
-            }
-        `
+        const clearQuery = await this.templateLoader.loadAndInterpolate('store', 'clear-faiss-index', {
+            graphName: this.graphName
+        })
 
         await this._executeSparqlUpdate(clearQuery, this.endpoint.update)
         logger.info('Cleared corrupted FAISS index data from SPARQL store')
@@ -2320,21 +2211,9 @@ export default class SPARQLStore extends BaseStore {
             const indexSize = this.index.ntotal()
 
             // Clear any existing current index
-            const clearQuery = `
-                PREFIX semem: <http://purl.org/stuff/semem/>
-                PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
-
-                DELETE {
-                    GRAPH <${this.graphName}> {
-                        ?indexUri semem:current "true"^^xsd:boolean .
-                    }
-                } WHERE {
-                    GRAPH <${this.graphName}> {
-                        ?indexUri a semem:FAISSIndex ;
-                                  semem:current "true"^^xsd:boolean .
-                    }
-                }
-            `
+            const clearQuery = await this.templateLoader.loadAndInterpolate('store', 'clear-current-faiss-index', {
+                graphName: this.graphName
+            })
             await this._executeSparqlUpdate(clearQuery, this.endpoint.update)
 
             // Store new index
@@ -2452,21 +2331,9 @@ export default class SPARQLStore extends BaseStore {
         `
 
         // Clear previous current graph
-        const clearQuery = `
-            PREFIX semem: <http://purl.org/stuff/semem/>
-            PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
-
-            DELETE {
-                GRAPH <${this.graphName}> {
-                    ?graphUri semem:current "true"^^xsd:boolean .
-                }
-            } WHERE {
-                GRAPH <${this.graphName}> {
-                    ?graphUri a semem:ConceptGraph ;
-                              semem:current "true"^^xsd:boolean .
-                }
-            }
-        `
+        const clearQuery = await this.templateLoader.loadAndInterpolate('store', 'clear-current-concept-graph', {
+            graphName: this.graphName
+        })
 
         await this._executeSparqlUpdate(clearQuery, this.endpoint.update)
         await this._executeSparqlUpdate(insertQuery, this.endpoint.update)

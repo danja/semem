@@ -3,6 +3,7 @@ PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX semem: <http://purl.org/stuff/semem/>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
 INSERT DATA {
@@ -11,7 +12,11 @@ INSERT DATA {
             rdfs:label "{{label}}" ;
             rdf:type ragno:{{subType}} ;
             skos:prefLabel "{{prefLabel}}" ;
+            semem:embedding """{{embeddingStr}}""" ;
             dcterms:created "{{timestamp}}"^^xsd:dateTime ;
-            ragno:isEntryPoint {{isEntryPoint}} .
+            ragno:frequency "{{frequency}}"^^xsd:integer ;
+            ragno:centrality "{{centrality}}"^^xsd:decimal ;
+            ragno:isEntryPoint "{{isEntryPoint}}"^^xsd:boolean .
+        {{optionalStatements}}
     }
 }

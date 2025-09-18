@@ -8,14 +8,33 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 SELECT ?id ?prompt ?output ?embedding ?timestamp ?accessCount ?concepts ?decayFactor ?memoryType
 FROM <{{graphName}}>
 WHERE {
-    ?interaction a semem:Interaction ;
-        semem:id ?id ;
-        semem:prompt ?prompt ;
-        semem:output ?output ;
-        semem:embedding ?embedding ;
-        semem:timestamp ?timestamp ;
-        semem:accessCount ?accessCount ;
-        semem:concepts ?concepts ;
-        semem:decayFactor ?decayFactor ;
-        semem:memoryType ?memoryType .
+    {
+        # New format: semem:Interaction objects
+        ?interaction a semem:Interaction ;
+            semem:id ?id ;
+            semem:prompt ?prompt ;
+            semem:output ?output ;
+            semem:embedding ?embedding ;
+            semem:timestamp ?timestamp ;
+            semem:accessCount ?accessCount ;
+            semem:decayFactor ?decayFactor ;
+            semem:memoryType ?memoryType .
+        OPTIONAL { ?interaction semem:concepts ?concepts }
+    }
+    UNION
+    {
+        # Old format: ragno:Element objects with legacy embedding property
+        ?interaction a ragno:Element ;
+            ragno:embedding ?embedding .
+        OPTIONAL { ?interaction skos:prefLabel ?prompt }
+        OPTIONAL { ?interaction ragno:content ?content }
+        OPTIONAL { ?interaction dcterms:created ?timestamp }
+        BIND(CONCAT("element-", SUBSTR(STR(?interaction), 1+STRLEN(STR(?interaction))-8)) AS ?id)
+        BIND(0 AS ?accessCount)
+        BIND("[]" AS ?concepts)
+        BIND(1.0 AS ?decayFactor)
+        BIND("short-term" AS ?memoryType)
+        # Use prompt as output when ragno:content is null (for simple definitions)
+        BIND(IF(BOUND(?content), ?content, ?prompt) AS ?output)
+    }
 }
