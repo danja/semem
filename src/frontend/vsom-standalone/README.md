@@ -15,7 +15,7 @@ A standalone web application for visualizing semantic memory interactions using 
 ### Prerequisites
 
 - Node.js 20.11.0 or higher
-- Running MCP HTTP server (default: http://localhost:3000)
+- Running MCP HTTP server (default: http://localhost:4101)
 
 ### Starting the Server
 
@@ -116,7 +116,7 @@ src/frontend/vsom-standalone/
 ## Usage
 
 1. **Start the application**: Navigate to http://localhost:4103
-2. **Connect to data**: Ensure MCP server is running (http://localhost:3000)
+2. **Connect to data**: Ensure MCP server is running (http://localhost:4101)
 3. **Generate interactions**: Use the workbench or API to create interactions
 4. **Explore with ZPT**: Use Zoom/Pan/Tilt controls to navigate the data
 5. **Visualize**: Watch as interactions appear as nodes on the VSOM grid

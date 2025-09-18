@@ -108,17 +108,18 @@ class VSOMStandaloneServer {
     }
     
     setupApiProxy() {
-        // Proxy API requests to the main MCP HTTP server
-        const mcpPort = this.config.get('servers.mcp') || 4101;
-        const mcpServerUrl = process.env.MCP_HTTP_URL || `http://localhost:${mcpPort}`;
+        // Proxy API requests to the main API server (not MCP server)
+        const apiPort = this.config.get('servers.api') || 4100;
+        const apiServerUrl = process.env.API_HTTP_URL || `http://localhost:${apiPort}/api`;
         
         this.app.use('/api', async (req, res) => {
             try {
-                const url = `${mcpServerUrl}${req.path}`;
+                const url = `${apiServerUrl}${req.path}`;
                 const options = {
                     method: req.method,
                     headers: {
                         'Content-Type': 'application/json',
+                        'X-API-Key': 'semem-docker-dev-key', // Use dev key for VSOM proxy
                         // Filter out content-length to let fetch calculate it correctly
                         ...Object.fromEntries(
                             Object.entries(req.headers).filter(([key]) =>
@@ -156,8 +157,8 @@ class VSOMStandaloneServer {
                 console.error(`API proxy error for ${req.path}:`, error);
                 res.status(502).json({
                     error: 'Bad Gateway',
-                    message: 'Unable to reach MCP server',
-                    mcpServerUrl: mcpServerUrl,
+                    message: 'Unable to reach API server',
+                    apiServerUrl: apiServerUrl,
                     timestamp: new Date().toISOString()
                 });
             }
@@ -169,9 +170,9 @@ class VSOMStandaloneServer {
             this.server = this.app.listen(this.port, () => {
                 console.log(`🗺️  VSOM Standalone Server running at http://localhost:${this.port}`);
                 console.log(`📁  Serving files from: ${this.publicDir}`);
-                const mcpPort = this.config.get('servers.mcp') || 4101;
-                const mcpServerUrl = process.env.MCP_HTTP_URL || `http://localhost:${mcpPort}`;
-                console.log(`🔗  API proxy to: ${mcpServerUrl}`);
+                const apiPort = this.config.get('servers.api') || 4100;
+                const apiServerUrl = process.env.API_HTTP_URL || `http://localhost:${apiPort}/api`;
+                console.log(`🔗  API proxy to: ${apiServerUrl}`);
                 resolve();
             });
         });

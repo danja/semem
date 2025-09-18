@@ -39,7 +39,6 @@ yields Based on the given context information, the relevant context is [Context 
 * add github mit logos
 * refactor src/connectors
 * throttling for API calls - working on server?
-* interactions aren't being stored - default should be yes
 * update Claude.md incorporate tips from https://diwank.space/field-notes-from-shipping-real-code-with-claude
 * check FAISS is being used on concepts (with backlinks)
 * clean src/frontend/_*

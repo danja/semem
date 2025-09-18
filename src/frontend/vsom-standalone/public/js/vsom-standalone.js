@@ -3,12 +3,12 @@
  * Main entry point for the standalone VSOM page
  */
 
-import VSOMGrid from './components/VSOMGrid.js?v=1726493600';
-import DataPanel from './components/DataPanel.js?v=1726493600';
-import ZPTControls from './components/ZPTControls.js?v=1726493600';
-import VSOMApiService from './services/VSOMApiService.js?v=1726493600';
-import DataProcessor from './services/DataProcessor.js?v=1726493600';
-import VSOMUtils from './utils/VSOMUtils.js?v=1726493600';
+import VSOMGrid from './components/VSOMGrid.js?v=1726495700';
+import DataPanel from './components/DataPanel.js?v=1726495700';
+import ZPTControls from './components/ZPTControls.js?v=1726495700';
+import VSOMApiService from './services/VSOMApiService.js?v=1726495700';
+import DataProcessor from './services/DataProcessor.js?v=1726495700';
+import VSOMUtils from './utils/VSOMUtils.js?v=1726495700';
 
 class VSOMStandaloneApp {
     constructor() {
@@ -153,25 +153,22 @@ class VSOMStandaloneApp {
             // Clear any existing tooltips before refresh
             VSOMUtils.hideTooltip();
 
-            // Get current contextual scope (same as prompt synthesis) + supporting data
-            const [contextualScope, sessionData, conceptsData, zptState, sparqlData, entitiesData, memoryData] = await Promise.allSettled([
-                this.services.api.getContextualScope({ query: 'What information is available in the current context?' }), // Primary: current context scope
-                this.services.api.getSessionData(),     // Supporting: interaction history
-                this.services.api.getConceptsData(),    // Supporting: concept analysis
-                this.services.api.getZPTState(),        // Supporting: navigation state
-                this.services.api.getSPARQLData(),      // Supporting: SPARQL results
-                this.services.api.getEntities(),        // Supporting: entity data
-                this.services.api.getMemoryItems()      // Supporting: memory items
+            // Get essential data only (reduced API calls)
+            const [sessionData, memoryData] = await Promise.allSettled([
+                this.services.api.getSessionData(),     // Primary: interaction history and concepts
+                this.services.api.getMemoryItems({ limit: 50 })      // Supporting: memory items for corpus view
             ]);
 
             // Extract successful results
-            const contextScope = contextualScope.status === 'fulfilled' ? contextualScope.value : {};
             const session = sessionData.status === 'fulfilled' ? sessionData.value : {};
-            const concepts = conceptsData.status === 'fulfilled' ? conceptsData.value : {};
-            const zpt = zptState.status === 'fulfilled' ? zptState.value : {};
-            const sparql = sparqlData.status === 'fulfilled' ? sparqlData.value : {};
-            const entities = entitiesData.status === 'fulfilled' ? entitiesData.value : {};
             const memory = memoryData.status === 'fulfilled' ? memoryData.value : {};
+
+            // Use default values for removed API calls
+            const contextScope = {};
+            const concepts = {};
+            const zpt = {};
+            const sparql = {};
+            const entities = {};
 
             // Aggregate data prioritizing contextual scope that would be used for prompt synthesis
             const aggregatedData = this.aggregateDataSources(session, concepts, zpt, sparql, entities, memory, contextScope);
@@ -229,7 +226,10 @@ class VSOMStandaloneApp {
         });
 
         // Supporting data: Traditional sources
-        const interactions = sessionData.sessionCache?.interactions || sessionData.detailedInteractions || sessionData.interactions || [];
+        console.log('🔍 Raw sessionData:', sessionData);
+        console.log('🔍 sessionAnalytics:', sessionData.sessionAnalytics);
+        const interactions = sessionData.sessionAnalytics?.interactions || sessionData.sessionCache?.interactions || sessionData.detailedInteractions || sessionData.interactions || [];
+        console.log('🔍 Extracted interactions:', interactions);
         const conceptAnalytics = conceptsData.conceptAnalytics || {};
         const concepts = Array.isArray(conceptAnalytics.topConcepts) ? conceptAnalytics.topConcepts : [];
         const relationships = conceptsData.conceptRelationships || [];
@@ -679,10 +679,10 @@ class VSOMStandaloneApp {
             clearInterval(this.updateInterval);
         }
         
-        // Update every 30 seconds
+        // Update every 5 minutes (less aggressive)
         this.updateInterval = setInterval(() => {
             this.refreshData();
-        }, 30000);
+        }, 300000);
     }
     
     stopPeriodicUpdates() {
