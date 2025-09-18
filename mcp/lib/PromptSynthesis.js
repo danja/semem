@@ -3,12 +3,12 @@
  * Handles LLM-based response synthesis from search results and context
  */
 
-import { PromptTemplateLoader } from './PromptTemplateLoader.js';
+import { SimpleTemplateLoader } from './SimpleTemplateLoader.js';
 
 export class PromptSynthesis {
   constructor(llmHandler) {
     this.llmHandler = llmHandler;
-    this.templateLoader = new PromptTemplateLoader();
+    this.templateLoader = new SimpleTemplateLoader();
   }
 
   /**

@@ -1,9 +1,15 @@
 /**
- * PromptTemplateLoader.js - Loads prompt templates from external files
+ * SimpleTemplateLoader.js - Simple template loader for MCP module
  *
- * This module provides functionality to load prompt templates from the
- * prompts/templates/ directory structure, with simple string interpolation
- * for variables using {{variableName}} syntax.
+ * This module provides functionality to load simple Markdown templates
+ * with {{variableName}} interpolation, consistent with SPARQLTemplateLoader pattern.
+ *
+ * DESIGN DECISION: We maintain this simple loader (vs src/prompts/TemplateLoader.js) for:
+ * - Consistency with SPARQL template pattern (simple Markdown + {{var}} interpolation)
+ * - MCP module simplicity (avoids complex JSON schema and Handlebars templating)
+ * - Clear separation of concerns (advanced templates use TemplateLoader, simple ones use this)
+ *
+ * For advanced template features (validation, workflows, Handlebars), use src/prompts/TemplateLoader.js instead.
  */
 
 import fs from 'fs';
@@ -13,7 +19,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-export class PromptTemplateLoader {
+export class SimpleTemplateLoader {
     constructor(templatesPath = null) {
         // Default to prompts/templates/ directory in project root
         if (templatesPath) {
@@ -154,4 +160,4 @@ export class PromptTemplateLoader {
     }
 }
 
-export default PromptTemplateLoader;
+export default SimpleTemplateLoader;

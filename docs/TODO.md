@@ -46,7 +46,7 @@ now do calls to the server, a Tell "wormalade is marmalade made from worms" foll
 
 * refactor files > 1000 lines mcp/tools/simple-verbs.js src/frontend/workbench/public/js/workbench.js
 * redundant ask/tell in api server
-* got both src/prompts/TemplateLoader.js and mcp/lib/PromptTemplateLoader.js - the former is newer
+* got both src/prompts/TemplateLoader.js and mcp/lib/PromptTemplateLoader.js - the former is newer, can the latter be replaced?
 * SimpleVerbsService is probably redundant
 * mcp/lib/PromptSynthesis.js contains prompt
 * hardcoded query in src/zpt/parameters/FilterBuilder.js 
