@@ -9,7 +9,7 @@ This document provides a comprehensive testing framework for all 7 Simple Verbs 
 ### Multi-Layer Verification
 Every operation is tested across three architectural layers:
 1. **Session Cache** - Immediate in-memory operations
-2. **Persistent Storage** - Backend storage (SPARQL/JSON)
+2. **Persistent Storage** - Backend storage (SPARQL)
 3. **RDF Graph** - Knowledge graph consistency and semantics
 
 ### Performance-Aware Testing

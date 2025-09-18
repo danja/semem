@@ -34,11 +34,17 @@ class VSOMStandaloneServer {
     }
     
     setupMiddleware() {
-        // Static file serving
+        // Static file serving with proper cache control
         this.app.use(express.static(this.publicDir, {
-            maxAge: '1h',
+            maxAge: '5m', // Short cache for static assets
             etag: true,
-            lastModified: true
+            lastModified: true,
+            setHeaders: (res, path) => {
+                if (path.endsWith('.js') || path.endsWith('.html')) {
+                    // Force revalidation for JS and HTML files
+                    res.setHeader('Cache-Control', 'no-cache, must-revalidate');
+                }
+            }
         }));
         
         // JSON parsing

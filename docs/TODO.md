@@ -26,35 +26,37 @@ Save the plan and keep progress reports in docs/MORE-SPARQL.md
 
 now do calls to the server, a Tell "wormalade is marmalade made from worms" followed by an Ask "what is wormalade?" 
 
+## General
 
-yields Based on the given context information, the relevant context is [Context 1
-   (relevance: 82.7%)] - Enhancement Query: wormalade. - so the system is not yet working end-to-end
-
+* use src/utils logger not console
 * mcp server should be logging to file under logs/ using the logger library and only logs of the last 3 runs should be kept
+* workbench console - replace json with words, add more logging
+* fix tests
+* revisit docs/PROBES.md
+* add github mit logos
+* throttling for API calls - working on server?
+* update Claude.md incorporate tips from https://diwank.space/field-notes-from-shipping-real-code-with-claude
+* check FAISS is being used on concepts (with backlinks)
+* danbri frontend
+* Italian version?
+* migrate webpack to vite
+* do something with VSOM
+
+## Cleanup
+
+* refactor files > 1000 lines mcp/tools/simple-verbs.js src/frontend/workbench/public/js/workbench.js
 * redundant ask/tell in api server
 * SimpleVerbsService is probably redundant
 * src/stores/SPARQLStore.js contains queries
 * mcp/lib/PromptSynthesis.js contains prompt
-* fix tests
-* add github mit logos
-* refactor src/connectors
-* throttling for API calls - working on server?
-* update Claude.md incorporate tips from https://diwank.space/field-notes-from-shipping-real-code-with-claude
-* check FAISS is being used on concepts (with backlinks)
-* clean src/frontend/_*
-* move prompts to src/
-* move mcp to src/
-* use src/utils logger not console
-* danbri frontend
-* console - replace json with words, add more logging
-* Config.js - remove refs to tbox, .env should handle
-* Italian version?
 * hardcoded query in src/zpt/parameters/FilterBuilder.js 
 * hardcoded prompt in mcp/http-server.js plus does not contain any relevant information about Matisse. Therefore, I cannot answer the question
 * string matching on result types in src/zpt/selection/CorpuscleSelector.js
-* migrate webpack to vite
-* refactor files > 1000 lines mcp/tools/simple-verbs.js src/frontend/workbench/public/js/workbench.js
-* do something with VSOM
+* refactor src/connectors
+* clean src/frontend/_*
+* move prompts to src/
+* move mcp to src/
+* Config.js - remove refs to tbox, .env should handle
 
 Can you create utils/SPARQLIngestRemote.js which will carry out the same operation as utils/SPARQLIngest.js but against a remote Semem install. For now the credentials will be the same. The Semem endpoints are at MCP : https://mcp.tensegrity.it/ API : https://api.tensegrity.it/ Fuseki : https://semem-fuseki.tensegrity.it/ Workbench : https://semem.tensegrity.it/
 

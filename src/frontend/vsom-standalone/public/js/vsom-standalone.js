@@ -3,12 +3,12 @@
  * Main entry point for the standalone VSOM page
  */
 
-import VSOMGrid from './components/VSOMGrid.js?v=1726495700';
-import DataPanel from './components/DataPanel.js?v=1726495700';
-import ZPTControls from './components/ZPTControls.js?v=1726495700';
-import VSOMApiService from './services/VSOMApiService.js?v=1726495700';
-import DataProcessor from './services/DataProcessor.js?v=1726495700';
-import VSOMUtils from './utils/VSOMUtils.js?v=1726495700';
+import VSOMGrid from './components/VSOMGrid.js';
+import DataPanel from './components/DataPanel.js';
+import ZPTControls from './components/ZPTControls.js';
+import VSOMApiService from './services/VSOMApiService.js';
+import DataProcessor from './services/DataProcessor.js';
+import VSOMUtils from './utils/VSOMUtils.js';
 
 class VSOMStandaloneApp {
     constructor() {
@@ -426,6 +426,10 @@ class VSOMStandaloneApp {
 
         // No placeholder data - only show live data
 
+        // Debug: Check interactions before return
+        console.log('🔍 Interactions before return:', interactions.length, interactions);
+        console.log('🔍 About to return aggregatedData with interactions:', interactions.length);
+
         return {
             items,
             interactions,
@@ -768,11 +772,27 @@ class VSOMStandaloneApp {
     }
     
     getSessionStats() {
+        const totalConcepts = this.state.interactions.reduce((sum, i) => {
+            if (typeof i.concepts === 'number') {
+                return sum + i.concepts;
+            } else if (Array.isArray(i.concepts)) {
+                return sum + i.concepts.length;
+            }
+            return sum;
+        }, 0);
+
+        // Use actual duration from API if available
+        let duration = '0s';
+        if (this.state.sessionData?.sessionAnalytics?.duration) {
+            duration = VSOMUtils.formatDuration(this.state.sessionData.sessionAnalytics.duration);
+        } else {
+            duration = this.getFormattedDuration();
+        }
+
         return {
             totalInteractions: this.state.interactions.length,
-            totalConcepts: this.state.interactions.reduce((sum, i) => 
-                sum + (i.concepts?.length || 0), 0),
-            duration: this.getFormattedDuration()
+            totalConcepts: totalConcepts,
+            duration: duration
         };
     }
     
