@@ -99,8 +99,8 @@ Analysis found **68 files** using deprecated storage classes:
 ```javascript
 class SPARQLStore extends BaseStore {
     // SPARQL persistence (existing)
-    async _executeSparqlQuery()
-    async _executeSparqlUpdate()
+    async executeSparqlQuery()
+    async executeSparqlUpdate()
     async store()
     async search()
 
