@@ -44,6 +44,7 @@ now do calls to the server, a Tell "wormalade is marmalade made from worms" foll
 
 ## Cleanup
 
+* rename mcp/lib/PromptSynthesis.js to mcp/lib/ResponseSynthesis.js
 * refactor files > 1000 lines mcp/tools/simple-verbs.js src/frontend/workbench/public/js/workbench.js
 * redundant ask/tell in api server
 * SimpleVerbsService is probably redundant

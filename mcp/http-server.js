@@ -593,6 +593,7 @@ async function startOptimizedServer() {
             const contentEmbedding = await embeddingService.generateEmbedding(content);
 
             // Store using Enhanced SPARQLStore
+            console.log('🔥 MCP DEBUG: About to call storage.storeWithMemory, storage type:', storage.constructor.name);
             const { randomUUID } = await import('crypto');
             const result = await storage.storeWithMemory({
               id: randomUUID(), // Generate unique ID for the record

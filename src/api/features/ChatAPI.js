@@ -81,12 +81,17 @@ export default class ChatAPI extends BaseAPI {
             throw new Error('Prompt is required');
         }
 
+        // Check for slash commands and route appropriately
+        if (prompt.startsWith('/ask ')) {
+            return this._handleAskCommand(prompt.substring(5), conversationId);
+        }
+
         // Start workflow tracking
         const operationId = this.workflowLogger.startOperation(
             null,
             'chat',
             'Processing chat request',
-            { 
+            {
                 prompt: prompt.substring(0, 100) + (prompt.length > 100 ? '...' : ''),
                 useMemory,
                 temperature,
@@ -379,6 +384,70 @@ export default class ChatAPI extends BaseAPI {
             this._emitMetric('chat.completion.errors', 1);
             throw error;
         }
+    }
+
+    /**
+     * Handle /ask slash command by routing to UnifiedSearchAPI
+     */
+    async _handleAskCommand(query, conversationId) {
+        try {
+            // Get UnifiedSearchAPI from registry
+            const registry = this.config.registry;
+            const apiContext = registry.get('apis') || {};
+            const unifiedSearchAPI = apiContext['unified-search-api'];
+
+            if (!unifiedSearchAPI) {
+                return {
+                    response: "Sorry, the search functionality is not available right now.",
+                    conversationId: conversationId || 'unknown',
+                    memoryIds: []
+                };
+            }
+
+            // Execute unified search
+            const searchResult = await unifiedSearchAPI.executeOperation('unified', {
+                query: query,
+                limit: 10
+            });
+
+            // Return the synthesized answer if available, otherwise fall back to search results summary
+            const response = searchResult.answer ||
+                this._generateFallbackResponse(searchResult.results, query);
+
+            return {
+                response,
+                conversationId: conversationId || 'unknown',
+                memoryIds: [],
+                searchMetadata: {
+                    totalResults: searchResult.metadata?.totalResults || 0,
+                    servicesUsed: searchResult.servicesQueried || [],
+                    strategy: searchResult.strategy
+                }
+            };
+        } catch (error) {
+            this.logger.error('Ask command failed:', error);
+            return {
+                response: `Sorry, I encountered an error while searching: ${error.message}`,
+                conversationId: conversationId || 'unknown',
+                memoryIds: []
+            };
+        }
+    }
+
+    /**
+     * Generate a fallback response when PromptSynthesis is not available
+     */
+    _generateFallbackResponse(results, query) {
+        if (!results || results.length === 0) {
+            return `I couldn't find any relevant information for "${query}".`;
+        }
+
+        const summary = results.slice(0, 3).map(result => {
+            const source = result.source ? `[${result.source}]` : '';
+            return `${source} ${result.content || result.title}`;
+        }).join('\n\n');
+
+        return `Here's what I found for "${query}":\n\n${summary}`;
     }
 
     /**

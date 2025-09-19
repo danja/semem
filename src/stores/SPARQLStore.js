@@ -1385,11 +1385,12 @@ export default class SPARQLStore extends BaseStore {
         }
 
         const entityUri = `<${data.id}>`
-        
+
         // Use graph from metadata if provided, otherwise use default
         const targetGraph = (data.metadata && data.metadata.graph) ? data.metadata.graph : this.graphName;
 
         const insertQuery = `
+            PREFIX semem: <http://purl.org/stuff/semem/>
             PREFIX ragno: <http://purl.org/stuff/ragno/>
             PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
             PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
@@ -1397,17 +1398,18 @@ export default class SPARQLStore extends BaseStore {
 
             INSERT DATA {
                 GRAPH <${targetGraph}> {
-                    ${entityUri} a ragno:Element ;
-                        ragno:content "${this._escapeSparqlString(data.response || data.content || '')}" ;
-                        skos:prefLabel "${this._escapeSparqlString(data.prompt || '')}" ;
-                        ragno:embedding """${JSON.stringify(data.embedding || [])}""" ; # DEPRECATED: Use ragno:hasEmbedding → ragno:vectorContent pattern instead
-                        dcterms:created "${new Date().toISOString()}"^^xsd:dateTime ;
-                        ragno:timestamp "${data.timestamp || new Date().toISOString()}" .
-                    ${data.concepts ? data.concepts.map(concept =>
-            `${entityUri} ragno:connectsTo "${this._escapeSparqlString(concept)}" .`
-        ).join('\n') : ''}
-                    ${data.metadata ? Object.entries(data.metadata).map(([key, value]) =>
-            `${entityUri} ragno:${key} "${this._escapeSparqlString(String(value))}" .`
+                    ${entityUri} a semem:Interaction ;
+                        semem:id "${this._escapeSparqlString(data.id)}" ;
+                        semem:prompt "${this._escapeSparqlString(data.prompt || '')}" ;
+                        semem:output "${this._escapeSparqlString(data.response || data.content || '')}" ;
+                        semem:embedding """${JSON.stringify(data.embedding || [])}""" ;
+                        semem:timestamp "${Date.now()}"^^xsd:integer ;
+                        semem:accessCount "0"^^xsd:integer ;
+                        semem:concepts """${JSON.stringify(data.concepts || [])}""" ;
+                        semem:decayFactor "1.0"^^xsd:decimal ;
+                        semem:memoryType "${data.metadata?.memoryType || 'short-term'}" .
+                    ${data.metadata ? Object.entries(data.metadata).filter(([key]) => key !== 'memoryType').map(([key, value]) =>
+            `${entityUri} semem:${key} "${this._escapeSparqlString(String(value))}" .`
         ).join('\n') : ''}
                 }
             }
@@ -2405,58 +2407,53 @@ export default class SPARQLStore extends BaseStore {
             this.accessCounts = shortTerm.map(item => item.accessCount || 1)
             this.conceptsList = shortTerm.map(item => item.concepts || [])
 
-            // Rebuild FAISS index with loaded embeddings
+            // Rebuild FAISS index with ONLY valid embeddings (no random defaults)
             if (this.embeddings.length > 0) {
                 this.index = new faiss.IndexFlatL2(this.dimension)
+
+                // Create mapping arrays to track valid embeddings
+                this.faissToMemoryMap = [];  // Maps FAISS index → shortTermMemory index
+                this.memoryToFaissMap = new Array(this.embeddings.length).fill(-1);  // Maps shortTermMemory index → FAISS index
+
                 let addedCount = 0;
                 let skippedCount = 0;
 
                 for (let i = 0; i < this.embeddings.length; i++) {
                     const embedding = this.embeddings[i];
-                    let processedEmbedding = null;
+                    let isValidEmbedding = false;
 
                     if (Array.isArray(embedding) && embedding.length === this.dimension) {
                         // Check if embedding contains valid numbers
                         const hasValidNumbers = embedding.some(val => typeof val === 'number' && !isNaN(val) && val !== 0);
                         if (hasValidNumbers) {
-                            processedEmbedding = embedding;
-                        } else {
-                            console.log(`⚠️ [SPARQLStore] Embedding ${i} is all zeros or invalid, creating default`);
-                            // Create a small random embedding to maintain position mapping
-                            processedEmbedding = new Array(this.dimension).fill(0).map(() => Math.random() * 0.001 - 0.0005);
+                            isValidEmbedding = true;
                         }
-                    } else {
-                        console.log(`⚠️ [SPARQLStore] Invalid embedding ${i}: ${Array.isArray(embedding) ? embedding.length : typeof embedding}D (expected ${this.dimension}D), creating default`);
-                        // Create a small random embedding to maintain position mapping
-                        processedEmbedding = new Array(this.dimension).fill(0).map(() => Math.random() * 0.001 - 0.0005);
                     }
 
-                    try {
-                        this.index.add(processedEmbedding);
-                        addedCount++;
-                    } catch (error) {
-                        console.log(`❌ [SPARQLStore] Failed to add embedding ${i} to FAISS: ${error.message}`);
-                        // Even if FAISS add fails, we need to maintain position, so add a zero vector
+                    if (isValidEmbedding) {
                         try {
-                            this.index.add(new Array(this.dimension).fill(0.0001));
+                            this.index.add(embedding);
+                            // Record the mapping: FAISS index addedCount → memory index i
+                            this.faissToMemoryMap[addedCount] = i;
+                            this.memoryToFaissMap[i] = addedCount;
                             addedCount++;
-                        } catch (fallbackError) {
-                            console.log(`❌ [SPARQLStore] Fallback embedding also failed for ${i}: ${fallbackError.message}`);
+                        } catch (error) {
+                            console.log(`❌ [SPARQLStore] Failed to add valid embedding ${i} to FAISS: ${error.message}`);
                             skippedCount++;
                         }
+                    } else {
+                        console.log(`⚠️ [SPARQLStore] Skipping invalid embedding ${i}: ${Array.isArray(embedding) ? embedding.length : typeof embedding}D (expected ${this.dimension}D)`);
+                        // memoryToFaissMap[i] remains -1 to indicate no FAISS entry
+                        skippedCount++;
                     }
                 }
-                console.log(`🔧 [SPARQLStore] Rebuilt FAISS index: ${addedCount} added, ${skippedCount} skipped, ${this.embeddings.length} total embeddings`);
+                console.log(`🔧 [SPARQLStore] Rebuilt FAISS index: ${addedCount} valid embeddings added, ${skippedCount} invalid embeddings skipped`);
+                console.log(`🔍 [SPARQLStore] FAISS index contains ${this.index.ntotal()} entries, shortTermMemory contains ${this.shortTermMemory.length} entries`);
 
-                // Verify synchronization
-                if (this.index.ntotal() !== this.shortTermMemory.length) {
-                    console.log(`⚠️ [SPARQLStore] FAISS index size (${this.index.ntotal()}) doesn't match shortTermMemory size (${this.shortTermMemory.length})`);
-                }
-
-                // Debug: Log first few shortTermMemory items
-                for (let i = 0; i < Math.min(3, this.shortTermMemory.length); i++) {
-                    const item = this.shortTermMemory[i];
-                    console.log(`🔍 [SPARQLStore] shortTermMemory[${i}]: "${(item.prompt || item.content || 'unknown').substring(0, 50)}..."`);
+                // Sample the mapping for verification
+                if (this.faissToMemoryMap.length > 0) {
+                    const memIdx = this.faissToMemoryMap[0];
+                    console.log(`🔍 [SPARQLStore] FAISS[0] → shortTermMemory[${memIdx}]: "${this.shortTermMemory[memIdx]?.prompt?.substring(0, 50) || 'N/A'}..."`);
                 }
             }
 
@@ -2478,11 +2475,43 @@ export default class SPARQLStore extends BaseStore {
      * Enhanced store method that maintains in-memory structures
      */
     async storeWithMemory(data) {
-        // Store to SPARQL (persistent)
-        await this.store(data)
+        console.log('🔍 DEBUGGING: storeWithMemory method called with data:', data);
+        // Phase 1: Comprehensive entry point debugging
+        logger.info(`[PHASE1] === storeWithMemory ENTRY ===`);
+        logger.info(`[PHASE1] Input data:`, {
+            hasEmbedding: !!data.embedding,
+            embeddingType: typeof data.embedding,
+            embeddingIsArray: Array.isArray(data.embedding),
+            embeddingLength: Array.isArray(data.embedding) ? data.embedding.length : 'N/A',
+            prompt: data.prompt ? data.prompt.substring(0, 50) + '...' : 'N/A',
+            hasId: !!data.id
+        });
 
-        // Update in-memory structures for fast access
-        await this._ensureMemoryLoaded()
+        logger.info(`[PHASE1] FAISS index state:`, {
+            indexExists: !!this.index,
+            indexType: typeof this.index,
+            currentTotal: this.index ? this.index.ntotal() : 'N/A',
+            expectedDimension: this.dimension
+        });
+
+        // Store to SPARQL (persistent)
+        logger.info(`[PHASE1] Starting SPARQL storage...`);
+        await this.store(data)
+        logger.info(`[PHASE1] SPARQL storage completed`);
+
+        // Phase 2: Memory loading investigation
+        logger.info(`[PHASE2] FAISS state before memory loading:`, {
+            indexTotal: this.index ? this.index.ntotal() : 'N/A'
+        });
+
+        // Skip _ensureMemoryLoaded() since memory should already be loaded
+        // and calling it would rebuild FAISS index, losing the new content
+        logger.info(`[PHASE2] Skipping _ensureMemoryLoaded() to preserve FAISS state`);
+
+        logger.info(`[PHASE2] FAISS state (preserved):`, {
+            indexTotal: this.index ? this.index.ntotal() : 'N/A',
+            memoryLoaded: this.shortTermMemory ? this.shortTermMemory.length : 'N/A'
+        });
 
         // Add to in-memory cache
         const interaction = {
@@ -2502,10 +2531,110 @@ export default class SPARQLStore extends BaseStore {
         this.accessCounts.push(1)
         this.conceptsList.push(interaction.concepts)
 
-        // Update FAISS index
-        if (Array.isArray(interaction.embedding) && interaction.embedding.length === this.dimension) {
-            this.index.add(interaction.embedding)
+        // Phase 3: FAISS operation monitoring with comprehensive debugging
+        logger.info(`[PHASE3] === FAISS INDEX UPDATE ===`);
+
+        let embeddingArray = data.embedding;
+        logger.info(`[PHASE3] Original embedding analysis:`, {
+            type: typeof embeddingArray,
+            isArray: Array.isArray(embeddingArray),
+            length: Array.isArray(embeddingArray) ? embeddingArray.length : 'N/A',
+            firstFew: Array.isArray(embeddingArray) ? embeddingArray.slice(0, 3) : 'N/A'
+        });
+
+        // Check FAISS index before any operations
+        logger.info(`[PHASE3] FAISS index pre-operation:`, {
+            indexExists: !!this.index,
+            indexConstructor: this.index ? this.index.constructor.name : 'N/A',
+            currentTotal: this.index ? this.index.ntotal() : 'N/A',
+            expectedDim: this.dimension
+        });
+
+        if (typeof embeddingArray === 'string') {
+            logger.info(`[PHASE3] Parsing string embedding...`);
+            try {
+                embeddingArray = JSON.parse(embeddingArray);
+                logger.info(`[PHASE3] Parsed successfully:`, {
+                    newLength: embeddingArray.length,
+                    firstFew: embeddingArray.slice(0, 3)
+                });
+            } catch (e) {
+                logger.error(`[PHASE3] Parsing failed:`, {
+                    error: e.message,
+                    stringLength: embeddingArray.length,
+                    stringStart: embeddingArray.substring(0, 100)
+                });
+                embeddingArray = [];
+            }
         }
+
+        if (Array.isArray(embeddingArray) && embeddingArray.length > 0) {
+            logger.info(`[PHASE3] Attempting FAISS add:`, {
+                embeddingLength: embeddingArray.length,
+                expectedLength: this.dimension,
+                dimensionMatch: embeddingArray.length === this.dimension,
+                indexReady: !!this.index
+            });
+
+            try {
+                if (embeddingArray.length === this.dimension) {
+                    const beforeTotal = this.index.ntotal();
+                    logger.info(`[PHASE3] FAISS before add: ${beforeTotal} entries`);
+
+                    this.index.add(embeddingArray);
+
+                    const afterTotal = this.index.ntotal();
+                    logger.info(`[PHASE3] FAISS after add: ${afterTotal} entries`);
+
+                    if (afterTotal > beforeTotal) {
+                        logger.info(`✅ [PHASE3] FAISS add SUCCESSFUL: ${embeddingArray.length}D (${beforeTotal} → ${afterTotal})`);
+
+                        // Update mapping arrays for the new entry
+                        const newFaissIndex = afterTotal - 1; // Latest FAISS index
+                        const newMemoryIndex = this.shortTermMemory.length - 1; // Latest memory index
+
+                        // Ensure mapping arrays exist and have correct length
+                        if (!this.faissToMemoryMap) this.faissToMemoryMap = [];
+                        if (!this.memoryToFaissMap) this.memoryToFaissMap = [];
+
+                        // Extend memoryToFaissMap if needed
+                        while (this.memoryToFaissMap.length <= newMemoryIndex) {
+                            this.memoryToFaissMap.push(-1);
+                        }
+
+                        // Record the mapping
+                        this.faissToMemoryMap[newFaissIndex] = newMemoryIndex;
+                        this.memoryToFaissMap[newMemoryIndex] = newFaissIndex;
+
+                        logger.info(`🔗 [PHASE3] Updated mappings: FAISS[${newFaissIndex}] ↔ memory[${newMemoryIndex}]`);
+                    } else {
+                        logger.error(`❌ [PHASE3] FAISS add FAILED: count didn't increase (${beforeTotal} → ${afterTotal})`);
+                    }
+                } else {
+                    logger.warn(`❌ [PHASE3] Dimension mismatch: expected ${this.dimension}, got ${embeddingArray.length}`);
+                }
+            } catch (faissError) {
+                logger.error(`❌ [PHASE3] FAISS add exception:`, {
+                    message: faissError.message,
+                    stack: faissError.stack,
+                    embeddingLength: embeddingArray.length,
+                    indexExists: !!this.index
+                });
+            }
+        } else {
+            logger.warn(`❌ [PHASE3] Invalid embedding for FAISS:`, {
+                type: typeof embeddingArray,
+                isArray: Array.isArray(embeddingArray),
+                length: Array.isArray(embeddingArray) ? embeddingArray.length : 'N/A'
+            });
+        }
+
+        // Final FAISS state check
+        logger.info(`[PHASE3] FAISS final state:`, {
+            totalEntries: this.index ? this.index.ntotal() : 'N/A'
+        });
+
+        logger.info(`[PHASE3] === storeWithMemory COMPLETE ===`);
 
         // Update concept graph
         if (interaction.concepts.length > 0) {

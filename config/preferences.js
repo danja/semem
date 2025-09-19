@@ -95,7 +95,7 @@ export const SPARQL_CONFIG = {
         DEFAULT_LIMIT: 10,                  // Default number of results to return
 
         // Used in: src/stores/SPARQLStore.js (search method signature, line ~1331)
-        DEFAULT_THRESHOLD: 0.3,             // Default similarity threshold for search
+        DEFAULT_THRESHOLD: 0.1,             // Default similarity threshold for search
 
         // Used in: src/stores/SPARQLStore.js (findSimilarElements method signature, line ~1018)
         FINDALL_THRESHOLD: 0.7,             // Higher threshold for findSimilarElements

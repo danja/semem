@@ -70,13 +70,30 @@ export class SearchService {
      * @returns {Promise<Array>} FAISS search results
      */
     async searchFaissIndex(queryEmbedding, limit, threshold) {
+        // Phase 4: Search Service index reference debugging
+        logger.info(`[PHASE4] === SearchService FAISS Search ===`);
+        logger.info(`[PHASE4] Search parameters:`, {
+            queryEmbeddingLength: queryEmbedding.length,
+            limit,
+            threshold
+        });
+
+        logger.info(`[PHASE4] FAISS index state in SearchService:`, {
+            indexExists: !!this.faissIndex,
+            indexType: this.faissIndex ? this.faissIndex.constructor.name : 'N/A',
+            totalEntries: this.faissIndex ? this.faissIndex.ntotal() : 'N/A',
+            indexReady: this.faissIndex && this.faissIndex.ntotal() > 0
+        });
+
         try {
             if (!this.faissIndex || this.faissIndex.ntotal() === 0) {
+                logger.warn(`[PHASE4] FAISS index not available or empty`);
                 return [];
             }
 
             // Perform FAISS search
             const k = Math.min(limit * 2, this.faissIndex.ntotal()); // Search more than needed for filtering
+            logger.info(`[PHASE4] Performing FAISS search with k=${k}`);
             const results = this.faissIndex.search(queryEmbedding, k);
 
             const faissResults = [];
@@ -87,49 +104,60 @@ export class SearchService {
                 const similarity = this.convertDistanceToSimilarity(distance);
 
                 if (similarity >= threshold) {
-                    const index = results.labels[i];
+                    const faissIndex = results.labels[i];
 
-                    // Try to get actual content from in-memory store if available
+                    // Use the new mapping system to find the correct memory item
                     let prompt = "Recent content";
                     let response = "Content indexed in FAISS";
                     let content = "Recently stored content";
 
-                    // Access in-memory arrays from SPARQLStore if they exist
-                    if (this.memoryStore.shortTermMemory && index >= 0 && index < this.memoryStore.shortTermMemory.length) {
-                        const memoryItem = this.memoryStore.shortTermMemory[index];
+                    // Map FAISS index to actual memory index using faissToMemoryMap
+                    if (this.memoryStore.faissToMemoryMap && faissIndex >= 0 && faissIndex < this.memoryStore.faissToMemoryMap.length) {
+                        const memoryIndex = this.memoryStore.faissToMemoryMap[faissIndex];
+                        const memoryItem = this.memoryStore.shortTermMemory[memoryIndex];
+
                         if (memoryItem) {
                             prompt = memoryItem.prompt || prompt;
                             response = memoryItem.response || response;
                             content = memoryItem.content || memoryItem.prompt || content;
 
                             // Debug: Log successful mapping
-                            console.log(`✅ [SearchService] FAISS index ${index} mapped to content: "${content.substring(0, 50)}..."`);
+                            console.log(`✅ [SearchService] FAISS[${faissIndex}] → memory[${memoryIndex}]: "${content.substring(0, 50)}..."`);
                         } else {
-                            console.log(`⚠️ [SearchService] FAISS index ${index} found null memoryItem`);
+                            console.log(`⚠️ [SearchService] FAISS[${faissIndex}] → memory[${memoryIndex}] found null memoryItem`);
                         }
                     } else {
-                        console.log(`⚠️ [SearchService] FAISS index ${index} out of bounds (shortTermMemory length: ${this.memoryStore.shortTermMemory?.length || 0})`);
+                        console.log(`⚠️ [SearchService] FAISS index ${faissIndex} out of bounds (faissToMemoryMap length: ${this.memoryStore.faissToMemoryMap?.length || 0})`);
                     }
 
                     faissResults.push({
-                        id: `faiss_${index}`,
+                        id: `faiss_${faissIndex}`,
                         prompt: prompt,
                         response: response,
                         content: content,
                         similarity: similarity,
                         metadata: {
                             format: 'faiss',
-                            index: index,
+                            index: faissIndex,
                             distance: distance
                         }
                     });
                 }
             }
 
+            logger.info(`[PHASE4] FAISS search results:`, {
+                totalFound: faissResults.length,
+                sampleResults: faissResults.slice(0, 2).map(r => ({
+                    id: r.id,
+                    similarity: r.similarity,
+                    prompt: r.prompt ? r.prompt.substring(0, 30) + '...' : 'N/A'
+                }))
+            });
+
             return faissResults;
 
         } catch (error) {
-            logger.error('❌ [SearchService] FAISS search error:', error);
+            logger.error('❌ [PHASE4] FAISS search error:', error);
             return [];
         }
     }

@@ -1,5 +1,6 @@
 import BaseAPI from '../common/BaseAPI.js';
 import { v4 as uuidv4 } from 'uuid';
+import { PromptSynthesis } from '../../../mcp/lib/PromptSynthesis.js';
 
 /**
  * Unified Search API that aggregates search across all Semem services
@@ -80,13 +81,20 @@ export default class UnifiedSearchAPI extends BaseAPI {
             this.ragnoAPI = apiContext['ragno-api'];
             this.zptAPI = apiContext['zpt-api'];
             this.searchAPI = apiContext['search-api'];
-            
+
+            // Initialize PromptSynthesis for answer generation
+            const llmHandler = registry.get('llm');
+            if (llmHandler) {
+                this.promptSynthesis = new PromptSynthesis(llmHandler);
+            }
+
             this.logger.info('UnifiedSearchAPI initialized successfully', {
                 availableServices: {
                     memory: !!this.memoryAPI,
                     ragno: !!this.ragnoAPI,
                     zpt: !!this.zptAPI,
-                    search: !!this.searchAPI
+                    search: !!this.searchAPI,
+                    synthesis: !!this.promptSynthesis
                 }
             });
         } catch (error) {
@@ -186,7 +194,20 @@ export default class UnifiedSearchAPI extends BaseAPI {
         
         // Update query type metrics
         this._updateQueryTypeMetrics(queryAnalysis);
-        
+
+        // Generate answer using PromptSynthesis if available and results exist
+        let answer = null;
+        if (this.promptSynthesis && mergedResults.length > 0) {
+            try {
+                answer = await this.promptSynthesis.synthesizeResponse(query, mergedResults, {
+                    mode: searchStrategy,
+                    useContext: true
+                });
+            } catch (error) {
+                this.logger.warn('Failed to synthesize answer:', error.message);
+            }
+        }
+
         return {
             success: true,
             query,
@@ -194,6 +215,7 @@ export default class UnifiedSearchAPI extends BaseAPI {
             analysis: queryAnalysis,
             servicesQueried: servicesToQuery,
             results: mergedResults,
+            answer: answer,
             metadata: {
                 totalResults: mergedResults.length,
                 searchTime,
