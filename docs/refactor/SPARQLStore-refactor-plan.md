@@ -8,7 +8,7 @@ The `SPARQLStore.js` file is a large and complex module with multiple responsibi
 
 2.  **`Search.js`:** This module will be responsible for all the search-related functionality. It will contain the `findSimilarElements` method for vector similarity search, and the `search` method for basic string matching.
 
-3.  **`Vector.js`:** This module will be responsible for all the vector-related functionality. It will contain the `calculateCosineSimilarity` and `adjustEmbeddingLength` methods. It will also manage the in-memory FAISS index.
+3.  **`Vectors.js`:** This module will be responsible for all the vector-related functionality. It will contain the `calculateCosineSimilarity` and `adjustEmbeddingLength` methods. It will also manage the in-memory FAISS index.
 
 4.  **`SPARQLCache.js`:** This module will be responsible for caching SPARQL query results. It will contain the logic for storing and retrieving cached results, as well as the cache invalidation logic.
 
