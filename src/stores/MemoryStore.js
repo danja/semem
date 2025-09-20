@@ -5,7 +5,10 @@ import graphology from 'graphology'
 const { Graph } = graphology
 
 export default class MemoryStore {
-    constructor(dimension = 1536, config = null) {
+    constructor(dimension, config = null) {
+        if (!dimension) {
+            throw new Error('Embedding dimension is required - check config.json embeddingDimension setting')
+        }
         this.dimension = dimension
         this.config = config
         this.initializeIndex()

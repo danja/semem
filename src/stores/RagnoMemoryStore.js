@@ -6,7 +6,7 @@ import { logger } from '../Utils.js';
  * Provides bidirectional sync between in-memory Graphology graph and SPARQL
  */
 export default class RagnoMemoryStore extends MemoryStore {
-    constructor(dimension = 1536, ragnoStore = null) {
+    constructor(dimension, ragnoStore = null) {
         super(dimension);
         this.ragnoStore = ragnoStore;
         this.syncQueue = [];

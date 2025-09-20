@@ -31,10 +31,14 @@ export class MemoryConfig {
         chatModel = 'qwen2:1.5b',
         embeddingModel = 'nomic-embed-text',
         storage = null,
-        dimension = 1536,
+        dimension,
         contextOptions = { maxTokens: 8192 },
         cacheOptions = { maxSize: 1000, ttl: 3600000 }
     }) {
+        if (!dimension) {
+            throw new Error('Embedding dimension is required - check config.json embeddingDimension setting')
+        }
+
         this.llmProvider = llmProvider
         this.chatModel = chatModel
         this.embeddingModel = embeddingModel

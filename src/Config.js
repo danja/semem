@@ -56,7 +56,7 @@ export default class Config {
             }
         },
         memory: {
-            dimension: 1536,
+            dimension: 768, // Should match embeddingDimension in llmProviders
             similarityThreshold: 40,
             contextWindow: 3,
             decayRate: 0.0001,

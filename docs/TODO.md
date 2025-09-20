@@ -1,3 +1,20 @@
+npm run start:api)
+  ⎿  Error: Search service not available, using memory manager for search
+     SPARQL helper not available in registry, some features may be limited
+
+Found it! The content was stored as semem:prompt not semem:output
+
+hardcoded all over the place. 1536
+768
+
+The configured embedding model is nomic-embed-text-v1.5 which has a default dimension of 768. 
+See https://docs.nomic.ai/reference/api/embed-text-v-1-embedding-text-post
+The value 1536 appears numerous times throughout the code. Remove all instances. No size should be hardcoded anywhere, not even as a fallback. The value should come from config.json via Config.js, otherwise there is an error.
+
+src/services/embeddings/EmbeddingService.js has stardardize with pad zeros
+
+Read src/stores/SPARQLStore-original.js and make a checklist of the methods in SPARQLSTORE.md Then take each method in turn and trace its namesake in SPARQLStore.js through into the module that actually implements the method. If a correct implementation exists, update the checklist. Make a note of any that are missing. Then got through each of the missing or flawed methods and implement them properly.
+
 npx vitest run tests/integration/sparql/enhanced-sparql-core.test.js --reporter=verbose
 
 node src/frontend/vsom-standalone/server.js

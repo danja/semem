@@ -10,13 +10,14 @@ export default class ClaudeConnector {
      * @param {string} apiKey - Claude API key
      * @param {string} defaultModel - Optional default model to use
      */
-    constructor(apiKey, defaultModel = 'claude-3-opus-20240229') {
+    constructor(apiKey, defaultModel = 'claude-3-opus-20240229', dimension = 768) {
         if (!apiKey) {
             throw new Error('Claude API key is required');
         }
 
         this.apiKey = apiKey;
         this.defaultModel = defaultModel;
+        this.dimension = dimension;
         this.client = null;
         this.initialized = false;
         this.initializing = false;
@@ -142,10 +143,10 @@ export default class ClaudeConnector {
         // This is a simple hash-based embedding generator as a fallback
         // It's not as good as a real embedding model but better than nothing
         const hash = this._hashCode(text);
-        const embedding = new Array(1536).fill(0);
+        const embedding = new Array(this.dimension).fill(0);
 
         // Distribute the hash values across the embedding dimensions
-        for (let i = 0; i < 1536; i++) {
+        for (let i = 0; i < this.dimension; i++) {
             const val = (hash * (i + 1)) % 1.0; // Simple pseudo-random value based on hash and position
             embedding[i] = (val - 0.5) * 2; // Scale to [-1, 1]
         }

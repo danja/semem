@@ -519,7 +519,10 @@ async function startOptimizedServer() {
         .filter(p => p.capabilities?.includes('embedding'))
         .sort((a, b) => (a.priority || 999) - (b.priority || 999))[0];
 
-      const dimension = embeddingProvider?.embeddingDimension || 768; // Default to 768 for nomic-embed-text
+      const dimension = embeddingProvider?.embeddingDimension;
+      if (!dimension) {
+        throw new Error('Embedding dimension not configured in config.json - check embeddingDimension in llmProviders');
+      }
 
       // Initialize EmbeddingService with config-based settings
       const embeddingService = new EmbeddingService({

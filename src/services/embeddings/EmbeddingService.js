@@ -3,8 +3,7 @@ import EmbeddingConnectorFactory from '../../connectors/EmbeddingConnectorFactor
 
 // Default Ollama embedding model
 const DEFAULT_MODEL = 'nomic-embed-text';
-// Default embedding dimension
-const DEFAULT_DIMENSION = 1536;
+// Embedding dimension should come from config - no hardcoded defaults
 
 /**
  * Service for generating and managing embeddings
@@ -21,7 +20,10 @@ class EmbeddingService {
     constructor(options = {}) {
         this.provider = options.provider || 'ollama';
         this.model = options.model || DEFAULT_MODEL;
-        this.dimension = options.dimension || DEFAULT_DIMENSION;
+        this.dimension = options.dimension;
+        if (!this.dimension) {
+            throw new Error('Embedding dimension is required - check config.json embeddingDimension setting');
+        }
         
         // Create embedding connector using factory
         this.connector = EmbeddingConnectorFactory.createConnector({

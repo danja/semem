@@ -18,7 +18,7 @@ export default class MemoryManager {
         chatModel = 'qwen2:1.5b',
         embeddingModel = 'nomic-embed-text',
         storage = null,
-        dimension = 1536,
+        dimension,
         config = null,
         contextOptions = {
             maxTokens: 8192
@@ -35,6 +35,10 @@ export default class MemoryManager {
         
         if (!llmProvider) {
             throw new Error('LLM provider is required')
+        }
+
+        if (!dimension) {
+            throw new Error('Embedding dimension is required - check config.json embeddingDimension setting')
         }
 
         // Use llmProvider for embeddings if no separate embeddingProvider is provided

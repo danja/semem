@@ -4,9 +4,9 @@ export class EmbeddingValidator {
         // Default dimensions for different models
         this.dimensionMap = {
             'nomic-embed-text': 768,
-            'qwen2:1.5b': 1536,
-            'llama2': 4096,
-            'default': 1536
+            'nomic-embed-text:v1.5': 768,
+            'text-embedding-3-small': 1536,
+            'text-embedding-3-large': 3072
         }
 
         // Override defaults with config
@@ -14,7 +14,11 @@ export class EmbeddingValidator {
     }
 
     getDimension(model) {
-        return this.dimensionMap[model] || this.dimensionMap.default
+        const dimension = this.dimensionMap[model];
+        if (!dimension) {
+            throw new Error(`Unknown embedding model dimension for: ${model}. Configure in dimensionMap or use config.json embeddingDimension.`);
+        }
+        return dimension;
     }
 
     validateEmbedding(embedding, expectedDimension) {

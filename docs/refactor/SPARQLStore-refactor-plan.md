@@ -23,7 +23,10 @@ The `SPARQLStore.js` file is a large and complex module with multiple responsibi
 1.  Create the new files for each module.
 2.  Move the relevant code from `SPARQLStore.js` to the new modules.
 3.  Update the imports and exports in all the affected files.
+4.  Create a Vitest test for each of the new files 
 4.  Create a new `SPARQLStore.js` that will act as a facade and compose the different modules.
 5.  Update the rest of the application to use the new `SPARQLStore.js` facade.
 
-This refactoring will result in a more modular and maintainable codebase. It will also make it easier to test the different parts of the SPARQL store in isolation.
+Code and tests should all follow existing patterns, in particular the current use of .env with dotenv for environment variables, config.json with Config.js and numeric constants in preferences.js
+
+The aim is a more a more modular and maintainable codebase. 

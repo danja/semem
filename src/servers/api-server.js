@@ -164,7 +164,19 @@ class APIServer {
         const modelConfig = await this.getModelConfig(this.config);
         this.logger.info('Using model configuration:', modelConfig);
         
-        const dimension = this.config.get('memory.dimension') || 1536;
+        // Get embedding dimension from the embedding provider configuration
+        const llmProviders = this.config.get('llmProviders') || [];
+        const embeddingProviderConfig = llmProviders
+            .filter(p => p.capabilities?.includes('embedding'))
+            .sort((a, b) => (a.priority || 999) - (b.priority || 999))[0];
+
+        const dimension = embeddingProviderConfig?.embeddingDimension;
+        if (!dimension) {
+            throw new Error('Embedding dimension not configured in config.json - check embeddingDimension in llmProviders');
+        }
+
+        // Store dimension for use in other methods
+        this.embeddingDimension = dimension;
 
         // Initialize cache manager
         const cacheManager = new CacheManager({
@@ -237,6 +249,8 @@ class APIServer {
             llm: llmHandler,
             storage: storage,
             sparqlStore: storage, // Alias for backwards compatibility
+            search: memoryManager, // SearchAPI expects this for search functionality
+            sparql: storage, // WikidataAPI expects this for SPARQL helper
             apis: {}
         };
 
@@ -440,13 +454,13 @@ class APIServer {
         await zptApi.initialize();
 
         // Initialize VSOM API
-        const dimension = 1536; // Default embedding dimension
+        // Use the same dimension as already determined above
         const vsomApi = new VSOMAPI({
             registry: this.apiRegistry,
             logger: this.logger,
             maxInstancesPerSession: 5,
             defaultMapSize: [20, 20],
-            defaultEmbeddingDim: dimension
+            defaultEmbeddingDim: this.embeddingDimension
         });
         await vsomApi.initialize();
 
@@ -1183,7 +1197,7 @@ class APIServer {
                         stats.search = {
                             indexedItems: searchService.index.ntotal ? searchService.index.ntotal() : 0,
                             indexType: 'faiss',
-                            dimension: searchService.dimension || 1536
+                            dimension: searchService.dimension || this.embeddingDimension
                         };
                     }
                 } catch (error) {

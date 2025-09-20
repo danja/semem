@@ -178,7 +178,7 @@ class SearchServer {
             await config.init();
             
             // Get embedding provider configuration
-            const embeddingProvider = config.get('embeddingProvider') || 'ollama';
+            const embeddingProvider = config.get('embeddingProvider') || 'ollama'; // TODO why?
             const embeddingModel = config.get('embeddingModel') || 'nomic-embed-text';
             
             logger.info(`Creating embedding connector: ${embeddingProvider} (${embeddingModel})`);

@@ -21,7 +21,10 @@ class SearchService {
         this.embeddingService = options.embeddingService || new EmbeddingService();
         this.sparqlService = options.sparqlService || new SPARQLService();
         this.graphName = options.graphName || 'http://hyperdata.it/content';
-        this.dimension = options.dimension || 1536;
+        this.dimension = options.dimension;
+        if (!this.dimension) {
+            throw new Error('Embedding dimension is required - check config.json embeddingDimension setting');
+        }
 
         this.initialized = false;
         this.index = null;
