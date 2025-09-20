@@ -4,19 +4,19 @@ The `SPARQLStore.js` file is a large and complex module with multiple responsibi
 
 ## Proposed Modules:
 
-1.  **`SPARQLCore.js`:** This module will be responsible for the low-level interaction with the SPARQL endpoint. It will contain the `executeSparqlQuery` and `executeSparqlUpdate` methods, as well as the transaction management logic (`beginTransaction`, `commitTransaction`, `rollbackTransaction`).
+1.  **`SPARQLExecute.js`:** This module will be responsible for the low-level interaction with the SPARQL endpoint. It will contain the `executeSparqlQuery` and `executeSparqlUpdate` methods, as well as the transaction management logic (`beginTransaction`, `commitTransaction`, `rollbackTransaction`).
 
-2.  **`SPARQLSearch.js`:** This module will be responsible for all the search-related functionality. It will contain the `findSimilarElements` method for vector similarity search, and the `search` method for basic string matching.
+2.  **`Search.js`:** This module will be responsible for all the search-related functionality. It will contain the `findSimilarElements` method for vector similarity search, and the `search` method for basic string matching.
 
-3.  **`SPARQLVector.js`:** This module will be responsible for all the vector-related functionality. It will contain the `calculateCosineSimilarity` and `adjustEmbeddingLength` methods. It will also manage the in-memory FAISS index.
+3.  **`Vector.js`:** This module will be responsible for all the vector-related functionality. It will contain the `calculateCosineSimilarity` and `adjustEmbeddingLength` methods. It will also manage the in-memory FAISS index.
 
 4.  **`SPARQLCache.js`:** This module will be responsible for caching SPARQL query results. It will contain the logic for storing and retrieving cached results, as well as the cache invalidation logic.
 
-5.  **`SPARQLData.js`:** This module will be responsible for loading and saving data from/to the SPARQL store. It will contain the `loadHistory` and `saveMemoryToHistory` methods, as well as the `storeEntity`, `storeSemanticUnit`, `storeRelationship`, and `storeCommunity` methods.
+5.  **`Store.js`:** This module will be responsible for loading and saving data from/to the SPARQL store. It will contain the `loadHistory` and `saveMemoryToHistory` methods, as well as the `storeEntity`, `storeSemanticUnit`, `storeRelationship`, and `storeCommunity` methods.
 
-6.  **`SPARQLZPT.js`:** This module will be responsible for the ZPT-related functionality. It will contain the `queryByZoomLevel` and `buildFilterClauses` methods.
+6.  **`ZPT.js`:** This module will be responsible for the ZPT-related functionality. It will contain the `queryByZoomLevel` and `buildFilterClauses` methods.
 
-7.  **`SPARQLGraph.js`:** This module will be responsible for the graph-related functionality. It will contain the `traverseGraph` and `validateCorpus` methods.
+7.  **`Graph.js`:** This module will be responsible for the graph-related functionality. It will contain the `traverseGraph` and `validateCorpus` methods.
 
 ## Refactoring Steps:
 
