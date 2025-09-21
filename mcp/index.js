@@ -61,6 +61,10 @@ function registerPromptHandlers(server) {
   // List prompts handler
   server.setRequestHandler(ListPromptsRequestSchema, async () => {
     try {
+      // Ensure prompt registry is initialized
+      if (!promptRegistry.initialized) {
+        await initializePromptRegistry();
+      }
       const prompts = promptRegistry.listPrompts();
       mcpDebugger.info(`Listed ${prompts.length} available prompts`);
       
@@ -86,6 +90,11 @@ function registerPromptHandlers(server) {
   // Get prompt handler
   server.setRequestHandler(GetPromptRequestSchema, async (request) => {
     try {
+      // Ensure prompt registry is initialized
+      if (!promptRegistry.initialized) {
+        await initializePromptRegistry();
+      }
+
       const { name } = request.params;
       if (!name) {
         throw new Error('Prompt name is required');
@@ -143,7 +152,12 @@ function registerPromptHandlers(server) {
       
       const promptName = ref.name;
       mcpDebugger.info(`Executing prompt: ${promptName}`, { argument });
-      
+
+      // Ensure prompt registry is initialized
+      if (!promptRegistry.initialized) {
+        await initializePromptRegistry();
+      }
+
       const prompt = promptRegistry.getPrompt(promptName);
       if (!prompt) {
         throw new Error(`Prompt not found: ${promptName}`);
@@ -2678,10 +2692,100 @@ function registerToolCallHandler(server) {
 }
 
 /**
+ * Register minimal tool handler for Inspector mode
+ */
+function registerInspectorToolHandler(server) {
+  // Register minimal tools list
+  server.setRequestHandler(ListToolsRequestSchema, async () => {
+    return {
+      tools: [
+        {
+          name: 'tell',
+          description: 'Store information in semantic memory (Inspector demo mode)',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              content: { type: 'string', description: 'Content to store' }
+            },
+            required: ['content']
+          }
+        },
+        {
+          name: 'ask',
+          description: 'Query semantic memory (Inspector demo mode)',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              question: { type: 'string', description: 'Question to ask' }
+            },
+            required: ['question']
+          }
+        }
+      ]
+    };
+  });
+
+  // Register minimal tool call handler
+  server.setRequestHandler(CallToolRequestSchema, async (request) => {
+    const { name, arguments: args } = request.params;
+
+    switch (name) {
+      case 'tell':
+        return {
+          content: [{
+            type: 'text',
+            text: JSON.stringify({
+              success: true,
+              message: 'Inspector demo mode: Content stored successfully',
+              content: args.content?.substring(0, 100) + '...',
+              note: 'This is a demo response. For full functionality, use Claude Desktop/Code.'
+            }, null, 2)
+          }]
+        };
+
+      case 'ask':
+        return {
+          content: [{
+            type: 'text',
+            text: JSON.stringify({
+              success: true,
+              question: args.question,
+              answer: 'Inspector demo mode: This would query the semantic memory system.',
+              note: 'This is a demo response. For full functionality, use Claude Desktop/Code.'
+            }, null, 2)
+          }]
+        };
+
+      default:
+        throw new Error(`Tool not available in Inspector mode: ${name}. Use "node mcp/inspector-clean.js" for more tools or Claude Desktop/Code for full functionality.`);
+    }
+  });
+}
+
+/**
  * Create and configure MCP server
  */
 async function createServer() {
   mcpDebugger.info('Creating MCP server with config', mcpConfig);
+
+  // Helper function for smart initialization that won't block Inspector
+  async function initForTool() {
+    // Check if running in Inspector mode
+    const isInspectorMode = process.argv.some(arg => arg.includes('inspector')) ||
+                            process.env.MCP_INSPECTOR_MODE === 'true';
+
+    if (isInspectorMode) {
+      throw new Error('Inspector demo mode: This tool requires full Semem initialization. Use "node mcp/inspector-clean.js" for Inspector-compatible testing.');
+    }
+
+    try {
+      await initializeServices();
+      const { getMemoryManager } = await import('./lib/initialization.js');
+      return getMemoryManager();
+    } catch (error) {
+      throw new Error(`Tool requires Semem initialization: ${error.message}`);
+    }
+  }
   
   // Create MCP server instance using reference server pattern
   const server = new Server(
@@ -2716,43 +2820,91 @@ async function createServer() {
   //   return originalSetRequestHandler.call(this, schema, wrappedHandler);
   // };
 
-  // Services will be initialized lazily when tools are called
-  mcpDebugger.info('Services will be initialized when first tool is called...');
+  // Check if running in Inspector mode (detect by checking if running via Inspector)
+  const isInspectorMode = process.env.MCP_INSPECTOR_MODE === 'true' ||
+                          process.argv.some(arg => arg.includes('inspector')) ||
+                          process.env.NODE_ENV === 'inspector';
 
-  // Initialize prompt registry
-  mcpDebugger.info('Initializing prompt registry...');
-  await initializePromptRegistry();
-  mcpDebugger.info('Prompt registry initialized successfully');
+  if (isInspectorMode) {
+    mcpDebugger.info('🔍 Inspector mode detected - using lightweight initialization');
+  } else {
+    mcpDebugger.info('Services will be initialized when first tool is called...');
+  }
 
-  // Initialize enhanced workflow orchestrator
-  mcpDebugger.info('Initializing enhanced workflow orchestrator...');
-  await workflowOrchestrator.initialize(server);
-  mcpDebugger.info('Enhanced workflow orchestrator initialized successfully');
+  // Prompt registry and workflow orchestrator will be initialized lazily when first needed
+  mcpDebugger.debug('Prompt registry and workflow orchestrator will be initialized on first use');
 
-  // Register prompt handlers
-  registerPromptHandlers(server);
+  // Register prompt handlers (temporarily disabled for Inspector debugging)
+  if (!isInspectorMode) {
+    registerPromptHandlers(server);
+  }
   
   // Register centralized tool call handler (works with correct argument passing)
-  registerToolCallHandler(server);
+  if (!isInspectorMode) {
+    registerToolCallHandler(server);
+  } else {
+    // Register minimal tool handler for Inspector mode
+    registerInspectorToolHandler(server);
+  }
 
-  // Register Simple Verbs - PROMINENTLY FEATURED simplified interface
+  // Register Simple Verbs - core interface (now works in Inspector mode with lazy initialization)
   mcpDebugger.info('🌟 Registering Simple MCP Verbs (tell, ask, augment, zoom, pan, tilt, inspect)...');
   registerSimpleVerbs(server);
   mcpDebugger.info('🌟 Simple MCP Verbs registered successfully - these provide the primary interface');
 
-  // Register all tools using a consistent pattern
-  mcpDebugger.info('Registering all tools...');
-  registerZPTTools(server);
-  registerResearchWorkflowTools(server);
-  registerRagnoTools(server);
-  registerSPARQLTools(server);
-  registerVSOMTools(server);
-  mcpDebugger.info('All complex tools registered (legacy/advanced interface).');
+  // Register complex tools - testing each one individually
+  mcpDebugger.info('Registering additional tools...');
 
-  // Register all resources
-  mcpDebugger.info('Registering resources using setRequestHandler pattern...');
-  registerResourceHandlers(server);
-  mcpDebugger.info('All resources registered.');
+  // Test SPARQL tools first (least likely to have blocking operations during registration)
+  try {
+    registerSPARQLTools(server);
+    mcpDebugger.info('SPARQL tools registered');
+  } catch (error) {
+    mcpDebugger.error('Failed to register SPARQL tools:', error);
+  }
+
+  // Test VSOM tools
+  try {
+    registerVSOMTools(server);
+    mcpDebugger.info('VSOM tools registered');
+  } catch (error) {
+    mcpDebugger.error('Failed to register VSOM tools:', error);
+  }
+
+  // Test Ragno tools
+  try {
+    registerRagnoTools(server);
+    mcpDebugger.info('Ragno tools registered');
+  } catch (error) {
+    mcpDebugger.error('Failed to register Ragno tools:', error);
+  }
+
+  // Test ZPT tools with lazy loading
+  try {
+    registerZPTTools(server);
+    mcpDebugger.info('ZPT tools registered');
+  } catch (error) {
+    mcpDebugger.error('Failed to register ZPT tools:', error);
+  }
+
+  // Test Research Workflow tools
+  try {
+    registerResearchWorkflowTools(server);
+    mcpDebugger.info('Research Workflow tools registered');
+  } catch (error) {
+    mcpDebugger.error('Failed to register Research Workflow tools:', error);
+  }
+
+  mcpDebugger.info('Tool registration completed');
+
+  // Register resources
+  try {
+    mcpDebugger.info('Registering resources using setRequestHandler pattern...');
+    registerResourceHandlers(server);
+    mcpDebugger.info('All resources registered.');
+  } catch (error) {
+    mcpDebugger.error('Failed to register resources:', error);
+  }
 
   // Register prompt tools (disabled - using broken server.tool pattern)
   mcpDebugger.info('Prompt tools temporarily disabled due to setRequestHandler migration...');

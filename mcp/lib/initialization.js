@@ -6,95 +6,126 @@ import { fileURLToPath } from 'url';
 import MemoryManager from '../../src/MemoryManager.js';
 import Config from '../../src/Config.js';
 import { createLLMConnector, createEmbeddingConnector, getModelConfig } from './config.js';
+import { mcpDebugger } from './debug-utils.js';
 
 // Global instances for reuse
 let memoryManager = null;
 let config = null;
 
 /**
+ * Non-blocking service check for Inspector compatibility
+ */
+export function requireServices() {
+  if (!memoryManager || !config) {
+    throw new Error('Services not initialized. Use initializeServices() first or run in full mode.');
+  }
+  return { memoryManager, config };
+}
+
+/**
+ * Fast initialization check for Inspector mode
+ */
+export async function initializeServicesQuick() {
+  // If already initialized, return immediately
+  if (memoryManager && config) {
+    mcpDebugger.debug('✅ Services already initialized, returning cached instances');
+    return { memoryManager, config };
+  }
+
+  // For Inspector mode, provide demo mode instead of real initialization
+  if (process.env.MCP_INSPECTOR_MODE === 'true') {
+    mcpDebugger.debug('🔍 Inspector mode detected, providing demo services');
+    throw new Error('Inspector demo mode: This tool requires full Semem initialization. Use the clean inspector server for testing.');
+  }
+
+  // For production mode, do full initialization
+  return await initializeServices();
+}
+
+/**
  * Initialize Semem services
  */
 export async function initializeServices() {
   if (memoryManager && config) {
-    console.log('✅ Services already initialized, returning cached instances');
+    mcpDebugger.info('✅ Services already initialized, returning cached instances');
     return { memoryManager, config }; // Already initialized
   }
 
   try {
-    console.log('🚀 [INIT] Starting Semem services initialization...');
+    mcpDebugger.info('🚀 [INIT] Starting Semem services initialization...');
     
     // Initialize config first
-    console.log('📝 [CONFIG] Initializing config...');
+    mcpDebugger.info('📝 [CONFIG] Initializing config...');
     // Use project root instead of process.cwd() to handle different working directories
     const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
     const configPath = process.env.SEMEM_CONFIG_PATH || path.join(projectRoot, 'config', 'config.json');
-    console.log(`📝 [CONFIG] Environment SEMEM_CONFIG_PATH: ${process.env.SEMEM_CONFIG_PATH}`);
-    console.log(`📝 [CONFIG] Resolved config file path: ${configPath}`);
+    mcpDebugger.debug(`📝 [CONFIG] Environment SEMEM_CONFIG_PATH: ${process.env.SEMEM_CONFIG_PATH}`);
+    mcpDebugger.debug(`📝 [CONFIG] Resolved config file path: ${configPath}`);
     
-    console.log('📝 [CONFIG] Creating Config instance...');
+    mcpDebugger.info('📝 [CONFIG] Creating Config instance...');
     config = new Config(configPath);
     
-    console.log('📝 [CONFIG] Calling config.init()...');
+    mcpDebugger.info('📝 [CONFIG] Calling config.init()...');
     try {
       await config.init();
-      console.log('✅ [CONFIG] Config initialized successfully');
+      mcpDebugger.info('✅ [CONFIG] Config initialized successfully');
     } catch (configError) {
-      console.error('❌ [CONFIG] Config initialization failed with detailed error:', configError);
+      mcpDebugger.error('❌ [CONFIG] Config initialization failed with detailed error:', configError);
       throw configError;
     }
     
     // Initialize memory manager
-    console.log('🧠 [MEMORY] Starting memory manager initialization...');
+    mcpDebugger.info('🧠 [MEMORY] Starting memory manager initialization...');
     
     // Create separate LLM and embedding providers
-    console.log('🤖 [LLM] Creating LLM connector...');
+    mcpDebugger.info('🤖 [LLM] Creating LLM connector...');
     const llmProvider = await createLLMConnector(configPath);
-    console.log('✅ [LLM] LLM provider created for chat operations');
+    mcpDebugger.info('✅ [LLM] LLM provider created for chat operations');
     
-    console.log('🔢 [EMBED] Creating embedding connector...');
+    mcpDebugger.info('🔢 [EMBED] Creating embedding connector...');
     const embeddingProvider = await createEmbeddingConnector(configPath);
-    console.log('✅ [EMBED] Embedding provider created for embedding operations');
+    mcpDebugger.info('✅ [EMBED] Embedding provider created for embedding operations');
     
     // Initialize MemoryManager with proper parameters
     // Create storage backend based on config
-    console.log('💾 [STORAGE] Initializing storage backend...');
+    mcpDebugger.info('💾 [STORAGE] Initializing storage backend...');
     let storageBackend = null;
     const storageType = config.get('storage.type');
-    console.log(`💾 [STORAGE] Storage type: ${storageType}`);
+    mcpDebugger.info(`💾 [STORAGE] Storage type: ${storageType}`);
     
     if (storageType === 'sparql') {
-      console.log('💾 [STORAGE] Importing SPARQLStore...');
+      mcpDebugger.info('💾 [STORAGE] Importing SPARQLStore...');
       const { default: SPARQLStore } = await import('../../src/stores/SPARQLStore.js');
-      console.log('💾 [STORAGE] Getting storage options...');
+      mcpDebugger.info('💾 [STORAGE] Getting storage options...');
       const storageOptions = config.get('storage.options');
-      console.log('💾 [STORAGE] Storage options:', JSON.stringify(storageOptions, null, 2));
+      mcpDebugger.info('💾 [STORAGE] Storage options:', JSON.stringify(storageOptions, null, 2));
       
       // Ensure we use the consistent graph from config, not the SPARQLStore default
       const configuredGraphName = config.get('graphName') || 'http://tensegrity.it/semem';
       storageOptions.graphName = configuredGraphName;
-      console.log('💾 [STORAGE] Using configured graphName:', storageOptions.graphName);
+      mcpDebugger.info('💾 [STORAGE] Using configured graphName:', storageOptions.graphName);
       
-      console.log('💾 [STORAGE] Creating SPARQLStore instance...');
+      mcpDebugger.info('💾 [STORAGE] Creating SPARQLStore instance...');
       storageBackend = new SPARQLStore(storageOptions);
-      console.log('✅ [STORAGE] SPARQLStore created');
+      mcpDebugger.info('✅ [STORAGE] SPARQLStore created');
     } else if (storageType === 'json') {
-      console.log('💾 [STORAGE] Importing JSONStore...');
+      mcpDebugger.info('💾 [STORAGE] Importing JSONStore...');
       const { default: JSONStore } = await import('../../src/stores/JSONStore.js');
-      console.log('💾 [STORAGE] Getting storage options...');
+      mcpDebugger.info('💾 [STORAGE] Getting storage options...');
       const storageOptions = config.get('storage.options');
-      console.log('💾 [STORAGE] Creating JSONStore instance...');
+      mcpDebugger.info('💾 [STORAGE] Creating JSONStore instance...');
       storageBackend = new JSONStore(storageOptions.path);
-      console.log('✅ [STORAGE] JSONStore created');
+      mcpDebugger.info('✅ [STORAGE] JSONStore created');
     } else {
-      console.log('💾 [STORAGE] Using default InMemoryStore (no backend specified)');
+      mcpDebugger.info('💾 [STORAGE] Using default InMemoryStore (no backend specified)');
     }
     
     // Get model configuration from config.json
-    console.log('⚙️ [MODEL] Getting model configuration...');
+    mcpDebugger.info('⚙️ [MODEL] Getting model configuration...');
     const modelConfig = await getModelConfig(configPath);
-    console.log('⚙️ [MODEL] Using model configuration:', modelConfig);
+    mcpDebugger.info('⚙️ [MODEL] Using model configuration:', modelConfig);
     
-    console.log('🧠 [MEMORY] Creating MemoryManager instance...');
+    mcpDebugger.info('🧠 [MEMORY] Creating MemoryManager instance...');
     memoryManager = new MemoryManager({
       llmProvider,
       embeddingProvider,
@@ -103,17 +134,17 @@ export async function initializeServices() {
       storage: storageBackend,
       config: config
     });
-    console.log('✅ [MEMORY] MemoryManager instance created');
+    mcpDebugger.info('✅ [MEMORY] MemoryManager instance created');
     
-    console.log('🧠 [MEMORY] Calling memoryManager.initialize()...');
+    mcpDebugger.info('🧠 [MEMORY] Calling memoryManager.initialize()...');
     await memoryManager.initialize();
-    console.log('✅ [MEMORY] Memory manager initialized successfully');
+    mcpDebugger.info('✅ [MEMORY] Memory manager initialized successfully');
     
-    console.log('🎉 [INIT] Semem services initialized successfully');
+    mcpDebugger.info('🎉 [INIT] Semem services initialized successfully');
     return { memoryManager, config };
   } catch (error) {
-    console.error('❌ [INIT] Failed to initialize Semem services:', error);
-    console.error('❌ [INIT] Error stack:', error.stack);
+    mcpDebugger.error('❌ [INIT] Failed to initialize Semem services:', error);
+    mcpDebugger.error('❌ [INIT] Error stack:', error.stack);
     throw error;
   }
 }
@@ -138,55 +169,55 @@ export function getConfig() {
  */
 export async function createIsolatedServices() {
   try {
-    console.log('🚀 [ISOLATED] Creating isolated Semem services...');
+    mcpDebugger.info('🚀 [ISOLATED] Creating isolated Semem services...');
     
     // Initialize config first
-    console.log('📝 [ISOLATED-CONFIG] Initializing config...');
+    mcpDebugger.info('📝 [ISOLATED-CONFIG] Initializing config...');
     // Use project root instead of process.cwd() to handle different working directories
     const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
     const configPath = process.env.SEMEM_CONFIG_PATH || path.join(projectRoot, 'config', 'config.json');
-    console.log(`📝 [ISOLATED-CONFIG] Config file path: ${configPath}`);
+    mcpDebugger.info(`📝 [ISOLATED-CONFIG] Config file path: ${configPath}`);
     
     const isolatedConfig = new Config(configPath);
     await isolatedConfig.init();
-    console.log('✅ [ISOLATED-CONFIG] Config initialized successfully');
+    mcpDebugger.info('✅ [ISOLATED-CONFIG] Config initialized successfully');
     
     // Create separate LLM and embedding providers
-    console.log('🤖 [ISOLATED-LLM] Creating LLM connector...');
+    mcpDebugger.info('🤖 [ISOLATED-LLM] Creating LLM connector...');
     const llmProvider = await createLLMConnector(configPath);
-    console.log('✅ [ISOLATED-LLM] LLM provider created');
+    mcpDebugger.info('✅ [ISOLATED-LLM] LLM provider created');
     
-    console.log('🔢 [ISOLATED-EMBED] Creating embedding connector...');
+    mcpDebugger.info('🔢 [ISOLATED-EMBED] Creating embedding connector...');
     const embeddingProvider = await createEmbeddingConnector(configPath);
-    console.log('✅ [ISOLATED-EMBED] Embedding provider created');
+    mcpDebugger.info('✅ [ISOLATED-EMBED] Embedding provider created');
     
     // Initialize storage backend
-    console.log('💾 [ISOLATED-STORAGE] Initializing storage backend...');
+    mcpDebugger.info('💾 [ISOLATED-STORAGE] Initializing storage backend...');
     let storageBackend = null;
     const storageType = isolatedConfig.get('storage.type');
-    console.log(`💾 [ISOLATED-STORAGE] Storage type: ${storageType}`);
+    mcpDebugger.info(`💾 [ISOLATED-STORAGE] Storage type: ${storageType}`);
     
     if (storageType === 'sparql') {
       const { default: SPARQLStore } = await import('../../src/stores/SPARQLStore.js');
       const storageOptions = isolatedConfig.get('storage.options');
       storageBackend = new SPARQLStore(storageOptions);
-      console.log('✅ [ISOLATED-STORAGE] SPARQLStore created');
+      mcpDebugger.info('✅ [ISOLATED-STORAGE] SPARQLStore created');
     } else if (storageType === 'json') {
       const { default: JSONStore } = await import('../../src/stores/JSONStore.js');
       const storageOptions = isolatedConfig.get('storage.options');
       storageBackend = new JSONStore(storageOptions.path);
-      console.log('✅ [ISOLATED-STORAGE] JSONStore created');
+      mcpDebugger.info('✅ [ISOLATED-STORAGE] JSONStore created');
     } else {
-      console.log('💾 [ISOLATED-STORAGE] Using default InMemoryStore');
+      mcpDebugger.info('💾 [ISOLATED-STORAGE] Using default InMemoryStore');
     }
     
     // Get model configuration
-    console.log('⚙️ [ISOLATED-MODEL] Getting model configuration...');
+    mcpDebugger.info('⚙️ [ISOLATED-MODEL] Getting model configuration...');
     const modelConfig = await getModelConfig(configPath);
-    console.log('⚙️ [ISOLATED-MODEL] Using model configuration:', modelConfig);
+    mcpDebugger.info('⚙️ [ISOLATED-MODEL] Using model configuration:', modelConfig);
     
     // Create isolated MemoryManager
-    console.log('🧠 [ISOLATED-MEMORY] Creating MemoryManager instance...');
+    mcpDebugger.info('🧠 [ISOLATED-MEMORY] Creating MemoryManager instance...');
     const isolatedMemoryManager = new MemoryManager({
       llmProvider,
       embeddingProvider,
@@ -194,20 +225,20 @@ export async function createIsolatedServices() {
       embeddingModel: modelConfig.embeddingModel,
       storage: storageBackend
     });
-    console.log('✅ [ISOLATED-MEMORY] MemoryManager instance created');
+    mcpDebugger.info('✅ [ISOLATED-MEMORY] MemoryManager instance created');
     
-    console.log('🧠 [ISOLATED-MEMORY] Initializing memory manager...');
+    mcpDebugger.info('🧠 [ISOLATED-MEMORY] Initializing memory manager...');
     await isolatedMemoryManager.initialize();
-    console.log('✅ [ISOLATED-MEMORY] Memory manager initialized successfully');
+    mcpDebugger.info('✅ [ISOLATED-MEMORY] Memory manager initialized successfully');
     
-    console.log('🎉 [ISOLATED] Isolated Semem services created successfully');
+    mcpDebugger.info('🎉 [ISOLATED] Isolated Semem services created successfully');
     return { 
       memoryManager: isolatedMemoryManager, 
       config: isolatedConfig 
     };
   } catch (error) {
-    console.error('❌ [ISOLATED] Failed to create isolated Semem services:', error);
-    console.error('❌ [ISOLATED] Error stack:', error.stack);
+    mcpDebugger.error('❌ [ISOLATED] Failed to create isolated Semem services:', error);
+    mcpDebugger.error('❌ [ISOLATED] Error stack:', error.stack);
     throw error;
   }
 }

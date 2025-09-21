@@ -11,15 +11,7 @@ import { initializeServices, getMemoryManager } from '../lib/initialization.js';
 import { SafeOperations } from '../lib/safe-operations.js';
 import { mcpDebugger } from '../lib/debug-utils.js';
 
-// Import ZPT components for real data integration
-import CorpuscleSelector from '../../src/zpt/selection/CorpuscleSelector.js';
-import CorpuscleTransformer from '../../src/zpt/transform/CorpuscleTransformer.js';
-import ParameterValidator from '../../src/zpt/parameters/ParameterValidator.js';
-import ParameterNormalizer from '../../src/zpt/parameters/ParameterNormalizer.js';
-
-// Import ZPT ontology integration
-import { NamespaceUtils } from '../../src/zpt/ontology/ZPTNamespaces.js';
-import { ZPTDataFactory } from '../../src/zpt/ontology/ZPTDataFactory.js';
+// ZPT components will be loaded lazily to avoid blocking imports
 
 // ZPT Tool Names
 const ZPTToolName = {
@@ -74,16 +66,10 @@ class ZPTNavigationService {
     this.memoryManager = memoryManager;
     this.safeOps = safeOps;
 
-    // Initialize ZPT components
-    this.parameterValidator = new ParameterValidator();
-    this.parameterNormalizer = new ParameterNormalizer();
-
-    // Initialize ZPT ontology integration
-    this.zptDataFactory = new ZPTDataFactory({
-      navigationGraph: 'http://purl.org/stuff/navigation'
-    });
-
-    // Initialize corpus selector and transformer (will be set when corpus is available)
+    // Lazy initialization - components will be loaded when needed
+    this.parameterValidator = null;
+    this.parameterNormalizer = null;
+    this.zptDataFactory = null;
     this.corpuscleSelector = null;
     this.corpuscleTransformer = null;
 
@@ -95,6 +81,31 @@ class ZPTNavigationService {
       maxTransformationTime: 45000,
       useZPTOntology: true // Enable ZPT URI usage
     };
+  }
+
+  /**
+   * Initialize ZPT components lazily
+   */
+  async initializeComponents() {
+    if (this.parameterValidator) {
+      return; // Already initialized
+    }
+
+    try {
+      // Lazy import ZPT components
+      const { default: ParameterValidator } = await import('../../src/zpt/parameters/ParameterValidator.js');
+      const { default: ParameterNormalizer } = await import('../../src/zpt/parameters/ParameterNormalizer.js');
+      const { ZPTDataFactory } = await import('../../src/zpt/ontology/ZPTDataFactory.js');
+
+      this.parameterValidator = new ParameterValidator();
+      this.parameterNormalizer = new ParameterNormalizer();
+      this.zptDataFactory = new ZPTDataFactory({
+        navigationGraph: 'http://purl.org/stuff/navigation'
+      });
+    } catch (error) {
+      mcpDebugger.error('Failed to initialize ZPT components:', error);
+      throw error;
+    }
   }
 
   /**
@@ -1817,7 +1828,15 @@ class ZPTNavigationService {
 export function registerZPTTools(server) {
   mcpDebugger.info('Registering ZPT tools...');
 
-  const service = new ZPTNavigationService();
+  // Lazy initialization - create service only when needed
+  let service = null;
+
+  function getService() {
+    if (!service) {
+      service = new ZPTNavigationService();
+    }
+    return service;
+  }
 
 
   server.tool(
@@ -1828,9 +1847,10 @@ export function registerZPTTools(server) {
       await initializeServices();
       const memoryManager = getMemoryManager();
       const safeOps = new SafeOperations(memoryManager);
-      service.memoryManager = memoryManager;
-      service.safeOps = safeOps;
-      const result = await service.preview(query, zoom, pan);
+      const svc = getService();
+      svc.memoryManager = memoryManager;
+      svc.safeOps = safeOps;
+      const result = await svc.preview(query, zoom, pan);
       return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
     }
   );
@@ -1843,9 +1863,10 @@ export function registerZPTTools(server) {
       await initializeServices();
       const memoryManager = getMemoryManager();
       const safeOps = new SafeOperations(memoryManager);
-      service.memoryManager = memoryManager;
-      service.safeOps = safeOps;
-      const result = await service.getSchema();
+      const svc = getService();
+      svc.memoryManager = memoryManager;
+      svc.safeOps = safeOps;
+      const result = await svc.getSchema();
       return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
     }
   );
@@ -1858,9 +1879,10 @@ export function registerZPTTools(server) {
       await initializeServices();
       const memoryManager = getMemoryManager();
       const safeOps = new SafeOperations(memoryManager);
-      service.memoryManager = memoryManager;
-      service.safeOps = safeOps;
-      const result = await service.validateParams(params);
+      const svc = getService();
+      svc.memoryManager = memoryManager;
+      svc.safeOps = safeOps;
+      const result = await svc.validateParams(params);
       return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
     }
   );
@@ -1873,9 +1895,10 @@ export function registerZPTTools(server) {
       await initializeServices();
       const memoryManager = getMemoryManager();
       const safeOps = new SafeOperations(memoryManager);
-      service.memoryManager = memoryManager;
-      service.safeOps = safeOps;
-      const result = await service.getOptions(context, query);
+      const svc = getService();
+      svc.memoryManager = memoryManager;
+      svc.safeOps = safeOps;
+      const result = await svc.getOptions(context, query);
       return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
     }
   );
@@ -1888,9 +1911,10 @@ export function registerZPTTools(server) {
       await initializeServices();
       const memoryManager = getMemoryManager();
       const safeOps = new SafeOperations(memoryManager);
-      service.memoryManager = memoryManager;
-      service.safeOps = safeOps;
-      const result = await service.analyzeCorpus(analysisType, includeStats);
+      const svc = getService();
+      svc.memoryManager = memoryManager;
+      svc.safeOps = safeOps;
+      const result = await svc.analyzeCorpus(analysisType, includeStats);
       return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
     }
   );

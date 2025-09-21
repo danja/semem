@@ -7,6 +7,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs/promises';
+import { mcpDebugger } from './lib/debug-utils.js';
 
 // Load environment variables first, before any other imports
 const __filename = fileURLToPath(import.meta.url);
@@ -15,8 +16,8 @@ const projectRoot = path.resolve(__dirname, '..');
 dotenv.config({ path: path.join(projectRoot, '.env') });
 
 // Debug: Check if API keys are loaded
-console.log('🔑 MISTRAL_API_KEY loaded:', process.env.MISTRAL_API_KEY ? 'YES' : 'NO');
-console.log('🔑 CLAUDE_API_KEY loaded:', process.env.CLAUDE_API_KEY ? 'YES' : 'NO');
+mcpDebugger.info('🔑 MISTRAL_API_KEY loaded:', process.env.MISTRAL_API_KEY ? 'YES' : 'NO');
+mcpDebugger.info('🔑 CLAUDE_API_KEY loaded:', process.env.CLAUDE_API_KEY ? 'YES' : 'NO');
 
 import express from 'express';
 import cors from 'cors';
@@ -25,13 +26,12 @@ import { randomUUID } from 'crypto';
 import { createHttpTerminator } from 'http-terminator';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { McpServer as Server } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { mcpDebugger } from './lib/debug-utils.js';
 import { mcpConfig } from './lib/config.js';
 import Config from '../src/Config.js';
 import { PromptSynthesis } from './lib/PromptSynthesis.js';
 import { SearchService } from '../src/services/SearchService.js';
 
-console.log('🚀 HTTP SERVER: Starting script execution...');
+mcpDebugger.info('🚀 HTTP SERVER: Starting script execution...');
 
 // Initialize config to get port from config.json
 let port = process.env.PORT || process.env.MCP_PORT || 3000;
@@ -40,15 +40,15 @@ try {
   const config = new Config(configPath);
   await config.init();
   port = process.env.PORT || process.env.MCP_PORT || config.get('servers.mcp') || config.get('port') || 3000;
-  console.log(`🔧 HTTP SERVER: Using port ${port} from config`);
+  mcpDebugger.info(`🔧 HTTP SERVER: Using port ${port} from config`);
 } catch (error) {
-  console.warn('⚠️ HTTP SERVER: Could not load config, using default port:', error.message);
+  mcpDebugger.warn('⚠️ HTTP SERVER: Could not load config, using default port:', error.message);
 }
 
 const app = express();
 let httpTerminator = null;
 
-console.log(`🚀 HTTP SERVER: Variables initialized, port: ${port}`);
+mcpDebugger.info(`🚀 HTTP SERVER: Variables initialized, port: ${port}`);
 
 // Server state management
 let mcpServerInstance = null;
@@ -274,7 +274,7 @@ You can also chat naturally - I'll understand your intentions and route appropri
               }
             } catch (processingError) {
               // Fall back to regular tell if document processing fails
-              console.warn('Document processing failed, falling back to regular tell:', processingError.message);
+              mcpDebugger.warn('Document processing failed, falling back to regular tell:', processingError.message);
             }
           }
         }
@@ -326,33 +326,33 @@ async function initializeFullServer() {
 
   initializationPromise = (async () => {
     try {
-      console.log('🔄 [FULL] Starting lazy initialization of full MCP server...');
+      mcpDebugger.info('🔄 [FULL] Starting lazy initialization of full MCP server...');
       mcpDebugger.info('🔄 Starting lazy initialization of full MCP server...');
       
       // Dynamic import to avoid blocking
-      console.log('📦 [FULL] Importing createServer from index.js...');
+      mcpDebugger.info('📦 [FULL] Importing createServer from index.js...');
       const { createServer } = await import('./index.js');
-      console.log('✅ [FULL] createServer imported successfully');
+      mcpDebugger.info('✅ [FULL] createServer imported successfully');
       
       // Initialize with timeout to prevent hanging
-      console.log('⏰ [FULL] Setting up timeout promise (30s)...');
+      mcpDebugger.info('⏰ [FULL] Setting up timeout promise (30s)...');
       const timeoutPromise = new Promise((_, reject) => {
         setTimeout(() => reject(new Error('Server initialization timeout (30s)')), 30000);
       });
       
-      console.log('🏃 [FULL] Starting createServer() call...');
+      mcpDebugger.info('🏃 [FULL] Starting createServer() call...');
       const serverPromise = createServer();
-      console.log('🏁 [FULL] Waiting for createServer() to complete...');
+      mcpDebugger.info('🏁 [FULL] Waiting for createServer() to complete...');
       const fullServer = await Promise.race([serverPromise, timeoutPromise]);
-      console.log('✅ [FULL] createServer() completed successfully');
+      mcpDebugger.info('✅ [FULL] createServer() completed successfully');
       
       // Store the full server instance (transport connections happen per-session)
       mcpServerInstance = fullServer;
-      console.log('✅ [FULL] Full server set as instance (per-session transport connections)');
+      mcpDebugger.info('✅ [FULL] Full server set as instance (per-session transport connections)');
       mcpDebugger.info('✅ Full MCP server initialized (per-session transport)');
       
       isFullyInitialized = true;
-      console.log('🎉 [FULL] Full server initialization completed!');
+      mcpDebugger.info('🎉 [FULL] Full server initialization completed!');
       return fullServer;
       
     } catch (error) {
@@ -379,30 +379,30 @@ async function handleMCPRequest(req, res, body, sessionTransports, sessionServer
 
     if (sessionId && transport) {
       // Reuse existing transport for this session
-      console.log(`🔄 [SESSION-${sessionId}] Reusing existing transport`);
+      mcpDebugger.info(`🔄 [SESSION-${sessionId}] Reusing existing transport`);
     } else if (!sessionId) {
       // New initialization request (no session ID header)
-      console.log('🔧 [INIT] New initialization request - creating server and transport...');
+      mcpDebugger.info('🔧 [INIT] New initialization request - creating server and transport...');
       
       // Create a new server instance for this session
       const { createServer } = await import('./index.js');
       const server = await createServer();
-      console.log('✅ [INIT] Server created');
+      mcpDebugger.info('✅ [INIT] Server created');
       
       // Create a new transport for this session
       transport = new StreamableHTTPServerTransport({
         sessionIdGenerator: () => randomUUID(),
         onsessioninitialized: (sid) => {
-          console.log(`🔗 [INIT] Session initialized with ID: ${sid}`);
+          mcpDebugger.info(`🔗 [INIT] Session initialized with ID: ${sid}`);
           sessionTransports.set(sid, transport);
           sessionServers.set(sid, server);
         }
       });
       
       // CRITICAL: Connect server to transport BEFORE handling request
-      console.log('🔗 [INIT] Connecting server to transport...');
+      mcpDebugger.info('🔗 [INIT] Connecting server to transport...');
       await server.connect(transport);
-      console.log('✅ [INIT] Server connected to transport');
+      mcpDebugger.info('✅ [INIT] Server connected to transport');
 
       await transport.handleRequest(req, res, body);
       return; // Already handled
@@ -433,21 +433,21 @@ async function handleMCPRequest(req, res, body, sessionTransports, sessionServer
 
 async function startOptimizedServer() {
   try {
-    console.log('🚀 [START] Starting Optimized MCP HTTP Server...');
+    mcpDebugger.info('🚀 [START] Starting Optimized MCP HTTP Server...');
     mcpDebugger.info('🚀 Starting Optimized MCP HTTP Server...');
 
     // Session management - we'll create transport instances per request
-    console.log('🔧 [START] Setting up session management...');
+    mcpDebugger.info('🔧 [START] Setting up session management...');
     const sessionTransports = new Map();
     const sessionServers = new Map();
     
-    console.log('✅ [START] Session management configured');
+    mcpDebugger.info('✅ [START] Session management configured');
     
     // Server instances will be created per session automatically
-    console.log('🔧 [START] Server instances will be created per session...');
+    mcpDebugger.info('🔧 [START] Server instances will be created per session...');
     
     // Configure Express middleware
-    console.log('🔧 [START] Configuring Express middleware...');
+    mcpDebugger.info('🔧 [START] Configuring Express middleware...');
     app.use(cors());
     
     // Session middleware for tracking conversation context
@@ -462,17 +462,17 @@ async function startOptimizedServer() {
     app.use(express.json({ limit: '50mb' }));
     // Also handle URL-encoded data with increased limits
     app.use(express.urlencoded({ limit: '50mb', extended: true }));
-    console.log('✅ [START] Express middleware configured with 50MB payload limits');
+    mcpDebugger.info('✅ [START] Express middleware configured with 50MB payload limits');
 
     // Wire up the request handler to the /mcp endpoint
-    console.log('🔧 [START] Setting up MCP endpoint...');
+    mcpDebugger.info('🔧 [START] Setting up MCP endpoint...');
     app.post('/mcp', async (req, res) => {
       await handleMCPRequest(req, res, req.body, sessionTransports, sessionServers);
     });
-    console.log('✅ [START] MCP endpoint configured');
+    mcpDebugger.info('✅ [START] MCP endpoint configured');
 
     // Health check endpoint
-    console.log('🔧 [START] Setting up health endpoint...');
+    mcpDebugger.info('🔧 [START] Setting up health endpoint...');
     app.get('/health', (req, res) => {
       res.json({
         status: 'ok',
@@ -484,10 +484,10 @@ async function startOptimizedServer() {
         timestamp: new Date().toISOString()
       });
     });
-    console.log('✅ [START] Health endpoint configured');
+    mcpDebugger.info('✅ [START] Health endpoint configured');
 
     // Simple Verbs REST endpoints - simplified MCP interface
-    console.log('🔧 [START] Setting up Simple Verbs REST endpoints...');
+    mcpDebugger.info('🔧 [START] Setting up Simple Verbs REST endpoints...');
     
     // Import Simple Verbs Service
     let SimpleVerbsService;
@@ -495,12 +495,12 @@ async function startOptimizedServer() {
       const simpleVerbsModule = await import('./tools/simple-verbs.js');
       SimpleVerbsService = simpleVerbsModule.SimpleVerbsService;
     } catch (error) {
-      console.log('⚠️ [REST] Simple Verbs module not available:', error.message);
+      mcpDebugger.info('⚠️ [REST] Simple Verbs module not available:', error.message);
     }
 
     if (SimpleVerbsService) {
       // MIGRATION: Use Enhanced SPARQLStore for unified storage with API server
-      console.log('🔄 [MCP] Initializing Enhanced SPARQLStore for unified storage...');
+      mcpDebugger.info('🔄 [MCP] Initializing Enhanced SPARQLStore for unified storage...');
       const { default: SPARQLStore } = await import('../src/stores/SPARQLStore.js');
       const { default: EmbeddingService } = await import('../src/services/embeddings/EmbeddingService.js');
       const { default: LLMHandler } = await import('../src/handlers/LLMHandler.js');
@@ -558,14 +558,14 @@ async function startOptimizedServer() {
           llmHandler = new LLMHandler(llmConnector, chatProvider.chatModel || 'llama-3.1-8b-instant');
         }
         // Add other providers as needed (mistral, claude, etc.)
-        console.log(`✅ [MCP] LLM handler initialized with ${chatProvider.type} provider`);
+        mcpDebugger.info(`✅ [MCP] LLM handler initialized with ${chatProvider.type} provider`);
       } else {
-        console.warn('⚠️ [MCP] No chat provider configured - chat functionality disabled');
+        mcpDebugger.warn('⚠️ [MCP] No chat provider configured - chat functionality disabled');
       }
 
       // Initialize PromptSynthesis for ask operations
       const promptSynthesis = llmHandler ? new PromptSynthesis(llmHandler) : null;
-      console.log(`✅ [MCP] PromptSynthesis initialized: ${promptSynthesis ? 'enabled' : 'disabled'}`);
+      mcpDebugger.info(`✅ [MCP] PromptSynthesis initialized: ${promptSynthesis ? 'enabled' : 'disabled'}`);
 
       const enhancedOptions = {
         ...storageOptions,
@@ -575,13 +575,13 @@ async function startOptimizedServer() {
         semanticClustering: true
       };
 
-      console.log('💾 [MCP] Creating Enhanced SPARQLStore with same config as API server');
+      mcpDebugger.info('💾 [MCP] Creating Enhanced SPARQLStore with same config as API server');
       const storage = new SPARQLStore(storageOptions.endpoint || storageOptions, enhancedOptions, config);
-      console.log('✅ [MCP] Enhanced SPARQLStore initialized for unified storage');
+      mcpDebugger.info('✅ [MCP] Enhanced SPARQLStore initialized for unified storage');
 
       // Initialize SearchService for unified search across SPARQL and FAISS
       const searchService = new SearchService(storage, storage.index);
-      console.log('✅ [MCP] SearchService initialized for unified search');
+      mcpDebugger.info('✅ [MCP] SearchService initialized for unified search');
 
       // Create a compatibility wrapper that mimics SimpleVerbsService interface
       const simpleVerbsService = {
@@ -596,7 +596,7 @@ async function startOptimizedServer() {
             const contentEmbedding = await embeddingService.generateEmbedding(content);
 
             // Store using Enhanced SPARQLStore
-            console.log('🔥 MCP DEBUG: About to call storage.storeWithMemory, storage type:', storage.constructor.name);
+            mcpDebugger.info('🔥 MCP DEBUG: About to call storage.storeWithMemory, storage type:', storage.constructor.name);
             const { randomUUID } = await import('crypto');
             const result = await storage.storeWithMemory({
               id: randomUUID(), // Generate unique ID for the record
@@ -616,7 +616,7 @@ async function startOptimizedServer() {
               result // Include the raw result for debugging
             };
           } catch (error) {
-            console.error('❌ [MCP] Tell operation failed:', error);
+            mcpDebugger.error('❌ [MCP] Tell operation failed:', error);
             throw error;
           }
         },
@@ -630,7 +630,7 @@ async function startOptimizedServer() {
             const results = await searchService.search(questionEmbedding, 10, threshold);
 
             // Debug: Log search results to understand what we're getting
-            console.log(`🔍 [DEBUG] Search results for "${question}":`, {
+            mcpDebugger.info(`🔍 [DEBUG] Search results for "${question}":`, {
               resultsCount: results.length,
               results: results.map(r => ({
                 prompt: r.prompt?.substring(0, 100),
@@ -683,7 +683,7 @@ async function startOptimizedServer() {
               }))
             };
           } catch (error) {
-            console.error('❌ [MCP] Ask operation failed:', error);
+            mcpDebugger.error('❌ [MCP] Ask operation failed:', error);
             throw error;
           }
         },
@@ -705,7 +705,7 @@ async function startOptimizedServer() {
               options
             };
           } catch (error) {
-            console.error('❌ [MCP] Chat operation failed:', error);
+            mcpDebugger.error('❌ [MCP] Chat operation failed:', error);
             throw error;
           }
         },
@@ -713,7 +713,7 @@ async function startOptimizedServer() {
         // ZPT navigation methods for VSOM compatibility
         async zoom({ level = 'entity', query }) {
           try {
-            console.log('🔍 [ZOOM] Zoom method called with:', { level, query });
+            mcpDebugger.info('🔍 [ZOOM] Zoom method called with:', { level, query });
 
             // Simple zoom implementation - return basic navigation data
             return {
@@ -734,14 +734,14 @@ async function startOptimizedServer() {
               }
             };
           } catch (error) {
-            console.error('❌ [MCP] Zoom operation failed:', error);
+            mcpDebugger.error('❌ [MCP] Zoom operation failed:', error);
             throw error;
           }
         },
 
         async pan(panParams) {
           try {
-            console.log('🔍 [PAN] Pan method called with:', panParams);
+            mcpDebugger.info('🔍 [PAN] Pan method called with:', panParams);
 
             return {
               success: true,
@@ -760,14 +760,14 @@ async function startOptimizedServer() {
               }
             };
           } catch (error) {
-            console.error('❌ [MCP] Pan operation failed:', error);
+            mcpDebugger.error('❌ [MCP] Pan operation failed:', error);
             throw error;
           }
         },
 
         async tilt({ style = 'keywords', query }) {
           try {
-            console.log('🔍 [TILT] Tilt method called with:', { style, query });
+            mcpDebugger.info('🔍 [TILT] Tilt method called with:', { style, query });
 
             return {
               success: true,
@@ -787,7 +787,7 @@ async function startOptimizedServer() {
               }
             };
           } catch (error) {
-            console.error('❌ [MCP] Tilt operation failed:', error);
+            mcpDebugger.error('❌ [MCP] Tilt operation failed:', error);
             throw error;
           }
         },
@@ -904,7 +904,7 @@ async function startOptimizedServer() {
       app.post('/augment', async (req, res) => {
         try {
           const { target, operation = 'auto', options = {} } = req.body;
-          console.log('🔥 [HTTP-SERVER] /augment endpoint called with:', { target, operation, options });
+          mcpDebugger.info('🔥 [HTTP-SERVER] /augment endpoint called with:', { target, operation, options });
           // Allow empty target for certain operations that work on "all" content
           const allowEmptyTarget = ['process_lazy', 'chunk_documents'].includes(operation);
           if (!target && !allowEmptyTarget) {
@@ -1116,7 +1116,7 @@ async function startOptimizedServer() {
         try {
           const { message, context = {} } = req.body;
           
-          console.log('🚀 [CHAT] Chat endpoint called with message:', message.substring(0, 50) + '...');
+          mcpDebugger.info('🚀 [CHAT] Chat endpoint called with message:', message.substring(0, 50) + '...');
           
           if (!message) {
             return res.status(400).json({ error: 'Message is required' });
@@ -1128,7 +1128,7 @@ async function startOptimizedServer() {
             const promptPath = path.join(projectRoot, 'prompts/system/chat.md');
             systemPrompt = await fs.readFile(promptPath, 'utf8');
           } catch (error) {
-            console.warn('⚠️ Could not load chat system prompt:', error.message);
+            mcpDebugger.warn('⚠️ Could not load chat system prompt:', error.message);
             systemPrompt = 'You are a helpful assistant for the Semem semantic memory system.';
           }
           
@@ -1150,7 +1150,7 @@ async function startOptimizedServer() {
             );
             
             if (isPositiveResponse) {
-              console.log('🔍 [CHAT] Detected positive response for enhanced search:', req.session.lastFailedQuery);
+              mcpDebugger.info('🔍 [CHAT] Detected positive response for enhanced search:', req.session.lastFailedQuery);
               
               // Store the query before clearing it
               const queryToEnhance = req.session.lastFailedQuery;
@@ -1186,10 +1186,10 @@ async function startOptimizedServer() {
           await simpleVerbsService.initialize();
           const llmHandler = simpleVerbsService.llmHandler;
           
-          console.log('🔍 [CHAT] Debug - simpleVerbsService initialized:', !!simpleVerbsService);
-          console.log('🔍 [CHAT] Debug - memoryManager exists:', !!simpleVerbsService.memoryManager);
-          console.log('🔍 [CHAT] Debug - llmHandler exists:', !!llmHandler);
-          console.log('🔍 [CHAT] Debug - llmHandler type:', typeof llmHandler);
+          mcpDebugger.info('🔍 [CHAT] Debug - simpleVerbsService initialized:', !!simpleVerbsService);
+          mcpDebugger.info('🔍 [CHAT] Debug - memoryManager exists:', !!simpleVerbsService.memoryManager);
+          mcpDebugger.info('🔍 [CHAT] Debug - llmHandler exists:', !!llmHandler);
+          mcpDebugger.info('🔍 [CHAT] Debug - llmHandler type:', typeof llmHandler);
           
           if (!llmHandler) {
             return res.json({
@@ -1256,7 +1256,7 @@ If action is "ask" or "tell", also include:
                               (askResult.usedContext === true) || 
                               (askResult.memories && askResult.memories > 0);
             
-            console.log('🔍 [CHAT] Context analysis:', {
+            mcpDebugger.info('🔍 [CHAT] Context analysis:', {
               contextItems: askResult.contextItems,
               usedContext: askResult.usedContext,
               memories: askResult.memories,
@@ -1350,7 +1350,7 @@ If action is "ask" or "tell", also include:
         try {
           const { query, useHyDE = false, useWikipedia = false, useWikidata = false } = req.body;
           
-          console.log('🚀 [ENHANCED-CHAT] Enhanced chat endpoint called with query:', query.substring(0, 50) + '...');
+          mcpDebugger.info('🚀 [ENHANCED-CHAT] Enhanced chat endpoint called with query:', query.substring(0, 50) + '...');
           
           if (!query) {
             return res.status(400).json({ error: 'Query is required' });
@@ -1393,25 +1393,25 @@ If action is "ask" or "tell", also include:
         }
       });
 
-      console.log('✅ [START] Simple Verbs REST endpoints configured:');
-      console.log('   POST /tell - Add resources to the system');
-      console.log('   POST /ask - Query the system');
-      console.log('   POST /augment - Augment content');
-      console.log('   POST /upload-document - Upload and process document files');
-      console.log('   POST /chat - Interactive chat with slash command support');
-      console.log('   POST /chat/enhanced - Enhanced chat with HyDE, Wikipedia, Wikidata');
-      console.log('   POST /zoom - Set abstraction level');
-      console.log('   POST /pan - Set domain/filtering');
-      console.log('   POST /tilt - Set view filter');
-      console.log('   POST /zpt/navigate - Execute ZPT navigation');
-      console.log('   POST /inspect - Debug and monitor system state');
-      console.log('   GET /state - Get current ZPT state');
+      mcpDebugger.info('✅ [START] Simple Verbs REST endpoints configured:');
+      mcpDebugger.info('   POST /tell - Add resources to the system');
+      mcpDebugger.info('   POST /ask - Query the system');
+      mcpDebugger.info('   POST /augment - Augment content');
+      mcpDebugger.info('   POST /upload-document - Upload and process document files');
+      mcpDebugger.info('   POST /chat - Interactive chat with slash command support');
+      mcpDebugger.info('   POST /chat/enhanced - Enhanced chat with HyDE, Wikipedia, Wikidata');
+      mcpDebugger.info('   POST /zoom - Set abstraction level');
+      mcpDebugger.info('   POST /pan - Set domain/filtering');
+      mcpDebugger.info('   POST /tilt - Set view filter');
+      mcpDebugger.info('   POST /zpt/navigate - Execute ZPT navigation');
+      mcpDebugger.info('   POST /inspect - Debug and monitor system state');
+      mcpDebugger.info('   GET /state - Get current ZPT state');
     } else {
-      console.log('⚠️ [REST] Simple Verbs REST endpoints not available (service not loaded)');
+      mcpDebugger.info('⚠️ [REST] Simple Verbs REST endpoints not available (service not loaded)');
     }
 
     // Serve MCP Inspector static files
-    console.log('🔧 [START] Setting up static file routes...');
+    mcpDebugger.info('🔧 [START] Setting up static file routes...');
     const inspectorPath = path.resolve(__dirname, '../node_modules/@modelcontextprotocol/inspector/client/dist');
     app.use('/inspector', express.static(inspectorPath));
     
@@ -1426,12 +1426,12 @@ If action is "ask" or "tell", also include:
     app.get('/', (req, res) => {
       res.redirect('/inspector');
     });
-    console.log('✅ [START] Static file routes configured');
+    mcpDebugger.info('✅ [START] Static file routes configured');
 
     // Start the Express server
-    console.log('🔧 [START] Starting Express server...');
+    mcpDebugger.info('🔧 [START] Starting Express server...');
     const server = app.listen(port, () => {
-      console.log(`✅ [START] Express server listening on port ${port}`);
+      mcpDebugger.info(`✅ [START] Express server listening on port ${port}`);
       mcpDebugger.info(`✅ Optimized MCP HTTP Server listening on port ${port}`);
       mcpDebugger.info(`Health check: http://localhost:${port}/health`);
       mcpDebugger.info(`MCP endpoint: http://localhost:${port}/mcp`);
@@ -1441,7 +1441,7 @@ If action is "ask" or "tell", also include:
       mcpDebugger.info(`   GET /state`);
       mcpDebugger.info('🔄 Full server initialization will happen on first request or in background...');
       
-      console.log('🔄 [START] Ready to handle MCP sessions...');
+      mcpDebugger.info('🔄 [START] Ready to handle MCP sessions...');
     });
 
     httpTerminator = createHttpTerminator({ server });

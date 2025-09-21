@@ -10,6 +10,7 @@ echo "================================================"
 export MCP_DEBUG=true
 export MCP_DEBUG_LEVEL=debug
 export NODE_ENV=development
+export MCP_INSPECTOR_MODE=true
 
 # Check if MCP Inspector is available
 if ! command -v npx &> /dev/null; then

@@ -8,6 +8,7 @@
 import path from 'path';
 import { fileURLToPath } from 'url';
 import logger from 'loglevel';
+import { mcpDebugger } from '../lib/debug-utils.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -33,9 +34,9 @@ class PromptRegistry {
     try {
       await this.loadPromptTemplates();
       this.initialized = true;
-      logger.info(`Prompt registry initialized with ${this.prompts.size} prompts`);
+      mcpDebugger.debug(`Prompt registry initialized with ${this.prompts.size} prompts`);
     } catch (error) {
-      logger.error('Failed to initialize prompt registry:', error);
+      mcpDebugger.error('Failed to initialize prompt registry:', error);
       throw error;
     }
   }

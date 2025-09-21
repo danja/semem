@@ -8,6 +8,7 @@ import ClaudeConnector from '../../src/connectors/ClaudeConnector.js';
 import MistralConnector from '../../src/connectors/MistralConnector.js';
 import EmbeddingConnectorFactory from '../../src/connectors/EmbeddingConnectorFactory.js';
 import Config from '../../src/Config.js';
+import { mcpDebugger } from './debug-utils.js';
 
 // Load environment variables
 dotenv.config();
@@ -29,43 +30,43 @@ export async function createLLMConnector(configPath = null) {
       .filter(p => p.capabilities?.includes('chat'))
       .sort((a, b) => (a.priority || 999) - (b.priority || 999));
     
-    console.log('Available chat providers by priority:', sortedProviders.map(p => `${p.type} (priority: ${p.priority})`));
+    mcpDebugger.info('Available chat providers by priority:', sortedProviders.map(p => `${p.type} (priority: ${p.priority})`));
     
     // Try providers in priority order
     for (const provider of sortedProviders) {
-      console.log(`Trying LLM provider: ${provider.type} (priority: ${provider.priority})`);
+      mcpDebugger.info(`Trying LLM provider: ${provider.type} (priority: ${provider.priority})`);
       
       if (provider.type === 'mistral') {
         // Get actual API key from environment variables
         const apiKey = process.env.MISTRAL_API_KEY;
         if (apiKey) {
-          console.log('✅ Creating Mistral connector (highest priority)...');
+          mcpDebugger.info('✅ Creating Mistral connector (highest priority)...');
           return new MistralConnector(apiKey);
         } else {
-          console.log(`❌ Mistral provider configured but MISTRAL_API_KEY environment variable not set`);
+          mcpDebugger.info(`❌ Mistral provider configured but MISTRAL_API_KEY environment variable not set`);
         }
       } else if (provider.type === 'claude') {
         // Get actual API key from environment variables
         const apiKey = process.env.CLAUDE_API_KEY;
         if (apiKey) {
-          console.log('✅ Creating Claude connector...');
+          mcpDebugger.info('✅ Creating Claude connector...');
           return new ClaudeConnector(apiKey);
         } else {
-          console.log(`❌ Claude provider configured but CLAUDE_API_KEY environment variable not set`);
+          mcpDebugger.info(`❌ Claude provider configured but CLAUDE_API_KEY environment variable not set`);
         }
       } else if (provider.type === 'ollama') {
-        console.log('✅ Creating Ollama connector (fallback)...');
+        mcpDebugger.info('✅ Creating Ollama connector (fallback)...');
         return new OllamaConnector();
       } else {
-        console.log(`❌ Provider ${provider.type} not available (missing API key or implementation)`);
+        mcpDebugger.info(`❌ Provider ${provider.type} not available (missing API key or implementation)`);
       }
     }
     
-    console.log('⚠️ No configured providers available, defaulting to Ollama');
+    mcpDebugger.info('⚠️ No configured providers available, defaulting to Ollama');
     return new OllamaConnector();
     
   } catch (error) {
-    console.warn('Failed to load provider configuration, defaulting to Ollama:', error.message);
+    mcpDebugger.warn('Failed to load provider configuration, defaulting to Ollama:', error.message);
     return new OllamaConnector();
   }
 }
@@ -87,27 +88,27 @@ export async function createEmbeddingConnector(configPath = null) {
       .filter(p => p.capabilities?.includes('embedding'))
       .sort((a, b) => (a.priority || 999) - (b.priority || 999));
     
-    console.log('Available embedding providers by priority:', sortedProviders.map(p => `${p.type} (priority: ${p.priority})`));
+    mcpDebugger.info('Available embedding providers by priority:', sortedProviders.map(p => `${p.type} (priority: ${p.priority})`));
     
     // Try providers in priority order
     for (const provider of sortedProviders) {
-      console.log(`Trying embedding provider: ${provider.type} (priority: ${provider.priority})`);
+      mcpDebugger.info(`Trying embedding provider: ${provider.type} (priority: ${provider.priority})`);
       
       if (provider.type === 'nomic') {
         // Get actual API key from environment variables
         const apiKey = process.env.NOMIC_API_KEY;
         if (apiKey) {
-          console.log('✅ Creating Nomic embedding connector (highest priority)...');
+          mcpDebugger.info('✅ Creating Nomic embedding connector (highest priority)...');
           return EmbeddingConnectorFactory.createConnector({
             provider: 'nomic',
             apiKey: apiKey,
             model: provider.embeddingModel || 'nomic-embed-text-v1.5'
           });
         } else {
-          console.log(`❌ Nomic provider configured but NOMIC_API_KEY environment variable not set`);
+          mcpDebugger.info(`❌ Nomic provider configured but NOMIC_API_KEY environment variable not set`);
         }
       } else if (provider.type === 'ollama') {
-        console.log('✅ Creating Ollama embedding connector (fallback)...');
+        mcpDebugger.info('✅ Creating Ollama embedding connector (fallback)...');
         const ollamaBaseUrl = process.env.OLLAMA_HOST || 'http://localhost:11434';
         return EmbeddingConnectorFactory.createConnector({
           provider: 'ollama',
@@ -115,11 +116,11 @@ export async function createEmbeddingConnector(configPath = null) {
           model: provider.embeddingModel || 'nomic-embed-text'
         });
       } else {
-        console.log(`❌ Embedding provider ${provider.type} not available (missing API key or implementation)`);
+        mcpDebugger.info(`❌ Embedding provider ${provider.type} not available (missing API key or implementation)`);
       }
     }
     
-    console.log('⚠️ No configured embedding providers available, defaulting to Ollama');
+    mcpDebugger.info('⚠️ No configured embedding providers available, defaulting to Ollama');
     return EmbeddingConnectorFactory.createConnector({
       provider: 'ollama',
       baseUrl: process.env.OLLAMA_HOST || 'http://localhost:11434',
@@ -127,7 +128,7 @@ export async function createEmbeddingConnector(configPath = null) {
     });
     
   } catch (error) {
-    console.warn('Failed to create configured embedding connector, falling back to Ollama:', error.message);
+    mcpDebugger.warn('Failed to create configured embedding connector, falling back to Ollama:', error.message);
     // Fallback to Ollama for embeddings
     return EmbeddingConnectorFactory.createConnector({
       provider: 'ollama',
@@ -190,7 +191,7 @@ export async function getModelConfig(configPath = null) {
       embeddingModel: workingEmbeddingProvider?.embeddingModel || 'nomic-embed-text'
     };
   } catch (error) {
-    console.warn('Failed to get model config from configuration, using defaults:', error.message);
+    mcpDebugger.warn('Failed to get model config from configuration, using defaults:', error.message);
     return {
       chatModel: 'qwen2:1.5b',
       embeddingModel: 'nomic-embed-text'

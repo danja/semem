@@ -21,6 +21,7 @@ import {
 } from './VerbSchemas.js';
 import { SimpleVerbsService } from './SimpleVerbsService.js';
 import { logOperation } from './VerbsLogger.js';
+import { mcpDebugger } from '../lib/debug-utils.js';
 
 // Create shared service instance
 const simpleVerbsService = new SimpleVerbsService();
@@ -29,7 +30,7 @@ const simpleVerbsService = new SimpleVerbsService();
  * Register Simple Verbs with MCP Server
  */
 export function registerSimpleVerbs(server) {
-  logOperation('info', 'initialization', 'Simple MCP Verbs service initialized for centralized handler');
+  mcpDebugger.debug('Simple MCP Verbs service initialized for centralized handler');
   // Simple Verbs are now handled by the centralized tool call handler in index.js
   // This function now just initializes the service - tool registration happens centrally
 }
