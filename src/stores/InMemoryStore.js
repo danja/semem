@@ -1,3 +1,4 @@
+// DEPRECATED use SPARQLStore instead
 import BaseStore from './BaseStore.js';
 import { logger } from '../Utils.js';
 

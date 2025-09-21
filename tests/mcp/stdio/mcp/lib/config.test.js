@@ -272,8 +272,8 @@ describe('MCP Config', () => {
   describe('Storage Configuration', () => {
     it('should have valid storage backend options', () => {
       // Storage backends are handled separately from mcpConfig
-      const validBackends = ['InMemoryStore', 'JSONStore', 'SPARQLStore', 'CachedSPARQLStore'];
-      const defaultBackend = 'InMemoryStore';
+      const validBackends = ['SPARQLStore', 'CachedSPARQLStore'];
+      const defaultBackend = 'SPARQLStore';
 
       expect(validBackends).toContain(defaultBackend);
     });

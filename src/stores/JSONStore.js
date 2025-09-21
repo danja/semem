@@ -1,3 +1,5 @@
+// DEPRECATED use SPARQLStore instead
+
 import { promises as fs } from 'fs'
 import { dirname, join } from 'path'
 import BaseStore from './BaseStore.js'

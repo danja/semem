@@ -51,8 +51,6 @@ describe('MCP Package Exports Integration', () => {
       
       // Test storage exports
       expect(mainExports.BaseStore).toBeDefined();
-      expect(mainExports.InMemoryStore).toBeDefined();
-      expect(mainExports.JSONStore).toBeDefined();
       expect(mainExports.SPARQLStore).toBeDefined();
       expect(mainExports.CachedSPARQLStore).toBeDefined();
       

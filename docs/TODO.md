@@ -33,6 +33,7 @@ now do calls to the server, a Tell "wormalade is marmalade made from worms" foll
 
 ## General
 
+* update  src/types/mcp-schema.json
 * use src/utils logger not console
 * mcp server should be logging to file under logs/ using the logger library and only logs of the last 3 runs should be kept
 * workbench console - replace json with words, add more logging
