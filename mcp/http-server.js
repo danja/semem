@@ -710,6 +710,101 @@ async function startOptimizedServer() {
           }
         },
 
+        // ZPT navigation methods for VSOM compatibility
+        async zoom({ level = 'entity', query }) {
+          try {
+            console.log('🔍 [ZOOM] Zoom method called with:', { level, query });
+
+            // Simple zoom implementation - return basic navigation data
+            return {
+              success: true,
+              verb: 'zoom',
+              level: level,
+              query: query,
+              navigation: {
+                success: true,
+                data: [],
+                message: `Zoomed to ${level} level${query ? ` with query: ${query}` : ''}`
+              },
+              zptState: {
+                zoom: level,
+                pan: {},
+                tilt: 'keywords',
+                sessionId: Date.now().toString()
+              }
+            };
+          } catch (error) {
+            console.error('❌ [MCP] Zoom operation failed:', error);
+            throw error;
+          }
+        },
+
+        async pan(panParams) {
+          try {
+            console.log('🔍 [PAN] Pan method called with:', panParams);
+
+            return {
+              success: true,
+              verb: 'pan',
+              panParams: panParams,
+              navigation: {
+                success: true,
+                data: [],
+                message: 'Pan operation completed'
+              },
+              zptState: {
+                zoom: 'entity',
+                pan: panParams || {},
+                tilt: 'keywords',
+                sessionId: Date.now().toString()
+              }
+            };
+          } catch (error) {
+            console.error('❌ [MCP] Pan operation failed:', error);
+            throw error;
+          }
+        },
+
+        async tilt({ style = 'keywords', query }) {
+          try {
+            console.log('🔍 [TILT] Tilt method called with:', { style, query });
+
+            return {
+              success: true,
+              verb: 'tilt',
+              style: style,
+              query: query,
+              navigation: {
+                success: true,
+                data: [],
+                message: `Tilted to ${style} style${query ? ` with query: ${query}` : ''}`
+              },
+              zptState: {
+                zoom: 'entity',
+                pan: {},
+                tilt: style,
+                sessionId: Date.now().toString()
+              }
+            };
+          } catch (error) {
+            console.error('❌ [MCP] Tilt operation failed:', error);
+            throw error;
+          }
+        },
+
+        // State management for VSOM
+        stateManager: {
+          getState() {
+            return {
+              zoom: 'entity',
+              pan: {},
+              tilt: 'keywords',
+              sessionId: Date.now().toString(),
+              lastQuery: null
+            };
+          }
+        },
+
         // Expose the llmHandler for compatibility
         get llmHandler() {
           return llmHandler;

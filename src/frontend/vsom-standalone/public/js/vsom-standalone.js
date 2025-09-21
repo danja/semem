@@ -146,55 +146,84 @@ class VSOMStandaloneApp {
         });
     }
     
-    async refreshData() {
+    async refreshData(preserveZPTState = false) {
         try {
             this.showLoading(true);
 
             // Clear any existing tooltips before refresh
             VSOMUtils.hideTooltip();
 
-            // Get essential data only (reduced API calls)
-            const [sessionData, memoryData] = await Promise.allSettled([
-                this.services.api.getSessionData(),     // Primary: interaction history and concepts
-                this.services.api.getMemoryItems({ limit: 50 })      // Supporting: memory items for corpus view
-            ]);
+            // Get session data (this works and has the interactions we need)
+            const sessionData = await this.services.api.getSessionData();
+            console.log('🔍 Session data received:', sessionData);
 
-            // Extract successful results
-            const session = sessionData.status === 'fulfilled' ? sessionData.value : {};
-            const memory = memoryData.status === 'fulfilled' ? memoryData.value : {};
+            // Extract interactions directly from session data
+            const interactions = sessionData.sessionAnalytics?.interactions || [];
+            console.log('🔍 Extracted interactions:', interactions.length, interactions);
 
-            // Use default values for removed API calls
-            const contextScope = {};
-            const concepts = {};
-            const zpt = {};
-            const sparql = {};
-            const entities = {};
+            // Extract concepts from interactions
+            const concepts = [];
+            interactions.forEach(interaction => {
+                if (interaction.concepts && Array.isArray(interaction.concepts)) {
+                    concepts.push(...interaction.concepts);
+                }
+            });
 
-            // Aggregate data prioritizing contextual scope that would be used for prompt synthesis
-            const aggregatedData = this.aggregateDataSources(session, concepts, zpt, sparql, entities, memory, contextScope);
+            // Use current app state for ZPT if preserving, otherwise get from API
+            let currentZPT;
+            if (preserveZPTState) {
+                console.log('🔍 Preserving current ZPT state:', this.state);
+                currentZPT = {
+                    zoom: this.state.zoom,
+                    pan: this.state.pan,
+                    tilt: this.state.tilt,
+                    threshold: this.state.threshold
+                };
+            } else {
+                try {
+                    const zptState = await this.services.api.getZPTState();
+                    currentZPT = {
+                        zoom: zptState.state?.zoom || this.state.zoom,
+                        pan: zptState.state?.pan || this.state.pan,
+                        tilt: zptState.state?.tilt || this.state.tilt,
+                        threshold: this.state.threshold
+                    };
+                } catch (zptError) {
+                    console.warn('Failed to get ZPT state, using defaults:', zptError);
+                    currentZPT = {
+                        zoom: this.state.zoom,
+                        pan: this.state.pan,
+                        tilt: this.state.tilt,
+                        threshold: this.state.threshold
+                    };
+                }
+            }
 
-            // Current ZPT parameters
-            const currentZPT = {
-                zoom: zpt.zoom || this.state.zoom,
-                pan: zpt.pan || this.state.pan,
-                tilt: zpt.tilt || this.state.tilt,
-                threshold: zpt.threshold || this.state.threshold
+            // Process interactions for VSOM visualization
+            const vsomData = await this.services.processor.processInteractions(interactions, currentZPT);
+
+            // Update state (only update ZPT if not preserving)
+            const stateUpdate = {
+                interactions: interactions,
+                vsomData,
+                concepts: [...new Set(concepts)], // Remove duplicates
+                lastUpdate: new Date()
             };
 
-            // Process all data for VSOM visualization
-            const vsomData = await this.services.processor.processInteractions(aggregatedData.items, currentZPT);
+            if (!preserveZPTState) {
+                stateUpdate.zoom = currentZPT.zoom;
+                stateUpdate.pan = currentZPT.pan;
+                stateUpdate.tilt = currentZPT.tilt;
+                stateUpdate.threshold = currentZPT.threshold;
+            }
 
-            // Update state
-            this.updateState({
-                interactions: aggregatedData.interactions,
-                vsomData,
-                concepts: aggregatedData.concepts,
-                aggregatedData,
-                zoom: currentZPT.zoom,
-                pan: currentZPT.pan,
-                tilt: currentZPT.tilt,
-                threshold: currentZPT.threshold,
-                lastUpdate: new Date()
+            this.updateState(stateUpdate);
+
+            console.log('🔍 Updated state:', {
+                interactionCount: this.state.interactions.length,
+                conceptCount: this.state.concepts.length,
+                zptState: {zoom: this.state.zoom, pan: this.state.pan, tilt: this.state.tilt},
+                vsomData: this.state.vsomData
             });
 
             // Update components
@@ -622,8 +651,8 @@ class VSOMStandaloneApp {
                 await this.services.api.setTilt(changes.tilt);
             }
             
-            // Refresh VSOM data with new settings
-            await this.refreshData();
+            // Refresh VSOM data with new settings (preserve ZPT state)
+            await this.refreshData(true);
             
         } catch (error) {
             console.error('Failed to update ZPT state:', error);

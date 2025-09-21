@@ -1,15 +1,3 @@
-npm run start:api)
-  ⎿  Error: Search service not available, using memory manager for search
-     SPARQL helper not available in registry, some features may be limited
-
-Found it! The content was stored as semem:prompt not semem:output
-
-hardcoded all over the place. 1536
-768
-
-The configured embedding model is nomic-embed-text-v1.5 which has a default dimension of 768. 
-See https://docs.nomic.ai/reference/api/embed-text-v-1-embedding-text-post
-The value 1536 appears numerous times throughout the code. Remove all instances. No size should be hardcoded anywhere, not even as a fallback. The value should come from config.json via Config.js, otherwise there is an error.
 
 src/services/embeddings/EmbeddingService.js has stardardize with pad zeros
 

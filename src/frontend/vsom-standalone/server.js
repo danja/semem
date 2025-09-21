@@ -114,13 +114,31 @@ class VSOMStandaloneServer {
     }
     
     setupApiProxy() {
-        // Proxy API requests to the main API server (not MCP server)
+        // Define server endpoints
         const apiPort = this.config.get('servers.api') || 4100;
+        const mcpPort = this.config.get('servers.mcp') || 4101;
         const apiServerUrl = process.env.API_HTTP_URL || `http://localhost:${apiPort}/api`;
-        
+        const mcpServerUrl = process.env.MCP_HTTP_URL || `http://localhost:${mcpPort}`;
+
+        // ZPT navigation endpoints that should go to MCP server
+        const zptEndpoints = ['/zoom', '/pan', '/tilt', '/state'];
+
         this.app.use('/api', async (req, res) => {
             try {
-                const url = `${apiServerUrl}${req.path}`;
+                // Determine which server to route to based on the endpoint
+                const isZptEndpoint = zptEndpoints.some(endpoint => req.path === endpoint);
+                let targetUrl, serverName;
+
+                if (isZptEndpoint) {
+                    // Route ZPT navigation requests to MCP server
+                    targetUrl = `${mcpServerUrl}${req.path}`;
+                    serverName = 'MCP';
+                } else {
+                    // Route all other API requests to API server
+                    targetUrl = `${apiServerUrl}${req.path}`;
+                    serverName = 'API';
+                }
+
                 const options = {
                     method: req.method,
                     headers: {
@@ -140,31 +158,32 @@ class VSOMStandaloneServer {
                     options.body = JSON.stringify(req.body);
                 }
 
-                const response = await fetch(url, options);
+                console.log(`🔗 Proxying ${req.method} ${req.path} to ${serverName} server: ${targetUrl}`);
+                const response = await fetch(targetUrl, options);
                 const data = await response.text();
-                
+
                 res.status(response.status);
-                
+
                 // Forward response headers
                 for (const [key, value] of response.headers.entries()) {
                     if (!key.startsWith(':') && key !== 'content-encoding') {
                         res.set(key, value);
                     }
                 }
-                
+
                 // Try to parse as JSON, fallback to text
                 try {
                     res.json(JSON.parse(data));
                 } catch {
                     res.send(data);
                 }
-                
+
             } catch (error) {
                 console.error(`API proxy error for ${req.path}:`, error);
                 res.status(502).json({
                     error: 'Bad Gateway',
-                    message: 'Unable to reach API server',
-                    apiServerUrl: apiServerUrl,
+                    message: 'Unable to reach target server',
+                    targetUrl: req.path,
                     timestamp: new Date().toISOString()
                 });
             }
