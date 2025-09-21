@@ -359,3 +359,4 @@ const llmHandler = new LLMHandler(llmProvider, modelConfig.chatModel);
   - 4102: Workbench
   - 4103: VSOM standalone
 - always work on live data, not simulations. Only use mock implementations in tests, and only there if absolutely appropriate.
+- you can check Inspector with Playwright mcp

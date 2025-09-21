@@ -76,16 +76,33 @@ export async function initializeServices() {
     
     // Initialize memory manager
     mcpDebugger.info('🧠 [MEMORY] Starting memory manager initialization...');
-    
+
     // Create separate LLM and embedding providers
     mcpDebugger.info('🤖 [LLM] Creating LLM connector...');
     const llmProvider = await createLLMConnector(configPath);
     mcpDebugger.info('✅ [LLM] LLM provider created for chat operations');
-    
+
     mcpDebugger.info('🔢 [EMBED] Creating embedding connector...');
     const embeddingProvider = await createEmbeddingConnector(configPath);
     mcpDebugger.info('✅ [EMBED] Embedding provider created for embedding operations');
-    
+
+    // Get embedding dimension from the active embedding provider (needed for all storage types)
+    mcpDebugger.info('💾 [STORAGE] Getting embedding dimension from provider...');
+    const llmProviders = config.get('llmProviders') || [];
+    const activeEmbeddingProvider = llmProviders
+      .filter(p => p.capabilities?.includes('embedding'))
+      .sort((a, b) => (a.priority || 999) - (b.priority || 999))[0];
+
+    if (!activeEmbeddingProvider) {
+      throw new Error('No embedding provider found in config - check config.json llmProviders section for providers with embedding capability');
+    }
+
+    const embeddingDimension = activeEmbeddingProvider.embeddingDimension;
+    if (!embeddingDimension) {
+      throw new Error(`Embedding provider ${activeEmbeddingProvider.type} missing embeddingDimension in config - check config.json embeddingDimension setting`);
+    }
+    mcpDebugger.info(`💾 [STORAGE] Using embedding dimension: ${embeddingDimension} from ${activeEmbeddingProvider.type} provider`);
+
     // Initialize MemoryManager with proper parameters
     // Create storage backend based on config
     mcpDebugger.info('💾 [STORAGE] Initializing storage backend...');
@@ -104,9 +121,18 @@ export async function initializeServices() {
       const configuredGraphName = config.get('graphName') || 'http://tensegrity.it/semem';
       storageOptions.graphName = configuredGraphName;
       mcpDebugger.info('💾 [STORAGE] Using configured graphName:', storageOptions.graphName);
-      
+
+      // Set embedding dimension for SPARQLStore
+      storageOptions.dimension = embeddingDimension;
+
       mcpDebugger.info('💾 [STORAGE] Creating SPARQLStore instance...');
-      storageBackend = new SPARQLStore(storageOptions);
+      // SPARQLStore constructor expects (endpoint, options, config)
+      const endpoint = {
+        query: storageOptions.query,
+        update: storageOptions.update,
+        data: storageOptions.data
+      };
+      storageBackend = new SPARQLStore(endpoint, storageOptions, config);
       mcpDebugger.info('✅ [STORAGE] SPARQLStore created');
     } else if (storageType === 'json') {
       mcpDebugger.info('💾 [STORAGE] Importing JSONStore...');
@@ -132,6 +158,7 @@ export async function initializeServices() {
       chatModel: modelConfig.chatModel,
       embeddingModel: modelConfig.embeddingModel,
       storage: storageBackend,
+      dimension: embeddingDimension,
       config: config
     });
     mcpDebugger.info('✅ [MEMORY] MemoryManager instance created');

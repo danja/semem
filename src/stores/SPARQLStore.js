@@ -127,6 +127,10 @@ export default class SPARQLStore extends BaseStore {
         Object.defineProperty(this, 'transactionId', {
             get: () => this.sparqlExecute.transactionId
         })
+
+        // Graph properties (delegated to graph module)
+        // Add nodes method as a property that returns a function
+        this.graph.nodes = () => this.graph.graph.nodes()
     }
 
     // ========== SPARQL Execution Methods (delegate to SPARQLExecute) ==========

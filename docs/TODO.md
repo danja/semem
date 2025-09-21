@@ -1,3 +1,13 @@
+{
+  "method": "notifications/message",
+  "params": {
+    "level": "info",
+    "logger": "stdio",
+    "data": {
+      "message": "⚠️ Using fallback search due to adaptive search failure"
+    }
+  }
+}
 
 src/services/embeddings/EmbeddingService.js has stardardize with pad zeros
 

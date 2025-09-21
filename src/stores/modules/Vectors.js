@@ -131,8 +131,24 @@ export class Vectors {
         try {
             const beforeTotal = this.index.ntotal()
 
+            // Debug log the embedding structure
+            logger.debug(`🔍 Adding embedding: type=${typeof embedding}, isArray=${Array.isArray(embedding)}, length=${embedding?.length}`)
+            if (Array.isArray(embedding) && embedding.length > 0) {
+                logger.debug(`🔍 First few values: [${embedding.slice(0, 3).join(', ')}...]`)
+            }
+
             // Convert to Float32Array as required by FAISS
-            const embeddingFloat32 = new Float32Array(embedding)
+            // Handle nested arrays or non-array structures
+            let flatEmbedding = embedding;
+            if (Array.isArray(embedding) && embedding.length === 1 && Array.isArray(embedding[0])) {
+                // Handle nested array structure like [[1,2,3,4...]]
+                flatEmbedding = embedding[0];
+                logger.debug(`🔧 Unwrapped nested embedding array: ${flatEmbedding.length}D`)
+            } else if (!Array.isArray(embedding)) {
+                throw new Error(`Embedding must be an array, got ${typeof embedding}`)
+            }
+
+            const embeddingFloat32 = new Float32Array(flatEmbedding)
 
             this.index.add(embeddingFloat32)
             const afterTotal = this.index.ntotal()
