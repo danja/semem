@@ -9,6 +9,8 @@
   }
 }
 
+we have src/utils/URIMinter.js
+
 /home/danny/hyperdata/semem/src/api/features/VSOMAPI.js - in use?
 
 src/utils/EmbeddingMigration.js ???
