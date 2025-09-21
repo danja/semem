@@ -131,13 +131,13 @@ export class Vectors {
         try {
             const beforeTotal = this.index.ntotal()
 
-            // Debug log the embedding structure
-            logger.debug(`🔍 Adding embedding: type=${typeof embedding}, isArray=${Array.isArray(embedding)}, length=${embedding?.length}`)
+            // Validate embedding structure
+            logger.debug(`Adding embedding: type=${typeof embedding}, isArray=${Array.isArray(embedding)}, length=${embedding?.length}`)
             if (Array.isArray(embedding) && embedding.length > 0) {
-                logger.debug(`🔍 First few values: [${embedding.slice(0, 3).join(', ')}...]`)
+                logger.debug(`First few values: [${embedding.slice(0, 3).join(', ')}...]`)
             }
 
-            // Convert to Float32Array as required by FAISS
+            // Prepare array for FAISS (expects regular Array, not Float32Array)
             // Handle nested arrays or non-array structures
             let flatEmbedding = embedding;
             if (Array.isArray(embedding) && embedding.length === 1 && Array.isArray(embedding[0])) {
@@ -148,9 +148,10 @@ export class Vectors {
                 throw new Error(`Embedding must be an array, got ${typeof embedding}`)
             }
 
-            const embeddingFloat32 = new Float32Array(flatEmbedding)
+            // FAISS expects a regular JavaScript Array, not Float32Array
+            const embeddingArray = Array.isArray(flatEmbedding) ? flatEmbedding : Array.from(flatEmbedding);
 
-            this.index.add(embeddingFloat32)
+            this.index.add(embeddingArray)
             const afterTotal = this.index.ntotal()
 
             if (afterTotal > beforeTotal) {

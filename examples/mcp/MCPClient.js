@@ -10,6 +10,8 @@
  * 4. Build a complete semantic processing pipeline
  */
 
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 
@@ -23,10 +25,14 @@ class SememMCPClient {
     console.log('🔌 Connecting to Semem MCP Server...');
     
     this.client = new Client({ name: "semem-example-client", version: "1.0.0" });
+        const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+    const projectRoot = path.resolve(__dirname, '../..'); // Resolves to the 'semem' directory
+
     this.transport = new StdioClientTransport({
       command: 'node',
       args: ['./mcp/index.js'],
-      cwd: process.cwd()
+      cwd: projectRoot
     });
 
     await this.client.connect(this.transport);

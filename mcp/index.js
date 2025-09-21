@@ -6,9 +6,14 @@
  */
 
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-// Load environment variables first, before any other imports
-dotenv.config();
+// Ensure .env is loaded from the project root, regardless of CWD
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const projectRoot = path.resolve(__dirname, '..'); // Resolve to 'semem/mcp' -> 'semem'
+dotenv.config({ path: path.join(projectRoot, '.env') });
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';

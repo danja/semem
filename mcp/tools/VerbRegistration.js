@@ -23,7 +23,7 @@ import { SimpleVerbsService } from './SimpleVerbsService.js';
 import { logOperation } from './VerbsLogger.js';
 import { mcpDebugger } from '../lib/debug-utils.js';
 
-// Create shared service instance
+// Create shared service instance for HTTP (working)
 const simpleVerbsService = new SimpleVerbsService();
 
 /**
@@ -37,6 +37,16 @@ export function registerSimpleVerbs(server) {
 
 // Export function to get the Simple Verbs service instance for centralized handler
 export function getSimpleVerbsService() {
+  // STDIO FIX: Create fresh instance for STDIO to avoid singleton issues
+  // HTTP uses shared instance (working), STDIO gets fresh instance
+  if (process.env.MCP_INSPECTOR_MODE === 'true' ||
+      process.argv.includes('mcp/index.js') ||
+      process.stdin.isTTY === false) {
+    console.log('🔍 STDIO FIX: Creating fresh SimpleVerbsService instance for STDIO');
+    return new SimpleVerbsService();
+  }
+
+  // HTTP path: return shared singleton (working)
   return simpleVerbsService;
 }
 

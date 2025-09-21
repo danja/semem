@@ -556,34 +556,11 @@ import {
       return result;
       
     } catch (error) {
-      const perfData = askTimer.complete(error);
-      const totalDuration = Date.now() - startTime;
-      
-      // Log performance data for failed operation
-      logPerformance('ask', {
-        duration: perfData.totalDuration,
-        phases: perfData.phases,
-        success: false,
+      logOperation('error', 'ask', 'Ask operation failed - throwing error instead of masking', {
         error: error.message,
-        questionLength: question.length,
-        mode
+        stack: error.stack
       });
-      
-      logOperation('error', 'ask', 'Ask operation failed', { 
-        error: error.message, 
-        totalDuration: totalDuration + 'ms' 
-      });
-      
-      return {
-        success: false,
-        verb: 'ask',
-        question,
-        error: error.message,
-        hybridError: true,
-        performance: perfData,
-        zptState: this.stateManager.getState(),
-        sessionCacheStats: this.stateManager.getSessionCacheStats()
-      };
+      throw error;
     }
   }
 

@@ -9,6 +9,12 @@
   }
 }
 
+
+export class Vectors {
+    constructor(dimension = 768) {
+
+substring(0, 100)
+
 src/services/embeddings/EmbeddingService.js has stardardize with pad zeros
 
 Read src/stores/SPARQLStore-original.js and make a checklist of the methods in SPARQLSTORE.md Then take each method in turn and trace its namesake in SPARQLStore.js through into the module that actually implements the method. If a correct implementation exists, update the checklist. Make a note of any that are missing. Then got through each of the missing or flawed methods and implement them properly.

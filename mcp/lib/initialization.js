@@ -180,6 +180,9 @@ export async function initializeServices() {
  * Get initialized memory manager
  */
 export function getMemoryManager() {
+  if (!memoryManager) {
+    throw new Error('MemoryManager not initialized. Call initializeServices() first.');
+  }
   return memoryManager;
 }
 
