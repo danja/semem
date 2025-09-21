@@ -29,47 +29,47 @@ export default class VSOM {
             mapSize: options.mapSize || [20, 20],
             topology: options.topology || 'rectangular',
             boundaryCondition: options.boundaryCondition || 'bounded',
-            
+
             // Algorithm parameters
-            embeddingDimension: options.embeddingDimension || 1536,
+            embeddingDimension: options.embeddingDimension,
             distanceMetric: options.distanceMetric || 'cosine',
-            
+
             // Training parameters
             maxIterations: options.maxIterations || 1000,
             initialLearningRate: options.initialLearningRate || 0.1,
             finalLearningRate: options.finalLearningRate || 0.01,
             initialRadius: options.initialRadius || Math.max(...(options.mapSize || [20, 20])) / 4,
             finalRadius: options.finalRadius || 0.5,
-            
+
             // Data handling
             batchSize: options.batchSize || 100,
-            
+
             // Clustering
             clusterThreshold: options.clusterThreshold || 0.8,
             minClusterSize: options.minClusterSize || 3,
-            
+
             // RDF integration
             uriBase: options.uriBase || 'http://example.org/ragno/',
             exportToRDF: options.exportToRDF !== false,
-            
+
             // Performance
             logProgress: options.logProgress !== false,
-            
+
             ...options
         }
-        
+
         // Initialize components
         this.core = new VSOMCore({
             distanceMetric: this.options.distanceMetric,
             batchSize: this.options.batchSize
         })
-        
+
         this.topology = new VSOMTopology({
             topology: this.options.topology,
             boundaryCondition: this.options.boundaryCondition,
             mapSize: this.options.mapSize
         })
-        
+
         this.training = new VSOMTraining({
             maxIterations: this.options.maxIterations,
             initialLearningRate: this.options.initialLearningRate,
@@ -79,9 +79,9 @@ export default class VSOM {
             batchSize: this.options.batchSize,
             logProgress: this.options.logProgress
         })
-        
+
         this.namespaces = new NamespaceManager({ uriBase: this.options.uriBase })
-        
+
         // Data storage
         this.entities = []
         this.embeddings = []
@@ -89,10 +89,10 @@ export default class VSOM {
         this.trained = false
         this.clusters = null
         this.nodeAssignments = null
-        
+
         // Training results
         this.trainingResults = null
-        
+
         // Statistics
         this.stats = {
             totalEntities: 0,
@@ -102,14 +102,14 @@ export default class VSOM {
             dataLoadTime: 0,
             lastDataLoadDate: null
         }
-        
+
         logger.debug('VSOM initialized with options:', {
             mapSize: this.options.mapSize,
             topology: this.options.topology,
             embeddingDimension: this.options.embeddingDimension
         })
     }
-    
+
     /**
      * Load entities from an array with embedding generation
      * @param {Array} entities - Array of Entity objects or entity data
@@ -120,63 +120,63 @@ export default class VSOM {
     async loadFromEntities(entities, embeddingHandler, options = {}) {
         const startTime = Date.now()
         logger.info(`Loading ${entities.length} entities into VSOM`)
-        
+
         this.entities = []
         this.embeddings = []
         this.entityMetadata = []
-        
+
         const batchSize = options.batchSize || this.options.batchSize
         let processedCount = 0
-        
+
         try {
             // Process entities in batches
             for (let i = 0; i < entities.length; i += batchSize) {
                 const batch = entities.slice(i, i + batchSize)
-                
+
                 for (const entity of batch) {
                     // Extract entity information
                     const entityData = this.extractEntityData(entity)
-                    
+
                     // Generate embedding for entity content
                     const embedding = await embeddingHandler.generateEmbedding(entityData.content)
-                    
+
                     // Validate embedding dimension
                     if (embedding.length !== this.options.embeddingDimension) {
                         logger.warn(`Embedding dimension mismatch: expected ${this.options.embeddingDimension}, got ${embedding.length}`)
                         continue
                     }
-                    
+
                     this.entities.push(entity)
                     this.embeddings.push(embedding)
                     this.entityMetadata.push(entityData)
                     processedCount++
                 }
-                
+
                 if (this.options.logProgress && (i + batchSize) % (batchSize * 10) === 0) {
                     logger.info(`Processed ${Math.min(i + batchSize, entities.length)}/${entities.length} entities`)
                 }
             }
-            
+
             const loadTime = Date.now() - startTime
             this.stats.totalEntities = processedCount
             this.stats.dataLoadTime = loadTime
             this.stats.lastDataLoadDate = new Date()
-            
+
             logger.info(`Loaded ${processedCount} entities in ${loadTime}ms`)
-            
+
             return {
                 entitiesLoaded: processedCount,
                 entitiesSkipped: entities.length - processedCount,
                 loadTime: loadTime,
                 averageEmbeddingTime: loadTime / processedCount
             }
-            
+
         } catch (error) {
             logger.error('Error loading entities:', error)
             throw error
         }
     }
-    
+
     /**
      * Load entities from SPARQL endpoint
      * @param {string} endpoint - SPARQL endpoint URL
@@ -187,23 +187,23 @@ export default class VSOM {
      */
     async loadFromSPARQL(endpoint, query, embeddingHandler, options = {}) {
         logger.info(`Loading entities from SPARQL endpoint: ${endpoint}`)
-        
+
         try {
             // Execute SPARQL query
             const sparqlResults = await this.executeSPARQLQuery(endpoint, query, options)
-            
+
             // Convert SPARQL results to entity format
             const entities = this.processSPARQLResults(sparqlResults)
-            
+
             // Load the entities
             return await this.loadFromEntities(entities, embeddingHandler, options)
-            
+
         } catch (error) {
             logger.error('Error loading from SPARQL:', error)
             throw error
         }
     }
-    
+
     /**
      * Load entities from existing VectorIndex
      * @param {Object} vectorIndex - VectorIndex instance
@@ -212,19 +212,19 @@ export default class VSOM {
      */
     async loadFromVectorIndex(vectorIndex, filters = {}) {
         logger.info('Loading entities from VectorIndex')
-        
+
         try {
             // Get all indexed entities
             const indexedEntities = vectorIndex.getAllNodes()
-            
+
             // Apply filters
             const filteredEntities = this.applyEntityFilters(indexedEntities, filters)
-            
+
             // Extract entities and embeddings
             this.entities = []
             this.embeddings = []
             this.entityMetadata = []
-            
+
             for (const indexedEntity of filteredEntities) {
                 this.entities.push(indexedEntity.entity)
                 this.embeddings.push(indexedEntity.embedding)
@@ -235,24 +235,24 @@ export default class VSOM {
                     fromVectorIndex: true
                 })
             }
-            
+
             this.stats.totalEntities = this.entities.length
             this.stats.lastDataLoadDate = new Date()
-            
+
             logger.info(`Loaded ${this.entities.length} entities from VectorIndex`)
-            
+
             return {
                 entitiesLoaded: this.entities.length,
                 entitiesSkipped: 0,
                 loadTime: 0
             }
-            
+
         } catch (error) {
             logger.error('Error loading from VectorIndex:', error)
             throw error
         }
     }
-    
+
     /**
      * Train the VSOM on loaded data
      * @param {Object} [options] - Training options
@@ -262,16 +262,16 @@ export default class VSOM {
         if (this.embeddings.length === 0) {
             throw new Error('No data loaded. Call loadFromEntities, loadFromSPARQL, or loadFromVectorIndex first.')
         }
-        
+
         logger.info(`Training VSOM on ${this.embeddings.length} entities`)
-        
+
         // Initialize core algorithm
         this.core.initializeWeights(
             this.options.mapSize,
             this.options.embeddingDimension,
             options.initMethod || 'random'
         )
-        
+
         // Execute training
         this.trainingResults = await this.training.train(
             this.core,
@@ -283,19 +283,19 @@ export default class VSOM {
                 shouldStop: options.shouldStop
             }
         )
-        
+
         this.trained = true
         this.stats.trainingTime = this.trainingResults.trainingTime
         this.stats.lastTrainingDate = new Date()
-        
+
         // Generate node assignments
         this.generateNodeAssignments()
-        
+
         logger.info(`VSOM training completed: ${this.trainingResults.totalIterations} iterations, ${this.trainingResults.trainingTime}ms`)
-        
+
         return this.trainingResults
     }
-    
+
     /**
      * Generate cluster assignments for entities
      * @param {number} [threshold] - Clustering threshold
@@ -305,18 +305,18 @@ export default class VSOM {
         if (!this.trained) {
             throw new Error('VSOM must be trained before clustering. Call train() first.')
         }
-        
+
         const clusterThreshold = threshold || this.options.clusterThreshold
-        
+
         logger.info(`Generating clusters with threshold ${clusterThreshold}`)
-        
+
         // Use weight similarity for clustering
         this.clusters = this.generateClusters(clusterThreshold)
         this.stats.totalClusters = this.clusters.length
-        
+
         return this.clusters
     }
-    
+
     /**
      * Get node mappings (entity to map position)
      * @returns {Array} Array of node mappings
@@ -325,7 +325,7 @@ export default class VSOM {
         if (!this.nodeAssignments) {
             throw new Error('Node assignments not generated. Train the VSOM first.')
         }
-        
+
         return this.nodeAssignments.map((assignment, index) => ({
             entityIndex: index,
             entity: this.entities[index],
@@ -335,7 +335,7 @@ export default class VSOM {
             metadata: this.entityMetadata[index]
         }))
     }
-    
+
     /**
      * Get topology information
      * @returns {Object} Topology information
@@ -343,7 +343,7 @@ export default class VSOM {
     getTopology() {
         return this.topology.getTopologyInfo()
     }
-    
+
     /**
      * Export results to RDF dataset
      * @param {Object} dataset - RDF dataset to augment
@@ -354,32 +354,32 @@ export default class VSOM {
         if (!this.trained) {
             throw new Error('VSOM must be trained before RDF export')
         }
-        
+
         logger.info('Exporting VSOM results to RDF')
-        
+
         let triplesAdded = 0
         const clusters = this.clusters || this.getClusters()
         const nodeMappings = this.getNodeMappings()
-        
+
         // Export cluster information
         for (let clusterIndex = 0; clusterIndex < clusters.length; clusterIndex++) {
             const cluster = clusters[clusterIndex]
             const clusterUri = this.namespaces.ex(`cluster_${clusterIndex}`)
-            
+
             // Cluster type
             dataset.add(rdf.quad(
                 clusterUri,
                 this.namespaces.rdf('type'),
                 this.namespaces.ragno('Cluster')
             ))
-            
+
             // Cluster properties
             dataset.add(rdf.quad(
                 clusterUri,
                 this.namespaces.ragno('memberCount'),
                 rdf.literal(cluster.members.length.toString(), this.namespaces.xsd('integer'))
             ))
-            
+
             if (cluster.centroid) {
                 dataset.add(rdf.quad(
                     clusterUri,
@@ -387,21 +387,21 @@ export default class VSOM {
                     rdf.literal(cluster.centroid.join(','), this.namespaces.ragno('Vector'))
                 ))
             }
-            
+
             triplesAdded += 3
         }
-        
+
         // Export entity mappings
         for (const mapping of nodeMappings) {
             const entityUri = rdf.namedNode(mapping.metadata.uri || mapping.entity.uri)
-            
+
             // Map position
             dataset.add(rdf.quad(
                 entityUri,
                 this.namespaces.ragno('mapPosition'),
                 rdf.literal(`${mapping.mapPosition[0]},${mapping.mapPosition[1]}`, this.namespaces.xsd('string'))
             ))
-            
+
             // Find cluster assignment
             const clusterIndex = this.findEntityCluster(mapping.entityIndex, clusters)
             if (clusterIndex !== -1) {
@@ -411,7 +411,7 @@ export default class VSOM {
                     this.namespaces.ragno('cluster'),
                     clusterUri
                 ))
-                
+
                 // Cluster confidence based on distance to BMU
                 const confidence = Math.max(0, 1 - mapping.distance)
                 dataset.add(rdf.quad(
@@ -420,14 +420,14 @@ export default class VSOM {
                     rdf.literal(confidence.toFixed(3), this.namespaces.xsd('decimal'))
                 ))
             }
-            
+
             triplesAdded += 3
         }
-        
+
         logger.info(`Exported ${triplesAdded} RDF triples`)
         return triplesAdded
     }
-    
+
     /**
      * Export visualization coordinates
      * @param {string} [format] - Output format ('coordinates', 'json', 'csv')
@@ -436,11 +436,11 @@ export default class VSOM {
     exportVisualization(format = 'coordinates') {
         const visualCoords = this.topology.getVisualizationCoordinates('cartesian')
         const nodeMappings = this.getNodeMappings()
-        
+
         const visualizationData = visualCoords.map(coord => {
             // Find entity assigned to this node
             const assignedEntity = nodeMappings.find(mapping => mapping.nodeIndex === coord.index)
-            
+
             return {
                 nodeIndex: coord.index,
                 mapCoords: coord.mapCoords,
@@ -453,7 +453,7 @@ export default class VSOM {
                 weights: this.core.getNodeWeights(coord.index)
             }
         })
-        
+
         switch (format) {
             case 'json':
                 return JSON.stringify(visualizationData, null, 2)
@@ -464,7 +464,7 @@ export default class VSOM {
                 return visualizationData
         }
     }
-    
+
     /**
      * Integrate with Hyde algorithm results
      * @param {Object} hydeResults - Results from Hyde algorithm
@@ -472,22 +472,22 @@ export default class VSOM {
      */
     async integrateWithHyde(hydeResults) {
         logger.info('Integrating VSOM with Hyde results')
-        
+
         // Separate hypothetical entities from factual ones
-        const hypotheticalEntities = hydeResults.entities.filter(entity => 
+        const hypotheticalEntities = hydeResults.entities.filter(entity =>
             entity.metadata && entity.metadata.hypothetical
         )
-        
+
         // Create separate clusters for hypothetical content
         const hypotheticalClusters = await this.clusterHypotheticalEntities(hypotheticalEntities)
-        
+
         return {
             hypotheticalClusters: hypotheticalClusters,
             totalHypotheticalEntities: hypotheticalEntities.length,
             confidenceDistribution: this.analyzeConfidenceDistribution(hypotheticalEntities)
         }
     }
-    
+
     /**
      * Integrate with GraphAnalytics results
      * @param {Object} graphResults - Results from GraphAnalytics
@@ -495,18 +495,18 @@ export default class VSOM {
      */
     integrateWithGraphAnalytics(graphResults) {
         logger.info('Integrating VSOM with GraphAnalytics results')
-        
+
         // Use centrality measures to weight entity importance in clustering
         const enhancedClusters = this.enhanceClustersWithCentrality(graphResults)
-        
+
         return {
             enhancedClusters: enhancedClusters,
             centralityWeighting: true
         }
     }
-    
+
     // Helper methods
-    
+
     /**
      * Extract entity data from various entity formats
      * @param {Object} entity - Entity object
@@ -543,7 +543,7 @@ export default class VSOM {
             throw new Error(`Unsupported entity format: ${typeof entity}`)
         }
     }
-    
+
     /**
      * Execute SPARQL query (placeholder implementation)
      * @param {string} endpoint - SPARQL endpoint URL
@@ -557,7 +557,7 @@ export default class VSOM {
         logger.warn('SPARQL query execution not implemented yet')
         return []
     }
-    
+
     /**
      * Process SPARQL results into entity format
      * @param {Array} sparqlResults - SPARQL query results
@@ -574,7 +574,7 @@ export default class VSOM {
             }
         }))
     }
-    
+
     /**
      * Apply filters to entity data
      * @param {Array} entities - Array of entities
@@ -591,7 +591,7 @@ export default class VSOM {
             return true
         })
     }
-    
+
     /**
      * Generate node assignments for entities
      */
@@ -599,14 +599,14 @@ export default class VSOM {
         this.nodeAssignments = this.embeddings.map(embedding => {
             const bmuIndex = this.core.findSingleBMU(embedding)
             const distance = this.core.calculateDistance(embedding, this.core.getNodeWeights(bmuIndex))
-            
+
             return {
                 nodeIndex: bmuIndex,
                 distance: distance
             }
         })
     }
-    
+
     /**
      * Generate clusters from trained map
      * @param {number} threshold - Clustering threshold
@@ -616,19 +616,19 @@ export default class VSOM {
         // Simple clustering based on weight similarity
         const clusters = []
         const visited = new Set()
-        
+
         for (let i = 0; i < this.core.totalNodes; i++) {
             if (visited.has(i)) continue
-            
+
             const cluster = this.expandCluster(i, threshold, visited)
             if (cluster.members.length >= this.options.minClusterSize) {
                 clusters.push(cluster)
             }
         }
-        
+
         return clusters
     }
-    
+
     /**
      * Expand cluster using neighboring nodes
      * @param {number} seedIndex - Starting node index
@@ -642,23 +642,23 @@ export default class VSOM {
             members: [seedIndex],
             centroid: [...this.core.getNodeWeights(seedIndex)]
         }
-        
+
         visited.add(seedIndex)
         const queue = [seedIndex]
-        
+
         while (queue.length > 0) {
             const currentIndex = queue.shift()
             const currentCoords = this.topology.indexToCoordinates(currentIndex)
-            
+
             // Check neighboring nodes
             const neighbors = this.topology.getNeighbors(currentCoords, 1.5)
-            
+
             for (const neighbor of neighbors) {
                 const neighborIndex = this.topology.coordinatesToIndex(...neighbor.coords)
-                
+
                 if (!visited.has(neighborIndex)) {
                     const similarity = this.calculateNodeSimilarity(currentIndex, neighborIndex)
-                    
+
                     if (similarity > threshold) {
                         cluster.members.push(neighborIndex)
                         visited.add(neighborIndex)
@@ -667,15 +667,15 @@ export default class VSOM {
                 }
             }
         }
-        
+
         // Recalculate centroid
         if (cluster.members.length > 1) {
             cluster.centroid = this.calculateClusterCentroid(cluster.members)
         }
-        
+
         return cluster
     }
-    
+
     /**
      * Calculate similarity between two nodes
      * @param {number} index1 - First node index
@@ -686,11 +686,11 @@ export default class VSOM {
         const weights1 = this.core.getNodeWeights(index1)
         const weights2 = this.core.getNodeWeights(index2)
         const distance = this.core.calculateDistance(weights1, weights2)
-        
+
         // Convert distance to similarity (0-1 scale)
         return Math.max(0, 1 - distance)
     }
-    
+
     /**
      * Calculate cluster centroid
      * @param {Array} memberIndices - Array of member node indices
@@ -698,21 +698,21 @@ export default class VSOM {
      */
     calculateClusterCentroid(memberIndices) {
         const centroid = new Array(this.options.embeddingDimension).fill(0)
-        
+
         for (const index of memberIndices) {
             const weights = this.core.getNodeWeights(index)
             for (let i = 0; i < weights.length; i++) {
                 centroid[i] += weights[i]
             }
         }
-        
+
         for (let i = 0; i < centroid.length; i++) {
             centroid[i] /= memberIndices.length
         }
-        
+
         return centroid
     }
-    
+
     /**
      * Find which cluster an entity belongs to
      * @param {number} entityIndex - Entity index
@@ -723,18 +723,18 @@ export default class VSOM {
         if (!this.nodeAssignments || !this.nodeAssignments[entityIndex]) {
             return -1
         }
-        
+
         const nodeIndex = this.nodeAssignments[entityIndex].nodeIndex
-        
+
         for (let i = 0; i < clusters.length; i++) {
             if (clusters[i].members.includes(nodeIndex)) {
                 return i
             }
         }
-        
+
         return -1
     }
-    
+
     /**
      * Cluster hypothetical entities separately
      * @param {Array} hypotheticalEntities - Array of hypothetical entities
@@ -745,7 +745,7 @@ export default class VSOM {
         logger.info(`Clustering ${hypotheticalEntities.length} hypothetical entities`)
         return []
     }
-    
+
     /**
      * Analyze confidence distribution
      * @param {Array} entities - Array of entities with confidence scores
@@ -755,14 +755,14 @@ export default class VSOM {
         const confidences = entities
             .map(entity => entity.metadata?.confidence || 0)
             .filter(conf => conf > 0)
-        
+
         if (confidences.length === 0) {
             return { mean: 0, std: 0, min: 0, max: 0 }
         }
-        
+
         const mean = confidences.reduce((sum, conf) => sum + conf, 0) / confidences.length
         const variance = confidences.reduce((sum, conf) => sum + Math.pow(conf - mean, 2), 0) / confidences.length
-        
+
         return {
             mean: mean,
             std: Math.sqrt(variance),
@@ -771,7 +771,7 @@ export default class VSOM {
             count: confidences.length
         }
     }
-    
+
     /**
      * Enhance clusters with centrality measures
      * @param {Object} graphResults - Graph analytics results
@@ -782,7 +782,7 @@ export default class VSOM {
         logger.info('Enhancing clusters with centrality measures')
         return this.clusters || []
     }
-    
+
     /**
      * Convert data to CSV format
      * @param {Array} data - Data to convert
@@ -790,19 +790,19 @@ export default class VSOM {
      */
     convertToCSV(data) {
         if (data.length === 0) return ''
-        
+
         const headers = Object.keys(data[0])
         const csvHeaders = headers.join(',')
-        const csvRows = data.map(row => 
+        const csvRows = data.map(row =>
             headers.map(header => {
                 const value = row[header]
                 return typeof value === 'object' ? JSON.stringify(value) : value
             }).join(',')
         )
-        
+
         return [csvHeaders, ...csvRows].join('\n')
     }
-    
+
     /**
      * Get algorithm statistics
      * @returns {Object} VSOM statistics
@@ -820,7 +820,7 @@ export default class VSOM {
             memoryUsage: this.estimateMemoryUsage()
         }
     }
-    
+
     /**
      * Estimate total memory usage
      * @returns {number} Estimated memory usage in bytes
@@ -830,10 +830,10 @@ export default class VSOM {
         const topologyMemory = this.topology.estimateMemoryUsage()
         const trainingMemory = this.training.estimateMemoryUsage()
         const dataMemory = this.embeddings.length * this.options.embeddingDimension * 8 // Float64
-        
+
         return coreMemory + topologyMemory + trainingMemory + dataMemory
     }
-    
+
     /**
      * Reset VSOM state
      */
@@ -845,9 +845,9 @@ export default class VSOM {
         this.clusters = null
         this.nodeAssignments = null
         this.trainingResults = null
-        
+
         this.training.reset()
-        
+
         this.stats = {
             totalEntities: 0,
             totalClusters: 0,
@@ -856,7 +856,7 @@ export default class VSOM {
             dataLoadTime: 0,
             lastDataLoadDate: null
         }
-        
+
         logger.debug('VSOM state reset')
     }
 }

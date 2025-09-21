@@ -4,7 +4,7 @@
 export default class TiltProjector {
     constructor(options = {}) {
         this.config = {
-            embeddingDimension: options.embeddingDimension || 1536,
+            embeddingDimension: options.embeddingDimension,
             keywordLimit: options.keywordLimit || 20,
             minKeywordScore: options.minKeywordScore || 0.1,
             graphDepth: options.graphDepth || 3,
@@ -12,7 +12,7 @@ export default class TiltProjector {
             includeMetadata: options.includeMetadata !== false,
             ...options
         };
-        
+
         this.initializeProjectionStrategies();
         this.initializeOutputFormats();
     }
@@ -144,7 +144,7 @@ export default class TiltProjector {
     async project(corpuscles, tiltParams, context = {}) {
         const { representation } = tiltParams;
         const strategy = this.projectionStrategies[representation];
-        
+
         if (!strategy) {
             throw new Error(`Unsupported tilt representation: ${representation}`);
         }
@@ -155,13 +155,13 @@ export default class TiltProjector {
         try {
             // Execute projection
             const projection = await strategy.processor(corpuscles, tiltParams, context);
-            
+
             // Enrich with metadata
             const enrichedProjection = this.enrichProjection(projection, strategy, context);
-            
+
             // Format output
             const formattedOutput = this.formatOutput(enrichedProjection, strategy.outputType);
-            
+
             return {
                 representation,
                 outputType: strategy.outputType,
@@ -173,7 +173,7 @@ export default class TiltProjector {
                     config: this.config
                 }
             };
-            
+
         } catch (error) {
             throw new Error(`Projection failed for ${representation}: ${error.message}`);
         }
@@ -186,12 +186,12 @@ export default class TiltProjector {
         const { embeddingHandler } = context;
         const embeddings = [];
         const similarities = [];
-        
+
         // Process each corpuscle
         for (const corpuscle of corpuscles) {
             let embedding = null;
             let similarity = corpuscle.similarity || 0;
-            
+
             // Use existing embedding if available
             if (corpuscle.metadata.embedding) {
                 embedding = corpuscle.metadata.embedding;
@@ -202,7 +202,7 @@ export default class TiltProjector {
                     embedding = await embeddingHandler.generateEmbedding(content);
                 }
             }
-            
+
             if (embedding) {
                 embeddings.push({
                     uri: corpuscle.uri,
@@ -216,7 +216,7 @@ export default class TiltProjector {
         }
 
         // Calculate aggregate statistics
-        const avgSimilarity = similarities.length > 0 ? 
+        const avgSimilarity = similarities.length > 0 ?
             similarities.reduce((a, b) => a + b, 0) / similarities.length : 0;
 
         return {
@@ -245,7 +245,7 @@ export default class TiltProjector {
 
             const keywords = this.extractKeywords(content);
             const scoredKeywords = this.scoreKeywords(keywords, content);
-            
+
             corpuscleKeywords.push({
                 uri: corpuscle.uri,
                 keywords: scoredKeywords,
@@ -310,14 +310,14 @@ export default class TiltProjector {
                 properties: this.extractNodeProperties(corpuscle),
                 score: corpuscle.score || 0
             };
-            
+
             nodes.set(nodeId, node);
         }
 
         // Extract relationships and build edges
         for (const corpuscle of corpuscles) {
             const relationships = this.extractRelationships(corpuscle);
-            
+
             relationships.forEach(rel => {
                 if (nodes.has(rel.target)) {
                     edges.push({
@@ -371,7 +371,7 @@ export default class TiltProjector {
         // Extract temporal information from corpuscles
         for (const corpuscle of corpuscles) {
             const temporalData = this.extractTemporalData(corpuscle);
-            
+
             if (temporalData.timestamp) {
                 const event = {
                     id: corpuscle.uri,
@@ -381,7 +381,7 @@ export default class TiltProjector {
                     data: temporalData.data,
                     score: corpuscle.score || 0
                 };
-                
+
                 events.push(event);
 
                 // Group into temporal buckets
@@ -463,7 +463,7 @@ export default class TiltProjector {
         // Extract relationships from corpuscle binding data
         const relationships = [];
         const binding = corpuscle.binding || {};
-        
+
         if (binding.entity?.value) {
             relationships.push({
                 target: binding.entity.value,
@@ -471,7 +471,7 @@ export default class TiltProjector {
                 weight: 1
             });
         }
-        
+
         if (binding.unit?.value) {
             relationships.push({
                 target: binding.unit.value,
@@ -479,14 +479,14 @@ export default class TiltProjector {
                 weight: 0.8
             });
         }
-        
+
         return relationships;
     }
 
     extractTemporalData(corpuscle) {
         const metadata = corpuscle.metadata || {};
         const binding = corpuscle.binding || {};
-        
+
         return {
             timestamp: metadata.created || binding.created?.value,
             modified: metadata.modified || binding.modified?.value,
@@ -506,22 +506,22 @@ export default class TiltProjector {
             .replace(/[^\w\s]/g, ' ')
             .split(/\s+/)
             .filter(word => word.length > 3);
-        
+
         // Remove common stop words
         const stopWords = new Set(['this', 'that', 'with', 'have', 'will', 'been', 'from', 'they', 'them', 'were', 'said', 'each', 'which', 'their', 'time', 'more', 'very', 'when', 'come', 'here', 'just', 'like', 'long', 'make', 'many', 'over', 'such', 'take', 'than', 'them', 'well', 'were']);
-        
+
         return words.filter(word => !stopWords.has(word));
     }
 
     scoreKeywords(keywords, text) {
         const wordFreq = new Map();
         const totalWords = keywords.length;
-        
+
         // Calculate frequency
         keywords.forEach(word => {
             wordFreq.set(word, (wordFreq.get(word) || 0) + 1);
         });
-        
+
         // Score keywords by frequency and position
         return Array.from(wordFreq.entries())
             .map(([keyword, freq]) => ({
@@ -535,7 +535,7 @@ export default class TiltProjector {
 
     generateKeywordSummary(topKeywords) {
         if (topKeywords.length === 0) return 'No keywords extracted';
-        
+
         const summary = `Key topics include: ${topKeywords.slice(0, 5).join(', ')}`;
         return summary + (topKeywords.length > 5 ? ' and others.' : '.');
     }
@@ -543,13 +543,13 @@ export default class TiltProjector {
     calculateKeywordCoverage(globalKeywords, corpuscleKeywords) {
         const topGlobalKeywords = new Set(globalKeywords.slice(0, 10).map(k => k.keyword));
         let totalCoverage = 0;
-        
+
         corpuscleKeywords.forEach(corpuscle => {
             const corpuscleKeywordSet = new Set(corpuscle.keywords.map(k => k.keyword));
             const intersection = new Set([...topGlobalKeywords].filter(k => corpuscleKeywordSet.has(k)));
             totalCoverage += intersection.size / topGlobalKeywords.size;
         });
-        
+
         return corpuscleKeywords.length > 0 ? totalCoverage / corpuscleKeywords.length : 0;
     }
 
@@ -557,7 +557,7 @@ export default class TiltProjector {
         const inEdges = edges.filter(e => e.target === nodeId);
         const outEdges = edges.filter(e => e.source === nodeId);
         const totalEdges = inEdges.length + outEdges.length;
-        
+
         return {
             inDegree: inEdges.length,
             outDegree: outEdges.length,
@@ -574,15 +574,15 @@ export default class TiltProjector {
             if (edge.source === nodeId) neighbors.add(edge.target);
             if (edge.target === nodeId) neighbors.add(edge.source);
         });
-        
+
         if (neighbors.size < 2) return 0;
-        
+
         let neighborConnections = 0;
         const neighborArray = Array.from(neighbors);
-        
+
         for (let i = 0; i < neighborArray.length; i++) {
             for (let j = i + 1; j < neighborArray.length; j++) {
-                if (edges.some(e => 
+                if (edges.some(e =>
                     (e.source === neighborArray[i] && e.target === neighborArray[j]) ||
                     (e.source === neighborArray[j] && e.target === neighborArray[i])
                 )) {
@@ -590,7 +590,7 @@ export default class TiltProjector {
                 }
             }
         }
-        
+
         const maxPossibleConnections = neighbors.size * (neighbors.size - 1) / 2;
         return maxPossibleConnections > 0 ? neighborConnections / maxPossibleConnections : 0;
     }
@@ -599,7 +599,7 @@ export default class TiltProjector {
         // Simple community detection based on connected components
         const communities = [];
         const visited = new Set();
-        
+
         nodes.forEach(node => {
             if (!visited.has(node.id)) {
                 const community = this.findConnectedComponent(node.id, edges, visited);
@@ -612,21 +612,21 @@ export default class TiltProjector {
                 }
             }
         });
-        
+
         return communities;
     }
 
     findConnectedComponent(startNode, edges, visited) {
         const component = [];
         const queue = [startNode];
-        
+
         while (queue.length > 0) {
             const node = queue.shift();
             if (visited.has(node)) continue;
-            
+
             visited.add(node);
             component.push(node);
-            
+
             // Find neighbors
             edges.forEach(edge => {
                 if (edge.source === node && !visited.has(edge.target)) {
@@ -637,24 +637,24 @@ export default class TiltProjector {
                 }
             });
         }
-        
+
         return component;
     }
 
     calculateGraphStatistics(nodes, edges) {
         const nodeCount = nodes.size;
         const edgeCount = edges.length;
-        
+
         let totalDegree = 0;
         let totalClustering = 0;
-        
+
         for (const [nodeId, node] of nodes) {
             if (node.metrics) {
                 totalDegree += node.metrics.degree;
                 totalClustering += node.metrics.clustering;
             }
         }
-        
+
         return {
             avgDegree: nodeCount > 0 ? totalDegree / nodeCount : 0,
             clusteringCoefficient: nodeCount > 0 ? totalClustering / nodeCount : 0
@@ -679,7 +679,7 @@ export default class TiltProjector {
     getTemporalBucket(timestamp) {
         const date = new Date(timestamp);
         const granularity = this.config.temporalGranularity;
-        
+
         switch (granularity) {
             case 'year':
                 return date.getFullYear().toString();
@@ -696,7 +696,7 @@ export default class TiltProjector {
 
     getBucketRange(bucket) {
         const granularity = this.config.temporalGranularity;
-        
+
         switch (granularity) {
             case 'year':
                 return [`${bucket}-01-01T00:00:00Z`, `${bucket}-12-31T23:59:59Z`];
@@ -717,14 +717,14 @@ export default class TiltProjector {
         // Detect sequences of related events
         const sequences = [];
         const sortedEvents = events.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-        
+
         let currentSequence = [];
         let lastTimestamp = null;
         const maxGap = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
-        
+
         for (const event of sortedEvents) {
             const currentTimestamp = new Date(event.timestamp).getTime();
-            
+
             if (lastTimestamp && currentTimestamp - lastTimestamp > maxGap) {
                 if (currentSequence.length > 1) {
                     sequences.push({
@@ -735,33 +735,33 @@ export default class TiltProjector {
                 }
                 currentSequence = [];
             }
-            
+
             currentSequence.push(event);
             lastTimestamp = currentTimestamp;
         }
-        
+
         if (currentSequence.length > 1) {
             sequences.push({
                 id: `sequence_${sequences.length}`,
                 events: currentSequence,
-                duration: new Date(currentSequence[currentSequence.length - 1].timestamp) - 
-                         new Date(currentSequence[0].timestamp)
+                duration: new Date(currentSequence[currentSequence.length - 1].timestamp) -
+                    new Date(currentSequence[0].timestamp)
             });
         }
-        
+
         return sequences;
     }
 
     calculateTemporalDuration(events) {
         if (events.length < 2) return 0;
-        
+
         const timestamps = events.map(e => new Date(e.timestamp).getTime()).sort((a, b) => a - b);
         return timestamps[timestamps.length - 1] - timestamps[0];
     }
 
     calculateEventFrequency(events) {
         if (events.length < 2) return 0;
-        
+
         const duration = this.calculateTemporalDuration(events);
         return duration > 0 ? events.length / (duration / (24 * 60 * 60 * 1000)) : 0; // events per day
     }
@@ -769,7 +769,7 @@ export default class TiltProjector {
     detectTemporalPatterns(events, timeline) {
         // Detect patterns in temporal data
         const patterns = [];
-        
+
         // Detect periodic patterns
         const periods = this.detectPeriodicPatterns(timeline);
         if (periods.length > 0) {
@@ -779,7 +779,7 @@ export default class TiltProjector {
                 periods
             });
         }
-        
+
         // Detect bursts
         const bursts = this.detectBurstPatterns(events);
         if (bursts.length > 0) {
@@ -789,25 +789,25 @@ export default class TiltProjector {
                 bursts
             });
         }
-        
+
         return patterns;
     }
 
     detectPeriodicPatterns(timeline) {
         // Simple periodic pattern detection
         if (timeline.length < 3) return [];
-        
+
         const intervals = [];
         for (let i = 1; i < timeline.length; i++) {
-            const interval = new Date(timeline[i].start) - new Date(timeline[i-1].start);
+            const interval = new Date(timeline[i].start) - new Date(timeline[i - 1].start);
             intervals.push(interval);
         }
-        
+
         // Check for regular intervals
         const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
         const variance = intervals.reduce((sum, interval) => sum + Math.pow(interval - avgInterval, 2), 0) / intervals.length;
         const stdDev = Math.sqrt(variance);
-        
+
         if (stdDev / avgInterval < 0.2) { // Low relative standard deviation indicates regularity
             return [{
                 interval: avgInterval,
@@ -815,7 +815,7 @@ export default class TiltProjector {
                 description: `Regular interval of ${Math.round(avgInterval / (24 * 60 * 60 * 1000))} days`
             }];
         }
-        
+
         return [];
     }
 
@@ -823,15 +823,15 @@ export default class TiltProjector {
         // Detect event bursts (periods of high activity)
         const bursts = [];
         const sortedEvents = events.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-        
+
         let currentBurst = [];
         let lastTimestamp = null;
         const burstThreshold = 3; // Minimum events for a burst
         const burstWindow = 60 * 60 * 1000; // 1 hour window
-        
+
         for (const event of sortedEvents) {
             const currentTimestamp = new Date(event.timestamp).getTime();
-            
+
             if (lastTimestamp && currentTimestamp - lastTimestamp <= burstWindow) {
                 currentBurst.push(event);
             } else {
@@ -845,10 +845,10 @@ export default class TiltProjector {
                 }
                 currentBurst = [event];
             }
-            
+
             lastTimestamp = currentTimestamp;
         }
-        
+
         if (currentBurst.length >= burstThreshold) {
             bursts.push({
                 start: currentBurst[0].timestamp,
@@ -857,7 +857,7 @@ export default class TiltProjector {
                 intensity: currentBurst.length / burstWindow * (60 * 60 * 1000)
             });
         }
-        
+
         return bursts;
     }
 
@@ -866,16 +866,16 @@ export default class TiltProjector {
      */
     calculateCentroid(embeddings) {
         if (embeddings.length === 0) return null;
-        
+
         const dimension = embeddings[0].length;
         const centroid = new Array(dimension).fill(0);
-        
+
         embeddings.forEach(embedding => {
             embedding.forEach((value, index) => {
                 centroid[index] += value;
             });
         });
-        
+
         return centroid.map(value => value / embeddings.length);
     }
 
@@ -888,7 +888,7 @@ export default class TiltProjector {
 
     enrichProjection(projection, strategy, context) {
         if (!this.config.includeMetadata) return projection;
-        
+
         return {
             ...projection,
             enrichment: {
@@ -906,7 +906,7 @@ export default class TiltProjector {
      */
     async projectToConcepts(corpuscles, tiltParams, context) {
         const { conceptExtractor, sparqlStore } = context;
-        
+
         if (!conceptExtractor || !sparqlStore) {
             throw new Error('Concept projection requires conceptExtractor and sparqlStore in context');
         }
@@ -915,16 +915,16 @@ export default class TiltProjector {
         const relationships = [];
         const categories = new Map(); // category -> count
         const conceptMap = new Map(); // conceptLabel -> concept object
-        
+
         // Extract concepts from each corpuscle
         for (const corpuscle of corpuscles) {
             try {
                 const corpuscleText = this.extractTextContent(corpuscle);
                 const extractedConcepts = await conceptExtractor.extractConcepts(corpuscleText);
-                
+
                 for (const concept of extractedConcepts) {
                     const conceptKey = concept.label.toLowerCase();
-                    
+
                     if (conceptMap.has(conceptKey)) {
                         // Update existing concept frequency/confidence
                         const existing = conceptMap.get(conceptKey);
@@ -943,11 +943,11 @@ export default class TiltProjector {
                             sources: new Set([corpuscle.uri]),
                             relationships: concept.relationships || []
                         };
-                        
+
                         conceptMap.set(conceptKey, conceptObj);
                         concepts.push(conceptObj);
                     }
-                    
+
                     // Track categories
                     const category = concept.category || 'uncategorized';
                     categories.set(category, (categories.get(category) || 0) + 1);
@@ -976,8 +976,8 @@ export default class TiltProjector {
         }
 
         // Calculate overall confidence
-        const overallConfidence = concepts.length > 0 
-            ? concepts.reduce((sum, c) => sum + (c.confidence || 0), 0) / concepts.length 
+        const overallConfidence = concepts.length > 0
+            ? concepts.reduce((sum, c) => sum + (c.confidence || 0), 0) / concepts.length
             : 0;
 
         return {
@@ -1003,12 +1003,12 @@ export default class TiltProjector {
      */
     extractTextContent(corpuscle) {
         // Try various fields that might contain text
-        return corpuscle.content || 
-               corpuscle.text || 
-               corpuscle.label || 
-               corpuscle.prefLabel || 
-               corpuscle.title || 
-               String(corpuscle.uri || '');
+        return corpuscle.content ||
+            corpuscle.text ||
+            corpuscle.label ||
+            corpuscle.prefLabel ||
+            corpuscle.title ||
+            String(corpuscle.uri || '');
     }
 
     /**
@@ -1027,16 +1027,16 @@ export default class TiltProjector {
     calculateRelationshipStrength(concept1, concept2) {
         const sharedSources = Array.from(concept1.sources).filter(s => concept2.sources.has(s));
         const totalSources = new Set([...concept1.sources, ...concept2.sources]).size;
-        
+
         if (totalSources === 0) return 0;
-        
+
         return sharedSources.length / totalSources;
     }
 
     formatOutput(projection, outputType) {
         const format = this.outputFormats[outputType];
         if (!format) return projection;
-        
+
         // Validate against schema (simplified validation)
         return this.validateAndFormat(projection, format);
     }

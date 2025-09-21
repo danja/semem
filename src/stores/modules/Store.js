@@ -12,7 +12,7 @@ dotenv.config();
  * entities, semantic units, relationships, and communities
  */
 export class Store {
-    constructor(sparqlExecute, graphName, dimension = 768) {
+    constructor(sparqlExecute, graphName, dimension) {
         this.config = new Config();
         this.sparqlExecute = sparqlExecute;
         this.graphName = graphName;
@@ -384,8 +384,8 @@ export class Store {
                         ragno:tokenCount "${unit.tokenCount || 0}"^^xsd:integer ;
                         ragno:importance "${unit.importance || 0.5}"^^xsd:decimal .
                     ${unit.entities ? unit.entities.map(entityId =>
-                        `${unitUri} ragno:relatedTo <${entityId}> .`
-                    ).join('\n') : ''}
+            `${unitUri} ragno:relatedTo <${entityId}> .`
+        ).join('\n') : ''}
                     ${unit.partOf ? `${unitUri} ragno:partOf <${unit.partOf}> .` : ''}
                 }
             }
@@ -424,8 +424,8 @@ export class Store {
                         ragno:confidence "${relationship.confidence || 1.0}"^^xsd:decimal ;
                         dcterms:created "${new Date().toISOString()}"^^xsd:dateTime .
                     ${relationship.properties ? Object.entries(relationship.properties).map(([key, value]) =>
-                        `${relUri} ragno:${key} "${this._escapeSparqlString(String(value))}" .`
-                    ).join('\n') : ''}
+            `${relUri} ragno:${key} "${this._escapeSparqlString(String(value))}" .`
+        ).join('\n') : ''}
                 }
             }
         `;
@@ -459,8 +459,8 @@ export class Store {
                         ragno:size "${community.size || (community.members ? community.members.length : 0)}"^^xsd:integer ;
                         dcterms:created "${new Date().toISOString()}"^^xsd:dateTime .
                     ${community.members ? community.members.map(memberId =>
-                        `${communityUri} ragno:hasMember <${memberId}> .`
-                    ).join('\n') : ''}
+            `${communityUri} ragno:hasMember <${memberId}> .`
+        ).join('\n') : ''}
                     ${community.description ? `${communityUri} rdfs:comment "${this._escapeSparqlString(community.description)}" .` : ''}
                 }
             }

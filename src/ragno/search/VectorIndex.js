@@ -22,7 +22,7 @@ import { logger } from '../../Utils.js'
 export default class VectorIndex {
     constructor(options = {}) {
         this.options = {
-            dimension: options.dimension || 1536, // Default OpenAI embedding size
+            dimension: options.dimension, // Default OpenAI embedding size
             maxElements: options.maxElements || 100000,
             efConstruction: options.efConstruction || 200,
             mMax: options.mMax || 16,
@@ -453,8 +453,8 @@ export default class VectorIndex {
     getStatistics() {
         return {
             ...this.stats,
-            nodesByType: this.stats.nodesByType instanceof Map 
-                ? Object.fromEntries(this.stats.nodesByType) 
+            nodesByType: this.stats.nodesByType instanceof Map
+                ? Object.fromEntries(this.stats.nodesByType)
                 : this.stats.nodesByType || {},
             availableTypes: Array.from(this.typeToNodes.keys()),
             indexSize: this.stats.totalNodes,

@@ -77,7 +77,7 @@ export default class UnitsToCorpuscles {
             const embeddingProviders = config.get('embeddingProviders') || [];
             const sortedProviders = embeddingProviders
                 .sort((a, b) => (a.priority || 999) - (b.priority || 999));
-            
+
             for (const provider of sortedProviders) {
                 if (provider.type === 'ollama') {
                     return EmbeddingConnectorFactory.createConnector({
@@ -87,14 +87,14 @@ export default class UnitsToCorpuscles {
                     });
                 }
             }
-            
+
             // Default to Ollama
             return EmbeddingConnectorFactory.createConnector({
                 provider: 'ollama',
                 model: 'nomic-embed-text',
                 options: { baseUrl: 'http://localhost:11434' }
             });
-            
+
         } catch (error) {
             logger.warn('Failed to create embedding connector, using default:', error.message);
             return EmbeddingConnectorFactory.createConnector({
@@ -111,7 +111,7 @@ export default class UnitsToCorpuscles {
     async getModelConfig(config) {
         try {
             const embeddingModel = config.get('embedding.model') || 'nomic-embed-text';
-            
+
             return {
                 embeddingModel: embeddingModel
             };
@@ -136,14 +136,14 @@ export default class UnitsToCorpuscles {
             // Use the new configuration pattern from api-server.js
             const embeddingProvider = await this.createEmbeddingConnector(config);
             const modelConfig = await this.getModelConfig(config);
-            const dimension = config.get('memory.dimension') || 1536;
-            
+            const dimension = config.get('memory.dimension');
+
             this.embeddingHandler = new EmbeddingHandler(
                 embeddingProvider,
                 modelConfig.embeddingModel,
                 dimension
             );
-            
+
             logger.info('Embedding handler initialized successfully');
         } catch (error) {
             logger.warn('Failed to initialize embedding handler:', error.message);
@@ -208,7 +208,7 @@ export default class UnitsToCorpuscles {
      */
     async findUnitsWithoutCorpuscles() {
         const queryEndpoint = this.options.sparqlEndpoint.replace('/update', '/query');
-        
+
         const query = `
 PREFIX ragno: <http://purl.org/stuff/ragno/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -252,7 +252,7 @@ ORDER BY ?unit`;
             }
 
             const results = await response.json();
-            
+
             // Transform SPARQL results to unit objects
             const units = results.results.bindings.map(binding => ({
                 uri: binding.unit.value,
@@ -280,30 +280,30 @@ ORDER BY ?unit`;
      */
     async processUnitsInBatches(units) {
         logger.info(`Processing ${units.length} units in batches of ${this.options.batchSize}`);
-        
+
         const batches = this.createBatches(units, this.options.batchSize);
         const results = [];
-        
+
         for (let i = 0; i < batches.length; i++) {
             const batch = batches[i];
             logger.info(`Processing batch ${i + 1}/${batches.length} (${batch.length} units)`);
-            
+
             try {
                 const batchResult = await this.processBatch(batch);
                 results.push(batchResult);
-                
+
                 if (!batchResult.success) {
                     logger.error(`Batch ${i + 1} failed:`, batchResult.error);
                     this.stats.errors.push(`Batch ${i + 1}: ${batchResult.error}`);
                 }
-                
+
             } catch (error) {
                 logger.error(`Failed to process batch ${i + 1}:`, error);
                 this.stats.errors.push(`Batch ${i + 1}: ${error.message}`);
                 results.push({ success: false, error: error.message });
             }
         }
-        
+
         return SPARQLHelper.getExecutionStats(results);
     }
 
@@ -316,7 +316,7 @@ ORDER BY ?unit`;
     async processBatch(batch) {
         try {
             const corpuscles = [];
-            
+
             // Create corpuscles for each unit in the batch
             for (const unit of batch) {
                 const corpuscle = await this.createCorpuscleForUnit(unit);
@@ -324,21 +324,21 @@ ORDER BY ?unit`;
                 this.stats.processedUnits++;
                 this.stats.generatedCorpuscles++;
             }
-            
+
             // Generate combined triples for all corpuscles in the batch
             const allTriples = corpuscles.flatMap(corpuscle => corpuscle.triples);
             const triplesString = allTriples.join('\n        ');
-            
+
             // Insert batch into SPARQL store
             const query = this.sparqlHelper.createInsertDataQuery(this.options.graphURI, triplesString);
             const result = await this.sparqlHelper.executeUpdate(query);
-            
+
             if (result.success) {
                 logger.info(`Successfully processed batch of ${batch.length} units`);
             }
-            
+
             return result;
-            
+
         } catch (error) {
             logger.error('Batch processing failed:', error);
             throw error;
@@ -393,10 +393,10 @@ ORDER BY ?unit`;
 
         // Generate RDF triples
         corpuscle.triples = this.generateCorpuscleTriples(corpuscle);
-        
+
         this.stats.generatedTriples += corpuscle.triples.length;
         this.stats.generatedRelationships++;
-        
+
         return corpuscle;
     }
 
@@ -418,7 +418,7 @@ ORDER BY ?unit`;
         triples.push(`${corpuscleURI} rdfs:label ${SPARQLHelper.createLiteral(corpuscle.label)} .`);
         triples.push(`${corpuscleURI} ragno:corpuscleType ${SPARQLHelper.createLiteral('wikipedia-derived')} .`);
         triples.push(`${corpuscleURI} ragno:content ${SPARQLHelper.createLiteral(corpuscle.textContent)} .`);
-        
+
         // Metadata
         triples.push(`${corpuscleURI} dcterms:created ${SPARQLHelper.createLiteral(new Date().toISOString(), 'http://www.w3.org/2001/XMLSchema#dateTime')} .`);
         triples.push(`${corpuscleURI} dcterms:source ${SPARQLHelper.createLiteral('wikipedia-unit-transformation')} .`);
@@ -432,7 +432,7 @@ ORDER BY ?unit`;
         triples.push(`${relationshipURI} ragno:hasSource ${corpuscleURI} .`);
         triples.push(`${relationshipURI} ragno:hasTarget ${unitURI} .`);
         triples.push(`${relationshipURI} dcterms:created ${SPARQLHelper.createLiteral(new Date().toISOString(), 'http://www.w3.org/2001/XMLSchema#dateTime')} .`);
-        
+
         // Bidirectional relationship references
         triples.push(`${corpuscleURI} ragno:relatedToUnit ${unitURI} .`);
         triples.push(`${unitURI} ragno:hasCorpuscle ${corpuscleURI} .`);
@@ -447,7 +447,7 @@ ORDER BY ?unit`;
             triples.push(`${attributeURI} ragno:embeddingDimensions ${SPARQLHelper.createLiteral(corpuscle.embedding.length.toString(), 'http://www.w3.org/2001/XMLSchema#integer')} .`);
             triples.push(`${attributeURI} dcterms:created ${SPARQLHelper.createLiteral(new Date().toISOString(), 'http://www.w3.org/2001/XMLSchema#dateTime')} .`);
             triples.push(`${attributeURI} prov:wasGeneratedBy ${SPARQLHelper.createLiteral('embedding-handler')} .`);
-            
+
             // Associate attribute with corpuscle
             triples.push(`${corpuscleURI} ragno:hasAttribute ${attributeURI} .`);
             triples.push(`${attributeURI} ragno:describesCorpuscle ${corpuscleURI} .`);
@@ -468,7 +468,7 @@ ORDER BY ?unit`;
         if (unitIdMatch) {
             return `corp_wp_${unitIdMatch[1]}`;
         }
-        
+
         // Fallback: create hash-based ID
         const hash = crypto.createHash('md5').update(unit.uri).digest('hex').substring(0, 8);
         return `corp_${hash}`;
@@ -512,7 +512,7 @@ ORDER BY ?unit`;
      */
     async queryCorpuscles(limit = 10) {
         const queryEndpoint = this.options.sparqlEndpoint.replace('/update', '/query');
-        
+
         const query = `
 PREFIX ragno: <http://purl.org/stuff/ragno/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -553,7 +553,7 @@ LIMIT ${limit}`;
 
             const results = await response.json();
             return results;
-            
+
         } catch (error) {
             logger.error('Failed to query generated corpuscles:', error);
             throw error;
@@ -567,7 +567,7 @@ LIMIT ${limit}`;
      */
     generateReport() {
         const stats = this.getStatistics();
-        
+
         return {
             summary: {
                 totalUnits: stats.totalUnits,

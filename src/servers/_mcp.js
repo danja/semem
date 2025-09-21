@@ -47,19 +47,19 @@ let embeddingProvider;
 try {
   // Get all configured providers and sort by priority (lower number = higher priority)
   const providers = (config.get('llmProviders') || []).sort((a, b) => (a.priority || 999) - (b.priority || 999));
-  
+
   console.log('Configured LLM providers:', JSON.stringify(providers, null, 2));
   console.log('Environment variables:', {
     CLAUDE_API_KEY: process.env.CLAUDE_API_KEY ? '***' : 'Not set',
     OLLAMA_API_KEY: process.env.OLLAMA_API_KEY ? '***' : 'Not set',
     MISTRAL_API_KEY: process.env.MISTRAL_API_KEY ? '***' : 'Not set'
   });
-  
+
   // Try to initialize each provider in order until one succeeds
   for (const providerConfig of providers) {
     try {
       let connector;
-      
+
       switch (providerConfig.type) {
         case 'ollama':
           console.log(`Initializing Ollama provider with model: ${providerConfig.chatModel}`);
@@ -70,7 +70,7 @@ try {
             embeddingModel: providerConfig.embeddingModel
           });
           await connector.initialize();
-          
+
           llmProvider = {
             type: 'ollama',
             generateChat: connector.generateChat.bind(connector),
@@ -79,20 +79,20 @@ try {
           };
           console.log('Ollama provider initialized successfully');
           break;
-          
+
         case 'claude':
           console.log(`Initializing Claude provider with model: ${providerConfig.chatModel}`);
           if (!providerConfig.apiKey) {
             console.warn('Skipping Claude provider: Missing API key');
             continue;
           }
-          
+
           connector = new ClaudeConnector(
             providerConfig.apiKey,
             providerConfig.chatModel || 'claude-3-opus-20240229'
           );
           await connector.initialize();
-          
+
           llmProvider = {
             type: 'claude',
             generateChat: connector.generateChat.bind(connector),
@@ -101,21 +101,21 @@ try {
           };
           console.log('Claude provider initialized successfully');
           break;
-          
+
         case 'mistral':
           console.log(`Initializing Mistral provider with model: ${providerConfig.chatModel}`);
           if (!providerConfig.apiKey) {
             console.warn('Skipping Mistral provider: Missing API key');
             continue;
           }
-          
+
           connector = new MistralConnector(
             providerConfig.apiKey,
             providerConfig.baseUrl || 'https://api.mistral.ai/v1',
             providerConfig.chatModel || 'mistral-medium'
           );
           await connector.initialize();
-          
+
           llmProvider = {
             type: 'mistral',
             generateChat: connector.generateChat.bind(connector),
@@ -124,21 +124,21 @@ try {
           };
           console.log('Mistral provider initialized successfully');
           break;
-          
+
         default:
           console.warn(`Unsupported provider type: ${providerConfig.type}`);
           continue;
       }
-      
+
       // If we successfully initialized a provider, break the loop
       if (llmProvider) break;
-      
+
     } catch (error) {
       console.error(`Failed to initialize ${providerConfig.type} provider:`, error);
       continue;
     }
   }
-  
+
   // If no provider was successfully initialized, use a mock provider
   if (!llmProvider) {
     console.warn('No valid LLM provider found, using mock provider');
@@ -159,9 +159,9 @@ try {
   // Get embedding provider configuration
   const embeddingProviderType = config.get('embeddingProvider') || 'ollama';
   const embeddingModel = config.get('embeddingModel') || 'nomic-embed-text';
-  
+
   console.log(`Creating embedding connector: ${embeddingProviderType} (${embeddingModel})`);
-  
+
   // Create embedding connector using factory
   let providerConfig = {};
   if (embeddingProviderType === 'nomic') {
@@ -178,10 +178,10 @@ try {
       model: embeddingModel
     };
   }
-  
+
   embeddingProvider = EmbeddingConnectorFactory.createConnector(providerConfig);
   console.log('Embedding provider initialized successfully');
-  
+
 } catch (error) {
   console.warn('Failed to create configured embedding connector, falling back to Ollama:', error.message);
   // Fallback to Ollama for embeddings
@@ -202,7 +202,7 @@ const llmHandler = new LLMHandler(
 const embeddingHandler = new EmbeddingHandler(
   embeddingProvider,
   config.get('embeddingModel') || 'nomic-embed-text',
-  ragnoConfig.ragno?.enrichment?.embedding?.dimensions || 1536,
+  ragnoConfig.ragno?.enrichment?.embedding?.dimensions,
   cacheManager
 );
 

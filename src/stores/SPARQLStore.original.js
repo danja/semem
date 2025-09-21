@@ -23,7 +23,7 @@ function loadZPTQueryTemplates() {
     const templatesDir = join(__dirname, '../../sparql/templates/zpt')
     const templateNames = ['micro', 'entity', 'relationship', 'community', 'corpus']
     const templates = {}
-    
+
     for (const name of templateNames) {
         try {
             const templatePath = join(templatesDir, `${name}.sparql`)
@@ -33,7 +33,7 @@ function loadZPTQueryTemplates() {
             throw new Error(`Could not load ZPT template: ${name}`)
         }
     }
-    
+
     return templates
 }
 
@@ -69,12 +69,12 @@ export default class SPARQLStore extends BaseStore {
         }
         this.graphName = options.graphName || 'http://tensegrity.it/semem/content'
         this.inTransaction = false
-        this.dimension = options.dimension || 768  // Default for nomic-embed-text (should be set via config)
+        this.dimension = options.dimension  // Default for nomic-embed-text (should be set via config)
         this.queryService = new SPARQLQueryService()
 
         // PREVENTION: Configuration limits to prevent triple explosion
-        this.maxConceptsPerInteraction = options.maxConceptsPerInteraction || 10
-        this.maxConnectionsPerEntity = options.maxConnectionsPerEntity || 100
+        this.maxConceptsPerInteraction = options.maxConceptsPerInteraction
+        this.maxConnectionsPerEntity = options.maxConnectionsPerEntity
         this.config = config
         this.baseUri = config?.get?.('baseUri') || config?.baseUri || 'http://tensegrity.it/semem/'
 
@@ -369,7 +369,7 @@ export default class SPARQLStore extends BaseStore {
                 'generate_rdf',
                 '🏗️ Generating RDF triples for memories',
                 `[SPARQLStore] _generateInsertStatements() - creating triples for ${memoryStore.shortTermMemory.length + memoryStore.longTermMemory.length} interactions`,
-                { 
+                {
                     shortTermTriples: memoryStore.shortTermMemory.length,
                     longTermTriples: memoryStore.longTermMemory.length
                 }
@@ -392,7 +392,7 @@ export default class SPARQLStore extends BaseStore {
                 'execute_insert',
                 '📤 Executing SPARQL INSERT operation',
                 `[SPARQLStore] _executeSparqlUpdate() - inserting ${memoryStore.shortTermMemory.length + memoryStore.longTermMemory.length} interactions with embeddings`,
-                { 
+                {
                     queryLength: insertQuery.length,
                     totalInteractions: memoryStore.shortTermMemory.length + memoryStore.longTermMemory.length
                 }
@@ -432,12 +432,12 @@ export default class SPARQLStore extends BaseStore {
                 { error: error.message }
             );
             await this.rollbackTransaction()
-            
+
             // Handle string length errors specifically
             if (error instanceof RangeError && error.message.includes('string length')) {
                 const detailedError = new Error(`String length error in SPARQL store: ${error.message}. This usually indicates content is too large for processing. Consider chunking the content first.`);
                 detailedError.code = 'CONTENT_TOO_LARGE';
-                
+
                 opLogger.fail(detailedError, {
                     errorType: 'CONTENT_TOO_LARGE',
                     shortTermCount: memoryStore.shortTermMemory.length,
@@ -453,7 +453,7 @@ export default class SPARQLStore extends BaseStore {
                 });
                 throw detailedError;
             }
-            
+
             // Handle general errors
             opLogger.fail(error, {
                 shortTermMemories: memoryStore.shortTermMemory.length,
@@ -517,12 +517,12 @@ export default class SPARQLStore extends BaseStore {
             // Add length validation to prevent string length errors
             const MAX_CONTENT_LENGTH = 50000; // Conservative limit to prevent RangeError
             const MAX_EMBEDDING_LENGTH = 500000; // Higher limit for embedding vectors (1536 * ~20 chars per float)
-            
+
             if (prompt.length > MAX_CONTENT_LENGTH) {
                 logger.warn(`Truncating prompt from ${prompt.length} to ${MAX_CONTENT_LENGTH} characters to prevent string length error`);
                 prompt = prompt.substring(0, MAX_CONTENT_LENGTH) + '... [TRUNCATED]';
             }
-            
+
             if (output.length > MAX_CONTENT_LENGTH) {
                 logger.warn(`Truncating output from ${output.length} to ${MAX_CONTENT_LENGTH} characters to prevent string length error`);
                 output = output.substring(0, MAX_CONTENT_LENGTH) + '... [TRUNCATED]';
@@ -567,7 +567,7 @@ export default class SPARQLStore extends BaseStore {
 
             // Use proper interaction URI instead of blank node to prevent phantom node creation
             const interactionUri = `${this.baseUri}interaction/${id}`
-            
+
             return `
             <${interactionUri}> a semem:Interaction ;
                 semem:id "${this._escapeSparqlString(id)}" ;
@@ -620,10 +620,10 @@ export default class SPARQLStore extends BaseStore {
             if (Array.isArray(interaction.concepts)) {
                 // Use proper interaction URI instead of blank node to prevent phantom node creation
                 const interactionUri = `${this.baseUri}interaction/${interaction.id || index}`
-                
+
                 // CONSTRAINT: Limit concepts per interaction to prevent connection explosion
                 const limitedConcepts = interaction.concepts.slice(0, this.maxConceptsPerInteraction);
-                
+
                 limitedConcepts.forEach(concept => {
                     const conceptUri = `${this.baseUri}concept/${encodeURIComponent(concept)}`
 
@@ -658,14 +658,14 @@ export default class SPARQLStore extends BaseStore {
         if (typeof str !== 'string') {
             str = String(str);
         }
-        
+
         // Prevent string length errors by truncating extremely long strings
         const MAX_SPARQL_STRING_LENGTH = 100000; // Conservative limit for SPARQL strings
         if (str.length > MAX_SPARQL_STRING_LENGTH) {
             logger.warn(`Truncating string from ${str.length} to ${MAX_SPARQL_STRING_LENGTH} characters in SPARQL escape`);
             str = str.substring(0, MAX_SPARQL_STRING_LENGTH) + '... [TRUNCATED]';
         }
-        
+
         return str.replace(/["\\]/g, '\\$&').replace(/\n/g, '\\n').replace(/\r/g, '\\r').replace(/\t/g, '\\t')
     }
 
@@ -678,19 +678,19 @@ export default class SPARQLStore extends BaseStore {
         if (typeof str !== 'string') {
             str = String(str);
         }
-        
+
         // Prevent string length errors by truncating extremely long strings
         const MAX_SPARQL_STRING_LENGTH = 100000; // Conservative limit for SPARQL strings
         if (str.length > MAX_SPARQL_STRING_LENGTH) {
             logger.warn(`Truncating string from ${str.length} to ${MAX_SPARQL_STRING_LENGTH} characters in triple-quoted SPARQL escape`);
             str = str.substring(0, MAX_SPARQL_STRING_LENGTH) + '... [TRUNCATED]';
         }
-        
+
         // For SPARQL triple-quoted strings, we need to:
         // 1. Escape backslashes 
         // 2. Escape triple quotes
         // 3. Handle control characters that can break SPARQL parsing
-        
+
         return str
             .replace(/\\/g, '\\\\')           // Escape backslashes first
             .replace(/"""/g, '\\"\\"\\"')     // Escape triple quotes 
@@ -829,8 +829,8 @@ export default class SPARQLStore extends BaseStore {
                         ragno:tokenCount "${unit.tokenCount || 0}"^^xsd:integer ;
                         ragno:importance "${unit.importance || 0.5}"^^xsd:decimal .
                     ${unit.entities ? unit.entities.map(entityId =>
-                        `${unitUri} ragno:relatedTo <${entityId}> .`
-                    ).join('\n') : ''}
+            `${unitUri} ragno:relatedTo <${entityId}> .`
+        ).join('\n') : ''}
                     ${unit.partOf ? `${unitUri} ragno:partOf <${unit.partOf}> .` : ''}
                 }
             }
@@ -869,8 +869,8 @@ export default class SPARQLStore extends BaseStore {
                         ragno:confidence "${relationship.confidence || 1.0}"^^xsd:decimal ;
                         dcterms:created "${new Date().toISOString()}"^^xsd:dateTime .
                     ${relationship.properties ? Object.entries(relationship.properties).map(([key, value]) =>
-                        `${relUri} ragno:${key} "${this._escapeSparqlString(String(value))}" .`
-                    ).join('\n') : ''}
+            `${relUri} ragno:${key} "${this._escapeSparqlString(String(value))}" .`
+        ).join('\n') : ''}
                 }
             }
         `
@@ -905,8 +905,8 @@ export default class SPARQLStore extends BaseStore {
                         ragno:size "${community.size || (community.members ? community.members.length : 0)}"^^xsd:integer ;
                         dcterms:created "${new Date().toISOString()}"^^xsd:dateTime .
                     ${community.members ? community.members.map(memberId =>
-                        `${communityUri} ragno:hasMember <${memberId}> .`
-                    ).join('\n') : ''}
+            `${communityUri} ragno:hasMember <${memberId}> .`
+        ).join('\n') : ''}
                     ${community.description ? `${communityUri} rdfs:comment "${this._escapeSparqlString(community.description)}" .` : ''}
                 }
             }
@@ -923,7 +923,7 @@ export default class SPARQLStore extends BaseStore {
      */
     async queryByZoomLevel(queryConfig) {
         const { zoomLevel, filters = {}, limit = 25 } = queryConfig
-        
+
         const template = ZPT_QUERY_TEMPLATES[zoomLevel]
         if (!template) {
             throw new Error(`Unknown zoom level: ${zoomLevel}`)
@@ -931,7 +931,7 @@ export default class SPARQLStore extends BaseStore {
 
         // Build filter clauses
         const filterClauses = this._buildFilterClauses(filters)
-        
+
         // Replace template variables
         const query = template
             .replace(/\{\{graphName\}\}/g, this.graphName)
@@ -940,7 +940,7 @@ export default class SPARQLStore extends BaseStore {
 
         logger.debug(`Executing ZPT query for zoom level: ${zoomLevel}`)
         const result = await this._executeSparqlQuery(query, this.endpoint.query)
-        
+
         return this._parseQueryResults(result, zoomLevel)
     }
 
@@ -1147,7 +1147,7 @@ export default class SPARQLStore extends BaseStore {
 
                     if (embedding.length === queryEmbedding.length && embedding.length > 0) {
                         const similarity = this._calculateCosineSimilarity(queryEmbedding, embedding)
-                        
+
                         if (similarity >= threshold) {
                             similarElements.push({
                                 id: binding.uri.value,
@@ -1184,7 +1184,7 @@ export default class SPARQLStore extends BaseStore {
      */
     async traverseGraph(startNodeId, depth = 2, options = {}) {
         const { direction = 'both', relationTypes = [] } = options
-        
+
         // Build property path for traversal
         let propertyPath = 'ragno:connectsTo'
         if (direction === 'outgoing') {
@@ -1446,7 +1446,7 @@ export default class SPARQLStore extends BaseStore {
 
         for (const concept of concepts) {
             const conceptUri = this.generateConceptURI(concept.label);
-            
+
             // Store concept as ragno:Concept entity
             conceptStatements.push(`
                 <${conceptUri}> a ragno:Concept ;
@@ -1553,15 +1553,15 @@ export default class SPARQLStore extends BaseStore {
      */
     async queryConceptsByFilter(filters = {}) {
         const filterClauses = [];
-        
+
         if (filters.category) {
             filterClauses.push(`FILTER (?category = "${filters.category}")`);
         }
-        
+
         if (filters.minConfidence) {
             filterClauses.push(`FILTER (?confidence >= ${filters.minConfidence})`);
         }
-        
+
         if (filters.relatedTo) {
             const relatedUri = this.generateConceptURI(filters.relatedTo);
             filterClauses.push(`?concept ragno:hasConceptualRelation <${relatedUri}> .`);
@@ -1594,7 +1594,7 @@ export default class SPARQLStore extends BaseStore {
         `;
 
         const result = await this._executeSparqlQuery(query, this.endpoint.query);
-        
+
         return result.results.bindings.map(binding => ({
             uri: binding.concept?.value,
             label: binding.label?.value,
@@ -1720,7 +1720,7 @@ export default class SPARQLStore extends BaseStore {
 
                     if (similarity >= threshold) {
                         const format = binding.format?.value || 'unknown';
-                        
+
                         // Log deprecation warning for old format
                         if (format === 'old') {
                             logger.warn('DEPRECATED: Found result using old ragno:embedding format. Consider migrating to ragno:hasEmbedding → ragno:vectorContent pattern.', {
@@ -1728,7 +1728,7 @@ export default class SPARQLStore extends BaseStore {
                                 type: binding.type?.value
                             });
                         }
-                        
+
                         searchResults.push({
                             id: binding.entity.value,
                             prompt: binding.prompt.value,
@@ -1751,11 +1751,11 @@ export default class SPARQLStore extends BaseStore {
                 // Prioritize new format over old format
                 const formatPriorityA = a.metadata.format === 'new' ? 1 : 0;
                 const formatPriorityB = b.metadata.format === 'new' ? 1 : 0;
-                
+
                 if (formatPriorityA !== formatPriorityB) {
                     return formatPriorityB - formatPriorityA; // New format first
                 }
-                
+
                 // If same format, sort by similarity
                 return b.similarity - a.similarity;
             })
@@ -1802,7 +1802,7 @@ export default class SPARQLStore extends BaseStore {
         if (embedding.length === targetLength) {
             return embedding;
         }
-        
+
         if (embedding.length > targetLength) {
             // Truncate if too long
             return embedding.slice(0, targetLength);
@@ -1827,7 +1827,7 @@ export default class SPARQLStore extends BaseStore {
             } catch (error) {
                 lastError = error
                 logger.warn(`SPARQL ${operationType} attempt ${attempt + 1}/${maxRetries} failed: ${error.message}`)
-                
+
                 if (attempt < maxRetries - 1) {
                     const delay = retryDelayMs * Math.pow(2, attempt) // Exponential backoff
                     await new Promise(resolve => setTimeout(resolve, delay))
@@ -1848,7 +1848,7 @@ export default class SPARQLStore extends BaseStore {
     async withTimeout(promise, timeoutMs) {
         return Promise.race([
             promise,
-            new Promise((_, reject) => 
+            new Promise((_, reject) =>
                 setTimeout(() => reject(new Error('SPARQL operation timed out')), timeoutMs)
             )
         ])
@@ -1873,18 +1873,18 @@ export default class SPARQLStore extends BaseStore {
                         ?s a ragno:Entity 
                     } 
                 } LIMIT 1`
-            
+
             await this.withTimeout(
                 this._executeSparqlQuery(testQuery, this.endpoint.query),
                 5000 // 5 second timeout for health check
             )
-            
+
             return { healthy: true, endpoint: this.endpoint.query }
         } catch (error) {
-            return { 
-                healthy: false, 
-                endpoint: this.endpoint.query, 
-                error: error.message 
+            return {
+                healthy: false,
+                endpoint: this.endpoint.query,
+                error: error.message
             }
         }
     }
@@ -1909,13 +1909,13 @@ export default class SPARQLStore extends BaseStore {
         if (!data || !data.id) {
             throw new Error('Data must have an id field')
         }
-        
+
         const elementUri = `<${data.id}>`
         const timestamp = new Date().toISOString()
-        
+
         // Use graph from metadata if provided, otherwise use default
         const targetGraph = (data.metadata && data.metadata.graph) ? data.metadata.graph : this.graphName;
-        
+
         // Determine ragno class based on content type
         let ragnoClass;
         switch (data.type) {
@@ -1930,7 +1930,7 @@ export default class SPARQLStore extends BaseStore {
                 ragnoClass = 'ragno:Element';
                 break;
         }
-        
+
         const insertQuery = `
             PREFIX ragno: <http://purl.org/stuff/ragno/>
             PREFIX zpt: <http://purl.org/stuff/zpt/>
@@ -1949,18 +1949,18 @@ export default class SPARQLStore extends BaseStore {
                         ragno:isEntryPoint false ;
                         rdfs:label "${this._escapeSparqlString(data.prompt || data.title || 'Lazy Content')}" .
                     
-                    ${data.metadata && Object.keys(data.metadata).length > 0 ? 
-                        Object.entries(data.metadata)
-                            .map(([key, value]) => `${elementUri} semem:${this._escapeProperty(key)} "${this._escapeSparqlString(String(value))}" .`)
-                            .join('\n                    ') 
-                        : ''
-                    }
+                    ${data.metadata && Object.keys(data.metadata).length > 0 ?
+                Object.entries(data.metadata)
+                    .map(([key, value]) => `${elementUri} semem:${this._escapeProperty(key)} "${this._escapeSparqlString(String(value))}" .`)
+                    .join('\n                    ')
+                : ''
+            }
                 }
             }
         `
-        
+
         await this._executeSparqlUpdate(insertQuery, this.endpoint.update)
-        
+
         return {
             id: data.id,
             uri: data.id,
@@ -1995,9 +1995,9 @@ export default class SPARQLStore extends BaseStore {
             ORDER BY DESC(?created)
             LIMIT ${limit}
         `
-        
+
         const result = await this._executeSparqlQuery(query, this.endpoint.query)
-        
+
         return result.results.bindings.map(binding => ({
             id: binding.element.value,
             content: binding.content.value,
@@ -2048,7 +2048,7 @@ export default class SPARQLStore extends BaseStore {
 
         try {
             await this.beginTransaction();
-            
+
             const documentUri = `${this.baseUri}document/${documentData.id}`;
             const insertQuery = `
                 PREFIX ragno: <http://purl.org/stuff/ragno/>
@@ -2791,7 +2791,7 @@ export default class SPARQLStore extends BaseStore {
         const connectivityScore = this.calculateSemanticConnectivity(interaction, concepts)
 
         return accessScore + recencyScore + reinforcementScore +
-               conceptScore + complexityScore + connectivityScore
+            conceptScore + complexityScore + connectivityScore
     }
 
     /**

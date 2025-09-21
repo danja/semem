@@ -6,7 +6,7 @@ import logger from 'loglevel'
  * Responsible for vector similarity calculations, embedding validation, and FAISS operations
  */
 export class Vectors {
-    constructor(dimension = 768) {
+    constructor(dimension) {
         this.dimension = dimension
         this.index = null
 

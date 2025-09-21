@@ -9,6 +9,7 @@
   }
 }
 
+/home/danny/hyperdata/semem/src/api/features/VSOMAPI.js - in use?
 
 export class Vectors {
     constructor(dimension = 768) {
