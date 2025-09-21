@@ -11,8 +11,12 @@
 
 /home/danny/hyperdata/semem/src/api/features/VSOMAPI.js - in use?
 
+src/utils/EmbeddingMigration.js ???
+
 export class Vectors {
     constructor(dimension = 768) {
+
+there's a src/ragno/CreateConcepts.js and src/ragno/CreateConceptsUnified.js both with 768 hardcoded
 
 substring(0, 100)
 

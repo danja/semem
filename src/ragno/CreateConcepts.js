@@ -184,6 +184,7 @@ export class CreateConcepts {
             const embeddingConnector = EmbeddingConnectorFactory.createConnector(providerConfig);
 
             // Determine embedding dimension based on provider/model
+            // WRONG READ CONFIG
             let embeddingDimension;
             if (embeddingProvider === 'nomic' || embeddingModel.includes('nomic')) {
                 embeddingDimension = 768; // Nomic embedding dimension

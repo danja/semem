@@ -10,7 +10,9 @@ export default class ClaudeConnector {
      * @param {string} apiKey - Claude API key
      * @param {string} defaultModel - Optional default model to use
      */
-    constructor(apiKey, defaultModel = 'claude-3-opus-20240229', dimension = 768) {
+
+    // USE CONFIG!!
+    constructor(apiKey, defaultModel, dimension) {
         if (!apiKey) {
             throw new Error('Claude API key is required');
         }
@@ -227,18 +229,18 @@ export default class ClaudeConnector {
             );
 
             logger.debug('Chat response generated successfully');
-            
+
             // Extract the content string from the response
             // If the response is already a string, return it directly
             if (typeof response === 'string') {
                 return response;
             }
-            
+
             // If the response is an object with content, extract the content
             if (response && typeof response === 'object' && response.content) {
                 return response.content;
             }
-            
+
             // If the response has a different structure, try to convert to string
             return String(response);
         } catch (error) {
@@ -272,7 +274,7 @@ export default class ClaudeConnector {
             })
 
             logger.debug('Completion response received')
-            
+
             // Extract content string from the response object
             // Based on the Claude response format: {content: '...', role: 'assistant'}
             if (response && typeof response === 'object' && response.content) {

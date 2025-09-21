@@ -15,11 +15,11 @@
 import logger from './logger.js';
 
 export class EmbeddingMigration {
-    constructor(endpoint, credentials, expectedDimension = 768) {
+    constructor(endpoint, credentials, expectedDimension) {
         this.endpoint = endpoint;
         this.credentials = credentials;
         this.expectedDimension = expectedDimension;
-        this.graphName = 'http://hyperdata.it/content';
+        this.graphName = 'http://hyperdata.it/content'; // HARDCODED URI - WRONG
         this.stats = {
             totalItems: 0,
             validItems: 0,
