@@ -1,9 +1,12 @@
 import dotenv from 'dotenv';
 import Config from "../../Config.js";
-import logger from 'loglevel';
 import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { createUnifiedLogger } from '../../utils/LoggingConfig.js';
+
+// Use unified STDIO-aware logger
+const logger = createUnifiedLogger('zpt');
 
 dotenv.config();
 

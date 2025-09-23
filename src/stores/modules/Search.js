@@ -1,5 +1,8 @@
-import logger from 'loglevel'
 import { SPARQL_CONFIG } from '../../../config/preferences.js'
+import { createUnifiedLogger } from '../../utils/LoggingConfig.js'
+
+// Use unified STDIO-aware logger
+const logger = createUnifiedLogger('search');
 
 /**
  * Search module handles search functionality for SPARQL stores

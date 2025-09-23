@@ -1,9 +1,12 @@
 import dotenv from 'dotenv';
 import Config from '../../Config.js';
 import { SPARQL_CONFIG } from '../../../config/preferences.js';
-import logger from 'loglevel';
 import SPARQLTemplateLoader from '../SPARQLTemplateLoader.js';
 import Graph from 'graphology';
+import { createUnifiedLogger } from '../../utils/LoggingConfig.js';
+
+// Use unified STDIO-aware logger
+const logger = createUnifiedLogger('graph');
 
 dotenv.config();
 

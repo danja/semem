@@ -118,7 +118,10 @@ export async function initializeServices() {
       mcpDebugger.info('💾 [STORAGE] Storage options:', JSON.stringify(storageOptions, null, 2));
       
       // Ensure we use the consistent graph from config, not the SPARQLStore default
-      const configuredGraphName = config.get('graphName') || 'http://tensegrity.it/semem';
+      const configuredGraphName = config.get('graphName');
+      if (!configuredGraphName) {
+        throw new Error('graphName not found in config - check config.json graphName setting');
+      }
       storageOptions.graphName = configuredGraphName;
       mcpDebugger.info('💾 [STORAGE] Using configured graphName:', storageOptions.graphName);
 

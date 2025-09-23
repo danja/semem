@@ -17,7 +17,7 @@ import { MemoryRelevanceEngine } from '../../src/services/memory/MemoryRelevance
 import { AskOperationTimer, TellOperationTimer } from '../../src/utils/PerformanceTiming.js';
 
 // Import modular components
-import { logOperation, logPerformance } from './VerbsLogger.js';
+import { logOperation, logPerformance, verbsLogger } from './VerbsLogger.js';
 import { ZPTStateManager } from './ZptStateManager.js';
 import { 
   TellSchema, AskSchema, AugmentSchema, ZoomSchema, 
@@ -216,22 +216,22 @@ import {
             // Store full content, but create a reasonable prompt for display
             prompt = content.length > 200 ? `${content.substring(0, 200)}...` : content;
             
-            console.log('🔥 DEBUG: About to call safeOps.storeInteraction');
+            verbsLogger.debug('🔥 DEBUG: About to call safeOps.storeInteraction');
             // Debug removed for ES module compatibility
             result = await this.safeOps.storeInteraction(
               prompt,
               response,
               { ...metadata, type: 'tell_interaction', concepts }
             );
-            console.log('🔥 DEBUG: safeOps.storeInteraction completed');
+            verbsLogger.debug('🔥 DEBUG: safeOps.storeInteraction completed');
             
             // DIRECT FIX: Force immediate SPARQL persistence 
             try {
-              console.log('🔥 DEBUG: Force saving to SPARQL...');
+              verbsLogger.debug('🔥 DEBUG: Force saving to SPARQL...');
               await this.memoryManager.store.saveMemoryToHistory(this.memoryManager.memStore);
               console.log('🔥 DEBUG: SPARQL force save completed');
             } catch (sparqlError) {
-              console.error('🔥 ERROR: Force SPARQL save failed:', sparqlError);
+              verbsLogger.error('🔥 ERROR: Force SPARQL save failed:', sparqlError);
             }
             break;
             
@@ -334,7 +334,7 @@ import {
                 
                 // DIRECT FIX: Force immediate SPARQL persistence 
                 try {
-                  console.log('🔥 DEBUG: Force saving document to SPARQL...');
+                  verbsLogger.debug('🔥 DEBUG: Force saving document to SPARQL...');
                   await this.memoryManager.store.saveMemoryToHistory(this.memoryManager.memStore);
                   console.log('🔥 DEBUG: Document SPARQL force save completed');
                 } catch (sparqlError) {

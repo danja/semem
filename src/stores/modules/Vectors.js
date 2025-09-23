@@ -1,5 +1,8 @@
 import faiss from 'faiss-node'
-import logger from 'loglevel'
+import { createUnifiedLogger } from '../../utils/LoggingConfig.js'
+
+// Use unified STDIO-aware logger
+const logger = createUnifiedLogger('vectors');
 
 /**
  * Vectors module handles vector operations and FAISS index management

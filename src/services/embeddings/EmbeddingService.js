@@ -1,5 +1,8 @@
-import logger from 'loglevel';
 import EmbeddingConnectorFactory from '../../connectors/EmbeddingConnectorFactory.js';
+import { createUnifiedLogger } from '../../utils/LoggingConfig.js';
+
+// Use unified STDIO-aware logger
+const logger = createUnifiedLogger('embedding-service');
 
 // Default Ollama embedding model
 const DEFAULT_MODEL = 'nomic-embed-text';

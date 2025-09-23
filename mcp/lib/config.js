@@ -6,6 +6,7 @@ import dotenv from 'dotenv';
 import OllamaConnector from '../../src/connectors/OllamaConnector.js';
 import ClaudeConnector from '../../src/connectors/ClaudeConnector.js';
 import MistralConnector from '../../src/connectors/MistralConnector.js';
+import GroqConnector from '../../src/connectors/GroqConnector.js';
 import EmbeddingConnectorFactory from '../../src/connectors/EmbeddingConnectorFactory.js';
 import Config from '../../src/Config.js';
 import { mcpDebugger } from './debug-utils.js';
@@ -35,12 +36,21 @@ export async function createLLMConnector(configPath = null) {
     // Try providers in priority order
     for (const provider of sortedProviders) {
       mcpDebugger.info(`Trying LLM provider: ${provider.type} (priority: ${provider.priority})`);
-      
-      if (provider.type === 'mistral') {
+
+      if (provider.type === 'groq') {
+        // Get actual API key from environment variables
+        const apiKey = process.env.GROQ_API_KEY;
+        if (apiKey) {
+          mcpDebugger.info('✅ Creating Groq connector (highest priority)...');
+          return new GroqConnector(apiKey);
+        } else {
+          mcpDebugger.info(`❌ Groq provider configured but GROQ_API_KEY environment variable not set`);
+        }
+      } else if (provider.type === 'mistral') {
         // Get actual API key from environment variables
         const apiKey = process.env.MISTRAL_API_KEY;
         if (apiKey) {
-          mcpDebugger.info('✅ Creating Mistral connector (highest priority)...');
+          mcpDebugger.info('✅ Creating Mistral connector...');
           return new MistralConnector(apiKey);
         } else {
           mcpDebugger.info(`❌ Mistral provider configured but MISTRAL_API_KEY environment variable not set`);
@@ -153,7 +163,9 @@ export const mcpConfig = {
 function findWorkingProvider(providers) {
   // Try providers in priority order to find one that will work
   for (const provider of providers) {
-    if (provider.type === 'mistral' && provider.apiKey) {
+    if (provider.type === 'groq' && provider.apiKey) {
+      return provider;
+    } else if (provider.type === 'mistral' && provider.apiKey) {
       return provider;
     } else if (provider.type === 'claude' && provider.apiKey) {
       return provider;

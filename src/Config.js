@@ -3,6 +3,10 @@ import { dirname, join } from 'path';
 import fs from 'fs';
 import path from 'path';
 import dotenv from 'dotenv';
+import { createUnifiedLogger } from './utils/LoggingConfig.js';
+
+// Use unified STDIO-aware logger
+const log = createUnifiedLogger('config');
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -112,32 +116,32 @@ export default class Config {
             // Load config file if requested
             if (this.configFilePath) {
                 fileConfig = this.loadConfigFile()
-                console.log('Loaded config file')
+                log.info('Loaded config file')
                 //, JSON.stringify(fileConfig, null, 2))
 
                 // Transform config file format to internal format
                 fileConfig = this.transformJsonConfig(fileConfig)
-                //  console.log('Transformed config:', JSON.stringify(fileConfig, null, 2))
+                //  log.info('Transformed config:', JSON.stringify(fileConfig, null, 2))
             } else {
-                console.log('No config file path provided, using defaults')
+                log.info('No config file path provided, using defaults')
             }
 
-            console.log('Merging configs...')
+            log.info('Merging configs...')
             // Defaults:', JSON.stringify(Config.defaults, null, 2))
 
             // Merge in order: defaults -> file config -> user config
             this.config = this.mergeConfigs(Config.defaults, fileConfig, 0)
 
-            //    console.log('After merging, config is:', JSON.stringify(this.config, null, 2))
+            //    log.log('After merging, config is:', JSON.stringify(this.config, null, 2))
 
             this.initialized = true
             this.applyEnvironmentOverrides()
             this.validateConfig()
 
-            // console.log('Final config after overrides and validation:', JSON.stringify(this.config, null, 2))
+            // log.log('Final config after overrides and validation:', JSON.stringify(this.config, null, 2))
         } catch (error) {
-            console.error('Config initialization error details:', error);
-            console.error('Error stack:', error.stack);
+            log.error('Config initialization error details:', error);
+            log.error('Error stack:', error.stack);
             throw new Error(`Config initialization failed: ${error.message}`)
         }
     }
@@ -146,12 +150,12 @@ export default class Config {
         try {
             // If config file path was provided in constructor, use it directly
             if (this.configFilePath) {
-                console.log('Checking provided config path:', this.configFilePath);
+                log.info('Checking provided config path:', this.configFilePath);
                 if (!fs.existsSync(this.configFilePath)) {
-                    console.warn('Config file not found at provided path:', this.configFilePath);
+                    log.warn('Config file not found at provided path:', this.configFilePath);
                     return {};
                 }
-                console.log('Loading config from provided path:', this.configFilePath);
+                log.info('Loading config from provided path:', this.configFilePath);
                 const fileContent = fs.readFileSync(this.configFilePath, 'utf8');
                 return JSON.parse(fileContent);
             }
@@ -172,24 +176,24 @@ export default class Config {
                 '/home/danny/hyperdata/semem/config/config.json'
             ].filter(Boolean);
 
-            console.log('Searching for config in these locations:', possiblePaths);
+            log.info('Searching for config in these locations:', possiblePaths);
 
             for (const path of possiblePaths) {
-                console.log('  Checking:', path);
+                log.info('  Checking:', path);
                 if (path && fs.existsSync(path)) {
-                    console.log('✓ Config file found at:', path);
+                    log.info('✓ Config file found at:', path);
                     this.configFilePath = path;
                     const fileContent = fs.readFileSync(path, 'utf8');
-                    console.log('Config file content:', fileContent);
+                    log.info('Config file content:', fileContent);
                     return JSON.parse(fileContent);
                 }
             }
 
-            console.warn('❌ Config file not found in any of these locations:', possiblePaths);
+            log.warn('❌ Config file not found in any of these locations:', possiblePaths);
             return {};
 
         } catch (error) {
-            console.error('Error loading config file:', error);
+            log.error('Error loading config file:', error);
             return {};
         }
     }
@@ -375,10 +379,10 @@ export default class Config {
         );
 
         if (isTboxEnvironment) {
-            console.log('🔧 Tbox environment detected - adjusting SPARQL configuration');
+            log.info('🔧 Tbox environment detected - adjusting SPARQL configuration');
             this.adjustForTboxEnvironment();
         } else {
-            console.log('📍 Standalone environment detected - using default SPARQL configuration');
+            log.info('📍 Standalone environment detected - using default SPARQL configuration');
         }
     }
 
@@ -417,7 +421,7 @@ export default class Config {
         if (this.config.storage && this.config.storage.type === 'sparql') {
             // Storage endpoints are now configured via environment variables in defaults
             // and will be processed by environment variable substitution
-            console.log('📍 Standalone environment detected - using default SPARQL configuration');
+            log.info('📍 Standalone environment detected - using default SPARQL configuration');
         }
 
         // Update SPARQL endpoints list to prioritize tbox Fuseki
@@ -454,7 +458,7 @@ export default class Config {
                 tboxEndpoint.urlBase = 'http://fuseki:3030';
             }
 
-            console.log(`🎯 Configured tbox SPARQL endpoint: ${tboxEndpoint.urlBase}/semem`);
+            log.info(`🎯 Configured tbox SPARQL endpoint: ${tboxEndpoint.urlBase}/semem`);
         }
     }
 
@@ -471,21 +475,21 @@ export default class Config {
         }
 
         // Replace ${VAR_NAME} placeholders with environment variables
-        console.log('🔍 Starting environment variable substitution...');
+        log.info('🔍 Starting environment variable substitution...');
         const replaceEnvVars = (obj) => {
             if (typeof obj === 'string' && obj.includes('${')) {
-                console.log('🔍 Processing string:', obj);
+                log.debug('🔍 Processing string:', obj);
                 return obj.replace(/\$\{([^}]+)\}/g, (match, varName) => {
                     // Handle default values: ${VAR_NAME:-default}
                     if (varName.includes(':-')) {
                         const [envVar, defaultValue] = varName.split(':-');
                         const result = process.env[envVar] || defaultValue || '';
-                        console.log(`🔄 Substituting ${match} -> ${result} (envVar: ${envVar}, env: ${process.env[envVar]}, default: ${defaultValue})`);
+                        log.debug(`🔄 Substituting ${match} -> ${result} (envVar: ${envVar}, env: ${process.env[envVar]}, default: ${defaultValue})`);
                         return result;
                     } else {
                         // Simple variable without default
                         const result = process.env[varName] || '';
-                        console.log(`🔄 Substituting ${match} -> ${result} (simple var: ${varName}, env: ${process.env[varName]})`);
+                        log.debug(`🔄 Substituting ${match} -> ${result} (simple var: ${varName}, env: ${process.env[varName]})`);
                         return result;
                     }
                 });
@@ -510,30 +514,30 @@ export default class Config {
      */
     loadEnvironmentVariables() {
         try {
-            console.log('🔍 Loading environment variables...');
-            console.log('🔍 Current SPARQL_HOST:', process.env.SPARQL_HOST);
-            console.log('🔍 Current SPARQL_PORT:', process.env.SPARQL_PORT);
-            
+            log.debug('🔍 Loading environment variables...');
+            log.debug('🔍 Current SPARQL_HOST:', process.env.SPARQL_HOST);
+            log.debug('🔍 Current SPARQL_PORT:', process.env.SPARQL_PORT);
+
             // Get the project root directory (semem root)
             const __filename = fileURLToPath(import.meta.url);
             const __dirname = dirname(__filename);
             const projectRoot = join(__dirname, '..');
             const envPath = join(projectRoot, '.env');
-            
+
             // Load .env file if it exists
             if (fs.existsSync(envPath)) {
                 dotenv.config({ path: envPath });
-                console.log('✅ Environment variables loaded from .env file');
+                log.info('✅ Environment variables loaded from .env file');
             } else {
                 // Try to load from current working directory as fallback
                 dotenv.config();
-                console.log('✅ Environment variables loaded from process.cwd()/.env');
+                log.info('✅ Environment variables loaded from process.cwd()/.env');
             }
-            
-            console.log('🔍 After dotenv - SPARQL_HOST:', process.env.SPARQL_HOST);
-            console.log('🔍 After dotenv - SPARQL_PORT:', process.env.SPARQL_PORT);
+
+            log.debug('🔍 After dotenv - SPARQL_HOST:', process.env.SPARQL_HOST);
+            log.debug('🔍 After dotenv - SPARQL_PORT:', process.env.SPARQL_PORT);
         } catch (error) {
-            console.warn('⚠️  Could not load .env file:', error.message);
+            log.warn('⚠️  Could not load .env file:', error.message);
             // Don't throw - environment variables might be set via other means
         }
     }

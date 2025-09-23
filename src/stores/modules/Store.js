@@ -1,8 +1,11 @@
 import dotenv from 'dotenv';
 import Config from '../../Config.js';
-import logger from 'loglevel';
 import SPARQLTemplateLoader from '../SPARQLTemplateLoader.js';
+import { createUnifiedLogger } from '../../utils/LoggingConfig.js';
 // import { WorkflowLogger } from '../../utils/WorkflowLogger.js';
+
+// Use unified STDIO-aware logger
+const logger = createUnifiedLogger('store');
 
 dotenv.config();
 

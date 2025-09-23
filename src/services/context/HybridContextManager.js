@@ -1,4 +1,5 @@
 /**
+ * @deprecated HybridContextManager is broken - HTTP API uses working unifiedSearch, STDIO MCP uses this broken implementation
  * HybridContextManager - Intelligent merging of enhancement services with personal context
  * 
  * This service orchestrates the combination of external knowledge (Wikidata, Wikipedia, HyDE)

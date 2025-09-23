@@ -1,3 +1,12 @@
+Wait, you said not to modify SimpleVerbsService.js since HTTP works. Let me step
+  back and understand: the HTTP server doesn't even use SimpleVerbsService.js at
+  all! It has its own ask endpoint that directly calls UnifiedSearchAPI.
+
+node src/frontend/vsom-standalone/server.js
+
+npx @modelcontextprotocol/inspector node mcp/index.js
+
+
 {
   "method": "notifications/message",
   "params": {
@@ -10,6 +19,7 @@
 }
 
 we have src/utils/URIMinter.js
+
 
 /home/danny/hyperdata/semem/src/api/features/VSOMAPI.js - in use?
 
@@ -26,9 +36,11 @@ src/services/embeddings/EmbeddingService.js has stardardize with pad zeros
 
 Read src/stores/SPARQLStore-original.js and make a checklist of the methods in SPARQLSTORE.md Then take each method in turn and trace its namesake in SPARQLStore.js through into the module that actually implements the method. If a correct implementation exists, update the checklist. Make a note of any that are missing. Then got through each of the missing or flawed methods and implement them properly.
 
+http://server/unset-base/
+
 npx vitest run tests/integration/sparql/enhanced-sparql-core.test.js --reporter=verbose
 
-node src/frontend/vsom-standalone/server.js
+
 
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -83,7 +95,7 @@ now do calls to the server, a Tell "wormalade is marmalade made from worms" foll
 * refactor src/connectors
 * clean src/frontend/_*
 * move prompts to src/
-* move mcp to src/
+* move mcp to src/ - beware arg.includes('mcp/index.js')
 * Config.js - remove refs to tbox, .env should handle
 
 Can you create utils/SPARQLIngestRemote.js which will carry out the same operation as utils/SPARQLIngest.js but against a remote Semem install. For now the credentials will be the same. The Semem endpoints are at MCP : https://mcp.tensegrity.it/ API : https://api.tensegrity.it/ Fuseki : https://semem-fuseki.tensegrity.it/ Workbench : https://semem.tensegrity.it/

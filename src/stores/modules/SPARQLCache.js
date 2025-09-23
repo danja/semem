@@ -1,7 +1,10 @@
 import dotenv from 'dotenv';
 import Config from '../../Config.js';
 import { MEMORY_CONFIG } from '../../../config/preferences.js';
-import logger from 'loglevel';
+import { createUnifiedLogger } from '../../utils/LoggingConfig.js';
+
+// Use unified STDIO-aware logger
+const logger = createUnifiedLogger('sparql-cache');
 
 dotenv.config();
 

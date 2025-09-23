@@ -1,6 +1,9 @@
 import BaseStore from './BaseStore.js'
-import logger from 'loglevel'
 import { SPARQLQueryService } from '../services/sparql/SPARQLQueryService.js'
+import { createUnifiedLogger } from '../utils/LoggingConfig.js'
+
+// Use unified STDIO-aware logger
+const logger = createUnifiedLogger('sparql-store');
 import { v4 as uuidv4 } from 'uuid'
 import { SPARQL_CONFIG } from '../../config/preferences.js'
 import { WorkflowLogger, workflowLoggerRegistry } from '../utils/WorkflowLogger.js'
@@ -33,7 +36,7 @@ export default class SPARQLStore extends BaseStore {
         // Legacy compatibility properties
         this._initializeLegacyProperties()
 
-        logger.info('SPARQLStore initialized with modular architecture')
+        logger.info('SPARQLStore initialized')
     }
 
     /**

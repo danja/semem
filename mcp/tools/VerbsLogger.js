@@ -3,12 +3,10 @@
  * Provides neutral logging interface that can be enhanced with hooks
  */
 
-import logger from 'loglevel';
+import { createUnifiedLogger } from '../../src/utils/LoggingConfig.js';
 
-// Neutral logging setup - can be easily reconfigured or hooked
-// Example: verbsLogger can be enhanced with JSON formatting hooks
-export const verbsLogger = logger.getLogger('simple-verbs');
-verbsLogger.setLevel(process.env.SIMPLE_VERBS_LOG_LEVEL || 'info');
+// Use unified STDIO-aware logger
+export const verbsLogger = createUnifiedLogger('simple-verbs');
 
 /* Example of adding JSON formatting hook:
  * const originalInfo = verbsLogger.info;

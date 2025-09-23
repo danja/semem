@@ -10,6 +10,11 @@ const __dirname = path.dirname(__filename);
 const PROJECT_ROOT = path.resolve(__dirname, '../../');
 const LOG_DIR = path.join(PROJECT_ROOT, 'logs');
 
+// Detect STDIO mode to suppress console output that interferes with Inspector JSON protocol
+const isSTDIOMode = process.stdin.isTTY !== true ||
+                   process.argv.some(arg => arg.includes('mcp/index.js')) ||
+                   process.env.MCP_INSPECTOR_MODE === 'true';
+
 // Ensure log directory exists
 if (!fs.existsSync(LOG_DIR)) {
     fs.mkdirSync(LOG_DIR, { recursive: true });
@@ -20,14 +25,43 @@ function getDateString() {
     return new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
 }
 
-// Enhanced logging configuration with file output
-class FileLogger {
+// Cleanup old log files, keeping only the last 2 runs
+function cleanupOldLogs(logDir, namePrefix) {
+    try {
+        const files = fs.readdirSync(logDir)
+            .filter(file => file.startsWith(namePrefix) && file.endsWith('.log'))
+            .map(file => ({
+                name: file,
+                path: path.join(logDir, file),
+                stat: fs.statSync(path.join(logDir, file))
+            }))
+            .sort((a, b) => b.stat.mtime - a.stat.mtime); // Sort by modification time, newest first
+
+        // Keep only the 2 most recent files for each prefix
+        const filesToDelete = files.slice(2);
+        filesToDelete.forEach(file => {
+            try {
+                fs.unlinkSync(file.path);
+            } catch (err) {
+                // Silent failure - don't log in STDIO mode
+            }
+        });
+    } catch (err) {
+        // Silent failure - don't log in STDIO mode
+    }
+}
+
+// Enhanced STDIO-aware logging configuration with file output
+class STDIOAwareFileLogger {
     constructor(name = 'default') {
         this.name = name;
         this.logFile = path.join(LOG_DIR, `${name}-${getDateString()}.log`);
         this.errorFile = path.join(LOG_DIR, `${name}-error-${getDateString()}.log`);
         this.originalLogger = logger.getLogger(name);
-        
+
+        // Cleanup old logs on creation
+        cleanupOldLogs(LOG_DIR, name);
+
         // Store original methods
         this.originalMethods = {
             trace: this.originalLogger.trace.bind(this.originalLogger),
@@ -36,27 +70,29 @@ class FileLogger {
             warn: this.originalLogger.warn.bind(this.originalLogger),
             error: this.originalLogger.error.bind(this.originalLogger)
         };
-        
-        // Override methods to include file logging
-        this.setupFileLogging();
+
+        // Override methods to include file logging with STDIO awareness
+        this.setupSTDIOAwareLogging();
     }
     
-    setupFileLogging() {
+    setupSTDIOAwareLogging() {
         const levels = ['trace', 'debug', 'info', 'warn', 'error'];
-        
+
         levels.forEach(level => {
             this.originalLogger[level] = (...args) => {
                 const timestamp = new Date().toISOString();
                 const levelUpper = level.toUpperCase();
                 const message = this.formatMessage(levelUpper, timestamp, args);
-                
-                // Always call original logger for console output
-                this.originalMethods[level](...args);
-                
-                // Write to appropriate log file
+
+                // Only call original logger for console output if NOT in STDIO mode
+                if (!isSTDIOMode) {
+                    this.originalMethods[level](...args);
+                }
+
+                // Always write to file
                 const logFile = (level === 'error') ? this.errorFile : this.logFile;
                 this.writeToFile(logFile, message);
-                
+
                 // Also write errors to the main log file
                 if (level === 'error') {
                     this.writeToFile(this.logFile, message);
@@ -80,34 +116,36 @@ class FileLogger {
         try {
             fs.appendFileSync(filePath, message);
         } catch (error) {
-            // Fallback to console if file writing fails
-            console.error('Failed to write to log file:', error.message);
+            // Silent failure in STDIO mode to avoid JSON protocol interference
+            if (!isSTDIOMode) {
+                console.error('Failed to write to log file:', error.message);
+            }
         }
     }
 }
 
-// Centralized logging configuration
+// Centralized STDIO-aware logging configuration
 export function configureLogging(componentName = 'semem', level = 'info') {
-    const fileLogger = new FileLogger(componentName);
-    
+    const fileLogger = new STDIOAwareFileLogger(componentName);
+
     // Set log level
     logger.setLevel(level);
-    
+
     // Create component-specific logger
     const componentLogger = logger.getLogger(componentName);
-    
+
     // Add convenient method to get logger with different component names
     componentLogger.getComponentLogger = (name) => {
-        return new FileLogger(`${componentName}-${name}`).originalLogger;
+        return new STDIOAwareFileLogger(`${componentName}-${name}`).originalLogger;
     };
-    
+
     return componentLogger;
 }
 
-// Default configuration for the main application
+// Default STDIO-aware configuration for the main application
 export function setupDefaultLogging() {
     const mainLogger = configureLogging('semem-main', 'info');
-    
+
     // Set up specific loggers for different components
     const loggers = {
         server: configureLogging('api-server', 'info'),
@@ -120,20 +158,26 @@ export function setupDefaultLogging() {
         zpt: configureLogging('zpt', 'info'),
         search: configureLogging('search', 'info')
     };
-    
-    // Log the startup information
+
+    // Log the startup information (only to file in STDIO mode)
     mainLogger.info('='.repeat(80));
     mainLogger.info('SEMEM APPLICATION STARTUP');
     mainLogger.info('='.repeat(80));
     mainLogger.info(`Log directory: ${LOG_DIR}`);
     mainLogger.info(`Log level: info`);
+    mainLogger.info(`STDIO mode: ${isSTDIOMode}`);
     mainLogger.info(`Available loggers: ${Object.keys(loggers).join(', ')}`);
     mainLogger.info('='.repeat(80));
-    
+
     return { mainLogger, ...loggers };
 }
 
-// Export log directory path for other modules
-export { LOG_DIR };
+// Convenience function to create unified STDIO-aware logger for any module
+export function createUnifiedLogger(name = 'default') {
+    return new STDIOAwareFileLogger(name).originalLogger;
+}
+
+// Export log directory path and STDIO detection for other modules
+export { LOG_DIR, isSTDIOMode };
 
 export default configureLogging;
