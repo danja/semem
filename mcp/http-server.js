@@ -705,7 +705,7 @@ async function startOptimizedServer() {
 
         // Expose the llmHandler for compatibility
         get llmHandler() {
-          return llmHandler;
+          return memoryManager.llmHandler;
         }
       };
 
