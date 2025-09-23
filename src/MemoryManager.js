@@ -248,13 +248,16 @@ export default class MemoryManager {
         
         try {
             // Step 1: Generate query embedding
+            const embeddingStartTime = Date.now();
             opLogger.step(
                 'generate_embedding',
                 '🎯 Generating query embedding',
                 '[MemoryManager] embeddingHandler.generateEmbedding() - creating vector representation'
             );
-            
+
             const queryEmbedding = await this.embeddingHandler.generateEmbedding(query);
+            const embeddingDuration = Date.now() - embeddingStartTime;
+            this.logger.info(`⏱️ [SEARCH-TIMING] Embedding generation took ${embeddingDuration}ms`);
             
             opLogger.step(
                 'embedding_generated',
@@ -266,13 +269,16 @@ export default class MemoryManager {
             // Step 2: Extract query concepts (if LLM available)
             let queryConcepts = [];
             if (this.llmHandler) {
+                const conceptsStartTime = Date.now();
                 opLogger.step(
                     'extract_concepts',
                     '💡 Extracting query concepts',
                     '[MemoryManager] llmHandler.extractConcepts() - identifying key concepts'
                 );
-                
+
                 queryConcepts = await this.llmHandler.extractConcepts(query);
+                const conceptsDuration = Date.now() - conceptsStartTime;
+                this.logger.info(`⏱️ [SEARCH-TIMING] Concept extraction took ${conceptsDuration}ms`);
                 
                 opLogger.step(
                     'concepts_extracted',
@@ -302,7 +308,10 @@ export default class MemoryManager {
 
             // MIGRATION: Enhanced SPARQLStore combines in-memory (FAISS, concept graph, clustering)
             // with SPARQL persistence in a single retrieve call
+            const searchStartTime = Date.now();
             const enhancedResults = await this.store.retrieve(queryEmbedding, queryConcepts, similarityThreshold, excludeLastN);
+            const searchDuration = Date.now() - searchStartTime;
+            this.logger.info(`⏱️ [SEARCH-TIMING] Store.retrieve took ${searchDuration}ms`);
 
             opLogger.step(
                 'enhanced_results_found',

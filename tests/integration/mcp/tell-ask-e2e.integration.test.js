@@ -20,17 +20,26 @@ describe('Tell/Ask E2E Integration Tests', () => {
   };
 
   const httpTellAsk = async (fact, question) => {
-    // Test HTTP interface using dynamic import for fetch
-    const { default: fetch } = await import('node-fetch');
+    // Test HTTP interface using native fetch (Node.js 18+)
     console.log(`🔵 HTTP: Testing fact: "${fact}"`);
 
     // Tell via HTTP
     try {
+      console.log('🔍 Starting fetch call to /tell...');
+      console.log('🔍 Fetch function type:', typeof fetch);
+
       const tellResponse = await fetch('http://localhost:4101/tell', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content: fact })
       });
+
+      console.log('🔍 Fetch response received:', tellResponse);
+      console.log('🔍 Response type:', typeof tellResponse);
+
+      if (!tellResponse) {
+        throw new Error('Fetch returned undefined - connection failed');
+      }
 
       if (!tellResponse.ok) {
         throw new Error(`HTTP ${tellResponse.status}: ${tellResponse.statusText}`);
@@ -46,6 +55,10 @@ describe('Tell/Ask E2E Integration Tests', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question })
       });
+
+      if (!askResponse) {
+        throw new Error('Fetch returned undefined - connection failed');
+      }
 
       if (!askResponse.ok) {
         throw new Error(`HTTP ${askResponse.status}: ${askResponse.statusText}`);
@@ -76,7 +89,7 @@ describe('Tell/Ask E2E Integration Tests', () => {
   }, 30000);
 
   test('Multiple random facts via HTTP', async () => {
-    const { default: fetch } = await import('node-fetch');
+    // Using native fetch (Node.js 18+)
     const facts = [
       generateRandomFact(),
       generateRandomFact(),
@@ -92,6 +105,9 @@ describe('Tell/Ask E2E Integration Tests', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content: fact })
       });
+      if (!tellResponse) {
+        throw new Error('Fetch returned undefined - connection failed');
+      }
       if (!tellResponse.ok) {
         throw new Error(`HTTP ${tellResponse.status}: ${tellResponse.statusText}`);
       }

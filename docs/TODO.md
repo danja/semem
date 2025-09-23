@@ -2,10 +2,13 @@ Wait, you said not to modify SimpleVerbsService.js since HTTP works. Let me step
   back and understand: the HTTP server doesn't even use SimpleVerbsService.js at
   all! It has its own ask endpoint that directly calls UnifiedSearchAPI.
 
+export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/tell-ask-e2e.integration.test.js --reporter=verbose | head -50)
+
 node src/frontend/vsom-standalone/server.js
 
 npx @modelcontextprotocol/inspector node mcp/index.js
 
+looks like there is mcpDeugger as well as loglevel logger
 
 {
   "method": "notifications/message",

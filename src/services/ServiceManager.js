@@ -3,6 +3,7 @@
  * Provides shared services for both HTTP API and STDIO MCP to eliminate duplication
  */
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import MemoryManager from '../MemoryManager.js';
 import EmbeddingHandler from '../handlers/EmbeddingHandler.js';
@@ -26,13 +27,17 @@ class ServiceManager {
         const projectRoot = path.resolve(path.dirname(__filename), '../..');
         const defaultConfigPath = path.join(projectRoot, 'config/config.json');
 
+        console.log('🔧 [ServiceManager] ProjectRoot:', projectRoot);
+        console.log('🔧 [ServiceManager] DefaultConfigPath:', defaultConfigPath);
+        console.log('🔧 [ServiceManager] ConfigPath exists:', fs.existsSync(defaultConfigPath));
+
         const config = new Config(configPath || defaultConfigPath);
         await config.init();
 
-        // Create LLM and embedding providers
-        const llmProvider = await createLLMConnector(configPath);
-        const embeddingProvider = await createEmbeddingConnector(configPath);
-        const modelConfig = await getModelConfig(configPath);
+        // Create LLM and embedding providers using initialized config instance
+        const llmProvider = await createLLMConnector(config);
+        const embeddingProvider = await createEmbeddingConnector(config);
+        const modelConfig = await getModelConfig(config);
 
         // Get embedding dimension
         const llmProviders = config.get('llmProviders') || [];

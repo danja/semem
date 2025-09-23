@@ -1,15 +1,13 @@
 // Global test setup for Vitest
 import { vi } from 'vitest';
+import fetch from 'node-fetch';
 
 // Set test timeouts
 const TEST_TIMEOUT = 10000; // 10s
 global.TEST_TIMEOUT = TEST_TIMEOUT;
 
-// Global mocks
-vi.mock('node-fetch', () => ({
-  default: vi.fn(),
-  __esModule: true,
-}));
+// Make fetch available globally for integration tests
+global.fetch = fetch;
 
 // Global test utilities
 global.createTestContext = () => ({

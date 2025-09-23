@@ -17,20 +17,29 @@ dotenv.config();
 /**
  * Create LLM connector based on configuration priority from config.json
  */
-export async function createLLMConnector(configPath = null) {
+export async function createLLMConnector(configOrPath = null) {
   try {
-    // Load system configuration to get provider priorities
-    const config = new Config(configPath);
-    await config.init();
+    let config;
+    // Accept either a Config instance or a path
+    if (configOrPath && typeof configOrPath === 'object' && configOrPath.get) {
+      // Already a Config instance
+      config = configOrPath;
+    } else {
+      // Load system configuration to get provider priorities
+      config = new Config(configOrPath);
+      await config.init();
+    }
     
     // Get llmProviders with priority ordering
     const llmProviders = config.get('llmProviders') || [];
-    
+    mcpDebugger.info('🔧 [CONFIG] Raw llmProviders from config:', llmProviders.length);
+    mcpDebugger.info('🔧 [CONFIG] llmProviders details:', llmProviders);
+
     // Sort by priority (lower number = higher priority)
     const sortedProviders = llmProviders
       .filter(p => p.capabilities?.includes('chat'))
       .sort((a, b) => (a.priority || 999) - (b.priority || 999));
-    
+
     mcpDebugger.info('Available chat providers by priority:', sortedProviders.map(p => `${p.type} (priority: ${p.priority})`));
     
     // Try providers in priority order
@@ -84,11 +93,18 @@ export async function createLLMConnector(configPath = null) {
 /**
  * Create embedding connector using configuration-driven factory pattern
  */
-export async function createEmbeddingConnector(configPath = null) {
+export async function createEmbeddingConnector(configOrPath = null) {
   try {
-    // Load system configuration
-    const config = new Config(configPath);
-    await config.init();
+    let config;
+    // Accept either a Config instance or a path
+    if (configOrPath && typeof configOrPath === 'object' && configOrPath.get) {
+      // Already a Config instance
+      config = configOrPath;
+    } else {
+      // Load system configuration
+      config = new Config(configOrPath);
+      await config.init();
+    }
     
     // Get llmProviders with priority ordering for embeddings
     const llmProviders = config.get('llmProviders') || [];
@@ -179,10 +195,17 @@ function findWorkingProvider(providers) {
 /**
  * Get working model names from configuration (follows same logic as provider selection)
  */
-export async function getModelConfig(configPath = null) {
+export async function getModelConfig(configOrPath = null) {
   try {
-    const config = new Config(configPath);
-    await config.init();
+    let config;
+    // Accept either a Config instance or a path
+    if (configOrPath && typeof configOrPath === 'object' && configOrPath.get) {
+      // Already a Config instance
+      config = configOrPath;
+    } else {
+      config = new Config(configOrPath);
+      await config.init();
+    }
     
     const llmProviders = config.get('llmProviders') || [];
     

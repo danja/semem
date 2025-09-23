@@ -16,6 +16,7 @@ const projectRoot = path.resolve(__dirname, '..');
 dotenv.config({ path: path.join(projectRoot, '.env') });
 
 // Debug: Check if API keys are loaded
+mcpDebugger.info('🔑 GROQ_API_KEY loaded:', process.env.GROQ_API_KEY ? 'YES' : 'NO');
 mcpDebugger.info('🔑 MISTRAL_API_KEY loaded:', process.env.MISTRAL_API_KEY ? 'YES' : 'NO');
 mcpDebugger.info('🔑 CLAUDE_API_KEY loaded:', process.env.CLAUDE_API_KEY ? 'YES' : 'NO');
 
@@ -536,11 +537,16 @@ async function startOptimizedServer() {
 
         async ask({ question, mode = 'standard', useContext = true, useHyDE = false, useWikipedia = false, useWikidata = false, useWebSearch = false, threshold = 0.3 }) {
           try {
+            const startTime = Date.now();
+
             // FIX: Use shared MemoryManager's search functionality
+            const searchStartTime = Date.now();
             const results = await memoryManager.retrieveRelevantInteractions(question, threshold * 100, 0, 10);
+            const searchDuration = Date.now() - searchStartTime;
 
             mcpDebugger.info(`🔍 [DEBUG] MemoryManager search results for "${question}":`, {
               resultsCount: results.length,
+              searchDuration: `${searchDuration}ms`,
               results: results.slice(0, 3).map(r => ({
                 prompt: r.prompt?.substring(0, 100),
                 response: r.response?.substring(0, 100),
@@ -552,10 +558,17 @@ async function startOptimizedServer() {
             let answer;
             if (results.length > 0 && useContext) {
               const context = results.map(r => `${r.prompt} ${r.response}`).join('\n');
+              const llmStartTime = Date.now();
               answer = await memoryManager.llmHandler.generateResponse(question, context);
+              const llmDuration = Date.now() - llmStartTime;
+              mcpDebugger.info(`🤖 [DEBUG] LLM response generation took ${llmDuration}ms`);
             } else {
               answer = `I'm sorry, but I don't have any information about "${question}" in my current knowledge base.`;
             }
+
+            const totalDuration = Date.now() - startTime;
+            mcpDebugger.info(`⏱️ [DEBUG] Total ask operation took ${totalDuration}ms`);
+
 
             return {
               success: true,
@@ -1012,8 +1025,9 @@ async function startOptimizedServer() {
       // CHAT endpoint - Interactive chat with slash command support
       app.post('/chat', async (req, res) => {
         try {
+          const chatStartTime = Date.now();
           const { message, context = {} } = req.body;
-          
+
           mcpDebugger.info('🚀 [CHAT] Chat endpoint called with message:', message.substring(0, 50) + '...');
           
           if (!message) {
@@ -1222,6 +1236,8 @@ If action is "ask" or "tell", also include:
             
           } else {
             // Direct chat response
+            const chatDuration = Date.now() - chatStartTime;
+            mcpDebugger.info(`⏱️ [CHAT] Direct chat response took ${chatDuration}ms`);
             return res.json({
               success: true,
               messageType: 'chat',
