@@ -499,89 +499,15 @@ async function startOptimizedServer() {
     }
 
     if (SimpleVerbsService) {
-      // MIGRATION: Use Enhanced SPARQLStore for unified storage with API server
-      mcpDebugger.info('🔄 [MCP] Initializing Enhanced SPARQLStore for unified storage...');
-      const { default: SPARQLStore } = await import('../src/stores/SPARQLStore.js');
-      const { default: EmbeddingService } = await import('../src/services/embeddings/EmbeddingService.js');
-      const { default: LLMHandler } = await import('../src/handlers/LLMHandler.js');
-      const Config = (await import('../src/Config.js')).default;
+      // FIX: Use unified ServiceManager to share storage with STDIO/API server
+      mcpDebugger.info('🔄 [MCP] Using unified ServiceManager for consistent storage...');
+      const serviceManager = (await import('../src/services/ServiceManager.js')).default;
+      const services = await serviceManager.getServices();
 
-      // Initialize config and storage to match API server configuration
-      const configPath = process.env.SEMEM_CONFIG_PATH || path.join(projectRoot, 'config/config.json');
-      const config = new Config(configPath);
-      await config.init();
-
-      const storageOptions = config.get('storage.options') || {};
-
-      // Get embedding dimension from the embedding provider configuration
-      const llmProviders = config.get('llmProviders') || [];
-      const embeddingProvider = llmProviders
-        .filter(p => p.capabilities?.includes('embedding'))
-        .sort((a, b) => (a.priority || 999) - (b.priority || 999))[0];
-
-      const dimension = embeddingProvider?.embeddingDimension;
-      if (!dimension) {
-        throw new Error('Embedding dimension not configured in config.json - check embeddingDimension in llmProviders');
-      }
-
-      // Initialize EmbeddingService with config-based settings
-      const embeddingService = new EmbeddingService({
-        provider: embeddingProvider?.type || 'ollama',
-        model: embeddingProvider?.embeddingModel || 'nomic-embed-text',
-        dimension: dimension,
-        providerOptions: {
-          baseUrl: embeddingProvider?.baseUrl,
-          apiKey: embeddingProvider?.apiKey
-        }
-      });
-
-      // Initialize LLM handler for chat functionality
-      const chatProvider = llmProviders
-        .filter(p => p.capabilities?.includes('chat'))
-        .sort((a, b) => (a.priority || 999) - (b.priority || 999))[0];
-
-      let llmHandler = null;
-      if (chatProvider) {
-        // Import the appropriate connector based on provider type
-        if (chatProvider.type === 'ollama') {
-          const { default: OllamaConnector } = await import('../src/connectors/OllamaConnector.js');
-          const llmConnector = new OllamaConnector({
-            baseUrl: chatProvider.baseUrl || 'http://localhost:11434',
-            apiKey: chatProvider.apiKey
-          });
-          llmHandler = new LLMHandler(llmConnector, chatProvider.chatModel || 'qwen2:1.5b');
-        } else if (chatProvider.type === 'groq') {
-          const { default: GroqConnector } = await import('../src/connectors/GroqConnector.js');
-          const llmConnector = new GroqConnector({
-            apiKey: chatProvider.apiKey
-          });
-          llmHandler = new LLMHandler(llmConnector, chatProvider.chatModel || 'llama-3.1-8b-instant');
-        }
-        // Add other providers as needed (mistral, claude, etc.)
-        mcpDebugger.info(`✅ [MCP] LLM handler initialized with ${chatProvider.type} provider`);
-      } else {
-        mcpDebugger.warn('⚠️ [MCP] No chat provider configured - chat functionality disabled');
-      }
-
-      // Initialize PromptSynthesis for ask operations
-      const promptSynthesis = llmHandler ? new PromptSynthesis(llmHandler) : null;
-      mcpDebugger.info(`✅ [MCP] PromptSynthesis initialized: ${promptSynthesis ? 'enabled' : 'disabled'}`);
-
-      const enhancedOptions = {
-        ...storageOptions,
-        dimension,
-        memoryManagement: true,
-        conceptGraphs: true,
-        semanticClustering: true
-      };
-
-      mcpDebugger.info('💾 [MCP] Creating Enhanced SPARQLStore with same config as API server');
-      const storage = new SPARQLStore(storageOptions.endpoint || storageOptions, enhancedOptions, config);
-      mcpDebugger.info('✅ [MCP] Enhanced SPARQLStore initialized for unified storage');
-
-      // Initialize SearchService for unified search across SPARQL and FAISS
-      const searchService = new SearchService(storage, storage.index);
-      mcpDebugger.info('✅ [MCP] SearchService initialized for unified search');
+      // FIX: Use services from ServiceManager instead of creating new instances
+      const memoryManager = services.memoryManager;
+      const config = services.config;
+      mcpDebugger.info('✅ [MCP] Using shared services from ServiceManager');
 
       // Create a compatibility wrapper that mimics SimpleVerbsService interface
       const simpleVerbsService = {
@@ -592,28 +518,15 @@ async function startOptimizedServer() {
 
         async tell({ content, type = 'interaction', metadata = {}, lazy = false }) {
           try {
-            // Generate embedding for the content using the configured embedding service
-            const contentEmbedding = await embeddingService.generateEmbedding(content);
-
-            // Store using Enhanced SPARQLStore
-            mcpDebugger.info('🔥 MCP DEBUG: About to call storage.storeWithMemory, storage type:', storage.constructor.name);
-            const { randomUUID } = await import('crypto');
-            const result = await storage.storeWithMemory({
-              id: randomUUID(), // Generate unique ID for the record
-              prompt: content,
-              response: '', // Tell operations don't have responses
-              embedding: contentEmbedding, // Use generated embedding
-              concepts: [],
-              metadata: { ...metadata, type, lazy }
-            });
+            // FIX: Use shared MemoryManager instead of separate storage
+            const result = await memoryManager.storeInteraction(content, '', { ...metadata, type, lazy });
 
             return {
               success: true,
               stored: true,
-              concepts: result?.concepts?.length || result?.extractedConcepts?.length || 0,
+              concepts: result?.concepts?.length || 0,
               contentLength: content.length,
-              metadata,
-              result // Include the raw result for debugging
+              metadata
             };
           } catch (error) {
             mcpDebugger.error('❌ [MCP] Tell operation failed:', error);
@@ -623,36 +536,27 @@ async function startOptimizedServer() {
 
         async ask({ question, mode = 'standard', useContext = true, useHyDE = false, useWikipedia = false, useWikidata = false, useWebSearch = false, threshold = 0.3 }) {
           try {
-            // Generate embedding for the question using the configured embedding service
-            const questionEmbedding = await embeddingService.generateEmbedding(question);
+            // FIX: Use shared MemoryManager's search functionality
+            const results = await memoryManager.retrieveRelevantInteractions(question, threshold * 100, 0, 10);
 
-            // Search using SearchService for unified SPARQL + FAISS search
-            const results = await searchService.search(questionEmbedding, 10, threshold);
-
-            // Debug: Log search results to understand what we're getting
-            mcpDebugger.info(`🔍 [DEBUG] Search results for "${question}":`, {
+            mcpDebugger.info(`🔍 [DEBUG] MemoryManager search results for "${question}":`, {
               resultsCount: results.length,
-              results: results.map(r => ({
+              results: results.slice(0, 3).map(r => ({
                 prompt: r.prompt?.substring(0, 100),
                 response: r.response?.substring(0, 100),
-                content: r.content?.substring(0, 100),
-                similarity: r.similarity,
-                keys: Object.keys(r)
+                similarity: r.similarity
               }))
             });
 
-            // Use PromptSynthesis to generate a proper LLM response instead of raw search results
+            // Use MemoryManager's LLM handler to generate response
             let answer;
-            if (promptSynthesis && useContext) {
-              answer = await promptSynthesis.synthesizeResponse(question, results, { mode, useContext });
+            if (results.length > 0 && useContext) {
+              const context = results.map(r => `${r.prompt} ${r.response}`).join('\n');
+              answer = await memoryManager.llmHandler.generateResponse(question, context);
             } else {
-              // Fallback to raw search results (the old redundant approach)
-              answer = results.length > 0 ?
-                `Based on stored information: ${results[0].prompt || results[0].response || results[0].content}` :
-                `I'm sorry, but I don't have any information about "${question}" in the provided context or my current knowledge base.`;
+              answer = `I'm sorry, but I don't have any information about "${question}" in my current knowledge base.`;
             }
 
-            // Format response to match SimpleVerbsService interface
             return {
               success: true,
               question,
@@ -671,12 +575,10 @@ async function startOptimizedServer() {
                 enhancementWeight: 0.5,
                 selectedStrategy: results.length > 0 ? "personal_context" : "no_context"
               },
-              // DEBUG: Include search results to debug content mapping
               debugSearchResults: results.slice(0, 3).map(r => ({
                 id: r.id,
                 prompt: r.prompt,
                 response: r.response,
-                content: r.content,
                 similarity: r.similarity,
                 source: r.source,
                 metadata: r.metadata
@@ -690,12 +592,8 @@ async function startOptimizedServer() {
 
         async chat({ message, context = [], options = {} }) {
           try {
-            if (!llmHandler) {
-              throw new Error('LLM service not available - handler not initialized');
-            }
-
-            // Use the LLM handler to generate a response
-            const response = await llmHandler.generateResponse(message, context, options);
+            // FIX: Use shared MemoryManager's LLM handler
+            const response = await memoryManager.llmHandler.generateResponse(message, context, options);
 
             return {
               success: true,
