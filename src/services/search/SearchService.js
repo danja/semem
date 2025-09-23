@@ -20,7 +20,10 @@ class SearchService {
     constructor(options = {}) {
         this.embeddingService = options.embeddingService || new EmbeddingService();
         this.sparqlService = options.sparqlService || new SPARQLService();
-        this.graphName = options.graphName || 'http://hyperdata.it/content';
+        if (!options.graphName) {
+            throw new Error('graphName is required in options - check config.json graphName setting');
+        }
+        this.graphName = options.graphName;
         this.dimension = options.dimension;
         if (!this.dimension) {
             throw new Error('Embedding dimension is required - check config.json embeddingDimension setting');

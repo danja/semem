@@ -48,7 +48,10 @@ export default class SPARQLStore extends BaseStore {
             user: options.user || 'admin',
             password: options.password || 'admin'
         }
-        const graphName = options.graphName || 'http://tensegrity.it/semem/content'
+        const graphName = options.graphName
+        if (!graphName) {
+            throw new Error('graphName must be provided in options.graphName - check config.json graphName setting')
+        }
         const dimension = options.dimension
         if (!dimension) {
             throw new Error('Embedding dimension must be provided in options.dimension - check config.json embeddingDimension setting')
@@ -70,7 +73,7 @@ export default class SPARQLStore extends BaseStore {
         })
 
         // Initialize store module
-        this.store = new Store(this.sparqlExecute, graphName, dimension)
+        this.storeModule = new Store(this.sparqlExecute, graphName, dimension)
 
         // Initialize ZPT module
         this.zpt = new ZPT(this.sparqlExecute, graphName)
@@ -205,11 +208,11 @@ export default class SPARQLStore extends BaseStore {
     // ========== Cache Management (delegate to SPARQLCache) ==========
 
     async loadHistory() {
-        return this.store.loadHistory()
+        return this.storeModule.loadHistory()
     }
 
     async saveMemoryToHistory() {
-        return this.store.saveMemoryToHistory()
+        return this.storeModule.saveMemoryToHistory()
     }
 
     clearMemoryCache() {
@@ -223,27 +226,27 @@ export default class SPARQLStore extends BaseStore {
     // ========== Store Operations (delegate to Store) ==========
 
     async store(data) {
-        return this.store.store(data)
+        return this.storeModule.store(data)
     }
 
     async storeEntity(entity) {
-        return this.store.storeEntity(entity)
+        return this.storeModule.storeEntity(entity)
     }
 
     async storeSemanticUnit(unit) {
-        return this.store.storeSemanticUnit(unit)
+        return this.storeModule.storeSemanticUnit(unit)
     }
 
     async storeRelationship(relationship) {
-        return this.store.storeRelationship(relationship)
+        return this.storeModule.storeRelationship(relationship)
     }
 
     async storeCommunity(community) {
-        return this.store.storeCommunity(community)
+        return this.storeModule.storeCommunity(community)
     }
 
     async storeConcepts(concepts) {
-        return this.store.storeConcepts(concepts)
+        return this.storeModule.storeConcepts(concepts)
     }
 
     // ========== ZPT Operations (delegate to ZPT) ==========
@@ -313,7 +316,7 @@ export default class SPARQLStore extends BaseStore {
 
         try {
             // Load memory interactions using store module
-            const [shortTerm, longTerm] = await this.store.loadHistory()
+            const [shortTerm, longTerm] = await this.storeModule.loadHistory()
 
             // Update cache with loaded data
             this.cache.setShortTermMemory(shortTerm)
@@ -351,15 +354,17 @@ export default class SPARQLStore extends BaseStore {
     }
 
     async storeWithMemory(interaction) {
-        return this.store.store(interaction)
+        return this.storeModule.store(interaction)
     }
 
     async retrieve(queryEmbedding, queryConcepts, similarityThreshold, excludeLastN) {
-        return this.searchModule.search(queryEmbedding, 50, similarityThreshold)
+        // Convert threshold from 0-100 scale to 0-1 scale for search module
+        const normalizedThreshold = similarityThreshold > 1 ? similarityThreshold / 100 : similarityThreshold;
+        return this.searchModule.search(queryEmbedding, 50, normalizedThreshold);
     }
 
     async storeDocument(documentData) {
-        return this.store.store(documentData)
+        return this.storeModule.store(documentData)
     }
 
     async cleanup() {
@@ -393,7 +398,7 @@ export default class SPARQLStore extends BaseStore {
         // Dispose all modules in reverse order of initialization
         if (this.graph) await this.graph.dispose()
         if (this.zpt) this.zpt.dispose()
-        if (this.store) this.store.dispose()
+        if (this.storeModule) this.storeModule.dispose()
         if (this.cache) this.cache.dispose()
         if (this.searchModule) this.searchModule.dispose()
         if (this.vectors) this.vectors.dispose()

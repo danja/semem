@@ -18,7 +18,10 @@ class EmbeddingCreator {
     constructor(options = {}) {
         this.embeddingService = options.embeddingService || new EmbeddingService();
         this.sparqlService = options.sparqlService || new SPARQLService();
-        this.graphName = options.graphName || 'http://hyperdata.it/content';
+        if (!options.graphName) {
+            throw new Error('graphName is required in options - check config.json graphName setting');
+        }
+        this.graphName = options.graphName;
         this.contentPredicate = options.contentPredicate || 'http://schema.org/articleBody';
         this.embeddingPredicate = options.embeddingPredicate || 'http://example.org/embedding/vector';
 

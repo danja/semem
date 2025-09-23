@@ -18,7 +18,10 @@ class SPARQLService {
     constructor(options = {}) {
         this.queryEndpoint = options.queryEndpoint || 'https://fuseki.hyperdata.it/semem/query';
         this.updateEndpoint = options.updateEndpoint || 'https://fuseki.hyperdata.it/semem/update';
-        this.graphName = options.graphName || 'http://hyperdata.it/content';
+        if (!options.graphName) {
+            throw new Error('graphName is required in options - check config.json graphName setting');
+        }
+        this.graphName = options.graphName;
         this.auth = options.auth || { user: 'admin', password: 'admin123' };
         
         logger.info(`SPARQLService initialized with endpoints: ${this.queryEndpoint}, ${this.updateEndpoint}`);

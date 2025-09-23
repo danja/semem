@@ -22,13 +22,8 @@ import {
 import { SimpleVerbsService } from './SimpleVerbsService.js';
 import { logOperation } from './VerbsLogger.js';
 import { mcpDebugger } from '../lib/debug-utils.js';
-import { createUnifiedLogger } from '../../src/utils/LoggingConfig.js';
-
-// Create shared service instance for HTTP (working)
+// Create shared service instance for all transports (HTTP and STDIO)
 const simpleVerbsService = new SimpleVerbsService();
-
-// Unified logger for STDIO-specific operations
-const stdioLogger = createUnifiedLogger('stdio-verbs');
 
 
 /**
@@ -40,65 +35,20 @@ export function registerSimpleVerbs(server) {
   // This function now just initializes the service - tool registration happens centrally
 }
 
-// STDIO-compatible service that uses SearchService like HTTP MCP does
+// STDIO-compatible service using unified ServiceManager
 async function createSTDIOSearchService() {
-  const path = await import('path');
-  const { fileURLToPath } = await import('url');
-  const __filename = fileURLToPath(import.meta.url);
-  const __dirname = path.dirname(__filename);
-  const projectRoot = path.resolve(__dirname, '../..');
+  stdioLogger.debug('🔍 STDIO: Using unified ServiceManager for search service');
 
-  // Import classes like HTTP MCP does
-  const { default: SPARQLStore } = await import('../../src/stores/SPARQLStore.js');
-  const { default: EmbeddingService } = await import('../../src/services/embeddings/EmbeddingService.js');
-  const { SearchService } = await import('../../src/services/SearchService.js');
-  const Config = (await import('../../src/Config.js')).default;
+  // Get shared services from ServiceManager
+  const serviceManager = (await import('../../src/services/ServiceManager.js')).default;
+  const services = await serviceManager.getServices();
 
-  // Initialize config like HTTP MCP
-  const configPath = process.env.SEMEM_CONFIG_PATH || path.join(projectRoot, 'config/config.json');
-  const config = new Config(configPath);
-  await config.init();
-
-  const storageOptions = config.get('storage.options') || {};
-  const llmProviders = config.get('llmProviders') || [];
-  const embeddingProvider = llmProviders
-    .filter(p => p.capabilities?.includes('embedding'))
-    .sort((a, b) => (a.priority || 999) - (b.priority || 999))[0];
-
-  const dimension = embeddingProvider?.embeddingDimension;
-  if (!dimension) {
-    throw new Error('Embedding dimension not configured');
-  }
-
-  // Initialize services like HTTP MCP
-  const embeddingService = new EmbeddingService({
-    provider: embeddingProvider?.type || 'ollama',
-    model: embeddingProvider?.embeddingModel || 'nomic-embed-text',
-    dimension: dimension,
-    providerOptions: {
-      baseUrl: embeddingProvider?.baseUrl,
-      apiKey: embeddingProvider?.apiKey
-    }
-  });
-
-  const storage = new SPARQLStore(storageOptions, { dimension }, config);
-  // SPARQLStore doesn't have initialize method, it's ready to use
-
-  const searchService = new SearchService(storage, storage.index);
-
-  // Return HTTP MCP-compatible service
+  // Return service that uses shared storage
   return {
     async ask({ question, threshold = 0.3 }) {
-      // Just use SearchService directly but make sure storage.search method exists
-      const questionEmbedding = await embeddingService.generateEmbedding(question);
-
-      // Try storage.search first, fallback to searchService if storage doesn't have search method
-      let results;
-      if (typeof storage.search === 'function') {
-        results = await storage.search(questionEmbedding, 10, threshold);
-      } else {
-        results = await searchService.search(questionEmbedding, 10, threshold);
-      }
+      // Use shared services for embedding and search
+      const questionEmbedding = await services.embeddingHandler.generateEmbedding(question);
+      const results = await services.storage.search(questionEmbedding, 10, threshold);
 
       // Return in compatible format
       return {
@@ -120,9 +70,9 @@ async function createSTDIOSearchService() {
 
     async recall({ query, domain = 'user', limit = 10, threshold = 0.3 }) {
       // Generate embedding for query
-      const queryEmbedding = await embeddingService.generateEmbedding(query);
-      // Search using SearchService
-      const results = await searchService.search(queryEmbedding, limit, threshold);
+      const queryEmbedding = await services.embeddingHandler.generateEmbedding(query);
+      // Search using shared storage
+      const results = await services.storage.search(queryEmbedding, limit, threshold);
 
       return {
         success: true,
@@ -141,9 +91,9 @@ async function createSTDIOSearchService() {
     },
 
     async augment({ target, operations = ['extract_concepts'], threshold = 0.3 }) {
-      // For augment, use SearchService to find related content for concept extraction
-      const targetEmbedding = await embeddingService.generateEmbedding(target);
-      const relatedResults = await searchService.search(targetEmbedding, 5, threshold);
+      // For augment, use shared services to find related content for concept extraction
+      const targetEmbedding = await services.embeddingHandler.generateEmbedding(target);
+      const relatedResults = await services.storage.search(targetEmbedding, 5, threshold);
 
       return {
         success: true,
@@ -161,53 +111,10 @@ async function createSTDIOSearchService() {
   };
 }
 
-// Cache for STDIO services
-let stdioSearchServicePromise = null;
-let stdioRegularServicePromise = null;
-
-// Methods that require SearchService for optimal performance
-const SEARCH_HEAVY_METHODS = ['ask', 'recall', 'augment'];
-
-// Create regular SimpleVerbsService for non-search operations
-async function createSTDIORegularService() {
-  return new SimpleVerbsService();
-}
-
 // Export function to get the Simple Verbs service instance for centralized handler
 export function getSimpleVerbsService() {
-  // STDIO FIX: Use hybrid approach - SearchService for search operations, regular service for others
-  if (process.env.MCP_INSPECTOR_MODE === 'true' ||
-      process.argv.some(arg => arg.includes('mcp/index.js')) ||
-      process.stdin.isTTY !== true) {
-    stdioLogger.info('🔍 STDIO FIX: Creating hybrid service (SearchService + regular) with method forwarding');
-
-    // Initialize both services lazily
-    if (!stdioSearchServicePromise) {
-      stdioSearchServicePromise = createSTDIOSearchService();
-    }
-    if (!stdioRegularServicePromise) {
-      stdioRegularServicePromise = createSTDIORegularService();
-    }
-
-    // Return a Proxy that automatically forwards method calls to appropriate service
-    return new Proxy({}, {
-      get(target, method) {
-        return async (args) => {
-          if (SEARCH_HEAVY_METHODS.includes(method)) {
-            stdioLogger.debug(`🔍 STDIO: Using SearchService for method: ${method}`);
-            const service = await stdioSearchServicePromise;
-            return await service[method](args);
-          } else {
-            stdioLogger.debug(`🔧 STDIO: Using regular service for method: ${method}`);
-            const service = await stdioRegularServicePromise;
-            return await service[method](args);
-          }
-        };
-      }
-    });
-  }
-
-  // HTTP path: return shared singleton (working)
+  // Unified approach: always return the shared singleton that uses ServiceManager
+  // No more STDIO vs HTTP differentiation needed since ServiceManager unifies everything
   return simpleVerbsService;
 }
 

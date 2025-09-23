@@ -527,10 +527,15 @@ export class AdaptiveSearchEngine {
         if (!results || results.length === 0) return [];
 
         // Calculate quality scores
-        const scoredResults = results.map(result => ({
-            ...result,
-            qualityScore: this._calculateResultQuality(result, query, zptState)
-        }));
+        const scoredResults = results.map(result => {
+            const qualityScore = this._calculateResultQuality(result, query, zptState);
+            // Fallback to similarity if quality calculation fails
+            const finalQualityScore = isNaN(qualityScore) ? (result.similarity || 0.5) : qualityScore;
+            return {
+                ...result,
+                qualityScore: finalQualityScore
+            };
+        });
 
         // Sort by quality score and similarity
         const sortedResults = scoredResults.sort((a, b) => {
@@ -541,6 +546,7 @@ export class AdaptiveSearchEngine {
 
         // Apply final filtering based on quality threshold
         const qualityThreshold = Math.max(SEARCH_CONFIG.QUALITY.QUALITY_THRESHOLD_FLOOR, this.options.minAcceptableQuality);
+
         const qualityFiltered = sortedResults.filter(result =>
             result.qualityScore >= qualityThreshold
         );

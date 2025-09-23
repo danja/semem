@@ -143,104 +143,30 @@ class APIServer {
      * Initialize API components
      */
     async initializeComponents() {
-        // Load configuration from config.json explicitly
-        const configPath = path.join(projectRoot, 'config/config.json');
-        this.config = new Config(configPath);
-        await this.config.init();
-        
+        this.logger.info('Initializing components using unified ServiceManager...');
+
+        // Import ServiceManager
+        const serviceManager = (await import('../services/ServiceManager.js')).default;
+
+        // Get shared services
+        const services = await serviceManager.getServices();
+
+        // Use shared configuration and services
+        this.config = services.config;
+        this.embeddingDimension = services.dimension;
+
         // Create config-aware authentication middleware
         this.authenticateRequest = createAuthenticateRequest(this.config);
-        
-        // Use new configuration-driven provider selection (like MCP server)
-        this.logger.info('Creating providers using configuration-driven selection...');
-        
-        // Create LLM connector for chat operations
-        const llmProvider = await this.createLLMConnector(this.config);
-        
-        // Create embedding connector for embedding operations  
-        const embeddingProvider = await this.createEmbeddingConnector(this.config);
-        
-        // Get model configuration
-        const modelConfig = await this.getModelConfig(this.config);
-        this.logger.info('Using model configuration:', modelConfig);
-        
-        // Get embedding dimension from the embedding provider configuration
-        const llmProviders = this.config.get('llmProviders') || [];
-        const embeddingProviderConfig = llmProviders
-            .filter(p => p.capabilities?.includes('embedding'))
-            .sort((a, b) => (a.priority || 999) - (b.priority || 999))[0];
 
-        const dimension = embeddingProviderConfig?.embeddingDimension;
-        if (!dimension) {
-            throw new Error('Embedding dimension not configured in config.json - check embeddingDimension in llmProviders');
-        }
+        // Use shared handlers from ServiceManager
+        const embeddingHandler = services.embeddingHandler;
+        const llmHandler = services.llmHandler;
 
-        // Store dimension for use in other methods
-        this.embeddingDimension = dimension;
+        // Use shared storage and MemoryManager from ServiceManager
+        const storage = services.storage;
+        const memoryManager = services.memoryManager;
 
-        // Initialize cache manager
-        const cacheManager = new CacheManager({
-            maxSize: 1000,
-            ttl: 3600000 // 1 hour
-        });
-
-        // Initialize handlers
-        const embeddingHandler = new EmbeddingHandler(
-            embeddingProvider,
-            modelConfig.embeddingModel,
-            dimension,
-            cacheManager
-        );
-
-        const llmHandler = new LLMHandler(llmProvider, modelConfig.chatModel);
-
-        // MIGRATION: Initialize enhanced SPARQLStore exclusively
-        // Legacy JSON and InMemory storage are no longer supported
-        const storageType = this.config.get('storage.type');
-        this.logger.info(`💾 [STORAGE] Storage type: ${storageType}`);
-
-        let storage;
-        if (storageType === 'sparql') {
-            this.logger.info('💾 [STORAGE] Importing Enhanced SPARQLStore...');
-            const { default: SPARQLStore } = await import('../stores/SPARQLStore.js');
-
-            const storageOptions = this.config.get('storage.options') || {};
-
-            // Enhanced SPARQLStore configuration with in-memory capabilities
-            const enhancedOptions = {
-                ...storageOptions,
-                dimension, // Pass embedding dimension for FAISS index
-                enableResilience: true, // Enable retry and timeout features
-                maxRetries: 3,
-                timeoutMs: 30000,
-                cacheTimeoutMs: 300000, // 5 minute cache timeout
-                maxConceptsPerInteraction: 10,
-                maxConnectionsPerEntity: 100
-            };
-
-            this.logger.info('💾 [STORAGE] Creating Enhanced SPARQLStore with in-memory capabilities:', {
-                endpoint: storageOptions.endpoint || 'configured',
-                dimension,
-                features: ['FAISS indexing', 'Concept graphs', 'Memory classification', 'Semantic clustering']
-            });
-
-            storage = new SPARQLStore(storageOptions.endpoint || storageOptions, enhancedOptions, this.config);
-            this.logger.info('✅ [STORAGE] Enhanced SPARQLStore created with unified memory + persistence');
-        } else {
-            // MIGRATION: No fallback to legacy storage - SPARQL is now required
-            throw new Error(`Unsupported storage type: ${storageType}. Only 'sparql' storage is supported. Legacy 'json' and 'memory' storage have been removed in favor of enhanced SPARQLStore.`);
-        }
-
-        // Initialize memory manager with the configured storage
-        const memoryManager = new MemoryManager({
-            llmProvider,
-            embeddingProvider,
-            chatModel: modelConfig.chatModel,
-            embeddingModel: modelConfig.embeddingModel,
-            dimension,
-            storage,
-            config: this.config
-        });
+        this.logger.info('✅ [UNIFIED] Using shared storage and MemoryManager from ServiceManager');
 
         // Store components in context
         this.apiContext = {

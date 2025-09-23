@@ -267,6 +267,8 @@ export class SafeOperations {
         interactionsCount: interactions?.length || 0,
         hasValidResults: interactions && Array.isArray(interactions) && interactions.length > 0
       });
+
+
       allResults.push(...interactions);
       
       // 2. REMOVED: Duplicate store search that was causing result interference

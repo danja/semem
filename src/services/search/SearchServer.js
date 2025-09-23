@@ -25,7 +25,10 @@ class SearchServer {
      */
     constructor(options = {}) {
         this.port = options.port || 4100;
-        this.graphName = options.graphName || 'http://hyperdata.it/content';
+        if (!options.graphName) {
+            throw new Error('graphName is required in options - check config.json graphName setting');
+        }
+        this.graphName = options.graphName;
         this.chatModel = options.chatModel || 'qwen2:1.5b';
         this.embeddingModel = options.embeddingModel || 'nomic-embed-text';
 

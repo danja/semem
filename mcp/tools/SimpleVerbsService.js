@@ -5,7 +5,7 @@
 
 import { z } from 'zod';
 import path from 'path';
-import { initializeServices, getMemoryManager } from '../lib/initialization.js';
+// Removed: initializeServices, getMemoryManager - now using unified ServiceManager
 import { SafeOperations } from '../lib/safe-operations.js';
 
 // Import existing complex tools to wrap
@@ -52,20 +52,24 @@ import {
    */
   async initialize() {
     if (!this.memoryManager) {
-      await initializeServices();
-      this.memoryManager = getMemoryManager();
+      // Use unified ServiceManager instead of duplicating initialization logic
+      const serviceManager = (await import('../../src/services/ServiceManager.js')).default;
+      const services = await serviceManager.getServices();
+
+      // Use shared services from ServiceManager (eliminates duplication)
+      this.memoryManager = services.memoryManager;
       this.safeOps = new SafeOperations(this.memoryManager);
       this.zptService = new ZPTNavigationService(this.memoryManager, this.safeOps);
       this.stateManager = new ZPTStateManager(this.memoryManager);
-      
-      // Initialize enhancement coordinator with available handlers
+
+      // Initialize enhancement coordinator with shared handlers
       this.enhancementCoordinator = new EnhancementCoordinator({
-        llmHandler: this.memoryManager.llmHandler,
-        embeddingHandler: this.memoryManager.embeddingHandler,
-        sparqlHelper: this.memoryManager.store?.sparqlHelper,
-        config: this.memoryManager.config
+        llmHandler: services.llmHandler,
+        embeddingHandler: services.embeddingHandler,
+        sparqlHelper: services.storage?.sparqlExecute,
+        config: services.config
       });
-      
+
       // Initialize hybrid context manager for intelligent context merging
       this.hybridContextManager = new HybridContextManager({
         memoryManager: this.memoryManager,
@@ -73,7 +77,7 @@ import {
         safeOperations: this.safeOps,
         zptStateManager: this.stateManager
       });
-      
+
       // Initialize memory domain management services
       this.memoryRelevanceEngine = new MemoryRelevanceEngine({
         baseWeights: {
@@ -83,16 +87,16 @@ import {
           frequency: 0.15
         }
       });
-      
+
       this.memoryDomainManager = new MemoryDomainManager(
-        this.memoryManager.store, 
+        this.memoryManager.store,
         this.stateManager,
         {
           memoryRelevanceEngine: this.memoryRelevanceEngine
         }
       );
-      
-      logOperation('info', 'initialization', 'SimpleVerbsService initialized with ZPT state management, enhancement coordinator, hybrid context manager, and memory domain services');
+
+      logOperation('info', 'initialization', 'SimpleVerbsService initialized with unified ServiceManager (removed duplication)');
     }
   }
 
