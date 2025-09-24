@@ -94,6 +94,7 @@ export class Search {
 
             // Limit processing to prevent memory exhaustion using configuration
             const bindingsToProcess = result.results.bindings.slice(0, maxResultsToProcess)
+            logger.info(`🔍 Search DEBUG: Found ${bindingsToProcess.length} total bindings, threshold: ${threshold}`)
 
             for (const binding of bindingsToProcess) {
                 // Add progress check to prevent hanging loops using configuration
@@ -111,6 +112,7 @@ export class Search {
                     if (binding.embeddingVector?.value && binding.embeddingVector.value !== 'undefined') {
                         // Ragno format: embedding stored as URI reference with vector data
                         const embeddingStr = binding.embeddingVector.value.trim()
+                        logger.info(`🔍 RAGNO format embedding found, length: ${embeddingStr.length}`)
                         // Add protection against extremely large JSON strings that could cause segfaults
                         if (embeddingStr.length > SPARQL_CONFIG.SIMILARITY.MAX_EMBEDDING_STRING_LENGTH) {
                             logger.warn(`Skipping embedding parsing - string too large: ${embeddingStr.length} chars`)
@@ -120,20 +122,31 @@ export class Search {
                     } else if (binding.embedding?.value && binding.embedding.value !== 'undefined' && binding.embedding.type === 'literal') {
                         // Semem format: embedding value is the JSON array string
                         const embeddingStr = binding.embedding.value.trim()
+                        logger.info(`🔍 SEMEM format embedding found, type: ${binding.embedding.type}, length: ${embeddingStr.length}`)
                         // Add protection against extremely large JSON strings that could cause segfaults
                         if (embeddingStr.length > SPARQL_CONFIG.SIMILARITY.MAX_EMBEDDING_STRING_LENGTH) {
                             logger.warn(`Skipping embedding parsing - string too large: ${embeddingStr.length} chars`)
                             continue
                         }
                         embedding = JSON.parse(embeddingStr)
+                    } else {
+                        logger.info(`🔍 SKIPPING binding - embedding format not recognized:`, {
+                            hasEmbeddingVector: !!binding.embeddingVector?.value,
+                            embeddingVectorValue: binding.embeddingVector?.value === 'undefined' ? 'undefined' : (binding.embeddingVector?.value ? 'present' : 'missing'),
+                            hasEmbedding: !!binding.embedding?.value,
+                            embeddingValue: binding.embedding?.value === 'undefined' ? 'undefined' : (binding.embedding?.value ? 'present' : 'missing'),
+                            embeddingType: binding.embedding?.type,
+                            bindingKeys: Object.keys(binding)
+                        })
                     }
 
                     if (embedding.length > 0) {
                         // Calculate similarity using vectors module
                         const similarity = this.vectors.calculateCosineSimilarity(queryEmbedding, embedding)
+                        logger.info(`🔍 Calculated similarity: ${similarity.toFixed(4)}, threshold: ${threshold}, passes: ${similarity >= threshold}`)
 
                         if (similarity >= threshold) {
-                            similarElements.push({
+                            const element = {
                                 id: binding.uri?.value || binding.entity?.value,
                                 content: binding.content?.value || binding.label?.value,
                                 similarity: similarity,
@@ -141,8 +154,12 @@ export class Search {
                                     type: binding.type?.value,
                                     timestamp: binding.timestamp?.value
                                 }
-                            })
+                            }
+                            logger.info(`🔍 ADDED to results: ${element.content?.substring(0, 50)}... (similarity: ${similarity.toFixed(4)})`)
+                            similarElements.push(element)
                         }
+                    } else {
+                        logger.info(`🔍 SKIPPED - no embedding data, length: ${embedding.length}`)
                     }
                 } catch (embeddingParseError) {
                     logger.warn('Failed to parse embedding from SPARQL result:', embeddingParseError.message)
@@ -152,6 +169,7 @@ export class Search {
 
             // Sort by similarity (highest first)
             similarElements.sort((a, b) => b.similarity - a.similarity)
+            logger.info(`🔍 Search FINAL: Returning ${similarElements.length} results from ${bindingsToProcess.length} bindings`)
 
             return similarElements.slice(0, maxLimit)
         } catch (error) {

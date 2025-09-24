@@ -578,17 +578,30 @@ class APIServer {
                     metadata: { ...metadata, type, lazy }
                 };
 
-                // Store using memory API
-                const memoryApi = this.apiContext.apis['memory-api'];
-                const result = await memoryApi.storeInteraction(interaction);
+                // Use SimpleVerbsService for consistent storage with ask endpoint
+                const { SimpleVerbsService } = await import('../../mcp/tools/SimpleVerbsService.js');
+                const verbsService = new SimpleVerbsService();
+                await verbsService.initialize();
+
+                const result = await verbsService.tell({
+                    content,
+                    type,
+                    lazy,
+                    metadata
+                });
 
                 const duration = Date.now() - startTime;
                 this.logger.info(`🟢 [API] POST /tell - Success (${duration}ms)`);
 
                 res.json({
-                    success: true,
-                    result,
-                    message: 'Content stored successfully'
+                    success: result.success,
+                    result: {
+                        id: result.performance?.operationId || 'unknown',
+                        concepts: result.concepts || 0,
+                        timestamp: Date.now(),
+                        success: result.success
+                    },
+                    message: result.message || 'Content stored successfully'
                 });
             } catch (error) {
                 const duration = Date.now() - startTime;
@@ -624,36 +637,39 @@ class APIServer {
 
                 this.logger.info(`🔵 [API] POST /ask - Question: "${question.substring(0, 50)}..."`);
 
-                // Use unified search API for comprehensive search
-                const searchApi = this.apiContext.apis['unified-search-api'];
-                const searchOptions = {
-                    query: question,
-                    threshold,
-                    useContext,
-                    enhancementOptions: {
-                        useHyDE,
-                        useWikipedia,
-                        useWikidata,
-                        useWebSearch
-                    },
-                    mode
-                };
+                // Use SimpleVerbsService for consistent behavior with MCP server
+                const { SimpleVerbsService } = await import('../../mcp/tools/SimpleVerbsService.js');
+                const verbsService = new SimpleVerbsService();
+                await verbsService.initialize();
 
-                const searchResult = await searchApi.unifiedSearch(searchOptions);
+                const askResult = await verbsService.ask({
+                    question,
+                    mode,
+                    useContext,
+                    useHyDE,
+                    useWikipedia,
+                    useWikidata,
+                    useWebSearch,
+                    threshold
+                });
 
                 const duration = Date.now() - startTime;
-                this.logger.info(`🟢 [API] POST /ask - Success (${duration}ms) - ${searchResult.results?.length || 0} results`);
+                this.logger.info(`🟢 [API] POST /ask - Success (${duration}ms) - ${askResult.contextItems || 0} context items`);
 
-                // Format response for workbench
+                // Format response for workbench - map from SimpleVerbsService response
                 res.json({
-                    success: true,
-                    answer: searchResult.answer || 'Based on the provided memory context, there is no specific information available about your question. The context does not mention relevant details. Therefore, I cannot provide an informed answer to your question. If you have any other questions or need information on a different topic, feel free to ask!',
-                    results: searchResult.results || [],
-                    context: searchResult.context || [],
+                    success: askResult.success,
+                    answer: askResult.answer,
+                    results: [], // SimpleVerbsService doesn't return results in this format
+                    context: askResult.localContextResults || [],
                     metadata: {
                         mode,
-                        searchDuration: searchResult.duration,
-                        resultsCount: searchResult.results?.length || 0
+                        contextItems: askResult.contextItems || 0,
+                        sessionResults: askResult.sessionResults || 0,
+                        persistentResults: askResult.persistentResults || 0,
+                        memories: askResult.memories || 0,
+                        searchMethod: askResult.searchMethod || 'simple-verbs',
+                        resultsCount: askResult.contextItems || 0
                     }
                 });
             } catch (error) {

@@ -17,13 +17,11 @@ export { default as LLMHandler } from './src/handlers/LLMHandler.js';
 export { default as EmbeddingHandler } from './src/handlers/EmbeddingHandler.js';
 export { default as CacheManager } from './src/handlers/CacheManager.js';
 
-// Storage Providers
+// Storage Providers - Enhanced SPARQLStore is the preferred implementation
 export { default as BaseStore } from './src/stores/BaseStore.js';
-export { default as InMemoryStore } from './src/stores/InMemoryStore.js';
-export { default as JSONStore } from './src/stores/JSONStore.js';
 export { default as SPARQLStore } from './src/stores/SPARQLStore.js';
 export { default as CachedSPARQLStore } from './src/stores/CachedSPARQLStore.js';
-export { default as MemoryStore } from './src/stores/MemoryStore.js';
+// Legacy stores removed: InMemoryStore, JSONStore, MemoryStore - use SPARQLStore instead
 
 // LLM Connectors
 export { default as ClientConnector } from './src/connectors/ClientConnector.js';

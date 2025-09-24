@@ -1,8 +1,16 @@
-Can you check for redundant/overlapping code between the HTTP servers, MemoryManager, SimpleVerbsService, SafeOperations and UnifiedSearchAPI.
+You said the API server has its own implementation that doesn't use the SimpleVerbsService at all. There should only be one implementation and any redundant code must be removed.
+
+
+carefully review files in the src and mcp directories looking for methods, classes and modules with similar signatures. The aim is to identify redundant code. Save your findings in docs/MAYBE-REDUNDANT.md
+
+
+api-server.js has :
+            // Create test interactions for VSOM visualization
+            const testInteractions = [
 
 This suggests there's a deeper issue with the SPARQLStore.store() → storeModule.store() chain not actually writing to the database. The integration test likely passes because
   it's finding old cached data, not the new data being stored.
-  
+
 In mcp/tools/SimpleVerbsService.js line 82, weights a given hardcoded values. These should be in config/preferences.js with explanatory comments
 
 export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/tell-ask-e2e.integration.test.js --reporter=verbose 
@@ -14,6 +22,8 @@ npx @modelcontextprotocol/inspector node mcp/index.js
 
 src/stores/modules/Search.js has a hardcoded query
 
+
+mcp/tools/SimpleVerbsService.js contains prompt fragments
 
 in preferences.js, export const SPARQL_CONFIG = { contains thresholds
 

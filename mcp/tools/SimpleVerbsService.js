@@ -7,11 +7,12 @@ import { z } from 'zod';
 import path from 'path';
 // Removed: initializeServices, getMemoryManager - now using unified ServiceManager
 import { SafeOperations } from '../lib/safe-operations.js';
+import { SPARQL_CONFIG } from '../../config/preferences.js';
 
 // Import existing complex tools to wrap
 import { ZPTNavigationService } from './zpt-tools.js';
 import { EnhancementCoordinator } from '../../src/services/enhancement/EnhancementCoordinator.js';
-import { HybridContextManager } from '../../src/services/context/HybridContextManager.js';
+// Note: HybridContextManager removed - was deprecated and broken
 import { MemoryDomainManager } from '../../src/services/memory/MemoryDomainManager.js';
 import { MemoryRelevanceEngine } from '../../src/services/memory/MemoryRelevanceEngine.js';
 import { AskOperationTimer, TellOperationTimer } from '../../src/utils/PerformanceTiming.js';
@@ -34,7 +35,7 @@ import {
     this.zptService = null;
     this.stateManager = null;
     this.enhancementCoordinator = null;
-    this.hybridContextManager = null;
+    // Note: hybridContextManager removed - was deprecated and broken
     // Memory domain management services
     this.memoryDomainManager = null;
     this.memoryRelevanceEngine = null;
@@ -51,6 +52,11 @@ import {
    * Initialize service with required dependencies
    */
   async initialize() {
+    verbsLogger.info('🔥 SimpleVerbsService.initialize() called', {
+      hasMemoryManager: !!this.memoryManager,
+      hasHybridContextManager: !!this.hybridContextManager
+    });
+
     if (!this.memoryManager) {
       // Use unified ServiceManager instead of duplicating initialization logic
       const serviceManager = (await import('../../src/services/ServiceManager.js')).default;
@@ -70,13 +76,7 @@ import {
         config: services.config
       });
 
-      // Initialize hybrid context manager for intelligent context merging
-      this.hybridContextManager = new HybridContextManager({
-        memoryManager: this.memoryManager,
-        enhancementCoordinator: this.enhancementCoordinator,
-        safeOperations: this.safeOps,
-        zptStateManager: this.stateManager
-      });
+      // Note: HybridContextManager removed - replaced with direct memory manager search
 
       // Initialize memory domain management services
       this.memoryRelevanceEngine = new MemoryRelevanceEngine({
@@ -97,6 +97,14 @@ import {
       );
 
       logOperation('info', 'initialization', 'SimpleVerbsService initialized with unified ServiceManager (removed duplication)');
+
+      verbsLogger.info('🔥 SimpleVerbsService.initialize() completed', {
+        hasMemoryManager: !!this.memoryManager,
+        hasHybridContextManager: !!this.hybridContextManager,
+        hasEnhancementCoordinator: !!this.enhancementCoordinator,
+        hasSafeOps: !!this.safeOps,
+        hasStateManager: !!this.stateManager
+      });
     }
   }
 
@@ -474,23 +482,82 @@ import {
       askTimer.startPhase('context_processing');
       
       // Use HybridContextManager for intelligent context processing
-      verbsLogger.info('🔥 CONSOLE: Simple-verbs ask() calling HybridContextManager.processQuery', { 
-        question: question.substring(0, 50), 
-        useContext,
-        hasHybridContextManager: !!this.hybridContextManager 
-      });
+      // Direct search using memoryManager (replaces broken HybridContextManager)
+      let hybridResult;
+      if (useContext && this.memoryManager) {
+        try {
+          // Generate embedding for the question
+          const questionEmbedding = await this.memoryManager.embeddingHandler.generateEmbedding(question);
+
+          // Use memory manager to search for similar content
+          const searchResults = await this.memoryManager.retrieveRelevantInteractions(
+            question,
+            threshold || SPARQL_CONFIG.SIMILARITY.DEFAULT_THRESHOLD,
+            0,   // excludeLastN
+            10   // limit
+          );
+
+          verbsLogger.info('Context retrieved successfully', {
+            resultsCount: searchResults.length
+          });
+
+          // Generate answer using LLM with retrieved context
+          let answer = 'I could not generate an answer.';
+          if (searchResults.length > 0) {
+            const contextText = searchResults.map(result => result.content || result.prompt || result.response).join('\n\n');
+            const prompt = `Based on this context information:\n${contextText}\n\nQuestion: ${question}\n\nPlease provide a direct answer based on the context provided.`;
+
+            try {
+              answer = await this.safeOps.generateResponse(prompt);
+            } catch (llmError) {
+              verbsLogger.error('LLM generation error:', llmError);
+              answer = `I found ${searchResults.length} relevant pieces of information but could not generate a response: ${llmError.message}`;
+            }
+          } else {
+            answer = `I don't have any relevant information to answer: ${question}`;
+          }
+
+          hybridResult = {
+            success: true,
+            answer: answer,
+            contextItems: searchResults.length,
+            sessionResults: searchResults.length,
+            persistentResults: searchResults.length,
+            memories: searchResults.length,
+            localContextResults: searchResults,
+            selectedStrategy: searchResults.length > 0 ? 'direct_search' : 'no_context',
+            queryTime: Date.now() - startTime
+          };
+        } catch (error) {
+          verbsLogger.error('Context retrieval error:', error);
+          hybridResult = {
+            success: false,
+            answer: `I encountered an error while searching for information: ${error.message}`,
+            error: error.message,
+            contextItems: 0,
+            sessionResults: 0,
+            persistentResults: 0,
+            memories: 0,
+            localContextResults: [],
+            selectedStrategy: 'error',
+            queryTime: Date.now() - startTime
+          };
+        }
+      } else {
+        hybridResult = {
+          success: true,
+          answer: `I don't have any context information to answer: ${question}`,
+          contextItems: 0,
+          sessionResults: 0,
+          persistentResults: 0,
+          memories: 0,
+          localContextResults: [],
+          selectedStrategy: 'no_context',
+          queryTime: Date.now() - startTime
+        };
+      }
       
-      const hybridResult = await this.hybridContextManager.processQuery(question, {
-        mode,
-        useContext,
-        useHyDE,
-        useWikipedia,
-        useWikidata,
-        useWebSearch,
-        threshold
-      });
-      
-      verbsLogger.info('🔥 CONSOLE: Simple-verbs ask() received result from HybridContextManager', { 
+      verbsLogger.info('Simple-verbs ask() received result', { 
         success: hybridResult.success,
         contextItems: hybridResult.contextItems || 0,
         sessionResults: hybridResult.sessionResults || 0,

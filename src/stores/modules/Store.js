@@ -281,7 +281,7 @@ export class Store {
      * @param {Object} data - Data to store (must have id, embedding, etc.)
      */
     async store(data) {
-        logger.info('🔥 DEBUG: Store.store() called with:', {
+        logger.info('Store.store() called with:', {
             id: data?.id,
             promptPreview: data?.prompt?.substring(0, 50),
             hasEmbedding: !!data?.embedding
@@ -321,7 +321,9 @@ export class Store {
             }
         `;
 
+        // console.log('🔥 DEBUG: SPARQL INSERT QUERY:', insertQuery);
         await this.sparqlExecute.executeSparqlUpdate(insertQuery);
+        // console.log('🔥 DEBUG: SPARQL INSERT completed - checking persistence...');
         logger.info(`Stored entity ${data.id} in SPARQL store`);
     }
 

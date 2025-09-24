@@ -82,8 +82,20 @@ export class HybridContextManager {
     async processQuery(query, options = {}) {
         const startTime = Date.now();
         this.stats.totalQueries++;
-        
-        
+
+        logger.info('🔥 HIBRID_DEBUG: HybridContextManager.processQuery() CALLED', {
+            query: query.substring(0, 50) + '...',
+            useContext: options.useContext,
+            useHyDE: options.useHyDE,
+            useWikipedia: options.useWikipedia,
+            useWikidata: options.useWikidata,
+            mode: options.mode,
+            hasThis: typeof this,
+            hasSafeOperations: !!this.safeOperations,
+            hasMemoryManager: !!this.memoryManager,
+            hasAdaptiveSearchEngine: !!this.adaptiveSearchEngine
+        });
+
         logger.debug('🔥 [HYBRID_CONTEXT] Starting query processing', {
             query: query.substring(0, 50) + '...',
             useContext: options.useContext,
