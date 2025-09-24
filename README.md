@@ -9,6 +9,8 @@
  
 **tl;dr - flipping ideas (mostly) from the LLM world over to the Semantic Web for massively simplified integration, at global scale**
 
+It has MCP facilities (stdio & HTTP) as well as a browser-based UI with chat.
+
 ![Semem Workbench](docs/images/workbench.png)
 
 **🐳 Quick Start with Docker**: A complete Docker Compose setup is available for easy deployment with all dependencies included. See [Docker Setup Guide](docs/manual/docker.md) for one-command installation.
@@ -21,18 +23,14 @@
 
 **[Semem Documentation](https://danja.github.io/semem/)** - *sprawling*
  
+Semem is an experimental Node.js toolkit for AI memory management that integrates large language models (LLMs) with Semantic Web technologies (RDF/SPARQL). It offers knowledge graph retrieval and augmentation algorithms within a conceptual model based on the [Ragno](https://github.com/danja/ragno) (knowledge graph description) and [ZPT](https://github.com/danja/zpt) (knowledge graph navigation) ontologies. [Tensegrity](https://github.com/danja/tensegrity) project.
 
-*click the triangles to expand the text* 
- 
-<details> 
-<summary>Semem is an experimental Node.js toolkit for AI memory management</summary> that integrates large language models (LLMs) with Semantic Web technologies (RDF/SPARQL). It offers knowledge graph retrieval and augmentation algorithms within a conceptual model based on the <a href="https://github.com/danja/ragno">Ragno</a> (knowledge graph description) and <a href="https://github.com/danja/zpt">ZPT</a> (knowledge graph navigation) ontologies. It is a <a href="https://github.com/danja/tensegrity">tensegrity</a> project.
+The intuition is that while LLMs and associated techniques have massively advanced the field of AI and offer considerable utility, the typical approach is missing the elephant in the room: __the Web__ - the biggest known knowledgebase in our universe. Semantic Web technologies offer data integration at a global scale, with tried & tested conceptual models for knowledge representation. __There is a lot of low-hanging fruit.__
 
-The intuition is that while LLMs and associated techniques have massively advanced the field of AI and offer considerable utility, the typical approach is missing the elephant in the room: <strong>the Web</strong> - the biggest known knowledgebase in our universe. Semantic Web technologies offer data integration at a global scale, with tried & tested conceptual models for knowledge representation. <strong>There is a lot of low-hanging fruit.</strong>
-</details>
 
-## Status 2025-08-28
+## Status 2025-09-24 : version 1.5.1
 
-Most of the system is functional but some systematic changes will be needed to deal with performance issues. Currently tidying up and consolidating. There was another explosion of cruft, and also the setup is fragile, minor changes can cause breakage. I've updated the tests but a little more structural work is needed. 
+Most of the system is functional. Have switched preferred LLM provider from Mistral to Groq because it's faster (Ollama is there as a fallback). The ZPT parts are far from intuitive, am working on that. The chat interface works pretty well.
 
 *previously...*
 

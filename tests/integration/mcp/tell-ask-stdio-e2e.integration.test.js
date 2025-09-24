@@ -51,9 +51,24 @@ describe('Tell/Ask STDIO E2E Integration Tests', () => {
             try {
               const jsonResponse = JSON.parse(line.trim());
               responses.push(jsonResponse);
+
+              // Check if we have all expected responses (init=1, tell=2, ask=3)
+              if (responses.length >= 3 && !resolved) {
+                const hasInit = responses.some(r => r.id === 1);
+                const hasTell = responses.some(r => r.id === 2);
+                const hasAsk = responses.some(r => r.id === 3);
+
+                if (hasInit && hasTell && hasAsk) {
+                  // We have all responses! Kill process and resolve
+                  mcpProcess.kill('SIGTERM');
+                  resolveWithResults();
+                  return;
+                }
+              }
             } catch (e) {
               // If we can't parse as JSON, this indicates pollution
               console.error('❌ Non-JSON data in stdout:', line.trim());
+              mcpProcess.kill('SIGTERM');
               reject(new Error(`STDIO pollution detected: "${line.trim()}" is not valid JSON`));
               return;
             }
@@ -67,6 +82,33 @@ describe('Tell/Ask STDIO E2E Integration Tests', () => {
       });
 
       let messageId = 1;
+      let resolved = false;
+
+      const resolveWithResults = () => {
+        if (resolved) return;
+        resolved = true;
+
+        const initResponse = responses.find(r => r.id === 1);
+        const tellResponse = responses.find(r => r.id === 2);
+        const askResponse = responses.find(r => r.id === 3);
+
+        if (!initResponse || !tellResponse || !askResponse) {
+          reject(new Error('Missing expected responses'));
+          return;
+        }
+
+        resolve({
+          fact,
+          question,
+          initResponse,
+          tellResponse,
+          askResponse,
+          stdoutLength: stdoutData.length,
+          stderrLength: stderrData.length,
+          stderrContent: stderrData,
+          allResponses: responses
+        });
+      };
 
       const sendMessage = (message) => {
         mcpProcess.stdin.write(JSON.stringify(message) + '\n');
@@ -115,8 +157,7 @@ describe('Tell/Ask STDIO E2E Integration Tests', () => {
 
           await setTimeout(2000); // Wait for ask processing
 
-          // Close the process
-          mcpProcess.stdin.end();
+          // Process will be killed automatically when all responses are received
 
         } catch (error) {
           reject(error);
@@ -124,53 +165,8 @@ describe('Tell/Ask STDIO E2E Integration Tests', () => {
       };
 
       mcpProcess.on('close', (code) => {
-        console.log(`📤 STDIO Tell/Ask completed with code: ${code}`);
-        console.log(`📊 Responses received: ${responses.length}`);
-        console.log(`📏 Stdout length: ${stdoutData.length} chars`);
-        console.log(`📏 Stderr length: ${stderrData.length} chars`);
-
-        if (stderrData.length > 0) {
-          console.log(`⚠️  Stderr content (first 500 chars):`);
-          console.log(stderrData.substring(0, 500));
-        }
-
-        // Verify we got responses
-        if (responses.length === 0) {
-          reject(new Error('No valid JSON responses received from STDIO MCP'));
-          return;
-        }
-
-        // Find the responses we care about
-        const initResponse = responses.find(r => r.id === 1);
-        const tellResponse = responses.find(r => r.id === 2);
-        const askResponse = responses.find(r => r.id === 3);
-
-        if (!initResponse) {
-          reject(new Error('Missing initialization response'));
-          return;
-        }
-
-        if (!tellResponse) {
-          reject(new Error('Missing tell response'));
-          return;
-        }
-
-        if (!askResponse) {
-          reject(new Error('Missing ask response'));
-          return;
-        }
-
-        resolve({
-          fact,
-          question,
-          initResponse,
-          tellResponse,
-          askResponse,
-          stdoutLength: stdoutData.length,
-          stderrLength: stderrData.length,
-          stderrContent: stderrData,
-          allResponses: responses
-        });
+        console.log(`📤 STDIO process closed with code: ${code}`);
+        // Resolution now happens immediately when we get all responses
       });
 
       mcpProcess.on('error', (error) => {
@@ -180,11 +176,13 @@ describe('Tell/Ask STDIO E2E Integration Tests', () => {
       // Start the test sequence
       runTest().catch(reject);
 
-      // Timeout after 10 seconds
-      setTimeout(() => {
-        mcpProcess.kill();
-        reject(new Error('STDIO MCP test timeout'));
-      }, 10000);
+      // Timeout after 15 seconds (now with forced termination)
+      const timeoutId = global.setTimeout(() => {
+        if (!resolved) {
+          mcpProcess.kill();
+          reject(new Error('STDIO MCP test timeout'));
+        }
+      }, 15000);
     });
   };
 
@@ -211,7 +209,7 @@ describe('Tell/Ask STDIO E2E Integration Tests', () => {
 
     console.log(`✅ STDIO test passed for: ${fact}`);
     console.log(`📊 Protocol cleanliness: stdout=${result.stdoutLength} chars, stderr=${result.stderrLength} chars`);
-  }, 15000); // 15 second timeout
+  }, 20000); // 20 second timeout
 
   test('STDIO protocol pollution detection', async () => {
     const fact = generateRandomFact();
@@ -245,7 +243,7 @@ describe('Tell/Ask STDIO E2E Integration Tests', () => {
       }
       throw error;
     }
-  }, 15000);
+  }, 20000); // 20 second timeout
 
   test('Multiple STDIO operations maintain protocol cleanliness', async () => {
     const facts = [

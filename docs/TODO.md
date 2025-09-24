@@ -3,6 +3,7 @@ Can you check for redundant code between the HTTP servers, SimpleVerbsService an
 In mcp/tools/SimpleVerbsService.js line 82, weights a given hardcoded values. These should be in config/preferences.js with explanatory comments
 
 export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/tell-ask-e2e.integration.test.js --reporter=verbose 
+export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/tell-ask-stdio-e2e.integration.test.js --reporter=verbose
 
 node src/frontend/vsom-standalone/server.js
 
