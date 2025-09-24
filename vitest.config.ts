@@ -54,7 +54,7 @@ export default defineConfig({
     },
     
     // Global setup files
-    setupFiles: ['./tests/setup.ts'],
+    setupFiles: ['./tests/setup-unified.js'],
     
     // TypeScript support
     typecheck: {

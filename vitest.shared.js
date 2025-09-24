@@ -6,7 +6,7 @@ export const sharedConfig = {
     environment: 'node',
     globals: true,
     isolate: true,
-    setupFiles: ['./tests/helpers/testSetup.js'],
+    setupFiles: ['./tests/setup-unified.js'],
     testTimeout: 30000,
     hookTimeout: 60000,
     exclude: [

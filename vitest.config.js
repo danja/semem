@@ -5,7 +5,7 @@ export default defineConfig({
     // Main test configuration (unit + integration)
     name: 'unit',
     environment: 'node',
-    setupFiles: ['./tests/setup-vitest.js'],
+    setupFiles: ['./tests/setup-unified.js'],
     include: [
       'tests/unit/**/*.test.{js,jsx,ts,tsx}',
       'tests/integration/**/*.test.{js,jsx,ts,tsx}'

@@ -1,9 +1,11 @@
 /**
  * End-to-End Tell/Ask Integration Test
  * Tests that both HTTP and STDIO interfaces can store and retrieve random facts consistently
+ * NO MOCKING - tests against live running servers
  */
 
 import { describe, test, expect, beforeEach } from 'vitest';
+// Note: fetch is provided globally by setup-unified.js in E2E mode
 
 describe('Tell/Ask E2E Integration Tests', () => {
   // Generate random facts to ensure we're testing actual storage/retrieval
@@ -20,22 +22,16 @@ describe('Tell/Ask E2E Integration Tests', () => {
   };
 
   const httpTellAsk = async (fact, question) => {
-    // Test HTTP interface using native fetch (Node.js 18+)
+    // Test HTTP interface against live server
     console.log(`🔵 HTTP: Testing fact: "${fact}"`);
 
     // Tell via HTTP
     try {
-      console.log('🔍 Starting fetch call to /tell...');
-      console.log('🔍 Fetch function type:', typeof fetch);
-
       const tellResponse = await fetch('http://localhost:4101/tell', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content: fact })
       });
-
-      console.log('🔍 Fetch response received:', tellResponse);
-      console.log('🔍 Response type:', typeof tellResponse);
 
       if (!tellResponse) {
         throw new Error('Fetch returned undefined - connection failed');
@@ -148,23 +144,13 @@ describe('Tell/Ask E2E Integration Tests', () => {
 
     console.log(`🔄 Testing storage consistency: "${fact}"`);
 
-    // Store via HTTP
-    await httpTellAsk(fact, question);
+    // Store and retrieve via HTTP
+    const { tellResult, askResult } = await httpTellAsk(fact, question);
 
-    // Verify both interfaces see the same data by checking the fact exists
-    const verifyResponse = await fetch('http://localhost:4101/ask', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ question })
-    });
-
-    if (!verifyResponse.ok) {
-      throw new Error(`HTTP ${verifyResponse.status}: ${verifyResponse.statusText}`);
-    }
-
-    const verifyResult = await verifyResponse.json();
-    expect(verifyResult.success).toBe(true);
-    expect(verifyResult.answer.toLowerCase()).toContain(expectedColor);
+    // Verify the tell/ask round trip worked correctly
+    expect(tellResult.success).toBe(true);
+    expect(askResult.success).toBe(true);
+    expect(askResult.answer.toLowerCase()).toContain(expectedColor);
 
     console.log(`✅ Storage consistency verified for: ${fact}`);
   }, 30000);
