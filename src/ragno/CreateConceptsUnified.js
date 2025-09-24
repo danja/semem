@@ -20,7 +20,8 @@ import MistralConnector from '../connectors/MistralConnector.js';
 import ClaudeConnector from '../connectors/ClaudeConnector.js';
 import OllamaConnector from '../connectors/OllamaConnector.js';
 import { URIMinter } from '../utils/URIMinter.js';
-import logger from 'loglevel';
+import { createUnifiedLogger } from '../utils/LoggingConfig.js';
+const logger = createUnifiedLogger('CreateConceptsUnified');
 import dotenv from 'dotenv';
 
 // Import unified prompt management system

@@ -5,11 +5,14 @@
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
+import log from 'loglevel';
 import MemoryManager from '../MemoryManager.js';
 import EmbeddingHandler from '../handlers/EmbeddingHandler.js';
 import LLMHandler from '../handlers/LLMHandler.js';
 import Config from '../Config.js';
 import { createLLMConnector, createEmbeddingConnector, getModelConfig } from '../../mcp/lib/config.js';
+
+const logger = log.getLogger('ServiceManager');
 
 class ServiceManager {
     constructor() {
@@ -27,9 +30,9 @@ class ServiceManager {
         const projectRoot = path.resolve(path.dirname(__filename), '../..');
         const defaultConfigPath = path.join(projectRoot, 'config/config.json');
 
-        console.log('🔧 [ServiceManager] ProjectRoot:', projectRoot);
-        console.log('🔧 [ServiceManager] DefaultConfigPath:', defaultConfigPath);
-        console.log('🔧 [ServiceManager] ConfigPath exists:', fs.existsSync(defaultConfigPath));
+        logger.debug('🔧 [ServiceManager] ProjectRoot:', projectRoot);
+        logger.debug('🔧 [ServiceManager] DefaultConfigPath:', defaultConfigPath);
+        logger.debug('🔧 [ServiceManager] ConfigPath exists:', fs.existsSync(defaultConfigPath));
 
         const config = new Config(configPath || defaultConfigPath);
         await config.init();
@@ -59,7 +62,7 @@ class ServiceManager {
             const storageOptions = config.get('storage.options');
             const configuredGraphName = config.get('graphName');
 
-            console.log('🔧 ServiceManager storageOptions:', JSON.stringify(storageOptions, null, 2));
+            logger.debug('🔧 ServiceManager storageOptions:', JSON.stringify(storageOptions, null, 2));
 
             if (!configuredGraphName) {
                 throw new Error('graphName not found in config - check config.json graphName setting');
@@ -74,7 +77,7 @@ class ServiceManager {
                 data: storageOptions.data
             };
 
-            console.log('🔧 ServiceManager endpoint object:', JSON.stringify(endpoint, null, 2));
+            logger.debug('🔧 ServiceManager endpoint object:', JSON.stringify(endpoint, null, 2));
 
             storage = new SPARQLStore(endpoint, storageOptions, config);
         } else {

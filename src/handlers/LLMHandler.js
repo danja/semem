@@ -1,4 +1,5 @@
-import logger from 'loglevel'
+import { createUnifiedLogger } from '../utils/LoggingConfig.js';
+const logger = createUnifiedLogger('LLMHandler');
 import PromptTemplates from '../PromptTemplates.js'
 import ParseHelper from '../utils/ParseHelper.js'
 

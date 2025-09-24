@@ -6,7 +6,9 @@
  * existing systems (PromptTemplates, PromptFormatter, MCP workflows).
  */
 
-import logger from 'loglevel';
+import { createUnifiedLogger } from '../utils/LoggingConfig.js';
+
+const logger = createUnifiedLogger('PromptManager');
 import { 
     PromptContext, 
     PromptTemplate, 

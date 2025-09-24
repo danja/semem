@@ -4,6 +4,7 @@
  */
 
 import { mcpDebugger } from './debug-utils.js';
+import { verbsLogger } from '../tools/VerbsLogger.js';
 
 export class SafeOperations {
   constructor(memoryManager) {
@@ -15,15 +16,15 @@ export class SafeOperations {
    */
   async retrieveMemories(query, threshold = 0.7, excludeLastN = 0) {
     if (!query || typeof query !== 'string' || !query.trim()) {
-      console.log('🔥 CONSOLE: SafeOperations.retrieveMemories - invalid query, returning empty array');
+      verbsLogger.debug('🔥 CONSOLE: SafeOperations.retrieveMemories - invalid query, returning empty array');
       return []; // Return empty array for invalid queries
     }
     
-    console.log('🔥 CONSOLE: SafeOperations.retrieveMemories called', { query, threshold, excludeLastN });
+    verbsLogger.debug('🔥 CONSOLE: SafeOperations.retrieveMemories called', { query, threshold, excludeLastN });
     
     const results = await this.memoryManager.retrieveRelevantInteractions(query.trim(), threshold, excludeLastN);
     
-    console.log('🔥 CONSOLE: SafeOperations.retrieveMemories received from MemoryManager', { 
+    verbsLogger.debug('🔥 CONSOLE: SafeOperations.retrieveMemories received from MemoryManager', { 
       resultsCount: results?.length || 0, 
       hasResults: !!results && results.length > 0,
       firstResult: results?.[0] ? { similarity: results[0].similarity, prompt: results[0].prompt?.substring(0, 50) } : null
@@ -284,7 +285,7 @@ export class SafeOperations {
       const maxMemoryScore = memoryManagerResults.length > 0 ? 
         Math.max(...memoryManagerResults.map(r => r.similarity)) : 0;
       
-      console.log('🔥 CONSOLE: Normalizing scores separately', {
+      verbsLogger.debug('🔥 CONSOLE: Normalizing scores separately', {
         memoryManagerCount: memoryManagerResults.length,
         sparqlCount: sparqlResults.length,
         maxMemoryScore,
@@ -314,7 +315,7 @@ export class SafeOperations {
         };
       });
       
-      console.log('🔥 CONSOLE: SafeOperations similarity normalization sample', {
+      verbsLogger.debug('🔥 CONSOLE: SafeOperations similarity normalization sample', {
         originalFirst: allResults[0] ? allResults[0].similarity : 'none',
         normalizedFirst: normalizedResults[0] ? normalizedResults[0].similarity : 'none',
         originalADHD: allResults.find(r => r.prompt?.includes('ADHD'))?.similarity || 'not found',
@@ -325,7 +326,7 @@ export class SafeOperations {
       const filteredResults = normalizedResults.filter(result => {
         // Filter out ZPT State Changes - these are system metadata, not user content
         if (result.prompt && result.prompt.includes('ZPT State Change:')) {
-          console.log('🔥 CONSOLE: Filtering out ZPT State Change', { 
+          verbsLogger.debug('🔥 CONSOLE: Filtering out ZPT State Change', { 
             prompt: result.prompt.substring(0, 50),
             similarity: result.similarity 
           });
@@ -340,7 +341,7 @@ export class SafeOperations {
         return true;
       });
       
-      console.log('🔥 CONSOLE: Content filtering results', {
+      verbsLogger.debug('🔥 CONSOLE: Content filtering results', {
         originalCount: normalizedResults.length,
         filteredCount: filteredResults.length,
         removedItems: normalizedResults.length - filteredResults.length

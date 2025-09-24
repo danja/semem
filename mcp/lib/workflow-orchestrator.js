@@ -592,7 +592,7 @@ export class WorkflowOrchestrator {
         
         return result;
       } catch (error) {
-        console.log(`❌ Custom tool caller failed for ${mappedToolName}: ${error.message}`);
+        logger.error(`❌ Custom tool caller failed for ${mappedToolName}: ${error.message}`);
         throw error;
       }
     }

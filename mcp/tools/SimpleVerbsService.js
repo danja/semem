@@ -160,16 +160,16 @@ import {
           metadata
         };
         
-        console.log('DEBUG MEMORY MANAGER:', !!this.memoryManager);
-        console.log('DEBUG STORE:', !!this.memoryManager?.store);
-        console.log('DEBUG STORE TYPE:', typeof this.memoryManager?.store);
+        verbsLogger.debug('DEBUG MEMORY MANAGER:', !!this.memoryManager);
+        verbsLogger.debug('DEBUG STORE:', !!this.memoryManager?.store);
+        verbsLogger.debug('DEBUG STORE TYPE:', typeof this.memoryManager?.store);
         
         if (!this.memoryManager?.store) {
           throw new Error('Memory manager store is not available');
         }
         
-        console.log('DEBUG STORE CONSTRUCTOR:', this.memoryManager.store.constructor.name);
-        console.log('DEBUG STORE METHODS:', Object.getOwnPropertyNames(this.memoryManager.store.constructor.prototype));
+        verbsLogger.debug('DEBUG STORE CONSTRUCTOR:', this.memoryManager.store.constructor.name);
+        verbsLogger.debug('DEBUG STORE METHODS:', Object.getOwnPropertyNames(this.memoryManager.store.constructor.prototype));
         
         if (typeof this.memoryManager.store.storeLazyContent === 'function') {
           result = await this.memoryManager.store.storeLazyContent(lazyData);
@@ -233,7 +233,7 @@ import {
             try {
               verbsLogger.debug('🔥 DEBUG: Force saving to SPARQL...');
               await this.memoryManager.store.saveMemoryToHistory(this.memoryManager.memStore);
-              console.log('🔥 DEBUG: SPARQL force save completed');
+              verbsLogger.debug('🔥 DEBUG: SPARQL force save completed');
             } catch (sparqlError) {
               verbsLogger.error('🔥 ERROR: Force SPARQL save failed:', sparqlError);
             }
@@ -255,7 +255,7 @@ import {
                   strategy: 'semantic'
                 });
                 
-                console.log(`📚 Document too large (${content.length} chars > ${MAX_EMBEDDING_SIZE}). Chunking into smaller pieces...`);
+                verbsLogger.info(`📚 Document too large (${content.length} chars > ${MAX_EMBEDDING_SIZE}). Chunking into smaller pieces...`);
                 
                 // Chunk the document
                 chunkingResult = await chunker.chunk(content, {
@@ -263,9 +263,9 @@ import {
                   sourceFile: metadata.filename || 'unknown'
                 });
                 
-                console.log(`✂️  Created ${chunkingResult.chunks.length} chunks for processing`);
+                verbsLogger.info(`✂️  Created ${chunkingResult.chunks.length} chunks for processing`);
               } catch (chunkingError) {
-                console.error('❌ Error during document chunking:', chunkingError.message);
+                verbsLogger.error('❌ Error during document chunking:', chunkingError.message);
                 throw new Error(`Failed to chunk large document: ${chunkingError.message}. Document size: ${content.length} characters.`);
               }
               
@@ -276,7 +276,7 @@ import {
               for (let i = 0; i < chunkingResult.chunks.length; i++) {
                 const chunk = chunkingResult.chunks[i];
                 try {
-                  console.log(`🧩 Processing chunk ${i + 1}/${chunkingResult.chunks.length} (${chunk.size} chars)...`);
+                  verbsLogger.info(`🧩 Processing chunk ${i + 1}/${chunkingResult.chunks.length} (${chunk.size} chars)...`);
                   
                   const chunkEmbedding = await this.safeOps.generateEmbedding(chunk.content);
                   const chunkConcepts = await this.safeOps.extractConcepts(chunk.content);
@@ -298,9 +298,9 @@ import {
                   chunkResults.push(chunkResult);
                   allConcepts = [...allConcepts, ...chunkConcepts];
                   
-                  console.log(`✅ Chunk ${i + 1} processed successfully (${chunkConcepts.length} concepts extracted)`);
+                  verbsLogger.info(`✅ Chunk ${i + 1} processed successfully (${chunkConcepts.length} concepts extracted)`);
                 } catch (chunkError) {
-                  console.error(`❌ Error processing chunk ${i + 1}:`, chunkError.message);
+                  verbsLogger.error(`❌ Error processing chunk ${i + 1}:`, chunkError.message);
                   // Don't throw here - continue with other chunks but log the failure
                   chunkResults.push({
                     error: true,
@@ -324,7 +324,7 @@ import {
             } else {
               // Small document - process normally
               try {
-                console.log(`📄 Processing document (${content.length} chars - under limit)...`);
+                verbsLogger.info(`📄 Processing document (${content.length} chars - under limit)...`);
                 embedding = await this.safeOps.generateEmbedding(content);
                 concepts = await this.safeOps.extractConcepts(content);
                 prompt = `Document: ${metadata.title || 'Untitled'}`;
@@ -334,18 +334,18 @@ import {
                   response,
                   { ...metadata, type: 'tell_document', concepts }
                 );
-                console.log(`✅ Document processed successfully (${concepts.length} concepts extracted)`);
+                verbsLogger.info(`✅ Document processed successfully (${concepts.length} concepts extracted)`);
                 
                 // DIRECT FIX: Force immediate SPARQL persistence 
                 try {
                   verbsLogger.debug('🔥 DEBUG: Force saving document to SPARQL...');
                   await this.memoryManager.store.saveMemoryToHistory(this.memoryManager.memStore);
-                  console.log('🔥 DEBUG: Document SPARQL force save completed');
+                  verbsLogger.info('🔥 DEBUG: Document SPARQL force save completed');
                 } catch (sparqlError) {
-                  console.error('🔥 ERROR: Document force SPARQL save failed:', sparqlError);
+                  verbsLogger.error('🔥 ERROR: Document force SPARQL save failed:', sparqlError);
                 }
               } catch (docError) {
-                console.error(`❌ Error processing document:`, docError.message);
+                verbsLogger.error(`❌ Error processing document:`, docError.message);
                 throw new Error(`Failed to process document: ${docError.message}. Document size: ${content.length} characters. Consider breaking it into smaller sections.`);
               }
             }
@@ -469,7 +469,7 @@ import {
       askTimer.startPhase('context_processing');
       
       // Use HybridContextManager for intelligent context processing
-      console.log('🔥 CONSOLE: Simple-verbs ask() calling HybridContextManager.processQuery', { 
+      verbsLogger.info('🔥 CONSOLE: Simple-verbs ask() calling HybridContextManager.processQuery', { 
         question: question.substring(0, 50), 
         useContext,
         hasHybridContextManager: !!this.hybridContextManager 
@@ -485,7 +485,7 @@ import {
         threshold
       });
       
-      console.log('🔥 CONSOLE: Simple-verbs ask() received result from HybridContextManager', { 
+      verbsLogger.info('🔥 CONSOLE: Simple-verbs ask() received result from HybridContextManager', { 
         success: hybridResult.success,
         contextItems: hybridResult.contextItems || 0,
         sessionResults: hybridResult.sessionResults || 0,
@@ -580,7 +580,7 @@ import {
       logOperation('debug', 'augment', 'Legacy parameters detected, merged into options', { parameters, mergedOptions });
     }
     
-    console.log('🔄 [AUGMENT] Function called with:', { target, operation, options, parameters });
+    verbsLogger.info('🔄 [AUGMENT] Function called with:', { target, operation, options, parameters });
     
     try {
       // Validate target for operations that require specific content
@@ -590,7 +590,7 @@ import {
       }
       
       logOperation('debug', 'augment', 'Simple Verb: augment', { target: target.substring(0, 50), operation });
-      console.log('🔄 [AUGMENT] About to enter switch statement:', { operation });
+      verbsLogger.info('🔄 [AUGMENT] About to enter switch statement:', { operation });
       
       let result;
       
@@ -601,7 +601,7 @@ import {
           
           // If includeEmbeddings option is set, generate embeddings for concepts
           if (mergedOptions.includeEmbeddings) {
-            console.log('🔮 [CONCEPTS] Generating embeddings for extracted concepts...');
+            verbsLogger.info('🔮 [CONCEPTS] Generating embeddings for extracted concepts...');
             try {
               // Use the concept_embeddings logic but return in concepts format
               const { maxConcepts = 20, embeddingModel = 'nomic-embed-text', batchSize = 5, graph } = mergedOptions;
@@ -674,9 +674,9 @@ import {
                 augmentationType: 'concepts_with_embeddings'
               };
               
-              console.log(`✅ [CONCEPTS] Generated embeddings for ${conceptEmbeddings.length} concepts`);
+              verbsLogger.info(`✅ [CONCEPTS] Generated embeddings for ${conceptEmbeddings.length} concepts`);
             } catch (embeddingError) {
-              console.warn('⚠️ [CONCEPTS] Embedding generation failed:', embeddingError.message);
+              verbsLogger.warn('⚠️ [CONCEPTS] Embedding generation failed:', embeddingError.message);
               result = {
                 concepts: extractedConcepts,
                 embeddingError: embeddingError.message,
@@ -790,7 +790,7 @@ import {
           
         case 'chunk_documents':
           // Chunk documents stored in SPARQL that haven't been processed yet
-          console.log('🔄 [CHUNK_DOCUMENTS] Case triggered - starting chunking process');
+          verbsLogger.info('🔄 [CHUNK_DOCUMENTS] Case triggered - starting chunking process');
           logOperation('info', 'augment', 'chunk_documents case triggered', { target: target.substring(0, 50), mergedOptions });
           try {
             const {
@@ -888,7 +888,7 @@ import {
               textElementsToProcess = queryResult.results?.bindings || [];
             } else {
               // Handle direct content text from UI - create a synthetic text element
-              console.log('📝 [CHUNK_DOCUMENTS] Processing direct content text from UI');
+              verbsLogger.info('📝 [CHUNK_DOCUMENTS] Processing direct content text from UI');
               if (target.length >= minContentLength) {
                 // Generate a URI for this content using a simple hash
                 const crypto = await import('crypto');
@@ -901,9 +901,9 @@ import {
                   sourceUnit: null
                 }];
                 
-                console.log(`📝 [CHUNK_DOCUMENTS] Created synthetic TextElement: ${syntheticURI} (${target.length} chars)`);
+                verbsLogger.info(`📝 [CHUNK_DOCUMENTS] Created synthetic TextElement: ${syntheticURI} (${target.length} chars)`);
               } else {
-                console.log(`⚠️ [CHUNK_DOCUMENTS] Content too short: ${target.length} < ${minContentLength} chars`);
+                verbsLogger.info(`⚠️ [CHUNK_DOCUMENTS] Content too short: ${target.length} < ${minContentLength} chars`);
               }
             }
 
@@ -914,7 +914,7 @@ import {
                 augmentationType: 'chunk_documents'
               };
             } else {
-              console.log('🔄 [CHUNK_DOCUMENTS] Processing documents for chunking...');
+              verbsLogger.info('🔄 [CHUNK_DOCUMENTS] Processing documents for chunking...');
               const chunkedResults = [];
               
               for (const element of textElementsToProcess) {
@@ -923,17 +923,17 @@ import {
                 const sourceUnit = element.sourceUnit?.value;
                 
                 try {
-                  console.log(`🧩 [CHUNK_DOCUMENTS] Processing document: ${textElementURI} (${content.length} chars)`);
+                  verbsLogger.info(`🧩 [CHUNK_DOCUMENTS] Processing document: ${textElementURI} (${content.length} chars)`);
                   logOperation('info', 'augment', 'Starting document chunking', { textElementURI, contentLength: content.length });
                   
                   // Chunk the content
-                  console.log('✂️ [CHUNK_DOCUMENTS] Chunking content...');
+                  verbsLogger.info('✂️ [CHUNK_DOCUMENTS] Chunking content...');
                   const chunkingResult = await chunker.chunk(content, {
                     title: `TextElement ${textElementURI.split('/').pop()}`,
                     sourceUri: textElementURI
                   });
                   
-                  console.log(`✂️ [CHUNK_DOCUMENTS] Created ${chunkingResult.chunks.length} chunks`);
+                  verbsLogger.info(`✂️ [CHUNK_DOCUMENTS] Created ${chunkingResult.chunks.length} chunks`);
                   logOperation('info', 'augment', 'Document chunked successfully', { 
                     textElementURI, 
                     chunkCount: chunkingResult.chunks.length,
@@ -1002,11 +1002,11 @@ import {
                   });
                   
                   // Execute the update
-                  console.log('💾 [CHUNK_DOCUMENTS] Storing chunks to SPARQL...');
-                  console.log('📝 [CHUNK_DOCUMENTS] Update query preview (first 500 chars):', updateQuery.substring(0, 500));
+                  verbsLogger.info('💾 [CHUNK_DOCUMENTS] Storing chunks to SPARQL...');
+                  verbsLogger.info('📝 [CHUNK_DOCUMENTS] Update query preview (first 500 chars):', updateQuery.substring(0, 500));
                   const updateResult = await sparqlHelper.executeUpdate(updateQuery);
                   
-                  console.log('📊 [CHUNK_DOCUMENTS] SPARQL update result:', {
+                  verbsLogger.info('📊 [CHUNK_DOCUMENTS] SPARQL update result:', {
                     success: updateResult.success,
                     status: updateResult.status,
                     statusText: updateResult.statusText,
@@ -1027,7 +1027,7 @@ import {
                     contentLength: content.length
                   });
                   
-                  console.log(`✅ [CHUNK_DOCUMENTS] Successfully stored ${chunkingResult.chunks.length} chunks with embeddings to SPARQL`);
+                  verbsLogger.info(`✅ [CHUNK_DOCUMENTS] Successfully stored ${chunkingResult.chunks.length} chunks with embeddings to SPARQL`);
                   logOperation('info', 'augment', 'Document chunks stored successfully', { 
                     textElementURI, 
                     chunkCount: chunkingResult.chunks.length,
@@ -1037,7 +1037,7 @@ import {
                   });
                   
                 } catch (chunkError) {
-                  console.error(`❌ Error chunking ${textElementURI}:`, chunkError.message);
+                  verbsLogger.error(`❌ Error chunking ${textElementURI}:`, chunkError.message);
                   chunkedResults.push({
                     textElementURI,
                     error: chunkError.message,
@@ -1100,7 +1100,7 @@ import {
         case 'concept_embeddings':
           // Extract concepts and generate embeddings using new ragno format
           try {
-            console.log('🔮 [CONCEPT_EMBEDDINGS] Starting concept embedding generation...');
+            verbsLogger.info('🔮 [CONCEPT_EMBEDDINGS] Starting concept embedding generation...');
             logOperation('info', 'augment', 'concept_embeddings operation started', { target: target.substring(0, 50), mergedOptions });
 
             const {
@@ -1113,7 +1113,7 @@ import {
 
             // Extract concepts from target content
             const concepts = await this.safeOps.extractConcepts(target);
-            console.log(`🔮 [CONCEPT_EMBEDDINGS] Extracted ${concepts.length} concepts`);
+            verbsLogger.info(`🔮 [CONCEPT_EMBEDDINGS] Extracted ${concepts.length} concepts`);
 
             if (concepts.length === 0) {
               result = {
@@ -1149,7 +1149,7 @@ import {
             // Process concepts in batches
             for (let i = 0; i < conceptsToProcess.length; i += batchSize) {
               const batch = conceptsToProcess.slice(i, i + batchSize);
-              console.log(`🔮 [CONCEPT_EMBEDDINGS] Processing batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(conceptsToProcess.length / batchSize)} (${batch.length} concepts)`);
+              verbsLogger.info(`🔮 [CONCEPT_EMBEDDINGS] Processing batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(conceptsToProcess.length / batchSize)} (${batch.length} concepts)`);
 
               for (const concept of batch) {
                 try {
@@ -1193,7 +1193,7 @@ import {
                     embeddingModel: embeddingModel
                   });
 
-                  console.log(`✅ [CONCEPT_EMBEDDINGS] Stored concept: ${concept} (${conceptEmbedding.length}D)`);
+                  verbsLogger.info(`✅ [CONCEPT_EMBEDDINGS] Stored concept: ${concept} (${conceptEmbedding.length}D)`);
                   logOperation('info', 'augment', 'Concept embedding stored', { 
                     concept, 
                     conceptUri, 
@@ -1201,7 +1201,7 @@ import {
                   });
 
                 } catch (conceptError) {
-                  console.error(`❌ [CONCEPT_EMBEDDINGS] Failed to process concept: ${concept}`, conceptError.message);
+                  verbsLogger.error(`❌ [CONCEPT_EMBEDDINGS] Failed to process concept: ${concept}`, conceptError.message);
                   skippedConcepts.push({
                     concept: concept,
                     error: conceptError.message
@@ -1218,7 +1218,7 @@ import {
             let attributeResults = null;
             if (includeAttributes && conceptEmbeddings.length > 0) {
               try {
-                console.log('🔮 [CONCEPT_EMBEDDINGS] Generating attributes for embedded concepts...');
+                verbsLogger.info('🔮 [CONCEPT_EMBEDDINGS] Generating attributes for embedded concepts...');
                 const { augmentWithAttributes } = await import('../../src/ragno/augmentWithAttributes.js');
                 // Create mock graph data for attribute generation
                 const mockGraphData = {
@@ -1229,9 +1229,9 @@ import {
                   dataset: null
                 };
                 attributeResults = await augmentWithAttributes(mockGraphData, this.memoryManager.llmHandler, mergedOptions);
-                console.log(`✅ [CONCEPT_EMBEDDINGS] Generated ${attributeResults.attributes?.length || 0} attributes`);
+                verbsLogger.info(`✅ [CONCEPT_EMBEDDINGS] Generated ${attributeResults.attributes?.length || 0} attributes`);
               } catch (attrError) {
-                console.warn('⚠️ [CONCEPT_EMBEDDINGS] Attribute generation failed:', attrError.message);
+                verbsLogger.warn('⚠️ [CONCEPT_EMBEDDINGS] Attribute generation failed:', attrError.message);
               }
             }
 
@@ -1250,7 +1250,7 @@ import {
               message: `Processed ${conceptEmbeddings.length}/${conceptsToProcess.length} concepts with embeddings using new ragno format`
             };
 
-            console.log(`✅ [CONCEPT_EMBEDDINGS] Complete: ${conceptEmbeddings.length} concepts embedded, ${skippedConcepts.length} skipped`);
+            verbsLogger.info(`✅ [CONCEPT_EMBEDDINGS] Complete: ${conceptEmbeddings.length} concepts embedded, ${skippedConcepts.length} skipped`);
 
           } catch (embeddingError) {
             result = {
@@ -1263,9 +1263,9 @@ import {
           
         case 'auto':
         default:
-          console.log('🔄 [AUGMENT] Entered default/auto case with operation:', operation);
+          verbsLogger.info('🔄 [AUGMENT] Entered default/auto case with operation:', operation);
           if (operation !== 'auto') {
-            console.log('❌ [AUGMENT] WARNING: Unknown operation fell through to default case:', operation);
+            verbsLogger.info('❌ [AUGMENT] WARNING: Unknown operation fell through to default case:', operation);
             logOperation('warn', 'augment', 'Unknown augment operation fell through to default case', { operation, target: target.substring(0, 50) });
           }
           
@@ -1831,7 +1831,7 @@ import {
           const interactionResult = await store.sparqlHelper.executeQuery(interactionQuery);
           totalInteractions = parseInt(interactionResult.results?.bindings[0]?.count?.value || '0');
         } catch (error) {
-          console.warn('Failed to query interactions:', error.message);
+          verbsLogger.warn('Failed to query interactions:', error.message);
         }
         
         // Query for concept count  
@@ -1846,7 +1846,7 @@ import {
           const conceptResult = await store.sparqlHelper.executeQuery(conceptQuery);
           concepts = parseInt(conceptResult.results?.bindings[0]?.count?.value || '0');
         } catch (error) {
-          console.warn('Failed to query concepts:', error.message);
+          verbsLogger.warn('Failed to query concepts:', error.message);
         }
         
         // Estimate other metrics based on available data
@@ -1901,7 +1901,7 @@ import {
       }
     };
     } catch (error) {
-      console.error('Error in _analyzeSession:', error);
+      verbsLogger.error('Error in _analyzeSession:', error);
       return {
         overview: {
           totalInteractions: 0,
@@ -1959,7 +1959,7 @@ import {
             uniqueConcepts = Object.keys(conceptFreq).length;
           }
         } catch (error) {
-          console.warn('Failed to query concept network:', error.message);
+          verbsLogger.warn('Failed to query concept network:', error.message);
         }
       }
       
@@ -2007,7 +2007,7 @@ import {
       }
     };
     } catch (error) {
-      console.error('Error in _analyzeConceptNetwork:', error);
+      verbsLogger.error('Error in _analyzeConceptNetwork:', error);
       return {
         overview: {
           totalUniqueConcepts: 0,
@@ -2137,7 +2137,7 @@ import {
 
       return health;
     } catch (error) {
-      console.error('Error in _analyzeSystemHealth:', error);
+      verbsLogger.error('Error in _analyzeSystemHealth:', error);
       return {
         overall: 'critical',
         components: {},

@@ -13,9 +13,9 @@
  * - Learning system for continuous threshold optimization
  */
 
-import log from 'loglevel';
+import { createUnifiedLogger } from '../../utils/LoggingConfig.js';
 
-const thresholdLogger = log.getLogger('ContextAwareThresholdCalculator');
+const thresholdLogger = createUnifiedLogger('ContextAwareThresholdCalculator');
 
 export class ContextAwareThresholdCalculator {
     constructor(options = {}) {

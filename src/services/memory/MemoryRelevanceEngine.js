@@ -5,7 +5,7 @@
  * Supports adaptive weighting, temporal decay, and contextual relevance adjustments.
  */
 
-import logger from 'loglevel';
+import { createUnifiedLogger } from '../../utils/LoggingConfig.js';
 
 export class MemoryRelevanceEngine {
     constructor(options = {}) {
@@ -40,7 +40,7 @@ export class MemoryRelevanceEngine {
             ...options
         };
 
-        this.logger = logger.getLogger('memory:relevance');
+        this.logger = createUnifiedLogger('MemoryRelevanceEngine');
         this.adaptiveWeights = new Map(); // Per-user adaptive weights
         this.logger.info('🧮 MemoryRelevanceEngine initialized');
     }

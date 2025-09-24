@@ -6,7 +6,9 @@
  * of enhancement results into unified, enriched responses.
  */
 
-import logger from 'loglevel';
+import { createUnifiedLogger } from '../../utils/LoggingConfig.js';
+
+const logger = createUnifiedLogger('EnhancementCoordinator');
 import HyDEService from './HyDEService.js';
 import WikipediaService from './WikipediaService.js';
 import WikidataService from './WikidataService.js';
@@ -113,7 +115,7 @@ export class EnhancementCoordinator {
      * @returns {Object} Comprehensive enhancement result
      */
     async enhanceQuery(query, options = {}) {
-        console.log('🔍 CONSOLE: EnhancementCoordinator starting with services:', {
+        logger.debug('🔍 CONSOLE: EnhancementCoordinator starting with services:', {
             useHyDE: !!options.useHyDE,
             useWikipedia: !!options.useWikipedia,
             useWikidata: !!options.useWikidata,
@@ -134,7 +136,7 @@ export class EnhancementCoordinator {
             if (options.useWebSearch && this.services.webSearch) servicesToUse.push('webSearch');
 
             if (servicesToUse.length === 0) {
-                console.log('⚠️ CONSOLE: No enhancement services requested - using original query only');
+                logger.debug('⚠️ CONSOLE: No enhancement services requested - using original query only');
                 logger.warn('No enhancement services requested');
                 return {
                     success: true,
@@ -398,7 +400,7 @@ export class EnhancementCoordinator {
                     break;
 
                 case 'webSearch':
-                    console.log('🌐 CONSOLE: EnhancementCoordinator processing web search results', {
+                    logger.debug('🌐 CONSOLE: EnhancementCoordinator processing web search results', {
                         hasResults: !!(result.results && result.results.length > 0),
                         resultCount: result.results?.length || 0,
                         hasContextualInfo: !!result.contextualInfo,
@@ -415,11 +417,11 @@ export class EnhancementCoordinator {
                             .slice(0, 3)
                             .map((item, i) => `${i + 1}. ${item.title}: ${item.description || 'No description'}`)
                             .join('\n');
-                        console.log('🌐 CONSOLE: Web search summaries created', { webSummaries });
+                        logger.debug('🌐 CONSOLE: Web search summaries created', { webSummaries });
                         contextSections.push(webSummaries); // Remove the "WEB SEARCH RESULTS:" header to make it more natural
                     }
                     if (result.contextualInfo) {
-                        console.log('🌐 CONSOLE: Adding contextual info', { 
+                        logger.debug('🌐 CONSOLE: Adding contextual info', { 
                             length: result.contextualInfo.length,
                             preview: result.contextualInfo.substring(0, 100) 
                         });
@@ -432,7 +434,7 @@ export class EnhancementCoordinator {
         // Combine sections and check length
         const fullContext = contextSections.join('\n');
         
-        console.log('🔥 CONSOLE: EnhancementCoordinator final context composition', {
+        logger.debug('🔥 DEBUG: EnhancementCoordinator final context composition', {
             sectionCount: contextSections.length,
             sections: contextSections.map((section, i) => ({ 
                 index: i, 
@@ -448,7 +450,7 @@ export class EnhancementCoordinator {
             const truncatedContext = fullContext.substring(0, this.settings.maxCombinedContextLength) + '\n[Context truncated due to length...]';
             combinedContext.combinedPrompt = truncatedContext;
             combinedContext.metadata.truncated = true;
-            console.log('⚠️ CONSOLE: Context truncated due to length', {
+            logger.debug('⚠️ CONSOLE: Context truncated due to length', {
                 originalLength: fullContext.length,
                 truncatedLength: truncatedContext.length,
                 maxAllowed: this.settings.maxCombinedContextLength
@@ -456,7 +458,7 @@ export class EnhancementCoordinator {
         } else {
             combinedContext.combinedPrompt = fullContext;
             combinedContext.metadata.truncated = false;
-            console.log('✅ CONSOLE: Context not truncated', { length: fullContext.length });
+            logger.debug('✅ CONSOLE: Context not truncated', { length: fullContext.length });
         }
 
         combinedContext.metadata.totalLength = combinedContext.combinedPrompt.length;

@@ -1,8 +1,8 @@
-Wait, you said not to modify SimpleVerbsService.js since HTTP works. Let me step
-  back and understand: the HTTP server doesn't even use SimpleVerbsService.js at
-  all! It has its own ask endpoint that directly calls UnifiedSearchAPI.
+Can you check for redundant code between the HTTP servers, SimpleVerbsService and UnifiedSearchAPI.
 
-export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/tell-ask-e2e.integration.test.js --reporter=verbose | head -50)
+In mcp/tools/SimpleVerbsService.js line 82, weights a given hardcoded values. These should be in config/preferences.js with explanatory comments
+
+export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/tell-ask-e2e.integration.test.js --reporter=verbose 
 
 node src/frontend/vsom-standalone/server.js
 

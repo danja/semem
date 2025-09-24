@@ -4,6 +4,7 @@
  */
 
 import { SimpleTemplateLoader } from './SimpleTemplateLoader.js';
+import { verbsLogger } from '../tools/VerbsLogger.js';
 
 export class PromptSynthesis {
   constructor(llmHandler) {
@@ -39,7 +40,7 @@ export class PromptSynthesis {
       const response = await this.llmHandler.generateResponse(synthesisPrompt, [], options);
       return response;
     } catch (error) {
-      console.error('❌ LLM synthesis failed:', error);
+      verbsLogger.error('❌ LLM synthesis failed:', error);
       // Fallback to best search result
       return await this._createFallbackResponse(question, searchResults);
     }

@@ -1,5 +1,8 @@
 import BaseAPI from '../common/BaseAPI.js';
 import { v4 as uuidv4 } from 'uuid';
+import log from 'loglevel';
+
+const logger = log.getLogger('SearchAPI');
 
 /**
  * Search API handler for semantic search capabilities
@@ -112,7 +115,7 @@ export default class SearchAPI extends BaseAPI {
                                 0,
                                 limit
                             );
-                            console.log('🔥 CONSOLE: SearchAPI received memories from MemoryManager', { 
+                            logger.debug('🔥 DEBUG: SearchAPI received memories from MemoryManager', { 
                                 memoriesCount: memories?.length || 0, 
                                 firstMemory: memories?.[0] ? Object.keys(memories[0]) : 'no memories',
                                 hasInteractionProperty: memories?.[0]?.interaction ? 'YES' : 'NO',
@@ -131,7 +134,7 @@ export default class SearchAPI extends BaseAPI {
                         }
                         
                         // Apply safe transformation with defensive coding
-                        console.log('🔥 CONSOLE: SearchAPI applying filter and transformation', { 
+                        logger.debug('🔥 DEBUG: SearchAPI applying filter and transformation', { 
                             memoriesBeforeFilter: memories.length,
                             memoriesWithInteractionProperty: memories.filter(item => item && typeof item === 'object' && item.interaction).length
                         });

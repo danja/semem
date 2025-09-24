@@ -116,12 +116,12 @@ export default class Config {
             // Load config file if requested
             if (this.configFilePath) {
                 fileConfig = this.loadConfigFile()
-                console.log('🔧 [CONFIG] Raw loaded config:', JSON.stringify(fileConfig, null, 2));
+                log.debug('🔧 [CONFIG] Raw loaded config:', JSON.stringify(fileConfig, null, 2));
                 log.info('Loaded config file')
 
                 // Transform config file format to internal format
                 fileConfig = this.transformJsonConfig(fileConfig)
-                console.log('🔧 [CONFIG] Transformed config:', JSON.stringify(fileConfig, null, 2));
+                log.debug('🔧 [CONFIG] Transformed config:', JSON.stringify(fileConfig, null, 2));
                 log.info('Transformed config')
             } else {
                 log.info('No config file path provided, using defaults')

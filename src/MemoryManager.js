@@ -419,7 +419,7 @@ export default class MemoryManager {
     }
 
     async storeInteraction(prompt, response, metadata = {}) {
-        console.log('🔥 DEBUG: MemoryManager.storeInteraction called with:', {
+        this.logger.debug('🔥 DEBUG: MemoryManager.storeInteraction called with:', {
             promptLength: prompt?.length || 0,
             responseLength: response?.length || 0,
             metadataKeys: Object.keys(metadata || {})

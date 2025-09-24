@@ -8,7 +8,7 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import logger from 'loglevel';
+import { createUnifiedLogger } from '../../utils/LoggingConfig.js';
 
 export class MemoryDomainManager {
     constructor(sparqlStore, zptSessionManager, options = {}) {
@@ -34,7 +34,7 @@ export class MemoryDomainManager {
         this.domainHierarchy = new Map();
         this.memoryCache = new Map();
 
-        this.logger = logger.getLogger('memory:domain');
+        this.logger = createUnifiedLogger('MemoryDomainManager');
         this.logger.info('🧠 MemoryDomainManager initialized');
     }
 

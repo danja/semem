@@ -14,9 +14,9 @@
  * - Enhancement result caching for future reuse
  */
 
-import log from 'loglevel';
+import { createUnifiedLogger } from '../../utils/LoggingConfig.js';
 
-const logger = log.getLogger('HybridContextManager');
+const logger = createUnifiedLogger('HybridContextManager');
 import AdaptiveSearchEngine from '../search/AdaptiveSearchEngine.js';
 import { getPromptManager } from '../../prompts/index.js';
 
@@ -84,7 +84,7 @@ export class HybridContextManager {
         this.stats.totalQueries++;
         
         
-        console.log('🔥 [HYBRID_CONTEXT] Starting query processing', {
+        logger.debug('🔥 [HYBRID_CONTEXT] Starting query processing', {
             query: query.substring(0, 50) + '...',
             useContext: options.useContext,
             useHyDE: options.useHyDE,
@@ -93,7 +93,7 @@ export class HybridContextManager {
             mode: options.mode
         });
         
-        console.log('🔄 CONSOLE: HybridContextManager processQuery called with options:', {
+        logger.debug('🔄 CONSOLE: HybridContextManager processQuery called with options:', {
             useContext: options.useContext,
             useHyDE: options.useHyDE,
             useWikipedia: options.useWikipedia,
@@ -112,14 +112,14 @@ export class HybridContextManager {
             const zptState = this._getZPTState(options);
             
             // Run enhancement and local search concurrently
-            console.log('🚀 [HYBRID_CONTEXT] Starting concurrent search for enhancements and local context');
+            logger.debug('🚀 [HYBRID_CONTEXT] Starting concurrent search for enhancements and local context');
             const [enhancementResult, localContextResult] = await this._runConcurrentSearch(
                 query, 
                 options, 
                 zptState
             );
             
-            console.log('🚀 [HYBRID_CONTEXT] Concurrent search completed', {
+            logger.debug('🚀 [HYBRID_CONTEXT] Concurrent search completed', {
                 enhancementSuccess: enhancementResult?.success,
                 enhancementResultsCount: enhancementResult?.results?.length || 0,
                 localContextSuccess: !!localContextResult,
@@ -149,7 +149,7 @@ export class HybridContextManager {
             }
 
             // Generate unified response
-            console.log('🤝 [HYBRID_CONTEXT] Synthesizing unified response', {
+            logger.debug('🤝 [HYBRID_CONTEXT] Synthesizing unified response', {
                 mergedContextLength: mergedContext?.combinedContent?.length || 0,
                 strategy: contextAnalysis.selectedStrategy
             });
@@ -161,7 +161,7 @@ export class HybridContextManager {
                 options
             );
             
-            console.log('✅ [HYBRID_CONTEXT] Response synthesis completed', {
+            logger.debug('✅ [HYBRID_CONTEXT] Response synthesis completed', {
                 answerLength: unifiedResponse?.answer?.length || 0,
                 hasAnswer: !!unifiedResponse?.answer
             });
@@ -177,7 +177,7 @@ export class HybridContextManager {
             });
 
             // DEBUG: Log the actual structure we're working with
-            console.log('🔥 CONSOLE: HybridContextManager return data structure check', {
+            logger.debug('🔥 DEBUG: HybridContextManager return data structure check', {
                 localContextResult: localContextResult ? Object.keys(localContextResult) : 'null',
                 localContextResultContexts: localContextResult?.contexts ? {
                     exists: true,
@@ -240,7 +240,7 @@ export class HybridContextManager {
         
         // Enhancement search (if requested) - check cache first, then live enhancement
         if (this._hasEnhancements(options) && this.enhancementCoordinator) {
-            console.log('🔍 CONSOLE: Starting enhancement search with services:', {
+            logger.debug('🔍 CONSOLE: Starting enhancement search with services:', {
                 useHyDE: options.useHyDE,
                 useWikipedia: options.useWikipedia, 
                 useWikidata: options.useWikidata,
@@ -256,7 +256,7 @@ export class HybridContextManager {
                         }
                         
                         // No cache hit - proceed with live enhancement
-                        console.log('🚀 CONSOLE: Cache miss - running live enhancements');
+                        logger.debug('🚀 CONSOLE: Cache miss - running live enhancements');
                         logger.debug('🔄 No cache hit, proceeding with live enhancement');
                         return this.enhancementCoordinator.enhanceQuery(query, enhancementOptions);
                     })
@@ -277,19 +277,19 @@ export class HybridContextManager {
         });
         
         if (options.useContext && this.safeOperations) {
-            console.log('🔍 [HYBRID_CONTEXT] Starting adaptive local context search');
+            logger.debug('🔍 [HYBRID_CONTEXT] Starting adaptive local context search');
             logger.debug('🚀 Executing adaptive local context search');
             // Pass options directly - AdaptiveSearchEngine handles ZPT adaptation internally
             searches.push(
                 this._searchLocalContext(query, options)
                     .catch(error => {
-                        console.log('❌ [HYBRID_CONTEXT] Local context search failed:', error.message);
+                        logger.debug('❌ [HYBRID_CONTEXT] Local context search failed:', error.message);
                         logger.warn('Adaptive local context search failed:', error.message);
                         return { success: false, error: error.message, contexts: [] };
                     })
             );
         } else {
-            console.log('⚠️ [HYBRID_CONTEXT] Skipping local context search', { 
+            logger.debug('⚠️ [HYBRID_CONTEXT] Skipping local context search', { 
                 useContext: options.useContext, 
                 hasSafeOps: !!this.safeOperations,
                 reason: !options.useContext ? 'useContext=false' : 'no safeOperations'
@@ -315,14 +315,14 @@ export class HybridContextManager {
      * @returns {Promise<Object>} Advanced local search results
      */
     async _searchLocalContext(query, options) {
-        console.log('🎆 [HYBRID_CONTEXT] Searching local context with adaptive engine');
+        logger.debug('🎆 [HYBRID_CONTEXT] Searching local context with adaptive engine');
         logger.debug('🎆 Searching local context with adaptive engine');
         
         // Get ZPT state for filtering
         const zptState = this._getZPTState(options);
         
         // Execute adaptive search with intelligent threshold management
-        console.log('🎯 [HYBRID_CONTEXT] Executing adaptive search with ZPT state:', {
+        logger.debug('🎯 [HYBRID_CONTEXT] Executing adaptive search with ZPT state:', {
             zoom: zptState?.zoom,
             panDomains: zptState?.pan?.domains,
             panKeywords: zptState?.pan?.keywords
@@ -334,7 +334,7 @@ export class HybridContextManager {
             options
         );
         
-        console.log('✅ [HYBRID_CONTEXT] Adaptive search completed', {
+        logger.debug('✅ [HYBRID_CONTEXT] Adaptive search completed', {
             success: adaptiveResult.success,
             contextsFound: adaptiveResult.contexts?.length || 0,
             totalPasses: adaptiveResult.totalPasses
@@ -1142,7 +1142,7 @@ export class HybridContextManager {
 
         // Extract personal context content
         if (contextAnalysis.personalWeight > 0 && localContextResult.contexts) {
-            console.log('🔥 CONSOLE: HybridContextManager _mergeContexts processing contexts', {
+            logger.debug('🔥 DEBUG: HybridContextManager _mergeContexts processing contexts', {
                 contextCount: localContextResult.contexts.length,
                 personalWeight: contextAnalysis.personalWeight,
                 firstContext: localContextResult.contexts[0] ? {
@@ -1187,7 +1187,7 @@ export class HybridContextManager {
                         }
                     }
                     
-                    console.log(`🔥 CONSOLE: HybridContextManager context ${index} extraction`, {
+                    logger.debug(`🔥 DEBUG: HybridContextManager context ${index} extraction`, {
                         hasPrompt: !!ctx.prompt,
                         hasOutput: !!ctx.output,
                         hasResponse: !!ctx.response,
@@ -1284,7 +1284,7 @@ export class HybridContextManager {
         let answer;
         if (this.safeOperations?.generateResponse) {
             try {
-                console.log('🔥 CONSOLE: HybridContextManager about to call LLM generateResponse', {
+                logger.debug('🔥 DEBUG: HybridContextManager about to call LLM generateResponse', {
                     promptType: typeof synthesisPrompt,
                     promptKeys: typeof synthesisPrompt === 'object' ? Object.keys(synthesisPrompt) : 'not-object',
                     promptLength: typeof synthesisPrompt === 'string' ? synthesisPrompt.length : 'not-string',
@@ -1301,18 +1301,18 @@ export class HybridContextManager {
                 const contextParts = [];
                 
                 if (synthesisComponents.personalContent) {
-                    console.log('🔥 CONSOLE: Adding personal content to context');
+                    logger.debug('🔥 DEBUG: Adding personal content to context');
                     contextParts.push(synthesisComponents.personalContent);
                 }
                 
                 if (synthesisComponents.enhancementContent) {
-                    console.log('🔥 CONSOLE: Adding enhancement content to context (from web search, Wikipedia, etc.)');
+                    logger.debug('🔥 DEBUG: Adding enhancement content to context (from web search, Wikipedia, etc.)');
                     contextParts.push(synthesisComponents.enhancementContent);
                 }
                 
                 const contextContent = contextParts.length > 0 ? contextParts.join('\n\n') : 'No relevant context found.';
                 
-                console.log('🔥 CONSOLE: Final context composition', {
+                logger.debug('🔥 DEBUG: Final context composition', {
                     totalParts: contextParts.length,
                     combinedLength: contextContent.length,
                     contextPreview: contextContent.substring(0, 300)
@@ -1330,14 +1330,14 @@ Provide a helpful, synthesized answer based on the information above. Focus on d
                 
                 answer = await this.safeOperations.generateResponse(directPrompt);
                 
-                console.log('🔥 CONSOLE: HybridContextManager LLM response received', {
+                logger.debug('🔥 DEBUG: HybridContextManager LLM response received', {
                     answerLength: answer?.length || 0,
                     answerPreview: answer?.substring(0, 200)
                 });
                 
                 logger.debug('✅ LLM response generated successfully');
             } catch (error) {
-                console.log('🔥 CONSOLE: HybridContextManager LLM generation failed', {
+                logger.debug('🔥 DEBUG: HybridContextManager LLM generation failed', {
                     error: error.message,
                     errorType: error.constructor.name,
                     fallbackToTemplate: true
@@ -1350,7 +1350,7 @@ Provide a helpful, synthesized answer based on the information above. Focus on d
                 // Enhanced fallback with template-based synthesis
                 answer = this._createTemplateBasedResponse(query, synthesisComponents, contextAnalysis);
                 
-                console.log('🔥 CONSOLE: HybridContextManager template fallback used', {
+                logger.debug('🔥 DEBUG: HybridContextManager template fallback used', {
                     templateAnswerLength: answer?.length || 0,
                     templateAnswerPreview: answer?.substring(0, 200)
                 });
@@ -1375,7 +1375,7 @@ Provide a helpful, synthesized answer based on the information above. Focus on d
         const localContextResults = synthesisComponents.personalSources || [];
         const enhancementResults = synthesisComponents.enhancementSources || [];
         
-        console.log('🔥 CONSOLE: HybridContextManager returning results', {
+        logger.debug('🔥 DEBUG: HybridContextManager returning results', {
             localContextResultsCount: localContextResults.length,
             enhancementResultsCount: enhancementResults.length,
             totalContextItems: localContextResults.length + enhancementResults.length,
@@ -1432,7 +1432,7 @@ Provide a helpful, synthesized answer based on the information above. Focus on d
         if (mergedContext.personalContent && contextAnalysis.personalWeight > 0) {
             components.personalContent = mergedContext.personalContent;
             
-            console.log('🔥 CONSOLE: HybridContextManager - personalContent extracted', {
+            logger.debug('🔥 DEBUG: HybridContextManager - personalContent extracted', {
                 length: mergedContext.personalContent.length,
                 preview: mergedContext.personalContent.substring(0, 100),
                 hasADHD: mergedContext.personalContent.toLowerCase().includes('adhd')

@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import PDFConverter from '../../src/services/document/PDFConverter.js';
 import { URIMinter } from '../../src/utils/URIMinter.js';
 import SPARQLDocumentIngester from '../../src/services/ingestion/SPARQLDocumentIngester.js';
+import { verbsLogger } from './VerbsLogger.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -70,7 +71,7 @@ export class DocumentProcessor {
       
       if (this.simpleVerbsService && content.length <= MEMORY_INTEGRATION_LIMIT) {
         try {
-          console.log(`📚 Integrating ${filename} with memory system for semantic search...`);
+          verbsLogger.info(`📚 Integrating ${filename} with memory system for semantic search...`);
           memoryResult = await this.simpleVerbsService.tell({
             content: content,
             type: 'document',
@@ -85,14 +86,14 @@ export class DocumentProcessor {
           });
           
           conceptsExtracted = memoryResult.concepts || 0;
-          console.log(`✅ Memory integration complete. Extracted ${conceptsExtracted} concepts.`);
+          verbsLogger.info(`✅ Memory integration complete. Extracted ${conceptsExtracted} concepts.`);
         } catch (error) {
-          console.warn(`⚠️ Memory system integration failed for ${filename}:`, error.message);
+          verbsLogger.warn(`⚠️ Memory system integration failed for ${filename}:`, error.message);
           // Don't fail the entire operation if memory integration fails
         }
       } else if (content.length > MEMORY_INTEGRATION_LIMIT) {
-        console.log(`📄 Document too large (${content.length} chars > ${MEMORY_INTEGRATION_LIMIT}) for immediate memory integration.`);
-        console.log(`🔄 Automatically chunking document for semantic processing...`);
+        verbsLogger.info(`📄 Document too large (${content.length} chars > ${MEMORY_INTEGRATION_LIMIT}) for immediate memory integration.`);
+        verbsLogger.info(`🔄 Automatically chunking document for semantic processing...`);
         
         try {
           // Import chunker service
@@ -109,7 +110,7 @@ export class DocumentProcessor {
             metadata: processedMetadata
           });
           
-          console.log(`📝 Created ${chunks.length} chunks from document`);
+          verbsLogger.info(`📝 Created ${chunks.length} chunks from document`);
           
           // Process each chunk through memory integration
           let totalConcepts = 0;
@@ -130,13 +131,13 @@ export class DocumentProcessor {
                 });
                 totalConcepts += chunkResult.concepts || 0;
               } catch (chunkError) {
-                console.warn(`⚠️ Failed to process chunk ${i + 1}:`, chunkError.message);
+                verbsLogger.warn(`⚠️ Failed to process chunk ${i + 1}:`, chunkError.message);
               }
             }
           }
           
           conceptsExtracted = totalConcepts;
-          console.log(`✅ Document chunking complete. Extracted ${conceptsExtracted} concepts from ${chunks.length} chunks.`);
+          verbsLogger.info(`✅ Document chunking complete. Extracted ${conceptsExtracted} concepts from ${chunks.length} chunks.`);
           memoryResult = { 
             chunked: true, 
             chunkCount: chunks.length, 
@@ -144,12 +145,12 @@ export class DocumentProcessor {
           };
           
         } catch (chunkingError) {
-          console.error(`❌ Document chunking failed:`, chunkingError.message);
-          console.log(`✨ Document stored in SPARQL. Manual chunking may be required.`);
+          verbsLogger.error(`❌ Document chunking failed:`, chunkingError.message);
+          verbsLogger.info(`✨ Document stored in SPARQL. Manual chunking may be required.`);
           memoryResult = { deferred: true, reason: 'chunking_failed', error: chunkingError.message };
         }
       } else {
-        console.warn('⚠️ Simple verbs service not available for memory integration');
+        verbsLogger.warn('⚠️ Simple verbs service not available for memory integration');
       }
       
       // Cleanup temp file
@@ -349,7 +350,7 @@ export class DocumentProcessor {
         // unlinkSync(filePath);
       }
     } catch (error) {
-      console.warn(`Failed to cleanup temp file ${filePath}:`, error.message);
+      verbsLogger.warn(`Failed to cleanup temp file ${filePath}:`, error.message);
     }
   }
 
@@ -384,7 +385,7 @@ export class DocumentProcessor {
       const result = await response.json();
       return result.boolean === true;
     } catch (error) {
-      console.warn(`Warning: Could not check if document exists: ${error.message}`);
+      verbsLogger.warn(`Warning: Could not check if document exists: ${error.message}`);
       return false;
     }
   }
@@ -539,7 +540,7 @@ export const createSparqlIngestTool = (simpleVerbsService) => ({
         tellFunction,
         progressCallback: (progress) => {
           // Could emit progress events here if needed
-          console.log(`Progress: ${progress.processed}/${progress.total} documents processed`);
+          verbsLogger.info(`Progress: ${progress.processed}/${progress.total} documents processed`);
         }
       });
 

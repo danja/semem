@@ -10,7 +10,9 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { PromptTemplate } from './interfaces.js';
-import logger from 'loglevel';
+import { createUnifiedLogger } from '../utils/LoggingConfig.js';
+
+const logger = createUnifiedLogger('TemplateLoader');
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

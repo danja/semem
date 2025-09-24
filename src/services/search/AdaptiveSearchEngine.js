@@ -13,12 +13,11 @@
  * - Performance tracking and learning integration
  */
 
-import logger from 'loglevel';
+import { createUnifiedLogger } from '../../utils/LoggingConfig.js';
 import ContextAwareThresholdCalculator from './ContextAwareThresholdCalculator.js';
 import { SEARCH_CONFIG } from '../../../config/preferences.js';
 
-// Use loglevel directly to avoid import issues
-const searchLogger = logger.getLogger('AdaptiveSearchEngine');
+const searchLogger = createUnifiedLogger('AdaptiveSearchEngine');
 
 export class AdaptiveSearchEngine {
     constructor(safeOperations, options = {}) {
@@ -82,7 +81,7 @@ export class AdaptiveSearchEngine {
             hasFilters: !!(zptState.pan?.domains || zptState.pan?.keywords)
         });
 
-        console.log('🔍 [ADAPTIVE_DEBUG] Search starting with options:', {
+        searchLogger.debug('🔍 [ADAPTIVE_DEBUG] Search starting with options:', {
             threshold: options.threshold,
             zoom: zptState.zoom,
             query: query.substring(0, 30) + '...'
@@ -96,13 +95,13 @@ export class AdaptiveSearchEngine {
 
             // Override with user-provided threshold if specified
             if (options.threshold !== undefined) {
-                console.log('🎯 [ADAPTIVE_SEARCH] Using user-provided threshold:', options.threshold);
-                console.log('🎯 [ADAPTIVE_SEARCH] Original expansion steps:', thresholdConfig.expansionSteps);
+                searchLogger.debug('🎯 [ADAPTIVE_SEARCH] Using user-provided threshold:', options.threshold);
+                searchLogger.debug('🎯 [ADAPTIVE_SEARCH] Original expansion steps:', thresholdConfig.expansionSteps);
                 thresholdConfig.expansionSteps = [options.threshold];
                 thresholdConfig.baseThreshold = options.threshold;
-                console.log('🎯 [ADAPTIVE_SEARCH] New expansion steps:', thresholdConfig.expansionSteps);
+                searchLogger.debug('🎯 [ADAPTIVE_SEARCH] New expansion steps:', thresholdConfig.expansionSteps);
             } else {
-                console.log('🎯 [ADAPTIVE_SEARCH] No user threshold provided, using calculated:', thresholdConfig.expansionSteps);
+                searchLogger.debug('🎯 [ADAPTIVE_SEARCH] No user threshold provided, using calculated:', thresholdConfig.expansionSteps);
             }
 
             // Step 2: Execute multi-pass search
@@ -255,7 +254,7 @@ export class AdaptiveSearchEngine {
         const passStartTime = Date.now();
 
         // Execute base similarity search
-        console.log('🔍 [SEARCH_PASS] Executing searchSimilar with:', {
+        searchLogger.debug('🔍 [SEARCH_PASS] Executing searchSimilar with:', {
             query: query.substring(0, 30) + '...',
             limit: limit * 2,
             threshold: threshold
@@ -267,7 +266,7 @@ export class AdaptiveSearchEngine {
             threshold
         );
 
-        console.log('🔍 [SEARCH_PASS] searchSimilar returned:', {
+        searchLogger.debug('🔍 [SEARCH_PASS] searchSimilar returned:', {
             resultCount: results?.length || 0,
             firstResult: results[0] ? {
                 similarity: results[0].similarity,

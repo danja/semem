@@ -15,6 +15,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { verbsLogger } from '../tools/VerbsLogger.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -66,10 +67,10 @@ export class SimpleTemplateLoader {
 
         } catch (error) {
             if (error.code === 'ENOENT') {
-                console.warn(`Prompt template not found: ${templatePath}`);
+                verbsLogger.warn(`Prompt template not found: ${templatePath}`);
                 return null;
             }
-            console.error(`Failed to load prompt template from ${templatePath}:`, error.message);
+            verbsLogger.error(`Failed to load prompt template from ${templatePath}:`, error.message);
             return null;
         }
     }
@@ -136,7 +137,7 @@ export class SimpleTemplateLoader {
                 .map(file => path.basename(file, '.md'));
 
         } catch (error) {
-            console.error(`Failed to list templates in category ${category}:`, error.message);
+            verbsLogger.error(`Failed to list templates in category ${category}:`, error.message);
             return [];
         }
     }

@@ -7,7 +7,9 @@
  * Follows the same pattern as WikipediaService.js for architectural consistency.
  */
 
-import logger from 'loglevel';
+import { createUnifiedLogger } from '../../utils/LoggingConfig.js';
+
+const logger = createUnifiedLogger('WebSearchService');
 import { search, SafeSearchType } from 'duck-duck-scrape';
 import { SPARQLQueryService } from '../sparql/index.js';
 import SPARQLHelper from '../sparql/SPARQLHelper.js';
