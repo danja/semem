@@ -197,12 +197,8 @@ export default class SPARQLStore extends BaseStore {
 
     // ========== Search Methods (delegate to Search) ==========
 
-    async findSimilarElements(queryEmbedding, limit, threshold, filters) {
+    async search(queryEmbedding, limit, threshold, filters = {}) {
         return this.searchModule.findSimilarElements(queryEmbedding, limit, threshold, filters)
-    }
-
-    async search(queryEmbedding, limit, threshold) {
-        return this.searchModule.search(queryEmbedding, limit, threshold)
     }
 
     // ========== Cache Management (delegate to SPARQLCache) ==========
@@ -353,18 +349,12 @@ export default class SPARQLStore extends BaseStore {
         }
     }
 
-    async storeWithMemory(interaction) {
+    async store(interaction) {
         return this.storeModule.store(interaction)
     }
 
     async retrieve(queryEmbedding, queryConcepts, similarityThreshold, excludeLastN) {
-        // Convert threshold from 0-100 scale to 0-1 scale for search module
-        const normalizedThreshold = similarityThreshold > 1 ? similarityThreshold / 100 : similarityThreshold;
-        return this.searchModule.search(queryEmbedding, 50, normalizedThreshold);
-    }
-
-    async storeDocument(documentData) {
-        return this.storeModule.store(documentData)
+        return this.search(queryEmbedding, 50, similarityThreshold);
     }
 
     async cleanup() {

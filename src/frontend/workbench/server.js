@@ -35,6 +35,15 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Configuration endpoint for frontend
+app.get('/config', (req, res) => {
+  res.json({
+    apiUrl: '/api', // Use relative URL through proxy
+    apiKey: process.env.SEMEM_API_KEY,
+    mcpServer: MCP_SERVER_URL
+  });
+});
+
 // Proxy workflow logs to API server (different path to avoid conflicts)
 app.use('/workflow-logs/stream', createProxyMiddleware({
   target: 'http://localhost:4100/api/logs/stream',

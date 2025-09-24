@@ -104,7 +104,12 @@ import {
    * TELL - Add resources to the system with minimal processing
    */
   async tell({ content, type = 'interaction', metadata = {}, lazy = false }) {
-    // Debug removed for ES module compatibility
+    verbsLogger.info('🔥 DEBUG: SimpleVerbsService.tell() called', {
+      contentPreview: content?.substring(0, 50),
+      type,
+      lazy,
+      hasMemoryManager: !!this.memoryManager
+    });
     await this.initialize();
     
     // Validate required parameters

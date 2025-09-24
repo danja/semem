@@ -97,8 +97,7 @@ export const SPARQL_CONFIG = {
         // Used in: src/stores/SPARQLStore.js (search method signature, line ~1331)
         DEFAULT_THRESHOLD: 0.1,             // Default similarity threshold for search
 
-        // Used in: src/stores/SPARQLStore.js (findSimilarElements method signature, line ~1018)
-        FINDALL_THRESHOLD: 0.7,             // Higher threshold for findSimilarElements
+        // Note: FINDALL_THRESHOLD removed - consolidated with DEFAULT_THRESHOLD
 
         // Protection against segfaults and memory exhaustion
         // Used in: src/stores/SPARQLStore.js (findSimilarElements method)

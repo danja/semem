@@ -281,6 +281,11 @@ export class Store {
      * @param {Object} data - Data to store (must have id, embedding, etc.)
      */
     async store(data) {
+        logger.info('🔥 DEBUG: Store.store() called with:', {
+            id: data?.id,
+            promptPreview: data?.prompt?.substring(0, 50),
+            hasEmbedding: !!data?.embedding
+        });
         if (!data || !data.id) {
             throw new Error('Data must have an id field');
         }

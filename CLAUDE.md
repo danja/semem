@@ -362,3 +362,4 @@ const llmHandler = new LLMHandler(llmProvider, modelConfig.chatModel);
 - you can check Inspector with Playwright mcp
 - no fallbacks. If it's not right, throw an error
 - there are three sources of truth : .env for secrets (call dotenv.config() early in files), config/config.json (use Config.js) and config/preferences.js for all the numeric values
+- no logging to console, use the proper logging system

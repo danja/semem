@@ -155,7 +155,7 @@ export default class MemoryAPI extends BaseAPI {
             });
             
             // Format the results according to API schema
-            // Note: combineResults returns flattened interaction objects with totalScore
+            // Note: MemoryManager returns results with similarity field
             const formattedResults = results.map(item => ({
                 id: item.id,
                 prompt: item.prompt,
@@ -163,7 +163,7 @@ export default class MemoryAPI extends BaseAPI {
                 concepts: item.concepts,
                 timestamp: item.timestamp,
                 accessCount: item.accessCount,
-                similarity: item.totalScore || 0
+                similarity: item.similarity || 0
             }));
             
             this._emitMetric('memory.search.count', 1);

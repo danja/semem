@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from 'uuid'
 import { configureLogging } from './utils/LoggingConfig.js'
+import { SPARQL_CONFIG } from '../config/preferences.js'
 // MIGRATION: Using enhanced SPARQLStore instead of dual MemoryStore + BaseStore architecture
 import SPARQLStore from './stores/SPARQLStore.js'
 import ContextManager from './ContextManager.js'
@@ -190,9 +191,9 @@ export default class MemoryManager {
 
             // Step 2: Store with enhanced SPARQLStore (handles both persistence and memory)
             opLogger.step(
-                'store_with_memory',
+                'store_interaction',
                 '🧠 Storing in enhanced SPARQLStore with in-memory capabilities',
-                `[MemoryManager] store.storeWithMemory() - unified storage with FAISS indexing`,
+                `[MemoryManager] store.store() - unified storage with FAISS indexing`,
                 {
                     currentMemorySize: this.store.shortTermMemory?.length || 0,
                     interactionId: interaction.id,
@@ -202,7 +203,12 @@ export default class MemoryManager {
 
             // MIGRATION: Enhanced SPARQLStore handles both SPARQL persistence and in-memory structures
             // This single call updates FAISS index, concept graph, clustering, and SPARQL store
-            await this.store.storeWithMemory(interaction)
+            this.logger.info('🔥 DEBUG: About to call store.store()', {
+                interactionId: interaction.id,
+                promptPreview: interaction.prompt?.substring(0, 50),
+                hasEmbedding: !!interaction.embedding
+            });
+            await this.store.store(interaction)
 
             opLogger.complete(
                 'Interaction stored successfully in enhanced SPARQLStore',
@@ -229,7 +235,7 @@ export default class MemoryManager {
         }
     }
 
-    async retrieveRelevantInteractions(query, similarityThreshold = 40, excludeLastN = 0, limit = null) {
+    async retrieveRelevantInteractions(query, similarityThreshold = SPARQL_CONFIG.SIMILARITY.DEFAULT_THRESHOLD, excludeLastN = 0, limit = null) {
         // Start workflow tracking for memory retrieval
         const operationId = this.workflowLogger.startOperation(
             null,
@@ -450,7 +456,7 @@ export default class MemoryManager {
             };
             
             // Store to SPARQL as Ragno document without memory processing
-            await this.store.storeDocument(documentData);
+            await this.store.store(documentData);
             
             return {
                 success: true,
@@ -470,6 +476,12 @@ export default class MemoryManager {
         const concepts = await this.extractConcepts(combinedText);
         
         // Store the interaction using addInteraction
+        this.logger.info('🔥 DEBUG: About to call addInteraction', {
+            promptPreview: prompt?.substring(0, 50),
+            responsePreview: response?.substring(0, 50),
+            embeddingLength: embedding?.length,
+            conceptsCount: concepts?.length
+        });
         await this.addInteraction(prompt, response, embedding, concepts, metadata);
         
         return {

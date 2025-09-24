@@ -5,12 +5,8 @@
 
 export class ApiService {
   constructor(baseUrl = '/api') {
-    // In test environment, use absolute URL to avoid fetch parsing errors
-    if (typeof process !== 'undefined' && process.env?.NODE_ENV === 'test') {
-      this.baseUrl = baseUrl.startsWith('http') ? baseUrl : `http://localhost:3000${baseUrl}`;
-    } else {
-      this.baseUrl = baseUrl;
-    }
+    this.baseUrl = baseUrl;
+    this.apiKey = null;
 
     // Session management for MCP server
     this.sessionId = null;
@@ -18,6 +14,30 @@ export class ApiService {
     this.defaultHeaders = {
       'Content-Type': 'application/json'
     };
+
+    // Initialize configuration
+    this.initConfig();
+  }
+
+  /**
+   * Initialize API configuration from server
+   */
+  async initConfig() {
+    try {
+      const response = await fetch('/config');
+      if (response.ok) {
+        const config = await response.json();
+        this.baseUrl = config.apiUrl || this.baseUrl;
+        this.apiKey = config.apiKey;
+
+        // Add API key to default headers
+        if (this.apiKey) {
+          this.defaultHeaders['X-API-Key'] = this.apiKey;
+        }
+      }
+    } catch (error) {
+      console.warn('Failed to load API configuration:', error);
+    }
   }
 
   /**

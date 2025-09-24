@@ -24,6 +24,7 @@ import { v4 as uuidv4 } from 'uuid';
 import rateLimit from 'express-rate-limit';
 import multer from 'multer';
 import Config from '../Config.js';
+import { SPARQL_CONFIG } from '../../config/preferences.js';
 import MemoryManager from '../MemoryManager.js';
 import EmbeddingConnectorFactory from '../connectors/EmbeddingConnectorFactory.js';
 import OllamaConnector from '../connectors/OllamaConnector.js';
@@ -336,8 +337,8 @@ class APIServer {
         const memoryApi = new MemoryAPI({
             registry: this.apiRegistry,
             logger: this.logger,
-            similarityThreshold: 0.7,
-            defaultLimit: 10
+            similarityThreshold: SPARQL_CONFIG.SIMILARITY.DEFAULT_THRESHOLD,
+            defaultLimit: SPARQL_CONFIG.SIMILARITY.DEFAULT_LIMIT
         });
         await memoryApi.initialize();
 
@@ -345,7 +346,7 @@ class APIServer {
         const chatApi = new ChatAPI({
             registry: this.apiRegistry,
             logger: this.logger,
-            similarityThreshold: 0.7,
+            similarityThreshold: SPARQL_CONFIG.SIMILARITY.DEFAULT_THRESHOLD,
             contextWindow: 5
         });
         await chatApi.initialize();
@@ -354,7 +355,7 @@ class APIServer {
         const searchApi = new SearchAPI({
             registry: this.apiRegistry,
             logger: this.logger,
-            similarityThreshold: 0.7,
+            similarityThreshold: SPARQL_CONFIG.SIMILARITY.DEFAULT_THRESHOLD,
             defaultLimit: 5
         });
         await searchApi.initialize();
