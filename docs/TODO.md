@@ -26,6 +26,7 @@ src/stores/modules/Search.js has a hardcoded query
   compatibility wrapper:
 ● Read(src/services/ServiceManager.js)
 
+do you know why the stdio and http servers differed on this? Don't they use the same code?
 
 mcp/tools/SimpleVerbsService.js contains prompt fragments
 

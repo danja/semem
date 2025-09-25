@@ -477,7 +477,7 @@ import {
       if (useContext && this.memoryManager) {
         try {
           // Generate embedding for the question
-          const questionEmbedding = await this.memoryManager.embeddingHandler.generateEmbedding(question);
+          const questionEmbedding = await this.safeOps.generateEmbedding(question);
 
           // Use memory manager to search for similar content
           const searchResults = await this.memoryManager.retrieveRelevantInteractions(

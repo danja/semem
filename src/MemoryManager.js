@@ -49,6 +49,7 @@ export default class MemoryManager {
         // Normalize model names
         this.chatModel = String(chatModel)
         this.embeddingModel = String(embeddingModel)
+        this.dimension = dimension
 
         // Track initialization state
         this._initialized = false;
