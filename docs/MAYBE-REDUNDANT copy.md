@@ -29,7 +29,8 @@ Review files with embedding-related functionality
 src/services/embeddings/EmbeddingsAPIBridge.js
 
 Move src/services/embeddings/EmbeddingsAPIBridge.js to src/services/EmbeddingsAPIBridge.js and modify its dependants imports accordingly.
-Review what depends on src/handlers/EmbeddingHandler.js This file needs to be removed with all the embeddings-related operations being carried out by src/core/Embeddings.js and src/services/EmbeddingsAPIBridge.js
+
+Review files with embedding-related functionality. All the embeddings-related operations should be carried out by src/core/Embeddings.js and src/services/EmbeddingsAPIBridge.js (and possibly other modules if appropriate to separate concerns). Other embeddings functionality should be consolidated into those and then the redundant methods and files removed.
 ---
 
 SEARCH
@@ -56,7 +57,7 @@ Trace the workflows used by tell, ask and ingest.
 
 LOGGING
 
-Functionality related to logging is distributed throughout the code with a lot of duplication. 
+Functionality related to logging is distributed throughout the code with a lot of duplication. It needs to be consolidated, redundant code deleted. loglevel should be used under the hood. The setup is working in places, with a file log rotated. Note that the mcp stdio interface demands that there is nothing extra in stdout so a flag is set to enable this mode. Apart from in tests, direct console logging should not appear anywhere. 
 
 src/utils/LoggingConfig.js'
 mcp/tools/VerbsLogger.js
@@ -70,6 +71,12 @@ LLM
 src/handlers/LLMHandler.js
 should be under 
 src/services/
+
+ - `search`
+  - `embedding`
+  - `server`
+  - `memory`
+  - `api`
 ---
 
 ## 3. Client/Handler Classes for External Services

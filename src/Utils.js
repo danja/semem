@@ -1,12 +1,10 @@
 import { VectorOperations } from './core/Vectors.js';
+import { createUnifiedLogger } from './utils/LoggingConfig.js';
 
-// Logging utility
-export const logger = {
-    info: (...args) => console.log('[INFO]', ...args),
-    error: (...args) => console.error('[ERROR]', ...args),
-    debug: (...args) => console.debug('[DEBUG]', ...args),
-    warn: (...args) => console.warn('[WARN]', ...args)
-};
+// Unified logger for this module
+const logger = createUnifiedLogger('utils');
+
+export { logger };
 
 // Helper functions for vector operations
 export const vectorOps = {

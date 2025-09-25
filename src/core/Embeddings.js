@@ -385,6 +385,114 @@ export class Embeddings {
         this.clearCaches();
         logger.info('Core Embeddings module disposed');
     }
+
+    // Consolidated functionality from EmbeddingsAPIBridge.js
+
+    /**
+     * Generate embedding using the best available provider
+     * @param {string} text - Text to embed
+     * @param {Object} options - Generation options
+     * @returns {Promise<Array<number>>} - Embedding vector
+     */
+    async generateEmbedding(text, options = {}) {
+        const content = this.truncateContent(text);
+        this.validateContent(content);
+
+        const {
+            provider: preferredProvider = null,
+            model = null,
+            maxRetries = this.options.PROVIDERS.MAX_RETRIES
+        } = options;
+
+        let lastError = null;
+        let attemptsRemaining = maxRetries + 1;
+
+        const providers = this._getProviderFallbackChain(preferredProvider);
+
+        for (const providerConfig of providers) {
+            if (attemptsRemaining <= 0) break;
+
+            try {
+                const connector = await this._getConnector(providerConfig);
+                const modelToUse = model || providerConfig.embeddingModel || 'default';
+                const expectedDimension = this.getDimension(modelToUse);
+
+                const rawEmbedding = await connector.generateEmbedding(modelToUse, content);
+                const standardizedEmbedding = this.standardizeEmbedding(rawEmbedding, expectedDimension);
+                this.validateEmbedding(standardizedEmbedding, expectedDimension);
+
+                return standardizedEmbedding;
+            } catch (error) {
+                lastError = error;
+                attemptsRemaining--;
+            }
+        }
+
+        throw new Error(`Failed to generate embedding: ${lastError?.message}`);
+    }
+
+    /**
+     * Get provider fallback chain in priority order
+     * @param {string} preferredProvider - Preferred provider (optional)
+     * @returns {Array} - Provider configurations in fallback order
+     */
+    _getProviderFallbackChain(preferredProvider = null) {
+        const availableProviders = this.getAvailableProviders();
+
+        if (availableProviders.length === 0) {
+            throw new EmbeddingError('No embedding providers available', { type: 'CONFIGURATION_ERROR' });
+        }
+
+        // If specific provider requested, try it first, then others
+        if (preferredProvider) {
+            const preferred = availableProviders.find(p => p.type === preferredProvider);
+            if (preferred) {
+                const others = availableProviders.filter(p => p.type !== preferredProvider);
+                return [preferred, ...others];
+            }
+        }
+
+        return availableProviders;
+    }
+
+    /**
+     * Get or create connector for provider
+     * @param {Object} providerConfig - Provider configuration
+     * @returns {Promise<Object>} - Connector instance
+     */
+    async _getConnector(providerConfig) {
+        const cacheKey = `${providerConfig.type}-${providerConfig.embeddingModel || 'default'}`;
+
+        if (this.providerCache.has(cacheKey)) {
+            return this.providerCache.get(cacheKey);
+        }
+
+        try {
+            const connectorConfig = {
+                provider: providerConfig.type,
+                model: providerConfig.embeddingModel,
+                options: {
+                    ...providerConfig,
+                    apiKey: providerConfig.apiKey,
+                    baseUrl: providerConfig.baseUrl
+                }
+            };
+
+            const connector = EmbeddingConnectorFactory.createConnector(connectorConfig);
+            this.providerCache.set(cacheKey, connector);
+
+            return connector;
+        } catch (error) {
+            throw new EmbeddingError(
+                `Failed to create connector for provider ${providerConfig.type}: ${error.message}`,
+                {
+                    cause: error,
+                    type: 'CONNECTOR_ERROR',
+                    provider: providerConfig.type
+                }
+            );
+        }
+    }
 }
 
 export default Embeddings;

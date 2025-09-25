@@ -21,8 +21,8 @@
 import Config from '../Config.js';
 import { SPARQLQueryService } from '../services/sparql/index.js';
 import SPARQLHelper from '../services/sparql/SPARQLHelper.js';
-import EmbeddingConnectorFactory from '../connectors/EmbeddingConnectorFactory.js';
-import EmbeddingHandler from '../handlers/EmbeddingHandler.js';
+import { Embeddings } from '../core/Embeddings.js';
+import EmbeddingsAPIBridge from '../services/EmbeddingsAPIBridge.js';
 import MistralConnector from '../connectors/MistralConnector.js';
 import ClaudeConnector from '../connectors/ClaudeConnector.js';
 import OllamaConnector from '../connectors/OllamaConnector.js';
@@ -39,8 +39,9 @@ export class CreateConcepts {
         this.config = config;
         this.sparqlHelper = null;
         this.queryService = null;
+        this.embeddings = null;
+        this.apiBridge = null;
         this.llmHandler = null;
-        this.embeddingHandler = null;
         this.initialized = false;
     }
 
@@ -78,8 +79,8 @@ export class CreateConcepts {
         // Initialize LLM handler
         await this.initializeLLMHandler();
 
-        // Initialize embedding handler
-        await this.initializeEmbeddingHandler();
+        // Initialize embedding services
+        await this.initializeEmbeddingServices();
 
         this.initialized = true;
         logger.info('✅ CreateConcepts system initialized');
@@ -145,65 +146,31 @@ export class CreateConcepts {
     }
 
     /**
-     * Initialize embedding handler for concept embeddings
+     * Initialize embedding services directly
      */
-    async initializeEmbeddingHandler() {
+    async initializeEmbeddingServices() {
         try {
-            // Get embedding configuration from config
             const embeddingProvider = this.config.get('embeddingProvider') || 'ollama';
             const embeddingModel = this.config.get('embeddingModel') || 'nomic-embed-text';
 
+            this.embeddings = new Embeddings(this.config);
+
             logger.info(`🧠 Using embedding provider: ${embeddingProvider}`);
             logger.info(`🧠 Embedding model: ${embeddingModel}`);
-
-            // Create embedding connector using configuration patterns
-            let providerConfig = {};
-            if (embeddingProvider === 'nomic' && process.env.NOMIC_API_KEY) {
-                providerConfig = {
-                    provider: 'nomic',
-                    apiKey: process.env.NOMIC_API_KEY,
-                    model: embeddingModel
-                };
-            } else if (embeddingProvider === 'ollama') {
-                const ollamaBaseUrl = this.config.get('ollama.baseUrl') || 'http://localhost:11434';
-                providerConfig = {
-                    provider: 'ollama',
-                    baseUrl: ollamaBaseUrl,
-                    model: embeddingModel
-                };
-            } else {
-                // Default to ollama for any other provider
-                const ollamaBaseUrl = this.config.get('ollama.baseUrl') || 'http://localhost:11434';
-                providerConfig = {
-                    provider: 'ollama',
-                    baseUrl: ollamaBaseUrl,
-                    model: embeddingModel
-                };
-            }
-
-            const embeddingConnector = EmbeddingConnectorFactory.createConnector(providerConfig);
-
-            // Determine embedding dimension based on provider/model
-            // WRONG READ CONFIG
-            let embeddingDimension;
-            if (embeddingProvider === 'nomic' || embeddingModel.includes('nomic')) {
-                embeddingDimension = 768; // Nomic embedding dimension
-            } else if (embeddingModel.includes('text-embedding')) {
-                embeddingDimension = 1536; // OpenAI text-embedding models
-            } else {
-                embeddingDimension = 1536; // Default dimension for most models
-            }
-
-            this.embeddingHandler = new EmbeddingHandler(embeddingConnector, embeddingModel, embeddingDimension);
-
         } catch (error) {
-            logger.warn('Failed to create configured embedding handler, falling back to Ollama:', error.message);
-            const embeddingConnector = EmbeddingConnectorFactory.createConnector({
-                provider: 'ollama',
-                baseUrl: 'http://localhost:11434',
-                model: 'nomic-embed-text'
-            });
-            this.embeddingHandler = new EmbeddingHandler(embeddingConnector, 'nomic-embed-text', 1536);
+            logger.error('Failed to initialize embedding services:', error.message);
+        }
+    }
+
+    /**
+     * Generate embedding for text
+     */
+    async generateEmbedding(text) {
+        try {
+            return await this.embeddings.generateEmbedding(text);
+        } catch (error) {
+            logger.error('Error generating embedding:', error.message);
+            throw error;
         }
     }
 
@@ -280,7 +247,7 @@ export class CreateConcepts {
                 logger.info(`   📝 Processing concept ${i + 1}/${concepts.length}: "${concept}"`);
 
                 // Generate embedding for the concept text
-                const embedding = await this.embeddingHandler.generateEmbedding(concept);
+                const embedding = await this.generateEmbedding(concept);
 
                 if (!embedding || !Array.isArray(embedding) || embedding.length === 0) {
                     logger.warn(`   ⚠️  Failed to generate valid embedding for concept: "${concept}"`);
@@ -562,8 +529,8 @@ export class CreateConcepts {
      * Clean up resources
      */
     async cleanup() {
-        if (this.embeddingHandler && typeof this.embeddingHandler.cleanup === 'function') {
-            await this.embeddingHandler.cleanup();
+        if (this.embeddings && typeof this.embeddings.cleanup === 'function') {
+            await this.embeddings.cleanup();
         }
 
         if (this.llmHandler && typeof this.llmHandler.cleanup === 'function') {

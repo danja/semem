@@ -7,13 +7,15 @@
 
 import { getPromptManager } from './compatibility.js';
 import { PromptTemplate } from './interfaces.js';
-import logger from 'loglevel';
+import { createUnifiedLogger } from '../utils/LoggingConfig.js';
+
+const logger = createUnifiedLogger('migrate-existing');
 
 /**
  * Migrate existing PromptTemplates.js to unified system
  */
 export async function migratePromptTemplates(quiet = false) {
-    if (!quiet) console.log('=== Migrating PromptTemplates.js ===');
+    if (!quiet) logger.info('=== Migrating PromptTemplates.js ===');
     
     const manager = getPromptManager();
     
@@ -43,7 +45,7 @@ QUESTION: \${query}`
             completion: {
                 name: 'llama2-completion',
                 description: 'Llama2 completion template with INST formatting',
-                content: '[INST] ${context ? `Context:\n${context}\n\n` : \'\'}Query: ${query} [/INST]',
+                content: `[INST] ${context ? `Context:\n${context}\n\n` : ''}Query: ${query} [/INST]`,
                 format: 'completion'
             },
             extractConcepts: {
@@ -80,7 +82,7 @@ QUESTION: \${query}`
             completion: {
                 name: 'mistral-completion',
                 description: 'Mistral completion template with special formatting',
-                content: '<s>[INST] ${context ? `${context}\n\n` : \'\'}${query} [/INST]',
+                content: `<s>[INST] ${context ? `${context}\n\n` : ''}${query} [/INST]`,
                 format: 'completion'
             },
             extractConcepts: {
@@ -108,7 +110,7 @@ Now extract concepts from this text:
     // Register all templates
     let registered = 0;
     for (const [modelName, templates] of Object.entries(templateDefinitions)) {
-        if (!quiet) console.log(`\nMigrating ${modelName} templates...`);
+        if (!quiet) logger.info(`\nMigrating ${modelName} templates...`);
         
         for (const [templateType, templateDef] of Object.entries(templates)) {
             try {
@@ -125,15 +127,15 @@ Now extract concepts from this text:
                 
                 manager.registerTemplate(template);
                 registered++;
-                if (!quiet) console.log(`  ✓ ${templateDef.name}`);
+                if (!quiet) logger.info(`  ✓ ${templateDef.name}`);
                 
             } catch (error) {
-                if (!quiet) console.log(`  ✗ Failed to migrate ${templateDef.name}: ${error.message}`);
+                if (!quiet) logger.error(`  ✗ Failed to migrate ${templateDef.name}: ${error.message}`);
             }
         }
     }
     
-    if (!quiet) console.log(`\n✓ Migration complete: ${registered} templates registered`);
+    if (!quiet) logger.info(`\n✓ Migration complete: ${registered} templates registered`);
     return registered;
 }
 
@@ -141,7 +143,7 @@ Now extract concepts from this text:
  * Migrate MCP prompt registry
  */
 export async function migrateMCPRegistry(quiet = false) {
-    if (!quiet) console.log('=== Migrating MCP Prompt Registry ===');
+    if (!quiet) logger.info('=== Migrating MCP Prompt Registry ===');
     
     const manager = getPromptManager();
     
@@ -151,7 +153,7 @@ export async function migrateMCPRegistry(quiet = false) {
         await promptRegistry.initialize();
         
         const mcpPrompts = promptRegistry.listPrompts();
-        if (!quiet) console.log(`Found ${mcpPrompts.length} MCP prompts to migrate`);
+        if (!quiet) logger.info(`Found ${mcpPrompts.length} MCP prompts to migrate`);
         
         let registered = 0;
         for (const mcpPrompt of mcpPrompts) {
@@ -172,18 +174,18 @@ export async function migrateMCPRegistry(quiet = false) {
                 
                 manager.registerTemplate(template);
                 registered++;
-                if (!quiet) console.log(`  ✓ ${mcpPrompt.name}`);
+                if (!quiet) logger.info(`  ✓ ${mcpPrompt.name}`);
                 
             } catch (error) {
-                if (!quiet) console.log(`  ✗ Failed to migrate ${mcpPrompt.name}: ${error.message}`);
+                if (!quiet) logger.error(`  ✗ Failed to migrate ${mcpPrompt.name}: ${error.message}`);
             }
         }
         
-        if (!quiet) console.log(`\n✓ MCP migration complete: ${registered} templates registered`);
+        if (!quiet) logger.info(`\n✓ MCP migration complete: ${registered} templates registered`);
         return registered;
         
     } catch (error) {
-        if (!quiet) console.log(`✗ Could not load MCP registry: ${error.message}`);
+        if (!quiet) logger.error(`✗ Could not load MCP registry: ${error.message}`);
         return 0;
     }
 }
@@ -192,7 +194,7 @@ export async function migrateMCPRegistry(quiet = false) {
  * Create compatibility mappings for smooth transition
  */
 export async function createCompatibilityMappings(quiet = false) {
-    if (!quiet) console.log('=== Creating Compatibility Mappings ===');
+    if (!quiet) logger.info('=== Creating Compatibility Mappings ===');
     
     const manager = getPromptManager();
     
@@ -210,7 +212,7 @@ export async function createCompatibilityMappings(quiet = false) {
         {
             name: 'completion-default',
             description: 'Default completion template (automatically selects best model)',
-            content: '${context ? `Context: ${context}\n\n` : \'\'}Query: ${query}',
+            content: '${context ? `Context: ${context}\n\n` : ''}Query: ${query}',
             format: 'completion',
             supportedModels: ['*'],
             metadata: { isGeneric: true }
@@ -233,13 +235,13 @@ export async function createCompatibilityMappings(quiet = false) {
         try {
             manager.registerTemplate(new PromptTemplate(template));
             registered++;
-            if (!quiet) console.log(`  ✓ ${template.name}`);
+            if (!quiet) logger.info(`  ✓ ${template.name}`);
         } catch (error) {
-            if (!quiet) console.log(`  ✗ Failed to register ${template.name}: ${error.message}`);
+            if (!quiet) logger.error(`  ✗ Failed to register ${template.name}: ${error.message}`);
         }
     }
     
-    if (!quiet) console.log(`\n✓ Compatibility mappings created: ${registered} templates`);
+    if (!quiet) logger.info(`\n✓ Compatibility mappings created: ${registered} templates`);
     return registered;
 }
 
@@ -247,15 +249,15 @@ export async function createCompatibilityMappings(quiet = false) {
  * Validate migration results
  */
 export async function validateMigration(quiet = false) {
-    if (!quiet) console.log('=== Validating Migration ===');
+    if (!quiet) logger.info('=== Validating Migration ===');
     
     const manager = getPromptManager();
     const health = manager.healthCheck();
     
     if (!quiet) {
-        console.log(`Health status: ${health.status}`);
-        console.log(`Total templates: ${health.templates}`);
-        console.log(`Cache size: ${health.cacheSize}`);
+        logger.info(`Health status: ${health.status}`);
+        logger.info(`Total templates: ${health.templates}`);
+        logger.info(`Cache size: ${health.cacheSize}`);
     }
     
     // Test key templates
@@ -270,79 +272,23 @@ export async function validateMigration(quiet = false) {
     for (const templateName of testTemplates) {
         const template = manager.getTemplate(templateName);
         if (template) {
-            if (!quiet) console.log(`  ✓ ${templateName} - available`);
-            working++;
+            try {
+                // Simulate a query to test template functionality
+                const result = await template.apply({ query: 'Test', context: 'Testing context' });
+                if (result) {
+                    working++;
+                    if (!quiet) logger.info(`  ✓ ${templateName} is working`);
+                } else {
+                    if (!quiet) logger.warn(`  ⚠ ${templateName} returned no result`);
+                }
+            } catch (error) {
+                if (!quiet) logger.error(`  ✗ ${templateName} error: ${error.message}`);
+            }
         } else {
-            if (!quiet) console.log(`  ✗ ${templateName} - missing`);
+            if (!quiet) logger.warn(`  ⚠ ${templateName} not found`);
         }
     }
     
-    if (!quiet) console.log(`\n✓ Validation complete: ${working}/${testTemplates.length} core templates working`);
-    
-    return {
-        health,
-        workingTemplates: working,
-        totalTemplates: testTemplates.length
-    };
+    if (!quiet) logger.info(`\n✓ Validation complete: ${working} templates working correctly`);
+    return working;
 }
-
-/**
- * Full migration process
- */
-export async function runFullMigration(quiet = false) {
-    if (!quiet) console.log('=== Starting Full Migration Process ===\n');
-    
-    const results = {
-        promptTemplates: 0,
-        mcpRegistry: 0,
-        compatibility: 0,
-        errors: []
-    };
-    
-    try {
-        // Step 1: Migrate PromptTemplates
-        results.promptTemplates = await migratePromptTemplates(quiet);
-        
-        // Step 2: Migrate MCP Registry
-        results.mcpRegistry = await migrateMCPRegistry(quiet);
-        
-        // Step 3: Create compatibility mappings
-        results.compatibility = await createCompatibilityMappings(quiet);
-        
-        // Step 4: Validate migration
-        const validation = await validateMigration(quiet);
-        results.validation = validation;
-        
-        if (!quiet) {
-            console.log('\n=== Migration Summary ===');
-            console.log(`PromptTemplates migrated: ${results.promptTemplates}`);
-            console.log(`MCP templates migrated: ${results.mcpRegistry}`);
-            console.log(`Compatibility templates: ${results.compatibility}`);
-            console.log(`Total templates: ${results.promptTemplates + results.mcpRegistry + results.compatibility}`);
-            console.log(`Validation passed: ${validation.workingTemplates}/${validation.totalTemplates}`);
-        }
-        
-        return results;
-        
-    } catch (error) {
-        if (!quiet) console.error('Migration failed:', error);
-        results.errors.push(error.message);
-        return results;
-    }
-}
-
-// Run migration if this file is executed directly
-if (import.meta.url === `file://${process.argv[1]}`) {
-    runFullMigration().catch(error => {
-        console.error('Migration failed:', error);
-        process.exit(1);
-    });
-}
-
-export default {
-    migratePromptTemplates,
-    migrateMCPRegistry,
-    createCompatibilityMappings,
-    validateMigration,
-    runFullMigration
-};

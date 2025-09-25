@@ -23,8 +23,8 @@ import Config from '../Config.js';
 import { SPARQLQueryService } from '../services/sparql/index.js';
 import SPARQLHelper from '../services/sparql/SPARQLHelper.js';
 import LLMHandler from '../handlers/LLMHandler.js';
-import EmbeddingHandler from '../handlers/EmbeddingHandler.js';
-import EmbeddingConnectorFactory from '../connectors/EmbeddingConnectorFactory.js';
+import { Embeddings } from '../core/Embeddings.js';
+import EmbeddingsAPIBridge from '../services/EmbeddingsAPIBridge.js';
 import MistralConnector from '../connectors/MistralConnector.js';
 import ClaudeConnector from '../connectors/ClaudeConnector.js';
 import OllamaConnector from '../connectors/OllamaConnector.js';
@@ -40,8 +40,9 @@ export default class Memorise {
         this.config = null;
         this.queryService = null;
         this.sparqlHelper = null;
+        this.embeddings = null;
+        this.apiBridge = null;
         this.llmHandler = null;
-        this.embeddingHandler = null;
         this.chunker = null;
         this.conceptExtractor = null;
         this.initialized = false;
@@ -79,7 +80,7 @@ export default class Memorise {
             
             // 3. Initialize LLM and embedding handlers
             await this.initializeLLMHandler();
-            await this.initializeEmbeddingHandler();
+            await this.initializeEmbeddingServices();
             
             // 4. Initialize document processing components
             await this.initializeDocumentProcessing();
@@ -193,25 +194,68 @@ export default class Memorise {
     }
 
     /**
-     * Initialize embedding handler with provider selection
+     * Initialize embedding services directly
      */
-    async initializeEmbeddingHandler() {
+    async initializeEmbeddingServices() {
         try {
-            // Use modern EmbeddingHandler with Config instance
-            // This automatically handles provider selection, dimension mapping, and configuration
-            this.embeddingHandler = new EmbeddingHandler(
-                this.config, // Pass Config instance for modern mode
-                null,        // Model will be auto-selected
-                null,        // Dimension will be auto-detected
-                null         // No cache manager for now
-            );
-            
-            logger.debug('Embedding handler initialized with automatic provider selection');
-            
+            const embeddingProvider = this.config.get('embeddingProvider') || 'ollama';
+            const embeddingModel = this.config.get('embeddingModel') || 'nomic-embed-text';
+
+            this.embeddings = new Embeddings(this.config);
+
+            logger.info(`🧠 Using embedding provider: ${embeddingProvider}`);
+            logger.info(`🧠 Embedding model: ${embeddingModel}`);
         } catch (error) {
-            logger.error('Failed to initialize embedding handler:', error.message);
+            logger.error('Failed to initialize embedding services:', error.message);
+        }
+    }
+
+    /**
+     * Generate embedding for text
+     */
+    async generateEmbedding(text) {
+        try {
+            return await this.embeddings.generateEmbedding(text);
+        } catch (error) {
+            logger.error('Error generating embedding:', error.message);
             throw error;
         }
+    }
+
+    /**
+     * Create embeddings for all chunks
+     */
+    async createEmbeddings(chunks, targetGraph) {
+        let embeddingsCreated = 0;
+
+        for (const chunk of chunks) {
+            try {
+                // Generate embedding
+                const embedding = await this.embeddings.generateEmbedding(chunk.content);
+                const embeddingString = embedding.join(',');
+
+                // Store embedding
+                const embeddingUpdateQuery = `
+                    PREFIX ragno: <http://purl.org/stuff/ragno/>
+
+                    INSERT DATA {
+                        GRAPH <${targetGraph}> {
+                            <${chunk.uri}> ragno:embedding "${embeddingString}" .
+                        }
+                    }
+                `;
+
+                await this.sparqlHelper.executeUpdate(embeddingUpdateQuery);
+                embeddingsCreated++;
+
+            } catch (error) {
+                logger.warn(`Failed to create embedding for chunk ${chunk.uri}: ${error.message}`);
+                this.stats.errors.push(`Embedding failed for chunk: ${error.message}`);
+            }
+        }
+
+        this.stats.embeddingsCreated = embeddingsCreated;
+        logger.info(`Created ${embeddingsCreated} embeddings`);
     }
 
     /**
@@ -449,33 +493,33 @@ export default class Memorise {
      */
     async createEmbeddings(chunks, targetGraph) {
         let embeddingsCreated = 0;
-        
+
         for (const chunk of chunks) {
             try {
                 // Generate embedding
-                const embedding = await this.embeddingHandler.generateEmbedding(chunk.content);
+                const embedding = await this.embeddings.generateEmbedding(chunk.content);
                 const embeddingString = embedding.join(',');
-                
+
                 // Store embedding
                 const embeddingUpdateQuery = `
                     PREFIX ragno: <http://purl.org/stuff/ragno/>
-                    
+
                     INSERT DATA {
                         GRAPH <${targetGraph}> {
                             <${chunk.uri}> ragno:embedding "${embeddingString}" .
                         }
                     }
                 `;
-                
+
                 await this.sparqlHelper.executeUpdate(embeddingUpdateQuery);
                 embeddingsCreated++;
-                
+
             } catch (error) {
                 logger.warn(`Failed to create embedding for chunk ${chunk.uri}: ${error.message}`);
                 this.stats.errors.push(`Embedding failed for chunk: ${error.message}`);
             }
         }
-        
+
         this.stats.embeddingsCreated = embeddingsCreated;
         logger.info(`Created ${embeddingsCreated} embeddings`);
     }
@@ -616,10 +660,6 @@ export default class Memorise {
     async cleanup() {
         if (this.conceptExtractor) {
             await this.conceptExtractor.cleanup();
-        }
-        
-        if (this.embeddingHandler && typeof this.embeddingHandler.dispose === 'function') {
-            await this.embeddingHandler.dispose();
         }
         
         if (this.queryService && typeof this.queryService.cleanup === 'function') {

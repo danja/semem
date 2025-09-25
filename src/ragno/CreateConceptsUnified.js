@@ -14,8 +14,7 @@
 import Config from '../Config.js';
 import { SPARQLQueryService } from '../services/sparql/index.js';
 import SPARQLHelper from '../services/sparql/SPARQLHelper.js';
-import EmbeddingConnectorFactory from '../connectors/EmbeddingConnectorFactory.js';
-import EmbeddingHandler from '../handlers/EmbeddingHandler.js';
+import { Embeddings } from '../core/Embeddings.js';
 import MistralConnector from '../connectors/MistralConnector.js';
 import ClaudeConnector from '../connectors/ClaudeConnector.js';
 import OllamaConnector from '../connectors/OllamaConnector.js';
@@ -40,9 +39,7 @@ export class CreateConceptsUnified {
         this.config = config;
         this.sparqlHelper = null;
         this.queryService = null;
-        this.llmProvider = null;
-        this.chatModel = null;
-        this.embeddingHandler = null;
+        this.embeddings = null;
         this.promptManager = null;
         this.initialized = false;
     }
@@ -84,8 +81,8 @@ export class CreateConceptsUnified {
         // Initialize LLM handler
         await this.initializeLLMHandler();
 
-        // Initialize embedding handler
-        await this.initializeEmbeddingHandler();
+        // Initialize embedding services directly
+        await this.initializeEmbeddingServices();
 
         this.initialized = true;
         logger.info('✅ CreateConceptsUnified system initialized');
@@ -260,61 +257,31 @@ export class CreateConceptsUnified {
     }
 
     /**
-     * Initialize embedding handler for concept embeddings
+     * Initialize embedding services directly
      */
-    async initializeEmbeddingHandler() {
+    async initializeEmbeddingServices() {
         try {
-            // Get embedding configuration from config
             const embeddingProvider = this.config.get('embeddingProvider') || 'ollama';
             const embeddingModel = this.config.get('embeddingModel') || 'nomic-embed-text';
 
+            this.embeddings = new Embeddings(this.config);
+
             logger.info(`🧠 Using embedding provider: ${embeddingProvider}`);
             logger.info(`🧠 Embedding model: ${embeddingModel}`);
-
-            // Create embedding connector using configuration patterns
-            let providerConfig = {};
-            if (embeddingProvider === 'nomic' && process.env.NOMIC_API_KEY) {
-                providerConfig = {
-                    provider: 'nomic',
-                    apiKey: process.env.NOMIC_API_KEY,
-                    model: embeddingModel
-                };
-            } else if (embeddingProvider === 'ollama') {
-                const ollamaBaseUrl = this.config.get('ollama.baseUrl') || 'http://localhost:11434';
-                providerConfig = {
-                    provider: 'ollama',
-                    baseUrl: ollamaBaseUrl,
-                    model: embeddingModel
-                };
-            } else {
-                // Default to ollama for any other provider
-                const ollamaBaseUrl = this.config.get('ollama.baseUrl') || 'http://localhost:11434';
-                providerConfig = {
-                    provider: 'ollama',
-                    baseUrl: ollamaBaseUrl,
-                    model: embeddingModel
-                };
-            }
-
-            const embeddingConnector = EmbeddingConnectorFactory.createConnector(providerConfig);
-            
-            // Use modern EmbeddingHandler for automatic provider selection and dimension detection
-            this.embeddingHandler = new EmbeddingHandler(
-                this.config, // Pass Config instance for modern mode
-                embeddingModel, // Preferred model (will use this if available)
-                null,        // Dimension will be auto-detected
-                null         // No cache manager for now
-            );
-
         } catch (error) {
-            logger.warn('Failed to create configured embedding handler, falling back to automatic selection:', error.message);
-            // Use modern EmbeddingHandler with automatic fallback
-            this.embeddingHandler = new EmbeddingHandler(
-                this.config, // Config instance
-                null,        // Auto-select model
-                null,        // Auto-detect dimension
-                null         // No cache manager
-            );
+            logger.error('Failed to initialize embedding services:', error.message);
+        }
+    }
+
+    /**
+     * Generate embedding for text
+     */
+    async generateEmbedding(text) {
+        try {
+            return await this.embeddings.generateEmbedding(text);
+        } catch (error) {
+            logger.error('Error generating embedding:', error.message);
+            throw error;
         }
     }
 
@@ -752,7 +719,7 @@ export class CreateConceptsUnified {
                 logger.info(`   📝 Processing concept ${i + 1}/${concepts.length}: "${concept}"`);
                 
                 // Generate embedding for the concept text
-                const embedding = await this.embeddingHandler.generateEmbedding(concept);
+                const embedding = await this.generateEmbedding(concept);
                 
                 if (!embedding || !Array.isArray(embedding) || embedding.length === 0) {
                     logger.warn(`   ⚠️  Failed to generate valid embedding for concept: "${concept}"`);

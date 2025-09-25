@@ -65,29 +65,23 @@ export class EmbeddingsAPIBridge {
     }
 
     /**
-     * Generate embedding using the best available provider
+     * Generate embedding using the provider-specific API
      * @param {string} text - Text to embed
      * @param {Object} options - Generation options
      * @returns {Promise<Array<number>>} - Embedding vector
      */
     async generateEmbedding(text, options = {}) {
-        // Validate and prepare content
-        const content = this.coreEmbeddings.truncateContent(text);
-        this.coreEmbeddings.validateContent(content);
-
         const {
             provider: preferredProvider = null,
             model = null,
             maxRetries = this.options.PROVIDERS.MAX_RETRIES
         } = options;
 
-        this.metrics.totalRequests++;
-
         let lastError = null;
         let attemptsRemaining = maxRetries + 1; // +1 for initial attempt
 
-        // Try providers in priority order
-        const providers = this._getProviderFallbackChain(preferredProvider);
+        // Use the consolidated logic from Embeddings.js
+        const providers = this.coreEmbeddings._getProviderFallbackChain(preferredProvider);
 
         for (const providerConfig of providers) {
             if (attemptsRemaining <= 0) break;
@@ -99,43 +93,24 @@ export class EmbeddingsAPIBridge {
                 await this._enforceRateLimit(providerConfig.type);
 
                 // Get or create connector
-                const connector = await this._getConnector(providerConfig);
+                const connector = await this.coreEmbeddings._getConnector(providerConfig);
 
                 // Determine model to use
                 const modelToUse = model || providerConfig.embeddingModel || 'default';
 
-                // Get expected dimension
-                const expectedDimension = this.coreEmbeddings.getDimension(modelToUse);
-
                 // Generate embedding
-                const startTime = Date.now();
-                const rawEmbedding = await this._generateWithTimeout(
-                    connector,
-                    modelToUse,
-                    content,
-                    this.options.PROVIDERS.TIMEOUT_MS
-                );
-                const responseTime = Date.now() - startTime;
-
-                // Process and validate result
-                const standardizedEmbedding = this.coreEmbeddings.standardizeEmbedding(
-                    rawEmbedding,
-                    expectedDimension
-                );
-
-                this.coreEmbeddings.validateEmbedding(standardizedEmbedding, expectedDimension);
+                const rawEmbedding = await connector.generateEmbedding(modelToUse, text);
 
                 // Update metrics
-                this._updateMetrics(providerConfig.type, true, responseTime);
+                this._updateMetrics(providerConfig.type, true);
                 this.metrics.successfulRequests++;
                 this.lastUsedProvider = providerConfig.type;
 
                 logger.debug(
-                    `Successfully generated ${standardizedEmbedding.length}D embedding ` +
-                    `using ${providerConfig.type} in ${responseTime}ms`
+                    `Successfully generated embedding using ${providerConfig.type}`
                 );
 
-                return standardizedEmbedding;
+                return rawEmbedding;
 
             } catch (error) {
                 lastError = error;
@@ -301,35 +276,6 @@ export class EmbeddingsAPIBridge {
                 }
             );
         }
-    }
-
-    /**
-     * Generate embedding with timeout wrapper
-     * @param {Object} connector - Connector instance
-     * @param {string} model - Model name
-     * @param {string} content - Content to embed
-     * @param {number} timeoutMs - Timeout in milliseconds
-     * @returns {Promise<Array<number>>} - Embedding vector
-     */
-    async _generateWithTimeout(connector, model, content, timeoutMs) {
-        return new Promise((resolve, reject) => {
-            const timeout = setTimeout(() => {
-                reject(new EmbeddingError(
-                    `Embedding generation timed out after ${timeoutMs}ms`,
-                    { type: 'TIMEOUT_ERROR' }
-                ));
-            }, timeoutMs);
-
-            connector.generateEmbedding(model, content)
-                .then(result => {
-                    clearTimeout(timeout);
-                    resolve(result);
-                })
-                .catch(error => {
-                    clearTimeout(timeout);
-                    reject(error);
-                });
-        });
     }
 
     /**
