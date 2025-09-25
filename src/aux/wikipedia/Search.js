@@ -16,11 +16,11 @@ export default class WikipediaSearch {
      */
     constructor(options = {}) {
         this.options = {
-            sparqlEndpoint: options.sparqlEndpoint || 'http://localhost:3030/wikipedia/update',
+            sparqlEndpoint: options.sparqlEndpoint,
             sparqlAuth: options.sparqlAuth || { user: 'admin', password: 'admin123' },
-            graphURI: options.graphURI || 'http://purl.org/stuff/wikipedia',
-            baseURI: options.baseURI || 'http://purl.org/stuff/wikipedia/',
-            ragnoBaseURI: options.ragnoBaseURI || 'http://purl.org/stuff/ragno/',
+            graphURI: options.graphURI,
+            baseURI: options.baseURI,
+            ragnoBaseURI: options.ragnoBaseURI,
             wikipediaAPIBase: options.wikipediaAPIBase || 'https://en.wikipedia.org/w/api.php',
             timeout: options.timeout || 30000,
             defaultSearchLimit: options.defaultSearchLimit || 10,
@@ -75,7 +75,7 @@ export default class WikipediaSearch {
 
         try {
             logger.info(`Searching Wikipedia for: "${queryText}"`);
-            
+
             // Apply rate limiting if specified
             if (searchOptions.delay > 0) {
                 await new Promise(resolve => setTimeout(resolve, searchOptions.delay));
@@ -107,7 +107,7 @@ export default class WikipediaSearch {
             }
 
             const data = await response.json();
-            
+
             // Validate response structure
             if (!data.query || !data.query.search) {
                 throw new Error('Invalid Wikipedia API response structure');
@@ -186,13 +186,13 @@ export default class WikipediaSearch {
      */
     async transformToUnits(searchObject) {
         const units = [];
-        
+
         for (let i = 0; i < searchObject.results.length; i++) {
             try {
                 const result = searchObject.results[i];
                 const unit = await this.createUnit(result, searchObject, i);
                 units.push(unit);
-                
+
                 this.stats.processedResults++;
                 this.stats.generatedUnits++;
 
@@ -250,9 +250,9 @@ export default class WikipediaSearch {
 
         // Generate RDF triples for the unit
         unit.triples = this.generateUnitTriples(unit, result, searchObject);
-        
+
         this.stats.generatedTriples += unit.triples.length;
-        
+
         return unit;
     }
 
@@ -275,7 +275,7 @@ export default class WikipediaSearch {
         triples.push(`${unitURI} rdf:type ragno:Unit .`);
         triples.push(`${unitURI} rdfs:label ${SPARQLHelper.createLiteral(unit.title)} .`);
         triples.push(`${unitURI} ragno:unitType ${SPARQLHelper.createLiteral(unit.type)} .`);
-        
+
         // Metadata properties
         triples.push(`${unitURI} dcterms:identifier ${SPARQLHelper.createLiteral(unit.metadata.wikipediaPageId.toString())} .`);
         triples.push(`${unitURI} dcterms:source ${SPARQLHelper.createLiteral('wikipedia-search')} .`);
@@ -296,7 +296,7 @@ export default class WikipediaSearch {
         triples.push(`${entityURI} ragno:pageSize ${SPARQLHelper.createLiteral(unit.metadata.size.toString(), 'http://www.w3.org/2001/XMLSchema#integer')} .`);
         triples.push(`${entityURI} ragno:wordCount ${SPARQLHelper.createLiteral(unit.metadata.wordcount.toString(), 'http://www.w3.org/2001/XMLSchema#integer')} .`);
         triples.push(`${entityURI} ragno:wikipediaURI ${wikipediaPageURI} .`);
-        
+
         // Unit-Entity relationship
         triples.push(`${unitURI} ragno:hasEntity ${entityURI} .`);
         triples.push(`${entityURI} ragno:belongsToUnit ${unitURI} .`);
@@ -307,11 +307,11 @@ export default class WikipediaSearch {
         triples.push(`${textElementURI} ragno:content ${SPARQLHelper.createLiteral(unit.snippet)} .`);
         triples.push(`${textElementURI} ragno:textType ${SPARQLHelper.createLiteral('search-snippet')} .`);
         triples.push(`${textElementURI} ragno:contentLength ${SPARQLHelper.createLiteral(unit.snippet.length.toString(), 'http://www.w3.org/2001/XMLSchema#integer')} .`);
-        
+
         // TextElement provenance
         triples.push(`${textElementURI} prov:wasDerivedFrom ${wikipediaPageURI} .`);
         triples.push(`${textElementURI} prov:wasGeneratedBy ${SPARQLHelper.createLiteral('wikipedia-search-api')} .`);
-        
+
         // Entity-TextElement relationship
         triples.push(`${entityURI} ragno:hasTextElement ${textElementURI} .`);
         triples.push(`${textElementURI} ragno:describesEntity ${entityURI} .`);
@@ -327,32 +327,32 @@ export default class WikipediaSearch {
      */
     async loadUnitsToSPARQL(units) {
         logger.info(`Loading ${units.length} Wikipedia units to SPARQL store`);
-        
+
         const results = [];
-        
+
         for (let i = 0; i < units.length; i++) {
             const unit = units[i];
             logger.debug(`Loading unit ${i + 1}/${units.length}: ${unit.title}`);
-            
+
             try {
                 const unitTriples = unit.triples.join('\n        ');
                 const query = this.sparqlHelper.createInsertDataQuery(this.options.graphURI, unitTriples);
-                
+
                 const result = await this.sparqlHelper.executeUpdate(query);
                 results.push(result);
-                
+
                 if (!result.success) {
                     logger.error(`Unit ${i + 1} (${unit.title}) failed:`, result.error);
                     this.stats.errors.push(`Unit "${unit.title}": ${result.error}`);
                 }
-                
+
             } catch (error) {
                 logger.error(`Failed to load unit ${i + 1} (${unit.title}):`, error);
                 this.stats.errors.push(`Unit "${unit.title}": ${error.message}`);
                 results.push({ success: false, error: error.message });
             }
         }
-        
+
         return SPARQLHelper.getExecutionStats(results);
     }
 
@@ -364,7 +364,7 @@ export default class WikipediaSearch {
      */
     cleanSnippet(snippet) {
         if (!snippet) return '';
-        
+
         return snippet
             .replace(/<[^>]*>/g, '') // Remove HTML tags
             .replace(/&quot;/g, '"') // Convert HTML entities
@@ -408,7 +408,7 @@ export default class WikipediaSearch {
      */
     async queryUnits(limit = 10) {
         const queryEndpoint = this.options.sparqlEndpoint.replace('/update', '/query');
-        
+
         const query = `
 PREFIX ragno: <http://purl.org/stuff/ragno/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -446,7 +446,7 @@ LIMIT ${limit}`;
 
             const results = await response.json();
             return results;
-            
+
         } catch (error) {
             logger.error('Failed to query Wikipedia units:', error);
             throw error;
@@ -460,7 +460,7 @@ LIMIT ${limit}`;
      */
     generateReport() {
         const stats = this.getStatistics();
-        
+
         return {
             summary: {
                 totalQueries: stats.totalQueries,

@@ -1,6 +1,7 @@
 import { v4 as uuidv4 } from 'uuid'
 import { configureLogging } from './utils/LoggingConfig.js'
 import { SPARQL_CONFIG } from '../config/preferences.js'
+import Config from '../Config.js'; // Import Config.js to fetch dynamic values
 // MIGRATION: Using enhanced SPARQLStore instead of dual MemoryStore + BaseStore architecture
 import SPARQLStore from './stores/SPARQLStore.js'
 import ContextManager from './ContextManager.js'
@@ -17,8 +18,8 @@ export default class MemoryManager {
     constructor({
         llmProvider,
         embeddingProvider = null,
-        chatModel = 'qwen2:1.5b',
-        embeddingModel = 'nomic-embed-text',
+        chatModel = Config.get('chatModel') || 'qwen2:1.5b',
+        embeddingModel = Config.get('embeddingModel') || 'nomic-embed-text',
         storage = null,
         dimension,
         config = null,

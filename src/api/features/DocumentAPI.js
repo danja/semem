@@ -14,17 +14,17 @@ import Ingester from '../../services/document/Ingester.js';
 export default class DocumentAPI extends BaseAPI {
     constructor(config = {}) {
         super(config);
-        
+
         // Override logger if provided in config
         if (config.logger) {
             this.logger = config.logger;
         }
-        
+
         this.tempDir = config.tempDir || '/tmp/semem-documents';
         this.maxFileSize = config.maxFileSize || 10 * 1024 * 1024; // 10MB default
         this.allowedMimeTypes = config.allowedMimeTypes || [
             'application/pdf',
-            'text/html', 
+            'text/html',
             'text/plain',
             'application/octet-stream' // For some PDF uploads
         ];
@@ -34,7 +34,7 @@ export default class DocumentAPI extends BaseAPI {
 
     async initialize() {
         await super.initialize();
-        
+
         // Ensure temp directory exists
         try {
             await fs.mkdir(this.tempDir, { recursive: true });
@@ -43,7 +43,7 @@ export default class DocumentAPI extends BaseAPI {
             this.logger.error('Failed to create temp directory:', error);
             throw error;
         }
-        
+
         // Get dependencies from registry if available
         const registry = this.config.registry;
         if (registry) {
@@ -62,13 +62,13 @@ export default class DocumentAPI extends BaseAPI {
      */
     async executeOperation(operation, params = {}, files = null) {
         this._validateParams(params);
-        
+
         const start = Date.now();
         const operationId = uuidv4();
-        
+
         try {
             let result;
-            
+
             switch (operation) {
                 case 'upload':
                     result = await this.uploadDocument(params, files, operationId);
@@ -112,7 +112,7 @@ export default class DocumentAPI extends BaseAPI {
         } catch (error) {
             const duration = Date.now() - start;
             this.logger.error(`Document operation ${operation} failed after ${duration}ms:`, error);
-            
+
             throw {
                 success: false,
                 operation,
@@ -134,16 +134,16 @@ export default class DocumentAPI extends BaseAPI {
 
         const file = files.file;
         const options = params.options || {};
-        
+
         // Validate file
         this._validateFile(file);
-        
+
         // Generate document ID and store metadata
         const documentId = uuidv4();
         const timestamp = new Date().toISOString();
         const filename = file.originalname || file.name || 'unknown';
         const extension = path.extname(filename).toLowerCase();
-        
+
         const documentMeta = {
             id: documentId,
             filename,
@@ -156,7 +156,7 @@ export default class DocumentAPI extends BaseAPI {
         };
 
         this.documentStore.set(documentId, documentMeta);
-        
+
         let result = {
             documentId,
             filename,
@@ -174,11 +174,11 @@ export default class DocumentAPI extends BaseAPI {
                     mimeType: file.mimetype,
                     filename
                 }, operationId);
-                
+
                 result.conversion = convertResult;
                 documentMeta.status = 'converted';
                 documentMeta.operations.push('convert');
-                
+
                 // Auto-chunk if requested
                 if (options.chunk !== false) {
                     const chunkResult = await this.chunkDocument({
@@ -186,11 +186,11 @@ export default class DocumentAPI extends BaseAPI {
                         content: convertResult.content,
                         metadata: convertResult.metadata
                     }, operationId);
-                    
+
                     result.chunking = chunkResult;
                     documentMeta.status = 'chunked';
                     documentMeta.operations.push('chunk');
-                    
+
                     // Auto-ingest if requested
                     if (options.ingest !== false) {
                         const ingestResult = await this.ingestDocument({
@@ -198,7 +198,7 @@ export default class DocumentAPI extends BaseAPI {
                             chunkingResult: chunkResult.fullResult,
                             namespace: options.namespace
                         }, operationId);
-                        
+
                         result.ingestion = ingestResult;
                         documentMeta.status = 'ingested';
                         documentMeta.operations.push('ingest');
@@ -219,11 +219,11 @@ export default class DocumentAPI extends BaseAPI {
      */
     async convertDocument(params, operationId) {
         const { documentId, file, mimeType, filename, content } = params;
-        
+
         let inputContent = content || file;
         let inputMimeType = mimeType;
         let inputFilename = filename;
-        
+
         // If documentId provided, get from store
         if (documentId && !inputContent) {
             const doc = this.documentStore.get(documentId);
@@ -239,7 +239,7 @@ export default class DocumentAPI extends BaseAPI {
         }
 
         let result;
-        
+
         if (inputMimeType === 'application/pdf' || inputFilename?.endsWith('.pdf')) {
             // Convert PDF using buffer method
             const buffer = Buffer.isBuffer(inputContent) ? inputContent : Buffer.from(inputContent);
@@ -298,13 +298,15 @@ export default class DocumentAPI extends BaseAPI {
      */
     async chunkDocument(params, operationId) {
         const { documentId, content, metadata, options } = params;
-        
+
         if (!content) {
             throw new Error('No content provided for chunking');
         }
 
+
+
         const chunkOptions = {
-            namespace: options?.namespace || 'http://example.org/documents/',
+            namespace: options.namespace,
             provenance: {
                 operation: 'document-api-chunk',
                 operationId,
@@ -342,7 +344,7 @@ export default class DocumentAPI extends BaseAPI {
      */
     async ingestDocument(params, operationId) {
         const { documentId, chunkingResult, chunks, namespace, options } = params;
-        
+
         // Handle both old (chunks array) and new (chunkingResult object) formats
         let finalChunkingResult;
         if (chunkingResult) {
@@ -354,8 +356,9 @@ export default class DocumentAPI extends BaseAPI {
             throw new Error('No chunks or chunkingResult provided for ingestion');
         }
 
+        if (!namespace) throw Error('namespace undefined')
         const ingestOptions = {
-            namespace: namespace || 'http://example.org/documents/',
+            namespace: namespace,
             provenance: {
                 operation: 'document-api-ingest',
                 operationId,
@@ -369,7 +372,7 @@ export default class DocumentAPI extends BaseAPI {
         if (!store) {
             throw new Error('SPARQL store not available for ingestion');
         }
-        
+
         const ingester = new Ingester(store, ingestOptions);
         const result = await ingester.ingest(finalChunkingResult, ingestOptions);
 
@@ -397,21 +400,21 @@ export default class DocumentAPI extends BaseAPI {
      */
     async listDocuments(params) {
         const { limit = 50, offset = 0, status } = params;
-        
+
         let documents = Array.from(this.documentStore.values());
-        
+
         // Filter by status if provided
         if (status) {
             documents = documents.filter(doc => doc.status === status);
         }
-        
+
         // Sort by upload date (newest first)
         documents.sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt));
-        
+
         // Apply pagination
         const total = documents.length;
         const paginatedDocuments = documents.slice(offset, offset + limit);
-        
+
         return {
             documents: paginatedDocuments,
             pagination: {
@@ -428,17 +431,17 @@ export default class DocumentAPI extends BaseAPI {
      */
     async getDocument(params) {
         const { documentId } = params;
-        
+
         if (!documentId) {
             throw new Error('Document ID is required');
         }
-        
+
         const document = this.documentStore.get(documentId);
-        
+
         if (!document) {
             throw new Error(`Document not found: ${documentId}`);
         }
-        
+
         return { document };
     }
 
@@ -447,23 +450,23 @@ export default class DocumentAPI extends BaseAPI {
      */
     async deleteDocument(params) {
         const { documentId } = params;
-        
+
         if (!documentId) {
             throw new Error('Document ID is required');
         }
-        
+
         const document = this.documentStore.get(documentId);
-        
+
         if (!document) {
             throw new Error(`Document not found: ${documentId}`);
         }
-        
+
         // Remove from store
         this.documentStore.delete(documentId);
-        
+
         // TODO: Clean up SPARQL data if ingested
         // TODO: Clean up temporary files
-        
+
         return {
             documentId,
             deleted: true
@@ -475,17 +478,17 @@ export default class DocumentAPI extends BaseAPI {
      */
     async getProcessingStatus(params) {
         const { operationId } = params;
-        
+
         if (!operationId) {
             throw new Error('Operation ID is required');
         }
-        
+
         const job = this.processingJobs.get(operationId);
-        
+
         if (!job) {
             throw new Error(`Processing job not found: ${operationId}`);
         }
-        
+
         return { job };
     }
 
@@ -496,11 +499,11 @@ export default class DocumentAPI extends BaseAPI {
         if (!file) {
             throw new Error('No file provided');
         }
-        
+
         if (file.size > this.maxFileSize) {
             throw new Error(`File too large: ${file.size} bytes (max: ${this.maxFileSize})`);
         }
-        
+
         if (file.mimetype && !this.allowedMimeTypes.includes(file.mimetype)) {
             throw new Error(`Unsupported file type: ${file.mimetype}`);
         }
@@ -522,13 +525,13 @@ export default class DocumentAPI extends BaseAPI {
         // Clean up temp files
         try {
             const files = await fs.readdir(this.tempDir);
-            await Promise.all(files.map(file => 
-                fs.unlink(path.join(this.tempDir, file)).catch(() => {})
+            await Promise.all(files.map(file =>
+                fs.unlink(path.join(this.tempDir, file)).catch(() => { })
             ));
         } catch (error) {
             this.logger.warn('Error cleaning up temp files:', error);
         }
-        
+
         await super.shutdown();
     }
 }

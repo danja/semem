@@ -15,9 +15,9 @@ export default class CustomValidators {
                     new URL(value);
                     return { valid: true };
                 } catch {
-                    return { 
-                        valid: false, 
-                        message: 'Invalid URI format' 
+                    return {
+                        valid: false,
+                        message: 'Invalid URI format'
                     };
                 }
             }
@@ -36,7 +36,7 @@ export default class CustomValidators {
         // Semantic validators
         this.register('concept', {
             validate: (value, options = {}) => {
-                if (!value.startsWith(options.namespace || 'http://')) {
+                if (!value.startsWith(options.namespace)) {
                     return {
                         valid: false,
                         message: 'Concept URI must use correct namespace'
@@ -146,9 +146,9 @@ export default class CustomValidators {
             validate: async (value, options = {}) => {
                 const results = [];
                 for (const validator of validators) {
-                    const name = typeof validator === 'string' ? 
+                    const name = typeof validator === 'string' ?
                         validator : validator.name;
-                    const validatorOptions = typeof validator === 'string' ? 
+                    const validatorOptions = typeof validator === 'string' ?
                         options : { ...options, ...validator.options };
 
                     const result = await this.execute(name, value, validatorOptions);
@@ -179,9 +179,9 @@ export default class CustomValidators {
                     return { valid: true };
                 }
 
-                const name = typeof validator === 'string' ? 
+                const name = typeof validator === 'string' ?
                     validator : validator.name;
-                const validatorOptions = typeof validator === 'string' ? 
+                const validatorOptions = typeof validator === 'string' ?
                     options : { ...options, ...validator.options };
 
                 return this.execute(name, value, validatorOptions);
@@ -209,8 +209,8 @@ export default class CustomValidators {
                     const result = await this.execute(
                         typeof validator === 'string' ? validator : validator.name,
                         node,
-                        typeof validator === 'string' ? 
-                            validatorOptions : 
+                        typeof validator === 'string' ?
+                            validatorOptions :
                             { ...validatorOptions, ...validator.options }
                     );
                     results.push(result);

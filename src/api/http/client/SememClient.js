@@ -3,7 +3,7 @@
  */
 export default class SememClient {
     constructor(config = {}) {
-        this.baseUrl = config.baseUrl || 'http://localhost:3000/api';
+        this.baseUrl = config.baseUrl;
         this.apiKey = config.apiKey;
         this.timeout = config.timeout || 30000;
         this.retries = config.retries || 3;
@@ -42,7 +42,7 @@ export default class SememClient {
             try {
                 const response = await fetch(`${this.baseUrl}${endpoint}`, options);
                 if (response.ok) return response;
-                
+
                 lastError = new Error(`HTTP ${response.status}: ${response.statusText}`);
                 if (!this.isRetryable(response.status)) throw lastError;
             } catch (error) {
@@ -50,7 +50,7 @@ export default class SememClient {
                 if (!this.isRetryable(error)) throw error;
             }
 
-            await new Promise(resolve => 
+            await new Promise(resolve =>
                 setTimeout(resolve, this.retryDelay * Math.pow(2, attempt))
             );
         }
@@ -61,8 +61,8 @@ export default class SememClient {
         if (typeof statusOrError === 'number') {
             return [408, 429, 500, 502, 503, 504].includes(statusOrError);
         }
-        return statusOrError.name === 'AbortError' || 
-               statusOrError.name === 'NetworkError';
+        return statusOrError.name === 'AbortError' ||
+            statusOrError.name === 'NetworkError';
     }
 
     // Chat operations
@@ -142,7 +142,7 @@ export default class SememClient {
             while (true) {
                 const { value, done } = await reader.read();
                 if (done) break;
-                
+
                 const chunk = decoder.decode(value, { stream: true });
                 yield JSON.parse(chunk);
             }

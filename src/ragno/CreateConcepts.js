@@ -37,6 +37,8 @@ dotenv.config();
 export class CreateConcepts {
     constructor(config = null) {
         this.config = config;
+        this.chatModel = Config.get('chatModel') || 'qwen2:1.5b';
+        this.embeddingModel = Config.get('embeddingModel') || 'nomic-embed-text';
         this.sparqlHelper = null;
         this.queryService = null;
         this.embeddings = null;

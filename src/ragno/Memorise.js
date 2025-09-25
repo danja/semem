@@ -38,6 +38,8 @@ import crypto from 'crypto';
 export default class Memorise {
     constructor(configPath = null) {
         this.config = null;
+        this.chatModel = Config.get('chatModel') || 'qwen2:1.5b';
+        this.embeddingModel = Config.get('embeddingModel') || 'nomic-embed-text';
         this.queryService = null;
         this.sparqlHelper = null;
         this.embeddings = null;
