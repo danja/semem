@@ -15,6 +15,7 @@
 import { VectorOperations, VectorError } from './Vectors.js';
 import { EMBEDDING_CONFIG } from '../../config/preferences.js';
 import { createUnifiedLogger } from '../utils/LoggingConfig.js';
+import EmbeddingConnectorFactory from '../connectors/EmbeddingConnectorFactory.js';
 
 // Use unified STDIO-aware logger
 const logger = createUnifiedLogger('core-embeddings');

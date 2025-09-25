@@ -179,7 +179,7 @@ export default class MemoryManager {
                 id: metadata.id || uuidv4(),
                 prompt,
                 output,
-                embedding: this.embeddings.standardizeEmbedding(embedding),
+                embedding: this.embeddings.standardizeEmbedding(embedding, this.dimension),
                 timestamp: metadata.timestamp || Date.now(),
                 accessCount: 1,
                 concepts,

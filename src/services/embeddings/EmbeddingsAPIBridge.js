@@ -13,8 +13,7 @@
  * intelligent failover, performance optimization, and unified error handling.
  */
 
-// Dynamic import to avoid potential circular dependency issues
-// import EmbeddingConnectorFactory from '../../connectors/EmbeddingConnectorFactory.js';
+import EmbeddingConnectorFactory from '../../connectors/EmbeddingConnectorFactory.js';
 import { Embeddings, EmbeddingError } from '../../core/Embeddings.js';
 import { EMBEDDING_CONFIG } from '../../../config/preferences.js';
 import { createUnifiedLogger } from '../../utils/LoggingConfig.js';
