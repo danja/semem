@@ -54,7 +54,11 @@ async function initializeLLMHandler(config) {
         llmConnector = new ClaudeConnector(process.env.CLAUDE_API_KEY);
     } else {
         mcpDebugger.info('API key not found, falling back to Ollama');
-        llmConnector = new OllamaConnector('http://localhost:11434', 'qwen2:1.5b');
+        const ollamaBaseUrl = process.env.OLLAMA_HOST || config.get('ollama.baseUrl');
+        if (!ollamaBaseUrl) {
+            throw new Error('Ollama baseUrl not found in environment (OLLAMA_HOST) or config.json (ollama.baseUrl)');
+        }
+        llmConnector = new OllamaConnector(ollamaBaseUrl, 'qwen2:1.5b');
         chatProvider.chatModel = 'qwen2:1.5b';
     }
 

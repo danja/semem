@@ -23,7 +23,7 @@ export default class Config {
                 query: 'http://${SPARQL_HOST:-localhost}:${SPARQL_PORT:-3030}/semem/sparql',
                 update: 'http://${SPARQL_HOST:-localhost}:${SPARQL_PORT:-3030}/semem/update',
                 data: 'http://${SPARQL_HOST:-localhost}:${SPARQL_PORT:-3030}/semem/data',
-                graphName: 'http://hyperdata.it/content',
+                graphName: '${GRAPH_NAME:-http://hyperdata.it/content}',
                 user: '${SPARQL_USER:-admin}',
                 password: '${SPARQL_PASSWORD:-admin123}'
             }
@@ -40,7 +40,7 @@ export default class Config {
                 provider: 'ollama',
                 model: 'nomic-embed-text',
                 options: {
-                    baseUrl: 'http://localhost:11434'
+                    baseUrl: '${OLLAMA_HOST:-http://localhost:11434}'
                 }
             },
             // Alternative embedding providers
@@ -48,7 +48,7 @@ export default class Config {
                 ollama: {
                     model: 'nomic-embed-text',
                     options: {
-                        baseUrl: 'http://localhost:11434'
+                        baseUrl: '${OLLAMA_HOST:-http://localhost:11434}'
                     }
                 },
                 nomic: {

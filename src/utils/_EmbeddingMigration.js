@@ -19,7 +19,7 @@ export class EmbeddingMigration {
         this.endpoint = endpoint;
         this.credentials = credentials;
         this.expectedDimension = expectedDimension;
-        this.graphName = 'http://hyperdata.it/content'; // HARDCODED URI - WRONG
+        this.graphName = process.env.GRAPH_NAME || (() => { throw new Error('GRAPH_NAME environment variable required'); })();
         this.stats = {
             totalItems: 0,
             validItems: 0,

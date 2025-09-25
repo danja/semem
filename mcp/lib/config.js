@@ -135,7 +135,10 @@ export async function createEmbeddingConnector(configOrPath = null) {
         }
       } else if (provider.type === 'ollama') {
         mcpDebugger.info('✅ Creating Ollama embedding connector (fallback)...');
-        const ollamaBaseUrl = process.env.OLLAMA_HOST || 'http://localhost:11434';
+        const ollamaBaseUrl = process.env.OLLAMA_HOST;
+        if (!ollamaBaseUrl) {
+            throw new Error('Ollama baseUrl not found in environment (OLLAMA_HOST)');
+        }
         return EmbeddingConnectorFactory.createConnector({
           provider: 'ollama',
           baseUrl: ollamaBaseUrl,
@@ -149,7 +152,7 @@ export async function createEmbeddingConnector(configOrPath = null) {
     mcpDebugger.info('⚠️ No configured embedding providers available, defaulting to Ollama');
     return EmbeddingConnectorFactory.createConnector({
       provider: 'ollama',
-      baseUrl: process.env.OLLAMA_HOST || 'http://localhost:11434',
+      baseUrl: process.env.OLLAMA_HOST || (() => { throw new Error('OLLAMA_HOST environment variable required'); })(),
       model: 'nomic-embed-text'
     });
     
@@ -158,7 +161,7 @@ export async function createEmbeddingConnector(configOrPath = null) {
     // Fallback to Ollama for embeddings
     return EmbeddingConnectorFactory.createConnector({
       provider: 'ollama',
-      baseUrl: process.env.OLLAMA_HOST || 'http://localhost:11434',
+      baseUrl: process.env.OLLAMA_HOST || (() => { throw new Error('OLLAMA_HOST environment variable required'); })(),
       model: 'nomic-embed-text'
     });
   }

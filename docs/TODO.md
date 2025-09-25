@@ -1,5 +1,18 @@
 create docs/STATUS.md describing the current situation : which files participate in the Tell/Ask workflow, the data that is created, the architecture,  
 
+Update(mcp/index.js)
+  ⎿  Updated mcp/index.js with 5 additions and 1 removal                                                                                                  
+       1509            } else if (chatProvider.type === 'claude' && process.env.CLAUDE_API_KEY) {
+       1510                llmConnector = new ClaudeConnector(process.env.CLAUDE_API_KEY);
+       1511            } else {
+       1512 -              llmConnector = new OllamaConnector('http://localhost:11434', 'qwen2:1.5b');
+       1512 +              const ollamaBaseUrl = process.env.OLLAMA_HOST || chatProvider.baseUrl || config.get('ollama.baseUrl');
+       1513 +              if (!ollamaBaseUrl) {
+       1514 +                  throw new Error('Ollama baseUrl not found in environment (OLLAMA_HOST), provider config, or config.json (ollama.baseUrl)');
+       1515 +              }
+       1516 +              llmConnector = new OllamaConnector(ollamaBaseUrl, 'qwen2:1.5b');
+       1517                chatProvider.chatModel = 'qwen2:1.5b
+       
 
 api-server.js has :
             // Create test interactions for VSOM visualization
@@ -19,8 +32,8 @@ npx @modelcontextprotocol/inspector node mcp/index.js
 
 src/stores/modules/Search.js has a hardcoded query
 
-  mcp/tools/SimpleVerbsService.js:              const targetGraph = graph || storageConfig?.graphName || config.get('graphName') || 'http://hyperdata.it/content';
-
+now trace through the tell/ask workflow to find where the error is that's preventing the expected outcome. Chances are it's either du to unnecessary unwanted fallback code or
+  multiple instances of an object being addressed. 
 
    Looking back at the ServiceManager, I can see the issue might be in the
   compatibility wrapper:

@@ -1509,15 +1509,23 @@ function registerToolCallHandler(server) {
         } else if (chatProvider.type === 'claude' && process.env.CLAUDE_API_KEY) {
             llmConnector = new ClaudeConnector(process.env.CLAUDE_API_KEY);
         } else {
-            llmConnector = new OllamaConnector('http://localhost:11434', 'qwen2:1.5b');
+            const ollamaBaseUrl = process.env.OLLAMA_HOST || chatProvider.baseUrl || config.get('ollama.baseUrl');
+            if (!ollamaBaseUrl) {
+                throw new Error('Ollama baseUrl not found in environment (OLLAMA_HOST), provider config, or config.json (ollama.baseUrl)');
+            }
+            llmConnector = new OllamaConnector(ollamaBaseUrl, 'qwen2:1.5b');
             chatProvider.chatModel = 'qwen2:1.5b';
         }
 
         const llmHandler = new LLMHandler(llmConnector, chatProvider.chatModel);
         
         const SPARQLHelper = (await import('../src/services/sparql/SPARQLHelper.js')).default;
+        const sparqlEndpoint = process.env.SPARQL_UPDATE_ENDPOINT || config.get('sparqlUpdateEndpoint');
+        if (!sparqlEndpoint) {
+            throw new Error('SPARQL update endpoint not found in environment (SPARQL_UPDATE_ENDPOINT) or config.json (sparqlUpdateEndpoint)');
+        }
         const sparqlHelper = new SPARQLHelper(
-            config.get('sparqlUpdateEndpoint') || 'http://localhost:3030/semem/update',
+            sparqlEndpoint,
             {
                 auth: config.get('sparqlAuth') || { user: 'admin', password: 'admin123' },
                 timeout: 30000
