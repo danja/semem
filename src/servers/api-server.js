@@ -33,7 +33,7 @@ import ClaudeConnector from '../connectors/ClaudeConnector.js';
 import MistralConnector from '../connectors/MistralConnector.js';
 import GroqConnector from '../connectors/GroqConnector.js';
 import LLMHandler from '../handlers/LLMHandler.js';
-import EmbeddingHandler from '../handlers/EmbeddingHandler.js';
+import Embeddings from '../core/Embeddings.js';
 import CacheManager from '../handlers/CacheManager.js';
 import APIRegistry from '../api/common/APIRegistry.js';
 import { workflowLoggerRegistry } from '../utils/WorkflowLogger.js';
@@ -175,7 +175,7 @@ class APIServer {
         this.authenticateRequest = createAuthenticateRequest(this.config);
 
         // Use shared handlers from ServiceManager
-        const embeddingHandler = services.embeddingHandler;
+        const embeddingHandler = new Embeddings(services.embeddingProvider, this.config.get('embeddingModel'), this.embeddingDimension, services.cacheManager);
         const llmHandler = services.llmHandler;
 
         // Use shared storage and MemoryManager from ServiceManager
