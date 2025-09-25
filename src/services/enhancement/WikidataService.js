@@ -17,7 +17,7 @@ export class WikidataService {
     constructor(options = {}) {
         this.sparqlHelper = options.sparqlHelper;
         this.config = options.config;
-        
+
         // Default configuration
         this.settings = {
             wikidataEndpoint: options.wikidataEndpoint || 'https://query.wikidata.org/sparql',
@@ -26,7 +26,7 @@ export class WikidataService {
             maxEntities: options.maxEntities || 10,
             maxRelationships: options.maxRelationships || 20,
             rateLimit: options.rateLimit || 500, // milliseconds between requests
-            storageGraph: options.storageGraph || 'http://hyperdata.it/content',
+            storageGraph: options.storageGraph,
             enableCaching: options.enableCaching !== false,
             userAgent: options.userAgent || 'SememEnhancementService/1.0 (https://github.com/danja/hyperdata)',
             timeout: options.timeout || 10000,
@@ -143,7 +143,7 @@ export class WikidataService {
 
         const maxEntities = Math.min(entityIds.length, options.maxEntities || this.settings.maxEntities);
         const entitiesToFetch = entityIds.slice(0, maxEntities);
-        
+
         const cacheKey = `details:${entitiesToFetch.join(',')}`;
 
         // Check cache first
@@ -235,9 +235,9 @@ export class WikidataService {
                     entityDetails.detailsId,
                     originalQuery
                 );
-                
+
                 const result = await this.sparqlHelper.executeUpdate(insertQuery);
-                
+
                 if (!result.success) {
                     logger.error('SPARQL entity storage failed:', result.error);
                     throw new Error(`Failed to store Wikidata entity: ${result.error}`);
@@ -261,9 +261,9 @@ export class WikidataService {
                     entityDetails.detailsId,
                     originalQuery
                 );
-                
+
                 const result = await this.sparqlHelper.executeUpdate(insertQuery);
-                
+
                 if (!result.success) {
                     logger.error('SPARQL relationship storage failed:', result.error);
                     throw new Error(`Failed to store Wikidata relationship: ${result.error}`);
@@ -331,7 +331,7 @@ export class WikidataService {
         const enhancedPrompt = this.buildEnhancedPrompt(originalQuery, wikidataContext);
 
         logger.info(`✅ Enhanced query with Wikidata context (${entitySearchResults.entities.length} entities, ${wikidataContext.relationships.length} relationships)`);
-        
+
         return {
             enhancedPrompt,
             wikidataContext,
@@ -480,7 +480,7 @@ export class WikidataService {
 
         for (const binding of bindings) {
             const entityId = binding.entity.value.split('/').pop();
-            
+
             // Process entity
             if (!entitiesMap.has(entityId)) {
                 entitiesMap.set(entityId, {
@@ -533,12 +533,12 @@ export class WikidataService {
     async applyRateLimit() {
         const now = Date.now();
         const timeSinceLastRequest = now - this.lastRequestTime;
-        
+
         if (timeSinceLastRequest < this.settings.rateLimit) {
             const waitTime = this.settings.rateLimit - timeSinceLastRequest;
             await new Promise(resolve => setTimeout(resolve, waitTime));
         }
-        
+
         this.lastRequestTime = Date.now();
     }
 
@@ -554,20 +554,20 @@ export class WikidataService {
         const queryLower = query.toLowerCase();
         const labelLower = (entity.label || '').toLowerCase();
         const descLower = (entity.description || '').toLowerCase();
-        
+
         // Exact label match
         if (labelLower === queryLower) return 1.0;
-        
+
         // Label contains query
         if (labelLower.includes(queryLower)) return 0.8;
-        
+
         // Description contains query
         if (descLower.includes(queryLower)) return 0.6;
-        
+
         // Partial match in label
         const labelMatch = this.calculatePartialMatch(labelLower, queryLower);
         if (labelMatch > 0.5) return 0.4 + (labelMatch * 0.2);
-        
+
         // Partial match in description
         const descMatch = this.calculatePartialMatch(descLower, queryLower);
         return 0.2 + (descMatch * 0.2);
@@ -611,7 +611,7 @@ export class WikidataService {
     buildEnhancedPrompt(originalQuery, wikidataContext) {
         const entitySummaries = wikidataContext.entities
             .slice(0, 5) // Limit to top 5 entities
-            .map((entity, index) => 
+            .map((entity, index) =>
                 `${index + 1}. **${entity.label}** (${entity.wikidataId})\n   ${entity.description}\n   Relevance: ${entity.relevanceScore.toFixed(2)} | URL: ${entity.url}`
             )
             .join('\n\n');

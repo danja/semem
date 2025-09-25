@@ -9,11 +9,11 @@ import logger from 'loglevel';
 
 export class EnhancedZPTQueries {
     constructor(options = {}) {
-        this.contentGraph = options.contentGraph || 'http://hyperdata.it/content';
+        this.contentGraph = options.contentGraph;
         this.navigationGraph = options.navigationGraph || 'http://purl.org/stuff/navigation';
         this.sessionGraph = options.sessionGraph || 'http://tensegrity.it/semem';
         this.sparqlStore = options.sparqlStore;
-        
+
         this.prefixes = `
             PREFIX ragno: <http://purl.org/stuff/ragno/>
             PREFIX zpt: <http://purl.org/stuff/zpt/>
@@ -32,30 +32,30 @@ export class EnhancedZPTQueries {
      */
     async executeNavigation(params) {
         logger.info('🧭 Executing enhanced ZPT navigation with params:', params);
-        
+
         try {
             // Step 1: Build zoom-level appropriate base query
             const baseQuery = this.buildZoomQuery(params.zoom);
-            
+
             // Step 2: Apply pan filtering
             const filteredQuery = this.applyPanFiltering(baseQuery, params.pan);
-            
+
             // Step 3: Apply tilt projection
             const projectedQuery = this.applyTiltProjection(filteredQuery, params.tilt);
-            
+
             // Step 4: Execute query
             const results = await this.executeQuery(projectedQuery);
-            
+
             // Step 5: Store navigation metadata
             await this.storeNavigationMetadata(params, results);
-            
+
             return {
                 success: true,
                 results: results,
                 queryParams: params,
                 timestamp: new Date().toISOString()
             };
-            
+
         } catch (error) {
             logger.error('❌ Enhanced ZPT navigation failed:', error);
             throw error;
@@ -279,10 +279,10 @@ export class EnhancedZPTQueries {
                 const insertPoint = whereMatch.index + whereMatch[0].length;
                 const additionalClauses = whereClauses.join('\n                ');
                 const filterClauses = filters.length > 0 ? `\nFILTER(${filters.join(' && ')})` : '';
-                
-                filteredQuery = filteredQuery.slice(0, insertPoint) + 
-                              '\n                ' + additionalClauses + filterClauses +
-                              filteredQuery.slice(insertPoint);
+
+                filteredQuery = filteredQuery.slice(0, insertPoint) +
+                    '\n                ' + additionalClauses + filterClauses +
+                    filteredQuery.slice(insertPoint);
             }
         }
 
@@ -364,11 +364,11 @@ export class EnhancedZPTQueries {
      */
     async executeQuery(query) {
         const fullQuery = this.prefixes + query + ' LIMIT 50';
-        
+
         logger.debug('🔍 Executing enhanced ZPT query:', fullQuery);
-        
+
         const result = await this.sparqlStore._executeSparqlQuery(
-            fullQuery, 
+            fullQuery,
             this.sparqlStore.endpoint.query
         );
 
@@ -392,7 +392,7 @@ export class EnhancedZPTQueries {
     async storeNavigationMetadata(params, results) {
         const sessionURI = `http://purl.org/stuff/instance/session-${Date.now()}`;
         const viewURI = `http://purl.org/stuff/instance/view-${Date.now()}`;
-        
+
         const metadataQuery = `
             ${this.prefixes}
             
@@ -415,7 +415,7 @@ export class EnhancedZPTQueries {
         `;
 
         const result = await this.sparqlStore._executeSparqlUpdate(metadataQuery, this.sparqlStore.endpoint.update);
-        
+
         if (!result.success) {
             logger.warn('⚠️  Failed to store navigation metadata:', result.error);
         } else {
@@ -447,7 +447,7 @@ export class EnhancedZPTQueries {
     getRagnoTypeForZoom(zoomLevel) {
         const mapping = {
             'entity': 'ragno:Entity',
-            'unit': 'ragno:Unit', 
+            'unit': 'ragno:Unit',
             'text': 'ragno:TextElement',
             'community': 'ragno:Community',
             'corpus': 'ragno:Corpus'

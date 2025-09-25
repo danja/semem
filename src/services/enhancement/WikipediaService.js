@@ -18,14 +18,14 @@ export class WikipediaService {
         this.sparqlHelper = options.sparqlHelper;
         this.embeddingHandler = options.embeddingHandler;
         this.config = options.config;
-        
+
         // Default configuration
         this.settings = {
             apiEndpoint: options.apiEndpoint || 'https://en.wikipedia.org/api/rest_v1',
             searchEndpoint: options.searchEndpoint || 'https://en.wikipedia.org/w/api.php',
             maxResults: options.maxResults || 5,
             rateLimit: options.rateLimit || 200, // milliseconds between requests
-            storageGraph: options.storageGraph || 'http://hyperdata.it/content',
+            storageGraph: options.storageGraph,
             maxContentLength: options.maxContentLength || 2000,
             enableCaching: options.enableCaching !== false,
             userAgent: options.userAgent || 'SememEnhancementService/1.0 (https://github.com/danja/hyperdata)',
@@ -143,7 +143,7 @@ export class WikipediaService {
 
         for (let i = 0; i < maxArticles; i++) {
             const article = articles[i];
-            
+
             try {
                 // Apply rate limiting
                 await this.applyRateLimit();
@@ -238,7 +238,7 @@ export class WikipediaService {
             for (const article of searchResults.results) {
                 // Generate embedding for article content
                 const contentForEmbedding = article.content || article.snippet || article.title;
-                const embedding = this.embeddingHandler 
+                const embedding = this.embeddingHandler
                     ? await this.embeddingHandler.generateEmbedding(contentForEmbedding)
                     : null;
 
@@ -247,15 +247,15 @@ export class WikipediaService {
 
                 // Use SPARQL template for context storage
                 const insertQuery = await this.buildContextStorageQuery(
-                    articleURI, 
-                    article, 
-                    embedding, 
+                    articleURI,
+                    article,
+                    embedding,
                     searchResults.searchId,
                     originalQuery
                 );
-                
+
                 const result = await this.sparqlHelper.executeUpdate(insertQuery);
-                
+
                 if (!result.success) {
                     logger.error('SPARQL context storage failed:', result.error);
                     throw new Error(`Failed to store Wikipedia context: ${result.error}`);
@@ -321,7 +321,7 @@ export class WikipediaService {
         const enhancedPrompt = this.buildEnhancedPrompt(originalQuery, wikipediaContext);
 
         logger.info(`✅ Enhanced query with Wikipedia context (${articles.length} articles)`);
-        
+
         return {
             enhancedPrompt,
             wikipediaContext,
@@ -362,8 +362,8 @@ export class WikipediaService {
 
             // Step 4: Create enhanced query context
             const enhancement = await this.enhanceQueryWithWikipedia(
-                query, 
-                searchResults, 
+                query,
+                searchResults,
                 articlesWithContent
             );
 
@@ -405,12 +405,12 @@ export class WikipediaService {
     async applyRateLimit() {
         const now = Date.now();
         const timeSinceLastRequest = now - this.lastRequestTime;
-        
+
         if (timeSinceLastRequest < this.settings.rateLimit) {
             const waitTime = this.settings.rateLimit - timeSinceLastRequest;
             await new Promise(resolve => setTimeout(resolve, waitTime));
         }
-        
+
         this.lastRequestTime = Date.now();
     }
 
@@ -426,18 +426,18 @@ export class WikipediaService {
         const queryLower = query.toLowerCase();
         const titleLower = result.title.toLowerCase();
         const snippetLower = (result.snippet || '').toLowerCase();
-        
+
         // Title match score (higher weight)
-        const titleMatch = titleLower.includes(queryLower) ? 0.4 : 
-                          this.calculatePartialMatch(titleLower, queryLower) * 0.4;
-        
+        const titleMatch = titleLower.includes(queryLower) ? 0.4 :
+            this.calculatePartialMatch(titleLower, queryLower) * 0.4;
+
         // Snippet match score
-        const snippetMatch = snippetLower.includes(queryLower) ? 0.3 : 
-                            this.calculatePartialMatch(snippetLower, queryLower) * 0.3;
-        
+        const snippetMatch = snippetLower.includes(queryLower) ? 0.3 :
+            this.calculatePartialMatch(snippetLower, queryLower) * 0.3;
+
         // Size/quality bonus (larger articles are often more comprehensive)
         const sizeBonus = result.wordcount ? Math.min(0.3, result.wordcount / 10000 * 0.3) : 0.1;
-        
+
         return Math.min(1.0, titleMatch + snippetMatch + sizeBonus);
     }
 
@@ -479,7 +479,7 @@ export class WikipediaService {
     buildEnhancedPrompt(originalQuery, wikipediaContext) {
         const articleSummaries = wikipediaContext.articles
             .slice(0, 5) // Limit to top 5 articles
-            .map((article, index) => 
+            .map((article, index) =>
                 `${index + 1}. **${article.title}** (Relevance: ${article.relevanceScore.toFixed(2)})\n   ${article.content.substring(0, 300)}${article.content.length > 300 ? '...' : ''}\n   Source: ${article.url}`
             )
             .join('\n\n');
@@ -517,7 +517,7 @@ ANSWER:`;
         try {
             const embeddingString = embedding ? embedding.map(x => x.toString()).join(',') : '';
             const content = article.content || article.snippet || '';
-            
+
             return await this.queryService.getQuery('store-wikipedia-article', {
                 storageGraph: this.settings.storageGraph,
                 articleURI: articleURI,
@@ -554,7 +554,7 @@ ANSWER:`;
     buildFallbackContextStorageQuery(articleURI, article, embedding, searchId, originalQuery) {
         const embeddingString = embedding ? embedding.map(x => x.toString()).join(',') : '';
         const content = article.content || article.snippet || '';
-        
+
         return `
             PREFIX ragno: <http://purl.org/stuff/ragno/>
             PREFIX dcterms: <http://purl.org/dc/terms/>

@@ -175,7 +175,7 @@ export class TextToCorpuscle {
 
         const cleanQuestion = questionText.trim();
         const storageConfig = this.config.get('storage');
-        const graphName = options.graphName || storageConfig.options.graphName || this.config.get('graphName') || 'http://hyperdata.it/content';
+        const graphName = options.graphName || storageConfig.options.graphName || this.config.get('graphName');
 
         logger.info('🔄 Processing question to corpuscle...');
         logger.info(`📝 Question: "${cleanQuestion}"`);

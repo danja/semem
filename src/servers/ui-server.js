@@ -22,7 +22,7 @@ const __dirname = path.dirname(path.dirname(path.dirname(__filename))); // Go up
 // Load configuration using Config.js (which includes SPARQL endpoints)
 let config = {
     port: parseInt(process.env.PORT) || 4120, // Updated port to 4120
-    graphName: process.env.GRAPH_NAME || 'http://hyperdata.it/content',
+    graphName: process.env.GRAPH_NAME,
     chatModel: process.env.CHAT_MODEL,
     embeddingModel: process.env.EMBEDDING_MODEL
 };

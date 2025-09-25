@@ -10,9 +10,9 @@ dotenv.config();
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { 
-  CallToolRequestSchema,
-  ListToolsRequestSchema
+import {
+    CallToolRequestSchema,
+    ListToolsRequestSchema
 } from '@modelcontextprotocol/sdk/types.js';
 
 // Import Flow components
@@ -45,7 +45,7 @@ async function initializeLLMHandler(config) {
     mcpDebugger.info(`Selected provider: ${chatProvider.type} (priority ${chatProvider.priority})`);
 
     let llmConnector;
-    
+
     if (chatProvider.type === 'mistral' && process.env.MISTRAL_API_KEY) {
         llmConnector = new MistralConnector(process.env.MISTRAL_API_KEY);
     } else if (chatProvider.type === 'claude' && process.env.CLAUDE_API_KEY) {
@@ -89,7 +89,7 @@ function getFeedbackOptionsForMode(mode) {
             feedbackMode: 'comprehensive'
         }
     };
-    
+
     return options[mode] || options.standard;
 }
 
@@ -98,22 +98,22 @@ function getFeedbackOptionsForMode(mode) {
  */
 async function processQuestionWithFeedback(question, llmHandler, sparqlHelper, config, mode = 'standard') {
     mcpDebugger.info(`Processing question with iterative feedback: "${question.substring(0, 50)}..."`);
-    
+
     const feedbackWorkflow = new FeedbackWorkflow();
-    
+
     const resources = {
         llmHandler,
         sparqlHelper,
         config: config
     };
-    
+
     const feedbackOptions = getFeedbackOptionsForMode(mode);
     mcpDebugger.info(`Using ${mode} mode with ${feedbackOptions.maxIterations} max iterations`);
-    
+
     try {
         // Execute iterative feedback workflow
         const feedbackResult = await feedbackWorkflow.execute(
-            { 
+            {
                 question: { text: question },
                 enableIterativeFeedback: true,
                 enableWikidataResearch: feedbackOptions.enableWikidataResearch
@@ -121,13 +121,13 @@ async function processQuestionWithFeedback(question, llmHandler, sparqlHelper, c
             resources,
             feedbackOptions
         );
-        
+
         if (feedbackResult.success) {
             const data = feedbackResult.data;
-            
+
             mcpDebugger.info(`Completed ${data.workflow.iterationsPerformed} iterations`);
             mcpDebugger.info(`Completeness improvement: ${(data.completenessImprovement.improvement * 100).toFixed(1)}%`);
-            
+
             return {
                 success: true,
                 question: question,
@@ -145,7 +145,7 @@ async function processQuestionWithFeedback(question, llmHandler, sparqlHelper, c
         } else {
             throw new Error(feedbackResult.error || 'Feedback workflow failed');
         }
-        
+
     } catch (error) {
         mcpDebugger.error('Error in question processing:', error);
         return {
@@ -161,7 +161,7 @@ async function processQuestionWithFeedback(question, llmHandler, sparqlHelper, c
  */
 async function createServer() {
     mcpDebugger.info('Creating Answer MCP server...');
-    
+
     const server = new Server(
         {
             name: "semem-answer",
@@ -185,8 +185,8 @@ async function createServer() {
                     inputSchema: {
                         type: 'object',
                         properties: {
-                            question: { 
-                                type: 'string', 
+                            question: {
+                                type: 'string',
                                 description: 'The question to answer'
                             },
                             mode: {
@@ -207,45 +207,45 @@ async function createServer() {
     server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const { name, arguments: args } = request.params;
         mcpDebugger.info(`Tool call: ${name}`, args);
-        
+
         try {
             if (name === 'semem:answer') {
                 const { question, mode = 'standard' } = args;
-                
+
                 if (!question || typeof question !== 'string' || !question.trim()) {
                     throw new Error('Invalid question parameter. It must be a non-empty string.');
                 }
-                
+
                 // Initialize configuration
                 const config = new Config('./config/config.json');
                 await config.init();
-                
+
                 const workflowConfig = {
                     beerqaGraphURI: 'http://purl.org/stuff/beerqa/test',
                     wikipediaGraphURI: 'http://purl.org/stuff/wikipedia/research',
                     wikidataGraphURI: 'http://purl.org/stuff/wikidata/research'
                 };
-                
+
                 // Initialize LLM handler
                 const llmHandler = await initializeLLMHandler(config);
-                
+
                 const sparqlHelper = new SPARQLHelper(
-                    config.get('sparqlUpdateEndpoint') || 'http://localhost:3030/semem/update',
+                    config.get('sparqlUpdateEndpoint'),
                     {
                         auth: config.get('sparqlAuth') || { user: 'admin', password: 'admin123' },
                         timeout: 30000
                     }
                 );
-                
+
                 // Process question with iterative feedback
                 const result = await processQuestionWithFeedback(
-                    question, 
-                    llmHandler, 
-                    sparqlHelper, 
-                    workflowConfig, 
+                    question,
+                    llmHandler,
+                    sparqlHelper,
+                    workflowConfig,
                     mode
                 );
-                
+
                 if (result.success) {
                     return {
                         content: [{
@@ -272,9 +272,9 @@ async function createServer() {
                     };
                 }
             }
-            
+
             throw new Error(`Unknown tool: ${name}`);
-            
+
         } catch (error) {
             mcpDebugger.error(`Error in tool ${name}:`, error);
             return {
@@ -290,7 +290,7 @@ async function createServer() {
             };
         }
     });
-    
+
     mcpDebugger.info('Answer MCP server created successfully');
     return server;
 }

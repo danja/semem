@@ -22,7 +22,7 @@ import logger from 'loglevel';
 export default class ResearchService {
     constructor(options = {}) {
         this.options = {
-            sparqlEndpoint: options.sparqlEndpoint || 'http://localhost:3030/semem/update',
+            sparqlEndpoint: options.sparqlEndpoint,
             sparqlAuth: options.sparqlAuth || { user: 'admin', password: 'admin123' },
             defaultGraphURI: options.defaultGraphURI || 'http://purl.org/stuff/research',
             maxEntitiesPerConcept: options.maxEntitiesPerConcept || 3,
@@ -31,7 +31,7 @@ export default class ResearchService {
             timeout: options.timeout || 30000,
             ...options
         };
-        
+
         // Initialize service instances
         this.wikidataResearcher = new WikidataResearcher();
         this.wikipediaSearch = new WikipediaSearch({
@@ -42,7 +42,7 @@ export default class ResearchService {
         });
         this.wikidataSearch = new WikidataSearch();
         this.wikidataConnector = new WikidataConnector();
-        
+
         // Statistics
         this.stats = {
             totalResearches: 0,
@@ -51,7 +51,7 @@ export default class ResearchService {
             entitiesDiscovered: 0,
             conceptsExtracted: 0
         };
-        
+
         logger.info('ResearchService initialized');
     }
 
@@ -68,7 +68,7 @@ export default class ResearchService {
     async researchConcepts(input, resources, options = {}) {
         this.stats.totalResearches++;
         this.stats.wikidataQueries++;
-        
+
         const researchOptions = {
             maxEntitiesPerConcept: options.maxEntitiesPerConcept || this.options.maxEntitiesPerConcept,
             maxWikidataSearchResults: options.maxSearchResults || this.options.maxSearchResults,
@@ -77,13 +77,13 @@ export default class ResearchService {
             storeResults: options.storeResults !== false,
             ...options
         };
-        
+
         logger.info(`Researching concepts for: "${input.question || 'provided concepts'}"`);
-        
+
         const result = await this.wikidataResearcher.executeResearch(input, resources, researchOptions);
-        
+
         this.stats.entitiesDiscovered += result.statistics?.entitiesFound || 0;
-        
+
         return result;
     }
 
@@ -96,7 +96,7 @@ export default class ResearchService {
      */
     async searchWikipedia(query, options = {}) {
         this.stats.wikipediaQueries++;
-        
+
         const searchOptions = {
             limit: options.limit || 10,
             offset: options.offset || 0,
@@ -105,9 +105,9 @@ export default class ResearchService {
             ingestResults: options.ingestResults !== false,
             ...options
         };
-        
+
         logger.info(`Searching Wikipedia for: "${query}"`);
-        
+
         return await this.wikipediaSearch.search(query, searchOptions);
     }
 
@@ -121,11 +121,11 @@ export default class ResearchService {
      */
     async combinedResearch(question, resources, options = {}) {
         this.stats.totalResearches++;
-        
+
         logger.info(`Starting combined research for: "${question}"`);
-        
+
         const results = {};
-        
+
         // Step 1: Wikidata research
         try {
             results.wikidata = await this.researchConcepts(
@@ -140,7 +140,7 @@ export default class ResearchService {
             logger.warn('Wikidata research failed:', error.message);
             results.wikidata = { error: error.message };
         }
-        
+
         // Step 2: Wikipedia search
         try {
             results.wikipedia = await this.searchWikipedia(question, {
@@ -151,17 +151,17 @@ export default class ResearchService {
             logger.warn('Wikipedia search failed:', error.message);
             results.wikipedia = { error: error.message };
         }
-        
+
         // Generate summary
         results.summary = {
             entitiesFound: results.wikidata?.statistics?.entitiesFound || 0,
             wikipediaArticles: results.wikipedia?.results?.length || 0,
-            totalSources: (results.wikidata?.statistics?.entitiesFound || 0) + 
-                         (results.wikipedia?.results?.length || 0),
+            totalSources: (results.wikidata?.statistics?.entitiesFound || 0) +
+                (results.wikipedia?.results?.length || 0),
             hasWikidataResults: !results.wikidata?.error,
             hasWikipediaResults: !results.wikipedia?.error
         };
-        
+
         return results;
     }
 
@@ -178,9 +178,9 @@ export default class ResearchService {
         if (!entityId && !entityName) {
             throw new Error('Either entityId or entityName must be provided');
         }
-        
+
         logger.info(`Looking up entity: ${entityId || entityName}`);
-        
+
         if (entityId) {
             // Direct lookup by ID
             return await this.wikidataConnector.getEntityDetails(entityId, { language });
@@ -190,11 +190,11 @@ export default class ResearchService {
                 language,
                 limit: 1
             });
-            
+
             if (searchResults.length === 0) {
                 throw new Error(`No entity found with name: ${entityName}`);
             }
-            
+
             const foundEntityId = searchResults[0].id;
             return await this.wikidataConnector.getEntityDetails(foundEntityId, { language });
         }
@@ -210,24 +210,24 @@ export default class ResearchService {
      */
     async extractAndResearchConcepts(text, resources, options = {}) {
         const { llmHandler } = resources;
-        
+
         if (!llmHandler) {
             throw new Error('LLM handler is required for concept extraction');
         }
-        
+
         logger.info(`Extracting concepts from text (${text.length} chars)`);
-        
+
         // Extract concepts
         const concepts = await llmHandler.extractConcepts(text);
         this.stats.conceptsExtracted += concepts.length;
-        
+
         const result = {
             concepts,
             summary: {
                 conceptsExtracted: concepts.length
             }
         };
-        
+
         // Optionally research concepts using Wikidata
         if (options.searchWikidata !== false && concepts.length > 0) {
             try {
@@ -239,14 +239,14 @@ export default class ResearchService {
                         storeResults: options.storeResults !== false
                     }
                 );
-                
+
                 result.summary.entitiesFound = result.wikidataResults.statistics?.entitiesFound || 0;
             } catch (error) {
                 logger.warn('Concept research failed:', error.message);
                 result.wikidataResults = { error: error.message };
             }
         }
-        
+
         return result;
     }
 
@@ -260,11 +260,11 @@ export default class ResearchService {
      */
     async batchResearch(questions, resources, options = {}) {
         logger.info(`Starting batch research for ${questions.length} questions`);
-        
+
         const results = [];
         const batchSize = options.batchSize || 3;
         const useParallel = options.parallel !== false;
-        
+
         if (useParallel) {
             // Process in parallel batches
             for (let i = 0; i < questions.length; i += batchSize) {
@@ -272,26 +272,26 @@ export default class ResearchService {
                 const batchPromises = batch.map(async (question, index) => {
                     try {
                         const result = await this.combinedResearch(question, resources, options);
-                        return { 
-                            index: i + index, 
-                            question, 
-                            success: true, 
-                            result 
+                        return {
+                            index: i + index,
+                            question,
+                            success: true,
+                            result
                         };
                     } catch (error) {
                         logger.warn(`Batch research failed for question ${i + index}:`, error.message);
-                        return { 
-                            index: i + index, 
-                            question, 
-                            success: false, 
-                            error: error.message 
+                        return {
+                            index: i + index,
+                            question,
+                            success: false,
+                            error: error.message
                         };
                     }
                 });
-                
+
                 const batchResults = await Promise.all(batchPromises);
                 results.push(...batchResults);
-                
+
                 // Brief pause between batches to avoid overwhelming services
                 if (i + batchSize < questions.length) {
                     await new Promise(resolve => setTimeout(resolve, 1000));
@@ -303,24 +303,24 @@ export default class ResearchService {
                 const question = questions[i];
                 try {
                     const result = await this.combinedResearch(question, resources, options);
-                    results.push({ 
-                        index: i, 
-                        question, 
-                        success: true, 
-                        result 
+                    results.push({
+                        index: i,
+                        question,
+                        success: true,
+                        result
                     });
                 } catch (error) {
                     logger.warn(`Sequential research failed for question ${i}:`, error.message);
-                    results.push({ 
-                        index: i, 
-                        question, 
-                        success: false, 
-                        error: error.message 
+                    results.push({
+                        index: i,
+                        question,
+                        success: false,
+                        error: error.message
                     });
                 }
             }
         }
-        
+
         return results;
     }
 
@@ -330,7 +330,7 @@ export default class ResearchService {
     getStats() {
         return {
             ...this.stats,
-            averageEntitiesPerQuery: this.stats.wikidataQueries > 0 ? 
+            averageEntitiesPerQuery: this.stats.wikidataQueries > 0 ?
                 (this.stats.entitiesDiscovered / this.stats.wikidataQueries).toFixed(2) : 0
         };
     }
@@ -356,7 +356,7 @@ export default class ResearchService {
             ...this.options,
             ...newOptions
         };
-        
+
         // Update Wikipedia search configuration
         this.wikipediaSearch.options = {
             ...this.wikipediaSearch.options,
@@ -365,7 +365,7 @@ export default class ResearchService {
             graphURI: this.options.defaultGraphURI,
             timeout: this.options.timeout
         };
-        
+
         logger.info('ResearchService configuration updated');
     }
 }

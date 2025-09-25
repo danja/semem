@@ -19,12 +19,12 @@ export class WebSearchService {
         this.sparqlHelper = options.sparqlHelper;
         this.embeddingHandler = options.embeddingHandler;
         this.config = options.config;
-        
+
         // Default configuration
         this.settings = {
             maxResults: options.maxResults || 5,
             rateLimit: options.rateLimit || 1000, // milliseconds between requests
-            storageGraph: options.storageGraph || 'http://hyperdata.it/content',
+            storageGraph: options.storageGraph,
             maxContentLength: options.maxContentLength || 2000,
             enableCaching: options.enableCaching !== false,
             userAgent: options.userAgent || 'SememEnhancementService/1.0 (https://github.com/danja/hyperdata)',
@@ -65,13 +65,13 @@ export class WebSearchService {
     async enhance(query, options = {}) {
         console.log('🌐 CONSOLE: WebSearchService starting DuckDuckGo search for:', query.substring(0, 50) + '...');
         const startTime = Date.now();
-        
+
         try {
             this.stats.totalQueries++;
-            
+
             // Apply rate limiting
             await this.enforceRateLimit();
-            
+
             // Check cache first
             const cacheKey = this.generateCacheKey(query, options);
             if (this.settings.enableCaching && this.cache.has(cacheKey)) {
@@ -86,25 +86,25 @@ export class WebSearchService {
                 return this.createEmptyResult('No searchable terms extracted from query');
             }
 
-            logger.debug('🔍 Performing web search', { 
+            logger.debug('🔍 Performing web search', {
                 query: query.substring(0, 50),
                 searchTerms: searchTerms.substring(0, 50)
             });
 
             // Perform DuckDuckGo search
             const searchResults = await this.performSearch(searchTerms, options);
-            
+
             // Process and format results
             const enhancementResult = await this.processSearchResults(
-                searchResults, 
-                query, 
+                searchResults,
+                query,
                 options
             );
 
             // Cache the result
             if (this.settings.enableCaching) {
                 this.cache.set(cacheKey, enhancementResult);
-                
+
                 // Clean up old cache entries
                 if (this.cache.size > 100) {
                     const firstKey = this.cache.keys().next().value;
@@ -115,8 +115,8 @@ export class WebSearchService {
             // Update statistics
             this.stats.successfulQueries++;
             this.stats.averageResponseTime = (
-                (this.stats.averageResponseTime * (this.stats.successfulQueries - 1) + 
-                (Date.now() - startTime)) / this.stats.successfulQueries
+                (this.stats.averageResponseTime * (this.stats.successfulQueries - 1) +
+                    (Date.now() - startTime)) / this.stats.successfulQueries
             );
             this.stats.lastQueryTime = new Date().toISOString();
 
@@ -155,7 +155,7 @@ export class WebSearchService {
         try {
             const results = await Promise.race([
                 search(searchTerms, searchOptions),
-                new Promise((_, reject) => 
+                new Promise((_, reject) =>
                     setTimeout(() => reject(new Error('Search timeout')), this.settings.timeout)
                 )
             ]);
@@ -264,7 +264,7 @@ export class WebSearchService {
      */
     filterAndRankResults(results, query) {
         const queryWords = query.toLowerCase().split(/\s+/);
-        
+
         return results
             .map(result => ({
                 ...result,
@@ -286,26 +286,26 @@ export class WebSearchService {
         const title = (result.title || '').toLowerCase();
         const description = (result.description || '').toLowerCase();
         const url = (result.url || '').toLowerCase();
-        
+
         let score = 0;
         let totalPossible = 0;
-        
+
         queryWords.forEach(word => {
             totalPossible += 10; // Max possible score per word
-            
+
             // Title matches (highest weight)
             if (title.includes(word)) score += 5;
-            
+
             // Description matches
             if (description.includes(word)) score += 3;
-            
+
             // URL matches
             if (url.includes(word)) score += 2;
-            
+
             // Exact phrase matching bonus
             if (title.includes(queryWords.join(' '))) score += 3;
         });
-        
+
         return totalPossible > 0 ? Math.min(score / totalPossible, 1) : 0;
     }
 
@@ -377,12 +377,12 @@ export class WebSearchService {
     async enforceRateLimit() {
         const now = Date.now();
         const timeSinceLastRequest = now - this.lastRequestTime;
-        
+
         if (timeSinceLastRequest < this.settings.rateLimit) {
             const delay = this.settings.rateLimit - timeSinceLastRequest;
             await new Promise(resolve => setTimeout(resolve, delay));
         }
-        
+
         this.lastRequestTime = Date.now();
     }
 

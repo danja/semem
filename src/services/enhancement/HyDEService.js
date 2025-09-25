@@ -18,12 +18,12 @@ export class HyDEService {
         this.embeddingHandler = options.embeddingHandler;
         this.sparqlHelper = options.sparqlHelper;
         this.config = options.config;
-        
+
         // Default configuration
         this.settings = {
             maxHypotheticalLength: options.maxHypotheticalLength || 2000,
             conceptExtractionEnabled: options.conceptExtractionEnabled !== false,
-            storageGraph: options.storageGraph || 'http://hyperdata.it/content',
+            storageGraph: options.storageGraph,
             maxConcepts: options.maxConcepts || 10,
             ...options.settings
         };
@@ -45,10 +45,10 @@ export class HyDEService {
         logger.info('🔮 Generating HyDE hypothetical document...');
 
         const prompt = this.buildHyDEPrompt(queryText, options);
-        
+
         try {
             const response = await this.llmHandler.generateResponse(prompt);
-            
+
             // Trim to max length if specified
             const content = this.settings.maxHypotheticalLength && response.length > this.settings.maxHypotheticalLength
                 ? response.substring(0, this.settings.maxHypotheticalLength) + '...'
@@ -87,7 +87,7 @@ export class HyDEService {
 
         try {
             const concepts = await this.llmHandler.extractConcepts(hypotheticalDoc.content);
-            
+
             // Enhance concepts with HyDE metadata
             const enhancedConcepts = concepts
                 .slice(0, this.settings.maxConcepts)
@@ -127,18 +127,18 @@ export class HyDEService {
 
         try {
             // Generate embedding for the hypothetical document
-            const embedding = this.embeddingHandler 
+            const embedding = this.embeddingHandler
                 ? await this.embeddingHandler.generateEmbedding(hypotheticalDoc.content)
                 : null;
-            
+
             // Create document URI
             const hypotheticalDocURI = `http://purl.org/stuff/instance/hyde-document/${hypotheticalDoc.id}`;
 
             // Use SPARQL template for document storage
             const insertQuery = await this.buildHypotheticalDocStorageQuery(hypotheticalDocURI, hypotheticalDoc, embedding);
-            
+
             const result = await this.sparqlHelper.executeUpdate(insertQuery);
-            
+
             if (!result.success) {
                 logger.error('SPARQL HyDE document storage failed:', result.error);
                 throw new Error(`Failed to store HyDE document: ${result.error}`);
@@ -197,7 +197,7 @@ export class HyDEService {
         const enhancedPrompt = this.buildEnhancedPrompt(originalQuery, hydeContext);
 
         logger.info(`✅ Enhanced query with HyDE context (${concepts.length} concepts)`);
-        
+
         return {
             enhancedPrompt,
             hydeContext,
@@ -327,7 +327,7 @@ ANSWER:`;
     async buildHypotheticalDocStorageQuery(hypotheticalDocURI, hypotheticalDoc, embedding) {
         try {
             const embeddingString = embedding ? embedding.map(x => x.toString()).join(',') : '';
-            
+
             return await this.queryService.getQuery('store-hyde-hypothetical', {
                 storageGraph: this.settings.storageGraph,
                 hypotheticalDocURI: hypotheticalDocURI,
@@ -357,7 +357,7 @@ ANSWER:`;
      */
     buildFallbackHypotheticalDocQuery(hypotheticalDocURI, hypotheticalDoc, embedding) {
         const embeddingString = embedding ? embedding.map(x => x.toString()).join(',') : '';
-        
+
         return `
             PREFIX ragno: <http://purl.org/stuff/ragno/>
             PREFIX dcterms: <http://purl.org/dc/terms/>
@@ -391,17 +391,17 @@ ANSWER:`;
         // Simple confidence calculation based on concept frequency and position
         const conceptLower = concept.toLowerCase();
         const documentLower = documentContent.toLowerCase();
-        
+
         // Count occurrences
         const occurrences = (documentLower.match(new RegExp(conceptLower, 'g')) || []).length;
-        
+
         // Check if concept appears early in document (higher confidence)
         const firstOccurrence = documentLower.indexOf(conceptLower);
         const earlyBonus = firstOccurrence >= 0 && firstOccurrence < documentContent.length * 0.3 ? 0.2 : 0;
-        
+
         // Base confidence from frequency (max 0.8) + early occurrence bonus
         const baseConfidence = Math.min(0.8, occurrences * 0.2);
-        
+
         return Math.min(1.0, baseConfidence + earlyBonus);
     }
 

@@ -31,7 +31,7 @@ export class SPARQLExecute {
             password: credentials?.password || 'admin'
         }
 
-        this.graphName = graphName || 'http://tensegrity.it/semem/content'
+        this.graphName = graphName
         this.inTransaction = false
         this.transactionId = null
     }

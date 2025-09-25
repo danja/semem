@@ -10,9 +10,9 @@ dotenv.config();
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
-import { 
-  CallToolRequestSchema,
-  ListToolsRequestSchema
+import {
+    CallToolRequestSchema,
+    ListToolsRequestSchema
 } from '@modelcontextprotocol/sdk/types.js';
 import express from 'express';
 import cors from 'cors';
@@ -47,7 +47,7 @@ async function initializeLLMHandler(config) {
     mcpDebugger.info(`Selected provider: ${chatProvider.type} (priority ${chatProvider.priority})`);
 
     let llmConnector;
-    
+
     if (chatProvider.type === 'mistral' && process.env.MISTRAL_API_KEY) {
         llmConnector = new MistralConnector(process.env.MISTRAL_API_KEY);
     } else if (chatProvider.type === 'claude' && process.env.CLAUDE_API_KEY) {
@@ -91,7 +91,7 @@ function getFeedbackOptionsForMode(mode) {
             feedbackMode: 'comprehensive'
         }
     };
-    
+
     return options[mode] || options.standard;
 }
 
@@ -100,18 +100,18 @@ function getFeedbackOptionsForMode(mode) {
  */
 async function processQuestionWithFeedback(question, llmHandler, sparqlHelper, config, mode = 'standard', streamCallback = null) {
     mcpDebugger.info(`Processing question with iterative feedback: "${question.substring(0, 50)}..."`);
-    
+
     const feedbackWorkflow = new FeedbackWorkflow();
-    
+
     const resources = {
         llmHandler,
         sparqlHelper,
         config: config
     };
-    
+
     const feedbackOptions = getFeedbackOptionsForMode(mode);
     mcpDebugger.info(`Using ${mode} mode with ${feedbackOptions.maxIterations} max iterations`);
-    
+
     // Stream initial status
     if (streamCallback) {
         streamCallback({
@@ -120,7 +120,7 @@ async function processQuestionWithFeedback(question, llmHandler, sparqlHelper, c
             stage: 'initialization'
         });
     }
-    
+
     try {
         // Create a wrapper to capture workflow progress
         const progressTracker = {
@@ -165,10 +165,10 @@ async function processQuestionWithFeedback(question, llmHandler, sparqlHelper, c
                 }
             }
         };
-        
+
         // Execute iterative feedback workflow
         const feedbackResult = await feedbackWorkflow.execute(
-            { 
+            {
                 question: { text: question },
                 enableIterativeFeedback: true,
                 enableWikidataResearch: feedbackOptions.enableWikidataResearch,
@@ -177,13 +177,13 @@ async function processQuestionWithFeedback(question, llmHandler, sparqlHelper, c
             resources,
             feedbackOptions
         );
-        
+
         if (feedbackResult.success) {
             const data = feedbackResult.data;
-            
+
             mcpDebugger.info(`Completed ${data.workflow.iterationsPerformed} iterations`);
             mcpDebugger.info(`Completeness improvement: ${(data.completenessImprovement.improvement * 100).toFixed(1)}%`);
-            
+
             // Stream completion status
             if (streamCallback) {
                 streamCallback({
@@ -193,7 +193,7 @@ async function processQuestionWithFeedback(question, llmHandler, sparqlHelper, c
                     improvement: data.completenessImprovement.improvement
                 });
             }
-            
+
             return {
                 success: true,
                 question: question,
@@ -211,10 +211,10 @@ async function processQuestionWithFeedback(question, llmHandler, sparqlHelper, c
         } else {
             throw new Error(feedbackResult.error || 'Feedback workflow failed');
         }
-        
+
     } catch (error) {
         mcpDebugger.error('Error in question processing:', error);
-        
+
         // Stream error
         if (streamCallback) {
             streamCallback({
@@ -224,7 +224,7 @@ async function processQuestionWithFeedback(question, llmHandler, sparqlHelper, c
                 error: error.message
             });
         }
-        
+
         return {
             success: false,
             question: question,
@@ -238,7 +238,7 @@ async function processQuestionWithFeedback(question, llmHandler, sparqlHelper, c
  */
 async function createServer() {
     mcpDebugger.info('Creating Answer HTTP MCP server...');
-    
+
     const server = new Server(
         {
             name: "semem-answer-http",
@@ -262,8 +262,8 @@ async function createServer() {
                     inputSchema: {
                         type: 'object',
                         properties: {
-                            question: { 
-                                type: 'string', 
+                            question: {
+                                type: 'string',
                                 description: 'The question to answer'
                             },
                             mode: {
@@ -289,36 +289,36 @@ async function createServer() {
     server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const { name, arguments: args } = request.params;
         mcpDebugger.info(`Tool call: ${name}`, args);
-        
+
         try {
             if (name === 'semem:answer') {
                 const { question, mode = 'standard', streaming = true } = args;
-                
+
                 if (!question || typeof question !== 'string' || !question.trim()) {
                     throw new Error('Invalid question parameter. It must be a non-empty string.');
                 }
-                
+
                 // Initialize configuration
                 const config = new Config('./config/config.json');
                 await config.init();
-                
+
                 const workflowConfig = {
                     beerqaGraphURI: 'http://purl.org/stuff/beerqa/test',
                     wikipediaGraphURI: 'http://purl.org/stuff/wikipedia/research',
                     wikidataGraphURI: 'http://purl.org/stuff/wikidata/research'
                 };
-                
+
                 // Initialize LLM handler
                 const llmHandler = await initializeLLMHandler(config);
-                
+
                 const sparqlHelper = new SPARQLHelper(
-                    config.get('sparqlUpdateEndpoint') || 'http://localhost:3030/semem/update',
+                    config.get('sparqlUpdateEndpoint'),
                     {
                         auth: config.get('sparqlAuth') || { user: 'admin', password: 'admin123' },
                         timeout: 30000
                     }
                 );
-                
+
                 // Collection for streaming updates
                 const streamingUpdates = [];
                 const streamCallback = streaming ? (update) => {
@@ -327,17 +327,17 @@ async function createServer() {
                         ...update
                     });
                 } : null;
-                
+
                 // Process question with iterative feedback
                 const result = await processQuestionWithFeedback(
-                    question, 
-                    llmHandler, 
-                    sparqlHelper, 
-                    workflowConfig, 
+                    question,
+                    llmHandler,
+                    sparqlHelper,
+                    workflowConfig,
                     mode,
                     streamCallback
                 );
-                
+
                 if (result.success) {
                     return {
                         content: [{
@@ -368,9 +368,9 @@ async function createServer() {
                     };
                 }
             }
-            
+
             throw new Error(`Unknown tool: ${name}`);
-            
+
         } catch (error) {
             mcpDebugger.error(`Error in tool ${name}:`, error);
             return {
@@ -386,7 +386,7 @@ async function createServer() {
             };
         }
     });
-    
+
     mcpDebugger.info('Answer HTTP MCP server created successfully');
     return server;
 }
@@ -396,20 +396,20 @@ async function createServer() {
  */
 async function createApp() {
     const app = express();
-    
+
     // Enable CORS and JSON parsing
     app.use(cors());
     app.use(express.json());
-    
+
     // Create MCP server
     const mcpServer = await createServer();
-    
+
     // Create SSE transport for MCP
     const transport = new SSEServerTransport('/mcp', mcpServer);
-    
+
     // Mount MCP SSE endpoint
     app.use('/mcp', transport.router);
-    
+
     // Health check endpoint
     app.get('/health', (req, res) => {
         res.json({
@@ -419,40 +419,40 @@ async function createApp() {
             timestamp: new Date().toISOString()
         });
     });
-    
+
     // Direct answer endpoint (non-MCP)
     app.post('/answer', async (req, res) => {
         try {
             const { question, mode = 'standard', streaming = false } = req.body;
-            
+
             if (!question || typeof question !== 'string' || !question.trim()) {
                 return res.status(400).json({
                     success: false,
                     error: 'Invalid question parameter. It must be a non-empty string.'
                 });
             }
-            
+
             // Initialize configuration
             const config = new Config('./config/config.json');
             await config.init();
-            
+
             const workflowConfig = {
                 beerqaGraphURI: 'http://purl.org/stuff/beerqa/test',
                 wikipediaGraphURI: 'http://purl.org/stuff/wikipedia/research',
                 wikidataGraphURI: 'http://purl.org/stuff/wikidata/research'
             };
-            
+
             // Initialize LLM handler
             const llmHandler = await initializeLLMHandler(config);
-            
+
             const sparqlHelper = new SPARQLHelper(
-                config.get('sparqlUpdateEndpoint') || 'http://localhost:3030/semem/update',
+                config.get('sparqlUpdateEndpoint'),
                 {
                     auth: config.get('sparqlAuth') || { user: 'admin', password: 'admin123' },
                     timeout: 30000
                 }
             );
-            
+
             if (streaming) {
                 // Set up SSE for streaming
                 res.writeHead(200, {
@@ -462,45 +462,45 @@ async function createApp() {
                     'Access-Control-Allow-Origin': '*',
                     'Access-Control-Allow-Headers': 'Cache-Control'
                 });
-                
+
                 const streamCallback = (update) => {
                     res.write(`data: ${JSON.stringify({
                         timestamp: new Date().toISOString(),
                         ...update
                     })}\\n\\n`);
                 };
-                
+
                 // Process question with streaming
                 const result = await processQuestionWithFeedback(
-                    question, 
-                    llmHandler, 
-                    sparqlHelper, 
-                    workflowConfig, 
+                    question,
+                    llmHandler,
+                    sparqlHelper,
+                    workflowConfig,
                     mode,
                     streamCallback
                 );
-                
+
                 // Send final result
                 res.write(`data: ${JSON.stringify({
                     type: 'final',
                     timestamp: new Date().toISOString(),
                     result: result
                 })}\\n\\n`);
-                
+
                 res.end();
             } else {
                 // Regular JSON response
                 const result = await processQuestionWithFeedback(
-                    question, 
-                    llmHandler, 
-                    sparqlHelper, 
-                    workflowConfig, 
+                    question,
+                    llmHandler,
+                    sparqlHelper,
+                    workflowConfig,
                     mode
                 );
-                
+
                 res.json(result);
             }
-            
+
         } catch (error) {
             mcpDebugger.error('Error in direct answer endpoint:', error);
             res.status(500).json({
@@ -509,7 +509,7 @@ async function createApp() {
             });
         }
     });
-    
+
     return app;
 }
 
@@ -522,9 +522,9 @@ async function main() {
 
         // Create Express app with MCP integration
         const app = await createApp();
-        
+
         const port = process.env.ANSWER_HTTP_PORT || 3002;
-        
+
         app.listen(port, () => {
             mcpDebugger.info(`✅ Semem Answer HTTP MCP server running on port ${port}`);
             mcpDebugger.info(`   MCP endpoint: http://localhost:${port}/mcp`);

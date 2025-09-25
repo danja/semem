@@ -14,7 +14,7 @@ export class ZPTSessionManager {
         this.config = {
             sessionGraph: options.sessionGraph || 'http://tensegrity.it/semem',
             navigationGraph: options.navigationGraph || 'http://purl.org/stuff/navigation',
-            contentGraph: options.contentGraph || 'http://hyperdata.it/content',
+            contentGraph: options.contentGraph,
             sessionTimeout: options.sessionTimeout || 3600000, // 1 hour
             enablePersistence: options.enablePersistence !== false,
             ...options
@@ -23,7 +23,7 @@ export class ZPTSessionManager {
         // Current session state
         this.currentSession = null;
         this.sessionCache = new Map();
-        
+
         this.prefixes = `
             PREFIX ragno: <http://purl.org/stuff/ragno/>
             PREFIX zpt: <http://purl.org/stuff/zpt/>
@@ -53,7 +53,7 @@ export class ZPTSessionManager {
             // Create new session
             const newSession = await this.createNewSession(initialState);
             this.currentSession = newSession;
-            
+
             logger.info('🆕 Created new ZPT session:', newSession.sessionId);
             return newSession;
 
@@ -69,7 +69,7 @@ export class ZPTSessionManager {
     async createNewSession(initialState = {}) {
         const sessionId = `session_${Date.now()}_${uuidv4().substring(0, 6)}`;
         const sessionURI = `http://purl.org/stuff/instance/${sessionId}`;
-        
+
         const session = {
             sessionId: sessionId,
             sessionURI: sessionURI,
@@ -115,7 +115,7 @@ export class ZPTSessionManager {
             ...this.currentSession.state,
             ...updates
         };
-        
+
         this.currentSession.lastActivity = new Date().toISOString();
         this.currentSession.state.interactions++;
 
@@ -157,7 +157,7 @@ export class ZPTSessionManager {
 
         // Add to session results
         this.currentSession.state.results.push(navigationEntry);
-        
+
         // Keep only last 50 results to manage memory
         if (this.currentSession.state.results.length > 50) {
             this.currentSession.state.results = this.currentSession.state.results.slice(-50);
@@ -191,7 +191,7 @@ export class ZPTSessionManager {
      */
     getZPTState() {
         if (!this.currentSession) return null;
-        
+
         return {
             zoom: this.currentSession.state.zoom,
             pan: this.currentSession.state.pan,
@@ -246,7 +246,7 @@ export class ZPTSessionManager {
         `;
 
         const result = await this.sparqlStore._executeSparqlUpdate(sessionQuery, this.sparqlStore.endpoint.update);
-        
+
         if (!result.success) {
             logger.warn('⚠️  Failed to persist session:', result.error);
         }
@@ -299,7 +299,7 @@ export class ZPTSessionManager {
         `;
 
         const result = await this.sparqlStore._executeSparqlUpdate(updateQuery, this.sparqlStore.endpoint.update);
-        
+
         if (!result.success) {
             logger.warn('⚠️  Failed to persist session state:', result.error);
         }
@@ -312,7 +312,7 @@ export class ZPTSessionManager {
         if (!this.currentSession) return;
 
         const viewURI = `http://purl.org/stuff/instance/view-${Date.now()}`;
-        
+
         const viewQuery = `
             ${this.prefixes}
             
@@ -331,7 +331,7 @@ export class ZPTSessionManager {
         `;
 
         const result = await this.sparqlStore._executeSparqlUpdate(viewQuery, this.sparqlStore.endpoint.update);
-        
+
         if (!result.success) {
             logger.warn('⚠️  Failed to store navigation view:', result.error);
         }
@@ -361,7 +361,7 @@ export class ZPTSessionManager {
         `;
 
         const result = await this.sparqlStore._executeSparqlQuery(
-            restoreQuery, 
+            restoreQuery,
             this.sparqlStore.endpoint.query
         );
 
@@ -370,10 +370,10 @@ export class ZPTSessionManager {
         }
 
         const binding = result.data.results.bindings[0];
-        
+
         try {
             const sessionData = JSON.parse(binding.sessionData.value);
-            
+
             const restoredSession = {
                 sessionId: sessionId,
                 sessionURI: binding.sessionURI.value,
@@ -389,7 +389,7 @@ export class ZPTSessionManager {
 
             // Cache restored session
             this.sessionCache.set(sessionId, restoredSession);
-            
+
             return restoredSession;
 
         } catch (error) {
@@ -403,7 +403,7 @@ export class ZPTSessionManager {
      */
     async clearExpiredSessions() {
         const cutoffTime = new Date(Date.now() - this.config.sessionTimeout).toISOString();
-        
+
         const clearQuery = `
             ${this.prefixes}
             
@@ -438,7 +438,7 @@ export class ZPTSessionManager {
         `;
 
         const result = await this.sparqlStore._executeSparqlUpdate(clearQuery, this.sparqlStore.endpoint.update);
-        
+
         if (result.success) {
             logger.info('🧹 Cleared expired ZPT sessions');
         }

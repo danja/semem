@@ -7,7 +7,7 @@ import SPARQLTemplateLoader from '../../stores/SPARQLTemplateLoader.js';
 
 export default class FilterBuilder {
     constructor(options = {}) {
-        this.graphName = options.graphName || 'http://hyperdata.it/content';
+        this.graphName = options.graphName;
         this.templateCache = new Map(); // Cache for loaded templates
         this.templateLoader = new SPARQLTemplateLoader();
         this.templates = {}; // Initialize templates object for concept queries
@@ -191,28 +191,28 @@ export default class FilterBuilder {
     loadConceptQueries() {
         try {
             const templateDir = path.join(process.cwd(), 'sparql', 'queries', 'zpt');
-            
+
             // Load concept extraction template
             const conceptExtractionPath = path.join(templateDir, 'concept-extraction.sparql');
             if (fs.existsSync(conceptExtractionPath)) {
                 this.templates.conceptExtraction = fs.readFileSync(conceptExtractionPath, 'utf8');
                 this.templateCache.set('concept-extraction', this.templates.conceptExtraction);
             }
-            
+
             // Load concept navigation template  
             const conceptNavigationPath = path.join(templateDir, 'concept-navigation.sparql');
             if (fs.existsSync(conceptNavigationPath)) {
                 this.templates.conceptNavigation = fs.readFileSync(conceptNavigationPath, 'utf8');
                 this.templateCache.set('concept-navigation', this.templates.conceptNavigation);
             }
-            
+
             // Load concept relationships template
             const conceptRelationshipsPath = path.join(templateDir, 'concept-relationships.sparql');
             if (fs.existsSync(conceptRelationshipsPath)) {
                 this.templates.conceptRelationships = fs.readFileSync(conceptRelationshipsPath, 'utf8');
                 this.templateCache.set('concept-relationships', this.templates.conceptRelationships);
             }
-            
+
         } catch (error) {
             console.warn('Could not load concept query templates:', error.message);
             // Fallback to inline templates if external files not available
@@ -317,7 +317,7 @@ export default class FilterBuilder {
      */
     buildConceptQuery(normalizedParams) {
         const template = this.templates.conceptExtraction || this.templates.conceptNavigation;
-        
+
         if (!template) {
             throw new Error('Concept templates not loaded');
         }
@@ -431,8 +431,8 @@ export default class FilterBuilder {
             const radius = geographicFilter.radius;
             // Approximate distance filter (not precise, but sufficient for basic filtering)
             filterClauses.push(`
-                FILTER (ABS(?lat - ${lat}) <= ${radius/111} && 
-                        ABS(?lon - ${lon}) <= ${radius/111})
+                FILTER (ABS(?lat - ${lat}) <= ${radius / 111} && 
+                        ABS(?lon - ${lon}) <= ${radius / 111})
             `);
         }
 
@@ -444,7 +444,7 @@ export default class FilterBuilder {
      */
     buildConceptFilter(conceptFilter) {
         const { concepts, mode = 'any' } = conceptFilter;
-        
+
         if (!concepts || concepts.length === 0) {
             return '';
         }
@@ -640,7 +640,7 @@ export default class FilterBuilder {
     estimateResults(normalizedParams) {
         const complexity = normalizedParams._metadata.complexity;
         const baseEstimate = 1000;
-        
+
         // Reduce estimate based on filters
         const filterReduction = Object.keys(normalizedParams.pan).length * 0.3;
         return Math.floor(baseEstimate * (1 - filterReduction));
@@ -656,7 +656,7 @@ export default class FilterBuilder {
             tilt: normalizedParams.tilt.representation,
             tokenBudget: normalizedParams.transform.maxTokens
         };
-        
+
         return this.hashObject(keyData);
     }
 
@@ -699,7 +699,7 @@ export default class FilterBuilder {
      */
     getQueryStats(queryConfig) {
         const query = queryConfig.query;
-        
+
         return {
             hasFilters: Object.keys(queryConfig.filters || {}).length > 0,
             hasOptionals: (query.match(/OPTIONAL/g) || []).length,

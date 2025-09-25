@@ -873,7 +873,7 @@ import {
             const config = this.memoryManager.config;
             const storageConfig = config.get('storage.options');
             // Use graph option, or storage.options.graphName, or fallback to top-level graphName, or default
-            const targetGraph = graph || storageConfig?.graphName || config.get('graphName') || 'http://hyperdata.it/content';
+            const targetGraph = graph || storageConfig?.graphName || config.get('graphName');
 
             // Initialize services with explicit paths
             const projectRoot = process.cwd();
@@ -1197,7 +1197,7 @@ import {
             const config = this.memoryManager.config;
             const storageConfig = config.get('storage.options');
             // Use graph option, or storage.options.graphName, or fallback to top-level graphName, or default
-            const targetGraph = graph || storageConfig?.graphName || config.get('graphName') || 'http://hyperdata.it/content';
+            const targetGraph = graph || storageConfig?.graphName || config.get('graphName');
 
             // Import required utilities
             const { URIMinter } = await import('../../src/utils/URIMinter.js');
