@@ -23,26 +23,53 @@ The following files contain related functionality, there may be others :
 Functionality related to embeddings is distributed throughout the code with a lot of duplication. This all needs to be consolidated into src/core/Embeddings.js for operations directly on the embeddings, EmbeddingsAPIBridge.js for code which calls external services. SPARQL storage of embeddings will be dealt with later.
 There must be no hardcoded variables (such as thresholds), these should be loaded from preferences.js following existing patterns. There must be no hardcoded URLs, they should come from config.json via Config.js . API keys will be loaded following existing patterns using dotenv.  
 You need to search the codebase for places in which embeddings play a role. I've found two already : EmbeddingHandler.js EmbeddingService.js 
-After consolidating the functionality the redundant files and methods should be removed.
-Think deeply on how best to do this safely, following best practices. Save the plan in docs/EMBEDDINGS-PLAN.md
+
+Where is EmbeddingsAPIBridge.js?
+Review files with embedding-related functionality
+src/services/embeddings/EmbeddingsAPIBridge.js
+
+Move src/services/embeddings/EmbeddingsAPIBridge.js to src/services/EmbeddingsAPIBridge.js and modify its dependants imports accordingly.
+Review what depends on src/handlers/EmbeddingHandler.js This file needs to be removed with all the embeddings-related operations being carried out by src/core/Embeddings.js and src/services/EmbeddingsAPIBridge.js
 ---
+
+SEARCH
+/clear
+plan mode
+where did faiss go?
+Functionality related to search is distributed throughout the code with a lot of duplication. This all needs to be consolidated into src/core/SimilaritySearch.js for functionality related to embeddings-based search, faiss and vector search, with src/core/SPARQLSearch.js for the SPARQL-related operations. If these are likely to need a lot of code then other modules should be created with well-defined, domain-related functionality to simplify maintenance and extension. 
+There must be no hardcoded variables (such as thresholds), these should be loaded from preferences.js following existing patterns. There must be no hardcoded URLs, they should come from config.json via Config.js . API keys will be loaded following existing patterns using dotenv.
+After consolidating the functionality the redundant files and methods should be removed.
+Think deeply on how best to do this safely, following best practices. Save the plan in docs/SEARCH-PLAN.md  
+You need to search the codebase for places in which search plays a role. So far I have found the following :
+src/services/SearchService.js
+src/services/search/AdaptiveSearchEngine.js
+src/services/search/SearchServer.js
+src/services/search/SearchService.js
+src/services/SearchService.js
+src/stores/modules/Search.js
+
+
+
+Trace the workflows used by tell, ask and ingest. 
 
 /clear first
 
 LOGGING
 
+Functionality related to logging is distributed throughout the code with a lot of duplication. 
+
+src/utils/LoggingConfig.js'
 mcp/tools/VerbsLogger.js
 
-### `src/Utils.js`
-- `logger.info`, `logger.error`, `logger.debug`, `logger.warn`
+SPARQL
+src/services/embeddings/SPARQLService.js
+should be under 
+src/services/
 
-### `examples/mcp/ZPTBasicNavigation.js`
-- `logBanner`, `logStep`, `logConcept`, `logSuccess`, `logWarning`, `logError`, `logPerformance`
-
-**Observation:**
-- Both provide logging, but with different levels of sophistication and output formatting.
-- Consider whether a unified logging interface could be used across modules.
-
+LLM
+src/handlers/LLMHandler.js
+should be under 
+src/services/
 ---
 
 ## 3. Client/Handler Classes for External Services

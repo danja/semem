@@ -29,7 +29,8 @@ import Config from '../../src/Config.js';
 import OllamaConnector from '../../src/connectors/OllamaConnector.js';
 import ClaudeConnector from '../../src/connectors/ClaudeConnector.js';
 import MistralConnector from '../../src/connectors/MistralConnector.js';
-import EmbeddingHandler from '../../src/handlers/EmbeddingHandler.js';
+import { Embeddings } from '../../src/core/Embeddings.js';
+import EmbeddingsAPIBridge from '../../src/services/EmbeddingsAPIBridge.js';
 import LLMHandler from '../../src/handlers/LLMHandler.js';
 import CacheManager from '../../src/handlers/CacheManager.js';
 
@@ -637,11 +638,8 @@ async function runQAAnalysis() {
             ttl: 3600000 // 1 hour
         });
         
-        const embeddingHandler = new EmbeddingHandler(
-            ollamaConnector,
-            'nomic-embed-text:latest',
-            1536,
-            cacheManager
+        const embeddingHandler = new Embeddings(
+            new EmbeddingsAPIBridge(ollamaConnector, 'nomic-embed-text:latest', 1536, cacheManager)
         );
         
         console.log('✅ LLM and embedding services initialized');

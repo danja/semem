@@ -15,7 +15,8 @@ import OllamaConnector from '../../src/connectors/OllamaConnector.js';
 import ClaudeConnector from '../../src/connectors/ClaudeConnector.js';
 import MistralConnector from '../../src/connectors/MistralConnector.js';
 import LLMHandler from '../../src/handlers/LLMHandler.js';
-import EmbeddingHandler from '../../src/handlers/EmbeddingHandler.js';
+import { Embeddings } from '../../src/core/Embeddings.js';
+import EmbeddingsAPIBridge from '../../src/services/EmbeddingsAPIBridge.js';
 import CacheManager from '../../src/handlers/CacheManager.js';
 import ParseHelper from '../../src/utils/ParseHelper.js';
 
@@ -104,11 +105,8 @@ export default class EnrichSimpleModule {
         });
 
         // Initialize handlers
-        this.embeddingHandler = new EmbeddingHandler(
-            ollamaConnector,
-            embeddingModel,
-            1536,
-            cacheManager
+        this.embeddingHandler = new Embeddings(
+            new EmbeddingsAPIBridge(ollamaConnector, embeddingModel, 1536, cacheManager)
         );
 
         this.llmHandler = llmHandler;

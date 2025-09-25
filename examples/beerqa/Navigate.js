@@ -14,7 +14,8 @@ import logger from 'loglevel';
 import chalk from 'chalk';
 import fetch from 'node-fetch';
 import Config from '../../src/Config.js';
-import EmbeddingHandler from '../../src/handlers/EmbeddingHandler.js';
+import { Embeddings } from '../../src/core/Embeddings.js';
+import EmbeddingsAPIBridge from '../../src/services/EmbeddingsAPIBridge.js';
 import OllamaConnector from '../../src/connectors/OllamaConnector.js';
 import CacheManager from '../../src/handlers/CacheManager.js';
 import { ZPTDataFactory } from '../../src/zpt/ontology/ZPTDataFactory.js';
@@ -515,7 +516,7 @@ async function initializeEmbeddingHandler() {
             ttl: 3600000 // 1 hour
         });
         
-        const embeddingHandler = new EmbeddingHandler(
+        const embeddingHandler = new EmbeddingsAPIBridge(
             ollamaConnector,
             'nomic-embed-text:latest',
             1536,

@@ -16,7 +16,8 @@ import Config from '../../src/Config.js';
 import { ZPTDataFactory } from '../../src/zpt/ontology/ZPTDataFactory.js';
 import { NamespaceUtils, getSPARQLPrefixes } from '../../src/zpt/ontology/ZPTNamespaces.js';
 import LLMHandler from '../../src/handlers/LLMHandler.js';
-import EmbeddingHandler from '../../src/handlers/EmbeddingHandler.js';
+import { Embeddings } from '../../src/core/Embeddings.js';
+import EmbeddingsAPIBridge from '../../src/services/EmbeddingsAPIBridge.js';
 
 class RealZPTNavigationDemo {
     constructor() {
@@ -74,12 +75,7 @@ class RealZPTNavigationDemo {
         });
 
         // Initialize handlers
-        this.embeddingHandler = new EmbeddingHandler(
-            embeddingConnector,
-            embeddingModel,
-            1536,
-            cacheManager
-        );
+        this.embeddingHandler = new Embeddings(embeddingConnector, embeddingModel, 1536, cacheManager);
 
         this.llmHandler = new LLMHandler(embeddingConnector, chatModel);
 

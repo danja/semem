@@ -16,7 +16,8 @@ import logger from 'loglevel';
 import chalk from 'chalk';
 import fetch from 'node-fetch';
 import Config from '../../src/Config.js';
-import EmbeddingHandler from '../../src/handlers/EmbeddingHandler.js';
+import { Embeddings } from '../../src/core/Embeddings.js';
+import EmbeddingsAPIBridge from '../../src/services/EmbeddingsAPIBridge.js';
 import LLMHandler from '../../src/handlers/LLMHandler.js';
 import EmbeddingConnectorFactory from '../../src/connectors/EmbeddingConnectorFactory.js';
 import OllamaConnector from '../../src/connectors/OllamaConnector.js';
@@ -297,7 +298,7 @@ class BeerQAQuestionAugmentation {
                     const modelConfig = await this.getModelConfig(config);
                     const dimension = config.get('memory.dimension') || 1536;
 
-                    this.embeddingHandler = new EmbeddingHandler(
+                    this.embeddingHandler = new Embeddings(
                         embeddingProvider,
                         modelConfig.embeddingModel,
                         dimension

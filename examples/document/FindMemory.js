@@ -34,7 +34,8 @@ dotenv.config({ path: path.join(__dirname, '../../.env') });
 import { parseArgs } from 'util';
 import Config from '../../src/Config.js';
 import LLMHandler from '../../src/handlers/LLMHandler.js';
-import EmbeddingHandler from '../../src/handlers/EmbeddingHandler.js';
+import { Embeddings } from '../../src/core/Embeddings.js';
+import EmbeddingsAPIBridge from '../../src/services/EmbeddingsAPIBridge.js';
 import { SPARQLQueryService } from '../../src/services/sparql/index.js';
 import SPARQLHelper from '../../src/services/sparql/SPARQLHelper.js';
 import DocumentSearchSystem from './Search.js';
@@ -240,7 +241,7 @@ class FindMemory {
             embeddingDimension = 1536;
         }
         
-        this.embeddingHandler = new EmbeddingHandler(
+        this.embeddingHandler = new Embeddings(
             embeddingProvider,
             modelConfig.embeddingModel,
             embeddingDimension

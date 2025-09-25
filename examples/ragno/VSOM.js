@@ -28,7 +28,8 @@
 import logger from 'loglevel'
 import rdf from 'rdf-ext'
 import LLMHandler from '../../src/handlers/LLMHandler.js'
-import EmbeddingHandler from '../../src/handlers/EmbeddingHandler.js'
+import { Embeddings } from '../../src/core/Embeddings.js';
+import EmbeddingsAPIBridge from '../../src/services/EmbeddingsAPIBridge.js';
 import OllamaConnector from '../../src/connectors/OllamaConnector.js'
 import VSOM from '../../src/ragno/algorithms/VSOM.js'
 import Entity from '../../src/ragno/Entity.js'

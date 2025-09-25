@@ -41,7 +41,8 @@ import logger from 'loglevel';
 import Config from '../../src/Config.js';
 import RagnoSearch from '../../src/ragno/search/index.js';
 import EmbeddingConnectorFactory from '../../src/connectors/EmbeddingConnectorFactory.js';
-import EmbeddingHandler from '../../src/handlers/EmbeddingHandler.js';
+import { Embeddings } from '../../src/core/Embeddings.js';
+import EmbeddingsAPIBridge from '../../src/services/EmbeddingsAPIBridge.js';
 import LLMHandler from '../../src/handlers/LLMHandler.js';
 import OllamaConnector from '../../src/connectors/OllamaConnector.js';
 import ClaudeConnector from '../../src/connectors/ClaudeConnector.js';
@@ -276,7 +277,7 @@ class DocumentSearchSystem {
 
             // Initialize handlers
             this.embeddingConnector = embeddingResult.connector;
-            this.embeddingHandler = new EmbeddingHandler(
+            this.embeddingHandler = new Embeddings(
                 this.embeddingConnector, 
                 embeddingResult.model, 
                 embeddingResult.dimension

@@ -17,7 +17,8 @@ import Config from '../../src/Config.js';
 import { SPARQLQueryService } from '../../src/services/sparql/index.js';
 import SPARQLHelper from '../../src/services/sparql/SPARQLHelper.js';
 import EmbeddingConnectorFactory from '../../src/connectors/EmbeddingConnectorFactory.js';
-import EmbeddingHandler from '../../src/handlers/EmbeddingHandler.js';
+import { Embeddings } from '../../src/core/Embeddings.js';
+import EmbeddingsAPIBridge from '../../src/services/EmbeddingsAPIBridge.js';
 import logger from 'loglevel';
 import dotenv from 'dotenv';
 
@@ -103,7 +104,7 @@ class MakeEmbeddings {
             embeddingDimension = 1536; // Default dimension for most models
         }
         
-        this.embeddingHandler = new EmbeddingHandler(embeddingConnector, embeddingModel, embeddingDimension);
+        this.embeddingHandler = new Embeddings(embeddingConnector, embeddingModel, embeddingDimension);
         
         logger.info(`✓ Embedding handler initialized with ${embeddingProvider} connector`);
     }

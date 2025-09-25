@@ -16,7 +16,8 @@ import chalk from 'chalk';
 import Config from '../../src/Config.js';
 import SPARQLStore from '../../src/stores/SPARQLStore.js';
 import OllamaConnector from '../../src/connectors/OllamaConnector.js';
-import EmbeddingHandler from '../../src/handlers/EmbeddingHandler.js';
+import { Embeddings } from '../../src/core/Embeddings.js';
+import EmbeddingsAPIBridge from '../../src/services/EmbeddingsAPIBridge.js';
 import CacheManager from '../../src/handlers/CacheManager.js';
 
 export default class SearchModule {
@@ -105,9 +106,8 @@ export default class SearchModule {
         });
 
         // Initialize embedding handler
-        this.embeddingHandler = new EmbeddingHandler(
-            ollamaConnector,
-            embeddingModel,
+        this.embeddingHandler = new Embeddings(
+            new EmbeddingsAPIBridge(ollamaConnector, embeddingModel),
             1536,
             cacheManager
         );

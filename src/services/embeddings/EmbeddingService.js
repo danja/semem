@@ -1,7 +1,7 @@
 import { createUnifiedLogger } from '../../utils/LoggingConfig.js';
 import { VectorOperations } from '../../core/Vectors.js';
 import { Embeddings, EmbeddingError } from '../../core/Embeddings.js';
-import EmbeddingsAPIBridge from './EmbeddingsAPIBridge.js';
+import EmbeddingsAPIBridge from '../EmbeddingsAPIBridge.js';
 import EmbeddingConnectorFactory from '../../connectors/EmbeddingConnectorFactory.js';
 import { EMBEDDING_CONFIG } from '../../../config/preferences.js';
 
