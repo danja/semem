@@ -20,7 +20,7 @@ export async function decomposeCorpus(textChunks, llmHandler, options = {}) {
   logger.info(`Starting corpus decomposition: ${textChunks.length} chunks`);
 
   const promptManager = getPromptManager();
-  
+
   // Ensure we have an LLM handler
   if (!llmHandler) {
     throw new Error('LLM handler is required for corpus decomposition');
@@ -31,7 +31,7 @@ export async function decomposeCorpus(textChunks, llmHandler, options = {}) {
     generateSummaries: options.generateSummaries !== false,
     minEntityConfidence: options.minEntityConfidence || 0.3,
     maxEntitiesPerUnit: options.maxEntitiesPerUnit || 10,
-    model: options.model || 'mistral-small-latest', // Allow model override
+    model: options.model, // Allow model override
     ...options
   };
 

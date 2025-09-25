@@ -83,7 +83,7 @@ export default class UnitsToCorpuscles {
                     return EmbeddingConnectorFactory.createConnector({
                         provider: 'ollama',
                         model: provider.model,
-                        options: { baseUrl: provider.baseUrl || 'http://localhost:11434' }
+                        options: { baseUrl: provider.baseUrl }
                     });
                 }
             }
@@ -92,7 +92,7 @@ export default class UnitsToCorpuscles {
             return EmbeddingConnectorFactory.createConnector({
                 provider: 'ollama',
                 model: 'nomic-embed-text',
-                options: { baseUrl: 'http://localhost:11434' }
+                options: { baseUrl: provider.baseUrl }
             });
 
         } catch (error) {

@@ -224,7 +224,7 @@ export class CreateConceptsUnified {
                         logger.info(`🤖 Using Claude LLM with model: ${chatModel}`);
                         break;
                     } else if (provider.type === 'ollama') {
-                        const ollamaBaseUrl = provider.baseUrl || this.config.get('ollama.baseUrl') || 'http://localhost:11434';
+                        const ollamaBaseUrl = provider.baseUrl || this.config.get('ollama.baseUrl');
                         llmProvider = new OllamaConnector(ollamaBaseUrl, chatModel);
                         logger.info(`🤖 Using Ollama LLM at: ${ollamaBaseUrl} with model: ${chatModel}`);
                         break;
@@ -237,7 +237,7 @@ export class CreateConceptsUnified {
 
             // Fallback to Ollama if no providers worked
             if (!llmProvider) {
-                const ollamaBaseUrl = this.config.get('ollama.baseUrl') || 'http://localhost:11434';
+                const ollamaBaseUrl = this.config.get('ollama.baseUrl');
                 chatModel = this.config.get('chatModel');
                 llmProvider = new OllamaConnector(ollamaBaseUrl, chatModel);
                 logger.info(`🤖 Fallback to Ollama LLM at: ${ollamaBaseUrl} with model: ${chatModel}`);
@@ -249,7 +249,7 @@ export class CreateConceptsUnified {
 
         } catch (error) {
             logger.warn('Failed to load LLM provider configuration, defaulting to Ollama:', error.message);
-            const ollamaBaseUrl = this.config.get('ollama.baseUrl') || 'http://localhost:11434';
+            const ollamaBaseUrl = this.config.get('ollama.baseUrl');
             const chatModel = this.config.get('chatModel');
             const llmProvider = new OllamaConnector(ollamaBaseUrl, chatModel);
 

@@ -195,7 +195,7 @@ class SearchServer {
                     model: embeddingModel
                 };
             } else if (embeddingProvider === 'ollama') {
-                const ollamaBaseUrl = config.get('ollama.baseUrl') || 'http://localhost:11434';
+                const ollamaBaseUrl = config.get('ollama.baseUrl');
                 providerConfig = {
                     provider: 'ollama',
                     baseUrl: ollamaBaseUrl,

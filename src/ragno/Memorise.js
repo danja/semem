@@ -154,18 +154,18 @@ export default class Memorise {
             for (const provider of sortedProviders) {
                 try {
                     if (provider.type === 'mistral' && process.env.MISTRAL_API_KEY) {
-                        chatModel = provider.chatModel || 'mistral-small-latest';
+                        chatModel = provider.chatModel;
                         llmProvider = new MistralConnector(process.env.MISTRAL_API_KEY);
                         logger.info(`Using Mistral LLM with model: ${chatModel}`);
                         break;
                     } else if (provider.type === 'claude' && process.env.ANTHROPIC_API_KEY) {
-                        chatModel = provider.chatModel || 'claude-3-haiku-20240307';
+                        chatModel = provider.chatModel;
                         llmProvider = new ClaudeConnector(process.env.ANTHROPIC_API_KEY);
                         logger.info(`Using Claude LLM with model: ${chatModel}`);
                         break;
                     } else if (provider.type === 'ollama') {
                         chatModel = provider.chatModel;
-                        const ollamaBaseUrl = provider.baseUrl || this.config.get('ollama.baseUrl') || 'http://localhost:11434';
+                        const ollamaBaseUrl = provider.baseUrl || this.config.get('ollama.baseUrl');
                         llmProvider = new OllamaConnector(ollamaBaseUrl, chatModel);
                         logger.info(`Using Ollama LLM at: ${ollamaBaseUrl} with model: ${chatModel}`);
                         break;
@@ -179,7 +179,7 @@ export default class Memorise {
             // Fallback to Ollama if no other provider works
             if (!llmProvider) {
                 logger.warn('No configured LLM provider available, falling back to Ollama');
-                const ollamaBaseUrl = this.config.get('ollama.baseUrl') || 'http://localhost:11434';
+                const ollamaBaseUrl = this.config.get('ollama.baseUrl');
                 chatModel = 'qwen2:1.5b';
                 llmProvider = new OllamaConnector(ollamaBaseUrl, chatModel);
             }

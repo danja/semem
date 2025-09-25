@@ -23,20 +23,20 @@ export default class EmbeddingConnectorFactory {
         switch (provider.toLowerCase()) {
             case 'ollama':
                 return new OllamaConnector(
-                    options.baseUrl || 'http://localhost:11434', // Will be resolved via Config.js by caller
+                    options.baseUrl, // Will be resolved via Config.js by caller
                     model
                 )
 
             case 'nomic':
                 return new NomicConnector(
                     options.apiKey, // Must be provided by caller from Config.js
-                    model || 'nomic-embed-text-v1.5'
+                    model
                 )
 
             default:
                 logger.warn(`Unknown embedding provider: ${provider}, falling back to ${EMBEDDING_CONFIG.PROVIDERS.FALLBACK_PROVIDER}`)
                 return new OllamaConnector(
-                    options.baseUrl || 'http://localhost:11434', // Will be resolved via Config.js by caller
+                    options.baseUrl, // Will be resolved via Config.js by caller
                     model
                 )
         }
