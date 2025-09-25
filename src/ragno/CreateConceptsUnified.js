@@ -298,26 +298,23 @@ export class CreateConceptsUnified {
 
             const embeddingConnector = EmbeddingConnectorFactory.createConnector(providerConfig);
             
-            // Determine embedding dimension based on provider/model
-            let embeddingDimension;
-            if (embeddingProvider === 'nomic' || embeddingModel.includes('nomic')) {
-                embeddingDimension = 768; // Nomic embedding dimension
-            } else if (embeddingModel.includes('text-embedding')) {
-                embeddingDimension = 1536; // OpenAI text-embedding models
-            } else {
-                embeddingDimension = 1536; // Default dimension for most models
-            }
-            
-            this.embeddingHandler = new EmbeddingHandler(embeddingConnector, embeddingModel, embeddingDimension);
+            // Use modern EmbeddingHandler for automatic provider selection and dimension detection
+            this.embeddingHandler = new EmbeddingHandler(
+                this.config, // Pass Config instance for modern mode
+                embeddingModel, // Preferred model (will use this if available)
+                null,        // Dimension will be auto-detected
+                null         // No cache manager for now
+            );
 
         } catch (error) {
-            logger.warn('Failed to create configured embedding handler, falling back to Ollama:', error.message);
-            const embeddingConnector = EmbeddingConnectorFactory.createConnector({
-                provider: 'ollama',
-                baseUrl: 'http://localhost:11434',
-                model: 'nomic-embed-text'
-            });
-            this.embeddingHandler = new EmbeddingHandler(embeddingConnector, 'nomic-embed-text', 1536);
+            logger.warn('Failed to create configured embedding handler, falling back to automatic selection:', error.message);
+            // Use modern EmbeddingHandler with automatic fallback
+            this.embeddingHandler = new EmbeddingHandler(
+                this.config, // Config instance
+                null,        // Auto-select model
+                null,        // Auto-detect dimension
+                null         // No cache manager
+            );
         }
     }
 

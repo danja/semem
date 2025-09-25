@@ -1,27 +1,54 @@
 import logger from 'loglevel'
 import { VectorOperations, VectorError } from '../core/Vectors.js'
-
-class EmbeddingError extends Error {
-    constructor(message, { cause, type = 'EMBEDDING_ERROR' } = {}) {
-        super(message)
-        this.name = 'EmbeddingError'
-        this.type = type
-        if (cause) this.cause = cause
-    }
-}
+import { Embeddings, EmbeddingError } from '../core/Embeddings.js'
+import EmbeddingsAPIBridge from '../services/embeddings/EmbeddingsAPIBridge.js'
 
 export default class EmbeddingHandler {
     constructor(provider, model, dimension, cacheManager, options = {}) {
-        if (!provider?.generateEmbedding) {
-            throw new EmbeddingError('Invalid embedding provider', { type: 'CONFIGURATION_ERROR' })
+        // Backward compatibility: if provider is provided, use legacy mode
+        // New usage: if provider is a Config instance, use new core modules
+        const isLegacyMode = provider && typeof provider.generateEmbedding === 'function';
+
+        if (isLegacyMode) {
+            // Legacy mode: use provided provider directly
+            this.provider = provider
+            this.model = String(model)
+            this.dimension = dimension
+            this.cacheManager = cacheManager
+            this.legacyMode = true
+            this.coreEmbeddings = null
+            this.apiBridge = null
+
+            if (!provider?.generateEmbedding) {
+                throw new EmbeddingError('Invalid embedding provider', { type: 'CONFIGURATION_ERROR' })
+            }
+        } else {
+            // New mode: provider is actually a Config instance
+            const config = provider;
+            if (!config || typeof config.get !== 'function') {
+                throw new EmbeddingError(
+                    'Config instance required. For legacy usage, provide connector with generateEmbedding method.',
+                    { type: 'CONFIGURATION_ERROR' }
+                );
+            }
+
+            this.config = config
+            this.model = String(model)
+            this.cacheManager = cacheManager
+            this.legacyMode = false
+
+            // Initialize core modules
+            this.coreEmbeddings = new Embeddings(config, options)
+            this.apiBridge = new EmbeddingsAPIBridge(config, options)
+
+            // Get dimension from core module if not provided
+            this.dimension = dimension || this.coreEmbeddings.getDimension(this.model)
+
+            // Legacy provider reference for backward compatibility
+            this.provider = null
         }
 
-        this.provider = provider
-        this.model = String(model)
-        this.dimension = dimension
-        this.cacheManager = cacheManager
-        
-        // Simple fallback configuration (opt-in for backward compatibility)
+        // Merge options with sensible defaults
         this.options = {
             enableFallbacks: options.enableFallbacks === true, // Default disabled for backward compatibility
             maxRetries: options.maxRetries || 3,
@@ -29,6 +56,8 @@ export default class EmbeddingHandler {
             fallbackEmbeddingStrategy: options.fallbackEmbeddingStrategy || 'zero_vector',
             ...options
         }
+
+        logger.debug(`EmbeddingHandler initialized in ${this.legacyMode ? 'legacy' : 'modern'} mode`);
     }
 
     async generateEmbedding(text, options = {}) {
@@ -43,26 +72,41 @@ export default class EmbeddingHandler {
         const mergedOptions = { ...this.options, ...options }
 
         try {
-            // Use resilience only if fallbacks are enabled, otherwise use original behavior
-            const embedding = mergedOptions.enableFallbacks
-                ? await this.executeWithResilience(
-                    () => this.provider.generateEmbedding(this.model, text),
-                    mergedOptions
-                  )
-                : await this.provider.generateEmbedding(this.model, text)
+            let embedding;
 
-            if (!embedding || !Array.isArray(embedding)) {
-                throw new EmbeddingError('Invalid embedding format from provider', {
-                    type: 'PROVIDER_ERROR'
-                })
+            if (this.legacyMode) {
+                // Legacy mode: use original provider-based approach
+                embedding = mergedOptions.enableFallbacks
+                    ? await this.executeWithResilience(
+                        () => this.provider.generateEmbedding(this.model, text),
+                        mergedOptions
+                      )
+                    : await this.provider.generateEmbedding(this.model, text)
+
+                if (!embedding || !Array.isArray(embedding)) {
+                    throw new EmbeddingError('Invalid embedding format from provider', {
+                        type: 'PROVIDER_ERROR'
+                    })
+                }
+
+                const standardized = this.standardizeEmbedding(embedding)
+                this.validateEmbedding(standardized)
+                embedding = standardized;
+
+            } else {
+                // Modern mode: use API bridge with automatic provider selection and retries
+                embedding = await this.apiBridge.generateEmbedding(text, {
+                    model: this.model,
+                    ...mergedOptions
+                });
+                // API bridge already handles validation and standardization
             }
 
-            const standardized = this.standardizeEmbedding(embedding)
-            this.validateEmbedding(standardized)
-            this.cacheManager?.set(cacheKey, standardized)
-            return standardized
+            this.cacheManager?.set(cacheKey, embedding)
+            return embedding
+
         } catch (error) {
-            // Simple fallback mechanism
+            // Simple fallback mechanism (for legacy mode or when API bridge fails)
             if (mergedOptions.enableFallbacks) {
                 logger.warn(`Embedding generation failed, using fallback: ${error.message}`)
                 const fallbackEmbedding = this.generateFallbackEmbedding(text, mergedOptions.fallbackEmbeddingStrategy)
@@ -79,32 +123,44 @@ export default class EmbeddingHandler {
     }
 
     validateEmbedding(embedding) {
-        try {
-            return VectorOperations.validateEmbedding(embedding, this.dimension)
-        } catch (error) {
-            // Convert VectorError to EmbeddingError for backward compatibility
-            if (error instanceof VectorError) {
-                throw new EmbeddingError(error.message, {
-                    type: error.type,
-                    cause: error.cause
-                })
+        if (this.legacyMode) {
+            // Legacy mode: use VectorOperations directly with error conversion
+            try {
+                return VectorOperations.validateEmbedding(embedding, this.dimension)
+            } catch (error) {
+                // Convert VectorError to EmbeddingError for backward compatibility
+                if (error instanceof VectorError) {
+                    throw new EmbeddingError(error.message, {
+                        type: error.type,
+                        cause: error.cause
+                    })
+                }
+                throw error
             }
-            throw error
+        } else {
+            // Modern mode: use core Embeddings module
+            return this.coreEmbeddings.validateEmbedding(embedding, this.dimension)
         }
     }
 
     standardizeEmbedding(embedding) {
-        try {
-            return VectorOperations.standardizeEmbedding(embedding, this.dimension)
-        } catch (error) {
-            // Convert VectorError to EmbeddingError for backward compatibility
-            if (error instanceof VectorError) {
-                throw new EmbeddingError(error.message, {
-                    type: error.type,
-                    cause: error.cause
-                })
+        if (this.legacyMode) {
+            // Legacy mode: use VectorOperations directly with error conversion
+            try {
+                return VectorOperations.standardizeEmbedding(embedding, this.dimension)
+            } catch (error) {
+                // Convert VectorError to EmbeddingError for backward compatibility
+                if (error instanceof VectorError) {
+                    throw new EmbeddingError(error.message, {
+                        type: error.type,
+                        cause: error.cause
+                    })
+                }
+                throw new EmbeddingError('Standardization failed', { cause: error })
             }
-            throw new EmbeddingError('Standardization failed', { cause: error })
+        } else {
+            // Modern mode: use core Embeddings module
+            return this.coreEmbeddings.standardizeEmbedding(embedding, this.dimension)
         }
     }
 

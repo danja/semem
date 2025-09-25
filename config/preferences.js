@@ -145,10 +145,133 @@ export const MEMORY_CONFIG = {
 };
 
 /**
+ * Embedding Configuration
+ * Used by core Embeddings module and embedding-related services
+ */
+export const EMBEDDING_CONFIG = {
+    /**
+     * Provider Management
+     */
+    PROVIDERS: {
+        // Provider priority order - used for automatic provider selection
+        // Used in: src/core/Embeddings.js (provider selection logic)
+        PROVIDER_PRIORITY: ['nomic', 'ollama'],
+
+        // Fallback provider when preferred providers fail
+        // Used in: src/core/Embeddings.js (fallback logic)
+        FALLBACK_PROVIDER: 'ollama',
+
+        // Maximum retry attempts for embedding generation
+        // Used in: src/services/embeddings/EmbeddingsAPIBridge.js
+        MAX_RETRIES: 3,
+
+        // Timeout for embedding generation requests (milliseconds)
+        // Used in: src/services/embeddings/EmbeddingsAPIBridge.js
+        TIMEOUT_MS: 30000,
+
+        // Rate limiting delay between requests (milliseconds)
+        // Used in: src/services/embeddings/EmbeddingsAPIBridge.js
+        RATE_LIMIT_DELAY_MS: 100
+    },
+
+    /**
+     * Model Dimensions and Validation
+     */
+    DIMENSIONS: {
+        // Model-to-dimension mapping for validation and standardization
+        // Used in: src/core/Embeddings.js (dimension resolution)
+        MODEL_DIMENSIONS: {
+            'nomic-embed-text': 768,
+            'nomic-embed-text-v1.5': 768,
+            'nomic-embed-text:v1.5': 768,
+            'text-embedding-3-small': 1536,
+            'text-embedding-3-large': 3072,
+            'text-embedding-ada-002': 1536
+        },
+
+        // Default dimension when model is unknown
+        // Used in: src/core/Embeddings.js (fallback dimension)
+        DEFAULT_DIMENSION: 768,
+
+        // Maximum allowed dimension for safety checks
+        // Used in: src/core/Embeddings.js (validation)
+        MAX_DIMENSION: 10000,
+
+        // Minimum dimension for meaningful embeddings
+        // Used in: src/core/Embeddings.js (validation)
+        MIN_DIMENSION: 50
+    },
+
+    /**
+     * SPARQL Predicates and RDF Configuration
+     */
+    SPARQL: {
+        // Default predicate for storing embeddings
+        // Used in: src/services/embeddings/EmbeddingCreator.js
+        EMBEDDING_PREDICATE: 'http://purl.org/stuff/ragno/embedding',
+
+        // Default predicate for content that gets embedded
+        // Used in: src/services/embeddings/EmbeddingCreator.js
+        CONTENT_PREDICATE: 'http://schema.org/articleBody',
+
+        // Alternative content predicates to try
+        // Used in: src/services/embeddings/SPARQLService.js
+        ALTERNATIVE_CONTENT_PREDICATES: [
+            'http://schema.org/text',
+            'http://purl.org/dc/elements/1.1/description',
+            'http://www.w3.org/2000/01/rdf-schema#comment'
+        ]
+    },
+
+    /**
+     * Processing and Performance Settings
+     */
+    PROCESSING: {
+        // Delay between embedding generation requests to avoid overloading services
+        // Used in: src/services/embeddings/EmbeddingCreator.js
+        BATCH_DELAY_MS: 500,
+
+        // Minimum content length for embedding generation
+        // Used in: src/services/embeddings/EmbeddingCreator.js
+        MIN_CONTENT_LENGTH: 10,
+
+        // Maximum content length before truncation
+        // Used in: src/core/Embeddings.js
+        MAX_CONTENT_LENGTH: 8000,
+
+        // Batch size for bulk embedding operations
+        // Used in: src/services/embeddings/EmbeddingsAPIBridge.js
+        DEFAULT_BATCH_SIZE: 10,
+
+        // Maximum batch size allowed
+        // Used in: src/services/embeddings/EmbeddingsAPIBridge.js
+        MAX_BATCH_SIZE: 50
+    },
+
+    /**
+     * Quality and Validation Thresholds
+     */
+    QUALITY: {
+        // Minimum similarity threshold for meaningful comparisons
+        // Used in: src/core/Embeddings.js (similarity validation)
+        MIN_SIMILARITY_THRESHOLD: 0.0,
+
+        // Maximum similarity threshold (1.0 = identical)
+        // Used in: src/core/Embeddings.js (similarity validation)
+        MAX_SIMILARITY_THRESHOLD: 1.0,
+
+        // Threshold for detecting zero/invalid embeddings
+        // Used in: src/core/Embeddings.js (validation)
+        ZERO_VECTOR_THRESHOLD: 1e-10
+    }
+};
+
+/**
  * Export all configurations as a single object for convenience
  */
 export default {
     SEARCH_CONFIG,
-    SPARQL_CONFIG,  
-    MEMORY_CONFIG
+    SPARQL_CONFIG,
+    MEMORY_CONFIG,
+    EMBEDDING_CONFIG
 };

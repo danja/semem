@@ -7,9 +7,9 @@ import { ClientFactory } from 'hyperdata-clients'
 export default class MistralConnector {
     /**
      * Create a new MistralConnector
-     * @param {string} apiKey - Mistral API key
-     * @param {string} baseUrl - Optional base URL for the API (defaults to 'https://api.mistral.ai/v1')
-     * @param {string} defaultModel - Optional default model to use (defaults to 'mistral-medium')
+     * @param {string} apiKey - Mistral API key (should be provided from Config.js)
+     * @param {string} baseUrl - Base URL for the API (should be provided from Config.js)
+     * @param {string} defaultModel - Optional default model to use
      */
     constructor(apiKey, baseUrl = 'https://api.mistral.ai/v1', defaultModel = 'mistral-medium') {
         if (!apiKey) {

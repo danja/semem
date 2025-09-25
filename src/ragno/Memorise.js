@@ -197,53 +197,16 @@ export default class Memorise {
      */
     async initializeEmbeddingHandler() {
         try {
-            const embeddingProviders = this.config.get('llmProviders') || [];
-            const sortedProviders = embeddingProviders
-                .filter(p => p.capabilities?.includes('embedding'))
-                .sort((a, b) => (a.priority || 999) - (b.priority || 999));
-
-            let providerConfig = null;
-            let embeddingDimension = 1536; // Default
-
-            // Try providers in priority order
-            for (const provider of sortedProviders) {
-                if (provider.type === 'nomic' && process.env.NOMIC_API_KEY) {
-                    providerConfig = {
-                        provider: 'nomic',
-                        apiKey: process.env.NOMIC_API_KEY,
-                        model: provider.embeddingModel || 'nomic-embed-text'
-                    };
-                    embeddingDimension = 768;
-                    logger.info(`Using Nomic embedding provider`);
-                    break;
-                } else if (provider.type === 'ollama') {
-                    const ollamaBaseUrl = provider.baseUrl || this.config.get('ollama.baseUrl') || 'http://localhost:11434';
-                    providerConfig = {
-                        provider: 'ollama',
-                        baseUrl: ollamaBaseUrl,
-                        model: provider.embeddingModel || 'nomic-embed-text'
-                    };
-                    embeddingDimension = 1536;
-                    logger.info(`Using Ollama embedding provider at: ${ollamaBaseUrl}`);
-                    break;
-                }
-            }
-
-            // Fallback to Ollama
-            if (!providerConfig) {
-                const ollamaBaseUrl = this.config.get('ollama.baseUrl') || 'http://localhost:11434';
-                providerConfig = {
-                    provider: 'ollama',
-                    baseUrl: ollamaBaseUrl,
-                    model: 'nomic-embed-text'
-                };
-                logger.info(`Defaulting to Ollama embedding provider`);
-            }
-
-            const embeddingConnector = EmbeddingConnectorFactory.createConnector(providerConfig);
-            this.embeddingHandler = new EmbeddingHandler(embeddingConnector, providerConfig.model, embeddingDimension);
+            // Use modern EmbeddingHandler with Config instance
+            // This automatically handles provider selection, dimension mapping, and configuration
+            this.embeddingHandler = new EmbeddingHandler(
+                this.config, // Pass Config instance for modern mode
+                null,        // Model will be auto-selected
+                null,        // Dimension will be auto-detected
+                null         // No cache manager for now
+            );
             
-            logger.debug(`Embedding handler initialized with ${providerConfig.provider} connector`);
+            logger.debug('Embedding handler initialized with automatic provider selection');
             
         } catch (error) {
             logger.error('Failed to initialize embedding handler:', error.message);

@@ -6,12 +6,12 @@ import { ClientFactory } from 'hyperdata-clients'
 
 export default class OllamaConnector {
     /**
-     * Create a new HOllamaClientConnector
-     * @param {string} baseUrl - Optional base URL for Ollama API (defaults to http://localhost:11434)
+     * Create a new OllamaConnector
+     * @param {string} baseUrl - Base URL for Ollama API (should be provided from Config.js)
      * @param {string} defaultModel - Optional default model to use
      */
     constructor(baseUrl = 'http://localhost:11434', defaultModel = 'qwen2:1.5b') {
-        this.baseUrl = baseUrl
+        this.baseUrl = baseUrl // Should come from config.json via Config.js
         this.defaultModel = defaultModel
         this.client = null
         this.initialize()

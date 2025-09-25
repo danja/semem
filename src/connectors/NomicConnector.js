@@ -7,11 +7,11 @@ import { createEmbeddingClient } from 'hyperdata-clients'
 export default class NomicConnector {
     /**
      * Create a new NomicConnector
-     * @param {string} apiKey - Nomic API key (optional, will use NOMIC_API_KEY env var)
+     * @param {string} apiKey - Nomic API key (must be provided from Config.js)
      * @param {string} defaultModel - Optional default model to use
      */
     constructor(apiKey = null, defaultModel = 'nomic-embed-text-v1.5') {
-        this.apiKey = apiKey || process.env.NOMIC_API_KEY
+        this.apiKey = apiKey // No longer falls back to process.env - must be provided by caller
         this.defaultModel = defaultModel
         this.client = null
         // Don't initialize in constructor - do it lazily
@@ -23,7 +23,7 @@ export default class NomicConnector {
     async initialize() {
         try {
             if (!this.apiKey) {
-                throw new Error('Nomic API key is required. Set NOMIC_API_KEY environment variable or provide apiKey parameter.')
+                throw new Error('Nomic API key is required. Configure in config.json llmProviders or provide apiKey parameter.')
             }
 
             this.client = await createEmbeddingClient('nomic', {

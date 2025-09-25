@@ -7,9 +7,9 @@ import { ClientFactory } from 'hyperdata-clients'
 export default class GroqConnector {
     /**
      * Create a new GroqConnector
-     * @param {string} apiKey - Groq API key
-     * @param {string} baseUrl - Optional base URL for the API (defaults to 'https://api.groq.com/openai/v1')
-     * @param {string} defaultModel - Optional default model to use (defaults to 'llama-3.1-8b-instant')
+     * @param {string} apiKey - Groq API key (should be provided from Config.js)
+     * @param {string} baseUrl - Base URL for the API (should be provided from Config.js)
+     * @param {string} defaultModel - Optional default model to use
      */
     constructor(apiKey, baseUrl = 'https://api.groq.com/openai/v1', defaultModel = 'llama-3.1-8b-instant') {
         if (!apiKey) {

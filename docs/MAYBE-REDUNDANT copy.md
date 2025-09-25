@@ -23,8 +23,8 @@ The following files contain related functionality, there may be others :
 Functionality related to embeddings is distributed throughout the code with a lot of duplication. This all needs to be consolidated into src/core/Embeddings.js for operations directly on the embeddings, EmbeddingsAPIBridge.js for code which calls external services. SPARQL storage of embeddings will be dealt with later.
 There must be no hardcoded variables (such as thresholds), these should be loaded from preferences.js following existing patterns. There must be no hardcoded URLs, they should come from config.json via Config.js . API keys will be loaded following existing patterns using dotenv.  
 You need to search the codebase for places in which embeddings play a role. I've found two already : EmbeddingHandler.js EmbeddingService.js 
-After consolidating the functionality the redundant files and methods should be remooved.
-
+After consolidating the functionality the redundant files and methods should be removed.
+Think deeply on how best to do this safely, following best practices. Save the plan in docs/EMBEDDINGS-PLAN.md
 ---
 
 /clear first

@@ -4,6 +4,7 @@
 import logger from 'loglevel'
 import OllamaConnector from './OllamaConnector.js'
 import NomicConnector from './NomicConnector.js'
+import { EMBEDDING_CONFIG } from '../../config/preferences.js'
 
 export default class EmbeddingConnectorFactory {
     /**
@@ -11,31 +12,31 @@ export default class EmbeddingConnectorFactory {
      * @param {Object} config - Provider configuration
      * @param {string} config.provider - Provider type ('ollama', 'nomic')
      * @param {string} config.model - Model name to use
-     * @param {Object} config.options - Provider-specific options
+     * @param {Object} config.options - Provider-specific options (including apiKey, baseUrl from Config.js)
      * @returns {Object} - Embedding connector instance
      */
     static createConnector(config = {}) {
-        const { provider = 'ollama', model, options = {} } = config
-        
+        const { provider = EMBEDDING_CONFIG.PROVIDERS.FALLBACK_PROVIDER, model, options = {} } = config
+
         logger.debug(`Creating embedding connector for provider: ${provider}`)
-        
+
         switch (provider.toLowerCase()) {
             case 'ollama':
                 return new OllamaConnector(
-                    options.baseUrl || 'http://localhost:11434',
+                    options.baseUrl || 'http://localhost:11434', // Will be resolved via Config.js by caller
                     model || 'nomic-embed-text'
                 )
-                
+
             case 'nomic':
                 return new NomicConnector(
-                    options.apiKey || process.env.NOMIC_API_KEY,
+                    options.apiKey, // Must be provided by caller from Config.js
                     model || 'nomic-embed-text-v1.5'
                 )
-                
+
             default:
-                logger.warn(`Unknown embedding provider: ${provider}, falling back to Ollama`)
+                logger.warn(`Unknown embedding provider: ${provider}, falling back to ${EMBEDDING_CONFIG.PROVIDERS.FALLBACK_PROVIDER}`)
                 return new OllamaConnector(
-                    options.baseUrl || 'http://localhost:11434',
+                    options.baseUrl || 'http://localhost:11434', // Will be resolved via Config.js by caller
                     model || 'nomic-embed-text'
                 )
         }
@@ -60,6 +61,8 @@ export default class EmbeddingConnectorFactory {
     
     /**
      * Get default configuration for a provider
+     * Note: This method provides fallback defaults only.
+     * Actual configuration should come from Config.js
      * @param {string} provider - Provider name
      * @returns {Object} - Default configuration object
      */
@@ -69,18 +72,19 @@ export default class EmbeddingConnectorFactory {
                 provider: 'ollama',
                 model: 'nomic-embed-text',
                 options: {
-                    baseUrl: 'http://localhost:11434'
+                    // baseUrl should come from config.json via Config.js
                 }
             },
             nomic: {
                 provider: 'nomic',
                 model: 'nomic-embed-text-v1.5',
                 options: {
-                    apiKey: process.env.NOMIC_API_KEY
+                    // apiKey should come from config.json via Config.js
                 }
             }
         }
-        
-        return configs[provider.toLowerCase()] || configs.ollama
+
+        const fallbackProvider = EMBEDDING_CONFIG.PROVIDERS.FALLBACK_PROVIDER;
+        return configs[provider.toLowerCase()] || configs[fallbackProvider] || configs.ollama
     }
 }
