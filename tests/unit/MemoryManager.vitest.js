@@ -90,12 +90,20 @@ describe('MemoryManager', () => {
     
     it('should retrieve relevant interactions', async () => {
       const query = 'test query';
-      await manager.retrieveRelevantInteractions(query);
-      
-      expect(mockLLM.generateEmbedding).toHaveBeenCalledWith(
-        'test-embed',
-        query
-      );
+      const mockEmbedding = [0.1, 0.2, 0.3];
+      const mockResults = [
+        { similarity: 0.9, interaction: { prompt: 'test1', output: 'output1' } },
+        { similarity: 0.8, interaction: { prompt: 'test2', output: 'output2' } }
+      ];
+
+      mockLLM.generateEmbedding.mockResolvedValue(mockEmbedding);
+      mockStore.retrieveRelevantInteractions.mockResolvedValue(mockResults);
+
+      const results = await manager.retrieveRelevantInteractions(query);
+
+      expect(mockLLM.generateEmbedding).toHaveBeenCalledWith('test-embed', query);
+      expect(mockStore.retrieveRelevantInteractions).toHaveBeenCalledWith(mockEmbedding);
+      expect(results).toEqual(mockResults);
     });
     
     it('should generate responses with context', async () => {

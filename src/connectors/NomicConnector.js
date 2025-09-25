@@ -3,38 +3,42 @@
  */
 import logger from 'loglevel'
 import { createEmbeddingClient } from 'hyperdata-clients'
+import Config from '../Config.js';
 
 export default class NomicConnector {
     /**
      * Create a new NomicConnector
-     * @param {string} apiKey - Nomic API key (must be provided from Config.js)
+     * @param {string} apiKey - Nomic API key (optional, defaults to Config.js value)
      * @param {string} defaultModel - Optional default model to use
      */
-    constructor(apiKey = null, defaultModel = 'nomic-embed-text-v1.5') {
-        this.apiKey = apiKey // No longer falls back to process.env - must be provided by caller
-        this.defaultModel = defaultModel
-        this.client = null
-        // Don't initialize in constructor - do it lazily
+    constructor(apiKey = null, defaultModel = null) {
+        const config = new Config();
+        config.init();
+
+        const nomicConfig = config.config.models.embeddingProviders.nomic;
+        this.apiKey = apiKey || nomicConfig.options.apiKey;
+        this.defaultModel = defaultModel || nomicConfig.model || 'nomic-embed-text-v1.5';
+        this.client = null;
     }
 
     /**
      * Initialize the Nomic client
      */
     async initialize() {
-        try {
-            if (!this.apiKey) {
-                throw new Error('Nomic API key is required. Configure in config.json llmProviders or provide apiKey parameter.')
-            }
+        if (!this.apiKey || this.apiKey.trim() === '') {
+            throw new Error('Nomic API key is required. Configure in config.json llmProviders or provide apiKey parameter.');
+        }
 
+        try {
             this.client = await createEmbeddingClient('nomic', {
                 apiKey: this.apiKey,
                 model: this.defaultModel
-            })
+            });
 
-            logger.debug('Nomic client initialized successfully')
+            logger.debug('Nomic client initialized successfully');
         } catch (error) {
-            logger.error('Failed to initialize Nomic client:', error)
-            throw error
+            logger.error('Failed to initialize Nomic client:', error);
+            throw error;
         }
     }
 
@@ -82,7 +86,7 @@ export default class NomicConnector {
      * @returns {boolean} - Whether the connector can be used
      */
     isAvailable() {
-        return Boolean(this.apiKey)
+        return Boolean(this.apiKey && this.apiKey.trim().length > 0);
     }
 
     /**

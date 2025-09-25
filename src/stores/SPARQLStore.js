@@ -24,19 +24,22 @@ import { GraphModule } from './modules/Graph.js'
  */
 export default class SPARQLStore extends BaseStore {
     constructor(endpoint, options = {}, config = null) {
-        super()
+        super();
+
+        // Debug log to trace options
+        console.log('DEBUG: SPARQLStore received options:', options);
 
         // Store configuration
-        this.config = config
-        this.options = options
+        this.config = config;
+        this.options = options;
 
         // Initialize core modules
-        this._initializeModules(endpoint, options)
+        this._initializeModules(endpoint, options);
 
         // Legacy compatibility properties
-        this._initializeLegacyProperties()
+        this._initializeLegacyProperties();
 
-        logger.info('SPARQLStore initialized')
+        logger.info('SPARQLStore initialized');
     }
 
     /**
@@ -47,49 +50,50 @@ export default class SPARQLStore extends BaseStore {
         const credentials = {
             user: options.user || 'admin',
             password: options.password || 'admin'
-        }
-        const graphName = options.graphName
+        };
+        const graphName = options.graphName;
+        console.log('DEBUG: Initializing SPARQLStore with graphName:', graphName); // Debug log
         if (!graphName) {
-            throw new Error('graphName must be provided in options.graphName - check config.json graphName setting')
+            throw new Error('graphName must be provided in options.graphName - check config.json graphName setting');
         }
-        const dimension = options.dimension
+        const dimension = options.dimension;
         if (!dimension) {
-            throw new Error('Embedding dimension must be provided in options.dimension - check config.json embeddingDimension setting')
+            throw new Error('Embedding dimension must be provided in options.dimension - check config.json embeddingDimension setting');
         }
 
         // Initialize SPARQL execution module
-        this.sparqlExecute = new SPARQLExecute(endpoint, credentials, graphName)
+        this.sparqlExecute = new SPARQLExecute(endpoint, credentials, graphName);
 
         // Initialize vectors module
-        this.vectors = new Vectors(dimension)
+        this.vectors = new Vectors(dimension);
 
         // Initialize search module
-        this.searchModule = new Search(this.sparqlExecute, this.vectors, graphName)
+        this.searchModule = new Search(this.sparqlExecute, this.vectors, graphName);
 
         // Initialize cache module
         this.cache = new SPARQLCache({
             cacheTimeoutMs: options.cacheTimeoutMs,
             maxCacheSize: options.maxCacheSize
-        })
+        });
 
         // Initialize store module
-        this.storeModule = new Store(this.sparqlExecute, graphName, dimension)
+        this.storeModule = new Store(this.sparqlExecute, graphName, dimension);
 
         // Initialize ZPT module
-        this.zpt = new ZPT(this.sparqlExecute, graphName)
+        this.zpt = new ZPT(this.sparqlExecute, graphName);
 
         // Initialize graph module
-        this.graph = new GraphModule(this.sparqlExecute, graphName, options.baseUri)
+        this.graph = new GraphModule(this.sparqlExecute, graphName, options.baseUri);
 
         // Initialize services that modules may need
-        this.queryService = new SPARQLQueryService()
-        this.templateLoader = new SPARQLTemplateLoader()
+        this.queryService = new SPARQLQueryService();
+        this.templateLoader = new SPARQLTemplateLoader();
 
         // Store references for easy access
-        this.endpoint = this.sparqlExecute.getEndpoint()
-        this.graphName = graphName
-        this.dimension = dimension
-        this.credentials = credentials
+        this.endpoint = this.sparqlExecute.getEndpoint();
+        this.graphName = graphName;
+        this.dimension = dimension;
+        this.credentials = credentials;
     }
 
     /**
@@ -385,7 +389,7 @@ export default class SPARQLStore extends BaseStore {
     // ========== Disposal ==========
 
     async dispose() {
-        // Dispose all modules in reverse order of initialization
+        // Dispose of all modules in reverse order of initialization
         if (this.graph) await this.graph.dispose()
         if (this.zpt) this.zpt.dispose()
         if (this.storeModule) this.storeModule.dispose()

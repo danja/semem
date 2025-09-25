@@ -120,6 +120,21 @@
         "chat"
       ],
       "description": "Local Ollama for embeddings and chat - fallback option"
+    },
+    {
+      "type": "nomic",
+      "implementation": "hyperdata-clients",
+      "apiKey": "${NOMIC_API_KEY}",
+      "embeddingModel": "nomic-embed-text:v1.5",
+      "priority": 4,
+      "capabilities": [
+        "embedding"
+      ],
+      "rateLimit": {
+        "delayMs": 200,
+        "description": "Delay between API calls to avoid rate limiting"
+      },
+      "description": "Embedding provider for text embeddings"
     }
   ],
   "performance": {

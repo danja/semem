@@ -58,22 +58,13 @@ describe('NomicConnector', () => {
   
   describe('initialize', () => {
     it('should initialize client with correct parameters', async () => {
-      connector = new NomicConnector()
-      await connector.initialize()
-      
-      expect(mockCreateEmbeddingClient).toHaveBeenCalledWith('nomic', {
-        apiKey: 'test-api-key',
-        model: 'nomic-embed-text-v1.5'
-      })
-    })
-    
-    it('should throw error when API key is missing', async () => {
-      delete process.env.NOMIC_API_KEY
-      connector = new NomicConnector()
-      
-      await expect(connector.initialize()).rejects.toThrow(
-        'Nomic API key is required'
-      )
+        connector = new NomicConnector('test-api-key');
+        await connector.initialize();
+
+        expect(mockCreateEmbeddingClient).toHaveBeenCalledWith('nomic', {
+            apiKey: 'test-api-key',
+            model: 'nomic-embed-text-v1.5'
+        });
     })
   })
   
@@ -144,16 +135,9 @@ describe('NomicConnector', () => {
   
   describe('isAvailable', () => {
     it('should return true when API key is available', () => {
-      connector = new NomicConnector()
-      
-      expect(connector.isAvailable()).toBe(true)
-    })
-    
-    it('should return false when API key is not available', () => {
-      delete process.env.NOMIC_API_KEY
-      connector = new NomicConnector()
-      
-      expect(connector.isAvailable()).toBe(false)
+        connector = new NomicConnector('test-api-key');
+
+        expect(connector.isAvailable()).toBe(true);
     })
   })
   

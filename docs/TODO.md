@@ -7,6 +7,8 @@ Create a module src/ragno/NodeRAG.js with a method which will receive a question
 2. use FAISS HNSW similarity matching to find the top k matches based on embeddings 
 ---
 
+The method relies heavily on the Enhanced SPARQLStore for retrieving and processing results.
+
 
 api-server.js has :
             // Create test interactions for VSOM visualization
@@ -19,6 +21,8 @@ In mcp/tools/SimpleVerbsService.js line 82, weights a given hardcoded values. Th
 
 export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/tell-ask-e2e.integration.test.js --reporter=verbose 
 export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/tell-ask-stdio-e2e.integration.test.js --reporter=verbose
+
+npx vitest run tests/unit/MemoryManager.test.js --reporter=verbose
 
 node src/frontend/vsom-standalone/server.js
 
