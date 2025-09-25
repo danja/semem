@@ -90,7 +90,7 @@ export default class GroqConnector {
 
             const response = await this.client.chat(messages, {
                 model,
-                temperature: options.temperature || 0.7,
+                temperature: options.temperature,
                 max_tokens: options.max_tokens || 2000,
                 top_p: options.top_p || 1.0,
                 ...options
@@ -124,7 +124,7 @@ export default class GroqConnector {
                 // Stream callback - handled by the generator
             }, {
                 model,
-                temperature: options.temperature || 0.7,
+                temperature: options.temperature,
                 max_tokens: options.max_tokens || 2000,
                 top_p: options.top_p || 1.0,
                 ...options

@@ -529,7 +529,7 @@ export class AdaptiveSearchEngine {
         const scoredResults = results.map(result => {
             const qualityScore = this._calculateResultQuality(result, query, zptState);
             // Fallback to similarity if quality calculation fails
-            const finalQualityScore = isNaN(qualityScore) ? (result.similarity || 0.5) : qualityScore;
+            const finalQualityScore = isNaN(qualityScore) ? (result.similarity) : qualityScore;
             return {
                 ...result,
                 qualityScore: finalQualityScore

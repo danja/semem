@@ -21,10 +21,10 @@ export default class MemoryStore {
         this.graph = new Graph({ multi: true, allowSelfLoops: false })
         this.semanticMemory = new Map()
         this.clusterLabels = []
-        
+
         // Memory classification configuration
         this.promotionThreshold = config?.get?.('memory.promotionThreshold') || 5.0
-        this.classificationChance = config?.get?.('memory.classificationChance') || 0.1
+        this.classificationChance = config?.get?.('memory.classificationChance')
     }
 
     initializeIndex() {
@@ -71,15 +71,15 @@ export default class MemoryStore {
     classifyMemory() {
         const currentTime = Date.now()
         const promotionCandidates = []
-        
+
         this.shortTermMemory.forEach((interaction, idx) => {
             if (this.longTermMemory.some(ltm => ltm.id === interaction.id)) {
                 return // Skip if already in long-term memory
             }
-            
+
             // Calculate multi-factor importance score
             const importanceScore = this.calculateMemoryImportance(interaction, idx, currentTime)
-            
+
             // Promote to long-term if importance score exceeds threshold
             if (importanceScore >= this.promotionThreshold) {
                 promotionCandidates.push({
@@ -89,7 +89,7 @@ export default class MemoryStore {
                 })
             }
         })
-        
+
         // Sort candidates by importance score and promote top candidates
         promotionCandidates
             .sort((a, b) => b.score - a.score)
@@ -112,41 +112,41 @@ export default class MemoryStore {
         const decayFactor = interaction.decayFactor || 1.0
         const concepts = interaction.concepts || []
         const content = interaction.prompt + ' ' + (interaction.output || interaction.response || '')
-        
+
         // Factor 1: Access Frequency (0-3 points)
         // Logarithmic scale: 1 access = 0.3, 5 accesses = 2.1, 10+ accesses = 3.0
         const accessScore = Math.min(3.0, Math.log1p(accessCount) * 1.3)
-        
+
         // Factor 2: Recency (0-2 points) 
         // More recent interactions get higher scores, with exponential decay
         const timeDiff = (currentTime - lastAccess) / (1000 * 60 * 60) // hours
         const recencyScore = Math.max(0, 2.0 * Math.exp(-timeDiff / 24)) // 24-hour half-life
-        
+
         // Factor 3: Reinforcement Strength (0-2 points)
         // Based on decay factor - higher decay factor indicates reinforcement
         const reinforcementScore = Math.min(2.0, (decayFactor - 1.0) * 4.0)
-        
+
         // Factor 4: Concept Richness (0-2 points)
         // More concepts indicate richer, more important content
         const conceptScore = Math.min(2.0, concepts.length * 0.25)
-        
+
         // Factor 5: Content Complexity (0-1 points)
         // Longer, more complex content may be more important
         const contentLength = content.length
         const complexityScore = Math.min(1.0, contentLength / 1000)
-        
+
         // Factor 6: Semantic Connectivity (0-1 points)
         // Boost score if content relates to many other memories
         const connectivityScore = this.calculateSemanticConnectivity(interaction, concepts)
-        
-        const totalScore = accessScore + recencyScore + reinforcementScore + 
-                          conceptScore + complexityScore + connectivityScore
-        
+
+        const totalScore = accessScore + recencyScore + reinforcementScore +
+            conceptScore + complexityScore + connectivityScore
+
         // Log detailed scoring for debugging
         if (accessCount > 3 || totalScore > 3.0) {
             logger.debug(`Memory importance scoring for ${interaction.id}:`, {
                 access: accessScore.toFixed(2),
-                recency: recencyScore.toFixed(2), 
+                recency: recencyScore.toFixed(2),
                 reinforcement: reinforcementScore.toFixed(2),
                 concepts: conceptScore.toFixed(2),
                 complexity: complexityScore.toFixed(2),
@@ -157,7 +157,7 @@ export default class MemoryStore {
                 contentLength
             })
         }
-        
+
         return totalScore
     }
 
@@ -169,26 +169,26 @@ export default class MemoryStore {
      */
     calculateSemanticConnectivity(interaction, concepts) {
         if (concepts.length === 0) return 0
-        
+
         let totalOverlap = 0
         let comparedMemories = 0
-        
+
         // Compare with other short-term memories
         this.shortTermMemory.forEach(other => {
             if (other.id === interaction.id) return
-            
+
             const otherConcepts = other.concepts || []
             if (otherConcepts.length === 0) return
-            
+
             // Calculate concept overlap using Jaccard similarity
             const intersection = concepts.filter(c => otherConcepts.includes(c)).length
             const union = new Set([...concepts, ...otherConcepts]).size
             const overlap = union > 0 ? intersection / union : 0
-            
+
             totalOverlap += overlap
             comparedMemories++
         })
-        
+
         // Return average connectivity score
         return comparedMemories > 0 ? Math.min(1.0, totalOverlap / comparedMemories * 3) : 0
     }

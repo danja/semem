@@ -9,17 +9,17 @@ export default class ContextManager {
         this.config = config;
         this.maxTokens = options.maxTokens || 8192
         this.maxTimeWindow = options.maxTimeWindow || 24 * 60 * 60 * 1000 // 24 hours
-        this.relevanceThreshold = options.relevanceThreshold || 0.7
+        this.relevanceThreshold = options.relevanceThreshold
         this.maxContextSize = options.maxContextSize || 5
         this.contextBuffer = []
-        
+
         // Get context truncation limit from config, default to no truncation (null)
         this.contextTruncationLimit = this.getContextTruncationLimit()
 
         this.windowManager = new ContextWindowManager({
             maxWindowSize: this.maxTokens,
             minWindowSize: Math.floor(this.maxTokens / 4),
-            overlapRatio: options.overlapRatio || 0.1
+            overlapRatio: options.overlapRatio
         })
     }
 
@@ -30,7 +30,7 @@ export default class ContextManager {
         if (!this.config) {
             return null; // No truncation if no config
         }
-        
+
         const contextConfig = this.config.get('context') || {};
         return contextConfig.truncationLimit || null; // Default to no truncation
     }
@@ -125,7 +125,7 @@ export default class ContextManager {
             .map(i => {
                 if (!i?.prompt || !i?.output) return null
                 // Use configurable truncation limit, default to no truncation
-                const truncatedOutput = this.contextTruncationLimit 
+                const truncatedOutput = this.contextTruncationLimit
                     ? i.output.substring(0, this.contextTruncationLimit)
                     : i.output
                 return `- ${i.prompt} → ${truncatedOutput}${this.contextTruncationLimit && truncatedOutput.length < i.output.length ? '...' : ''}`

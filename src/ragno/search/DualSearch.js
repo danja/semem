@@ -35,17 +35,17 @@ export default class DualSearch {
 
             // Vector search parameters
             vectorSimilarityK: options.vectorSimilarityK || 10,
-            similarityThreshold: options.similarityThreshold || 0.7,
+            similarityThreshold: options.similarityThreshold,
 
             // PPR parameters
-            pprAlpha: options.pprAlpha || 0.15,
+            pprAlpha: options.pprAlpha,
             pprIterations: options.pprIterations || 2,
             topKPerType: options.topKPerType || 5,
 
             // Result ranking weights
             exactMatchWeight: options.exactMatchWeight || 1.0,
-            vectorSimilarityWeight: options.vectorSimilarityWeight || 0.8,
-            pprWeight: options.pprWeight || 0.6,
+            vectorSimilarityWeight: options.vectorSimilarityWeight,
+            pprWeight: options.pprWeight,
 
             // Query processing
             queryExpansion: options.queryExpansion || true,
@@ -60,7 +60,7 @@ export default class DualSearch {
         this.sparqlEndpoint = options.sparqlEndpoint || null
         this.llmHandler = options.llmHandler || null
         this.embeddingHandler = options.embeddingHandler || null
-        
+
         // Initialize SPARQL helper if endpoint is provided
         this.sparqlHelper = null
         if (this.sparqlEndpoint && typeof this.sparqlEndpoint === 'string') {
@@ -330,7 +330,7 @@ export default class DualSearch {
         try {
             // First, convert entity names to URIs by finding them in the knowledge graph
             const entityURIs = await this.resolveEntityNamesToURIs(queryEntities)
-            
+
             if (entityURIs.length === 0) {
                 logger.debug('No entity URIs found for PPR traversal')
                 return { rankedNodes: [], scores: {} }
@@ -525,7 +525,7 @@ Extracted entities:`
         // Handle undefined/null entities and types
         const safeEntities = Array.isArray(entities) ? entities : []
         const safeTypes = Array.isArray(types) ? types : ['ragno:Entity', 'ragno:Unit']
-        
+
         if (safeEntities.length === 0) {
             // Return a query that matches nothing if no entities provided
             return `
@@ -538,7 +538,7 @@ Extracted entities:`
                 }
                 LIMIT 0`
         }
-        
+
         const typeFilter = safeTypes.map(type => {
             // Handle URI format properly - avoid double angle brackets
             if (type.startsWith('<') && type.endsWith('>')) {
@@ -555,11 +555,11 @@ Extracted entities:`
                 return `?type = ragno:${type}`
             }
         }).join(' || ')
-        
+
         const entityFilter = safeEntities.map(entity =>
             `(LCASE(STR(?label)) = LCASE("${entity.replace(/"/g, '\\"')}") || CONTAINS(LCASE(?label), LCASE("${entity.replace(/"/g, '\\"')}")))`
         ).join(' || ')
-        
+
         logger.debug('Built SPARQL filters:', { typeFilter, entityFilter })
 
         return `
@@ -590,7 +590,7 @@ Extracted entities:`
     buildGraphTraversalQuery(entityUris) {
         // Handle undefined/null entityUris
         const safeEntityUris = Array.isArray(entityUris) ? entityUris : []
-        
+
         if (safeEntityUris.length === 0) {
             // Return a query that matches nothing if no entity URIs provided
             return `
@@ -601,11 +601,11 @@ Extracted entities:`
                 }
                 LIMIT 0`
         }
-        
+
         // Handle URI format properly - avoid double angle brackets
         const entityUriList = safeEntityUris.map(uri => {
             if (typeof uri !== 'string') return ''
-            
+
             if (uri.startsWith('<') && uri.endsWith('>')) {
                 // Already properly formatted
                 return uri
@@ -617,7 +617,7 @@ Extracted entities:`
                 return `<${uri}>`
             }
         }).filter(uri => uri.length > 0).join(' ')
-        
+
         if (!entityUriList) {
             // Return empty result if no valid URIs
             return `
@@ -628,7 +628,7 @@ Extracted entities:`
                 }
                 LIMIT 0`
         }
-        
+
         logger.debug('Built graph traversal URI list:', entityUriList)
 
         return `
@@ -686,14 +686,14 @@ Extracted entities:`
      */
     async resolveEntityNamesToURIs(entityNames) {
         const resolvedURIs = []
-        
+
         // Handle undefined/null entityNames
         const safeEntityNames = Array.isArray(entityNames) ? entityNames : []
-        
+
         if (safeEntityNames.length === 0) {
             return resolvedURIs
         }
-        
+
         try {
             // Check if inputs are already URIs (start with http:// or https://)
             for (const entity of safeEntityNames) {
@@ -701,10 +701,10 @@ Extracted entities:`
                     resolvedURIs.push(entity)
                     continue
                 }
-                
+
                 // Try to find URI for entity name in knowledge graph
                 const entityFilter = `(LCASE(STR(?label)) = LCASE("${entity.replace(/"/g, '\\"')}") || CONTAINS(LCASE(?label), LCASE("${entity.replace(/"/g, '\\"')}")))`
-                
+
                 const resolveQuery = `
                     PREFIX ragno: <http://purl.org/stuff/ragno/>
                     PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
@@ -718,7 +718,7 @@ Extracted entities:`
                     }
                     LIMIT 5
                 `
-                
+
                 if (this.sparqlHelper) {
                     const result = await this.sparqlHelper.executeSelect(resolveQuery)
                     if (result.success && result.data.results.bindings.length > 0) {
@@ -731,10 +731,10 @@ Extracted entities:`
                     }
                 }
             }
-            
+
             logger.debug(`Resolved ${resolvedURIs.length}/${safeEntityNames.length} entities to URIs`)
             return resolvedURIs
-            
+
         } catch (error) {
             logger.warn(`Failed to resolve entity names to URIs: ${error.message}`)
             return resolvedURIs

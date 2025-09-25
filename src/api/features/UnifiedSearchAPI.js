@@ -9,28 +9,28 @@ import { PromptSynthesis } from '../../../mcp/lib/PromptSynthesis.js';
 export default class UnifiedSearchAPI extends BaseAPI {
     constructor(config = {}) {
         super(config);
-        
+
         // Search configuration
         this.defaultLimit = config.defaultLimit || 20;
         this.maxTotalResults = config.maxTotalResults || 100;
         this.searchTimeout = config.searchTimeout || 30000;
         this.enableParallelSearch = config.enableParallelSearch !== false;
         this.enableResultRanking = config.enableResultRanking !== false;
-        
+
         // Service references (will be injected)
         this.memoryAPI = null;
         this.ragnoAPI = null;
         this.zptAPI = null;
         this.searchAPI = null;
-        
+
         // Search strategy weights for result ranking
         this.searchWeights = {
-            memory: config.memoryWeight || 0.4,
-            ragno: config.ragnoWeight || 0.3,
-            search: config.searchWeight || 0.2,
-            zpt: config.zptWeight || 0.1
+            memory: config.memoryWeight,
+            ragno: config.ragnoWeight,
+            search: config.searchWeight,
+            zpt: config.zptWeight
         };
-        
+
         // Query analysis patterns
         this.queryPatterns = {
             entity: /\b(who|person|people|organization|company|entity)\b/i,
@@ -40,7 +40,7 @@ export default class UnifiedSearchAPI extends BaseAPI {
             navigation: /\b(navigate|explore|traverse|browse|discover)\b/i,
             knowledge: /\b(knowledge|graph|semantic|ontology|rdf)\b/i
         };
-        
+
         // Metrics
         this.metrics = {
             totalSearches: 0,
@@ -66,17 +66,17 @@ export default class UnifiedSearchAPI extends BaseAPI {
 
     async initialize() {
         await super.initialize();
-        
+
         // Get service references from registry
         const registry = this.config.registry;
         if (!registry) {
             throw new Error('Registry is required for UnifiedSearchAPI');
         }
-        
+
         try {
             // Get API instances from the registry's API context
             const apiContext = registry.get('apis') || {};
-            
+
             this.memoryAPI = apiContext['memory-api'];
             this.ragnoAPI = apiContext['ragno-api'];
             this.zptAPI = apiContext['zpt-api'];
@@ -108,13 +108,13 @@ export default class UnifiedSearchAPI extends BaseAPI {
      */
     async executeOperation(operation, params) {
         this._validateParams(params);
-        
+
         const start = Date.now();
         const requestId = uuidv4();
-        
+
         try {
             let result;
-            
+
             switch (operation) {
                 case 'unified':
                     result = await this.unifiedSearch(params, requestId);
@@ -131,12 +131,12 @@ export default class UnifiedSearchAPI extends BaseAPI {
                 default:
                     throw new Error(`Unknown operation: ${operation}`);
             }
-            
+
             const duration = Date.now() - start;
             this.metrics.avgResponseTime = this._updateAverage(this.metrics.avgResponseTime, duration);
             this._emitMetric(`unified.operation.${operation}.duration`, duration);
             this._emitMetric(`unified.operation.${operation}.count`, 1);
-            
+
             return {
                 ...result,
                 requestId,
@@ -156,18 +156,18 @@ export default class UnifiedSearchAPI extends BaseAPI {
         if (!query) {
             throw new Error('Search query is required');
         }
-        
+
         this.logger.info('Executing unified search', { requestId, query, strategy, limit });
-        
+
         const searchStart = Date.now();
-        
+
         // Analyze query to determine optimal search strategy
         const queryAnalysis = this._analyzeQuery(query);
         const searchStrategy = strategy === 'auto' ? this._determineStrategy(queryAnalysis) : strategy;
-        
+
         // Determine which services to query
         const servicesToQuery = services || this._selectServices(queryAnalysis, searchStrategy);
-        
+
         // Execute searches in parallel or sequence based on configuration
         let searchResults;
         if (this.enableParallelSearch) {
@@ -176,22 +176,22 @@ export default class UnifiedSearchAPI extends BaseAPI {
         } else {
             searchResults = await this._executeSequentialSearches(query, servicesToQuery, limit, requestId);
         }
-        
+
         // Rank and merge results
-        const mergedResults = this.enableResultRanking ? 
+        const mergedResults = this.enableResultRanking ?
             this._rankAndMergeResults(searchResults, queryAnalysis, weights) :
             this._simpleMergeResults(searchResults, limit);
-        
+
         const searchTime = Date.now() - searchStart;
         this.metrics.totalSearches++;
-        
+
         // Update service usage metrics
         servicesToQuery.forEach(service => {
             if (this.metrics.serviceUsage[service] !== undefined) {
                 this.metrics.serviceUsage[service]++;
             }
         });
-        
+
         // Update query type metrics
         this._updateQueryTypeMetrics(queryAnalysis);
 
@@ -230,7 +230,7 @@ export default class UnifiedSearchAPI extends BaseAPI {
      */
     async _executeParallelSearches(query, services, limit, requestId) {
         const searchPromises = [];
-        
+
         // Memory search
         if (services.includes('memory') && this.memoryAPI) {
             searchPromises.push(
@@ -240,7 +240,7 @@ export default class UnifiedSearchAPI extends BaseAPI {
                 }).catch(error => ({ service: 'memory', error: error.message, results: [] }))
             );
         }
-        
+
         // Ragno search
         if (services.includes('ragno') && this.ragnoAPI) {
             searchPromises.push(
@@ -251,7 +251,7 @@ export default class UnifiedSearchAPI extends BaseAPI {
                 }).catch(error => ({ service: 'ragno', error: error.message, results: [] }))
             );
         }
-        
+
         // Basic search
         if (services.includes('search') && this.searchAPI) {
             searchPromises.push(
@@ -261,7 +261,7 @@ export default class UnifiedSearchAPI extends BaseAPI {
                 }).catch(error => ({ service: 'search', error: error.message, results: [] }))
             );
         }
-        
+
         // ZPT search (via preview for concept exploration)
         if (services.includes('zpt') && this.zptAPI) {
             searchPromises.push(
@@ -272,7 +272,7 @@ export default class UnifiedSearchAPI extends BaseAPI {
                 }).catch(error => ({ service: 'zpt', error: error.message, results: [] }))
             );
         }
-        
+
         const results = await Promise.allSettled(searchPromises);
         return results.map(result => result.status === 'fulfilled' ? result.value : result.reason);
     }
@@ -282,7 +282,7 @@ export default class UnifiedSearchAPI extends BaseAPI {
      */
     async _executeSequentialSearches(query, services, limit, requestId) {
         const results = [];
-        
+
         for (const service of services) {
             try {
                 let result;
@@ -318,7 +318,7 @@ export default class UnifiedSearchAPI extends BaseAPI {
                         }
                         break;
                 }
-                
+
                 if (result) {
                     results.push(result);
                 }
@@ -327,7 +327,7 @@ export default class UnifiedSearchAPI extends BaseAPI {
                 results.push({ service, error: error.message, results: [] });
             }
         }
-        
+
         return results;
     }
 
@@ -336,17 +336,17 @@ export default class UnifiedSearchAPI extends BaseAPI {
      */
     async _executeServiceSearch(serviceName, api, operation, params) {
         const start = Date.now();
-        
+
         try {
             const result = await Promise.race([
                 api.executeOperation(operation, params),
-                new Promise((_, reject) => 
+                new Promise((_, reject) =>
                     setTimeout(() => reject(new Error('Search timeout')), this.searchTimeout)
                 )
             ]);
-            
+
             const duration = Date.now() - start;
-            
+
             return {
                 service: serviceName,
                 operation,
@@ -380,7 +380,7 @@ export default class UnifiedSearchAPI extends BaseAPI {
                     },
                     source: 'memory'
                 }));
-                
+
             case 'ragno':
                 return (result.results || []).map(item => ({
                     type: 'entity',
@@ -395,7 +395,7 @@ export default class UnifiedSearchAPI extends BaseAPI {
                     },
                     source: 'ragno'
                 }));
-                
+
             case 'search':
                 return (result.results || []).map(item => ({
                     type: 'content',
@@ -406,21 +406,21 @@ export default class UnifiedSearchAPI extends BaseAPI {
                     metadata: item.metadata || {},
                     source: 'search'
                 }));
-                
+
             case 'zpt':
                 return (result.corpuscles || []).map(item => ({
                     type: 'corpuscle',
                     id: item.id || uuidv4(),
                     title: item.title || 'Navigation Result',
                     content: item.content || item.summary,
-                    score: item.relevance || 0.5,
+                    score: item.relevance,
                     metadata: {
                         complexity: item.complexity,
                         entities: item.entities
                     },
                     source: 'zpt'
                 }));
-                
+
             default:
                 return [];
         }
@@ -432,11 +432,11 @@ export default class UnifiedSearchAPI extends BaseAPI {
     _rankAndMergeResults(searchResults, queryAnalysis, customWeights = {}) {
         const weights = { ...this.searchWeights, ...customWeights };
         const allResults = [];
-        
+
         // Apply service-specific weights and collect all results
         searchResults.forEach(serviceResult => {
             if (serviceResult.results && serviceResult.results.length > 0) {
-                const serviceWeight = weights[serviceResult.service] || 0.1;
+                const serviceWeight = weights[serviceResult.service];
                 const weightedResults = serviceResult.results.map(result => ({
                     ...result,
                     weightedScore: result.score * serviceWeight,
@@ -445,12 +445,12 @@ export default class UnifiedSearchAPI extends BaseAPI {
                 allResults.push(...weightedResults);
             }
         });
-        
+
         // Apply query-based boost factors
         allResults.forEach(result => {
             result.finalScore = this._calculateFinalScore(result, queryAnalysis);
         });
-        
+
         // Sort by final score and limit results
         return allResults
             .sort((a, b) => b.finalScore - a.finalScore)
@@ -462,7 +462,7 @@ export default class UnifiedSearchAPI extends BaseAPI {
      */
     _calculateFinalScore(result, queryAnalysis) {
         let score = result.weightedScore;
-        
+
         // Boost based on query type alignment
         if (queryAnalysis.type === 'entity' && result.type === 'entity') {
             score *= 1.3;
@@ -476,7 +476,7 @@ export default class UnifiedSearchAPI extends BaseAPI {
         if (queryAnalysis.type === 'knowledge' && result.source === 'ragno') {
             score *= 1.3;
         }
-        
+
         // Boost recent content
         if (result.metadata?.timestamp) {
             const age = Date.now() - new Date(result.metadata.timestamp).getTime();
@@ -485,12 +485,12 @@ export default class UnifiedSearchAPI extends BaseAPI {
                 score *= 1.1;
             }
         }
-        
+
         // Boost high-confidence results
         if (result.metadata?.confidence > 0.8) {
             score *= 1.15;
         }
-        
+
         return score;
     }
 
@@ -499,13 +499,13 @@ export default class UnifiedSearchAPI extends BaseAPI {
      */
     _simpleMergeResults(searchResults, limit) {
         const allResults = [];
-        
+
         searchResults.forEach(serviceResult => {
             if (serviceResult.results) {
                 allResults.push(...serviceResult.results);
             }
         });
-        
+
         return allResults.slice(0, limit);
     }
 
@@ -520,7 +520,7 @@ export default class UnifiedSearchAPI extends BaseAPI {
             keywords: query.toLowerCase().split(/\s+/).filter(word => word.length > 2),
             confidence: 0
         };
-        
+
         // Check query patterns
         let maxScore = 0;
         for (const [type, pattern] of Object.entries(this.queryPatterns)) {
@@ -535,9 +535,9 @@ export default class UnifiedSearchAPI extends BaseAPI {
                 }
             }
         }
-        
+
         analysis.confidence = Math.min(maxScore / 3, 1); // Normalize to 0-1
-        
+
         return analysis;
     }
 
@@ -566,7 +566,7 @@ export default class UnifiedSearchAPI extends BaseAPI {
      */
     _selectServices(analysis, strategy) {
         const allServices = ['memory', 'ragno', 'search', 'zpt'];
-        
+
         switch (strategy) {
             case 'entity-focused':
                 return ['ragno', 'memory', 'search'];
@@ -590,7 +590,7 @@ export default class UnifiedSearchAPI extends BaseAPI {
         const analysis = this._analyzeQuery(query);
         const strategy = this._determineStrategy(analysis);
         const services = this._selectServices(analysis, strategy);
-        
+
         return {
             success: true,
             query,
@@ -686,12 +686,12 @@ export default class UnifiedSearchAPI extends BaseAPI {
      */
     _estimateServiceRelevance(service, analysis) {
         let relevance = 0.5; // Base relevance
-        
+
         if (analysis.type === 'entity' && service === 'ragno') relevance = 0.9;
         if (analysis.type === 'concept' && service === 'memory') relevance = 0.9;
         if (analysis.type === 'navigation' && service === 'zpt') relevance = 0.9;
         if (analysis.type === 'knowledge' && service === 'ragno') relevance = 0.8;
-        
+
         return relevance;
     }
 
@@ -750,7 +750,7 @@ export default class UnifiedSearchAPI extends BaseAPI {
      */
     async getMetrics() {
         const baseMetrics = await super.getMetrics();
-        
+
         return {
             ...baseMetrics,
             unified: this.metrics,
@@ -766,10 +766,10 @@ export default class UnifiedSearchAPI extends BaseAPI {
 
     async shutdown() {
         this.logger.info('Shutting down UnifiedSearchAPI');
-        
+
         // Clear any active searches
         // In a production system, you might want to cancel ongoing searches
-        
+
         await super.shutdown();
     }
 }

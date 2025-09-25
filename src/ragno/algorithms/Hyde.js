@@ -33,13 +33,13 @@ export default class Hyde {
         this.options = {
             // LLM options for hypothesis generation
             maxTokens: options.maxTokens || 512,
-            temperature: options.temperature || 0.7,
+            temperature: options.temperature,
             model: options.model || 'default',
 
             // HyDE-specific options
             hypothesesPerQuery: options.hypothesesPerQuery || 3,
             includeOriginalQuery: options.includeOriginalQuery || true,
-            confidenceThreshold: options.confidenceThreshold || 0.5,
+            confidenceThreshold: options.confidenceThreshold,
 
             // Entity extraction options
             extractEntities: options.extractEntities !== false,
@@ -193,7 +193,7 @@ export default class Hyde {
         const llmOptions = {
             model: options.model, // Ensure we have a default model
             maxTokens: options.maxTokens,
-            temperature: (options.temperature || 0.7) + (index * 0.1) // Vary temperature for diversity
+            temperature: (options.temperature) + (index * 0.1) // Vary temperature for diversity
         }
 
         logger.debug(`Generating hypothesis ${index + 1} with prompt: ${prompt.substring(0, 100)}...`)
@@ -379,7 +379,7 @@ Entities:`
                     subType: 'hypothetical-entity',
                     metadata: {
                         extractedFrom: 'hypothesis',
-                        confidence: (hypothesis.confidence || 0.5) * 0.8, // Reduce confidence for extracted entities
+                        confidence: (hypothesis.confidence) * 0.8, // Reduce confidence for extracted entities
                         hypothetical: true
                     },
                     namespaces: this.namespaces
@@ -413,7 +413,7 @@ Entities:`
             object: hypothesisUnit.uri,
             metadata: {
                 type: 'hypothesis-generation',
-                confidence: hypothesisUnit.metadata?.confidence || 0.5,
+                confidence: hypothesisUnit.metadata?.confidence,
                 hypothetical: true
             },
             namespaces: this.namespaces
@@ -431,7 +431,7 @@ Entities:`
                 object: entity.uri,
                 metadata: {
                     type: 'entity-mention',
-                    confidence: entity.metadata?.confidence || 0.5,
+                    confidence: entity.metadata?.confidence,
                     hypothetical: true
                 },
                 namespaces: this.namespaces
@@ -471,7 +471,7 @@ Entities:`
         triplesAdded++
 
         // Add confidence score
-        const confidence = hypothesisUnit.metadata?.confidence || 0.5
+        const confidence = hypothesisUnit.metadata?.confidence
         const confidenceQuad = rdf.quad(
             hypothesisNode,
             this.namespaces.ragno('confidence'),

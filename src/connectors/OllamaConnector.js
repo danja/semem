@@ -83,7 +83,7 @@ export default class OllamaConnector {
 
             const response = await this.client.chat(ollamaMessages, {
                 model,
-                temperature: options.temperature || 0.7,
+                temperature: options.temperature,
                 ...options
             });
 
@@ -113,7 +113,7 @@ export default class OllamaConnector {
 
             const response = await this.client.complete(prompt, {
                 model,
-                temperature: options.temperature || 0.7,
+                temperature: options.temperature,
                 ...options
             })
 

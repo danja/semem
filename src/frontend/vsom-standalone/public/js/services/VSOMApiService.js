@@ -16,51 +16,51 @@ export default class VSOMApiService {
             'Content-Type': 'application/json'
         };
     }
-    
+
     /**
      * Make HTTP request with error handling and session management
      */
     async makeRequest(endpoint, options = {}) {
         const url = `${this.baseUrl}${endpoint}`;
-        
+
         // Include session ID in headers if available
         const headers = { ...this.defaultHeaders };
         if (this.sessionId) {
             headers['mcp-session-id'] = this.sessionId;
         }
-        
+
         const config = {
             headers: { ...headers, ...options.headers },
             ...options
         };
-        
+
         try {
             const response = await fetch(url, config);
-            
+
             // Extract and store session ID from response
             const responseSessionId = response.headers.get('mcp-session-id');
             if (responseSessionId && responseSessionId !== this.sessionId) {
                 console.log(`🔗 [VSOM] Session ID updated: ${this.sessionId} → ${responseSessionId}`);
                 this.sessionId = responseSessionId;
             }
-            
+
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
                 throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
             }
-            
+
             const contentType = response.headers.get('content-type');
             if (contentType && contentType.includes('application/json')) {
                 return await response.json();
             }
-            
+
             return await response.text();
         } catch (error) {
             console.error(`API Error [${endpoint}]:`, error);
             throw error;
         }
     }
-    
+
     /**
      * Test connection to API server
      */
@@ -73,7 +73,7 @@ export default class VSOMApiService {
             return false;
         }
     }
-    
+
     /**
      * Get server health status
      */
@@ -82,7 +82,7 @@ export default class VSOMApiService {
             method: 'GET'
         });
     }
-    
+
     /**
      * Get current ZPT navigation state
      */
@@ -106,7 +106,7 @@ export default class VSOMApiService {
                     mode: 'comprehensive',
                     useContext: true,
                     useHyDE: false,
-                    threshold: options.threshold || 0.3
+                    threshold: options.threshold
                 })
             });
 
@@ -144,7 +144,7 @@ export default class VSOMApiService {
             body: JSON.stringify({ what: 'session', details: true })
         });
     }
-    
+
     /**
      * Get concepts data
      */
@@ -154,7 +154,7 @@ export default class VSOMApiService {
             body: JSON.stringify({ what: 'concepts', details: true })
         });
     }
-    
+
     /**
      * Get all system data
      */
@@ -225,7 +225,7 @@ export default class VSOMApiService {
         const conceptsQuery = await this.queryLoader.loadQuery('visualization/vsom-concepts.sparql', variables);
         return this.getSPARQLData(conceptsQuery);
     }
-    
+
     /**
      * Set zoom level
      */
@@ -235,30 +235,30 @@ export default class VSOMApiService {
             body: JSON.stringify({ level, query })
         });
     }
-    
+
     /**
      * Set pan filters
      */
     async setPan(panParams, query) {
         const panData = {};
         if (panParams.domains) {
-            panData.domains = Array.isArray(panParams.domains) ? 
-                panParams.domains : 
+            panData.domains = Array.isArray(panParams.domains) ?
+                panParams.domains :
                 panParams.domains.split(',').map(s => s.trim()).filter(s => s);
         }
         if (panParams.keywords) {
-            panData.keywords = Array.isArray(panParams.keywords) ? 
-                panParams.keywords : 
+            panData.keywords = Array.isArray(panParams.keywords) ?
+                panParams.keywords :
                 panParams.keywords.split(',').map(s => s.trim()).filter(s => s);
         }
         if (query) panData.query = query;
-        
+
         return this.makeRequest('/pan', {
             method: 'POST',
             body: JSON.stringify(panData)
         });
     }
-    
+
     /**
      * Set tilt style
      */
@@ -268,7 +268,7 @@ export default class VSOMApiService {
             body: JSON.stringify({ style, query })
         });
     }
-    
+
     /**
      * Create VSOM instance
      */
@@ -277,14 +277,14 @@ export default class VSOMApiService {
         // For now, we'll simulate this with inspect data
         return this.makeRequest('/inspect', {
             method: 'POST',
-            body: JSON.stringify({ 
-                what: 'session', 
+            body: JSON.stringify({
+                what: 'session',
                 details: true,
                 vsomConfig: config
             })
         });
     }
-    
+
     /**
      * Load data into VSOM
      */
@@ -297,7 +297,7 @@ export default class VSOMApiService {
             message: 'Data loaded for VSOM processing'
         };
     }
-    
+
     /**
      * Train VSOM instance
      */
@@ -313,7 +313,7 @@ export default class VSOMApiService {
             status: 'completed'
         };
     }
-    
+
     /**
      * Get VSOM grid state
      */
@@ -331,7 +331,7 @@ export default class VSOMApiService {
             }
         };
     }
-    
+
     /**
      * Get VSOM feature maps
      */
@@ -347,7 +347,7 @@ export default class VSOMApiService {
             }
         };
     }
-    
+
     /**
      * Perform VSOM clustering on live semantic data
      */
@@ -380,7 +380,7 @@ export default class VSOMApiService {
             };
         }
     }
-    
+
     /**
      * Perform actual semantic clustering based on concept similarity
      */
@@ -501,17 +501,17 @@ export default class VSOMApiService {
             })
         });
     }
-    
+
     /**
      * Get interaction history with embeddings
      */
     async getInteractionHistory(limit = 100) {
         try {
             const sessionData = await this.getSessionData();
-            
+
             // Extract interactions from session data
             let interactions = [];
-            
+
             if (sessionData.sessionCache?.interactions) {
                 interactions = sessionData.sessionCache.interactions;
             } else if (sessionData.interactions) {
@@ -519,12 +519,12 @@ export default class VSOMApiService {
             } else if (sessionData.zptState?.interactions) {
                 interactions = sessionData.zptState.interactions;
             }
-            
+
             // Ensure we have an array and limit results
             if (!Array.isArray(interactions)) {
                 interactions = [];
             }
-            
+
             return {
                 success: true,
                 interactions: interactions.slice(-limit),
@@ -540,7 +540,7 @@ export default class VSOMApiService {
             };
         }
     }
-    
+
     /**
      * Generate mock grid for testing
      * @private
@@ -562,7 +562,7 @@ export default class VSOMApiService {
         }
         return grid;
     }
-    
+
     /**
      * Generate mock feature map for testing
      * @private
@@ -578,8 +578,8 @@ export default class VSOMApiService {
         }
         return map;
     }
-    
-    
+
+
     /**
      * Get formatted error message
      */

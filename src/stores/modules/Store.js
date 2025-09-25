@@ -393,7 +393,7 @@ export class Store {
                         semem:embedding """${embeddingStr}""" ;
                         dcterms:created "${new Date().toISOString()}"^^xsd:dateTime ;
                         ragno:tokenCount "${unit.tokenCount || 0}"^^xsd:integer ;
-                        ragno:importance "${unit.importance || 0.5}"^^xsd:decimal .
+                        ragno:importance "${unit.importance}"^^xsd:decimal .
                     ${unit.entities ? unit.entities.map(entityId =>
             `${unitUri} ragno:relatedTo <${entityId}> .`
         ).join('\n') : ''}
@@ -466,7 +466,7 @@ export class Store {
                 GRAPH <${this.graphName}> {
                     ${communityUri} a ragno:Community ;
                         rdfs:label "${this._escapeSparqlString(community.label || community.name || '')}" ;
-                        ragno:cohesion "${community.cohesion || 0.5}"^^xsd:decimal ;
+                        ragno:cohesion "${community.cohesion}"^^xsd:decimal ;
                         ragno:size "${community.size || (community.members ? community.members.length : 0)}"^^xsd:integer ;
                         dcterms:created "${new Date().toISOString()}"^^xsd:dateTime .
                     ${community.members ? community.members.map(memberId =>
@@ -501,7 +501,7 @@ export class Store {
             conceptStatements.push(`
                 <${conceptUri}> a ragno:Concept ;
                     rdfs:label "${this._escapeSparqlString(concept.label)}" ;
-                    ragno:confidence "${concept.confidence || 0.5}"^^xsd:decimal ;
+                    ragno:confidence "${concept.confidence}"^^xsd:decimal ;
                     ragno:frequency "${concept.frequency || 1}"^^xsd:integer ;
                     ragno:conceptCategory "${concept.category || 'general'}" ;
                     ragno:extractedFrom <${sourceEntityUri}> ;

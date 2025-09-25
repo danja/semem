@@ -20,17 +20,17 @@ class VSOMStandaloneApp {
             pan: { domains: '', keywords: '' },
             tilt: 'keywords',
             threshold: 0.3,
-            
+
             // App State
             interactions: [],
             vsomData: null,
             connected: false,
             lastUpdate: null
         };
-        
+
         this.updateInterval = null;
         this.initialized = false;
-        
+
         // Bind methods
         this.init = this.init.bind(this);
         this.updateState = this.updateState.bind(this);
@@ -38,19 +38,19 @@ class VSOMStandaloneApp {
         this.handleZPTChange = this.handleZPTChange.bind(this);
         this.showToast = this.showToast.bind(this);
     }
-    
+
     async init() {
         if (this.initialized) return;
-        
+
         console.log('🚀 Initializing VSOM Standalone App...');
-        
+
         try {
             // Initialize services
             await this.initializeServices();
-            
+
             // Initialize components
             await this.initializeComponents();
-            
+
             // Setup event listeners
             this.setupEventListeners();
 
@@ -59,30 +59,30 @@ class VSOMStandaloneApp {
 
             // Initial data load
             await this.refreshData();
-            
+
             // Start periodic updates
             this.startPeriodicUpdates();
-            
+
             this.initialized = true;
             console.log('✅ VSOM Standalone App initialized successfully');
-            
+
             this.showToast('VSOM Navigation Ready', 'success');
-            
+
         } catch (error) {
             console.error('❌ Failed to initialize VSOM Standalone App:', error);
             this.showToast('Failed to initialize: ' + error.message, 'error');
         }
     }
-    
+
     async initializeServices() {
         this.services.api = new VSOMApiService();
         this.services.processor = new DataProcessor();
-        
+
         // Test connection
         const connected = await this.services.api.testConnection();
         this.updateConnectionStatus(connected);
     }
-    
+
     async initializeComponents() {
         // Initialize VSOM Grid component
         const gridContainer = document.getElementById('vsom-grid');
@@ -93,7 +93,7 @@ class VSOMStandaloneApp {
             });
             await this.components.grid.init();
         }
-        
+
         // Initialize Data Panel component
         const dataContainer = document.getElementById('data-panel');
         if (dataContainer) {
@@ -102,7 +102,7 @@ class VSOMStandaloneApp {
             });
             await this.components.dataPanel.init();
         }
-        
+
         // Initialize ZPT Controls component
         const zptContainer = document.getElementById('zpt-controls');
         if (zptContainer) {
@@ -118,24 +118,24 @@ class VSOMStandaloneApp {
             await this.components.zptControls.init();
         }
     }
-    
+
     setupEventListeners() {
         // Refresh button
         const refreshBtn = document.getElementById('refresh-map');
         if (refreshBtn) {
             refreshBtn.addEventListener('click', this.refreshData);
         }
-        
+
         // Auto layout button
         const autoLayoutBtn = document.getElementById('auto-layout');
         if (autoLayoutBtn) {
             autoLayoutBtn.addEventListener('click', this.handleAutoLayout.bind(this));
         }
-        
+
         // Window events
         window.addEventListener('beforeunload', this.cleanup.bind(this));
         window.addEventListener('resize', this.handleResize.bind(this));
-        
+
         // Visibility change (pause updates when hidden)
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) {
@@ -145,7 +145,7 @@ class VSOMStandaloneApp {
             }
         });
     }
-    
+
     async refreshData(preserveZPTState = false) {
         try {
             this.showLoading(true);
@@ -222,7 +222,7 @@ class VSOMStandaloneApp {
             console.log('🔍 Updated state:', {
                 interactionCount: this.state.interactions.length,
                 conceptCount: this.state.concepts.length,
-                zptState: {zoom: this.state.zoom, pan: this.state.pan, tilt: this.state.tilt},
+                zptState: { zoom: this.state.zoom, pan: this.state.pan, tilt: this.state.tilt },
                 vsomData: this.state.vsomData
             });
 
@@ -294,11 +294,11 @@ class VSOMStandaloneApp {
                     size: Math.max(12, Math.min(24, community.size * 2)),
                     color: community.color,
                     metadata: {
-                        quality: community.coherence || 0.7,
+                        quality: community.coherence,
                         importance: community.size / 20,
                         memberCount: community.size,
                         topics: community.topics,
-                        strength: community.strength || 0.6
+                        strength: community.strength
                     }
                 });
             });
@@ -381,7 +381,7 @@ class VSOMStandaloneApp {
                 color: isContextualScope ? '#66BB6A' : '#4CAF50', // Brighter green when contextual
                 metadata: {
                     quality: Math.min(1, (concept.count || 1) / 10),
-                    importance: Math.min(1, (concept.frequency || 0.1) * 2),
+                    importance: Math.min(1, (concept.frequency) * 2),
                     contextualRelevance: isContextualScope ? 0.6 : 0.3
                 }
             });
@@ -425,7 +425,7 @@ class VSOMStandaloneApp {
                 size: 9,
                 color: '#9C27B0', // Purple for memories
                 metadata: {
-                    quality: memory.quality || 0.7,
+                    quality: memory.quality,
                     importance: isContextualScope ? 0.7 : 0.4,
                     contextualRelevance: isContextualScope ? 0.8 : 0.3,
                     similarity: memory.similarity
@@ -447,8 +447,8 @@ class VSOMStandaloneApp {
                 size: 8,
                 color: '#FF9800',
                 metadata: {
-                    strength: rel.strength || 0.5,
-                    quality: rel.confidence || 0.7
+                    strength: rel.strength,
+                    quality: rel.confidence
                 }
             });
         });
@@ -572,7 +572,7 @@ class VSOMStandaloneApp {
         if (this.components.grid && this.state.vsomData) {
             await this.components.grid.updateData(this.state.vsomData);
         }
-        
+
         // Update Data Panel
         if (this.components.dataPanel) {
             await this.components.dataPanel.updateData({
@@ -581,7 +581,7 @@ class VSOMStandaloneApp {
                 vsomStats: this.getVSOMStats()
             });
         }
-        
+
         // Update ZPT Controls
         if (this.components.zptControls) {
             await this.components.zptControls.updateState({
@@ -591,54 +591,54 @@ class VSOMStandaloneApp {
                 threshold: this.state.threshold
             });
         }
-        
+
         // Update UI elements
         this.updateUIElements();
     }
-    
+
     updateUIElements() {
         // Update header info
         const interactionsCount = document.getElementById('interactions-count');
         if (interactionsCount) {
             interactionsCount.textContent = this.state.interactions.length;
         }
-        
+
         const sessionDuration = document.getElementById('session-duration');
         if (sessionDuration) {
             sessionDuration.textContent = this.getFormattedDuration();
         }
-        
+
         // Update ZPT display
         const currentZoom = document.getElementById('current-zoom');
         if (currentZoom) {
             currentZoom.textContent = this.state.zoom;
         }
-        
+
         const currentPan = document.getElementById('current-pan');
         if (currentPan) {
-            const panText = this.state.pan.domains || this.state.pan.keywords ? 
+            const panText = this.state.pan.domains || this.state.pan.keywords ?
                 'filtered' : 'all';
             currentPan.textContent = panText;
         }
-        
+
         const currentTilt = document.getElementById('current-tilt');
         if (currentTilt) {
             currentTilt.textContent = this.state.tilt;
         }
-        
+
         // Update last update time
         const lastUpdate = document.getElementById('last-update');
         if (lastUpdate && this.state.lastUpdate) {
             lastUpdate.textContent = VSOMUtils.formatRelativeTime(this.state.lastUpdate);
         }
     }
-    
+
     async handleZPTChange(changes) {
         console.log('ZPT state changed:', changes);
-        
+
         // Update local state
         this.updateState(changes);
-        
+
         // Send changes to API if needed
         try {
             if (changes.zoom !== undefined) {
@@ -650,28 +650,28 @@ class VSOMStandaloneApp {
             if (changes.tilt !== undefined) {
                 await this.services.api.setTilt(changes.tilt);
             }
-            
+
             // Refresh VSOM data with new settings (preserve ZPT state)
             await this.refreshData(true);
-            
+
         } catch (error) {
             console.error('Failed to update ZPT state:', error);
             this.showToast('Failed to update navigation settings', 'error');
         }
     }
-    
+
     handleNodeClick(nodeData) {
         console.log('Node clicked:', nodeData);
-        
+
         // Highlight interaction in data panel
         if (this.components.dataPanel) {
             this.components.dataPanel.highlightInteraction(nodeData.interactionId);
         }
-        
+
         // Show node details in tooltip or modal
         this.showNodeDetails(nodeData);
     }
-    
+
     handleNodeHover(nodeData, event) {
         // Show tooltip with node information
         if (nodeData) {
@@ -681,61 +681,61 @@ class VSOMStandaloneApp {
             VSOMUtils.hideTooltip();
         }
     }
-    
+
     handleInteractionClick(interaction) {
         console.log('Interaction clicked:', interaction);
-        
+
         // Highlight corresponding node in VSOM grid
         if (this.components.grid) {
             this.components.grid.highlightNode(interaction.id);
         }
-        
+
         // Show interaction details
         this.showInteractionDetails(interaction);
     }
-    
+
     async handleAutoLayout() {
         if (this.components.grid) {
             await this.components.grid.autoLayout();
             this.showToast('Auto layout applied', 'info');
         }
     }
-    
+
     handleResize() {
         if (this.components.grid) {
             this.components.grid.handleResize();
         }
     }
-    
+
     startPeriodicUpdates() {
         if (this.updateInterval) {
             clearInterval(this.updateInterval);
         }
-        
+
         // Update every 5 minutes (less aggressive)
         this.updateInterval = setInterval(() => {
             this.refreshData();
         }, 300000);
     }
-    
+
     stopPeriodicUpdates() {
         if (this.updateInterval) {
             clearInterval(this.updateInterval);
             this.updateInterval = null;
         }
     }
-    
+
     updateState(changes) {
         this.state = { ...this.state, ...changes };
     }
-    
+
     updateConnectionStatus(connected) {
         this.state.connected = connected;
-        
+
         const statusDot = document.getElementById('connection-status');
         const statusText = document.getElementById('status-text');
         const apiStatus = document.getElementById('api-status');
-        
+
         if (connected) {
             statusDot?.classList.add('connected');
             statusDot?.classList.remove('error');
@@ -748,7 +748,7 @@ class VSOMStandaloneApp {
             if (apiStatus) apiStatus.textContent = 'Disconnected';
         }
     }
-    
+
     showLoading(show) {
         const loading = document.getElementById('vsom-loading');
 
@@ -758,11 +758,11 @@ class VSOMStandaloneApp {
 
         // No placeholder elements - only show live data visualization
     }
-    
+
     showToast(message, type = 'info') {
         VSOMUtils.showToast(message, type);
     }
-    
+
     showNodeDetails(nodeData) {
         // Implementation for showing node details modal/panel
         console.log('Show node details:', nodeData);
@@ -775,7 +775,7 @@ class VSOMStandaloneApp {
         // Create a simple alert/popup for now (could be enhanced with a modal later)
         const content = nodeData.content || 'No content available';
         const concepts = Array.isArray(nodeData.concepts) ? nodeData.concepts.join(', ') :
-                        (typeof nodeData.concepts === 'number' ? `${nodeData.concepts} concepts` : 'No concepts');
+            (typeof nodeData.concepts === 'number' ? `${nodeData.concepts} concepts` : 'No concepts');
         const timestamp = nodeData.timestamp ? new Date(nodeData.timestamp).toLocaleString() : 'Unknown time';
 
         const message = `Node Details:\n\nType: ${nodeData.type || 'interaction'}\nID: ${nodeData.interactionId || nodeData.id}\n\nContent: ${content.substring(0, 300)}${content.length > 300 ? '...' : ''}\n\nConcepts: ${concepts}\nTime: ${timestamp}`;
@@ -794,12 +794,12 @@ class VSOMStandaloneApp {
             position: { x: nodeData.x, y: nodeData.y }
         });
     }
-    
+
     showInteractionDetails(interaction) {
         // Implementation for showing interaction details modal/panel
         console.log('Show interaction details:', interaction);
     }
-    
+
     getSessionStats() {
         const totalConcepts = this.state.interactions.reduce((sum, i) => {
             if (typeof i.concepts === 'number') {
@@ -824,29 +824,29 @@ class VSOMStandaloneApp {
             duration: duration
         };
     }
-    
+
     getVSOMStats() {
         if (!this.state.vsomData) {
             return { nodes: 0, gridSize: '0x0', trained: false };
         }
-        
+
         return {
             nodes: this.state.vsomData.nodes?.length || 0,
             gridSize: `${this.state.vsomData.gridSize || 0}x${this.state.vsomData.gridSize || 0}`,
             trained: this.state.vsomData.trained || false
         };
     }
-    
+
     getFormattedDuration() {
         if (!this.state.lastUpdate) return '0s';
-        
+
         const start = new Date(this.state.lastUpdate.getTime() - (this.state.interactions.length * 1000 * 60)); // Rough estimate
         return VSOMUtils.formatDuration(Date.now() - start.getTime());
     }
-    
+
     cleanup() {
         this.stopPeriodicUpdates();
-        
+
         if (this.components.grid) {
             this.components.grid.cleanup();
         }
@@ -863,7 +863,7 @@ class VSOMStandaloneApp {
 document.addEventListener('DOMContentLoaded', async () => {
     const app = new VSOMStandaloneApp();
     await app.init();
-    
+
     // Expose app instance globally for debugging
     window.vsomApp = app;
 });

@@ -36,39 +36,39 @@ export default class RagnoAlgorithms {
             // Graph analytics options
             maxIterations: options.maxIterations || 1000,
             convergenceThreshold: options.convergenceThreshold || 1e-6,
-            
+
             // Community detection options
             resolution: options.resolution || 1.0,
             minCommunitySize: options.minCommunitySize || 3,
-            
+
             // PPR options
-            alpha: options.alpha || 0.15,
+            alpha: options.alpha,
             topKPerType: options.topKPerType || 5,
             shallowIterations: options.shallowIterations || 2,
             deepIterations: options.deepIterations || 10,
-            
+
             // General options
             logProgress: options.logProgress || false,
             exportToRDF: options.exportToRDF || false,
             ...options
         }
-        
+
         // Initialize algorithm modules
         this.graphAnalytics = new GraphAnalytics(this.options)
         this.communityDetection = new CommunityDetection(this.options)
         this.personalizedPageRank = new PersonalizedPageRank(this.options)
         this.hyde = new Hyde(this.options)
         this.vsom = new VSOM(this.options)
-        
+
         this.stats = {
             lastFullAnalysis: null,
             analysisCount: 0,
             totalProcessingTime: 0
         }
-        
+
         logger.info('RagnoAlgorithms suite initialized')
     }
-    
+
     /**
      * Run complete graph analysis pipeline
      * @param {Dataset} dataset - RDF-Ext dataset
@@ -78,7 +78,7 @@ export default class RagnoAlgorithms {
     async runFullAnalysis(dataset, options = {}) {
         const startTime = Date.now()
         logger.info('Starting full Ragno graph analysis pipeline...')
-        
+
         const opts = { ...this.options, ...options }
         const results = {
             timestamp: new Date(),
@@ -91,7 +91,7 @@ export default class RagnoAlgorithms {
             components: null,
             processingTime: 0
         }
-        
+
         try {
             // Phase 1: Build graph representation from RDF
             logger.info('Phase 1: Building graph from RDF dataset...')
@@ -101,64 +101,64 @@ export default class RagnoAlgorithms {
                 edgeCount: graph.edges.size,
                 metadata: 'Graph built from RDF dataset'
             }
-            
+
             if (graph.nodes.size === 0) {
                 logger.warn('Empty graph - skipping analysis')
                 return results
             }
-            
+
             // Phase 2: Basic graph statistics
             logger.info('Phase 2: Computing graph statistics...')
             results.statistics = this.graphAnalytics.computeGraphStatistics(graph)
-            
+
             // Phase 3: Structural analysis
             logger.info('Phase 3: Running structural analysis...')
-            
+
             // K-core decomposition
             if (graph.nodes.size > 1) {
                 results.kCore = this.graphAnalytics.computeKCore(graph)
             }
-            
+
             // Betweenness centrality (skip for very large graphs)
             if (graph.nodes.size <= 1000) {
                 results.centrality = this.graphAnalytics.computeBetweennessCentrality(graph)
             } else {
                 logger.info('Skipping betweenness centrality for large graph (>1000 nodes)')
             }
-            
+
             // Connected components
             results.components = this.graphAnalytics.findConnectedComponents(graph)
-            
+
             // Phase 4: Community detection
             logger.info('Phase 4: Detecting communities...')
             if (graph.nodes.size > 2) {
                 results.communities = this.communityDetection.detectCommunities(graph, opts)
             }
-            
+
             // Phase 5: Export to RDF if requested
             if (opts.exportToRDF && opts.targetDataset) {
                 logger.info('Phase 5: Exporting results to RDF...')
                 this.exportAllResultsToRDF(results, opts.targetDataset)
             }
-            
+
             const endTime = Date.now()
             results.processingTime = endTime - startTime
-            
+
             // Update statistics
             this.stats.lastFullAnalysis = new Date()
             this.stats.analysisCount++
             this.stats.totalProcessingTime += results.processingTime
-            
+
             logger.info(`Full analysis completed in ${results.processingTime}ms`)
-            
+
             return results
-            
+
         } catch (error) {
             logger.error('Error during full analysis:', error)
             throw error
         }
     }
-    
+
     /**
      * Run semantic search using PPR
      * @param {Dataset} dataset - RDF-Ext dataset
@@ -168,17 +168,17 @@ export default class RagnoAlgorithms {
      */
     async runSemanticSearch(dataset, queryEntities, options = {}) {
         logger.info(`Running semantic search from ${queryEntities.length} entities...`)
-        
+
         const opts = { ...this.options, ...options }
-        
+
         // Build graph
         const graph = this.graphAnalytics.buildGraphFromRDF(dataset, { undirected: true })
-        
+
         if (graph.nodes.size === 0) {
             logger.warn('Empty graph for semantic search')
             return { results: [], entryPoints: queryEntities }
         }
-        
+
         // Run appropriate PPR based on options
         let pprResults
         if (opts.shallow) {
@@ -188,13 +188,13 @@ export default class RagnoAlgorithms {
         } else {
             pprResults = this.personalizedPageRank.runPPR(graph, queryEntities, opts)
         }
-        
+
         // Enhance results with node metadata
         const enhancedResults = this.enhanceSearchResults(pprResults, graph, dataset)
-        
+
         return enhancedResults
     }
-    
+
     /**
      * Enhance search results with additional metadata
      * @param {Object} pprResults - PPR results
@@ -204,7 +204,7 @@ export default class RagnoAlgorithms {
      */
     enhanceSearchResults(pprResults, graph, dataset) {
         const enhancedNodes = []
-        
+
         for (const node of pprResults.rankedNodes) {
             const nodeData = graph.nodes.get(node.nodeUri)
             const enhanced = {
@@ -214,21 +214,21 @@ export default class RagnoAlgorithms {
                     connections: graph.adjacency.get(node.nodeUri)?.size || 0
                 }
             }
-            
+
             // Add additional RDF properties if available
             const nodeTriples = [...dataset.match(nodeData ? rdf.namedNode(nodeData.uri) : null)]
             enhanced.metadata.tripleCount = nodeTriples.length
-            
+
             enhancedNodes.push(enhanced)
         }
-        
+
         return {
             ...pprResults,
             rankedNodes: enhancedNodes,
             enhanced: true
         }
     }
-    
+
     /**
      * Run targeted analysis for specific algorithms
      * @param {Dataset} dataset - RDF-Ext dataset
@@ -238,64 +238,64 @@ export default class RagnoAlgorithms {
      */
     async runTargetedAnalysis(dataset, algorithms, options = {}) {
         logger.info(`Running targeted analysis: ${algorithms.join(', ')}`)
-        
+
         const graph = this.graphAnalytics.buildGraphFromRDF(dataset, { undirected: true })
         const results = {
             timestamp: new Date(),
             algorithms: algorithms,
             graph: { nodeCount: graph.nodes.size, edgeCount: graph.edges.size }
         }
-        
+
         for (const algorithm of algorithms) {
             switch (algorithm.toLowerCase()) {
                 case 'k-core':
                 case 'kcore':
                     results.kCore = this.graphAnalytics.computeKCore(graph)
                     break
-                    
+
                 case 'centrality':
                 case 'betweenness':
                     if (graph.nodes.size <= 1000) {
                         results.centrality = this.graphAnalytics.computeBetweennessCentrality(graph)
                     }
                     break
-                    
+
                 case 'communities':
                 case 'leiden':
                     if (graph.nodes.size > 2) {
                         results.communities = this.communityDetection.detectCommunities(graph, options)
                     }
                     break
-                    
+
                 case 'components':
                     results.components = this.graphAnalytics.findConnectedComponents(graph)
                     break
-                    
+
                 case 'statistics':
                 case 'stats':
                     results.statistics = this.graphAnalytics.computeGraphStatistics(graph)
                     break
-                    
+
                 case 'hyde':
                 case 'hypothetical':
                     // Hyde requires different parameters - would need LLM handler
                     logger.info('Hyde algorithm requires LLM handler - use runHydeGeneration method')
                     break
-                    
+
                 case 'vsom':
                 case 'clustering':
                     // VSOM requires different parameters - would need entity data and embeddings
                     logger.info('VSOM algorithm requires entity data and embeddings - use runEntityClustering method')
                     break
-                    
+
                 default:
                     logger.warn(`Unknown algorithm: ${algorithm}`)
             }
         }
-        
+
         return results
     }
-    
+
     /**
      * Get top-k important nodes across all metrics
      * @param {Object} analysisResults - Results from runFullAnalysis
@@ -304,7 +304,7 @@ export default class RagnoAlgorithms {
      */
     getTopKNodes(analysisResults, k = 10) {
         const nodeScores = new Map()
-        
+
         // Collect scores from different algorithms
         if (analysisResults.kCore?.coreNumbers) {
             for (const [nodeUri, coreNumber] of analysisResults.kCore.coreNumbers) {
@@ -314,7 +314,7 @@ export default class RagnoAlgorithms {
                 nodeScores.get(nodeUri).coreNumber = coreNumber
             }
         }
-        
+
         if (analysisResults.centrality?.centrality) {
             for (const [nodeUri, centrality] of analysisResults.centrality.centrality) {
                 if (!nodeScores.has(nodeUri)) {
@@ -323,16 +323,16 @@ export default class RagnoAlgorithms {
                 nodeScores.get(nodeUri).centrality = centrality
             }
         }
-        
+
         // Calculate composite score
         const scoredNodes = []
         for (const [nodeUri, scores] of nodeScores) {
             const coreScore = scores.coreNumber || 0
             const centralityScore = scores.centrality || 0
-            
+
             // Weighted composite score
             const compositeScore = coreScore * 0.6 + centralityScore * 0.4
-            
+
             scoredNodes.push({
                 nodeUri,
                 compositeScore,
@@ -340,13 +340,13 @@ export default class RagnoAlgorithms {
                 centrality: centralityScore
             })
         }
-        
+
         // Sort by composite score and return top-k
         return scoredNodes
             .sort((a, b) => b.compositeScore - a.compositeScore)
             .slice(0, k)
     }
-    
+
     /**
      * Export all analysis results to RDF
      * @param {Object} results - Analysis results
@@ -354,23 +354,23 @@ export default class RagnoAlgorithms {
      */
     exportAllResultsToRDF(results, targetDataset) {
         logger.info('Exporting all analysis results to RDF...')
-        
+
         // Export individual algorithm results
         if (results.kCore) {
             this.graphAnalytics.exportResultsToRDF(results.kCore, targetDataset)
         }
-        
+
         if (results.centrality) {
             this.graphAnalytics.exportResultsToRDF(results.centrality, targetDataset)
         }
-        
+
         if (results.communities) {
             this.communityDetection.exportCommunitiesToRDF(results.communities, targetDataset)
         }
-        
+
         logger.info('All results exported to RDF')
     }
-    
+
     /**
      * Run HyDE hypothesis generation
      * @param {Array|string} inputs - Query strings or entity URIs
@@ -381,7 +381,7 @@ export default class RagnoAlgorithms {
      */
     async runHydeGeneration(inputs, llmHandler, targetDataset, options = {}) {
         logger.info('Running HyDE hypothesis generation...')
-        
+
         const opts = { ...this.options, ...options }
         return await this.hyde.generateHypotheses(inputs, llmHandler, targetDataset, opts)
     }
@@ -405,18 +405,18 @@ export default class RagnoAlgorithms {
      */
     async runEntityClustering(entities, embeddingHandler, options = {}) {
         logger.info('Running VSOM entity clustering...')
-        
+
         const opts = { ...this.options, ...options }
-        
+
         // Load entities into VSOM
         const loadResults = await this.vsom.loadFromEntities(entities, embeddingHandler, opts)
-        
+
         // Train the VSOM
         const trainingResults = await this.vsom.train(opts)
-        
+
         // Generate clusters
         const clusters = this.vsom.getClusters(opts.clusterThreshold)
-        
+
         return {
             loadResults,
             trainingResults,
@@ -435,10 +435,10 @@ export default class RagnoAlgorithms {
      */
     async runVSOMAnalysis(dataset, embeddingHandler, options = {}) {
         logger.info('Running VSOM analysis on RDF dataset...')
-        
+
         // Extract entities from dataset
         const entities = this.extractEntitiesFromDataset(dataset)
-        
+
         // Run clustering
         return await this.runEntityClustering(entities, embeddingHandler, options)
     }
@@ -457,7 +457,7 @@ export default class RagnoAlgorithms {
             vsom: this.vsom.getStatistics()
         }
     }
-    
+
     /**
      * Reset all statistics
      */
@@ -467,7 +467,7 @@ export default class RagnoAlgorithms {
             analysisCount: 0,
             totalProcessingTime: 0
         }
-        
+
         logger.info('Algorithm statistics reset')
     }
 
@@ -478,24 +478,24 @@ export default class RagnoAlgorithms {
      */
     extractEntitiesFromDataset(dataset) {
         const entities = []
-        
+
         // Find all ragno:Entity triples
         const ragnoNS = this.namespaces?.ragno || namespace('http://purl.org/stuff/ragno/')
         const rdfNS = this.namespaces?.rdf || namespace('http://www.w3.org/1999/02/22-rdf-syntax-ns#')
         const rdfsNS = this.namespaces?.rdfs || namespace('http://www.w3.org/2000/01/rdf-schema#')
-        
+
         const entityTriples = [...dataset.match(null, rdfNS('type'), ragnoNS('Entity'))]
-        
+
         for (const triple of entityTriples) {
             const entityUri = triple.subject
-            
+
             // Get entity properties
             const labelTriples = [...dataset.match(entityUri, rdfsNS('label'), null)]
             const contentTriples = [...dataset.match(entityUri, ragnoNS('content'), null)]
-            
+
             const label = labelTriples[0]?.object.value || ''
             const content = contentTriples[0]?.object.value || label
-            
+
             if (content) {
                 entities.push({
                     uri: entityUri.value,
@@ -507,7 +507,7 @@ export default class RagnoAlgorithms {
                 })
             }
         }
-        
+
         logger.debug(`Extracted ${entities.length} entities from dataset`)
         return entities
     }

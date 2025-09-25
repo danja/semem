@@ -53,23 +53,23 @@ export default class ResponseAnalyzer {
     async analyzeCompleteness(input, resources, options = {}) {
         const { originalQuestion, response, context = '' } = input;
         const { llmHandler } = resources;
-        
+
         const config = {
-            completenessThreshold: options.completenessThreshold || 0.8,
+            completenessThreshold: options.completenessThreshold,
             maxFollowUpQuestions: options.maxFollowUpQuestions || 3,
-            minConfidence: options.minConfidence || 0.7,
+            minConfidence: options.minConfidence,
             ...options
         };
 
         try {
             // Step 1: Pattern-based incompleteness detection
             const incompleteness = this._detectIncompleteness(response);
-            
+
             // Step 2: LLM-based analysis for completeness scoring
             const completenessAnalysis = await this._analyzeCompletenessWithLLM(
                 originalQuestion, response, context, llmHandler
             );
-            
+
             // Step 3: Extract follow-up questions if incomplete
             let followUpQuestions = [];
             if (incompleteness.isIncomplete || completenessAnalysis.score < config.completenessThreshold) {
@@ -77,14 +77,14 @@ export default class ResponseAnalyzer {
                     originalQuestion, response, context, llmHandler, config
                 );
             }
-            
+
             const result = {
                 isComplete: !incompleteness.isIncomplete && completenessAnalysis.score >= config.completenessThreshold,
                 completenessScore: completenessAnalysis.score,
                 incompleteness: incompleteness,
                 reasoning: completenessAnalysis.reasoning,
                 followUpQuestions: followUpQuestions,
-                confidence: completenessAnalysis.confidence || 0.8,
+                confidence: completenessAnalysis.confidence,
                 metadata: {
                     analysisTimestamp: new Date().toISOString(),
                     thresholdUsed: config.completenessThreshold,
@@ -92,9 +92,9 @@ export default class ResponseAnalyzer {
                     followUpCount: followUpQuestions.length
                 }
             };
-            
+
             return result;
-            
+
         } catch (error) {
             logger.error('Failed to analyze response:', error.message);
             return {
@@ -118,7 +118,7 @@ export default class ResponseAnalyzer {
     _detectIncompleteness(response) {
         const matches = [];
         let isIncomplete = false;
-        
+
         for (const pattern of INCOMPLETE_PATTERNS) {
             const match = response.match(pattern);
             if (match) {
@@ -130,7 +130,7 @@ export default class ResponseAnalyzer {
                 isIncomplete = true;
             }
         }
-        
+
         return {
             isIncomplete,
             matches,
@@ -163,23 +163,23 @@ MISSING: [what information is missing, or "none" if complete]`;
 
         try {
             const analysis = await llmHandler.generateResponse(prompt);
-            
+
             // Parse the structured response
             const scoreMatch = analysis.match(/SCORE:\s*([0-9.]+)/i);
             const reasoningMatch = analysis.match(/REASONING:\s*(.+?)(?=MISSING:|$)/is);
             const missingMatch = analysis.match(/MISSING:\s*(.+)$/is);
-            
+
             const score = scoreMatch ? parseFloat(scoreMatch[1]) : 0.5;
             const reasoning = reasoningMatch ? reasoningMatch[1].trim() : 'Analysis unavailable';
             const missing = missingMatch ? missingMatch[1].trim() : 'Unknown';
-            
+
             return {
                 score: Math.max(0, Math.min(1, score)), // Clamp between 0 and 1
                 reasoning: reasoning,
                 missing: missing,
                 confidence: 0.8
             };
-            
+
         } catch (error) {
             logger.debug('LLM completeness analysis failed:', error.message);
             return {
@@ -219,11 +219,11 @@ FOLLOW-UP QUESTIONS:`;
 
         try {
             const questionsResponse = await llmHandler.generateResponse(prompt);
-            
+
             // Extract numbered questions
             const questions = [];
             const lines = questionsResponse.split('\n');
-            
+
             for (const line of lines) {
                 const match = line.match(/^\s*\d+\.\s*(.+)$/);
                 if (match && match[1].trim()) {
@@ -238,10 +238,10 @@ FOLLOW-UP QUESTIONS:`;
                     }
                 }
             }
-            
+
             // Limit to max questions
             return questions.slice(0, config.maxFollowUpQuestions);
-            
+
         } catch (error) {
             logger.debug('Failed to extract follow-up questions:', error.message);
             return [];
@@ -254,7 +254,7 @@ FOLLOW-UP QUESTIONS:`;
      */
     _categorizeQuestion(question) {
         const questionLower = question.toLowerCase();
-        
+
         if (questionLower.includes('who') || questionLower.includes('person') || questionLower.includes('author') || questionLower.includes('actor')) {
             return 'person';
         } else if (questionLower.includes('where') || questionLower.includes('location') || questionLower.includes('city') || questionLower.includes('country')) {
@@ -278,24 +278,24 @@ FOLLOW-UP QUESTIONS:`;
      */
     _calculateQuestionPriority(question, originalQuestion) {
         let priority = 0.5; // Base priority
-        
+
         // Higher priority for questions that share key terms with original
         const originalTerms = originalQuestion.toLowerCase().split(/\s+/);
         const questionTerms = question.toLowerCase().split(/\s+/);
         const overlap = originalTerms.filter(term => questionTerms.includes(term) && term.length > 3);
         priority += overlap.length * 0.1;
-        
+
         // Higher priority for specific question types
         const questionType = this._categorizeQuestion(question);
         if (['person', 'location', 'temporal'].includes(questionType)) {
             priority += 0.2;
         }
-        
+
         // Lower priority for very general questions
         if (question.toLowerCase().includes('anything') || question.toLowerCase().includes('everything')) {
             priority -= 0.3;
         }
-        
+
         return Math.max(0.1, Math.min(1.0, priority));
     }
 }

@@ -12,7 +12,7 @@ export default class ChatAPI extends BaseAPI {
         this.memoryManager = null;
         this.llmHandler = null;
         this.conversationCache = new Map();
-        this.similarityThreshold = config.similarityThreshold || 0.7;
+        this.similarityThreshold = config.similarityThreshold;
         this.contextWindow = config.contextWindow || 5;
         this.workflowLogger = new WorkflowLogger('ChatAPI');
         workflowLoggerRegistry.register('ChatAPI', this.workflowLogger);
@@ -118,7 +118,7 @@ export default class ChatAPI extends BaseAPI {
                     '🧠 Searching for relevant memories',
                     `[ChatAPI] memoryManager.retrieveRelevantInteractions() - threshold: ${this.similarityThreshold}`
                 );
-                
+
                 relevantMemories = await this.memoryManager.retrieveRelevantInteractions(
                     prompt,
                     this.similarityThreshold
@@ -152,16 +152,16 @@ export default class ChatAPI extends BaseAPI {
                 `🤖 Generating response with ${model || 'default'} model`,
                 `[ChatAPI] llmHandler.generateResponse() - model: ${model || 'default'}, temperature: ${temperature}`
             );
-            
+
             const response = await this.llmHandler.generateResponse(
                 prompt,
                 context,
-                { 
+                {
                     temperature,
                     model: model // Will fall back to LLMHandler's default if not provided
                 }
             );
-            
+
             opLogger.step(
                 'response_generated',
                 `✅ Generated ${response.length} character response`,
@@ -185,7 +185,7 @@ export default class ChatAPI extends BaseAPI {
                     '🎯 Generating embeddings for storage',
                     '[ChatAPI] memoryManager.generateEmbedding() - creating vector representation'
                 );
-                
+
                 const embedding = await this.memoryManager.generateEmbedding(
                     `${prompt} ${response}`
                 );
@@ -195,7 +195,7 @@ export default class ChatAPI extends BaseAPI {
                     '💡 Extracting semantic concepts',
                     '[ChatAPI] memoryManager.extractConcepts() - identifying key concepts'
                 );
-                
+
                 const concepts = await this.memoryManager.extractConcepts(
                     `${prompt} ${response}`
                 );
@@ -229,7 +229,7 @@ export default class ChatAPI extends BaseAPI {
 
             opLogger.complete(
                 'Chat response generated successfully',
-                { 
+                {
                     conversationId: conversation.id,
                     memoryIdsCount: result.memoryIds.length,
                     responseLength: response.length
@@ -238,7 +238,7 @@ export default class ChatAPI extends BaseAPI {
 
             this._emitMetric('chat.generate.count', 1);
             return result;
-            
+
         } catch (error) {
             // Fail operation with detailed error info
             opLogger.fail(error, {

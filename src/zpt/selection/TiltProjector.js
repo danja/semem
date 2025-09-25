@@ -6,7 +6,7 @@ export default class TiltProjector {
         this.config = {
             embeddingDimension: options.embeddingDimension,
             keywordLimit: options.keywordLimit || 20,
-            minKeywordScore: options.minKeywordScore || 0.1,
+            minKeywordScore: options.minKeywordScore,
             graphDepth: options.graphDepth || 3,
             temporalGranularity: options.temporalGranularity || 'day',
             includeMetadata: options.includeMetadata !== false,

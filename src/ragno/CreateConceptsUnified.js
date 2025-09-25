@@ -441,7 +441,7 @@ export class CreateConceptsUnified {
             logger.info(`🧠 Extracting concepts from content (${content.length} characters) using unified prompt system...`);
 
             // Get config values
-            const temperature = this.config.get('conceptExtraction.temperature') || 0.2;
+            const temperature = this.config.get('conceptExtraction.temperature');
             const retries = this.config.get('conceptExtraction.retries') || 3;
 
             // Create prompt context

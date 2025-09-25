@@ -201,7 +201,7 @@ export default class SelectionCriteria {
             Math.floor(tokenBudget / 50), // Estimate tokens per item
             1000 // Hard limit
         );
-        
+
         constraints.push({
             type: 'result_count',
             limit: maxResults,
@@ -491,8 +491,8 @@ export default class SelectionCriteria {
             'entity': 0.7,
             'text': 0.9
         };
-        
-        selectivity *= zoomSelectivity[normalizedParams.zoom.level] || 0.5;
+
+        selectivity *= zoomSelectivity[normalizedParams.zoom.level];
 
         return Math.max(0.01, Math.min(1.0, selectivity));
     }
@@ -501,9 +501,9 @@ export default class SelectionCriteria {
      * Count total number of rules
      */
     countRules(criteria) {
-        return (criteria.primary?.length || 0) + 
-               (criteria.secondary?.length || 0) + 
-               (criteria.constraints?.length || 0);
+        return (criteria.primary?.length || 0) +
+            (criteria.secondary?.length || 0) +
+            (criteria.constraints?.length || 0);
     }
 
     /**
@@ -521,7 +521,7 @@ export default class SelectionCriteria {
         // Validate weights sum to 1.0
         const totalWeight = Object.values(criteria.scoring.weights || {})
             .reduce((sum, weight) => sum + weight, 0);
-        
+
         if (Math.abs(totalWeight - 1.0) > 0.01) {
             throw new Error(`Invalid criteria: weights must sum to 1.0, got ${totalWeight}`);
         }
@@ -564,8 +564,8 @@ export default class SelectionCriteria {
             'temporal_filter': 0.4,
             'geographic_filter': 0.3
         };
-        
-        return selectivityMap[rule.type] || 0.5;
+
+        return selectivityMap[rule.type];
     }
 
     /**

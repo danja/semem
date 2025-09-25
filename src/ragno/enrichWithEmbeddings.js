@@ -39,7 +39,7 @@ export async function enrichWithEmbeddings(graphData, embeddingHandler, options 
     M: options.M || 16,
 
     // Similarity linking
-    similarityThreshold: options.similarityThreshold || 0.7,
+    similarityThreshold: options.similarityThreshold,
     maxSimilarityLinks: options.maxSimilarityLinks || 5,
     linkAcrossTypes: options.linkAcrossTypes !== false,
 

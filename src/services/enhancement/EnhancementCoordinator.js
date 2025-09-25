@@ -20,16 +20,16 @@ export class EnhancementCoordinator {
         this.embeddingHandler = options.embeddingHandler;
         this.sparqlHelper = options.sparqlHelper;
         this.config = options.config;
-        
+
         // Default settings
         this.settings = {
             maxCombinedContextLength: options.maxCombinedContextLength || 8000,
             enableConcurrentProcessing: options.enableConcurrentProcessing !== false,
             contextWeights: {
-                hyde: options.hydeWeight || 0.25,
-                wikipedia: options.wikipediaWeight || 0.3,
-                wikidata: options.wikidataWeight || 0.25,
-                webSearch: options.webSearchWeight || 0.2
+                hyde: options.hydeWeight,
+                wikipedia: options.wikipediaWeight,
+                wikidata: options.wikidataWeight,
+                webSearch: options.webSearchWeight
             },
             fallbackOnError: options.fallbackOnError !== false,
             ...options.settings
@@ -38,7 +38,7 @@ export class EnhancementCoordinator {
         // Initialize enhancement services
         this.services = {};
         this.initializeServices(options);
-        
+
         // Statistics tracking
         this.stats = {
             totalEnhancements: 0,
@@ -203,9 +203,9 @@ export class EnhancementCoordinator {
         } catch (error) {
             const enhancementTime = Date.now() - startTime;
             this.updateStats([], enhancementTime, false);
-            
+
             logger.error('❌ Query enhancement failed:', error.message);
-            
+
             if (this.settings.fallbackOnError) {
                 logger.info('🔄 Falling back to original query');
                 return {
@@ -246,7 +246,7 @@ export class EnhancementCoordinator {
         });
 
         const results = await Promise.allSettled(enhancementPromises);
-        
+
         const successful = [];
         const failed = [];
 
@@ -254,15 +254,15 @@ export class EnhancementCoordinator {
             if (result.status === 'fulfilled' && result.value.success) {
                 successful.push(result.value);
             } else {
-                const failureInfo = result.status === 'fulfilled' 
-                    ? result.value 
+                const failureInfo = result.status === 'fulfilled'
+                    ? result.value
                     : { serviceName: 'unknown', error: result.reason.message, success: false };
                 failed.push(failureInfo);
             }
         }
 
         logger.info(`✅ Concurrent enhancements completed: ${successful.length} successful, ${failed.length} failed`);
-        
+
         return { successful, failed, executionMode: 'concurrent' };
     }
 
@@ -293,7 +293,7 @@ export class EnhancementCoordinator {
         }
 
         logger.info(`✅ Sequential enhancements completed: ${successful.length} successful, ${failed.length} failed`);
-        
+
         return { successful, failed, executionMode: 'sequential' };
     }
 
@@ -354,7 +354,7 @@ export class EnhancementCoordinator {
         for (const enhancement of enhancementResults.successful) {
             const serviceName = enhancement.serviceName;
             const result = enhancement.result;
-            
+
             if (!result.success) continue;
 
             combinedContext.enhancements[serviceName] = result;
@@ -388,7 +388,7 @@ export class EnhancementCoordinator {
                             .map((entity, i) => `${i + 1}. ${entity.label} (${entity.wikidataId}): ${entity.description}`)
                             .join('\n');
                         contextSections.push(`WIKIDATA ENTITIES:\n${entitySummaries}\n`);
-                        
+
                         if (result.entityDetails && result.entityDetails.relationships) {
                             const relationshipSummaries = result.entityDetails.relationships
                                 .slice(0, 5)
@@ -411,7 +411,7 @@ export class EnhancementCoordinator {
                             keys: Object.keys(result.results[0])
                         } : 'none'
                     });
-                    
+
                     if (result.results && result.results.length > 0) {
                         const webSummaries = result.results
                             .slice(0, 3)
@@ -421,9 +421,9 @@ export class EnhancementCoordinator {
                         contextSections.push(webSummaries); // Remove the "WEB SEARCH RESULTS:" header to make it more natural
                     }
                     if (result.contextualInfo) {
-                        logger.debug('🌐 CONSOLE: Adding contextual info', { 
+                        logger.debug('🌐 CONSOLE: Adding contextual info', {
                             length: result.contextualInfo.length,
-                            preview: result.contextualInfo.substring(0, 100) 
+                            preview: result.contextualInfo.substring(0, 100)
                         });
                         contextSections.push(result.contextualInfo);
                     }
@@ -433,18 +433,18 @@ export class EnhancementCoordinator {
 
         // Combine sections and check length
         const fullContext = contextSections.join('\n');
-        
+
         logger.debug('🔥 DEBUG: EnhancementCoordinator final context composition', {
             sectionCount: contextSections.length,
-            sections: contextSections.map((section, i) => ({ 
-                index: i, 
+            sections: contextSections.map((section, i) => ({
+                index: i,
                 length: section.length,
-                preview: section.substring(0, 100) 
+                preview: section.substring(0, 100)
             })),
             fullContextLength: fullContext.length,
             fullContextPreview: fullContext.substring(0, 300)
         });
-        
+
         // Truncate if too long
         if (fullContext.length > this.settings.maxCombinedContextLength) {
             const truncatedContext = fullContext.substring(0, this.settings.maxCombinedContextLength) + '\n[Context truncated due to length...]';
@@ -462,9 +462,9 @@ export class EnhancementCoordinator {
         }
 
         combinedContext.metadata.totalLength = combinedContext.combinedPrompt.length;
-        
+
         logger.info(`✅ Combined context created (${combinedContext.metadata.totalLength} chars, ${enhancementResults.successful.length} services)`);
-        
+
         return combinedContext;
     }
 
@@ -491,7 +491,7 @@ export class EnhancementCoordinator {
 
         try {
             const enhancedPrompt = this.buildComprehensivePrompt(originalQuery, combinedContext);
-            
+
             const answer = await this.llmHandler.generateResponse(enhancedPrompt);
 
             return {
@@ -523,7 +523,7 @@ export class EnhancementCoordinator {
      */
     buildComprehensivePrompt(originalQuery, combinedContext) {
         const servicesUsed = combinedContext.metadata.servicesUsed.join(', ');
-        
+
         return `You are answering a question using multiple knowledge enhancement sources: ${servicesUsed}. Provide a comprehensive, accurate response that synthesizes information from all available sources.
 
 ${combinedContext.combinedPrompt}
@@ -555,8 +555,8 @@ COMPREHENSIVE ANSWER:`;
         }
 
         // Update average response time
-        this.stats.averageResponseTime = 
-            (this.stats.averageResponseTime * (this.stats.totalEnhancements - 1) + responseTime) / 
+        this.stats.averageResponseTime =
+            (this.stats.averageResponseTime * (this.stats.totalEnhancements - 1) + responseTime) /
             this.stats.totalEnhancements;
 
         this.stats.lastEnhancementTime = new Date().toISOString();
@@ -569,7 +569,7 @@ COMPREHENSIVE ANSWER:`;
      */
     getServiceHealth() {
         const serviceHealth = {};
-        
+
         for (const [serviceName, service] of Object.entries(this.services)) {
             try {
                 serviceHealth[serviceName] = service.getServiceStats();

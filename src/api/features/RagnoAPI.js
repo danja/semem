@@ -20,19 +20,19 @@ import SPARQLHelpers from '../../services/sparql/SPARQLHelper.js';
 export default class RagnoAPI extends BaseAPI {
     constructor(config = {}) {
         super(config);
-        
+
         // Configuration
         this.maxTextLength = config.maxTextLength || 50000;
         this.maxBatchSize = config.maxBatchSize || 10;
         this.requestTimeout = config.requestTimeout || 300000; // 5 minutes
         this.supportedFormats = config.supportedFormats || ['turtle', 'ntriples', 'jsonld', 'json'];
-        
+
         // Core dependencies (will be injected)
         this.llmHandler = null;
         this.embeddingHandler = null;
         this.sparqlEndpoint = null;
         this.sparqlStore = null;
-        
+
         // Ragno components
         this.namespaceManager = new NamespaceManager();
         this.rdfManager = new RDFGraphManager({ namespace: this.namespaceManager });
@@ -40,7 +40,7 @@ export default class RagnoAPI extends BaseAPI {
         this.communityDetection = null;
         this.dualSearch = null;
         this.hyde = null;
-        
+
         // Metrics tracking
         this.metrics = {
             decompositions: 0,
@@ -54,18 +54,18 @@ export default class RagnoAPI extends BaseAPI {
 
     async initialize() {
         await super.initialize();
-        
+
         // Get dependencies from registry
         const registry = this.config.registry;
         if (!registry) {
             throw new Error('Registry is required for RagnoAPI');
         }
-        
+
         try {
             // Get core handlers
             this.llmHandler = registry.get('llm');
             this.embeddingHandler = registry.get('embedding');
-            
+
             // Get storage - try to get SPARQL store if available
             try {
                 const memoryManager = registry.get('memory');
@@ -87,26 +87,26 @@ export default class RagnoAPI extends BaseAPI {
             } catch (error) {
                 this.logger.warn('SPARQL store not available, some features will be limited');
             }
-            
+
             // Initialize analytics components
             if (this.sparqlEndpoint) {
                 this.graphAnalytics = new GraphAnalytics({
                     sparqlEndpoint: this.sparqlEndpoint,
                     namespaceManager: this.namespaceManager
                 });
-                
+
                 this.communityDetection = new CommunityDetection({
                     sparqlEndpoint: this.sparqlEndpoint,
                     graphAnalytics: this.graphAnalytics
                 });
-                
+
                 this.dualSearch = new DualSearch({
                     sparqlEndpoint: this.sparqlEndpoint,
                     embeddingHandler: this.embeddingHandler,
                     textAnalyzer: this.llmHandler
                 });
             }
-            
+
             // Initialize Hyde algorithm
             this.hyde = new Hyde({
                 uriBase: this.namespaceManager.uriBase,
@@ -116,7 +116,7 @@ export default class RagnoAPI extends BaseAPI {
                 extractEntities: true,
                 maxEntitiesPerHypothesis: 10
             });
-            
+
             this.logger.info('RagnoAPI initialized successfully');
         } catch (error) {
             this.logger.error('Failed to initialize RagnoAPI:', error);
@@ -129,13 +129,13 @@ export default class RagnoAPI extends BaseAPI {
      */
     async executeOperation(operation, params) {
         this._validateParams(params);
-        
+
         const start = Date.now();
         const requestId = uuidv4();
-        
+
         try {
             let result;
-            
+
             switch (operation) {
                 case 'decompose':
                     result = await this.decomposeText(params, requestId);
@@ -170,11 +170,11 @@ export default class RagnoAPI extends BaseAPI {
                 default:
                     throw new Error(`Unknown operation: ${operation}`);
             }
-            
+
             const duration = Date.now() - start;
             this._emitMetric(`ragno.operation.${operation}.duration`, duration);
             this._emitMetric(`ragno.operation.${operation}.count`, 1);
-            
+
             return {
                 ...result,
                 requestId,
@@ -195,11 +195,11 @@ export default class RagnoAPI extends BaseAPI {
         if (!text && !chunks) {
             throw new Error('Either text or chunks must be provided');
         }
-        
+
         if (text && text.length > this.maxTextLength) {
             throw new Error(`Text length exceeds maximum of ${this.maxTextLength} characters`);
         }
-        
+
         // Convert text to chunks if needed
         let textChunks;
         if (text) {
@@ -207,22 +207,22 @@ export default class RagnoAPI extends BaseAPI {
         } else {
             textChunks = chunks;
         }
-        
+
         if (textChunks.length > this.maxBatchSize) {
             throw new Error(`Batch size exceeds maximum of ${this.maxBatchSize} chunks`);
         }
-        
+
         this.logger.info(`Decomposing corpus: ${textChunks.length} chunks`, { requestId });
-        
+
         try {
             const result = await decomposeCorpus(textChunks, this.llmHandler, {
                 extractRelationships: options.extractRelationships !== false,
                 generateSummaries: options.generateSummaries !== false,
-                minEntityConfidence: options.minEntityConfidence || 0.3,
+                minEntityConfidence: options.minEntityConfidence,
                 maxEntitiesPerUnit: options.maxEntitiesPerUnit || 10,
                 ...options
             });
-            
+
             // Store in SPARQL if available
             if (this.sparqlStore && options.store !== false) {
                 try {
@@ -232,11 +232,11 @@ export default class RagnoAPI extends BaseAPI {
                     this.logger.warn('Failed to store in SPARQL:', error.message);
                 }
             }
-            
+
             this.metrics.decompositions++;
             this.metrics.entities += result.entities.length;
             this.metrics.relationships += result.relationships.length;
-            
+
             return {
                 success: true,
                 units: result.units.map(unit => this._formatSemanticUnit(unit)),
@@ -261,7 +261,7 @@ export default class RagnoAPI extends BaseAPI {
         if (!this.sparqlEndpoint) {
             throw new Error('SPARQL endpoint not available for statistics');
         }
-        
+
         try {
             const queries = {
                 entities: 'SELECT (COUNT(*) as ?count) WHERE { ?s a <http://purl.org/stuff/ragno/Entity> }',
@@ -269,7 +269,7 @@ export default class RagnoAPI extends BaseAPI {
                 relationships: 'SELECT (COUNT(*) as ?count) WHERE { ?s a <http://purl.org/stuff/ragno/Relationship> }',
                 triples: 'SELECT (COUNT(*) as ?count) WHERE { ?s ?p ?o }'
             };
-            
+
             const results = {};
             for (const [key, query] of Object.entries(queries)) {
                 try {
@@ -280,7 +280,7 @@ export default class RagnoAPI extends BaseAPI {
                     results[key] = 0;
                 }
             }
-            
+
             // Get additional analytics if available
             let analytics = {};
             if (this.graphAnalytics) {
@@ -290,7 +290,7 @@ export default class RagnoAPI extends BaseAPI {
                     this.logger.warn('Failed to get graph analytics:', error.message);
                 }
             }
-            
+
             return {
                 success: true,
                 statistics: results,
@@ -310,7 +310,7 @@ export default class RagnoAPI extends BaseAPI {
         if (!this.sparqlEndpoint) {
             throw new Error('SPARQL endpoint not available for entity retrieval');
         }
-        
+
         try {
             let query = `
                 PREFIX ragno: <http://purl.org/stuff/ragno/>
@@ -320,7 +320,7 @@ export default class RagnoAPI extends BaseAPI {
                     OPTIONAL { ?entity ragno:subType ?type }
                     OPTIONAL { ?entity ragno:confidence ?confidence }
             `;
-            
+
             // Add filters
             if (type) {
                 query += ` FILTER(CONTAINS(LCASE(?type), LCASE("${type}")))`;
@@ -328,18 +328,18 @@ export default class RagnoAPI extends BaseAPI {
             if (name) {
                 query += ` FILTER(CONTAINS(LCASE(?name), LCASE("${name}")))`;
             }
-            
+
             query += ` } ORDER BY DESC(?confidence) LIMIT ${limit} OFFSET ${offset}`;
-            
+
             const results = await SPARQLHelpers.executeSPARQLQuery(this.sparqlEndpoint, query);
-            
+
             const entities = results.map(row => ({
                 uri: row.entity.value,
                 name: row.name.value,
                 type: row.type?.value || 'unknown',
                 confidence: parseFloat(row.confidence?.value || 0)
             }));
-            
+
             return {
                 success: true,
                 entities,
@@ -359,10 +359,10 @@ export default class RagnoAPI extends BaseAPI {
         if (!query) {
             throw new Error('Search query is required');
         }
-        
+
         try {
             let results;
-            
+
             if (type === 'dual' && this.dualSearch) {
                 results = await this.dualSearch.search(query, {
                     limit,
@@ -376,9 +376,9 @@ export default class RagnoAPI extends BaseAPI {
             } else {
                 throw new Error(`Unsupported search type: ${type}`);
             }
-            
+
             this.metrics.searches++;
-            
+
             return {
                 success: true,
                 query,
@@ -399,14 +399,14 @@ export default class RagnoAPI extends BaseAPI {
         if (!this.supportedFormats.includes(format)) {
             throw new Error(`Unsupported export format: ${format}. Supported: ${this.supportedFormats.join(', ')}`);
         }
-        
+
         if (!this.sparqlEndpoint) {
             throw new Error('SPARQL endpoint not available for export');
         }
-        
+
         try {
             let query = 'CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o }';
-            
+
             // Add filters if specified
             if (filter) {
                 if (filter.entityType) {
@@ -417,22 +417,22 @@ export default class RagnoAPI extends BaseAPI {
                     }`;
                 }
             }
-            
+
             if (limit) {
                 query += ` LIMIT ${limit}`;
             }
-            
+
             const triples = await SPARQLHelpers.executeSPARQLConstruct(this.sparqlEndpoint, query);
-            
+
             let exportData;
             if (format === 'json') {
                 exportData = this._triplesToJSON(triples);
             } else {
                 exportData = await this._serializeTriples(triples, format);
             }
-            
+
             this.metrics.exports++;
-            
+
             return {
                 success: true,
                 format,
@@ -453,14 +453,14 @@ export default class RagnoAPI extends BaseAPI {
         if (!this.sparqlEndpoint) {
             throw new Error('SPARQL endpoint not available for enrichment');
         }
-        
+
         try {
             const results = {
                 embeddings: null,
                 attributes: null,
                 communities: null
             };
-            
+
             // Enrich with embeddings if embedding handler available
             if (this.embeddingHandler && options.embeddings !== false) {
                 try {
@@ -474,7 +474,7 @@ export default class RagnoAPI extends BaseAPI {
                     this.logger.warn('Failed to enrich with embeddings:', error.message);
                 }
             }
-            
+
             // Augment with attributes if LLM handler available
             if (this.llmHandler && options.attributes !== false) {
                 try {
@@ -488,7 +488,7 @@ export default class RagnoAPI extends BaseAPI {
                     this.logger.warn('Failed to augment with attributes:', error.message);
                 }
             }
-            
+
             // Detect communities if analytics available
             if (this.communityDetection && options.communities !== false) {
                 try {
@@ -505,7 +505,7 @@ export default class RagnoAPI extends BaseAPI {
                     this.logger.warn('Failed to detect communities:', error.message);
                 }
             }
-            
+
             return {
                 success: true,
                 enrichment: results,
@@ -524,13 +524,13 @@ export default class RagnoAPI extends BaseAPI {
         if (!this.communityDetection) {
             throw new Error('Community detection not available without SPARQL endpoint');
         }
-        
+
         try {
             const communities = await this.communityDetection.detectCommunities({
                 algorithm,
                 limit
             });
-            
+
             return {
                 success: true,
                 communities: communities.map(community => ({
@@ -553,7 +553,7 @@ export default class RagnoAPI extends BaseAPI {
      */
     async runFullPipeline({ text, chunks, options = {} }, requestId) {
         this.logger.info('Running full Ragno pipeline', { requestId });
-        
+
         try {
             const pipeline = {
                 decomposition: null,
@@ -561,23 +561,23 @@ export default class RagnoAPI extends BaseAPI {
                 communities: null,
                 statistics: null
             };
-            
+
             // Step 1: Decompose corpus
             pipeline.decomposition = await this.decomposeText({ text, chunks, options }, requestId);
-            
+
             // Step 2: Enrich if requested
             if (options.enrich !== false) {
                 pipeline.enrichment = await this.enrichGraph({ options: options.enrichOptions }, requestId);
             }
-            
+
             // Step 3: Detect communities if requested
             if (options.communities !== false) {
                 pipeline.communities = await this.getCommunities(options.communityOptions || {}, requestId);
             }
-            
+
             // Step 4: Get final statistics
             pipeline.statistics = await this.getGraphStats({}, requestId);
-            
+
             return {
                 success: true,
                 pipeline,
@@ -596,31 +596,31 @@ export default class RagnoAPI extends BaseAPI {
         if (!queries) {
             throw new Error('Queries are required for hypothesis generation');
         }
-        
+
         if (!this.llmHandler) {
             throw new Error('LLM handler not available for hypothesis generation');
         }
-        
+
         try {
             const queryArray = Array.isArray(queries) ? queries : [queries];
             const dataset = this.rdfManager.dataset || require('rdf-ext').dataset();
-            
+
             this.logger.info(`Generating hypotheses for ${queryArray.length} queries`, { requestId });
-            
+
             const results = await this.hyde.generateHypotheses(
                 queryArray,
                 this.llmHandler,
                 dataset,
                 {
                     hypothesesPerQuery: options.hypothesesPerQuery || 3,
-                    temperature: options.temperature || 0.7,
+                    temperature: options.temperature,
                     maxTokens: options.maxTokens || 512,
                     extractEntities: options.extractEntities !== false,
                     maxEntitiesPerHypothesis: options.maxEntitiesPerHypothesis || 10,
                     ...options
                 }
             );
-            
+
             // Store results in SPARQL if available
             if (this.sparqlStore && options.store !== false) {
                 try {
@@ -630,7 +630,7 @@ export default class RagnoAPI extends BaseAPI {
                     this.logger.warn('Failed to store hypotheses in SPARQL:', error.message);
                 }
             }
-            
+
             return {
                 success: true,
                 queries: queryArray,
@@ -659,7 +659,7 @@ export default class RagnoAPI extends BaseAPI {
         if (!this.sparqlEndpoint && !this.rdfManager.dataset) {
             throw new Error('No RDF data source available for querying hypotheses');
         }
-        
+
         try {
             let dataset;
             if (this.rdfManager.dataset && this.rdfManager.dataset.size > 0) {
@@ -675,14 +675,14 @@ export default class RagnoAPI extends BaseAPI {
                     message: 'No hypothetical content available in local dataset'
                 };
             }
-            
+
             this.logger.info('Querying hypothetical content', { requestId, filters });
-            
+
             const hypotheses = this.hyde.queryHypotheticalContent(dataset, filters);
-            
+
             // Apply limit
             const limitedResults = hypotheses.slice(0, limit);
-            
+
             return {
                 success: true,
                 hypotheses: limitedResults,
@@ -751,7 +751,7 @@ export default class RagnoAPI extends BaseAPI {
                 FILTER(CONTAINS(LCASE(?name), LCASE("${query}")))
             } ORDER BY DESC(?confidence) LIMIT ${limit}
         `;
-        
+
         const results = await SPARQLHelpers.executeSPARQLQuery(this.sparqlEndpoint, sparqlQuery);
         return results.map(row => ({
             uri: row.entity.value,
@@ -768,7 +768,7 @@ export default class RagnoAPI extends BaseAPI {
     async _searchSemantic(query, limit, threshold) {
         // Generate embedding for query
         const queryEmbedding = await this.embeddingHandler.generateEmbedding(query);
-        
+
         // Search in SPARQL store if it supports similarity search
         if (this.sparqlStore && typeof this.sparqlStore.search === 'function') {
             const results = await this.sparqlStore.search(queryEmbedding, limit, threshold);
@@ -777,7 +777,7 @@ export default class RagnoAPI extends BaseAPI {
                 score: result.similarity
             }));
         }
-        
+
         throw new Error('Semantic search requires SPARQL store with similarity search support');
     }
 
@@ -800,11 +800,11 @@ export default class RagnoAPI extends BaseAPI {
         // This would use rdf-ext serializers in real implementation
         // For now, return basic serialization
         if (format === 'turtle') {
-            return triples.map(t => 
+            return triples.map(t =>
                 `<${t.subject.value}> <${t.predicate.value}> <${t.object.value}> .`
             ).join('\n');
         }
-        
+
         throw new Error(`Serialization for ${format} not yet implemented`);
     }
 
@@ -829,7 +829,7 @@ export default class RagnoAPI extends BaseAPI {
      */
     async getMetrics() {
         const baseMetrics = await super.getMetrics();
-        
+
         return {
             ...baseMetrics,
             ragno: this.metrics,
@@ -844,16 +844,16 @@ export default class RagnoAPI extends BaseAPI {
 
     async shutdown() {
         this.logger.info('Shutting down RagnoAPI');
-        
+
         // Cleanup components
         if (this.dualSearch && typeof this.dualSearch.shutdown === 'function') {
             await this.dualSearch.shutdown();
         }
-        
+
         if (this.graphAnalytics && typeof this.graphAnalytics.shutdown === 'function') {
             await this.graphAnalytics.shutdown();
         }
-        
+
         await super.shutdown();
     }
 }

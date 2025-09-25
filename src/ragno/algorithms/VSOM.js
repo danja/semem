@@ -36,16 +36,16 @@ export default class VSOM {
 
             // Training parameters
             maxIterations: options.maxIterations || 1000,
-            initialLearningRate: options.initialLearningRate || 0.1,
+            initialLearningRate: options.initialLearningRate,
             finalLearningRate: options.finalLearningRate || 0.01,
             initialRadius: options.initialRadius || Math.max(...(options.mapSize || [20, 20])) / 4,
-            finalRadius: options.finalRadius || 0.5,
+            finalRadius: options.finalRadius,
 
             // Data handling
             batchSize: options.batchSize || 100,
 
             // Clustering
-            clusterThreshold: options.clusterThreshold || 0.8,
+            clusterThreshold: options.clusterThreshold,
             minClusterSize: options.minClusterSize || 3,
 
             // RDF integration

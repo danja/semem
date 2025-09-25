@@ -19,45 +19,45 @@ export default class WikidataAPI extends BaseAPI {
         this.memoryManager = null;
         this.llmHandler = null;
         this.sparqlHelper = null;
-        
+
         // Wikidata service instances
         this.wikidataResearcher = null;
         this.wikidataSearch = null;
         this.wikidataConnector = null;
-        
+
         // Configuration
         this.maxEntitiesPerConcept = config.maxEntitiesPerConcept || 3;
         this.maxSearchResults = config.maxSearchResults || 15;
-        this.minConfidence = config.minConfidence || 0.4;
+        this.minConfidence = config.minConfidence;
         this.requestTimeout = config.requestTimeout || 30000;
         this.defaultGraphURI = config.defaultGraphURI || 'http://purl.org/stuff/wikidata';
     }
 
     async initialize() {
         await super.initialize();
-        
+
         // Get dependencies from registry
         const registry = this.config.registry;
         if (!registry) {
             throw new Error('Registry is required for WikidataAPI');
         }
-        
+
         try {
             this.memoryManager = registry.get('memory');
             this.llmHandler = registry.get('llm');
-            
+
             // Initialize Wikidata services
             this.wikidataResearcher = new WikidataResearcher();
             this.wikidataSearch = new WikidataSearch();
             this.wikidataConnector = new WikidataConnector();
-            
+
             // Try to get SPARQL helper from registry
             try {
                 this.sparqlHelper = registry.get('sparql');
             } catch (error) {
                 this.logger.warn('SPARQL helper not available in registry, some features may be limited');
             }
-            
+
             this.logger.info('WikidataAPI initialized successfully');
         } catch (error) {
             this.logger.error('Failed to initialize WikidataAPI:', error);
@@ -70,40 +70,40 @@ export default class WikidataAPI extends BaseAPI {
      */
     async executeOperation(operation, params) {
         this._validateParams(params);
-        
+
         const start = Date.now();
         const requestId = params.requestId || uuidv4();
-        
+
         try {
             let result;
-            
+
             switch (operation) {
                 case 'research-concepts':
                     result = await this._executeConceptResearch(params, requestId);
                     break;
-                    
+
                 case 'entity-lookup':
                     result = await this._executeEntityLookup(params, requestId);
                     break;
-                    
+
                 case 'entity-search':
                     result = await this._executeEntitySearch(params, requestId);
                     break;
-                    
+
                 case 'sparql-query':
                     result = await this._executeSPARQLQuery(params, requestId);
                     break;
-                    
+
                 case 'concept-discovery':
                     result = await this._executeConceptDiscovery(params, requestId);
                     break;
-                    
+
                 default:
                     throw new Error(`Unknown Wikidata operation: ${operation}`);
             }
-            
+
             const duration = Date.now() - start;
-            
+
             return {
                 success: true,
                 operation,
@@ -111,11 +111,11 @@ export default class WikidataAPI extends BaseAPI {
                 duration,
                 result
             };
-            
+
         } catch (error) {
             const duration = Date.now() - start;
             this.logger.error(`Wikidata operation ${operation} failed:`, error);
-            
+
             return {
                 success: false,
                 operation,
@@ -131,15 +131,15 @@ export default class WikidataAPI extends BaseAPI {
      */
     async _executeConceptResearch(params, requestId) {
         const { question, concepts, options = {} } = params;
-        
+
         if (!question && !concepts) {
             throw new Error('Either question or concepts must be provided');
         }
-        
+
         if (!this.sparqlHelper) {
             throw new Error('SPARQL helper is required for concept research but not available');
         }
-        
+
         const input = { question, concepts };
         const resources = {
             llmHandler: this.llmHandler,
@@ -148,7 +148,7 @@ export default class WikidataAPI extends BaseAPI {
                 wikidataGraphURI: options.graphURI || this.defaultGraphURI
             }
         };
-        
+
         const researchOptions = {
             maxEntitiesPerConcept: options.maxEntitiesPerConcept || this.maxEntitiesPerConcept,
             maxWikidataSearchResults: options.maxSearchResults || this.maxSearchResults,
@@ -156,9 +156,9 @@ export default class WikidataAPI extends BaseAPI {
             enableHierarchySearch: options.enableHierarchySearch !== false,
             storeResults: options.storeResults !== false
         };
-        
+
         this.logger.info(`[${requestId}] Starting Wikidata concept research for: "${question || 'provided concepts'}"`);
-        
+
         return await this.wikidataResearcher.executeResearch(input, resources, researchOptions);
     }
 
@@ -167,18 +167,18 @@ export default class WikidataAPI extends BaseAPI {
      */
     async _executeEntityLookup(params, requestId) {
         const { entityId, entityName, language = 'en', includeRelated = false } = params;
-        
+
         if (!entityId && !entityName) {
             throw new Error('Either entityId or entityName must be provided');
         }
-        
+
         this.logger.info(`[${requestId}] Looking up entity: ${entityId || entityName}`);
-        
+
         if (entityId) {
             // Direct entity lookup by Wikidata ID
-            const entity = await this.wikidataConnector.getEntityDetails(entityId, { 
+            const entity = await this.wikidataConnector.getEntityDetails(entityId, {
                 language,
-                includeRelated 
+                includeRelated
             });
             return {
                 entity,
@@ -191,18 +191,18 @@ export default class WikidataAPI extends BaseAPI {
                 language,
                 limit: 5 // Get multiple candidates
             });
-            
+
             if (searchResults.length === 0) {
                 throw new Error(`No entity found with name: ${entityName}`);
             }
-            
+
             // Get details for the top result
             const topResult = searchResults[0];
-            const entity = await this.wikidataConnector.getEntityDetails(topResult.id, { 
+            const entity = await this.wikidataConnector.getEntityDetails(topResult.id, {
                 language,
-                includeRelated 
+                includeRelated
             });
-            
+
             return {
                 entity,
                 lookupMethod: 'search',
@@ -216,29 +216,29 @@ export default class WikidataAPI extends BaseAPI {
      * Execute entity search
      */
     async _executeEntitySearch(params, requestId) {
-        const { 
-            query, 
-            language = 'en', 
-            limit = 10, 
+        const {
+            query,
+            language = 'en',
+            limit = 10,
             type = null,
-            includeDescriptions = true 
+            includeDescriptions = true
         } = params;
-        
+
         if (!query) {
             throw new Error('Search query is required');
         }
-        
+
         this.logger.info(`[${requestId}] Searching Wikidata entities for: "${query}"`);
-        
+
         const searchOptions = {
             language,
             limit,
             type,
             includeDescriptions
         };
-        
+
         const results = await this.wikidataSearch.searchEntities(query, searchOptions);
-        
+
         return {
             query,
             results,
@@ -252,19 +252,19 @@ export default class WikidataAPI extends BaseAPI {
      */
     async _executeSPARQLQuery(params, requestId) {
         const { query, format = 'json', timeout = 30000 } = params;
-        
+
         if (!query) {
             throw new Error('SPARQL query is required');
         }
-        
+
         this.logger.info(`[${requestId}] Executing SPARQL query against Wikidata`);
-        
+
         try {
             const result = await this.wikidataConnector.executeSPARQLQuery(query, {
                 format,
                 timeout
             });
-            
+
             return {
                 query,
                 result,
@@ -281,26 +281,26 @@ export default class WikidataAPI extends BaseAPI {
      */
     async _executeConceptDiscovery(params, requestId) {
         const { text, options = {} } = params;
-        
+
         if (!text) {
             throw new Error('Text is required for concept discovery');
         }
-        
+
         if (!this.llmHandler) {
             throw new Error('LLM handler is required for concept extraction but not available');
         }
-        
+
         this.logger.info(`[${requestId}] Discovering concepts from text (${text.length} chars)`);
-        
+
         // Extract concepts using LLM
         const concepts = await this.llmHandler.extractConcepts(text);
-        
+
         const result = {
             text: text.substring(0, 200) + (text.length > 200 ? '...' : ''),
             concepts,
             conceptCount: concepts.length
         };
-        
+
         // Optionally research concepts using Wikidata
         if (options.researchConcepts !== false && concepts.length > 0 && this.sparqlHelper) {
             try {
@@ -311,7 +311,7 @@ export default class WikidataAPI extends BaseAPI {
                         storeResults: options.storeResults !== false
                     }
                 }, requestId);
-                
+
                 result.research = researchResult;
                 result.entitiesFound = researchResult.statistics?.entitiesFound || 0;
             } catch (error) {
@@ -319,7 +319,7 @@ export default class WikidataAPI extends BaseAPI {
                 result.researchError = error.message;
             }
         }
-        
+
         return result;
     }
 

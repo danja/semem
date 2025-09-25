@@ -44,15 +44,15 @@ export default class WikidataResearcher {
      */
     async executeResearch(input, resources, options = {}) {
         const startTime = Date.now();
-        
+
         try {
             const { question, concepts: preExtractedConcepts } = input;
             const { llmHandler, sparqlHelper, config } = resources;
-            
+
             const researchConfig = {
                 maxEntitiesPerConcept: options.maxEntitiesPerConcept || 3,
                 maxWikidataSearchResults: options.maxWikidataSearchResults || 15,
-                minEntityConfidence: options.minEntityConfidence || 0.4,
+                minEntityConfidence: options.minEntityConfidence,
                 enableHierarchySearch: options.enableHierarchySearch !== false,
                 storeResults: options.storeResults !== false,
                 storageGraph: options.storageGraph || config.wikidataGraphURI || 'http://purl.org/stuff/wikidata/research',
@@ -78,7 +78,7 @@ export default class WikidataResearcher {
 
             // Step 2: Search Wikidata for entities
             const searchResult = await this._searchWikidataEntities(concepts, researchConfig);
-            
+
             if (!searchResult.success) {
                 return {
                     success: false,
@@ -95,8 +95,8 @@ export default class WikidataResearcher {
 
             // Step 3: Convert to Ragno format
             const conversionResult = await this._convertToRagno(
-                searchResult.entities, 
-                question, 
+                searchResult.entities,
+                question,
                 researchConfig
             );
 
@@ -126,7 +126,7 @@ export default class WikidataResearcher {
                 timestamp: new Date().toISOString(),
                 stored: storageResult?.success || false
             };
-            
+
             this.stats.researchSessions.push(sessionData);
 
             return {
@@ -179,9 +179,9 @@ export default class WikidataResearcher {
             conceptsExtracted: this.stats.conceptsExtracted,
             entitiesFound: this.stats.entitiesFound,
             entitiesConverted: this.stats.entitiesConverted,
-            averageEntitiesPerResearch: this.stats.totalResearches > 0 ? 
+            averageEntitiesPerResearch: this.stats.totalResearches > 0 ?
                 Math.round(this.stats.entitiesFound / this.stats.totalResearches) : 0,
-            conversionRate: this.stats.entitiesFound > 0 ? 
+            conversionRate: this.stats.entitiesFound > 0 ?
                 (this.stats.entitiesConverted / this.stats.entitiesFound) : 0
         };
 
@@ -211,7 +211,7 @@ export default class WikidataResearcher {
 Return only the concepts, one per line, without explanations or numbers.`;
 
             const response = await llmHandler.generateResponse(prompt);
-            
+
             // Parse concepts from response
             const concepts = response
                 .split('\n')
@@ -248,14 +248,14 @@ Return only the concepts, one per line, without explanations or numbers.`;
             });
 
             const allEntities = [];
-            const searchPromises = concepts.map(concept => 
+            const searchPromises = concepts.map(concept =>
                 wikidataSearch.searchByText(concept)
                     .then(result => result.success ? result.entities : [])
                     .catch(() => [])
             );
 
             const searchResults = await Promise.all(searchPromises);
-            
+
             // Flatten and deduplicate entities
             const entityMap = new Map();
             searchResults.forEach(entities => {
@@ -299,14 +299,14 @@ Return only the concepts, one per line, without explanations or numbers.`;
             });
 
             const ragnoEntities = [];
-            
+
             for (const entity of entities) {
                 try {
                     const ragnoEntity = await ragnoConverter.convertEntity(entity, {
                         sourceQuestion: originalQuestion,
                         timestamp: new Date().toISOString()
                     });
-                    
+
                     if (ragnoEntity && ragnoEntity.success) {
                         // Create a proper entity object with label for display
                         const entityObject = {
@@ -355,7 +355,7 @@ Return only the concepts, one per line, without explanations or numbers.`;
     async _storeResults(ragnoEntities, originalQuestion, concepts, sparqlHelper, config) {
         try {
             const triples = [];
-            
+
             // Create research session metadata
             const sessionURI = `${config.storageGraph}/session/${Date.now()}`;
             triples.push(`<${sessionURI}> a ragno:ResearchSession ;`);
@@ -388,7 +388,7 @@ INSERT DATA {
 }`;
 
                 const result = await sparqlHelper.executeUpdate(insertQuery);
-                
+
                 return {
                     success: result.success,
                     triplesStored: triples.length,

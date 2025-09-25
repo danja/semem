@@ -8,23 +8,23 @@ import logger from 'loglevel';
 export default class PanDomainFilter {
     constructor(options = {}) {
         this.config = {
-            fuzzyMatchThreshold: options.fuzzyMatchThreshold || 0.7,
+            fuzzyMatchThreshold: options.fuzzyMatchThreshold,
             temporalGracePeriod: options.temporalGracePeriod || 86400000, // 1 day in ms
             geographicPrecision: options.geographicPrecision || 6, // decimal places
             topicExpansion: options.topicExpansion !== false,
             entityResolution: options.entityResolution !== false,
-            
+
             // Memory domain specific settings
-            memoryRelevanceThreshold: options.memoryRelevanceThreshold || 0.1,
+            memoryRelevanceThreshold: options.memoryRelevanceThreshold,
             domainFadeSupport: options.domainFadeSupport !== false,
             hierarchicalDomains: options.hierarchicalDomains !== false,
             crossDomainBoost: options.crossDomainBoost || 1.2,
-            
+
             ...options
         };
-        
+
         this.logger = logger.getLogger('zpt:pan');
-        
+
         this.initializeFilterStrategies();
         this.initializeDomainPatterns();
         this.initializeMemoryDomains();
@@ -163,7 +163,7 @@ export default class PanDomainFilter {
             const memoryFilter = this.applyMemoryDomainFilter(panParams.domains, enhancedQuery);
             enhancedQuery = { ...enhancedQuery, ...memoryFilter.query };
             appliedFilters.push(memoryFilter.metadata);
-            
+
             this.logger.debug('🧠 Applied memory domain filters:', {
                 domains: panParams.domains,
                 filterCount: appliedFilters.length
@@ -213,7 +213,7 @@ export default class PanDomainFilter {
     applyTopicFilter(topicFilter, queryContext) {
         const { value, pattern, namespace } = topicFilter;
         const domain = this.detectTopicDomain(value, namespace);
-        
+
         let strategy = 'exact';
         if (pattern === 'wildcard') strategy = 'fuzzy';
         if (this.config.topicExpansion) strategy = 'semantic';
@@ -240,7 +240,7 @@ export default class PanDomainFilter {
     applyEntityFilter(entityFilter, queryContext) {
         const { values, type } = entityFilter;
         const domain = this.detectEntityDomain(values);
-        
+
         let strategy = type === 'single' ? 'direct' : 'related';
         if (this.config.entityResolution) strategy = 'transitive';
         if (domain) strategy = 'typed';
@@ -267,7 +267,7 @@ export default class PanDomainFilter {
     applyTemporalFilter(temporalFilter, queryContext) {
         const { start, end, duration, durationDays } = temporalFilter;
         const domain = this.detectTemporalDomain(temporalFilter);
-        
+
         let strategy = 'exact';
         if (start && end) strategy = 'range';
         if (durationDays && durationDays > 365) strategy = 'relative';
@@ -294,7 +294,7 @@ export default class PanDomainFilter {
      */
     applyGeographicFilter(geographicFilter, queryContext) {
         const domain = this.detectGeographicDomain(geographicFilter);
-        
+
         let strategy = 'point';
         if (geographicFilter.bbox) strategy = 'bbox';
         if (geographicFilter.polygon) strategy = 'polygon';
@@ -336,9 +336,9 @@ export default class PanDomainFilter {
     createFuzzyTopicFilter(topicFilter, domain, queryContext) {
         const { value } = topicFilter;
         const patterns = this.generateFuzzyPatterns(value);
-        
+
         const regexPatterns = patterns.map(p => `REGEX(STR(?label), "${p}", "i")`).join(' || ');
-        
+
         return {
             sparqlClause: `FILTER (${regexPatterns})`,
             confidence: 0.7,
@@ -349,11 +349,11 @@ export default class PanDomainFilter {
     createSemanticTopicFilter(topicFilter, domain, queryContext) {
         const { value } = topicFilter;
         const expansions = this.expandTopicSemantically(value, domain);
-        
-        const semanticTerms = [value, ...expansions].map(term => 
+
+        const semanticTerms = [value, ...expansions].map(term =>
             `CONTAINS(LCASE(STR(?label)), "${term.toLowerCase()}")`
         ).join(' || ');
-        
+
         return {
             sparqlClause: `FILTER (${semanticTerms})`,
             confidence: 0.8,
@@ -364,11 +364,11 @@ export default class PanDomainFilter {
     createHierarchicalTopicFilter(topicFilter, domain, queryContext) {
         const { value, namespace } = topicFilter;
         const hierarchy = this.buildTopicHierarchy(value, domain);
-        
-        const hierarchicalTerms = hierarchy.map(level => 
+
+        const hierarchicalTerms = hierarchy.map(level =>
             level.map(term => `CONTAINS(LCASE(STR(?label)), "${term.toLowerCase()}")`).join(' || ')
         ).join(' || ');
-        
+
         return {
             sparqlClause: `FILTER (${hierarchicalTerms})`,
             confidence: 0.85,
@@ -382,7 +382,7 @@ export default class PanDomainFilter {
     createDirectEntityFilter(entityFilter, domain, queryContext) {
         const { values } = entityFilter;
         const entityUris = values.map(v => `<${v}>`).join(', ');
-        
+
         return {
             sparqlClause: `
                 FILTER (
@@ -401,7 +401,7 @@ export default class PanDomainFilter {
         const relatedEntities = this.findRelatedEntities(values, domain);
         const allEntities = [...values, ...relatedEntities];
         const entityUris = allEntities.map(v => `<${v}>`).join(', ');
-        
+
         return {
             sparqlClause: `
                 {
@@ -422,7 +422,7 @@ export default class PanDomainFilter {
         const transitiveEntities = this.findTransitiveEntities(values, domain);
         const allEntities = [...values, ...transitiveEntities];
         const entityUris = allEntities.map(v => `<${v}>`).join(', ');
-        
+
         return {
             sparqlClause: `
                 {
@@ -441,10 +441,10 @@ export default class PanDomainFilter {
     createTypedEntityFilter(entityFilter, domain, queryContext) {
         const { values } = entityFilter;
         const entityTypes = this.inferEntityTypes(values, domain);
-        const typeFilters = entityTypes.map(type => 
+        const typeFilters = entityTypes.map(type =>
             `?uri rdf:type ragno:${type}`
         ).join(' || ');
-        
+
         return {
             sparqlClause: `
                 FILTER (${typeFilters})
@@ -461,7 +461,7 @@ export default class PanDomainFilter {
     createExactTemporalFilter(temporalFilter, domain, queryContext) {
         const { start, end } = temporalFilter;
         let clause = '';
-        
+
         if (start && end) {
             clause = `
                 FILTER (?created >= "${start}"^^xsd:dateTime && 
@@ -472,7 +472,7 @@ export default class PanDomainFilter {
         } else if (end) {
             clause = `FILTER (?created <= "${end}"^^xsd:dateTime)`;
         }
-        
+
         return {
             sparqlClause: clause,
             confidence: 1.0,
@@ -483,10 +483,10 @@ export default class PanDomainFilter {
     createRangeTemporalFilter(temporalFilter, domain, queryContext) {
         const { start, end } = temporalFilter;
         const gracePeriod = this.config.temporalGracePeriod;
-        
+
         const expandedStart = new Date(new Date(start).getTime() - gracePeriod).toISOString();
         const expandedEnd = new Date(new Date(end).getTime() + gracePeriod).toISOString();
-        
+
         return {
             sparqlClause: `
                 FILTER (?created >= "${expandedStart}"^^xsd:dateTime && 
@@ -502,7 +502,7 @@ export default class PanDomainFilter {
         const { durationDays } = temporalFilter;
         const now = new Date();
         const relativeStart = new Date(now.getTime() - (durationDays * 24 * 60 * 60 * 1000));
-        
+
         return {
             sparqlClause: `
                 FILTER (?created >= "${relativeStart.toISOString()}"^^xsd:dateTime)
@@ -515,11 +515,11 @@ export default class PanDomainFilter {
     createPeriodicTemporalFilter(temporalFilter, domain, queryContext) {
         const { start, end } = temporalFilter;
         const periods = this.generatePeriodicIntervals(start, end, domain);
-        
-        const periodClauses = periods.map(period => 
+
+        const periodClauses = periods.map(period =>
             `(?created >= "${period.start}"^^xsd:dateTime && ?created <= "${period.end}"^^xsd:dateTime)`
         ).join(' || ');
-        
+
         return {
             sparqlClause: `FILTER (${periodClauses})`,
             confidence: 0.7,
@@ -534,10 +534,10 @@ export default class PanDomainFilter {
     createPointGeographicFilter(geographicFilter, domain, queryContext) {
         const { center, radius } = geographicFilter;
         if (!center) return { sparqlClause: '', confidence: 0 };
-        
+
         const { lat, lon } = center;
         const radiusKm = radius || 10; // Default 10km radius
-        
+
         return {
             sparqlClause: `
                 ?uri ragno:hasLocation ?location .
@@ -556,9 +556,9 @@ export default class PanDomainFilter {
     createBboxGeographicFilter(geographicFilter, domain, queryContext) {
         const { bbox } = geographicFilter;
         if (!bbox) return { sparqlClause: '', confidence: 0 };
-        
+
         const { minLon, minLat, maxLon, maxLat } = bbox;
-        
+
         return {
             sparqlClause: `
                 ?uri ragno:hasLocation ?location .
@@ -578,9 +578,9 @@ export default class PanDomainFilter {
         // Simplified polygon filter - in practice would use spatial functions
         const { polygon } = geographicFilter;
         if (!polygon) return { sparqlClause: '', confidence: 0 };
-        
+
         const bounds = this.calculatePolygonBounds(polygon);
-        
+
         return {
             sparqlClause: `
                 ?uri ragno:hasLocation ?location .
@@ -598,11 +598,11 @@ export default class PanDomainFilter {
 
     createAdministrativeGeographicFilter(geographicFilter, domain, queryContext) {
         const administrativeUnits = this.resolveAdministrativeUnits(geographicFilter, domain);
-        
+
         const unitFilters = administrativeUnits.map(unit =>
             `?location ragno:administrativeUnit <${unit}>`
         ).join(' || ');
-        
+
         return {
             sparqlClause: `
                 ?uri ragno:hasLocation ?location .
@@ -619,29 +619,29 @@ export default class PanDomainFilter {
     applyMemoryDomainFilter(domains, queryContext) {
         const domainArray = Array.isArray(domains) ? domains : [domains];
         const activeMemoryDomains = this.resolveActiveMemoryDomains(domainArray);
-        
+
         // Build memory domain specific filters
         const memoryFilters = [];
-        
+
         if (this.config.memoryRelevanceThreshold) {
             memoryFilters.push(this.memoryFilters.relevanceThreshold(activeMemoryDomains, queryContext));
         }
-        
+
         if (this.config.hierarchicalDomains) {
             memoryFilters.push(this.memoryFilters.domainHierarchy(activeMemoryDomains, queryContext));
         }
-        
+
         if (this.config.domainFadeSupport) {
             memoryFilters.push(this.memoryFilters.temporalFading(activeMemoryDomains, queryContext));
         }
-        
+
         if (this.config.crossDomainBoost > 1.0) {
             memoryFilters.push(this.memoryFilters.crossDomainBoost(activeMemoryDomains, queryContext));
         }
 
         // Combine all memory filters
         const combinedFilter = this.combineMemoryFilters(memoryFilters);
-        
+
         return {
             query: combinedFilter.query,
             metadata: {
@@ -656,7 +656,7 @@ export default class PanDomainFilter {
 
     createRelevanceThresholdFilter(domains, queryContext) {
         const threshold = this.config.memoryRelevanceThreshold;
-        
+
         return {
             strategy: 'relevance_threshold',
             query: {
@@ -671,7 +671,7 @@ export default class PanDomainFilter {
 
     createDomainHierarchyFilter(domains, queryContext) {
         const hierarchyClause = this.buildDomainHierarchyClause(domains);
-        
+
         return {
             strategy: 'domain_hierarchy',
             query: {
@@ -687,10 +687,10 @@ export default class PanDomainFilter {
             const domainType = this.extractDomainType(domain);
             const config = this.memoryDomainTypes[domainType];
             if (!config || config.fadingStrategy === 'none') return '';
-            
+
             const halfLife = config.decayHalfLife;
             if (halfLife === Infinity) return '';
-            
+
             return `
                 {
                     ?memory zpt:belongsToDomain <${domain}> ;
@@ -701,7 +701,7 @@ export default class PanDomainFilter {
                 }
             `;
         }).filter(clause => clause).join(' UNION ');
-        
+
         return {
             strategy: 'temporal_fading',
             query: {
@@ -721,7 +721,7 @@ export default class PanDomainFilter {
                 BIND (${boostFactor} AS ?crossDomainBoost)
             }
         `;
-        
+
         return {
             strategy: 'cross_domain_boost',
             query: {
@@ -750,16 +750,16 @@ export default class PanDomainFilter {
         const hierarchyClauses = domains.map(domain => {
             const domainType = this.extractDomainType(domain);
             const config = this.memoryDomainTypes[domainType];
-            
+
             if (!config || !config.inheritanceRules.length) {
                 return `?memory zpt:belongsToDomain <${domain}> .`;
             }
-            
-            const inheritanceClauses = config.inheritanceRules.map(inheritedType => 
+
+            const inheritanceClauses = config.inheritanceRules.map(inheritedType =>
                 `?memory zpt:belongsToDomain ?${inheritedType}Domain .
                  ?${inheritedType}Domain zpt:inheritsFrom <${domain}> .`
             ).join('\n                 ');
-            
+
             return `
                 {
                     ?memory zpt:belongsToDomain <${domain}> .
@@ -768,20 +768,20 @@ export default class PanDomainFilter {
                 }
             `;
         }).join(' UNION ');
-        
+
         return hierarchyClauses;
     }
 
     combineMemoryFilters(memoryFilters) {
         const nonEmptyFilters = memoryFilters.filter(f => f.query.sparqlClause.trim());
-        
+
         if (nonEmptyFilters.length === 0) {
             return { query: { sparqlClause: '', confidence: 1.0 } };
         }
-        
+
         const combinedClause = nonEmptyFilters.map(f => `{ ${f.query.sparqlClause} }`).join(' ');
         const avgConfidence = nonEmptyFilters.reduce((sum, f) => sum + f.query.confidence, 0) / nonEmptyFilters.length;
-        
+
         return {
             query: {
                 sparqlClause: combinedClause,
@@ -792,14 +792,14 @@ export default class PanDomainFilter {
 
     buildMemoryDomainContext(domains) {
         if (!domains) return null;
-        
+
         const domainArray = Array.isArray(domains) ? domains : [domains];
         const context = {};
-        
+
         domainArray.forEach(domain => {
             const domainType = this.extractDomainType(domain);
             const config = this.memoryDomainTypes[domainType];
-            
+
             if (config) {
                 context[domainType] = {
                     priority: config.priority,
@@ -809,25 +809,25 @@ export default class PanDomainFilter {
                 };
             }
         });
-        
+
         return context;
     }
 
     estimateMemorySelectivity(domains) {
         // Base selectivity on domain types and priorities
         let selectivity = 0.5;
-        
+
         domains.forEach(domain => {
             const domainType = this.extractDomainType(domain);
             const config = this.memoryDomainTypes[domainType];
-            
+
             if (config) {
                 // Higher priority domains are more selective
                 const priorityFactor = config.priority / 15; // Normalize to 0-1
                 selectivity *= (1 - priorityFactor * 0.3);
             }
         });
-        
+
         return Math.max(0.1, selectivity);
     }
 
@@ -876,44 +876,44 @@ export default class PanDomainFilter {
      */
     generateFuzzyPatterns(value) {
         const patterns = [value];
-        
+
         // Add common variations
         patterns.push(value.replace(/s$/, '')); // Remove plural
         patterns.push(value + 's'); // Add plural
         patterns.push(value.replace(/y$/, 'ies')); // y to ies
         patterns.push(value.replace(/ies$/, 'y')); // ies to y
-        
+
         return patterns;
     }
 
     expandTopicSemantically(value, domain) {
         // Simple semantic expansion - could use word embeddings
         const expansions = [];
-        
+
         if (domain === 'scientific') {
             if (value.includes('gene')) expansions.push('protein', 'DNA', 'sequence');
             if (value.includes('cell')) expansions.push('tissue', 'organ', 'biology');
         }
-        
+
         if (domain === 'geographic') {
             if (value.includes('city')) expansions.push('urban', 'municipality', 'town');
             if (value.includes('country')) expansions.push('nation', 'state', 'territory');
         }
-        
+
         return expansions;
     }
 
     buildTopicHierarchy(value, domain) {
         // Build hierarchical topic structure
         const hierarchy = [[value]]; // Start with the original term
-        
+
         if (domain) {
             const patterns = this.domainPatterns[domain];
             if (patterns && patterns.entityTypes) {
                 hierarchy.push(patterns.entityTypes);
             }
         }
-        
+
         return hierarchy;
     }
 
@@ -942,11 +942,11 @@ export default class PanDomainFilter {
         const startDate = new Date(start);
         const endDate = new Date(end);
         const granularity = domain?.granularity || 'day';
-        
+
         let current = new Date(startDate);
         while (current < endDate) {
             const next = new Date(current);
-            
+
             switch (granularity) {
                 case 'year':
                     next.setFullYear(current.getFullYear() + 1);
@@ -959,16 +959,16 @@ export default class PanDomainFilter {
                     next.setDate(current.getDate() + 1);
                     break;
             }
-            
+
             intervals.push({
                 start: current.toISOString(),
-                end: Math.min(next.getTime(), endDate.getTime()) === next.getTime() ? 
+                end: Math.min(next.getTime(), endDate.getTime()) === next.getTime() ?
                     next.toISOString() : endDate.toISOString()
             });
-            
+
             current = next;
         }
-        
+
         return intervals;
     }
 
@@ -976,7 +976,7 @@ export default class PanDomainFilter {
         // Calculate bounding box for polygon
         const lats = polygon.map(p => p.lat);
         const lons = polygon.map(p => p.lon);
-        
+
         return {
             minLat: Math.min(...lats),
             maxLat: Math.max(...lats),
@@ -990,11 +990,11 @@ export default class PanDomainFilter {
             const { minLon, minLat, maxLon, maxLat } = geographicFilter.bbox;
             return (maxLon - minLon) * (maxLat - minLat);
         }
-        
+
         if (geographicFilter.radius) {
             return Math.PI * geographicFilter.radius * geographicFilter.radius;
         }
-        
+
         return 0;
     }
 
@@ -1021,7 +1021,7 @@ export default class PanDomainFilter {
     estimateTemporalSelectivity(temporalFilter, domain) {
         const { durationDays } = temporalFilter;
         if (!durationDays) return 0.5;
-        
+
         // Assume corpus spans 5 years
         const corpusSpanDays = 5 * 365;
         return Math.min(1.0, durationDays / corpusSpanDays);
@@ -1037,7 +1037,7 @@ export default class PanDomainFilter {
     calculateSelectivity(appliedFilters) {
         // Calculate combined selectivity of all filters
         return appliedFilters.reduce((product, filter) => {
-            return product * (filter.selectivity || 0.5);
+            return product * (filter.selectivity);
         }, 1.0);
     }
 
@@ -1047,15 +1047,15 @@ export default class PanDomainFilter {
     createDirectConceptFilter(concepts) {
         const conceptLabels = concepts.map(c => typeof c === 'string' ? c : c.label);
         const conceptUris = concepts.map(c => typeof c === 'string' ? c : c.uri).filter(Boolean);
-        
+
         return {
             type: 'concept-direct',
             selectivity: this.estimateConceptSelectivity(concepts, 'direct'),
             filter: (corpuscle) => {
                 // Check if corpuscle is directly related to any of the specified concepts
                 const corpuscleConcepts = this.extractCorpuscleConcepts(corpuscle);
-                return corpuscleConcepts.some(concept => 
-                    conceptLabels.includes(concept.label) || 
+                return corpuscleConcepts.some(concept =>
+                    conceptLabels.includes(concept.label) ||
                     conceptUris.includes(concept.uri)
                 );
             }
@@ -1064,13 +1064,13 @@ export default class PanDomainFilter {
 
     createCategoricalConceptFilter(concepts) {
         const categories = [...new Set(concepts.map(c => c.category).filter(Boolean))];
-        
+
         return {
             type: 'concept-categorical',
             selectivity: this.estimateConceptSelectivity(concepts, 'categorical'),
             filter: (corpuscle) => {
                 const corpuscleConcepts = this.extractCorpuscleConcepts(corpuscle);
-                return corpuscleConcepts.some(concept => 
+                return corpuscleConcepts.some(concept =>
                     categories.includes(concept.category)
                 );
             }
@@ -1079,13 +1079,13 @@ export default class PanDomainFilter {
 
     createRelationalConceptFilter(concepts) {
         const conceptLabels = concepts.map(c => typeof c === 'string' ? c : c.label);
-        
+
         return {
             type: 'concept-relational',
             selectivity: this.estimateConceptSelectivity(concepts, 'relational'),
             filter: (corpuscle) => {
                 const corpuscleConcepts = this.extractCorpuscleConcepts(corpuscle);
-                
+
                 // Check if corpuscle concepts have relationships to target concepts
                 return corpuscleConcepts.some(concept => {
                     const relationships = concept.relationships || [];
@@ -1101,7 +1101,7 @@ export default class PanDomainFilter {
             selectivity: this.estimateConceptSelectivity(concepts, 'similarity'),
             filter: (corpuscle) => {
                 const corpuscleConcepts = this.extractCorpuscleConcepts(corpuscle);
-                
+
                 // Use semantic similarity to match concepts (simplified implementation)
                 return concepts.some(targetConcept => {
                     return corpuscleConcepts.some(corpuscleConcept => {
@@ -1121,17 +1121,17 @@ export default class PanDomainFilter {
         if (corpuscle.concepts && Array.isArray(corpuscle.concepts)) {
             return corpuscle.concepts;
         }
-        
+
         if (corpuscle.metadata && corpuscle.metadata.concepts) {
             try {
-                return Array.isArray(corpuscle.metadata.concepts) ? 
-                    corpuscle.metadata.concepts : 
+                return Array.isArray(corpuscle.metadata.concepts) ?
+                    corpuscle.metadata.concepts :
                     JSON.parse(corpuscle.metadata.concepts);
             } catch (e) {
                 return [];
             }
         }
-        
+
         // Fallback: create pseudo-concept from corpuscle content
         const label = corpuscle.label || corpuscle.content || corpuscle.uri;
         if (label) {
@@ -1141,7 +1141,7 @@ export default class PanDomainFilter {
                 confidence: 0.5
             }];
         }
-        
+
         return [];
     }
 
@@ -1151,17 +1151,17 @@ export default class PanDomainFilter {
     calculateConceptSimilarity(concept1, concept2) {
         const label1 = String(concept1.label || '').toLowerCase();
         const label2 = String(concept2.label || '').toLowerCase();
-        
+
         // Simple string similarity as fallback
         if (label1 === label2) return 1.0;
         if (label1.includes(label2) || label2.includes(label1)) return 0.8;
-        
+
         // Could be enhanced with actual embedding similarity if available
         const words1 = label1.split(/\s+/);
         const words2 = label2.split(/\s+/);
         const commonWords = words1.filter(w => words2.includes(w));
         const totalWords = new Set([...words1, ...words2]).size;
-        
+
         return totalWords > 0 ? commonWords.length / totalWords : 0;
     }
 
@@ -1175,10 +1175,10 @@ export default class PanDomainFilter {
             'relational': 0.6,  // Less selective (includes related)
             'similarity': 0.7   // Least selective (fuzzy matching)
         };
-        
+
         const conceptCount = concepts.length;
         const countFactor = Math.min(1.0, conceptCount / 10); // More concepts = less selective
-        
+
         return Math.max(0.1, baseSelectivity[filterType] * (1 - countFactor * 0.3));
     }
 

@@ -27,28 +27,28 @@ export default class SearchFilters {
     constructor(options = {}) {
         this.options = {
             // Relevance filtering options
-            relevanceThreshold: options.relevanceThreshold || 0.7,
+            relevanceThreshold: options.relevanceThreshold,
             enableRelevanceFiltering: options.enableRelevanceFiltering !== false,
-            
+
             // Document type filtering options
             documentTypes: options.documentTypes || [
                 'ragno:Entity',
-                'ragno:Unit', 
+                'ragno:Unit',
                 'ragno:TextElement',
                 'ragno:CommunityElement',
                 'ragno:Attribute'
             ],
             enableTypeFiltering: options.enableTypeFiltering !== false,
-            
+
             // Deduplication options
             enableDeduplication: options.enableDeduplication !== false,
             deduplicationStrategy: options.deduplicationStrategy || 'uri', // uri, content, hybrid
-            contentSimilarityThreshold: options.contentSimilarityThreshold || 0.9,
-            
+            contentSimilarityThreshold: options.contentSimilarityThreshold,
+
             // Context enrichment options
             enableContextEnrichment: options.enableContextEnrichment !== false,
             contextTypes: options.contextTypes || ['relationship', 'source', 'provenance'],
-            
+
             // Ranking options
             rankingStrategy: options.rankingStrategy || 'weighted', // weighted, score, type, hybrid
             typeWeights: options.typeWeights || {
@@ -58,15 +58,15 @@ export default class SearchFilters {
                 'ragno:CommunityElement': 0.7,
                 'ragno:Attribute': 0.6
             },
-            
+
             // Result limiting options
             maxResults: options.maxResults || 50,
             enableResultLimiting: options.enableResultLimiting !== false,
-            
+
             // Score normalization options
             enableScoreNormalization: options.enableScoreNormalization !== false,
             normalizationMethod: options.normalizationMethod || 'minmax', // minmax, zscore, sigmoid
-            
+
             ...options
         };
 
@@ -143,7 +143,7 @@ export default class SearchFilters {
      */
     async applyRelevanceFiltering(results, options = {}) {
         const threshold = options.threshold || this.options.relevanceThreshold;
-        
+
         logger.debug(`🎯 Applying relevance filtering with threshold ${threshold}`);
 
         const filtered = results.filter(result => {
@@ -153,7 +153,7 @@ export default class SearchFilters {
 
         this.statistics.filtered += results.length - filtered.length;
         logger.debug(`🎯 Relevance filtering: ${results.length} → ${filtered.length} results`);
-        
+
         return filtered;
     }
 
@@ -162,7 +162,7 @@ export default class SearchFilters {
      */
     async applyTypeFiltering(results, options = {}) {
         const allowedTypes = options.documentTypes || this.options.documentTypes;
-        
+
         logger.debug(`📋 Applying type filtering for types: ${allowedTypes.join(', ')}`);
 
         const filtered = results.filter(result => {
@@ -171,7 +171,7 @@ export default class SearchFilters {
         });
 
         logger.debug(`📋 Type filtering: ${results.length} → ${filtered.length} results`);
-        
+
         return filtered;
     }
 
@@ -180,7 +180,7 @@ export default class SearchFilters {
      */
     async applyDeduplication(results, options = {}) {
         const strategy = options.deduplicationStrategy || this.options.deduplicationStrategy;
-        
+
         logger.debug(`🔄 Applying deduplication using strategy: ${strategy}`);
 
         let deduplicated;
@@ -200,7 +200,7 @@ export default class SearchFilters {
 
         this.statistics.deduplicated += results.length - deduplicated.length;
         logger.debug(`🔄 Deduplication: ${results.length} → ${deduplicated.length} results`);
-        
+
         return deduplicated;
     }
 
@@ -209,7 +209,7 @@ export default class SearchFilters {
      */
     async enrichWithContext(results, options = {}) {
         const contextTypes = options.contextTypes || this.options.contextTypes;
-        
+
         logger.debug(`🔗 Enriching ${results.length} results with context: ${contextTypes.join(', ')}`);
 
         const enriched = await Promise.all(results.map(async (result) => {
@@ -235,7 +235,7 @@ export default class SearchFilters {
 
         this.statistics.enriched += enriched.length;
         logger.debug(`🔗 Context enrichment completed for ${enriched.length} results`);
-        
+
         return enriched;
     }
 
@@ -245,7 +245,7 @@ export default class SearchFilters {
     async applyRanking(results, options = {}) {
         const strategy = options.rankingStrategy || this.options.rankingStrategy;
         const sortBy = options.sortBy || 'relevance';
-        
+
         logger.debug(`📊 Applying ranking using strategy: ${strategy}, sortBy: ${sortBy}`);
 
         let ranked;
@@ -268,7 +268,7 @@ export default class SearchFilters {
 
         this.statistics.ranked += ranked.length;
         logger.debug(`📊 Ranking completed for ${ranked.length} results`);
-        
+
         return ranked;
     }
 
@@ -277,7 +277,7 @@ export default class SearchFilters {
      */
     async normalizeScores(results, options = {}) {
         const method = options.normalizationMethod || this.options.normalizationMethod;
-        
+
         logger.debug(`📏 Normalizing scores using method: ${method}`);
 
         const scores = results.map(result => this.extractScore(result));
@@ -290,7 +290,7 @@ export default class SearchFilters {
         }));
 
         logger.debug(`📏 Score normalization completed`);
-        
+
         return normalizedResults;
     }
 
@@ -299,13 +299,13 @@ export default class SearchFilters {
      */
     async limitResults(results, options = {}) {
         const maxResults = options.limit || this.options.maxResults;
-        
+
         if (results.length <= maxResults) {
             return results;
         }
 
         logger.debug(`✂️  Limiting results from ${results.length} to ${maxResults}`);
-        
+
         return results.slice(0, maxResults);
     }
 
@@ -360,10 +360,10 @@ export default class SearchFilters {
     async deduplicateHybrid(results) {
         // First deduplicate by URI
         const uriDeduped = this.deduplicateByURI(results);
-        
+
         // Then deduplicate by content
         const contentDeduped = await this.deduplicateByContent(uriDeduped);
-        
+
         return contentDeduped;
     }
 
@@ -372,10 +372,10 @@ export default class SearchFilters {
      */
     async checkContentSimilarity(result, existingResults, threshold) {
         const content1 = result.content || result.text || result.summary || '';
-        
+
         for (const existing of existingResults) {
             const content2 = existing.content || existing.text || existing.summary || '';
-            
+
             if (content1 && content2) {
                 const similarity = this.calculateContentSimilarity(content1, content2);
                 if (similarity >= threshold) {
@@ -383,7 +383,7 @@ export default class SearchFilters {
                 }
             }
         }
-        
+
         return false;
     }
 
@@ -393,10 +393,10 @@ export default class SearchFilters {
     calculateContentSimilarity(content1, content2) {
         const words1 = new Set(content1.toLowerCase().split(/\s+/));
         const words2 = new Set(content2.toLowerCase().split(/\s+/));
-        
+
         const intersection = new Set([...words1].filter(x => words2.has(x)));
         const union = new Set([...words1, ...words2]);
-        
+
         return intersection.size / union.size;
     }
 
@@ -407,7 +407,7 @@ export default class SearchFilters {
         return results.sort((a, b) => {
             const scoreA = this.calculateWeightedScore(a);
             const scoreB = this.calculateWeightedScore(b);
-            
+
             if (sortBy === 'score') {
                 return scoreB - scoreA; // Descending by score
             } else {
@@ -432,13 +432,13 @@ export default class SearchFilters {
      */
     rankByType(results, sortBy) {
         return results.sort((a, b) => {
-            const weightA = this.options.typeWeights[a.type] || 0.5;
-            const weightB = this.options.typeWeights[b.type] || 0.5;
-            
+            const weightA = this.options.typeWeights[a.type];
+            const weightB = this.options.typeWeights[b.type];
+
             if (weightA !== weightB) {
                 return weightB - weightA; // Descending by type weight
             }
-            
+
             // If same type weight, sort by score
             const scoreA = this.extractScore(a);
             const scoreB = this.extractScore(b);
@@ -462,7 +462,7 @@ export default class SearchFilters {
      */
     calculateWeightedScore(result) {
         const baseScore = this.extractScore(result);
-        const typeWeight = this.options.typeWeights[result.type] || 0.5;
+        const typeWeight = this.options.typeWeights[result.type];
         return baseScore * typeWeight;
     }
 
@@ -471,8 +471,8 @@ export default class SearchFilters {
      */
     calculateHybridScore(result) {
         const baseScore = this.extractScore(result);
-        const typeWeight = this.options.typeWeights[result.type] || 0.5;
-        
+        const typeWeight = this.options.typeWeights[result.type];
+
         // Combine base score and type weight
         return (baseScore * 0.7) + (typeWeight * 0.3);
     }
@@ -502,11 +502,11 @@ export default class SearchFilters {
         const min = Math.min(...scores);
         const max = Math.max(...scores);
         const range = max - min;
-        
+
         if (range === 0) {
             return scores.map(() => 1.0);
         }
-        
+
         return scores.map(score => (score - min) / range);
     }
 
@@ -517,11 +517,11 @@ export default class SearchFilters {
         const mean = scores.reduce((sum, score) => sum + score, 0) / scores.length;
         const variance = scores.reduce((sum, score) => sum + Math.pow(score - mean, 2), 0) / scores.length;
         const stdDev = Math.sqrt(variance);
-        
+
         if (stdDev === 0) {
             return scores.map(() => 0.0);
         }
-        
+
         return scores.map(score => (score - mean) / stdDev);
     }
 

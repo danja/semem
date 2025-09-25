@@ -25,7 +25,7 @@ export class PromptContext {
 
         // Model and generation settings
         this.model = options.model;
-        this.temperature = options.temperature || 0.7;
+        this.temperature = options.temperature;
         this.maxTokens = options.maxTokens || null;
 
         // Metadata and tracking
@@ -329,7 +329,7 @@ export class PromptTemplate {
 export class PromptOptions {
     constructor(options = {}) {
         // Generation options
-        this.temperature = options.temperature || 0.7;
+        this.temperature = options.temperature;
         this.maxTokens = options.maxTokens || null;
         this.topP = options.topP || null;
         this.topK = options.topK || null;
@@ -351,7 +351,7 @@ export class PromptOptions {
         // Memory and context options
         this.useMemory = options.useMemory !== false;
         this.contextLimit = options.contextLimit || 10;
-        this.memoryThreshold = options.memoryThreshold || 0.7;
+        this.memoryThreshold = options.memoryThreshold;
 
         // Workflow options
         this.workflow = options.workflow || null;

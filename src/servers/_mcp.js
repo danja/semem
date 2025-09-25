@@ -196,7 +196,7 @@ try {
 const llmHandler = new LLMHandler(
   llmProvider,
   config.get('chatModel'),
-  config.get('llm.temperature') || 0.7
+  config.get('llm.temperature')
 );
 
 const embeddingHandler = new EmbeddingHandler(

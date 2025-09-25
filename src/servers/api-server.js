@@ -416,7 +416,7 @@ class APIServer {
             logger: this.logger,
             maxEntitiesPerConcept: wikidataPerf.maxEntitiesPerConcept || 3,
             maxSearchResults: wikidataPerf.maxWikidataSearchResults || 15,
-            minConfidence: wikidataPerf.minConfidence || 0.4,
+            minConfidence: wikidataPerf.minConfidence,
             requestTimeout: wikidataPerf.timeout || 30000,
             defaultGraphURI: 'http://purl.org/stuff/wikidata'
         });

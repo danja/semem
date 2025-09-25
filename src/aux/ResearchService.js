@@ -27,7 +27,7 @@ export default class ResearchService {
             defaultGraphURI: options.defaultGraphURI || 'http://purl.org/stuff/research',
             maxEntitiesPerConcept: options.maxEntitiesPerConcept || 3,
             maxSearchResults: options.maxSearchResults || 15,
-            minConfidence: options.minConfidence || 0.4,
+            minConfidence: options.minConfidence,
             timeout: options.timeout || 30000,
             ...options
         };

@@ -43,7 +43,7 @@ export class MemoryDomainManager {
      */
     async createDomain(type, id, metadata = {}) {
         const domainURI = this.generateDomainURI(type, id);
-        
+
         const domainData = {
             uri: domainURI,
             type: type,
@@ -74,8 +74,8 @@ export class MemoryDomainManager {
                     
                     ${metadata.description ? `<${domainURI}> dcterms:description "${metadata.description}" .` : ''}
                     ${metadata.parentDomain ? `<${domainURI}> zpt:hasParentDomain <${metadata.parentDomain}> .` : ''}
-                    ${metadata.technologies ? metadata.technologies.map(tech => 
-                        `<${domainURI}> zpt:usesTechnology "${tech}" .`).join('\n                    ') : ''}
+                    ${metadata.technologies ? metadata.technologies.map(tech =>
+            `<${domainURI}> zpt:usesTechnology "${tech}" .`).join('\n                    ') : ''}
                 }
             }
         `;
@@ -99,10 +99,10 @@ export class MemoryDomainManager {
             preserveInstructions = true
         } = options;
 
-        this.logger.info('🔄 Switching domain context:', { 
-            from: fromDomains, 
-            to: toDomains, 
-            options 
+        this.logger.info('🔄 Switching domain context:', {
+            from: fromDomains,
+            to: toDomains,
+            options
         });
 
         const fromArray = Array.isArray(fromDomains) ? fromDomains : [fromDomains];
@@ -172,14 +172,14 @@ export class MemoryDomainManager {
      * Get visible memories based on current ZPT state and relevance
      */
     async getVisibleMemories(query, zptState) {
-        this.logger.info('🔍 Retrieving visible memories:', { 
-            query: query?.substring(0, 100) + '...', 
-            threshold: zptState.relevanceThreshold || this.config.defaultRelevanceThreshold 
+        this.logger.info('🔍 Retrieving visible memories:', {
+            query: query?.substring(0, 100) + '...',
+            threshold: zptState.relevanceThreshold || this.config.defaultRelevanceThreshold
         });
 
         // Fetch all memories from storage
         const allMemories = await this.fetchAllMemories(query);
-        
+
         // Calculate relevance and filter
         const scoredMemories = allMemories
             .map(memory => {
@@ -259,7 +259,7 @@ export class MemoryDomainManager {
 
             // Search with expanded context
             const recoveredMemories = await this.fetchAllMemories(searchCriteria);
-            
+
             // Filter for previously low-relevance memories
             const previouslyHidden = recoveredMemories.filter(memory => {
                 const oldRelevance = this.calculateRelevance(memory, originalState);
@@ -277,10 +277,10 @@ export class MemoryDomainManager {
 
         } catch (error) {
             this.logger.error('❌ Memory recovery failed:', error);
-            
+
             // Restore original state on error
             await this.zptSessionManager.updateNavigationState(originalState);
-            
+
             throw error;
         }
     }
@@ -303,7 +303,7 @@ export class MemoryDomainManager {
             'session': 0.5,         // Fast decay for sessions
             'instruction': 0.99     // Very slow decay for explicit instructions
         };
-        return rates[type] || 0.8;
+        return rates[type];
     }
 
     getDefaultPriority(type) {
@@ -318,7 +318,7 @@ export class MemoryDomainManager {
 
     computeDomainMatch(memoryDomains, currentDomains) {
         if (!memoryDomains.length || !currentDomains.length) return 0;
-        
+
         const intersection = memoryDomains.filter(d => currentDomains.includes(d));
         return intersection.length / Math.max(memoryDomains.length, currentDomains.length);
     }
@@ -326,26 +326,26 @@ export class MemoryDomainManager {
     computeTemporalRelevance(created, lastAccessed) {
         const now = Date.now();
         const age = now - (lastAccessed || created);
-        
+
         // Exponential decay based on half-life
         return Math.exp(-age / this.config.temporalDecayHalfLife);
     }
 
     computeSemanticRelevance(memoryEmbedding, focusEmbedding) {
         if (!memoryEmbedding || !focusEmbedding) return 0.5; // Neutral if no embeddings
-        
+
         // Cosine similarity calculation
         const dotProduct = memoryEmbedding.reduce((sum, a, i) => sum + a * focusEmbedding[i], 0);
         const normA = Math.sqrt(memoryEmbedding.reduce((sum, a) => sum + a * a, 0));
         const normB = Math.sqrt(focusEmbedding.reduce((sum, b) => sum + b * b, 0));
-        
+
         return normA && normB ? dotProduct / (normA * normB) : 0;
     }
 
     computeFrequencyRelevance(accessCount, importance) {
         const normalizedAccess = Math.log(1 + (accessCount || 0)) / 10; // Log scale
-        const importanceScore = (importance || 0.5);
-        
+        const importanceScore = (importance);
+
         return Math.min(1, normalizedAccess + importanceScore);
     }
 
@@ -374,7 +374,7 @@ export class MemoryDomainManager {
         };
 
         this.logger.info('📝 Domain switch logged:', logEntry);
-        
+
         // Could also persist to SPARQL for audit trail
     }
 }

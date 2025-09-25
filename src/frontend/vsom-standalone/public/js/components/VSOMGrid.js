@@ -24,7 +24,7 @@ export default class VSOMGrid {
             onNodeHover: null,
             ...options
         };
-        
+
         this.svg = null;
         this.mainGroup = null;
         this.backgroundGroup = null;
@@ -45,33 +45,33 @@ export default class VSOMGrid {
         this.nodeConnections = [];
         this.qualityMetrics = null;
         this.temporalFlow = [];
-        
+
         // Transform state
         this.transform = {
             x: 0,
             y: 0,
             scale: 1
         };
-        
+
         this.initialized = false;
-        
+
         // Bind methods
         this.handleResize = this.handleResize.bind(this);
         this.handleNodeClick = this.handleNodeClick.bind(this);
         this.handleNodeMouseEnter = this.handleNodeMouseEnter.bind(this);
         this.handleNodeMouseLeave = this.handleNodeMouseLeave.bind(this);
     }
-    
+
     async init() {
         if (this.initialized) return;
-        
+
         console.log('Initializing VSOM Grid...');
-        
+
         try {
             this.createSVG();
             this.setupGroups();
             this.setupEventListeners();
-            
+
             this.initialized = true;
             console.log('VSOM Grid initialized');
         } catch (error) {
@@ -79,18 +79,18 @@ export default class VSOMGrid {
             throw error;
         }
     }
-    
+
     createSVG() {
         // Clear container
         this.container.innerHTML = '';
-        
+
         // Create SVG element
         this.svg = VSOMUtils.createSVGElement('svg', {
             class: 'vsom-svg',
             width: '100%',
             height: '100%'
         });
-        
+
         // Create background
         const background = VSOMUtils.createSVGElement('rect', {
             class: 'vsom-background',
@@ -98,11 +98,11 @@ export default class VSOMGrid {
             height: '100%',
             fill: 'var(--gray-50)'
         });
-        
+
         this.svg.appendChild(background);
         this.container.appendChild(this.svg);
     }
-    
+
     setupGroups() {
         // Main group for transformations
         this.mainGroup = VSOMUtils.createSVGElement('g', {
@@ -159,12 +159,12 @@ export default class VSOMGrid {
         // Create tooltip div
         this.createTooltip();
     }
-    
+
     setupEventListeners() {
         // Resize observer
         const resizeObserver = new ResizeObserver(this.handleResize);
         resizeObserver.observe(this.container);
-        
+
         // Mouse events for global tooltip cleanup (only when moving away from visualization)
         document.addEventListener('mousemove', (event) => {
             // Only hide tooltips if mouse is completely outside the SVG container
@@ -174,7 +174,7 @@ export default class VSOMGrid {
             }
         });
     }
-    
+
     async updateData(data) {
         if (!data || !data.nodes) {
             this.clearVisualization();
@@ -184,7 +184,7 @@ export default class VSOMGrid {
         this.data = data;
         await this.renderVisualization();
     }
-    
+
     async renderVisualization() {
         if (!this.data || !this.data.nodes || this.data.nodes.length === 0) {
             this.renderEmptyState();
@@ -238,7 +238,7 @@ export default class VSOMGrid {
         // Center the visualization
         this.centerVisualization(bounds);
     }
-    
+
     calculateBounds() {
         if (!this.data.nodes || this.data.nodes.length === 0) {
             return { minX: 0, maxX: 0, minY: 0, maxY: 0, width: 0, height: 0 };
@@ -267,15 +267,15 @@ export default class VSOMGrid {
             height
         };
     }
-    
+
     renderGrid(bounds) {
         // Clear existing grid
         this.gridGroup.innerHTML = '';
-        
+
         if (!this.data.gridSize) return;
-        
+
         const spacing = this.options.gridSpacing;
-        
+
         // Vertical lines
         for (let x = bounds.minX; x <= bounds.maxX; x += spacing) {
             const line = VSOMUtils.createSVGElement('line', {
@@ -287,7 +287,7 @@ export default class VSOMGrid {
             });
             this.gridGroup.appendChild(line);
         }
-        
+
         // Horizontal lines
         for (let y = bounds.minY; y <= bounds.maxY; y += spacing) {
             const line = VSOMUtils.createSVGElement('line', {
@@ -300,7 +300,7 @@ export default class VSOMGrid {
             this.gridGroup.appendChild(line);
         }
     }
-    
+
     renderNodes() {
         // Clear existing nodes
         this.nodesGroup.innerHTML = '';
@@ -310,7 +310,7 @@ export default class VSOMGrid {
             this.nodesGroup.appendChild(nodeElement);
         });
     }
-    
+
     createNodeElement(node, index) {
         const x = node.x * this.options.gridSpacing;
         const y = node.y * this.options.gridSpacing;
@@ -330,25 +330,25 @@ export default class VSOMGrid {
             'stroke-width': '3',
             'opacity': '1.0'
         });
-        
+
         // Add event listeners
         circle.addEventListener('click', (event) => this.handleNodeClick(node, circle, event));
         circle.addEventListener('mouseenter', (event) => this.handleNodeMouseEnter(node, circle, event));
         circle.addEventListener('mouseleave', (event) => this.handleNodeMouseLeave(node, circle, event));
-        
+
         // Add activation visualization (opacity based on activation)
         if (node.activation !== undefined) {
             const opacity = VSOMUtils.clamp(node.activation, 0.3, 1.0);
             circle.setAttribute('fill-opacity', opacity);
         }
-        
+
         return circle;
     }
-    
+
     renderLabels() {
         // Clear existing labels
         this.labelsGroup.innerHTML = '';
-        
+
         this.data.nodes.forEach((node, index) => {
             if (node.content || node.concepts?.length > 0) {
                 const label = this.createLabelElement(node, index);
@@ -356,11 +356,11 @@ export default class VSOMGrid {
             }
         });
     }
-    
+
     createLabelElement(node, index) {
         const x = node.x * this.options.gridSpacing;
         const y = node.y * this.options.gridSpacing + this.options.nodeSize + 12;
-        
+
         // Determine label text
         let labelText = '';
         if (node.concepts && node.concepts.length > 0) {
@@ -370,7 +370,7 @@ export default class VSOMGrid {
         } else {
             labelText = node.type || 'Node';
         }
-        
+
         const text = VSOMUtils.createSVGElement('text', {
             class: 'vsom-label',
             x: x,
@@ -378,28 +378,28 @@ export default class VSOMGrid {
             'text-anchor': 'middle',
             'data-node-id': node.id
         });
-        
+
         text.textContent = labelText;
-        
+
         return text;
     }
-    
+
     renderEmptyState() {
         this.clearVisualization();
-        
+
         // Show placeholder (handled by parent container)
         console.log('Rendering empty VSOM state');
     }
-    
+
     clearVisualization() {
         if (this.gridGroup) this.gridGroup.innerHTML = '';
         if (this.nodesGroup) this.nodesGroup.innerHTML = '';
         if (this.labelsGroup) this.labelsGroup.innerHTML = '';
-        
+
         this.selectedNode = null;
         this.hoveredNode = null;
     }
-    
+
     centerVisualization(bounds) {
         const containerRect = this.container.getBoundingClientRect();
         const centerX = containerRect.width / 2;
@@ -426,31 +426,31 @@ export default class VSOMGrid {
 
         this.setTransform(translateX, translateY, scale);
     }
-    
+
     setTransform(x, y, scale) {
         this.transform.x = x;
         this.transform.y = y;
         this.transform.scale = scale;
-        
+
         if (this.mainGroup) {
-            this.mainGroup.setAttribute('transform', 
+            this.mainGroup.setAttribute('transform',
                 `translate(${x}, ${y}) scale(${scale})`
             );
         }
     }
-    
+
     handleNodeClick(node, element) {
         console.log('Node clicked:', node);
-        
+
         // Update selection
         this.setSelectedNode(node, element);
-        
+
         // Call callback
         if (this.options.onNodeClick) {
             this.options.onNodeClick(node);
         }
     }
-    
+
     handleNodeMouseEnter(node, element, event) {
         this.hoveredNode = node;
 
@@ -468,28 +468,28 @@ export default class VSOMGrid {
             this.options.onNodeHover(node, event);
         }
     }
-    
+
     handleNodeMouseLeave(node, element) {
         this.hoveredNode = null;
-        
+
         // Remove hover class
         VSOMUtils.removeClass(element, 'hovered');
-        
+
         // Hide corresponding label
         const label = this.labelsGroup.querySelector(`[data-node-id="${node.id}"]`);
         if (label) {
             VSOMUtils.removeClass(label, 'visible');
         }
-        
+
         // Hide tooltip
         VSOMUtils.hideTooltip();
-        
+
         // Call callback
         if (this.options.onNodeHover) {
             this.options.onNodeHover(null);
         }
     }
-    
+
     setSelectedNode(node, element) {
         // Clear previous selection
         if (this.selectedNode) {
@@ -498,52 +498,52 @@ export default class VSOMGrid {
                 VSOMUtils.removeClass(prevElement, 'selected');
             }
         }
-        
+
         // Set new selection
         this.selectedNode = node;
         if (element) {
             VSOMUtils.addClass(element, 'selected');
         }
     }
-    
+
     highlightNode(interactionId) {
         // Find node by interaction ID
         const node = this.data?.nodes?.find(n => n.interactionId === interactionId);
         if (!node) return;
-        
+
         const element = this.nodesGroup.querySelector(`[data-node-id="${node.id}"]`);
         if (element) {
             this.setSelectedNode(node, element);
-            
+
             // Scroll to node
             const nodeRect = element.getBoundingClientRect();
             const containerRect = this.container.getBoundingClientRect();
-            
+
             if (!VSOMUtils.isInViewport(element)) {
                 // Calculate center position for the node
                 const centerX = containerRect.width / 2;
                 const centerY = containerRect.height / 2;
-                
+
                 const nodeX = node.x * this.options.gridSpacing;
                 const nodeY = node.y * this.options.gridSpacing;
-                
+
                 const newX = centerX - nodeX * this.transform.scale;
                 const newY = centerY - nodeY * this.transform.scale;
-                
+
                 this.setTransform(newX, newY, this.transform.scale);
             }
         }
     }
-    
+
     async autoLayout() {
         if (!this.data || !this.data.nodes || this.data.nodes.length === 0) return;
-        
+
         console.log('Applying auto layout...');
-        
+
         // Recalculate bounds and center
         const bounds = this.calculateBounds();
         this.centerVisualization(bounds);
-        
+
         // Apply smooth transition
         if (this.mainGroup) {
             this.mainGroup.style.transition = 'transform 0.5s ease';
@@ -552,16 +552,16 @@ export default class VSOMGrid {
             }, 500);
         }
     }
-    
+
     updateOptions(newOptions) {
         this.options = { ...this.options, ...newOptions };
-        
+
         // Rerender if data exists
         if (this.data) {
             this.renderVisualization();
         }
     }
-    
+
     handleResize() {
         if (this.data) {
             // Recalculate layout on resize
@@ -569,7 +569,7 @@ export default class VSOMGrid {
             this.centerVisualization(bounds);
         }
     }
-    
+
     // Enhanced rendering methods
 
     createTooltip() {
@@ -967,7 +967,7 @@ export default class VSOMGrid {
                 fill: node.color,
                 stroke: this.getNodeStroke(node),
                 'stroke-width': this.getNodeStrokeWidth(node),
-                opacity: node.opacity || 0.8,
+                opacity: node.opacity,
                 class: 'node-circle',
                 'data-interaction-type': node.type,
                 'data-quality': node.quality || (node.metadata && node.metadata.quality) || '0',

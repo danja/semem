@@ -29,7 +29,7 @@ export async function decomposeCorpus(textChunks, llmHandler, options = {}) {
   const opts = {
     extractRelationships: options.extractRelationships !== false,
     generateSummaries: options.generateSummaries !== false,
-    minEntityConfidence: options.minEntityConfidence || 0.3,
+    minEntityConfidence: options.minEntityConfidence,
     maxEntitiesPerUnit: options.maxEntitiesPerUnit || 10,
     model: options.model, // Allow model override
     ...options
@@ -117,7 +117,7 @@ export async function decomposeCorpus(textChunks, llmHandler, options = {}) {
             targetEntity: targetEntity.getURI(),
             relationshipType: relData.type || 'related',
             content: relData.content || '',
-            weight: relData.weight || 0.5,
+            weight: relData.weight,
             evidence: relData.evidence || [],
             bidirectional: relData.bidirectional || false
           });

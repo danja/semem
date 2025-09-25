@@ -29,7 +29,7 @@ export default class WikidataSearch {
         };
 
         this.connector = new WikidataConnector(options);
-        
+
         // Search statistics
         this.stats = {
             searchesByType: {
@@ -62,7 +62,7 @@ export default class WikidataSearch {
         this.stats.searchesByType.text++;
 
         const termArray = Array.isArray(searchTerms) ? searchTerms : [searchTerms];
-        
+
         try {
             // Use Wikidata's full-text search via wikibase:mwapi
             const sparql = this.buildTextSearchQuery(termArray, searchOptions);
@@ -71,7 +71,7 @@ export default class WikidataSearch {
             if (result.success) {
                 const entities = this.processSearchResults(result.data, searchOptions);
                 this.updateSearchStats(entities.length);
-                
+
                 return {
                     success: true,
                     entities: entities,
@@ -194,8 +194,8 @@ export default class WikidataSearch {
 
             // Sort by concept confidence if available
             if (searchOptions.prioritizeHighConfidence) {
-                conceptResults.sort((a, b) => 
-                    (b.concept.confidence || 0.5) - (a.concept.confidence || 0.5)
+                conceptResults.sort((a, b) =>
+                    (b.concept.confidence) - (a.concept.confidence)
                 );
             }
 
@@ -279,7 +279,7 @@ export default class WikidataSearch {
      */
     buildTextSearchQuery(searchTerms, options) {
         const searchString = searchTerms.join(' ');
-        
+
         return `
 SELECT DISTINCT ?item ?itemLabel ?itemDescription ?score WHERE {
   SERVICE wikibase:mwapi {
@@ -294,10 +294,10 @@ SELECT DISTINCT ?item ?itemLabel ?itemDescription ?score WHERE {
   
   SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],${options.language}". }
   
-  ${options.filterTypes && options.filterTypes.length > 0 ? 
-    `FILTER EXISTS { ?item wdt:P31/wdt:P279* ?type . VALUES ?type { ${options.filterTypes.map(t => `wd:${t}`).join(' ')} } }` : 
-    ''
-  }
+  ${options.filterTypes && options.filterTypes.length > 0 ?
+                `FILTER EXISTS { ?item wdt:P31/wdt:P279* ?type . VALUES ?type { ${options.filterTypes.map(t => `wd:${t}`).join(' ')} } }` :
+                ''
+            }
 }
 ORDER BY DESC(?score)`;
     }
@@ -407,7 +407,7 @@ LIMIT 50`;
      * @private
      */
     calculateConfidence(entity, options) {
-        let confidence = entity.score || 0.5;
+        let confidence = entity.score;
 
         // Boost confidence for exact label matches
         if (options.searchTerm && entity.label.toLowerCase() === options.searchTerm.toLowerCase()) {
@@ -438,7 +438,7 @@ LIMIT 50`;
     updateSearchStats(entityCount) {
         this.stats.totalEntitiesFound += entityCount;
         const totalSearches = Object.values(this.stats.searchesByType).reduce((a, b) => a + b, 0);
-        this.stats.averageResultsPerSearch = totalSearches > 0 ? 
+        this.stats.averageResultsPerSearch = totalSearches > 0 ?
             this.stats.totalEntitiesFound / totalSearches : 0;
     }
 

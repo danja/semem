@@ -39,10 +39,10 @@ export default class IterationManager {
     async processIterations(input, resources, options = {}) {
         const { originalQuestion, initialResponse, context = '' } = input;
         const { llmHandler, sparqlHelper, config, wikidataResearch } = resources;
-        
+
         const iterationConfig = {
             maxIterations: options.maxIterations || 3,
-            completenessThreshold: options.completenessThreshold || 0.8,
+            completenessThreshold: options.completenessThreshold,
             maxFollowUpQuestions: options.maxFollowUpQuestions || 2,
             ...options
         };
@@ -56,7 +56,7 @@ export default class IterationManager {
             // Process iterations until complete or max iterations reached
             while (currentIteration <= iterationConfig.maxIterations && !isComplete) {
                 const iterationStart = Date.now();
-                
+
                 // Step 1: Analyze current response for completeness
                 const analysisResult = await this.responseAnalyzer.analyzeCompleteness(
                     {
@@ -106,7 +106,7 @@ export default class IterationManager {
                                 wikidataResearch,
                                 iterationConfig
                             );
-                            
+
                             iterationData.researchResults = researchResults;
 
                             // Step 4: Generate enhanced response with research findings
@@ -118,7 +118,7 @@ export default class IterationManager {
                                     llmHandler,
                                     iterationConfig
                                 );
-                                
+
                                 iterationData.enhancedResponse = enhancedResponse;
                                 if (enhancedResponse.success) {
                                     currentResponse = enhancedResponse.response;
@@ -157,7 +157,7 @@ export default class IterationManager {
                     llmHandler,
                     iterationConfig
                 );
-                
+
                 if (finalAnswerResult.success) {
                     finalAnswer = finalAnswerResult.answer;
                 }
@@ -214,12 +214,12 @@ export default class IterationManager {
             for (const question of questions) {
                 try {
                     const result = await wikidataResearch.executeResearch(question.text);
-                    
+
                     if (result && result.ragnoEntities) {
                         const entityCount = result.ragnoEntities.length;
                         researchResults.questionsResearched++;
                         researchResults.totalEntities += entityCount;
-                        
+
                         researchResults.researchDetails.push({
                             questionURI: question.uri,
                             questionText: question.text,
@@ -277,10 +277,10 @@ RESEARCH SUMMARY:
 - Average entities per question: ${researchResults.entitiesPerQuestion}
 
 RESEARCH DETAILS:
-${researchResults.researchDetails.map((detail, i) => 
-`${i + 1}. Question: "${detail.questionText}"
+${researchResults.researchDetails.map((detail, i) =>
+                `${i + 1}. Question: "${detail.questionText}"
    Results: ${detail.success ? `${detail.entitiesFound} entities found` : 'Research failed'}`
-).join('\n')}
+            ).join('\n')}
 
 Please provide an enhanced answer that:
 1. Builds upon the current answer
@@ -292,7 +292,7 @@ Please provide an enhanced answer that:
 ENHANCED ANSWER:`;
 
             const enhancedResponse = await llmHandler.generateResponse(prompt);
-            
+
             return {
                 success: true,
                 response: enhancedResponse,
@@ -354,7 +354,7 @@ Please provide a final, comprehensive answer that:
 FINAL COMPREHENSIVE ANSWER:`;
 
             const finalAnswer = await llmHandler.generateResponse(prompt);
-            
+
             return {
                 success: true,
                 answer: finalAnswer,

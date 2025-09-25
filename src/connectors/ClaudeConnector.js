@@ -268,7 +268,7 @@ export default class ClaudeConnector {
             // Convert to chat format since Claude uses chat API for completions
             const response = await this.client.complete(prompt, {
                 model,
-                temperature: options.temperature || 0.7,
+                temperature: options.temperature,
                 max_tokens: options.max_tokens || 1024,
                 ...options
             })

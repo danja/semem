@@ -26,7 +26,7 @@ class CommunityElement {
     // Core properties
     this.members = options.members || []
     this.summary = options.summary || ''
-    this.confidence = options.confidence || 0.5
+    this.confidence = options.confidence
     this.modularityScore = options.modularityScore || 0.0
     this.cohesionScore = options.cohesionScore || 0.0
     this.keywords = options.keywords || []
@@ -164,8 +164,8 @@ export async function aggregateCommunities(graphData, llmHandler, options = {}) 
     includeKeywords: options.includeKeywords !== false,
 
     // Quality control
-    minModularityScore: options.minModularityScore || 0.1,
-    minCohesionScore: options.minCohesionScore || 0.3,
+    minModularityScore: options.minModularityScore,
+    minCohesionScore: options.minCohesionScore,
 
     ...options
   }

@@ -33,7 +33,7 @@ export default class WikidataToRagno {
 
         // Property type mappings
         this.propertyTypeMappings = this.initializePropertyMappings();
-        
+
         // Statistics
         this.stats = {
             entitiesConverted: 0,
@@ -110,11 +110,11 @@ export default class WikidataToRagno {
 
             // Core entity triples
             const triples = [];
-            
+
             // Basic entity structure
             triples.push(`<${entityURI}> rdf:type ragno:Entity .`);
             triples.push(`<${entityURI}> rdfs:label ${this.createLiteral(wikidataEntity.label || wikidataEntity.id)} .`);
-            
+
             if (wikidataEntity.description) {
                 triples.push(`<${entityURI}> rdfs:comment ${this.createLiteral(wikidataEntity.description)} .`);
             }
@@ -123,10 +123,10 @@ export default class WikidataToRagno {
             triples.push(`<${entityURI}> dcterms:source <${wikidataEntity.uri}> .`);
             triples.push(`<${entityURI}> dcterms:created ${this.createLiteral(timestamp, 'xsd:dateTime')} .`);
             triples.push(`<${entityURI}> prov:wasGeneratedBy ${this.createLiteral('wikidata-conversion')} .`);
-            
+
             // Original Wikidata identifier
             triples.push(`<${entityURI}> ragno:wikidataId ${this.createLiteral(wikidataEntity.id)} .`);
-            
+
             // Cross-reference to original Wikidata entity
             if (conversionOptions.includeRelationships) {
                 triples.push(`<${entityURI}> <http://www.w3.org/2002/07/owl#sameAs> <${wikidataEntity.uri}> .`);
@@ -166,7 +166,7 @@ export default class WikidataToRagno {
             });
 
             logger.error(`Failed to convert Wikidata entity ${wikidataEntity.id}:`, error.message);
-            
+
             return {
                 success: false,
                 error: error.message,
@@ -190,7 +190,7 @@ export default class WikidataToRagno {
         for (let i = 0; i < processedProperties.length; i++) {
             const property = processedProperties[i];
             const attributeResult = this.convertPropertyToAttribute(entityURI, property, i, options);
-            
+
             if (attributeResult.success) {
                 triples.push(...attributeResult.triples);
                 this.stats.propertiesConverted++;
@@ -221,10 +221,10 @@ export default class WikidataToRagno {
             // Property identification
             const propertyId = this.extractPropertyId(property.property);
             const attributeType = this.mapPropertyType(propertyId) || 'wikidata-property';
-            
+
             triples.push(`<${attributeURI}> ragno:attributeType ${this.createLiteral(attributeType)} .`);
             triples.push(`<${attributeURI}> ragno:wikidataProperty ${this.createLiteral(propertyId)} .`);
-            
+
             if (property.propertyLabel) {
                 triples.push(`<${attributeURI}> rdfs:label ${this.createLiteral(property.propertyLabel)} .`);
             }
@@ -233,7 +233,7 @@ export default class WikidataToRagno {
             const valueResult = this.convertPropertyValue(property.value, property.valueLabel);
             if (valueResult.success) {
                 triples.push(`<${attributeURI}> ragno:attributeValue ${valueResult.value} .`);
-                
+
                 if (valueResult.datatype) {
                     triples.push(`<${attributeURI}> ragno:valueType ${this.createLiteral(valueResult.datatype)} .`);
                 }
@@ -349,15 +349,15 @@ export default class WikidataToRagno {
             triples.push(`<${relationshipURI}> ragno:hasSourceEntity <${wikidataEntityURI}> .`);
             triples.push(`<${relationshipURI}> ragno:hasTargetEntity <${targetEntityURI}> .`);
             triples.push(`<${relationshipURI}> ragno:relationshipType ${this.createLiteral(relationshipType)} .`);
-            
+
             // Weight and confidence
-            const weight = options.weight || 0.8; // High weight for Wikidata relationships
+            const weight = options.weight; // High weight for Wikidata relationships
             triples.push(`<${relationshipURI}> ragno:weight ${this.createLiteral(weight.toString(), 'xsd:float')} .`);
-            
+
             // Description
             const description = options.description || `Wikidata cross-reference: ${relationshipType}`;
             triples.push(`<${relationshipURI}> ragno:description ${this.createLiteral(description)} .`);
-            
+
             // Provenance
             const timestamp = new Date().toISOString();
             triples.push(`<${relationshipURI}> dcterms:created ${this.createLiteral(timestamp, 'xsd:dateTime')} .`);
@@ -454,7 +454,7 @@ export default class WikidataToRagno {
     getStats() {
         return {
             ...this.stats,
-            conversionRate: this.stats.entitiesConverted > 0 ? 
+            conversionRate: this.stats.entitiesConverted > 0 ?
                 ((this.stats.entitiesConverted - this.stats.conversionErrors.length) / this.stats.entitiesConverted * 100).toFixed(2) + '%' : '0%'
         };
     }

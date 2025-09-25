@@ -17,7 +17,7 @@ export class MemoryRelevanceEngine {
                 semantic: 0.30,         // Semantic similarity to current focus
                 frequency: 0.15         // Access frequency and importance
             },
-            
+
             // Temporal decay settings
             temporalDecay: {
                 session: { halfLife: 3600000 },         // 1 hour
@@ -25,7 +25,7 @@ export class MemoryRelevanceEngine {
                 project: { halfLife: 2592000000 },      // 30 days
                 permanent: { halfLife: 31536000000 }    // 365 days
             },
-            
+
             // Domain type boost factors
             domainBoosts: {
                 'instruction': 1.5,     // Explicit instructions get boost
@@ -33,10 +33,10 @@ export class MemoryRelevanceEngine {
                 'project': 1.0,         // Project memories baseline
                 'session': 0.8          // Session memories reduced
             },
-            
+
             // Minimum relevance score (memories never completely forgotten)
             minimumRelevance: 0.001,
-            
+
             ...options
         };
 
@@ -50,7 +50,7 @@ export class MemoryRelevanceEngine {
      */
     calculateRelevance(memory, currentZPTState, context = {}) {
         const startTime = performance.now();
-        
+
         const factors = {
             domainMatch: this.computeDomainMatchScore(memory, currentZPTState),
             temporal: this.computeTemporalScore(memory, currentZPTState),
@@ -76,7 +76,7 @@ export class MemoryRelevanceEngine {
         const finalScore = Math.max(this.config.minimumRelevance, relevanceScore);
 
         const calculationTime = performance.now() - startTime;
-        
+
         this.logger.debug('🎯 Relevance calculated:', {
             memoryId: memory.id?.substring(0, 8) || 'unknown',
             factors,
@@ -103,7 +103,7 @@ export class MemoryRelevanceEngine {
      */
     calculateBatchRelevance(memories, currentZPTState, context = {}) {
         const startTime = performance.now();
-        
+
         this.logger.info(`🔄 Batch relevance calculation for ${memories.length} memories`);
 
         // Pre-calculate shared context values
@@ -141,13 +141,13 @@ export class MemoryRelevanceEngine {
         this.logger.info(`🧠 Updating adaptive weights for user: ${userId}`);
 
         const currentWeights = this.adaptiveWeights.get(userId) || { ...this.config.baseWeights };
-        
+
         // Analyze interaction patterns
         const patterns = this.analyzeInteractionPatterns(interactions);
-        
+
         // Adjust weights based on patterns
         const adjustedWeights = this.adjustWeightsFromPatterns(currentWeights, patterns);
-        
+
         // Store updated weights
         this.adaptiveWeights.set(userId, {
             ...adjustedWeights,
@@ -175,7 +175,7 @@ export class MemoryRelevanceEngine {
             ...weights,
             configured: Date.now()
         });
-        
+
         this.logger.info(`⚙️ Configured contextual weights for: ${contextId}`);
     }
 
@@ -184,20 +184,20 @@ export class MemoryRelevanceEngine {
     computeDomainMatchScore(memory, currentZPTState) {
         const memoryDomains = memory.domains || [];
         const currentDomains = currentZPTState.panDomains || [];
-        
+
         if (!memoryDomains.length && !currentDomains.length) return 1.0; // Both empty = perfect match
         if (!memoryDomains.length || !currentDomains.length) return 0.1; // One empty = low match
 
         // Calculate intersection and union
         const intersection = memoryDomains.filter(d => currentDomains.includes(d));
         const union = [...new Set([...memoryDomains, ...currentDomains])];
-        
+
         // Jaccard similarity with domain hierarchy consideration
         let baseScore = intersection.length / union.length;
-        
+
         // Bonus for hierarchical relationships
         const hierarchyBonus = this.calculateHierarchyBonus(memoryDomains, currentDomains);
-        
+
         return Math.min(1.0, baseScore + hierarchyBonus);
     }
 
@@ -206,48 +206,48 @@ export class MemoryRelevanceEngine {
         const created = memory.timestamp || memory.created || now;
         const lastAccessed = memory.lastAccessed || created;
         const age = now - lastAccessed;
-        
+
         // Determine decay type based on memory characteristics
         const decayType = this.determineDecayType(memory);
-        
+
         // Apply temporal decay
         const decayScore = this.getTemporalDecayMultiplier(age, decayType);
-        
+
         // Recency bonus for very recent memories
         const recencyBonus = age < 3600000 ? (1 - age / 3600000) * 0.2 : 0; // 1 hour window
-        
+
         return Math.min(1.0, decayScore + recencyBonus);
     }
 
     computeSemanticScore(memory, currentZPTState) {
         const memoryEmbedding = memory.embedding;
         const focusEmbedding = currentZPTState.focusEmbedding;
-        
+
         if (!memoryEmbedding || !focusEmbedding) {
             // Use text-based similarity as fallback
             return this.computeTextSimilarity(memory.content, currentZPTState.focusQuery);
         }
-        
+
         // Cosine similarity
         const similarity = this.cosineSimilarity(memoryEmbedding, focusEmbedding);
-        
+
         // Apply non-linear scaling to emphasize high similarity
         return Math.pow(Math.max(0, similarity), 0.8);
     }
 
     computeFrequencyScore(memory, context) {
         const accessCount = memory.accessCount || 0;
-        const importance = memory.metadata?.importance || 0.5;
-        
+        const importance = memory.metadata?.importance;
+
         // Logarithmic scaling for access count
         const accessScore = accessCount > 0 ? Math.log(1 + accessCount) / Math.log(100) : 0;
-        
+
         // Explicit importance weighting
         const importanceScore = importance;
-        
+
         // User-specific importance (if available in context)
         const userImportanceBonus = context.userPreferences?.importanceBoost || 0;
-        
+
         return Math.min(1.0, accessScore * 0.6 + importanceScore * 0.4 + userImportanceBonus);
     }
 
@@ -265,7 +265,7 @@ export class MemoryRelevanceEngine {
         }, 0);
 
         relevanceScore = this.applyDomainBoosts(relevanceScore, memory, currentZPTState);
-        
+
         return {
             score: Math.max(this.config.minimumRelevance, relevanceScore),
             factors,
@@ -283,13 +283,13 @@ export class MemoryRelevanceEngine {
         if (userId && this.adaptiveWeights.has(userId)) {
             return this.adaptiveWeights.get(userId);
         }
-        
+
         // Try context-specific weights
         const contextId = `context:${currentZPTState.zoom || 'default'}`;
         if (this.adaptiveWeights.has(contextId)) {
             return this.adaptiveWeights.get(contextId);
         }
-        
+
         // Default weights
         return this.config.baseWeights;
     }
@@ -297,7 +297,7 @@ export class MemoryRelevanceEngine {
     applyDomainBoosts(baseScore, memory, currentZPTState) {
         const memoryDomains = memory.domains || [];
         let boostedScore = baseScore;
-        
+
         // Apply boosts based on domain types
         for (const domain of memoryDomains) {
             const domainType = domain.split(':')[0]; // Extract type from "type:id" format
@@ -306,56 +306,56 @@ export class MemoryRelevanceEngine {
                 boostedScore *= boost;
             }
         }
-        
+
         return Math.min(1.0, boostedScore);
     }
 
     applyContextualModifiers(score, memory, currentZPTState, context) {
         let modifiedScore = score;
-        
+
         // Recent interaction boost
         if (context.recentInteractions?.includes(memory.id)) {
             modifiedScore *= 1.3;
         }
-        
+
         // Project context boost
         if (context.activeProject && memory.domains?.includes(`project:${context.activeProject}`)) {
             modifiedScore *= 1.2;
         }
-        
+
         // Instruction priority boost
         if (memory.domain === 'instruction' || memory.type === 'instruction') {
             modifiedScore *= 1.5;
         }
-        
+
         return Math.min(1.0, modifiedScore);
     }
 
     cosineSimilarity(vecA, vecB) {
         if (!vecA || !vecB || vecA.length !== vecB.length) return 0;
-        
+
         let dotProduct = 0;
         let normA = 0;
         let normB = 0;
-        
+
         for (let i = 0; i < vecA.length; i++) {
             dotProduct += vecA[i] * vecB[i];
             normA += vecA[i] * vecA[i];
             normB += vecB[i] * vecB[i];
         }
-        
+
         const norm = Math.sqrt(normA) * Math.sqrt(normB);
         return norm === 0 ? 0 : dotProduct / norm;
     }
 
     determineDecayType(memory) {
         const domains = memory.domains || [];
-        
+
         if (domains.some(d => d.startsWith('instruction'))) return 'permanent';
         if (domains.some(d => d.startsWith('user'))) return 'permanent';
         if (domains.some(d => d.startsWith('project'))) return 'project';
         if (domains.some(d => d.startsWith('session'))) return 'session';
-        
+
         return 'daily'; // Default
     }
 
@@ -373,13 +373,13 @@ export class MemoryRelevanceEngine {
     getAppliedBoosts(memory, currentZPTState) {
         const boosts = [];
         const domainTypes = this.extractDomainTypes(memory);
-        
+
         for (const type of domainTypes) {
             if (this.config.domainBoosts[type] > 1.0) {
                 boosts.push(`${type}:${this.config.domainBoosts[type]}`);
             }
         }
-        
+
         return boosts;
     }
 

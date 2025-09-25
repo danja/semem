@@ -19,57 +19,57 @@ export default class VSOMTraining {
     constructor(options = {}) {
         this.options = {
             // Learning rate schedule
-            initialLearningRate: options.initialLearningRate || 0.1,
+            initialLearningRate: options.initialLearningRate,
             finalLearningRate: options.finalLearningRate || 0.01,
             learningRateSchedule: options.learningRateSchedule || 'exponential', // 'linear', 'exponential', 'inverse', 'step'
-            
+
             // Neighborhood radius schedule
             initialRadius: options.initialRadius || 5.0,
-            finalRadius: options.finalRadius || 0.5,
+            finalRadius: options.finalRadius,
             radiusSchedule: options.radiusSchedule || 'exponential',
-            
+
             // Training parameters
             maxIterations: options.maxIterations || 1000,
             batchSize: options.batchSize || 100,
-            
+
             // Convergence detection
             convergenceThreshold: options.convergenceThreshold || 1e-4,
             convergenceWindow: options.convergenceWindow || 10,
             minIterations: options.minIterations || 100,
-            
+
             // Quality metrics
             trackQuantizationError: options.trackQuantizationError !== false,
             trackTopographicError: options.trackTopographicError !== false,
             qualityCheckInterval: options.qualityCheckInterval || 50,
-            
+
             // Monitoring
             logProgress: options.logProgress !== false,
             progressInterval: options.progressInterval || 100,
-            
+
             ...options
         }
-        
+
         // Training state
         this.currentIteration = 0
         this.isTraining = false
         this.trainingStartTime = null
         this.trainingHistory = []
-        
+
         // Convergence tracking
         this.errorHistory = []
         this.converged = false
         this.convergenceIteration = null
-        
+
         // Quality metrics
         this.qualityMetrics = {
             quantizationError: [],
             topographicError: [],
             neighborhoodPreservation: []
         }
-        
+
         logger.debug('VSOMTraining initialized with options:', this.options)
     }
-    
+
     /**
      * Execute complete training process
      * @param {Object} vsomCore - VSOM core algorithm instance
@@ -80,13 +80,13 @@ export default class VSOMTraining {
      */
     async train(vsomCore, topology, trainingData, callbacks = {}) {
         logger.info(`Starting VSOM training: ${trainingData.length} samples, ${this.options.maxIterations} iterations`)
-        
+
         this.isTraining = true
         this.trainingStartTime = Date.now()
         this.currentIteration = 0
         this.converged = false
         this.convergenceIteration = null
-        
+
         // Initialize training history
         this.trainingHistory = []
         this.errorHistory = []
@@ -95,32 +95,32 @@ export default class VSOMTraining {
             topographicError: [],
             neighborhoodPreservation: []
         }
-        
+
         // Create neighborhood function
         const neighborhoodFunction = topology.createNeighborhoodFunction('gaussian')
-        
+
         try {
             // Training loop
             for (let iteration = 0; iteration < this.options.maxIterations; iteration++) {
                 this.currentIteration = iteration
-                
+
                 // Calculate current learning parameters
                 const learningRate = this.calculateLearningRate(iteration)
                 const neighborhoodRadius = this.calculateNeighborhoodRadius(iteration)
-                
+
                 // Perform training step
                 const iterationResults = await this.trainingStep(
-                    vsomCore, 
-                    topology, 
-                    trainingData, 
-                    learningRate, 
-                    neighborhoodRadius, 
+                    vsomCore,
+                    topology,
+                    trainingData,
+                    learningRate,
+                    neighborhoodRadius,
                     neighborhoodFunction
                 )
-                
+
                 // Record training progress
                 this.recordIteration(iteration, learningRate, neighborhoodRadius, iterationResults)
-                
+
                 // Check convergence
                 if (iteration >= this.options.minIterations) {
                     if (this.checkConvergence()) {
@@ -130,43 +130,43 @@ export default class VSOMTraining {
                         break
                     }
                 }
-                
+
                 // Quality metrics
                 if (iteration % this.options.qualityCheckInterval === 0) {
                     await this.calculateQualityMetrics(vsomCore, trainingData, iteration)
                 }
-                
+
                 // Progress logging
                 if (this.options.logProgress && iteration % this.options.progressInterval === 0) {
                     this.logTrainingProgress(iteration, learningRate, neighborhoodRadius, iterationResults)
                 }
-                
+
                 // Execute callbacks
                 if (callbacks.onIteration) {
                     await callbacks.onIteration(iteration, iterationResults)
                 }
-                
+
                 // Early stopping check
                 if (callbacks.shouldStop && callbacks.shouldStop(iteration, iterationResults)) {
                     logger.info(`Training stopped early at iteration ${iteration} by callback`)
                     break
                 }
             }
-            
+
             // Final quality assessment
             await this.calculateQualityMetrics(vsomCore, trainingData, this.currentIteration)
-            
+
             const trainingTime = Date.now() - this.trainingStartTime
             const results = this.compileTrainingResults(trainingTime)
-            
+
             logger.info(`Training completed in ${trainingTime}ms after ${this.currentIteration + 1} iterations`)
-            
+
             if (callbacks.onComplete) {
                 await callbacks.onComplete(results)
             }
-            
+
             return results
-            
+
         } catch (error) {
             logger.error('Training failed:', error)
             throw error
@@ -174,7 +174,7 @@ export default class VSOMTraining {
             this.isTraining = false
         }
     }
-    
+
     /**
      * Perform single training step
      * @param {Object} vsomCore - VSOM core algorithm instance
@@ -187,35 +187,35 @@ export default class VSOMTraining {
      */
     async trainingStep(vsomCore, topology, trainingData, learningRate, neighborhoodRadius, neighborhoodFunction) {
         const stepStartTime = Date.now()
-        
+
         // Shuffle training data for this epoch
         const shuffledData = this.shuffleArray([...trainingData])
-        
+
         let totalQuantizationError = 0
         let batchCount = 0
-        
+
         // Process data in batches
         for (let i = 0; i < shuffledData.length; i += this.options.batchSize) {
             const batch = shuffledData.slice(i, i + this.options.batchSize)
-            
+
             // Find BMUs for batch
             const bmuIndices = vsomCore.findBestMatchingUnits(batch)
-            
+
             // Update weights
             vsomCore.updateWeights(batch, bmuIndices, learningRate, neighborhoodRadius, neighborhoodFunction)
-            
+
             // Calculate batch quantization error
             for (let j = 0; j < batch.length; j++) {
                 const distance = vsomCore.calculateDistance(batch[j], vsomCore.getNodeWeights(bmuIndices[j]))
                 totalQuantizationError += distance
             }
-            
+
             batchCount++
         }
-        
+
         const averageQuantizationError = totalQuantizationError / shuffledData.length
         const stepTime = Date.now() - stepStartTime
-        
+
         return {
             quantizationError: averageQuantizationError,
             processingTime: stepTime,
@@ -223,7 +223,7 @@ export default class VSOMTraining {
             samplesProcessed: shuffledData.length
         }
     }
-    
+
     /**
      * Calculate learning rate for current iteration
      * @param {number} iteration - Current iteration
@@ -233,28 +233,28 @@ export default class VSOMTraining {
         const progress = iteration / this.options.maxIterations
         const initial = this.options.initialLearningRate
         const final = this.options.finalLearningRate
-        
+
         switch (this.options.learningRateSchedule) {
             case 'linear':
                 return initial * (1 - progress) + final * progress
-                
+
             case 'exponential':
                 const decayFactor = Math.log(final / initial)
                 return initial * Math.exp(decayFactor * progress)
-                
+
             case 'inverse':
                 return initial / (1 + iteration * 0.01)
-                
+
             case 'step':
                 const stepSize = this.options.maxIterations / 4
                 const step = Math.floor(iteration / stepSize)
                 return initial * Math.pow(0.5, step)
-                
+
             default:
                 return initial * Math.exp(-iteration / (this.options.maxIterations / 3))
         }
     }
-    
+
     /**
      * Calculate neighborhood radius for current iteration
      * @param {number} iteration - Current iteration
@@ -264,23 +264,23 @@ export default class VSOMTraining {
         const progress = iteration / this.options.maxIterations
         const initial = this.options.initialRadius
         const final = this.options.finalRadius
-        
+
         switch (this.options.radiusSchedule) {
             case 'linear':
                 return initial * (1 - progress) + final * progress
-                
+
             case 'exponential':
                 const decayFactor = Math.log(final / initial)
                 return initial * Math.exp(decayFactor * progress)
-                
+
             case 'inverse':
                 return initial / (1 + iteration * 0.02)
-                
+
             default:
                 return initial * Math.exp(-iteration / (this.options.maxIterations / 2))
         }
     }
-    
+
     /**
      * Check if training has converged
      * @returns {boolean} True if converged
@@ -289,19 +289,19 @@ export default class VSOMTraining {
         if (this.errorHistory.length < this.options.convergenceWindow) {
             return false
         }
-        
+
         // Get recent errors
         const recentErrors = this.errorHistory.slice(-this.options.convergenceWindow)
-        
+
         // Calculate error variance over convergence window
         const mean = recentErrors.reduce((sum, error) => sum + error, 0) / recentErrors.length
         const variance = recentErrors.reduce((sum, error) => sum + Math.pow(error - mean, 2), 0) / recentErrors.length
         const standardDeviation = Math.sqrt(variance)
-        
+
         // Check if standard deviation is below threshold
         return standardDeviation < this.options.convergenceThreshold
     }
-    
+
     /**
      * Calculate training quality metrics
      * @param {Object} vsomCore - VSOM core algorithm instance
@@ -316,7 +316,7 @@ export default class VSOMTraining {
                 value: qError
             })
         }
-        
+
         if (this.options.trackTopographicError) {
             const tError = vsomCore.calculateTopographicError(trainingData)
             this.qualityMetrics.topographicError.push({
@@ -325,7 +325,7 @@ export default class VSOMTraining {
             })
         }
     }
-    
+
     /**
      * Record iteration results
      * @param {number} iteration - Current iteration
@@ -342,9 +342,9 @@ export default class VSOMTraining {
             processingTime: results.processingTime,
             timestamp: Date.now()
         })
-        
+
         this.errorHistory.push(results.quantizationError)
-        
+
         // Limit history size to prevent memory issues
         const maxHistorySize = this.options.maxIterations + 100
         if (this.trainingHistory.length > maxHistorySize) {
@@ -354,7 +354,7 @@ export default class VSOMTraining {
             this.errorHistory = this.errorHistory.slice(-maxHistorySize)
         }
     }
-    
+
     /**
      * Log training progress
      * @param {number} iteration - Current iteration
@@ -366,14 +366,14 @@ export default class VSOMTraining {
         const progress = ((iteration + 1) / this.options.maxIterations * 100).toFixed(1)
         const elapsed = Date.now() - this.trainingStartTime
         const eta = elapsed / (iteration + 1) * (this.options.maxIterations - iteration - 1)
-        
+
         logger.info(`Training ${progress}%: iteration ${iteration + 1}/${this.options.maxIterations}, ` +
-                   `QE: ${results.quantizationError.toFixed(6)}, ` +
-                   `LR: ${learningRate.toFixed(4)}, ` +
-                   `R: ${neighborhoodRadius.toFixed(2)}, ` +
-                   `ETA: ${Math.round(eta / 1000)}s`)
+            `QE: ${results.quantizationError.toFixed(6)}, ` +
+            `LR: ${learningRate.toFixed(4)}, ` +
+            `R: ${neighborhoodRadius.toFixed(2)}, ` +
+            `ETA: ${Math.round(eta / 1000)}s`)
     }
-    
+
     /**
      * Compile final training results
      * @param {number} trainingTime - Total training time
@@ -386,26 +386,26 @@ export default class VSOMTraining {
             trainingTime: trainingTime,
             converged: this.converged,
             convergenceIteration: this.convergenceIteration,
-            
+
             // Final state
             finalQuantizationError: this.errorHistory[this.errorHistory.length - 1] || null,
             finalLearningRate: this.calculateLearningRate(this.currentIteration),
             finalNeighborhoodRadius: this.calculateNeighborhoodRadius(this.currentIteration),
-            
+
             // Training history
             trainingHistory: this.trainingHistory,
             errorHistory: this.errorHistory,
             qualityMetrics: this.qualityMetrics,
-            
+
             // Performance metrics
             averageIterationTime: trainingTime / (this.currentIteration + 1),
             iterationsPerSecond: (this.currentIteration + 1) / (trainingTime / 1000),
-            
+
             // Configuration used
             trainingOptions: this.options
         }
     }
-    
+
     /**
      * Shuffle array in place using Fisher-Yates algorithm
      * @param {Array} array - Array to shuffle
@@ -414,11 +414,11 @@ export default class VSOMTraining {
     shuffleArray(array) {
         for (let i = array.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1))
-            ;[array[i], array[j]] = [array[j], array[i]]
+                ;[array[i], array[j]] = [array[j], array[i]]
         }
         return array
     }
-    
+
     /**
      * Stop training if currently running
      */
@@ -428,7 +428,7 @@ export default class VSOMTraining {
             this.isTraining = false
         }
     }
-    
+
     /**
      * Get current training status
      * @returns {Object} Training status information
@@ -444,7 +444,7 @@ export default class VSOMTraining {
             elapsedTime: this.trainingStartTime ? Date.now() - this.trainingStartTime : 0
         }
     }
-    
+
     /**
      * Get training statistics
      * @returns {Object} Training statistics
@@ -457,7 +457,7 @@ export default class VSOMTraining {
             memoryUsage: this.estimateMemoryUsage()
         }
     }
-    
+
     /**
      * Estimate memory usage
      * @returns {number} Estimated memory usage in bytes
@@ -466,10 +466,10 @@ export default class VSOMTraining {
         const historySize = this.trainingHistory.length * 200 // Rough estimate per entry
         const errorHistorySize = this.errorHistory.length * 8 // Float64
         const qualityMetricsSize = Object.values(this.qualityMetrics).reduce((sum, arr) => sum + arr.length * 16, 0)
-        
+
         return historySize + errorHistorySize + qualityMetricsSize
     }
-    
+
     /**
      * Reset training state
      */
@@ -486,7 +486,7 @@ export default class VSOMTraining {
             topographicError: [],
             neighborhoodPreservation: []
         }
-        
+
         logger.debug('VSOMTraining state reset')
     }
 }

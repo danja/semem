@@ -40,16 +40,16 @@ export default class WikidataNavigator {
      */
     async enhanceNavigation(input, resources, options = {}) {
         const startTime = Date.now();
-        
+
         try {
             const { question, localEntities = [], navigationContext = {} } = input;
             const { llmHandler, sparqlHelper, config, embeddingHandler } = resources;
-            
+
             const navConfig = {
                 enableWikidataResearch: options.enableWikidataResearch !== false,
                 maxWikidataEntities: options.maxWikidataEntities || 10,
                 createCrossReferences: options.createCrossReferences !== false,
-                similarityThreshold: options.similarityThreshold || 0.7,
+                similarityThreshold: options.similarityThreshold,
                 enhancementLevel: options.enhancementLevel || 'standard',
                 ...options
             };
@@ -233,7 +233,7 @@ ORDER BY DESC(?relationshipWeight) ?label`;
 
             if (result.success) {
                 const entities = this._processEntityContext(result.data.results.bindings);
-                
+
                 return {
                     success: true,
                     entities,
@@ -280,17 +280,17 @@ ORDER BY DESC(?relationshipWeight) ?label`;
 
         if (this.navigationSessions.length > 0) {
             stats.averageWikidataEntities = Math.round(
-                this.navigationSessions.reduce((sum, s) => sum + s.wikidataEntitiesCount, 0) / 
+                this.navigationSessions.reduce((sum, s) => sum + s.wikidataEntitiesCount, 0) /
                 this.navigationSessions.length
             );
-            
+
             stats.averageCrossReferences = Math.round(
-                this.navigationSessions.reduce((sum, s) => sum + s.crossReferencesCount, 0) / 
+                this.navigationSessions.reduce((sum, s) => sum + s.crossReferencesCount, 0) /
                 this.navigationSessions.length
             );
-            
+
             stats.averageDuration = Math.round(
-                this.navigationSessions.reduce((sum, s) => sum + s.duration, 0) / 
+                this.navigationSessions.reduce((sum, s) => sum + s.duration, 0) /
                 this.navigationSessions.length
             );
 
@@ -447,7 +447,7 @@ ORDER BY DESC(?relationshipWeight) ?label`;
 
         bindings.forEach(binding => {
             const uri = binding.entity.value;
-            
+
             if (!entityMap.has(uri)) {
                 entityMap.set(uri, {
                     uri: uri,
@@ -479,13 +479,13 @@ ORDER BY DESC(?relationshipWeight) ?label`;
      */
     _calculateTextSimilarity(text1, text2) {
         if (!text1 || !text2) return 0;
-        
+
         const words1 = text1.toLowerCase().split(/\s+/);
         const words2 = text2.toLowerCase().split(/\s+/);
-        
+
         const intersection = words1.filter(word => words2.includes(word));
         const union = [...new Set([...words1, ...words2])];
-        
+
         return union.length > 0 ? intersection.length / union.length : 0;
     }
 

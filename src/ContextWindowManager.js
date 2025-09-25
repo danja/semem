@@ -2,7 +2,7 @@ export default class ContextWindowManager {
     constructor(options = {}) {
         this.minWindowSize = options.minWindowSize || 1024
         this.maxWindowSize = options.maxWindowSize || 8192
-        this.overlapRatio = options.overlapRatio || 0.1
+        this.overlapRatio = options.overlapRatio
         this.avgTokenLength = options.avgTokenLength || 4
     }
 
