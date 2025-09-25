@@ -242,14 +242,9 @@ import {
             );
             verbsLogger.debug('🔥 DEBUG: safeOps.storeInteraction completed');
             
-            // DIRECT FIX: Force immediate SPARQL persistence 
-            try {
-              verbsLogger.debug('🔥 DEBUG: Force saving to SPARQL...');
-              await this.memoryManager.store.saveMemoryToHistory(this.memoryManager.memStore);
-              verbsLogger.debug('🔥 DEBUG: SPARQL force save completed');
-            } catch (sparqlError) {
-              verbsLogger.error('🔥 ERROR: Force SPARQL save failed:', sparqlError);
-            }
+            // FIXED: Enhanced SPARQLStore automatically persists via store.store() call above
+            // No need for separate saveMemoryToHistory as memStore was removed in migration
+            verbsLogger.debug('🔥 DEBUG: Data automatically persisted via Enhanced SPARQLStore');
             break;
             
           case 'document':
@@ -349,14 +344,9 @@ import {
                 );
                 verbsLogger.info(`✅ Document processed successfully (${concepts.length} concepts extracted)`);
                 
-                // DIRECT FIX: Force immediate SPARQL persistence 
-                try {
-                  verbsLogger.debug('🔥 DEBUG: Force saving document to SPARQL...');
-                  await this.memoryManager.store.saveMemoryToHistory(this.memoryManager.memStore);
-                  verbsLogger.info('🔥 DEBUG: Document SPARQL force save completed');
-                } catch (sparqlError) {
-                  verbsLogger.error('🔥 ERROR: Document force SPARQL save failed:', sparqlError);
-                }
+                // FIXED: Enhanced SPARQLStore automatically persists document data
+                // No need for separate saveMemoryToHistory as memStore was removed in migration
+                verbsLogger.debug('🔥 DEBUG: Document data automatically persisted via Enhanced SPARQLStore');
               } catch (docError) {
                 verbsLogger.error(`❌ Error processing document:`, docError.message);
                 throw new Error(`Failed to process document: ${docError.message}. Document size: ${content.length} characters. Consider breaking it into smaller sections.`);

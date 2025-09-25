@@ -1,5 +1,6 @@
 import faiss from 'faiss-node'
 import { createUnifiedLogger } from '../../utils/LoggingConfig.js'
+import { VectorOperations } from '../../core/Vectors.js'
 
 // Use unified STDIO-aware logger
 const logger = createUnifiedLogger('vectors');
@@ -42,15 +43,7 @@ export class Vectors {
      * @throws {Error} If embedding is invalid
      */
     validateEmbedding(embedding) {
-        if (!Array.isArray(embedding)) {
-            throw new TypeError('Embedding must be an array')
-        }
-        if (embedding.length !== this.dimension) {
-            throw new Error(`Embedding dimension mismatch: expected ${this.dimension}, got ${embedding.length}`)
-        }
-        if (!embedding.every(x => typeof x === 'number' && !isNaN(x))) {
-            throw new TypeError('Embedding must contain only valid numbers')
-        }
+        return VectorOperations.validateEmbedding(embedding, this.dimension)
     }
 
     /**
@@ -60,21 +53,7 @@ export class Vectors {
      * @returns {number} Cosine similarity (0-1 range)
      */
     calculateCosineSimilarity(vecA, vecB) {
-        if (vecA.length !== vecB.length) return 0
-
-        let dotProduct = 0
-        let normA = 0
-        let normB = 0
-
-        for (let i = 0; i < vecA.length; i++) {
-            dotProduct += vecA[i] * vecB[i]
-            normA += vecA[i] * vecA[i]
-            normB += vecB[i] * vecB[i]
-        }
-
-        if (normA === 0 || normB === 0) return 0
-
-        return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB))
+        return VectorOperations.cosineSimilarity(vecA, vecB)
     }
 
     /**
@@ -84,21 +63,7 @@ export class Vectors {
      * @returns {Array<number>} Adjusted embedding vector
      */
     adjustEmbeddingLength(embedding, targetLength) {
-        if (embedding.length === targetLength) {
-            return embedding;
-        }
-
-        if (embedding.length > targetLength) {
-            // Truncate if too long
-            return embedding.slice(0, targetLength);
-        } else {
-            // Pad with zeros if too short
-            const padded = [...embedding];
-            while (padded.length < targetLength) {
-                padded.push(0);
-            }
-            return padded;
-        }
+        return VectorOperations.adjustEmbeddingLength(embedding, targetLength)
     }
 
     /**
@@ -107,16 +72,8 @@ export class Vectors {
      * @returns {boolean} True if valid
      */
     isValidEmbedding(embedding) {
-        if (!Array.isArray(embedding) || embedding.length !== this.dimension) {
-            return false
-        }
-
-        // Check if embedding contains valid numbers and is not all zeros
-        const hasValidNumbers = embedding.some(val =>
-            typeof val === 'number' && !isNaN(val) && val !== 0
-        )
-
-        return hasValidNumbers
+        return VectorOperations.hasMeaningfulContent(embedding) &&
+               VectorOperations.isValidEmbedding(embedding, this.dimension)
     }
 
     /**
@@ -302,8 +259,7 @@ export class Vectors {
      * @returns {number} Similarity score (0-1 range, higher is more similar)
      */
     distanceToSimilarity(distance) {
-        // Convert L2 distance to cosine-like similarity (0-1 range)
-        return 1 / (1 + distance)
+        return VectorOperations.distanceToSimilarity(distance)
     }
 
     /**

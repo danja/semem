@@ -1,7 +1,4 @@
-You said the API server has its own implementation that doesn't use the SimpleVerbsService at all. There should only be one implementation and any redundant code must be removed.
-
-
-carefully review files in the src and mcp directories looking for methods, classes and modules with similar signatures. The aim is to identify redundant code. Save your findings in docs/MAYBE-REDUNDANT.md
+create docs/STATUS.md describing the current situation : which files participate in the Tell/Ask workflow, the data that is created, the architecture,  
 
 
 api-server.js has :

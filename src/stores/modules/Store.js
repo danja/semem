@@ -2,6 +2,7 @@ import dotenv from 'dotenv';
 import Config from '../../Config.js';
 import SPARQLTemplateLoader from '../SPARQLTemplateLoader.js';
 import { createUnifiedLogger } from '../../utils/LoggingConfig.js';
+import { VectorOperations } from '../../core/Vectors.js';
 // import { WorkflowLogger } from '../../utils/WorkflowLogger.js';
 
 // Use unified STDIO-aware logger
@@ -557,15 +558,7 @@ export class Store {
      * @param {Array} embedding - Embedding vector to validate
      */
     validateEmbedding(embedding) {
-        if (!Array.isArray(embedding)) {
-            throw new Error('Embedding must be an array');
-        }
-        if (embedding.length !== this.dimension) {
-            throw new Error(`Embedding dimension mismatch: expected ${this.dimension}, got ${embedding.length}`);
-        }
-        if (!embedding.every(val => typeof val === 'number' && !isNaN(val))) {
-            throw new Error('Embedding must contain only valid numbers');
-        }
+        return VectorOperations.validateEmbedding(embedding, this.dimension);
     }
 
     /**

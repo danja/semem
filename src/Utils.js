@@ -1,3 +1,5 @@
+import { VectorOperations } from './core/Vectors.js';
+
 // Logging utility
 export const logger = {
     info: (...args) => console.log('[INFO]', ...args),
@@ -9,14 +11,10 @@ export const logger = {
 // Helper functions for vector operations
 export const vectorOps = {
     normalize: (vector) => {
-        const magnitude = Math.sqrt(vector.reduce((sum, val) => sum + val * val, 0));
-        return vector.map(val => val / magnitude);
+        return VectorOperations.normalize(vector);
     },
-    
+
     cosineSimilarity: (vec1, vec2) => {
-        const dotProduct = vec1.reduce((sum, val, i) => sum + val * vec2[i], 0);
-        const mag1 = Math.sqrt(vec1.reduce((sum, val) => sum + val * val, 0));
-        const mag2 = Math.sqrt(vec2.reduce((sum, val) => sum + val * val, 0));
-        return dotProduct / (mag1 * mag2);
+        return VectorOperations.cosineSimilarity(vec1, vec2);
     }
 };

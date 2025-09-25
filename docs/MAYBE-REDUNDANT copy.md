@@ -1,5 +1,7 @@
+We need to refactor embedding and vector operations and remove duplicate code and place it appropriately. Think deeply and create a plan to do this.
 
-## 1. Vector Operations & Embedding Utilities
+There is massive overlap. All embedding validation and vector math should be consolidated into a single new module`src/core/Vectors.js` and current versions removed.
+The following files contain related functionality, there may be others :
 
 ### `src/Utils.js`
 - `vectorOps.normalize(vector)`
@@ -11,14 +13,25 @@
 - `EmbeddingHandler.generateFallbackEmbedding(text, strategy)`
 - `EmbeddingHandler.generateHashEmbedding(text)`
 
-**Observation:**
-- Both files deal with vector operations (normalization, similarity, standardization).
-- There may be overlap in how vectors/embeddings are processed and validated.
-- Consider centralizing vector math and embedding validation in a shared utility module.
+- `Store.js`, `Vectors.js`, and `Search.js` all implement embedding/vector validation and similarity logic:
+	- `Store.js`: `validateEmbedding(embedding)`
+	- `Vectors.js`: `validateEmbedding(embedding)`, `isValidEmbedding(embedding)`, `adjustEmbeddingLength(embedding, targetLength)`, `calculateCosineSimilarity(vecA, vecB)`
+	- `Search.js`: `validateQueryEmbedding(embedding)`, uses `vectors.calculateCosineSimilarity()`
 
 ---
 
-## 2. Logging Utilities
+Functionality related to embeddings is distributed throughout the code with a lot of duplication. This all needs to be consolidated into src/core/Embeddings.js for operations directly on the embeddings, EmbeddingsAPIBridge.js for code which calls external services. SPARQL storage of embeddings will be dealt with later.
+There must be no hardcoded variables (such as thresholds), these should be loaded from preferences.js following existing patterns. There must be no hardcoded URLs, they should come from config.json via Config.js . API keys will be loaded following existing patterns using dotenv.  
+You need to search the codebase for places in which embeddings play a role. I've found two already : EmbeddingHandler.js EmbeddingService.js 
+After consolidating the functionality the redundant files and methods should be remooved.
+
+---
+
+/clear first
+
+LOGGING
+
+mcp/tools/VerbsLogger.js
 
 ### `src/Utils.js`
 - `logger.info`, `logger.error`, `logger.debug`, `logger.warn`
@@ -87,14 +100,8 @@
 - `src/stores/modules/Vectors.js`
 - `src/stores/modules/ZPT.js`
 
-### Observations:
 
-#### a. Embedding Validation and Vector Operations
-- `Store.js`, `Vectors.js`, and `Search.js` all implement embedding/vector validation and similarity logic:
-	- `Store.js`: `validateEmbedding(embedding)`
-	- `Vectors.js`: `validateEmbedding(embedding)`, `isValidEmbedding(embedding)`, `adjustEmbeddingLength(embedding, targetLength)`, `calculateCosineSimilarity(vecA, vecB)`
-	- `Search.js`: `validateQueryEmbedding(embedding)`, uses `vectors.calculateCosineSimilarity()`
-- There is overlap in how embeddings are validated and compared. Consider consolidating all embedding validation and vector math into a single utility (possibly `Vectors.js`).
+
 
 #### b. SPARQL Query/Update Execution
 - `SPARQLExecute.js` provides low-level query/update/transaction logic.

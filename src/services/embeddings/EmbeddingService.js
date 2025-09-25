@@ -1,5 +1,6 @@
 import EmbeddingConnectorFactory from '../../connectors/EmbeddingConnectorFactory.js';
 import { createUnifiedLogger } from '../../utils/LoggingConfig.js';
+import { VectorOperations } from '../../core/Vectors.js';
 
 // Use unified STDIO-aware logger
 const logger = createUnifiedLogger('embedding-service');
@@ -76,19 +77,7 @@ class EmbeddingService {
      * @throws {Error} If the embedding is invalid
      */
     validateEmbedding(embedding) {
-        if (!Array.isArray(embedding)) {
-            throw new Error('Embedding must be an array');
-        }
-        
-        if (embedding.length !== this.dimension) {
-            throw new Error(`Embedding dimension mismatch: expected ${this.dimension}, got ${embedding.length}`);
-        }
-        
-        if (!embedding.every(x => typeof x === 'number' && !isNaN(x))) {
-            throw new Error('Embedding must contain only valid numbers');
-        }
-        
-        return true;
+        return VectorOperations.validateEmbedding(embedding, this.dimension);
     }
     
     /**
@@ -97,23 +86,7 @@ class EmbeddingService {
      * @returns {number[]} The standardized embedding
      */
     standardizeEmbedding(embedding) {
-        if (!Array.isArray(embedding)) {
-            throw new Error('Embedding must be an array');
-        }
-        
-        const current = embedding.length;
-        
-        if (current === this.dimension) {
-            return embedding;
-        }
-        
-        if (current < this.dimension) {
-            // Pad with zeros if embedding is too short
-            return [...embedding, ...new Array(this.dimension - current).fill(0)];
-        }
-        
-        // Truncate if embedding is too long
-        return embedding.slice(0, this.dimension);
+        return VectorOperations.standardizeEmbedding(embedding, this.dimension);
     }
 }
 

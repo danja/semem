@@ -74,9 +74,23 @@ class APIServer {
         this.server = null;
         this.apiContext = {};
         this.registry = new APIRegistry();
+        this.sharedVerbsService = null; // Shared SimpleVerbsService instance
         
         this.logger.info('APIServer constructor initialized');
         this.initializeMiddleware();
+    }
+
+    /**
+     * Get or create the shared SimpleVerbsService instance
+     */
+    async getSharedVerbsService() {
+        if (!this.sharedVerbsService) {
+            const { SimpleVerbsService } = await import('../../mcp/tools/SimpleVerbsService.js');
+            this.sharedVerbsService = new SimpleVerbsService();
+            await this.sharedVerbsService.initialize();
+            this.logger.info('✅ Shared SimpleVerbsService instance created and initialized');
+        }
+        return this.sharedVerbsService;
     }
 
     /**
@@ -578,10 +592,8 @@ class APIServer {
                     metadata: { ...metadata, type, lazy }
                 };
 
-                // Use SimpleVerbsService for consistent storage with ask endpoint
-                const { SimpleVerbsService } = await import('../../mcp/tools/SimpleVerbsService.js');
-                const verbsService = new SimpleVerbsService();
-                await verbsService.initialize();
+                // Use shared SimpleVerbsService instance
+                const verbsService = await this.getSharedVerbsService();
 
                 const result = await verbsService.tell({
                     content,
@@ -637,10 +649,8 @@ class APIServer {
 
                 this.logger.info(`🔵 [API] POST /ask - Question: "${question.substring(0, 50)}..."`);
 
-                // Use SimpleVerbsService for consistent behavior with MCP server
-                const { SimpleVerbsService } = await import('../../mcp/tools/SimpleVerbsService.js');
-                const verbsService = new SimpleVerbsService();
-                await verbsService.initialize();
+                // Use shared SimpleVerbsService instance
+                const verbsService = await this.getSharedVerbsService();
 
                 const askResult = await verbsService.ask({
                     question,

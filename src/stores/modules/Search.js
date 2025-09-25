@@ -1,5 +1,6 @@
 import { SPARQL_CONFIG } from '../../../config/preferences.js'
 import { createUnifiedLogger } from '../../utils/LoggingConfig.js'
+import { VectorOperations } from '../../core/Vectors.js'
 
 // Use unified STDIO-aware logger
 const logger = createUnifiedLogger('search');
@@ -141,8 +142,8 @@ export class Search {
                     }
 
                     if (embedding.length > 0) {
-                        // Calculate similarity using vectors module
-                        const similarity = this.vectors.calculateCosineSimilarity(queryEmbedding, embedding)
+                        // Calculate similarity using core vector operations
+                        const similarity = VectorOperations.cosineSimilarity(queryEmbedding, embedding)
                         logger.info(`🔍 Calculated similarity: ${similarity.toFixed(4)}, threshold: ${threshold}, passes: ${similarity >= threshold}`)
 
                         if (similarity >= threshold) {
@@ -280,9 +281,7 @@ export class Search {
      * @returns {boolean} True if valid
      */
     validateQueryEmbedding(embedding) {
-        return Array.isArray(embedding) &&
-               embedding.length > 0 && // Valid dimension from config
-               embedding.every(val => typeof val === 'number' && !isNaN(val));
+        return VectorOperations.isValidEmbedding(embedding);
     }
 
     /**

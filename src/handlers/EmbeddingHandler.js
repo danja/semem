@@ -1,4 +1,5 @@
 import logger from 'loglevel'
+import { VectorOperations, VectorError } from '../core/Vectors.js'
 
 class EmbeddingError extends Error {
     constructor(message, { cause, type = 'EMBEDDING_ERROR' } = {}) {
@@ -78,47 +79,31 @@ export default class EmbeddingHandler {
     }
 
     validateEmbedding(embedding) {
-        if (!Array.isArray(embedding)) {
-            throw new EmbeddingError('Embedding must be an array', {
-                type: 'VALIDATION_ERROR'
-            })
-        }
-
-        if (embedding.length !== this.dimension) {
-            throw new EmbeddingError(
-                `Embedding dimension mismatch: expected ${this.dimension}, got ${embedding.length}`, {
-                type: 'VALIDATION_ERROR'
+        try {
+            return VectorOperations.validateEmbedding(embedding, this.dimension)
+        } catch (error) {
+            // Convert VectorError to EmbeddingError for backward compatibility
+            if (error instanceof VectorError) {
+                throw new EmbeddingError(error.message, {
+                    type: error.type,
+                    cause: error.cause
+                })
             }
-            )
+            throw error
         }
-
-        if (!embedding.every(x => typeof x === 'number' && !isNaN(x))) {
-            throw new EmbeddingError('Embedding must contain only valid numbers', {
-                type: 'VALIDATION_ERROR'
-            })
-        }
-
-        return true
     }
 
     standardizeEmbedding(embedding) {
         try {
-            if (!Array.isArray(embedding)) {
-                throw new EmbeddingError('Input must be an array', {
-                    type: 'VALIDATION_ERROR'
+            return VectorOperations.standardizeEmbedding(embedding, this.dimension)
+        } catch (error) {
+            // Convert VectorError to EmbeddingError for backward compatibility
+            if (error instanceof VectorError) {
+                throw new EmbeddingError(error.message, {
+                    type: error.type,
+                    cause: error.cause
                 })
             }
-
-            const current = embedding.length
-            if (current === this.dimension) return embedding
-
-            if (current < this.dimension) {
-                return [...embedding, ...new Array(this.dimension - current).fill(0)]
-            }
-
-            return embedding.slice(0, this.dimension)
-        } catch (error) {
-            if (error instanceof EmbeddingError) throw error
             throw new EmbeddingError('Standardization failed', { cause: error })
         }
     }
@@ -160,31 +145,15 @@ export default class EmbeddingHandler {
     generateFallbackEmbedding(text, strategy) {
         switch (strategy) {
             case 'zero_vector':
-                return new Array(this.dimension).fill(0)
+                return VectorOperations.generateZeroVector(this.dimension)
             case 'random_vector':
-                return Array.from({ length: this.dimension }, () => Math.random() - 0.5)
+                return VectorOperations.generateRandomVector(this.dimension)
             case 'text_hash':
                 // Simple hash-based embedding
-                return this.generateHashEmbedding(text)
+                return VectorOperations.generateHashEmbedding(text, this.dimension)
             default:
-                return new Array(this.dimension).fill(0)
+                return VectorOperations.generateZeroVector(this.dimension)
         }
     }
 
-    // Simple text hash to embedding conversion
-    generateHashEmbedding(text) {
-        const embedding = new Array(this.dimension).fill(0)
-        let hash = 0
-        
-        for (let i = 0; i < text.length; i++) {
-            hash = ((hash << 5) - hash + text.charCodeAt(i)) & 0xffffffff
-        }
-        
-        // Distribute hash across dimensions
-        for (let i = 0; i < this.dimension; i++) {
-            embedding[i] = ((hash + i) % 1000) / 1000 - 0.5
-        }
-        
-        return embedding
-    }
 }
