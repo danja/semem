@@ -4,7 +4,8 @@ import { SPARQL_CONFIG } from '../config/preferences.js'
 // MIGRATION: Using enhanced SPARQLStore instead of dual MemoryStore + BaseStore architecture
 import SPARQLStore from './stores/SPARQLStore.js'
 import ContextManager from './ContextManager.js'
-import EmbeddingHandler from './handlers/EmbeddingHandler.js'
+import Embeddings from './core/Embeddings.js';
+import EmbeddingsAPIBridge from './services/EmbeddingsAPIBridge.js';
 import CacheManager from './handlers/CacheManager.js'
 import LLMHandler from './handlers/LLMHandler.js'
 import { WorkflowLogger, workflowLoggerRegistry } from './utils/WorkflowLogger.js'
@@ -55,12 +56,9 @@ export default class MemoryManager {
 
         // Initialize components
         this.cacheManager = new CacheManager(cacheOptions)
-        this.embeddingHandler = new EmbeddingHandler(
-            embeddingProviderToUse,
-            this.embeddingModel,
-            dimension,
-            this.cacheManager
-        )
+        // Replace EmbeddingHandler with Embeddings and EmbeddingsAPIBridge
+        this.embeddings = new Embeddings(embeddingProviderToUse, this.embeddingModel, dimension, this.cacheManager);
+        this.embeddingsAPIBridge = new EmbeddingsAPIBridge(embeddingProviderToUse);
 
         // Only initialize LLMHandler if the provider supports chat operations
         // Check if the provider has working chat capabilities by checking provider info
@@ -181,7 +179,7 @@ export default class MemoryManager {
                 id: metadata.id || uuidv4(),
                 prompt,
                 output,
-                embedding: this.embeddingHandler.standardizeEmbedding(embedding),
+                embedding: this.embeddings.standardizeEmbedding(embedding),
                 timestamp: metadata.timestamp || Date.now(),
                 accessCount: 1,
                 concepts,
@@ -261,7 +259,7 @@ export default class MemoryManager {
                 '[MemoryManager] embeddingHandler.generateEmbedding() - creating vector representation'
             );
 
-            const queryEmbedding = await this.embeddingHandler.generateEmbedding(query);
+            const queryEmbedding = await this.embeddingsAPIBridge.generateEmbedding(query);
             const embeddingDuration = Date.now() - embeddingStartTime;
             this.logger.info(`⏱️ [SEARCH-TIMING] Embedding generation took ${embeddingDuration}ms`);
             
@@ -413,7 +411,7 @@ export default class MemoryManager {
     }
 
     async generateEmbedding(text) {
-        return await this.embeddingHandler.generateEmbedding(text)
+        return await this.embeddingsAPIBridge.generateEmbedding(text)
     }
 
     async extractConcepts(text) {
