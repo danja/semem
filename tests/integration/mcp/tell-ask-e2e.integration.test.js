@@ -10,7 +10,7 @@ import { describe, test, expect, beforeEach } from 'vitest';
 describe('Tell/Ask E2E Integration Tests', () => {
   // Generate random facts to ensure we're testing actual storage/retrieval
   const generateRandomFact = () => {
-    const subjects = ['florglings', 'blorknots', 'quiblets', 'zephyrs', 'glooplings'];
+    const subjects = ['flommings', 'bloonots', 'quityets', 'zepliars', 'looplongs'];
     const colors = ['turquoise', 'magenta', 'chartreuse', 'vermillion', 'cerulean'];
     const types = ['creatures', 'plants', 'crystals', 'beings', 'entities'];
 

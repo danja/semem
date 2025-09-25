@@ -24,7 +24,7 @@ import { SPARQLQueryService } from '../services/sparql/index.js';
 import SPARQLHelper from '../services/sparql/SPARQLHelper.js';
 import LLMHandler from '../handlers/LLMHandler.js';
 import { Embeddings } from '../core/Embeddings.js';
-import EmbeddingsAPIBridge from '../services/EmbeddingsAPIBridge.js';
+import EmbeddingsAPIBridge from '../services/embeddings/EmbeddingsAPIBridge.js';
 import MistralConnector from '../connectors/MistralConnector.js';
 import ClaudeConnector from '../connectors/ClaudeConnector.js';
 import OllamaConnector from '../connectors/OllamaConnector.js';

@@ -1,8 +1,6 @@
 import { createUnifiedLogger } from '../../utils/LoggingConfig.js';
-import { VectorOperations } from '../../core/Vectors.js';
 import { Embeddings, EmbeddingError } from '../../core/Embeddings.js';
-import EmbeddingsAPIBridge from '../EmbeddingsAPIBridge.js';
-import EmbeddingConnectorFactory from '../../connectors/EmbeddingConnectorFactory.js';
+import EmbeddingsAPIBridge from './EmbeddingsAPIBridge.js';
 import { EMBEDDING_CONFIG } from '../../../config/preferences.js';
 
 // Use unified STDIO-aware logger
@@ -40,7 +38,14 @@ class EmbeddingService {
 
         // Get configuration from core module
         this.model = options.model || this._getDefaultModel();
-        this.dimension = options.dimension || this.coreEmbeddings.getDimension(this.model);
+        // Fetch embedding dimension from configuration
+        this.dimension = this.config.get('embeddingDimension') || this.coreEmbeddings.getDimension(this.model);
+
+        if (!this.dimension) {
+            throw new EmbeddingError('Embedding dimension is required - check config.json embeddingDimension setting', {
+                type: 'CONFIGURATION_ERROR'
+            });
+        }
         this.provider = options.provider || this._getPreferredProvider();
 
         // For backward compatibility
@@ -125,7 +130,7 @@ class EmbeddingService {
      * @param {string} text - The text to embed
      * @returns {Promise<number[]>} The embedding vector
      */
-    async generateEmbedding(text) {
+    async generateEmbedding(text, options = {}) {
         if (!text || typeof text !== 'string') {
             throw new EmbeddingError('Invalid input text', { type: 'VALIDATION_ERROR' });
         }
@@ -134,29 +139,9 @@ class EmbeddingService {
             logger.debug(`Generating embedding for text (${text.length} characters)...`);
             logger.debug(`Using ${this.legacyMode ? 'legacy' : 'modern'} mode with model ${this.model}`);
 
-            let embedding;
-
-            if (this.legacyMode) {
-                // Legacy mode: use connector directly
-                const rawEmbedding = await this.connector.generateEmbedding(this.model, text);
-                logger.debug(`Generated raw embedding with ${rawEmbedding.length} dimensions`);
-
-                // Standardize and validate using VectorOperations directly
-                embedding = this.standardizeEmbedding(rawEmbedding);
-                logger.debug(`Standardized embedding to ${embedding.length} dimensions`);
-                this.validateEmbedding(embedding);
-
-            } else {
-                // Modern mode: use API bridge
-                embedding = await this.apiBridge.generateEmbedding(text, {
-                    model: this.model,
-                    provider: this.provider
-                });
-                // API bridge already handles validation and standardization
-                logger.debug(`Generated and validated embedding with ${embedding.length} dimensions`);
-            }
-
-            return embedding;
+            // Delegate embedding generation to Embeddings.js
+            const embeddings = new Embeddings(this.config, this.options);
+            return await embeddings.generateEmbedding(text, { ...this.options, ...options });
         } catch (error) {
             logger.error('Error generating embedding:', error);
 
@@ -168,51 +153,6 @@ class EmbeddingService {
                 });
             }
             throw error;
-        }
-    }
-    
-    /**
-     * Validate an embedding vector
-     * @param {number[]} embedding - The embedding vector to validate
-     * @returns {boolean} True if valid
-     * @throws {EmbeddingError} If the embedding is invalid
-     */
-    validateEmbedding(embedding) {
-        if (this.legacyMode) {
-            // Legacy mode: use VectorOperations directly
-            try {
-                return VectorOperations.validateEmbedding(embedding, this.dimension);
-            } catch (error) {
-                throw new EmbeddingError(error.message, {
-                    cause: error,
-                    type: 'VALIDATION_ERROR'
-                });
-            }
-        } else {
-            // Modern mode: use core Embeddings module
-            return this.coreEmbeddings.validateEmbedding(embedding, this.dimension);
-        }
-    }
-
-    /**
-     * Standardize an embedding to match the expected dimension
-     * @param {number[]} embedding - The embedding to standardize
-     * @returns {number[]} The standardized embedding
-     */
-    standardizeEmbedding(embedding) {
-        if (this.legacyMode) {
-            // Legacy mode: use VectorOperations directly
-            try {
-                return VectorOperations.standardizeEmbedding(embedding, this.dimension);
-            } catch (error) {
-                throw new EmbeddingError(error.message, {
-                    cause: error,
-                    type: 'STANDARDIZATION_ERROR'
-                });
-            }
-        } else {
-            // Modern mode: use core Embeddings module
-            return this.coreEmbeddings.standardizeEmbedding(embedding, this.dimension);
         }
     }
 }

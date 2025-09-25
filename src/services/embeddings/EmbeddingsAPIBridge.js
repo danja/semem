@@ -13,7 +13,8 @@
  * intelligent failover, performance optimization, and unified error handling.
  */
 
-import EmbeddingConnectorFactory from '../../connectors/EmbeddingConnectorFactory.js';
+// Dynamic import to avoid potential circular dependency issues
+// import EmbeddingConnectorFactory from '../../connectors/EmbeddingConnectorFactory.js';
 import { Embeddings, EmbeddingError } from '../../core/Embeddings.js';
 import { EMBEDDING_CONFIG } from '../../../config/preferences.js';
 import { createUnifiedLogger } from '../../utils/LoggingConfig.js';
@@ -36,7 +37,6 @@ export class EmbeddingsAPIBridge {
         }
 
         this.config = config;
-        this.coreEmbeddings = new Embeddings(config, options);
 
         this.options = {
             ...EMBEDDING_CONFIG,
@@ -81,7 +81,7 @@ export class EmbeddingsAPIBridge {
         let attemptsRemaining = maxRetries + 1; // +1 for initial attempt
 
         // Use the consolidated logic from Embeddings.js
-        const providers = this.coreEmbeddings._getProviderFallbackChain(preferredProvider);
+        const providers = this._getProviderFallbackChain(preferredProvider);
 
         for (const providerConfig of providers) {
             if (attemptsRemaining <= 0) break;
@@ -93,13 +93,14 @@ export class EmbeddingsAPIBridge {
                 await this._enforceRateLimit(providerConfig.type);
 
                 // Get or create connector
-                const connector = await this.coreEmbeddings._getConnector(providerConfig);
+                const connector = await this._getConnector(providerConfig);
 
                 // Determine model to use
                 const modelToUse = model || providerConfig.embeddingModel || 'default';
 
-                // Generate embedding
-                const rawEmbedding = await connector.generateEmbedding(modelToUse, text);
+                // Delegate embedding generation to Embeddings.js
+                const embeddings = new Embeddings(this.config, this.options);
+                const rawEmbedding = await embeddings.generateEmbedding(text, options);
 
                 // Update metrics
                 this._updateMetrics(providerConfig.type, true);
@@ -217,7 +218,11 @@ export class EmbeddingsAPIBridge {
      * @returns {Array} - Provider configurations in fallback order
      */
     _getProviderFallbackChain(preferredProvider = null) {
-        const availableProviders = this.coreEmbeddings.getAvailableProviders();
+        const providers = this.config.get('llmProviders') || [];
+        // Filter to embedding-capable providers
+        const availableProviders = providers.filter(provider =>
+            provider.capabilities && provider.capabilities.includes('embedding')
+        );
 
         if (availableProviders.length === 0) {
             throw new EmbeddingError('No embedding providers available', { type: 'CONFIGURATION_ERROR' });
@@ -403,7 +408,6 @@ export class EmbeddingsAPIBridge {
     dispose() {
         this.clearCache();
         this.resetMetrics();
-        this.coreEmbeddings.dispose();
         logger.info('Embeddings API Bridge disposed');
     }
 }

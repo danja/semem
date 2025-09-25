@@ -5,7 +5,7 @@ import { SPARQL_CONFIG } from '../config/preferences.js'
 import SPARQLStore from './stores/SPARQLStore.js'
 import ContextManager from './ContextManager.js'
 import Embeddings from './core/Embeddings.js';
-import EmbeddingsAPIBridge from './services/EmbeddingsAPIBridge.js';
+import EmbeddingsAPIBridge from './services/embeddings/EmbeddingsAPIBridge.js';
 import CacheManager from './handlers/CacheManager.js'
 import LLMHandler from './handlers/LLMHandler.js'
 import { WorkflowLogger, workflowLoggerRegistry } from './utils/WorkflowLogger.js'
@@ -58,7 +58,7 @@ export default class MemoryManager {
         this.cacheManager = new CacheManager(cacheOptions)
         // Replace EmbeddingHandler with Embeddings and EmbeddingsAPIBridge
         this.embeddings = new Embeddings(embeddingProviderToUse, this.embeddingModel, dimension, this.cacheManager);
-        this.embeddingsAPIBridge = new EmbeddingsAPIBridge(embeddingProviderToUse);
+        this.embeddingsAPIBridge = new EmbeddingsAPIBridge(config);
 
         // Only initialize LLMHandler if the provider supports chat operations
         // Check if the provider has working chat capabilities by checking provider info

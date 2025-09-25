@@ -510,8 +510,9 @@ async function startOptimizedServer() {
       const config = services.config;
       mcpDebugger.info('✅ [MCP] Using shared services from ServiceManager');
 
-      // Use the real SimpleVerbsService instead of a fake wrapper
-      const simpleVerbsService = new SimpleVerbsService();
+      // Use the shared SimpleVerbsService instance (same as STDIO server)
+      const { getSimpleVerbsService } = await import('./tools/simple-verbs.js');
+      const simpleVerbsService = getSimpleVerbsService();
 
 
       // TELL endpoint - Add resources to the system

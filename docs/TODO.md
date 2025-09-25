@@ -19,7 +19,8 @@ npx @modelcontextprotocol/inspector node mcp/index.js
 
 src/stores/modules/Search.js has a hardcoded query
 
-
+  mcp/tools/SimpleVerbsService.js:              const targetGraph = graph || storageConfig?.graphName || config.get('graphName') || 'http://hyperdata.it/content';
+  
 mcp/tools/SimpleVerbsService.js contains prompt fragments
 
 in preferences.js, export const SPARQL_CONFIG = { contains thresholds

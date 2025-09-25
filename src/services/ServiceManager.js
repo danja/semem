@@ -7,7 +7,8 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 import log from 'loglevel';
 import MemoryManager from '../MemoryManager.js';
-import EmbeddingHandler from '../handlers/EmbeddingHandler.js';
+import { Embeddings } from '../core/Embeddings.js';
+import EmbeddingsAPIBridge from '../services/embeddings/EmbeddingsAPIBridge.js';
 import LLMHandler from '../handlers/LLMHandler.js';
 import Config from '../Config.js';
 import { createLLMConnector, createEmbeddingConnector, getModelConfig } from '../../mcp/lib/config.js';
@@ -84,8 +85,27 @@ class ServiceManager {
             throw new Error(`Unsupported storage type: ${storageType}`);
         }
 
-        // Create handlers
-        const embeddingHandler = new EmbeddingHandler(embeddingProvider, modelConfig.embeddingModel, embeddingDimension);
+        // Create embedding handler using modern core architecture
+        // Note: For ServiceManager, we'll create a simple wrapper that provides the expected interface
+        const embeddings = new Embeddings(config);
+        const embeddingsAPIBridge = new EmbeddingsAPIBridge(config);
+
+        // Create a compatibility wrapper that matches the old EmbeddingHandler interface
+        const embeddingHandler = {
+            generateEmbedding: async (text) => {
+                return await embeddingsAPIBridge.generateEmbedding(text, {
+                    model: modelConfig.embeddingModel
+                });
+            },
+            validateEmbedding: (embedding) => {
+                return embeddings.validateEmbedding(embedding, embeddingDimension);
+            },
+            standardizeEmbedding: (embedding) => {
+                return embeddings.standardizeEmbedding(embedding, embeddingDimension);
+            },
+            dimension: embeddingDimension,
+            model: modelConfig.embeddingModel
+        };
         const llmHandler = new LLMHandler(llmProvider, modelConfig.chatModel);
 
         // Initialize MemoryManager with unified configuration
