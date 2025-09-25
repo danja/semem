@@ -82,7 +82,7 @@ export default class UnitsToCorpuscles {
                 if (provider.type === 'ollama') {
                     return EmbeddingConnectorFactory.createConnector({
                         provider: 'ollama',
-                        model: provider.model || 'nomic-embed-text',
+                        model: provider.model,
                         options: { baseUrl: provider.baseUrl || 'http://localhost:11434' }
                     });
                 }
@@ -110,7 +110,7 @@ export default class UnitsToCorpuscles {
      */
     async getModelConfig(config) {
         try {
-            const embeddingModel = config.get('embedding.model') || 'nomic-embed-text';
+            const embeddingModel = config.get('embedding.model');
 
             return {
                 embeddingModel: embeddingModel

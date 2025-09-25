@@ -29,7 +29,7 @@ export async function createLLMConnector(configOrPath = null) {
       config = new Config(configOrPath);
       await config.init();
     }
-    
+
     // Get llmProviders with priority ordering
     const llmProviders = config.get('llmProviders') || [];
     mcpDebugger.info('🔧 [CONFIG] Raw llmProviders from config:', llmProviders.length);
@@ -41,7 +41,7 @@ export async function createLLMConnector(configOrPath = null) {
       .sort((a, b) => (a.priority || 999) - (b.priority || 999));
 
     mcpDebugger.info('Available chat providers by priority:', sortedProviders.map(p => `${p.type} (priority: ${p.priority})`));
-    
+
     // Try providers in priority order
     for (const provider of sortedProviders) {
       mcpDebugger.info(`Trying LLM provider: ${provider.type} (priority: ${provider.priority})`);
@@ -80,10 +80,10 @@ export async function createLLMConnector(configOrPath = null) {
         mcpDebugger.info(`❌ Provider ${provider.type} not available (missing API key or implementation)`);
       }
     }
-    
+
     mcpDebugger.info('⚠️ No configured providers available, defaulting to Ollama');
     return new OllamaConnector();
-    
+
   } catch (error) {
     mcpDebugger.warn('Failed to load provider configuration, defaulting to Ollama:', error.message);
     return new OllamaConnector();
@@ -105,21 +105,21 @@ export async function createEmbeddingConnector(configOrPath = null) {
       config = new Config(configOrPath);
       await config.init();
     }
-    
+
     // Get llmProviders with priority ordering for embeddings
     const llmProviders = config.get('llmProviders') || [];
-    
+
     // Sort by priority (lower number = higher priority)
     const sortedProviders = llmProviders
       .filter(p => p.capabilities?.includes('embedding'))
       .sort((a, b) => (a.priority || 999) - (b.priority || 999));
-    
+
     mcpDebugger.info('Available embedding providers by priority:', sortedProviders.map(p => `${p.type} (priority: ${p.priority})`));
-    
+
     // Try providers in priority order
     for (const provider of sortedProviders) {
       mcpDebugger.info(`Trying embedding provider: ${provider.type} (priority: ${provider.priority})`);
-      
+
       if (provider.type === 'nomic') {
         // Get actual API key from environment variables
         const apiKey = process.env.NOMIC_API_KEY;
@@ -137,25 +137,25 @@ export async function createEmbeddingConnector(configOrPath = null) {
         mcpDebugger.info('✅ Creating Ollama embedding connector (fallback)...');
         const ollamaBaseUrl = process.env.OLLAMA_HOST;
         if (!ollamaBaseUrl) {
-            throw new Error('Ollama baseUrl not found in environment (OLLAMA_HOST)');
+          throw new Error('Ollama baseUrl not found in environment (OLLAMA_HOST)');
         }
         return EmbeddingConnectorFactory.createConnector({
           provider: 'ollama',
           baseUrl: ollamaBaseUrl,
-          model: provider.embeddingModel || 'nomic-embed-text'
+          model: provider.embeddingModel
         });
       } else {
         mcpDebugger.info(`❌ Embedding provider ${provider.type} not available (missing API key or implementation)`);
       }
     }
-    
+
     mcpDebugger.info('⚠️ No configured embedding providers available, defaulting to Ollama');
     return EmbeddingConnectorFactory.createConnector({
       provider: 'ollama',
       baseUrl: process.env.OLLAMA_HOST || (() => { throw new Error('OLLAMA_HOST environment variable required'); })(),
       model: 'nomic-embed-text'
     });
-    
+
   } catch (error) {
     mcpDebugger.warn('Failed to create configured embedding connector, falling back to Ollama:', error.message);
     // Fallback to Ollama for embeddings
@@ -209,24 +209,24 @@ export async function getModelConfig(configOrPath = null) {
       config = new Config(configOrPath);
       await config.init();
     }
-    
+
     const llmProviders = config.get('llmProviders') || [];
-    
+
     // Find working chat provider using same logic as createLLMConnector
     const chatProviders = llmProviders
       .filter(p => p.capabilities?.includes('chat'))
       .sort((a, b) => (a.priority || 999) - (b.priority || 999));
     const workingChatProvider = findWorkingProvider(chatProviders);
-    
+
     // Find working embedding provider
     const embeddingProviders = llmProviders
       .filter(p => p.capabilities?.includes('embedding'))
       .sort((a, b) => (a.priority || 999) - (b.priority || 999));
     const workingEmbeddingProvider = findWorkingProvider(embeddingProviders);
-    
+
     return {
-      chatModel: workingChatProvider?.chatModel || 'qwen2:1.5b',
-      embeddingModel: workingEmbeddingProvider?.embeddingModel || 'nomic-embed-text'
+      chatModel: workingChatProvider?.chatModel,
+      embeddingModel: workingEmbeddingProvider?.embeddingModel
     };
   } catch (error) {
     mcpDebugger.warn('Failed to get model config from configuration, using defaults:', error.message);

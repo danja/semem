@@ -18,8 +18,8 @@ export default class MemoryManager {
     constructor({
         llmProvider,
         embeddingProvider = null,
-        chatModel = Config.get('chatModel') || 'qwen2:1.5b',
-        embeddingModel = Config.get('embeddingModel') || 'nomic-embed-text',
+        chatModel = Config.get('chatModel'),
+        embeddingModel = Config.get('embeddingModel'),
         storage = null,
         dimension,
         config = null,
@@ -35,7 +35,7 @@ export default class MemoryManager {
         this.logger = configureLogging('memory-manager');
         this.workflowLogger = new WorkflowLogger('MemoryManager');
         workflowLoggerRegistry.register('MemoryManager', this.workflowLogger);
-        
+
         if (!llmProvider) {
             throw new Error('LLM provider is required')
         }
@@ -65,20 +65,20 @@ export default class MemoryManager {
         // Only initialize LLMHandler if the provider supports chat operations
         // Check if the provider has working chat capabilities by checking provider info
         let hasChatCapability = false;
-        
+
         if (llmProvider && llmProvider.getInfo) {
             const providerInfo = llmProvider.getInfo();
             hasChatCapability = providerInfo.capabilities && providerInfo.capabilities.includes('chat');
         } else if (llmProvider) {
             // Fallback: check if provider has chat methods and doesn't throw on basic test
             hasChatCapability = (
-                typeof llmProvider.generateChat === 'function' || 
+                typeof llmProvider.generateChat === 'function' ||
                 typeof llmProvider.chat === 'function' ||  // Support hyperdata-clients interface
-                (typeof llmProvider.generateCompletion === 'function' && 
-                 llmProvider.constructor.name !== 'NomicConnector')  // Explicitly exclude NomicConnector
+                (typeof llmProvider.generateCompletion === 'function' &&
+                    llmProvider.constructor.name !== 'NomicConnector')  // Explicitly exclude NomicConnector
             );
         }
-        
+
         if (hasChatCapability) {
             this.llmHandler = new LLMHandler(llmProvider, this.chatModel)
         } else {
@@ -251,7 +251,7 @@ export default class MemoryManager {
         );
 
         const opLogger = this.workflowLogger.createOperationLogger(operationId);
-        
+
         try {
             // Step 1: Generate query embedding
             const embeddingStartTime = Date.now();
@@ -264,14 +264,14 @@ export default class MemoryManager {
             const queryEmbedding = await this.embeddingsAPIBridge.generateEmbedding(query);
             const embeddingDuration = Date.now() - embeddingStartTime;
             this.logger.info(`⏱️ [SEARCH-TIMING] Embedding generation took ${embeddingDuration}ms`);
-            
+
             opLogger.step(
                 'embedding_generated',
                 `✅ Generated ${queryEmbedding?.length || 0}D embedding vector`,
                 `[MemoryManager] Embedding generated - dimensions: ${queryEmbedding?.length || 'unknown'}`,
                 { embeddingDimensions: queryEmbedding?.length || 0 }
             );
-            
+
             // Step 2: Extract query concepts (if LLM available)
             let queryConcepts = [];
             if (this.llmHandler) {
@@ -285,7 +285,7 @@ export default class MemoryManager {
                 queryConcepts = await this.llmHandler.extractConcepts(query);
                 const conceptsDuration = Date.now() - conceptsStartTime;
                 this.logger.info(`⏱️ [SEARCH-TIMING] Concept extraction took ${conceptsDuration}ms`);
-                
+
                 opLogger.step(
                     'concepts_extracted',
                     `🔍 Extracted ${queryConcepts.length} concepts`,
@@ -299,7 +299,7 @@ export default class MemoryManager {
                     '[MemoryManager] No chat provider available for concept extraction - using embedding-only search'
                 );
             }
-            
+
             // Step 3: Search with enhanced SPARQLStore (unified in-memory + SPARQL search)
             opLogger.step(
                 'search_enhanced_store',
@@ -328,7 +328,7 @@ export default class MemoryManager {
                     searchMethod: 'Unified FAISS + SPARQL'
                 }
             );
-            
+
             // Step 4: Enhanced SPARQLStore already handles deduplication and sorting
             // The unified search automatically combines FAISS, concept graph activation,
             // and SPARQL results with intelligent deduplication
@@ -345,12 +345,12 @@ export default class MemoryManager {
             );
 
             const uniqueResults = enhancedResults; // Already processed by enhanced store
-            
+
             // Step 7: Apply limit if specified
             let finalResults = uniqueResults;
             if (limit && typeof limit === 'number' && limit > 0) {
                 finalResults = uniqueResults.slice(0, limit);
-                
+
                 opLogger.step(
                     'apply_limit',
                     `✂️ Applied limit: ${finalResults.length}/${uniqueResults.length} results`,
@@ -373,7 +373,7 @@ export default class MemoryManager {
             );
 
             return finalResults;
-            
+
         } catch (error) {
             opLogger.fail(error, {
                 query: query.substring(0, 100),
@@ -381,7 +381,7 @@ export default class MemoryManager {
                 excludeLastN,
                 limit
             });
-            
+
             this.logger.error('Failed to retrieve interactions:', {
                 message: error.message,
                 stack: error.stack,
@@ -397,7 +397,7 @@ export default class MemoryManager {
             if (!this.llmHandler) {
                 throw new Error('No chat provider available for response generation')
             }
-            
+
             const context = this.contextManager.buildContext(
                 prompt,
                 retrievals,
@@ -432,7 +432,7 @@ export default class MemoryManager {
         });
         const combinedText = `${prompt} ${response}`;
         const MEMORY_CONTENT_LIMIT = 5000; // Conservative limit for in-memory processing
-        
+
         // Check if content is too large for memory processing
         if (combinedText.length > MEMORY_CONTENT_LIMIT) {
             this.logger.warn('Content too large for memory processing, storing directly to SPARQL without embeddings', {
@@ -440,7 +440,7 @@ export default class MemoryManager {
                 limit: MEMORY_CONTENT_LIMIT,
                 suggestion: 'Use Augment → Chunk Documents to process this content for semantic search'
             });
-            
+
             // Store directly to SPARQL as a document without embeddings
             const documentData = {
                 id: `interaction_${Date.now()}`,
@@ -454,10 +454,10 @@ export default class MemoryManager {
                     processingSkipped: 'content_too_large'
                 }
             };
-            
+
             // Store to SPARQL as Ragno document without memory processing
             await this.store.store(documentData);
-            
+
             return {
                 success: true,
                 deferred: true,
@@ -468,13 +468,13 @@ export default class MemoryManager {
                 suggestion: 'Use Augment → Chunk Documents to enable semantic search'
             };
         }
-        
+
         // Generate embedding for the combined prompt and response
         const embedding = await this.generateEmbedding(combinedText);
-        
+
         // Extract concepts from the combined text (returns empty array if no chat provider)
         const concepts = await this.extractConcepts(combinedText);
-        
+
         // Store the interaction using addInteraction
         this.logger.info('🔥 DEBUG: About to call addInteraction', {
             promptPreview: prompt?.substring(0, 50),
@@ -483,7 +483,7 @@ export default class MemoryManager {
             conceptsCount: concepts?.length
         });
         await this.addInteraction(prompt, response, embedding, concepts, metadata);
-        
+
         return {
             success: true,
             concepts: concepts.length,

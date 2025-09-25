@@ -37,8 +37,8 @@ dotenv.config();
 export class CreateConcepts {
     constructor(config = null) {
         this.config = config;
-        this.chatModel = Config.get('chatModel') || 'qwen2:1.5b';
-        this.embeddingModel = Config.get('embeddingModel') || 'nomic-embed-text';
+        this.chatModel = Config.get('chatModel');
+        this.embeddingModel = Config.get('embeddingModel');
         this.sparqlHelper = null;
         this.queryService = null;
         this.embeddings = null;
@@ -106,7 +106,7 @@ export class CreateConcepts {
             // Try providers in priority order
             for (const provider of sortedProviders) {
                 try {
-                    chatModel = provider.chatModel || this.config.get('chatModel') || 'qwen2:1.5b';
+                    chatModel = provider.chatModel || this.config.get('chatModel');
 
                     if (provider.type === 'mistral' && provider.apiKey) {
                         llmProvider = new MistralConnector(process.env.MISTRAL_API_KEY);
@@ -131,7 +131,7 @@ export class CreateConcepts {
             // Fallback to Ollama if no providers worked
             if (!llmProvider) {
                 const ollamaBaseUrl = this.config.get('ollama.baseUrl') || 'http://localhost:11434';
-                chatModel = this.config.get('chatModel') || 'qwen2:1.5b';
+                chatModel = this.config.get('chatModel');
                 llmProvider = new OllamaConnector(ollamaBaseUrl, chatModel);
                 logger.info(`🤖 Fallback to Ollama LLM at: ${ollamaBaseUrl} with model: ${chatModel}`);
             }
@@ -141,7 +141,7 @@ export class CreateConcepts {
         } catch (error) {
             logger.warn('Failed to load LLM provider configuration, defaulting to Ollama:', error.message);
             const ollamaBaseUrl = this.config.get('ollama.baseUrl') || 'http://localhost:11434';
-            const chatModel = this.config.get('chatModel') || 'qwen2:1.5b';
+            const chatModel = this.config.get('chatModel');
             const llmProvider = new OllamaConnector(ollamaBaseUrl, chatModel);
             this.llmHandler = new LLMHandler(llmProvider, chatModel);
         }
@@ -153,7 +153,7 @@ export class CreateConcepts {
     async initializeEmbeddingServices() {
         try {
             const embeddingProvider = this.config.get('embeddingProvider') || 'ollama';
-            const embeddingModel = this.config.get('embeddingModel') || 'nomic-embed-text';
+            const embeddingModel = this.config.get('embeddingModel');
 
             this.embeddings = new Embeddings(this.config);
 

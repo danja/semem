@@ -65,7 +65,7 @@ class EmbeddingService {
         const options = { ...legacyOptions, ...additionalOptions };
 
         this.provider = options.provider || EMBEDDING_CONFIG.PROVIDERS.FALLBACK_PROVIDER;
-        this.model = options.model || 'nomic-embed-text';
+        this.model = options.model;
         this.dimension = options.dimension;
 
         if (!this.dimension) {
@@ -99,7 +99,7 @@ class EmbeddingService {
             const embeddingProvider = providers.find(p =>
                 p.capabilities && p.capabilities.includes('embedding')
             );
-            return embeddingProvider?.embeddingModel || 'nomic-embed-text';
+            return embeddingProvider?.embeddingModel;
         } catch (error) {
             logger.warn('Could not get default model from config, using fallback');
             return 'nomic-embed-text';
@@ -124,7 +124,7 @@ class EmbeddingService {
             return EMBEDDING_CONFIG.PROVIDERS.FALLBACK_PROVIDER;
         }
     }
-    
+
     /**
      * Generate an embedding for text
      * @param {string} text - The text to embed

@@ -29,8 +29,8 @@ class SearchServer {
             throw new Error('graphName is required in options - check config.json graphName setting');
         }
         this.graphName = options.graphName;
-        this.chatModel = options.chatModel || 'qwen2:1.5b';
-        this.embeddingModel = options.embeddingModel || 'nomic-embed-text';
+        this.chatModel = options.chatModel;
+        this.embeddingModel = options.embeddingModel;
 
         // Initialize services
         this.embeddingService = new EmbeddingService();
@@ -106,7 +106,7 @@ class SearchServer {
             let searchService = this.searchService;
             if (graph !== this.graphName) {
                 logger.info(`Using different graph: ${graph} (current: ${this.graphName})`);
-                
+
                 // Create a new SPARQLService with the requested graph
                 const sparqlService = new SPARQLService({
                     queryEndpoint: 'http://localhost:4030/semem/query',
@@ -179,13 +179,13 @@ class SearchServer {
             // Load system configuration
             const config = new Config();
             await config.init();
-            
+
             // Get embedding provider configuration
             const embeddingProvider = config.get('embeddingProvider') || 'ollama'; // TODO why?
-            const embeddingModel = config.get('embeddingModel') || 'nomic-embed-text';
-            
+            const embeddingModel = config.get('embeddingModel');
+
             logger.info(`Creating embedding connector: ${embeddingProvider} (${embeddingModel})`);
-            
+
             // Create embedding connector using factory
             let providerConfig = {};
             if (embeddingProvider === 'nomic') {
@@ -202,9 +202,9 @@ class SearchServer {
                     model: embeddingModel
                 };
             }
-            
+
             return EmbeddingConnectorFactory.createConnector(providerConfig);
-            
+
         } catch (error) {
             logger.warn('Failed to create configured embedding connector, falling back to Ollama:', error.message);
             // Fallback to Ollama for embeddings

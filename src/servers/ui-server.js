@@ -23,8 +23,8 @@ const __dirname = path.dirname(path.dirname(path.dirname(__filename))); // Go up
 let config = {
     port: parseInt(process.env.PORT) || 4120, // Updated port to 4120
     graphName: process.env.GRAPH_NAME || 'http://hyperdata.it/content',
-    chatModel: process.env.CHAT_MODEL || 'qwen2:1.5b',
-    embeddingModel: process.env.EMBEDDING_MODEL || 'nomic-embed-text'
+    chatModel: process.env.CHAT_MODEL,
+    embeddingModel: process.env.EMBEDDING_MODEL
 };
 
 // Initialize Config.js to get SPARQL endpoints and other settings  
@@ -33,26 +33,26 @@ async function loadConfig() {
         const configPath = process.argv[2] || process.env.CONFIG_FILE;
         const configInstance = new Config(configPath);
         await configInstance.init();
-        
+
         // Extract SPARQL endpoints from Config.js
         config.sparqlEndpoints = configInstance.config.sparqlEndpoints;
-        
+
         // Extract graph name from Config.js if available
         if (configInstance.config.graphName) {
             config.graphName = configInstance.config.graphName;
         }
-        
+
         // Extract other relevant config
         if (configInstance.config.models) {
             config.chatModel = configInstance.config.models.chat?.model || config.chatModel;
             config.embeddingModel = configInstance.config.models.embedding?.model || config.embeddingModel;
         }
-        
+
         logger.info('Loaded Config.js with SPARQL endpoints:', config.sparqlEndpoints?.map(e => e.label));
-        
+
     } catch (error) {
         logger.warn(`Failed to load Config.js: ${error.message}, using defaults`);
-        
+
         // Fallback: try to load from JSON file if Config.js fails
         const configPath = process.argv[2] || process.env.CONFIG_FILE;
         if (configPath) {

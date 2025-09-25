@@ -66,7 +66,7 @@ class APIServer {
         this.logger = loggers.server;
         this.apiLogger = loggers.api;
         this.memoryLogger = loggers.memory;
-        
+
         this.port = process.env.PORT || 4100; // Updated port to 4100
         this.publicDir = path.join(__dirname, 'public');
         this.distDir = path.join(__dirname, 'public/dist');
@@ -75,7 +75,7 @@ class APIServer {
         this.apiContext = {};
         this.registry = new APIRegistry();
         this.sharedVerbsService = null; // Shared SimpleVerbsService instance
-        
+
         this.logger.info('APIServer constructor initialized');
         this.initializeMiddleware();
     }
@@ -221,18 +221,18 @@ class APIServer {
         try {
             // Get llmProviders with priority ordering
             const llmProviders = config.get('llmProviders') || [];
-            
+
             // Sort by priority (lower number = higher priority)
             const sortedProviders = llmProviders
                 .filter(p => p.capabilities?.includes('chat'))
                 .sort((a, b) => (a.priority || 999) - (b.priority || 999));
-            
+
             this.logger.info('Available chat providers by priority:', sortedProviders.map(p => `${p.type} (priority: ${p.priority})`));
-            
+
             // Try providers in priority order
             for (const provider of sortedProviders) {
                 this.logger.info(`Trying LLM provider: ${provider.type} (priority: ${provider.priority})`);
-                
+
                 if (provider.type === 'groq' && provider.apiKey) {
                     this.logger.info('✅ Creating Groq connector (highest priority)...');
                     return new GroqConnector(provider.apiKey);
@@ -249,10 +249,10 @@ class APIServer {
                     this.logger.info(`❌ Provider ${provider.type} not available (missing API key or implementation)`);
                 }
             }
-            
+
             this.logger.info('⚠️ No configured providers available, defaulting to Ollama');
             return new OllamaConnector();
-            
+
         } catch (error) {
             this.logger.warn('Failed to load provider configuration, defaulting to Ollama:', error.message);
             return new OllamaConnector();
@@ -266,18 +266,18 @@ class APIServer {
         try {
             // Get llmProviders with priority ordering for embeddings
             const llmProviders = config.get('llmProviders') || [];
-            
+
             // Sort by priority (lower number = higher priority)
             const sortedProviders = llmProviders
                 .filter(p => p.capabilities?.includes('embedding'))
                 .sort((a, b) => (a.priority || 999) - (b.priority || 999));
-            
+
             this.logger.info('Available embedding providers by priority:', sortedProviders.map(p => `${p.type} (priority: ${p.priority})`));
-            
+
             // Try providers in priority order
             for (const provider of sortedProviders) {
                 this.logger.info(`Trying embedding provider: ${provider.type} (priority: ${provider.priority})`);
-                
+
                 if (provider.type === 'nomic' && provider.apiKey) {
                     this.logger.info('✅ Creating Nomic embedding connector (highest priority)...');
                     return EmbeddingConnectorFactory.createConnector({
@@ -291,20 +291,20 @@ class APIServer {
                     return EmbeddingConnectorFactory.createConnector({
                         provider: 'ollama',
                         baseUrl: ollamaBaseUrl,
-                        model: provider.embeddingModel || 'nomic-embed-text'
+                        model: provider.embeddingModel
                     });
                 } else {
                     this.logger.info(`❌ Embedding provider ${provider.type} not available (missing API key or implementation)`);
                 }
             }
-            
+
             this.logger.info('⚠️ No configured embedding providers available, defaulting to Ollama');
             return EmbeddingConnectorFactory.createConnector({
                 provider: 'ollama',
                 baseUrl: process.env.OLLAMA_HOST || 'http://localhost:11434',
                 model: 'nomic-embed-text'
             });
-            
+
         } catch (error) {
             this.logger.warn('Failed to create configured embedding connector, falling back to Ollama:', error.message);
             // Fallback to Ollama for embeddings
@@ -329,10 +329,10 @@ class APIServer {
             const embeddingProvider = llmProviders
                 .filter(p => p.capabilities?.includes('embedding'))
                 .sort((a, b) => (a.priority || 999) - (b.priority || 999))[0];
-            
+
             return {
-                chatModel: chatProvider?.chatModel || 'qwen2:1.5b',
-                embeddingModel: embeddingProvider?.embeddingModel || 'nomic-embed-text'
+                chatModel: chatProvider?.chatModel,
+                embeddingModel: embeddingProvider?.embeddingModel
             };
         } catch (error) {
             this.logger.warn('Failed to get model config from configuration, using defaults:', error.message);
@@ -409,7 +409,7 @@ class APIServer {
         const performanceConfig = this.config.get('performance') || {};
         const wikidataPerf = performanceConfig.wikidata || {};
         const wikipediaPerf = performanceConfig.wikipedia || {};
-        
+
         // Initialize Wikidata API with performance config
         const wikidataApi = new WikidataAPI({
             registry: this.apiRegistry,
@@ -510,7 +510,7 @@ class APIServer {
         apiRouter.get('/navigate/options', this.createHandler('zpt-api', 'options'));
         apiRouter.get('/navigate/schema', this.createHandler('zpt-api', 'schema'));
         apiRouter.get('/navigate/health', this.createHandler('zpt-api', 'health'));
-        
+
         // ZPT Ontology Integration routes
         apiRouter.post('/navigate/convert-params', this.authenticateRequest, this.createHandler('zpt-api', 'convertParams'));
         apiRouter.post('/navigate/store-session', this.authenticateRequest, this.createHandler('zpt-api', 'storeSession'));
@@ -757,7 +757,7 @@ class APIServer {
                             status: this.apiContext.apis['memory-api']?.initialized ? 'healthy' : 'unavailable'
                         },
                         chat: {
-                            name: 'Chat API', 
+                            name: 'Chat API',
                             description: 'Conversational AI and completion',
                             endpoints: [
                                 'POST /api/chat - Chat completion',
@@ -893,9 +893,9 @@ class APIServer {
 
                 const summary = {
                     totalServices: Object.keys(services.basic).length + Object.keys(services.advanced).length,
-                    healthyServices: Object.values({...services.basic, ...services.advanced})
+                    healthyServices: Object.values({ ...services.basic, ...services.advanced })
                         .filter(service => service.status === 'healthy').length,
-                    totalEndpoints: Object.values({...services.basic, ...services.advanced})
+                    totalEndpoints: Object.values({ ...services.basic, ...services.advanced })
                         .reduce((total, service) => total + service.endpoints.length, 0) + 4 // system endpoints
                 };
 
@@ -932,7 +932,7 @@ class APIServer {
                         },
                         sparqlEndpoints: (() => {
                             const endpoints = [];
-                            
+
                             // Add endpoints from Config.js defaults (urlBase format)
                             const configEndpoints = config.get('sparqlEndpoints');
                             if (configEndpoints && configEndpoints.length > 0) {
@@ -948,7 +948,7 @@ class APIServer {
                                     }
                                 });
                             }
-                            
+
                             // Add endpoints from config.json (queryEndpoint format)
                             const fileEndpoints = config.config.sparqlEndpoints;
                             if (fileEndpoints && fileEndpoints.length > 0) {
@@ -968,10 +968,10 @@ class APIServer {
                                     }
                                 });
                             }
-                            
+
                             return endpoints;
                         })(),
-                        llmProviders: config.config.llmProviders ? 
+                        llmProviders: config.config.llmProviders ?
                             config.config.llmProviders.map(p => ({
                                 type: p.type,
                                 implementation: p.implementation,
@@ -985,7 +985,7 @@ class APIServer {
                         defaultChatModel: config.config.chatModel,
                         defaultEmbeddingModel: config.config.embeddingModel
                     };
-                    
+
                     res.json({
                         success: true,
                         data: safeConfig
@@ -1196,7 +1196,7 @@ class APIServer {
         return async (req, res, next) => {
             const requestId = uuidv4();
             this.apiLogger.info(`[${requestId}] Starting ${req.method} ${req.path} -> ${apiName}.${operation}`);
-            
+
             try {
                 const api = this.apiContext.apis[apiName];
                 if (!api) {
@@ -1208,7 +1208,7 @@ class APIServer {
 
                 // Get parameters from appropriate source
                 const params = req.method === 'GET' ? req.query : req.body;
-                
+
                 // Include route parameters if they exist
                 if (req.params && Object.keys(req.params).length > 0) {
                     Object.assign(params, req.params);
@@ -1226,7 +1226,7 @@ class APIServer {
                 // Execute operation
                 this.apiLogger.info(`[${requestId}] Executing ${apiName}.executeOperation('${operation}', params)`);
                 const result = await api.executeOperation(operation, params);
-                
+
                 // this.apiLogger.info(`[${requestId}] Operation completed successfully, result type: ${typeof result}`);
 
                 // Determine status code based on operation
@@ -1239,9 +1239,9 @@ class APIServer {
                     success: true,
                     ...result
                 };
-                
+
                 // this.apiLogger.info(`[${requestId}] Sending response with status ${statusCode}`);
-                
+
                 res.status(statusCode).json(response);
             } catch (error) {
                 this.apiLogger.error(`[${requestId}] Error in ${apiName}.${operation}:`, {
@@ -1261,7 +1261,7 @@ class APIServer {
         return async (req, res, next) => {
             const requestId = uuidv4();
             this.apiLogger.info(`[${requestId}] Starting ${req.method} ${req.path} -> ${apiName}.${operation} (file upload)`);
-            
+
             try {
                 const api = this.apiContext.apis[apiName];
                 if (!api) {
@@ -1271,7 +1271,7 @@ class APIServer {
 
                 // Get parameters from body and route params
                 const params = { ...req.body };
-                
+
                 // Include route parameters if they exist
                 if (req.params && Object.keys(req.params).length > 0) {
                     Object.assign(params, req.params);
@@ -1296,7 +1296,7 @@ class APIServer {
                 // Execute operation with files
                 this.apiLogger.info(`[${requestId}] Executing ${apiName}.executeOperation('${operation}', params, files)`);
                 const result = await api.executeOperation(operation, params, { file: req.file });
-                
+
                 // Determine status code - uploads are created
                 const statusCode = 201;
 
@@ -1304,7 +1304,7 @@ class APIServer {
                     success: true,
                     ...result
                 };
-                
+
                 this.apiLogger.info(`[${requestId}] Document operation completed successfully`);
                 res.status(statusCode).json(response);
             } catch (error) {
@@ -1415,11 +1415,11 @@ class APIServer {
      */
     async getSPARQLStatistics() {
         const stats = {};
-        
+
         try {
             const sparqlStore = this.apiContext.memory.storage;
             const endpoint = sparqlStore.endpoint;
-            
+
             if (!endpoint) {
                 return { error: 'No SPARQL endpoint available' };
             }
@@ -1428,10 +1428,10 @@ class APIServer {
             const queries = {
                 // Total triples
                 totalTriples: `SELECT (COUNT(*) as ?count) WHERE { ?s ?p ?o }`,
-                
+
                 // Named graphs
                 namedGraphs: `SELECT (COUNT(DISTINCT ?g) as ?count) WHERE { GRAPH ?g { ?s ?p ?o } }`,
-                
+
                 // Ragno entities
                 ragnoEntities: `
                     PREFIX ragno: <http://purl.org/stuff/ragno/>
@@ -1440,7 +1440,7 @@ class APIServer {
                         ?entity a ?type . 
                         FILTER(STRSTARTS(STR(?type), "http://purl.org/stuff/ragno/"))
                     }`,
-                
+
                 // Ragno relationships  
                 ragnoRelationships: `
                     PREFIX ragno: <http://purl.org/stuff/ragno/>
@@ -1448,7 +1448,7 @@ class APIServer {
                     WHERE { 
                         ?rel a ragno:Relationship 
                     }`,
-                
+
                 // ZPT navigation sessions
                 zptNavigationSessions: `
                     PREFIX zpt: <http://purl.org/stuff/zpt/>
@@ -1456,7 +1456,7 @@ class APIServer {
                     WHERE { 
                         ?session a zpt:NavigationSession 
                     }`,
-                
+
                 // ZPT navigation views
                 zptNavigationViews: `
                     PREFIX zpt: <http://purl.org/stuff/zpt/>
@@ -1464,7 +1464,7 @@ class APIServer {
                     WHERE { 
                         ?view a zpt:NavigationView 
                     }`,
-                
+
                 // Resources with embeddings
                 resourcesWithEmbeddings: `
                     PREFIX ragno: <http://purl.org/stuff/ragno/>
@@ -1472,7 +1472,7 @@ class APIServer {
                     WHERE { 
                         ?resource ragno:embedding ?embedding 
                     }`,
-                
+
                 // Memory items (conversations)
                 memoryItems: `
                     PREFIX schema: <http://schema.org/>
@@ -1484,7 +1484,7 @@ class APIServer {
 
             // Get credentials from config
             const storageOptions = this.config.get('storage.options');
-            const credentials = storageOptions && storageOptions.user && storageOptions.password 
+            const credentials = storageOptions && storageOptions.user && storageOptions.password
                 ? { user: storageOptions.user, password: storageOptions.password }
                 : null;
 
@@ -1512,15 +1512,15 @@ class APIServer {
                     WHERE {
                         ?item a ?type ;
                               dcterms:created ?created .
-                        FILTER(?created > "${new Date(Date.now() - 24*60*60*1000).toISOString()}"^^<http://www.w3.org/2001/XMLSchema#dateTime>)
+                        FILTER(?created > "${new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()}"^^<http://www.w3.org/2001/XMLSchema#dateTime>)
                     }
                     GROUP BY ?type
                     ORDER BY DESC(?count)
                 `;
-                
+
                 const activityResult = await this.executeSPARQLQuery(endpoint, recentActivityQuery, credentials);
                 stats.recentActivity = [];
-                
+
                 if (activityResult && activityResult.results && activityResult.results.bindings) {
                     stats.recentActivity = activityResult.results.bindings.map(binding => ({
                         type: binding.type.value.split('/').pop(), // Get local name

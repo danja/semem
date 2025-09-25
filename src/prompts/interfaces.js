@@ -16,37 +16,37 @@ export class PromptContext {
         this.timestamp = options.timestamp || new Date().toISOString();
         this.session = options.session || null;
         this.user = options.user || null;
-        
+
         // Core content
         this.query = options.query || '';
         this.systemPrompt = options.systemPrompt || '';
         this.context = options.context || '';
         this.memory = options.memory || null;
-        
+
         // Model and generation settings
-        this.model = options.model || 'qwen2:1.5b';
+        this.model = options.model;
         this.temperature = options.temperature || 0.7;
         this.maxTokens = options.maxTokens || null;
-        
+
         // Metadata and tracking
         this.metadata = options.metadata || {};
         this.execution = options.execution || {};
-        
+
         // Format and output preferences
         this.format = options.format || 'structured';
         this.instructions = options.instructions || null;
         this.includeMetadata = options.includeMetadata !== false;
-        
+
         // Workflow context (for MCP compatibility)
         this.workflow = options.workflow || null;
         this.stepResults = options.stepResults || {};
         this.arguments = options.arguments || {};
     }
-    
+
     generateId() {
         return `prompt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     }
-    
+
     /**
      * Clone context with modifications
      */
@@ -60,7 +60,7 @@ export class PromptContext {
             arguments: { ...this.arguments, ...modifications.arguments }
         });
     }
-    
+
     /**
      * Add memory context
      */
@@ -68,7 +68,7 @@ export class PromptContext {
         this.memory = memoryContext;
         return this;
     }
-    
+
     /**
      * Add step result (for workflow compatibility)
      */
@@ -76,7 +76,7 @@ export class PromptContext {
         this.stepResults[stepName] = result;
         return this;
     }
-    
+
     /**
      * Set workflow context
      */
@@ -85,7 +85,7 @@ export class PromptContext {
         this.arguments = { ...this.arguments, ...args };
         return this;
     }
-    
+
     /**
      * Convert to legacy PromptTemplates format
      */
@@ -98,7 +98,7 @@ export class PromptContext {
             temperature: this.temperature
         };
     }
-    
+
     /**
      * Convert to MCP workflow format
      */
@@ -123,33 +123,33 @@ export class PromptTemplate {
         this.description = options.description || '';
         this.version = options.version || '1.0';
         this.category = options.category || 'general';
-        
+
         // Template content
         this.content = options.content || '';
         this.systemPrompt = options.systemPrompt || '';
         this.format = options.format || 'chat';
-        
+
         // Arguments and validation
         this.arguments = options.arguments || [];
         this.required = options.required || [];
         this.defaults = options.defaults || {};
-        
+
         // Model compatibility
         this.modelVariants = options.modelVariants || {};
         this.supportedModels = options.supportedModels || ['*'];
-        
+
         // Workflow support
         this.workflow = options.workflow || null;
         this.isWorkflow = Boolean(options.workflow);
-        
+
         // Metadata
         this.metadata = options.metadata || {};
         this.tags = options.tags || [];
-        
+
         // Validation
         this.validate();
     }
-    
+
     /**
      * Validate template structure
      */
@@ -157,31 +157,31 @@ export class PromptTemplate {
         if (!this.name || this.name.trim() === '') {
             throw new Error('Template name is required');
         }
-        
+
         if (this.isWorkflow && !this.workflow) {
             throw new Error('Workflow templates must have workflow definition');
         }
-        
+
         // Validate arguments
         for (const arg of this.arguments) {
             if (!arg.name || !arg.type) {
                 throw new Error(`Invalid argument definition: ${JSON.stringify(arg)}`);
             }
         }
-        
+
         return true;
     }
-    
+
     /**
      * Check if template supports a specific model
      */
     supportsModel(modelName) {
         if (this.supportedModels.includes('*')) return true;
-        return this.supportedModels.some(model => 
+        return this.supportedModels.some(model =>
             modelName.toLowerCase().includes(model.toLowerCase())
         );
     }
-    
+
     /**
      * Get model-specific variant
      */
@@ -189,7 +189,7 @@ export class PromptTemplate {
         const baseModel = modelName.split(':')[0].toLowerCase();
         return this.modelVariants[baseModel] || this.modelVariants.default || this;
     }
-    
+
     /**
      * Render template with context
      */
@@ -199,13 +199,13 @@ export class PromptTemplate {
         }
         return this.renderStatic(context);
     }
-    
+
     /**
      * Render static template
      */
     renderStatic(context) {
         let rendered = this.content;
-        
+
         // Replace variables
         rendered = rendered.replace(/\$\{([^}]+)\}/g, (match, varName) => {
             if (context.arguments && varName in context.arguments) {
@@ -216,7 +216,7 @@ export class PromptTemplate {
             }
             return match;
         });
-        
+
         return {
             content: rendered,
             systemPrompt: this.systemPrompt,
@@ -224,7 +224,7 @@ export class PromptTemplate {
             metadata: this.metadata
         };
     }
-    
+
     /**
      * Render workflow template
      */
@@ -235,32 +235,32 @@ export class PromptTemplate {
             metadata: this.metadata
         };
     }
-    
+
     /**
      * Extract arguments from context
      */
     extractArguments(context) {
         const args = {};
-        
+
         for (const argDef of this.arguments) {
             let value = context.arguments?.[argDef.name] || context[argDef.name];
-            
+
             // Use default if not provided
             if (value === undefined && argDef.default !== undefined) {
                 value = argDef.default;
             }
-            
+
             // Apply defaults from template
             if (value === undefined && this.defaults[argDef.name] !== undefined) {
                 value = this.defaults[argDef.name];
             }
-            
+
             args[argDef.name] = value;
         }
-        
+
         return args;
     }
-    
+
     /**
      * Convert to legacy PromptTemplates format
      */
@@ -273,7 +273,7 @@ export class PromptTemplate {
                     query,
                     arguments: { system, context, query }
                 });
-                
+
                 const rendered = this.render(promptContext);
                 return this.formatAsMessages(rendered, system, context, query);
             },
@@ -285,17 +285,17 @@ export class PromptTemplate {
             }
         };
     }
-    
+
     /**
      * Format as chat messages
      */
     formatAsMessages(rendered, system, context, query) {
         const messages = [];
-        
+
         if (system) {
             messages.push({ role: 'system', content: system });
         }
-        
+
         if (context) {
             messages.push({
                 role: 'user',
@@ -304,17 +304,17 @@ export class PromptTemplate {
         } else {
             messages.push({ role: 'user', content: query });
         }
-        
+
         return messages;
     }
-    
+
     /**
      * Format as completion prompt
      */
     formatAsCompletion(context, query) {
         return `${context ? `Context: ${context}\n\n` : ''}Query: ${query}`;
     }
-    
+
     /**
      * Format for concept extraction
      */
@@ -335,37 +335,37 @@ export class PromptOptions {
         this.topK = options.topK || null;
         this.frequencyPenalty = options.frequencyPenalty || null;
         this.presencePenalty = options.presencePenalty || null;
-        
+
         // Format options
         this.format = options.format || 'structured';
         this.includeInstructions = options.includeInstructions !== false;
         this.includeMetadata = options.includeMetadata !== false;
         this.contextMarkers = options.contextMarkers || false;
-        
+
         // Execution options
         this.retries = options.retries || 3;
         this.timeout = options.timeout || 60000;
         this.streaming = options.streaming || false;
         this.debug = options.debug || false;
-        
+
         // Memory and context options
         this.useMemory = options.useMemory !== false;
         this.contextLimit = options.contextLimit || 10;
         this.memoryThreshold = options.memoryThreshold || 0.7;
-        
+
         // Workflow options
         this.workflow = options.workflow || null;
         this.stepByStep = options.stepByStep || false;
         this.validateSteps = options.validateSteps !== false;
-        
+
         // Legacy compatibility
         this.legacyMode = options.legacyMode || false;
         this.adaptiveRetries = options.adaptiveRetries !== false;
-        
+
         // Custom extensions
         this.extensions = options.extensions || {};
     }
-    
+
     /**
      * Merge with other options
      */
@@ -376,7 +376,7 @@ export class PromptOptions {
             extensions: { ...this.extensions, ...other.extensions }
         });
     }
-    
+
     /**
      * Get options for specific format
      */
@@ -388,10 +388,10 @@ export class PromptOptions {
             analytical: { includeInstructions: true, includeMetadata: true },
             markdown: { includeInstructions: false, includeMetadata: true }
         };
-        
+
         return this.merge(formatDefaults[format] || {});
     }
-    
+
     /**
      * Convert to legacy format
      */
@@ -405,7 +405,7 @@ export class PromptOptions {
             contextLimit: this.contextLimit
         };
     }
-    
+
     /**
      * Convert to MCP format
      */
@@ -428,38 +428,38 @@ export class PromptResult {
         this.id = options.id || null;
         this.timestamp = options.timestamp || new Date().toISOString();
         this.success = options.success !== false;
-        
+
         // Content
         this.content = options.content || '';
         this.format = options.format || 'text';
         this.metadata = options.metadata || {};
-        
+
         // Execution info
         this.executionTime = options.executionTime || 0;
         this.tokenCount = options.tokenCount || 0;
         this.model = options.model || null;
         this.temperature = options.temperature || null;
-        
+
         // Error handling
         this.error = options.error || null;
         this.warnings = options.warnings || [];
-        
+
         // Workflow results
         this.workflow = options.workflow || null;
         this.stepResults = options.stepResults || [];
-        
+
         // Context preservation
         this.originalContext = options.originalContext || null;
         this.template = options.template || null;
     }
-    
+
     /**
      * Check if result is successful
      */
     isSuccess() {
         return this.success && !this.error;
     }
-    
+
     /**
      * Get content with metadata
      */
@@ -467,7 +467,7 @@ export class PromptResult {
         if (!this.metadata || Object.keys(this.metadata).length === 0) {
             return this.content;
         }
-        
+
         return {
             content: this.content,
             metadata: this.metadata,
@@ -486,14 +486,14 @@ export class PromptValidation {
         }
         return true;
     }
-    
+
     static validateTemplate(template) {
         if (!(template instanceof PromptTemplate)) {
             throw new Error('Template must be a PromptTemplate instance');
         }
         return template.validate();
     }
-    
+
     static validateOptions(options) {
         if (!(options instanceof PromptOptions)) {
             throw new Error('Options must be a PromptOptions instance');

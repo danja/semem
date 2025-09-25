@@ -24,7 +24,7 @@ export default class EmbeddingConnectorFactory {
             case 'ollama':
                 return new OllamaConnector(
                     options.baseUrl || 'http://localhost:11434', // Will be resolved via Config.js by caller
-                    model || 'nomic-embed-text'
+                    model
                 )
 
             case 'nomic':
@@ -37,11 +37,11 @@ export default class EmbeddingConnectorFactory {
                 logger.warn(`Unknown embedding provider: ${provider}, falling back to ${EMBEDDING_CONFIG.PROVIDERS.FALLBACK_PROVIDER}`)
                 return new OllamaConnector(
                     options.baseUrl || 'http://localhost:11434', // Will be resolved via Config.js by caller
-                    model || 'nomic-embed-text'
+                    model
                 )
         }
     }
-    
+
     /**
      * Get list of supported embedding providers
      * @returns {string[]} - Array of supported provider names
@@ -49,7 +49,7 @@ export default class EmbeddingConnectorFactory {
     static getSupportedProviders() {
         return ['ollama', 'nomic']
     }
-    
+
     /**
      * Check if a provider is supported
      * @param {string} provider - Provider name to check
@@ -58,7 +58,7 @@ export default class EmbeddingConnectorFactory {
     static isProviderSupported(provider) {
         return this.getSupportedProviders().includes(provider.toLowerCase())
     }
-    
+
     /**
      * Get default configuration for a provider
      * Note: This method provides fallback defaults only.

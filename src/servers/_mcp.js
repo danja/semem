@@ -158,7 +158,7 @@ try {
 try {
   // Get embedding provider configuration
   const embeddingProviderType = config.get('embeddingProvider') || 'ollama';
-  const embeddingModel = config.get('embeddingModel') || 'nomic-embed-text';
+  const embeddingModel = config.get('embeddingModel');
 
   console.log(`Creating embedding connector: ${embeddingProviderType} (${embeddingModel})`);
 
@@ -195,13 +195,13 @@ try {
 // Initialize handlers
 const llmHandler = new LLMHandler(
   llmProvider,
-  config.get('chatModel') || 'qwen2:1.5b',
+  config.get('chatModel'),
   config.get('llm.temperature') || 0.7
 );
 
 const embeddingHandler = new EmbeddingHandler(
   embeddingProvider,
-  config.get('embeddingModel') || 'nomic-embed-text',
+  config.get('embeddingModel'),
   ragnoConfig.ragno?.enrichment?.embedding?.dimensions,
   cacheManager
 );

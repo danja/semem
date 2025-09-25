@@ -71,7 +71,7 @@ export default class SememClient {
             method: 'POST',
             body: JSON.stringify({
                 prompt,
-                model: options.model || 'qwen2:1.5b',
+                model: options.model,
                 ...options
             })
         });
@@ -126,7 +126,7 @@ export default class SememClient {
             },
             body: JSON.stringify({
                 prompt,
-                model: options.model || 'qwen2:1.5b',
+                model: options.model,
                 ...options
             })
         });

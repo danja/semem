@@ -24,11 +24,11 @@ const logger = createUnifiedLogger('CreateConceptsUnified');
 import dotenv from 'dotenv';
 
 // Import unified prompt management system
-import { 
-    getPromptManager, 
-    PromptContext, 
+import {
+    getPromptManager,
+    PromptContext,
     PromptOptions,
-    PromptTemplate 
+    PromptTemplate
 } from '../prompts/index.js';
 
 // Load environment variables
@@ -37,8 +37,8 @@ dotenv.config();
 export class CreateConceptsUnified {
     constructor(config = null) {
         this.config = config;
-        this.chatModel = Config.get('chatModel') || 'qwen2:1.5b';
-        this.embeddingModel = Config.get('embeddingModel') || 'nomic-embed-text';
+        this.chatModel = Config.get('chatModel');
+        this.embeddingModel = Config.get('embeddingModel');
         this.sparqlHelper = null;
         this.queryService = null;
         this.embeddings = null;
@@ -56,8 +56,8 @@ export class CreateConceptsUnified {
 
         // Initialize configuration if not provided
         if (!this.config) {
-            const configPath = process.cwd().endsWith('/examples/document') 
-                ? '../../config/config.json' 
+            const configPath = process.cwd().endsWith('/examples/document')
+                ? '../../config/config.json'
                 : 'config/config.json';
             this.config = new Config(configPath);
             await this.config.init();
@@ -97,10 +97,10 @@ export class CreateConceptsUnified {
         try {
             // Get global prompt manager and ensure it's initialized
             this.promptManager = getPromptManager();
-            
+
             // Register custom concept extraction templates if not already present
             await this.registerConceptExtractionTemplates();
-            
+
             logger.info('🎯 Unified prompt management system initialized');
         } catch (error) {
             logger.error('Failed to initialize prompt management system:', error);
@@ -115,14 +115,14 @@ export class CreateConceptsUnified {
         try {
             // Load external templates from prompts/templates/concept-extraction/
             await this.promptManager.loadExternalTemplates();
-            
+
             // Check if required templates are loaded
             const requiredTemplates = [
                 'concept-extraction-enhanced',
-                'concept-extraction-mistral', 
+                'concept-extraction-mistral',
                 'concept-extraction-llama'
             ];
-            
+
             const loadedTemplates = [];
             for (const templateName of requiredTemplates) {
                 const template = this.promptManager.getTemplate(templateName);
@@ -133,14 +133,14 @@ export class CreateConceptsUnified {
                     console.warn(`📁 Expected: prompts/templates/concept-extraction/${templateName.replace('concept-extraction-', '')}.json`);
                 }
             }
-            
+
             if (loadedTemplates.length > 0) {
                 logger.info(`🎯 Loaded ${loadedTemplates.length} concept extraction templates from external files`);
                 logger.debug('Loaded templates:', loadedTemplates);
             } else {
                 throw new Error('No concept extraction templates could be loaded from external files');
             }
-            
+
         } catch (error) {
             console.error('\n' + '='.repeat(80));
             console.error('⚠️  WARNING: EXTERNAL TEMPLATE LOADING FAILED');
@@ -151,7 +151,7 @@ export class CreateConceptsUnified {
             console.error('🔄 Using fallback template - PERFORMANCE MAY BE DEGRADED');
             console.error('🔧 Action required: Check template files exist and are valid JSON');
             console.error('='.repeat(80) + '\n');
-            
+
             // Fallback to inline template registration for backward compatibility
             await this.registerFallbackTemplates();
         }
@@ -162,7 +162,7 @@ export class CreateConceptsUnified {
      */
     async registerFallbackTemplates() {
         const { PromptTemplate } = await import('../prompts/interfaces.js');
-        
+
         // Register basic fallback template
         const fallbackTemplate = new PromptTemplate({
             name: 'concept-extraction-enhanced',
@@ -170,9 +170,9 @@ export class CreateConceptsUnified {
             content: 'Extract key concepts from the following text and return them as a JSON array of strings only. Be precise and focus on the most important concepts. Text: "${text}"',
             format: 'completion',
             arguments: [
-                { 
-                    name: 'text', 
-                    type: 'string', 
+                {
+                    name: 'text',
+                    type: 'string',
                     required: true,
                     description: 'Text to extract concepts from'
                 }
@@ -187,7 +187,7 @@ export class CreateConceptsUnified {
         });
 
         this.promptManager.registerTemplate(fallbackTemplate);
-        
+
         console.warn('\n' + '⚠️'.repeat(20));
         console.warn('🔄 FALLBACK TEMPLATE ACTIVE - SUBOPTIMAL PERFORMANCE');
         console.warn('📝 Using basic concept extraction template');
@@ -213,7 +213,7 @@ export class CreateConceptsUnified {
             // Try providers in priority order
             for (const provider of sortedProviders) {
                 try {
-                    chatModel = provider.chatModel || this.config.get('chatModel') || 'qwen2:1.5b';
+                    chatModel = provider.chatModel || this.config.get('chatModel');
 
                     if (provider.type === 'mistral' && provider.apiKey) {
                         llmProvider = new MistralConnector(process.env.MISTRAL_API_KEY);
@@ -238,7 +238,7 @@ export class CreateConceptsUnified {
             // Fallback to Ollama if no providers worked
             if (!llmProvider) {
                 const ollamaBaseUrl = this.config.get('ollama.baseUrl') || 'http://localhost:11434';
-                chatModel = this.config.get('chatModel') || 'qwen2:1.5b';
+                chatModel = this.config.get('chatModel');
                 llmProvider = new OllamaConnector(ollamaBaseUrl, chatModel);
                 logger.info(`🤖 Fallback to Ollama LLM at: ${ollamaBaseUrl} with model: ${chatModel}`);
             }
@@ -250,9 +250,9 @@ export class CreateConceptsUnified {
         } catch (error) {
             logger.warn('Failed to load LLM provider configuration, defaulting to Ollama:', error.message);
             const ollamaBaseUrl = this.config.get('ollama.baseUrl') || 'http://localhost:11434';
-            const chatModel = this.config.get('chatModel') || 'qwen2:1.5b';
+            const chatModel = this.config.get('chatModel');
             const llmProvider = new OllamaConnector(ollamaBaseUrl, chatModel);
-            
+
             this.llmProvider = llmProvider;
             this.chatModel = chatModel;
         }
@@ -264,7 +264,7 @@ export class CreateConceptsUnified {
     async initializeEmbeddingServices() {
         try {
             const embeddingProvider = this.config.get('embeddingProvider') || 'ollama';
-            const embeddingModel = this.config.get('embeddingModel') || 'nomic-embed-text';
+            const embeddingModel = this.config.get('embeddingModel');
 
             this.embeddings = new Embeddings(this.config);
 
@@ -307,11 +307,11 @@ export class CreateConceptsUnified {
 
         try {
             logger.info(`🔍 Checking for existing concepts: ${concepts.length} concepts to verify (deduplication enabled)`);
-            
+
             // Build dynamic filter for concept text matching based on config
             const caseInsensitive = deduplicationConfig.caseInsensitive !== false; // Default true
             const maxConceptsToCheck = deduplicationConfig.maxExistingConceptsToCheck || 1000;
-            
+
             const conceptFilters = concepts.map(concept => {
                 const escapedConcept = concept.replace(/"/g, '\\"');
                 if (caseInsensitive) {
@@ -320,32 +320,32 @@ export class CreateConceptsUnified {
                     return `(?conceptContent = "${escapedConcept}" || ?conceptText = "${escapedConcept}")`;
                 }
             }).join(' || ');
-            
+
             const conceptTextsFilter = `FILTER(${conceptFilters})`;
-            
+
             // Load and execute the find-existing-concepts query
             const queryTemplate = await this.queryService.loadQuery('find-existing-concepts');
             if (!queryTemplate) {
                 throw new Error('find-existing-concepts query template not found');
             }
-            
+
             const query = queryTemplate
                 .replace('${graphURI}', targetGraph)
                 .replace('${conceptTexts}', conceptTextsFilter)
                 .replace('${additionalFilters}', '')
                 .replace('${limitClause}', `LIMIT ${maxConceptsToCheck}`);
-            
+
             logger.debug('Executing concept existence check query...');
             const result = await this.sparqlHelper.executeSelect(query);
-            
+
             if (!result.success) {
                 throw new Error(`SPARQL query failed: ${result.error}`);
             }
-            
+
             // Process results into a lookup map
             const existingConcepts = {};
             const bindings = result.data.results.bindings;
-            
+
             for (const binding of bindings) {
                 const conceptText = binding.conceptText?.value || binding.conceptContent?.value;
                 if (conceptText) {
@@ -366,22 +366,22 @@ export class CreateConceptsUnified {
                     }
                 }
             }
-            
+
             const foundCount = Object.keys(existingConcepts).length;
             const newCount = concepts.length - foundCount;
-            
+
             logger.info(`✅ Concept deduplication check completed:`);
             logger.info(`   📋 Concepts checked: ${concepts.length}`);
             logger.info(`   🔍 Existing concepts found: ${foundCount}`);
             logger.info(`   ✨ New concepts to create: ${newCount}`);
-            
+
             if (foundCount > 0) {
                 const foundConcepts = Object.values(existingConcepts).map(c => c.conceptText).slice(0, 3);
                 logger.info(`   📝 Sample existing: ${foundConcepts.join(', ')}${foundCount > 3 ? '...' : ''}`);
             }
-            
+
             return existingConcepts;
-            
+
         } catch (error) {
             logger.warn(`⚠️  Failed to check existing concepts: ${error.message}`);
             logger.warn('Falling back to creating all concepts as new (no deduplication)');
@@ -439,11 +439,11 @@ export class CreateConceptsUnified {
     async extractConcepts(content) {
         try {
             logger.info(`🧠 Extracting concepts from content (${content.length} characters) using unified prompt system...`);
-            
+
             // Get config values
             const temperature = this.config.get('conceptExtraction.temperature') || 0.2;
             const retries = this.config.get('conceptExtraction.retries') || 3;
-            
+
             // Create prompt context
             const context = new PromptContext({
                 arguments: { text: content },
@@ -462,7 +462,7 @@ export class CreateConceptsUnified {
 
             // Select appropriate template based on model and availability
             let templateName = 'concept-extraction-enhanced'; // Default fallback
-            
+
             if (this.chatModel.includes('mistral')) {
                 const mistralTemplate = this.promptManager.getTemplate('concept-extraction-mistral');
                 if (mistralTemplate) {
@@ -480,7 +480,7 @@ export class CreateConceptsUnified {
                     console.warn('⚠️  Llama-specific template not available, using fallback');
                 }
             }
-            
+
             // Final check that the selected template exists
             const selectedTemplate = this.promptManager.getTemplate(templateName);
             if (!selectedTemplate) {
@@ -493,22 +493,22 @@ export class CreateConceptsUnified {
 
             // Generate prompt using unified system
             const promptResult = await this.promptManager.generatePrompt(templateName, context, options);
-            
+
             if (!promptResult.success) {
                 throw new Error(`Prompt generation failed: ${promptResult.error}`);
             }
 
             // Execute the prompt with LLM
             const response = await this.executeLLMPrompt(promptResult.content, options);
-            
+
             logger.info(`LLM response for concept extraction: ${response}`);
-            
+
             // Parse response to extract concepts
             const concepts = this.parseConceptsFromResponse(response);
-            
+
             logger.info(`✅ Extracted ${concepts.length} concepts using unified prompt system`);
             return concepts;
-            
+
         } catch (error) {
             logger.error('❌ Error extracting concepts with unified prompt system:', error.message);
             throw error;
@@ -534,28 +534,28 @@ export class CreateConceptsUnified {
                 if (isMessagesFormat) {
                     // Use chat method for message arrays
                     if (this.llmProvider.chat) {
-                        return await this.llmProvider.chat(promptContent, { 
-                            model: this.chatModel, 
-                            temperature: options.temperature 
+                        return await this.llmProvider.chat(promptContent, {
+                            model: this.chatModel,
+                            temperature: options.temperature
                         });
                     } else if (this.llmProvider.generateChat) {
                         return await this.llmProvider.generateChat(
-                            this.chatModel, 
-                            promptContent, 
+                            this.chatModel,
+                            promptContent,
                             { temperature: options.temperature }
                         );
                     }
                 } else {
                     // Use completion method for text prompts
                     if (this.llmProvider.complete) {
-                        return await this.llmProvider.complete(promptContent, { 
-                            model: this.chatModel, 
-                            temperature: options.temperature 
+                        return await this.llmProvider.complete(promptContent, {
+                            model: this.chatModel,
+                            temperature: options.temperature
                         });
                     } else if (this.llmProvider.generateCompletion) {
                         return await this.llmProvider.generateCompletion(
-                            this.chatModel, 
-                            promptContent, 
+                            this.chatModel,
+                            promptContent,
                             { temperature: options.temperature }
                         );
                     }
@@ -565,7 +565,7 @@ export class CreateConceptsUnified {
 
             } catch (error) {
                 lastError = error;
-                
+
                 // Check if it's a rate limit error
                 if (error.code === 529 || error.message?.includes('overloaded') || error.message?.includes('rate limit')) {
                     if (attempt < maxRetries - 1) {
@@ -573,7 +573,7 @@ export class CreateConceptsUnified {
                         continue;
                     }
                 }
-                
+
                 // For non-rate-limit errors, throw immediately
                 if (!error.message?.includes('overloaded') && error.code !== 529) {
                     throw error;
@@ -605,7 +605,7 @@ export class CreateConceptsUnified {
 
             // Handle different response formats
             let concepts = [];
-            
+
             if (Array.isArray(parsedResponse)) {
                 concepts = parsedResponse;
             } else if (typeof parsedResponse === 'object' && parsedResponse !== null) {
@@ -620,7 +620,7 @@ export class CreateConceptsUnified {
             const maxConcepts = this.config.get('conceptExtraction.maxConcepts') || 5;
             const minLength = this.config.get('conceptExtraction.minConceptLength') || 3;
             const maxLength = this.config.get('conceptExtraction.maxConceptLength') || 100;
-            
+
             const cleanedConcepts = concepts
                 .filter(concept => concept && typeof concept === 'string')
                 .map(concept => concept.trim())
@@ -632,7 +632,7 @@ export class CreateConceptsUnified {
 
         } catch (error) {
             logger.warn('JSON parsing failed, attempting manual concept extraction');
-            
+
             // Fallback to manual extraction
             const extractedConcepts = this.extractConceptsManually(response);
             if (extractedConcepts.length > 0) {
@@ -651,13 +651,13 @@ export class CreateConceptsUnified {
      */
     extractConceptsManually(response) {
         const concepts = [];
-        
+
         // Pattern 1: Extract from quoted strings
         const quotedPatterns = [
             /"([^"]+)"/g,
             /'([^']+)'/g,
         ];
-        
+
         for (const pattern of quotedPatterns) {
             let match;
             while ((match = pattern.exec(response)) !== null) {
@@ -667,13 +667,13 @@ export class CreateConceptsUnified {
                 }
             }
         }
-        
+
         // Pattern 2: Extract from numbered/bulleted lists
         const listPatterns = [
             /^\s*[-*•]\s*(.+)$/gm,
             /^\s*\d+\.?\s*(.+)$/gm,
         ];
-        
+
         for (const pattern of listPatterns) {
             let match;
             while ((match = pattern.exec(response)) !== null) {
@@ -683,7 +683,7 @@ export class CreateConceptsUnified {
                 }
             }
         }
-        
+
         // Pattern 3: Extract from comma-separated values (without quotes)
         if (concepts.length === 0) {
             const commaPattern = /([A-Za-z][A-Za-z0-9\s]{2,}(?:[A-Za-z0-9]|[.!?]))(?:\s*,\s*|$)/g;
@@ -695,12 +695,12 @@ export class CreateConceptsUnified {
                 }
             }
         }
-        
+
         // Limit to reasonable number and clean up using config
         const maxConcepts = this.config.get('conceptExtraction.maxConcepts') || 5;
         const minLength = this.config.get('conceptExtraction.minConceptLength') || 3;
         const maxLength = this.config.get('conceptExtraction.maxConceptLength') || 100;
-        
+
         return concepts
             .slice(0, maxConcepts)
             .filter(c => c.length >= minLength && c.length <= maxLength)
@@ -712,17 +712,17 @@ export class CreateConceptsUnified {
      */
     async createConceptEmbeddings(concepts) {
         logger.info(`🧠 Generating embeddings for ${concepts.length} concepts...`);
-        
+
         const conceptEmbeddings = [];
-        
+
         for (let i = 0; i < concepts.length; i++) {
             const concept = concepts[i];
             try {
                 logger.info(`   📝 Processing concept ${i + 1}/${concepts.length}: "${concept}"`);
-                
+
                 // Generate embedding for the concept text
                 const embedding = await this.generateEmbedding(concept);
-                
+
                 if (!embedding || !Array.isArray(embedding) || embedding.length === 0) {
                     logger.warn(`   ⚠️  Failed to generate valid embedding for concept: "${concept}"`);
                     continue;
@@ -754,18 +754,18 @@ export class CreateConceptsUnified {
      */
     async createConceptReferences(textElementURI, existingConceptMappings, targetGraph) {
         logger.info(`🔗 Creating references to ${existingConceptMappings.length} existing concepts...`);
-        
+
         const now = new Date().toISOString();
         const referencedConceptURIs = [];
         let referenceTriples = '';
-        
+
         for (const conceptInfo of existingConceptMappings) {
             const conceptUnit = conceptInfo.conceptUnit;
             const conceptText = conceptInfo.conceptText;
-            
+
             if (conceptUnit) {
                 referencedConceptURIs.push(conceptUnit);
-                
+
                 // Create lightweight reference relationship
                 referenceTriples += `
                     # Reference to existing concept instead of creating duplicate
@@ -779,9 +779,9 @@ export class CreateConceptsUnified {
                 `;
             }
         }
-        
+
         logger.info(`✅ Generated references to ${referencedConceptURIs.length} existing concepts`);
-        
+
         return {
             referencedConceptURIs,
             referenceTriples,
@@ -794,15 +794,15 @@ export class CreateConceptsUnified {
      */
     async createConceptCorpuscles(textElementURI, conceptEmbeddings, targetGraph) {
         logger.info(`📦 Creating concept corpuscles for ${conceptEmbeddings.length} concepts with deduplication...`);
-        
+
         // Step 1: Check for existing concepts to enable deduplication
         const conceptTexts = conceptEmbeddings.map(ce => ce.concept);
         const existingConcepts = await this.checkExistingConcepts(conceptTexts, targetGraph);
-        
+
         // Step 2: Separate existing vs new concepts
         const existingConceptMappings = [];
         const newConceptEmbeddings = [];
-        
+
         for (const { concept, embedding } of conceptEmbeddings) {
             const existingInfo = existingConcepts[concept.toLowerCase()];
             if (existingInfo && existingInfo.conceptUnit) {
@@ -811,40 +811,40 @@ export class CreateConceptsUnified {
                 newConceptEmbeddings.push({ concept, embedding });
             }
         }
-        
+
         logger.info(`📊 Deduplication analysis:`);
         logger.info(`   🔍 Found ${existingConceptMappings.length} existing concepts to reference`);
         logger.info(`   ✨ Creating ${newConceptEmbeddings.length} new concept corpuscles`);
-        
+
         // Step 3: Create references to existing concepts
         let referenceData = { referencedConceptURIs: [], referenceTriples: '', type: 'references' };
         if (existingConceptMappings.length > 0) {
             referenceData = await this.createConceptReferences(textElementURI, existingConceptMappings, targetGraph);
         }
-        
+
         // Step 4: Create new concept corpuscles for concepts that don't exist
         let newConceptData = { conceptURIs: [], conceptCorpuscleURIs: [], conceptTriples: '', type: 'new' };
         if (newConceptEmbeddings.length > 0) {
             newConceptData = await this.createNewConceptCorpuscles(textElementURI, newConceptEmbeddings, targetGraph);
         }
-        
+
         // Step 5: Combine all concept URIs for collection corpuscle
         const allConceptURIs = [
             ...referenceData.referencedConceptURIs,
             ...newConceptData.conceptURIs
         ];
-        
+
         // Step 6: Combine all triples
         const combinedTriples = [
             referenceData.referenceTriples,
             newConceptData.conceptTriples
         ].filter(t => t.trim()).join('\n');
-        
+
         logger.info(`✅ Concept processing completed:`);
         logger.info(`   🔗 Referenced existing: ${referenceData.referencedConceptURIs.length}`);
         logger.info(`   📦 Created new corpuscles: ${newConceptData.conceptCorpuscleURIs.length}`);
         logger.info(`   📋 Total concepts: ${allConceptURIs.length}`);
-        
+
         return {
             conceptURIs: allConceptURIs,
             conceptCorpuscleURIs: newConceptData.conceptCorpuscleURIs, // Only new corpuscles
@@ -864,25 +864,25 @@ export class CreateConceptsUnified {
      */
     async createNewConceptCorpuscles(textElementURI, conceptEmbeddings, targetGraph) {
         logger.info(`📦 Creating ${conceptEmbeddings.length} new concept corpuscles...`);
-        
+
         const now = new Date().toISOString();
         const conceptCorpuscleURIs = [];
         const conceptURIs = [];
         let conceptTriples = '';
-        
+
         for (let i = 0; i < conceptEmbeddings.length; i++) {
             const { concept, embedding } = conceptEmbeddings[i];
-            
+
             // Generate URIs for concept unit and corpuscle
             const conceptURI = URIMinter.mintURI('http://purl.org/stuff/instance/', 'concept', concept);
             const conceptCorpuscleURI = URIMinter.mintURI('http://purl.org/stuff/instance/', 'concept-corpuscle', concept);
-            
+
             conceptURIs.push(conceptURI);
             conceptCorpuscleURIs.push(conceptCorpuscleURI);
-            
+
             // Convert embedding to comma-separated string
             const embeddingString = embedding.join(',');
-            
+
             conceptTriples += `
                 # Concept unit
                 <${conceptURI}> a ragno:Unit ;
@@ -902,7 +902,7 @@ export class CreateConceptsUnified {
                     skos:member <${conceptURI}> .
             `;
         }
-        
+
         return {
             conceptURIs,
             conceptCorpuscleURIs,
@@ -916,12 +916,12 @@ export class CreateConceptsUnified {
      */
     async createCollectionCorpuscle(textElementURI, conceptURIs, targetGraph) {
         logger.info(`📦 Creating collection corpuscle for ${conceptURIs.length} concepts...`);
-        
+
         const now = new Date().toISOString();
         const collectionCorpuscleURI = URIMinter.mintURI('http://purl.org/stuff/instance/', 'corpuscle', textElementURI);
-        
+
         const conceptMembers = conceptURIs.map(uri => `<${uri}>`).join(', ');
-        
+
         const collectionTriples = `
             # Collection corpuscle that groups all concepts from this text element
             <${collectionCorpuscleURI}> a ragno:Corpuscle ;
@@ -930,7 +930,7 @@ export class CreateConceptsUnified {
                 prov:wasDerivedFrom <${textElementURI}> ;
                 skos:member ${conceptMembers} .
         `;
-        
+
         return {
             collectionCorpuscleURI,
             collectionTriples
@@ -942,7 +942,7 @@ export class CreateConceptsUnified {
      */
     async storeConceptData(textElementURI, conceptTriples, collectionTriples, collectionCorpuscleURI, targetGraph, stats = null) {
         logger.info(`💾 Storing concept data in SPARQL store...`);
-        
+
         const updateTriples = `
             # Mark TextElement as having concepts extracted
             <${textElementURI}> semem:hasConcepts true ;
@@ -952,14 +952,14 @@ export class CreateConceptsUnified {
             
             ${collectionTriples}
         `;
-        
+
         const query = this.sparqlHelper.createInsertDataQuery(targetGraph, updateTriples);
         const result = await this.sparqlHelper.executeUpdate(query);
-        
+
         if (!result.success) {
             throw new Error(`Failed to store concept data: ${result.error}`);
         }
-        
+
         if (stats && stats.deduplicationEnabled) {
             logger.info(`✅ Successfully stored concept data with deduplication:`);
             logger.info(`   🔗 Referenced existing concepts: ${stats.existing}`);
@@ -976,25 +976,25 @@ export class CreateConceptsUnified {
     async processTextElement(textElement, targetGraph) {
         const textElementURI = textElement.textElement.value;
         const content = textElement.content.value;
-        
+
         logger.info(`📄 Processing TextElement: ${textElementURI}`);
         logger.info(`   📏 Content length: ${content.length} characters`);
-        
+
         try {
             // Step 1: Extract concepts using unified prompt system
             const concepts = await this.extractConcepts(content);
-            
+
             if (concepts.length === 0) {
                 logger.info(`   ⚠️  No concepts extracted, marking as processed`);
-                
+
                 // Mark as processed even if no concepts found
                 const markProcessedTriples = `
                     <${textElementURI}> semem:hasConcepts true .
                 `;
-                
+
                 const query = this.sparqlHelper.createInsertDataQuery(targetGraph, markProcessedTriples);
                 await this.sparqlHelper.executeUpdate(query);
-                
+
                 return {
                     textElementURI,
                     conceptCount: 0,
@@ -1006,18 +1006,18 @@ export class CreateConceptsUnified {
 
             // Step 2: Create embeddings for concepts
             const conceptEmbeddings = await this.createConceptEmbeddings(concepts);
-            
+
             if (conceptEmbeddings.length === 0) {
                 logger.warn(`   ⚠️  No embeddings generated for concepts, marking as processed`);
-                
+
                 // Mark as processed even if no embeddings generated
                 const markProcessedTriples = `
                     <${textElementURI}> semem:hasConcepts true .
                 `;
-                
+
                 const query = this.sparqlHelper.createInsertDataQuery(targetGraph, markProcessedTriples);
                 await this.sparqlHelper.executeUpdate(query);
-                
+
                 return {
                     textElementURI,
                     conceptCount: concepts.length,
@@ -1028,26 +1028,26 @@ export class CreateConceptsUnified {
             }
 
             // Step 3: Create concept corpuscles with embeddings (with deduplication)
-            const { conceptURIs, conceptCorpuscleURIs, referencedConceptURIs, conceptTriples, stats } = 
+            const { conceptURIs, conceptCorpuscleURIs, referencedConceptURIs, conceptTriples, stats } =
                 await this.createConceptCorpuscles(textElementURI, conceptEmbeddings, targetGraph);
 
             // Step 4: Create collection corpuscle
-            const { collectionCorpuscleURI, collectionTriples } = 
+            const { collectionCorpuscleURI, collectionTriples } =
                 await this.createCollectionCorpuscle(textElementURI, conceptURIs, targetGraph);
 
             // Step 5: Store all data in SPARQL store
             await this.storeConceptData(
-                textElementURI, 
-                conceptTriples, 
-                collectionTriples, 
-                collectionCorpuscleURI, 
+                textElementURI,
+                conceptTriples,
+                collectionTriples,
+                collectionCorpuscleURI,
                 targetGraph,
                 stats
             );
 
             logger.info(`   ✅ Successfully processed with deduplication using unified prompt system`);
             logger.info(`   📝 Concepts: ${concepts.slice(0, 5).join(', ')}${concepts.length > 5 ? '...' : ''}`);
-            
+
             return {
                 textElementURI,
                 conceptCount: conceptEmbeddings.length,
@@ -1057,7 +1057,7 @@ export class CreateConceptsUnified {
                 concepts,
                 deduplicationStats: stats
             };
-            
+
         } catch (error) {
             logger.error(`   ❌ Error processing ${textElementURI}: ${error.message}`);
             throw error;
@@ -1073,23 +1073,23 @@ export class CreateConceptsUnified {
         }
 
         const { limit = 0, graph } = options;
-        
+
         const storageConfig = this.config.get('storage');
-        const targetGraph = graph || storageConfig.options.graphName || 
-                           this.config.get('graphName') || 
-                           'http://tensegrity.it/semem';
-        
+        const targetGraph = graph || storageConfig.options.graphName ||
+            this.config.get('graphName') ||
+            'http://tensegrity.it/semem';
+
         logger.info(`🔍 Finding TextElements without concepts in graph: ${targetGraph}`);
         logger.info(`📏 Limit: ${limit === 0 ? 'No limit (process all)' : limit}`);
-        
+
         const textElementsWithoutConcepts = await this.findTextElementsWithoutConcepts(targetGraph, limit);
         logger.info(`📋 Found ${textElementsWithoutConcepts.length} TextElements without concepts`);
-        
+
         if (textElementsWithoutConcepts.length === 0) {
             logger.info('✅ All TextElements already have concepts extracted.');
             return [];
         }
-        
+
         const results = [];
         let processed = 0;
         let failed = 0;
@@ -1098,7 +1098,7 @@ export class CreateConceptsUnified {
         let totalReferencedConcepts = 0;
         let totalNewConcepts = 0;
         let totalExistingConcepts = 0;
-        
+
         for (const textElement of textElementsWithoutConcepts) {
             try {
                 const result = await this.processTextElement(textElement, targetGraph);
@@ -1109,20 +1109,20 @@ export class CreateConceptsUnified {
                 if (result.collectionCorpuscleURI) {
                     totalCorpuscles += 1; // Add collection corpuscle
                 }
-                
+
                 // Track deduplication statistics
                 if (result.deduplicationStats) {
                     totalNewConcepts += result.deduplicationStats.new;
                     totalExistingConcepts += result.deduplicationStats.existing;
                 }
                 totalReferencedConcepts += (result.referencedConceptURIs || []).length;
-                
+
             } catch (error) {
                 logger.error(`Failed to process TextElement: ${error.message}`);
                 failed++;
             }
         }
-        
+
         logger.info(`\n📊 Enhanced Concept Extraction Summary (With Deduplication):`);
         logger.info(`   ✅ Successfully processed: ${processed} TextElements`);
         logger.info(`   ❌ Failed: ${failed} TextElements`);
@@ -1134,7 +1134,7 @@ export class CreateConceptsUnified {
         logger.info(`   💡 Deduplication efficiency: ${totalExistingConcepts > 0 ? Math.round((totalExistingConcepts / totalConcepts) * 100) : 0}% concepts reused`);
         logger.info(`   🎯 Graph: ${targetGraph}`);
         logger.info(`   🎯 Prompt System: Unified (v2.0) + Deduplication`);
-        
+
         return results;
     }
 
@@ -1145,11 +1145,11 @@ export class CreateConceptsUnified {
         if (this.embeddingHandler && typeof this.embeddingHandler.cleanup === 'function') {
             await this.embeddingHandler.cleanup();
         }
-        
+
         if (this.sparqlHelper && typeof this.sparqlHelper.cleanup === 'function') {
             await this.sparqlHelper.cleanup();
         }
-        
+
         if (this.queryService && typeof this.queryService.cleanup === 'function') {
             await this.queryService.cleanup();
         }

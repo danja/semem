@@ -38,8 +38,8 @@ import crypto from 'crypto';
 export default class Memorise {
     constructor(configPath = null) {
         this.config = null;
-        this.chatModel = Config.get('chatModel') || 'qwen2:1.5b';
-        this.embeddingModel = Config.get('embeddingModel') || 'nomic-embed-text';
+        this.chatModel = Config.get('chatModel');
+        this.embeddingModel = Config.get('embeddingModel');
         this.queryService = null;
         this.sparqlHelper = null;
         this.embeddings = null;
@@ -49,7 +49,7 @@ export default class Memorise {
         this.conceptExtractor = null;
         this.initialized = false;
         this.configPath = configPath;
-        
+
         // Statistics tracking
         this.stats = {
             textLength: 0,
@@ -72,24 +72,24 @@ export default class Memorise {
         if (this.initialized) return;
 
         logger.info('🚀 Initializing Memorise module...');
-        
+
         try {
             // 1. Initialize configuration
             await this.initializeConfig();
-            
+
             // 2. Initialize SPARQL services
             await this.initializeSPARQLServices();
-            
+
             // 3. Initialize LLM and embedding handlers
             await this.initializeLLMHandler();
             await this.initializeEmbeddingServices();
-            
+
             // 4. Initialize document processing components
             await this.initializeDocumentProcessing();
-            
+
             this.initialized = true;
             logger.info('✅ Memorise module initialized successfully');
-            
+
         } catch (error) {
             logger.error('❌ Failed to initialize Memorise module:', error.message);
             throw error;
@@ -100,14 +100,14 @@ export default class Memorise {
      * Initialize configuration following semem patterns
      */
     async initializeConfig() {
-        const configPath = this.configPath || 
-            (process.cwd().endsWith('/examples/document') 
-                ? '../../config/config.json' 
+        const configPath = this.configPath ||
+            (process.cwd().endsWith('/examples/document')
+                ? '../../config/config.json'
                 : 'config/config.json');
-        
+
         this.config = new Config(configPath);
         await this.config.init();
-        
+
         logger.debug(`Configuration loaded from: ${configPath}`);
     }
 
@@ -117,8 +117,8 @@ export default class Memorise {
     async initializeSPARQLServices() {
         // Initialize query service
         this.queryService = new SPARQLQueryService({
-            queryPath: process.cwd().endsWith('/examples/document') 
-                ? '../../sparql/queries' 
+            queryPath: process.cwd().endsWith('/examples/document')
+                ? '../../sparql/queries'
                 : 'sparql/queries'
         });
 
@@ -127,14 +127,14 @@ export default class Memorise {
         if (storageConfig.type !== 'sparql') {
             throw new Error('Memorise requires SPARQL storage configuration');
         }
-        
+
         this.sparqlHelper = new SPARQLHelper(storageConfig.options.update, {
             auth: {
                 user: storageConfig.options.user,
                 password: storageConfig.options.password
             }
         });
-        
+
         logger.debug('SPARQL services initialized');
     }
 
@@ -164,7 +164,7 @@ export default class Memorise {
                         logger.info(`Using Claude LLM with model: ${chatModel}`);
                         break;
                     } else if (provider.type === 'ollama') {
-                        chatModel = provider.chatModel || 'qwen2:1.5b';
+                        chatModel = provider.chatModel;
                         const ollamaBaseUrl = provider.baseUrl || this.config.get('ollama.baseUrl') || 'http://localhost:11434';
                         llmProvider = new OllamaConnector(ollamaBaseUrl, chatModel);
                         logger.info(`Using Ollama LLM at: ${ollamaBaseUrl} with model: ${chatModel}`);
@@ -186,7 +186,7 @@ export default class Memorise {
 
             this.llmHandler = new LLMHandler(llmProvider, chatModel);
             logger.debug(`LLM handler initialized with ${chatModel}`);
-            
+
         } catch (error) {
             logger.error('Failed to initialize LLM handler:', error.message);
             // Emergency fallback
@@ -201,7 +201,7 @@ export default class Memorise {
     async initializeEmbeddingServices() {
         try {
             const embeddingProvider = this.config.get('embeddingProvider') || 'ollama';
-            const embeddingModel = this.config.get('embeddingModel') || 'nomic-embed-text';
+            const embeddingModel = this.config.get('embeddingModel');
 
             this.embeddings = new Embeddings(this.config);
 
@@ -276,7 +276,7 @@ export default class Memorise {
         // Initialize concept extractor
         this.conceptExtractor = new CreateConceptsUnified();
         await this.conceptExtractor.init();
-        
+
         logger.debug('Document processing components initialized');
     }
 
@@ -295,38 +295,38 @@ export default class Memorise {
         if (typeof text !== 'string') {
             throw new Error('Text input must be a string');
         }
-        
+
         if (text.trim().length === 0) {
             throw new Error('Text input cannot be empty');
         }
 
         const startTime = Date.now();
         this.stats = { ...this.stats, textLength: text.length, processingTimeMs: 0, errors: [] };
-        
+
         logger.info(`🧠 Starting memory ingestion for ${text.length} characters of text...`);
-        
+
         try {
-            const targetGraph = options.graph || this.config.get('storage.options.graphName') || 
-                               this.config.get('graphName') || 'http://hyperdata.it/content';
+            const targetGraph = options.graph || this.config.get('storage.options.graphName') ||
+                this.config.get('graphName') || 'http://hyperdata.it/content';
 
             // Step 1: Create ragno:Unit and ragno:TextElement
             logger.info('📄 Step 1: Creating ragno:Unit and ragno:TextElement...');
             const { unitURI, textElementURI } = await this.createTextUnit(text, targetGraph, options);
-            
+
             // Step 2: Chunk the text
             logger.info('✂️  Step 2: Chunking text...');
             const chunks = await this.chunkText(textElementURI, text, targetGraph);
-            
+
             // Step 3: Create embeddings for chunks
             logger.info('🔢 Step 3: Creating embeddings...');
             await this.createEmbeddings(chunks, targetGraph);
-            
+
             // Step 4: Extract concepts (optional, controlled by extractConcepts option)
             let decompositionResults = null;
             if (options.extractConcepts) {
                 logger.info('🧠 Step 4: Extracting concepts...');
                 await this.extractConcepts(chunks, targetGraph);
-                
+
                 // Step 5: Decompose into entities and relationships
                 logger.info('🕸️  Step 5: Decomposing into entities and relationships...');
                 decompositionResults = await this.decomposeText(chunks, targetGraph);
@@ -334,13 +334,13 @@ export default class Memorise {
                 logger.info('⏭️  Step 4: Skipping concept extraction (--augment not specified)');
                 logger.info('⏭️  Step 5: Skipping entity decomposition (--augment not specified)');
             }
-            
+
             // Calculate final statistics
             this.stats.processingTimeMs = Date.now() - startTime;
-            
+
             logger.info('✅ Memory ingestion completed successfully');
             this.logProcessingSummary();
-            
+
             return {
                 success: true,
                 unitURI,
@@ -349,7 +349,7 @@ export default class Memorise {
                 decompositionResults,
                 statistics: { ...this.stats }
             };
-            
+
         } catch (error) {
             this.stats.errors.push(error.message);
             this.stats.processingTimeMs = Date.now() - startTime;
@@ -364,13 +364,13 @@ export default class Memorise {
     async createTextUnit(text, targetGraph, options = {}) {
         const title = options.title || `Memory ingestion ${new Date().toISOString()}`;
         const source = options.source || 'direct-input';
-        
+
         // Generate URIs
         const unitURI = URIMinter.mintURI('http://purl.org/stuff/instance/', 'unit', text.substring(0, 100));
         const textElementURI = URIMinter.mintURI('http://purl.org/stuff/instance/', 'text', text);
-        
+
         const now = new Date().toISOString();
-        
+
         // Create SPARQL INSERT query for Unit and TextElement
         const updateQuery = `
             PREFIX ragno: <http://purl.org/stuff/ragno/>
@@ -400,15 +400,15 @@ export default class Memorise {
                 }
             }
         `;
-        
+
         await this.sparqlHelper.executeUpdate(updateQuery);
-        
+
         this.stats.unitsCreated = 1;
         this.stats.textElementsCreated = 1;
-        
+
         logger.debug(`Created ragno:Unit: ${unitURI}`);
         logger.debug(`Created ragno:TextElement: ${textElementURI}`);
-        
+
         return { unitURI, textElementURI };
     }
 
@@ -420,19 +420,19 @@ export default class Memorise {
             title: `TextElement ${textElementURI.split('/').pop()}`,
             sourceUri: textElementURI
         });
-        
+
         logger.info(`Created ${chunkingResult.chunks.length} chunks`);
-        
+
         // Generate URIs and store chunks using OLO structure (following ChunkDocuments.js pattern)
         const chunkListURI = URIMinter.mintURI('http://purl.org/stuff/instance/', 'chunklist', textElementURI);
-        
+
         const chunkTriples = [];
         const slotTriples = [];
-        
+
         chunkingResult.chunks.forEach((chunk, index) => {
             const chunkURI = chunk.uri;
             const slotURI = URIMinter.mintURI('http://purl.org/stuff/instance/', 'slot', `${textElementURI}-${index}`);
-            
+
             // Chunk as both ragno:Unit and ragno:TextElement for embeddings
             chunkTriples.push(`
     <${chunkURI}> a ragno:Unit, ragno:TextElement ;
@@ -441,7 +441,7 @@ export default class Memorise {
                   olo:index ${chunk.index} ;
                   prov:wasDerivedFrom <${textElementURI}> ;
                   dcterms:created "${new Date().toISOString()}"^^xsd:dateTime .`);
-            
+
             // OLO slot structure
             slotTriples.push(`
     <${slotURI}> a olo:Slot ;
@@ -451,7 +451,7 @@ export default class Memorise {
     
     <${chunkListURI}> olo:slot <${slotURI}> .`);
         });
-        
+
         // Store chunks with OLO indexing
         const chunksUpdateQuery = `
             PREFIX ragno: <http://purl.org/stuff/ragno/>
@@ -482,11 +482,11 @@ export default class Memorise {
                 }
             }
         `;
-        
+
         await this.sparqlHelper.executeUpdate(chunksUpdateQuery);
-        
+
         this.stats.chunksCreated = chunkingResult.chunks.length;
-        
+
         return chunkingResult.chunks;
     }
 
@@ -531,10 +531,10 @@ export default class Memorise {
      */
     async extractConcepts(chunks, targetGraph) {
         logger.info(`Processing concepts for ${chunks.length} specific chunks from current ingestion`);
-        
+
         let conceptsExtracted = 0;
         const conceptResults = [];
-        
+
         for (const chunk of chunks) {
             try {
                 // Create a mock textElement object for the conceptExtractor
@@ -542,22 +542,22 @@ export default class Memorise {
                     textElement: { value: chunk.uri },
                     content: { value: chunk.content }
                 };
-                
+
                 const result = await this.conceptExtractor.processTextElement(textElement, targetGraph);
                 conceptResults.push(result);
                 conceptsExtracted += result.conceptCount;
-                
+
                 logger.debug(`Extracted ${result.conceptCount} concepts from chunk: ${chunk.uri}`);
-                
+
             } catch (error) {
                 logger.warn(`Failed to extract concepts from chunk ${chunk.uri}: ${error.message}`);
                 this.stats.errors.push(`Concept extraction failed for chunk: ${error.message}`);
             }
         }
-        
+
         this.stats.conceptsExtracted = conceptsExtracted;
         logger.info(`Extracted ${conceptsExtracted} concepts from ${chunks.length} chunks`);
-        
+
         return conceptResults;
     }
 
@@ -572,7 +572,7 @@ export default class Memorise {
                 sourceUnit: chunk.uri
             }
         }));
-        
+
         try {
             const decompositionResults = await decomposeCorpus(textChunks, this.llmHandler, {
                 extractRelationships: true,
@@ -580,17 +580,17 @@ export default class Memorise {
                 minEntityConfidence: 0.4,
                 maxEntitiesPerUnit: 15
             });
-            
+
             // Store the RDF dataset from decomposition results
             if (decompositionResults.dataset && decompositionResults.dataset.size > 0) {
                 logger.info(`Storing decomposition results: ${decompositionResults.dataset.size} triples`);
-                
+
                 // Convert dataset to properly escaped SPARQL triples
                 const quads = Array.from(decompositionResults.dataset);
                 const triples = quads.map(quad => {
                     const subject = quad.subject.termType === 'NamedNode' ? `<${quad.subject.value}>` : quad.subject.value;
                     const predicate = `<${quad.predicate.value}>`;
-                    
+
                     let object;
                     if (quad.object.termType === 'NamedNode') {
                         object = `<${quad.object.value}>`;
@@ -606,26 +606,26 @@ export default class Memorise {
                     } else {
                         object = quad.object.value;
                     }
-                    
+
                     return `${subject} ${predicate} ${object} .`;
                 }).join('\n');
-                
+
                 // Use SPARQLHelper to create and execute the insert query
                 const insertQuery = this.sparqlHelper.createInsertDataQuery(targetGraph, triples);
                 const result = await this.sparqlHelper.executeUpdate(insertQuery);
-                
+
                 if (!result.success) {
                     throw new Error(`SPARQL insert failed: ${result.error}`);
                 }
             }
-            
+
             this.stats.entitiesCreated = decompositionResults.entities?.length || 0;
             this.stats.relationshipsCreated = decompositionResults.relationships?.length || 0;
-            
+
             logger.info(`Created ${this.stats.entitiesCreated} entities and ${this.stats.relationshipsCreated} relationships`);
-            
+
             return decompositionResults;
-            
+
         } catch (error) {
             logger.error(`Decomposition failed: ${error.message}`);
             this.stats.errors.push(`Decomposition failed: ${error.message}`);
@@ -647,7 +647,7 @@ export default class Memorise {
         logger.info(`   🎯 Entities created: ${this.stats.entitiesCreated}`);
         logger.info(`   🔗 Relationships: ${this.stats.relationshipsCreated}`);
         logger.info(`   ⏱️  Processing time: ${(this.stats.processingTimeMs / 1000).toFixed(2)}s`);
-        
+
         if (this.stats.errors.length > 0) {
             logger.warn(`   ⚠️  Errors: ${this.stats.errors.length}`);
             this.stats.errors.forEach(error => {
@@ -663,11 +663,11 @@ export default class Memorise {
         if (this.conceptExtractor) {
             await this.conceptExtractor.cleanup();
         }
-        
+
         if (this.queryService && typeof this.queryService.cleanup === 'function') {
             this.queryService.cleanup();
         }
-        
+
         logger.debug('Memorise module cleaned up');
     }
 }

@@ -34,17 +34,17 @@ class ArticleSearchService {
         if (this.initialized) return;
 
         logger.info('Initializing ArticleSearchService...');
-        
+
         try {
             // Initialize embedding connector using configuration
             await this.initializeEmbeddingConnector();
-            
+
             // Create the Faiss index
             this.index = new IndexFlatIP(EMBEDDING_DIMENSION);
-            
+
             // Load article embeddings from SPARQL store
             await this.loadEmbeddings();
-            
+
             this.initialized = true;
             logger.info(`ArticleSearchService initialized with ${this.articles.length} articles`);
         } catch (error) {
@@ -61,13 +61,13 @@ class ArticleSearchService {
             // Load system configuration
             const config = new Config();
             await config.init();
-            
+
             // Get embedding provider configuration
             const embeddingProvider = config.get('embeddingProvider') || 'ollama';
-            const embeddingModel = config.get('embeddingModel') || 'nomic-embed-text';
-            
+            const embeddingModel = config.get('embeddingModel');
+
             logger.info(`Creating embedding connector: ${embeddingProvider} (${embeddingModel})`);
-            
+
             // Create embedding connector using factory
             let providerConfig = {};
             if (embeddingProvider === 'nomic') {
@@ -84,10 +84,10 @@ class ArticleSearchService {
                     model: embeddingModel
                 };
             }
-            
+
             this.embeddingConnector = EmbeddingConnectorFactory.createConnector(providerConfig);
             logger.info('Embedding connector initialized successfully');
-            
+
         } catch (error) {
             logger.warn('Failed to create configured embedding connector, falling back to Ollama:', error.message);
             // Fallback to Ollama for embeddings
@@ -104,7 +104,7 @@ class ArticleSearchService {
      */
     async loadEmbeddings() {
         logger.info('Loading article embeddings from SPARQL store...');
-        
+
         const query = `
             SELECT ?article ?content ?embedding WHERE {
                 GRAPH <${GRAPH_NAME}> {
@@ -113,39 +113,39 @@ class ArticleSearchService {
                 }
             }
         `;
-        
+
         try {
             const results = await this.executeSparqlQuery(query);
             const articles = results.results.bindings;
-            
+
             logger.info(`Found ${articles.length} articles with embeddings`);
-            
+
             this.articles = [];
             this.articleMap = new Map();
-            
+
             let validEmbeddings = 0;
-            
+
             // Process each article and add to the index
             articles.forEach((article, i) => {
                 try {
                     const uri = article.article.value;
                     const content = article.content.value;
                     const embeddingStr = article.embedding.value;
-                    
+
                     // Parse the embedding vector
                     const embedding = JSON.parse(embeddingStr);
-                    
+
                     if (Array.isArray(embedding) && embedding.length === EMBEDDING_DIMENSION) {
                         // Add embedding to the index
                         this.index.add(embedding);
-                        
+
                         // Store article data
                         this.articles.push({
                             uri,
                             content: this.truncateContent(content),
                             title: this.extractTitle(uri, content)
                         });
-                        
+
                         // Map the index to the article
                         this.articleMap.set(validEmbeddings, uri);
                         validEmbeddings++;
@@ -156,7 +156,7 @@ class ArticleSearchService {
                     logger.error(`Error processing article embedding: ${error.message}`);
                 }
             });
-            
+
             logger.info(`Added ${validEmbeddings} valid embeddings to the index`);
         } catch (error) {
             logger.error('Error loading embeddings:', error);
@@ -169,7 +169,7 @@ class ArticleSearchService {
      */
     async executeSparqlQuery(query) {
         const auth = Buffer.from(`${SPARQL_AUTH.user}:${SPARQL_AUTH.password}`).toString('base64');
-        
+
         try {
             const response = await fetch(SPARQL_QUERY_ENDPOINT, {
                 method: 'POST',
@@ -180,12 +180,12 @@ class ArticleSearchService {
                 },
                 body: query
             });
-            
+
             if (!response.ok) {
                 const errorText = await response.text();
                 throw new Error(`SPARQL query failed: ${response.status} - ${errorText}`);
             }
-            
+
             return await response.json();
         } catch (error) {
             logger.error('Error executing SPARQL query:', error);
@@ -212,29 +212,29 @@ class ArticleSearchService {
         if (!this.initialized) {
             await this.initialize();
         }
-        
+
         if (!queryText || queryText.trim().length === 0) {
             return [];
         }
-        
+
         try {
             // Generate embedding for the query
             const queryEmbedding = await this.generateEmbedding(queryText);
-            
+
             // Search the index
             const searchResults = this.index.search(queryEmbedding, limit);
-            
+
             // Faiss-node returns an object with labels and distances
             const results = [];
-            
+
             // Process the faiss search results
             for (let i = 0; i < searchResults.labels.length; i++) {
                 const id = searchResults.labels[i];
                 const score = searchResults.distances[i];
-                
+
                 const uri = this.articleMap.get(id);
                 const article = this.articles.find(a => a.uri === uri);
-                
+
                 if (uri) {
                     results.push({
                         uri,
@@ -244,7 +244,7 @@ class ArticleSearchService {
                     });
                 }
             }
-            
+
             return results;
         } catch (error) {
             logger.error('Error searching articles:', error);
@@ -261,7 +261,7 @@ class ArticleSearchService {
         if (firstLine.startsWith('# ')) {
             return firstLine.substring(2).trim();
         }
-        
+
         // Otherwise get filename from URI
         return this.getFilenameFromUri(uri);
     }
@@ -281,7 +281,7 @@ class ArticleSearchService {
         if (content.length <= maxLength) {
             return content;
         }
-        
+
         return content.substring(0, maxLength) + '...';
     }
 }

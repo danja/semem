@@ -191,7 +191,7 @@ export default class Hyde {
         const prompt = this.createHypothesisPrompt(input, index, options)
 
         const llmOptions = {
-            model: options.model || 'qwen2:1.5b', // Ensure we have a default model
+            model: options.model, // Ensure we have a default model
             maxTokens: options.maxTokens,
             temperature: (options.temperature || 0.7) + (index * 0.1) // Vary temperature for diversity
         }
@@ -357,7 +357,7 @@ ${hypothesis.content}
 Entities:`
 
             const response = await llmHandler.generateResponse(extractionPrompt, '', {
-                model: options.model || 'qwen2:1.5b',
+                model: options.model,
                 maxTokens: 200,
                 temperature: 0.3
             })
