@@ -29,8 +29,6 @@ import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/
 import { McpServer as Server } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { mcpConfig } from './lib/config.js';
 import Config from '../src/Config.js';
-import { PromptSynthesis } from './lib/PromptSynthesis.js';
-import { SearchService } from '../src/services/SearchService.js';
 
 mcpDebugger.info('🚀 HTTP SERVER: Starting script execution...');
 
@@ -500,19 +498,11 @@ async function startOptimizedServer() {
     }
 
     if (SimpleVerbsService) {
-      // FIX: Use unified ServiceManager to share storage with STDIO/API server
-      mcpDebugger.info('🔄 [MCP] Using unified ServiceManager for consistent storage...');
-      const serviceManager = (await import('../src/services/ServiceManager.js')).default;
-      const services = await serviceManager.getServices();
-
-      // FIX: Use services from ServiceManager instead of creating new instances
-      const memoryManager = services.memoryManager;
-      const config = services.config;
-      mcpDebugger.info('✅ [MCP] Using shared services from ServiceManager');
-
       // Use the shared SimpleVerbsService instance (same as STDIO server)
+      mcpDebugger.info('🔄 [HTTP] Using shared SimpleVerbsService for consistent storage...');
       const { getSimpleVerbsService } = await import('./tools/simple-verbs.js');
       const simpleVerbsService = getSimpleVerbsService();
+      mcpDebugger.info('✅ [HTTP] Using shared SimpleVerbsService instance');
 
 
       // TELL endpoint - Add resources to the system
