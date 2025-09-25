@@ -1,6 +1,11 @@
-create docs/STATUS.md describing the current situation : which files participate in the Tell/Ask workflow, the data that is created, the architecture,  
 
-qwen2:1.5b and nomic-embed-text 
+trace from `export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/tell-ask-stdio-e2e.integration.test.js --reporter=verbose` and create docs/TELL-ASK-STATUS.md describing the current situation : which files participate in the Tell/Ask workflow, the data that is created and the overall architecture and workflow  
+
+---
+Create a module src/ragno/NodeRAG.js with a method which will receive a question as argument and first call src/ragno/TextToCorpuscle.js. This class should support the following operatioons :
+1. run a query to string match the content of concepts extracted from the question with other concepts in the store
+2. use FAISS HNSW similarity matching to find the top k matches based on embeddings 
+---
 
 
 api-server.js has :

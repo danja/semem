@@ -14,6 +14,7 @@ dotenv.config({ path: path.join(projectRoot, '.env') });
 // Debug: Check if API keys are loaded
 console.log('🔑 MISTRAL_API_KEY loaded:', process.env.MISTRAL_API_KEY ? 'YES' : 'NO');
 console.log('🔑 CLAUDE_API_KEY loaded:', process.env.CLAUDE_API_KEY ? 'YES' : 'NO');
+console.log('🔑 GROQ_API_KEY loaded:', process.env.GROQ_API_KEY ? 'YES' : 'NO');
 
 import { setupDefaultLogging } from '../utils/LoggingConfig.js';
 import express from 'express';
