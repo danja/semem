@@ -106,10 +106,32 @@ export class ApiService {
    * @returns {Promise<Object>} Tell result
    */
   async tell({ content, type = 'interaction', lazy = false, metadata = {} }) {
-    return this.makeRequest('/tell', {
-      method: 'POST',
-      body: JSON.stringify({ content, type, lazy, metadata })
+    consoleService.info(`🔵 [WORKBENCH TELL] Starting tell operation:`, {
+      contentPreview: content?.substring(0, 100) + (content?.length > 100 ? '...' : ''),
+      contentLength: content?.length,
+      type,
+      lazy,
+      metadata
     });
+
+    try {
+      const result = await this.makeRequest('/tell', {
+        method: 'POST',
+        body: JSON.stringify({ content, type, lazy, metadata })
+      });
+
+      consoleService.success(`✅ [WORKBENCH TELL] Operation completed successfully:`, result);
+      return result;
+    } catch (error) {
+      consoleService.error(`❌ [WORKBENCH TELL] Operation failed:`, {
+        error: error.message,
+        stack: error.stack,
+        contentLength: content?.length,
+        type,
+        lazy
+      });
+      throw error;
+    }
   }
 
   /**
@@ -147,19 +169,74 @@ export class ApiService {
    * @returns {Promise<Object>} Ask result with answer and related content
    */
   async ask({ question, mode = 'standard', useContext = true, useHyDE = false, useWikipedia = false, useWikidata = false, useWebSearch = false, threshold }) {
-    return this.makeRequest('/ask', {
-      method: 'POST',
-      body: JSON.stringify({ 
-        question, 
-        mode, 
-        useContext,
-        useHyDE,
-        useWikipedia,
-        useWikidata,
-        useWebSearch,
-        threshold
-      })
+    consoleService.info(`🔵 [WORKBENCH ASK] Starting ask operation:`, {
+      questionPreview: question?.substring(0, 100) + (question?.length > 100 ? '...' : ''),
+      questionLength: question?.length,
+      mode,
+      useContext,
+      useHyDE,
+      useWikipedia,
+      useWikidata,
+      useWebSearch,
+      threshold
     });
+
+    try {
+      const result = await this.makeRequest('/ask', {
+        method: 'POST',
+        body: JSON.stringify({
+          question,
+          mode,
+          useContext,
+          useHyDE,
+          useWikipedia,
+          useWikidata,
+          useWebSearch,
+          threshold
+        })
+      });
+
+      consoleService.info(`✅ [WORKBENCH ASK] Operation completed:`, {
+        success: result?.success,
+        answer: result?.answer?.substring(0, 200) + (result?.answer?.length > 200 ? '...' : ''),
+        contextItems: result?.contextItems,
+        sessionResults: result?.sessionResults,
+        persistentResults: result?.persistentResults,
+        memories: result?.memories,
+        selectedStrategy: result?.selectedStrategy,
+        queryTime: result?.queryTime
+      });
+
+      // Log detailed memory retrieval info
+      if (result?.localContextResults && Array.isArray(result.localContextResults)) {
+        consoleService.info(`🧠 [WORKBENCH ASK] Retrieved ${result.localContextResults.length} memories:`,
+          result.localContextResults.map((mem, idx) => ({
+            index: idx,
+            id: mem.id,
+            contentPreview: (mem.content || mem.prompt || mem.response || mem.output || '').substring(0, 100),
+            relevance: mem.relevance,
+            hasEmbedding: !!mem.embedding
+          }))
+        );
+      } else {
+        consoleService.info(`⚠️ [WORKBENCH ASK] No memories found or invalid memory format:`, {
+          localContextResults: result?.localContextResults,
+          type: typeof result?.localContextResults
+        });
+      }
+
+      return result;
+    } catch (error) {
+      consoleService.error(`❌ [WORKBENCH ASK] Operation failed:`, {
+        error: error.message,
+        stack: error.stack,
+        questionLength: question?.length,
+        mode,
+        useContext,
+        threshold
+      });
+      throw error;
+    }
   }
 
   /**

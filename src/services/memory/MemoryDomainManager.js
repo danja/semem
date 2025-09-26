@@ -383,38 +383,96 @@ export class MemoryDomainManager {
 
     async fetchAllMemories(query) {
         try {
-            this.logger.debug('fetchAllMemories called with query:', query?.substring(0, 50));
-            this.logger.debug('this.sparqlStore exists:', !!this.sparqlStore);
-            this.logger.debug('this.sparqlStore.loadHistory exists:', !!this.sparqlStore?.loadHistory);
+            this.logger.info('🔍 [MEMORY FETCH] Starting fetchAllMemories:', {
+                queryPreview: query?.substring(0, 50),
+                sparqlStoreExists: !!this.sparqlStore,
+                loadHistoryExists: !!this.sparqlStore?.loadHistory
+            });
+
+            if (!this.sparqlStore) {
+                this.logger.error('❌ [MEMORY FETCH] SPARQL store is not available!');
+                return [];
+            }
+
+            if (!this.sparqlStore.loadHistory) {
+                this.logger.error('❌ [MEMORY FETCH] loadHistory method not found on SPARQL store!', {
+                    availableMethods: Object.getOwnPropertyNames(this.sparqlStore.constructor.prototype)
+                });
+                return [];
+            }
 
             // Use existing SPARQLStore loadHistory method to get all memories
+            this.logger.info('🔄 [MEMORY FETCH] Calling sparqlStore.loadHistory()...');
             const result = await this.sparqlStore.loadHistory();
-            this.logger.debug('loadHistory result type:', typeof result);
-            this.logger.debug('loadHistory result:', Array.isArray(result) ? `Array[${result.length}]` : result);
 
-            const [shortTermMemories, longTermMemories] = Array.isArray(result) ? result : [result || [], []];
+            this.logger.info('📊 [MEMORY FETCH] loadHistory raw result:', {
+                resultType: typeof result,
+                isArray: Array.isArray(result),
+                length: Array.isArray(result) ? result.length : 'N/A',
+                resultPreview: result
+            });
 
-            this.logger.debug('shortTermMemories length:', shortTermMemories?.length || 0);
-            this.logger.debug('longTermMemories length:', longTermMemories?.length || 0);
+            // Handle different return formats
+            let shortTermMemories = [];
+            let longTermMemories = [];
+
+            if (Array.isArray(result)) {
+                if (result.length === 2 && Array.isArray(result[0]) && Array.isArray(result[1])) {
+                    // Format: [shortTerm[], longTerm[]]
+                    [shortTermMemories, longTermMemories] = result;
+                } else {
+                    // Format: single array of memories
+                    shortTermMemories = result;
+                    longTermMemories = [];
+                }
+            } else if (result && typeof result === 'object') {
+                // Format: object with memory arrays
+                shortTermMemories = result.shortTermMemories || result.shortTerm || [];
+                longTermMemories = result.longTermMemories || result.longTerm || [];
+            } else {
+                // Fallback for null/undefined
+                this.logger.warn('⚠️ [MEMORY FETCH] Unexpected result format, using empty arrays');
+                shortTermMemories = [];
+                longTermMemories = [];
+            }
+
+            this.logger.info('📋 [MEMORY FETCH] Memory arrays extracted:', {
+                shortTermCount: shortTermMemories?.length || 0,
+                longTermCount: longTermMemories?.length || 0
+            });
 
             // Combine both short-term and long-term memories
             const allMemories = [...(shortTermMemories || []), ...(longTermMemories || [])];
 
-            this.logger.debug('Total memories combined:', allMemories.length);
-            if (allMemories.length > 0) {
-                this.logger.debug('First memory sample:', {
-                    id: allMemories[0]?.id,
-                    content: allMemories[0]?.content?.substring(0, 50),
-                    output: allMemories[0]?.output?.substring(0, 50)
-                });
-            }
+            this.logger.info('✅ [MEMORY FETCH] Combined memories:', {
+                totalCount: allMemories.length,
+                hasMemories: allMemories.length > 0
+            });
 
-            this.logger.debug(`📋 Fetched ${allMemories.length} memories from SPARQL store`);
+            if (allMemories.length > 0) {
+                this.logger.info('🧠 [MEMORY FETCH] First few memories sample:',
+                    allMemories.slice(0, 3).map((mem, idx) => ({
+                        index: idx,
+                        id: mem?.id,
+                        prompt: mem?.prompt?.substring(0, 50),
+                        output: mem?.output?.substring(0, 50),
+                        content: mem?.content?.substring(0, 50),
+                        response: mem?.response?.substring(0, 50),
+                        hasEmbedding: !!mem?.embedding,
+                        timestamp: mem?.timestamp
+                    }))
+                );
+            } else {
+                this.logger.warn('⚠️ [MEMORY FETCH] No memories found in SPARQL store!');
+            }
 
             return allMemories;
         } catch (error) {
-            this.logger.debug('fetchAllMemories error:', error.message);
-            this.logger.error('Failed to fetch memories from SPARQL store:', error);
+            this.logger.error('❌ [MEMORY FETCH] Failed to fetch memories from SPARQL store:', {
+                error: error.message,
+                stack: error.stack,
+                queryPreview: query?.substring(0, 50)
+            });
             return [];
         }
     }

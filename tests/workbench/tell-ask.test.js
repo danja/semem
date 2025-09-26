@@ -31,6 +31,9 @@ test.describe('Workbench Tell/Ask Integration', () => {
       console.log(`Tell results message: ${tellResultsMessage}`);
       expect(tellResultsMessage).toContain('Successfully stored content');
 
+      // Wait a moment for session cache to update
+      await page.waitForTimeout(1000);
+
       // Ask about the fact
       const question = `What are ${subject}?`;
       console.log(`Filling #ask-question with question: ${question}`);

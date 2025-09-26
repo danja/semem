@@ -38,12 +38,26 @@ export class Store {
     async loadHistory() {
         await this.sparqlExecute.verify();
 
+        logger.info('🔍 [SPARQL STORE] Loading memory history from graph:', {
+            graphName: this.graphName
+        });
+
         const query = await this.templateLoader.loadAndInterpolate('store', 'load-memory', {
+            graphName: this.graphName
+        });
+
+        logger.info('🔄 [SPARQL STORE] Executing loadHistory SPARQL query...', {
+            queryPreview: query.substring(0, 300) + '...',
             graphName: this.graphName
         });
 
         try {
             const result = await this.sparqlExecute.executeSparqlQuery(query);
+
+            logger.info('📊 [SPARQL STORE] SPARQL query executed, processing results...', {
+                bindingsCount: result?.results?.bindings?.length || 0,
+                hasResults: !!(result?.results?.bindings?.length)
+            });
             const shortTermMemory = [];
             const longTermMemory = [];
 
@@ -116,10 +130,33 @@ export class Store {
                 }
             }
 
-            logger.info(`Loaded ${shortTermMemory.length} short-term and ${longTermMemory.length} long-term memories from store`);
+            logger.info('✅ [SPARQL STORE] Successfully loaded memories from SPARQL store:', {
+                shortTermCount: shortTermMemory.length,
+                longTermCount: longTermMemory.length,
+                totalCount: shortTermMemory.length + longTermMemory.length,
+                graphName: this.graphName
+            });
+
+            if (shortTermMemory.length > 0) {
+                logger.info('🧠 [SPARQL STORE] Sample loaded memories:',
+                    shortTermMemory.slice(0, 2).map((mem, idx) => ({
+                        index: idx,
+                        id: mem.id,
+                        promptPreview: mem.prompt?.substring(0, 50),
+                        outputPreview: mem.output?.substring(0, 50),
+                        hasEmbedding: !!mem.embedding,
+                        timestamp: mem.timestamp
+                    }))
+                );
+            }
+
             return [shortTermMemory, longTermMemory];
         } catch (error) {
-            logger.error('Error loading history:', error);
+            logger.error('❌ [SPARQL STORE] Error loading history:', {
+                error: error.message,
+                stack: error.stack,
+                graphName: this.graphName
+            });
             return [[], []];
         }
     }
@@ -282,12 +319,20 @@ export class Store {
      * @param {Object} data - Data to store (must have id, embedding, etc.)
      */
     async store(data) {
-        logger.info('Store.store() called with:', {
+        logger.info('🔄 [SPARQL STORE] Store.store() called with:', {
             id: data?.id,
             promptPreview: data?.prompt?.substring(0, 50),
-            hasEmbedding: !!data?.embedding
+            outputPreview: data?.output?.substring(0, 50),
+            responsePreview: data?.response?.substring(0, 50),
+            contentPreview: data?.content?.substring(0, 50),
+            hasEmbedding: !!data?.embedding,
+            embeddingLength: data?.embedding?.length,
+            conceptsCount: data?.concepts?.length,
+            metadata: data?.metadata,
+            graphName: this.graphName
         });
         if (!data || !data.id) {
+            logger.error('❌ [SPARQL STORE] Data must have an id field:', data);
             throw new Error('Data must have an id field');
         }
 
@@ -323,10 +368,28 @@ export class Store {
             }
         `;
 
-        logger.debug('SPARQL INSERT QUERY:', insertQuery);
-        await this.sparqlExecute.executeSparqlUpdate(insertQuery);
-        logger.debug('SPARQL INSERT completed - checking persistence...');
-        logger.info(`Stored entity ${data.id} in SPARQL store`);
+        logger.info('🔄 [SPARQL STORE] Executing SPARQL INSERT query...', {
+            queryPreview: insertQuery.substring(0, 200) + '...',
+            targetGraph: targetGraph,
+            entityUri: entityUri
+        });
+
+        try {
+            await this.sparqlExecute.executeSparqlUpdate(insertQuery);
+            logger.info('✅ [SPARQL STORE] Successfully stored interaction:', {
+                id: data.id,
+                graph: targetGraph,
+                timestamp: Date.now()
+            });
+        } catch (error) {
+            logger.error('❌ [SPARQL STORE] Failed to execute SPARQL INSERT:', {
+                error: error.message,
+                stack: error.stack,
+                id: data.id,
+                graph: targetGraph
+            });
+            throw error;
+        }
     }
 
     /**

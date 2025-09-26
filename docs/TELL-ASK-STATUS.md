@@ -19,6 +19,21 @@ The `tell` and `ask` workflows are integral to the Workbench UI and MCP server, 
 
 ---
 
+## Playwright Test
+
+### Overview
+The Playwright test located at `tests/workbench/tell-ask.test.js` automates the `tell` and `ask` workflows in the Workbench UI. It validates the following:
+
+- Correct API calls are made for `tell` and `ask` operations.
+- UI elements and selectors function as expected.
+- Responses from the MCP server are correctly displayed in the Workbench UI.
+
+### Current Status
+- The test was executed recently but failed due to issues unrelated to the MCP server or SPARQL store.
+- Further debugging is required to identify and resolve the root cause of the failure.
+
+---
+
 ## Data Flow
 
 1. **Tell Workflow**:

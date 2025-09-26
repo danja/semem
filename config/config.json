@@ -5,7 +5,7 @@
       "query": "http://${SPARQL_HOST:-localhost}:${SPARQL_PORT:-3030}/semem/query",
       "update": "http://${SPARQL_HOST:-localhost}:${SPARQL_PORT:-3030}/semem/update",
       "data": "http://${SPARQL_HOST:-localhost}:${SPARQL_PORT:-3030}/semem/data",
-      "graphName": "http://tensegrity.it/semem/content",
+      "graphName": "http://tensegrity.it/semem",
       "user": "${SPARQL_USER}",
       "password": "${SPARQL_PASSWORD}"
     }
@@ -20,7 +20,7 @@
     "key": "${SEMEM_API_KEY}"
   },
   "port": 4120,
-  "graphName": "http://tensegrity.it/semem/content",
+  "graphName": "http://tensegrity.it/semem",
   "chatModel": "qwen2:1.5b",
   "embeddingModel": "nomic-embed-text:v1.5",
   "embeddingProvider": "nomic",

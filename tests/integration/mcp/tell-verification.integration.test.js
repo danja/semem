@@ -14,10 +14,11 @@ import randomFactGenerator from '../../helpers/randomFactGenerator.js';
 
 const generateRandomString = () => Math.random().toString(36).substring(2, 15);
 
+const originalGenerateUniqueFact = randomFactGenerator.generateUniqueFact.bind(randomFactGenerator);
 randomFactGenerator.generateUniqueFact = () => {
-  const baseFact = randomFactGenerator.generateUniqueFact();
+  const baseFact = originalGenerateUniqueFact();
   baseFact.randomField = generateRandomString();
-  baseFact.timeString = `${baseFact.timeString}_${generateRandomString()}`;
+  baseFact.timeString = `${baseFact.timestamp}_${generateRandomString()}`;
   return baseFact;
 };
 
