@@ -198,9 +198,29 @@ export class MemoryDomainManager {
         const relevanceThreshold = zptState.relevanceThreshold || this.config.defaultRelevanceThreshold;
         this.logger.debug(`🎯 Relevance threshold: ${relevanceThreshold}`);
 
+        // Debug the ZPT state to see if focusEmbedding exists
+        console.log(`🧪 ZPT State debug:`, {
+            hasFocusEmbedding: !!zptState.focusEmbedding,
+            focusQuery: zptState.focusQuery,
+            relevanceThreshold: relevanceThreshold,
+            memoriesCount: allMemories.length
+        });
+
         const scoredMemories = allMemories
-            .map(memory => {
+            .map((memory, index) => {
                 const relevanceResult = this.calculateRelevance(memory, zptState);
+
+                // Debug first 3 memories in detail
+                if (index < 3) {
+                    console.log(`🔍 Memory ${index} debug:`, {
+                        id: memory.id,
+                        hasEmbedding: !!memory.embedding,
+                        embeddingLength: memory.embedding?.length,
+                        relevanceScore: relevanceResult.score,
+                        textContent: (memory.content || memory.output || memory.prompt || '').substring(0, 50)
+                    });
+                }
+
                 this.logger.debug(`📊 Memory ${memory.id}: relevance=${relevanceResult.score}, hasEmbedding=${!!memory.embedding}, textContent="${(memory.content || memory.output || memory.prompt || '').substring(0, 50)}..."`);
                 return {
                     ...memory,

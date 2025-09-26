@@ -1704,7 +1704,10 @@ import {
    * RECALL - Retrieve memories based on query and domain filters
    */
   async recall({ query, domains, timeRange, relevanceThreshold = 0.1, maxResults = 10 }) {
+    console.log(`🎯 RECALL METHOD CALLED: query="${query}", threshold=${relevanceThreshold}, maxResults=${maxResults}`);
+
     await this.initialize();
+    console.log(`🔧 SimpleVerbsService initialized, memoryDomainManager exists:`, !!this.memoryDomainManager);
 
     try {
       logOperation('debug', 'recall', 'Simple Verb: recall', { query: query.substring(0, 50), domains, relevanceThreshold, maxResults });

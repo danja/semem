@@ -2603,10 +2603,18 @@ function registerToolCallHandler(server) {
       }
 
       if (name === 'recall') {
-        const { getSimpleVerbsService } = await import('./tools/simple-verbs.js');
-        const service = getSimpleVerbsService();
-        const result = await service.recall(args);
-        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        try {
+          console.error(`🎯 MCP RECALL ROUTING: args=${JSON.stringify(args)}`);
+          const { getSimpleVerbsService } = await import('./tools/simple-verbs.js');
+          const service = getSimpleVerbsService();
+          console.error(`📋 Service obtained:`, !!service);
+          const result = await service.recall(args);
+          console.error(`📋 Recall result:`, { success: result.success, memoriesFound: result.memoriesFound });
+          return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        } catch (error) {
+          console.error(`❌ RECALL ERROR:`, error);
+          throw error;
+        }
       }
 
       if (name === 'project_context') {

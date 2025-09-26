@@ -21,11 +21,11 @@ In mcp/tools/SimpleVerbsService.js line 82, weights a given hardcoded values. Th
 
 * export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/tell-ask-e2e.integration.test.js --reporter=verbose 
 * export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/tell-ask-stdio-e2e.integration.test.js --reporter=verbose
-* tests/integration/mcp/tell-verification.integration.test.js
-* INTEGRATION_TESTS=true npx vitest run
+* export INTEGRATION_TESTS=true npx vitest run tests/integration/mcp/tell-verification.integration.test.js
+* export INTEGRATION_TESTS=true npx vitest run
       tests/integration/stores/sparql-similarity-search.integration.test.js --reporter=verbose
 
-npx vitest run tests/unit/MemoryManager.test.js --reporter=verbose
+* npx vitest run tests/unit/MemoryManager.test.js --reporter=verbose
 
 node src/frontend/vsom-standalone/server.js
 
@@ -128,6 +128,7 @@ Save the plan and keep progress reports in docs/MORE-SPARQL.md
 
 ## Cleanup
 
+* move src/services/memory/MemoryDomainManager.js etc- looks zpt
 * Config.js has a weird restructuring thing
 * rename mcp/lib/PromptSynthesis.js to mcp/lib/ResponseSynthesis.js
 * refactor files > 1000 lines mcp/tools/simple-verbs.js src/frontend/workbench/public/js/workbench.js
