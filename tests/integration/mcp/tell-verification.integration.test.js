@@ -12,6 +12,15 @@ import { describe, test, expect } from 'vitest';
 import { spawn } from 'child_process';
 import randomFactGenerator from '../../helpers/randomFactGenerator.js';
 
+const generateRandomString = () => Math.random().toString(36).substring(2, 15);
+
+randomFactGenerator.generateUniqueFact = () => {
+  const baseFact = randomFactGenerator.generateUniqueFact();
+  baseFact.randomField = generateRandomString();
+  baseFact.timeString = `${baseFact.timeString}_${generateRandomString()}`;
+  return baseFact;
+};
+
 describe('Tell Operation Verification Tests', () => {
 
   /**

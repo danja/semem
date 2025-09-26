@@ -6,19 +6,13 @@
 
 import { describe, test, expect, beforeEach } from 'vitest';
 // Note: fetch is provided globally by setup-unified.js in E2E mode
+import randomFactGenerator from '../../helpers/randomFactGenerator.js';
 
 describe('Tell/Ask E2E Integration Tests', () => {
   // Generate random facts to ensure we're testing actual storage/retrieval
   const generateRandomFact = () => {
-    const subjects = ['flommings', 'bloonots', 'quityets', 'zepliars', 'looplongs'];
-    const colors = ['turquoise', 'magenta', 'chartreuse', 'vermillion', 'cerulean'];
-    const types = ['creatures', 'plants', 'crystals', 'beings', 'entities'];
-
-    const subject = subjects[Math.floor(Math.random() * subjects.length)];
-    const color = colors[Math.floor(Math.random() * colors.length)];
-    const type = types[Math.floor(Math.random() * types.length)];
-
-    return `${subject} are ${color} ${type}`;
+    const uniqueFact = randomFactGenerator.generateUniqueFact();
+    return uniqueFact.fact;
   };
 
   const httpTellAsk = async (fact, question) => {

@@ -6,15 +6,13 @@ import { defineConfig, devices } from '@playwright/test';
  */
 export default defineConfig({
   testDir: './tests',
-  testMatch: ['**/e2e/**/*.test.js', '**/ui/**/*.e2e.js'],
+  testMatch: ['**/e2e/**/*.test.js', '**/ui/**/*.e2e.js', '**/workbench/**/*.test.js'],
   fullyParallel: false, // Run tests sequentially for integration tests
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 1,
+  retries: 0, // Disable retries to prevent repeated browser restarts
   workers: process.env.CI ? 1 : 1, // Single worker for integration tests
   reporter: [
-    ['html', { outputFolder: 'test-results/playwright-report' }],
-    ['junit', { outputFile: 'test-results/playwright-results.xml' }],
-    ['list']
+    ['list'], // Use the list reporter for detailed error messages
   ],
   timeout: 60 * 1000, // 1 minute per test for integration
   expect: {
@@ -33,29 +31,14 @@ export default defineConfig({
       name: 'chromium',
       use: { 
         ...devices['Desktop Chrome'],
-        // Increase viewport for workbench UI
         viewport: { width: 1280, height: 720 },
-        // Enable console logging
         launchOptions: {
-          args: ['--enable-logging', '--v=1']
+          args: ['--enable-logging', '--v=1'],
+          headless: false // Ensure the browser is visible
         }
-      },
-    },
-    {
-      name: 'firefox',
-      use: { 
-        ...devices['Desktop Firefox'],
-        viewport: { width: 1280, height: 720 }
       },
     },
   ],
   // Output directories
   outputDir: 'test-results/e2e-artifacts',
-  
-  webServer: {
-    command: 'npm run mcp:http',
-    url: 'http://localhost:3000',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120 * 1000,
-  },
 });

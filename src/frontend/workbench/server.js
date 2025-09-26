@@ -72,6 +72,15 @@ app.use('/api', createProxyMiddleware({
   },
   onProxyRes: (proxyRes, req, res) => {
     console.log(`📡 [WORKBENCH PROXY] Response ${proxyRes.statusCode} for ${req.method} ${req.originalUrl}`);
+
+    let responseBody = '';
+    proxyRes.on('data', (chunk) => {
+      responseBody += chunk;
+    });
+
+    proxyRes.on('end', () => {
+      console.log(`📡 [WORKBENCH PROXY] Response body: ${responseBody}`);
+    });
   },
   onError: (err, req, res) => {
     console.error('❌ [WORKBENCH PROXY] Proxy error:', err.message);

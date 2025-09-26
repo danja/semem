@@ -1,3 +1,5 @@
+import { consoleService } from './ConsoleService.js';
+
 /**
  * API Service for Semantic Memory Workbench
  * Handles communication with API server and MCP server endpoints
@@ -45,41 +47,49 @@ export class ApiService {
    */
   async makeRequest(endpoint, options = {}) {
     const url = `${this.baseUrl}${endpoint}`;
-    
+
     // Include session ID in headers if available
     const headers = { ...this.defaultHeaders };
     if (this.sessionId) {
       headers['mcp-session-id'] = this.sessionId;
     }
-    
+
     const config = {
       headers: { ...headers, ...options.headers },
       ...options
     };
 
+    consoleService.info(`🔍 [API REQUEST] Endpoint: ${url}`);
+    consoleService.info(`🔍 [API REQUEST] Config:`, config);
+
     try {
       const response = await fetch(url, config);
-      
+
       // Extract and store session ID from response for future requests
       const responseSessionId = response.headers.get('mcp-session-id');
       if (responseSessionId && responseSessionId !== this.sessionId) {
-        console.log(`🔗 [WORKBENCH] Session ID updated: ${this.sessionId} → ${responseSessionId}`);
+        consoleService.info(`🔗 [WORKBENCH] Session ID updated: ${this.sessionId} → ${responseSessionId}`);
         this.sessionId = responseSessionId;
       }
-      
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        consoleService.error(`❌ [API ERROR] Endpoint: ${url}`, errorData);
         throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
       }
 
       const contentType = response.headers.get('content-type');
+      let result;
       if (contentType && contentType.includes('application/json')) {
-        return await response.json();
+        result = await response.json();
+      } else {
+        result = await response.text();
       }
-      
-      return await response.text();
+
+      consoleService.success(`✅ [API RESPONSE] Endpoint: ${url}`, result);
+      return result;
     } catch (error) {
-      console.error(`API Error [${endpoint}]:`, error);
+      consoleService.error(`❌ [API ERROR] Endpoint: ${url}`, error);
       throw error;
     }
   }
