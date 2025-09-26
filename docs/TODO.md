@@ -111,6 +111,7 @@ Save the plan and keep progress reports in docs/MORE-SPARQL.md
 
 ## General
 
+* push and pop state for context
 * add mcp interaction (?) for zpt
 * update  src/types/mcp-schema.json
 * use src/utils logger not console
