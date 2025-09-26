@@ -225,7 +225,8 @@ export class MemoryRelevanceEngine {
 
         if (!memoryEmbedding || !focusEmbedding) {
             // Use text-based similarity as fallback
-            return this.computeTextSimilarity(memory.content, currentZPTState.focusQuery);
+            const textContent = memory.content || memory.output || memory.prompt || '';
+            return this.computeTextSimilarity(textContent, currentZPTState.focusQuery);
         }
 
         // Cosine similarity

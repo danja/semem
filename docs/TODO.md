@@ -19,9 +19,11 @@ This suggests there's a deeper issue with the SPARQLStore.store() → storeModul
 
 In mcp/tools/SimpleVerbsService.js line 82, weights a given hardcoded values. These should be in config/preferences.js with explanatory comments
 
-export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/tell-ask-e2e.integration.test.js --reporter=verbose 
-export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/tell-ask-stdio-e2e.integration.test.js --reporter=verbose
-tests/integration/mcp/tell-verification.integration.test.js
+* export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/tell-ask-e2e.integration.test.js --reporter=verbose 
+* export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/tell-ask-stdio-e2e.integration.test.js --reporter=verbose
+* tests/integration/mcp/tell-verification.integration.test.js
+* INTEGRATION_TESTS=true npx vitest run
+      tests/integration/stores/sparql-similarity-search.integration.test.js --reporter=verbose
 
 npx vitest run tests/unit/MemoryManager.test.js --reporter=verbose
 
@@ -31,8 +33,11 @@ npx @modelcontextprotocol/inspector node mcp/index.js
 
 src/stores/modules/Search.js has a hardcoded query
 
-now trace through the tell/ask workflow to find where the error is that's preventing the expected outcome. Chances are it's either du to unnecessary unwanted fallback code or
-  multiple instances of an object being addressed. 
+
+ The SPARQLStore already has a loadHistory() method that delegates to
+  storeModule.loadHistory().
+
+src/services/memory/MemoryDomainManager.js has similarity search - bet it's elsewhere too
 
    Looking back at the ServiceManager, I can see the issue might be in the
   compatibility wrapper:
@@ -101,7 +106,8 @@ The SPARQL store is still empty, which means the data is only in the memory stor
 Figure out how best to move the API from using memory storage to data persisted in the SPARQL store. This has to be done following best practices. A list should be made of any code that still uses in-memory or JSON storage. This code will subsequently removed, so ensure all bases are covered.
 Save the plan and keep progress reports in docs/MORE-SPARQL.md
 
-now do calls to the server, a Tell "wormalade is marmalade made from worms" followed by an Ask "what is wormalade?" 
+ The fix is to remove the redundant VerbRegistration.js recall implementation and ensure all recall
+  operations use the proper SimpleVerbsService.js path through MemoryDomainManager.
 
 ## General
 
@@ -122,6 +128,7 @@ now do calls to the server, a Tell "wormalade is marmalade made from worms" foll
 
 ## Cleanup
 
+* Config.js has a weird restructuring thing
 * rename mcp/lib/PromptSynthesis.js to mcp/lib/ResponseSynthesis.js
 * refactor files > 1000 lines mcp/tools/simple-verbs.js src/frontend/workbench/public/js/workbench.js
 * redundant ask/tell in api server

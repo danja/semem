@@ -140,7 +140,24 @@ export const MEMORY_CONFIG = {
      */
     DECAY: {
         // TODO: Add usage references when memory decay is fully implemented
-        DEFAULT_DECAY_FACTOR: 1.0          // Default decay factor for new memories
+        DEFAULT_DECAY_FACTOR: 1.0,          // Default decay factor for new memories
+
+        // Temporal decay half-life in milliseconds (24 hours)
+        // Used in: src/services/memory/MemoryDomainManager.js (constructor)
+        TEMPORAL_DECAY_HALF_LIFE: 86400000
+    },
+
+    /**
+     * Memory Management Settings
+     */
+    VISIBILITY: {
+        // Maximum number of visible memories to return
+        // Used in: src/services/memory/MemoryDomainManager.js (constructor)
+        MAX_VISIBLE_MEMORIES: 100,
+
+        // Domain graph URI for memory domain organization
+        // Used in: src/services/memory/MemoryDomainManager.js (constructor)
+        DOMAIN_GRAPH: 'http://purl.org/stuff/domains'
     }
 };
 
