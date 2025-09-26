@@ -18,21 +18,45 @@ test.describe('Workbench Tell/Ask Integration', () => {
       await page.waitForSelector('#tell-content', { timeout: 15000 });
       console.log('#tell-content is visible.');
 
+      // Set up network request tracking for tell operation
+      const tellRequestPromise = page.waitForResponse(response =>
+        response.url().includes('/api/tell') && response.status() === 200,
+        { timeout: 15000 }
+      );
+
       // Tell the random fact
       console.log(`Filling #tell-content with fact: ${fact}`);
       await page.fill('#tell-content', fact);
       console.log('Clicking #tell-submit...');
       await page.click('#tell-submit');
 
+      // Wait for the network request to complete
+      console.log('Waiting for tell API request to complete...');
+      await tellRequestPromise;
+
       // Wait for confirmation that the fact was stored
       console.log('Waiting for #tell-results...');
-      await page.waitForSelector('#tell-results', { timeout: 5000 });
+      await page.waitForSelector('#tell-results', { timeout: 10000 });
+
+      // Wait for the actual success message to appear
+      await page.waitForFunction(() => {
+        const element = document.querySelector('#tell-results');
+        return element && element.textContent.includes('Successfully stored content');
+      }, { timeout: 10000 });
+
       const tellResultsMessage = await page.textContent('#tell-results');
       console.log(`Tell results message: ${tellResultsMessage}`);
       expect(tellResultsMessage).toContain('Successfully stored content');
 
-      // Wait a moment for session cache to update
-      await page.waitForTimeout(1000);
+      // Wait longer for the data to be fully processed and indexed
+      console.log('Waiting for data to be fully processed...');
+      await page.waitForTimeout(3000);
+
+      // Set up network request tracking for ask operation
+      const askRequestPromise = page.waitForResponse(response =>
+        response.url().includes('/api/ask') && response.status() === 200,
+        { timeout: 20000 }
+      );
 
       // Ask about the fact
       const question = `What are ${subject}?`;
@@ -41,9 +65,21 @@ test.describe('Workbench Tell/Ask Integration', () => {
       console.log('Clicking #ask-submit...');
       await page.click('#ask-submit');
 
+      // Wait for the network request to complete
+      console.log('Waiting for ask API request to complete...');
+      await askRequestPromise;
+
       // Wait for the answer
       console.log('Waiting for #ask-results...');
-      await page.waitForSelector('#ask-results', { timeout: 5000 });
+      await page.waitForSelector('#ask-results', { timeout: 15000 });
+
+      // Wait for the actual response to be populated (not just loading state)
+      await page.waitForFunction(() => {
+        const element = document.querySelector('#ask-results');
+        const text = element?.textContent || '';
+        return text.length > 10 && !text.includes('Loading') && !text.includes('...');
+      }, { timeout: 15000 });
+
       const askResultsMessage = await page.textContent('#ask-results');
       console.log(`Ask results message: ${askResultsMessage}`);
 
