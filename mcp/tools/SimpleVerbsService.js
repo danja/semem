@@ -233,18 +233,13 @@ import {
             // Store full content, but create a reasonable prompt for display
             prompt = content.length > 200 ? `${content.substring(0, 200)}...` : content;
 
-            verbsLogger.debug('🔥 DEBUG: About to call safeOps.storeInteraction');
-            // Debug removed for ES module compatibility
             result = await this.safeOps.storeInteraction(
               prompt,
               response,
               { ...metadata, type: 'tell_interaction', concepts }
             );
-            verbsLogger.debug('🔥 DEBUG: safeOps.storeInteraction completed');
 
-            // FIXED: Enhanced SPARQLStore automatically persists via store.store() call above
-            // No need for separate saveMemoryToHistory as memStore was removed in migration
-            verbsLogger.debug('🔥 DEBUG: Data automatically persisted via Enhanced SPARQLStore');
+            // Enhanced SPARQLStore automatically persists via store.store() call
             break;
 
           case 'document':
@@ -474,18 +469,28 @@ import {
       // Use HybridContextManager for intelligent context processing
       // Direct search using memoryManager (replaces broken HybridContextManager)
       let hybridResult;
-      if (useContext && this.memoryManager) {
+      if (useContext && this.memoryDomainManager) {
         try {
-          // Generate embedding for the question
-          const questionEmbedding = await this.safeOps.generateEmbedding(question);
+          // Use the working memory retrieval pipeline (same as recall)
+          const zptState = {
+            ...this.stateManager.getState(),
+            focusQuery: question,  // Set the query for relevance calculation
+            panDomains: [],
+            relevanceThreshold: threshold || SPARQL_CONFIG.SIMILARITY.DEFAULT_THRESHOLD,
+            maxMemories: 10
+          };
 
-          // Use memory manager to search for similar content
-          const searchResults = await this.memoryManager.retrieveRelevantInteractions(
-            question,
-            threshold || SPARQL_CONFIG.SIMILARITY.DEFAULT_THRESHOLD,
-            0,   // excludeLastN
-            10   // limit
-          );
+          // Generate embedding for the question to enable semantic similarity
+          try {
+            const questionEmbedding = await this.embeddingHandler.generateEmbedding(question);
+            zptState.focusEmbedding = questionEmbedding;
+          } catch (error) {
+            verbsLogger.warn(`Failed to generate question embedding: ${error.message}`);
+            // Continue without embedding - will fallback to text similarity
+          }
+
+          // Use memory domain manager (same as working recall)
+          const searchResults = await this.memoryDomainManager.getVisibleMemories(question, zptState);
 
           verbsLogger.info('Context retrieved successfully', {
             resultsCount: searchResults.length
@@ -1715,10 +1720,21 @@ import {
       // Build ZPT state for memory retrieval
       const zptState = {
         ...this.stateManager.getState(),
+        focusQuery: query,  // Set the query for relevance calculation
         panDomains: domains || this.stateManager.getState().pan?.domains || [],
         relevanceThreshold: relevanceThreshold,
         maxMemories: maxResults
       };
+
+      // Generate embedding for the query to enable semantic similarity
+      try {
+        const queryEmbedding = await this.embeddingHandler.generateEmbedding(query);
+        zptState.focusEmbedding = queryEmbedding;
+        console.log(`🧮 Generated query embedding: length=${queryEmbedding.length}`);
+      } catch (error) {
+        console.log(`⚠️ Failed to generate query embedding: ${error.message}`);
+        // Continue without embedding - will fallback to text similarity
+      }
 
       if (timeRange) {
         zptState.temporalFilter = timeRange;

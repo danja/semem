@@ -223,30 +223,17 @@ export class MemoryRelevanceEngine {
         const memoryEmbedding = memory.embedding;
         const focusEmbedding = currentZPTState.focusEmbedding;
 
-        console.log(`🧮 Semantic score debug:`, {
-            hasMemoryEmbedding: !!memoryEmbedding,
-            hasFocusEmbedding: !!focusEmbedding,
-            memoryEmbeddingLength: memoryEmbedding?.length,
-            focusEmbeddingLength: focusEmbedding?.length,
-            focusQuery: currentZPTState.focusQuery
-        });
-
         if (!memoryEmbedding || !focusEmbedding) {
             // Use text-based similarity as fallback
             const textContent = memory.content || memory.output || memory.prompt || '';
-            const textScore = this.computeTextSimilarity(textContent, currentZPTState.focusQuery);
-            console.log(`📝 Using text similarity fallback: score=${textScore}, textContent="${textContent.substring(0, 50)}..."`);
-            return textScore;
+            return this.computeTextSimilarity(textContent, currentZPTState.focusQuery);
         }
 
         // Cosine similarity
         const similarity = this.cosineSimilarity(memoryEmbedding, focusEmbedding);
-        console.log(`🎯 Cosine similarity calculated: ${similarity}`);
 
         // Apply non-linear scaling to emphasize high similarity
-        const scaledScore = Math.pow(Math.max(0, similarity), 0.8);
-        console.log(`🔢 Scaled similarity score: ${scaledScore}`);
-        return scaledScore;
+        return Math.pow(Math.max(0, similarity), 0.8);
     }
 
     computeFrequencyScore(memory, context) {

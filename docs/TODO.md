@@ -111,6 +111,7 @@ Save the plan and keep progress reports in docs/MORE-SPARQL.md
 
 ## General
 
+* add mcp interaction (?) for zpt
 * update  src/types/mcp-schema.json
 * use src/utils logger not console
 * mcp server should be logging to file under logs/ using the logger library and only logs of the last 3 runs should be kept
@@ -128,6 +129,7 @@ Save the plan and keep progress reports in docs/MORE-SPARQL.md
 
 ## Cleanup
 
+* remove old mcp tools (check prompts & resources)
 * move src/services/memory/MemoryDomainManager.js etc- looks zpt
 * Config.js has a weird restructuring thing
 * rename mcp/lib/PromptSynthesis.js to mcp/lib/ResponseSynthesis.js

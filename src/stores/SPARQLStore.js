@@ -27,7 +27,7 @@ export default class SPARQLStore extends BaseStore {
         super();
 
         // Debug log to trace options
-        console.log('DEBUG: SPARQLStore received options:', options);
+        logger.debug('SPARQLStore received options:', options);
 
         // Store configuration
         this.config = config;
@@ -52,7 +52,7 @@ export default class SPARQLStore extends BaseStore {
             password: options.password || 'admin'
         };
         const graphName = options.graphName;
-        console.log('DEBUG: Initializing SPARQLStore with graphName:', graphName); // Debug log
+        logger.debug('Initializing SPARQLStore with graphName:', graphName);
         if (!graphName) {
             throw new Error('graphName must be provided in options.graphName - check config.json graphName setting');
         }

@@ -23,7 +23,8 @@ import { SimpleVerbsService } from './SimpleVerbsService.js';
 import { logOperation } from './VerbsLogger.js';
 import { mcpDebugger } from '../lib/debug-utils.js';
 // Create shared service instance for all transports (HTTP and STDIO)
-const simpleVerbsService = new SimpleVerbsService();
+// CRITICAL: This singleton must be initialized once and reused across all requests
+let simpleVerbsService = null;
 
 
 /**
@@ -41,8 +42,13 @@ export function registerSimpleVerbs(server) {
 
 // Export function to get the Simple Verbs service instance for centralized handler
 export function getSimpleVerbsService() {
-  // Unified approach: always return the shared singleton that uses ServiceManager
-  // No more STDIO vs HTTP differentiation needed since ServiceManager unifies everything
+  // Unified approach: ensure singleton is created once and reused
+  if (!simpleVerbsService) {
+    mcpDebugger.info('🔄 Creating shared SimpleVerbsService singleton');
+    simpleVerbsService = new SimpleVerbsService();
+  }
+
+  // Always return the same singleton instance for unified storage
   return simpleVerbsService;
 }
 

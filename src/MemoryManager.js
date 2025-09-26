@@ -203,11 +203,6 @@ export default class MemoryManager {
 
             // MIGRATION: Enhanced SPARQLStore handles both SPARQL persistence and in-memory structures
             // This single call updates FAISS index, concept graph, clustering, and SPARQL store
-            this.logger.info('🔥 DEBUG: About to call store.store()', {
-                interactionId: interaction.id,
-                promptPreview: interaction.prompt?.substring(0, 50),
-                hasEmbedding: !!interaction.embedding
-            });
             await this.store.store(interaction);
 
             opLogger.complete(

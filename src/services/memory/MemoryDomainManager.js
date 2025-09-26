@@ -157,6 +157,14 @@ export class MemoryDomainManager {
             frequency: this.computeFrequencyRelevance(memory.accessCount, memory.metadata?.importance)
         };
 
+        // Debug relevance calculation if needed
+        this.logger.debug(`🔬 Relevance factors for memory ${memory.id}:`, {
+            domainMatch: factors.domainMatch,
+            temporal: factors.temporal,
+            semantic: factors.semantic,
+            frequency: factors.frequency
+        });
+
         // Calculate weighted relevance score
         const relevance = Object.entries(factors).reduce((total, [factor, value]) => {
             return total + (value * this.relevanceWeights[factor]);
@@ -198,29 +206,9 @@ export class MemoryDomainManager {
         const relevanceThreshold = zptState.relevanceThreshold || this.config.defaultRelevanceThreshold;
         this.logger.debug(`🎯 Relevance threshold: ${relevanceThreshold}`);
 
-        // Debug the ZPT state to see if focusEmbedding exists
-        console.log(`🧪 ZPT State debug:`, {
-            hasFocusEmbedding: !!zptState.focusEmbedding,
-            focusQuery: zptState.focusQuery,
-            relevanceThreshold: relevanceThreshold,
-            memoriesCount: allMemories.length
-        });
-
         const scoredMemories = allMemories
-            .map((memory, index) => {
+            .map(memory => {
                 const relevanceResult = this.calculateRelevance(memory, zptState);
-
-                // Debug first 3 memories in detail
-                if (index < 3) {
-                    console.log(`🔍 Memory ${index} debug:`, {
-                        id: memory.id,
-                        hasEmbedding: !!memory.embedding,
-                        embeddingLength: memory.embedding?.length,
-                        relevanceScore: relevanceResult.score,
-                        textContent: (memory.content || memory.output || memory.prompt || '').substring(0, 50)
-                    });
-                }
-
                 this.logger.debug(`📊 Memory ${memory.id}: relevance=${relevanceResult.score}, hasEmbedding=${!!memory.embedding}, textContent="${(memory.content || memory.output || memory.prompt || '').substring(0, 50)}..."`);
                 return {
                     ...memory,
@@ -388,33 +376,33 @@ export class MemoryDomainManager {
 
     computeFrequencyRelevance(accessCount, importance) {
         const normalizedAccess = Math.log(1 + (accessCount || 0)) / 10; // Log scale
-        const importanceScore = (importance);
+        const importanceScore = (importance || 0);  // Default to 0 if undefined
 
         return Math.min(1, normalizedAccess + importanceScore);
     }
 
     async fetchAllMemories(query) {
         try {
-            console.log('🔥 DEBUG: fetchAllMemories called with query:', query?.substring(0, 50));
-            console.log('🔥 DEBUG: this.sparqlStore exists:', !!this.sparqlStore);
-            console.log('🔥 DEBUG: this.sparqlStore.loadHistory exists:', !!this.sparqlStore?.loadHistory);
+            this.logger.debug('fetchAllMemories called with query:', query?.substring(0, 50));
+            this.logger.debug('this.sparqlStore exists:', !!this.sparqlStore);
+            this.logger.debug('this.sparqlStore.loadHistory exists:', !!this.sparqlStore?.loadHistory);
 
             // Use existing SPARQLStore loadHistory method to get all memories
             const result = await this.sparqlStore.loadHistory();
-            console.log('🔥 DEBUG: loadHistory result type:', typeof result);
-            console.log('🔥 DEBUG: loadHistory result:', Array.isArray(result) ? `Array[${result.length}]` : result);
+            this.logger.debug('loadHistory result type:', typeof result);
+            this.logger.debug('loadHistory result:', Array.isArray(result) ? `Array[${result.length}]` : result);
 
             const [shortTermMemories, longTermMemories] = Array.isArray(result) ? result : [result || [], []];
 
-            console.log('🔥 DEBUG: shortTermMemories length:', shortTermMemories?.length || 0);
-            console.log('🔥 DEBUG: longTermMemories length:', longTermMemories?.length || 0);
+            this.logger.debug('shortTermMemories length:', shortTermMemories?.length || 0);
+            this.logger.debug('longTermMemories length:', longTermMemories?.length || 0);
 
             // Combine both short-term and long-term memories
             const allMemories = [...(shortTermMemories || []), ...(longTermMemories || [])];
 
-            console.log('🔥 DEBUG: Total memories combined:', allMemories.length);
+            this.logger.debug('Total memories combined:', allMemories.length);
             if (allMemories.length > 0) {
-                console.log('🔥 DEBUG: First memory sample:', {
+                this.logger.debug('First memory sample:', {
                     id: allMemories[0]?.id,
                     content: allMemories[0]?.content?.substring(0, 50),
                     output: allMemories[0]?.output?.substring(0, 50)
@@ -425,7 +413,7 @@ export class MemoryDomainManager {
 
             return allMemories;
         } catch (error) {
-            console.log('🔥 DEBUG: fetchAllMemories error:', error.message);
+            this.logger.debug('fetchAllMemories error:', error.message);
             this.logger.error('Failed to fetch memories from SPARQL store:', error);
             return [];
         }

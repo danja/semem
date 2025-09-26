@@ -124,6 +124,43 @@ The Tell/Ask workflow is tested using the `tell-ask-stdio-e2e.integration.test.j
    - Run the `tell-ask-stdio-e2e.integration.test.js` file with verbose logging.
    - Analyze the test output for errors or unexpected behavior.
 
+## Working Call Path (Verified 2025-09-26)
+
+The following call path has been verified to work correctly for the recall/similarity search functionality:
+
+### Recall Tool Flow:
+1. **MCP Entry**: `mcp/index.js` handles `tools/call` with `name: "recall"`
+2. **Service Import**: Dynamically imports `./tools/simple-verbs.js`
+3. **Service Factory**: `getSimpleVerbsService()` returns singleton `SimpleVerbsService` instance
+4. **Recall Method**: `SimpleVerbsService.recall()` method is called with query parameters
+5. **ZPT State Setup**: Creates ZPT state with:
+   - `focusQuery`: Set to the user's query string
+   - `focusEmbedding`: Generated embedding for the query (via `embeddingHandler`)
+   - `relevanceThreshold`: Defaults to 0.1 from preferences.js
+6. **Memory Retrieval**: `memoryDomainManager.getVisibleMemories(query, zptState)`
+7. **Data Fetching**: `fetchAllMemories()` uses `sparqlStore.loadHistory()`
+8. **SPARQL Query**: Uses `sparql/templates/store/load-memory.sparql` template
+9. **Relevance Calculation**: Each memory processed through `calculateRelevance()`
+   - **Domain Match**: `computeDomainMatch()` - matches domains
+   - **Temporal**: `computeTemporalRelevance()` - exponential decay based on age
+   - **Semantic**: `computeSemanticRelevance()` - cosine similarity with query embedding
+   - **Frequency**: `computeFrequencyRelevance()` - log scale of access count + importance
+10. **Filtering**: Memories with relevance > threshold are kept
+11. **Sorting**: Results sorted by relevance score (highest first)
+12. **Response**: Formatted memories returned with relevance scores
+
+### Critical Configuration Requirements:
+- **No Hardcoded Values**: All thresholds/dimensions must come from `config/preferences.js`
+- **Field Mapping**: Memory objects need `content || output || prompt` for text similarity
+- **NaN Prevention**: All relevance factors must have defaults (e.g., `importance || 0`)
+- **ZPT State**: Must include both `focusQuery` and `focusEmbedding` for proper scoring
+
+### Fixed Issues (2025-09-26):
+- ✅ Removed redundant `createSTDIOSearchService()` bypass implementation
+- ✅ Fixed hardcoded values in `MemoryDomainManager` to use `preferences.js`
+- ✅ Added missing `focusQuery` and `focusEmbedding` to ZPT state
+- ✅ Fixed `computeFrequencyRelevance()` NaN issue with undefined importance
+
 ## Notes
 - The `tell-ask-stdio-e2e.integration.test.js` file ensures that the workflow is functional and adheres to the protocol.
 - Future improvements may include additional validation and support for more complex queries.

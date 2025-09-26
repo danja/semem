@@ -23,8 +23,11 @@ class ServiceManager {
 
     async initialize(configPath = null) {
         if (this.initialized) {
+            logger.debug('🔄 [ServiceManager] Returning existing services (already initialized)');
             return this.services;
         }
+
+        logger.debug('🔧 [ServiceManager] Initializing services for the first time...');
 
         // Initialize configuration
         const __filename = fileURLToPath(import.meta.url);

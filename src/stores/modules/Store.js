@@ -323,9 +323,9 @@ export class Store {
             }
         `;
 
-        // console.log('🔥 DEBUG: SPARQL INSERT QUERY:', insertQuery);
+        logger.debug('SPARQL INSERT QUERY:', insertQuery);
         await this.sparqlExecute.executeSparqlUpdate(insertQuery);
-        // console.log('🔥 DEBUG: SPARQL INSERT completed - checking persistence...');
+        logger.debug('SPARQL INSERT completed - checking persistence...');
         logger.info(`Stored entity ${data.id} in SPARQL store`);
     }
 
