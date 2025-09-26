@@ -739,6 +739,7 @@ async function startOptimizedServer() {
         }
       });
 
+
       // INSPECT endpoint - Debug and monitor system state
       app.post('/inspect', async (req, res) => {
         try {

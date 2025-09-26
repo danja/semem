@@ -291,7 +291,8 @@ export class Store {
             throw new Error('Data must have an id field');
         }
 
-        const entityUri = `<${data.id}>`;
+        // Use absolute URI to avoid base URI resolution issues
+        const entityUri = data.id.startsWith('http') ? `<${data.id}>` : `<http://purl.org/stuff/semem/interaction/${data.id}>`;
 
         // Use graph from metadata if provided, otherwise use default
         const targetGraph = (data.metadata && data.metadata.graph) ? data.metadata.graph : this.graphName;
@@ -307,8 +308,8 @@ export class Store {
                 GRAPH <${targetGraph}> {
                     ${entityUri} a semem:Interaction ;
                         semem:id "${this._escapeSparqlString(data.id)}" ;
-                        semem:prompt "${this._escapeSparqlString(data.prompt || '')}" ;
-                        semem:output "${this._escapeSparqlString(data.response || data.content || '')}" ;
+                        semem:prompt "${this._escapeSparqlString(data.prompt || data.content || '')}" ;
+                        semem:output "${this._escapeSparqlString(data.response || data.output || data.content || '')}" ;
                         semem:embedding """${JSON.stringify(data.embedding || [])}""" ;
                         semem:timestamp "${Date.now()}"^^xsd:integer ;
                         semem:accessCount "0"^^xsd:integer ;

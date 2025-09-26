@@ -21,6 +21,7 @@ In mcp/tools/SimpleVerbsService.js line 82, weights a given hardcoded values. Th
 
 export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/tell-ask-e2e.integration.test.js --reporter=verbose 
 export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/tell-ask-stdio-e2e.integration.test.js --reporter=verbose
+tests/integration/mcp/tell-verification.integration.test.js
 
 npx vitest run tests/unit/MemoryManager.test.js --reporter=verbose
 

@@ -11,7 +11,7 @@ import { setTimeout } from 'timers/promises';
 describe('Tell/Ask STDIO E2E Integration Tests', () => {
   // Generate random facts to ensure we're testing actual storage/retrieval
   const generateRandomFact = () => {
-    const subjects = ['noglings', 'conots', 'kiblents', 'peffers', 'komplings'];
+    const subjects = ['norgs', 'munj', 'kibberts', 'pelgers', 'pliplings'];
     const colors = ['turquoise', 'magenta', 'chartreuse', 'vermillion', 'cerulean'];
     const types = ['creatures', 'plants', 'crystals', 'beings', 'entities'];
 

@@ -187,7 +187,7 @@ export default class MemoryManager {
                 concepts,
                 decayFactor: 1.0,
                 ...metadata
-            }
+            };
 
             // Step 2: Store with enhanced SPARQLStore (handles both persistence and memory)
             opLogger.step(
@@ -208,7 +208,7 @@ export default class MemoryManager {
                 promptPreview: interaction.prompt?.substring(0, 50),
                 hasEmbedding: !!interaction.embedding
             });
-            await this.store.store(interaction)
+            await this.store.store(interaction);
 
             opLogger.complete(
                 'Interaction stored successfully in enhanced SPARQLStore',
