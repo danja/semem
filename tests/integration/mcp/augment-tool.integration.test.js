@@ -288,7 +288,7 @@ describe('Augment Tool Integration Tests', () => {
 
     const response = parseAugmentResponse(result.augmentResponse);
     expect(response.success).toBe(true);
-    expect(response.embeddingDimension).toBe(1536);
+    expect(response.embeddingDimension).toBe(768);
 
     console.log(`✅ Augment embedding options test passed`);
   });

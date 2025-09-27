@@ -1,15 +1,17 @@
 mcp index tests
 * export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/tell-tool.integration.test.js --reporter=verbose
 * export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/ask-tool.integration.test.js --reporter=verbose
-
 * export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/augment-tool.integration.test.js --reporter=verbose
-
 * export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/zoom-tool.integration.test.js --reporter=verbose
 * export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/pan-tool.integration.test.js --reporter=verbose
 * export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/tilt-tool.integration.test.js --reporter=verbose
 * export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/inspect-tool.integration.test.js --reporter=verbose
 
-
+e2e - move stdio ones to use new paths
+* export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/tell-ask-e2e.integration.test.js --reporter=verbose 
+* export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/tell-ask-stdio-e2e.integration.test.js --reporter=verbose
+* export INTEGRATION_TESTS=true npx vitest run tests/integration/mcp/tell-verification.integration.test.js
+* export INTEGRATION_TESTS=true npx vitest run tests/integration/stores/sparql-similarity-search.integration.test.js --reporter=verbose
 
 In docs/BIG-FILES.md you will find a list of excessively long source files. Please examine the dependents and dependencies of each to see if each is actually in current use.
 
@@ -33,11 +35,7 @@ This suggests there's a deeper issue with the SPARQLStore.store() → storeModul
 
 In mcp/tools/SimpleVerbsService.js line 82, weights a given hardcoded values. These should be in config/preferences.js with explanatory comments
 
-* export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/tell-ask-e2e.integration.test.js --reporter=verbose 
-* export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/tell-ask-stdio-e2e.integration.test.js --reporter=verbose
-* export INTEGRATION_TESTS=true npx vitest run tests/integration/mcp/tell-verification.integration.test.js
-* export INTEGRATION_TESTS=true npx vitest run
-      tests/integration/stores/sparql-similarity-search.integration.test.js --reporter=verbose
+
 
 * npx vitest run tests/unit/MemoryManager.test.js --reporter=verbose
 

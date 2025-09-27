@@ -16,7 +16,7 @@ describe('Tell/Ask STDIO E2E Integration Tests', () => {
 
     // Test STDIO interface against live MCP server
     return new Promise((resolve, reject) => {
-      const mcpProcess = spawn('node', ['mcp/src/index.js'], {
+      const mcpProcess = spawn('node', ['mcp/index.js'], {
         stdio: ['pipe', 'pipe', 'pipe'],
         cwd: process.cwd()
       });
