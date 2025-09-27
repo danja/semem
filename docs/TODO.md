@@ -10,7 +10,7 @@ mcp index tests
 e2e - move stdio ones to use new paths
 * export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/tell-ask-e2e.integration.test.js --reporter=verbose 
 * export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/tell-ask-stdio-e2e.integration.test.js --reporter=verbose
-* export INTEGRATION_TESTS=true npx vitest run tests/integration/mcp/tell-verification.integration.test.js
+* export INTEGRATION_TESTS=true npx vitest run tests/integration/mcp/tell-verification.integration.test.js --reporter=verbose
 * export INTEGRATION_TESTS=true npx vitest run tests/integration/stores/sparql-similarity-search.integration.test.js --reporter=verbose
 
 In docs/BIG-FILES.md you will find a list of excessively long source files. Please examine the dependents and dependencies of each to see if each is actually in current use.
