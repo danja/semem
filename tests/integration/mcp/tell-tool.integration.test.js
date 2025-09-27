@@ -242,7 +242,7 @@ describe('Tell Tool Integration Tests', () => {
   test('should handle SPARQL ingestion format', async () => {
     const content = 'Test content for SPARQL ingestion';
     const endpoint = 'http://localhost:3030/test/query';
-    const template = 'test-template';
+    const template = 'documents';
     const limit = 10;
 
     const result = await executeTell({

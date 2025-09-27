@@ -6,7 +6,7 @@
 
 import { describe, test, expect } from 'vitest';
 import { spawn } from 'child_process';
-import { delay as delay } from 'timers/promises';
+import { setTimeout as delay } from 'timers/promises';
 import randomFactGenerator from '../../helpers/randomFactGenerator.js';
 
 describe('Ask Tool Integration Tests', () => {

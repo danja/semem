@@ -434,4 +434,265 @@ export class SafeOperations {
       throw error;
     }
   }
+
+  /**
+   * Ask a question - basic question answering
+   */
+  async askQuestion(question, options = {}) {
+    if (!question || typeof question !== 'string' || !question.trim()) {
+      throw new Error('Invalid question parameter: must be a non-empty string');
+    }
+
+    const { mode = 'standard', useContext = true } = options;
+
+    mcpDebugger.debug('SafeOperations.askQuestion - Starting question processing', {
+      questionLength: question.length,
+      mode,
+      useContext
+    });
+
+    try {
+      // Use LLM to generate response
+      const context = useContext ? await this.retrieveMemories(question, 0.7) : [];
+      const response = await this.generateResponse(question, context, { mode });
+
+      mcpDebugger.info('SafeOperations.askQuestion - Question processed successfully', {
+        questionLength: question.length,
+        contextCount: context.length,
+        hasResponse: !!response
+      });
+
+      return {
+        content: response,
+        question,
+        mode,
+        contextUsed: useContext,
+        contextCount: context.length,
+        timestamp: new Date().toISOString()
+      };
+    } catch (error) {
+      mcpDebugger.error('SafeOperations.askQuestion - Question processing failed', {
+        error: error.message,
+        stack: error.stack,
+        questionLength: question.length
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Recall memories - enhanced memory retrieval
+   */
+  async recallMemories(options = {}) {
+    const { query, domains, timeRange, relevanceThreshold = 0.1, maxResults = 10 } = options;
+
+    if (!query || typeof query !== 'string' || !query.trim()) {
+      throw new Error('Invalid query parameter: must be a non-empty string');
+    }
+
+    mcpDebugger.debug('SafeOperations.recallMemories - Starting memory recall', {
+      queryLength: query.length,
+      domains,
+      timeRange,
+      relevanceThreshold,
+      maxResults
+    });
+
+    try {
+      // Get memories with enhanced filtering
+      let memories = await this.retrieveMemories(query, relevanceThreshold);
+
+      // Apply domain filtering if specified
+      if (domains && Array.isArray(domains) && domains.length > 0) {
+        memories = memories.filter(memory =>
+          domains.some(domain =>
+            memory.metadata?.domain === domain ||
+            memory.metadata?.tags?.includes(domain)
+          )
+        );
+      }
+
+      // Apply time range filtering if specified
+      if (timeRange) {
+        const now = new Date();
+        let cutoffDate;
+
+        if (timeRange.start && timeRange.end) {
+          // Specific date range
+          const startDate = new Date(timeRange.start);
+          const endDate = new Date(timeRange.end);
+          memories = memories.filter(memory => {
+            const memoryDate = new Date(memory.timestamp || memory.metadata?.timestamp);
+            return memoryDate >= startDate && memoryDate <= endDate;
+          });
+        } else if (typeof timeRange === 'string') {
+          // Relative time range (e.g., "7d", "1h")
+          const match = timeRange.match(/^(\d+)([dhm])$/);
+          if (match) {
+            const [, amount, unit] = match;
+            const milliseconds = {
+              'm': parseInt(amount) * 60 * 1000,
+              'h': parseInt(amount) * 60 * 60 * 1000,
+              'd': parseInt(amount) * 24 * 60 * 60 * 1000
+            }[unit];
+            cutoffDate = new Date(now.getTime() - milliseconds);
+
+            memories = memories.filter(memory => {
+              const memoryDate = new Date(memory.timestamp || memory.metadata?.timestamp);
+              return memoryDate >= cutoffDate;
+            });
+          }
+        }
+      }
+
+      // Limit results
+      memories = memories.slice(0, maxResults);
+
+      mcpDebugger.info('SafeOperations.recallMemories - Memory recall completed', {
+        queryLength: query.length,
+        totalMemories: memories.length,
+        domainsUsed: domains?.length || 0,
+        timeRangeUsed: !!timeRange
+      });
+
+      return {
+        memories,
+        query,
+        domains,
+        timeRange,
+        relevanceThreshold,
+        count: memories.length,
+        timestamp: new Date().toISOString()
+      };
+    } catch (error) {
+      mcpDebugger.error('SafeOperations.recallMemories - Memory recall failed', {
+        error: error.message,
+        stack: error.stack,
+        queryLength: query.length
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Store processed document
+   */
+  async storeDocument(processedDoc, options = {}) {
+    if (!processedDoc || !processedDoc.content) {
+      throw new Error('Invalid processed document: must have content');
+    }
+
+    const { lazy = false } = options;
+
+    mcpDebugger.debug('SafeOperations.storeDocument - Starting document storage', {
+      documentId: processedDoc.id,
+      filename: processedDoc.filename,
+      contentLength: processedDoc.content.text?.length || 0,
+      lazy
+    });
+
+    try {
+      // Store document as a special interaction with document metadata
+      const documentContent = `Document: ${processedDoc.filename}\n` +
+        `Summary: ${processedDoc.summary}\n` +
+        `Content: ${processedDoc.content.text || ''}`;
+
+      const result = await this.memoryManager.storeInteraction(
+        `Document: ${processedDoc.filename}`,
+        documentContent,
+        {
+          ...processedDoc.metadata,
+          documentId: processedDoc.id,
+          filename: processedDoc.filename,
+          mediaType: processedDoc.mediaType,
+          documentType: processedDoc.documentType,
+          processingType: processedDoc.processingType,
+          isDocument: true,
+          timestamp: new Date().toISOString()
+        }
+      );
+
+      mcpDebugger.info('SafeOperations.storeDocument - Document stored successfully', {
+        documentId: processedDoc.id,
+        filename: processedDoc.filename,
+        result: !!result
+      });
+
+      return {
+        document: processedDoc,
+        stored: true,
+        result,
+        timestamp: new Date().toISOString()
+      };
+
+    } catch (error) {
+      mcpDebugger.error('SafeOperations.storeDocument - Document storage failed', {
+        error: error.message,
+        stack: error.stack,
+        documentId: processedDoc.id,
+        filename: processedDoc.filename
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Store multiple documents (for batch processing)
+   */
+  async storeDocuments(documents, options = {}) {
+    if (!Array.isArray(documents)) {
+      throw new Error('Documents must be an array');
+    }
+
+    const { lazy = false } = options;
+
+    mcpDebugger.debug('SafeOperations.storeDocuments - Starting batch document storage', {
+      documentCount: documents.length,
+      lazy
+    });
+
+    try {
+      const results = [];
+
+      for (const doc of documents) {
+        try {
+          const result = await this.storeDocument(doc, { lazy });
+          results.push(result);
+        } catch (error) {
+          mcpDebugger.warn('SafeOperations.storeDocuments - Single document storage failed', {
+            error: error.message,
+            documentId: doc.id
+          });
+          results.push({
+            document: doc,
+            stored: false,
+            error: error.message,
+            timestamp: new Date().toISOString()
+          });
+        }
+      }
+
+      mcpDebugger.info('SafeOperations.storeDocuments - Batch storage completed', {
+        totalDocuments: documents.length,
+        successfullyStored: results.filter(r => r.stored).length,
+        failed: results.filter(r => !r.stored).length
+      });
+
+      return {
+        results,
+        total: documents.length,
+        successful: results.filter(r => r.stored).length,
+        failed: results.filter(r => !r.stored).length,
+        timestamp: new Date().toISOString()
+      };
+
+    } catch (error) {
+      mcpDebugger.error('SafeOperations.storeDocuments - Batch storage failed', {
+        error: error.message,
+        stack: error.stack,
+        documentCount: documents.length
+      });
+      throw error;
+    }
+  }
 }

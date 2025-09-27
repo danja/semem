@@ -1,7 +1,9 @@
 mcp index tests
 * export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/tell-tool.integration.test.js --reporter=verbose
 * export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/ask-tool.integration.test.js --reporter=verbose
+
 * export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/augment-tool.integration.test.js --reporter=verbose
+
 * export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/zoom-tool.integration.test.js --reporter=verbose
 * export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/pan-tool.integration.test.js --reporter=verbose
 * export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/tilt-tool.integration.test.js --reporter=verbose
