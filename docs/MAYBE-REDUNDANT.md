@@ -1,5 +1,7 @@
+We need to refactor embedding and vector operations and remove duplicate code and place it appropriately. Think deeply and create a plan to do this.
 
-## 1. Vector Operations & Embedding Utilities
+There is massive overlap. All embedding validation and vector math should be consolidated into a single new module`src/core/Vectors.js` and current versions removed.
+The following files contain related functionality, there may be others :
 
 ### `src/Utils.js`
 - `vectorOps.normalize(vector)`
@@ -11,25 +13,70 @@
 - `EmbeddingHandler.generateFallbackEmbedding(text, strategy)`
 - `EmbeddingHandler.generateHashEmbedding(text)`
 
-**Observation:**
-- Both files deal with vector operations (normalization, similarity, standardization).
-- There may be overlap in how vectors/embeddings are processed and validated.
-- Consider centralizing vector math and embedding validation in a shared utility module.
+- `Store.js`, `Vectors.js`, and `Search.js` all implement embedding/vector validation and similarity logic:
+	- `Store.js`: `validateEmbedding(embedding)`
+	- `Vectors.js`: `validateEmbedding(embedding)`, `isValidEmbedding(embedding)`, `adjustEmbeddingLength(embedding, targetLength)`, `calculateCosineSimilarity(vecA, vecB)`
+	- `Search.js`: `validateQueryEmbedding(embedding)`, uses `vectors.calculateCosineSimilarity()`
 
 ---
 
-## 2. Logging Utilities
+Functionality related to embeddings is distributed throughout the code with a lot of duplication. This all needs to be consolidated into src/core/Embeddings.js for operations directly on the embeddings, EmbeddingsAPIBridge.js for code which calls external services. SPARQL storage of embeddings will be dealt with later.
+There must be no hardcoded variables (such as thresholds), these should be loaded from preferences.js following existing patterns. There must be no hardcoded URLs, they should come from config.json via Config.js . API keys will be loaded following existing patterns using dotenv.  
+You need to search the codebase for places in which embeddings play a role. I've found two already : EmbeddingHandler.js EmbeddingService.js 
 
-### `src/Utils.js`
-- `logger.info`, `logger.error`, `logger.debug`, `logger.warn`
+Where is EmbeddingsAPIBridge.js?
+Review files with embedding-related functionality
+src/services/embeddings/EmbeddingsAPIBridge.js
 
-### `examples/mcp/ZPTBasicNavigation.js`
-- `logBanner`, `logStep`, `logConcept`, `logSuccess`, `logWarning`, `logError`, `logPerformance`
+Move src/services/embeddings/EmbeddingsAPIBridge.js to src/services/EmbeddingsAPIBridge.js and modify its dependants imports accordingly.
 
-**Observation:**
-- Both provide logging, but with different levels of sophistication and output formatting.
-- Consider whether a unified logging interface could be used across modules.
+Review files with embedding-related functionality. All the embeddings-related operations should be carried out by src/core/Embeddings.js and src/services/EmbeddingsAPIBridge.js (and possibly other modules if appropriate to separate concerns). Other embeddings functionality should be consolidated into those and then the redundant methods and files removed.
+---
 
+SEARCH
+/clear
+plan mode
+where did faiss go?
+Functionality related to search is distributed throughout the code with a lot of duplication. This all needs to be consolidated into src/core/SimilaritySearch.js for functionality related to embeddings-based search, faiss and vector search, with src/core/SPARQLSearch.js for the SPARQL-related operations. If these are likely to need a lot of code then other modules should be created with well-defined, domain-related functionality to simplify maintenance and extension. 
+There must be no hardcoded variables (such as thresholds), these should be loaded from preferences.js following existing patterns. There must be no hardcoded URLs, they should come from config.json via Config.js . API keys will be loaded following existing patterns using dotenv.
+After consolidating the functionality the redundant files and methods should be removed.
+Think deeply on how best to do this safely, following best practices. Save the plan in docs/SEARCH-PLAN.md  
+You need to search the codebase for places in which search plays a role. So far I have found the following :
+src/services/SearchService.js
+src/services/search/AdaptiveSearchEngine.js
+src/services/search/SearchServer.js
+src/services/search/SearchService.js
+src/services/SearchService.js
+src/stores/modules/Search.js
+
+
+
+Trace the workflows used by tell, ask and ingest. 
+
+/clear first
+
+LOGGING
+
+Functionality related to logging is distributed throughout the code with a lot of duplication. It needs to be consolidated, redundant code deleted. loglevel should be used under the hood. The setup is working in places, with a file log rotated. Note that the mcp stdio interface demands that there is nothing extra in stdout so a flag is set to enable this mode. Apart from in tests, direct console logging should not appear anywhere. 
+
+src/utils/LoggingConfig.js'
+mcp/tools/VerbsLogger.js
+
+SPARQL
+src/services/embeddings/SPARQLService.js
+should be under 
+src/services/
+
+LLM
+src/handlers/LLMHandler.js
+should be under 
+src/services/
+
+ - `search`
+  - `embedding`
+  - `server`
+  - `memory`
+  - `api`
 ---
 
 ## 3. Client/Handler Classes for External Services
@@ -87,14 +134,8 @@
 - `src/stores/modules/Vectors.js`
 - `src/stores/modules/ZPT.js`
 
-### Observations:
 
-#### a. Embedding Validation and Vector Operations
-- `Store.js`, `Vectors.js`, and `Search.js` all implement embedding/vector validation and similarity logic:
-	- `Store.js`: `validateEmbedding(embedding)`
-	- `Vectors.js`: `validateEmbedding(embedding)`, `isValidEmbedding(embedding)`, `adjustEmbeddingLength(embedding, targetLength)`, `calculateCosineSimilarity(vecA, vecB)`
-	- `Search.js`: `validateQueryEmbedding(embedding)`, uses `vectors.calculateCosineSimilarity()`
-- There is overlap in how embeddings are validated and compared. Consider consolidating all embedding validation and vector math into a single utility (possibly `Vectors.js`).
+
 
 #### b. SPARQL Query/Update Execution
 - `SPARQLExecute.js` provides low-level query/update/transaction logic.

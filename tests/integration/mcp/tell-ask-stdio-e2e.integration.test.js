@@ -7,20 +7,9 @@
 import { describe, test, expect, beforeEach } from 'vitest';
 import { spawn } from 'child_process';
 import { setTimeout } from 'timers/promises';
+import randomFactGenerator from '../../helpers/randomFactGenerator.js';
 
 describe('Tell/Ask STDIO E2E Integration Tests', () => {
-  // Generate random facts to ensure we're testing actual storage/retrieval
-  const generateRandomFact = () => {
-    const subjects = ['norgs', 'munj', 'kibberts', 'pelgers', 'pliplings'];
-    const colors = ['turquoise', 'magenta', 'chartreuse', 'vermillion', 'cerulean'];
-    const types = ['creatures', 'plants', 'crystals', 'beings', 'entities'];
-
-    const subject = subjects[Math.floor(Math.random() * subjects.length)];
-    const color = colors[Math.floor(Math.random() * colors.length)];
-    const type = types[Math.floor(Math.random() * types.length)];
-
-    return `${subject} are ${color} ${type}`;
-  };
 
   const stdioTellAsk = async (fact, question) => {
     console.log(`🔵 STDIO: Testing fact: "${fact}"`);
@@ -187,8 +176,8 @@ describe('Tell/Ask STDIO E2E Integration Tests', () => {
   };
 
   test('STDIO tell/ask round trip with clean protocol', async () => {
-    const fact = generateRandomFact();
-    const question = `what color are ${fact.split(' ')[0]}?`;
+    const fact = randomFactGenerator.generateFact();
+    const question = randomFactGenerator.generateQuestion(fact);
 
     const result = await stdioTellAsk(fact, question);
 
@@ -212,8 +201,8 @@ describe('Tell/Ask STDIO E2E Integration Tests', () => {
   }, 20000); // 20 second timeout
 
   test('STDIO protocol pollution detection', async () => {
-    const fact = generateRandomFact();
-    const question = `tell me about ${fact.split(' ')[0]}`;
+    const fact = randomFactGenerator.generateFact();
+    const question = `tell me about ${randomFactGenerator.extractSubject(fact)}`;
 
     try {
       const result = await stdioTellAsk(fact, question);
@@ -247,13 +236,13 @@ describe('Tell/Ask STDIO E2E Integration Tests', () => {
 
   test('Multiple STDIO operations maintain protocol cleanliness', async () => {
     const facts = [
-      generateRandomFact(),
-      generateRandomFact(),
-      generateRandomFact()
+      randomFactGenerator.generateFact(),
+      randomFactGenerator.generateFact(),
+      randomFactGenerator.generateFact()
     ];
 
     for (const fact of facts) {
-      const question = `what are ${fact.split(' ')[0]} like?`;
+      const question = `what are ${randomFactGenerator.extractSubject(fact)} like?`;
       const result = await stdioTellAsk(fact, question);
 
       // Each operation should maintain clean protocol

@@ -1,3 +1,4 @@
+In docs/BIG-FILES.md you will find a list of excessively long source files. Please examine the dependents and dependencies of each to see if each is actually in current use.
 
 trace from `export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/tell-ask-stdio-e2e.integration.test.js --reporter=verbose` and create docs/TELL-ASK-STATUS.md describing the current situation : which files participate in the Tell/Ask workflow, the data that is created and the overall architecture and workflow  
 
@@ -43,7 +44,6 @@ src/services/memory/MemoryDomainManager.js has similarity search - bet it's else
   compatibility wrapper:
 ● Read(src/services/ServiceManager.js)
 
-do you know why the stdio and http servers differed on this? Don't they use the same code?
 
 mcp/tools/SimpleVerbsService.js contains prompt fragments
 
@@ -76,7 +76,6 @@ substring(0, 100)
 
 src/services/embeddings/EmbeddingService.js has stardardize with pad zeros
 
-Read src/stores/SPARQLStore-original.js and make a checklist of the methods in SPARQLSTORE.md Then take each method in turn and trace its namesake in SPARQLStore.js through into the module that actually implements the method. If a correct implementation exists, update the checklist. Make a note of any that are missing. Then got through each of the missing or flawed methods and implement them properly.
 
 http://server/unset-base/
 
@@ -103,8 +102,7 @@ The SPARQL store is still empty, which means the data is only in the memory stor
   The issue is that the system architecture notes state "The memory and json storage backends are being phased out, sparql storage should be used throughout", but the API is still
    using memory storage.
 
-Figure out how best to move the API from using memory storage to data persisted in the SPARQL store. This has to be done following best practices. A list should be made of any code that still uses in-memory or JSON storage. This code will subsequently removed, so ensure all bases are covered.
-Save the plan and keep progress reports in docs/MORE-SPARQL.md
+
 
  The fix is to remove the redundant VerbRegistration.js recall implementation and ensure all recall
   operations use the proper SimpleVerbsService.js path through MemoryDomainManager.
@@ -130,6 +128,7 @@ Save the plan and keep progress reports in docs/MORE-SPARQL.md
 
 ## Cleanup
 
+* HARDCODED-URIS.md
 * remove old mcp tools (check prompts & resources)
 * move src/services/memory/MemoryDomainManager.js etc- looks zpt
 * Config.js has a weird restructuring thing
