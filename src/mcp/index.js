@@ -12,12 +12,12 @@ import { fileURLToPath } from 'url';
 // Ensure .env is loaded from the project root, regardless of CWD
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const projectRoot = path.resolve(__dirname, '..'); // Resolve to 'mcp' -> 'semem'
+const projectRoot = path.resolve(__dirname, '../..'); // Resolve to 'src/mcp' -> 'semem'
 dotenv.config({ path: path.join(projectRoot, '.env') });
 
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { mcpDebugger } from '../src/mcp/lib/debug-utils.js';
-import { createMCPServer } from '../src/mcp/server/server-factory.js';
+import { mcpDebugger } from './lib/debug-utils.js';
+import { createMCPServer } from './server/server-factory.js';
 
 /**
  * Main entry point

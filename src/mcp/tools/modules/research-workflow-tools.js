@@ -6,8 +6,8 @@
  */
 
 import { z } from 'zod';
-import { mcpDebugger } from '../lib/debug-utils.js';
-import { workflowOrchestrator } from '../lib/workflow-orchestrator.js';
+import { mcpDebugger } from '../../lib/debug-utils.js';
+import { workflowOrchestrator } from '../../lib/workflow-orchestrator.js';
 
 // Input schemas for research workflow tools
 

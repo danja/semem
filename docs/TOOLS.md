@@ -2,17 +2,16 @@
 
 This document lists all the tools supported by the Semem MCP (Model Context Protocol) server. These tools enable AI agents to interact with the semantic memory system through standardized interfaces.
 
-## ⚠️ Tool Handler Consolidation Needed
+## ✅ Tool Architecture Refactored
 
-**Important Note:** The MCP server currently has multiple tool handlers that need consolidation:
+**Update:** The MCP tool architecture has been refactored and consolidated:
 
-1. **Main Tool Handler** (line ~1281 in mcp/index.js) - Handles tools with names like `semem_extract_concepts`
-2. **Simple Verbs Handler** (line ~2750 in mcp/index.js) - Handles basic tools like `tell`, `ask`
-3. **Schema-Defined Tools** (VerbSchemas.js) - Defines tools with names like `semem-tell`, `semem-ask`
+1. **Core Tools** (7 essential tools) - Implemented in `src/mcp/tools/core/`
+2. **Unified Router** - Single tool routing system in `src/mcp/server/handlers/tool-router.js`
+3. **Module System** - Specialized tools organized in `src/mcp/tools/modules/`
+4. **Deprecated Tools** - Legacy tools automatically redirected to core equivalents
 
-**Current State:** Inspector shows simple names (`tell`, `ask`) because it uses a minimal demo handler. The full tool handler (line ~552) also uses simple names (`tell`, `ask`, `augment`, etc.), while schemas define prefixed names (`semem-tell`, `semem-ask`) that aren't currently used.
-
-**Action Required:** Consolidate these handlers to use a single naming convention and eliminate duplicate/conflicting handlers.
+**Benefits:** Eliminated redundancy, simplified maintenance, clear separation of concerns, and consistent tool patterns.
 
 ## Simple Verbs
 
@@ -284,6 +283,32 @@ High-level research and learning workflow tools.
 **Parameters:**
 - `learningData` (array, required): Learning examples with queries and responses
 - `options` (object, optional): Learning configuration options
+
+## Deprecated Tools (Automatically Redirected)
+
+The following tools have been deprecated and are automatically redirected to core tools:
+
+### Concept & Embedding Tools → `augment`
+- `semem_extract_concepts` → `augment` with `operation: 'extract_concepts'`
+- `semem_generate_embedding` → `augment` with `operation: 'generate_embedding'`
+
+### Storage Tools → `tell`
+- `semem_store_interaction` → `tell` with interaction format
+- `uploadDocument` → `tell` with document processing
+
+### Query Tools → `ask`
+- `semem_retrieve_memories` → `ask` with memory retrieval
+- `semem_answer` → `ask` with comprehensive mode
+- `semem_ask` → `ask` with standard processing
+
+### Memory Management Tools → Core Integration
+- `remember` → `augment` with `operation: 'remember'`
+- `forget` → `augment` with `operation: 'forget'`
+- `fade_memory` → `augment` with `operation: 'fade'`
+- `recall` → `ask` with memory domain
+- `project_context` → `augment` with `operation: 'project_context'`
+
+**Note:** All deprecated tools continue to work seamlessly through automatic redirection to the appropriate core tools.
 
 ## Usage Notes
 

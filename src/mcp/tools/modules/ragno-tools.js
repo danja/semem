@@ -6,15 +6,15 @@
  */
 
 import { z } from 'zod';
-import { mcpDebugger } from '../lib/debug-utils.js';
-import { initializeServices, getMemoryManager } from '../lib/initialization.js';
-import { SafeOperations } from '../lib/safe-operations.js';
+import { mcpDebugger } from '../../lib/debug-utils.js';
+import { initializeServices, getMemoryManager } from '../../lib/initialization.js';
+import { SafeOperations } from '../../lib/safe-operations.js';
 
 // Import Ragno functionality
-import { decomposeCorpus } from '../../src/ragno/decomposeCorpus.js';
-import { enrichWithEmbeddings } from '../../src/ragno/enrichWithEmbeddings.js';
-import { augmentWithAttributes } from '../../src/ragno/augmentWithAttributes.js';
-import { aggregateCommunities } from '../../src/ragno/aggregateCommunities.js';
+import { decomposeCorpus } from '../../../ragno/decomposeCorpus.js';
+import { enrichWithEmbeddings } from '../../../ragno/enrichWithEmbeddings.js';
+import { augmentWithAttributes } from '../../../ragno/augmentWithAttributes.js';
+import { aggregateCommunities } from '../../../ragno/aggregateCommunities.js';
 
 /**
  * Export decomposition results to SPARQL endpoint

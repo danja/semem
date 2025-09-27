@@ -6,9 +6,9 @@
  */
 
 import { z } from 'zod';
-import { mcpDebugger } from '../lib/debug-utils.js';
-import { initializeServices, getMemoryManager } from '../lib/initialization.js';
-import { SafeOperations } from '../lib/safe-operations.js';
+import { mcpDebugger } from '../../lib/debug-utils.js';
+import { initializeServices, getMemoryManager } from '../../lib/initialization.js';
+import { SafeOperations } from '../../lib/safe-operations.js';
 
 // SPARQL Tool Input Schemas
 const SPARQLExecuteQuerySchema = z.object({

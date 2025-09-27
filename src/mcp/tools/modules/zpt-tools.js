@@ -7,9 +7,9 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema
 } from '@modelcontextprotocol/sdk/types.js';
-import { initializeServices, getMemoryManager } from '../lib/initialization.js';
-import { SafeOperations } from '../lib/safe-operations.js';
-import { mcpDebugger } from '../lib/debug-utils.js';
+import { initializeServices, getMemoryManager } from '../../lib/initialization.js';
+import { SafeOperations } from '../../lib/safe-operations.js';
+import { mcpDebugger } from '../../lib/debug-utils.js';
 
 // ZPT components will be loaded lazily to avoid blocking imports
 

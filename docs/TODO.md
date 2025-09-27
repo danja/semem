@@ -1,3 +1,14 @@
+mcp index tests
+* export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/tell-tool.integration.test.js --reporter=verbose
+* export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/ask-tool.integration.test.js --reporter=verbose
+* export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/augment-tool.integration.test.js --reporter=verbose
+* export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/zoom-tool.integration.test.js --reporter=verbose
+* export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/pan-tool.integration.test.js --reporter=verbose
+* export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/tilt-tool.integration.test.js --reporter=verbose
+* export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/inspect-tool.integration.test.js --reporter=verbose
+
+
+
 In docs/BIG-FILES.md you will find a list of excessively long source files. Please examine the dependents and dependencies of each to see if each is actually in current use.
 
 trace from `export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/tell-ask-stdio-e2e.integration.test.js --reporter=verbose` and create docs/TELL-ASK-STATUS.md describing the current situation : which files participate in the Tell/Ask workflow, the data that is created and the overall architecture and workflow  

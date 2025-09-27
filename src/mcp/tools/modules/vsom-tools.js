@@ -6,12 +6,12 @@
  */
 
 import { z } from 'zod';
-import { mcpDebugger } from '../lib/debug-utils.js';
-import { initializeServices, getMemoryManager } from '../lib/initialization.js';
-import { SafeOperations } from '../lib/safe-operations.js';
+import { mcpDebugger } from '../../lib/debug-utils.js';
+import { initializeServices, getMemoryManager } from '../../lib/initialization.js';
+import { SafeOperations } from '../../lib/safe-operations.js';
 
 // Import VSOM functionality
-import VSOMService from '../../src/services/vsom/VSOMService.js';
+import VSOMService from '../../../services/vsom/VSOMService.js';
 
 // VSOM Tool Input Schemas
 const VSOMCreateInstanceSchema = z.object({

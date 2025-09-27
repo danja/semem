@@ -3,7 +3,7 @@
  * Provides neutral logging interface that can be enhanced with hooks
  */
 
-import { createUnifiedLogger } from '../../src/utils/LoggingConfig.js';
+import { createUnifiedLogger } from '../../utils/LoggingConfig.js';
 
 // Use unified STDIO-aware logger
 export const verbsLogger = createUnifiedLogger('simple-verbs');
