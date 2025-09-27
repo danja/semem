@@ -7,15 +7,15 @@ import { z } from 'zod';
 import path from 'path';
 // Removed: initializeServices, getMemoryManager - now using unified ServiceManager
 import { SafeOperations } from '../lib/safe-operations.js';
-import { SPARQL_CONFIG } from '../../config/preferences.js';
+import { SPARQL_CONFIG } from '../../../config/preferences.js';
 
 // Import existing complex tools to wrap
-import { ZPTNavigationService } from './zpt-tools.js';
-import { EnhancementCoordinator } from '../../src/services/enhancement/EnhancementCoordinator.js';
+import { ZPTNavigationService } from './modules/zpt-tools.js';
+import { EnhancementCoordinator } from '../../../src/services/enhancement/EnhancementCoordinator.js';
 // Note: HybridContextManager removed - was deprecated and broken
-import { MemoryDomainManager } from '../../src/services/memory/MemoryDomainManager.js';
-import { MemoryRelevanceEngine } from '../../src/services/memory/MemoryRelevanceEngine.js';
-import { AskOperationTimer, TellOperationTimer } from '../../src/utils/PerformanceTiming.js';
+import { MemoryDomainManager } from '../../../src/services/memory/MemoryDomainManager.js';
+import { MemoryRelevanceEngine } from '../../../src/services/memory/MemoryRelevanceEngine.js';
+import { AskOperationTimer, TellOperationTimer } from '../../../src/utils/PerformanceTiming.js';
 
 // Import modular components
 import { logOperation, logPerformance, verbsLogger } from './VerbsLogger.js';
@@ -38,6 +38,9 @@ import {
     // Note: hybridContextManager removed - was deprecated and broken
     // Memory domain management services
     this.memoryDomainManager = null;
+
+    // Core tool names for router interface
+    this.coreToolNames = ['tell', 'ask', 'augment', 'zoom', 'pan', 'tilt', 'inspect'];
     this.memoryRelevanceEngine = null;
   }
 
@@ -59,7 +62,7 @@ import {
 
     if (!this.memoryManager) {
       // Use unified ServiceManager instead of duplicating initialization logic
-      const serviceManager = (await import('../../src/services/ServiceManager.js')).default;
+      const serviceManager = (await import('../../../src/services/ServiceManager.js')).default;
       const services = await serviceManager.getServices();
 
       // Use shared services from ServiceManager (eliminates duplication)
@@ -105,6 +108,71 @@ import {
         hasSafeOps: !!this.safeOps,
         hasStateManager: !!this.stateManager
       });
+    }
+  }
+
+  /**
+   * Router interface - Check if this service handles the given tool name
+   */
+  handles(toolName) {
+    return this.coreToolNames.includes(toolName);
+  }
+
+  /**
+   * Router interface - Execute a tool with standardized response format
+   */
+  async execute(toolName, args) {
+    try {
+      // Ensure service is initialized
+      await this.initialize();
+
+      // Call the appropriate method
+      let result;
+      switch (toolName) {
+        case 'tell':
+          result = await this.tell(args);
+          break;
+        case 'ask':
+          result = await this.ask(args);
+          break;
+        case 'augment':
+          result = await this.augment(args);
+          break;
+        case 'zoom':
+          result = await this.zoom(args);
+          break;
+        case 'pan':
+          result = await this.pan(args);
+          break;
+        case 'tilt':
+          result = await this.tilt(args);
+          break;
+        case 'inspect':
+          result = await this.inspect(args);
+          break;
+        default:
+          throw new Error(`Unknown tool: ${toolName}`);
+      }
+
+      // Return in MCP response format
+      return {
+        content: [{
+          type: 'text',
+          text: JSON.stringify(result, null, 2)
+        }]
+      };
+    } catch (error) {
+      // Return error in MCP response format
+      return {
+        content: [{
+          type: 'text',
+          text: JSON.stringify({
+            success: false,
+            error: error.message,
+            tool: toolName
+          }, null, 2)
+        }]
+      };
     }
   }
 

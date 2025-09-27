@@ -3,12 +3,12 @@
  * Replaces the massive if-else chain with clean routing to core tools and modules
  */
 
-import { CoreToolsService } from '../../tools/core/core-tools.js';
+import { SimpleVerbsService } from '../../tools/SimpleVerbsService.js';
 import { mcpDebugger } from '../../lib/debug-utils.js';
 
 export class ToolRouter {
   constructor() {
-    this.coreTools = new CoreToolsService();
+    this.coreTools = new SimpleVerbsService();
     this.modules = new Map();
     this.initialized = false;
   }
