@@ -105,7 +105,7 @@ export class HybridContextManager {
             mode: options.mode
         });
 
-        logger.debug('🔄 CONSOLE: HybridContextManager processQuery called with options:', {
+        logger.debug('🔄 HybridContextManager processQuery called with options:', {
             useContext: options.useContext,
             useHyDE: options.useHyDE,
             useWikipedia: options.useWikipedia,
@@ -252,7 +252,7 @@ export class HybridContextManager {
 
         // Enhancement search (if requested) - check cache first, then live enhancement
         if (this._hasEnhancements(options) && this.enhancementCoordinator) {
-            logger.debug('🔍 CONSOLE: Starting enhancement search with services:', {
+            logger.debug('🔍 Starting enhancement search with services:', {
                 useHyDE: options.useHyDE,
                 useWikipedia: options.useWikipedia,
                 useWikidata: options.useWikidata,
@@ -268,7 +268,7 @@ export class HybridContextManager {
                         }
 
                         // No cache hit - proceed with live enhancement
-                        logger.debug('🚀 CONSOLE: Cache miss - running live enhancements');
+                        logger.debug('🚀 Cache miss - running live enhancements');
                         logger.debug('🔄 No cache hit, proceeding with live enhancement');
                         return this.enhancementCoordinator.enhanceQuery(query, enhancementOptions);
                     })

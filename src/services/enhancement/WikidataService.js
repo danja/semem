@@ -53,14 +53,14 @@ export class WikidataService {
      * @returns {Object} Wikidata entity search results
      */
     async searchWikidataEntities(query, options = {}) {
-        logger.info(`🔍 Searching Wikidata entities for: "${query}"`);
+        logger.debug(`🔍 Searching Wikidata entities for: "${query}"`);
 
         const limit = options.limit || this.settings.maxEntities;
         const cacheKey = `entities:${query}:${limit}`;
 
         // Check cache first
         if (this.settings.enableCaching && this.entityCache.has(cacheKey)) {
-            logger.info('📋 Using cached Wikidata entity results');
+            logger.debug('📋 Using cached Wikidata entity results');
             return this.entityCache.get(cacheKey);
         }
 
@@ -122,7 +122,7 @@ export class WikidataService {
                 this.entityCache.set(cacheKey, searchResults);
             }
 
-            logger.info(`✅ Found ${entities.length} Wikidata entities`);
+            logger.debug(`✅ Found ${entities.length} Wikidata entities`);
             return searchResults;
 
         } catch (error) {
@@ -139,7 +139,7 @@ export class WikidataService {
      * @returns {Object} Detailed entity information with relationships
      */
     async getEntityDetails(entityIds, options = {}) {
-        logger.info(`📄 Fetching details for ${entityIds.length} Wikidata entities`);
+        logger.debug(`📄 Fetching details for ${entityIds.length} Wikidata entities`);
 
         const maxEntities = Math.min(entityIds.length, options.maxEntities || this.settings.maxEntities);
         const entitiesToFetch = entityIds.slice(0, maxEntities);
@@ -148,7 +148,7 @@ export class WikidataService {
 
         // Check cache first
         if (this.settings.enableCaching && this.entityCache.has(cacheKey)) {
-            logger.info('📋 Using cached Wikidata entity details');
+            logger.debug('📋 Using cached Wikidata entity details');
             return this.entityCache.get(cacheKey);
         }
 
@@ -198,7 +198,7 @@ export class WikidataService {
                 this.entityCache.set(cacheKey, detailsResult);
             }
 
-            logger.info(`✅ Retrieved details for ${entityDetails.entities.length} entities with ${entityDetails.relationships.length} relationships`);
+            logger.debug(`✅ Retrieved details for ${entityDetails.entities.length} entities with ${entityDetails.relationships.length} relationships`);
             return detailsResult;
 
         } catch (error) {
@@ -220,7 +220,7 @@ export class WikidataService {
             return [];
         }
 
-        logger.info('💾 Storing Wikidata context with relationships...');
+        logger.debug('💾 Storing Wikidata context with relationships...');
 
         const results = [];
 
@@ -278,7 +278,7 @@ export class WikidataService {
                 });
             }
 
-            logger.info(`✅ Stored ${results.length} Wikidata items (${entityDetails.entities.length} entities, ${entityDetails.relationships.length} relationships)`);
+            logger.debug(`✅ Stored ${results.length} Wikidata items (${entityDetails.entities.length} entities, ${entityDetails.relationships.length} relationships)`);
             return results;
 
         } catch (error) {
@@ -296,7 +296,7 @@ export class WikidataService {
      * @returns {Object} Enhanced query context
      */
     async enhanceQueryWithWikidata(originalQuery, entitySearchResults, entityDetails = null) {
-        logger.info('🔍 Enhancing query with Wikidata context...');
+        logger.debug('🔍 Enhancing query with Wikidata context...');
 
         // Build Wikidata context
         const wikidataContext = {
@@ -330,7 +330,7 @@ export class WikidataService {
         // Create enhanced prompt
         const enhancedPrompt = this.buildEnhancedPrompt(originalQuery, wikidataContext);
 
-        logger.info(`✅ Enhanced query with Wikidata context (${entitySearchResults.entities.length} entities, ${wikidataContext.relationships.length} relationships)`);
+        logger.debug(`✅ Enhanced query with Wikidata context (${entitySearchResults.entities.length} entities, ${wikidataContext.relationships.length} relationships)`);
 
         return {
             enhancedPrompt,
@@ -353,7 +353,7 @@ export class WikidataService {
      * @returns {Object} Complete Wikidata enhancement result
      */
     async processQueryWithWikidata(query, options = {}) {
-        logger.info(`🔍 Processing query with full Wikidata pipeline: "${query}"`);
+        logger.debug(`🔍 Processing query with full Wikidata pipeline: "${query}"`);
 
         try {
             // Step 1: Search for entities
@@ -800,7 +800,7 @@ ANSWER:`;
     clearCache() {
         this.entityCache.clear();
         this.relationshipCache.clear();
-        logger.info('📋 Wikidata caches cleared');
+        logger.debug('📋 Wikidata caches cleared');
     }
 
     /**

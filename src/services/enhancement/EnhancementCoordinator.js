@@ -95,7 +95,7 @@ export class EnhancementCoordinator {
                 ...options.webSearchOptions
             });
 
-            logger.info('✅ Enhancement services initialized successfully');
+            logger.debug('✅ Enhancement services initialized successfully');
 
         } catch (error) {
             logger.error('❌ Failed to initialize enhancement services:', error.message);
@@ -115,14 +115,14 @@ export class EnhancementCoordinator {
      * @returns {Object} Comprehensive enhancement result
      */
     async enhanceQuery(query, options = {}) {
-        logger.debug('🔍 CONSOLE: EnhancementCoordinator starting with services:', {
+        logger.debug('🔍 EnhancementCoordinator starting with services:', {
             useHyDE: !!options.useHyDE,
             useWikipedia: !!options.useWikipedia,
             useWikidata: !!options.useWikidata,
             useWebSearch: !!options.useWebSearch
         });
-        logger.info(`🔍 Coordinating query enhancement: "${query}"`);
-        logger.info(`Enhancement options: HyDE(${!!options.useHyDE}), Wikipedia(${!!options.useWikipedia}), Wikidata(${!!options.useWikidata}), WebSearch(${!!options.useWebSearch})`);
+        logger.debug(`🔍 Coordinating query enhancement: "${query}"`);
+        logger.debug(`Enhancement options: HyDE(${!!options.useHyDE}), Wikipedia(${!!options.useWikipedia}), Wikidata(${!!options.useWikidata}), WebSearch(${!!options.useWebSearch})`);
 
         const startTime = Date.now();
         this.stats.totalEnhancements++;
@@ -136,7 +136,7 @@ export class EnhancementCoordinator {
             if (options.useWebSearch && this.services.webSearch) servicesToUse.push('webSearch');
 
             if (servicesToUse.length === 0) {
-                logger.debug('⚠️ CONSOLE: No enhancement services requested - using original query only');
+                logger.debug('⚠️ No enhancement services requested - using original query only');
                 logger.warn('No enhancement services requested');
                 return {
                     success: true,
@@ -149,7 +149,7 @@ export class EnhancementCoordinator {
             }
 
             // Execute enhancements
-            console.log(`🚀 CONSOLE: Running ${servicesToUse.length} enhancement services:`, servicesToUse);
+            logger.debug(`🚀 Running ${servicesToUse.length} enhancement services:`, servicesToUse);
             let enhancementResults;
             if (this.settings.enableConcurrentProcessing && servicesToUse.length > 1) {
                 enhancementResults = await this.executeConcurrentEnhancements(query, servicesToUse, options);
@@ -197,7 +197,7 @@ export class EnhancementCoordinator {
                 }
             };
 
-            logger.info(`✅ Query enhancement completed in ${enhancementTime}ms using ${servicesToUse.length} services`);
+            logger.debug(`✅ Query enhancement completed in ${enhancementTime}ms using ${servicesToUse.length} services`);
             return result;
 
         } catch (error) {
@@ -207,7 +207,7 @@ export class EnhancementCoordinator {
             logger.error('❌ Query enhancement failed:', error.message);
 
             if (this.settings.fallbackOnError) {
-                logger.info('🔄 Falling back to original query');
+                logger.debug('🔄 Falling back to original query');
                 return {
                     success: true,
                     originalQuery: query,
@@ -232,7 +232,7 @@ export class EnhancementCoordinator {
      * @returns {Object} Enhancement results from all services
      */
     async executeConcurrentEnhancements(query, servicesToUse, options) {
-        logger.info(`⚡ Executing ${servicesToUse.length} enhancements concurrently`);
+        logger.debug(`⚡ Executing ${servicesToUse.length} enhancements concurrently`);
 
         const enhancementPromises = servicesToUse.map(async (serviceName) => {
             try {
@@ -261,7 +261,7 @@ export class EnhancementCoordinator {
             }
         }
 
-        logger.info(`✅ Concurrent enhancements completed: ${successful.length} successful, ${failed.length} failed`);
+        logger.debug(`✅ Concurrent enhancements completed: ${successful.length} successful, ${failed.length} failed`);
 
         return { successful, failed, executionMode: 'concurrent' };
     }
@@ -276,7 +276,7 @@ export class EnhancementCoordinator {
      * @returns {Object} Enhancement results from all services
      */
     async executeSequentialEnhancements(query, servicesToUse, options) {
-        logger.info(`⏭️ Executing ${servicesToUse.length} enhancements sequentially`);
+        logger.debug(`⏭️ Executing ${servicesToUse.length} enhancements sequentially`);
 
         const successful = [];
         const failed = [];
@@ -292,7 +292,7 @@ export class EnhancementCoordinator {
             }
         }
 
-        logger.info(`✅ Sequential enhancements completed: ${successful.length} successful, ${failed.length} failed`);
+        logger.debug(`✅ Sequential enhancements completed: ${successful.length} successful, ${failed.length} failed`);
 
         return { successful, failed, executionMode: 'sequential' };
     }
@@ -334,7 +334,7 @@ export class EnhancementCoordinator {
      * @returns {Object} Combined enhanced context
      */
     async combineEnhancedContext(originalQuery, enhancementResults, options = {}) {
-        logger.info('🔗 Combining enhancement contexts');
+        logger.debug('🔗 Combining enhancement contexts');
 
         const combinedContext = {
             originalQuery,
@@ -400,7 +400,7 @@ export class EnhancementCoordinator {
                     break;
 
                 case 'webSearch':
-                    logger.debug('🌐 CONSOLE: EnhancementCoordinator processing web search results', {
+                    logger.debug('🌐 EnhancementCoordinator processing web search results', {
                         hasResults: !!(result.results && result.results.length > 0),
                         resultCount: result.results?.length || 0,
                         hasContextualInfo: !!result.contextualInfo,
@@ -417,11 +417,11 @@ export class EnhancementCoordinator {
                             .slice(0, 3)
                             .map((item, i) => `${i + 1}. ${item.title}: ${item.description || 'No description'}`)
                             .join('\n');
-                        logger.debug('🌐 CONSOLE: Web search summaries created', { webSummaries });
+                        logger.debug('🌐 Web search summaries created', { webSummaries });
                         contextSections.push(webSummaries); // Remove the "WEB SEARCH RESULTS:" header to make it more natural
                     }
                     if (result.contextualInfo) {
-                        logger.debug('🌐 CONSOLE: Adding contextual info', {
+                        logger.debug('🌐 Adding contextual info', {
                             length: result.contextualInfo.length,
                             preview: result.contextualInfo.substring(0, 100)
                         });
@@ -434,7 +434,7 @@ export class EnhancementCoordinator {
         // Combine sections and check length
         const fullContext = contextSections.join('\n');
 
-        logger.debug('🔥 DEBUG: EnhancementCoordinator final context composition', {
+        logger.debug('🔥 EnhancementCoordinator final context composition', {
             sectionCount: contextSections.length,
             sections: contextSections.map((section, i) => ({
                 index: i,
@@ -450,7 +450,7 @@ export class EnhancementCoordinator {
             const truncatedContext = fullContext.substring(0, this.settings.maxCombinedContextLength) + '\n[Context truncated due to length...]';
             combinedContext.combinedPrompt = truncatedContext;
             combinedContext.metadata.truncated = true;
-            logger.debug('⚠️ CONSOLE: Context truncated due to length', {
+            logger.debug('⚠️ Context truncated due to length', {
                 originalLength: fullContext.length,
                 truncatedLength: truncatedContext.length,
                 maxAllowed: this.settings.maxCombinedContextLength
@@ -458,12 +458,12 @@ export class EnhancementCoordinator {
         } else {
             combinedContext.combinedPrompt = fullContext;
             combinedContext.metadata.truncated = false;
-            logger.debug('✅ CONSOLE: Context not truncated', { length: fullContext.length });
+            logger.debug('✅ Context not truncated', { length: fullContext.length });
         }
 
         combinedContext.metadata.totalLength = combinedContext.combinedPrompt.length;
 
-        logger.info(`✅ Combined context created (${combinedContext.metadata.totalLength} chars, ${enhancementResults.successful.length} services)`);
+        logger.debug(`✅ Combined context created (${combinedContext.metadata.totalLength} chars, ${enhancementResults.successful.length} services)`);
 
         return combinedContext;
     }
@@ -478,7 +478,7 @@ export class EnhancementCoordinator {
      * @returns {Object} Enhanced response
      */
     async generateEnhancedResponse(originalQuery, combinedContext, options = {}) {
-        logger.info('💭 Generating enhanced response');
+        logger.debug('💭 Generating enhanced response');
 
         if (!this.llmHandler) {
             logger.warn('No LLM handler available for response generation');
@@ -619,7 +619,7 @@ COMPREHENSIVE ANSWER:`;
             averageResponseTime: 0,
             lastEnhancementTime: null
         };
-        logger.info('📊 Enhancement coordinator statistics reset');
+        logger.debug('📊 Enhancement coordinator statistics reset');
     }
 
     /**
@@ -629,7 +629,7 @@ COMPREHENSIVE ANSWER:`;
         for (const [serviceName, service] of Object.entries(this.services)) {
             if (typeof service.clearCache === 'function') {
                 service.clearCache();
-                logger.info(`🗑️ Cleared cache for ${serviceName} service`);
+                logger.debug(`🗑️ Cleared cache for ${serviceName} service`);
             }
         }
     }

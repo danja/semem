@@ -42,7 +42,7 @@ export class HyDEService {
      * @returns {Object} Generated hypothetical document
      */
     async generateHypotheticalDocument(queryText, options = {}) {
-        logger.info('🔮 Generating HyDE hypothetical document...');
+        logger.debug('🔮 Generating HyDE hypothetical document...');
 
         const prompt = this.buildHyDEPrompt(queryText, options);
 
@@ -62,7 +62,7 @@ export class HyDEService {
                 length: content.length
             };
 
-            logger.info(`✅ Generated HyDE document (${content.length} chars)`);
+            logger.debug(`✅ Generated HyDE document (${content.length} chars)`);
             return hypotheticalDoc;
 
         } catch (error) {
@@ -79,11 +79,11 @@ export class HyDEService {
      */
     async extractConceptsFromHypothetical(hypotheticalDoc) {
         if (!this.settings.conceptExtractionEnabled) {
-            logger.info('Concept extraction disabled, skipping...');
+            logger.debug('Concept extraction disabled, skipping...');
             return [];
         }
 
-        logger.info('🧠 Extracting concepts from HyDE document...');
+        logger.debug('🧠 Extracting concepts from HyDE document...');
 
         try {
             const concepts = await this.llmHandler.extractConcepts(hypotheticalDoc.content);
@@ -101,7 +101,7 @@ export class HyDEService {
                     confidence: this.calculateConceptConfidence(concept, hypotheticalDoc.content)
                 }));
 
-            logger.info(`✅ Extracted ${enhancedConcepts.length} concepts from HyDE document`);
+            logger.debug(`✅ Extracted ${enhancedConcepts.length} concepts from HyDE document`);
             return enhancedConcepts;
 
         } catch (error) {
@@ -123,7 +123,7 @@ export class HyDEService {
             return null;
         }
 
-        logger.info('💾 Storing HyDE hypothetical document...');
+        logger.debug('💾 Storing HyDE hypothetical document...');
 
         try {
             // Generate embedding for the hypothetical document
@@ -153,7 +153,7 @@ export class HyDEService {
                 originalQuery: hypotheticalDoc.originalQuery
             };
 
-            logger.info(`✅ Stored HyDE hypothetical document: ${hypotheticalDoc.id}`);
+            logger.debug(`✅ Stored HyDE hypothetical document: ${hypotheticalDoc.id}`);
             return storedDocument;
 
         } catch (error) {
@@ -171,7 +171,7 @@ export class HyDEService {
      * @returns {Object} Enhanced query context
      */
     async enhanceQueryWithHyDE(originalQuery, hypotheticalDoc, concepts = []) {
-        logger.info('🔍 Enhancing query with HyDE context...');
+        logger.debug('🔍 Enhancing query with HyDE context...');
 
         // Build enhanced context
         const hydeContext = {
@@ -196,7 +196,7 @@ export class HyDEService {
         // Create enhanced prompt
         const enhancedPrompt = this.buildEnhancedPrompt(originalQuery, hydeContext);
 
-        logger.info(`✅ Enhanced query with HyDE context (${concepts.length} concepts)`);
+        logger.debug(`✅ Enhanced query with HyDE context (${concepts.length} concepts)`);
 
         return {
             enhancedPrompt,
@@ -218,7 +218,7 @@ export class HyDEService {
      * @returns {Object} Complete HyDE enhancement result
      */
     async processQueryWithHyDE(query, options = {}) {
-        logger.info(`🔮 Processing query with full HyDE pipeline: "${query}"`);
+        logger.debug(`🔮 Processing query with full HyDE pipeline: "${query}"`);
 
         try {
             // Step 1: Generate hypothetical document

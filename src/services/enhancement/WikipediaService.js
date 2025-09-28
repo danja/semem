@@ -50,14 +50,14 @@ export class WikipediaService {
      * @returns {Object} Wikipedia search results
      */
     async searchWikipedia(query, options = {}) {
-        logger.info(`🔍 Searching Wikipedia for: "${query}"`);
+        logger.debug(`🔍 Searching Wikipedia for: "${query}"`);
 
         const limit = options.limit || this.settings.maxResults;
         const cacheKey = `${query}:${limit}`;
 
         // Check cache first
         if (this.settings.enableCaching && this.searchCache.has(cacheKey)) {
-            logger.info('📋 Using cached Wikipedia results');
+            logger.debug('📋 Using cached Wikipedia results');
             return this.searchCache.get(cacheKey);
         }
 
@@ -119,7 +119,7 @@ export class WikipediaService {
                 this.searchCache.set(cacheKey, searchObject);
             }
 
-            logger.info(`✅ Found ${searchResults.length} Wikipedia articles`);
+            logger.debug(`✅ Found ${searchResults.length} Wikipedia articles`);
             return searchObject;
 
         } catch (error) {
@@ -136,7 +136,7 @@ export class WikipediaService {
      * @returns {Array} Articles with detailed content
      */
     async fetchArticleContent(articles, options = {}) {
-        logger.info(`📄 Fetching content for ${articles.length} Wikipedia articles`);
+        logger.debug(`📄 Fetching content for ${articles.length} Wikipedia articles`);
 
         const maxArticles = Math.min(articles.length, options.maxArticles || this.settings.maxResults);
         const articlesWithContent = [];
@@ -213,7 +213,7 @@ export class WikipediaService {
             }
         }
 
-        logger.info(`✅ Retrieved content for ${articlesWithContent.filter(a => a.hasContent).length}/${maxArticles} articles`);
+        logger.debug(`✅ Retrieved content for ${articlesWithContent.filter(a => a.hasContent).length}/${maxArticles} articles`);
         return articlesWithContent;
     }
 
@@ -230,7 +230,7 @@ export class WikipediaService {
             return [];
         }
 
-        logger.info('💾 Storing Wikipedia context with embeddings...');
+        logger.debug('💾 Storing Wikipedia context with embeddings...');
 
         const results = [];
 
@@ -270,7 +270,7 @@ export class WikipediaService {
                 });
             }
 
-            logger.info(`✅ Stored ${results.length} Wikipedia articles with context`);
+            logger.debug(`✅ Stored ${results.length} Wikipedia articles with context`);
             return results;
 
         } catch (error) {
@@ -288,7 +288,7 @@ export class WikipediaService {
      * @returns {Object} Enhanced query context
      */
     async enhanceQueryWithWikipedia(originalQuery, searchResults, articlesWithContent = null) {
-        logger.info('🔍 Enhancing query with Wikipedia context...');
+        logger.debug('🔍 Enhancing query with Wikipedia context...');
 
         // Use articles with content if provided, otherwise use search results
         const articles = articlesWithContent || searchResults.results;
@@ -320,7 +320,7 @@ export class WikipediaService {
         // Create enhanced prompt
         const enhancedPrompt = this.buildEnhancedPrompt(originalQuery, wikipediaContext);
 
-        logger.info(`✅ Enhanced query with Wikipedia context (${articles.length} articles)`);
+        logger.debug(`✅ Enhanced query with Wikipedia context (${articles.length} articles)`);
 
         return {
             enhancedPrompt,
@@ -342,7 +342,7 @@ export class WikipediaService {
      * @returns {Object} Complete Wikipedia enhancement result
      */
     async processQueryWithWikipedia(query, options = {}) {
-        logger.info(`🔍 Processing query with full Wikipedia pipeline: "${query}"`);
+        logger.debug(`🔍 Processing query with full Wikipedia pipeline: "${query}"`);
 
         try {
             // Step 1: Search Wikipedia
@@ -599,7 +599,7 @@ ANSWER:`;
      */
     clearCache() {
         this.searchCache.clear();
-        logger.info('📋 Wikipedia search cache cleared');
+        logger.debug('📋 Wikipedia search cache cleared');
     }
 
     /**

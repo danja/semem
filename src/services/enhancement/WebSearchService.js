@@ -52,7 +52,7 @@ export class WebSearchService {
             lastQueryTime: null
         };
 
-        logger.info('🔍 WebSearchService initialized');
+        logger.debug('🔍 WebSearchService initialized');
     }
 
     /**
@@ -63,7 +63,7 @@ export class WebSearchService {
      * @returns {Promise<Object>} Enhancement results
      */
     async enhance(query, options = {}) {
-        console.log('🌐 CONSOLE: WebSearchService starting DuckDuckGo search for:', query.substring(0, 50) + '...');
+        logger.debug('🌐 WebSearchService starting DuckDuckGo search for:', query.substring(0, 50) + '...');
         const startTime = Date.now();
 
         try {
@@ -120,7 +120,7 @@ export class WebSearchService {
             );
             this.stats.lastQueryTime = new Date().toISOString();
 
-            logger.info('🔍 Web search completed', {
+            logger.debug('🔍 Web search completed', {
                 query: query.substring(0, 50),
                 resultsCount: enhancementResult.results?.length || 0,
                 duration: Date.now() - startTime
@@ -457,7 +457,7 @@ export class WebSearchService {
             averageResponseTime: 0,
             lastQueryTime: null
         };
-        logger.info('🔍 WebSearchService reset');
+        logger.debug('🔍 WebSearchService reset');
     }
 }
 

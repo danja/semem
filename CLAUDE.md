@@ -181,6 +181,12 @@ const llmHandler = new LLMHandler(llmProvider, modelConfig.chatModel);
 ## Error Handling
 - Fallbacks are not to be used. Informative errors should be thrown so the underlying problem can be fixed. No masking!
 
+## Logging Guidelines
+- **NEVER use console.log, console.error, or any console.* methods** - these pollute the STDIO stream and break MCP protocol communication
+- Always use the unified logger: `import { createUnifiedLogger } from './utils/LoggingConfig.js'` then `const logger = createUnifiedLogger('ComponentName');`
+- Use appropriate log levels: `logger.debug()`, `logger.info()`, `logger.warn()`, `logger.error()`
+- The logging system automatically handles STDIO-aware output and prevents protocol pollution
+
 # Using Gemini CLI for Large Codebase Analysis
 
   When analyzing large codebases or multiple files that might exceed context limits, use the Gemini CLI with its massive

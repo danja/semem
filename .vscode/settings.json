@@ -1,0 +1,28 @@
+{
+  "files.exclude": {
+    "docker-data/**": true,
+    "**/*.log": true,
+    "node_modules/**": true,
+    ".git/**": true,
+    "**/.cache/**": true,
+    "**/logs/**": true,
+    "**/temp/**": true,
+    "**/coverage/**": true,
+    "**/*.tgz": true,
+    "**/*.zip": true,
+    "**/playwright-report/**": true,
+    "**/test-results/**": true
+  },
+  "search.exclude": {
+    "docker-data/**": true,
+    "**/*.log": true,
+    "node_modules/**": true,
+    ".git/**": true
+  },
+  "files.watcherExclude": {
+    "docker-data/**": true,
+    "**/*.log": true,
+    "node_modules/**": true,
+    ".git/**": true
+  }
+}
