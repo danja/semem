@@ -10,6 +10,7 @@ import {
 import { initializeServices, getMemoryManager } from '../../lib/initialization.js';
 import { SafeOperations } from '../../lib/safe-operations.js';
 import { mcpDebugger } from '../../lib/debug-utils.js';
+import { NamespaceUtils } from '../../../zpt/ontology/ZPTNamespaces.js';
 
 // ZPT components will be loaded lazily to avoid blocking imports
 

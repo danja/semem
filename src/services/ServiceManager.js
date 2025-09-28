@@ -11,7 +11,7 @@ import { Embeddings } from '../core/Embeddings.js';
 import EmbeddingsAPIBridge from '../services/embeddings/EmbeddingsAPIBridge.js';
 import LLMHandler from '../handlers/LLMHandler.js';
 import Config from '../Config.js';
-import { createLLMConnector, createEmbeddingConnector, getModelConfig } from '../../mcp/lib/config.js';
+import { createLLMConnector, createEmbeddingConnector, getModelConfig } from '../mcp/lib/config.js';
 
 const logger = log.getLogger('ServiceManager');
 

@@ -86,7 +86,7 @@ class APIServer {
      */
     async getSharedVerbsService() {
         if (!this.sharedVerbsService) {
-            const { SimpleVerbsService } = await import('../../mcp/tools/SimpleVerbsService.js');
+            const { SimpleVerbsService } = await import('../mcp/tools/SimpleVerbsService.js');
             this.sharedVerbsService = new SimpleVerbsService();
             await this.sharedVerbsService.initialize();
             this.logger.info('✅ Shared SimpleVerbsService instance created and initialized');

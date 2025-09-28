@@ -1,3 +1,7 @@
+start.sh
+src/servers/start-all.js
+
+
 mcp index tests
 * export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/tell-tool.integration.test.js --reporter=verbose
 * export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/ask-tool.integration.test.js --reporter=verbose
@@ -155,6 +159,7 @@ The SPARQL store is still empty, which means the data is only in the memory stor
 * move prompts to src/
 * move mcp to src/ - beware arg.includes('mcp/index.js')
 * Config.js - remove refs to tbox, .env should handle
+* handleSlashCommand functionality should be in a separate module
 
 Can you create utils/SPARQLIngestRemote.js which will carry out the same operation as utils/SPARQLIngest.js but against a remote Semem install. For now the credentials will be the same. The Semem endpoints are at MCP : https://mcp.tensegrity.it/ API : https://api.tensegrity.it/ Fuseki : https://semem-fuseki.tensegrity.it/ Workbench : https://semem.tensegrity.it/
 

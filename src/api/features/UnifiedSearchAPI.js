@@ -1,6 +1,6 @@
 import BaseAPI from '../common/BaseAPI.js';
 import { v4 as uuidv4 } from 'uuid';
-import { PromptSynthesis } from '../../../mcp/lib/PromptSynthesis.js';
+import { PromptSynthesis } from '../../mcp/lib/PromptSynthesis.js';
 
 /**
  * Unified Search API that aggregates search across all Semem services

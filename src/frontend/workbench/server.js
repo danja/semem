@@ -18,8 +18,10 @@ const config = new Config(process.env.SEMEM_CONFIG_PATH || path.join(projectRoot
 await config.init();
 
 const app = express();
-const PORT = process.env.PORT || config.get('servers.workbench') || 4102;
-const MCP_PORT = process.env.MCP_PORT || config.get('servers.mcp') || 4101;
+const PORT = process.env.PORT || config.get('servers.workbench');
+const API_PORT = config.get('servers.api');
+const MCP_PORT = config.get('servers.mcp');
+const API_SERVER_URL = process.env.API_SERVER || `http://localhost:${API_PORT}`;
 const MCP_SERVER_URL = process.env.MCP_SERVER || `http://localhost:${MCP_PORT}`;
 
 // Serve static files from public directory
@@ -46,23 +48,23 @@ app.get('/config', (req, res) => {
 
 // Proxy workflow logs to API server (different path to avoid conflicts)
 app.use('/workflow-logs/stream', createProxyMiddleware({
-  target: 'http://localhost:4100/api/logs/stream',
+  target: `${API_SERVER_URL}/api/logs/stream`,
   changeOrigin: true,
   ws: false, // Server-sent events use HTTP, not WebSocket
   pathRewrite: {
     '^/workflow-logs/stream': '' // Remove /workflow-logs/stream prefix
   },
   onProxyReq: (proxyReq, req, res) => {
-    console.log(`🔄 [WORKFLOW LOGS PROXY] ${req.method} ${req.originalUrl} -> http://localhost:4100/api/logs/stream${req.url.replace('/workflow-logs/stream', '')}`);
+    console.log(`🔄 [WORKFLOW LOGS PROXY] ${req.method} ${req.originalUrl} -> ${API_SERVER_URL}/api/logs/stream${req.url.replace('/workflow-logs/stream', '')}`);
   }
 }));
 
-// Proxy API requests to MCP server  
+// Proxy API requests to MCP server (for Tell/Ask operations)
 app.use('/api', createProxyMiddleware({
   target: MCP_SERVER_URL,
   changeOrigin: true,
   pathRewrite: {
-    '^/api': '' // Remove /api prefix when forwarding
+    '^/api': '' // Remove /api prefix when forwarding to MCP server
   },
   onProxyReq: (proxyReq, req, res) => {
     console.log(`🔄 [WORKBENCH PROXY] ${req.method} ${req.originalUrl} -> ${MCP_SERVER_URL}${req.url.replace('/api', '')}`);

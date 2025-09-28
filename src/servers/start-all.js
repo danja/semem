@@ -55,14 +55,14 @@ const startServers = async () => {
             }
         );
 
-        // Start MCP server (using the http-server.js implementation)
+        // Start MCP server (using the refactored http-server.js implementation)
         await serverManager.startServer(
-            join(projectRoot, 'mcp', 'http-server.js'),
+            join(projectRoot, 'src', 'mcp', 'http-server.js'),
             'MCP Server',
             mcp,
-            { 
+            {
                 NODE_ENV: 'production',
-                cwd: join(projectRoot, 'mcp')
+                cwd: join(projectRoot, 'src', 'mcp')
             }
         );
 

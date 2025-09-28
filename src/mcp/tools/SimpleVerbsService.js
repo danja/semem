@@ -11,11 +11,11 @@ import { SPARQL_CONFIG } from '../../../config/preferences.js';
 
 // Import existing complex tools to wrap
 import { ZPTNavigationService } from './modules/zpt-tools.js';
-import { EnhancementCoordinator } from '../../../src/services/enhancement/EnhancementCoordinator.js';
+import { EnhancementCoordinator } from '../../services/enhancement/EnhancementCoordinator.js';
 // Note: HybridContextManager removed - was deprecated and broken
-import { MemoryDomainManager } from '../../../src/services/memory/MemoryDomainManager.js';
-import { MemoryRelevanceEngine } from '../../../src/services/memory/MemoryRelevanceEngine.js';
-import { AskOperationTimer, TellOperationTimer } from '../../../src/utils/PerformanceTiming.js';
+import { MemoryDomainManager } from '../../services/memory/MemoryDomainManager.js';
+import { MemoryRelevanceEngine } from '../../services/memory/MemoryRelevanceEngine.js';
+import { AskOperationTimer, TellOperationTimer } from '../../utils/PerformanceTiming.js';
 
 // Import modular components
 import { logOperation, logPerformance, verbsLogger } from './VerbsLogger.js';
@@ -62,7 +62,7 @@ import {
 
     if (!this.memoryManager) {
       // Use unified ServiceManager instead of duplicating initialization logic
-      const serviceManager = (await import('../../../src/services/ServiceManager.js')).default;
+      const serviceManager = (await import('../../services/ServiceManager.js')).default;
       const services = await serviceManager.getServices();
 
       // Use shared services from ServiceManager (eliminates duplication)
@@ -318,7 +318,7 @@ import {
               let chunkingResult;
               try {
                 // Import chunker for large documents
-                const Chunker = (await import('../../src/services/document/Chunker.js')).default;
+                const Chunker = (await import('../../services/document/Chunker.js')).default;
                 const chunker = new Chunker({
                   maxChunkSize: 2000,
                   minChunkSize: 100,
@@ -750,8 +750,8 @@ import {
               const targetGraph = graph || storageConfig?.graphName || config.get('graphName');
 
               // Import utilities
-              const { URIMinter } = await import('../../src/utils/URIMinter.js');
-              const SPARQLHelper = (await import('../../src/services/sparql/SPARQLHelper.js')).default;
+              const { URIMinter } = await import('../../utils/URIMinter.js');
+              const SPARQLHelper = (await import('../../services/sparql/SPARQLHelper.js')).default;
               const sparqlHelper = new SPARQLHelper(storageConfig.update, {
                 user: storageConfig.user,
                 password: storageConfig.password
@@ -826,7 +826,7 @@ import {
         case 'attributes':
           // Use Ragno to augment with attributes
           try {
-            const { augmentWithAttributes } = await import('../../src/ragno/augmentWithAttributes.js');
+            const { augmentWithAttributes } = await import('../../ragno/augmentWithAttributes.js');
             result = await augmentWithAttributes([{ content: target }], this.memoryManager.llmHandler, mergedOptions);
           } catch (importError) {
             // Fallback to concept extraction if Ragno is not available
@@ -938,10 +938,10 @@ import {
             } = mergedOptions;
 
             // Import chunking dependencies
-            const Chunker = (await import('../../src/services/document/Chunker.js')).default;
-            const { SPARQLQueryService } = await import('../../src/services/sparql/index.js');
-            const SPARQLHelper = (await import('../../src/services/sparql/SPARQLHelper.js')).default;
-            const { URIMinter } = await import('../../src/utils/URIMinter.js');
+            const Chunker = (await import('../../services/document/Chunker.js')).default;
+            const { SPARQLQueryService } = await import('../../services/sparql/index.js');
+            const SPARQLHelper = (await import('../../services/sparql/SPARQLHelper.js')).default;
+            const { URIMinter } = await import('../../utils/URIMinter.js');
 
             const config = this.memoryManager.config;
             const storageConfig = config.get('storage.options');
@@ -1273,8 +1273,8 @@ import {
             const targetGraph = graph || storageConfig?.graphName || config.get('graphName');
 
             // Import required utilities
-            const { URIMinter } = await import('../../src/utils/URIMinter.js');
-            const SPARQLHelper = (await import('../../src/services/sparql/SPARQLHelper.js')).default;
+            const { URIMinter } = await import('../../utils/URIMinter.js');
+            const SPARQLHelper = (await import('../../services/sparql/SPARQLHelper.js')).default;
 
             const sparqlHelper = new SPARQLHelper(storageConfig.update, {
               user: storageConfig.user,
@@ -1354,7 +1354,7 @@ import {
             if (includeAttributes && conceptEmbeddings.length > 0) {
               try {
                 verbsLogger.info('🔮 [CONCEPT_EMBEDDINGS] Generating attributes for embedded concepts...');
-                const { augmentWithAttributes } = await import('../../src/ragno/augmentWithAttributes.js');
+                const { augmentWithAttributes } = await import('../../ragno/augmentWithAttributes.js');
                 // Create mock graph data for attribute generation
                 const mockGraphData = {
                   entities: conceptEmbeddings.map(ce => ({

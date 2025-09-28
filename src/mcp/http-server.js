@@ -109,6 +109,111 @@ async function handleMCPRequest(req, res, body, sessionTransports, sessionServer
   }
 }
 
+/**
+ * Handle slash commands in chat - refactored version
+ */
+async function handleSlashCommand(command, simpleVerbsService) {
+  const commandParts = command.split(' ');
+  const cmd = commandParts[0].toLowerCase();
+  const args = commandParts.slice(1).join(' ').trim();
+
+  switch (cmd) {
+    case '/help':
+      return {
+        success: true,
+        messageType: 'help',
+        content: `Available Commands:
+/help          - Show this help message
+/ask [query]   - Search your semantic memory for information
+/tell [info]   - Store new information in your semantic memory
+
+Examples:
+/ask What did I learn about machine learning?
+/tell The meeting is scheduled for tomorrow at 2pm
+
+You can also chat naturally - I'll understand your intentions and route appropriately.`,
+        timestamp: new Date().toISOString()
+      };
+
+    case '/ask':
+      if (!args) {
+        return {
+          success: false,
+          messageType: 'error',
+          content: 'Please provide a question after /ask. Example: /ask What is machine learning?',
+          timestamp: new Date().toISOString()
+        };
+      }
+
+      try {
+        const result = await simpleVerbsService.ask({
+          question: args,
+          mode: 'standard',
+          useContext: true
+        });
+
+        return {
+          success: true,
+          messageType: 'ask_result',
+          content: result.content || result.answer || 'No answer found for your question.',
+          originalMessage: command,
+          routing: 'ask_command',
+          timestamp: new Date().toISOString()
+        };
+      } catch (error) {
+        return {
+          success: false,
+          messageType: 'error',
+          content: `Error processing ask command: ${error.message}`,
+          timestamp: new Date().toISOString()
+        };
+      }
+
+    case '/tell':
+      if (!args) {
+        return {
+          success: false,
+          messageType: 'error',
+          content: 'Please provide information after /tell. Example: /tell The project deadline is next Friday.',
+          timestamp: new Date().toISOString()
+        };
+      }
+
+      try {
+        const result = await simpleVerbsService.tell({
+          content: args,
+          type: 'interaction',
+          metadata: { source: 'chat_command', command: '/tell' }
+        });
+
+        return {
+          success: true,
+          messageType: 'tell_result',
+          content: `✅ Information stored successfully: "${args.substring(0, 100)}${args.length > 100 ? '...' : ''}"`,
+          originalMessage: command,
+          routing: 'tell_command',
+          stored: result.stored || result.success,
+          timestamp: new Date().toISOString()
+        };
+      } catch (error) {
+        return {
+          success: false,
+          messageType: 'error',
+          content: `Error processing tell command: ${error.message}`,
+          timestamp: new Date().toISOString()
+        };
+      }
+
+    default:
+      return {
+        success: false,
+        messageType: 'error',
+        content: `Unknown command: ${cmd}. Type /help for available commands.`,
+        timestamp: new Date().toISOString()
+      };
+  }
+}
+
 async function startRefactoredServer() {
   try {
     mcpDebugger.info('🚀 [REFACTORED-START] Starting Refactored MCP HTTP Server...');
@@ -241,6 +346,309 @@ async function startRefactoredServer() {
       }
     });
 
+    // Chat endpoint - for workbench chat interface compatibility
+    app.post('/chat', async (req, res) => {
+      try {
+        const { message, context = {} } = req.body;
+        if (!message) {
+          return res.status(400).json({ error: 'Message is required' });
+        }
+
+        mcpDebugger.info(`💬 Refactored Chat request: ${message.substring(0, 50)}...`);
+
+        // Check for slash commands
+        const trimmedMessage = message.trim();
+        if (trimmedMessage.startsWith('/')) {
+          const commandResult = await handleSlashCommand(trimmedMessage, simpleVerbsService);
+          return res.json(commandResult);
+        }
+
+        // Use the ask functionality for basic chat
+        const result = await simpleVerbsService.ask({
+          question: message,
+          mode: 'standard',
+          useContext: true
+        });
+
+        // Format response for chat interface compatibility
+        const chatResponse = {
+          success: result.success || true,
+          content: result.content || result.answer,
+          messageType: 'chat',
+          routing: 'semantic_memory',
+          timestamp: result.timestamp || new Date().toISOString()
+        };
+
+        mcpDebugger.info(`💬 Refactored Chat result: ${chatResponse.success ? 'SUCCESS' : 'FAILED'}`);
+        res.json(chatResponse);
+      } catch (error) {
+        mcpDebugger.error('❌ Refactored Chat error:', error.message);
+        res.status(500).json({
+          success: false,
+          content: 'I encountered an error processing your message. Please try again.',
+          messageType: 'error',
+          error: error.message
+        });
+      }
+    });
+
+    // Enhanced chat endpoint - for advanced queries
+    app.post('/chat/enhanced', async (req, res) => {
+      try {
+        const { query, useHyDE = false, useWikipedia = false, useWikidata = false } = req.body;
+        if (!query) {
+          return res.status(400).json({ error: 'Query is required' });
+        }
+
+        mcpDebugger.info(`🚀 Refactored Enhanced Chat: ${query.substring(0, 50)}...`);
+
+        // Use the ask functionality with enhancements
+        const result = await simpleVerbsService.ask({
+          question: query,
+          mode: 'comprehensive',
+          useContext: true,
+          useHyDE,
+          useWikipedia,
+          useWikidata
+        });
+
+        // Format response for enhanced chat interface
+        const enhancedResponse = {
+          success: result.success || true,
+          content: result.content || result.answer,
+          messageType: 'enhanced_chat',
+          routing: 'enhanced_semantic_memory',
+          enhancements: { useHyDE, useWikipedia, useWikidata },
+          timestamp: result.timestamp || new Date().toISOString()
+        };
+
+        mcpDebugger.info(`🚀 Refactored Enhanced Chat result: ${enhancedResponse.success ? 'SUCCESS' : 'FAILED'}`);
+        res.json(enhancedResponse);
+      } catch (error) {
+        mcpDebugger.error('❌ Refactored Enhanced Chat error:', error.message);
+        res.status(500).json({
+          success: false,
+          content: 'I encountered an error processing your enhanced query. Please try again.',
+          messageType: 'error',
+          error: error.message
+        });
+      }
+    });
+
+    // Augment endpoint - for document processing and content analysis
+    app.post('/augment', async (req, res) => {
+      try {
+        const { target, operation = 'auto', options = {} } = req.body;
+
+        mcpDebugger.info(`🔬 Refactored Augment: ${operation} operation on target (${target?.length || 'no'} chars)`);
+
+        // Call the augment functionality
+        const result = await simpleVerbsService.augment({
+          target,
+          operation,
+          options
+        });
+
+        // Format response for augment interface
+        const augmentResponse = {
+          success: result.success || true,
+          operation,
+          result: result.result || result,
+          metadata: result.metadata || {},
+          timestamp: result.timestamp || new Date().toISOString()
+        };
+
+        mcpDebugger.info(`🔬 Refactored Augment result: ${augmentResponse.success ? 'SUCCESS' : 'FAILED'} - ${operation}`);
+        res.json(augmentResponse);
+      } catch (error) {
+        mcpDebugger.error('❌ Refactored Augment error:', error.message);
+        res.status(500).json({
+          success: false,
+          error: error.message,
+          operation: req.body.operation || 'unknown',
+          timestamp: new Date().toISOString()
+        });
+      }
+    });
+
+    // State endpoint - for ZPT navigation state and session info
+    app.get('/state', async (req, res) => {
+      try {
+        mcpDebugger.info('🔍 Refactored State: Getting current ZPT navigation state');
+
+        // Get ZPT state from the state manager
+        const zptState = simpleVerbsService.stateManager.getState();
+
+        // Format response for workbench
+        const stateResponse = {
+          success: true,
+          state: {
+            zoom: zptState.zoom || 'entity',
+            pan: zptState.pan || {},
+            tilt: zptState.tilt || 'keywords',
+            threshold: 0.3, // Default threshold
+            sessionId: zptState.sessionId,
+            timestamp: zptState.timestamp || new Date().toISOString()
+          },
+          session: {
+            interactions: simpleVerbsService.stateManager.sessionCache?.interactions?.size || 0,
+            concepts: simpleVerbsService.stateManager.sessionCache?.concepts?.size || 0,
+            duration: Date.now() - (new Date(zptState.timestamp || Date.now()).getTime())
+          },
+          timestamp: new Date().toISOString()
+        };
+
+        mcpDebugger.info(`🔍 Refactored State result: zoom=${stateResponse.state.zoom}, tilt=${stateResponse.state.tilt}`);
+        res.json(stateResponse);
+      } catch (error) {
+        mcpDebugger.error('❌ Refactored State error:', error.message);
+        res.status(500).json({
+          success: false,
+          error: error.message,
+          timestamp: new Date().toISOString()
+        });
+      }
+    });
+
+    // Inspect endpoint - for debugging and monitoring session data
+    app.post('/inspect', async (req, res) => {
+      try {
+        const { what = 'session', details = false } = req.body;
+
+        mcpDebugger.info(`🔍 Refactored Inspect: Inspecting ${what} with details=${details}`);
+
+        let inspectionResult;
+
+        switch (what.toLowerCase()) {
+          case 'session':
+            const sessionState = simpleVerbsService.stateManager.getState();
+            const sessionCache = simpleVerbsService.stateManager.sessionCache || {};
+
+            inspectionResult = {
+              sessionId: sessionState.sessionId,
+              timestamp: sessionState.timestamp,
+              state: {
+                zoom: sessionState.zoom || 'entity',
+                pan: sessionState.pan || {},
+                tilt: sessionState.tilt || 'keywords'
+              },
+              cache: {
+                interactions: sessionCache.interactions?.size || 0,
+                concepts: sessionCache.concepts?.size || 0,
+                conceptsList: details ? Array.from(sessionCache.concepts?.keys() || []) : undefined
+              },
+              memory: {
+                duration: Date.now() - (new Date(sessionState.timestamp || Date.now()).getTime()),
+                active: true
+              }
+            };
+            break;
+
+          case 'concepts':
+            const conceptsCache = simpleVerbsService.stateManager.sessionCache?.concepts || new Map();
+            inspectionResult = {
+              total: conceptsCache.size,
+              concepts: details ? Array.from(conceptsCache.entries()) : Array.from(conceptsCache.keys())
+            };
+            break;
+
+          case 'all':
+            // Get comprehensive system state
+            const allState = simpleVerbsService.stateManager.getState();
+            const allCache = simpleVerbsService.stateManager.sessionCache || {};
+
+            inspectionResult = {
+              system: {
+                architecture: 'refactored-per-request-isolation',
+                timestamp: new Date().toISOString()
+              },
+              session: {
+                sessionId: allState.sessionId,
+                timestamp: allState.timestamp,
+                state: allState
+              },
+              cache: {
+                interactions: allCache.interactions?.size || 0,
+                concepts: allCache.concepts?.size || 0,
+                data: details ? {
+                  interactions: Array.from(allCache.interactions?.entries() || []),
+                  concepts: Array.from(allCache.concepts?.entries() || [])
+                } : undefined
+              }
+            };
+            break;
+
+          default:
+            throw new Error(`Unknown inspection target: ${what}`);
+        }
+
+        const inspectResponse = {
+          success: true,
+          what,
+          details,
+          result: inspectionResult,
+          timestamp: new Date().toISOString()
+        };
+
+        mcpDebugger.info(`🔍 Refactored Inspect result: ${what} inspection completed`);
+        res.json(inspectResponse);
+      } catch (error) {
+        mcpDebugger.error('❌ Refactored Inspect error:', error.message);
+        res.status(500).json({
+          success: false,
+          error: error.message,
+          what: req.body.what || 'unknown',
+          timestamp: new Date().toISOString()
+        });
+      }
+    });
+
+    // ZPT Navigate endpoint - for Zoom-Pan-Tilt knowledge navigation
+    app.post('/zpt/navigate', async (req, res) => {
+      try {
+        const { query, zoom, pan, tilt } = req.body;
+
+        mcpDebugger.info(`🗺️ Refactored ZPT Navigate: zoom=${zoom}, tilt=${tilt}, pan domains=${pan?.domains?.length || 0}`);
+
+        // Get navigation result from the ZPT navigation service
+        const navigationResult = await simpleVerbsService.zptService.navigate({
+          query: query || 'Navigate knowledge space',
+          zoom,
+          pan,
+          tilt
+        });
+
+        // Format response for workbench navigation
+        const navigateResponse = {
+          success: true,
+          navigation: {
+            zoom,
+            pan,
+            tilt,
+            query
+          },
+          result: navigationResult || {
+            entities: [],
+            relationships: [],
+            concepts: [],
+            message: 'Navigation executed successfully'
+          },
+          timestamp: new Date().toISOString()
+        };
+
+        mcpDebugger.info(`🗺️ Refactored ZPT Navigate result: ${navigateResponse.success ? 'SUCCESS' : 'FAILED'} - ${zoom}/${tilt}`);
+        res.json(navigateResponse);
+      } catch (error) {
+        mcpDebugger.error('❌ Refactored ZPT Navigate error:', error.message);
+        res.status(500).json({
+          success: false,
+          error: error.message,
+          navigation: req.body || {},
+          timestamp: new Date().toISOString()
+        });
+      }
+    });
+
     mcpDebugger.info('✅ [REFACTORED-REST] Simple Verbs REST endpoints configured');
 
     // Start the server
@@ -250,6 +658,12 @@ async function startRefactoredServer() {
       mcpDebugger.info(`MCP endpoint: POST http://localhost:${port}/mcp`);
       mcpDebugger.info(`Tell endpoint: POST http://localhost:${port}/tell`);
       mcpDebugger.info(`Ask endpoint: POST http://localhost:${port}/ask`);
+      mcpDebugger.info(`Chat endpoint: POST http://localhost:${port}/chat`);
+      mcpDebugger.info(`Enhanced Chat endpoint: POST http://localhost:${port}/chat/enhanced`);
+      mcpDebugger.info(`Augment endpoint: POST http://localhost:${port}/augment`);
+      mcpDebugger.info(`State endpoint: GET http://localhost:${port}/state`);
+      mcpDebugger.info(`Inspect endpoint: POST http://localhost:${port}/inspect`);
+      mcpDebugger.info(`ZPT Navigate endpoint: POST http://localhost:${port}/zpt/navigate`);
       mcpDebugger.info('🎯 REFACTORED HTTP SERVER: Setup complete with full architecture');
     });
 
