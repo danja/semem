@@ -546,9 +546,9 @@ import {
 
           verbsLogger.info('✅ Enhancement completed successfully', {
             hasResults: !!enhancementResults,
-            contextLength: enhancementResults?.combinedContext?.length || 0,
+            contextLength: enhancementResults?.context?.combinedPrompt?.length || 0,
             enhancementKeys: enhancementResults ? Object.keys(enhancementResults) : [],
-            hasCombinedContext: !!enhancementResults?.combinedContext
+            hasCombinedContext: !!enhancementResults?.context?.combinedPrompt
           });
 
         } catch (enhancementError) {
@@ -591,7 +591,7 @@ import {
           // Generate answer using LLM with retrieved context and enhancement results
           let answer = 'I could not generate an answer.';
           const hasLocalContext = searchResults.length > 0;
-          const hasEnhancementContext = enhancementResults?.combinedContext;
+          const hasEnhancementContext = enhancementResults?.context?.combinedPrompt;
 
           if (hasLocalContext || hasEnhancementContext) {
             let promptParts = [];
@@ -604,7 +604,7 @@ import {
 
             // Add enhancement context if available
             if (hasEnhancementContext) {
-              promptParts.push(`External knowledge context:\n${enhancementResults.combinedContext}`);
+              promptParts.push(`External knowledge context:\n${enhancementResults.context.combinedPrompt}`);
             }
 
             const fullContext = promptParts.join('\n\n---\n\n');
@@ -653,9 +653,9 @@ import {
         // No local context requested, but check if we have enhancement results
         let answer = `I don't have any context information to answer: ${question}`;
 
-        if (enhancementResults?.combinedContext) {
+        if (enhancementResults?.context?.combinedPrompt) {
           // Use enhancement results even without local context
-          const prompt = `Based on this external knowledge:\n${enhancementResults.combinedContext}\n\nQuestion: ${question}\n\nPlease provide a comprehensive answer using the available external knowledge.`;
+          const prompt = `Based on this external knowledge:\n${enhancementResults.context.combinedPrompt}\n\nQuestion: ${question}\n\nPlease provide a comprehensive answer using the available external knowledge.`;
 
           try {
             answer = await this.safeOps.generateResponse(prompt);
