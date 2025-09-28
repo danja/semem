@@ -11,15 +11,11 @@ export class RandomFactGenerator {
   }
 
   /**
-   * Generate a random fact with the pattern: "{subject} are {color} {type}"
-   * @returns {string} A random fact
+   * Generate a random fact with timestamp for uniqueness
+   * @returns {string} A unique random fact
    */
   generateFact() {
-    const subject = this.subjects[Math.floor(Math.random() * this.subjects.length)];
-    const color = this.colors[Math.floor(Math.random() * this.colors.length)];
-    const type = this.types[Math.floor(Math.random() * this.types.length)];
-
-    return `${subject} are ${color} ${type}`;
+    return this.generateUniqueFact().fact;
   }
 
   /**

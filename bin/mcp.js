@@ -9,7 +9,7 @@
  * Usage: claude mcp add semem npx semem-mcp
  */
 
-import { createServer } from '../mcp/index.js';
+import { createServer } from '../_mcp/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 
 async function main() {

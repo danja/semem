@@ -4,7 +4,7 @@
  */
 
 import { describe, test, expect, beforeEach, afterEach } from 'vitest';
-import { getSimpleVerbsService } from '../../../mcp/tools/VerbRegistration.js';
+import { getSimpleVerbsService } from '../../../_mcp/tools/VerbRegistration.js';
 
 describe('STDIO Fix Unit Verification', () => {
   let originalEnv;

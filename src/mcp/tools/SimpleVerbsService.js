@@ -5,14 +5,12 @@
 
 import { z } from 'zod';
 import path from 'path';
-// Removed: initializeServices, getMemoryManager - now using unified ServiceManager
 import { SafeOperations } from '../lib/safe-operations.js';
 import { SPARQL_CONFIG } from '../../../config/preferences.js';
 
 // Import existing complex tools to wrap
 import { ZPTNavigationService } from './modules/zpt-tools.js';
 import { EnhancementCoordinator } from '../../services/enhancement/EnhancementCoordinator.js';
-// Note: HybridContextManager removed - was deprecated and broken
 import { MemoryDomainManager } from '../../services/memory/MemoryDomainManager.js';
 import { MemoryRelevanceEngine } from '../../services/memory/MemoryRelevanceEngine.js';
 import { AskOperationTimer, TellOperationTimer } from '../../utils/PerformanceTiming.js';
@@ -35,7 +33,6 @@ import {
     this.zptService = null;
     this.stateManager = null;
     this.enhancementCoordinator = null;
-    // Note: hybridContextManager removed - was deprecated and broken
     // Memory domain management services
     this.memoryDomainManager = null;
 
@@ -56,8 +53,7 @@ import {
    */
   async initialize() {
     verbsLogger.info('🔥 SimpleVerbsService.initialize() called', {
-      hasMemoryManager: !!this.memoryManager,
-      hasHybridContextManager: !!this.hybridContextManager
+      hasMemoryManager: !!this.memoryManager
     });
 
     if (!this.memoryManager) {
@@ -79,7 +75,6 @@ import {
         config: services.config
       });
 
-      // Note: HybridContextManager removed - replaced with direct memory manager search
 
       // Initialize memory domain management services
       this.memoryRelevanceEngine = new MemoryRelevanceEngine({
@@ -103,7 +98,6 @@ import {
 
       verbsLogger.info('🔥 SimpleVerbsService.initialize() completed', {
         hasMemoryManager: !!this.memoryManager,
-        hasHybridContextManager: !!this.hybridContextManager,
         hasEnhancementCoordinator: !!this.enhancementCoordinator,
         hasSafeOps: !!this.safeOps,
         hasStateManager: !!this.stateManager
@@ -511,7 +505,7 @@ import {
 
   /**
    * ASK - Query the system using current ZPT context with optional enhancements
-   * Now uses HybridContextManager for intelligent merging of enhancement and personal context
+   * Uses enhanced context processing with local memory and external enhancements
    */
   async ask({ question, mode = 'standard', useContext = true, useHyDE = false, useWikipedia = false, useWikidata = false, useWebSearch = false, threshold }) {
     await this.initialize();
@@ -534,8 +528,38 @@ import {
       askTimer.endPhase('initialization');
       askTimer.startPhase('context_processing');
 
-      // Use HybridContextManager for intelligent context processing
-      // Direct search using memoryManager (replaces broken HybridContextManager)
+      // Enhancement phase - call EnhancementCoordinator if any enhancements are requested
+      let enhancementResults = null;
+      if (useHyDE || useWikipedia || useWikidata || useWebSearch) {
+        askTimer.startPhase('enhancement_processing');
+        try {
+          verbsLogger.info('🔍 Running query enhancement with EnhancementCoordinator', {
+            useHyDE, useWikipedia, useWikidata, useWebSearch
+          });
+
+          enhancementResults = await this.enhancementCoordinator.enhanceQuery(question, {
+            useHyDE,
+            useWikipedia,
+            useWikidata,
+            useWebSearch
+          });
+
+          verbsLogger.info('✅ Enhancement completed successfully', {
+            hasResults: !!enhancementResults,
+            contextLength: enhancementResults?.combinedContext?.length || 0,
+            enhancementKeys: enhancementResults ? Object.keys(enhancementResults) : [],
+            hasCombinedContext: !!enhancementResults?.combinedContext
+          });
+
+        } catch (enhancementError) {
+          verbsLogger.error('❌ Enhancement failed:', enhancementError.message);
+          // Continue without enhancement - don't fail the entire request
+          enhancementResults = null;
+        }
+        askTimer.endPhase('enhancement_processing');
+      }
+
+      // Enhanced context processing with direct memory search
       let hybridResult;
       if (useContext && this.memoryDomainManager) {
         try {
@@ -564,17 +588,33 @@ import {
             resultsCount: searchResults.length
           });
 
-          // Generate answer using LLM with retrieved context
+          // Generate answer using LLM with retrieved context and enhancement results
           let answer = 'I could not generate an answer.';
-          if (searchResults.length > 0) {
-            const contextText = searchResults.map(result => result.content || result.prompt || result.response).join('\n\n');
-            const prompt = `Based on this context information:\n${contextText}\n\nQuestion: ${question}\n\nPlease provide a direct answer based on the context provided.`;
+          const hasLocalContext = searchResults.length > 0;
+          const hasEnhancementContext = enhancementResults?.combinedContext;
+
+          if (hasLocalContext || hasEnhancementContext) {
+            let promptParts = [];
+
+            // Add local context if available
+            if (hasLocalContext) {
+              const contextText = searchResults.map(result => result.content || result.prompt || result.response).join('\n\n');
+              promptParts.push(`Personal knowledge context:\n${contextText}`);
+            }
+
+            // Add enhancement context if available
+            if (hasEnhancementContext) {
+              promptParts.push(`External knowledge context:\n${enhancementResults.combinedContext}`);
+            }
+
+            const fullContext = promptParts.join('\n\n---\n\n');
+            const prompt = `Based on this context information:\n${fullContext}\n\nQuestion: ${question}\n\nPlease provide a comprehensive answer using the available context. If both personal and external knowledge are provided, synthesize them appropriately.`;
 
             try {
               answer = await this.safeOps.generateResponse(prompt);
             } catch (llmError) {
               verbsLogger.error('LLM generation error:', llmError);
-              answer = `I found ${searchResults.length} relevant pieces of information but could not generate a response: ${llmError.message}`;
+              answer = `I found relevant information but could not generate a response: ${llmError.message}`;
             }
           } else {
             answer = `I don't have any relevant information to answer: ${question}`;
@@ -583,12 +623,15 @@ import {
           hybridResult = {
             success: true,
             answer: answer,
-            contextItems: searchResults.length,
+            contextItems: searchResults.length + (enhancementResults ? 1 : 0),
             sessionResults: searchResults.length,
             persistentResults: searchResults.length,
             memories: searchResults.length,
             localContextResults: searchResults,
-            selectedStrategy: searchResults.length > 0 ? 'direct_search' : 'no_context',
+            enhancementResults: enhancementResults ? [enhancementResults] : [],
+            enhancementUsed: !!enhancementResults,
+            localContextUsed: searchResults.length > 0,
+            selectedStrategy: searchResults.length > 0 || enhancementResults ? 'hybrid_enhanced' : 'no_context',
             queryTime: Date.now() - startTime
           };
         } catch (error) {
@@ -607,15 +650,33 @@ import {
           };
         }
       } else {
+        // No local context requested, but check if we have enhancement results
+        let answer = `I don't have any context information to answer: ${question}`;
+
+        if (enhancementResults?.combinedContext) {
+          // Use enhancement results even without local context
+          const prompt = `Based on this external knowledge:\n${enhancementResults.combinedContext}\n\nQuestion: ${question}\n\nPlease provide a comprehensive answer using the available external knowledge.`;
+
+          try {
+            answer = await this.safeOps.generateResponse(prompt);
+          } catch (llmError) {
+            verbsLogger.error('LLM generation error with enhancement only:', llmError);
+            answer = `I found external information but could not generate a response: ${llmError.message}`;
+          }
+        }
+
         hybridResult = {
           success: true,
-          answer: `I don't have any context information to answer: ${question}`,
-          contextItems: 0,
+          answer: answer,
+          contextItems: enhancementResults ? 1 : 0,
           sessionResults: 0,
           persistentResults: 0,
           memories: 0,
           localContextResults: [],
-          selectedStrategy: 'no_context',
+          enhancementResults: enhancementResults ? [enhancementResults] : [],
+          enhancementUsed: !!enhancementResults,
+          localContextUsed: false,
+          selectedStrategy: enhancementResults ? 'enhancement_only' : 'no_context',
           queryTime: Date.now() - startTime
         };
       }

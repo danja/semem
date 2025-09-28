@@ -313,14 +313,15 @@ async function startRefactoredServer() {
     // Ask endpoint
     app.post('/ask', async (req, res) => {
       try {
-        const { question, mode = 'standard', useContext = true, threshold } = req.body;
+        const { question, mode = 'standard', useContext = true, useHyDE = false, useWikipedia = false, useWikidata = false, useWebSearch = false, threshold } = req.body;
         if (!question) {
           return res.status(400).json({ error: 'Question is required' });
         }
 
         mcpDebugger.info(`📥 Refactored Ask request: ${question.substring(0, 50)}...`);
+        mcpDebugger.info(`📥 Enhancement flags: HyDE=${useHyDE}, Wikipedia=${useWikipedia}, Wikidata=${useWikidata}, WebSearch=${useWebSearch}`);
 
-        const result = await simpleVerbsService.ask({ question, mode, useContext, threshold });
+        const result = await simpleVerbsService.ask({ question, mode, useContext, useHyDE, useWikipedia, useWikidata, useWebSearch, threshold });
         mcpDebugger.info(`📥 Refactored Ask result: ${result.success ? 'SUCCESS' : 'FAILED'}`);
 
         // Map the refactored response to the expected HTTP API format

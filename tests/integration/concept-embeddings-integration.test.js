@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest'
 import path from 'path'
 import Config from '../../src/Config.js'
-import { SimpleVerbsService } from '../../mcp/tools/simple-verbs.js'
+import { SimpleVerbsService } from '../../_mcp/tools/simple-verbs.js'
 
 // Helper function to check if services are available
 async function checkServicesAvailable(config) {

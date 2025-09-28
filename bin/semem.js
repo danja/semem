@@ -31,7 +31,7 @@ program
   .option('-c, --config <path>', 'Configuration file path')
   .action(async (options) => {
     try {
-      const { createServer } = await import('../mcp/index.js');
+      const { createServer } = await import('../_mcp/index.js');
       const { StdioServerTransport } = await import('@modelcontextprotocol/sdk/server/stdio.js');
       
       // Create the MCP server
@@ -40,7 +40,7 @@ program
       // Choose transport based on options
       if (options.transport === 'http' || options.transport === 'sse') {
         // For HTTP/SSE transport, delegate to http-server
-        const { default: httpServer } = await import('../mcp/http-server.js');
+        const { default: httpServer } = await import('../_mcp/http-server.js');
         console.log(`Starting MCP HTTP server on port ${options.port || 3000}`);
       } else {
         // For stdio transport, use SDK transport

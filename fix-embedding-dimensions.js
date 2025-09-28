@@ -8,7 +8,7 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-import { initializeServices } from './mcp/lib/initialization.js';
+import { initializeServices } from './_mcp/lib/initialization.js';
 
 async function fixEmbeddingDimensions() {
     console.log('🔧 Starting embedding dimension fix...');

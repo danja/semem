@@ -7,7 +7,7 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-import { initializeServices } from './mcp/lib/initialization.js';
+import { initializeServices } from './_mcp/lib/initialization.js';
 
 async function compareSearch() {
     console.log('🔍 Testing search functionality directly...');

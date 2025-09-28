@@ -149,7 +149,7 @@ export async function migrateMCPRegistry(quiet = false) {
     
     // Try to import MCP registry
     try {
-        const { promptRegistry } = await import('../../mcp/prompts/registry.js');
+        const { promptRegistry } = await import('../../_mcp/prompts/registry.js');
         await promptRegistry.initialize();
         
         const mcpPrompts = promptRegistry.listPrompts();

@@ -7,7 +7,7 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import fetch from 'node-fetch';
-import { SimpleVerbsService, ZPTStateManager } from '../../../mcp/tools/simple-verbs.js';
+import { SimpleVerbsService, ZPTStateManager } from '../../../_mcp/tools/simple-verbs.js';
 
 // Set up fetch for any network calls
 global.fetch = fetch;

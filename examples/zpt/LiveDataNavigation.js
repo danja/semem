@@ -2,9 +2,9 @@
  * ZPT Live Data Navigation Example
  * Demonstrates real ZPT navigation using live SPARQL data and ragno vocabulary
  */
-import { getMemoryManager } from '../../mcp/lib/initialization.js';
-import { ZPTNavigationService } from '../../mcp/tools/zpt-tools.js';
-import { SafeOperations } from '../../mcp/lib/safe-operations.js';
+import { getMemoryManager } from '../../_mcp/lib/initialization.js';
+import { ZPTNavigationService } from '../../_mcp/tools/zpt-tools.js';
+import { SafeOperations } from '../../_mcp/lib/safe-operations.js';
 
 async function demonstrateLiveNavigation() {
   console.log('🚀 ZPT Live Data Navigation Demo\n');

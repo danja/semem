@@ -15,8 +15,8 @@ import readline from 'readline';
 import logger from 'loglevel';
 import Config from '../src/Config.js';
 import SPARQLDocumentIngester from '../src/services/ingestion/SPARQLDocumentIngester.js';
-import { getSimpleVerbsService } from '../mcp/tools/simple-verbs.js';
-import { initializeServices } from '../mcp/lib/initialization.js';
+import { getSimpleVerbsService } from '../_mcp/tools/simple-verbs.js';
+import { initializeServices } from '../_mcp/lib/initialization.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 

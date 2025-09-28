@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { createLLMConnector, createEmbeddingConnector, mcpConfig, getModelConfig } from '../../../../mcp/lib/config.js';
+import { createLLMConnector, createEmbeddingConnector, mcpConfig, getModelConfig } from '../../../../_mcp/lib/config.js';
 
 // Mock connectors
 vi.mock('../../../../src/connectors/OllamaConnector.js', () => ({

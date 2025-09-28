@@ -7,7 +7,8 @@
 
 import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach, vi } from 'vitest';
 import fetch from 'node-fetch';
-import { SimpleVerbsService, ZPTStateManager } from '../../../mcp/tools/simple-verbs.js';
+import { SimpleVerbsService } from '../../../src/mcp/tools/SimpleVerbsService.js';
+import { ZptStateManager } from '../../../src/mcp/tools/ZptStateManager.js';
 import SPARQLStore from '../../../src/stores/SPARQLStore.js';
 import MemoryManager from '../../../src/MemoryManager.js';
 import Config from '../../../src/Config.js';
