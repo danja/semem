@@ -15,6 +15,7 @@ Only look at docs when requested. Always ignore all files under docs/ignore
 ## Architectural Notes
 
 - The memory and json storage backends are being phased out, sparql storage should be used throughout
+- The MCP (Model Context Protocol) system has been restructured around 12 core verbs instead of the previous complex tool hierarchy
 
 ## Development Guidelines
 
@@ -85,11 +86,25 @@ Semem has a layered architecture with the following key components:
 
 6. **Ragno Layer (Knowledge Graph Integration)**
    - `Entity`: RDF-based entities extracted from text
-   - `Unit`: Independent semantic units from corpus decomposition  
+   - `Unit`: Independent semantic units from corpus decomposition
    - `Relationship`: First-class relationship nodes between entities
    - `RDFGraphManager`: Manages RDF graph operations
    - `decomposeCorpus`: Main function for text-to-RDF decomposition
    - Uses Ragno vocabulary (http://purl.org/stuff/ragno/) for RDF modeling
+
+7. **MCP Layer (Model Context Protocol)**
+   - 12 core verbs: `semem-tell`, `semem-ask`, `semem-augment`, `semem-inspect`, `semem-state`, `semem-zoom`, `semem-pan`, `semem-tilt`, `semem-remember`, `semem-recall`, `semem-chat`, `semem-chat-enhanced`
+   - HTTP server: `src/mcp/http-server.js` - provides REST API endpoints
+   - STDIO server: `src/mcp/index.js` - provides MCP protocol communication
+   - Unified validation using Zod schemas for all verb parameters
+   - Direct HTTP endpoints: `/tell`, `/ask`, `/augment`, `/inspect`, `/state`, `/zpt/navigate`, `/chat`, `/chat/enhanced`
+
+8. **VSOM Layer (Visual Self-Organizing Map)**
+   - Standalone server: `src/frontend/vsom-standalone/server.js` - serves VSOM UI and proxies to MCP
+   - API proxy configuration routes requests to appropriate backend services
+   - ZPT (Zoom, Pan, Tilt) 3-dimensional navigation system
+   - Integration with MCP verbs for semantic visualization and spatial navigation
+   - Runs on port 4103 by default
 
 ## Working with the Codebase
 
@@ -106,7 +121,9 @@ If problems are enountered in the following areas, refer to documentation :
 - Read `docs/manual/config.md` for issues related to general setup
 - Read `docs/manual/provider-config.md` for issues relating to embedding and llm chat completion services
 - Read `docs/manual/prompt-management.md` for issues related to chat completion prompts
-- Read `docs/manual/sparql-service.md` for issues related to SPARQL 
+- Read `docs/manual/sparql-service.md` for issues related to SPARQL
+- Read `docs/manual/mcp-list.md` for current MCP verb documentation
+- Read `docs/manual/mcp-tutorial.md` for MCP integration guidance 
 
 ### LLM Connector and Model Configuration (from api-server.js)
 The semem system uses a priority-based LLM provider configuration pattern:
@@ -169,13 +186,26 @@ const llmHandler = new LLMHandler(llmProvider, modelConfig.chatModel);
 - Chat model: `qwen2:1.5b` (commonly available, fast)
 - Verify models are installed: `ollama list`
 
-### VSOM UI Integration
-- VSOM "Load Data" button in UI now functional (src/frontend/js/controllers/VSOMController.js:279-325)
-- Supports JSON input formats:
-  - Entities: `{"type":"entities","entities":[{"uri":"http://example.org/e1","content":"text","type":"concept"}]}`
-  - SPARQL: `{"type":"sparql","endpoint":"http://localhost:3030/dataset/query","query":"SELECT * WHERE {?s ?p ?o} LIMIT 10"}`
-  - Sample data: `{"type":"sample","count":50}` (generates test entities)
-- Backend API endpoints: `/api/vsom/load-data` and `/api/vsom/generate-sample-data`
+### MCP Core Verbs
+- **semem-tell**: Store content in semantic memory
+- **semem-ask**: Query stored knowledge with context
+- **semem-augment**: Extract concepts and relationships
+- **semem-inspect**: Examine system state and health
+- **semem-state**: Manage system state and configuration
+- **semem-zoom**: Navigate content at different granularities (entity/concept/document/community)
+- **semem-pan**: Navigate content in semantic/temporal/conceptual directions
+- **semem-tilt**: Present content at different detail levels (keywords/summary/detailed)
+- **semem-remember**: Store in specific memory domains (user/project/session/instruction)
+- **semem-recall**: Retrieve from specific memory domains
+- **semem-chat**: Basic chat interaction
+- **semem-chat-enhanced**: Chat with external service enhancements
+
+### VSOM Integration
+- VSOM standalone server: `src/frontend/vsom-standalone/server.js`
+- Proxies API requests to MCP server on port 4101
+- Uses direct HTTP endpoints (`/tell`, `/ask`, etc.) instead of MCP protocol
+- Comprehensive e2e test coverage in `tests/integration/vsom/`
+- ZPT navigation system integrated with MCP verbs for 3D semantic exploration
 
 ---
 ## Error Handling
@@ -186,6 +216,15 @@ const llmHandler = new LLMHandler(llmProvider, modelConfig.chatModel);
 - Always use the unified logger: `import { createUnifiedLogger } from './utils/LoggingConfig.js'` then `const logger = createUnifiedLogger('ComponentName');`
 - Use appropriate log levels: `logger.debug()`, `logger.info()`, `logger.warn()`, `logger.error()`
 - The logging system automatically handles STDIO-aware output and prevents protocol pollution
+
+## Testing Guidelines
+- Use Vitest for all tests with ES modules
+- Integration tests should work against live services and real data (no mocking except when absolutely necessary)
+- E2E tests follow pattern: `tests/integration/{component}/{component}-e2e.integration.test.js`
+- VSOM e2e tests: `tests/integration/vsom/` with comprehensive coverage of API proxy, ZPT navigation, and MCP integration
+- MCP tests: `tests/integration/mcp/` covering all 12 core verbs
+- Run integration tests with: `INTEGRATION_TESTS=true npx vitest run tests/integration/`
+- Test environment uses real SPARQL endpoint and live LLM/embedding services
 
 # Using Gemini CLI for Large Codebase Analysis
 
@@ -262,106 +301,13 @@ const llmHandler = new LLMHandler(llmProvider, modelConfig.chatModel);
   - The CLI will include file contents directly in the context
   - No need for --yolo flag for read-only analysis
   - Gemini's context window can handle entire codebases that would overflow Claude's context
-  - When checking implementations, be specific about what you're looking for to get accurate results # Using Gemini CLI for Large Codebase Analysis
-
-
-  When analyzing large codebases or multiple files that might exceed context limits, use the Gemini CLI with its massive
-  context window. Use `gemini -p` to leverage Google Gemini's large context capacity.
-
-
-  ## File and Directory Inclusion Syntax
-
-
-  Use the `@` syntax to include files and directories in your Gemini prompts. The paths should be relative to WHERE you run the
-   gemini command:
-
-
-  ### Examples:
-
-
-  **Single file analysis:**
-  ```bash
-  gemini -p "@src/main.py Explain this file's purpose and structure"
-
-
-  Multiple files:
-  gemini -p "@package.json @src/index.js Analyze the dependencies used in the code"
-
-
-  Entire directory:
-  gemini -p "@src/ Summarize the architecture of this codebase"
-
-
-  Multiple directories:
-  gemini -p "@src/ @tests/ Analyze test coverage for the source code"
-
-
-  Current directory and subdirectories:
-  gemini -p "@./ Give me an overview of this entire project"
-  # Or use --all_files flag:
-  gemini --all_files -p "Analyze the project structure and dependencies"
-
-
-  Implementation Verification Examples
-
-
-  Check if a feature is implemented:
-  gemini -p "@src/ @lib/ Has dark mode been implemented in this codebase? Show me the relevant files and functions"
-
-
-  Verify authentication implementation:
-  gemini -p "@src/ @middleware/ Is JWT authentication implemented? List all auth-related endpoints and middleware"
-
-
-  Check for specific patterns:
-  gemini -p "@src/ Are there any React hooks that handle WebSocket connections? List them with file paths"
-
-
-  Verify error handling:
-  gemini -p "@src/ @api/ Is proper error handling implemented for all API endpoints? Show examples of try-catch blocks"
-
-
-  Check for rate limiting:
-  gemini -p "@backend/ @middleware/ Is rate limiting implemented for the API? Show the implementation details"
-
-
-  Verify caching strategy:
-  gemini -p "@src/ @lib/ @services/ Is Redis caching implemented? List all cache-related functions and their usage"
-
-
-  Check for specific security measures:
-  gemini -p "@src/ @api/ Are SQL injection protections implemented? Show how user inputs are sanitized"
-
-
-  Verify test coverage for features:
-  gemini -p "@src/payment/ @tests/ Is the payment processing module fully tested? List all test cases"
-
-
-  When to Use Gemini CLI
-
-
-  Use gemini -p when:
-  - Analyzing entire codebases or large directories
-  - Comparing multiple large files
-  - Need to understand project-wide patterns or architecture
-  - Current context window is insufficient for the task
-  - Working with files totaling more than 100KB
-  - Verifying if specific features, patterns, or security measures are implemented
-  - Checking for the presence of certain coding patterns across the entire codebase
-
-
-  Important Notes
-
-
-  - Paths in @ syntax are relative to your current working directory when invoking gemini
-  - The CLI will include file contents directly in the context
-  - No need for --yolo flag for read-only analysis
-  - Gemini's context window can handle entire codebases that would overflow Claude's context
   - When checking implementations, be specific about what you're looking for to get accurate results
-  
+
+## Quick Reference
+
 - use ./stop.sh and ./start.sh when testing the servers locally without docker
 - sparql queries and llm prompts should not appear inline in the code. They should be placed in the sparql and prompts directories following the same patterns as existing files, with templating if appropriate
-- default ports :\
+- default ports :
   - 4100: API server
   - 4101: MCP server
   - 4102: Workbench
@@ -371,3 +317,7 @@ const llmHandler = new LLMHandler(llmProvider, modelConfig.chatModel);
 - no fallbacks. If it's not right, throw an error
 - there are three sources of truth : .env for secrets (call dotenv.config() early in files), config/config.json (use Config.js) and config/preferences.js for all the numeric values
 - no logging to console, use the proper logging system
+- MCP system uses 12 core verbs, not the old complex tool hierarchy
+- VSOM integration complete with comprehensive e2e test coverage
+- All API calls from VSOM go through HTTP proxy to MCP server endpoints
+- Content-Type header duplication bug fixed in VSOM proxy configuration

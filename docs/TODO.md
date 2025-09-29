@@ -142,13 +142,13 @@ The SPARQL store is still empty, which means the data is only in the memory stor
 ## Cleanup
 
 * HARDCODED-URIS.md
+* update types
 * remove old mcp tools (check prompts & resources)
 * move src/services/memory/MemoryDomainManager.js etc- looks zpt
 * Config.js has a weird restructuring thing
 * rename mcp/lib/PromptSynthesis.js to mcp/lib/ResponseSynthesis.js
 * refactor files > 1000 lines mcp/tools/simple-verbs.js src/frontend/workbench/public/js/workbench.js
 * redundant ask/tell in api server
-* SimpleVerbsService is probably redundant
 * hardcoded query in src/zpt/parameters/FilterBuilder.js ******************************** 
 * hardcoded prompt in mcp/http-server.js plus does not contain any relevant information about Matisse. Therefore, I cannot answer the question
 * string matching on result types in src/zpt/selection/CorpuscleSelector.js
