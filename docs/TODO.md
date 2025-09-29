@@ -37,7 +37,7 @@ api-server.js has :
 This suggests there's a deeper issue with the SPARQLStore.store() → storeModule.store() chain not actually writing to the database. The integration test likely passes because
   it's finding old cached data, not the new data being stored.
 
-In mcp/tools/SimpleVerbsService.js line 82, weights a given hardcoded values. These should be in config/preferences.js with explanatory comments
+In mcp/tools/SimpleVerbsService.js line 82, weights are given hardcoded values. These should be in config/preferences.js with explanatory comments
 
 
 
@@ -159,9 +159,7 @@ The SPARQL store is still empty, which means the data is only in the memory stor
 * Config.js - remove refs to tbox, .env should handle
 * handleSlashCommand functionality should be in a separate module
 * src/mcp/tools/SimpleVerbsService.js contains prompts
-* src/mcp/tools/SimpleVerbsService.js is 2636 lines. Looks to mostly be a switch
-
-https://refactoring.guru/smells/switch-statements
+* src/mcp/tools/SimpleVerbsService.js is 2636 lines. Looks to mostly be a switch. Read https://refactoring.guru/smells/switch-statements then think deeply how to refactor it.
 
 Can you create utils/SPARQLIngestRemote.js which will carry out the same operation as utils/SPARQLIngest.js but against a remote Semem install. For now the credentials will be the same. The Semem endpoints are at MCP : https://mcp.tensegrity.it/ API : https://api.tensegrity.it/ Fuseki : https://semem-fuseki.tensegrity.it/ Workbench : https://semem.tensegrity.it/
 
