@@ -107,29 +107,9 @@ describe.skipIf(!process.env.INTEGRATION_TESTS)('Simple Verbs Basic Integration 
       get: vi.fn().mockReturnValue('mock-value')
     };
 
-    // Initialize service with mocks
+    // Initialize refactored service with real dependencies
     service = new SimpleVerbsService();
-    service.memoryManager = mockMemoryManager;
-    service.sparqlHelper = mockSparqlHelper;
-    service.config = mockConfig;
-    service.stateManager = new ZPTStateManager(mockMemoryManager);
-
-    // Set up SafeOperations with mock methods
-    service.safeOps = {
-      generateEmbedding: mockMemoryManager.embeddingHandler.generateEmbedding,
-      extractConcepts: mockMemoryManager.llmHandler.extractConcepts,
-      generateResponse: mockMemoryManager.llmHandler.generateResponse,
-      storeInteraction: vi.fn().mockImplementation(async (prompt, response, metadata) => {
-        return {
-          id: 'mock-interaction-id',
-          success: true,
-          timestamp: Date.now()
-        };
-      })
-    };
-
-    // Note: templateLoader is already initialized in constructor
-    service.initialized = true;
+    await service.initialize();
 
     console.log('✓ Basic integration test setup complete');
   });
