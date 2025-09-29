@@ -16,17 +16,17 @@ class SPARQLService {
      * @param {string} options.auth.password - Password for basic auth
      */
     constructor(options = {}) {
-        this.queryEndpoint = options.queryEndpoint || 'https://fuseki.hyperdata.it/semem/query';
-        this.updateEndpoint = options.updateEndpoint || 'https://fuseki.hyperdata.it/semem/update';
+        this.queryEndpoint = options.queryEndpoint
+        this.updateEndpoint = options.updateEndpoint
         if (!options.graphName) {
             throw new Error('graphName is required in options - check config.json graphName setting');
         }
         this.graphName = options.graphName;
         this.auth = options.auth || { user: 'admin', password: 'admin123' };
-        
+
         logger.info(`SPARQLService initialized with endpoints: ${this.queryEndpoint}, ${this.updateEndpoint}`);
     }
-    
+
     /**
      * Execute a SPARQL query
      * @param {string} query - The SPARQL query to execute
@@ -35,14 +35,14 @@ class SPARQLService {
     async executeQuery(query) {
         logger.debug(`Executing SPARQL query to endpoint: ${this.queryEndpoint}`);
         logger.debug(`Query: ${query}`);
-        
+
         const auth = Buffer.from(`${this.auth.user}:${this.auth.password}`).toString('base64');
-        
+
         try {
             // Detect query type to set appropriate Accept header
             const isConstruct = query.trim().toUpperCase().startsWith('CONSTRUCT');
             const acceptHeader = isConstruct ? 'text/turtle' : 'application/json';
-            
+
             const response = await fetch(this.queryEndpoint, {
                 method: 'POST',
                 headers: {
@@ -52,12 +52,12 @@ class SPARQLService {
                 },
                 body: query
             });
-            
+
             if (!response.ok) {
                 const errorText = await response.text();
                 throw new Error(`SPARQL query failed: ${response.status} - ${errorText}`);
             }
-            
+
             // Return appropriate response type based on query
             if (isConstruct) {
                 return await response.text(); // RDF data as text
@@ -69,7 +69,7 @@ class SPARQLService {
             throw error;
         }
     }
-    
+
     /**
      * Execute a SPARQL update
      * @param {string} update - The SPARQL update to execute
@@ -78,9 +78,9 @@ class SPARQLService {
     async executeUpdate(update) {
         logger.debug(`Executing SPARQL update to endpoint: ${this.updateEndpoint}`);
         logger.debug(`Update: ${update}`);
-        
+
         const auth = Buffer.from(`${this.auth.user}:${this.auth.password}`).toString('base64');
-        
+
         try {
             const response = await fetch(this.updateEndpoint, {
                 method: 'POST',
@@ -91,19 +91,19 @@ class SPARQLService {
                 },
                 body: update
             });
-            
+
             if (!response.ok) {
                 const errorText = await response.text();
                 throw new Error(`SPARQL update failed: ${response.status} - ${errorText}`);
             }
-            
+
             return response;
         } catch (error) {
             logger.error('Error executing SPARQL update:', error);
             throw error;
         }
     }
-    
+
     /**
      * Check if a graph exists
      * @param {string} graphName - The graph name to check
@@ -111,7 +111,7 @@ class SPARQLService {
      */
     async graphExists(graphName = this.graphName) {
         const query = `ASK { GRAPH <${graphName}> { ?s ?p ?o } }`;
-        
+
         try {
             const result = await this.executeQuery(query);
             return result.boolean === true;
@@ -120,7 +120,7 @@ class SPARQLService {
             throw error;
         }
     }
-    
+
     /**
      * Store an embedding for a resource in the SPARQL store
      * @param {string} resourceUri - The URI of the resource
@@ -132,7 +132,7 @@ class SPARQLService {
     async storeEmbedding(resourceUri, embedding, graphName = this.graphName, predicateUri = 'http://example.org/embedding/vector') {
         // Prepare the embedding to be stored as a JSON string
         const embeddingStr = JSON.stringify(embedding);
-        
+
         // SPARQL update query to add the embedding to the resource
         const updateQuery = `
             PREFIX schema: <http://schema.org/>
@@ -144,7 +144,7 @@ class SPARQLService {
                 }
             }
         `;
-        
+
         try {
             await this.executeUpdate(updateQuery);
             logger.info(`Stored embedding for resource: ${resourceUri}`);
@@ -154,7 +154,7 @@ class SPARQLService {
             throw error;
         }
     }
-    
+
     /**
      * Fetch resources with embeddings from the SPARQL store
      * @param {string} resourceClass - The class of resources to fetch (optional)
@@ -170,10 +170,10 @@ class SPARQLService {
         graphName = this.graphName
     ) {
         // Build the class filter if provided
-        const classFilter = resourceClass 
-            ? `?resource a <${resourceClass}> .` 
+        const classFilter = resourceClass
+            ? `?resource a <${resourceClass}> .`
             : '';
-        
+
         const query = `
             SELECT ?resource ?content ?embedding WHERE {
                 GRAPH <${graphName}> {
@@ -183,7 +183,7 @@ class SPARQLService {
                 }
             }
         `;
-        
+
         try {
             const results = await this.executeQuery(query);
             return results.results.bindings;
@@ -310,7 +310,7 @@ class SPARQLService {
         try {
             const results = await this.executeQuery(query);
             const stats = results.results.bindings[0];
-            
+
             return {
                 triples: parseInt(stats.totalTriples?.value || 0),
                 subjects: parseInt(stats.totalSubjects?.value || 0),
@@ -438,7 +438,7 @@ class SPARQLService {
         try {
             const results = await this.executeQuery(query);
             const bindings = results.results.bindings;
-            
+
             const nodes = new Map();
             const edges = [];
 
@@ -446,7 +446,7 @@ class SPARQLService {
                 const s = binding.s.value;
                 const p = binding.p.value;
                 const o = binding.o.value;
-                
+
                 // Add subject node
                 if (!nodes.has(s)) {
                     nodes.set(s, {
@@ -457,7 +457,7 @@ class SPARQLService {
                         shape: 'dot'
                     });
                 }
-                
+
                 // Add object node (if it's a URI)
                 if (binding.o.type === 'uri' && !nodes.has(o)) {
                     nodes.set(o, {
@@ -468,7 +468,7 @@ class SPARQLService {
                         shape: 'dot'
                     });
                 }
-                
+
                 // Add edge
                 if (binding.o.type === 'uri') {
                     edges.push({
@@ -498,18 +498,18 @@ class SPARQLService {
      */
     getShortLabel(uri) {
         if (!uri) return 'Unknown';
-        
+
         // If it's a URI, try to extract the local name
         if (uri.startsWith('http')) {
             const lastSlash = uri.lastIndexOf('/');
             const lastHash = uri.lastIndexOf('#');
             const lastIndex = Math.max(lastSlash, lastHash);
-            
+
             if (lastIndex > 0 && lastIndex < uri.length - 1) {
                 return uri.substring(lastIndex + 1);
             }
         }
-        
+
         return uri.length > 30 ? uri.substring(0, 27) + '...' : uri;
     }
 
@@ -520,14 +520,14 @@ class SPARQLService {
      */
     getNodeGroup(type) {
         if (!type) return 'default';
-        
+
         if (type.includes('Person')) return 'person';
         if (type.includes('Organization')) return 'organization';
         if (type.includes('Place') || type.includes('Location')) return 'place';
         if (type.includes('Event')) return 'event';
         if (type.includes('Concept')) return 'concept';
         if (type.includes('Document') || type.includes('Article')) return 'document';
-        
+
         return 'default';
     }
 }

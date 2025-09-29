@@ -29,7 +29,7 @@ export class SimpleTemplateLoader {
                 : path.resolve(process.cwd(), templatesPath);
         } else {
             // Default to prompts/templates relative to project root
-            this.templatesPath = path.resolve(__dirname, '../../prompts/templates');
+            this.templatesPath = path.resolve(__dirname, '../../../prompts/templates');
         }
         this.templateCache = new Map();
         this.lastLoadTime = new Map();

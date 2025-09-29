@@ -7,7 +7,8 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import fetch from 'node-fetch';
-import { SimpleVerbsService, ZPTStateManager } from '../../../_mcp/tools/simple-verbs.js';
+import { SimpleVerbsService } from '../../../src/mcp/tools/SimpleVerbsService.js';
+import { ZPTStateManager } from '../../../src/mcp/tools/ZptStateManager.js';
 
 // Set up fetch for any network calls
 global.fetch = fetch;
@@ -111,12 +112,13 @@ describe.skipIf(!process.env.INTEGRATION_TESTS)('Simple Verbs Basic Integration 
     service.memoryManager = mockMemoryManager;
     service.sparqlHelper = mockSparqlHelper;
     service.config = mockConfig;
-    service.stateManager = new ZPTStateManager();
-    
+    service.stateManager = new ZPTStateManager(mockMemoryManager);
+
     // Set up SafeOperations with mock methods
     service.safeOps = {
       generateEmbedding: mockMemoryManager.embeddingHandler.generateEmbedding,
       extractConcepts: mockMemoryManager.llmHandler.extractConcepts,
+      generateResponse: mockMemoryManager.llmHandler.generateResponse,
       storeInteraction: vi.fn().mockImplementation(async (prompt, response, metadata) => {
         return {
           id: 'mock-interaction-id',
@@ -125,7 +127,8 @@ describe.skipIf(!process.env.INTEGRATION_TESTS)('Simple Verbs Basic Integration 
         };
       })
     };
-    
+
+    // Note: templateLoader is already initialized in constructor
     service.initialized = true;
 
     console.log('✓ Basic integration test setup complete');
@@ -189,23 +192,22 @@ describe.skipIf(!process.env.INTEGRATION_TESTS)('Simple Verbs Basic Integration 
 
     it('should handle ask operation with context retrieval', async () => {
       const question = 'What are the benefits of machine learning in data analysis?';
-      
+
       const result = await service.ask({
         question,
         mode: 'comprehensive',
-        limit: 5
+        useContext: true
       });
 
       expect(result).toBeDefined();
       expect(result.success).toBe(true);
-      expect(result.response).toBeDefined();
-      expect(result.contextUsed).toBeGreaterThan(0);
-      
+      expect(result.answer).toBeDefined();
+
       // Verify realistic interactions
       expect(mockMemoryManager.embeddingHandler.generateEmbedding).toHaveBeenCalledWith(question);
       expect(mockMemoryManager.search).toHaveBeenCalled();
       expect(mockMemoryManager.llmHandler.generateResponse).toHaveBeenCalled();
-      
+
       console.log('✓ Ask operation completed with context retrieval');
     });
 
@@ -310,6 +312,88 @@ describe.skipIf(!process.env.INTEGRATION_TESTS)('Simple Verbs Basic Integration 
       expect(mlResult.similarity).toBeGreaterThan(0.3);
       
       console.log('✓ Session cache operations completed successfully');
+    });
+  });
+
+  describe('Template Loading Integration', () => {
+    it('should load and use prompt templates correctly', async () => {
+      // Test that the service has a template loader
+      expect(service.templateLoader).toBeDefined();
+      expect(typeof service.templateLoader.loadAndInterpolate).toBe('function');
+
+      // Test template loading for ask operation with context
+      const question = 'What is machine learning used for?';
+
+      const result = await service.ask({
+        question,
+        mode: 'comprehensive',
+        useContext: true
+      });
+
+      expect(result).toBeDefined();
+      expect(result.success).toBe(true);
+      expect(result.answer).toBeDefined();
+
+      // Verify template was loaded and used by checking the prompt passed to generateResponse
+      const generateResponseCall = mockMemoryManager.llmHandler.generateResponse.mock.calls.find(call =>
+        call[0].includes('Based on this context information')
+      );
+      expect(generateResponseCall).toBeDefined();
+      expect(generateResponseCall[0]).toContain('Question: ' + question);
+
+      console.log('✓ Template loading and interpolation works correctly');
+    });
+
+    it('should handle template loading for external context', async () => {
+      const question = 'How does quantum computing work?';
+
+      // Mock enhancement results to trigger external context template
+      service.enhancementCoordinator = {
+        enhanceContext: vi.fn().mockResolvedValue({
+          context: {
+            combinedPrompt: 'External knowledge about quantum computing...'
+          }
+        })
+      };
+
+      const result = await service.ask({
+        question,
+        mode: 'comprehensive',
+        useContext: false, // No local context, forces external only
+        useWikipedia: true
+      });
+
+      expect(result).toBeDefined();
+      expect(result.success).toBe(true);
+
+      console.log('✓ External context template loading works correctly');
+    });
+
+    it('should verify template files exist', async () => {
+      // Test that the actual template files exist and can be loaded
+      const hybridTemplate = await service.templateLoader.loadTemplate('mcp', 'ask-with-hybrid-context');
+      expect(hybridTemplate).toBeDefined();
+      expect(hybridTemplate).toContain('{{fullContext}}');
+      expect(hybridTemplate).toContain('{{question}}');
+
+      const externalTemplate = await service.templateLoader.loadTemplate('mcp', 'ask-with-external-context');
+      expect(externalTemplate).toBeDefined();
+      expect(externalTemplate).toContain('{{externalContext}}');
+      expect(externalTemplate).toContain('{{question}}');
+
+      console.log('✓ Template files exist and can be loaded');
+    });
+
+    it('should interpolate template variables correctly', async () => {
+      const template = 'Test template with {{variable1}} and {{variable2}}.';
+      const variables = { variable1: 'value1', variable2: 'value2' };
+
+      const interpolated = service.templateLoader.interpolateTemplate(template, variables);
+
+      expect(interpolated).toBe('Test template with value1 and value2.');
+      expect(interpolated).not.toContain('{{');
+
+      console.log('✓ Template variable interpolation works correctly');
     });
   });
 

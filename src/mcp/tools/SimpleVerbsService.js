@@ -18,6 +18,7 @@ import { AskOperationTimer, TellOperationTimer } from '../../utils/PerformanceTi
 // Import modular components
 import { logOperation, logPerformance, verbsLogger } from './VerbsLogger.js';
 import { ZPTStateManager } from './ZptStateManager.js';
+import { SimpleTemplateLoader } from '../lib/SimpleTemplateLoader.js';
 import {
   TellSchema, AskSchema, AugmentSchema, ZoomSchema,
   PanSchema, TiltSchema, InspectSchema, RememberSchema,
@@ -39,6 +40,9 @@ import {
     // Core tool names for router interface
     this.coreToolNames = ['tell', 'ask', 'augment', 'zoom', 'pan', 'tilt', 'inspect'];
     this.memoryRelevanceEngine = null;
+
+    // Template loader for prompts
+    this.templateLoader = new SimpleTemplateLoader();
   }
 
   /**
@@ -608,7 +612,10 @@ import {
             }
 
             const fullContext = promptParts.join('\n\n---\n\n');
-            const prompt = `Based on this context information:\n${fullContext}\n\nQuestion: ${question}\n\nPlease provide a comprehensive answer using the available context. If both personal and external knowledge are provided, synthesize them appropriately.`;
+            const prompt = await this.templateLoader.loadAndInterpolate('mcp', 'ask-with-hybrid-context', {
+              fullContext: fullContext,
+              question: question
+            });
 
             try {
               answer = await this.safeOps.generateResponse(prompt);
@@ -655,7 +662,10 @@ import {
 
         if (enhancementResults?.context?.combinedPrompt) {
           // Use enhancement results even without local context
-          const prompt = `Based on this external knowledge:\n${enhancementResults.context.combinedPrompt}\n\nQuestion: ${question}\n\nPlease provide a comprehensive answer using the available external knowledge.`;
+          const prompt = await this.templateLoader.loadAndInterpolate('mcp', 'ask-with-external-context', {
+            externalContext: enhancementResults.context.combinedPrompt,
+            question: question
+          });
 
           try {
             answer = await this.safeOps.generateResponse(prompt);
