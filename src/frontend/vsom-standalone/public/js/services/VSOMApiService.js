@@ -84,7 +84,7 @@ export default class VSOMApiService {
     }
 
     /**
-     * Get current ZPT navigation state
+     * Get current ZPT navigation state using state endpoint
      */
     async getZPTState() {
         return this.makeRequest('/state', {
@@ -102,11 +102,10 @@ export default class VSOMApiService {
             const response = await this.makeRequest('/ask', {
                 method: 'POST',
                 body: JSON.stringify({
-                    question: options.query || 'What information is available in the current context?', // Query for context scope
+                    question: options.query || 'What information is available in the current context?',
                     mode: 'comprehensive',
                     useContext: true,
-                    useHyDE: false,
-                    threshold: options.threshold
+                    useHyDE: false
                 })
             });
 
@@ -141,7 +140,10 @@ export default class VSOMApiService {
     async getSessionData() {
         return this.makeRequest('/inspect', {
             method: 'POST',
-            body: JSON.stringify({ what: 'session', details: true })
+            body: JSON.stringify({
+                type: 'session',
+                includeRecommendations: true
+            })
         });
     }
 
@@ -151,7 +153,10 @@ export default class VSOMApiService {
     async getConceptsData() {
         return this.makeRequest('/inspect', {
             method: 'POST',
-            body: JSON.stringify({ what: 'concepts', details: true })
+            body: JSON.stringify({
+                type: 'concept',
+                includeRecommendations: true
+            })
         });
     }
 
@@ -161,7 +166,10 @@ export default class VSOMApiService {
     async getAllData() {
         return this.makeRequest('/inspect', {
             method: 'POST',
-            body: JSON.stringify({ what: 'all', details: true })
+            body: JSON.stringify({
+                type: 'memory',
+                includeRecommendations: true
+            })
         });
     }
 
@@ -195,9 +203,14 @@ export default class VSOMApiService {
             return await response.json();
         } catch (error) {
             console.warn('SPARQL query failed, falling back to memory manager:', error);
-            // Fallback to memory manager API
-            return this.makeRequest('/memory/search?query=*&limit=100', {
-                method: 'GET'
+            // Fallback to direct ask endpoint
+            return this.makeRequest('/ask', {
+                method: 'POST',
+                body: JSON.stringify({
+                    question: 'What content is available?',
+                    mode: 'standard',
+                    useContext: true
+                })
             });
         }
     }
@@ -230,9 +243,13 @@ export default class VSOMApiService {
      * Set zoom level
      */
     async setZoom(level, query) {
-        return this.makeRequest('/zoom', {
+        // Use ZPT navigate endpoint with zoom parameter
+        return this.makeRequest('/zpt/navigate', {
             method: 'POST',
-            body: JSON.stringify({ level, query })
+            body: JSON.stringify({
+                zoom: level,
+                query: query
+            })
         });
     }
 
@@ -240,22 +257,33 @@ export default class VSOMApiService {
      * Set pan filters
      */
     async setPan(panParams, query) {
-        const panData = {};
+        const panData = {
+            direction: panParams.direction || 'semantic',
+            maxResults: panParams.maxResults || 50,
+            threshold: panParams.threshold || 0.5
+        };
+
         if (panParams.domains) {
-            panData.domains = Array.isArray(panParams.domains) ?
-                panParams.domains :
-                panParams.domains.split(',').map(s => s.trim()).filter(s => s);
+            panData.domain = Array.isArray(panParams.domains) ?
+                panParams.domains.join(',') :
+                panParams.domains;
         }
         if (panParams.keywords) {
-            panData.keywords = Array.isArray(panParams.keywords) ?
+            panData.conceptFilter = Array.isArray(panParams.keywords) ?
                 panParams.keywords :
                 panParams.keywords.split(',').map(s => s.trim()).filter(s => s);
         }
-        if (query) panData.query = query;
+        if (panParams.timeRange) {
+            panData.timeRange = panParams.timeRange;
+        }
 
-        return this.makeRequest('/pan', {
+        // Use ZPT navigate endpoint with pan parameter
+        return this.makeRequest('/zpt/navigate', {
             method: 'POST',
-            body: JSON.stringify(panData)
+            body: JSON.stringify({
+                pan: panData,
+                query: query
+            })
         });
     }
 
@@ -263,9 +291,13 @@ export default class VSOMApiService {
      * Set tilt style
      */
     async setTilt(style, query) {
-        return this.makeRequest('/tilt', {
+        // Use ZPT navigate endpoint with tilt parameter
+        return this.makeRequest('/zpt/navigate', {
             method: 'POST',
-            body: JSON.stringify({ style, query })
+            body: JSON.stringify({
+                tilt: style,
+                query: query
+            })
         });
     }
 
@@ -278,9 +310,8 @@ export default class VSOMApiService {
         return this.makeRequest('/inspect', {
             method: 'POST',
             body: JSON.stringify({
-                what: 'session',
-                details: true,
-                vsomConfig: config
+                type: 'system',
+                includeRecommendations: true
             })
         });
     }
@@ -491,15 +522,32 @@ export default class VSOMApiService {
      * Navigate using ZPT parameters
      */
     async zptNavigate({ query, zoom = 'entity', pan = {}, tilt = 'keywords' }) {
-        return this.makeRequest('/zpt/navigate', {
-            method: 'POST',
-            body: JSON.stringify({
-                query,
-                zoom,
-                pan,
-                tilt
-            })
-        });
+        // Perform ZPT navigation using individual verbs
+        const results = {};
+
+        // Set zoom level
+        if (zoom) {
+            results.zoom = await this.setZoom(zoom, query);
+        }
+
+        // Set pan filters
+        if (pan && Object.keys(pan).length > 0) {
+            results.pan = await this.setPan(pan, query);
+        }
+
+        // Set tilt style
+        if (tilt) {
+            results.tilt = await this.setTilt(tilt, query);
+        }
+
+        // Get final state after navigation
+        results.finalState = await this.getZPTState();
+
+        return {
+            success: true,
+            results: results,
+            message: 'ZPT navigation completed'
+        };
     }
 
     /**

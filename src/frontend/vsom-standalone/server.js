@@ -120,17 +120,17 @@ class VSOMStandaloneServer {
         const apiServerUrl = process.env.API_HTTP_URL || `http://localhost:${apiPort}/api`;
         const mcpServerUrl = process.env.MCP_HTTP_URL || `http://localhost:${mcpPort}`;
 
-        // ZPT navigation endpoints that should go to MCP server
-        const zptEndpoints = ['/zoom', '/pan', '/tilt', '/state'];
+        // MCP endpoints that should go to MCP server
+        const mcpEndpoints = ['/tell', '/ask', '/augment', '/inspect', '/state', '/zpt/navigate', '/chat', '/chat/enhanced'];
 
         this.app.use('/api', async (req, res) => {
             try {
                 // Determine which server to route to based on the endpoint
-                const isZptEndpoint = zptEndpoints.some(endpoint => req.path === endpoint);
+                const isMcpEndpoint = mcpEndpoints.some(endpoint => req.path === endpoint || req.path.startsWith(endpoint + '/'));
                 let targetUrl, serverName;
 
-                if (isZptEndpoint) {
-                    // Route ZPT navigation requests to MCP server
+                if (isMcpEndpoint) {
+                    // Route MCP requests to MCP server
                     targetUrl = `${mcpServerUrl}${req.path}`;
                     serverName = 'MCP';
                 } else {
@@ -144,11 +144,12 @@ class VSOMStandaloneServer {
                     headers: {
                         'Content-Type': 'application/json',
                         'X-API-Key': 'semem-docker-dev-key', // Use dev key for VSOM proxy
-                        // Filter out content-length to let fetch calculate it correctly
+                        // Filter out content-length, host, and content-type to avoid duplicates
                         ...Object.fromEntries(
                             Object.entries(req.headers).filter(([key]) =>
                                 key.toLowerCase() !== 'content-length' &&
-                                key.toLowerCase() !== 'host'
+                                key.toLowerCase() !== 'host' &&
+                                key.toLowerCase() !== 'content-type'
                             )
                         )
                     }

@@ -1,40 +1,41 @@
-# Semem MCP Tutorial: Complete User Guide
+# Semem MCP Tutorial: Core Verbs Guide
 
-**Untested!**
-
-**A comprehensive workflow-focused guide for using Semem with MCP-enabled systems**
+**A practical guide to using Semem's 12 core verbs with MCP-enabled systems**
 
 ## Table of Contents
 
 1. [Introduction](#introduction)
 2. [Quick Start](#quick-start)
-3. [Understanding Semem's Capabilities](#understanding-semems-capabilities)
-4. [Core Workflow Patterns](#core-workflow-patterns)
-5. [Memory Management Workflows](#memory-management-workflows)
-6. [Knowledge Graph Construction Workflows](#knowledge-graph-construction-workflows)
-7. [3D Navigation Workflows](#3d-navigation-workflows)
-8. [Integrated Multi-System Workflows](#integrated-multi-system-workflows)
-9. [SPARQL Store Integration](#sparql-store-integration)
-10. [Real-World Use Cases](#real-world-use-cases)
-11. [Troubleshooting](#troubleshooting)
+3. [Core Verbs Overview](#core-verbs-overview)
+4. [Primary Memory Verbs](#primary-memory-verbs)
+5. [ZPT Navigation Verbs](#zpt-navigation-verbs)
+6. [Advanced Memory Management](#advanced-memory-management)
+7. [Workflow Patterns](#workflow-patterns)
+8. [Memory Domains](#memory-domains)
+9. [Real-World Examples](#real-world-examples)
+10. [Troubleshooting](#troubleshooting)
 
 ---
 
 ## Introduction
 
-Semem is a semantic memory management platform that combines three powerful systems through the Model Context Protocol (MCP):
+Semem provides semantic memory management through 12 intuitive verbs accessible via the Model Context Protocol (MCP). These verbs form a simple, powerful interface for intelligent memory operations, knowledge processing, and spatial navigation.
 
-**🧠 Semantic Memory**: Intelligent storage and retrieval with vector embeddings  
-**🕸️ Knowledge Graphs**: RDF-based entity extraction and relationship modeling using the Ragno ontology  
-**🧭 3D Navigation**: ZPT (Zoom, Pan, Tilt) spatial analysis for multi-dimensional content exploration
+### Core Verb Categories
+
+**🧠 Primary Memory Verbs**: `tell`, `ask`, `augment` - fundamental storage, querying, and enhancement
+**🧭 ZPT Navigation Verbs**: `zoom`, `pan`, `tilt` - 3-dimensional knowledge space exploration
+**🔍 Inspection Verbs**: `inspect` - system state and debugging
+**📚 Advanced Memory Verbs**: `remember`, `forget`, `recall` - precision memory management
+**🗂️ Context Management Verbs**: `project-context`, `fade-memory` - domain and transition management
 
 ### What Makes Semem Unique
 
-- **Workflow-Centric Design**: Pre-built patterns for common research and analysis tasks
-- **SPARQL-First Storage**: Native RDF storage with external SPARQL endpoint support
-- **Unified Access**: All capabilities accessible through a single MCP interface
-- **43 HTTP API Endpoints**: Complete programmatic access alongside MCP tools
-- **External Data Integration**: SPARQL stores can be populated independently, then analyzed with Semem
+- **Verb-Centric Design**: Simple, intuitive interface replacing complex tool hierarchies
+- **Memory Domains**: Multi-domain organization (user, project, session, instruction)
+- **ZPT Navigation**: Camera-like controls for exploring knowledge spaces
+- **SPARQL Integration**: Native RDF storage with external endpoint support
+- **Context Awareness**: Verbs maintain state and provide contextual responses
 
 ---
 
@@ -60,7 +61,7 @@ npm run mcp-server-new
 
 #### For Claude Code
 ```bash
-claude mcp add semem node mcp/index.js
+claude mcp add semem node src/mcp/index.js
 claude  # Start Claude
 ```
 
@@ -71,7 +72,7 @@ Add to your Claude Desktop configuration:
   "mcpServers": {
     "semem": {
       "command": "node",
-      "args": ["/path/to/semem/mcp/index.js"]
+      "args": ["/path/to/semem/src/mcp/index.js"]
     }
   }
 }
@@ -80,455 +81,783 @@ Add to your Claude Desktop configuration:
 ### Verify Connection
 
 Once connected, you should see:
-- **35+ MCP tools** for memory, knowledge graphs, and navigation
-- **15 resources** for documentation and system status  
-- **8 workflow prompts** for complex operations
+- **12 core verbs** with `semem-` prefix for all operations
+- **System resources** for status and documentation
+- **Unified interface** - all capabilities through simple verb calls
 
 ---
 
-## Understanding Semem's Capabilities
+## Core Verbs Overview
 
-### Core System Components
+### Verb Categories and Usage
 
-#### 🧠 Semantic Memory (5 tools)
-Store and retrieve conversations, documents, and knowledge with vector embeddings for semantic similarity search.
+#### 🧠 Primary Memory Verbs (3 verbs)
+- **`semem-tell`**: Store content with minimal processing
+- **`semem-ask`**: Context-aware querying with enhancement options
+- **`semem-augment`**: Post-processing for concept extraction and relationship discovery
 
-#### 🕸️ Ragno Knowledge Graph (13 tools)  
-Transform text into structured RDF knowledge graphs following the Ragno ontology. Extract entities, relationships, and semantic units with full SPARQL compatibility.
+#### 🧭 ZPT Navigation Verbs (3 verbs)
+- **`semem-zoom`**: Set abstraction level (entity → community)
+- **`semem-pan`**: Apply semantic, temporal, or conceptual filters
+- **`semem-tilt`**: Choose representation style (keywords → detailed)
 
-#### 🧭 ZPT 3D Navigation (6 tools)
-Navigate knowledge spaces using camera-like controls:
-- **Zoom**: Level of detail (entity, unit, text, community, corpus)
-- **Pan**: Content filtering (temporal, geographic, topical) 
-- **Tilt**: Representation style (keywords, embedding, graph, temporal)
+#### 🔍 Inspection Verbs (1 verb)
+- **`semem-inspect`**: Examine system state, memory domains, and context
 
-#### 📊 System Management (11+ tools)
-Storage backends, configuration, metrics, backup/restore, and health monitoring.
+#### 📚 Advanced Memory Verbs (3 verbs)
+- **`semem-remember`**: Domain-specific storage with importance weighting
+- **`semem-forget`**: Graceful memory fading for context transitions
+- **`semem-recall`**: Advanced retrieval with multi-dimensional filtering
 
-### SPARQL Store Independence
+#### 🗂️ Context Management Verbs (2 verbs)
+- **`semem-project-context`**: Project boundary and domain management
+- **`semem-fade-memory`**: Smooth memory visibility transitions
 
-**Important**: Semem's SPARQL store can be populated and managed independently of Semem itself. You can:
+### Memory Domain System
 
-- Use external tools to populate a SPARQL endpoint with RDF data
-- Point Semem at an existing SPARQL store containing domain knowledge
-- Apply Semem's analysis capabilities to any RDF dataset
-- Combine Semem-generated knowledge graphs with external ontologies
+Semem organizes memory into four domains:
+- **User**: Personal long-term memories and preferences
+- **Project**: Project-specific context and knowledge
+- **Session**: Temporary conversation and interaction memory
+- **Instruction**: System instructions and behavioral context
 
-This separation allows Semem to function as an analysis layer over existing semantic web infrastructure.
-
----
-
-## Core Workflow Patterns
-
-### Pattern 1: Document Analysis and Storage
-
-**Workflow**: Document → Memory Storage → Concept Extraction → Knowledge Graph → Analysis
-
-**Use When**: Processing research papers, reports, or documentation for future reference and analysis.
-
-**Tools Chain**:
-1. `semem_store_interaction` - Store document with embeddings
-2. `semem_extract_concepts` - Extract key concepts  
-3. `ragno_decompose_corpus` - Build knowledge graph
-4. `ragno_analyze_graph` - Understand relationships
-
-### Pattern 2: Knowledge Discovery and Exploration
-
-**Workflow**: Query → Memory Search → Graph Navigation → Insight Generation
-
-**Use When**: Exploring existing knowledge to find connections, patterns, or answer research questions.
-
-**Tools Chain**:
-1. `semem_retrieve_memories` - Find related content
-2. `ragno_search_graph` - Graph-based search
-3. `zpt_navigate` - 3D spatial exploration
-4. `semem_generate_response` - Synthesize insights
-
-### Pattern 3: Corpus Analysis and Visualization
-
-**Workflow**: Text Corpus → Knowledge Graph → Community Detection → Navigation Interface
-
-**Use When**: Analyzing large document collections to understand structure, themes, and relationships.
-
-**Tools Chain**:
-1. `ragno_decompose_corpus` - Process entire corpus
-2. `ragno_aggregate_communities` - Find topical clusters
-3. `zpt_analyze_corpus` - Prepare for navigation
-4. `zpt_navigate` - Interactive exploration
-
----
-
-## Memory Management Workflows
-
-### Basic Memory Operations
-
-#### Storing Information
-Use `semem_store_interaction` to create searchable memories:
-```
-Store the conversation: "What are sustainable development principles?" 
-Response: "Sustainable development balances economic growth with environmental protection..."
-```
-
-#### Semantic Search
-Use `semem_retrieve_memories` for contextual retrieval:
-```
-Search for memories about "environmental sustainability" with threshold 0.7
-```
-
-#### Context-Aware Responses
-Use `semem_generate_response` for intelligent replies:
-```
-Generate response to "How can cities become more sustainable?" using stored memories
-```
-
-### Research Document Workflow
-
-**Use Case**: Academic researcher analyzing multiple papers
-
-**Workflow Steps**:
-1. **Batch Storage**: Store multiple research papers using `semem_store_interaction`
-2. **Concept Mapping**: Extract concepts from each paper using `semem_extract_concepts`
-3. **Cross-Reference**: Find related content using `semem_retrieve_memories`
-4. **Synthesis**: Generate comprehensive analysis using `semem_generate_response`
-
-**Benefits**:
-- Automatic similarity detection between papers
-- Concept-based organization of research
-- Contextual synthesis of findings
-- Persistent memory for long-term projects
-
-### Educational Content Workflow
-
-**Use Case**: Educator building curriculum connections
-
-**Workflow Steps**:
-1. **Content Storage**: Store educational materials and explanations
-2. **Prerequisite Mapping**: Use memory search to find foundational concepts
-3. **Progression Paths**: Identify learning sequences through concept relationships
-4. **Adaptive Responses**: Generate explanations tailored to student level
-
----
-
-## Knowledge Graph Construction Workflows
-
-### Text to Knowledge Graph Pipeline
-
-#### Single Document Processing
-**Workflow**: Document → Entities → Relationships → RDF Graph
-
-```
-Use ragno_decompose_corpus with:
-- Text: "Apple Inc. founded by Steve Jobs revolutionized computing with the iPhone"
-- Options: extractRelationships=true, generateSummaries=true
-```
-
-**Results**:
-- Entities: Apple Inc. (Organization), Steve Jobs (Person), iPhone (Product)
-- Relationships: Steve Jobs → founded → Apple Inc., Apple Inc. → created → iPhone
-- RDF triples stored in SPARQL endpoint
-
-#### Multi-Document Corpus
-**Workflow**: Document Collection → Unified Graph → Community Analysis
-
-```
-Process corpus with ragno_decompose_corpus:
-- Multiple documents about technology companies
-- Extract cross-document entity relationships
-- Identify business ecosystem patterns
-```
-
-### Entity-Centric Analysis
-
-#### Finding Key Entities
-Use `ragno_get_entities` to discover important entities:
-```
-Retrieve entities with minimum frequency 3, type "Person", limit 50
-```
-
-#### Entity Relationship Mapping
-Use `ragno_search_graph` for entity exploration:
-```
-Search for entities related to "artificial intelligence" with dual search
-```
-
-#### Graph Analytics
-Use `ragno_analyze_graph` for comprehensive analysis:
-```
-Analyze graph with centrality, communities, and statistics
-```
-
-### SPARQL Integration Workflows
-
-#### Direct SPARQL Queries
-Use `ragno_query_sparql` for precise data extraction:
-```
-Query: "SELECT ?person ?company WHERE { ?person <founded> ?company }"
-```
-
-#### External Data Integration
-**Workflow**: External SPARQL Store → Semem Analysis
-
-1. **Populate External Store**: Use external tools to load domain ontologies or datasets
-2. **Configure Semem**: Point storage backend to external SPARQL endpoint  
-3. **Apply Analysis**: Use Ragno tools to analyze existing RDF data
-4. **Enhance Data**: Add embeddings and semantic analysis to existing graphs
-
----
-
-## 3D Navigation Workflows
-
-### Understanding ZPT Navigation
-
-ZPT treats knowledge as a 3-dimensional space you can explore cinematically:
-
-#### Zoom Levels
-- **Entity**: Focus on individual entities and their properties
-- **Unit**: Balanced view of semantic units with related entities
-- **Text**: Broader view including detailed textual content  
-- **Community**: Topic-level clusters and domain overviews
-- **Corpus**: Highest level patterns across entire knowledge base
-
-#### Pan (Filtering)
-- **Temporal**: Filter by time periods or chronological progression
-- **Geographic**: Focus on location-specific content
-- **Topical**: Filter by subject areas or themes
-- **Entity-Based**: Focus on specific organizations, people, or concepts
-
-#### Tilt (Representation)
-- **Keywords**: Term-based representation (fastest)
-- **Embedding**: Vector-based semantic similarity
-- **Graph**: Relationship-based network representation
-- **Temporal**: Time-based sequential representation
-
-### Basic Navigation Patterns
-
-#### Quick Entity Overview
-```
-Navigate "artificial intelligence" with:
-- Zoom: entity
-- Tilt: keywords  
-- Limit: 2000 tokens
-```
-
-#### Relationship Exploration
-```
-Navigate "machine learning algorithms" with:
-- Zoom: unit
-- Tilt: graph
-- Format: structured
-```
-
-#### Temporal Analysis
-```
-Navigate "climate change research" with:
-- Zoom: community
-- Tilt: temporal
-- Pan: date range 2020-2024
-```
-
-### Advanced Navigation Workflows
-
-#### Research Domain Exploration
-**Use Case**: Understanding a new research field
-
-**Workflow Steps**:
-1. **Preview Scope**: Use `zpt_preview` to understand content availability
-2. **Parameter Validation**: Use `zpt_validate_params` to verify navigation settings
-3. **Navigate Overview**: Start with corpus-level zoom for field overview
-4. **Drill Down**: Progressive zoom to entity level for specific topics
-5. **Relationship Analysis**: Use graph tilt to understand connections
-
-#### Content Discovery Pipeline
-**Use Case**: Finding relevant information in large corpora
-
-**Workflow Steps**:
-1. **Corpus Analysis**: Use `zpt_analyze_corpus` to understand structure
-2. **Options Discovery**: Use `zpt_get_options` to see available navigation paths
-3. **Multi-Dimensional Search**: Combine temporal, geographic, and topical filters
-4. **Interactive Exploration**: Use preview-then-navigate pattern for efficiency
-
----
-
-## Integrated Multi-System Workflows
-
-### Memory + Knowledge Graph Integration
-
-**Workflow**: Document Storage → Graph Construction → Memory-Enhanced Queries
-
-**Steps**:
-1. **Store in Memory**: Use `semem_store_interaction` for semantic search capability
-2. **Build Graph**: Use `ragno_decompose_corpus` for structured relationships
-3. **Enhanced Search**: Use both `semem_retrieve_memories` and `ragno_search_graph`
-4. **Synthesize**: Combine memory context with graph relationships for comprehensive analysis
-
-**Benefits**:
-- Memory provides semantic similarity and context
-- Graph provides structured relationships and reasoning
-- Combined approach offers both associative and logical reasoning
-
-### ZPT + Knowledge Graph Exploration
-
-**Workflow**: Graph Construction → Navigation Preparation → Interactive Exploration
-
-**Steps**:
-1. **Build Graph**: Create knowledge graph from corpus
-2. **Analyze Structure**: Use `ragno_analyze_graph` to understand communities
-3. **Prepare Navigation**: Use `zpt_analyze_corpus` for optimization
-4. **Explore Spatially**: Use ZPT navigation for intuitive discovery
-
-### Full Pipeline Integration
-
-**Workflow**: Document → Memory → Graph → Navigation → Insights
-
-**Example: Legal Document Analysis**
-
-**Steps**:
-1. **Memory Storage**: Store legal documents with metadata
-2. **Entity Extraction**: Extract legal entities (cases, statutes, parties)
-3. **Relationship Mapping**: Build citation and precedent relationships
-4. **Spatial Analysis**: Navigate legal reasoning patterns
-5. **Case Law Discovery**: Find relevant precedents through multi-system search
-
----
-
-## SPARQL Store Integration
-
-### External SPARQL Store Setup
+### SPARQL Integration
 
 Semem can work with any SPARQL-compatible endpoint:
+- Native storage for self-contained operation
+- External endpoint integration for existing RDF datasets
+- Analysis layer over existing semantic web infrastructure
+- Support for domain ontologies and knowledge graphs
 
-#### Popular SPARQL Stores
-- **Apache Jena Fuseki**: Full-featured, production-ready
-- **Virtuoso**: High-performance commercial/open source
-- **GraphDB**: Semantic database with reasoning
-- **Blazegraph**: High-performance graph database
+---
 
-#### Configuration
-Set storage backend to use external SPARQL endpoint:
+## Primary Memory Verbs
+
+The three primary verbs form the foundation of all memory operations:
+
+### `semem-tell`: Store Information
+
+**Purpose**: Add content to the system with minimal processing
+
+**Basic Usage**:
 ```
-Configure storage: backend="sparql", endpoint="https://your-sparql-store.com/query"
-```
-
-### External Data Workflows
-
-#### Workflow 1: Analyze Existing Knowledge Base
-**Scenario**: Company has existing RDF data in SPARQL store
-
-**Steps**:
-1. **Connect**: Point Semem at existing SPARQL endpoint
-2. **Analyze**: Use `ragno_get_graph_stats` to understand existing data
-3. **Enhance**: Add embeddings using `ragno_enrich_embeddings`  
-4. **Navigate**: Use ZPT tools to explore existing knowledge spatially
-
-#### Workflow 2: Enrich External Ontology
-**Scenario**: Enhance domain ontology with new documents
-
-**Steps**:
-1. **Load External Data**: Import domain ontology into SPARQL store
-2. **Process Documents**: Use Ragno tools to create entities from new content
-3. **Link Data**: Connect new entities to existing ontology concepts
-4. **Validate**: Use graph analytics to ensure consistency
-
-#### Workflow 3: Multi-Source Integration
-**Scenario**: Combine multiple knowledge sources
-
-**Steps**:
-1. **Establish Store**: Set up central SPARQL endpoint
-2. **Load Sources**: Import data from multiple external sources
-3. **Apply Semem**: Use entity extraction and relationship detection
-4. **Resolve Conflicts**: Use confidence scoring and validation
-5. **Navigate Result**: Explore integrated knowledge space
-
-### Data Export and Backup
-
-#### Export Workflows
-Use `ragno_export_sparql` to create portable datasets:
-```
-Export format options:
-- Turtle (.ttl) - Human-readable RDF
-- N-Triples (.nt) - Machine-processable format
-- JSON-LD - Web-compatible JSON format
-- RDF/XML - Standard XML serialization
+Use semem-tell with:
+- content: "Machine learning is a subset of artificial intelligence"
+- type: "concept"
+- metadata: {"source": "textbook", "confidence": 0.9}
 ```
 
-#### Backup Strategies
+**Parameters**:
+- `content` (required): Text to store
+- `type`: "interaction", "document", or "concept" (default: interaction)
+- `metadata`: Additional structured information
+- `lazy`: Defer processing for batch operations (default: false)
+
+**When to Use**:
+- Storing conversations and interactions
+- Archiving documents and references
+- Building concept libraries
+- Rapid information capture
+
+### `semem-ask`: Query with Context
+
+**Purpose**: Query the system using current ZPT context for enhanced answers
+
+**Basic Usage**:
 ```
-Memory backup: semem_backup_memory (JSON format with embeddings)
-Graph backup: ragno_export_sparql (RDF format for SPARQL stores)
-System backup: Complete configuration and data export
+Use semem-ask with:
+- question: "What are the key principles of machine learning?"
+- mode: "comprehensive"
+- useContext: true
+- useWikipedia: true
+```
+
+**Parameters**:
+- `question` (required): Your query
+- `mode`: "basic", "standard", or "comprehensive" (default: standard)
+- `useContext`: Include stored memories (default: true)
+- `useHyDE`: Hypothetical Document Embeddings enhancement
+- `useWikipedia`: External Wikipedia knowledge
+- `useWikidata`: Structured data from Wikidata
+- `useWebSearch`: Live web search integration
+
+**Enhancement Modes**:
+- **Basic**: Fast responses using only stored memory
+- **Standard**: Memory + basic enhancement
+- **Comprehensive**: Full enhancement with external sources
+
+### `semem-augment`: Enhance Stored Content
+
+**Purpose**: Post-process stored content with concept extraction and analysis
+
+**Basic Usage**:
+```
+Use semem-augment with:
+- target: "all"
+- operation: "concepts"
+- options: {"maxConcepts": 15, "includeRelationships": true}
+```
+
+**Operations**:
+- `auto`: Intelligent selection of needed operations
+- `concepts`: Extract key concepts and entities
+- `attributes`: Add entity attributes and properties
+- `relationships`: Discover and model relationships
+- `chunk_documents`: Break large documents into semantic units
+- `generate_embedding`: Create or refresh vector embeddings
+
+**When to Use**:
+- After storing large documents with lazy=true
+- Building knowledge graphs from stored content
+- Enhancing older memories with new capabilities
+- Preparing content for ZPT navigation
+
+---
+
+## ZPT Navigation Verbs
+
+ZPT (Zoom, Pan, Tilt) provides camera-like controls for exploring knowledge spaces:
+
+### `semem-zoom`: Set Abstraction Level
+
+**Purpose**: Control the granularity of content view
+
+**Levels**:
+- **entity**: Individual entities and their immediate properties
+- **concept**: Balanced view of concepts with related entities
+- **document**: Document-level content with broader context
+- **community**: Topic-level clusters and domain overviews
+
+**Usage Examples**:
+```
+# Focus on specific entities
+Use semem-zoom with level: "entity", query: "artificial intelligence"
+
+# Get conceptual overview
+Use semem-zoom with level: "concept", query: "machine learning algorithms"
+
+# Understand topic communities
+Use semem-zoom with level: "community"
+```
+
+### `semem-pan`: Apply Filters
+
+**Purpose**: Filter content across multiple dimensions
+
+**Filter Types**:
+- **semantic**: Filter by conceptual similarity using vector embeddings
+- **temporal**: Filter by time periods or chronological progression
+- **conceptual**: Filter by specific topics or domain areas
+
+**Usage Examples**:
+```
+# Temporal filtering
+Use semem-pan with:
+- direction: "temporal"
+- timeRange: "2020-2024"
+- maxResults: 50
+
+# Semantic filtering
+Use semem-pan with:
+- direction: "semantic"
+- conceptFilter: ["machine learning", "neural networks"]
+- threshold: 0.7
+
+# Domain-specific filtering
+Use semem-pan with:
+- direction: "conceptual"
+- domain: "computer science"
+- maxResults: 25
+```
+
+### `semem-tilt`: Choose Representation
+
+**Purpose**: Control how content is presented
+
+**Styles**:
+- **keywords**: Brief term-based representation (fastest)
+- **summary**: Balanced summary with key points
+- **detailed**: Comprehensive structured representation
+
+**Usage Examples**:
+```
+# Quick keyword overview
+Use semem-tilt with style: "keywords"
+
+# Balanced summary
+Use semem-tilt with style: "summary", query: "recent developments"
+
+# Detailed analysis
+Use semem-tilt with style: "detailed"
+```
+
+### Navigation Workflow
+
+**Step-by-Step Navigation**:
+1. **Set Level**: Use `semem-zoom` to choose appropriate abstraction
+2. **Apply Filters**: Use `semem-pan` to focus on relevant content
+3. **Choose View**: Use `semem-tilt` to get the right level of detail
+4. **Inspect State**: Use `semem-inspect` to understand current context
+5. **Iterate**: Adjust zoom/pan/tilt based on findings
+
+---
+
+## Advanced Memory Management
+
+The advanced memory verbs provide precision control over memory operations:
+
+### `semem-remember`: Domain-Specific Storage
+
+**Purpose**: Store content with explicit importance and domain targeting
+
+**Parameters**:
+- `content` (required): Information to remember
+- `importance`: "low", "medium", "high", "critical" (default: medium)
+- `domain`: Target memory domain (user/project/session/instruction)
+- `tags`: Searchable tags for organization
+- `context`: Additional contextual information
+- `metadata`: Structured metadata (source, timestamp, category)
+
+**Usage Examples**:
+```
+# Critical project information
+Use semem-remember with:
+- content: "Database password reset procedure for production"
+- importance: "critical"
+- domain: "project"
+- tags: ["security", "database", "production"]
+
+# Personal preference
+Use semem-remember with:
+- content: "Prefer detailed explanations with examples"
+- importance: "medium"
+- domain: "user"
+- tags: ["preferences", "communication"]
+```
+
+### `semem-forget`: Graceful Memory Management
+
+**Purpose**: Reduce memory visibility using navigation rather than deletion
+
+**Methods**:
+- `fade`: Gradually reduce memory visibility
+- `remove`: Direct memory removal (use sparingly)
+
+**Usage Examples**:
+```
+# Fade old project memories
+Use semem-forget with:
+- target: "project_alpha"
+- method: "fade"
+- intensity: 0.7
+
+# Remove sensitive information
+Use semem-forget with:
+- target: "temporary passwords"
+- method: "remove"
+```
+
+### `semem-recall`: Advanced Retrieval
+
+**Purpose**: Search memories with multi-dimensional filtering
+
+**Filters**:
+- `domain`: Specific memory domain
+- `timeRange`: Temporal constraints
+- `tags`: Tag-based filtering
+- `threshold`: Similarity threshold (0.0-1.0)
+- `limit`: Maximum results
+
+**Usage Examples**:
+```
+# Find recent project memories
+Use semem-recall with:
+- query: "API documentation"
+- domain: "project"
+- timeRange: "last_week"
+- limit: 10
+
+# High-confidence user preferences
+Use semem-recall with:
+- query: "communication style"
+- domain: "user"
+- threshold: 0.8
+- tags: ["preferences"]
+```
+
+### `semem-inspect`: System Examination
+
+**Purpose**: Examine system state and stored content for debugging
+
+**Types**:
+- `system`: Overall system health and configuration
+- `session`: Current session state and temporary memory
+- `concept`: Concept extraction and knowledge graph status
+- `memory`: Memory domain statistics and health
+
+**Usage Examples**:
+```
+# Check system status
+Use semem-inspect with type: "system", includeRecommendations: true
+
+# Examine current session
+Use semem-inspect with type: "session"
+
+# Review memory domain health
+Use semem-inspect with type: "memory", target: "project"
 ```
 
 ---
 
-## Real-World Use Cases
+## Workflow Patterns
 
-### Academic Research Pipeline
+Common workflows combining multiple verbs for specific tasks:
 
-**Scenario**: Researcher analyzing 50+ papers on renewable energy
+### Pattern 1: Document Analysis Pipeline
+
+**Workflow**: Store → Augment → Navigate → Query
+
+**Use Case**: Analyzing research papers or technical documents
+
+**Steps**:
+1. **Store Content**: Use `semem-tell` with `lazy: true` for rapid ingestion
+2. **Extract Knowledge**: Use `semem-augment` with `operation: "concepts"`
+3. **Set Navigation**: Use `semem-zoom` to "concept" level
+4. **Query Insights**: Use `semem-ask` with `mode: "comprehensive"`
+
+**Example**:
+```
+# Store document quickly
+Use semem-tell with:
+- content: "[Research paper text]"
+- type: "document"
+- lazy: true
+
+# Extract concepts and relationships
+Use semem-augment with:
+- operation: "concepts"
+- options: {"includeRelationships": true, "maxConcepts": 20}
+
+# Set conceptual view
+Use semem-zoom with level: "concept"
+
+# Query for insights
+Use semem-ask with:
+- question: "What are the main findings and methodologies?"
+- mode: "comprehensive"
+```
+
+### Pattern 2: Knowledge Discovery
+
+**Workflow**: Navigate → Filter → Query → Remember
+
+**Use Case**: Exploring existing knowledge to find connections
+
+**Steps**:
+1. **Set Overview**: Use `semem-zoom` to "community" level
+2. **Apply Filters**: Use `semem-pan` with relevant constraints
+3. **Choose Detail**: Use `semem-tilt` for appropriate representation
+4. **Query Connections**: Use `semem-ask` to explore relationships
+5. **Store Insights**: Use `semem-remember` for important discoveries
+
+### Pattern 3: Project Context Setup
+
+**Workflow**: Context → Remember → Tell → Augment
+
+**Use Case**: Starting a new project with existing knowledge
+
+**Steps**:
+1. **Create Context**: Use `semem-project-context` to establish boundaries
+2. **Remember Goals**: Use `semem-remember` for project objectives
+3. **Store Resources**: Use `semem-tell` for relevant documents
+4. **Build Knowledge**: Use `semem-augment` to create concept maps
+
+### Pattern 4: Context Transition
+
+**Workflow**: Fade → Context → Recall → Ask
+
+**Use Case**: Switching between projects or domains
+
+**Steps**:
+1. **Fade Old Context**: Use `semem-fade-memory` for smooth transition
+2. **Switch Context**: Use `semem-project-context` to activate new domain
+3. **Recall Relevant**: Use `semem-recall` to refresh context
+4. **Query Status**: Use `semem-ask` to understand current state
+
+---
+
+## Memory Domains
+
+Semem organizes memory into four distinct domains for contextual organization:
+
+### Domain Types
+
+#### User Domain
+**Purpose**: Personal long-term memories and preferences
+**Content**: User preferences, communication styles, personal context
+**Persistence**: Long-term, survives sessions and projects
+**Access**: Available across all contexts
+
+**Examples**:
+- Communication preferences ("I prefer detailed explanations")
+- Domain expertise ("I'm experienced in machine learning")
+- Working patterns ("I work best with structured information")
+
+#### Project Domain
+**Purpose**: Project-specific context and knowledge
+**Content**: Project goals, constraints, specific knowledge, team context
+**Persistence**: Project lifetime, can be archived
+**Access**: Active when project context is set
+
+**Examples**:
+- Project objectives and requirements
+- Team member roles and expertise
+- Project-specific terminology and conventions
+- Technical constraints and decisions
+
+#### Session Domain
+**Purpose**: Temporary conversation and interaction memory
+**Content**: Current conversation, temporary context, session-specific state
+**Persistence**: Session lifetime only
+**Access**: Current session only
+
+**Examples**:
+- Current conversation thread
+- Temporary calculations or analysis
+- Session-specific assumptions
+- Recently referenced information
+
+#### Instruction Domain
+**Purpose**: System instructions and behavioral context
+**Content**: System behavior modifications, processing instructions
+**Persistence**: Configurable, can be session or longer-term
+**Access**: Applied to system behavior
+
+**Examples**:
+- Output format preferences
+- Processing constraints
+- Behavioral modifications
+- Workflow customizations
+
+### Domain Management
+
+#### Switching Project Context
+```
+Use semem-project-context with:
+- query: "switch to project_beta"
+- projectionType: "semantic"
+- includeMetadata: true
+```
+
+#### Cross-Domain Queries
+```
+# Query user preferences
+Use semem-recall with:
+- query: "communication preferences"
+- domain: "user"
+- threshold: 0.8
+
+# Find project-specific information
+Use semem-recall with:
+- query: "API endpoints"
+- domain: "project"
+- tags: ["documentation"]
+```
+
+#### Domain Inspection
+```
+# Check project domain status
+Use semem-inspect with:
+- type: "memory"
+- target: "project"
+- includeRecommendations: true
+```
+
+---
+
+## Real-World Examples
+
+Practical examples demonstrating verb usage in real scenarios:
+
+### Example 1: Research Paper Analysis
+
+**Scenario**: Analyzing a collection of AI research papers
 
 **Workflow**:
-1. **Batch Import**: Load papers into both memory and knowledge graph
-2. **Concept Mapping**: Extract and connect technical concepts across papers
-3. **Author Networks**: Build collaboration and citation relationships
-4. **Trend Analysis**: Use temporal navigation to identify research progression
-5. **Gap Analysis**: Find under-researched areas through graph analysis
+```
+# Store papers with lazy processing for speed
+Use semem-tell with:
+- content: "[Paper 1 content]"
+- type: "document"
+- metadata: {"source": "arxiv", "year": "2024", "topic": "transformers"}
+- lazy: true
 
-**Tools Used**: 
-- `ragno_decompose_corpus` for paper processing
-- `ragno_aggregate_communities` for research area clustering
-- `zpt_navigate` with temporal tilt for trend analysis
-- `semem_generate_response` for synthesis
+# Extract concepts from all stored papers
+Use semem-augment with:
+- target: "all"
+- operation: "concepts"
+- options: {"includeRelationships": true, "maxConcepts": 25}
 
-### Corporate Knowledge Management
+# Navigate to community level to see research themes
+Use semem-zoom with level: "community"
 
-**Scenario**: Fortune 500 company organizing internal documentation
+# Filter by temporal progression
+Use semem-pan with:
+- direction: "temporal"
+- timeRange: "2020-2024"
 
-**Workflow**:
-1. **Document Import**: Process policies, procedures, and reports
-2. **Department Mapping**: Extract organizational entities and relationships
-3. **Expertise Location**: Connect people to topics through document authorship
-4. **Compliance Tracking**: Use temporal analysis for policy evolution
-5. **Decision Support**: Provide context-aware answers to employee questions
+# Get detailed view of trends
+Use semem-tilt with style: "detailed"
 
-**Architecture**:
-- External SPARQL store for persistent company knowledge
-- Semem analysis layer for intelligent querying
-- Multiple document ingestion pipelines
-- Role-based access through API endpoints
+# Query for insights
+Use semem-ask with:
+- question: "What are the emerging trends in transformer architectures?"
+- mode: "comprehensive"
+- useWikipedia: true
+```
 
-### Legal Research System
+### Example 2: Project Knowledge Management
 
-**Scenario**: Law firm analyzing case precedents and legal relationships
-
-**Workflow**:
-1. **Case Database**: Import case law into SPARQL store with metadata
-2. **Citation Analysis**: Extract and model legal citations as relationships
-3. **Precedent Networks**: Build networks of legal precedent relationships
-4. **Topic Evolution**: Track legal principle development over time
-5. **Case Research**: Multi-dimensional search for relevant precedents
-
-**Key Features**:
-- Entity extraction for legal concepts (parties, statutes, principles)
-- Temporal navigation for legal evolution analysis
-- Graph analytics for influence and centrality analysis
-- Memory system for contextual legal research
-
-### Scientific Literature Analysis
-
-**Scenario**: Medical researchers tracking COVID-19 research evolution
+**Scenario**: Managing knowledge for a software development project
 
 **Workflow**:
-1. **Literature Ingestion**: Continuous import of research papers
-2. **Methodology Tracking**: Extract and connect research methodologies
-3. **Finding Networks**: Connect research findings and contradictions
-4. **Geographic Analysis**: Map research activity by location
-5. **Knowledge Synthesis**: Generate systematic reviews from graph analysis
+```
+# Set up project context
+Use semem-project-context with:
+- query: "create web_app_project"
+- projectionType: "semantic"
+- includeMetadata: true
 
-**Advanced Features**:
-- Real-time literature monitoring
-- Contradiction detection through relationship analysis
-- Geographic visualization of research activity
-- Automated systematic review generation
+# Remember critical project information
+Use semem-remember with:
+- content: "API rate limits: 1000 requests/hour, database connection pool size: 20"
+- importance: "critical"
+- domain: "project"
+- tags: ["configuration", "limits"]
+
+# Store technical documentation
+Use semem-tell with:
+- content: "[API documentation]"
+- type: "document"
+- metadata: {"type": "api_docs", "version": "v2.1"}
+
+# Extract technical concepts
+Use semem-augment with:
+- operation: "concepts"
+- options: {"maxConcepts": 30, "includeAttributes": true}
+
+# Query for specific information
+Use semem-ask with:
+- question: "What are the authentication requirements for the API?"
+- mode: "standard"
+```
+
+### Example 3: Context Switching Between Projects
+
+**Scenario**: Switching from one project to another
+
+**Workflow**:
+```
+# Fade current project memories
+Use semem-fade-memory with:
+- target: "current_project"
+- fadeRate: 0.3
+- preserveImportant: true
+
+# Switch to new project context
+Use semem-project-context with:
+- query: "activate mobile_app_project"
+- projectionType: "conceptual"
+
+# Recall relevant memories for new context
+Use semem-recall with:
+- query: "mobile development best practices"
+- domain: "project"
+- threshold: 0.7
+- limit: 15
+
+# Check what's available in new context
+Use semem-inspect with:
+- type: "memory"
+- target: "project"
+- includeRecommendations: true
+
+# Ask context-aware question
+Use semem-ask with:
+- question: "What's the current status of the mobile app project?"
+- mode: "comprehensive"
+```
+
+### Example 4: Learning and Knowledge Building
+
+**Scenario**: Building personal knowledge about a new technical domain
+
+**Workflow**:
+```
+# Remember learning preference
+Use semem-remember with:
+- content: "I learn best with examples and practical applications"
+- importance: "medium"
+- domain: "user"
+- tags: ["learning", "preferences"]
+
+# Store learning materials
+Use semem-tell with:
+- content: "[Tutorial content on blockchain]"
+- type: "document"
+- metadata: {"difficulty": "beginner", "topic": "blockchain"}
+
+# Extract key concepts
+Use semem-augment with:
+- operation: "concepts"
+- options: {"maxConcepts": 20, "minConfidence": 0.7}
+
+# Navigate to concept level
+Use semem-zoom with level: "concept"
+
+# Filter by conceptual domain
+Use semem-pan with:
+- direction: "conceptual"
+- domain: "blockchain"
+
+# Ask for explanation with examples
+Use semem-ask with:
+- question: "Can you explain consensus mechanisms with practical examples?"
+- mode: "comprehensive"
+- useWikipedia: true
+```
+
+---
+
+## Context Management Verbs
+
+The final two verbs handle project boundaries and memory transitions:
+
+### `semem-project-context`: Project Management
+
+**Purpose**: Create, switch, list, or archive project contexts
+
+**Operations**:
+- Create new project contexts with specific domains
+- Switch between active projects
+- List available project contexts
+- Archive completed projects
+
+**Parameters**:
+- `query` (required): Context operation or project identifier
+- `projectionType`: "semantic", "temporal", or "conceptual" (default: semantic)
+- `dimensions`: Number of dimensions for context projection (default: 50)
+- `includeMetadata`: Include project metadata in responses
+- `timeWindow`: Temporal constraints for context
+- `conceptFilters`: Specific concept filters for the project
+
+**Usage Examples**:
+```
+# Create new project context
+Use semem-project-context with:
+- query: "create machine_learning_research"
+- projectionType: "semantic"
+- includeMetadata: true
+
+# Switch to existing project
+Use semem-project-context with:
+- query: "activate web_development_project"
+- projectionType: "conceptual"
+
+# List available projects
+Use semem-project-context with:
+- query: "list projects"
+- includeMetadata: true
+
+# Archive completed project
+Use semem-project-context with:
+- query: "archive mobile_app_project"
+```
+
+### `semem-fade-memory`: Memory Transitions
+
+**Purpose**: Gradually reduce memory visibility for smooth context transitions
+
+**Strategies**:
+- **Gradual Fading**: Slowly reduce memory visibility over time
+- **Importance Preservation**: Maintain critical memories while fading others
+- **Context-Aware Fading**: Fade based on relevance to new context
+- **Dry Run**: Preview fading effects without applying changes
+
+**Parameters**:
+- `target`: Specific memories or domains to fade (optional)
+- `domain`: Memory domain to target (optional)
+- `fadeRate`: Rate of fading from 0.0 (no fade) to 1.0 (complete fade)
+- `preserveImportant`: Keep high-importance memories visible (default: true)
+- `dryRun`: Preview changes without applying them (default: false)
+
+**Usage Examples**:
+```
+# Gentle fade of old project context
+Use semem-fade-memory with:
+- target: "old_project_context"
+- fadeRate: 0.3
+- preserveImportant: true
+
+# Preview fading effects
+Use semem-fade-memory with:
+- domain: "session"
+- fadeRate: 0.5
+- dryRun: true
+
+# Complete fade of temporary information
+Use semem-fade-memory with:
+- target: "temporary_calculations"
+- fadeRate: 0.9
+- preserveImportant: false
+```
+
+### Project Lifecycle Management
+
+**Complete Project Workflow**:
+```
+# 1. Create project context
+Use semem-project-context with query: "create data_analysis_project"
+
+# 2. Remember project goals
+Use semem-remember with:
+- content: "Analyze customer behavior patterns for Q4 marketing strategy"
+- importance: "high"
+- domain: "project"
+- tags: ["goals", "marketing", "analysis"]
+
+# 3. Work with project data...
+# [Multiple tell/ask/augment operations]
+
+# 4. Transition to new project
+Use semem-fade-memory with:
+- domain: "project"
+- fadeRate: 0.4
+- preserveImportant: true
+
+# 5. Activate new project
+Use semem-project-context with query: "activate social_media_campaign"
+
+# 6. Recall relevant cross-project knowledge
+Use semem-recall with:
+- query: "marketing strategies"
+- domain: "user"
+- threshold: 0.7
+```
+
+### Best Practices
+
+**Memory Domain Organization**:
+- Use **user domain** for personal preferences and cross-project knowledge
+- Use **project domain** for specific project context and constraints
+- Use **session domain** for temporary conversation state
+- Use **instruction domain** for system behavior modifications
+
+**Context Transition Guidelines**:
+- Always use `semem-fade-memory` before major context switches
+- Preserve important memories during transitions
+- Use dry run to preview fading effects
+- Gradually fade rather than abrupt context switching
 
 ---
 
@@ -642,26 +971,47 @@ System backup: Complete configuration and data export
 
 ## Conclusion
 
-Semem provides a comprehensive platform for intelligent knowledge management through its three integrated systems. The MCP interface makes these powerful capabilities accessible in any MCP-enabled environment, while the HTTP API endpoints provide programmatic access for custom applications.
+Semem's 12 core verbs provide a simple, powerful interface for semantic memory management, knowledge processing, and spatial navigation. The verb-centric design makes complex operations intuitive while maintaining the full power of the underlying systems.
 
 ### Key Success Patterns
 
-1. **Start with Clear Goals**: Define what you want to achieve before choosing tools
-2. **Use Appropriate Storage**: Match storage backend to your persistence needs
-3. **Leverage Integration**: Combine memory, graphs, and navigation for comprehensive analysis
-4. **Optimize Incrementally**: Start with default settings, then tune based on performance
-5. **Monitor and Validate**: Use built-in metrics and validation tools
+1. **Start Simple**: Begin with `tell`, `ask`, and `augment` before exploring advanced verbs
+2. **Use Domain Organization**: Leverage memory domains for clean context separation
+3. **Navigate Spatially**: Use ZPT verbs to explore knowledge from different perspectives
+4. **Manage Transitions**: Use fade and context verbs for smooth workflow transitions
+5. **Inspect Regularly**: Use the inspect verb to understand system state
+
+### Verb Selection Guide
+
+**For Basic Operations**:
+- Start with `semem-tell` and `semem-ask`
+- Add `semem-augment` when you need concept extraction
+- Use `semem-inspect` when troubleshooting
+
+**For Advanced Memory Management**:
+- Use `semem-remember` for important, domain-specific information
+- Use `semem-recall` for precise, filtered retrieval
+- Use `semem-forget` for graceful memory management
+
+**For Knowledge Exploration**:
+- Use `semem-zoom` to set the right abstraction level
+- Use `semem-pan` to filter by semantic, temporal, or conceptual dimensions
+- Use `semem-tilt` to control detail level
+
+**For Project Management**:
+- Use `semem-project-context` for project boundaries
+- Use `semem-fade-memory` for smooth context transitions
 
 ### Next Steps
 
-- **Experiment** with different workflow patterns in your domain
-- **Integrate External Data** using SPARQL store capabilities  
-- **Build Custom Workflows** combining multiple systems
-- **Optimize Performance** using monitoring and tuning tools
-- **Contribute** improvements and share use cases with the community
+- **Practice with Simple Workflows**: Start with tell/ask patterns
+- **Explore Navigation**: Try different zoom/pan/tilt combinations
+- **Organize by Domain**: Set up user and project contexts
+- **Build Custom Patterns**: Combine verbs for your specific workflows
+- **Monitor Performance**: Use inspect to understand system behavior
 
-Semem transforms individual AI capabilities into a unified platform for intelligent knowledge processing, analysis, and discovery. Through thoughtful workflow design and proper configuration, it enables sophisticated research and analysis capabilities that adapt to your specific needs and domains.
+The verb interface transforms complex semantic operations into intuitive, composable actions. Through thoughtful verb combination and domain organization, Semem enables sophisticated knowledge management that adapts to your specific needs and working patterns.
 
 ---
 
-*For detailed API reference and additional resources, visit the [Semem documentation](../README.md) and explore the comprehensive [HTTP API endpoints](./http-api-endpoints.md) for programmatic access.*
+*For detailed implementation reference, see [MCP List](./mcp-list.md) and explore the comprehensive [HTTP API endpoints](./http-api-endpoints.md) for programmatic access.*

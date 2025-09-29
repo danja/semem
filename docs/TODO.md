@@ -1,6 +1,6 @@
-start.sh
-src/servers/start-all.js
+node src/frontend/vsom-standalone/server.js
 
+npx @modelcontextprotocol/inspector node mcp/index.js
 
 mcp index tests
 * export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/tell-tool.integration.test.js --reporter=verbose
@@ -43,9 +43,7 @@ In mcp/tools/SimpleVerbsService.js line 82, weights a given hardcoded values. Th
 
 * npx vitest run tests/unit/MemoryManager.test.js --reporter=verbose
 
-node src/frontend/vsom-standalone/server.js
 
-npx @modelcontextprotocol/inspector node mcp/index.js
 
 src/stores/modules/Search.js has a hardcoded query
 

@@ -28,23 +28,23 @@ Semem is an experimental Node.js toolkit for AI memory management that integrate
 The intuition is that while LLMs and associated techniques have massively advanced the field of AI and offer considerable utility, the typical approach is missing the elephant in the room: __the Web__ - the biggest known knowledgebase in our universe. Semantic Web technologies offer data integration at a global scale, with tried & tested conceptual models for knowledge representation. __There is a lot of low-hanging fruit.__
 
 
-## Status 2025-09-26 : version 1.5.2
+## Status 2025-09-29 : version 1.5.3
 
 Core functionality is working well after significant refactoring. The tell/ask pipeline through both MCP and workbench UI is functioning correctly, with proper storage and retrieval through SPARQL. LLM provider priority system works with Groq as primary (fastest), fallback to Ollama for local processing. Enhanced logging throughout has improved debugging.
 
 **Recent fixes:**
-- Fixed workbench tell/ask functionality (form defaults and storage paths)
-- Improved playwright test timing with proper network request waiting
-- Enhanced error handling and logging across the pipeline
-- Stabilized session-based memory caching
+- Refactored the MCP layer, it's really the core of the system but most of it was implemented in a single **huge** file. Now a bit more logical (under `src/mcp`). To keep it real, used e2e integration tests working against live systems (under `tests/integration/mcp`).
 
 **Still messy areas:**
 - ZPT navigation concepts remain non-intuitive
 - Codebase architecture needs consolidation
-- Documentation sprawls across many files
+- Documentation sprawls and much is out-of-date
 - Some test timing issues in automated environments
 
-The system is functional but needs architectural cleanup and better abstractions. Core memory operations and knowledge graph processing work reliably.
+**Current activity**
+- Working on a spike for visualization using self-organizing maps. The hope is it will help clarify the navigation ideas around ZPT.  
+- Working on auxiliary stuff around Transmissions with a view to populating knowledgebase.
+- Most tests need deleting and recreating...
 
 *previously...*
 
