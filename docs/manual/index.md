@@ -83,7 +83,9 @@ The **MCP Protocol Server** enables seamless AI integration through:
 
 **[Knowledge Enhancement](enhancements.md)** - External knowledge integration covering Wikipedia, Wikidata, and HyDE (Hypothetical Document Embeddings) with multi-source coordination and best practices.
 
-**[Document Ingestion](ingest.md)** - SPARQL-based document ingestion system with configurable query templates, CLI tools, batch processing capabilities, and MCP integration.
+**[Document Ingestion](ingest.md)** - SPARQL-based document ingestion system with configurable query templates, CLI tools (including specialized bookmark ingestion), lazy/full processing modes, and MCP integration.
+
+**[Lazy Batch Processing](lazy-batch-processing.md)** - Two-phase ingestion workflow for bulk operations: fast lazy storage (~167ms/item) followed by batch augmentation for 360x performance improvement over full processing.
 
 **[Memory Systems](memory.md)** - Persistent memory architecture covering conversation continuity, document storage, context-aware interactions, and memory decay strategies.
 

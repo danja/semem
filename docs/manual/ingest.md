@@ -19,6 +19,7 @@ A comprehensive SPARQL-to-MCP document ingestion system has been implemented for
 - **blog-articles.sparql**: Template for blog article ingestion
 - **generic-documents.sparql**: Flexible pattern for various document types
 - **wikidata-entities.sparql**: Wikidata entity extraction template
+- **bookmarks.sparql**: Template for bookmark content ingestion
 - Variable substitution system with `{{variable}}` syntax
 
 ### 3. MCP Tool Integration
@@ -29,13 +30,21 @@ A comprehensive SPARQL-to-MCP document ingestion system has been implemented for
 - Graph parameter support for SPARQL updates
 - Integration with semem's tell method for document storage
 
-### 4. CLI Tool
-**Location**: `utils/SPARQLIngest.js` (moved from `examples/ingestion/`)
-- Interactive and batch processing modes
-- Built-in help and template listing
-- Authentication support for protected endpoints
-- Graph parameter support matching MCP tool
-- Verbose logging and comprehensive error reporting
+### 4. CLI Tools
+**Location**: `utils/`
+- **SPARQLIngest.js**: General-purpose SPARQL document ingestion
+  - Interactive and batch processing modes
+  - Built-in help and template listing
+  - Authentication support for protected endpoints
+  - Graph parameter support matching MCP tool
+  - Verbose logging and comprehensive error reporting
+- **BookmarkIngest.js**: Specialized bookmark content ingestion
+  - Uses bookmark vocabulary (http://purl.org/stuff/bm/)
+  - Supports lazy and full processing modes
+  - 360x faster lazy mode for bulk ingestion
+- **QueryLazyContent.js**: Query and inspect lazy-stored content
+  - View content waiting for augmentation
+  - Filter by type and limit results
 
 ### 5. Configuration System
 **Location**: `config/config.json`
@@ -46,6 +55,8 @@ A comprehensive SPARQL-to-MCP document ingestion system has been implemented for
 ## 🚀 Usage Examples
 
 ### Command Line Interface
+
+#### General Document Ingestion
 
 ```bash
 # Preview blog articles
@@ -63,6 +74,38 @@ node utils/SPARQLIngest.js \
 
 # Interactive mode for testing
 node utils/SPARQLIngest.js --interactive
+```
+
+#### Bookmark Ingestion
+
+```bash
+# Preview bookmarks first
+node utils/BookmarkIngest.js \
+  --endpoint "http://localhost:3030/test/query" \
+  --graph "http://hyperdata.it/content" \
+  --dry-run --limit 5
+
+# Fast bulk ingestion with lazy mode (360x faster)
+node utils/BookmarkIngest.js \
+  --endpoint "http://localhost:3030/test/query" \
+  --graph "http://hyperdata.it/content" \
+  --limit 100 \
+  --lazy
+
+# Full processing mode (slower, immediate embeddings)
+node utils/BookmarkIngest.js \
+  --endpoint "http://localhost:3030/test/query" \
+  --limit 10
+```
+
+#### Query Lazy Content
+
+```bash
+# Show first 10 lazy items
+node utils/QueryLazyContent.js
+
+# Show more with full content
+node utils/QueryLazyContent.js --limit 50 --verbose
 ```
 
 ### MCP Integration
@@ -167,13 +210,41 @@ node examples/ingestion/SPARQLIngest.js \
 
 The `blog-articles.sparql` template uses exactly the query pattern you specified, mapping the results to semem's document structure via the MCP tell method.
 
+## 🔄 Lazy Processing Workflow
+
+For bulk ingestion scenarios, semem supports a two-phase workflow:
+
+1. **Phase 1: Lazy Storage** (~167ms per item) - Store content quickly without processing
+2. **Phase 2: Batch Augmentation** - Process stored content later in batches
+
+This provides a 360x performance improvement for bulk ingestion.
+
+**See**: [Lazy Batch Processing Documentation](./lazy-batch-processing.md) for complete workflow details.
+
+### Performance Comparison
+
+| Mode | Speed | Use Case |
+|------|-------|----------|
+| Dry Run | Instant | Preview before ingestion |
+| Lazy | ~167ms/item | Bulk ingestion, process later |
+| Full | ~60s/item | Complete processing immediately |
+
 ## ✨ Next Steps
 
 The system is ready for immediate use! You can:
 
 1. **Test with your blog**: Use the CLI or MCP tool with your Fuseki endpoint
-2. **Add custom templates**: Create new `.sparql` files for other content sources  
-3. **Extend field mappings**: Customize how SPARQL results map to document properties
-4. **Integrate with pipelines**: Use ingested documents with existing semem processing workflows
+2. **Ingest bookmarks**: Use BookmarkIngest.js for bookmark content
+3. **Use lazy mode**: For bulk ingestion, use --lazy flag for 360x speedup
+4. **Add custom templates**: Create new `.sparql` files for other content sources
+5. **Extend field mappings**: Customize how SPARQL results map to document properties
+6. **Integrate with pipelines**: Use ingested documents with existing semem processing workflows
+
+## 📚 Related Documentation
+
+- [Lazy Batch Processing](./lazy-batch-processing.md) - Complete workflow for bulk ingestion
+- [Tell Verb](./tell.md) - MCP tell operation documentation
+- [Augment Verb](./augment.md) - MCP augment operation for processing
+- [SPARQL Service](./sparql-service.md) - SPARQL store operations
 
 The implementation provides a complete, flexible, and easy-to-use solution for reading content from SPARQL stores and passing it to the MCP tell method as requested!
