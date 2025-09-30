@@ -1,18 +1,14 @@
 /**
- * Simple Verbs Basic Integration Tests  
+ * Simple Verbs Basic Integration Tests
  * Tests core functionality that can be tested without complex SPARQL initialization
- * 
+ *
  * Run with: INTEGRATION_TESTS=true npx vitest run tests/integration/mcp/simple-verbs-basic.integration.test.js --reporter=verbose
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import fetch from 'node-fetch';
+// Note: fetch is provided globally by setup-unified.js in E2E mode
 import { SimpleVerbsService } from '../../../src/mcp/tools/SimpleVerbsService.js';
 import { ZPTStateManager } from '../../../src/mcp/tools/ZptStateManager.js';
-
-// Set up fetch for any network calls
-global.fetch = fetch;
-globalThis.fetch = fetch;
 
 // Skip all tests if INTEGRATION_TESTS is not set
 describe.skipIf(!process.env.INTEGRATION_TESTS)('Simple Verbs Basic Integration Tests', () => {

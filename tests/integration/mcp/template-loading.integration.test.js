@@ -6,42 +6,50 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import fetch from 'node-fetch';
-
-// Set up fetch for HTTP calls
-global.fetch = fetch;
-globalThis.fetch = fetch;
+// Note: fetch is provided globally by setup-unified.js in E2E mode
 
 describe.skipIf(!process.env.INTEGRATION_TESTS)('Template Loading Integration', () => {
   const MCP_BASE_URL = 'http://localhost:4101';
 
   it('should use templates for ask operation with context', async () => {
     // First store some content to provide context
-    const tellResponse = await fetch(`${MCP_BASE_URL}/tell`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        content: 'Machine learning algorithms can process vast amounts of data to identify patterns and make predictions.',
-        type: 'document',
-        metadata: { source: 'template-test' }
-      })
-    });
+    let tellResponse;
+    try {
+      tellResponse = await fetch(`${MCP_BASE_URL}/tell`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content: 'Machine learning algorithms can process vast amounts of data to identify patterns and make predictions.',
+          type: 'document',
+          metadata: { source: 'template-test' }
+        })
+      });
+    } catch (err) {
+      throw new Error(`Tell fetch failed: ${err.message}`);
+    }
 
+    expect(tellResponse).toBeDefined();
     expect(tellResponse.ok).toBe(true);
     const tellResult = await tellResponse.json();
     expect(tellResult.success).toBe(true);
 
     // Now ask a question that should retrieve context and use templates
-    const askResponse = await fetch(`${MCP_BASE_URL}/ask`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        question: 'What can machine learning do with data?',
-        mode: 'comprehensive',
-        useContext: true
-      })
-    });
+    let askResponse;
+    try {
+      askResponse = await fetch(`${MCP_BASE_URL}/ask`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          question: 'What can machine learning do with data?',
+          mode: 'comprehensive',
+          useContext: true
+        })
+      });
+    } catch (err) {
+      throw new Error(`Ask fetch failed: ${err.message}`);
+    }
 
+    expect(askResponse).toBeDefined();
     expect(askResponse.ok).toBe(true);
     const askResult = await askResponse.json();
 
@@ -55,17 +63,23 @@ describe.skipIf(!process.env.INTEGRATION_TESTS)('Template Loading Integration', 
   });
 
   it('should use templates for ask operation with external context', async () => {
-    const askResponse = await fetch(`${MCP_BASE_URL}/ask`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        question: 'What is quantum computing?',
-        mode: 'comprehensive',
-        useContext: false,
-        useWikipedia: true
-      })
-    });
+    let askResponse;
+    try {
+      askResponse = await fetch(`${MCP_BASE_URL}/ask`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          question: 'What is quantum computing?',
+          mode: 'comprehensive',
+          useContext: false,
+          useWikipedia: true
+        })
+      });
+    } catch (err) {
+      throw new Error(`Ask fetch failed: ${err.message}`);
+    }
 
+    expect(askResponse).toBeDefined();
     expect(askResponse.ok).toBe(true);
     const askResult = await askResponse.json();
 

@@ -7,7 +7,8 @@
 
 import { BaseVerbCommand } from './BaseVerbCommand.js';
 import { TellSchema } from '../../VerbSchemas.js';
-import { TellOperationTimer, logOperation, logPerformance } from '../../VerbsLogger.js';
+import { verbsLogger, logOperation, logPerformance } from '../../VerbsLogger.js';
+import { TellOperationTimer } from '../../../../utils/PerformanceTiming.js';
 
 // Import tell strategies
 import { InteractionTellStrategy } from '../strategies/tell/InteractionTellStrategy.js';
@@ -138,6 +139,7 @@ export class TellCommand extends BaseVerbCommand {
       });
 
       return this.createSuccessResponse({
+        content,  // Include content for MCP protocol compatibility
         type,
         stored: true,
         contentLength: content.length,

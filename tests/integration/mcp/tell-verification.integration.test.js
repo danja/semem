@@ -43,7 +43,7 @@ describe('Tell Operation Verification Tests', () => {
 
     return new Promise((resolve, reject) => {
       const { spawn } = require('child_process');
-      const process = spawn('bash', ['-c', `export INTEGRATION_TESTS=true && echo '${JSON.stringify(request)}' | timeout 10s node mcp/index.js`]);
+      const process = spawn('bash', ['-c', `export INTEGRATION_TESTS=true && echo '${JSON.stringify(request)}' | timeout 10s node src/mcp/index.js`]);
 
       let stdout = '';
       let stderr = '';

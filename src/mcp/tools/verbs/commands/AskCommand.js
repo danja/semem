@@ -7,7 +7,8 @@
 
 import { BaseVerbCommand } from './BaseVerbCommand.js';
 import { AskSchema } from '../../VerbSchemas.js';
-import { AskOperationTimer, logOperation, logPerformance, verbsLogger } from '../../VerbsLogger.js';
+import { logOperation, logPerformance, verbsLogger } from '../../VerbsLogger.js';
+import { AskOperationTimer } from '../../../../utils/PerformanceTiming.js';
 import { SPARQL_CONFIG } from '../../../../../config/preferences.js';
 
 export class AskCommand extends BaseVerbCommand {
@@ -346,6 +347,7 @@ export class AskCommand extends BaseVerbCommand {
 
     // Transform hybrid result to standard ask response format
     return this.createSuccessResponse({
+      content: hybridResult.answer,  // Include content for MCP protocol compatibility
       question,
       answer: hybridResult.answer,
       usedContext: hybridResult.localContextUsed || hybridResult.enhancementUsed,
