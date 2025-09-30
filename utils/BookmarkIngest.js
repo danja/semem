@@ -1,15 +1,14 @@
 #!/usr/bin/env node
 
 /**
- * SPARQL Document Ingestion CLI Tool
- * 
- * Provides command-line interface for ingesting documents from SPARQL endpoints
- * into the semem semantic memory system using configurable query templates.
+ * Bookmark Ingestion CLI Tool
+ *
+ * Provides command-line interface for ingesting bookmarks from SPARQL endpoints
+ * into the semem semantic memory system using the bookmark vocabulary.
  */
 
 import { parseArgs } from 'util';
-import { readFileSync, existsSync } from 'fs';
-import { join, dirname } from 'path';
+import { dirname } from 'path';
 import { fileURLToPath } from 'url';
 import readline from 'readline';
 import logger from 'loglevel';
@@ -20,7 +19,7 @@ import { initializeServices } from '../src/mcp/lib/initialization.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-class SPARQLIngestCLI {
+class BookmarkIngestCLI {
     constructor() {
         this.config = null;
         this.simpleVerbsService = null;
@@ -29,10 +28,10 @@ class SPARQLIngestCLI {
     async initialize() {
         try {
             // Initialize configuration (relative path from utils)
-            const configPath = process.cwd().endsWith('/utils') 
-                ? '../config/config.json' 
+            const configPath = process.cwd().endsWith('/utils')
+                ? '../config/config.json'
                 : 'config/config.json';
-                
+
             this.config = new Config(configPath);
             await this.config.init();
 
@@ -40,7 +39,7 @@ class SPARQLIngestCLI {
             await initializeServices();
             this.simpleVerbsService = getSimpleVerbsService();
 
-            logger.info('SPARQL Ingestion CLI initialized successfully');
+            logger.info('Bookmark Ingestion CLI initialized successfully');
         } catch (error) {
             logger.error('Failed to initialize CLI:', error.message);
             throw error;
@@ -57,15 +56,10 @@ class SPARQLIngestCLI {
                 short: 'e',
                 description: 'SPARQL query endpoint URL'
             },
-            template: {
-                type: 'string',
-                short: 't',
-                description: 'Query template name (blog-articles, generic-documents, wikidata-entities)'
-            },
             limit: {
                 type: 'string',
                 short: 'l',
-                description: 'Maximum number of documents to ingest (default: 50)'
+                description: 'Maximum number of bookmarks to ingest (default: 50)'
             },
             lazy: {
                 type: 'boolean',
@@ -74,12 +68,12 @@ class SPARQLIngestCLI {
             'dry-run': {
                 type: 'boolean',
                 short: 'd',
-                description: 'Preview documents without ingesting them'
+                description: 'Preview bookmarks without ingesting them'
             },
             interactive: {
                 type: 'boolean',
                 short: 'i',
-                description: 'Interactive mode for building queries'
+                description: 'Interactive mode'
             },
             verbose: {
                 type: 'boolean',
@@ -94,15 +88,10 @@ class SPARQLIngestCLI {
                 type: 'string',
                 description: 'SPARQL endpoint password'
             },
-            config: {
-                type: 'string',
-                short: 'c',
-                description: 'Path to configuration file'
-            },
             graph: {
                 type: 'string',
                 short: 'g',
-                description: 'Graph URI for SPARQL updates (default: http://hyperdata.it/content)'
+                description: 'Graph URI (default: http://hyperdata.it/content)'
             },
             help: {
                 type: 'boolean',
@@ -130,93 +119,44 @@ class SPARQLIngestCLI {
      */
     showHelp() {
         console.log(`
-🔍 SPARQL Document Ingestion Tool
+🔖 Bookmark Ingestion Tool
 
 USAGE:
-  node SPARQLIngest.js [OPTIONS]
+  node BookmarkIngest.js [OPTIONS]
 
 EXAMPLES:
-  # Preview blog articles
-  node SPARQLIngest.js --endpoint "https://fuseki.hyperdata.it/danny.ayers.name/query" \\
-                       --template blog-articles --dry-run --limit 5
+  # Preview bookmarks
+  node BookmarkIngest.js --endpoint "https://fuseki.hyperdata.it/hyperdata.it/query" \\
+                         --graph "http://hyperdata.it/content" --dry-run --limit 5
 
-  # Ingest documents with lazy processing
-  node SPARQLIngest.js --endpoint "http://localhost:3030/dataset/query" \\
-                       --template generic-documents --limit 20 --lazy
+  # Ingest bookmarks with lazy processing
+  node BookmarkIngest.js --endpoint "http://localhost:3030/dataset/query" \\
+                         --limit 20 --lazy
 
   # Interactive mode
-  node SPARQLIngest.js --interactive
-
-  # Ingest from blog example (using auth)
-  node SPARQLIngest.js --endpoint "https://fuseki.hyperdata.it/danny.ayers.name/query" \\
-                       --template blog-articles --limit 10 \\
-                       --user admin --password secret
+  node BookmarkIngest.js --interactive
 
 OPTIONS:
   -e, --endpoint <url>     SPARQL query endpoint URL
-  -t, --template <name>    Query template (blog-articles, generic-documents, wikidata-entities)  
-  -l, --limit <number>     Maximum documents to ingest (default: unlimited)
+  -l, --limit <number>     Maximum bookmarks to ingest (default: 50)
       --lazy               Use lazy processing (store without immediate processing)
-  -d, --dry-run            Preview documents without ingesting
-  -i, --interactive        Interactive mode for building queries
+  -d, --dry-run            Preview bookmarks without ingesting
+  -i, --interactive        Interactive mode
   -v, --verbose            Enable verbose logging
       --user <username>    SPARQL endpoint username
       --password <pass>    SPARQL endpoint password
-  -c, --config <path>      Configuration file path
-  -g, --graph <uri>        Graph URI for SPARQL updates (default: http://hyperdata.it/content)
+  -g, --graph <uri>        Graph URI (default: http://hyperdata.it/content)
   -h, --help               Show this help message
 
-TEMPLATES:
-  blog-articles           Articles following schema.org Article pattern
-  generic-documents       Flexible pattern for various document types
-  wikidata-entities       Wikidata entities with labels and descriptions
-
-For more information, see: docs/manual/sparql-ingestion.md
+QUERY:
+  Uses bookmark vocabulary (http://purl.org/stuff/bm/)
+  Retrieves: target URL, title, content, fetch date
+  Orders by most recent first
 `);
     }
 
     /**
-     * List available templates
-     */
-    async listTemplates() {
-        const templateDir = join(__dirname, '../config/sparql-templates');
-        
-        if (!existsSync(templateDir)) {
-            console.log('❌ No templates directory found');
-            return;
-        }
-
-        console.log('\n📋 Available SPARQL Templates:');
-        console.log('================================');
-
-        try {
-            const { readdirSync } = await import('fs');
-            const files = readdirSync(templateDir).filter(f => f.endsWith('.sparql'));
-            
-            for (const file of files) {
-                const templateName = file.replace('.sparql', '');
-                const templatePath = join(templateDir, file);
-                
-                try {
-                    const content = readFileSync(templatePath, 'utf8');
-                    const firstLine = content.split('\n')[0];
-                    const description = firstLine.startsWith('#') ? firstLine.substring(1).trim() : 'No description';
-                    
-                    console.log(`\n🔍 ${templateName}`);
-                    console.log(`   ${description}`);
-                    console.log(`   File: ${file}`);
-                } catch (error) {
-                    console.log(`\n🔍 ${templateName}`);
-                    console.log(`   Error reading template: ${error.message}`);
-                }
-            }
-        } catch (error) {
-            console.log('❌ Failed to list templates:', error.message);
-        }
-    }
-
-    /**
-     * Interactive mode for building and testing queries
+     * Interactive mode
      */
     async runInteractive() {
         const rl = readline.createInterface({
@@ -226,13 +166,10 @@ For more information, see: docs/manual/sparql-ingestion.md
 
         const question = (prompt) => new Promise(resolve => rl.question(prompt, resolve));
 
-        console.log('\n🤖 SPARQL Ingestion Interactive Mode');
-        console.log('====================================');
-        
-        try {
-            // List available templates
-            await this.listTemplates();
+        console.log('\n🔖 Bookmark Ingestion Interactive Mode');
+        console.log('======================================');
 
+        try {
             // Get endpoint URL
             let endpoint = await question('\n📡 Enter SPARQL endpoint URL: ');
             if (!endpoint.trim()) {
@@ -241,12 +178,9 @@ For more information, see: docs/manual/sparql-ingestion.md
                 return;
             }
 
-            // Get template
-            let template = await question('📋 Enter template name (blog-articles, generic-documents, wikidata-entities): ');
-            if (!template.trim()) {
-                template = 'generic-documents';
-                console.log(`Using default template: ${template}`);
-            }
+            // Get graph
+            let graph = await question('🗂️  Enter graph URI (default: http://hyperdata.it/content): ');
+            graph = graph.trim() || 'http://hyperdata.it/content';
 
             // Get limit
             let limit = await question('📊 Enter limit (default 10): ');
@@ -268,10 +202,10 @@ For more information, see: docs/manual/sparql-ingestion.md
             rl.close();
 
             // Execute query
-            console.log('\n🚀 Executing SPARQL ingestion...');
+            console.log('\n🚀 Executing bookmark ingestion...');
             await this.executeIngestion({
                 endpoint,
-                template,
+                graph,
                 limit: parseInt(limit),
                 auth,
                 dryRun,
@@ -286,57 +220,64 @@ For more information, see: docs/manual/sparql-ingestion.md
         }
     }
 
+
     /**
-     * Execute SPARQL ingestion
+     * Execute bookmark ingestion
      */
     async executeIngestion(options) {
         const {
             endpoint,
-            template,
-            limit = null,
+            limit = 50,
             lazy = false,
             dryRun = false,
             auth,
-            variables = {},
-            fieldMappings,
             verbose = false,
             graph = 'http://hyperdata.it/content'
         } = options;
 
         try {
-            // Create ingester
+            // Create ingester with field mappings for bookmarks
             const ingester = new SPARQLDocumentIngester({
                 endpoint,
                 auth,
-                fieldMappings
+                fieldMappings: {
+                    uri: 'uri',
+                    title: 'title',
+                    content: 'content',
+                    date: 'date'
+                }
             });
 
-            console.log(`\n🔍 SPARQL Ingestion Starting`);
-            console.log(`==========================`);
+            console.log(`\n🔖 Bookmark Ingestion Starting`);
+            console.log(`=============================`);
             console.log(`📡 Endpoint: ${endpoint}`);
-            console.log(`📋 Template: ${template}`);
-            console.log(`📊 Limit: ${limit}`);
             console.log(`🗂️  Graph: ${graph}`);
+            console.log(`📊 Limit: ${limit}`);
             console.log(`⚡ Mode: ${dryRun ? 'Dry Run' : (lazy ? 'Lazy Processing' : 'Full Processing')}`);
 
             if (dryRun) {
                 // Execute dry run
                 console.log('\n🧪 Executing dry run...');
-                const result = await ingester.dryRun(template, { variables, limit, graph });
+                const result = await ingester.dryRun('bookmarks', {
+                    variables: {},
+                    limit,
+                    graph
+                });
 
                 if (result.success) {
                     console.log(`\n✅ Dry Run Successful`);
-                    console.log(`📊 Total documents found: ${result.totalFound}`);
-                    console.log(`\n📋 Preview (first ${result.preview.length} documents):`);
-                    
+                    console.log(`📊 Total bookmarks found: ${result.totalFound}`);
+                    console.log(`\n📋 Preview (first ${result.preview.length} bookmarks):`);
+
                     result.preview.forEach((doc, index) => {
                         if (doc.error) {
-                            console.log(`\n❌ Document ${index + 1}: Error - ${doc.error}`);
+                            console.log(`\n❌ Bookmark ${index + 1}: Error - ${doc.error}`);
                         } else {
-                            console.log(`\n📄 Document ${index + 1}:`);
-                            console.log(`   URI: ${doc.uri}`);
-                            console.log(`   Title: ${doc.title}`);
+                            console.log(`\n🔖 Bookmark ${index + 1}:`);
+                            console.log(`   Target: ${doc.uri}`);
+                            console.log(`   Title: ${doc.title || '(no title)'}`);
                             console.log(`   Content Preview: ${doc.contentPreview}`);
+                            console.log(`   Fetched: ${doc.metadata?.date || 'unknown'}`);
                             if (verbose && doc.metadata) {
                                 console.log(`   Metadata:`, JSON.stringify(doc.metadata, null, 2));
                             }
@@ -344,7 +285,7 @@ For more information, see: docs/manual/sparql-ingestion.md
                     });
 
                     if (result.totalFound > result.preview.length) {
-                        console.log(`\n... and ${result.totalFound - result.preview.length} more documents`);
+                        console.log(`\n... and ${result.totalFound - result.preview.length} more bookmarks`);
                     }
                 } else {
                     console.log(`\n❌ Dry Run Failed: ${result.error}`);
@@ -366,21 +307,22 @@ For more information, see: docs/manual/sparql-ingestion.md
                     ...tellParams,
                     metadata: {
                         ...tellParams.metadata,
-                        graph: graph
+                        graph: graph,
+                        source: 'bookmark'
                     }
                 };
                 return await this.simpleVerbsService.tell(enhancedParams);
             };
 
-            const result = await ingester.ingestFromTemplate(template, {
-                variables,
+            const result = await ingester.ingestFromTemplate('bookmarks', {
+                variables: {},
                 limit,
                 lazy,
                 graph,
                 tellFunction,
                 progressCallback: (progress) => {
                     const percent = Math.round((progress.processed / progress.total) * 100);
-                    console.log(`📊 Progress: ${progress.processed}/${progress.total} (${percent}%) - ${progress.current.title}`);
+                    console.log(`📊 Progress: ${progress.processed}/${progress.total} (${percent}%) - ${progress.current.title || progress.current.uri}`);
                 }
             });
 
@@ -388,8 +330,8 @@ For more information, see: docs/manual/sparql-ingestion.md
             console.log(`\n📊 INGESTION COMPLETE`);
             console.log(`====================`);
             console.log(`✅ Success: ${result.success}`);
-            console.log(`📁 Documents Found: ${result.statistics?.documentsFound || 0}`);
-            console.log(`📥 Documents Ingested: ${result.statistics?.documentsIngested || 0}`);
+            console.log(`📁 Bookmarks Found: ${result.statistics?.documentsFound || 0}`);
+            console.log(`📥 Bookmarks Ingested: ${result.statistics?.documentsIngested || 0}`);
             console.log(`❌ Errors: ${result.statistics?.errors || 0}`);
             console.log(`⏱️  Duration: ${result.duration}ms`);
 
@@ -401,9 +343,9 @@ For more information, see: docs/manual/sparql-ingestion.md
             }
 
             if (verbose && result.results?.length > 0) {
-                console.log(`\n✅ Successfully Ingested Documents:`);
+                console.log(`\n✅ Successfully Ingested Bookmarks:`);
                 result.results.slice(0, 10).forEach((doc, index) => {
-                    console.log(`   ${index + 1}. ${doc.title} (${doc.uri})`);
+                    console.log(`   ${index + 1}. ${doc.title || doc.uri}`);
                 });
                 if (result.results.length > 10) {
                     console.log(`   ... and ${result.results.length - 10} more`);
@@ -430,7 +372,7 @@ For more information, see: docs/manual/sparql-ingestion.md
                 console.log('🧹 Cleaning up memory manager...');
                 await this.simpleVerbsService.memoryManager.dispose();
             }
-            
+
             // Small delay to ensure cleanup completes
             await new Promise(resolve => setTimeout(resolve, 100));
         } catch (error) {
@@ -468,8 +410,8 @@ For more information, see: docs/manual/sparql-ingestion.md
             }
 
             // Validate required arguments for non-interactive mode
-            if (!values.endpoint || !values.template) {
-                console.error('❌ Both --endpoint and --template are required for non-interactive mode');
+            if (!values.endpoint) {
+                console.error('❌ --endpoint is required for non-interactive mode');
                 this.showHelp();
                 process.exit(1);
             }
@@ -486,8 +428,7 @@ For more information, see: docs/manual/sparql-ingestion.md
             // Execute ingestion
             await this.executeIngestion({
                 endpoint: values.endpoint,
-                template: values.template,
-                limit: values.limit ? parseInt(values.limit) : null,
+                limit: values.limit ? parseInt(values.limit) : 50,
                 lazy: values.lazy || false,
                 dryRun: values['dry-run'] || false,
                 auth,
@@ -504,7 +445,7 @@ For more information, see: docs/manual/sparql-ingestion.md
         } finally {
             // Always cleanup, even on errors
             await this.cleanup();
-            
+
             // Force exit after cleanup
             console.log('🔚 Exiting process...');
             process.exit(0);
@@ -514,7 +455,7 @@ For more information, see: docs/manual/sparql-ingestion.md
 
 // Execute CLI if this file is run directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-    const cli = new SPARQLIngestCLI();
+    const cli = new BookmarkIngestCLI();
     cli.run().catch(error => {
         console.error('Fatal error:', error.message);
         process.exit(1);

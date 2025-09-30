@@ -393,6 +393,81 @@ export class Store {
     }
 
     /**
+     * Store content with lazy processing status (no embeddings/concepts yet)
+     * @param {Object} data - Data to store lazily
+     * @param {string} data.id - Unique identifier
+     * @param {string} data.content - Content to store
+     * @param {string} data.type - Content type (concept, interaction, document)
+     * @param {string} data.prompt - Prompt/title for the content
+     * @param {Object} data.metadata - Additional metadata
+     */
+    async storeLazyContent(data) {
+        logger.info('🔄 [SPARQL STORE] storeLazyContent() called with:', {
+            id: data?.id,
+            type: data?.type,
+            contentLength: data?.content?.length,
+            hasMetadata: !!data?.metadata
+        });
+
+        if (!data || !data.id) {
+            throw new Error('Data must have an id field');
+        }
+
+        // Escape content for SPARQL
+        const escapedContent = this._escapeSparqlString(data.content || '');
+        const escapedPrompt = this._escapeSparqlString(data.prompt || data.title || '');
+        const timestamp = new Date().toISOString();
+
+        // Build optional statements
+        let titleStatement = '';
+        if (data.title || data.prompt) {
+            titleStatement = `; rdfs:label "${escapedPrompt}"`;
+        }
+
+        let metadataStatements = '';
+        if (data.metadata && Object.keys(data.metadata).length > 0) {
+            const metadataTriples = Object.entries(data.metadata)
+                .filter(([key, value]) => value !== undefined && value !== null)
+                .map(([key, value]) => `; semem:${key} "${this._escapeSparqlString(String(value))}"`)
+                .join(' ');
+            if (metadataTriples) {
+                metadataStatements = metadataTriples;
+            }
+        }
+
+        const insertQuery = await this.templateLoader.loadAndInterpolate('store', 'insert-lazy-content', {
+            graphName: this.graphName,
+            id: data.id,
+            content: escapedContent,
+            type: data.type || 'interaction',
+            timestamp: timestamp,
+            titleStatement: titleStatement,
+            metadataStatements: metadataStatements
+        });
+
+        logger.debug('🔄 [SPARQL STORE] Executing lazy content insert...', {
+            id: data.id,
+            queryLength: insertQuery.length
+        });
+
+        try {
+            await this.sparqlExecute.executeSparqlUpdate(insertQuery);
+            logger.info('✅ [SPARQL STORE] Successfully stored lazy content:', {
+                id: data.id,
+                type: data.type,
+                contentLength: data.content?.length
+            });
+            return { success: true, id: data.id };
+        } catch (error) {
+            logger.error('❌ [SPARQL STORE] Failed to store lazy content:', {
+                error: error.message,
+                id: data.id
+            });
+            throw error;
+        }
+    }
+
+    /**
      * Store a ragno:Entity with metadata and relationships
      * @param {Object} entity - Entity data with id, label, metadata
      */

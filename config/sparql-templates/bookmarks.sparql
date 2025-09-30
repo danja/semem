@@ -1,0 +1,14 @@
+# Bookmark ingestion template - retrieves bookmarks with target, title, content, and fetch date
+PREFIX bm: <http://purl.org/stuff/bm/>
+
+SELECT ?uri ?title ?content ?date
+FROM <{{graph}}>
+WHERE {
+  ?bookmark a bm:Bookmark ;
+            bm:target ?uri ;
+            bm:content ?content ;
+            bm:fetched ?date .
+  OPTIONAL { ?bookmark bm:title ?title }
+}
+ORDER BY DESC(?date)
+LIMIT {{limit}}

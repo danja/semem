@@ -229,6 +229,10 @@ export default class SPARQLStore extends BaseStore {
         return this.storeModule.store(data)
     }
 
+    async storeLazyContent(data) {
+        return this.storeModule.storeLazyContent(data)
+    }
+
     async storeEntity(entity) {
         return this.storeModule.storeEntity(entity)
     }
