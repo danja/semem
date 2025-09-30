@@ -119,6 +119,8 @@ The **MCP Protocol Server** enables seamless AI integration through:
 
 **[Development Infrastructure](infrastructure.md)** - Coding guidelines, architectural patterns, and best practices for extending Semem functionality with new components and integrations.
 
+**[Command Pattern Architecture](command-pattern.md)** - Comprehensive guide to SimpleVerbsService's Command Pattern implementation, covering public API usage, internal architecture, command classes, strategy patterns, and the benefits of the refactored design.
+
 **[Testing Framework](tests.md)** - Comprehensive testing infrastructure covering unit tests, integration tests, service dependencies, SPARQL test stores, and automated test execution.
 
 **[System Connectors](connectors.md)** - Implementation patterns for LLM provider connectors including authentication, capability detection, error handling, and fallback strategies.
