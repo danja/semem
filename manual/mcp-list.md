@@ -4,191 +4,216 @@ This document provides comprehensive documentation for all available MCP tools, 
 
 ## Overview
 
-The Semem MCP integration provides programmatic access to Semem's core capabilities through the Model Context Protocol. This enables external applications to leverage Semem's semantic memory management, knowledge graph operations, and 3-dimensional navigation systems.
+The Semem MCP integration provides programmatic access to Semem's core capabilities through the Model Context Protocol via a simplified verb-based interface. The system centers around 12 core verbs that provide intelligent memory management, knowledge processing, and spatial navigation.
 
 **Server Information:**
 - **Name**: Semem Integration Server
 - **Version**: 1.0.0
 - **Transport**: stdio
+- **Entry Point**: `src/mcp/index.js`
 
 ## Core Capabilities
 
 The Semem MCP server provides the following core capabilities:
 
-- ✅ **Memory Management**: Store and retrieve semantic memories with embeddings
-- ✅ **Concept Extraction**: LLM-powered concept extraction from text
-- ✅ **Embedding Generation**: Vector embedding generation for semantic search
-- ✅ **Ragno Knowledge Graph**: RDF-based knowledge graph construction and querying
-- ✅ **ZPT Navigation**: 3-dimensional knowledge graph navigation using spatial metaphors
+- ✅ **Semantic Memory**: Tell/ask paradigm with vector embeddings and context awareness
+- ✅ **Memory Domains**: Multi-domain memory management (user, project, session, instruction)
+- ✅ **Content Augmentation**: Automated concept extraction, chunking, and relationship discovery
+- ✅ **ZPT Navigation**: 3-dimensional knowledge space navigation (zoom, pan, tilt)
+- ✅ **SPARQL Integration**: Native RDF storage with SPARQL endpoint support
 
 ---
 
-## MCP Tools
+## Core Verbs (MCP Tools)
 
-### Semantic Memory API Tools
+Semem provides 12 core verbs that form a simple, intuitive interface for semantic memory and knowledge management:
 
-#### `mcp__semem__semem_store_interaction`
-**Purpose**: Store interactions with automatic embedding generation  
-**Description**: Stores user prompts and responses as semantic memories, automatically generating vector embeddings for later retrieval.
+### Primary Memory Verbs
 
-#### `mcp__semem__semem_retrieve_memories` 
-**Purpose**: Semantic memory search and retrieval  
-**Description**: Searches stored memories using vector similarity, returning relevant interactions based on semantic similarity to the query.
+#### `semem-tell`
+**Purpose**: Store content in the system with minimal processing
+**Schema**: Content (required), type (interaction/document/concept), metadata, lazy flag
+**Description**: Primary storage verb for adding information to memory with automatic embedding generation and optional lazy processing.
 
-#### `mcp__semem__semem_generate_embedding`
-**Purpose**: Vector embedding generation  
-**Description**: Generates vector embeddings for text content using configured embedding providers.
+#### `semem-ask`
+**Purpose**: Query the system using current context for enhanced answers
+**Schema**: Question (required), mode (basic/standard/comprehensive), enhancement flags (HyDE, Wikipedia, Wikidata, WebSearch)
+**Description**: Context-aware querying with optional external knowledge enhancement and variable complexity modes.
 
-#### `mcp__semem__semem_generate_response`
-**Purpose**: LLM response with memory context  
-**Description**: Generates LLM responses augmented with relevant memory context retrieved from the semantic memory store.
+#### `semem-augment`
+**Purpose**: Run operations like concept extraction on stored content
+**Schema**: Target scope, operation type (auto/concepts/attributes/relationships), chunking/extraction options
+**Description**: Post-processing verb for enriching stored content with concepts, relationships, and structured analysis.
 
-#### `mcp__semem__semem_extract_concepts`
-**Purpose**: LLM concept extraction  
-**Description**: Extracts key concepts and entities from text using large language models.
+### ZPT Navigation Verbs
 
-### Ragno Knowledge Graph API Tools
+#### `semem-zoom`
+**Purpose**: Set abstraction level for navigation
+**Schema**: Level (entity/concept/document/community), optional query filter
+**Description**: Controls the granularity of content view from individual entities to corpus-wide communities.
 
-#### `mcp__semem__ragno_decompose_corpus`
-**Purpose**: Text to RDF knowledge graph decomposition  
-**Description**: Decomposes text corpora into structured RDF knowledge graphs, extracting entities, relationships, and semantic units following the Ragno ontology.
+#### `semem-pan`
+**Purpose**: Set subject domain filters
+**Schema**: Direction (semantic/temporal/conceptual), domain, time range, concept filters, semantic vectors
+**Description**: Spatial filtering across semantic, temporal, or conceptual dimensions for focused exploration.
 
-#### `mcp__semem__ragno_enrich_embeddings`
-**Purpose**: Enrich decomposition results with vector embeddings  
-**Description**: Adds vector embeddings to decomposed knowledge graph elements for semantic search capabilities.
+#### `semem-tilt`
+**Purpose**: Set representation style
+**Schema**: Style (keywords/summary/detailed), optional query
+**Description**: Controls how content is presented - from brief keywords to detailed structured views.
 
-#### `mcp__semem__ragno_augment_attributes`
-**Purpose**: Augment entities with additional attributes and properties  
-**Description**: Enhances extracted entities with additional attributes and metadata using LLM analysis.
+### Inspection and Debugging
 
-#### `mcp__semem__ragno_aggregate_communities`
-**Purpose**: Detect and aggregate communities in the knowledge graph  
-**Description**: Identifies topical communities and clusters within the knowledge graph using graph analytics algorithms.
+#### `semem-inspect`
+**Purpose**: Examine system state and stored content
+**Schema**: Type (system/session/concept/memory), target, recommendation flag
+**Description**: Diagnostic verb for understanding memory state, session context, and system health.
 
-#### `mcp__semem__ragno_export_sparql`
-**Purpose**: Export decomposition results to SPARQL endpoint  
-**Description**: Exports structured knowledge graph data to SPARQL endpoints for persistent storage and querying.
+### Advanced Memory Management
 
-#### `mcp__semem__ragno_get_entity`
-**Purpose**: Retrieve entity details with relationships and attributes  
-**Description**: Fetches detailed information about specific entities including their properties and relationships.
+#### `semem-remember`
+**Purpose**: Store content with explicit importance and domain targeting
+**Schema**: Content, importance level (low/medium/high/critical), domain, tags, context, metadata
+**Description**: Precision storage for critical information with domain-specific targeting and importance weighting.
 
-#### `mcp__semem__ragno_search_graph`
-**Purpose**: Search the knowledge graph using semantic or entity-based queries  
-**Description**: Performs searches across the knowledge graph using various search strategies (semantic, entity-based, or dual).
+#### `semem-forget`
+**Purpose**: Reduce memory visibility using navigation strategies
+**Schema**: Target, method (fade/remove), intensity level
+**Description**: Graceful memory management through fading rather than deletion, preserving information structure.
 
-#### `mcp__semem__ragno_get_graph_stats`
-**Purpose**: Get statistics and metrics about the knowledge graph  
-**Description**: Provides comprehensive statistics about the knowledge graph including entity counts, relationship metrics, and graph analytics.
+#### `semem-recall`
+**Purpose**: Search memories with domain and temporal filtering
+**Schema**: Query, domain filter, time range, tags, limit, threshold
+**Description**: Advanced memory retrieval with multi-dimensional filtering and relevance scoring.
 
-### ZPT Navigation API Tools
+### Context Management
 
-#### `mcp__semem__zpt_navigate`
-**Purpose**: Navigate the knowledge space using 3D spatial metaphors (zoom, pan, tilt)  
-**Description**: Provides intuitive knowledge graph navigation using camera-like controls for exploring content at different levels of abstraction and representation styles.
+#### `semem-project-context`
+**Purpose**: Manage project-specific memory domains
+**Schema**: Query, projection type (semantic/temporal/conceptual), dimensions, metadata inclusion
+**Description**: Project boundary management for organizing memories into distinct contexts and domains.
 
-#### `mcp__semem__zpt_preview`
-**Purpose**: Get a lightweight preview of a navigation destination  
-**Description**: Provides quick previews of navigation results without full processing, useful for UI responsiveness.
-
-#### `mcp__semem__zpt_get_schema`
-**Purpose**: Get the ZPT schema and available dimensions  
-**Description**: Returns the complete JSON schema for ZPT navigation parameters with validation rules and examples.
-
-#### `mcp__semem__zpt_validate_params`
-**Purpose**: Validate a set of ZPT navigation parameters  
-**Description**: Validates ZPT navigation parameters against the schema before execution.
-
-#### `mcp__semem__zpt_get_options`
-**Purpose**: Get available options for ZPT navigation  
-**Description**: Returns available navigation options based on current context and corpus state.
-
-#### `mcp__semem__zpt_analyze_corpus`
-**Purpose**: Analyze the corpus for ZPT navigation readiness  
-**Description**: Analyzes the corpus structure and provides recommendations for optimal ZPT navigation configuration.
+#### `semem-fade-memory`
+**Purpose**: Gradually reduce memory visibility for context transitions
+**Schema**: Target, domain, fade rate, importance preservation flag, dry run option
+**Description**: Smooth context transitions by gradually reducing memory visibility while preserving important information.
 
 ---
 
 ## MCP Resources
 
-### `semem://status`
-**Description**: Current system status and service health  
-**Type**: JSON  
-**Purpose**: Provides real-time status information about Semem services, initialization state, and available capabilities.
+### Core Status Resources
 
-### `semem://docs/api`
-**Description**: Complete API documentation for Semem MCP integration  
-**Type**: JSON  
-**Purpose**: Comprehensive documentation of all available tools, their parameters, and usage examples.
+#### `semem://status`
+**Description**: Current system status and service health
+**Type**: JSON
+**Purpose**: Real-time status information about Semem services, initialization state, memory domains, and ZPT navigation context.
 
-### `semem://graph/schema`
-**Description**: Schema and ontology information for the Ragno knowledge graph  
-**Type**: JSON  
-**Purpose**: Provides the complete RDF schema and ontology definitions used by the Ragno knowledge graph system.
+#### `semem://status-http`
+**Description**: HTTP server status and endpoint health
+**Type**: JSON
+**Purpose**: Status information specific to HTTP API server, endpoint availability, and performance metrics.
 
-**Key Schema Elements:**
-- `ragno:Corpus` - A collection of related documents or texts
-- `ragno:Entity` - Named entities extracted from text (people, places, concepts)
-- `ragno:SemanticUnit` - Independent semantic units from corpus decomposition
-- `ragno:Relationship` - First-class relationship nodes between entities
-- `ragno:Element` - Generic element in the knowledge graph
+### Documentation Resources
 
-### `semem://zpt/schema`
-**Description**: Complete JSON schema for ZPT navigation parameters  
-**Type**: JSON  
-**Purpose**: Provides validation schema for 3-dimensional knowledge graph navigation parameters.
+#### `semem://docs/verbs`
+**Description**: Complete documentation for all 12 core verbs
+**Type**: Markdown
+**Purpose**: Comprehensive guide to verb usage, parameters, schemas, and workflow patterns.
 
-**Navigation Dimensions:**
-- **Zoom**: Level of abstraction (entity, unit, text, community, corpus)
-- **Pan**: Content filtering parameters
-- **Tilt**: Representation style (keywords, embedding, graph, temporal)
+#### `semem://docs/domains`
+**Description**: Memory domain system documentation
+**Type**: Markdown
+**Purpose**: Explanation of user, project, session, and instruction memory domains with management strategies.
 
-### `semem://zpt/examples`
-**Description**: Comprehensive examples and patterns for ZPT knowledge graph navigation  
-**Type**: Markdown  
-**Purpose**: Practical examples demonstrating effective ZPT navigation patterns and use cases.
+### ZPT Navigation Resources
 
-### `semem://zpt/guide`
-**Description**: Comprehensive guide to ZPT concepts, spatial metaphors, and navigation principles  
-**Type**: Markdown  
-**Purpose**: Complete conceptual guide explaining the 3-dimensional navigation model and its applications.
+#### `semem://zpt/context`
+**Description**: Current ZPT navigation state and context
+**Type**: JSON
+**Purpose**: Active zoom/pan/tilt settings, available navigation options, and context-aware suggestions.
 
-### `semem://zpt/performance`
-**Description**: Performance optimization strategies, caching patterns, and monitoring for ZPT navigation  
-**Type**: Markdown  
-**Purpose**: Best practices for optimizing ZPT navigation performance in production environments.
+#### `semem://zpt/schema`
+**Description**: ZPT navigation parameter schemas
+**Type**: JSON
+**Purpose**: Validation schemas for zoom, pan, and tilt operations with examples and constraints.
+
+#### `semem://zpt/examples`
+**Description**: ZPT navigation patterns and use cases
+**Type**: Markdown
+**Purpose**: Practical examples of effective navigation workflows and spatial exploration strategies.
 
 ---
 
-## Usage Patterns
+## Core Workflows
 
-### Basic Memory Operations
-1. Use `semem_store_interaction` to save conversations
-2. Use `semem_retrieve_memories` for semantic search
-3. Use `semem_generate_response` for context-aware responses
+### Basic Memory Workflow
+1. **Store**: Use `semem-tell` to add content with minimal processing
+2. **Query**: Use `semem-ask` for context-aware retrieval and responses
+3. **Enhance**: Use `semem-augment` to add concepts and relationships post-storage
+4. **Navigate**: Use ZPT verbs (zoom/pan/tilt) for spatial exploration
 
-### Knowledge Graph Construction
-1. Use `ragno_decompose_corpus` to process text into RDF
-2. Use `ragno_enrich_embeddings` to add semantic search capabilities
-3. Use `ragno_export_sparql` to persist to graph database
+### Advanced Memory Management
+1. **Domain Storage**: Use `semem-remember` for domain-specific, importance-weighted storage
+2. **Contextual Retrieval**: Use `semem-recall` with domain and temporal filtering
+3. **Project Management**: Use `semem-project-context` for project boundary management
+4. **Memory Transitions**: Use `semem-fade-memory` for smooth context switching
 
-### 3D Knowledge Navigation
-1. Use `zpt_get_schema` to understand navigation parameters
-2. Use `zpt_navigate` with appropriate zoom/pan/tilt settings
-3. Use `zpt_preview` for efficient UI interactions
+### ZPT Navigation Workflow
+1. **Set Level**: Use `semem-zoom` to choose abstraction level (entity → community)
+2. **Apply Filters**: Use `semem-pan` for semantic, temporal, or conceptual filtering
+3. **Choose Style**: Use `semem-tilt` for representation (keywords → detailed)
+4. **Inspect Results**: Use `semem-inspect` to understand current state
 
-### System Monitoring
-1. Check `semem://status` for service health
-2. Use `ragno_get_graph_stats` for knowledge graph metrics
-3. Use `zpt_analyze_corpus` for navigation optimization
+### System Health and Debugging
+1. **Status Check**: Query `semem://status` resource for system health
+2. **Context Review**: Query `semem://zpt/context` for navigation state
+3. **System Inspection**: Use `semem-inspect` with various type filters
+4. **Documentation**: Reference `semem://docs/*` resources for guidance
 
 ---
 
-## Integration Notes
+## Architecture Notes
 
-- All tools follow consistent parameter patterns and error handling
-- Resources provide both machine-readable schemas and human-readable documentation
-- The system supports both synchronous and asynchronous operation modes
-- Full compatibility with standard MCP client implementations
+### Verb-Centric Design
+- **Simple Interface**: 12 intuitive verbs replace complex tool hierarchies
+- **Unified Service**: Single `SimpleVerbsService` handles all verb operations
+- **Schema Validation**: Zod schemas ensure type safety and parameter validation
+- **Centralized Routing**: All verbs route through `tool-router.js` for consistent handling
 
-For detailed parameter specifications and examples, refer to the individual resource documents accessible through the MCP resource system.
+### Memory Domain System
+- **User Domain**: Personal long-term memories and preferences
+- **Project Domain**: Project-specific context and knowledge
+- **Session Domain**: Temporary conversation and interaction memory
+- **Instruction Domain**: System instructions and behavioral context
+
+### SPARQL Integration
+- **Backend Agnostic**: Works with any SPARQL-compatible endpoint
+- **External Data Support**: Can analyze existing RDF datasets
+- **Native Storage**: Built-in SPARQL store for self-contained operation
+- **CachedSPARQL**: Performance optimization for frequent queries
+
+### ZPT Navigation Model
+- **Zoom**: Abstraction levels from entities to entire corpora
+- **Pan**: Multi-dimensional filtering (semantic, temporal, conceptual)
+- **Tilt**: Representation styles from keywords to detailed structured views
+- **Context Aware**: Navigation maintains state across operations
+
+---
+
+## Implementation Structure
+
+**Core Files:**
+- `src/mcp/index.js` - Main MCP server entry point
+- `src/mcp/tools/simple-verbs.js` - Verb exports and coordination
+- `src/mcp/tools/VerbSchemas.js` - Zod validation schemas
+- `src/mcp/tools/SimpleVerbsService.js` - Core verb implementation
+- `src/mcp/tools/VerbRegistration.js` - MCP tool registration
+- `src/mcp/server/handlers/tool-router.js` - Centralized request routing
+
+**Transport Support:**
+- **STDIO**: Direct MCP protocol communication
+- **HTTP**: REST API endpoints for web integration
+- **Unified Backend**: Both transports share the same service layer
+
+For detailed implementation guides and examples, refer to the resource documents accessible through the MCP resource system.

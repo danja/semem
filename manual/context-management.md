@@ -6,9 +6,9 @@ Context management in Semem is the process of retrieving, processing, and synthe
 
 ## Architecture Components
 
-### Hybrid Context Manager
+### Unified Search System
 
-The HybridContextManager serves as the orchestrator for all context processing operations. It coordinates between multiple subsystems to provide unified, intelligent responses that combine personal experience with external knowledge sources.
+The system uses a unified search architecture orchestrated through the UnifiedSearchAPI (HTTP) and verb-based command architecture (MCP STDIO). These components coordinate between multiple subsystems to provide intelligent responses that combine personal experience with external knowledge sources.
 
 **Core Responsibilities:**
 - Query processing and intent analysis

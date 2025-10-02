@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Semem Manual - intro</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 1rem;
+      line-height: 1.6;
+      color: #24292f;
+      background-color: #ffffff;
+    }
+    .github-markdown-body {
+      box-sizing: border-box;
+      min-width: 200px;
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 45px;
+    }
+    .nav-bar {
+      background: #f6f8fa;
+      border-bottom: 1px solid #d1d9e0;
+      padding: 1rem;
+      margin-bottom: 2rem;
+    }
+    .nav-bar a {
+      color: #0969da;
+      text-decoration: none;
+      margin-right: 1rem;
+    }
+    .nav-bar a:hover {
+      text-decoration: underline;
+    }
+  </style>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown-light.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+  <div class="nav-bar">
+    <a href="../">← Documentation Home</a>
+    <a href="index.html">Manual Index</a>
+    <a href="../api/">API Reference</a>
+    <a href="https://github.com/danja/semem">GitHub</a>
+  </div>
+  
+  <div class="github-markdown-body" id="content">
+    Loading...
+  </div>
+  
+  <script>
+    async function loadPage() {
+      try {
+        const response = await fetch('intro.md');
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        const markdown = await response.text();
+        document.getElementById('content').innerHTML = marked.parse(markdown);
+        
+        // Update relative links
+        const links = document.querySelectorAll('a[href$=".md"]');
+        links.forEach(link => {
+          const href = link.getAttribute('href');
+          if (href && !href.startsWith('http') && !href.startsWith('..')) {
+            link.setAttribute('href', href.replace('.md', '.html'));
+          }
+        });
+      } catch (error) {
+        document.getElementById('content').innerHTML = '<h1>Error loading page</h1><p>Please try refreshing or visit the GitHub repository.</p>';
+      }
+    }
+    document.addEventListener('DOMContentLoaded', loadPage);
+  </script>
+</body>
+</html>

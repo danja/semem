@@ -10,11 +10,11 @@ The Ask operation allows users to query stored knowledge using natural language 
 
 **Major architectural improvements have been implemented:**
 
-1. **Enhanced Hybrid Context Processing**: New `HybridContextManager` that intelligently combines personal context with external enhancements
-2. **Adaptive Search Engine**: Context-aware threshold calculation with multi-pass search and progressive relaxation  
+1. **Unified Search Architecture**: Intelligent combination of personal context with external enhancements via UnifiedSearchAPI (HTTP) and verb commands (MCP)
+2. **Adaptive Search Engine**: Context-aware threshold calculation with multi-pass search and progressive relaxation
 3. **Dual-Store Search**: MemoryManager now searches both in-memory store AND SPARQL store for comprehensive results
 4. **ZPT Navigation Integration**: Pan filters (domains, keywords, entities, temporal) now influence search thresholds and result prioritization
-5. **Improved Context Flow**: Results now properly flow from MemoryManager → AdaptiveSearchEngine → HybridContextManager → Simple-verbs → UI
+5. **Improved Context Flow**: Results now properly flow from MemoryManager → AdaptiveSearchEngine → UnifiedSearch → Simple-verbs → UI
 
 ## Complete Workflow
 
@@ -108,33 +108,29 @@ app.post('/ask', async (req, res) => {
 
 ### 6. Simple Verbs Service (Enhanced Architecture)
 
-**File**: `mcp/tools/simple-verbs.js` (lines 641-870)
+**File**: `src/mcp/tools/verbs/commands/AskCommand.js`
 
-The Ask operation now uses the new **HybridContextManager** for intelligent context processing:
+The Ask operation uses unified search architecture for intelligent context processing:
 
-#### Step 1: HybridContextManager Invocation
+#### Step 1: Unified Search Invocation
 ```javascript
-if (useContext && this.hybridContextManager) {
-  const hybridResult = await this.hybridContextManager.processQuery(question, {
-    useContext: true,
-    useHyDE, useWikipedia, useWikidata, mode
-  });
-  
-  if (hybridResult.success) {
-    return {
-      success: true,
-      answer: hybridResult.answer,
-      contextItems: hybridResult.localContextResults?.length || 0,
-      memories: hybridResult.localContextResults?.length || 0,
-      searchMethod: "hybrid_context_processing"
-    };
-  }
-}
+// The verb command routes to appropriate search strategy:
+// - HTTP API uses UnifiedSearchAPI
+// - MCP STDIO uses verb-based command architecture
+
+const result = await this.execute({
+  question,
+  mode,
+  useContext,
+  useHyDE,
+  useWikipedia,
+  useWikidata
+});
 ```
 
-#### Step 2: Hybrid Context Processing Flow
+#### Step 2: Context Processing Flow
 
-**Within HybridContextManager**:
+**Within Unified Search System**:
 
 1. **Concurrent Search Execution**:
    - Enhancement search (if requested): Wikidata/Wikipedia/HyDE
@@ -242,9 +238,9 @@ WHERE {
 
 ### 9. Enhanced Response Flow Paths
 
-#### Path A: Hybrid Context Processing (NEW - Default Mode)
+#### Path A: Unified Search Processing (Default Mode)
 ```
-UI → API → MCP → SimpleVerbs → HybridContextManager → {
+UI → API → MCP → SimpleVerbs → UnifiedSearch/VerbCommands → {
   Enhancement Search (Wikidata/Wikipedia/HyDE) +
   AdaptiveSearchEngine → MemoryManager → [MemoryStore + SPARQLStore]
 } → Unified Response
@@ -252,7 +248,7 @@ UI → API → MCP → SimpleVerbs → HybridContextManager → {
 - **Combines** external knowledge WITH local context
 - Uses context-aware adaptive thresholds
 - Multi-pass search with ZPT filtering
-- Search method: "hybrid_context_processing"
+- Search method: "unified_search"
 - **Result**: Rich responses combining personal and external knowledge
 
 #### Path B: Enhancement-Only Response (Fallback)
@@ -279,7 +275,7 @@ UI → API → MCP → SimpleVerbs → SessionCache + SPARQLStore → LLM → Re
 
 **Previous Issue**: The system treated enhancements and local context as **alternatives** rather than **complementary sources**.
 
-**Solution Implemented**: The new **HybridContextManager** intelligently combines both sources:
+**Solution Implemented**: The unified search architecture intelligently combines both sources:
 
 - **With Wikidata + Local Context**: Gets comprehensive knowledge combining external AND personal sources
 - **Fallback Logic**: If one source fails, continues with the other
@@ -307,7 +303,7 @@ A successful Ask response includes:
   "sessionResults": 0,
   "persistentResults": 0,
   "memories": 5,
-  "searchMethod": "hybrid_context_processing",
+  "searchMethod": "unified_search",
   "localContextResults": [
     { "prompt": "Enhancement Query: what precedes earthquakes?", "response": "...", "similarity": 0.776 },
     { "prompt": "Earthquake prediction research", "response": "...", "similarity": 0.721 }
@@ -358,11 +354,11 @@ curl -u admin:admin -H "Content-Type: application/sparql-query" \
 
 ## Implemented Improvements (August 2025)
 
-✅ **Hybrid Enhancement**: ✅ COMPLETED - HybridContextManager combines external knowledge with local context  
-✅ **Context Weighting**: ✅ COMPLETED - Intelligent context analysis and weighting based on query relevance  
-✅ **Fallback Logic**: ✅ COMPLETED - Multiple fallback paths ensure robust operation  
-✅ **Adaptive Thresholds**: ✅ COMPLETED - Context-aware threshold calculation with ZPT integration  
-✅ **Multi-Pass Search**: ✅ COMPLETED - Progressive threshold relaxation for comprehensive results  
+✅ **Unified Search Architecture**: ✅ COMPLETED - UnifiedSearchAPI and verb commands combine external knowledge with local context
+✅ **Context Weighting**: ✅ COMPLETED - Intelligent context analysis and weighting based on query relevance
+✅ **Fallback Logic**: ✅ COMPLETED - Multiple fallback paths ensure robust operation
+✅ **Adaptive Thresholds**: ✅ COMPLETED - Context-aware threshold calculation with ZPT integration
+✅ **Multi-Pass Search**: ✅ COMPLETED - Progressive threshold relaxation for comprehensive results
 ✅ **Dual-Store Search**: ✅ COMPLETED - MemoryManager searches both memory and SPARQL stores  
 
 ## Concept-Following Enhancement (Planned)
@@ -449,7 +445,7 @@ class ConceptLinker {
 class ContextExpander {
   async expandWithLinkedContent(concepts, maxDepth = 2) {
     // Recursively gather content from linked concepts
-    // Integrates with existing HybridContextManager
+    // Integrates with existing UnifiedSearch system
   }
   
   async rankRelevance(linkedConcepts, originalQuery) {
@@ -529,9 +525,9 @@ The concept-following enhancement leverages the new ragno embedding storage:
 - Resolve initialization timeouts that currently block MCP requests
 - Implement connection pooling and async initialization
 
-**Phase 2: Concept Linking Infrastructure** (High Priority)  
+**Phase 2: Concept Linking Infrastructure** (High Priority)
 - Build ConceptLinker and ContextExpander services
-- Integrate with existing HybridContextManager architecture
+- Integrate with existing UnifiedSearch architecture
 
 **Phase 3: Enhanced Ask Implementation** (Medium Priority)
 - Add concept-following parameters to Ask operation
