@@ -93,7 +93,7 @@ Semem has a layered architecture with the following key components:
    - Uses Ragno vocabulary (http://purl.org/stuff/ragno/) for RDF modeling
 
 7. **MCP Layer (Model Context Protocol)**
-   - 12 core verbs: `semem-tell`, `semem-ask`, `semem-augment`, `semem-inspect`, `semem-state`, `semem-zoom`, `semem-pan`, `semem-tilt`, `semem-remember`, `semem-recall`, `semem-chat`, `semem-chat-enhanced`
+   - 12 core verbs: `tell`, `ask`, `augment`, `inspect`, `state`, `zoom`, `pan`, `tilt`, `remember`, `recall`, `chat`, `chat-enhanced`
    - HTTP server: `src/mcp/http-server.js` - provides REST API endpoints
    - STDIO server: `src/mcp/index.js` - provides MCP protocol communication
    - Unified validation using Zod schemas for all verb parameters
@@ -187,18 +187,18 @@ const llmHandler = new LLMHandler(llmProvider, modelConfig.chatModel);
 - Verify models are installed: `ollama list`
 
 ### MCP Core Verbs
-- **semem-tell**: Store content in semantic memory
-- **semem-ask**: Query stored knowledge with context
-- **semem-augment**: Extract concepts and relationships
-- **semem-inspect**: Examine system state and health
-- **semem-state**: Manage system state and configuration
-- **semem-zoom**: Navigate content at different granularities (entity/concept/document/community)
-- **semem-pan**: Navigate content in semantic/temporal/conceptual directions
-- **semem-tilt**: Present content at different detail levels (keywords/summary/detailed)
-- **semem-remember**: Store in specific memory domains (user/project/session/instruction)
-- **semem-recall**: Retrieve from specific memory domains
-- **semem-chat**: Basic chat interaction
-- **semem-chat-enhanced**: Chat with external service enhancements
+- **tell**: Store content in semantic memory
+- **ask**: Query stored knowledge with context
+- **augment**: Extract concepts and relationships
+- **inspect**: Examine system state and health
+- **state**: Manage system state and configuration
+- **zoom**: Navigate content at different granularities (entity/concept/document/community)
+- **pan**: Navigate content in semantic/temporal/conceptual directions
+- **tilt**: Present content at different detail levels (keywords/summary/detailed)
+- **remember**: Store in specific memory domains (user/project/session/instruction)
+- **recall**: Retrieve from specific memory domains
+- **chat**: Basic chat interaction
+- **chat-enhanced**: Chat with external service enhancements
 
 ### VSOM Integration
 - VSOM standalone server: `src/frontend/vsom-standalone/server.js`

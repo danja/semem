@@ -511,88 +511,21 @@ async function startRefactoredServer() {
       }
     });
 
-    // Inspect endpoint - for debugging and monitoring session data
+    // Inspect endpoint - uses InspectCommand for comprehensive analytics
     app.post('/inspect', async (req, res) => {
       try {
         const { what = 'session', details = false } = req.body;
 
         mcpDebugger.info(`🔍 Refactored Inspect: Inspecting ${what} with details=${details}`);
 
-        let inspectionResult;
-
-        switch (what.toLowerCase()) {
-          case 'session':
-            const sessionState = simpleVerbsService.stateManager.getState();
-            const sessionCache = simpleVerbsService.stateManager.sessionCache || {};
-
-            inspectionResult = {
-              sessionId: sessionState.sessionId,
-              timestamp: sessionState.timestamp,
-              state: {
-                zoom: sessionState.zoom || 'entity',
-                pan: sessionState.pan || {},
-                tilt: sessionState.tilt || 'keywords'
-              },
-              cache: {
-                interactions: sessionCache.interactions?.size || 0,
-                concepts: sessionCache.concepts?.size || 0,
-                conceptsList: details ? Array.from(sessionCache.concepts?.keys() || []) : undefined
-              },
-              memory: {
-                duration: Date.now() - (new Date(sessionState.timestamp || Date.now()).getTime()),
-                active: true
-              }
-            };
-            break;
-
-          case 'concepts':
-            const conceptsCache = simpleVerbsService.stateManager.sessionCache?.concepts || new Map();
-            inspectionResult = {
-              total: conceptsCache.size,
-              concepts: details ? Array.from(conceptsCache.entries()) : Array.from(conceptsCache.keys())
-            };
-            break;
-
-          case 'all':
-            // Get comprehensive system state
-            const allState = simpleVerbsService.stateManager.getState();
-            const allCache = simpleVerbsService.stateManager.sessionCache || {};
-
-            inspectionResult = {
-              system: {
-                architecture: 'refactored-per-request-isolation',
-                timestamp: new Date().toISOString()
-              },
-              session: {
-                sessionId: allState.sessionId,
-                timestamp: allState.timestamp,
-                state: allState
-              },
-              cache: {
-                interactions: allCache.interactions?.size || 0,
-                concepts: allCache.concepts?.size || 0,
-                data: details ? {
-                  interactions: Array.from(allCache.interactions?.entries() || []),
-                  concepts: Array.from(allCache.concepts?.entries() || [])
-                } : undefined
-              }
-            };
-            break;
-
-          default:
-            throw new Error(`Unknown inspection target: ${what}`);
-        }
-
-        const inspectResponse = {
-          success: true,
+        // Use the InspectCommand from the verb registry
+        const inspectResult = await simpleVerbsService.execute('inspect', {
           what,
-          details,
-          result: inspectionResult,
-          timestamp: new Date().toISOString()
-        };
+          details
+        });
 
         mcpDebugger.info(`🔍 Refactored Inspect result: ${what} inspection completed`);
-        res.json(inspectResponse);
+        res.json(inspectResult);
       } catch (error) {
         mcpDebugger.error('❌ Refactored Inspect error:', error.message);
         res.status(500).json({

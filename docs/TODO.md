@@ -2,7 +2,11 @@ node src/frontend/vsom-standalone/server.js
 
 npx @modelcontextprotocol/inspector node mcp/index.js
 
-mcp index tests
+essential e2e
+* export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/tell-ask-e2e.integration.test.js --reporter=verbose 
+* export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/tell-ask-stdio-e2e.integration.test.js --reporter=verbose
+
+mcp index tests - may well be broken
 * export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/tell-tool.integration.test.js --reporter=verbose
 * export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/ask-tool.integration.test.js --reporter=verbose
 * export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/augment-tool.integration.test.js --reporter=verbose
@@ -11,9 +15,6 @@ mcp index tests
 * export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/tilt-tool.integration.test.js --reporter=verbose
 * export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/inspect-tool.integration.test.js --reporter=verbose
 
-e2e
-* export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/tell-ask-e2e.integration.test.js --reporter=verbose 
-* export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/tell-ask-stdio-e2e.integration.test.js --reporter=verbose
 * export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/tell-verification.integration.test.js --reporter=verbose
 * export INTEGRATION_TESTS=true && npx vitest run tests/integration/stores/sparql-similarity-search.integration.test.js --reporter=verbose
 

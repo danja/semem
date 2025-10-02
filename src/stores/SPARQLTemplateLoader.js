@@ -22,6 +22,7 @@ export class SPARQLTemplateLoader {
                 : path.resolve(process.cwd(), templatesPath);
         } else {
             // Default to sparql/templates relative to project root
+            // From src/stores/, go up two levels to project root (../../) then into sparql/templates
             this.templatesPath = path.resolve(__dirname, '../../sparql/templates');
         }
         this.templateCache = new Map();

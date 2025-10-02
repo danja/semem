@@ -7,6 +7,7 @@
 import { BaseVerbCommand } from './BaseVerbCommand.js';
 import { InspectSchema } from '../../VerbSchemas.js';
 import { logOperation } from '../../VerbsLogger.js';
+import SPARQLTemplateLoader from '../../../../stores/SPARQLTemplateLoader.js';
 
 // Import inspect strategies
 import { SessionInspectStrategy } from '../strategies/inspect/SessionInspectStrategy.js';
@@ -18,6 +19,7 @@ export class InspectCommand extends BaseVerbCommand {
     super('inspect');
     this.schema = InspectSchema;
     this.strategies = new Map();
+    this.sparqlTemplateLoader = new SPARQLTemplateLoader();
   }
 
   /**
@@ -209,11 +211,84 @@ export class InspectCommand extends BaseVerbCommand {
   }
 
   async _generateKnowledgeGraphData() {
-    return {
-      nodes: [],
-      edges: [],
-      metadata: {}
-    };
+    try {
+      if (!this.memoryManager?.store) {
+        return { nodes: [], edges: [], metadata: { error: 'Store not available' } };
+      }
+
+      const store = this.memoryManager.store;
+
+      this.logOperation('debug', 'Template loader path', {
+        templatesPath: this.sparqlTemplateLoader.templatesPath,
+        cwd: process.cwd()
+      });
+
+      // Load and execute nodes query
+      const nodesQuery = await this.sparqlTemplateLoader.loadAndInterpolate(
+        'queries/visualization',
+        'knowledge-graph-nodes',
+        { limit: 500 }
+      );
+
+      if (!nodesQuery) {
+        throw new Error(`Failed to load nodes query template from ${this.sparqlTemplateLoader.templatesPath}/queries/visualization/knowledge-graph-nodes.sparql`);
+      }
+
+      this.logOperation('debug', 'Generated nodes query', {
+        queryLength: nodesQuery.length,
+        queryPreview: nodesQuery.substring(0, 200)
+      });
+
+      const nodesResults = await store.executeSparqlQuery(nodesQuery);
+
+      const nodes = (nodesResults?.results?.bindings || []).map(binding => ({
+        id: binding.entity?.value || 'unknown',
+        label: binding.label?.value || 'Unlabeled',
+        type: binding.type?.value || 'unknown',
+        graph: binding.graph?.value || 'default'
+      }));
+
+      // Load and execute edges query
+      const edgesQuery = await this.sparqlTemplateLoader.loadAndInterpolate(
+        'queries/visualization',
+        'knowledge-graph-edges',
+        { limit: 500 }
+      );
+
+      if (!edgesQuery) {
+        throw new Error(`Failed to load edges query template from ${this.sparqlTemplateLoader.templatesPath}/queries/visualization/knowledge-graph-edges.sparql`);
+      }
+
+      const edgesResults = await store.executeSparqlQuery(edgesQuery);
+
+      const edges = (edgesResults?.results?.bindings || []).map(binding => ({
+        source: binding.source?.value || 'unknown',
+        target: binding.target?.value || 'unknown',
+        label: binding.label?.value || binding.relType?.value || 'related',
+        type: binding.relType?.value || 'relationship',
+        graph: binding.graph?.value || 'default'
+      }));
+
+      return {
+        nodes,
+        edges,
+        metadata: {
+          nodeCount: nodes.length,
+          edgeCount: edges.length,
+          graphsQueried: [...new Set(nodes.map(n => n.graph))].length,
+          nodeTypes: [...new Set(nodes.map(n => n.type))],
+          edgeTypes: [...new Set(edges.map(e => e.type))]
+        }
+      };
+
+    } catch (error) {
+      this.logOperation('error', 'Failed to generate knowledge graph data', { error: error.message });
+      return {
+        nodes: [],
+        edges: [],
+        metadata: { error: error.message }
+      };
+    }
   }
 
   async _analyzeUsagePatterns() {

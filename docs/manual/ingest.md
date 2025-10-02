@@ -96,6 +96,10 @@ node utils/BookmarkIngest.js \
 node utils/BookmarkIngest.js \
   --endpoint "http://localhost:3030/test/query" \
   --limit 10
+
+node utils/BookmarkIngest.js \
+  --endpoint "http://localhost:3030/semem/query" \
+  --limit 10
 ```
 
 #### Query Lazy Content

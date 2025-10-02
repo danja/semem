@@ -84,9 +84,8 @@ export const TiltSchema = z.object({
 });
 
 export const InspectSchema = z.object({
-  type: z.enum(['system', 'session', 'concept', 'memory']).default('system'),
-  target: z.string().optional(),
-  includeRecommendations: z.boolean().optional().default(false)
+  what: z.enum(['session', 'concepts', 'all']).default('session'),
+  details: z.boolean().optional().default(false)
 });
 
 // Memory management schemas

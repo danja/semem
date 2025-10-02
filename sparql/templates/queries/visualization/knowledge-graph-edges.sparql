@@ -1,0 +1,29 @@
+PREFIX ragno: <http://purl.org/stuff/ragno/>
+PREFIX semem: <http://purl.org/stuff/semem/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+# Query all named graphs for edges (relationships)
+SELECT DISTINCT ?graph ?rel ?source ?target ?label ?relType
+WHERE {
+  GRAPH ?graph {
+    {
+      ?rel a ragno:Relationship ;
+           ragno:source ?source ;
+           ragno:target ?target .
+      OPTIONAL { ?rel rdfs:label ?label }
+      BIND("relationship" as ?relType)
+    } UNION {
+      ?source semem:relatedTo ?target .
+      OPTIONAL { ?source rdfs:label ?label }
+      BIND(?source as ?rel)
+      BIND("related" as ?relType)
+    } UNION {
+      ?source semem:hasConcept ?target .
+      ?target a semem:Concept .
+      BIND(?source as ?rel)
+      BIND("hasConcept" as ?relType)
+    }
+  }
+}
+ORDER BY ?graph
+LIMIT {{limit}}

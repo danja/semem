@@ -1,0 +1,34 @@
+PREFIX ragno: <http://purl.org/stuff/ragno/>
+PREFIX semem: <http://purl.org/stuff/semem/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+# Query all named graphs for nodes (entities, concepts, documents)
+SELECT DISTINCT ?graph ?entity ?label ?type
+WHERE {
+  GRAPH ?graph {
+    {
+      ?entity a ragno:Entity .
+      OPTIONAL { ?entity rdfs:label ?label }
+      BIND("entity" as ?type)
+    } UNION {
+      ?entity a semem:Concept .
+      OPTIONAL { ?entity rdfs:label ?label }
+      BIND("concept" as ?type)
+    } UNION {
+      ?entity a semem:Document .
+      OPTIONAL { ?entity rdfs:label ?label }
+      BIND("document" as ?type)
+    } UNION {
+      ?entity a semem:TextElement .
+      OPTIONAL { ?entity semem:content ?label }
+      BIND("text" as ?type)
+    } UNION {
+      ?entity a ragno:Unit .
+      OPTIONAL { ?entity rdfs:label ?label }
+      BIND("unit" as ?type)
+    }
+  }
+}
+ORDER BY ?graph ?type
+LIMIT {{limit}}
