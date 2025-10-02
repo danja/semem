@@ -223,11 +223,11 @@ export class InspectCommand extends BaseVerbCommand {
         cwd: process.cwd()
       });
 
-      // Load and execute nodes query
+      // Load and execute nodes query - get more nodes to show full knowledge graph
       const nodesQuery = await this.sparqlTemplateLoader.loadAndInterpolate(
         'queries/visualization',
         'knowledge-graph-nodes',
-        { limit: 500 }
+        { limit: 5000 }
       );
 
       if (!nodesQuery) {
@@ -248,11 +248,11 @@ export class InspectCommand extends BaseVerbCommand {
         graph: binding.graph?.value || 'default'
       }));
 
-      // Load and execute edges query
+      // Load and execute edges query - get more edges to show relationships
       const edgesQuery = await this.sparqlTemplateLoader.loadAndInterpolate(
         'queries/visualization',
         'knowledge-graph-edges',
-        { limit: 500 }
+        { limit: 5000 }
       );
 
       if (!edgesQuery) {

@@ -141,8 +141,8 @@ export default class VSOMApiService {
         return this.makeRequest('/inspect', {
             method: 'POST',
             body: JSON.stringify({
-                type: 'session',
-                includeRecommendations: true
+                what: 'session',
+                details: false
             })
         });
     }
@@ -154,23 +154,37 @@ export default class VSOMApiService {
         return this.makeRequest('/inspect', {
             method: 'POST',
             body: JSON.stringify({
-                type: 'concept',
-                includeRecommendations: true
+                what: 'concepts',
+                details: false
             })
         });
     }
 
     /**
-     * Get all system data
+     * Get all system data including knowledge graph
      */
     async getAllData() {
         return this.makeRequest('/inspect', {
             method: 'POST',
             body: JSON.stringify({
-                type: 'memory',
-                includeRecommendations: true
+                what: 'all',
+                details: true
             })
         });
+    }
+
+    /**
+     * Get knowledge graph data (nodes and edges)
+     */
+    async getKnowledgeGraph() {
+        const data = await this.makeRequest('/inspect', {
+            method: 'POST',
+            body: JSON.stringify({
+                what: 'all',
+                details: true
+            })
+        });
+        return data.knowledgeGraph || { nodes: [], edges: [], metadata: {} };
     }
 
     /**

@@ -1,29 +1,55 @@
 PREFIX ragno: <http://purl.org/stuff/ragno/>
 PREFIX semem: <http://purl.org/stuff/semem/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX bm: <http://purl.org/stuff/bm/>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 
-# Query all named graphs for edges (relationships)
-SELECT DISTINCT ?graph ?rel ?source ?target ?label ?relType
+# Query all named graphs for edges (relationships between nodes)
+SELECT DISTINCT ?graph ?source ?target ?label ?relType
 WHERE {
   GRAPH ?graph {
     {
+      # Ragno connectsTo relationships
+      ?source ragno:connectsTo ?target .
+      BIND("connectsTo" as ?relType)
+      OPTIONAL { ?source rdfs:label ?label }
+    } UNION {
+      # Explicit Ragno Relationships
       ?rel a ragno:Relationship ;
            ragno:source ?source ;
            ragno:target ?target .
       OPTIONAL { ?rel rdfs:label ?label }
       BIND("relationship" as ?relType)
     } UNION {
+      # Semem relatedTo
       ?source semem:relatedTo ?target .
+      BIND("relatedTo" as ?relType)
       OPTIONAL { ?source rdfs:label ?label }
-      BIND(?source as ?rel)
-      BIND("related" as ?relType)
     } UNION {
-      ?source semem:hasConcept ?target .
-      ?target a semem:Concept .
-      BIND(?source as ?rel)
-      BIND("hasConcept" as ?relType)
+      # Bookmark target relationships
+      ?source bm:target ?target .
+      ?source a bm:Bookmark .
+      FILTER(isURI(?target))
+      BIND("bookmarkTarget" as ?relType)
+      OPTIONAL { ?source bm:title ?label }
+    } UNION {
+      # SKOS broader/narrower
+      ?source skos:broader ?target .
+      BIND("broader" as ?relType)
+      OPTIONAL { ?source skos:prefLabel ?label }
+    } UNION {
+      ?source skos:narrower ?target .
+      BIND("narrower" as ?relType)
+      OPTIONAL { ?source skos:prefLabel ?label }
+    } UNION {
+      # SKOS related
+      ?source skos:related ?target .
+      BIND("related" as ?relType)
+      OPTIONAL { ?source skos:prefLabel ?label }
     }
+    # Ensure both source and target are typed resources (nodes in our graph)
+    FILTER(isURI(?source) && isURI(?target))
   }
 }
-ORDER BY ?graph
+ORDER BY ?graph ?relType
 LIMIT {{limit}}

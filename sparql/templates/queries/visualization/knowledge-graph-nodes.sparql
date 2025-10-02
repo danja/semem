@@ -2,31 +2,46 @@ PREFIX ragno: <http://purl.org/stuff/ragno/>
 PREFIX semem: <http://purl.org/stuff/semem/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX bm: <http://purl.org/stuff/bm/>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX schema: <http://schema.org/>
 
-# Query all named graphs for nodes (entities, concepts, documents)
+# Query all named graphs for nodes (entities, concepts, documents, bookmarks, interactions, articles)
 SELECT DISTINCT ?graph ?entity ?label ?type
 WHERE {
   GRAPH ?graph {
     {
-      ?entity a ragno:Entity .
+      ?entity a bm:Bookmark .
       OPTIONAL { ?entity rdfs:label ?label }
-      BIND("entity" as ?type)
+      BIND("bookmark" as ?type)
     } UNION {
-      ?entity a semem:Concept .
+      ?entity a semem:Interaction .
       OPTIONAL { ?entity rdfs:label ?label }
+      BIND("interaction" as ?type)
+    } UNION {
+      ?entity a ragno:Element .
+      OPTIONAL { ?entity rdfs:label ?label }
+      BIND("element" as ?type)
+    } UNION {
+      ?entity a skos:Concept .
+      OPTIONAL { ?entity skos:prefLabel ?label }
       BIND("concept" as ?type)
     } UNION {
-      ?entity a semem:Document .
-      OPTIONAL { ?entity rdfs:label ?label }
-      BIND("document" as ?type)
-    } UNION {
-      ?entity a semem:TextElement .
-      OPTIONAL { ?entity semem:content ?label }
-      BIND("text" as ?type)
+      ?entity a schema:Article .
+      OPTIONAL { ?entity schema:name ?label }
+      BIND("article" as ?type)
     } UNION {
       ?entity a ragno:Unit .
       OPTIONAL { ?entity rdfs:label ?label }
       BIND("unit" as ?type)
+    } UNION {
+      ?entity a ragno:Entity .
+      OPTIONAL { ?entity rdfs:label ?label }
+      BIND("entity" as ?type)
+    } UNION {
+      ?entity a ragno:TextElement .
+      OPTIONAL { ?entity rdfs:label ?label }
+      BIND("text" as ?type)
     }
   }
 }

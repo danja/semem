@@ -153,13 +153,31 @@ class VSOMStandaloneApp {
             // Clear any existing tooltips before refresh
             VSOMUtils.hideTooltip();
 
-            // Get session data (this works and has the interactions we need)
+            // Get knowledge graph data from inspect endpoint
+            const knowledgeGraph = await this.services.api.getKnowledgeGraph();
+            console.log('🔍 Knowledge graph received:', {
+                nodes: knowledgeGraph.nodes?.length || 0,
+                edges: knowledgeGraph.edges?.length || 0,
+                metadata: knowledgeGraph.metadata
+            });
+
+            // Get session data for backward compatibility
             const sessionData = await this.services.api.getSessionData();
             console.log('🔍 Session data received:', sessionData);
 
-            // Extract interactions directly from session data
-            const interactions = sessionData.sessionAnalytics?.interactions || [];
-            console.log('🔍 Extracted interactions:', interactions.length, interactions);
+            // Use knowledge graph nodes as interactions for visualization
+            // Convert nodes to interaction-like format for compatibility
+            const interactions = knowledgeGraph.nodes.map((node, idx) => ({
+                id: node.id,
+                label: node.label || `Node ${idx}`,
+                type: node.type,
+                graph: node.graph,
+                prompt: node.label || node.id,
+                response: `${node.type} from ${node.graph}`,
+                concepts: [node.type, node.graph],
+                metadata: { nodeType: node.type, sourceGraph: node.graph }
+            }));
+            console.log('🔍 Converted knowledge graph to interactions:', interactions.length);
 
             // Extract concepts from interactions
             const concepts = [];
