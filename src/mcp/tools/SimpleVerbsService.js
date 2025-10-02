@@ -17,7 +17,7 @@ export class SimpleVerbsService {
     this.initialized = false;
 
     // Core tool names for router interface compatibility
-    this.coreToolNames = ['tell', 'ask', 'augment', 'zoom', 'pan', 'tilt', 'inspect', 'remember', 'forget', 'recall', 'project_context', 'fade_memory'];
+    this.coreToolNames = ['tell', 'ask', 'augment', 'zoom', 'pan', 'tilt', 'inspect', 'remember', 'forget', 'recall', 'project_context', 'fade_memory', 'train-vsom'];
   }
 
   /**

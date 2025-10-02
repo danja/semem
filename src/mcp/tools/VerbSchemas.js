@@ -88,6 +88,12 @@ export const InspectSchema = z.object({
   details: z.boolean().optional().default(false)
 });
 
+export const TrainVSOMSchema = z.object({
+  epochs: z.number().min(1).max(10000).optional().default(100),
+  learningRate: z.number().min(0.001).max(1.0).optional().default(0.1),
+  gridSize: z.number().min(5).max(50).optional().default(20)
+});
+
 // Memory management schemas
 export const RememberSchema = z.object({
   content: z.string().min(1, "Content to remember cannot be empty"),

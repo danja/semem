@@ -66,6 +66,13 @@ class VSOMStandaloneApp {
             this.initialized = true;
             console.log('✅ VSOM Standalone App initialized successfully');
 
+            // Hide initial loader
+            const initialLoader = document.getElementById('initial-loader');
+            if (initialLoader) {
+                initialLoader.classList.add('hidden');
+                setTimeout(() => initialLoader.remove(), 300);
+            }
+
             this.showToast('VSOM Navigation Ready', 'success');
 
         } catch (error) {
@@ -130,6 +137,12 @@ class VSOMStandaloneApp {
         const autoLayoutBtn = document.getElementById('auto-layout');
         if (autoLayoutBtn) {
             autoLayoutBtn.addEventListener('click', this.handleAutoLayout.bind(this));
+        }
+
+        // Train VSOM button
+        const trainBtn = document.getElementById('train-vsom');
+        if (trainBtn) {
+            trainBtn.addEventListener('click', this.handleTrainVSOM.bind(this));
         }
 
         // Window events
@@ -719,6 +732,95 @@ class VSOMStandaloneApp {
         }
     }
 
+    async handleTrainVSOM() {
+        try {
+            this.showToast('Starting VSOM training...', 'info');
+            this.showLoading(true, 'Training self-organizing map...');
+
+            console.log('🧠 [VSOM] Starting training with current knowledge graph');
+            console.log('🧠 [VSOM] Training parameters:', { epochs: 100, learningRate: 0.1, gridSize: 20 });
+
+            // Train VSOM - this will use embeddings from the knowledge graph
+            const trainingResult = await this.services.api.trainVSOM({
+                epochs: 100,
+                learningRate: 0.1,
+                gridSize: 20
+            });
+
+            console.log('✅ [VSOM] Training completed:', trainingResult);
+            console.log('🔍 [VSOM] Result details:', {
+                success: trainingResult.success,
+                hasMappings: !!trainingResult.mappings,
+                mappingsCount: trainingResult.mappings?.length || 0,
+                hasMetadata: !!trainingResult.metadata,
+                entitiesCount: trainingResult.metadata?.entitiesCount || 0,
+                embeddingDimension: trainingResult.metadata?.embeddingDimension || 0,
+                error: trainingResult.error || 'none',
+                keys: Object.keys(trainingResult)
+            });
+
+            if (trainingResult.success) {
+                console.log('✅ [VSOM] Training was successful, processing mappings...');
+
+                // Apply trained positions to the visualization
+                if (trainingResult.mappings && trainingResult.mappings.length > 0 && this.components.grid) {
+                    console.log(`🔍 [VSOM] Processing ${trainingResult.mappings.length} mappings`);
+                    console.log('🔍 [VSOM] First mapping sample:', trainingResult.mappings[0]);
+
+                    // Convert mappings to positioned nodes with required properties
+                    const trainedNodes = trainingResult.mappings.map((mapping, index) => ({
+                        ...mapping.entity,
+                        ...mapping.metadata,
+                        id: mapping.entity.id || mapping.metadata.uri,
+                        x: mapping.mapPosition[0] || 0,
+                        y: mapping.mapPosition[1] || 0,
+                        trained: true,
+                        distance: mapping.distance || 0,
+                        // Add required visualization properties (matching VSOMGrid expectations)
+                        size: 8,  // VSOMGrid uses 'size', not 'radius'
+                        color: '#4CAF50',
+                        memoryImportance: 0.5,
+                        activation: 0.8,
+                        timestamp: new Date().toISOString()
+                    }));
+
+                    console.log(`🔍 [VSOM] Created ${trainedNodes.length} trained nodes`);
+                    console.log('🔍 [VSOM] First trained node sample:', trainedNodes[0]);
+                    console.log('🔍 [VSOM] Calling grid.updateData...');
+
+                    // Update grid with trained positions
+                    await this.components.grid.updateData({ nodes: trainedNodes });
+
+                    console.log('✅ [VSOM] Grid updated successfully');
+
+                    this.showToast(
+                        `Training complete! ${trainingResult.metadata.entitiesCount} nodes organized. ` +
+                        `Final error: ${trainingResult.finalError.toFixed(4)}`,
+                        'success'
+                    );
+                } else {
+                    console.warn('⚠️ [VSOM] No mappings to display:', {
+                        hasMappings: !!trainingResult.mappings,
+                        mappingsLength: trainingResult.mappings?.length,
+                        hasGrid: !!this.components.grid
+                    });
+                    this.showToast('Training completed but no mappings returned', 'warning');
+                }
+            } else {
+                console.error('❌ [VSOM] Training reported failure:', trainingResult.error);
+                this.showToast(`Training failed: ${trainingResult.error || 'Unknown error'}`, 'error');
+            }
+
+            this.showLoading(false);
+
+        } catch (error) {
+            console.error('❌ [VSOM] Training error:', error);
+            console.error('❌ [VSOM] Error stack:', error.stack);
+            this.showToast(`Training error: ${error.message}`, 'error');
+            this.showLoading(false);
+        }
+    }
+
     handleResize() {
         if (this.components.grid) {
             this.components.grid.handleResize();
@@ -767,11 +869,17 @@ class VSOMStandaloneApp {
         }
     }
 
-    showLoading(show) {
+    showLoading(show, message = 'Loading...') {
         const loading = document.getElementById('vsom-loading');
 
         if (loading) {
             loading.style.display = show ? 'flex' : 'none';
+
+            // Update loading message
+            const loadingText = loading.querySelector('.loading-text');
+            if (loadingText && show) {
+                loadingText.textContent = message;
+            }
         }
 
         // No placeholder elements - only show live data visualization

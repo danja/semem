@@ -9,6 +9,14 @@
     <link rel="stylesheet" href="styles/vsom-components.css">
 </head>
 <body>
+    <!-- Initial loading indicator -->
+    <div id="initial-loader" class="initial-loader">
+        <div class="loader-content">
+            <div class="loader-spinner"></div>
+            <div class="loader-text">Loading VSOM...</div>
+        </div>
+    </div>
+
     <div id="app" class="vsom-app">
         <!-- Header -->
         <header class="vsom-header">
@@ -138,6 +146,10 @@
                             <span class="button-icon">🎯</span>
                             Auto Layout
                         </button>
+                        <button class="control-button" id="train-vsom">
+                            <span class="button-icon">🧠</span>
+                            Train Map
+                        </button>
                     </div>
                 </div>
                 
@@ -151,6 +163,10 @@
                             <div class="placeholder-icon">🗺️</div>
                             <div class="placeholder-text">Your interactions will appear here</div>
                             <div class="placeholder-subtext">Perform some tell/ask operations in the workbench to see them mapped</div>
+                        </div>
+                        <div class="zoom-hint">
+                            <span class="hint-icon">💡</span>
+                            <span class="hint-text">Scroll to zoom • Shift+Drag to pan • Double-click to reset</span>
                         </div>
                     </div>
                 </div>
@@ -239,6 +255,6 @@
     <div id="toast-container" class="toast-container"></div>
 
     <!-- Scripts -->
-    <script type="module" src="js/vsom-standalone.js"></script>
+    <script type="module" src="js/vsom-standalone.js?v=10"></script>
 </body>
 </html>

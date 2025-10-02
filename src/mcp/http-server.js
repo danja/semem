@@ -537,6 +537,33 @@ async function startRefactoredServer() {
       }
     });
 
+    // Train VSOM endpoint - for training Visual Self-Organizing Map
+    app.post('/train-vsom', async (req, res) => {
+      try {
+        const { epochs = 100, learningRate = 0.1, gridSize = 20 } = req.body;
+
+        mcpDebugger.info(`🧠 Refactored Train VSOM: epochs=${epochs}, learningRate=${learningRate}, gridSize=${gridSize}`);
+
+        // Use the TrainVSOMCommand from the verb registry
+        const trainingResult = await simpleVerbsService.execute('train-vsom', {
+          epochs,
+          learningRate,
+          gridSize
+        });
+
+        mcpDebugger.info(`🧠 Refactored Train VSOM result: ${trainingResult.success ? 'SUCCESS' : 'FAILED'}`);
+        res.json(trainingResult);
+      } catch (error) {
+        mcpDebugger.error('❌ Refactored Train VSOM error:', error.message);
+        res.status(500).json({
+          success: false,
+          error: error.message,
+          trained: false,
+          timestamp: new Date().toISOString()
+        });
+      }
+    });
+
     // ZPT Navigate endpoint - for Zoom-Pan-Tilt knowledge navigation
     app.post('/zpt/navigate', async (req, res) => {
       try {

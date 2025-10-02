@@ -1,6 +1,5 @@
 node src/frontend/vsom-standalone/server.js
-
-Returns structured data showing 23 nodes from 2 named graphs
+pkill -f "node src/frontend/vsom-standalone/server.js" 
 
 npx @modelcontextprotocol/inspector node mcp/index.js
 
@@ -23,6 +22,16 @@ mcp index tests - may well be broken
 In docs/BIG-FILES.md you will find a list of excessively long source files. Please examine the dependents and dependencies of each to see if each is actually in current use.
 
 trace from `export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/tell-ask-stdio-e2e.integration.test.js --reporter=verbose` and create docs/TELL-ASK-STATUS.md describing the current situation : which files participate in the Tell/Ask workflow, the data that is created and the overall architecture and workflow  
+
+PERFECT! Embeddings ARE stored! They use semem:embedding (direct property), not semem:hasEmbedding (which would point to a node). The issue is my
+  TrainVSOMCommand query was looking for semem:hasEmbedding with an intermediate node structure. Let me fix the SPARQL query in TrainVSOMCommand:
+...
+ Since we already HAVE the embeddings from SPARQL, we don't need to regenerate them. The cleanest solution is to use the VSOM class directly with pre-embedded
+  data, not through VSOMService. Let me update TrainVSOMCommand to use VSOM directly:
+
+search for the value 1536 under src/**/*.js - it's given as a default in many places. The value should always come from preferences.js or config.js via Config.js
+
+The word `migration`/`Migration` appears in several places in the code. This suggests the code is redundant or should be carefully phased out and replaced.
 
 ---
 Create a module src/ragno/NodeRAG.js with a method which will receive a question as argument and first call src/ragno/TextToCorpuscle.js. This class should support the following operatioons :
@@ -81,7 +90,19 @@ in preferences.js, export const SPARQL_CONFIG = { contains thresholds
 we have src/utils/URIMinter.js
 
 
-/home/danny/hyperdata/semem/src/api/features/VSOMAPI.js - in use?
+/home/danny/hyperdata/semem/src/api/features/VSOMAPI.js - REMOVE once new TrainVSOMCommand is confirmed working
+  - Old trainSOM() method uses VSOMService which has API mismatches
+  - Returns {instanceId, epochs, finalError, duration, status} instead of {mappings}
+  - New TrainVSOMCommand uses VSOM directly and returns mappings correctly
+  - Currently frontend is hitting old API endpoint instead of new MCP /train-vsom endpoint
+
+## Delete Test Data
+
+Remove test cluster entities from SPARQL store:
+- Entities: http://tensegrity.it/semem/interaction/cluster-test-0 through cluster-test-4
+- These are mock test entities with embeddings that pollute the real data
+- Use SPARQL DELETE to remove them from all graphs
+- Command to run after TrainVSOM is fully working with real bookmark data
 
 src/utils/EmbeddingMigration.js ???
 

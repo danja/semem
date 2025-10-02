@@ -55,6 +55,14 @@ class VSOMStandaloneServer {
             res.header('Access-Control-Allow-Origin', '*');
             res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
             res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+
+            // Disable caching for JavaScript files in development
+            if (req.path.endsWith('.js')) {
+                res.header('Cache-Control', 'no-cache, no-store, must-revalidate');
+                res.header('Pragma', 'no-cache');
+                res.header('Expires', '0');
+            }
+
             next();
         });
         
@@ -121,7 +129,7 @@ class VSOMStandaloneServer {
         const mcpServerUrl = process.env.MCP_HTTP_URL || `http://localhost:${mcpPort}`;
 
         // MCP endpoints that should go to MCP server
-        const mcpEndpoints = ['/tell', '/ask', '/augment', '/inspect', '/state', '/zpt/navigate', '/chat', '/chat/enhanced'];
+        const mcpEndpoints = ['/tell', '/ask', '/augment', '/inspect', '/state', '/zpt/navigate', '/chat', '/chat/enhanced', '/train-vsom'];
 
         this.app.use('/api', async (req, res) => {
             try {

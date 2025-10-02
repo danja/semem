@@ -21,6 +21,7 @@ import { ForgetCommand } from './commands/ForgetCommand.js';
 import { RecallCommand } from './commands/RecallCommand.js';
 import { ProjectContextCommand } from './commands/ProjectContextCommand.js';
 import { FadeMemoryCommand } from './commands/FadeMemoryCommand.js';
+import { TrainVSOMCommand } from './commands/TrainVSOMCommand.js';
 
 export class VerbCommandRegistry {
   constructor() {
@@ -61,6 +62,9 @@ export class VerbCommandRegistry {
     // Register context and memory management commands
     await this.registerCommand('project_context', new ProjectContextCommand(), sharedContext);
     await this.registerCommand('fade_memory', new FadeMemoryCommand(), sharedContext);
+
+    // Register VSOM training command
+    await this.registerCommand('train-vsom', new TrainVSOMCommand(), sharedContext);
 
     this.initialized = true;
 

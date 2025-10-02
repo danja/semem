@@ -173,6 +173,113 @@ export default class VSOMGrid {
                 this.hideTooltip();
             }
         });
+
+        // Setup zoom and pan if enabled
+        if (this.options.enableZoom || this.options.enablePan) {
+            this.setupZoomAndPan();
+        }
+    }
+
+    setupZoomAndPan() {
+        let isPanning = false;
+        let startX = 0;
+        let startY = 0;
+        let startTransformX = 0;
+        let startTransformY = 0;
+
+        // Mouse wheel zoom
+        this.svg.addEventListener('wheel', (event) => {
+            if (!this.options.enableZoom) return;
+
+            event.preventDefault();
+
+            const delta = -event.deltaY;
+            const scaleAmount = delta > 0 ? 1.1 : 0.9;
+            const newScale = Math.max(0.1, Math.min(10, this.transform.scale * scaleAmount));
+
+            // Get mouse position relative to SVG
+            const rect = this.svg.getBoundingClientRect();
+            const mouseX = event.clientX - rect.left;
+            const mouseY = event.clientY - rect.top;
+
+            // Calculate zoom point in transformed coordinates
+            const worldX = (mouseX - this.transform.x) / this.transform.scale;
+            const worldY = (mouseY - this.transform.y) / this.transform.scale;
+
+            // Update transform
+            this.transform.scale = newScale;
+            this.transform.x = mouseX - worldX * newScale;
+            this.transform.y = mouseY - worldY * newScale;
+
+            this.applyTransform();
+        });
+
+        // Pan with mouse drag
+        this.svg.addEventListener('mousedown', (event) => {
+            if (!this.options.enablePan) return;
+
+            // Only pan on middle mouse button or space+left click
+            if (event.button === 1 || (event.button === 0 && event.shiftKey)) {
+                event.preventDefault();
+                isPanning = true;
+                startX = event.clientX;
+                startY = event.clientY;
+                startTransformX = this.transform.x;
+                startTransformY = this.transform.y;
+                this.svg.style.cursor = 'grabbing';
+            }
+        });
+
+        this.svg.addEventListener('mousemove', (event) => {
+            if (!isPanning) return;
+
+            event.preventDefault();
+            const dx = event.clientX - startX;
+            const dy = event.clientY - startY;
+
+            this.transform.x = startTransformX + dx;
+            this.transform.y = startTransformY + dy;
+
+            this.applyTransform();
+        });
+
+        this.svg.addEventListener('mouseup', () => {
+            if (isPanning) {
+                isPanning = false;
+                this.svg.style.cursor = 'default';
+            }
+        });
+
+        this.svg.addEventListener('mouseleave', () => {
+            if (isPanning) {
+                isPanning = false;
+                this.svg.style.cursor = 'default';
+            }
+        });
+
+        // Double-click to reset zoom
+        this.svg.addEventListener('dblclick', (event) => {
+            if (!this.options.enableZoom) return;
+
+            event.preventDefault();
+            this.resetTransform();
+        });
+    }
+
+    applyTransform() {
+        if (this.mainGroup) {
+            this.mainGroup.setAttribute(
+                'transform',
+                `translate(${this.transform.x}, ${this.transform.y}) scale(${this.transform.scale})`
+            );
+        }
+    }
+
+    resetTransform() {
+        this.transform.x = 0;
+        this.transform.y = 0;
+        this.transform.scale = 1;
+        this.applyTransform();
     }
 
     async updateData(data) {

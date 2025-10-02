@@ -29,13 +29,25 @@ export default class VSOMApiService {
             headers['mcp-session-id'] = this.sessionId;
         }
 
+        // Set timeout for training operations (2 minutes)
+        const timeout = endpoint === '/train-vsom' ? 120000 : 30000;
+
         const config = {
             headers: { ...headers, ...options.headers },
             ...options
         };
 
         try {
-            const response = await fetch(url, config);
+            // Create abort controller for timeout
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+            const response = await fetch(url, {
+                ...config,
+                signal: controller.signal
+            });
+
+            clearTimeout(timeoutId);
 
             // Extract and store session ID from response
             const responseSessionId = response.headers.get('mcp-session-id');
@@ -56,6 +68,10 @@ export default class VSOMApiService {
 
             return await response.text();
         } catch (error) {
+            if (error.name === 'AbortError') {
+                console.error(`Request timeout [${endpoint}] after ${timeout}ms`);
+                throw new Error(`Request timed out after ${timeout/1000} seconds`);
+            }
             console.error(`API Error [${endpoint}]:`, error);
             throw error;
         }
@@ -230,6 +246,50 @@ export default class VSOMApiService {
     }
 
     /**
+     * Train VSOM on knowledge graph data
+     * @param {Object} options - Training options
+     * @param {number} options.epochs - Number of training epochs (default: 100)
+     * @param {number} options.learningRate - Initial learning rate (default: 0.1)
+     * @param {number} options.gridSize - Grid size (default: 20)
+     * @returns {Promise<Object>} Training result with grid and mappings
+     */
+    async trainVSOM(options = {}) {
+        const {
+            epochs = 100,
+            learningRate = 0.1,
+            gridSize = 20
+        } = options;
+
+        console.log(`🧠 [VSOM] Training with epochs=${epochs}, learningRate=${learningRate}, gridSize=${gridSize}`);
+
+        try {
+            const result = await this.makeRequest('/train-vsom', {
+                method: 'POST',
+                body: JSON.stringify({
+                    epochs,
+                    learningRate,
+                    gridSize
+                })
+            });
+
+            console.log(`✅ [VSOM] Training API response:`, result);
+            console.log(`✅ [VSOM] Training summary:`, {
+                success: result.success,
+                epochs: result.epochs,
+                finalError: result.finalError,
+                nodes: result.metadata?.entitiesCount || 0,
+                hasMappings: !!result.mappings,
+                mappingsCount: result.mappings?.length || 0
+            });
+
+            return result;
+        } catch (error) {
+            console.error('❌ [VSOM] Training failed:', error);
+            throw error;
+        }
+    }
+
+    /**
      * Get entities from SPARQL store
      */
     async getEntities(variables = {}) {
@@ -346,18 +406,7 @@ export default class VSOMApiService {
     /**
      * Train VSOM instance
      */
-    async trainVSOM(instanceId, options = {}) {
-        // This would trigger actual VSOM training
-        // For now, return mock training result
-        return {
-            success: true,
-            instanceId,
-            epochs: options.epochs || 100,
-            finalError: Math.random() * 0.1,
-            duration: Math.random() * 5000 + 1000,
-            status: 'completed'
-        };
-    }
+    // REMOVED: Old mock trainVSOM method - use the real one at line 240
 
     /**
      * Get VSOM grid state
