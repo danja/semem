@@ -2,11 +2,8 @@
   "source": {
     "include": [
       "./src/",
-      "./docs/handlers/README.md",
       "./docs/stores/README.md",
-      "./docs/services/README.md",
       "./docs/utils/README.md",
-      "./docs/types/README.md",
       "./README.md"
     ],
     "includePattern": "\\.js$",
@@ -27,6 +24,13 @@
       "src/api/cli/about.md",
       "src/types/README.md",
       "src/servers/mcp-server.js",
+      "src/prompts/migrate-existing.js",
+      "src/frontend/",
+      "src/mcp/",
+      "src/aux/",
+      "src/compose/",
+      "src/migration/",
+      "src/temp/",
       "*.test.js",
       "*.spec.js",
       "*.vitest.js",

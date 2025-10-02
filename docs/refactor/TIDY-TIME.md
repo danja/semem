@@ -95,7 +95,6 @@
 ./src/services/enhancement/WikipediaService.js
 ./src/services/enhancement/EnhancementCoordinator.js
 ./src/services/vsom/VSOMService.js
-./src/services/context/HybridContextManager.js
 ./src/services/embeddings/SPARQLService.js
 ./src/servers/api-server.js
 ./src/Config.js

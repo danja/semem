@@ -79,7 +79,7 @@ The **MCP Protocol Server** enables seamless AI integration through:
 
 ### III. Knowledge Processing and Enhancement
 
-**[Context Management](context-management.md)** - Advanced guide to Semem's HybridContextManager, adaptive search algorithms, context merging strategies, and intelligent response synthesis.
+**[Context Management](context-management.md)** - Advanced guide to Semem's unified search architecture, adaptive search algorithms, context merging strategies, and intelligent response synthesis.
 
 **[Knowledge Enhancement](enhancements.md)** - External knowledge integration covering Wikipedia, Wikidata, and HyDE (Hypothetical Document Embeddings) with multi-source coordination and best practices.
 

@@ -5,8 +5,7 @@ This document lists all JavaScript source files under the `mcp/` and `src/` dire
 ## Files
 
 1. **`mcp/index.js`**: 2982 lines
-2. **`src/services/context/HybridContextManager.js`**: 2635 lines
-3. **`mcp/tools/SimpleVerbsService.js`**: 2507 lines
+2. **`mcp/tools/SimpleVerbsService.js`**: 2507 lines
 4. **`src/frontend/workbench/public/js/workbench.js`**: 2145 lines
 5. **`mcp/tools/zpt-tools.js`**: 1924 lines
 6. **`src/servers/api-server.js`**: 1607 lines
