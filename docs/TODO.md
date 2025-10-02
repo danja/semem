@@ -1,5 +1,7 @@
 node src/frontend/vsom-standalone/server.js
 
+Returns structured data showing 23 nodes from 2 named graphs
+
 npx @modelcontextprotocol/inspector node mcp/index.js
 
 essential e2e

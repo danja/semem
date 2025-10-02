@@ -226,10 +226,38 @@ const llmHandler = new LLMHandler(llmProvider, modelConfig.chatModel);
 - Run integration tests with: `INTEGRATION_TESTS=true npx vitest run tests/integration/`
 - Test environment uses real SPARQL endpoint and live LLM/embedding services
 
+## Using MCP ERF Tools for Codebase Analysis
+
+The ERF (Entity Relationship Framework) MCP tools provide powerful static analysis capabilities for understanding codebase structure and health:
+
+**Available Tools:**
+- `mcp__erf__erf_analyze` - Generate comprehensive codebase statistics (files, modules, functions, imports, exports)
+- `mcp__erf__erf_health` - Get overall health score (0-100) with connectivity, structure, and quality metrics
+- `mcp__erf__erf_dead_code` - Find unreachable files and unused exports
+- `mcp__erf__erf_isolated` - Identify code subgraphs with no connection to entry points
+- `mcp__erf__erf_hubs` - Find hub files (core infrastructure that many files depend on)
+- `mcp__erf__erf_functions` - Analyze function/method distribution and complexity
+
+**When to Use ERF Tools:**
+- **Before major refactoring** - Use `erf_health` to get baseline metrics, `erf_hubs` to identify critical files needing extra testing
+- **During code cleanup** - Use `erf_dead_code` and `erf_isolated` to find candidates for removal
+- **After architecture changes** - Use `erf_analyze` to verify import/export structure, check connectivity
+- **Identifying technical debt** - Use `erf_health` to track missing imports, isolated files over time
+- **Understanding unfamiliar codebases** - Use `erf_hubs` to find the most important files to study first
+
+**Example Results from Semem:**
+- Health Score: 63/100 (Good) - 567/589 files connected, 22 isolated, 53 missing imports
+- Top Hubs: Config.js (125 dependents), SPARQLHelper.js (77 dependents), Utils.js (50 dependents)
+- Dead Code: 0 dead files, 302 unused exports, 100% reachability
+- Functions: 5833 functions across 589 files (avg 9.9 per file)
+
+These tools are **faster and more accurate than text search** for architectural questions, and complement Gemini CLI which is better for semantic code understanding.
+
 # Using Gemini CLI for Large Codebase Analysis
 
   When analyzing large codebases or multiple files that might exceed context limits, use the Gemini CLI with its massive
   context window. Use `gemini -p` to leverage Google Gemini's large context capacity.
+
 
   ## File and Directory Inclusion Syntax
 
