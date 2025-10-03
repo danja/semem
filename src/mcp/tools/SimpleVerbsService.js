@@ -267,6 +267,13 @@ export class SimpleVerbsService {
   get stateManager() {
     return this.registry.contextService.getContext()?.stateManager;
   }
+
+  /**
+   * Get ZPT service (compatibility)
+   */
+  get zptService() {
+    return this.registry.contextService.getContext()?.zptService;
+  }
 }
 
 export default SimpleVerbsService;
