@@ -22,22 +22,22 @@ export const SEARCH_CONFIG = {
         // Results below this threshold are filtered out
         // Used in: src/services/search/AdaptiveSearchEngine.js (constructor)
         MIN_ACCEPTABLE_QUALITY: 0.3,
-        
+
         // Absolute minimum quality threshold floor (0.0 - 1.0)
         // Even if MIN_ACCEPTABLE_QUALITY is lower, this is the absolute minimum
         // Used in: src/services/search/AdaptiveSearchEngine.js (_optimizeResults method, line ~543)
         QUALITY_THRESHOLD_FLOOR: 0.05,
-        
+
         // Quality improvement threshold for stopping multi-pass search (0.0 - 1.0)
         // If quality degrades by more than this amount, stop searching
         // Used in: src/services/search/AdaptiveSearchEngine.js (constructor)
         QUALITY_IMPROVEMENT_THRESHOLD: 0.1,
-        
+
         // High confidence threshold for early stopping (0.0 - 1.0)
         // If search confidence exceeds this, stop with sufficient results
         // Used in: src/services/search/AdaptiveSearchEngine.js (_evaluateStoppingCriteria method, line ~507)
         HIGH_CONFIDENCE_THRESHOLD: 0.8,
-        
+
         // Quality bands for adaptive behavior
         // Used in: src/services/search/AdaptiveSearchEngine.js (_updateMetrics method, lines ~678-680)
         HIGH_QUALITY_THRESHOLD: 0.7,      // Results above this are considered high quality
@@ -53,7 +53,7 @@ export const SEARCH_CONFIG = {
         // Used in: src/services/search/AdaptiveSearchEngine.js (_optimizeResults method, lines ~537-538)
         QUALITY_WEIGHT: 0.6,               // Weight of quality score in final ranking
         SIMILARITY_WEIGHT: 0.4,            // Weight of similarity score in final ranking
-        
+
         // Quality score calculation weights
         // All used in: src/services/search/AdaptiveSearchEngine.js (_calculateResultQuality method, lines ~571-599)
         BASE_QUALITY_SCORE: 0.5,           // Starting quality score before adjustments
@@ -62,7 +62,7 @@ export const SEARCH_CONFIG = {
         PAN_FILTER_MAX_CONTRIBUTION: 0.25, // Maximum contribution from pan filters
         RECENCY_CONTRIBUTION: 0.15,        // How much recency affects quality score
         CONCEPT_CONTRIBUTION: 0.1,         // How much concept matching affects quality score
-        
+
         // Fallback scores
         // Used in: src/services/search/AdaptiveSearchEngine.js (_calculateAverageQuality method, line ~615)
         DEFAULT_SIMILARITY_FALLBACK: 0.3,  // Default similarity when calculation fails
@@ -116,15 +116,15 @@ export const SPARQL_CONFIG = {
     HEALTH: {
         // Used in: src/stores/SPARQLStore.js (assessGraphHealth method, lines ~1235, 1238)
         MIN_EMBEDDING_COVERAGE: 0.5,        // Minimum fraction of elements with embeddings
-        
+
         // Used in: src/stores/SPARQLStore.js (assessGraphHealth method, lines ~1235, 1241)
         MIN_CONNECTIVITY: 0.1,              // Minimum graph connectivity score
-        
+
         // TODO: Add usage references when these constants are implemented
         DEFAULT_ENTITY_CENTRALITY: 0.0,     // Default centrality for new entities
         DEFAULT_UNIT_IMPORTANCE: 0.5,       // Default importance for new units
         DEFAULT_COMMUNITY_COHESION: 0.5,    // Default cohesion for new communities
-        
+
         // Used in: src/stores/SPARQLStore.js (search method, line ~1412)
         FAILED_SIMILARITY_SCORE: 0.0        // Similarity score when calculation completely fails
     }
@@ -295,7 +295,7 @@ export const VSOM_CONFIG = {
         // Number of training epochs/iterations
         // Used in: src/mcp/tools/verbs/commands/TrainVSOMCommand.js (execute method)
         // Used in: src/frontend/vsom-standalone/public/js/vsom-standalone.js (handleTrainVSOM method)
-        DEFAULT_EPOCHS: 100,
+        DEFAULT_EPOCHS: 10,
 
         // Initial learning rate for VSOM training
         // Used in: src/mcp/tools/verbs/commands/TrainVSOMCommand.js (execute method)
@@ -305,7 +305,7 @@ export const VSOM_CONFIG = {
         // VSOM grid size (creates gridSize x gridSize map)
         // Used in: src/mcp/tools/verbs/commands/TrainVSOMCommand.js (execute method)
         // Used in: src/frontend/vsom-standalone/public/js/vsom-standalone.js (handleTrainVSOM method)
-        DEFAULT_GRID_SIZE: 20,
+        DEFAULT_GRID_SIZE: 30,
 
         // Final learning rate (as fraction of initial)
         // Used in: src/mcp/tools/verbs/commands/TrainVSOMCommand.js (execute method)
