@@ -1,6 +1,7 @@
 import SPARQLStore from '../../stores/SPARQLStore.js';
 import { v4 as uuidv4 } from 'uuid';
 import logger from 'loglevel';
+import { generateLabel } from '../../utils/KeywordExtractor.js';
 
 /**
  * Document ingestion service with PROV-O integration
@@ -96,7 +97,18 @@ export default class Ingester {
     }
 
     // 4. Insert chunks (text elements)
-    const chunkBatches = this.batchChunks(chunkingResult.chunks, options.batchSize);
+    // Generate keyword-based labels for chunks that don't have titles
+    const chunksWithLabels = chunkingResult.chunks.map(chunk => {
+      if (!chunk.title || chunk.title === 'unlabeled') {
+        return {
+          ...chunk,
+          title: generateLabel(chunk.content, 5)
+        };
+      }
+      return chunk;
+    });
+
+    const chunkBatches = this.batchChunks(chunksWithLabels, options.batchSize);
     for (const batch of chunkBatches) {
       updates.push(this.createChunksBatchInsertQuery(batch, activity, options.graphName));
     }

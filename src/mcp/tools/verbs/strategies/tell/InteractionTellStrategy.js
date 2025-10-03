@@ -40,11 +40,14 @@ export class InteractionTellStrategy extends BaseStrategy {
       const prompt = content.length > 200 ? `${content.substring(0, 200)}...` : content;
       const response = content;
 
+      // Use chunkLabel from metadata if provided, otherwise use prompt
+      const label = metadata.chunkLabel || prompt;
+
       // Store the interaction
       const result = await safeOps.storeInteraction(
         prompt,
         response,
-        { ...metadata, type: 'tell_interaction', concepts }
+        { ...metadata, type: 'tell_interaction', concepts, label }
       );
 
       this.logOperation('info', 'Interaction processed successfully', {

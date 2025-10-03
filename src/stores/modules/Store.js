@@ -117,7 +117,8 @@ export class Store {
                         timestamp: parseInt(binding.timestamp.value) || Date.now(),
                         accessCount: parseInt(binding.accessCount.value) || 1,
                         concepts,
-                        decayFactor: parseFloat(binding.decayFactor.value) || 1.0
+                        decayFactor: parseFloat(binding.decayFactor.value) || 1.0,
+                        source: binding.sourceType?.value || 'interaction'
                     };
 
                     if (binding.memoryType.value === 'short-term') {
@@ -342,10 +343,17 @@ export class Store {
         // Use graph from metadata if provided, otherwise use default
         const targetGraph = (data.metadata && data.metadata.graph) ? data.metadata.graph : this.graphName;
 
+        // Get label from metadata, or fallback to 'unlabeled'
+        const label = this._escapeSparqlString((data.metadata && data.metadata.label) || 'unlabeled');
+
+        // Get source type from metadata (bookmark, document, chat, etc.)
+        const sourceType = this._escapeSparqlString((data.metadata && data.metadata.source) || 'interaction');
+
         const insertQuery = `
             PREFIX semem: <http://purl.org/stuff/semem/>
             PREFIX ragno: <http://purl.org/stuff/ragno/>
             PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
             PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
             PREFIX dcterms: <http://purl.org/dc/terms/>
 
@@ -355,6 +363,8 @@ export class Store {
                         semem:id "${this._escapeSparqlString(data.id)}" ;
                         semem:prompt "${this._escapeSparqlString(data.prompt || data.content || '')}" ;
                         semem:output "${this._escapeSparqlString(data.response || data.output || data.content || '')}" ;
+                        rdfs:label "${label}" ;
+                        semem:sourceType "${sourceType}" ;
                         semem:embedding """${JSON.stringify(data.embedding || [])}""" ;
                         semem:timestamp "${Date.now()}"^^xsd:integer ;
                         semem:accessCount "0"^^xsd:integer ;

@@ -17,6 +17,7 @@ import SPARQLDocumentIngester from '../src/services/ingestion/SPARQLDocumentInge
 import { getSimpleVerbsService } from '../src/mcp/tools/simple-verbs.js';
 import { initializeServices } from '../src/mcp/lib/initialization.js';
 import Chunker from '../src/services/document/Chunker.js';
+import { generateLabel } from '../src/utils/KeywordExtractor.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -364,6 +365,10 @@ QUERY:
 
                     const batchPromises = batch.map((chunk, batchIndex) => {
                         const i = batchStart + batchIndex;
+
+                        // Generate keyword-based label for this chunk
+                        const chunkLabel = generateLabel(chunk.content, 5);
+
                         const chunkParams = {
                             content: chunk.content,
                             metadata: {
@@ -375,7 +380,8 @@ QUERY:
                                 chunkIndex: i,
                                 chunkTotal: chunkingResult.chunks.length,
                                 chunkUri: chunk.uri,
-                                partOf: chunkingResult.sourceUri
+                                partOf: chunkingResult.sourceUri,
+                                chunkLabel: chunkLabel  // Add keyword-based label
                             }
                         };
 

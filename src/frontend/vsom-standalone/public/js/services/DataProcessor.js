@@ -10,14 +10,18 @@ export default class DataProcessor {
             ask: { color: '#17a2b8', priority: 2, icon: '❓', description: 'Query knowledge' },
             augment: { color: '#ffc107', priority: 3, icon: '⚡', description: 'Process & enhance' },
             chat: { color: '#6c757d', priority: 4, icon: '💬', description: 'Conversation' },
-            upload: { color: '#fd7e14', priority: 1, icon: '📄', description: 'Document upload' },
+            bookmark: { color: '#fd7e14', priority: 1, icon: '🔖', description: 'Bookmark' },
+            'bookmark-chunk': { color: '#ff9800', priority: 1, icon: '📑', description: 'Bookmark chunk' },
+            document: { color: '#2196f3', priority: 1, icon: '📄', description: 'Document' },
+            chunk: { color: '#9c27b0', priority: 3, icon: '🧩', description: 'Text chunk' },
+            upload: { color: '#fd7e14', priority: 1, icon: '📄', description: 'Upload' },
             inspect: { color: '#e83e8c', priority: 5, icon: '🔍', description: 'System inspection' },
-            chunk: { color: '#9c27b0', priority: 3, icon: '🧩', description: 'Text chunking' },
             embed: { color: '#3f51b5', priority: 3, icon: '🧠', description: 'Embedding generation' },
             search: { color: '#00bcd4', priority: 2, icon: '🔎', description: 'Semantic search' },
             ragno: { color: '#4caf50', priority: 4, icon: '🕸️', description: 'Knowledge graph' },
             vsom: { color: '#ff5722', priority: 4, icon: '🗺️', description: 'Map visualization' },
             zpt: { color: '#795548', priority: 4, icon: '🧭', description: 'Navigation state' },
+            interaction: { color: '#6c757d', priority: 4, icon: '💭', description: 'Interaction' },
 
             // Additional enhanced interaction types expected by tests
             decompose: { color: '#673ab7', priority: 3, icon: '🔬', description: 'Text decomposition' },
@@ -319,6 +323,21 @@ export default class DataProcessor {
      * Detect interaction type from interaction data
      */
     detectInteractionType(interaction) {
+        // Check source property from RDF (semem:sourceType)
+        const source = interaction.source;
+        if (source) {
+            // Return specific source types directly for more informative labels
+            if (source.includes('bookmark-chunk')) return 'bookmark-chunk';
+            if (source.includes('bookmark')) return 'bookmark';
+            if (source.includes('document')) return 'document';
+            if (source.includes('chunk')) return 'chunk';
+            if (source.includes('tell')) return 'tell';
+            if (source.includes('ask')) return 'ask';
+            if (source.includes('augment')) return 'augment';
+            if (source.includes('inspect')) return 'inspect';
+            if (source.includes('chat')) return 'chat';
+        }
+
         const type = interaction.type?.toLowerCase();
 
         if (type) {
