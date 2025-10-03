@@ -3,6 +3,8 @@ pkill -f "node src/frontend/vsom-standalone/server.js"
 
 npx @modelcontextprotocol/inspector node mcp/index.js
 
+hardcoded query in src/stores/modules/Search.js
+
 essential e2e
 * export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/tell-ask-e2e.integration.test.js --reporter=verbose 
 * export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/tell-ask-stdio-e2e.integration.test.js --reporter=verbose
@@ -29,7 +31,26 @@ PERFECT! Embeddings ARE stored! They use semem:embedding (direct property), not 
  Since we already HAVE the embeddings from SPARQL, we don't need to regenerate them. The cleanest solution is to use the VSOM class directly with pre-embedded
   data, not through VSOMService. Let me update TrainVSOMCommand to use VSOM directly:
 
-search for the value 1536 under src/**/*.js - it's given as a default in many places. The value should always come from preferences.js or config.js via Config.js
+✅ FIXED: search for the value 1536 under src/**/*.js - it's given as a default in many places. The value should always come from preferences.js or config.js via Config.js
+  - TrainVSOMCommand now reads embedding dimension from config (768)
+  - Search.js now queries across all graphs using GRAPH ?g pattern
+  - All hardcoded values removed from BookmarkIngest.js - now uses config.json performance.ingestion.chunking settings
+
+✅ IMPLEMENTED: BookmarkIngest.js now chunks large documents before calling Tell
+  - Uses src/services/document/Chunker.js for semantic chunking
+  - Maintains RDF links via metadata: bookmarkUri, bookmarkTitle, partOf, chunkUri
+  - Processes chunks in parallel batches (configurable via config.json performance.ingestion.chunking.batchSize)
+  - Configuration in config.json: threshold (5000), maxChunkSize (2000), minChunkSize (100), overlapSize (100), batchSize (5)
+  - Each chunk creates a semem:Interaction with embeddings, making bookmarks searchable in workbench
+  - Rate limiting handled by LLM provider config (Groq: 6000 tokens/min)
+
+✅ IMPLEMENTED: VSOM improvements
+  - Training progress modal with spinner and status messages
+  - Zoom: mouse wheel to zoom in/out at cursor position (0.1x-10x range)
+  - Pan: Shift+drag or middle mouse button to pan the view
+  - Double-click to reset zoom/pan
+  - Visual hint showing controls in bottom-right corner
+  - Data panel refreshes after training with updated stats
 
 The word `migration`/`Migration` appears in several places in the code. This suggests the code is redundant or should be carefully phased out and replaced.
 

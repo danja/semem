@@ -40,44 +40,45 @@ export class Search {
             PREFIX semem: <http://purl.org/stuff/semem/>
 
             SELECT ?uri ?content ?embedding ?embeddingVector ?label ?type ?timestamp
-            FROM <${this.graphName}>
             WHERE {
-                {
-                    # Search in ragno:Element objects (old format)
-                    ?uri a ragno:Element ;
-                        skos:prefLabel ?label ;
-                        ragno:content ?content ;
-                        ragno:embedding ?embedding .
-                    OPTIONAL { ?uri ragno:timestamp ?timestamp }
-                    OPTIONAL { ?uri ragno:type ?type }
-                } UNION {
-                    # Search in ragno:Unit chunks (new format)
-                    ?uri a ragno:Unit ;
-                        ragno:content ?content .
-                    ?uri ragno:hasEmbedding ?embeddingUri .
-                    ?embeddingUri ragno:vectorContent ?embeddingVector .
-                    OPTIONAL { ?uri dcterms:created ?timestamp }
-                    BIND("Chunk" AS ?type)
-                    BIND(?content AS ?label)
-                } UNION {
-                    # Search in ragno:Concept embeddings (new format)
-                    ?uri a ragno:Concept ;
-                        skos:prefLabel ?label .
-                    ?uri ragno:hasEmbedding ?embeddingUri .
-                    ?embeddingUri ragno:vectorContent ?embeddingVector .
-                    OPTIONAL { ?uri dcterms:created ?timestamp }
-                    BIND("Concept" AS ?type)
-                    BIND(?label AS ?content)
-                } UNION {
-                    # Search in semem:Interaction objects (memory interactions)
-                    ?uri a semem:Interaction ;
-                        semem:prompt ?label ;
-                        semem:output ?content ;
-                        semem:embedding ?embedding .
-                    OPTIONAL { ?uri semem:timestamp ?timestamp }
-                    BIND("Interaction" AS ?type)
+                GRAPH ?g {
+                    {
+                        # Search in ragno:Element objects (old format)
+                        ?uri a ragno:Element ;
+                            skos:prefLabel ?label ;
+                            ragno:content ?content ;
+                            ragno:embedding ?embedding .
+                        OPTIONAL { ?uri ragno:timestamp ?timestamp }
+                        OPTIONAL { ?uri ragno:type ?type }
+                    } UNION {
+                        # Search in ragno:Unit chunks (new format)
+                        ?uri a ragno:Unit ;
+                            ragno:content ?content .
+                        ?uri ragno:hasEmbedding ?embeddingUri .
+                        ?embeddingUri ragno:vectorContent ?embeddingVector .
+                        OPTIONAL { ?uri dcterms:created ?timestamp }
+                        BIND("Chunk" AS ?type)
+                        BIND(?content AS ?label)
+                    } UNION {
+                        # Search in ragno:Concept embeddings (new format)
+                        ?uri a ragno:Concept ;
+                            skos:prefLabel ?label .
+                        ?uri ragno:hasEmbedding ?embeddingUri .
+                        ?embeddingUri ragno:vectorContent ?embeddingVector .
+                        OPTIONAL { ?uri dcterms:created ?timestamp }
+                        BIND("Concept" AS ?type)
+                        BIND(?label AS ?content)
+                    } UNION {
+                        # Search in semem:Interaction objects (memory interactions)
+                        ?uri a semem:Interaction ;
+                            semem:prompt ?label ;
+                            semem:output ?content ;
+                            semem:embedding ?embedding .
+                        OPTIONAL { ?uri semem:timestamp ?timestamp }
+                        BIND("Interaction" AS ?type)
+                    }
+                    ${filterClauses}
                 }
-                ${filterClauses}
             }
             LIMIT ${maxResultsToProcess}
         `

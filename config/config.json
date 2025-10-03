@@ -159,7 +159,15 @@
       "earlyTerminationThreshold": 0.8,
       "maxPagesPerQuery": 50,
       "useRelevanceFiltering": true,
-      "skipLowConfidenceEntities": true
+      "skipLowConfidenceEntities": true,
+      "chunking": {
+        "enabled": true,
+        "threshold": 5000,
+        "maxChunkSize": 2000,
+        "minChunkSize": 100,
+        "overlapSize": 100,
+        "batchSize": 5
+      }
     },
     "relationships": {
       "maxQuestionsToProcess": 5,

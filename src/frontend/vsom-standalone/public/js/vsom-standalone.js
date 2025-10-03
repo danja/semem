@@ -793,6 +793,21 @@ class VSOMStandaloneApp {
 
                     console.log('✅ [VSOM] Grid updated successfully');
 
+                    // Update data panel with new stats
+                    if (this.components.dataPanel) {
+                        await this.components.dataPanel.updateData({
+                            interactions: this.state.interactions,
+                            sessionStats: this.getSessionStats(),
+                            vsomStats: {
+                                ...this.getVSOMStats(),
+                                trainedNodes: trainedNodes.length,
+                                trainingError: trainingResult.finalError,
+                                embeddingDimension: trainingResult.metadata.embeddingDimension
+                            }
+                        });
+                        console.log('✅ [VSOM] Data panel updated');
+                    }
+
                     this.showToast(
                         `Training complete! ${trainingResult.metadata.entitiesCount} nodes organized. ` +
                         `Final error: ${trainingResult.finalError.toFixed(4)}`,

@@ -16,6 +16,7 @@ import Config from '../src/Config.js';
 import SPARQLDocumentIngester from '../src/services/ingestion/SPARQLDocumentIngester.js';
 import { getSimpleVerbsService } from '../src/mcp/tools/simple-verbs.js';
 import { initializeServices } from '../src/mcp/lib/initialization.js';
+import Chunker from '../src/services/document/Chunker.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -297,21 +298,111 @@ QUERY:
             // Execute full ingestion
             console.log('\n🚀 Starting ingestion...');
 
-            // Create tell function for MCP integration
+            // Get chunking configuration from config
+            const chunkingConfig = this.config.get('performance.ingestion.chunking') || {
+                enabled: true,
+                threshold: 5000,
+                maxChunkSize: 2000,
+                minChunkSize: 100,
+                overlapSize: 100,
+                batchSize: 5
+            };
+
+            // Initialize chunker for large documents
+            const chunker = new Chunker({
+                maxChunkSize: chunkingConfig.maxChunkSize,
+                minChunkSize: chunkingConfig.minChunkSize,
+                overlapSize: chunkingConfig.overlapSize,
+                strategy: 'semantic'
+            });
+
+            // Create tell function for MCP integration with chunking support
             const tellFunction = async (tellParams) => {
                 if (!this.simpleVerbsService) {
                     throw new Error('Simple verbs service not initialized');
                 }
-                // Add graph parameter to metadata
-                const enhancedParams = {
-                    ...tellParams,
+
+                const content = tellParams.content || '';
+                const CHUNK_THRESHOLD = chunkingConfig.threshold;
+
+                // If content is small enough, process directly
+                if (content.length <= CHUNK_THRESHOLD) {
+                    const enhancedParams = {
+                        ...tellParams,
+                        metadata: {
+                            ...tellParams.metadata,
+                            graph: graph,
+                            source: 'bookmark',
+                            bookmarkUri: tellParams.metadata?.uri,
+                            bookmarkTitle: tellParams.metadata?.title
+                        }
+                    };
+                    return await this.simpleVerbsService.tell(enhancedParams);
+                }
+
+                // Chunk large content
+                console.log(`  📄 Chunking large document: ${content.length} chars`);
+
+                const chunkingResult = await chunker.chunk(content, {
+                    title: tellParams.metadata?.title || 'Untitled',
+                    uri: tellParams.metadata?.uri,
+                    format: 'text',
+                    ...tellParams.metadata
+                });
+
+                console.log(`  ✂️  Created ${chunkingResult.chunks.length} chunks`);
+
+                // Process chunks in parallel batches with rate limiting from config
+                const BATCH_SIZE = chunkingConfig.batchSize;
+                const chunkResults = [];
+
+                for (let batchStart = 0; batchStart < chunkingResult.chunks.length; batchStart += BATCH_SIZE) {
+                    const batchEnd = Math.min(batchStart + BATCH_SIZE, chunkingResult.chunks.length);
+                    const batch = chunkingResult.chunks.slice(batchStart, batchEnd);
+
+                    console.log(`    Processing chunks ${batchStart + 1}-${batchEnd}/${chunkingResult.chunks.length}...`);
+
+                    const batchPromises = batch.map((chunk, batchIndex) => {
+                        const i = batchStart + batchIndex;
+                        const chunkParams = {
+                            content: chunk.content,
+                            metadata: {
+                                ...tellParams.metadata,
+                                graph: graph,
+                                source: 'bookmark-chunk',
+                                bookmarkUri: tellParams.metadata?.uri,
+                                bookmarkTitle: tellParams.metadata?.title,
+                                chunkIndex: i,
+                                chunkTotal: chunkingResult.chunks.length,
+                                chunkUri: chunk.uri,
+                                partOf: chunkingResult.sourceUri
+                            }
+                        };
+
+                        return this.simpleVerbsService.tell(chunkParams)
+                            .then(result => ({ success: true, result, index: i }))
+                            .catch(error => ({ success: false, error: error.message, index: i }));
+                    });
+
+                    const batchResults = await Promise.all(batchPromises);
+                    chunkResults.push(...batchResults);
+
+                    const successCount = batchResults.filter(r => r.success).length;
+                    console.log(`    ✓ Batch complete: ${successCount}/${batchResults.length} successful`);
+                }
+
+                // Return aggregated result
+                return {
+                    success: chunkResults.every(r => r.success),
+                    chunks: chunkResults,
+                    chunkCount: chunkingResult.chunks.length,
+                    sourceUri: chunkingResult.sourceUri,
                     metadata: {
                         ...tellParams.metadata,
-                        graph: graph,
-                        source: 'bookmark'
+                        chunked: true,
+                        chunkingMetadata: chunkingResult.metadata
                     }
                 };
-                return await this.simpleVerbsService.tell(enhancedParams);
             };
 
             const result = await ingester.ingestFromTemplate('bookmarks', {
