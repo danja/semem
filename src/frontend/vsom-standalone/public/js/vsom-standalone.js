@@ -740,16 +740,19 @@ class VSOMStandaloneApp {
             console.log('🧠 [VSOM] Starting training with current knowledge graph');
 
             // TODO move to preferences.js
-            const epochs = 10
-            const learningRate = 0.1
-            const gridSize = 50
-            console.log('🧠 [VSOM] Training parameters:', { epochs: epochs, learningRate: learningRate, gridSize: gridSize });
+            // Get VSOM training parameters from preferences (or use backend defaults)
+            // Backend defaults: epochs=100, learningRate=0.1, gridSize=20
+            // These match config/preferences.js VSOM_CONFIG.TRAINING defaults
+            const trainingParams = {
+                // Don't specify - let backend use config/preferences.js defaults
+                // epochs: 100,
+                // learningRate: 0.1,
+                // gridSize: 20
+            };
+
+            console.log('🧠 [VSOM] Starting training with backend defaults from config/preferences.js');
             // Train VSOM - this will use embeddings from the knowledge graph
-            const trainingResult = await this.services.api.trainVSOM({
-                epochs: epochs,
-                learningRate: learningRate,
-                gridSize: gridSize
-            });
+            const trainingResult = await this.services.api.trainVSOM(trainingParams);
 
             console.log('✅ [VSOM] Training completed:', trainingResult);
             console.log('🔍 [VSOM] Result details:', {

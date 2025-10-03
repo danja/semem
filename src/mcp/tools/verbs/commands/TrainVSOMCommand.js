@@ -8,6 +8,7 @@
 import { BaseVerbCommand } from './BaseVerbCommand.js';
 import { TrainVSOMSchema } from '../../VerbSchemas.js';
 import VSOM from '../../../../ragno/algorithms/VSOM.js';
+import { VSOM_CONFIG } from '../../../../../config/preferences.js';
 
 export class TrainVSOMCommand extends BaseVerbCommand {
   constructor() {
@@ -34,17 +35,17 @@ export class TrainVSOMCommand extends BaseVerbCommand {
   /**
    * Execute train-vsom command
    * @param {Object} params - Command parameters
-   * @param {number} params.epochs - Number of training epochs (default: 100)
-   * @param {number} params.learningRate - Initial learning rate (default: 0.1)
-   * @param {number} params.gridSize - Grid size (default: 20)
+   * @param {number} params.epochs - Number of training epochs (default from config/preferences.js)
+   * @param {number} params.learningRate - Initial learning rate (default from config/preferences.js)
+   * @param {number} params.gridSize - Grid size (default from config/preferences.js)
    * @returns {Promise<Object>} Command result with trained grid
    */
   async execute(params) {
     const validatedParams = this.validateParameters(params);
     const {
-      epochs = 100,
-      learningRate = 0.1,
-      gridSize = 20
+      epochs = VSOM_CONFIG.TRAINING.DEFAULT_EPOCHS,
+      learningRate = VSOM_CONFIG.TRAINING.DEFAULT_LEARNING_RATE,
+      gridSize = VSOM_CONFIG.TRAINING.DEFAULT_GRID_SIZE
     } = validatedParams;
 
     try {
@@ -82,7 +83,7 @@ export class TrainVSOMCommand extends BaseVerbCommand {
         embeddingDimension: embeddingDimension,
         maxIterations: epochs,
         initialLearningRate: learningRate,
-        finalLearningRate: learningRate * 0.1
+        finalLearningRate: learningRate * VSOM_CONFIG.TRAINING.FINAL_LEARNING_RATE_FACTOR
       });
 
       // Load embeddings directly into VSOM

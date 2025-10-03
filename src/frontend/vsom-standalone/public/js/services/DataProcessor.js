@@ -440,62 +440,30 @@ export default class DataProcessor {
     }
 
     /**
-     * TODO isn't it a real VSOM already? this needs replacing/removing
-     * 
-     * Position nodes in the grid using VSOM-like algorithm
+     * Position nodes for initial display (pre-training layout)
+     *
+     * NOTE: This is NOT a trained VSOM - positions are random until proper training.
+     * Real VSOM positions are computed by backend during training based on embedding similarity.
+     * Click "Train Map" button to compute actual VSOM positions.
      */
     positionNodes(nodes, gridSize, zptSettings) {
         if (nodes.length === 0) return nodes;
 
-        // Simple positioning algorithm
-        // In a real VSOM, this would involve training and similarity calculations
-
-        const positioned = nodes.map((node, index) => {
-            // For now, position in a grid pattern with some semantic clustering
-            let x, y;
-
-            if (zptSettings.tilt === 'temporal') {
-                // Arrange by time
-                const timeIndex = nodes
-                    .map((n, i) => ({ node: n, index: i }))
-                    .sort((a, b) => a.node.timestamp - b.node.timestamp)
-                    .findIndex(item => item.index === index);
-
-                x = timeIndex % gridSize;
-                y = Math.floor(timeIndex / gridSize);
-            } else if (zptSettings.tilt === 'graph') {
-                // Arrange by type and relationships
-                const typeGroups = this.groupNodesByType(nodes);
-                const typeIndex = Object.keys(typeGroups).indexOf(node.type);
-                const positionInType = typeGroups[node.type].indexOf(node);
-
-                x = (typeIndex * 3 + positionInType % 3) % gridSize;
-                y = Math.floor((typeIndex * 3 + positionInType) / gridSize);
-            } else {
-                // Default: simple grid layout to ensure nodes are separated
-                // This ensures we actually see multiple nodes
-                const cols = Math.ceil(Math.sqrt(nodes.length));
-                x = index % cols;
-                y = Math.floor(index / cols);
-
-                // For few nodes, center them better by adding offset to avoid top-left clustering
-                if (nodes.length <= 4) {
-                    const centerOffset = Math.floor(gridSize / 4);
-                    x += centerOffset;
-                    y += centerOffset;
-                }
-            }
-
-            // Ensure positions are within grid bounds
-            x = Math.max(0, Math.min(x, gridSize - 1));
-            y = Math.max(0, Math.min(y, gridSize - 1));
+        // Random positioning for initial display
+        // Real VSOM positions come from backend training
+        const positioned = nodes.map((node) => {
+            // Random positions within grid bounds
+            // No attempt at semantic clustering - that's what VSOM training does
+            const x = Math.random() * gridSize;
+            const y = Math.random() * gridSize;
 
             return {
                 ...node,
-                x: Math.round(x * 10) / 10, // Keep one decimal place for fine positioning
+                x: Math.round(x * 10) / 10,
                 y: Math.round(y * 10) / 10,
-                activation: Math.random() * 0.5 + 0.5, // Mock activation
-                weight: Math.random() * 0.3 + 0.7 // Mock weight
+                trained: false, // Mark as untrained - real VSOM positions come from backend training
+                activation: 0.5, // Neutral placeholder
+                weight: 0.5 // Neutral placeholder
             };
         });
 

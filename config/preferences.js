@@ -284,11 +284,42 @@ export const EMBEDDING_CONFIG = {
 };
 
 /**
+ * VSOM (Visual Self-Organizing Map) Configuration
+ * Used by VSOM training and visualization components
+ */
+export const VSOM_CONFIG = {
+    /**
+     * Training Parameters
+     */
+    TRAINING: {
+        // Number of training epochs/iterations
+        // Used in: src/mcp/tools/verbs/commands/TrainVSOMCommand.js (execute method)
+        // Used in: src/frontend/vsom-standalone/public/js/vsom-standalone.js (handleTrainVSOM method)
+        DEFAULT_EPOCHS: 100,
+
+        // Initial learning rate for VSOM training
+        // Used in: src/mcp/tools/verbs/commands/TrainVSOMCommand.js (execute method)
+        // Used in: src/frontend/vsom-standalone/public/js/vsom-standalone.js (handleTrainVSOM method)
+        DEFAULT_LEARNING_RATE: 0.1,
+
+        // VSOM grid size (creates gridSize x gridSize map)
+        // Used in: src/mcp/tools/verbs/commands/TrainVSOMCommand.js (execute method)
+        // Used in: src/frontend/vsom-standalone/public/js/vsom-standalone.js (handleTrainVSOM method)
+        DEFAULT_GRID_SIZE: 20,
+
+        // Final learning rate (as fraction of initial)
+        // Used in: src/mcp/tools/verbs/commands/TrainVSOMCommand.js (execute method)
+        FINAL_LEARNING_RATE_FACTOR: 0.1
+    }
+};
+
+/**
  * Export all configurations as a single object for convenience
  */
 export default {
     SEARCH_CONFIG,
     SPARQL_CONFIG,
     MEMORY_CONFIG,
-    EMBEDDING_CONFIG
+    EMBEDDING_CONFIG,
+    VSOM_CONFIG
 };
