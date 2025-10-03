@@ -200,7 +200,14 @@ export default class VSOMApiService {
                 details: true
             })
         });
-        return data.knowledgeGraph || { nodes: [], edges: [], metadata: {} };
+
+        const kg = data.knowledgeGraph || { nodes: [], edges: [], metadata: {} };
+
+        // Add top-level counts for convenience (they're in metadata)
+        kg.nodeCount = kg.metadata?.nodeCount || kg.nodes?.length || 0;
+        kg.edgeCount = kg.metadata?.edgeCount || kg.edges?.length || 0;
+
+        return kg;
     }
 
     /**

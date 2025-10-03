@@ -738,13 +738,17 @@ class VSOMStandaloneApp {
             this.showLoading(true, 'Training self-organizing map...');
 
             console.log('🧠 [VSOM] Starting training with current knowledge graph');
-            console.log('🧠 [VSOM] Training parameters:', { epochs: 100, learningRate: 0.1, gridSize: 20 });
 
+            // TODO move to preferences.js
+            const epochs = 10
+            const learningRate = 0.1
+            const gridSize = 50
+            console.log('🧠 [VSOM] Training parameters:', { epochs: epochs, learningRate: learningRate, gridSize: gridSize });
             // Train VSOM - this will use embeddings from the knowledge graph
             const trainingResult = await this.services.api.trainVSOM({
-                epochs: 100,
-                learningRate: 0.1,
-                gridSize: 20
+                epochs: epochs,
+                learningRate: learningRate,
+                gridSize: gridSize
             });
 
             console.log('✅ [VSOM] Training completed:', trainingResult);

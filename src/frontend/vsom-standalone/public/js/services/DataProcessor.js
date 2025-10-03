@@ -440,6 +440,8 @@ export default class DataProcessor {
     }
 
     /**
+     * TODO isn't it a real VSOM already? this needs replacing/removing
+     * 
      * Position nodes in the grid using VSOM-like algorithm
      */
     positionNodes(nodes, gridSize, zptSettings) {
