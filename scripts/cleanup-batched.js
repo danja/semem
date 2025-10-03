@@ -6,10 +6,13 @@
  */
 
 import fetch from 'node-fetch';
+import Config from '../src/Config.js';
 
 const SPARQL_ENDPOINT = 'http://localhost:3030/semem';
-const GRAPH_URI = 'http://hyperdata.it/content';
-const auth = Buffer.from('admin:admin123').toString('base64');
+
+// Graph URI will be loaded from config
+let GRAPH_URI;
+let auth;
 
 async function executeSPARQLUpdate(query, description, timeout = 30000) {
     console.log(`🔄 ${description}...`);
@@ -114,6 +117,22 @@ async function countRemainingPhantoms() {
 
 async function main() {
     console.log('🚀 Starting Batched Cleanup...\n');
+
+    // Initialize config to get graph URI
+    const config = new Config();
+    await config.init();
+    GRAPH_URI = config.get('graphName') || config.get('storage.options.graphName');
+    if (!GRAPH_URI) {
+        throw new Error('Graph name not found in configuration. Please set graphName in config.json');
+    }
+
+    // Get auth from config
+    const storageOptions = config.get('storage.options');
+    if (storageOptions.user && storageOptions.password) {
+        auth = Buffer.from(`${storageOptions.user}:${storageOptions.password}`).toString('base64');
+    }
+
+    console.log(`📊 Graph URI: ${GRAPH_URI}\n`);
     
     let totalRemoved = 0;
     let batchSize = 5000;

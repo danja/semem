@@ -875,13 +875,18 @@ document.addEventListener('DOMContentLoaded', () => {
     function loadGraphList() {
         const graphSelector = document.getElementById('graph-selector');
         if (!graphSelector) return;
-        
+
         // Get saved graphs from localStorage
         const savedGraphs = JSON.parse(localStorage.getItem('semem-graph-list') || '[]');
-        
-        // Default graph (from config fallback)
-        const defaultGraph = 'http://hyperdata.it/content';
-        
+
+        // Get default graph from server config
+        const serverConfig = JSON.parse(localStorage.getItem('sememServerConfig') || '{}');
+        const defaultGraph = serverConfig.storage?.graphName;
+
+        if (!defaultGraph) {
+            throw new Error('Graph name not found in server configuration. Please check config.json');
+        }
+
         // Create Set to avoid duplicates
         const allGraphs = new Set([defaultGraph, ...savedGraphs]);
         
@@ -906,10 +911,17 @@ document.addEventListener('DOMContentLoaded', () => {
     function saveGraphList() {
         const graphSelector = document.getElementById('graph-selector');
         if (!graphSelector) return;
-        
+
+        // Get default graph from server config
+        const serverConfig = JSON.parse(localStorage.getItem('sememServerConfig') || '{}');
+        const defaultGraph = serverConfig.storage?.graphName;
+
+        if (!defaultGraph) {
+            throw new Error('Graph name not found in server configuration. Please check config.json');
+        }
+
         const graphs = Array.from(graphSelector.options).map(option => option.value);
-        const defaultGraph = 'http://hyperdata.it/content';
-        
+
         // Save all graphs except the default one
         const savedGraphs = graphs.filter(graph => graph !== defaultGraph);
         localStorage.setItem('semem-graph-list', JSON.stringify(savedGraphs));
@@ -952,10 +964,17 @@ document.addEventListener('DOMContentLoaded', () => {
     function removeSelectedGraph() {
         const graphSelector = document.getElementById('graph-selector');
         if (!graphSelector) return;
-        
+
+        // Get default graph from server config
+        const serverConfig = JSON.parse(localStorage.getItem('sememServerConfig') || '{}');
+        const defaultGraph = serverConfig.storage?.graphName;
+
+        if (!defaultGraph) {
+            throw new Error('Graph name not found in server configuration. Please check config.json');
+        }
+
         const selectedValue = graphSelector.value;
-        const defaultGraph = 'http://hyperdata.it/content';
-        
+
         // Don't allow removing the default graph
         if (selectedValue === defaultGraph) {
             alert('Cannot remove the default graph');

@@ -93,7 +93,7 @@ class BookmarkIngestCLI {
             graph: {
                 type: 'string',
                 short: 'g',
-                description: 'Graph URI (default: http://hyperdata.it/content)'
+                description: 'Graph URI (default from config.json graphName)'
             },
             help: {
                 type: 'boolean',
@@ -127,9 +127,9 @@ USAGE:
   node BookmarkIngest.js [OPTIONS]
 
 EXAMPLES:
-  # Preview bookmarks
+  # Preview bookmarks (uses graphName from config.json)
   node BookmarkIngest.js --endpoint "https://fuseki.hyperdata.it/hyperdata.it/query" \\
-                         --graph "http://hyperdata.it/content" --dry-run --limit 5
+                         --dry-run --limit 5
 
   # Ingest bookmarks with lazy processing
   node BookmarkIngest.js --endpoint "http://localhost:3030/dataset/query" \\
@@ -147,7 +147,7 @@ OPTIONS:
   -v, --verbose            Enable verbose logging
       --user <username>    SPARQL endpoint username
       --password <pass>    SPARQL endpoint password
-  -g, --graph <uri>        Graph URI (default: http://hyperdata.it/content)
+  -g, --graph <uri>        Graph URI (default from config.json graphName)
   -h, --help               Show this help message
 
 QUERY:
@@ -181,8 +181,12 @@ QUERY:
             }
 
             // Get graph
-            let graph = await question('🗂️  Enter graph URI (default: http://hyperdata.it/content): ');
-            graph = graph.trim() || 'http://hyperdata.it/content';
+            const defaultGraph = this.config.get('graphName') || this.config.get('storage.options.graphName');
+            if (!defaultGraph) {
+                throw new Error('Graph name not found in configuration. Please set graphName in config.json');
+            }
+            let graph = await question(`🗂️  Enter graph URI (default: ${defaultGraph}): `);
+            graph = graph.trim() || defaultGraph;
 
             // Get limit
             let limit = await question('📊 Enter limit (default 10): ');
@@ -234,8 +238,14 @@ QUERY:
             dryRun = false,
             auth,
             verbose = false,
-            graph = 'http://hyperdata.it/content'
+            graph
         } = options;
+
+        // Get graph from config if not provided
+        const targetGraph = graph || this.config.get('graphName') || this.config.get('storage.options.graphName');
+        if (!targetGraph) {
+            throw new Error('Graph name not found in options or configuration. Please provide --graph or set graphName in config.json');
+        }
 
         try {
             // Create ingester with field mappings for bookmarks
@@ -253,7 +263,7 @@ QUERY:
             console.log(`\n🔖 Bookmark Ingestion Starting`);
             console.log(`=============================`);
             console.log(`📡 Endpoint: ${endpoint}`);
-            console.log(`🗂️  Graph: ${graph}`);
+            console.log(`🗂️  Graph: ${targetGraph}`);
             console.log(`📊 Limit: ${limit}`);
             console.log(`⚡ Mode: ${dryRun ? 'Dry Run' : (lazy ? 'Lazy Processing' : 'Full Processing')}`);
 
@@ -263,7 +273,7 @@ QUERY:
                 const result = await ingester.dryRun('bookmarks', {
                     variables: {},
                     limit,
-                    graph
+                    graph: targetGraph
                 });
 
                 if (result.success) {
@@ -332,7 +342,7 @@ QUERY:
                         ...tellParams,
                         metadata: {
                             ...tellParams.metadata,
-                            graph: graph,
+                            graph: targetGraph,
                             source: 'bookmark',
                             bookmarkUri: tellParams.metadata?.uri,
                             bookmarkTitle: tellParams.metadata?.title
@@ -373,7 +383,7 @@ QUERY:
                             content: chunk.content,
                             metadata: {
                                 ...tellParams.metadata,
-                                graph: graph,
+                                graph: targetGraph,
                                 source: 'bookmark-chunk',
                                 bookmarkUri: tellParams.metadata?.uri,
                                 bookmarkTitle: tellParams.metadata?.title,
@@ -415,7 +425,7 @@ QUERY:
                 variables: {},
                 limit,
                 lazy,
-                graph,
+                graph: targetGraph,
                 tellFunction,
                 progressCallback: (progress) => {
                     const percent = Math.round((progress.processed / progress.total) * 100);
@@ -529,7 +539,7 @@ QUERY:
                 lazy: values.lazy || false,
                 dryRun: values['dry-run'] || false,
                 auth,
-                graph: values.graph || 'http://hyperdata.it/content',
+                graph: values.graph, // Will be resolved in executeIngestion from config if not provided
                 verbose: values.verbose || false
             });
 

@@ -240,12 +240,17 @@ ${triplesText}
     async importTriples(triples) {
         console.log('📥 [IMPORT] Starting batch import...');
         console.log('📊 [BATCHES]', `Processing ${triples.length} triples in batches of ${this.options.batchSize}`);
-        
+
         // Determine target graph
-        const targetGraph = this.options.graph || 
-                           (triples.find(t => t.graph)?.graph) || 
-                           'http://hyperdata.it/content';
-        
+        const targetGraph = this.options.graph ||
+                           (triples.find(t => t.graph)?.graph) ||
+                           this.config.get('graphName') ||
+                           this.config.get('storage.options.graphName');
+
+        if (!targetGraph) {
+            throw new Error('Graph name not found. Please provide --graph or set graphName in config.json');
+        }
+
         console.log('🎯 [TARGET]', targetGraph);
         
         // Clear graph if requested
@@ -418,7 +423,7 @@ Options:
 Examples:
   node utils/Import.js
   node utils/Import.js --input backup.ttl --clear
-  node utils/Import.js --graph "http://hyperdata.it/content" --batch 500
+  node utils/Import.js --graph "YOUR_GRAPH_URI" --batch 500
   node utils/Import.js --endpoint "http://localhost:3030/dataset/update" --validate
                 `);
                 process.exit(0);

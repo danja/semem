@@ -2,18 +2,19 @@
 
 /**
  * Safe SPARQL Store Cleanup Script
- * 
+ *
  * This script safely removes phantom nodes and excessive connections
  * without breaking the legitimate memory system.
  */
 
 import fetch from 'node-fetch';
+import Config from '../src/Config.js';
 
 const SPARQL_ENDPOINT = 'http://localhost:3030/semem';
-const GRAPH_URI = 'http://hyperdata.it/content';
 
-// Basic auth if needed
-const auth = Buffer.from('admin:admin123').toString('base64');
+// Graph URI and auth will be loaded from config
+let GRAPH_URI;
+let auth;
 
 async function executeSPARQLUpdate(query, description) {
     console.log(`\n🔄 ${description}...`);
@@ -177,7 +178,23 @@ async function pruneExcessiveConnections() {
 
 async function main() {
     console.log('🚀 Starting SPARQL Store Cleanup...\n');
-    
+
+    // Initialize config to get graph URI
+    const config = new Config();
+    await config.init();
+    GRAPH_URI = config.get('graphName') || config.get('storage.options.graphName');
+    if (!GRAPH_URI) {
+        throw new Error('Graph name not found in configuration. Please set graphName in config.json');
+    }
+
+    // Get auth from config
+    const storageOptions = config.get('storage.options');
+    if (storageOptions.user && storageOptions.password) {
+        auth = Buffer.from(`${storageOptions.user}:${storageOptions.password}`).toString('base64');
+    }
+
+    console.log(`📊 Graph URI: ${GRAPH_URI}\n`);
+
     // Phase 1: Get initial statistics
     console.log('📊 PHASE 1: Initial Analysis');
     const initialStats = await getStoreStatistics();

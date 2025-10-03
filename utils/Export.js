@@ -281,7 +281,7 @@ Options:
 Examples:
   node utils/Export.js
   node utils/Export.js --output backup.ttl --format ttl
-  node utils/Export.js --graph "http://hyperdata.it/content"
+  node utils/Export.js --graph "YOUR_GRAPH_URI"
   node utils/Export.js --endpoint "http://localhost:3030/dataset/sparql"
                 `);
                 process.exit(0);

@@ -1,7 +1,8 @@
 #!/bin/bash
 
-# Script to delete all triples from the http://hyperdata.it/content graph
+# Script to delete all triples from the http://tensegrity.it/semem graph
 # Uses the SPARQL update endpoint to clear the graph
+# see also http://hyperdata.it/content
 
 # Configuration - read from config.json or use defaults
 SPARQL_ENDPOINT="http://localhost:3030/semem/update"

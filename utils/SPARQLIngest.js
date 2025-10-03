@@ -102,7 +102,7 @@ class SPARQLIngestCLI {
             graph: {
                 type: 'string',
                 short: 'g',
-                description: 'Graph URI for SPARQL updates (default: http://hyperdata.it/content)'
+                description: 'Graph URI for SPARQL updates (default from config.json graphName)'
             },
             help: {
                 type: 'boolean',
@@ -163,7 +163,7 @@ OPTIONS:
       --user <username>    SPARQL endpoint username
       --password <pass>    SPARQL endpoint password
   -c, --config <path>      Configuration file path
-  -g, --graph <uri>        Graph URI for SPARQL updates (default: http://hyperdata.it/content)
+  -g, --graph <uri>        Graph URI for SPARQL updates (default from config.json graphName)
   -h, --help               Show this help message
 
 TEMPLATES:
@@ -300,8 +300,14 @@ For more information, see: docs/manual/sparql-ingestion.md
             variables = {},
             fieldMappings,
             verbose = false,
-            graph = 'http://hyperdata.it/content'
+            graph
         } = options;
+
+        // Get graph from config if not provided
+        const targetGraph = graph || this.config.get('graphName') || this.config.get('storage.options.graphName');
+        if (!targetGraph) {
+            throw new Error('Graph name not found in options or configuration. Please provide --graph or set graphName in config.json');
+        }
 
         try {
             // Create ingester
@@ -316,13 +322,13 @@ For more information, see: docs/manual/sparql-ingestion.md
             console.log(`📡 Endpoint: ${endpoint}`);
             console.log(`📋 Template: ${template}`);
             console.log(`📊 Limit: ${limit}`);
-            console.log(`🗂️  Graph: ${graph}`);
+            console.log(`🗂️  Graph: ${targetGraph}`);
             console.log(`⚡ Mode: ${dryRun ? 'Dry Run' : (lazy ? 'Lazy Processing' : 'Full Processing')}`);
 
             if (dryRun) {
                 // Execute dry run
                 console.log('\n🧪 Executing dry run...');
-                const result = await ingester.dryRun(template, { variables, limit, graph });
+                const result = await ingester.dryRun(template, { variables, limit, graph: targetGraph });
 
                 if (result.success) {
                     console.log(`\n✅ Dry Run Successful`);
@@ -366,7 +372,7 @@ For more information, see: docs/manual/sparql-ingestion.md
                     ...tellParams,
                     metadata: {
                         ...tellParams.metadata,
-                        graph: graph
+                        graph: targetGraph
                     }
                 };
                 return await this.simpleVerbsService.tell(enhancedParams);
@@ -376,7 +382,7 @@ For more information, see: docs/manual/sparql-ingestion.md
                 variables,
                 limit,
                 lazy,
-                graph,
+                graph: targetGraph,
                 tellFunction,
                 progressCallback: (progress) => {
                     const percent = Math.round((progress.processed / progress.total) * 100);
@@ -491,7 +497,7 @@ For more information, see: docs/manual/sparql-ingestion.md
                 lazy: values.lazy || false,
                 dryRun: values['dry-run'] || false,
                 auth,
-                graph: values.graph || 'http://hyperdata.it/content',
+                graph: values.graph, // Will be resolved in executeIngestion from config if not provided
                 verbose: values.verbose || false
             });
 

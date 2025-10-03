@@ -925,7 +925,8 @@ class APIServer {
                     const safeConfig = {
                         storage: {
                             availableTypes: ['memory', 'json', 'sparql', 'inmemory'],
-                            current: config.get('storage.type') || 'memory'
+                            current: config.get('storage.type') || 'memory',
+                            graphName: config.get('graphName') || config.get('storage.options.graphName')
                         },
                         models: {
                             chat: config.get('models.chat') || {},
