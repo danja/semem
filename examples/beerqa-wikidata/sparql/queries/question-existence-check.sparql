@@ -1,8 +1,0 @@
-SELECT ?question ?questionText WHERE {
-    GRAPH <${graphURI}> {
-        ?question a ragno:Corpuscle ;
-                 rdfs:label ?questionText .
-        
-        FILTER(LCASE(?questionText) = "${escapedQuestionLower}" || CONTAINS(LCASE(?questionText), "${escapedQuestionLower}"))
-    }
-}
