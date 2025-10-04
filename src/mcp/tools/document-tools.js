@@ -439,7 +439,7 @@ export const createDocumentUploadTool = (processor) => ({
 /**
  * Create MCP tool for SPARQL document ingestion
  */
-export const createSparqlIngestTool = (simpleVerbsService) => ({
+export const createSparqlIngestTool = (simpleVerbsService, config) => ({
   name: 'sparql_ingest_documents',
   description: 'Ingest documents from SPARQL endpoint using query templates',
   parameters: {
@@ -487,7 +487,7 @@ export const createSparqlIngestTool = (simpleVerbsService) => ({
       },
       graph: {
         type: 'string',
-        description: 'Graph URI for SPARQL updates (default: http://hyperdata.it/content)'
+        description: 'Graph URI for SPARQL updates (default from config)'
       }
     },
     required: ['endpoint', 'template']
@@ -502,8 +502,14 @@ export const createSparqlIngestTool = (simpleVerbsService) => ({
       auth,
       variables = {},
       fieldMappings,
-      graph = 'http://hyperdata.it/content'
+      graph
     } = params;
+
+    // Get graph from params, config, or fallback
+    const targetGraph = graph ||
+                       config?.get('storage.options.graphName') ||
+                       config?.get('graphName') ||
+                       'http://purl.org/stuff/semem/documents';
 
     try {
       // Create SPARQL ingester
@@ -515,7 +521,7 @@ export const createSparqlIngestTool = (simpleVerbsService) => ({
 
       // Handle dry run
       if (dryRun) {
-        const result = await ingester.dryRun(template, { variables, limit, graph });
+        const result = await ingester.dryRun(template, { variables, limit, graph: targetGraph });
         return {
           success: true,
           type: 'dry_run',
@@ -536,7 +542,7 @@ export const createSparqlIngestTool = (simpleVerbsService) => ({
         variables,
         limit,
         lazy,
-        graph,
+        graph: targetGraph,
         tellFunction,
         progressCallback: (progress) => {
           // Could emit progress events here if needed

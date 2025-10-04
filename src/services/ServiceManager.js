@@ -46,10 +46,14 @@ class ServiceManager {
         const embeddingProvider = await createEmbeddingConnector(config);
         const modelConfig = await getModelConfig(config);
 
-        // Get embedding dimension
+        // Get embedding dimension and LLM provider config
         const llmProviders = config.get('llmProviders') || [];
         const activeEmbeddingProvider = llmProviders
             .filter(p => p.capabilities?.includes('embedding'))
+            .sort((a, b) => (a.priority || 999) - (b.priority || 999))[0];
+
+        const activeLLMProvider = llmProviders
+            .filter(p => p.capabilities?.includes('chat'))
             .sort((a, b) => (a.priority || 999) - (b.priority || 999))[0];
 
         const embeddingDimension = activeEmbeddingProvider?.embeddingDimension;
@@ -109,7 +113,9 @@ class ServiceManager {
             dimension: embeddingDimension,
             model: modelConfig.embeddingModel
         };
-        const llmHandler = new LLMHandler(llmProvider, modelConfig.chatModel);
+        const llmHandler = new LLMHandler(llmProvider, modelConfig.chatModel, 0.7, {
+            rateLimitDelayMs: activeLLMProvider?.rateLimit?.delayMs || 100
+        });
 
         // Initialize MemoryManager with unified configuration
         const memoryManager = new MemoryManager({

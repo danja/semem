@@ -4,6 +4,20 @@
 
 A comprehensive SPARQL-to-MCP document ingestion system has been implemented for semem, providing flexible document ingestion from any SPARQL endpoint.
 
+**Note to self**
+cd ~/hyperdata/transmissions # my local path
+./trans link-finder
+./trans bookmark-get
+node utils/BookmarkIngest.js \
+  --endpoint "http://localhost:3030/semem/query" \
+  --graph "http://hyperdata.it/content" \
+  --limit 10
+node utils/SPARQLIngest.js \
+  --endpoint "https://fuseki.hyperdata.it/danny.ayers.name/query" \
+  --template blog-articles \
+  --graph "http://hyperdata.it/content" \
+  --user admin --password admin123  
+
 ## 🏗️ Core Components
 
 ### 1. SPARQLDocumentIngester Class

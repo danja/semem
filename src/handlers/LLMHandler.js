@@ -19,15 +19,16 @@ export default class LLMHandler {
         this.llmProvider = llmProvider
         this.chatModel = chatModel
         this.temperature = temperature
-        
+
         // Simple fallback configuration (opt-in for backward compatibility)
         this.options = {
             enableFallbacks: options.enableFallbacks === true, // Default disabled for backward compatibility
             timeoutMs: options.timeoutMs || 60000,
             fallbackResponse: options.fallbackResponse || 'Unable to generate response due to service unavailability.',
+            rateLimitDelayMs: options.rateLimitDelayMs || 100, // Default rate limit delay
             ...options
         }
-        
+
         // Detect provider interface type
         this._hasHyperdataClientsInterface = typeof this.llmProvider.chat === 'function'
         this._hasLegacyInterface = typeof this.llmProvider.generateChat === 'function'
@@ -114,24 +115,25 @@ export default class LLMHandler {
      */
     async withRateLimit(fn, maxRetries = 3, baseDelay = 1000) {
         let lastError = null;
-        
+
         for (let attempt = 0; attempt <= maxRetries; attempt++) {
             try {
-                // Add a small delay before each request to avoid overwhelming the API
+                // Add a delay before each request to avoid overwhelming the API
                 if (attempt > 0) {
                     const delay = baseDelay * Math.pow(2, attempt - 1) + Math.random() * 500; // Add jitter
                     logger.log(`Retrying after ${delay.toFixed(0)}ms (attempt ${attempt}/${maxRetries})`);
                     await new Promise(resolve => setTimeout(resolve, delay));
                 } else {
-                    // Even on first attempt, add a small delay to avoid rapid-fire requests
-                    await new Promise(resolve => setTimeout(resolve, Math.random() * 200 + 100));
+                    // On first attempt, use configured rate limit delay
+                    const configuredDelay = this.options.rateLimitDelayMs;
+                    await new Promise(resolve => setTimeout(resolve, configuredDelay));
                 }
-                
+
                 return await fn();
-                
+
             } catch (error) {
                 lastError = error;
-                
+
                 // Check if it's a rate limit error
                 if (error.code === 529 || error.message?.includes('overloaded') || error.message?.includes('rate limit')) {
                     if (attempt < maxRetries) {
@@ -139,14 +141,14 @@ export default class LLMHandler {
                         continue;
                     }
                 }
-                
+
                 // For non-rate-limit errors, throw immediately
                 if (!error.message?.includes('overloaded') && error.code !== 529) {
                     throw error;
                 }
             }
         }
-        
+
         // If we've exhausted all retries, throw the last error
         logger.error(`All ${maxRetries + 1} attempts failed due to rate limiting`);
         throw lastError;

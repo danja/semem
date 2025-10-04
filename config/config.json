@@ -5,7 +5,7 @@
       "query": "http://${SPARQL_HOST:-localhost}:${SPARQL_PORT:-3030}/semem/query",
       "update": "http://${SPARQL_HOST:-localhost}:${SPARQL_PORT:-3030}/semem/update",
       "data": "http://${SPARQL_HOST:-localhost}:${SPARQL_PORT:-3030}/semem/data",
-      "graphName": "http://tensegrity.it/semem",
+      "graphName": "http://hyperdata.it/content",
       "user": "${SPARQL_USER}",
       "password": "${SPARQL_PASSWORD}"
     }
@@ -62,7 +62,7 @@
         "chat"
       ],
       "rateLimit": {
-        "delayMs": 100,
+        "delayMs": 200,
         "description": "Delay between API calls to avoid rate limiting"
       },
       "description": "Using hyperdata-clients implementation for fast inference"
