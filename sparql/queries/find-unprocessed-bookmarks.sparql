@@ -1,0 +1,21 @@
+PREFIX bm: <http://purl.org/stuff/bm/>
+PREFIX semem: <http://purl.org/stuff/semem/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+SELECT ?bookmark ?title ?content ?target ?fetched
+WHERE {
+  GRAPH <${graphURI}> {
+    ?bookmark a bm:Bookmark ;
+              bm:content ?content .
+
+    OPTIONAL { ?bookmark bm:title ?title }
+    OPTIONAL { ?bookmark bm:target ?target }
+    OPTIONAL { ?bookmark bm:fetched ?fetched }
+
+    FILTER NOT EXISTS {
+      ?bookmark semem:processedToMemory true .
+    }
+  }
+}
+ORDER BY DESC(?fetched)
+LIMIT ${limit}

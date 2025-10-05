@@ -29,12 +29,40 @@ export class InteractionTellStrategy extends BaseStrategy {
     try {
       this.logOperation('info', 'Processing interaction content', {
         contentLength: content.length,
-        contentPreview: content.substring(0, 50) + (content.length > 50 ? '...' : '')
+        contentPreview: content.substring(0, 50) + (content.length > 50 ? '...' : ''),
+        hasLabel: !!metadata.chunkLabel,
+        source: metadata.source
       });
 
       // Generate embedding and extract concepts
-      const embedding = await safeOps.generateEmbedding(content);
-      const concepts = await safeOps.extractConcepts(content);
+      this.logOperation('debug', 'Generating embedding for content');
+      let embedding;
+      try {
+        embedding = await safeOps.generateEmbedding(content);
+        this.logOperation('debug', 'Embedding generated successfully', {
+          dimension: embedding?.length
+        });
+      } catch (embError) {
+        this.logOperation('error', 'Embedding generation failed', {
+          error: embError.message,
+          contentLength: content.length
+        });
+        throw embError;
+      }
+
+      this.logOperation('debug', 'Extracting concepts from content');
+      let concepts;
+      try {
+        concepts = await safeOps.extractConcepts(content);
+        this.logOperation('debug', 'Concepts extracted successfully', {
+          conceptCount: concepts?.length || 0
+        });
+      } catch (conceptError) {
+        this.logOperation('warn', 'Concept extraction failed, continuing without concepts', {
+          error: conceptError.message
+        });
+        concepts = []; // Continue without concepts rather than failing
+      }
 
       // Create reasonable prompt for display
       const prompt = content.length > 200 ? `${content.substring(0, 200)}...` : content;
@@ -43,16 +71,35 @@ export class InteractionTellStrategy extends BaseStrategy {
       // Use chunkLabel from metadata if provided, otherwise use prompt
       const label = metadata.chunkLabel || prompt;
 
+      this.logOperation('debug', 'Storing interaction', {
+        hasLabel: !!label,
+        label: label?.substring(0, 50),
+        conceptCount: concepts.length
+      });
+
       // Store the interaction
-      const result = await safeOps.storeInteraction(
-        prompt,
-        response,
-        { ...metadata, type: 'tell_interaction', concepts, label }
-      );
+      let result;
+      try {
+        result = await safeOps.storeInteraction(
+          prompt,
+          response,
+          { ...metadata, type: 'tell_interaction', concepts, label }
+        );
+        this.logOperation('debug', 'Interaction stored successfully', {
+          resultSuccess: result?.success
+        });
+      } catch (storeError) {
+        this.logOperation('error', 'Failed to store interaction', {
+          error: storeError.message,
+          stack: storeError.stack
+        });
+        throw storeError;
+      }
 
       this.logOperation('info', 'Interaction processed successfully', {
         conceptCount: concepts.length,
-        embeddingDimension: embedding.length
+        embeddingDimension: embedding.length,
+        label: label?.substring(0, 50)
       });
 
       return this.createSuccessResponse({
@@ -65,6 +112,12 @@ export class InteractionTellStrategy extends BaseStrategy {
       });
 
     } catch (error) {
+      this.logOperation('error', 'Interaction processing failed', {
+        error: error.message,
+        stack: error.stack,
+        contentLength: content.length,
+        source: metadata.source
+      });
       return this.handleError(error, 'process interaction', {
         contentLength: content.length
       });

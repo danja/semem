@@ -316,10 +316,41 @@ export const VSOM_CONFIG = {
 /**
  * Export all configurations as a single object for convenience
  */
+/**
+ * Ingestion and Processing Configuration
+ * Used by bookmark processing and document ingestion services
+ */
+export const INGESTION_CONFIG = {
+    /**
+     * Bookmark Processing Settings
+     */
+    BOOKMARK: {
+        // Delay between processing individual chunks (milliseconds)
+        // Helps avoid rate limiting when processing large bookmarks with many chunks
+        // Used in: src/services/ingestion/MemoryItemProcessor.js
+        CHUNK_PROCESSING_DELAY: 1000,         // 1 second delay between chunks
+
+        // Delay between processing individual bookmarks (milliseconds)
+        // Provides additional breathing room for API rate limits
+        // Used in: src/services/ingestion/MemoryItemProcessor.js
+        BOOKMARK_PROCESSING_DELAY: 2000,      // 2 second delay between bookmarks
+
+        // Default batch size for bookmark processing
+        // Used in: src/services/ingestion/MemoryItemProcessor.js
+        DEFAULT_BATCH_SIZE: 5,                // Process 5 bookmarks at a time
+
+        // Content length threshold for chunking (characters)
+        // Bookmarks longer than this will be chunked before processing
+        // Used in: src/services/ingestion/MemoryItemProcessor.js
+        CHUNKING_THRESHOLD: 5000              // 5000 character threshold
+    }
+};
+
 export default {
     SEARCH_CONFIG,
     SPARQL_CONFIG,
     MEMORY_CONFIG,
     EMBEDDING_CONFIG,
-    VSOM_CONFIG
+    VSOM_CONFIG,
+    INGESTION_CONFIG
 };

@@ -62,7 +62,7 @@
         "chat"
       ],
       "rateLimit": {
-        "delayMs": 200,
+        "delayMs": 500,
         "description": "Delay between API calls to avoid rate limiting"
       },
       "description": "Using hyperdata-clients implementation for fast inference"
