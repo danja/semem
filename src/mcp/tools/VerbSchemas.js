@@ -43,7 +43,7 @@ export const AskSchema = z.object({
 
 export const AugmentSchema = z.object({
   target: z.string().optional().default('all'),
-  operation: z.enum(['auto', 'concepts', 'attributes', 'relationships', 'process_lazy', 'chunk_documents', 'extract_concepts', 'generate_embedding', 'analyze_text', 'concept_embeddings']).optional().default('auto'),
+  operation: z.enum(['auto', 'concepts', 'attributes', 'relationships', 'process_lazy', 'chunk_documents', 'label', 'extract_concepts', 'generate_embedding', 'analyze_text', 'concept_embeddings']).optional().default('auto'),
   options: z.object({
     // Chunking options
     maxChunkSize: z.number().optional().default(2000),
@@ -58,7 +58,11 @@ export const AugmentSchema = z.object({
     minConfidence: z.number().optional().default(0.0),
     // General augmentation options
     includeAttributes: z.boolean().optional().default(true),
-    includeRelationships: z.boolean().optional().default(true)
+    includeRelationships: z.boolean().optional().default(true),
+    // Label generation options
+    limit: z.number().optional().default(100),
+    keywordCount: z.number().optional().default(5),
+    dryRun: z.boolean().optional().default(false)
   }).optional().default({})
 });
 

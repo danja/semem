@@ -1,0 +1,53 @@
+# Find entities with content but no labels
+# Used by augment label operation to identify entities needing keyword-based labels
+
+PREFIX ragno: <http://purl.org/stuff/ragno/>
+PREFIX semem: <http://purl.org/stuff/semem/>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+SELECT ?entity ?type ?content
+WHERE {
+  GRAPH <{{graphURI}}> {
+    # Find entities with content
+    {
+      # ragno:Element entities with ragno:content
+      ?entity a ragno:Element ;
+              ragno:content ?content .
+      BIND(ragno:Element AS ?type)
+
+      # Exclude if already labeled
+      FILTER NOT EXISTS {
+        ?entity rdfs:label ?existingLabel .
+      }
+    }
+    UNION
+    {
+      # skos:Concept entities with ragno:content
+      ?entity a skos:Concept ;
+              ragno:content ?content .
+      BIND(skos:Concept AS ?type)
+
+      # Exclude if already has rdfs:label (skos:prefLabel is ok)
+      FILTER NOT EXISTS {
+        ?entity rdfs:label ?existingLabel .
+      }
+    }
+    UNION
+    {
+      # semem:Interaction entities with content
+      ?entity a semem:Interaction ;
+              semem:prompt ?content .
+      BIND(semem:Interaction AS ?type)
+
+      # Exclude if already labeled
+      FILTER NOT EXISTS {
+        ?entity rdfs:label ?existingLabel .
+      }
+    }
+
+    # Content must have substance (at least 10 chars)
+    FILTER(STRLEN(?content) >= 10)
+  }
+}
+LIMIT {{limit}}

@@ -20,7 +20,7 @@
     "key": "${SEMEM_API_KEY}"
   },
   "port": 4120,
-  "graphName": "http://tensegrity.it/semem",
+  "graphName": "http://hyperdata.it/content",
   "chatModel": "qwen2:1.5b",
   "embeddingModel": "nomic-embed-text:v1.5",
   "embeddingProvider": "nomic",

@@ -17,6 +17,7 @@ import { ProcessLazyStrategy } from '../strategies/augment/ProcessLazyStrategy.j
 import { ChunkDocumentsStrategy } from '../strategies/augment/ChunkDocumentsStrategy.js';
 import { LegacyOperationsStrategy } from '../strategies/augment/LegacyOperationsStrategy.js';
 import { AutoStrategy } from '../strategies/augment/AutoStrategy.js';
+import { LabelStrategy } from '../strategies/augment/LabelStrategy.js';
 
 export class AugmentCommand extends BaseVerbCommand {
   constructor() {
@@ -36,6 +37,7 @@ export class AugmentCommand extends BaseVerbCommand {
     this.strategies.set('relationships', new RelationshipsStrategy());
     this.strategies.set('process_lazy', new ProcessLazyStrategy());
     this.strategies.set('chunk_documents', new ChunkDocumentsStrategy());
+    this.strategies.set('label', new LabelStrategy());
 
     // Legacy operations strategy handles multiple operations
     const legacyStrategy = new LegacyOperationsStrategy();
