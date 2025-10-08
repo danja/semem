@@ -313,6 +313,79 @@ The system is ready for immediate use! You can:
 6. **Integrate with pipelines**: Use ingested documents with existing semem processing workflows
 7. **Query and search**: Use `ask` verb to search processed bookmark content
 
+## 🏷️ Label Generation for Unlabeled Entities
+
+After ingestion, entities may lack proper labels for visualization in interfaces like VSOM. The augment verb now includes a `label` command to automatically generate keyword-based labels.
+
+### How It Works
+
+The label strategy:
+1. Queries for entities with content but no `rdfs:label` (ragno:Element, skos:Concept, semem:Interaction)
+2. Extracts keywords from content using KeywordExtractor
+3. Generates both `rdfs:label` and `skos:prefLabel` properties
+4. Supports dry-run mode for preview
+
+### Usage
+
+```bash
+# Via MCP (programmatic)
+await simpleVerbsService.augment({
+    target: 'all',
+    operation: 'label',
+    options: {
+        limit: 1000,        // Max entities to process
+        keywordCount: 5,    // Keywords per label
+        dryRun: false       // Set true to preview
+    }
+});
+
+# Preview first 100 unlabeled entities
+{ operation: 'label', options: { limit: 100, dryRun: true } }
+
+# Label all unlabeled entities
+{ operation: 'label', options: { limit: 1000, dryRun: false } }
+```
+
+### What Gets Labeled
+
+The system finds and labels:
+- **ragno:Element** entities with `ragno:content` but no `rdfs:label`
+- **skos:Concept** entities with `ragno:content` but no `rdfs:label`
+- **semem:Interaction** entities with `semem:prompt` but no `rdfs:label`
+- Only processes entities with content ≥10 characters
+
+### Example Output
+
+Given content: `"Live system test: quantum entanglement and superposition in distributed computing systems"`
+
+Generated label: `"live system test quantum entanglement"`
+
+Both properties added:
+- `rdfs:label "live system test quantum entanglement"`
+- `skos:prefLabel "live system test quantum entanglement"@en`
+
+### Integration with Ingestion
+
+After running bookmark or document ingestion, you may want to label new entities:
+
+```bash
+# 1. Ingest documents
+node utils/BookmarkIngest.js --endpoint "..." --limit 100
+
+# 2. Process to memory (creates unlabeled entities)
+node utils/ProcessBookmarksToMemory.js --limit 100
+
+# 3. Generate labels for VSOM visualization
+# (via MCP augment with operation: 'label')
+```
+
+### Files
+
+- **Strategy**: `src/mcp/tools/verbs/strategies/augment/LabelStrategy.js`
+- **Query**: `sparql/queries/find-unlabeled-elements.sparql`
+- **Update**: `sparql/updates/add-labels.sparql`
+- **Tests**: `tests/integration/mcp/augment-label.integration.test.js`
+
 ## 📚 Related Documentation
 
 - [Lazy Batch Processing](./lazy-batch-processing.md) - Complete workflow for bulk ingestion

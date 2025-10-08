@@ -310,4 +310,94 @@ describe('Augment Label Integration Tests', () => {
         `;
         await store.executeSparqlUpdate(deleteQuery);
     });
+
+    it('should label unlabeled entities in live system', async () => {
+        if (!process.env.INTEGRATION_TESTS) {
+            console.log('⏭️  Skipping test');
+            return;
+        }
+
+        // Step 1: Create a new random unlabeled entity in live system
+        const timestamp = Date.now();
+        const liveEntityUri = `http://hyperdata.it/live/element-${timestamp}`;
+        const randomContent = `Live system test: quantum entanglement and superposition in distributed computing systems at timestamp ${timestamp}`;
+
+        const insertQuery = `
+            PREFIX ragno: <http://purl.org/stuff/ragno/>
+            PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+
+            INSERT DATA {
+                GRAPH <${testGraph}> {
+                    <${liveEntityUri}> a ragno:Element , skos:Concept ;
+                                       ragno:content "${randomContent}" .
+                }
+            }
+        `;
+
+        await store.executeSparqlUpdate(insertQuery);
+        console.log(`📝 Created new unlabeled entity in live system: ${liveEntityUri}`);
+
+        // Step 2: Verify entity has no label
+        const checkBeforeQuery = `
+            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+            SELECT ?label
+            WHERE {
+                GRAPH <${testGraph}> {
+                    <${liveEntityUri}> rdfs:label ?label .
+                }
+            }
+        `;
+
+        const beforeResult = await store.executeSparqlQuery(checkBeforeQuery);
+        expect(beforeResult.results.bindings).toHaveLength(0);
+        console.log('✅ Verified entity has no label initially');
+
+        // Step 3: Run label operation on live system
+        const result = await simpleVerbsService.augment({
+            target: 'all',
+            operation: 'label',
+            options: {
+                limit: 1000,
+                keywordCount: 5,
+                dryRun: false
+            }
+        });
+
+        console.log(`🏷️  Live labeling complete: ${result.processed} entities labeled`);
+
+        expect(result.success).toBe(true);
+        expect(result.processed).toBeGreaterThan(0);
+        expect(result.failed).toBe(0);
+
+        // Step 4: Verify the new entity was labeled
+        const afterResult = await store.executeSparqlQuery(checkBeforeQuery);
+        expect(afterResult.results.bindings).toHaveLength(1);
+
+        const label = afterResult.results.bindings[0].label.value;
+        expect(label).toBeTruthy();
+        expect(label.length).toBeGreaterThan(0);
+
+        console.log(`✅ Live entity labeled successfully: "${label}"`);
+
+        // Step 5: Verify label contains keywords from content
+        const keywords = label.toLowerCase().split(' ');
+        const contentLower = randomContent.toLowerCase();
+        const hasRelevantKeyword = keywords.some(keyword =>
+            contentLower.includes(keyword)
+        );
+        expect(hasRelevantKeyword).toBe(true);
+        console.log('✅ Label contains relevant keywords:', keywords);
+
+        // Clean up
+        const deleteQuery = `
+            DELETE WHERE {
+                GRAPH <${testGraph}> {
+                    <${liveEntityUri}> ?p ?o .
+                }
+            }
+        `;
+        await store.executeSparqlUpdate(deleteQuery);
+        console.log('🧹 Cleaned up live entity');
+    });
 });
