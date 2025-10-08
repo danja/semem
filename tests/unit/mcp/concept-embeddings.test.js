@@ -143,7 +143,7 @@ describe('Concept Embeddings Functionality', () => {
       // Verify success
       expect(result.success).toBe(true)
       expect(result.operation).toBe('concept_embeddings')
-      expect(result.result.augmentationType).toBe('concept_embeddings')
+      expect(result.augmentationType).toBe('concept_embeddings')
 
       // Verify concepts were extracted
       expect(mockSafeOps.extractConceptsCalls).toHaveLength(1)
@@ -158,14 +158,14 @@ describe('Concept Embeddings Functionality', () => {
       })
 
       // Verify result structure
-      expect(result.result.conceptsEmbedded).toHaveLength(expectedConcepts.length)
-      expect(result.result.totalConcepts).toBe(expectedConcepts.length)
-      expect(result.result.totalEmbeddings).toBe(expectedConcepts.length)
-      expect(result.result.embeddingModel).toBe('nomic-embed-text')
-      expect(result.result.targetGraph).toBe(mockMemoryManager.config.get('storage.options').graphName)
+      expect(result.conceptsEmbedded).toHaveLength(expectedConcepts.length)
+      expect(result.totalConcepts).toBe(expectedConcepts.length)
+      expect(result.totalEmbeddings).toBe(expectedConcepts.length)
+      expect(result.embeddingModel).toBe('nomic-embed-text')
+      expect(result.targetGraph).toBe(mockMemoryManager.config.get('storage.options').graphName)
 
       // Verify each concept embedding has expected structure
-      result.result.conceptsEmbedded.forEach((conceptEmbed, index) => {
+      result.conceptsEmbedded.forEach((conceptEmbed, index) => {
         expect(conceptEmbed.concept).toBe(expectedConcepts[index])
         expect(conceptEmbed.conceptUri).toContain('concept/')
         expect(conceptEmbed.embeddingUri).toContain('embedding/')
@@ -190,10 +190,10 @@ describe('Concept Embeddings Functionality', () => {
       expect(result.success).toBe(true)
       
       // Should only process 2 concepts even though 4 were extracted
-      expect(result.result.totalConcepts).toBe(4) // Total extracted
-      expect(result.result.totalProcessed).toBe(2) // Actually processed
-      expect(result.result.totalEmbeddings).toBe(2) // Embeddings generated
-      expect(result.result.conceptsEmbedded).toHaveLength(2)
+      expect(result.totalConcepts).toBe(4) // Total extracted
+      expect(result.totalProcessed).toBe(2) // Actually processed
+      expect(result.totalEmbeddings).toBe(2) // Embeddings generated
+      expect(result.conceptsEmbedded).toHaveLength(2)
 
       // Should only generate embeddings for first 2 concepts
       expect(mockSafeOps.generateEmbeddingCalls).toHaveLength(2)
@@ -213,10 +213,10 @@ describe('Concept Embeddings Functionality', () => {
       })
 
       expect(result.success).toBe(true)
-      expect(result.result.totalEmbeddings).toBe(4)
+      expect(result.totalEmbeddings).toBe(4)
       
       // Verify batch processing doesn't affect the final result
-      expect(result.result.conceptsEmbedded).toHaveLength(4)
+      expect(result.conceptsEmbedded).toHaveLength(4)
     })
 
     it('should handle empty concept extraction gracefully', async () => {
@@ -231,11 +231,11 @@ describe('Concept Embeddings Functionality', () => {
       })
 
       expect(result.success).toBe(true)
-      expect(result.result.augmentationType).toBe('concept_embeddings')
+      expect(result.augmentationType).toBe('concept_embeddings')
       
       // Should handle the 3 default concepts from mock
-      expect(result.result.totalConcepts).toBe(3)
-      expect(result.result.totalEmbeddings).toBe(3)
+      expect(result.totalConcepts).toBe(3)
+      expect(result.totalEmbeddings).toBe(3)
     })
 
     it('should handle errors in concept embedding generation gracefully', async () => {
@@ -251,11 +251,11 @@ describe('Concept Embeddings Functionality', () => {
       })
 
       expect(result.success).toBe(true)
-      expect(result.result.totalEmbeddings).toBe(0) // No embeddings generated due to errors
-      expect(result.result.skippedConcepts).toHaveLength(3) // All concepts skipped
+      expect(result.totalEmbeddings).toBe(0) // No embeddings generated due to errors
+      expect(result.skippedConcepts).toHaveLength(3) // All concepts skipped
       
       // Verify error information is captured
-      result.result.skippedConcepts.forEach(skipped => {
+      result.skippedConcepts.forEach(skipped => {
         expect(skipped.error).toContain('Embedding service unavailable')
       })
     })
@@ -284,8 +284,8 @@ describe('Concept Embeddings Functionality', () => {
       })
 
       expect(result.success).toBe(true)
-      expect(result.result.attributeCount).toBe(2)
-      expect(result.result.attributes).toHaveLength(2)
+      expect(result.attributeCount).toBe(2)
+      expect(result.attributes).toHaveLength(2)
     })
 
     it('should use default graph from config when no graph specified', async () => {
@@ -302,7 +302,7 @@ describe('Concept Embeddings Functionality', () => {
       })
 
       expect(result.success).toBe(true)
-      expect(result.result.targetGraph).toBe(mockMemoryManager.config.get('storage.options').graphName)
+      expect(result.targetGraph).toBe(mockMemoryManager.config.get('storage.options').graphName)
     })
 
     it('should use custom graph when specified', async () => {
@@ -320,7 +320,7 @@ describe('Concept Embeddings Functionality', () => {
       })
 
       expect(result.success).toBe(true)
-      expect(result.result.targetGraph).toBe(customGraph)
+      expect(result.targetGraph).toBe(customGraph)
     })
   })
 
@@ -339,14 +339,14 @@ describe('Concept Embeddings Functionality', () => {
       })
 
       expect(result.success).toBe(true)
-      expect(result.result.augmentationType).toBe('concepts_with_embeddings')
-      expect(result.result.concepts).toHaveLength(4) // All extracted concepts
-      expect(result.result.embeddedConcepts).toHaveLength(3) // Limited by maxConcepts
-      expect(result.result.totalEmbeddings).toBe(3)
-      expect(result.result.embeddingModel).toBe('nomic-embed-text')
+      expect(result.augmentationType).toBe('concepts_with_embeddings')
+      expect(result.concepts).toHaveLength(4) // All extracted concepts
+      expect(result.embeddedConcepts).toHaveLength(3) // Limited by maxConcepts
+      expect(result.totalEmbeddings).toBe(3)
+      expect(result.embeddingModel).toBe('nomic-embed-text')
 
       // Verify concepts are still returned
-      expect(result.result.concepts).toEqual(['machine learning', 'artificial intelligence', 'algorithms', 'data science'])
+      expect(result.concepts).toEqual(['machine learning', 'artificial intelligence', 'algorithms', 'data science'])
     })
 
     it('should return only concepts when includeEmbeddings is false', async () => {
@@ -362,8 +362,8 @@ describe('Concept Embeddings Functionality', () => {
       })
 
       expect(result.success).toBe(true)
-      expect(Array.isArray(result.result)).toBe(true)
-      expect(result.result).toEqual(['machine learning', 'artificial intelligence', 'algorithms', 'data science'])
+      expect(Array.isArray(result.concepts)).toBe(true)
+      expect(result.concepts).toEqual(['machine learning', 'artificial intelligence', 'algorithms', 'data science'])
       
       // Should not generate any embeddings
       expect(mockSafeOps.generateEmbeddingCalls).toHaveLength(0)
@@ -390,9 +390,9 @@ describe('Concept Embeddings Functionality', () => {
       })
 
       expect(result.success).toBe(true)
-      expect(result.result.augmentationType).toBe('concepts_embedding_failed')
-      expect(result.result.concepts).toEqual(['concept1', 'concept2', 'concept3'])
-      expect(result.result.embeddingError).toContain('Network error')
+      expect(result.augmentationType).toBe('concepts_embedding_failed')
+      expect(result.concepts).toEqual(['concept1', 'concept2', 'concept3'])
+      expect(result.embeddingError).toContain('Network error')
     })
   })
 })

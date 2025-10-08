@@ -59,6 +59,7 @@ export const AugmentSchema = z.object({
     // General augmentation options
     includeAttributes: z.boolean().optional().default(true),
     includeRelationships: z.boolean().optional().default(true),
+    includeEmbeddings: z.boolean().optional().default(false),
     // Label generation options
     limit: z.number().optional().default(100),
     keywordCount: z.number().optional().default(5),

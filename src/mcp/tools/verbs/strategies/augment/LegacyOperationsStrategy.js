@@ -7,6 +7,9 @@
 
 import { BaseStrategy } from '../BaseStrategy.js';
 import { logOperation, verbsLogger } from '../../../VerbsLogger.js';
+import SPARQLTemplateLoader from '../../../../../stores/SPARQLTemplateLoader.js';
+
+const templateLoader = new SPARQLTemplateLoader();
 
 export class LegacyOperationsStrategy extends BaseStrategy {
   constructor() {
@@ -148,8 +151,8 @@ export class LegacyOperationsStrategy extends BaseStrategy {
       const targetGraph = graph || storageConfig?.graphName || config.get('graphName');
 
       // Import utilities for ragno format storage
-      const { URIMinter } = await import('../../../../utils/URIMinter.js');
-      const SPARQLHelper = (await import('../../../../services/sparql/SPARQLHelper.js')).default;
+      const { URIMinter } = await import('../../../../../utils/URIMinter.js');
+      const SPARQLHelper = (await import('../../../../../services/sparql/SPARQLHelper.js')).default;
 
       const sparqlHelper = new SPARQLHelper(storageConfig.update, {
         user: storageConfig.user,
@@ -167,36 +170,34 @@ export class LegacyOperationsStrategy extends BaseStrategy {
             const conceptEmbedding = await safeOps.generateEmbedding(concept);
             const conceptUri = URIMinter.mintURI('http://purl.org/stuff/instance/', 'concept', concept);
             const embeddingUri = URIMinter.mintURI('http://purl.org/stuff/instance/', 'embedding', concept);
+            const conceptLabel = concept.replace(/"/g, '\\"');
+            const vectorContent = JSON.stringify(conceptEmbedding).replace(/"/g, '\\"');
+            const createdAt = new Date().toISOString();
 
             // Store using ragno format
-            const insertQuery = `
-              PREFIX ragno: <http://purl.org/stuff/ragno/>
-              PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-              PREFIX dcterms: <http://purl.org/dc/terms/>
-              PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+            const insertQuery = await templateLoader.loadAndInterpolate('store', 'insert-concept-embedding', {
+              graph: targetGraph,
+              conceptUri,
+              conceptLabel,
+              embeddingUri,
+              embeddingModel,
+              embeddingDimension: conceptEmbedding.length,
+              vectorContent,
+              createdAt
+            });
 
-              INSERT DATA {
-                GRAPH <${targetGraph}> {
-                  <${conceptUri}> a ragno:Concept ;
-                                  skos:prefLabel "${concept.replace(/"/g, '\\"')}" ;
-                                  ragno:hasEmbedding <${embeddingUri}> ;
-                                  dcterms:created "${new Date().toISOString()}"^^xsd:dateTime .
-
-                  <${embeddingUri}> a ragno:IndexElement ;
-                                    ragno:embeddingModel "${embeddingModel}" ;
-                                    ragno:subType ragno:ConceptEmbedding ;
-                                    ragno:embeddingDimension ${conceptEmbedding.length} ;
-                                    ragno:vectorContent "[${conceptEmbedding.join(',')}]" .
-                }
-              }
-            `;
+            if (!insertQuery) {
+              throw new Error('Concept embedding SPARQL template missing');
+            }
 
             await sparqlHelper.executeUpdate(insertQuery);
 
             conceptEmbeddings.push({
               concept,
-              uri: conceptUri,
-              embeddingDimension: conceptEmbedding.length
+              conceptUri,
+              embeddingUri,
+              embeddingDimension: conceptEmbedding.length,
+              embeddingModel
             });
 
           } catch (error) {
@@ -214,8 +215,10 @@ export class LegacyOperationsStrategy extends BaseStrategy {
         concepts: extractedConcepts,
         embeddedConcepts: conceptEmbeddings,
         totalConcepts: extractedConcepts.length,
+        totalProcessed: conceptEmbeddings.length,
         totalEmbeddings: conceptEmbeddings.length,
         embeddingModel,
+        targetGraph,
         augmentationType: 'concept_embeddings'
       });
 
