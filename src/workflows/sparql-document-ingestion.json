@@ -1,0 +1,37 @@
+{
+  "name": "sparql-document-ingestion",
+  "description": "Fetch documents via SPARQL template and load into memory",
+  "parameters": {
+    "template": { "type": "string", "required": true },
+    "graph": { "type": "string", "required": true },
+    "limit": { "type": "number", "required": false }
+  },
+  "steps": [
+    {
+      "id": "fetch",
+      "verb": "augment",
+      "operation": "sparql_fetch",
+      "args": {
+        "template": "${template}",
+        "variables": {
+          "graph": "${graph}",
+          "limit": "${limit}"
+        }
+      }
+    },
+    {
+      "id": "tell",
+      "verb": "tell",
+      "args": {
+        "content": "${fetch.content}",
+        "type": "document",
+        "lazy": true,
+        "metadata": {
+          "title": "${fetch.title}",
+          "uri": "${fetch.uri}",
+          "source": "sparql"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "name": "file-document-ingestion",
+  "description": "Convert local document into Ragno corpus and ingest into SPARQL",
+  "parameters": {
+    "filePath": {
+      "type": "string",
+      "required": true
+    }
+  },
+  "steps": [
+    {
+      "id": "load",
+      "verb": "augment",
+      "operation": "load_document",
+      "args": {
+        "path": "${filePath}"
+      }
+    },
+    {
+      "id": "convert",
+      "verb": "augment",
+      "operation": "convert_pdf",
+      "args": {
+        "buffer": "${load.buffer}",
+        "metadata": {
+          "sourceFile": "${filePath}" }
+      }
+    },
+    {
+      "id": "chunk",
+      "verb": "augment",
+      "operation": "chunk_markdown",
+      "args": {
+        "markdown": "${convert.markdown}",
+        "metadata": "${convert.metadata}"
+      }
+    },
+    {
+      "id": "ingest",
+      "verb": "augment",
+      "operation": "ingest_chunks",
+      "args": {
+        "chunkData": "${chunk}"
+      }
+    }
+  ]
+}
