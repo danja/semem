@@ -6,5 +6,5 @@
 4. Run MCP integration tests (`tell-ask` HTTP & STDIO) — **DONE** (validated outside sandbox as per user)
 
 Next up:
-- [x] Align concept embedding integration/unit tests with the new augmentation responses (no `*_legacy`, updated payload shape).
+- [~] Align concept embedding integration/unit tests with the new augmentation responses (currently skip assertions when SPARQL writes are unavailable; revisit once storage endpoint is consistent).
 - [ ] Decide whether to retire remaining deprecated tool aliases after checking external clients.

@@ -14,6 +14,6 @@ INSERT DATA {
                        ragno:embeddingModel "{{embeddingModel}}" ;
                        ragno:subType ragno:ConceptEmbedding ;
                        ragno:embeddingDimension {{embeddingDimension}} ;
-                       ragno:vectorContent "{{vectorContent}}".
+                       ragno:vectorContent "{{vectorContent}}" .
   }
 }

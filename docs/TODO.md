@@ -8,6 +8,7 @@ hardcoded query in src/stores/modules/Search.js
 essential e2e
 * export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/tell-ask-e2e.integration.test.js --reporter=verbose 
 * export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/tell-ask-stdio-e2e.integration.test.js --reporter=verbose
+* INTEGRATION_TESTS=true npx vitest run tests/integration/concept-embeddings-integration.test.js --reporter=verbose
 
 mcp index tests - may well be broken
 * export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/tell-tool.integration.test.js --reporter=verbose
