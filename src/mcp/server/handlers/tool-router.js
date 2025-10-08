@@ -77,54 +77,6 @@ export class ToolRouter {
   }
 
   // Argument transformation functions for deprecated tools
-  transformInteractionArgs(args) {
-    return { ...args, content: `${args.prompt}\n\nResponse: ${args.response}` };
-  }
-
-  transformRetrievalArgs(args) {
-    return { question: args.query, ...args };
-  }
-
-  transformAnswerArgs(args) {
-    return { question: args.question, mode: args.mode || 'comprehensive', ...args };
-  }
-
-  transformAskArgs(args) {
-    return { question: args.question, ...args };
-  }
-
-  transformConceptArgs(args) {
-    return { operation: 'extract_concepts', text: args.text, ...args };
-  }
-
-  transformEmbeddingArgs(args) {
-    return { operation: 'generate_embedding', text: args.text, options: { embedding: true }, ...args };
-  }
-
-  transformRememberArgs(args) {
-    return { operation: 'remember', content: args.content, ...args };
-  }
-
-  transformForgetArgs(args) {
-    return { operation: 'forget', target: args.target, ...args };
-  }
-
-  transformFadeArgs(args) {
-    return { operation: 'fade', ...args };
-  }
-
-  transformRecallArgs(args) {
-    return { question: args.query, ...args };
-  }
-
-  transformProjectArgs(args) {
-    return { operation: 'project_context', ...args };
-  }
-
-  transformDocumentArgs(args) {
-    return { content: 'Document upload', ...args };
-  }
-
   transformChatArgs(args) {
     const message = args?.message || args?.question;
     if (!message || typeof message !== 'string') {

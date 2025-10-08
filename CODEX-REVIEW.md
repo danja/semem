@@ -10,6 +10,7 @@
 - [x] Extended augment options schema with `includeEmbeddings` and enriched concept embedding responses (`totalProcessed`, `targetGraph`) so verb outputs match the modern tests/clients.
 - [x] Moved concept embedding SPARQL write into `sparql/templates/store/insert-concept-embedding.sparql` and load it via `SPARQLTemplateLoader` to eliminate inline queries.
 - [x] Slimmed `ToolRouter` to core verbs plus chat shims; legacy `semem_*` tool names now map through workflow orchestration rather than bespoke router branches.
+- [x] Removed unused legacy argument transformers from `ToolRouter`; only `/chat` and `/chat/enhanced` remain as thin aliases over `ask`.
 - [~] Confirm we still need PromptManager’s legacy adapters. `src/prompts/compatibility.js` calls into the adapters for `PromptTemplates`, `PromptFormatter`, and `MCP`, so a wider migration plan is needed before removing them.
 - [~] Evaluate `EmbeddingService`’s legacy constructor path (`src/services/embeddings/EmbeddingService.js:23`). `SearchService`, `SearchServer`, and several test helpers still instantiate the service without a `Config`, so we need to refactor those callers before dropping the fallback.
 - [x] Audit leftover `_mcp` imports as likely-dead entry points: `compare-search.js`, `fix-embedding-dimensions.js`, `test-dogfort.js`, and the MCP test suites now import from `src/mcp/**`.
