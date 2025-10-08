@@ -2,7 +2,7 @@
 // Unit tests for SimpleVerbsService and ZPTStateManager
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { SimpleVerbsService, ZPTStateManager } from '../../../../_mcp/tools/simple-verbs.js';
+import { SimpleVerbsService, ZPTStateManager } from '../../../../src/mcp/tools/simple-verbs.js';
 
 describe('ZPTStateManager Unit Tests', () => {
   let stateManager;

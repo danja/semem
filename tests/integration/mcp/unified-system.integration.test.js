@@ -11,8 +11,8 @@ import fetch from 'node-fetch';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { getSimpleVerbsService } from '../../../_mcp/tools/VerbRegistration.js';
-import { initializeServices, getMemoryManager } from '../../../_mcp/lib/initialization.js';
+import { getSimpleVerbsService } from '../../../src/mcp/tools/VerbRegistration.js';
+import { initializeServices, getMemoryManager } from '../../../src/mcp/lib/initialization.js';
 import ServiceManager from '../../../src/services/ServiceManager.js';
 import { v4 as uuidv4 } from 'uuid';
 

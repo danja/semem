@@ -7,7 +7,7 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-import { initializeServices } from './_mcp/lib/initialization.js';
+import { initializeServices } from './src/mcp/lib/initialization.js';
 
 async function testDogfort() {
     console.log('🔍 Testing "dogfort" query directly...');

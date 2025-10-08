@@ -9,43 +9,14 @@ import { mcpDebugger } from '../../lib/debug-utils.js';
 export class ToolRouter {
   constructor() {
     this.coreTools = new SimpleVerbsService();
-    this.modules = new Map();
     this.initialized = false;
   }
 
-  /**
-   * Initialize and register all tool modules
-   */
   async initialize() {
     if (this.initialized) return;
-
-    try {
-      // Register SPARQL tools module
-      const { default: sparqlModule } = await import('../../tools/modules/sparql-tools.js');
-      this.modules.set('sparql_', sparqlModule);
-
-      // Register Ragno tools module
-      const { default: ragnoModule } = await import('../../tools/modules/ragno-tools.js');
-      this.modules.set('ragno_', ragnoModule);
-
-      // Register ZPT tools module
-      const { default: zptModule } = await import('../../tools/modules/zpt-tools.js');
-      this.modules.set('zpt_', zptModule);
-
-      // Register VSOM tools module
-      const { default: vsomModule } = await import('../../tools/modules/vsom-tools.js');
-      this.modules.set('vsom_', vsomModule);
-
-      // Register Research Workflow tools module
-      const { default: researchModule } = await import('../../tools/modules/research-workflow-tools.js');
-      this.modules.set('research_', researchModule);
-
-      this.initialized = true;
-      mcpDebugger.info('ToolRouter initialized with all modules');
-    } catch (error) {
-      mcpDebugger.error('Failed to initialize ToolRouter:', error);
-      throw error;
-    }
+    await this.coreTools.initialize?.();
+    this.initialized = true;
+    mcpDebugger.info('ToolRouter initialized with core verb tools only');
   }
 
   /**
@@ -59,14 +30,6 @@ export class ToolRouter {
       if (this.coreTools.handles(toolName)) {
         mcpDebugger.debug(`Routing ${toolName} to core tools`);
         return await this.coreTools.execute(toolName, args);
-      }
-
-      // Route to specialized modules based on prefix
-      for (const [prefix, module] of this.modules) {
-        if (toolName.startsWith(prefix)) {
-          mcpDebugger.debug(`Routing ${toolName} to ${prefix} module`);
-          return await module.execute(toolName, args);
-        }
       }
 
       // Handle legacy tools that don't fit the prefix pattern
@@ -115,10 +78,10 @@ export class ToolRouter {
 
     const mapping = deprecatedMappings[toolName];
     if (mapping) {
-      mcpDebugger.info(`Redirecting deprecated tool ${toolName} to ${mapping.tool}`);
-      const transformedArgs = mapping.transform ? mapping.transform(args) : args;
-      return await this.coreTools.execute(mapping.tool, transformedArgs);
-    }
+      mcpDebugger.warn(`Redirecting deprecated tool ${toolName} to ${mapping.tool}`);
+     const transformedArgs = mapping.transform ? mapping.transform(args) : args;
+     return await this.coreTools.execute(mapping.tool, transformedArgs);
+   }
 
     return null;
   }
@@ -178,29 +141,11 @@ export class ToolRouter {
   async getAvailableTools() {
     await this.initialize();
 
-    const tools = [
-      // Core tools
-      ...this.coreTools.coreToolNames.map(name => ({
-        name,
-        type: 'core',
-        description: this.getCoreToolDescription(name)
-      }))
-    ];
-
-    // Add module tools
-    for (const [prefix, module] of this.modules) {
-      if (module.getToolNames) {
-        const moduleTools = await module.getToolNames();
-        tools.push(...moduleTools.map(name => ({
-          name,
-          type: 'module',
-          module: prefix.replace('_', ''),
-          description: `${prefix.replace('_', '')} module tool`
-        })));
-      }
-    }
-
-    return tools;
+    return this.coreTools.coreToolNames.map(name => ({
+      name,
+      type: 'core',
+      description: this.getCoreToolDescription(name)
+    }));
   }
 
   getCoreToolDescription(toolName) {

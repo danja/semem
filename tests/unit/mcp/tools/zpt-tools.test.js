@@ -2,7 +2,7 @@
 // Tests for ZPT navigation tools
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { ZPTNavigationService } from '../../../../_mcp/tools/zpt-tools.js';
+import { ZPTNavigationService } from '../../../../src/mcp/tools/zpt-tools.js';
 
 // Mock the SPARQLStore
 const mockSparqlStore = {

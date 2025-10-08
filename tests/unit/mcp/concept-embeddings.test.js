@@ -96,7 +96,7 @@ class MockZPTStateManager {
 }
 
 // Import the SimpleVerbsService after mocks are set up
-import { SimpleVerbsService } from '../../../_mcp/tools/simple-verbs.js'
+import { SimpleVerbsService } from '../../../src/mcp/tools/simple-verbs.js'
 
 describe('Concept Embeddings Functionality', () => {
   let simpleVerbsService

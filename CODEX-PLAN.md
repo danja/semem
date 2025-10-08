@@ -6,4 +6,4 @@
 4. Run MCP integration tests (`tell-ask` HTTP & STDIO) — **DONE** (validated outside sandbox as per user)
 
 Next up:
-5. Replace remaining `_mcp` imports (`compare-search.js`, `fix-embedding-dimensions.js`, `test-dogfort.js`) or retire the scripts.
+5. Replace remaining `_mcp` imports (`compare-search.js`, `fix-embedding-dimensions.js`, `test-dogfort.js`, MCP tests) — **DONE** (all point to `src/mcp/**`)

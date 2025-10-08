@@ -69,7 +69,7 @@ export class LegacyOperationsStrategy extends BaseStrategy {
 
     return this.createSuccessResponse({
       concepts: result,
-      augmentationType: 'extract_concepts_legacy'
+      augmentationType: 'extract_concepts'
     });
   }
 
@@ -86,7 +86,7 @@ export class LegacyOperationsStrategy extends BaseStrategy {
         preview: embedding.slice(0, 5).map(x => parseFloat(x.toFixed(4))),
         model: 'default'
       },
-      augmentationType: 'generate_embedding_legacy'
+      augmentationType: 'generate_embedding'
     });
   }
 
@@ -108,7 +108,7 @@ export class LegacyOperationsStrategy extends BaseStrategy {
         preview: analysisEmbedding.slice(0, 5).map(x => parseFloat(x.toFixed(4)))
       },
       textLength: target.length,
-      augmentationType: 'analyze_text_legacy'
+      augmentationType: 'analyze_text'
     });
   }
 
@@ -138,7 +138,7 @@ export class LegacyOperationsStrategy extends BaseStrategy {
           concepts: [],
           embeddedConcepts: [],
           message: 'No concepts extracted from target content',
-          augmentationType: 'concept_embeddings_legacy'
+          augmentationType: 'concept_embeddings'
         });
       }
 
@@ -216,7 +216,7 @@ export class LegacyOperationsStrategy extends BaseStrategy {
         totalConcepts: extractedConcepts.length,
         totalEmbeddings: conceptEmbeddings.length,
         embeddingModel,
-        augmentationType: 'concept_embeddings_legacy'
+        augmentationType: 'concept_embeddings'
       });
 
     } catch (error) {
