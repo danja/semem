@@ -399,24 +399,24 @@ export function validateExecutionPrerequisites(prompt, mcpServer) {
   // Tool name mapping - matches workflow-orchestrator.js TOOL_MAPPING
   const TOOL_MAPPING = {
     // Memory tools
-    'semem_store_interaction': 'semem_store_interaction',
-    'semem_retrieve_memories': 'semem_retrieve_memories', 
-    'semem_generate_response': 'semem_generate_response',
-    'semem_generate_embedding': 'semem_generate_embedding',
-    'semem_extract_concepts': 'semem_extract_concepts',
+    'semem_store_interaction': 'tell',
+    'semem_retrieve_memories': 'ask', 
+    'semem_generate_response': 'ask',
+    'semem_generate_embedding': 'augment',
+    'semem_extract_concepts': 'augment',
     
     // Ragno tools
-    'ragno_decompose_corpus': 'ragno_decompose_corpus',
-    'ragno_search_dual': 'ragno_search_dual',
-    'ragno_get_entities': 'ragno_get_entities',
-    'ragno_vector_search': 'ragno_vector_search',
-    'ragno_export_rdf': 'ragno_export_rdf',
-    'ragno_query_sparql': 'ragno_query_sparql',
-    'ragno_analyze_graph': 'ragno_analyze_graph',
+    'ragno_decompose_corpus': 'augment',
+    'ragno_search_dual': 'ask',
+    'ragno_get_entities': 'augment',
+    'ragno_vector_search': 'augment',
+    'ragno_export_rdf': 'augment',
+    'ragno_query_sparql': 'ask',
+    'ragno_analyze_graph': 'augment',
     
     // Workflow aliases
-    'ragno_build_relationships': 'ragno_analyze_graph',
-    'ragno_extract_entities': 'ragno_get_entities',
+    'ragno_build_relationships': 'augment',
+    'ragno_extract_entities': 'augment',
     
     // Custom workflow tools (implemented by orchestrator)
     'research_ingest_documents': 'research_ingest_documents',

@@ -221,13 +221,13 @@ class PromptRegistry {
             }
           },
           {
-            tool: 'semem_extract_concepts',
+            tool: 'augment',
             arguments: {
               text: '${document_text}'
             }
           },
           {
-            tool: 'semem_retrieve_memories',
+            tool: 'ask',
             arguments: {
               query: 'extracted concepts',
               limit: 10,
@@ -270,13 +270,13 @@ class PromptRegistry {
         ],
         workflow: [
           {
-            tool: 'semem_generate_embedding',
+            tool: 'augment',
             arguments: {
               text: '${question}'
             }
           },
           {
-            tool: 'semem_retrieve_memories',
+            tool: 'ask',
             arguments: {
               query: '${question}',
               limit: '${context_limit}',
@@ -359,13 +359,13 @@ class PromptRegistry {
         ],
         workflow: [
           {
-            tool: 'semem_extract_concepts',
+            tool: 'augment',
             arguments: {
               text: '${concept}'
             }
           },
           {
-            tool: 'semem_retrieve_memories',
+            tool: 'ask',
             arguments: {
               query: '${concept}',
               limit: 20,
@@ -626,7 +626,7 @@ class PromptRegistry {
             condition: 'memory in pipeline_stages'
           },
           {
-            tool: 'semem_extract_concepts',
+            tool: 'augment',
             arguments: {
               text: '${input_data}'
             },
@@ -698,7 +698,7 @@ class PromptRegistry {
             }
           },
           {
-            tool: 'semem_extract_concepts',
+            tool: 'augment',
             arguments: {
               text: 'combined document text'
             }
@@ -790,7 +790,7 @@ class PromptRegistry {
             description: 'Enhanced document ingestion with dual storage'
           },
           {
-            tool: 'semem_extract_concepts',
+            tool: 'augment',
             arguments: {
               text: 'combined document text',
               options: { domainFocus: '${domain_focus}' }
@@ -878,7 +878,7 @@ class PromptRegistry {
         ],
         workflow: [
           {
-            tool: 'semem_extract_concepts',
+            tool: 'augment',
             arguments: {
               text: '${question}',
               options: { extractIntent: true }

@@ -13,21 +13,7 @@ import { mcpDebugger } from './debug-utils.js';
  */
 export const TOOL_MAPPING = {
   // Memory tools (HTTP server uses simple names)
-  'semem_store_interaction': 'semem_store_interaction',
-  'semem_retrieve_memories': 'semem_retrieve_memories', 
-  'semem_generate_response': 'semem_generate_response',
-  'semem_generate_embedding': 'semem_generate_embedding',
-  'semem_extract_concepts': 'semem_extract_concepts',
-  
   // Ragno tools (HTTP server uses simple names)
-  'ragno_decompose_corpus': 'ragno_decompose_corpus',
-  'ragno_search_dual': 'ragno_search_dual',
-  'ragno_get_entities': 'ragno_get_entities',
-  'ragno_vector_search': 'ragno_vector_search',
-  'ragno_export_rdf': 'ragno_export_rdf',
-  'ragno_query_sparql': 'ragno_query_sparql',
-  'ragno_analyze_graph': 'ragno_analyze_graph',
-  
   // System tools (HTTP server uses simple names)
   'semem_switch_storage_backend': 'semem_switch_storage_backend',
   'semem_get_config': 'semem_get_config',
@@ -35,12 +21,6 @@ export const TOOL_MAPPING = {
   'semem_health_check': 'semem_health_check',
   
   // Alias mappings for common workflow names
-  'ragno_build_relationships': 'ragno_analyze_graph',
-  'ragno_extract_entities': 'ragno_get_entities',
-  'ragno_find_entity': 'ragno_get_entities',
-  'ragno_get_relationships': 'ragno_analyze_graph',
-  'ragno_analyze_entity': 'ragno_analyze_graph',
-  
   // Missing tools that we'll implement
   'research_ingest_documents': 'research_ingest_documents',
   'research_generate_insights': 'research_generate_insights',
@@ -557,52 +537,43 @@ export class WorkflowOrchestrator {
 
   // Helper methods
 
-  async executeMappedTool(toolName, args, context) {
-    const mappedToolName = TOOL_MAPPING[toolName] || toolName;
-    
-    if (this.toolExecutors.has(toolName)) {
-      return await this.toolExecutors.get(toolName)(args, context);
+  async executeMappedTool(toolName, args) {
+    if (!this.simpleVerbsService) {
+      const { SimpleVerbsService } = await import('../tools/SimpleVerbsService.js');
+      this.simpleVerbsService = new SimpleVerbsService();
+      await this.simpleVerbsService.initialize();
     }
 
-    // For HTTP MCP server, use our custom tool calling mechanism
-    if (this.customToolCaller) {
-      try {
-        const result = await this.customToolCaller({
-          name: mappedToolName,
-          arguments: args
-        });
-        
-        // Parse JSON result if it's a string
-        if (typeof result === 'string') {
-          try {
-            return JSON.parse(result);
-          } catch (parseError) {
-            return result;
-          }
-        }
-        
-        // Extract content from MCP result format
-        if (result && result.content && result.content[0] && result.content[0].text) {
-          try {
-            return JSON.parse(result.content[0].text);
-          } catch (parseError) {
-            return result.content[0].text;
-          }
-        }
-        
-        return result;
-      } catch (error) {
-        logger.error(`❌ Custom tool caller failed for ${mappedToolName}: ${error.message}`);
-        throw error;
-      }
+    switch (toolName) {
+      case 'tell':
+        return await this.simpleVerbsService.tell(args);
+      case 'ask':
+        return await this.simpleVerbsService.ask(args);
+      case 'augment':
+        return await this.simpleVerbsService.augment(args);
+      case 'zoom':
+        return await this.simpleVerbsService.zoom(args);
+      case 'pan':
+        return await this.simpleVerbsService.pan(args);
+      case 'tilt':
+        return await this.simpleVerbsService.tilt(args);
+      case 'inspect':
+        return await this.simpleVerbsService.inspect(args);
+      case 'remember':
+        return await this.simpleVerbsService.remember(args);
+      case 'forget':
+        return await this.simpleVerbsService.forget(args);
+      case 'recall':
+        return await this.simpleVerbsService.recall(args);
+      case 'project_context':
+        return await this.simpleVerbsService.augment({ operation: 'project_context', options: args });
+      case 'fade_memory':
+        return await this.simpleVerbsService.fade_memory(args);
+      case 'train-vsom':
+        return await this.simpleVerbsService['train-vsom']?.(args);
+      default:
+        throw new Error(`Unsupported tool in workflow orchestrator: ${toolName}`);
     }
-
-    // Fallback: Execute via MCP server (old pattern)
-    if (!this.mcpServer.tools || !this.mcpServer.tools[mappedToolName]) {
-      throw new Error(`Tool not available: ${mappedToolName}`);
-    }
-
-    return await this.mcpServer.tools[mappedToolName].handler(args);
   }
 
   buildInsightPrompt(context) {
