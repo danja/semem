@@ -62,18 +62,8 @@ export class ToolRouter {
   async handleLegacyTool(toolName, args) {
     // Handle deprecated tools by redirecting to core tools
     const deprecatedMappings = {
-      'semem_store_interaction': { tool: 'tell', transform: this.transformInteractionArgs },
-      'semem_retrieve_memories': { tool: 'ask', transform: this.transformRetrievalArgs },
-      'semem_answer': { tool: 'ask', transform: this.transformAnswerArgs },
-      'semem_ask': { tool: 'ask', transform: this.transformAskArgs },
-      'semem_extract_concepts': { tool: 'augment', transform: this.transformConceptArgs },
-      'semem_generate_embedding': { tool: 'augment', transform: this.transformEmbeddingArgs },
-      'remember': { tool: 'augment', transform: this.transformRememberArgs },
-      'forget': { tool: 'augment', transform: this.transformForgetArgs },
-      'fade_memory': { tool: 'augment', transform: this.transformFadeArgs },
-      'recall': { tool: 'ask', transform: this.transformRecallArgs },
-      'project_context': { tool: 'augment', transform: this.transformProjectArgs },
-      'uploadDocument': { tool: 'tell', transform: this.transformDocumentArgs }
+      'chat': { tool: 'ask', transform: this.transformChatArgs },
+      'chat-enhanced': { tool: 'ask', transform: this.transformEnhancedChatArgs }
     };
 
     const mapping = deprecatedMappings[toolName];
@@ -133,6 +123,34 @@ export class ToolRouter {
 
   transformDocumentArgs(args) {
     return { content: 'Document upload', ...args };
+  }
+
+  transformChatArgs(args) {
+    const message = args?.message || args?.question;
+    if (!message || typeof message !== 'string') {
+      throw new Error('Chat message is required');
+    }
+    return {
+      question: message,
+      mode: 'standard',
+      useContext: true
+    };
+  }
+
+  transformEnhancedChatArgs(args) {
+    const query = args?.query || args?.message;
+    if (!query || typeof query !== 'string') {
+      throw new Error('Enhanced chat query is required');
+    }
+    return {
+      question: query,
+      mode: 'comprehensive',
+      useContext: true,
+      useHyDE: !!args?.useHyDE,
+      useWikipedia: !!args?.useWikipedia,
+      useWikidata: !!args?.useWikidata,
+      useWebSearch: !!args?.useWebSearch
+    };
   }
 
   /**

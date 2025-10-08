@@ -7,4 +7,4 @@
 
 Next up:
 - [~] Align concept embedding integration/unit tests with the new augmentation responses (currently skip assertions when SPARQL writes are unavailable; revisit once storage endpoint is consistent).
-- [ ] Decide whether to retire remaining deprecated tool aliases after checking external clients.
+- [ ] Review workflow orchestrator mappings and remaining prompts to eliminate `semem_*` tool usage in favour of core verbs.
