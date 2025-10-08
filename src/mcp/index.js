@@ -74,6 +74,10 @@ async function main() {
 // Export server creation function for testing
 export { createMCPServer };
 
+export async function startMCPServer() {
+  return main();
+}
+
 // Run if this is the main module
 if (import.meta.url === `file://${process.argv[1]}`) {
   main().catch((error) => {

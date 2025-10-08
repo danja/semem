@@ -349,3 +349,10 @@ These tools are **faster and more accurate than text search** for architectural 
 - VSOM integration complete with comprehensive e2e test coverage
 - All API calls from VSOM go through HTTP proxy to MCP server endpoints
 - Content-Type header duplication bug fixed in VSOM proxy configuration
+
+## Check any potentially breaking changes with essential e2e tests 
+
+First stop/start the servers with `stop.sh` and `start.sh`, then -
+
+* export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/tell-ask-e2e.integration.test.js --reporter=verbose 
+* export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/tell-ask-stdio-e2e.integration.test.js --reporter=verbose

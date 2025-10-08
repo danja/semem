@@ -45,7 +45,7 @@ QUESTION: \${query}`
             completion: {
                 name: 'llama2-completion',
                 description: 'Llama2 completion template with INST formatting',
-                content: `[INST] ${context ? `Context:\n${context}\n\n` : ''}Query: ${query} [/INST]`,
+                content: '[INST] ${context}\n\nQuery: ${query} [/INST]',
                 format: 'completion'
             },
             extractConcepts: {
@@ -82,7 +82,7 @@ QUESTION: \${query}`
             completion: {
                 name: 'mistral-completion',
                 description: 'Mistral completion template with special formatting',
-                content: `<s>[INST] ${context ? `${context}\n\n` : ''}${query} [/INST]`,
+                content: '<s>[INST] ${context}\n\n${query} [/INST]',
                 format: 'completion'
             },
             extractConcepts: {
@@ -149,7 +149,7 @@ export async function migrateMCPRegistry(quiet = false) {
     
     // Try to import MCP registry
     try {
-        const { promptRegistry } = await import('../../_mcp/prompts/registry.js');
+        const { promptRegistry } = await import('../mcp/prompts/registry.js');
         await promptRegistry.initialize();
         
         const mcpPrompts = promptRegistry.listPrompts();
@@ -212,7 +212,7 @@ export async function createCompatibilityMappings(quiet = false) {
         {
             name: 'completion-default',
             description: 'Default completion template (automatically selects best model)',
-            content: '${context ? `Context: ${context}\n\n` : ''}Query: ${query}',
+            content: '${context}\n\nQuery: ${query}',
             format: 'completion',
             supportedModels: ['*'],
             metadata: { isGeneric: true }

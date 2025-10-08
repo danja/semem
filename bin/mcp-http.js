@@ -52,4 +52,4 @@ if (args.find(arg => arg.startsWith('--host='))) {
 }
 
 // Import and start the HTTP server
-import '../_mcp/http-server.js';
+import '../src/mcp/http-server.js';

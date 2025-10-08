@@ -1,0 +1,11 @@
+# CODEX Review Proposals
+
+- [x] Fix template literal parsing bug in `src/prompts/migrate-existing.js:215`: the conditional placeholder now renders safely and passes `node --check`.
+- [x] Update MCP entry points to reference the new `src/mcp` structure rather than the flagged-for-removal `_mcp` paths. `bin/mcp-http.js`, `bin/mcp.js`, `bin/semem.js`, and `index.js` now target `src/mcp/**`.
+- [x] Resolve missing Embedding handler export: reinstated a compatibility handler in `src/handlers/EmbeddingHandler.js`, restored exports, and aligned migration scripts with the renamed `src/utils/EmbeddingMigration.js`.
+- Revisit the embedding migration utilities: confirm whether `scripts/migrate-embeddings.js` should remain now that `EmbeddingMigration.js` is restored, or archive both if the workflow is obsolete.
+- Audit MCP legacy compatibility layers. `src/mcp/tools/verbs/commands/AugmentCommand.js:42` still routes four operations through `LegacyOperationsStrategy`, whose responses label augmentation types as `*_legacy` (`src/mcp/tools/verbs/strategies/augment/LegacyOperationsStrategy.js:5`). Integration tests expect the modern `concept_embeddings` shape, so either migrate callers off the legacy path or replace the strategy with the new ragno-native implementation.
+- Clean up deprecated MCP tool shims in `src/mcp/server/handlers/tool-router.js:72`. We still remap a dozen `semem_*` tool names to the new verbs; if no active clients rely on them, remove the mappings to declutter routing and error reporting.
+- Confirm we still need PromptManager’s legacy adapters. `src/prompts/PromptManager.js:43` initializes compatibility shims for `PromptTemplates`/`PromptFormatter`; if all consumers moved to unified prompts, we can drop the adapters and associated maintenance overhead.
+- Evaluate `EmbeddingService`’s legacy constructor path (`src/services/embeddings/EmbeddingService.js:23`). The modern architecture requires a Config instance, yet we still warn and instantiate connector factories directly for legacy callers. If nothing invokes this mode, remove the fallback and its unused dependencies.
+- Audit leftover `_mcp` imports as likely-dead entry points: `compare-search.js:10`, `fix-embedding-dimensions.js:11`, and `test-dogfort.js:10` still point at `_mcp/**`. Update them to the `src/mcp` structure or delete the scripts if they are no longer used.

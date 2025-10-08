@@ -30,40 +30,23 @@ program
   .option('-t, --transport <type>', 'Transport type (stdio|http|sse)', 'stdio')
   .option('-c, --config <path>', 'Configuration file path')
   .action(async (options) => {
+    const { createUnifiedLogger } = await import('../src/utils/LoggingConfig.js');
+    const logger = createUnifiedLogger('semem-cli');
+
+    if (options.transport === 'http' || options.transport === 'sse') {
+      logger.warn('HTTP/SSE transport moved to `semem-mcp-http`. Please run that command directly.');
+      return;
+    }
+
     try {
-      const { createServer } = await import('../_mcp/index.js');
-      const { StdioServerTransport } = await import('@modelcontextprotocol/sdk/server/stdio.js');
-      
-      // Create the MCP server
-      const server = await createServer();
-      
-      // Choose transport based on options
-      if (options.transport === 'http' || options.transport === 'sse') {
-        // For HTTP/SSE transport, delegate to http-server
-        const { default: httpServer } = await import('../_mcp/http-server.js');
-        console.log(`Starting MCP HTTP server on port ${options.port || 3000}`);
-      } else {
-        // For stdio transport, use SDK transport
-        const transport = new StdioServerTransport();
-        await server.connect(transport);
-        
-        // Handle graceful shutdown
-        process.on('SIGINT', async () => {
-          console.log('\nShutting down MCP server...');
-          if (server && server.close) {
-            await server.close();
-          }
-          process.exit(0);
-        });
-        
-        // Keep process alive for stdio
-        process.stdin.resume();
-      }
+      const { startMCPServer } = await import('../src/mcp/index.js');
+      await startMCPServer();
+      logger.info('Semem MCP STDIO server started');
     } catch (error) {
-      console.error('Failed to start MCP server:', error.message);
-      if (process.env.NODE_ENV === 'development') {
-        console.error(error.stack);
-      }
+      logger.error('Failed to start MCP server', {
+        message: error.message,
+        stack: error.stack
+      });
       process.exit(1);
     }
   });
