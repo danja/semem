@@ -49,6 +49,295 @@ export default class DataProcessor {
     }
 
     /**
+     * Process summarized knowledge graph data for visualization
+     * @param {Object} graphSummary - preprocessed graph summary from VSOMStandaloneApp
+     * @param {Object} zptSettings - current navigation settings
+     * @returns {Promise<Object>} layout-ready VSOM data
+     */
+    async processGraphSummary(graphSummary, zptSettings = {}) {
+        if (!graphSummary || !Array.isArray(graphSummary.nodes) || graphSummary.nodes.length === 0) {
+            return this.createEmptyVSOMData();
+        }
+
+        const zoomLevel = zptSettings.zoom || 'entity';
+        const preparedNodes = this.prepareGraphNodes(graphSummary, zoomLevel, zptSettings);
+
+        if (preparedNodes.length === 0) {
+            return this.createEmptyVSOMData();
+        }
+
+        const positionedNodes = this.applyDeterministicLayout(preparedNodes);
+        const connections = this.buildGraphConnections(positionedNodes, graphSummary.edges);
+
+        const bounds = this.calculateNodeBounds(positionedNodes);
+        const gridSize = Math.max(8, Math.ceil(Math.max(bounds.width, bounds.height)) + 2);
+
+        return {
+            nodes: positionedNodes,
+            gridSize,
+            connections,
+            interactions: this.createInteractionSummaries(positionedNodes),
+            metadata: {
+                ...graphSummary.metadata,
+                filteredCount: preparedNodes.length,
+                zoom: zoomLevel,
+                generatedAt: new Date().toISOString()
+            }
+        };
+    }
+
+    prepareGraphNodes(graphSummary, zoomLevel, zptSettings) {
+        const typeStats = graphSummary.typeStats || {};
+        const maxNodes = this.determineNodeLimit(zoomLevel, graphSummary.metadata);
+        const threshold = typeof zptSettings.threshold === 'number' ? zptSettings.threshold : 0.3;
+
+        if (zoomLevel === 'corpus') {
+            return this.createTypeAggregateNodes(typeStats, graphSummary.metadata, threshold);
+        }
+
+        if (zoomLevel === 'community') {
+            return this.pickTopNodesPerType(graphSummary.nodes, maxNodes);
+        }
+
+        return this.limitNodesByScore(graphSummary.nodes, maxNodes, threshold);
+    }
+
+    determineNodeLimit(zoomLevel, metadata = {}) {
+        const baseLimit = metadata?.layout?.maxNodes || 250;
+        switch (zoomLevel) {
+            case 'unit':
+            case 'text':
+                return Math.min(baseLimit, 200);
+            case 'community':
+                return Math.min(baseLimit, 140);
+            case 'corpus':
+                return Object.keys(metadata.typeStats || {}).length || 12;
+            default:
+                return Math.min(baseLimit, 260);
+        }
+    }
+
+    limitNodesByScore(nodes, maxNodes, threshold) {
+        if (!Array.isArray(nodes)) return [];
+
+        const maxScore = nodes[0]?.score || 1;
+        const minScore = maxScore * Math.max(0.05, threshold / 2);
+
+        return nodes
+            .filter(node => (node.score || 0) >= minScore)
+            .slice(0, maxNodes)
+            .map((node, index) => ({
+                ...node,
+                content: node.label,
+                interactionId: node.id,
+                rank: index + 1,
+                color: this.getInteractionColor(node.type),
+                qualityMetrics: {
+                    importance: node.scoreNormalized || (node.score / Math.max(1, maxScore))
+                },
+                timestamp: node.timestamp || Date.now() - index * 60000
+            }));
+    }
+
+    pickTopNodesPerType(nodes, maxNodes) {
+        const groups = nodes.reduce((acc, node) => {
+            const type = node.type || 'interaction';
+            if (!acc[type]) acc[type] = [];
+            acc[type].push(node);
+            return acc;
+        }, {});
+
+        const perGroupLimit = Math.max(3, Math.floor(maxNodes / Math.max(1, Object.keys(groups).length)));
+
+        const selected = [];
+        Object.entries(groups)
+            .sort(([, a], [, b]) => b.length - a.length)
+            .forEach(([type, group]) => {
+                group
+                    .slice(0, perGroupLimit)
+                    .forEach((node, index) => {
+                        selected.push({
+                            ...node,
+                            content: node.label,
+                            interactionId: node.id,
+                            rank: selected.length + 1,
+                            color: this.getInteractionColor(type),
+                            collection: type,
+                            timestamp: node.timestamp || Date.now() - (selected.length * 90000)
+                        });
+                    });
+            });
+
+        return selected.slice(0, maxNodes);
+    }
+
+    createTypeAggregateNodes(typeStats = {}, metadata = {}, threshold = 0.3) {
+        const entries = Object.entries(typeStats);
+        if (entries.length === 0) return [];
+
+        const maxCount = Math.max(...entries.map(([, stats]) => stats.count || 0)) || 1;
+        const minCount = maxCount * Math.max(0.05, threshold / 2);
+
+        return entries
+            .filter(([, stats]) => (stats.count || 0) >= minCount)
+            .map(([type, stats], index) => ({
+                id: `type::${type}`,
+                interactionId: `type::${type}`,
+                type: type || 'community',
+                label: `${stats.label || type} (${stats.count || 0})`,
+                content: `${stats.label || type} (${stats.count || 0})`,
+                concepts: stats.representativeConcepts || [type],
+                score: stats.count || 0,
+                scoreNormalized: (stats.count || 0) / maxCount,
+                degree: stats.count || 0,
+                color: this.getInteractionColor(type),
+                metadata: {
+                    ...stats,
+                    aggregate: true,
+                    totalEdges: metadata.totalEdges || 0
+                },
+                timestamp: Date.now() - index * 120000
+            }));
+    }
+
+    getInteractionColor(type = 'interaction') {
+        return this.interactionTypes[type]?.color || this.interactionTypes.interaction.color;
+    }
+
+    applyDeterministicLayout(nodes) {
+        if (!nodes.length) return nodes;
+
+        const goldenAngle = Math.PI * (3 - Math.sqrt(5));
+        const spacing = Math.max(1.2, Math.sqrt(nodes.length) / 3);
+
+        const positioned = nodes.map((node, index) => {
+            const radius = Math.sqrt(index + 1) * spacing;
+            const angle = index * goldenAngle;
+            const x = radius * Math.cos(angle);
+            const y = radius * Math.sin(angle);
+
+            return {
+                ...node,
+                x,
+                y,
+                trained: !!node.trained,
+                activation: node.activation || node.scoreNormalized || 0.5,
+                weight: node.weight || Math.min(1, (node.scoreNormalized || 0.5) + 0.2)
+            };
+        });
+
+        return this.normalizePositions(positioned);
+    }
+
+    normalizePositions(nodes) {
+        if (!nodes.length) return nodes;
+
+        const xs = nodes.map(node => node.x);
+        const ys = nodes.map(node => node.y);
+
+        const minX = Math.min(...xs);
+        const maxX = Math.max(...xs);
+        const minY = Math.min(...ys);
+        const maxY = Math.max(...ys);
+
+        const offsetX = minX < 0 ? Math.abs(minX) + 1 : 0;
+        const offsetY = minY < 0 ? Math.abs(minY) + 1 : 0;
+
+        return nodes.map(node => ({
+            ...node,
+            x: Math.round((node.x + offsetX) * 100) / 100,
+            y: Math.round((node.y + offsetY) * 100) / 100
+        }));
+    }
+
+    calculateNodeBounds(nodes) {
+        if (!nodes.length) {
+            return { minX: 0, maxX: 0, minY: 0, maxY: 0, width: 0, height: 0 };
+        }
+
+        const xs = nodes.map(node => node.x);
+        const ys = nodes.map(node => node.y);
+
+        const minX = Math.min(...xs);
+        const maxX = Math.max(...xs);
+        const minY = Math.min(...ys);
+        const maxY = Math.max(...ys);
+
+        return {
+            minX,
+            maxX,
+            minY,
+            maxY,
+            width: maxX - minX,
+            height: maxY - minY
+        };
+    }
+
+    createInteractionSummaries(nodes) {
+        return nodes.slice(0, 80).map(node => ({
+            id: node.id,
+            type: node.type || 'interaction',
+            content: node.label,
+            prompt: node.label,
+            response: `${node.type || 'node'} • degree ${node.degree || 0}`,
+            concepts: node.concepts || [],
+            metadata: {
+                degree: node.degree,
+                score: node.score,
+                aggregate: node.metadata?.aggregate || false,
+                graph: node.metadata?.graph || node.graph
+            },
+            timestamp: node.timestamp
+        }));
+    }
+
+    buildGraphConnections(nodes, edges = []) {
+        if (!Array.isArray(nodes) || nodes.length === 0 || !Array.isArray(edges) || edges.length === 0) {
+            return [];
+        }
+
+        const nodeMap = new Map(nodes.map(node => [node.id, node]));
+        const connections = [];
+
+        let processed = 0;
+        for (const edge of edges) {
+            const sourceNode = nodeMap.get(edge.source);
+            const targetNode = nodeMap.get(edge.target);
+
+            if (!sourceNode || !targetNode) continue;
+
+            const strength = this.estimateEdgeStrength(sourceNode, targetNode, edge);
+
+            connections.push({
+                from: sourceNode,
+                to: targetNode,
+                strength,
+                type: edge.type || 'graph',
+                label: edge.label || `${sourceNode.type} → ${targetNode.type}`,
+                graph: edge.graph,
+                distance: Math.sqrt(
+                    Math.pow(targetNode.x - sourceNode.x, 2) +
+                    Math.pow(targetNode.y - sourceNode.y, 2)
+                )
+            });
+
+            processed += 1;
+            if (processed >= 80) break;
+        }
+
+        return connections;
+    }
+
+    estimateEdgeStrength(sourceNode, targetNode, edge = {}) {
+        const base = 0.5;
+        const degreeBoost = Math.min(0.4, ((sourceNode.scoreNormalized || 0.5) + (targetNode.scoreNormalized || 0.5)) / 2);
+        const typeBoost = sourceNode.type === targetNode.type ? 0.15 : 0;
+        const edgeWeight = typeof edge.weight === 'number' ? Math.min(0.5, edge.weight) : 0;
+
+        return Math.min(1, base + degreeBoost + typeBoost + edgeWeight);
+    }
+
+    /**
      * Process interactions for VSOM visualization
      */
     async processInteractions(interactions, zptSettings = {}) {

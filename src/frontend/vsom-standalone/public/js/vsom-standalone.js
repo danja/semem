@@ -25,7 +25,9 @@ class VSOMStandaloneApp {
             interactions: [],
             vsomData: null,
             connected: false,
-            lastUpdate: null
+            lastUpdate: null,
+            graphSummary: null,
+            sessionData: null
         };
 
         this.updateInterval = null;
@@ -178,25 +180,11 @@ class VSOMStandaloneApp {
             const sessionData = await this.services.api.getSessionData();
             console.log('🔍 Session data received:', sessionData);
 
-            // Use knowledge graph nodes as interactions for visualization
-            // Convert nodes to interaction-like format for compatibility
-            const interactions = knowledgeGraph.nodes.map((node, idx) => ({
-                id: node.id,
-                label: node.label || `Node ${idx}`,
-                type: node.type,
-                graph: node.graph,
-                prompt: node.label || node.id,
-                response: `${node.type} from ${node.graph}`,
-                concepts: [node.type, node.graph],
-                metadata: { nodeType: node.type, sourceGraph: node.graph }
-            }));
-            console.log('🔍 Converted knowledge graph to interactions:', interactions.length);
-
-            // Extract concepts from interactions
-            const concepts = [];
-            interactions.forEach(interaction => {
-                if (interaction.concepts && Array.isArray(interaction.concepts)) {
-                    concepts.push(...interaction.concepts);
+            const graphSummary = this.buildGraphSummary(knowledgeGraph);
+            const summaryConcepts = new Set();
+            graphSummary.nodes.forEach(node => {
+                if (Array.isArray(node.concepts)) {
+                    node.concepts.forEach(concept => summaryConcepts.add(concept));
                 }
             });
 
@@ -230,14 +218,19 @@ class VSOMStandaloneApp {
                 }
             }
 
-            // Process interactions for VSOM visualization
-            const vsomData = await this.services.processor.processInteractions(interactions, currentZPT);
+            // Process knowledge graph summary for VSOM visualization
+            const vsomData = await this.services.processor.processGraphSummary(graphSummary, currentZPT);
+
+            // Prepare interaction list (for data panel and event linking)
+            const interactions = this.buildInteractionList(graphSummary);
 
             // Update state (only update ZPT if not preserving)
             const stateUpdate = {
-                interactions: interactions,
+                interactions,
                 vsomData,
-                concepts: [...new Set(concepts)], // Remove duplicates
+                concepts: Array.from(summaryConcepts).slice(0, 50),
+                graphSummary,
+                sessionData,
                 lastUpdate: new Date()
             };
 
@@ -253,6 +246,7 @@ class VSOMStandaloneApp {
             console.log('🔍 Updated state:', {
                 interactionCount: this.state.interactions.length,
                 conceptCount: this.state.concepts.length,
+                graphNodes: this.state.graphSummary?.nodes?.length || 0,
                 zptState: { zoom: this.state.zoom, pan: this.state.pan, tilt: this.state.tilt },
                 vsomData: this.state.vsomData
             });
@@ -269,14 +263,199 @@ class VSOMStandaloneApp {
         }
     }
 
+    buildGraphSummary(knowledgeGraph) {
+        const nodes = knowledgeGraph?.nodes || [];
+        const edges = knowledgeGraph?.edges || [];
+        const metadata = knowledgeGraph?.metadata || {};
+
+        const degreeMap = new Map();
+        edges.forEach(edge => {
+            const source = edge.source;
+            const target = edge.target;
+            if (source) degreeMap.set(source, (degreeMap.get(source) || 0) + 1);
+            if (target) degreeMap.set(target, (degreeMap.get(target) || 0) + 1);
+        });
+
+        const typeStats = {};
+
+        const summarizedNodes = nodes.map((node, index) => {
+            const type = (node.type || 'interaction').toLowerCase();
+            const label = this.formatGraphLabel(node.label, node.id, index);
+            const degree = degreeMap.get(node.id) || 0;
+            const typeWeight = this.getTypeWeight(type);
+            const score = degree + typeWeight;
+
+            if (!typeStats[type]) {
+                typeStats[type] = {
+                    type,
+                    count: 0,
+                    label: type.charAt(0).toUpperCase() + type.slice(1),
+                    representativeConcepts: new Set(),
+                    examples: []
+                };
+            }
+
+            typeStats[type].count += 1;
+            if (typeStats[type].examples.length < 5) {
+                typeStats[type].examples.push(label);
+            }
+            typeStats[type].representativeConcepts.add(type);
+
+            return {
+                id: node.id,
+                label,
+                type,
+                graph: node.graph,
+                degree,
+                score,
+                concepts: [type, node.graph].filter(Boolean),
+                metadata: {
+                    graph: node.graph,
+                    originalLabel: node.label,
+                    index
+                }
+            };
+        });
+
+        const sortedNodes = summarizedNodes.sort((a, b) => {
+            if (b.score === a.score) {
+                return a.label.localeCompare(b.label);
+            }
+            return b.score - a.score;
+        });
+
+        const maxNodes = Math.min(320, sortedNodes.length);
+        const trimmedNodes = sortedNodes.slice(0, maxNodes);
+        const maxScore = trimmedNodes[0]?.score || 1;
+
+        const keepSet = new Set(trimmedNodes.map(node => node.id));
+        const limitedEdges = [];
+        const adjacency = new Map();
+
+        edges.some(edge => {
+            if (!keepSet.has(edge.source) || !keepSet.has(edge.target)) {
+                return false;
+            }
+
+            if (limitedEdges.length < 600) {
+                limitedEdges.push(edge);
+            }
+
+            if (!adjacency.has(edge.source)) adjacency.set(edge.source, []);
+            if (!adjacency.has(edge.target)) adjacency.set(edge.target, []);
+
+            adjacency.get(edge.source).push({ id: edge.target, type: edge.type, label: edge.label });
+            adjacency.get(edge.target).push({ id: edge.source, type: edge.type, label: edge.label });
+
+            return limitedEdges.length >= 600;
+        });
+
+        const normalizedNodes = trimmedNodes.map((node, index) => ({
+            ...node,
+            rank: index + 1,
+            scoreNormalized: node.score / Math.max(1, maxScore),
+            neighbors: (adjacency.get(node.id) || []).slice(0, 6)
+        }));
+
+        const summarizedTypeStats = Object.entries(typeStats).reduce((acc, [type, stats]) => {
+            acc[type] = {
+                type,
+                label: stats.label,
+                count: stats.count,
+                representativeConcepts: Array.from(stats.representativeConcepts),
+                examples: stats.examples
+            };
+            return acc;
+        }, {});
+
+        return {
+            nodes: normalizedNodes,
+            edges: limitedEdges,
+            typeStats: summarizedTypeStats,
+            metadata: {
+                totalNodes: nodes.length,
+                totalEdges: edges.length,
+                truncated: nodes.length > normalizedNodes.length,
+                layout: {
+                    maxNodes,
+                    maxDegree: Math.max(...normalizedNodes.map(node => node.degree || 0), 0),
+                    averageDegree: normalizedNodes.reduce((sum, node) => sum + (node.degree || 0), 0) / Math.max(1, normalizedNodes.length)
+                },
+                typeStats: summarizedTypeStats,
+                knowledgeGraph: metadata
+            }
+        };
+    }
+
+    formatGraphLabel(label, id, index) {
+        if (label && label !== 'Unlabeled') {
+            return label;
+        }
+
+        if (typeof id === 'string') {
+            try {
+                const uri = new URL(id);
+                const pathname = uri.pathname || '';
+                const segments = pathname.split('/').filter(Boolean);
+                if (segments.length > 0) {
+                    return decodeURIComponent(segments[segments.length - 1]);
+                }
+                return uri.hostname;
+            } catch (_error) {
+                const parts = id.split(/[\/#]/).filter(Boolean);
+                if (parts.length > 0) {
+                    return parts[parts.length - 1];
+                }
+            }
+        }
+
+        return `Node ${index + 1}`;
+    }
+
+    getTypeWeight(type) {
+        const weights = {
+            bookmark: 2.5,
+            document: 2,
+            chunk: 1.6,
+            concept: 1.4,
+            interaction: 1.2,
+            community: 2.2,
+            entity: 1.8
+        };
+        return weights[type] || 1;
+    }
+
+    buildInteractionList(graphSummary) {
+        if (!graphSummary || !Array.isArray(graphSummary.nodes)) {
+            return [];
+        }
+
+        return graphSummary.nodes.slice(0, 80).map(node => ({
+            id: node.id,
+            type: node.type || 'interaction',
+            content: node.label,
+            prompt: node.label,
+            response: `${node.type || 'node'} • degree ${node.degree || 0}`,
+            concepts: node.concepts || [],
+            graph: node.graph,
+            metadata: {
+                neighbors: node.neighbors,
+                score: node.score,
+                aggregate: node.metadata?.aggregate || false,
+                graph: node.metadata?.graph || node.graph
+            },
+            timestamp: node.timestamp || Date.now() - (node.rank * 45000)
+        }));
+    }
+
     /**
      * Aggregate data from multiple sources based on ZPT scope and contextual relevance
      * Now prioritizes data that would be used for prompt synthesis at current ZPT state
      */
-    aggregateDataSources(sessionData, conceptsData, zptState, sparqlData, entitiesData, memoryData, contextScope) {
+    aggregateDataSources(sessionData = {}, conceptsData = {}, zptState = {}, sparqlData = {}, entitiesData = {}, memoryData = {}, contextScope = {}) {
         // Primary data: What's currently in contextual scope (for prompt synthesis)
-        const contextualInfo = contextScope.contextual || {};
-        const isContextualScope = contextScope.success && contextualInfo.items > 0;
+        const contextualInfo = contextScope?.contextual || {};
+        const isContextualScope = contextScope?.success && contextualInfo.items > 0;
 
         console.log('🔍 VSOM Data Sources:', {
             contextualScope: isContextualScope,
@@ -609,7 +788,9 @@ class VSOMStandaloneApp {
             await this.components.dataPanel.updateData({
                 interactions: this.state.interactions,
                 sessionStats: this.getSessionStats(),
-                vsomStats: this.getVSOMStats()
+                vsomStats: this.getVSOMStats(),
+                graphSummary: this.state.graphSummary,
+                graphMetadata: this.state.graphSummary?.metadata
             });
         }
 

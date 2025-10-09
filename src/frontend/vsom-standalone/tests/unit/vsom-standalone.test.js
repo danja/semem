@@ -358,6 +358,40 @@ describe('VSOM Standalone Application', () => {
             expect(processor.analyzeConcepts(undefinedConcepts).total).toBe(0);
             expect(processor.analyzeConcepts(numberConcepts).total).toBe(0);
         });
+
+        it('should process graph summary data into a deterministic layout', async () => {
+            const graphSummary = {
+                nodes: [
+                    { id: 'node-a', label: 'Node A', type: 'bookmark', score: 5, scoreNormalized: 1, degree: 5, concepts: ['bookmark'] },
+                    { id: 'node-b', label: 'Node B', type: 'document', score: 3, scoreNormalized: 0.6, degree: 3, concepts: ['document'] },
+                    { id: 'node-c', label: 'Node C', type: 'chunk', score: 2, scoreNormalized: 0.4, degree: 2, concepts: ['chunk'] }
+                ],
+                edges: [
+                    { source: 'node-a', target: 'node-b', type: 'related', label: 'A → B' },
+                    { source: 'node-b', target: 'node-c', type: 'related', label: 'B → C' }
+                ],
+                typeStats: {
+                    bookmark: { label: 'Bookmark', count: 1, representativeConcepts: ['bookmark'], examples: ['Node A'] },
+                    document: { label: 'Document', count: 1, representativeConcepts: ['document'], examples: ['Node B'] },
+                    chunk: { label: 'Chunk', count: 1, representativeConcepts: ['chunk'], examples: ['Node C'] }
+                },
+                metadata: {
+                    totalNodes: 3,
+                    totalEdges: 2,
+                    truncated: false,
+                    layout: { maxNodes: 3 }
+                }
+            };
+
+            const result = await processor.processGraphSummary(graphSummary, { zoom: 'entity' });
+
+            expect(result.nodes).toHaveLength(3);
+            expect(result.connections.length).toBeGreaterThan(0);
+            expect(result.nodes[0]).toHaveProperty('x');
+            expect(result.nodes[0]).toHaveProperty('y');
+            expect(result.nodes[0]).toHaveProperty('interactionId');
+            expect(result.metadata.filteredCount).toBe(3);
+        });
     });
 
     describe('VSOMApiService', () => {

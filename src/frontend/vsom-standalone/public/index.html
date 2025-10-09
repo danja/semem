@@ -220,6 +220,27 @@
                         </div>
                     </div>
 
+                    <!-- Knowledge Graph Overview -->
+                    <div class="info-section" id="graph-overview">
+                        <h3 class="info-title">Knowledge Graph</h3>
+                        <div class="info-grid compact">
+                            <div class="info-item">
+                                <span class="info-label">Nodes:</span>
+                                <span class="info-value" id="graph-node-count">0</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Edges:</span>
+                                <span class="info-value" id="graph-edge-count">0</span>
+                            </div>
+                        </div>
+                        <div class="graph-summary-status muted" id="graph-summary-status">
+                            Awaiting knowledge graph data…
+                        </div>
+                        <ul class="graph-type-list" id="graph-type-list">
+                            <li class="graph-type-empty">No node types observed</li>
+                        </ul>
+                    </div>
+
                     <!-- Recent Interactions -->
                     <div class="info-section">
                         <h3 class="info-title">Recent Interactions</h3>
@@ -255,6 +276,6 @@
     <div id="toast-container" class="toast-container"></div>
 
     <!-- Scripts -->
-    <script type="module" src="js/vsom-standalone.js?v=12"></script>
+    <script type="module" src="js/vsom-standalone.js?v=13"></script>
 </body>
 </html>

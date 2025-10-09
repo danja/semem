@@ -351,19 +351,24 @@ export default class VSOMGrid {
             return { minX: 0, maxX: 0, minY: 0, maxY: 0, width: 0, height: 0 };
         }
 
-        const positions = this.data.nodes.map(node => ({
-            x: (node.x || 0) * this.options.gridSpacing,
-            y: (node.y || 0) * this.options.gridSpacing
-        }));
+        const padding = this.options.gridSpacing / 3;
+        const unitSpacing = padding * 2;
 
-        const minX = Math.min(...positions.map(p => p.x)) - this.options.gridSpacing;
-        const maxX = Math.max(...positions.map(p => p.x)) + this.options.gridSpacing;
-        const minY = Math.min(...positions.map(p => p.y)) - this.options.gridSpacing;
-        const maxY = Math.max(...positions.map(p => p.y)) + this.options.gridSpacing;
+        const xCoords = this.data.nodes.map(node => typeof node.x === 'number' ? node.x : 0);
+        const yCoords = this.data.nodes.map(node => typeof node.y === 'number' ? node.y : 0);
 
-        // Ensure minimum bounds to prevent issues with single nodes at origin
-        const width = Math.max(maxX - minX, this.options.gridSpacing * 2);
-        const height = Math.max(maxY - minY, this.options.gridSpacing * 2);
+        const minXCoord = Math.max(Math.min(...xCoords, 1), 1);
+        const maxXCoord = Math.max(Math.max(...xCoords, 1), 1);
+        const minYCoord = Math.max(Math.min(...yCoords, 1), 1);
+        const maxYCoord = Math.max(Math.max(...yCoords, 1), 1);
+
+        const minX = (minXCoord - 1) * unitSpacing - padding;
+        const maxX = (maxXCoord) * unitSpacing + padding - unitSpacing;
+        const minY = (minYCoord - 1) * unitSpacing - padding;
+        const maxY = (maxYCoord) * unitSpacing + padding - unitSpacing;
+
+        const width = Math.max(maxX - minX, unitSpacing * 2);
+        const height = Math.max(maxY - minY, unitSpacing * 2);
 
         return {
             minX,
@@ -706,8 +711,11 @@ export default class VSOMGrid {
         this.semanticClusters = this.identifySemanticClusters(this.data.nodes);
         this.clusterData = this.buildClusterData(this.semanticClusters);
 
-        // Calculate node connections based on semantic similarity
-        this.nodeConnections = this.calculateNodeConnections(this.data.nodes);
+        if (Array.isArray(this.data.connections) && this.data.connections.length > 0) {
+            this.nodeConnections = this.data.connections;
+        } else {
+            this.nodeConnections = this.calculateNodeConnections(this.data.nodes);
+        }
         this.connections = this.nodeConnections; // For test compatibility
 
         // Extract quality metrics for visualization
@@ -1058,6 +1066,10 @@ export default class VSOMGrid {
         for (const node of this.data.nodes) {
             const x = node.x * this.options.gridSpacing;
             const y = node.y * this.options.gridSpacing;
+            const baseSize = typeof node.size === 'number' ? node.size : this.options.nodeSize;
+            const qualityBoost = node.quality && node.quality > 0.8 ? 2 : 0;
+            const importanceBoost = node.qualityMetrics?.importance > 0.8 ? 1 : 0;
+            const nodeSize = baseSize + qualityBoost + importanceBoost;
 
             // Create node group
             const nodeGroup = VSOMUtils.createSVGElement('g', {
@@ -1070,7 +1082,7 @@ export default class VSOMGrid {
             const circle = VSOMUtils.createSVGElement('circle', {
                 cx: 0,
                 cy: 0,
-                r: node.size,
+                r: nodeSize,
                 fill: node.color,
                 stroke: this.getNodeStroke(node),
                 'stroke-width': this.getNodeStrokeWidth(node),
@@ -1085,10 +1097,11 @@ export default class VSOMGrid {
 
             // Add quality indicator ring
             if (node.qualityMetrics && node.qualityMetrics.importance > 0.7) {
-                const qualityRing = VSOMUtils.createSVGElement('circle', {
+                const qualityRing = VSOMUtils.createSVGElement('ellipse', {
                     cx: 0,
                     cy: 0,
-                    r: node.size + 3,
+                    rx: nodeSize + 3,
+                    ry: nodeSize + 3,
                     fill: 'none',
                     stroke: '#ffd700',
                     'stroke-width': '2',
@@ -1100,10 +1113,11 @@ export default class VSOMGrid {
 
             // Add processing indicator
             if (node.processingSteps && node.processingSteps.length > 2) {
-                const processRing = VSOMUtils.createSVGElement('circle', {
+                const processRing = VSOMUtils.createSVGElement('ellipse', {
                     cx: 0,
                     cy: 0,
-                    r: node.size + 1.5,
+                    rx: nodeSize + 1.5,
+                    ry: nodeSize + 1.5,
                     fill: 'none',
                     stroke: '#00bcd4',
                     'stroke-width': '1',
@@ -1130,10 +1144,12 @@ export default class VSOMGrid {
 
             // Add concept count indicator
             if (node.concepts && node.concepts.length > 0) {
-                const conceptBadge = VSOMUtils.createSVGElement('circle', {
-                    cx: node.size * 0.7,
-                    cy: -node.size * 0.7,
-                    r: Math.min(6, node.concepts.length + 3),
+                const badgeRadius = Math.min(6, node.concepts.length + 3);
+                const conceptBadge = VSOMUtils.createSVGElement('ellipse', {
+                    cx: nodeSize * 0.7,
+                    cy: -nodeSize * 0.7,
+                    rx: badgeRadius,
+                    ry: badgeRadius,
                     fill: '#4caf50',
                     stroke: 'white',
                     'stroke-width': '1',
@@ -1142,8 +1158,8 @@ export default class VSOMGrid {
                 nodeGroup.appendChild(conceptBadge);
 
                 const conceptCount = VSOMUtils.createSVGElement('text', {
-                    x: node.size * 0.7,
-                    y: -node.size * 0.7 + 2,
+                    x: nodeSize * 0.7,
+                    y: -nodeSize * 0.7 + 2,
                     'text-anchor': 'middle',
                     'font-size': '8px',
                     fill: 'white',
@@ -1264,8 +1280,9 @@ export default class VSOMGrid {
     }
 
     createNodeLabel(node, x, y) {
-        let labelText = `${node.type}: ${node.content.substring(0, 20)}`;
-        if (node.content.length > 20) labelText += '...';
+        const baseContent = (node.content || node.label || node.prompt || node.id || 'Node').toString();
+        let labelText = `${node.type || 'interaction'}: ${baseContent.substring(0, 20)}`;
+        if (baseContent.length > 20) labelText += '...';
 
         const label = VSOMUtils.createSVGElement('text', {
             x: x,

@@ -50,7 +50,9 @@ export default class VSOMApiService {
             clearTimeout(timeoutId);
 
             // Extract and store session ID from response
-            const responseSessionId = response.headers.get('mcp-session-id');
+            const responseSessionId = typeof response.headers?.get === 'function'
+                ? response.headers.get('mcp-session-id')
+                : null;
             if (responseSessionId && responseSessionId !== this.sessionId) {
                 console.log(`🔗 [VSOM] Session ID updated: ${this.sessionId} → ${responseSessionId}`);
                 this.sessionId = responseSessionId;
@@ -61,12 +63,23 @@ export default class VSOMApiService {
                 throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
             }
 
-            const contentType = response.headers.get('content-type');
-            if (contentType && contentType.includes('application/json')) {
+            const contentTypeHeader = typeof response.headers?.get === 'function'
+                ? response.headers.get('content-type')
+                : response.headers?.['content-type'] || response.headers?.['Content-Type'] || '';
+
+            if (contentTypeHeader && contentTypeHeader.includes('application/json')) {
                 return await response.json();
             }
 
-            return await response.text();
+            if (typeof response.json === 'function' && !contentTypeHeader) {
+                return await response.json();
+            }
+
+            if (typeof response.text === 'function') {
+                return await response.text();
+            }
+
+            return null;
         } catch (error) {
             if (error.name === 'AbortError') {
                 console.error(`Request timeout [${endpoint}] after ${timeout}ms`);
