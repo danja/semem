@@ -43,7 +43,23 @@ export const AskSchema = z.object({
 
 export const AugmentSchema = z.object({
   target: z.string().optional().default('all'),
-  operation: z.enum(['auto', 'concepts', 'attributes', 'relationships', 'process_lazy', 'chunk_documents', 'label', 'extract_concepts', 'generate_embedding', 'analyze_text', 'concept_embeddings']).optional().default('auto'),
+  operation: z.enum([
+    'auto',
+    'concepts',
+    'attributes',
+    'relationships',
+    'process_lazy',
+    'chunk_documents',
+    'label',
+    'extract_concepts',
+    'generate_embedding',
+    'analyze_text',
+    'concept_embeddings',
+    'load_document',
+    'convert_pdf',
+    'chunk_markdown',
+    'ingest_chunks'
+  ]).optional().default('auto'),
   options: z.object({
     // Chunking options
     maxChunkSize: z.number().optional().default(2000),
@@ -65,7 +81,7 @@ export const AugmentSchema = z.object({
     keywordCount: z.number().optional().default(5),
     dryRun: z.boolean().optional().default(false)
   }).optional().default({})
-});
+}).catchall(z.unknown());
 
 // ZPT Navigation schemas  
 export const ZoomSchema = z.object({

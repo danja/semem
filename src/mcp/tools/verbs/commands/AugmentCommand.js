@@ -18,6 +18,10 @@ import { ChunkDocumentsStrategy } from '../strategies/augment/ChunkDocumentsStra
 import { LegacyOperationsStrategy } from '../strategies/augment/LegacyOperationsStrategy.js';
 import { AutoStrategy } from '../strategies/augment/AutoStrategy.js';
 import { LabelStrategy } from '../strategies/augment/LabelStrategy.js';
+import { LoadDocumentStrategy } from '../strategies/augment/LoadDocumentStrategy.js';
+import { ConvertPDFStrategy } from '../strategies/augment/ConvertPDFStrategy.js';
+import { ChunkMarkdownStrategy } from '../strategies/augment/ChunkMarkdownStrategy.js';
+import { IngestChunksStrategy } from '../strategies/augment/IngestChunksStrategy.js';
 
 export class AugmentCommand extends BaseVerbCommand {
   constructor() {
@@ -38,6 +42,10 @@ export class AugmentCommand extends BaseVerbCommand {
     this.strategies.set('process_lazy', new ProcessLazyStrategy());
     this.strategies.set('chunk_documents', new ChunkDocumentsStrategy());
     this.strategies.set('label', new LabelStrategy());
+    this.strategies.set('load_document', new LoadDocumentStrategy());
+    this.strategies.set('convert_pdf', new ConvertPDFStrategy());
+    this.strategies.set('chunk_markdown', new ChunkMarkdownStrategy());
+    this.strategies.set('ingest_chunks', new IngestChunksStrategy());
 
     // Legacy operations strategy handles multiple operations
     const legacyStrategy = new LegacyOperationsStrategy();
@@ -66,7 +74,13 @@ export class AugmentCommand extends BaseVerbCommand {
    */
   async execute(params) {
     const validatedParams = this.validateParameters(params);
-    const { target, operation = 'auto', options = {}, parameters = {} } = validatedParams;
+    const {
+      target,
+      operation = 'auto',
+      options = {},
+      parameters = {},
+      ...additionalParams
+    } = validatedParams;
 
     // Backward compatibility: merge legacy 'parameters' into 'options'
     const mergedOptions = { ...parameters, ...options };
@@ -81,7 +95,8 @@ export class AugmentCommand extends BaseVerbCommand {
       target: typeof target === 'string' ? target.substring(0, 50) + '...' : target,
       operation,
       options: Object.keys(mergedOptions),
-      parameters: Object.keys(parameters)
+      parameters: Object.keys(parameters),
+      extraKeys: Object.keys(additionalParams)
     });
 
     try {
@@ -111,12 +126,25 @@ export class AugmentCommand extends BaseVerbCommand {
 
       // Execute strategy
       const strategyResult = await strategy.execute(
-        { target, operation, options: mergedOptions },
+        {
+          target,
+          operation,
+          options: mergedOptions,
+          parameters,
+          ...additionalParams
+        },
         {
           memoryManager: this.memoryManager,
           safeOps: this.safeOps,
           stateManager: this.stateManager,
-          zptService: this.zptService
+          zptService: this.zptService,
+          templateLoader: this.templateLoader,
+          enhancementCoordinator: this.enhancementCoordinator,
+          memoryDomainManager: this.memoryDomainManager,
+          memoryRelevanceEngine: this.memoryRelevanceEngine,
+          config: this.config || this.memoryManager?.config || this.sharedContext?.config || null,
+          storage: this.storage || this.memoryManager?.store || this.sharedContext?.storage || null,
+          sharedContext: this.sharedContext || null
         }
       );
 

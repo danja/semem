@@ -22,6 +22,7 @@ Only look at docs when requested. Always ignore all files under docs/ignore
 When creating new code follow the patterns described in `docs/manual/infrastructure.md`
 
 - scripts should be run from the server root
+- Mocking is only allowed for trivial arithmetic-style unit checks (e.g. “does a + b equal c?”); every other test must assume the live services defined in `config/config.json` are reachable and interact with them directly.
 
 ## Configuration Management
 

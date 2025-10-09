@@ -180,3 +180,15 @@
   ]
 }
 ```
+
+## Implementation Status (`src/workflows/index.js`)
+- `src/workflows/index.js` now re-exports `WorkflowRunner` so callers can simply `import WorkflowRunner from 'src/workflows/index.js';`.
+- `WorkflowRunner` (in `src/workflows/WorkflowRunner.js`) reads JSON workflow definitions from `src/workflows/`, expands `${...}` placeholders using the shared execution context, and delegates verbs via `SimpleVerbsService`.
+- Each step result is stored under both `stepResults[stepId]` and `context['$' + stepId]`; later steps can reference these values (e.g. `${step_2.answer}`).
+- Steps may set `continueOnError: true`; otherwise any verb error or `{ success: false }` response raises, so failures surface immediately.
+- The runner records a lightweight execution log (`log`) alongside structured results, which will help when we add metrics or richer orchestration features.
+- Workflow definitions go through a Zod schema that enforces unique step ids, validates parameter metadata, and surfaces JSON/schema errors with file context before execution begins.
+- Parameter definitions now support required/default/nullable flags; missing or mistyped values throw before verbs run, keeping orchestration deterministic.
+- Placeholder interpolation is strict—unresolved `${...}` paths throw with workflow/step metadata instead of silently degrading—and the runner emits structured lifecycle logs via the unified logger.
+- `Config.js` still needs a cleanup pass; the SPARQL endpoint defaults/config should live with the other SPARQL settings rather than being scattered in the class body.
+- New ingest pipeline verbs (`load_document`, `convert_pdf`, `chunk_markdown`, `ingest_chunks`) are first-class augment strategies that reuse the existing document services, so workflows now orchestrate real file → markdown → chunk → SPARQL ingestion without ad-hoc glue code.

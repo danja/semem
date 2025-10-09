@@ -4,7 +4,7 @@
   "parameters": {
     "template": { "type": "string", "required": true },
     "graph": { "type": "string", "required": true },
-    "limit": { "type": "number", "required": false }
+    "limit": { "type": "number", "required": false, "nullable": true, "default": null }
   },
   "steps": [
     {

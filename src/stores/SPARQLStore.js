@@ -153,6 +153,10 @@ export default class SPARQLStore extends BaseStore {
         return this.sparqlExecute.executeSparqlUpdate(update, endpoint)
     }
 
+    async executeUpdate(update, endpoint = null) {
+        return this.executeSparqlUpdate(update, endpoint)
+    }
+
     async beginTransaction() {
         return this.sparqlExecute.beginTransaction()
     }

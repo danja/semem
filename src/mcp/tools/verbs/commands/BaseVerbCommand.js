@@ -38,6 +38,9 @@ export class BaseVerbCommand {
     this.memoryDomainManager = context.memoryDomainManager;
     this.memoryRelevanceEngine = context.memoryRelevanceEngine;
     this.zptService = context.zptService;
+    this.config = context.config || context.memoryManager?.config || null;
+    this.storage = context.storage || context.memoryManager?.store || null;
+    this.sharedContext = context;
 
     // Perform command-specific initialization
     await this.onInitialize(context);

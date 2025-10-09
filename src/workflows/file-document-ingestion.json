@@ -22,8 +22,9 @@
       "operation": "convert_pdf",
       "args": {
         "buffer": "${load.buffer}",
-        "metadata": {
-          "sourceFile": "${filePath}" }
+        "mimeType": "${load.mimeType}",
+        "metadata": "${load.metadata}",
+        "filename": "${load.filename}"
       }
     },
     {
