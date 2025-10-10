@@ -26,6 +26,7 @@ export default class DocumentAPI extends BaseAPI {
             'application/pdf',
             'text/html',
             'text/plain',
+            'text/markdown',
             'application/octet-stream' // For some PDF uploads
         ];
         this.documentStore = new Map(); // In-memory document tracking
@@ -297,14 +298,20 @@ export default class DocumentAPI extends BaseAPI {
             });
             // HTMLConverter returns { markdown, metadata, success }
             result = { content: result.markdown, metadata: result.metadata };
-        } else if (inputMimeType === 'text/plain' || inputFilename?.endsWith('.txt')) {
-            // Text files need no conversion
+        } else if (
+            inputMimeType === 'text/plain' ||
+            inputMimeType === 'text/markdown' ||
+            inputFilename?.endsWith('.txt') ||
+            inputFilename?.toLowerCase().endsWith('.md') ||
+            inputFilename?.toLowerCase().endsWith('.markdown')
+        ) {
+            // Text and markdown files need no conversion
             result = {
                 content: typeof inputContent === 'string' ? inputContent : inputContent.toString('utf8'),
                 metadata: {
                     filename: inputFilename,
                     size: Buffer.isBuffer(inputContent) ? inputContent.length : inputContent.length,
-                    contentType: 'text/plain'
+                    contentType: inputMimeType || 'text/plain'
                 }
             };
         } else {

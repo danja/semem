@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Workbench Document Upload Integration', () => {
   test('uploads a document through the Workbench UI', async ({ page }) => {
-    const fileName = `workbench-upload-${Date.now()}.txt`;
+    const fileName = `workbench-upload-${Date.now()}.md`;
     const fileContents = [
       '# Workbench Upload Verification',
       '',
@@ -19,7 +19,7 @@ test.describe('Workbench Document Upload Integration', () => {
 
     await page.setInputFiles('#document-file', {
       name: fileName,
-      mimeType: 'text/plain',
+      mimeType: 'text/markdown',
       buffer: Buffer.from(fileContents, 'utf-8')
     });
 

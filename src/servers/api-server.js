@@ -130,6 +130,7 @@ class APIServer {
                     'application/pdf',
                     'text/html',
                     'text/plain',
+                    'text/markdown',
                     'application/octet-stream'
                 ];
                 if (allowedMimeTypes.includes(file.mimetype)) {
@@ -440,7 +441,7 @@ class APIServer {
             logger: this.logger,
             tempDir: '/tmp/semem-documents',
             maxFileSize: 10 * 1024 * 1024, // 10MB
-            allowedMimeTypes: ['application/pdf', 'text/html', 'text/plain', 'application/octet-stream']
+            allowedMimeTypes: ['application/pdf', 'text/html', 'text/plain', 'text/markdown', 'application/octet-stream']
         });
         await documentApi.initialize();
 
