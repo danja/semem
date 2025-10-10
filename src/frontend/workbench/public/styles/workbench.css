@@ -1812,53 +1812,62 @@ body {
     color: var(--text-muted);
 }
 
-.chat-send-button {
-    background: var(--primary-color);
-    color: white;
-    border: none;
-    border-radius: var(--border-radius);
-    padding: var(--space-sm) var(--space-md);
-    cursor: pointer;
-    transition: background-color 0.2s ease;
+.chat-action-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    margin-top: var(--space-sm);
+}
+
+.chat-action-button {
     display: flex;
     align-items: center;
     gap: var(--space-xs);
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
     min-height: 38px;
-    font-size: 0.875rem;
+}
+
+.chat-action-button:hover:not(:disabled) {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.chat-action-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.chat-action-button .button-loader {
+    display: none;
+    animation: spin 1s linear infinite;
+}
+
+.chat-send-button {
+    background: var(--primary-color);
+    color: #fff;
+    border-color: var(--primary-color);
 }
 
 .chat-send-button:hover:not(:disabled) {
     background: var(--primary-hover);
+    color: #fff;
 }
 
 .chat-send-button:disabled {
     background: var(--text-muted);
-    cursor: not-allowed;
-    opacity: 0.6;
-}
-
-.chat-send-button .button-loader {
-    animation: spin 1s linear infinite;
+    border-color: var(--text-muted);
 }
 
 @keyframes spin {
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
-}
-
-.chat-hints {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-sm);
-    font-size: 0.75rem;
-    color: var(--text-muted);
-}
-
-.hint-item {
-    background: rgba(37, 99, 235, 0.1);
-    padding: var(--space-xs) var(--space-sm);
-    border-radius: 12px;
-    white-space: nowrap;
 }
 
 /* Command suggestions dropdown */
@@ -1926,18 +1935,20 @@ body {
         font-size: 0.875rem;
     }
     
-    .chat-hints {
-        display: none;
-    }
-    
     .input-group {
         flex-direction: column;
         align-items: stretch;
     }
-    
-    .chat-send-button {
-        align-self: flex-end;
-        min-width: 80px;
+
+    .chat-action-buttons {
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .chat-action-button {
+        width: 100%;
+        justify-content: center;
     }
 }
 

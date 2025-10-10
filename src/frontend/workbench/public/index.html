@@ -58,21 +58,34 @@
                                 rows="1"
                                 required
                             ></textarea>
+                        </div>
+
+                        <div class="chat-action-buttons">
                             <button 
                                 type="submit" 
                                 id="chat-send" 
-                                class="chat-send-button"
+                                class="chat-action-button chat-send-button"
                                 aria-label="Send message"
                             >
-                                <span class="button-icon">📤</span>
+                                <span class="button-icon">💬</span>
+                                <span class="button-text">Chat</span>
                                 <span class="button-loader" style="display: none;">⏳</span>
                             </button>
-                        </div>
-                        
-                        <div class="chat-hints">
-                            <span class="hint-item">💡 Try: /ask What is semantic memory?</span>
-                            <span class="hint-item">💡 Try: /tell Today I learned about...</span>
-                            <span class="hint-item">💡 Type naturally for conversation</span>
+                            <button type="button" id="chat-ask" class="chat-action-button" aria-label="Send as Ask">
+                                <span class="button-icon">🧠</span>
+                                <span class="button-text">Ask</span>
+                                <span class="button-loader" style="display: none;">⏳</span>
+                            </button>
+                            <button type="button" id="chat-tell" class="chat-action-button" aria-label="Send as Tell">
+                                <span class="button-icon">💾</span>
+                                <span class="button-text">Tell</span>
+                                <span class="button-loader" style="display: none;">⏳</span>
+                            </button>
+                            <button type="button" id="chat-upload" class="chat-action-button" aria-label="Upload document">
+                                <span class="button-icon">📄</span>
+                                <span class="button-text">Upload</span>
+                                <span class="button-loader" style="display: none;">⏳</span>
+                            </button>
                         </div>
                     </form>
                 </div>

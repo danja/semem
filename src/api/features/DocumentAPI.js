@@ -30,6 +30,7 @@ export default class DocumentAPI extends BaseAPI {
         ];
         this.documentStore = new Map(); // In-memory document tracking
         this.processingJobs = new Map(); // Track async processing jobs
+        this.memoryManager = null;
     }
 
     async initialize() {
@@ -46,14 +47,19 @@ export default class DocumentAPI extends BaseAPI {
 
         // Get dependencies from registry if available
         const registry = this.config.registry;
-        if (registry) {
-            try {
-                // Document services don't require dependencies from registry
-                // They are self-contained service classes
-                this.logger.info('DocumentAPI initialized successfully');
-            } catch (error) {
-                this.logger.warn('Some dependencies not available:', error.message);
+        if (!registry) {
+            throw new Error('DocumentAPI requires registry access to shared services');
+        }
+
+        try {
+            this.memoryManager = registry.get('memory');
+            if (!this.memoryManager) {
+                throw new Error('Memory manager not available via registry');
             }
+            this.logger.info('DocumentAPI initialized successfully with memory integration');
+        } catch (error) {
+            this.logger.error('Failed to initialize DocumentAPI dependencies:', error.message);
+            throw error;
         }
     }
 
@@ -134,6 +140,22 @@ export default class DocumentAPI extends BaseAPI {
 
         const file = files.file;
         const options = params.options || {};
+        const resolvedNamespace = this._resolveGraphName(options.namespace || params.namespace);
+        const mergedOptions = {
+            ...options,
+            convert: options.convert !== false,
+            chunk: options.chunk !== false,
+            ingest: options.ingest !== false,
+            namespace: options.namespace || params.namespace || resolvedNamespace,
+            graphName: options.graphName || resolvedNamespace
+        };
+
+        if (!mergedOptions.namespace) {
+            throw new Error('Failed to resolve namespace for document ingestion');
+        }
+
+        const uploadMetadata = this._normalizeMetadata(params.metadata);
+        const documentType = params.documentType || uploadMetadata.documentType || this._inferDocumentType(file.mimetype, file.originalname);
 
         // Validate file
         this._validateFile(file);
@@ -152,7 +174,9 @@ export default class DocumentAPI extends BaseAPI {
             extension,
             uploadedAt: timestamp,
             status: 'uploaded',
-            operations: []
+            operations: [],
+            documentType,
+            metadata: uploadMetadata
         };
 
         this.documentStore.set(documentId, documentMeta);
@@ -162,11 +186,13 @@ export default class DocumentAPI extends BaseAPI {
             filename,
             size: file.size,
             mimeType: file.mimetype,
-            status: 'uploaded'
+            status: 'uploaded',
+            documentType,
+            metadata: uploadMetadata
         };
 
         // Auto-convert if requested
-        if (options.convert !== false) {
+        if (mergedOptions.convert !== false) {
             try {
                 const convertResult = await this.convertDocument({
                     documentId,
@@ -175,16 +201,25 @@ export default class DocumentAPI extends BaseAPI {
                     filename
                 }, operationId);
 
+                const combinedMetadata = {
+                    ...convertResult.metadata,
+                    ...uploadMetadata,
+                    documentType,
+                    filename,
+                    uploadedAt: timestamp
+                };
+
                 result.conversion = convertResult;
                 documentMeta.status = 'converted';
                 documentMeta.operations.push('convert');
 
                 // Auto-chunk if requested
-                if (options.chunk !== false) {
+                if (mergedOptions.chunk !== false) {
                     const chunkResult = await this.chunkDocument({
                         documentId,
                         content: convertResult.content,
-                        metadata: convertResult.metadata
+                        metadata: combinedMetadata,
+                        options: mergedOptions
                     }, operationId);
 
                     result.chunking = chunkResult;
@@ -192,11 +227,12 @@ export default class DocumentAPI extends BaseAPI {
                     documentMeta.operations.push('chunk');
 
                     // Auto-ingest if requested
-                    if (options.ingest !== false) {
+                    if (mergedOptions.ingest !== false) {
                         const ingestResult = await this.ingestDocument({
                             documentId,
                             chunkingResult: chunkResult.fullResult,
-                            namespace: options.namespace
+                            namespace: mergedOptions.namespace,
+                            options: mergedOptions
                         }, operationId);
 
                         result.ingestion = ingestResult;
@@ -204,6 +240,8 @@ export default class DocumentAPI extends BaseAPI {
                         documentMeta.operations.push('ingest');
                     }
                 }
+
+                result.metadata = combinedMetadata;
             } catch (error) {
                 documentMeta.status = 'error';
                 documentMeta.error = error.message;
@@ -303,20 +341,28 @@ export default class DocumentAPI extends BaseAPI {
             throw new Error('No content provided for chunking');
         }
 
-
+        const chunkOptionsInput = options || {};
+        const namespace = this._resolveGraphName(chunkOptionsInput.namespace);
+        if (!namespace) {
+            throw new Error('namespace undefined');
+        }
 
         const chunkOptions = {
-            namespace: options.namespace,
+            ...chunkOptionsInput,
+            namespace,
+            baseNamespace: chunkOptionsInput.baseNamespace
+                ? this._normalizeNamespace(chunkOptionsInput.baseNamespace)
+                : this._normalizeNamespace(namespace),
             provenance: {
+                ...(chunkOptionsInput.provenance || {}),
                 operation: 'document-api-chunk',
                 operationId,
                 timestamp: new Date().toISOString()
-            },
-            ...options
+            }
         };
 
         const chunker = new Chunker(chunkOptions);
-        const result = await chunker.chunk(content, {}, chunkOptions);
+        const result = await chunker.chunk(content, metadata || {}, chunkOptions);
 
         // Update document store if documentId provided
         if (documentId) {
@@ -356,15 +402,21 @@ export default class DocumentAPI extends BaseAPI {
             throw new Error('No chunks or chunkingResult provided for ingestion');
         }
 
-        if (!namespace) throw Error('namespace undefined')
+        const normalizedOptions = options || {};
+        const ingestNamespace = this._resolveGraphName(namespace || normalizedOptions.namespace);
+        if (!ingestNamespace) throw Error('namespace undefined')
         const ingestOptions = {
-            namespace: namespace,
+            ...normalizedOptions,
+            namespace: ingestNamespace,
+            graphName: normalizedOptions.graphName || ingestNamespace,
             provenance: {
+                ...(normalizedOptions.provenance || {}),
                 operation: 'document-api-ingest',
                 operationId,
-                timestamp: new Date().toISOString()
-            },
-            ...options
+                timestamp: new Date().toISOString(),
+                chunkCount: finalChunkingResult.chunks?.length || 0,
+                sourceUri: finalChunkingResult.sourceUri
+            }
         };
 
         // Get SPARQL store from registry
@@ -376,6 +428,16 @@ export default class DocumentAPI extends BaseAPI {
         const ingester = new Ingester(store, ingestOptions);
         const result = await ingester.ingest(finalChunkingResult, ingestOptions);
 
+        const documentMeta = documentId ? this.documentStore.get(documentId) : null;
+        const memoryResult = await this._storeChunksInMemory({
+            documentMeta,
+            documentId,
+            chunkingResult: finalChunkingResult,
+            ingestOptions,
+            ingestionResult: result,
+            operationId
+        });
+
         // Update document store if documentId provided
         if (documentId) {
             const doc = this.documentStore.get(documentId);
@@ -385,13 +447,16 @@ export default class DocumentAPI extends BaseAPI {
                     ingestedAt: new Date().toISOString(),
                     graphUri: result.graphUri
                 };
+                doc.operations.push('memory');
+                doc.memory = memoryResult;
             }
         }
 
         return {
             triplesCreated: result.triplesCreated,
             graphUri: result.graphUri,
-            chunksIngested: finalChunkingResult.chunks?.length || 0
+            chunksIngested: finalChunkingResult.chunks?.length || 0,
+            memory: memoryResult
         };
     }
 
@@ -490,6 +555,205 @@ export default class DocumentAPI extends BaseAPI {
         }
 
         return { job };
+    }
+
+    async _storeChunksInMemory({ documentMeta, documentId, chunkingResult, ingestOptions, ingestionResult, operationId }) {
+        if (!this.memoryManager) {
+            throw new Error('Memory manager not available for document chunk storage');
+        }
+
+        if (!chunkingResult?.chunks || chunkingResult.chunks.length === 0) {
+            throw new Error('No chunks available to store in memory');
+        }
+
+        const storedInteractions = [];
+        const docId = documentMeta?.id || documentMeta?.documentId || documentId;
+        const docName = documentMeta?.filename;
+        const docType = documentMeta?.documentType;
+        const uploadTimestamp = documentMeta?.uploadedAt;
+
+        for (const chunk of chunkingResult.chunks) {
+            const chunkTitle = this._createChunkTitle(chunk, docName, chunkingResult.chunks.length);
+            const chunkContent = chunk.content;
+
+            if (!chunkContent || typeof chunkContent !== 'string') {
+                throw new Error(`Chunk ${chunk.uri || chunk.index} is missing content for memory storage`);
+            }
+
+            const interactionId = chunk.uri || `doc:${docId || 'unknown'}:chunk:${chunk.index}`;
+            const baseMetadata = {
+                id: interactionId,
+                memoryType: 'long-term',
+                source: 'document-upload',
+                documentId: docId,
+                documentName: docName,
+                documentType: docType,
+                chunkUri: chunk.uri,
+                chunkIndex: chunk.index,
+                chunkHash: chunk.metadata?.hash,
+                chunkTitle,
+                chunkPreview: chunkContent.slice(0, 280),
+                namespace: ingestOptions?.namespace,
+                graph: ingestOptions?.graphName,
+                ingestionOperationId: operationId,
+                ingestionGraphUri: ingestionResult?.graphUri,
+                ragnoSourceUri: chunk.partOf,
+                ragnoCorpusUri: chunkingResult.corpus?.uri,
+                ragnoCommunityUri: chunkingResult.community?.uri,
+                uploadedAt: uploadTimestamp,
+                ingestionTimestamp: ingestionResult?.metadata?.ingestionTimestamp || new Date().toISOString()
+            };
+
+            const metadata = Object.fromEntries(
+                Object.entries(baseMetadata).filter(([, value]) => value !== undefined && value !== null)
+            );
+
+            const combinedText = `${chunkTitle}\n\n${chunkContent}`.trim();
+            const embedding = await this.memoryManager.generateEmbedding(combinedText);
+            const concepts = await this.memoryManager.extractConcepts(combinedText);
+
+            await this.memoryManager.addInteraction(
+                chunkTitle,
+                chunkContent,
+                embedding,
+                concepts,
+                {
+                    ...metadata,
+                    timestamp: Date.now()
+                }
+            );
+
+            storedInteractions.push({
+                interactionId: metadata.id || interactionId,
+                chunkUri: chunk.uri,
+                concepts: concepts.length
+            });
+        }
+
+        this.logger.info(`Stored ${storedInteractions.length} document chunks in semantic memory`, {
+            documentId: docId,
+            interactionsStored: storedInteractions.length
+        });
+
+        return {
+            stored: storedInteractions.length,
+            interactions: storedInteractions
+        };
+    }
+
+    _createChunkTitle(chunk, documentName, totalChunks) {
+        const existingTitle = chunk.title?.trim();
+        const isGeneric = existingTitle ? /^chunk\s+\d+/i.test(existingTitle) || existingTitle.toLowerCase() === 'unlabeled' : false;
+
+        if (existingTitle && !isGeneric) {
+            return existingTitle;
+        }
+
+        const content = chunk.content || '';
+        const firstNonEmptyLine = content
+            .split('\n')
+            .map(line => line.trim())
+            .find(line => line.length > 0);
+
+        if (firstNonEmptyLine) {
+            return firstNonEmptyLine.length > 120 ? `${firstNonEmptyLine.slice(0, 117)}...` : firstNonEmptyLine;
+        }
+
+        const defaultLabel = documentName ? `${documentName} chunk ${chunk.index + 1}` : `Document chunk ${chunk.index + 1}`;
+        if (!content) {
+            return defaultLabel;
+        }
+
+        const preview = content.slice(0, 120).trim();
+        return preview.length > 0 ? `${preview}${preview.length === 120 ? '...' : ''}` : defaultLabel;
+    }
+
+    /**
+     * Resolve namespace/graphName from provided value, registry config, or local config
+     * @private
+     */
+    _resolveGraphName(candidate) {
+        if (candidate && typeof candidate === 'string') {
+            return candidate;
+        }
+
+        try {
+            const registryConfig = this.config?.registry?.get?.('config');
+            if (registryConfig?.get) {
+                const value = registryConfig.get('graphName');
+                if (value) {
+                    return value;
+                }
+            }
+        } catch (error) {
+            this.logger?.warn?.(`DocumentAPI: failed to resolve graphName from registry config: ${error.message}`);
+        }
+
+        if (this.config?.get) {
+            const value = this.config.get('graphName');
+            if (value) {
+                return value;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Normalize metadata input to a plain object
+     * @private
+     */
+    _normalizeMetadata(metadata) {
+        if (!metadata || typeof metadata !== 'object') {
+            return {};
+        }
+
+        try {
+            JSON.stringify(metadata);
+            return metadata;
+        } catch {
+            const safeMetadata = {};
+            for (const [key, value] of Object.entries(metadata)) {
+                if (value === undefined) continue;
+                if (typeof value === 'object') {
+                    try {
+                        JSON.stringify(value);
+                        safeMetadata[key] = value;
+                    } catch {
+                        continue;
+                    }
+                } else if (typeof value !== 'function' && typeof value !== 'symbol') {
+                    safeMetadata[key] = value;
+                }
+            }
+            return safeMetadata;
+        }
+    }
+
+    /**
+     * Infer a document type from MIME type or filename
+     * @private
+     */
+    _inferDocumentType(mimeType, filename) {
+        if (mimeType === 'application/pdf' || filename?.toLowerCase().endsWith('.pdf')) {
+            return 'pdf';
+        }
+        if (mimeType === 'text/markdown' || filename?.toLowerCase().endsWith('.md') || filename?.toLowerCase().endsWith('.markdown')) {
+            return 'markdown';
+        }
+        return 'text';
+    }
+
+    /**
+     * Normalize namespace/base URI to ensure safe URI concatenation
+     * @private
+     */
+    _normalizeNamespace(namespace) {
+        if (!namespace || typeof namespace !== 'string') {
+            throw new Error('Invalid namespace - expected non-empty string');
+        }
+
+        return namespace.endsWith('/') ? namespace : `${namespace}/`;
     }
 
     /**

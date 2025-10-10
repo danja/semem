@@ -598,165 +598,71 @@ class WorkbenchApp {
     });
 
     try {
-      // Step 1: Process file for upload
+      // Step 1: Prepare metadata and upload options
       consoleService.info(`📄 Preparing "${file.name}" for upload...`);
-      const fileUrl = await this.createFileUrl(file);
-      consoleService.info(`✅ File prepared successfully (${this.formatFileSize(file.size)})`);
 
-      // Prepare upload payload
-      const uploadPayload = {
-        fileUrl: fileUrl,
-        filename: file.name,
-        mediaType: this.getMediaType(fileType),
+      const tags = formData.tags
+        ? formData.tags.split(',').map(t => t.trim()).filter(Boolean)
+        : [];
+
+      const uploadMetadata = this.sanitizeMetadata({
+        source: formData.source || 'workbench',
+        originalName: file.name,
+        size: file.size,
+        tags,
         documentType: fileType,
-        metadata: {
-          originalName: file.name,
-          size: file.size,
-          tags: formData.tags ? formData.tags.split(',').map(t => t.trim()) : [],
-          uploadedAt: new Date().toISOString()
-        }
+        uploadedAt: new Date().toISOString()
+      });
+
+      const uploadOptions = {
+        convert: true,
+        chunk: true,
+        ingest: true
       };
 
-      // Step 2: Upload and process document
+      // Step 2: Upload and process document via Document API
       consoleService.info(`🚀 Uploading ${fileType.toUpperCase()} document to semantic memory...`);
 
-      const result = await apiService.uploadDocument(uploadPayload);
+      const result = await apiService.uploadDocument({
+        file,
+        documentType: fileType,
+        metadata: uploadMetadata,
+        options: uploadOptions
+      });
 
-      // Step 3: Immediate chunking and embedding creation
-      if (result.success) {
-        consoleService.info(`🔄 Starting immediate chunking and embedding generation...`);
-
-        try {
-          // Try chunking operation, but handle graceful fallback if it fails
-          let chunkingResult;
-          try {
-            chunkingResult = await apiService.augment({
-              target: 'all', // Process all unprocessed documents including the one just uploaded
-              operation: 'chunk_documents',
-              options: {
-                maxChunkSize: 2000,
-                minChunkSize: 100,
-                overlapSize: 100,
-                strategy: 'semantic',
-                minContentLength: 500 // Lower threshold to ensure chunking happens
-              }
-            });
-          } catch (chunkingError) {
-            console.warn('Chunking operation failed, using alternative approach:', chunkingError.message);
-            chunkingResult = { success: false, error: chunkingError.message };
-          }
-
-          if (chunkingResult.success && chunkingResult.chunks > 0) {
-            consoleService.success(`✅ Created ${chunkingResult.chunks} searchable chunks from document`);
-            result.chunks = chunkingResult.chunks;
-            result.immediateChunking = 'success';
-          } else {
-            // Alternative approach: Store document content for immediate searchability
-            consoleService.info(`🔄 Creating searchable summary for immediate access...`);
-
-            try {
-              // Get first part of document content to make it searchable
-              const contentPreview = result.contentLength > 2000
-                ? `${filename} (${result.contentLength} chars): First section of uploaded ${uploadPayload.documentType.toUpperCase()} document. Content includes information stored in semantic memory for search and retrieval.`
-                : `${filename}: Complete ${uploadPayload.documentType.toUpperCase()} document (${result.contentLength} chars) uploaded and available for search.`;
-
-              // Sanitize metadata to prevent circular references and JSON issues
-              const sanitizedMetadata = this.sanitizeMetadata({
-                ...uploadPayload.metadata,
-                parentURI: result.unitURI,
-                processingMethod: 'workbench_upload',
-                originalFilename: filename,
-                documentLength: result.contentLength,
-                uploadTimestamp: new Date().toISOString(),
-                isDocumentSummary: true // Flag to indicate this is a summary
-              });
-
-              const summaryResult = await apiService.tell({
-                content: contentPreview,
-                type: 'document', // Use valid type instead of 'document_summary'
-                metadata: sanitizedMetadata
-              });
-
-              if (summaryResult.success) {
-                consoleService.success(`✅ Document summary created - now searchable`);
-                result.immediateChunking = 'alternative';
-                result.concepts = (result.concepts || 0) + (summaryResult.concepts || 0);
-              } else {
-                consoleService.warning(`⚠️ Failed to create searchable summary`);
-                result.immediateChunking = 'failed';
-              }
-            } catch (altError) {
-              console.warn('Alternative processing failed:', altError.message);
-              consoleService.warning(`⚠️ Document uploaded but may not be immediately searchable`);
-              result.immediateChunking = 'failed';
-            }
-          }
-
-          // Process any lazy content to ensure embeddings are generated
-          if (result.memoryIntegration === 'deferred' || !result.concepts) {
-            consoleService.info(`🧠 Generating embeddings for processed content...`);
-
-            const embeddingResult = await apiService.augment({
-              target: 'all',
-              operation: 'process_lazy',
-              options: {
-                limit: 50 // Process up to 50 items to catch the uploaded document
-              }
-            });
-
-            if (embeddingResult.success && embeddingResult.totalProcessed > 0) {
-              consoleService.success(`✅ Generated embeddings for ${embeddingResult.totalProcessed} items`);
-              result.embeddingGeneration = 'success';
-              result.processedItems = embeddingResult.totalProcessed;
-              // Update concepts count if we got more from lazy processing
-              if (embeddingResult.totalProcessed > 0 && !result.concepts) {
-                result.concepts = embeddingResult.totalProcessed;
-              }
-            } else {
-              consoleService.info(`ℹ️ No lazy content found to process for embeddings`);
-              result.embeddingGeneration = 'skipped';
-            }
-          }
-
-        } catch (postProcessingError) {
-          consoleService.warn(`⚠️ Post-processing failed: ${postProcessingError.message}`);
-          result.postProcessingError = postProcessingError.message;
-          // Don't fail the entire upload for post-processing errors
-        }
+      if (!result?.success) {
+        throw new Error(result?.error || 'Document upload failed');
       }
 
-      const uploadDuration = Date.now() - uploadStartTime;
+      // Step 3: Summarize processing results
+      const chunkCount =
+        result.chunking?.chunkCount ??
+        result.chunking?.fullResult?.chunks?.length ??
+        0;
+      const triplesCreated = result.ingestion?.triplesCreated ?? 0;
+      const processingDuration = Date.now() - uploadStartTime;
 
-      // Step 4: Report comprehensive results
-      if (result.success) {
-        let processingMessage;
-        if (result.chunks && result.chunks > 0) {
-          processingMessage = `✅ Document fully processed! Created ${result.chunks} searchable chunks`;
-          if (result.concepts) {
-            processingMessage += ` and extracted ${result.concepts} concepts`;
-          }
-          processingMessage += ` - ready for semantic search.`;
-        } else if (result.concepts) {
-          processingMessage = `✅ Document processed successfully! Extracted ${result.concepts} concepts and stored in semantic memory.`;
-        } else {
-          processingMessage = `✅ Document stored successfully in semantic memory.`;
-        }
-
-        consoleService.success(processingMessage);
-
-        // Additional status information
-        if (result.immediateChunking === 'success') {
-          consoleService.info(`🔍 Document is now fully searchable with semantic similarity`);
-        }
-        if (result.embeddingGeneration === 'success') {
-          consoleService.info(`🎯 Embeddings generated for enhanced search capabilities`);
-        }
-
+      if (chunkCount > 0) {
+        consoleService.success(`✅ Document processed into ${chunkCount} chunks in ${processingDuration}ms`);
       } else {
-        consoleService.error(`❌ Document processing failed: ${result.error || 'Unknown error'}`);
+        consoleService.success(`✅ Document stored successfully in ${processingDuration}ms`);
       }
 
-      return result;
+      if (triplesCreated > 0) {
+        consoleService.info(`📚 Ingested ${triplesCreated} triples into semantic memory`);
+      }
+
+      if (result.conversion?.metadata?.pages) {
+        consoleService.info(`📄 Document spans approximately ${result.conversion.metadata.pages} pages`);
+      }
+
+      // Step 4: Return summarized result for UI consumption
+      return {
+        ...result,
+        chunks: chunkCount,
+        triplesCreated,
+        processingDuration
+      };
     } catch (error) {
       const uploadDuration = Date.now() - uploadStartTime;
       consoleService.error(`❌ Failed to upload "${file.name}": ${error.message}`);
@@ -806,15 +712,6 @@ class WorkbenchApp {
 
       return sanitized;
     }
-  }
-
-  async createFileUrl(file) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = () => reject(new Error('Failed to read file'));
-      reader.readAsDataURL(file);
-    });
   }
 
   getMediaType(fileType) {

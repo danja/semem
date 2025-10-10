@@ -50,6 +50,11 @@ export class ApiService {
 
     // Include session ID in headers if available
     const headers = { ...this.defaultHeaders };
+    const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData;
+
+    if (isFormData) {
+      delete headers['Content-Type'];
+    }
     if (this.sessionId) {
       headers['mcp-session-id'] = this.sessionId;
     }
@@ -60,7 +65,11 @@ export class ApiService {
     };
 
     consoleService.info(`🔍 [API REQUEST] Endpoint: ${url}`);
-    consoleService.info(`🔍 [API REQUEST] Config:`, config);
+    if (isFormData) {
+      consoleService.info(`🔍 [API REQUEST] Body type: FormData`);
+    } else {
+      consoleService.info(`🔍 [API REQUEST] Config:`, config);
+    }
 
     try {
       const response = await fetch(url, config);
@@ -137,22 +146,35 @@ export class ApiService {
   /**
    * UPLOAD DOCUMENT - Upload and process document file
    * @param {Object} params - Upload parameters
-   * @param {string} params.fileUrl - Data URL of the file
-   * @param {string} params.filename - Original filename
-   * @param {string} params.mediaType - MIME type of the file
+   * @param {File} params.file - File object selected by the user
    * @param {string} params.documentType - Document type (pdf, text, markdown)
    * @param {Object} params.metadata - Additional metadata
+   * @param {Object} params.options - Processing options (convert/chunk/ingest)
    */
-  async uploadDocument({ fileUrl, filename, mediaType, documentType, metadata = {} }) {
-    return this.makeRequest('/upload-document', {
+  async uploadDocument({ file, documentType, metadata = {}, options = {} }) {
+    const isBrowserFile = typeof File !== 'undefined' && file instanceof File;
+    if (!isBrowserFile) {
+      throw new Error('uploadDocument requires a File object');
+    }
+
+    const formData = new FormData();
+    formData.append('file', file, file.name);
+
+    if (documentType) {
+      formData.append('documentType', documentType);
+    }
+
+    if (metadata && Object.keys(metadata).length > 0) {
+      formData.append('metadata', JSON.stringify(metadata));
+    }
+
+    if (options && Object.keys(options).length > 0) {
+      formData.append('options', JSON.stringify(options));
+    }
+
+    return this.makeRequest('/documents/upload', {
       method: 'POST',
-      body: JSON.stringify({
-        fileUrl,
-        filename,
-        mediaType,
-        documentType,
-        metadata
-      })
+      body: formData
     });
   }
 

@@ -59,7 +59,32 @@ app.use('/workflow-logs/stream', createProxyMiddleware({
   }
 }));
 
-// Proxy API requests to MCP server (for Tell/Ask operations)
+// Proxy document upload API requests to API server
+app.use('/api/documents', createProxyMiddleware({
+  target: `${API_SERVER_URL}`,
+  changeOrigin: true,
+  pathRewrite: (path) => {
+    const PREFIX = '/api/documents';
+    const [pathname, search = ''] = path.split('?');
+    let suffix = pathname.startsWith(PREFIX) ? pathname.slice(PREFIX.length) : pathname;
+    if (suffix && !suffix.startsWith('/')) {
+      suffix = `/${suffix}`;
+    }
+    if (suffix === '/') {
+      suffix = '';
+    }
+    const rewrittenPath = `${PREFIX}${suffix}`;
+    return search ? `${rewrittenPath}?${search}` : rewrittenPath;
+  },
+  onProxyReq: (proxyReq, req) => {
+    console.log(`🔄 [WORKBENCH DOC PROXY] ${req.method} ${req.originalUrl} -> ${API_SERVER_URL}${req.url}`);
+  },
+  onProxyRes: (proxyRes, req) => {
+    console.log(`📡 [WORKBENCH DOC PROXY] Response ${proxyRes.statusCode} for ${req.method} ${req.originalUrl}`);
+  }
+}));
+
+// Proxy remaining /api requests to MCP server (Tell/Ask operations)
 app.use('/api', createProxyMiddleware({
   target: MCP_SERVER_URL,
   changeOrigin: true,

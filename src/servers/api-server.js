@@ -116,7 +116,7 @@ class APIServer {
         }));
 
         this.app.use(compression());
-        this.app.use(express.json({ limit: '1mb' }));
+        this.app.use(express.json({ limit: '25mb' }));
 
         // File upload middleware
         const upload = multer({
@@ -1285,6 +1285,14 @@ class APIServer {
                         params.options = JSON.parse(params.options);
                     } catch (error) {
                         this.apiLogger.warn(`[${requestId}] Failed to parse options JSON:`, error.message);
+                    }
+                }
+
+                if (params.metadata && typeof params.metadata === 'string') {
+                    try {
+                        params.metadata = JSON.parse(params.metadata);
+                    } catch (error) {
+                        this.apiLogger.warn(`[${requestId}] Failed to parse metadata JSON:`, error.message);
                     }
                 }
 

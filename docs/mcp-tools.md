@@ -29,3 +29,9 @@ API_KEY = "value"
  *works for me :claude mcp add erf node /home/danny/hyperdata/erf/bin/erf-mcp.js*
 
 *later : claude mcp add erf npx erf-analyzer*
+
+claude mcp add playwright npx '@playwright/mcp@latest'
+
+[mcp_servers.playwright]
+command = "npx"
+args = ["@playwright/mcp@latest"]

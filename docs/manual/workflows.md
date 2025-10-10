@@ -53,3 +53,7 @@ node -e "import('./src/workflows/index.js').then(async ({ WorkflowRunner }) => {
 ## Outstanding Work
 - HTTP MCP ask currently returns intermittent 500 responses from downstream services; once upstream is stable, re-run the HTTP E2E suite to confirm the ingest workflow supplies usable context.
 - `Config.js` still needs a cleanup pass to consolidate SPARQL defaults (tracked separately).
+- The Workbench document upload flow now mirrors the `file-document-ingestion`
+  workflow (load → convert → chunk → ingest). Future enhancements can call the
+  workflow runner directly to guarantee parity between automated ingestion and
+  interactive uploads.
