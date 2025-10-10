@@ -11,8 +11,10 @@
 <body>
     <div id="app" class="workbench-app">
 
-        <!-- Chat Interface -->
-        <section id="chat-container" class="chat-container">
+        <!-- Top Row: Chat and Console -->
+        <div class="top-row">
+            <!-- Chat Interface -->
+            <section id="chat-container" class="chat-container">
             <div class="chat-header">
                 <div class="chat-title">
                     <span class="chat-icon">🧠</span>
@@ -36,8 +38,8 @@
                         <span class="link-text">Docs</span>
                     </a>
                 </div>
-                <button type="button" id="chat-toggle" class="chat-toggle" aria-label="Toggle chat">
-                    <span class="toggle-text">Minimize Chat</span>
+                <button type="button" id="verbs-toggle" class="verbs-toggle" aria-label="Toggle verbs panel">
+                    <span class="toggle-text">Show Verbs</span>
                     <span class="toggle-icon">▼</span>
                 </button>
             </div>
@@ -92,9 +94,77 @@
             </div>
         </section>
 
+            <!-- Console Column (moved from main grid) -->
+            <div class="verb-column console-column console-in-top-row">
+                <div class="column-header">
+                    <div class="console-header-top">
+                        <h2 class="verb-title">
+                            <span class="verb-icon">📋</span>
+                            Console
+                        </h2>
+                        <div class="connection-status">
+                            <div class="status-indicator" id="connection-status">
+                                <span class="status-dot"></span>
+                                <span class="status-text">Connecting...</span>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="verb-description">Monitor operations and logs</p>
+                </div>
+
+                <div class="column-content" id="console-component">
+                    <div class="console-controls">
+                        <div class="console-toolbar">
+                            <button type="button" class="console-button clear-button" id="console-clear">
+                                <span class="button-icon">🗑️</span>
+                                <span class="button-text">Clear</span>
+                            </button>
+                            <button type="button" class="console-button auto-scroll-button active" id="console-auto-scroll">
+                                <span class="button-icon">⬇️</span>
+                                <span class="button-text">Auto-scroll</span>
+                            </button>
+                            <div class="console-filter">
+                                <select id="console-level-filter" class="form-select">
+                                    <option value="all">All Levels</option>
+                                    <option value="info">Info</option>
+                                    <option value="success">Success</option>
+                                    <option value="warning">Warning</option>
+                                    <option value="error">Error</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="console-logs" id="console-logs">
+                        <div class="console-placeholder">
+                            <div class="placeholder-icon">📋</div>
+                            <p class="placeholder-text">Console logs will appear here as operations are performed</p>
+                        </div>
+                    </div>
+
+                    <div class="console-stats console-stats-bottom">
+                        <div class="session-stats">
+                            <span class="stat-item">
+                                <span class="stat-icon">💭</span>
+                                <span id="interactions-count-bottom">0</span> interactions
+                            </span>
+                            <span class="stat-item">
+                                <span class="stat-icon">🧩</span>
+                                <span id="concepts-count-bottom">0</span> concepts
+                            </span>
+                            <span class="stat-item">
+                                <span class="stat-icon">⚡</span>
+                                <span id="session-duration-bottom">0s</span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Main Content Area -->
-        <main class="main-content">
-            <!-- Primary Verbs: 6-Column Layout -->
+        <main class="main-content" id="main-content" style="display: none;">
+            <!-- Primary Verbs: 5-Column Layout -->
             <section class="primary-verbs">
                 <!-- Tell Column -->
                 <div class="verb-column tell-column">
@@ -593,72 +663,6 @@
                         </div>
                         <div class="verb-results" id="inspect-results" style="display: none;">
                             <!-- Inspect results will appear here -->
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Console Column -->
-                <div class="verb-column console-column">
-                    <div class="column-header">
-                        <div class="console-header-top">
-                            <h2 class="verb-title">
-                                <span class="verb-icon">📋</span>
-                                Console
-                            </h2>
-                            <div class="connection-status">
-                                <div class="status-indicator" id="connection-status">
-                                    <span class="status-dot"></span>
-                                    <span class="status-text">Connecting...</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="console-stats">
-                            <div class="session-stats">
-                                <span class="stat-item">
-                                    <span class="stat-icon">💭</span>
-                                    <span id="interactions-count">0</span> interactions
-                                </span>
-                                <span class="stat-item">
-                                    <span class="stat-icon">🧩</span>
-                                    <span id="concepts-count">0</span> concepts
-                                </span>
-                                <span class="stat-item">
-                                    <span class="stat-icon">⚡</span>
-                                    <span id="session-duration">0s</span>
-                                </span>
-                            </div>
-                        </div>
-                        <p class="verb-description">Monitor operations and logs</p>
-                    </div>
-                    
-                    <div class="column-content" id="console-component">
-                        <div class="console-controls">
-                            <div class="console-toolbar">
-                                <button type="button" class="console-button clear-button" id="console-clear">
-                                    <span class="button-icon">🗑️</span>
-                                    <span class="button-text">Clear</span>
-                                </button>
-                                <button type="button" class="console-button auto-scroll-button active" id="console-auto-scroll">
-                                    <span class="button-icon">⬇️</span>
-                                    <span class="button-text">Auto-scroll</span>
-                                </button>
-                                <div class="console-filter">
-                                    <select id="console-level-filter" class="form-select">
-                                        <option value="all">All Levels</option>
-                                        <option value="info">Info</option>
-                                        <option value="success">Success</option>
-                                        <option value="warning">Warning</option>
-                                        <option value="error">Error</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="console-logs" id="console-logs">
-                            <div class="console-placeholder">
-                                <div class="placeholder-icon">📋</div>
-                                <p class="placeholder-text">Console logs will appear here as operations are performed</p>
-                            </div>
                         </div>
                     </div>
                 </div>

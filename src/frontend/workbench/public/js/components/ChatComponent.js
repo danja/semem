@@ -313,7 +313,7 @@ export default class ChatComponent {
 
     displayWelcomeMessage() {
         this.addMessage({
-            content: '👋 Welcome to Semem Chat! You can:\n• Type naturally and I\'ll understand your intentions\n• Use /help to see available commands\n• Use /ask to search your knowledge\n• Use /tell to store information',
+            content: '👋 Welcome to Semem Chat!',
             messageType: 'system',
             timestamp: new Date().toISOString()
         });

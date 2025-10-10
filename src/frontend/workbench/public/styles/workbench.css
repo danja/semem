@@ -85,6 +85,30 @@ body {
     box-sizing: border-box;
 }
 
+/* Top Row: Chat and Console */
+.top-row {
+    display: flex;
+    gap: var(--space-xs);
+    width: 100%;
+    max-width: 2400px;
+    margin: 0 auto var(--space-xs) auto;
+    flex: 1;
+    min-height: 0;
+}
+
+.top-row .chat-container {
+    flex: 2;
+    min-width: 0;
+    margin: 0;
+    width: auto;
+    max-width: none;
+}
+
+.top-row .console-in-top-row {
+    flex: 1;
+    min-width: 0;
+}
+
 /* Session Dashboard Header */
 .session-dashboard {
     background: var(--bg-primary);
@@ -218,7 +242,7 @@ body {
 
 /* Main Content */
 .main-content {
-    flex: 1;
+    flex: 0 0 auto;
     padding: var(--space-xs) 0;
     display: flex;
     flex-direction: column;
@@ -226,16 +250,16 @@ body {
     width: 100%;
     margin: 0 auto;
     max-width: 100%;
-    height: calc(100vh - 45px);
+    height: 60vh;
     overflow: hidden;
     min-width: 0;
     box-sizing: border-box;
 }
 
-/* Primary Verbs - Responsive Grid */
+/* Primary Verbs - Responsive Grid (now 5 columns) */
 .primary-verbs {
     display: grid;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: var(--space-xs);
     margin: 0 auto;
     padding: 0;
@@ -1504,6 +1528,9 @@ body {
     max-width: none;
     margin-left: auto;
     margin-right: auto;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 
 .chat-container.collapsed .chat-content {
@@ -1540,7 +1567,8 @@ body {
     font-size: 1.2rem;
 }
 
-.chat-toggle {
+.chat-toggle,
+.verbs-toggle {
     display: flex;
     align-items: center;
     gap: var(--space-xs);
@@ -1554,9 +1582,18 @@ body {
     transition: all 0.2s ease;
 }
 
-.chat-toggle:hover {
+.chat-toggle:hover,
+.verbs-toggle:hover {
     background: var(--bg-tertiary);
     color: var(--text-primary);
+}
+
+.verbs-toggle .toggle-icon {
+    transform: rotate(-90deg);
+}
+
+.verbs-toggle.active .toggle-icon {
+    transform: rotate(0deg);
 }
 
 .toggle-icon {
@@ -1626,6 +1663,12 @@ body {
     display: flex;
     flex-direction: column;
     height: 400px;
+    flex: 1;
+    min-height: 0;
+}
+
+.top-row .chat-content {
+    height: auto;
 }
 
 .chat-messages {
@@ -2001,8 +2044,8 @@ body {
 
 /* Console stats section */
 .console-stats {
-    margin: var(--space-sm) 0;
-    padding: var(--space-sm);
+    margin: var(--space-xs) 0;
+    padding: var(--space-xs) var(--space-sm);
     background: var(--bg-secondary);
     border-radius: var(--border-radius);
     border: 1px solid var(--border-color);
@@ -2011,7 +2054,7 @@ body {
 .console-stats .session-stats {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--space-md);
+    gap: var(--space-sm);
     justify-content: space-around;
 }
 
@@ -2019,12 +2062,22 @@ body {
     display: flex;
     align-items: center;
     gap: var(--space-xs);
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
     color: var(--text-secondary);
 }
 
 .console-stats .stat-icon {
     font-size: 1rem;
+}
+
+/* Console stats at bottom of panel */
+.console-stats-bottom {
+    margin-top: auto;
+    padding: var(--space-xs) var(--space-sm);
+    border-top: 1px solid var(--border-color);
+    background: transparent;
+    flex-shrink: 0;
+    margin-bottom: 0;
 }
 
 /* Responsive adjustments for console stats */

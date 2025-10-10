@@ -167,6 +167,12 @@ class WorkbenchApp {
     DomUtils.$$('.panel-toggle').forEach(button => {
       button.addEventListener('click', this.handlePanelToggle);
     });
+
+    // Verbs toggle button
+    const verbsToggle = DomUtils.$('#verbs-toggle');
+    if (verbsToggle) {
+      verbsToggle.addEventListener('click', this.handleVerbsToggle.bind(this));
+    }
   }
 
   setupInspectControls() {
@@ -1011,28 +1017,49 @@ class WorkbenchApp {
   handlePanelToggle(event) {
     const button = event.target;
     const panelData = button.dataset.panel;
-    
+
     if (!panelData) return;
-    
+
     const panel = DomUtils.$(`#${panelData}-panel`);
     const content = panel?.querySelector('.panel-content');
     const icon = button.querySelector('.toggle-icon');
-    
+
     if (!panel || !content) return;
-    
+
     const isExpanded = button.getAttribute('aria-expanded') === 'true';
-    
+
     // Toggle panel
     button.setAttribute('aria-expanded', !isExpanded);
     DomUtils.toggle(content);
-    
+
     // Update icon
     if (icon) {
       icon.textContent = isExpanded ? '▼' : '▲';
     }
-    
+
     // Update state
     stateManager.togglePanel(panelData);
+  }
+
+  handleVerbsToggle(event) {
+    const button = event.currentTarget;
+    const mainContent = DomUtils.$('#main-content');
+    const toggleText = button.querySelector('.toggle-text');
+
+    if (!mainContent) return;
+
+    const isVisible = mainContent.style.display !== 'none';
+
+    // Toggle visibility
+    if (isVisible) {
+      mainContent.style.display = 'none';
+      toggleText.textContent = 'Show Verbs';
+      button.classList.remove('active');
+    } else {
+      mainContent.style.display = 'flex';
+      toggleText.textContent = 'Hide Verbs';
+      button.classList.add('active');
+    }
   }
 
   async handleInspectAction(event) {

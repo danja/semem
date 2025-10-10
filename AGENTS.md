@@ -357,3 +357,4 @@ First stop/start the servers with `stop.sh` and `start.sh`, then -
 
 * export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/tell-ask-e2e.integration.test.js --reporter=verbose 
 * export INTEGRATION_TESTS=true && npx vitest run tests/integration/mcp/tell-ask-stdio-e2e.integration.test.js --reporter=verbose
+- browser code is vanilla JS
