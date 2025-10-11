@@ -13,6 +13,13 @@ test.describe('Workbench Document Upload Integration', () => {
 
     await page.goto('http://localhost:4102');
 
+    // Show the verb panels (hidden by default after UI reorganization)
+    await page.waitForSelector('#verbs-toggle', { timeout: 15000 });
+    await page.click('#verbs-toggle');
+
+    // Wait for the main content to become visible
+    await page.waitForSelector('#main-content[style*="display: flex"]', { timeout: 5000 });
+
     await page.waitForSelector('#tell-type', { timeout: 15000 });
     await page.selectOption('#tell-type', 'document');
     await page.waitForSelector('#document-file', { timeout: 10000 });

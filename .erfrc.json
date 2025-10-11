@@ -1,0 +1,16 @@
+{
+  "exclude": [
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/build/**",
+    "**/archive/**",
+    "**/.git/**",
+    "**/docs/**"
+  ],
+  "entryPoints": [
+    "src/servers/api-server.js",
+    "src/mcp/http-server.js",
+    "src/mcp/index.js",
+    "src/frontend/vsom-standalone/server.js"
+  ]
+}

@@ -179,6 +179,130 @@ cp -r archive/2025-01-old-storage-backends/* src/stores/
 
 ---
 
+## 2025-01-10: Phase 2 Cleanup - Isolated Tool Modules
+
+### Rationale
+After Phase 1 archiving and restoration, conducted second ERF analysis to identify additional safe archiving candidates. Found 10 isolated files that are provably unused (no imports found in active code).
+
+### Health Metrics After Phase 1
+- Overall Health Score: 60/100 (unchanged)
+- Connected Files: 447/469 (95%)
+- Isolated Files: 22 (excluding frontend)
+- Missing Imports: 72 (needs investigation)
+
+### Phase 2 Archived Components
+
+#### 1. Unused MCP Tool Modules (`archive/2025-01-phase2-cleanup/mcp-tool-modules/`)
+
+**Files Archived:**
+- `ragno-tools.js` - Old ragno tool wrappers
+- `research-workflow-tools.js` - Research workflow tools
+- `sparql-tools.js` - SPARQL tool wrappers
+- `vsom-tools.js` - VSOM tool wrappers
+
+**Why Archived:**
+These were old tool organization patterns from before the current MCP verb-based system. Grep verification showed zero imports of these modules in active code. The current system uses strategies under `src/mcp/tools/verbs/strategies/` instead.
+
+**Note:** `zpt-tools.js` was initially archived but restored because `VerbContextService.js` imports it.
+
+#### 2. Old API Common Files (`archive/2025-01-phase2-cleanup/api-common/`)
+
+**Files Archived:**
+- `CustomValidators.js` - Custom validation functions
+- `RDFParser.js` - RDF parsing utilities
+- `RDFValidator.js` - RDF validation
+
+**Why Archived:**
+Part of the old API system infrastructure. Grep verification showed no active imports. RDF operations are now handled through SPARQLStore and the ragno core modules.
+
+#### 3. Old Handler Pattern Files (`archive/2025-01-phase2-cleanup/old-handlers/`)
+
+**Files Archived:**
+- `ActiveHandler.js` - Active handler pattern
+- `PassiveHandler.js` - Passive handler pattern
+- `SelfieHandler.js` - Selfie handler pattern
+
+**Why Archived:**
+These represent an older handler pattern that predates the current API feature structure. Note that the API feature files with similar names (MemoryAPI, ChatAPI, etc.) in `src/api/features/` are still active and used by the API server.
+
+### Phase 2 Verification
+
+**Process:**
+1. ✅ Used grep to verify no active imports
+2. ✅ Archived 11 files initially
+3. ❌ Server startup failed - VerbContextService imports zpt-tools.js
+4. ✅ Restored zpt-tools.js to active use
+5. ✅ Restarted servers successfully
+6. ✅ Integration tests passing (tell-ask-e2e: 3/3)
+
+**Actually Archived (Phase 2):**
+- 4 MCP tool modules (minus zpt-tools)
+- 3 API common files
+- 3 Old handler files
+- **Total**: 10 files archived
+
+### Ragno API Analysis
+
+**Files Identified as Unused:**
+- `src/ragno/api/RagnoAPIServer.js` - Standalone Ragno HTTP server
+- `src/ragno/api/GraphAPI.js` - Graph querying API
+- `src/ragno/api/SearchAPIEnhanced.js` - Enhanced search API
+
+**Status:** NOT YET ARCHIVED (conservative approach)
+
+**Analysis:**
+- These files are not imported by any active code
+- They implement a standalone Ragno API server separate from MCP
+- They depend on ragno components (GraphMetrics, GraphCache, VectorIndex)
+- Only referenced in `config/repomix.config.json` (documentation tool)
+
+**Recommendation:** Candidate for future archiving after verifying dependent components (GraphMetrics, GraphCache) are also unused.
+
+### Critical Path Findings
+
+**MCP Verb Architecture (Active):**
+```
+Entry Points:
+  - src/mcp/http-server.js (HTTP API)
+  - src/mcp/index.js (STDIO MCP protocol)
+    ↓
+Verb Commands (src/mcp/tools/verbs/commands/):
+  - Tell/Ask/Augment/Inspect/etc.
+    ↓
+Strategies (src/mcp/tools/verbs/strategies/):
+  - ConceptsStrategy, LabelStrategy, etc.
+    ↓
+Core Services:
+  - MemoryManager → SPARQLStore → Apache Jena Fuseki
+  - LLMHandler → LLM Providers (Mistral, Claude, Ollama)
+  - EmbeddingHandler → Embedding Services
+```
+
+**Key Finding:** Ragno API is **separate** from MCP verbs and not integrated into the current verb flow.
+
+### Cumulative Totals
+
+**Phase 1 + Phase 2:**
+- Old API infrastructure: 17 files
+- Old storage backends: 4 files
+- Experimental workflows: 13 files
+- MCP tool modules: 4 files
+- API common files: 3 files
+- Old handler files: 3 files
+- **Grand Total: 44 files archived across 2 phases**
+
+**Still Active (restored):**
+- 13 API feature files (MemoryAPI, ChatAPI, etc.)
+- 1 zpt-tools.js (MCP tool module)
+
+### Phase 2 Related Documentation
+
+- ERF Analysis: Generated 2025-01-10 23:40 using `mcp__erf__erf_health`
+- Health Score: 60/100 (stable after Phase 2 cleanup)
+- Critical Path Analysis: MCP verbs → strategies → core services documented
+
+---
+
 ## Archive Guidelines
 
 When archiving code:
