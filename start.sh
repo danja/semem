@@ -17,8 +17,8 @@ MCP_PORT=$(node -pe "JSON.parse(require('fs').readFileSync('$CONFIG_FILE', 'utf8
 
 echo "Starting servers with configured ports..."
 echo "- API Server port: $API_PORT"
-echo "- Workbench UI port: $WORKBENCH_PORT" 
 echo "- MCP Server port: $MCP_PORT"
+echo "- Workbench UI port: $WORKBENCH_PORT" 
 
 # Start all servers using the new start-all.js script
 # Run in background but don't mess with terminal
@@ -39,7 +39,7 @@ echo "$START_ALL_PID $API_PID $WORKBENCH_PID $MCP_PID" > "$SCRIPT_DIR/server-pid
 echo ""
 echo "Servers started successfully!"
 echo "- API Server:         http://localhost:$API_PORT"
-echo "- Workbench UI:       http://localhost:$WORKBENCH_PORT"
 echo "- MCP Server:         http://localhost:$MCP_PORT"
+echo "- Workbench UI:       http://localhost:$WORKBENCH_PORT"
 echo ""
 echo "Use './stop.sh' to stop all servers"
