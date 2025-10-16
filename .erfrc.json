@@ -5,7 +5,8 @@
     "**/build/**",
     "**/archive/**",
     "**/.git/**",
-    "**/docs/**"
+    "**/docs/**",
+    "**/archive/**"
   ],
   "entryPoints": [
     "src/servers/api-server.js",
