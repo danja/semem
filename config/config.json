@@ -2,7 +2,7 @@
   "storage": {
     "type": "sparql",
     "options": {
-      "query": "http://${SPARQL_HOST:-localhost}:${SPARQL_PORT:-3030}/semem/query",
+      "query": "http://${SPARQL_HOST:-localhost}:${SPARQL_PORT:-3030}/semem/sparql",
       "update": "http://${SPARQL_HOST:-localhost}:${SPARQL_PORT:-3030}/semem/update",
       "data": "http://${SPARQL_HOST:-localhost}:${SPARQL_PORT:-3030}/semem/data",
       "graphName": "http://hyperdata.it/content",

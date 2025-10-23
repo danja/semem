@@ -1,0 +1,13 @@
+The project I've spent most time on - nearly a year, on & off, is : https://github.com/danja/semem
+
+"Semantic Web Memory for Intelligent Agents"
+
+The name caused teenage giggles on Reddit. And for me :)
+
+Not what I intended doing. What I'm planned doing was playing with multiple independent LLM-based bots in a (XMPP) chatroom. Fun stuff!
+
+But instead I went down the rabbit hole of looking at how to use semweb tech with language models etc. Play to each's advantages. The LLMs are great at dealing with material *if* you can get it into the context window efficiently. RDF is great for organising stuff.
+
+I had been playing with graph RAG a bit, but not in a very coordinated way. Then I stumbled on the NodeRAG paper : https://arxiv.org/abs/2504.11544 which has a nice system. With a few tweaks I turned their model into an ontology and pretty much recreated their system just with a SPARQL store as backend. 
+
+
