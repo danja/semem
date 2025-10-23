@@ -40,8 +40,13 @@ class ServerManager {
         });
 
         // Handle unhandled promise rejections
-        process.on('unhandledRejection', (reason, promise) => {
+        process.on('unhandledRejection', async (reason, promise) => {
             this.log(`\nUnhandled Rejection at: ${promise}, reason: ${reason}`);
+            if (reason instanceof Error) {
+                this.log(`Stack trace: ${reason.stack}`);
+            }
+            await this.stopAllServers();
+            process.exit(1);
         });
     }
 
