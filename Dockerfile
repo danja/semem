@@ -59,7 +59,6 @@ COPY --from=builder --chown=semem:semem /app/node_modules ./node_modules
 
 # Copy application source code
 COPY --from=builder --chown=semem:semem /app/src ./src
-COPY --from=builder --chown=semem:semem /app/mcp ./mcp
 COPY --from=builder --chown=semem:semem /app/bin ./bin
 COPY --from=builder --chown=semem:semem /app/index.js ./
 COPY --from=builder --chown=semem:semem /app/start.sh ./
