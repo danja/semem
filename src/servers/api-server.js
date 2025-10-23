@@ -1,5 +1,22 @@
 #!/usr/bin/env node
 
+// Global error handlers FIRST to catch any initialization errors
+process.on('uncaughtException', (error) => {
+    console.error('💥 UNCAUGHT EXCEPTION during api-server.js initialization:');
+    console.error('Error:', error.message);
+    console.error('Stack:', error.stack);
+    process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('💥 UNHANDLED REJECTION during api-server.js initialization:');
+    console.error('Reason:', reason);
+    if (reason instanceof Error) {
+        console.error('Stack:', reason.stack);
+    }
+    process.exit(1);
+});
+
 // Load environment variables FIRST before any other imports
 import dotenv from 'dotenv';
 import path from 'path';

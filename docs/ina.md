@@ -1,4 +1,3 @@
-I 
 The project I've spent most time on - nearly a year, on & off, is : https://github.com/danja/semem 
 The name caused teenage giggles on Reddit. And for me :)
 Anyway, "Semantic Web Memory for Intelligent Agents". It's not useful yet, mostly due to me over-relying on Claude to write the code. 

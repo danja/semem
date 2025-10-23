@@ -12,7 +12,6 @@
   },
   "servers": {
     "api": 4100,
-    "ui": 4150,
     "workbench": 4102,
     "mcp": 4101
   },
