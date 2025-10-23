@@ -552,7 +552,6 @@ The development environment uses simplified configuration with optional external
 
 # Development: live code editing
 ./src:/app/src:ro
-./mcp:/app/mcp:ro
 ```
 
 ### Advanced Deployment Options

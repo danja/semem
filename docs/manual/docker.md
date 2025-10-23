@@ -367,7 +367,6 @@ Development containers mount source code as volumes:
 ```bash
 # Changes to these directories are reflected immediately:
 ./src      -> /app/src      (Application source)
-./mcp      -> /app/mcp      (MCP server)
 ./config   -> /app/config   (Configuration)
 ./prompts  -> /app/prompts  (Prompt templates)
 

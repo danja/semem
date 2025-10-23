@@ -65,7 +65,6 @@ services:
     volumes:
       # Mount source code for hot reloading in development
       - ./src:/app/src:ro
-      - ./mcp:/app/mcp:ro
       - ./config:/app/config
       - ./prompts:/app/prompts:ro
       - ./bin:/app/bin:ro
