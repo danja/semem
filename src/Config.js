@@ -360,6 +360,10 @@ export default class Config {
         if (!endpoint?.urlBase || !endpoint?.query || !endpoint?.update) {
             throw new Error('Invalid SPARQL endpoint configuration')
         }
+
+        if (!this.config.api?.key) {
+            throw new Error('Missing API key configuration (api.key). Ensure SEMEM_API_KEY is set in the environment or provided in the configuration file.')
+        }
     }
 
     /**

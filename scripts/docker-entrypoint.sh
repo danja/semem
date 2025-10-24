@@ -27,6 +27,25 @@ log_error() {
     echo -e "${RED}[ERROR]${NC} $(date '+%Y-%m-%d %H:%M:%S') $1"
 }
 
+# Function to optionally load environment variables from a file inside the container
+load_environment_file() {
+    local env_file="${SEMEM_ENV_FILE:-/app/.env}"
+
+    if [ -f "$env_file" ]; then
+        log_info "Loading environment variables from ${env_file}"
+        set -a
+        # shellcheck source=/dev/null
+        . "$env_file"
+        set +a
+    else
+        if [ -n "$SEMEM_ENV_FILE" ]; then
+            log_error "Environment file specified at ${env_file} but not found"
+            exit 1
+        fi
+        log_info "No environment file found at ${env_file}; relying on container environment variables"
+    fi
+}
+
 # Function to wait for a service to be ready
 wait_for_service() {
     local host=$1
@@ -120,10 +139,11 @@ check_environment() {
     
     # API key
     if [ -z "$SEMEM_API_KEY" ]; then
-        log_warn "SEMEM_API_KEY not set, generating random key"
-        export SEMEM_API_KEY="semem-$(head -c 16 /dev/urandom | xxd -l 16 -p)"
-        log_info "Generated API key: $SEMEM_API_KEY"
+        log_error "SEMEM_API_KEY not set. Provide it via environment variables or mount a .env file."
+        exit 1
     fi
+
+    log_info "SEMEM_API_KEY loaded from environment"
     
     # LLM provider check (at least one should be configured)
     local has_llm_provider=false
@@ -179,6 +199,7 @@ main() {
     log "npm version: $(npm --version)"
     
     # Setup
+    load_environment_file
     setup_directories
     check_environment
     verify_config
