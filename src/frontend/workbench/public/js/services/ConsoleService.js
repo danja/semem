@@ -10,6 +10,9 @@ export class ConsoleService {
     this.autoScroll = true;
     this.levelFilter = 'all';
     this.listeners = new Set();
+    this.apiKey = null;
+    this.reconnectDelayMs = 10000;
+    this.reconnectTimeout = null;
     
     // Backend log streaming
     this.eventSource = null;
@@ -22,9 +25,12 @@ export class ConsoleService {
     this.warning = this.warning.bind(this);
     this.error = this.error.bind(this);
     this.connectToBackendStream = this.connectToBackendStream.bind(this);
+    this.initializeBackendStream = this.initializeBackendStream.bind(this);
+    this.loadApiKey = this.loadApiKey.bind(this);
+    this.scheduleReconnect = this.scheduleReconnect.bind(this);
     
     // Auto-connect to backend workflow logs
-    this.connectToBackendStream();
+    this.initializeBackendStream();
   }
 
   /**
@@ -381,14 +387,64 @@ export class ConsoleService {
   /**
    * Connect to backend workflow log stream
    */
-  connectToBackendStream() {
-    if (this.eventSource) {
-      return; // Already connected
+  async initializeBackendStream() {
+    await this.loadApiKey();
+    if (!this.apiKey) {
+      this.warning('⚠️ Backend workflow logs unavailable (missing API key)');
+      return;
+    }
+    this.connectToBackendStream();
+  }
+
+  async loadApiKey() {
+    if (this.apiKey) {
+      return this.apiKey;
     }
 
     try {
-      // Connect via workbench proxy to API server for workflow logs
-      const streamUrl = '/workflow-logs/stream?api_key=your-api-key; // was semem-docker-dev-key';
+      if (typeof window !== 'undefined' && window.sessionStorage) {
+        const storedKey = window.sessionStorage.getItem('semem-api-key');
+        if (storedKey) {
+          this.apiKey = storedKey;
+          return this.apiKey;
+        }
+      }
+    } catch (error) {
+      console.warn('Unable to read API key from sessionStorage:', error);
+    }
+
+    try {
+      const response = await fetch('/config');
+      if (response.ok) {
+        const config = await response.json();
+        if (config?.apiKey) {
+          this.apiKey = config.apiKey;
+          try {
+            if (typeof window !== 'undefined' && window.sessionStorage) {
+              window.sessionStorage.setItem('semem-api-key', this.apiKey);
+            }
+          } catch (storageError) {
+            console.warn('Unable to store API key in sessionStorage:', storageError);
+          }
+          return this.apiKey;
+        }
+      } else {
+        this.warning(`⚠️ /config request failed (${response.status}) while loading workflow log API key`);
+      }
+    } catch (error) {
+      this.error('❌ Failed to load API key for workflow logs', { error: error.message });
+    }
+
+    return null;
+  }
+
+  connectToBackendStream() {
+    if (this.eventSource || !this.apiKey) {
+      return; // Already connected or no API key available
+    }
+
+    try {
+      const streamUrl = `/workflow-logs/stream?api_key=${encodeURIComponent(this.apiKey)}`;
       
       this.info('🔄 Connecting to backend workflow logs...');
       this.eventSource = new EventSource(streamUrl);
@@ -423,12 +479,31 @@ export class ConsoleService {
       this.eventSource.onerror = () => {
         this.streamConnected = false;
         this.warning('⚠️ Backend workflow log connection lost');
+        if (this.eventSource) {
+          this.eventSource.close();
+        }
         this.eventSource = null;
+        this.scheduleReconnect();
       };
 
     } catch (error) {
       this.error('❌ Failed to connect to backend workflow logs', { error: error.message });
+      this.scheduleReconnect();
     }
+  }
+
+  scheduleReconnect() {
+    if (this.reconnectTimeout) {
+      return;
+    }
+
+    this.reconnectTimeout = setTimeout(async () => {
+      this.reconnectTimeout = null;
+      await this.loadApiKey();
+      if (this.apiKey) {
+        this.connectToBackendStream();
+      }
+    }, this.reconnectDelayMs);
   }
 
   /**
@@ -453,6 +528,10 @@ export class ConsoleService {
     if (this.eventSource) {
       this.eventSource.close();
       this.eventSource = null;
+    }
+    if (this.reconnectTimeout) {
+      clearTimeout(this.reconnectTimeout);
+      this.reconnectTimeout = null;
     }
     this.logs = [];
     this.listeners.clear();

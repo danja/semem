@@ -147,26 +147,61 @@ export default class ChatAPI extends BaseAPI {
             const context = this._buildContext(conversation, relevantMemories);
 
             // Step 4: Generate response using LLM
+            const resolvedModel = model || this.llmHandler?.chatModel || 'default';
+            const providerLabel = typeof this.llmHandler?.getProviderLabel === 'function'
+                ? this.llmHandler.getProviderLabel()
+                : 'UnknownProvider';
+
             opLogger.step(
                 'generate_response',
-                `🤖 Generating response with ${model || 'default'} model`,
-                `[ChatAPI] llmHandler.generateResponse() - model: ${model || 'default'}, temperature: ${temperature}`
-            );
-
-            const response = await this.llmHandler.generateResponse(
-                prompt,
-                context,
+                `🤖 Generating response with ${resolvedModel} model`,
+                `[ChatAPI] llmHandler.generateResponse() - model: ${resolvedModel}, temperature: ${temperature}, provider: ${providerLabel}`,
                 {
-                    temperature,
-                    model: model // Will fall back to LLMHandler's default if not provided
+                    provider: providerLabel,
+                    model: resolvedModel,
+                    temperature
                 }
             );
+
+            opLogger.log(
+                'info',
+                `INFO [API REQUEST] ${providerLabel} called`,
+                `[ChatAPI] Dispatching LLM request - provider: ${providerLabel}, model: ${resolvedModel}`,
+                { provider: providerLabel, model: resolvedModel, temperature }
+            );
+
+            let response;
+            try {
+                response = await this.llmHandler.generateResponse(
+                    prompt,
+                    context,
+                    {
+                        temperature,
+                        model: model // Will fall back to LLMHandler's default if not provided
+                    }
+                );
+
+                opLogger.log(
+                    'info',
+                    `INFO [API REQUEST] ${providerLabel} SUCCESS`,
+                    `[ChatAPI] LLM request succeeded - provider: ${providerLabel}, model: ${resolvedModel}`,
+                    { provider: providerLabel, model: resolvedModel }
+                );
+            } catch (error) {
+                opLogger.log(
+                    'error',
+                    `ERROR [API REQUEST] ${providerLabel} FAILED`,
+                    `[ChatAPI] LLM request failed - provider: ${providerLabel}, model: ${resolvedModel}, error: ${error.message}`,
+                    { provider: providerLabel, model: resolvedModel, error: error.message }
+                );
+                throw error;
+            }
 
             opLogger.step(
                 'response_generated',
                 `✅ Generated ${response.length} character response`,
-                `[ChatAPI] LLM response generated - length: ${response.length}, model: ${model || 'default'}`,
-                { responseLength: response.length, model: model || 'default' }
+                `[ChatAPI] LLM response generated - length: ${response.length}, model: ${resolvedModel}`,
+                { responseLength: response.length, model: resolvedModel }
             );
 
             // Step 5: Update conversation history

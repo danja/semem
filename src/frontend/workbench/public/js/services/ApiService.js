@@ -218,6 +218,18 @@ export class ApiService {
         })
       });
 
+      if (result?.llm?.provider) {
+        const { provider, status, model, durationMs, error } = result.llm;
+        const outcome = status === 'success' ? 'SUCCESS' : 'FAILED';
+        consoleService.info(`INFO [API REQUEST] ${provider} ${outcome}`, {
+          provider,
+          model,
+          status,
+          durationMs,
+          error
+        });
+      }
+
       consoleService.info(`✅ [WORKBENCH ASK] Operation completed:`, {
         success: result?.success,
         answer: result?.answer?.substring(0, 200) + (result?.answer?.length > 200 ? '...' : ''),

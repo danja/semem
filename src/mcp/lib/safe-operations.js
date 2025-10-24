@@ -9,6 +9,7 @@ import { verbsLogger } from '../tools/VerbsLogger.js';
 export class SafeOperations {
   constructor(memoryManager) {
     this.memoryManager = memoryManager;
+    this.lastLLMCallInfo = null;
   }
 
   /**
@@ -255,6 +256,7 @@ export class SafeOperations {
         duration: duration + 'ms',
         responseLength: response?.length || 0
       });
+      this.lastLLMCallInfo = this.memoryManager.llmHandler?.getLastCallInfo?.() || null;
       return response;
     } catch (error) {
       const duration = Date.now() - startTime;
@@ -262,8 +264,22 @@ export class SafeOperations {
         duration: duration + 'ms', 
         error: error.message 
       });
+      this.lastLLMCallInfo = this.memoryManager.llmHandler?.getLastCallInfo?.() || {
+        provider: this.memoryManager.llmHandler?.getProviderLabel?.() || 'UnknownProvider',
+        status: 'error',
+        error: error.message,
+        completedAtIso: new Date().toISOString()
+      };
       throw error;
     }
+  }
+
+  /**
+   * Retrieve metadata about the most recent LLM call handled via SafeOperations.
+   * @returns {Object|null}
+   */
+  getLastLLMCallInfo() {
+    return this.lastLLMCallInfo ? { ...this.lastLLMCallInfo } : null;
   }
 
   /**

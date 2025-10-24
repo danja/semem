@@ -32,6 +32,7 @@ export default class LLMHandler {
         // Detect provider interface type
         this._hasHyperdataClientsInterface = typeof this.llmProvider.chat === 'function'
         this._hasLegacyInterface = typeof this.llmProvider.generateChat === 'function'
+        this._lastCallInfo = null
     }
 
     /**
@@ -56,10 +57,38 @@ export default class LLMHandler {
     }
 
     /**
+     * Public accessor for the active provider label.
+     * @returns {string}
+     */
+    getProviderLabel() {
+        return this._getProviderLabel()
+    }
+
+    /**
+     * Retrieve metadata about the most recent LLM call.
+     * @returns {Object|null}
+     */
+    getLastCallInfo() {
+        return this._lastCallInfo ? { ...this._lastCallInfo } : null
+    }
+
+    /**
      * Call chat method using the appropriate provider interface
      */
     async _callChat(model, messages, options = {}) {
         const providerLabel = this._getProviderLabel()
+        const startedAt = Date.now()
+        const callInfo = {
+            provider: providerLabel,
+            model,
+            status: 'pending',
+            startedAt,
+            startedAtIso: new Date(startedAt).toISOString(),
+            options: {
+                temperature: options.temperature
+            }
+        }
+        this._lastCallInfo = { ...callInfo }
         logger.info(`[API REQUEST] ${providerLabel} called`)
 
         try {
@@ -75,9 +104,25 @@ export default class LLMHandler {
             }
 
             logger.info(`[API REQUEST] ${providerLabel} SUCCESS`)
+            const completedAt = Date.now()
+            this._lastCallInfo = {
+                ...callInfo,
+                status: 'success',
+                durationMs: completedAt - startedAt,
+                completedAtIso: new Date(completedAt).toISOString(),
+                error: null
+            }
             return response
         } catch (error) {
             logger.error(`[API REQUEST] ${providerLabel} FAILED: ${error.message}`)
+            const completedAt = Date.now()
+            this._lastCallInfo = {
+                ...callInfo,
+                status: 'error',
+                durationMs: completedAt - startedAt,
+                completedAtIso: new Date(completedAt).toISOString(),
+                error: error.message
+            }
             throw error
         }
     }
@@ -87,6 +132,19 @@ export default class LLMHandler {
      */
     async _callCompletion(model, prompt, options = {}) {
         const providerLabel = this._getProviderLabel()
+        const startedAt = Date.now()
+        const callInfo = {
+            provider: providerLabel,
+            model,
+            status: 'pending',
+            startedAt,
+            startedAtIso: new Date(startedAt).toISOString(),
+            mode: 'completion',
+            options: {
+                temperature: options.temperature
+            }
+        }
+        this._lastCallInfo = { ...callInfo }
         logger.info(`[API REQUEST] ${providerLabel} called (completion)`)
 
         try {
@@ -102,9 +160,25 @@ export default class LLMHandler {
             }
 
             logger.info(`[API REQUEST] ${providerLabel} SUCCESS (completion)`)
+            const completedAt = Date.now()
+            this._lastCallInfo = {
+                ...callInfo,
+                status: 'success',
+                durationMs: completedAt - startedAt,
+                completedAtIso: new Date(completedAt).toISOString(),
+                error: null
+            }
             return response
         } catch (error) {
             logger.error(`[API REQUEST] ${providerLabel} FAILED (completion): ${error.message}`)
+            const completedAt = Date.now()
+            this._lastCallInfo = {
+                ...callInfo,
+                status: 'error',
+                durationMs: completedAt - startedAt,
+                completedAtIso: new Date(completedAt).toISOString(),
+                error: error.message
+            }
             throw error
         }
     }

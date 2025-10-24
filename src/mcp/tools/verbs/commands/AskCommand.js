@@ -346,6 +346,8 @@ export class AskCommand extends BaseVerbCommand {
     });
 
     // Transform hybrid result to standard ask response format
+    const llmInfo = this.safeOps.getLastLLMCallInfo?.() || null;
+
     return this.createSuccessResponse({
       content: hybridResult.answer,  // Include content for MCP protocol compatibility
       question,
@@ -365,7 +367,7 @@ export class AskCommand extends BaseVerbCommand {
       searchMethod: 'hybrid_context_processing',
       sessionCacheStats: this.stateManager.getSessionCacheStats(),
       performance: perfData
-    });
+    }, llmInfo ? { llm: llmInfo } : {});
   }
 }
 
