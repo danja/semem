@@ -35,17 +35,50 @@ export default class LLMHandler {
     }
 
     /**
+     * Derive a human-readable provider label for logging purposes.
+     * Falls back to constructor name when explicit metadata is unavailable.
+     */
+    _getProviderLabel() {
+        if (!this.llmProvider) {
+            return 'UnknownProvider'
+        }
+
+        if (typeof this.llmProvider.getProviderName === 'function') {
+            return this.llmProvider.getProviderName()
+        }
+
+        if (this.llmProvider.providerName) {
+            return this.llmProvider.providerName
+        }
+
+        const ctorName = this.llmProvider.constructor?.name || 'UnknownProvider'
+        return ctorName.replace(/Connector$/, '') || 'UnknownProvider'
+    }
+
+    /**
      * Call chat method using the appropriate provider interface
      */
     async _callChat(model, messages, options = {}) {
-        if (this._hasHyperdataClientsInterface) {
-            // hyperdata-clients interface: chat(messages, options)
-            return await this.llmProvider.chat(messages, { model, ...options })
-        } else if (this._hasLegacyInterface) {
-            // Legacy interface: generateChat(model, messages, options)
-            return await this.llmProvider.generateChat(model, messages, options)
-        } else {
-            throw new Error('Provider does not support chat operations')
+        const providerLabel = this._getProviderLabel()
+        logger.info(`[API REQUEST] ${providerLabel} called`)
+
+        try {
+            let response
+            if (this._hasHyperdataClientsInterface) {
+                // hyperdata-clients interface: chat(messages, options)
+                response = await this.llmProvider.chat(messages, { model, ...options })
+            } else if (this._hasLegacyInterface) {
+                // Legacy interface: generateChat(model, messages, options)
+                response = await this.llmProvider.generateChat(model, messages, options)
+            } else {
+                throw new Error('Provider does not support chat operations')
+            }
+
+            logger.info(`[API REQUEST] ${providerLabel} SUCCESS`)
+            return response
+        } catch (error) {
+            logger.error(`[API REQUEST] ${providerLabel} FAILED: ${error.message}`)
+            throw error
         }
     }
 
@@ -53,14 +86,26 @@ export default class LLMHandler {
      * Call completion method using the appropriate provider interface
      */
     async _callCompletion(model, prompt, options = {}) {
-        if (this._hasHyperdataClientsInterface) {
-            // hyperdata-clients interface: complete(prompt, options)
-            return await this.llmProvider.complete(prompt, { model, ...options })
-        } else if (this._hasLegacyInterface) {
-            // Legacy interface: generateCompletion(model, prompt, options)
-            return await this.llmProvider.generateCompletion(model, prompt, options)
-        } else {
-            throw new Error('Provider does not support completion operations')
+        const providerLabel = this._getProviderLabel()
+        logger.info(`[API REQUEST] ${providerLabel} called (completion)`)
+
+        try {
+            let response
+            if (this._hasHyperdataClientsInterface) {
+                // hyperdata-clients interface: complete(prompt, options)
+                response = await this.llmProvider.complete(prompt, { model, ...options })
+            } else if (this._hasLegacyInterface) {
+                // Legacy interface: generateCompletion(model, prompt, options)
+                response = await this.llmProvider.generateCompletion(model, prompt, options)
+            } else {
+                throw new Error('Provider does not support completion operations')
+            }
+
+            logger.info(`[API REQUEST] ${providerLabel} SUCCESS (completion)`)
+            return response
+        } catch (error) {
+            logger.error(`[API REQUEST] ${providerLabel} FAILED (completion): ${error.message}`)
+            throw error
         }
     }
 

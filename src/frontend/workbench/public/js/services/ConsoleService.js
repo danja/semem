@@ -388,7 +388,7 @@ export class ConsoleService {
 
     try {
       // Connect via workbench proxy to API server for workflow logs
-      const streamUrl = '/workflow-logs/stream?api_key=semem-docker-dev-key';
+      const streamUrl = '/workflow-logs/stream?api_key=your-api-key; // was semem-docker-dev-key';
       
       this.info('🔄 Connecting to backend workflow logs...');
       this.eventSource = new EventSource(streamUrl);

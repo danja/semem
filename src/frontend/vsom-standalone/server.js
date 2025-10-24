@@ -151,7 +151,7 @@ class VSOMStandaloneServer {
                     method: req.method,
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-API-Key': 'semem-docker-dev-key', // Use dev key for VSOM proxy
+                        'X-API-Key': 'your-api-key', // was semem-docker-dev-key', // Use dev key for VSOM proxy
                         // Filter out content-length, host, and content-type to avoid duplicates
                         ...Object.fromEntries(
                             Object.entries(req.headers).filter(([key]) =>
