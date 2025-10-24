@@ -274,7 +274,7 @@ export class AskCommand extends BaseVerbCommand {
     // Add local context if available
     if (hasLocalContext) {
       const contextText = searchResults.map(result =>
-        result.content || result.prompt || result.response
+        result.content || result.output || result.prompt || result.response
       ).join('\n\n');
       promptParts.push(`Personal knowledge context:\n${contextText}`);
     }

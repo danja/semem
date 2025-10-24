@@ -27,7 +27,7 @@ export const SimpleVerbToolNames = {
 export const TellSchema = z.object({
   content: z.string().min(1, "Content cannot be empty"),
   type: z.enum(['interaction', 'document', 'concept']).optional().default('interaction'),
-  metadata: z.object({}).optional().default({}),
+  metadata: z.record(z.unknown()).optional().default({}),
   lazy: z.boolean().optional().default(false)
 });
 

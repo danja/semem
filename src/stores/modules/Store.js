@@ -343,8 +343,11 @@ export class Store {
         // Use graph from metadata if provided, otherwise use default
         const targetGraph = (data.metadata && data.metadata.graph) ? data.metadata.graph : this.graphName;
 
-        // Get label from metadata, or fallback to 'unlabeled'
-        const label = this._escapeSparqlString((data.metadata && data.metadata.label) || 'unlabeled');
+        // Get title from metadata (prioritize title field)
+        const title = data.metadata?.title || data.metadata?.filename || null;
+
+        // Get label from metadata, fallback to title, then to 'unlabeled'
+        const label = this._escapeSparqlString(data.metadata?.label || title || 'unlabeled');
 
         // Get source type from metadata (bookmark, document, chat, etc.)
         const sourceType = this._escapeSparqlString((data.metadata && data.metadata.source) || 'interaction');
@@ -370,7 +373,7 @@ export class Store {
                         semem:accessCount "0"^^xsd:integer ;
                         semem:concepts """${JSON.stringify(data.concepts || [])}""" ;
                         semem:decayFactor "1.0"^^xsd:decimal ;
-                        semem:memoryType "${data.metadata?.memoryType || 'short-term'}" .
+                        semem:memoryType "${data.metadata?.memoryType || 'short-term'}" ${title ? `;\n                        dcterms:title "${this._escapeSparqlString(title)}"` : ''} .
                     ${data.metadata ? Object.entries(data.metadata).filter(([key]) => key !== 'memoryType').map(([key, value]) =>
             `${entityUri} semem:${key} "${this._escapeSparqlString(String(value))}" .`
         ).join('\n') : ''}

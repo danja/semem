@@ -186,7 +186,7 @@ export default class MemoryManager {
                 accessCount: 1,
                 concepts,
                 decayFactor: 1.0,
-                ...metadata
+                metadata: metadata
             };
 
             // Step 2: Store with enhanced SPARQLStore (handles both persistence and memory)
