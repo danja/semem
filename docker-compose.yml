@@ -46,7 +46,8 @@ services:
       - ./docker-data/fuseki:/fuseki
       - ./docker-data/fuseki-base:/fuseki-base
     environment:
-      - ADMIN_PASSWORD=admin123
+      # ADMIN_PASSWORD removed - already configured in shiro.ini to avoid sed write errors
+      # - ADMIN_PASSWORD=admin123
       - JVM_ARGS=-Xmx2g
     depends_on:
       fuseki-init:
