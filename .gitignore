@@ -17,6 +17,7 @@ server-pids.txt
 
 **/debug-screenshots
 debug-*
+!src/mcp/lib/debug-utils.js
 docs/jsdoc
 docs-generated/
 
