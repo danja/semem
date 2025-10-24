@@ -25,6 +25,7 @@ services:
         cp /config/shiro.ini /fuseki-base/shiro.ini &&
         chown -R 9008:9008 /fuseki-base /fuseki &&
         chmod -R 755 /fuseki-base /fuseki &&
+        chmod 664 /fuseki-base/shiro.ini /fuseki-base/configuration/assembler.ttl &&
         echo 'Permissions fixed for Fuseki directories'
       "
     volumes:

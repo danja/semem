@@ -1567,8 +1567,7 @@ body {
     font-size: 1.2rem;
 }
 
-.chat-toggle,
-.verbs-toggle {
+.chat-toggle {
     display: flex;
     align-items: center;
     gap: var(--space-xs);
@@ -1582,17 +1581,18 @@ body {
     transition: all 0.2s ease;
 }
 
-.chat-toggle:hover,
-.verbs-toggle:hover {
+.chat-toggle:hover {
     background: var(--bg-tertiary);
     color: var(--text-primary);
 }
 
-.verbs-toggle .toggle-icon {
+/* Verbs toggle button icon rotation when in chat action buttons */
+.chat-action-button.verbs-toggle .button-icon {
     transform: rotate(-90deg);
+    transition: transform 0.3s ease;
 }
 
-.verbs-toggle.active .toggle-icon {
+.chat-action-button.verbs-toggle.active .button-icon {
     transform: rotate(0deg);
 }
 

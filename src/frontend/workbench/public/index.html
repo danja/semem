@@ -38,10 +38,6 @@
                         <span class="link-text">Docs</span>
                     </a>
                 </div>
-                <button type="button" id="verbs-toggle" class="verbs-toggle" aria-label="Toggle verbs panel">
-                    <span class="toggle-text">Show Verbs</span>
-                    <span class="toggle-icon">▼</span>
-                </button>
             </div>
             
             <div id="chat-content" class="chat-content">
@@ -63,9 +59,9 @@
                         </div>
 
                         <div class="chat-action-buttons">
-                            <button 
-                                type="submit" 
-                                id="chat-send" 
+                            <button
+                                type="submit"
+                                id="chat-send"
                                 class="chat-action-button chat-send-button"
                                 aria-label="Send message"
                             >
@@ -87,6 +83,10 @@
                                 <span class="button-icon">📄</span>
                                 <span class="button-text">Upload</span>
                                 <span class="button-loader" style="display: none;">⏳</span>
+                            </button>
+                            <button type="button" id="verbs-toggle" class="chat-action-button verbs-toggle" aria-label="Toggle verbs panel">
+                                <span class="button-icon">▼</span>
+                                <span class="button-text">Show Verbs</span>
                             </button>
                         </div>
                     </form>
