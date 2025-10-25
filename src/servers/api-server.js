@@ -570,7 +570,13 @@ class APIServer {
         apiRouter.get('/wikipedia/categories', this.authenticateRequest, this.createHandler('wikipedia-api', 'categories'));
 
         // Document API routes
-        apiRouter.post('/documents/upload', this.authenticateRequest, this.upload.single('file'), this.createDocumentHandler('document-api', 'upload'));
+        // Upload endpoint with extended timeout (10 minutes) due to embedding generation
+        apiRouter.post('/documents/upload', this.authenticateRequest, this.upload.single('file'), (req, res, next) => {
+            // Set timeout to 10 minutes (600000ms) for document processing with embeddings
+            req.setTimeout(600000);
+            res.setTimeout(600000);
+            next();
+        }, this.createDocumentHandler('document-api', 'upload'));
         apiRouter.post('/documents/convert', this.authenticateRequest, this.createHandler('document-api', 'convert'));
         apiRouter.post('/documents/chunk', this.authenticateRequest, this.createHandler('document-api', 'chunk'));
         apiRouter.post('/documents/ingest', this.authenticateRequest, this.createHandler('document-api', 'ingest'));

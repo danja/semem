@@ -579,7 +579,9 @@ export default class DocumentAPI extends BaseAPI {
         const docType = documentMeta?.documentType;
         const uploadTimestamp = documentMeta?.uploadedAt;
 
-        for (const chunk of chunkingResult.chunks) {
+        // Process chunks in parallel for better performance
+        this.logger.info(`Processing ${chunkingResult.chunks.length} chunks in parallel for document ${docId}`);
+        const chunkPromises = chunkingResult.chunks.map(async (chunk) => {
             const chunkTitle = this._createChunkTitle(chunk, docName, chunkingResult.chunks.length);
             const chunkContent = chunk.content;
 
@@ -616,8 +618,12 @@ export default class DocumentAPI extends BaseAPI {
             );
 
             const combinedText = `${chunkTitle}\n\n${chunkContent}`.trim();
-            const embedding = await this.memoryManager.generateEmbedding(combinedText);
-            const concepts = await this.memoryManager.extractConcepts(combinedText);
+
+            // Generate embedding and extract concepts in parallel
+            const [embedding, concepts] = await Promise.all([
+                this.memoryManager.generateEmbedding(combinedText),
+                this.memoryManager.extractConcepts(combinedText)
+            ]);
 
             await this.memoryManager.addInteraction(
                 chunkTitle,
@@ -630,12 +636,16 @@ export default class DocumentAPI extends BaseAPI {
                 }
             );
 
-            storedInteractions.push({
+            return {
                 interactionId: metadata.id || interactionId,
                 chunkUri: chunk.uri,
                 concepts: concepts.length
-            });
-        }
+            };
+        });
+
+        // Wait for all chunks to be processed
+        const results = await Promise.all(chunkPromises);
+        storedInteractions.push(...results);
 
         this.logger.info(`Stored ${storedInteractions.length} document chunks in semantic memory`, {
             documentId: docId,
