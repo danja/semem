@@ -154,20 +154,28 @@ body {
 
 .session-stats {
     display: flex;
-    gap: var(--space-md);
-    font-size: 0.8125rem;
+    gap: var(--space-sm);
+    font-size: 0.75rem;
     color: var(--text-secondary);
     white-space: nowrap;
+    flex-wrap: wrap;
+    align-items: center;
+    padding: var(--space-xs) 0;
 }
 
 .stat-item {
     display: flex;
     align-items: center;
-    gap: var(--space-xs);
+    gap: var(--space-2xs);
+    padding: var(--space-2xs) var(--space-xs);
 }
 
 .stat-icon {
-    font-size: 1rem;
+    font-size: 0.875rem;
+}
+
+.stat-item span:not(.stat-icon) {
+    font-weight: 500;
 }
 
 /* ZPT State Display */
@@ -2214,8 +2222,20 @@ body {
 /* Responsive adjustments for console stats */
 @media (max-width: 768px) {
     .console-stats .session-stats {
-        flex-direction: column;
-        gap: var(--space-sm);
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: var(--space-xs);
+        justify-content: flex-start;
+    }
+
+    .console-stats .stat-item {
+        font-size: 0.7rem;
+        padding: var(--space-2xs) var(--space-xs);
+        white-space: nowrap;
+    }
+
+    .console-stats .stat-icon {
+        font-size: 0.75rem;
     }
 }
 

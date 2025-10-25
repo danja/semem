@@ -283,9 +283,11 @@ class WorkbenchApp {
 
   initializeDashboardComponent() {
     this.components.dashboard = {
-      interactionsCount: DomUtils.$('#interactions-count'),
-      conceptsCount: DomUtils.$('#concepts-count'),
-      sessionDuration: DomUtils.$('#session-duration'),
+      interactionsCount: DomUtils.$('#interactions-count-bottom'),
+      conceptsCount: DomUtils.$('#concepts-count-bottom'),
+      sessionDuration: DomUtils.$('#session-duration-bottom'),
+      documentsCount: DomUtils.$('#documents-count-bottom'),
+      chunksCount: DomUtils.$('#chunks-count-bottom'),
       zoomState: DomUtils.$('#zoom-state'),
       panState: DomUtils.$('#pan-state'),
       tiltState: DomUtils.$('#tilt-state'),
@@ -390,11 +392,25 @@ class WorkbenchApp {
           consoleService.success(`✅ Content stored successfully in semantic memory (${duration}ms)`);
         }
       }
-      
+
       // Update session stats
-      stateManager.updateSessionStats({
-        interactionsCount: stateManager.getState().session.interactionsCount + 1
-      });
+      const currentState = stateManager.getState().session;
+      const statsUpdate = {
+        interactionsCount: currentState.interactionsCount + 1
+      };
+
+      // Track document and chunk counts
+      if (isDocumentType && result.success) {
+        statsUpdate.documentsCount = currentState.documentsCount + 1;
+
+        // Track chunks if available
+        if (result.chunks || result.chunking?.chunkCount) {
+          const chunkCount = result.chunks || result.chunking.chunkCount || 0;
+          statsUpdate.chunksCount = currentState.chunksCount + chunkCount;
+        }
+      }
+
+      stateManager.updateSessionStats(statsUpdate);
       
       // Show results
       this.displayTellResults(results, result);
@@ -1172,24 +1188,36 @@ class WorkbenchApp {
 
   updateSessionStats() {
     const state = stateManager.getState();
-    const { interactionsCount, conceptsCount } = state.session;
-    
+    const { interactionsCount, conceptsCount, documentsCount, chunksCount } = state.session;
+
     // Update interactions count
     const interactionsElement = this.components.dashboard.interactionsCount;
     if (interactionsElement) {
-      interactionsElement.textContent = interactionsCount;
+      interactionsElement.textContent = interactionsCount || 0;
     }
-    
+
     // Update concepts count
     const conceptsElement = this.components.dashboard.conceptsCount;
     if (conceptsElement) {
-      conceptsElement.textContent = conceptsCount;
+      conceptsElement.textContent = conceptsCount || 0;
     }
-    
+
     // Update duration
     const durationElement = this.components.dashboard.sessionDuration;
     if (durationElement) {
       durationElement.textContent = stateManager.getFormattedDuration();
+    }
+
+    // Update documents count (if element exists and data available)
+    const documentsElement = this.components.dashboard.documentsCount;
+    if (documentsElement && documentsCount !== undefined) {
+      documentsElement.textContent = documentsCount || 0;
+    }
+
+    // Update chunks count (if element exists and data available)
+    const chunksElement = this.components.dashboard.chunksCount;
+    if (chunksElement && chunksCount !== undefined) {
+      chunksElement.textContent = chunksCount || 0;
     }
   }
 

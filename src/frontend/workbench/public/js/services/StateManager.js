@@ -24,6 +24,8 @@ export class StateManager {
         startTime: Date.now(),
         interactionsCount: 0,
         conceptsCount: 0,
+        documentsCount: 0,
+        chunksCount: 0,
         duration: 0
       },
       
