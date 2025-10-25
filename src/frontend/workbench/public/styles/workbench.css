@@ -724,53 +724,184 @@ body {
     }
 }
 
+/* Tablet layout */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .top-row {
+        flex-direction: column;
+    }
+
+    .top-row .chat-container {
+        flex: none;
+        min-height: 450px;
+    }
+
+    .top-row .console-in-top-row {
+        flex: none;
+        min-height: 350px;
+    }
+
+    .primary-verbs {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
 @media (max-width: 900px) {
     .primary-verbs {
         grid-template-columns: 1fr 1fr;
     }
 }
 
+/* Mobile layout: Chat → Verbs → Console */
 @media (max-width: 768px) {
+    /* Responsive Layout: Chat → Verbs → Console */
+    .workbench-app {
+        display: grid;
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto auto;
+        gap: var(--space-md);
+        grid-template-areas:
+            "chat"
+            "verbs"
+            "console";
+    }
+
+    /* Top row becomes a grid container to split chat and console */
+    .top-row {
+        display: contents; /* Makes children direct grid items */
+    }
+
+    /* Chat first */
+    .top-row .chat-container {
+        grid-area: chat;
+        min-height: 400px;
+        max-height: 60vh;
+        width: 100%;
+    }
+
+    /* Console last (after verbs) */
+    .top-row .console-in-top-row {
+        grid-area: console;
+        min-height: 300px;
+        max-height: 50vh;
+        width: 100%;
+    }
+
+    /* Verbs in the middle */
+    .main-content {
+        grid-area: verbs;
+        height: auto;
+        max-height: none;
+        padding: 0;
+        overflow: visible;
+    }
+
     .dashboard-content {
         flex-direction: column;
         gap: var(--space-md);
         text-align: center;
     }
-    
+
     .session-stats {
         justify-content: center;
+        flex-wrap: wrap;
     }
-    
+
     .zpt-display {
         font-size: 0.75rem;
     }
-    
+
+    /* Single column layout for verb panels */
     .primary-verbs {
-        grid-template-columns: 1fr;
+        display: flex;
+        flex-direction: column;
         gap: var(--space-md);
-        margin: 0 var(--space-sm) var(--space-xl);
-        width: calc(100% - var(--space-sm) * 2);
+        margin: 0;
+        width: 100%;
+        height: auto;
     }
-    
+
+    /* Each verb column takes full width */
+    .verb-column {
+        min-height: 350px;
+        max-height: 80vh;
+        width: 100%;
+    }
+
     .console-column,
     .augment-column,
     .inspect-column {
         grid-column: auto;
     }
-    
+
     .form-row {
         grid-template-columns: 1fr;
         gap: var(--space-sm);
     }
-    
+
     .zoom-controls,
     .tilt-controls {
         flex-direction: column;
     }
-    
+
     .zoom-button,
     .tilt-button {
         flex: none;
+        width: 100%;
+    }
+
+    /* Adjust chat input for mobile */
+    .chat-input {
+        font-size: 16px; /* Prevents zoom on iOS */
+    }
+
+    .chat-action-buttons {
+        flex-wrap: wrap;
+    }
+
+    /* Make buttons stack nicely on very small screens */
+    .chat-action-button {
+        flex: 1 1 calc(50% - var(--space-xs));
+        min-width: 120px;
+    }
+
+    /* Header adjustments */
+    .chat-header {
+        padding: var(--space-sm);
+    }
+
+    .header-links {
+        gap: var(--space-sm);
+    }
+
+    .link-text {
+        display: none; /* Show only icons on mobile */
+    }
+}
+
+/* Extra small screens */
+@media (max-width: 480px) {
+    .workbench-app {
+        padding: var(--space-2xs);
+    }
+
+    .chat-action-button {
+        flex: 1 1 100%;
+    }
+
+    .button-text {
+        font-size: 0.875rem;
+    }
+
+    .verb-column {
+        min-height: 300px;
+    }
+
+    .top-row .chat-container {
+        min-height: 350px;
+    }
+
+    .top-row .console-in-top-row {
+        min-height: 250px;
     }
 }
 
