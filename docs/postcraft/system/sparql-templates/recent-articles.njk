@@ -2,14 +2,14 @@ PREFIX schema: <http://schema.org/>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 PREFIX : <http://purl.org/stuff/transmissions/>
 
-SELECT DISTINCT * WHERE {
-     GRAPH ?g {
-  ?uri a schema:Article ;
-    schema:headline ?title ;
-    schema:dateModified ?modified ;
-    schema:dateCreated ?created ;
-    :htmlContent ?html .
-}
+SELECT DISTINCT ?uri ?title ?modified ?created ?html WHERE {
+  GRAPH <{{ graph }}> {
+    ?uri a schema:Article ;
+      schema:headline ?title ;
+      schema:dateModified ?modified ;
+      schema:dateCreated ?created ;
+      :htmlContent ?html .
+  }
 }
 ORDER BY DESC(?modified)
 LIMIT 5
