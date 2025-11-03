@@ -82,6 +82,18 @@
     :endpointSettings "system/endpoints.json" ;
         :graph <http://hyperdata.it/content> .
 
+### for watch ####################
+:prepFilename a :ConfigSet  ;
+    :rename (:pf1)  .
+        :pf1    :pre    "sourcePath" ;
+                :post   "sourceFile"  .
+
+:selectLatest a :ConfigSet ;
+    :templateFilename "system/sparql-templates/select-latest.njk" ;
+    :endpointSettings "system/endpoints.json" ;
+        :graph <http://hyperdata.it/content> .
+
+#################################
 :shiftHTML a :ConfigSet  ;
     :rename ( :sh1 :sh3)  .
         # for content
@@ -153,31 +165,25 @@
     :remove "queryResults" ;
     :rename (:pc1 :pc2 :pc3 :pu1)  .
         :pc1   :pre    "currentItem.title.value" ;
-              :post "contentBlocks.title"  .
+              :post "entry.title"  .
         :pc2   :pre    "currentItem.html.value" ;
-              :post  "contentBlocks.html"  .
+              :post  "entry.content"  .
         :pc3   :pre    "currentItem.created.value" ;
-              :post  "contentBlocks.created"  .
-
+              :post  "entry.published"  .
         :pu1     :pre    "currentItem.uri.value" ;
-                :post   "contentBlocks.uri"  .
+                :post   "entry.uri"  .
 
 :accumulator a :ConfigSet ;
     :label "test" ;
-    :sourceField "currentItem.html.value" .
+    :accumulatorType "array" ;
+    :sourceField "entry" ;
+    :targetField "contentBlocks.entries" .
 
 #### unforks -------------
 
 ### create HTML index
 
-:prepHTML a :ConfigSet  ;
-    :loglevel "debug" ;
-    :rename (:ph1 :ph2)  .
-        # for content
-        :ph1   :pre    "accumulator" ;
-              :post "contentBlocks.content"  .
-        :ph2   :pre    "dummy" ;
-              :post "dummy"  .
+# No prepHTML needed - accumulator puts entries directly into contentBlocks.entries
 
 :htmlIndex a :ConfigSet ;
     :templateFilename "layout/base/templates/index-html.njk" .
@@ -198,14 +204,17 @@
 
 ### create Atom index
 
-:prepAtom a :ConfigSet  ;
-    :rename :pa1  .
-        # for content
-        :pa1   :pre    "accumulator" ;
-              :post "contentBlocks.content"  .
+# No prepAtom needed - AtomBuilder reads from contentBlocks.entries directly
 
-:atomIndex a :ConfigSet ;
-    :templateFilename "layout/base/templates/index-atom.njk" .
+:atomBuilder a :ConfigSet ;
+    :inputField "contentBlocks.entries" ;
+    :outputField "content" ;
+    :feedTitle "Semem - Recent Articles" ;
+    :feedSubtitle "Latest articles from semem" ;
+    :feedAuthorName "Danny Ayers" ;
+    :feedAuthorEmail "danny.ayers@gmail.com" ;
+    :baseUrl "https://hyperdata.it" ;
+    :feedUrl "https://hyperdata.it/atom.xml" .
 
 :atomFilepath a :ConfigSet ;
   :asPath true ;
