@@ -29,7 +29,8 @@ export default class DogalogResponseParser {
         const labeledCodeMatch = trimmed.match(labeledCodePattern);
 
         if (labeledCodeMatch) {
-            result.codeSuggestion = labeledCodeMatch[1].trim();
+            // Strip any accidental label inclusion inside the code block
+            result.codeSuggestion = this._stripLabels(labeledCodeMatch[1].trim());
         }
 
         // Pattern 2: Labeled PROLOG QUERY block (from our prompt template)
@@ -37,7 +38,8 @@ export default class DogalogResponseParser {
         const labeledQueryMatch = trimmed.match(labeledQueryPattern);
 
         if (labeledQueryMatch) {
-            result.querySuggestion = labeledQueryMatch[1].trim();
+            // Strip any accidental label inclusion inside the code block
+            result.querySuggestion = this._stripLabels(labeledQueryMatch[1].trim());
         }
 
         // If we found labeled blocks, return early
@@ -165,6 +167,24 @@ export default class DogalogResponseParser {
         ];
 
         return prologPatterns.some(pattern => pattern.test(trimmed));
+    }
+
+    /**
+     * Strip any label text that might have been included inside code blocks
+     *
+     * @param {string} code - Code to clean
+     * @returns {string} - Cleaned code
+     * @private
+     */
+    static _stripLabels(code) {
+        if (!code) return code;
+
+        // Remove "PROLOG CODE:" or "PROLOG QUERY:" if they appear at the start
+        return code
+            .replace(/^PROLOG\s+CODE:\s*/i, '')
+            .replace(/^PROLOG\s+QUERY:\s*/i, '')
+            .replace(/^\?-\s*PROLOG\s+QUERY:\s*/i, '?- ')  // Handle ?- prefix
+            .trim();
     }
 
     /**

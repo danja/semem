@@ -171,6 +171,21 @@ The endpoint will:
 - Extract and return code suggestions when appropriate
 - Extract and return query suggestions when appropriate
 
+### Tips for Better Results
+
+**Be specific in your prompts:**
+- ✅ GOOD: "Write a complete kick drum pattern with 4 hits in 16 steps"
+- ✅ GOOD: "Add a hi-hat using every(T, 0.5)"
+- ❌ VAGUE: "create a jolly tune" (may generate complex/incorrect syntax)
+
+**Request complete code:**
+- Add phrases like "Write the complete code" or "Include both the pattern and event rules"
+- This helps ensure the LLM generates all necessary predicates
+
+**Known limitations:**
+- Complex musical requests may generate overly complicated patterns
+- Always verify generated code follows Dogalog syntax (one `euc` per pattern, valid voices)
+
 ## Risk Assessment
 
 **Low Risk** ✅

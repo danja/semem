@@ -459,11 +459,13 @@ async function startRefactoredServer() {
           code
         );
 
-        // Route to existing ask verb (stateless, no memory storage)
+        // Route to existing ask verb
+        // Note: useContext:true allows LLM generation but doesn't store the interaction
+        // (stateless operation - we're not using 'tell' to store anything)
         const result = await simpleVerbsService.ask({
           question: enhancedQuestion,
           mode: 'standard',
-          useContext: false  // Stateless per user preference
+          useContext: true  // Enable LLM generation with context retrieval
         });
 
         // Extract code and query suggestions
