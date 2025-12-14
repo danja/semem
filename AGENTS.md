@@ -208,6 +208,21 @@ const llmHandler = new LLMHandler(llmProvider, modelConfig.chatModel);
 - Comprehensive e2e test coverage in `tests/integration/vsom/`
 - ZPT navigation system integrated with MCP verbs for 3D semantic exploration
 
+### Dogalog Integration
+- **Endpoint**: `POST http://localhost:4101/dogalog/chat`
+- **Purpose**: Provides AI assistance for Dogalog Prolog-based audio programming IDE
+- **Request format**: `{ prompt: string, code?: string }`
+- **Response format**: `{ message: string, codeSuggestion?: string, querySuggestion?: string }`
+- **Characteristics**: Stateless, always returns HTTP 200, Dogalog-specific prompts
+- **Implementation**:
+  - Response parser: `src/utils/DogalogResponseParser.js` - extracts Prolog code/query suggestions
+  - Context builder: `src/mcp/lib/PrologContextBuilder.js` - builds domain-aware prompts
+  - Templates: `prompts/templates/mcp/dogalog-with-code.md`, `dogalog-no-code.md`
+- **Testing**:
+  - Unit tests: `tests/unit/utils/DogalogResponseParser.test.js`, `tests/unit/mcp/PrologContextBuilder.test.js`
+  - Integration test: `tests/integration/dogalog/dogalog-chat-e2e.integration.test.js`
+- **Documentation**: See `docs/DOGALOG-ENDPOINT-PLAN.md` for full implementation details
+
 ---
 ## Error Handling
 - Fallbacks are not to be used. Informative errors should be thrown so the underlying problem can be fixed. No masking!

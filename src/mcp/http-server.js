@@ -16,6 +16,8 @@ import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/
 import { createMCPServer } from './server/server-factory.js';
 import { mcpDebugger } from './lib/debug-utils.js';
 import Config from '../../src/Config.js';
+import DogalogResponseParser from '../utils/DogalogResponseParser.js';
+import { PrologContextBuilder } from './lib/PrologContextBuilder.js';
 
 // Load environment variables first
 const __filename = fileURLToPath(import.meta.url);
@@ -432,6 +434,66 @@ async function startRefactoredServer() {
           content: 'I encountered an error processing your enhanced query. Please try again.',
           messageType: 'error',
           error: error.message
+        });
+      }
+    });
+
+    // Dogalog chat endpoint - for Dogalog Prolog IDE integration
+    app.post('/dogalog/chat', async (req, res) => {
+      try {
+        const { prompt, code } = req.body;
+
+        // Validate required prompt
+        if (!prompt || typeof prompt !== 'string' || prompt.trim() === '') {
+          return res.status(200).json({
+            message: 'Please provide a prompt.'
+          });
+        }
+
+        mcpDebugger.info(`🎵 Dogalog chat request: ${prompt.substring(0, 50)}...`);
+
+        // Build Prolog-aware question using templates
+        const contextBuilder = new PrologContextBuilder();
+        const enhancedQuestion = await contextBuilder.buildPrologQuestion(
+          prompt.trim(),
+          code
+        );
+
+        // Route to existing ask verb (stateless, no memory storage)
+        const result = await simpleVerbsService.ask({
+          question: enhancedQuestion,
+          mode: 'standard',
+          useContext: false  // Stateless per user preference
+        });
+
+        // Extract code and query suggestions
+        const suggestions = DogalogResponseParser.extractPrologSuggestions(
+          result.content || result.answer || ''
+        );
+
+        // Transform to Dogalog format
+        const dogalogResponse = {
+          message: result.content || result.answer || 'Sorry, I could not generate a response.'
+        };
+
+        // Add suggestions if extracted
+        if (suggestions.codeSuggestion) {
+          dogalogResponse.codeSuggestion = suggestions.codeSuggestion;
+        }
+        if (suggestions.querySuggestion) {
+          dogalogResponse.querySuggestion = suggestions.querySuggestion;
+        }
+
+        mcpDebugger.info(`🎵 Dogalog chat response generated (code: ${!!suggestions.codeSuggestion}, query: ${!!suggestions.querySuggestion})`);
+
+        // Always return 200 per Dogalog contract
+        res.status(200).json(dogalogResponse);
+
+      } catch (error) {
+        mcpDebugger.error('❌ Dogalog chat error:', error.message);
+        // Return 200 with error message per Dogalog contract
+        res.status(200).json({
+          message: `I encountered an error: ${error.message}. Please try again.`
         });
       }
     });
