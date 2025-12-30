@@ -184,4 +184,86 @@ describe('Tell/Ask E2E Integration Tests', () => {
     expect(recallResult.zptState.sessionId).toBeDefined();
     expect(Array.isArray(recallResult.memories)).toBe(true);
   }, 30000);
+
+  test('Ask/Recall persist ZPT navigation provenance', async () => {
+    const apiKey = process.env.SEMEM_API_KEY;
+    if (!apiKey) {
+      throw new Error('SEMEM_API_KEY is required for navigation provenance checks');
+    }
+
+    const fact = generateRandomFact();
+    const subject = fact.split(' ')[0];
+    const question = `what color are ${subject}?`;
+    const startTime = Date.now() - 5000;
+
+    const tellResponse = await fetch('http://localhost:4101/tell', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content: fact })
+    });
+
+    if (!tellResponse.ok) {
+      throw new Error(`HTTP ${tellResponse.status}: ${tellResponse.statusText}`);
+    }
+
+    const askResponse = await fetch('http://localhost:4101/ask', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question })
+    });
+
+    if (!askResponse.ok) {
+      throw new Error(`HTTP ${askResponse.status}: ${askResponse.statusText}`);
+    }
+
+    const recallResponse = await fetch('http://localhost:4101/recall', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: subject })
+    });
+
+    if (!recallResponse.ok) {
+      throw new Error(`HTTP ${recallResponse.status}: ${recallResponse.statusText}`);
+    }
+
+    const sessionsResponse = await fetch('http://localhost:4100/api/navigate/sessions?limit=20', {
+      headers: { 'X-API-Key': apiKey }
+    });
+
+    if (!sessionsResponse.ok) {
+      throw new Error(`HTTP ${sessionsResponse.status}: ${sessionsResponse.statusText}`);
+    }
+
+    const sessionsResult = await sessionsResponse.json();
+    expect(sessionsResult.success).toBe(true);
+    expect(Array.isArray(sessionsResult.sessions)).toBe(true);
+
+    const recentSessions = sessionsResult.sessions.filter(session => {
+      const sessionTime = session.startTime ? new Date(session.startTime).getTime() : 0;
+      return sessionTime >= startTime;
+    });
+
+    expect(recentSessions.length).toBeGreaterThan(0);
+
+    const viewsResponse = await fetch('http://localhost:4100/api/navigate/views?limit=50', {
+      headers: { 'X-API-Key': apiKey }
+    });
+
+    if (!viewsResponse.ok) {
+      throw new Error(`HTTP ${viewsResponse.status}: ${viewsResponse.statusText}`);
+    }
+
+    const viewsResult = await viewsResponse.json();
+    expect(viewsResult.success).toBe(true);
+    expect(Array.isArray(viewsResult.views)).toBe(true);
+
+    const subjectLower = subject.toLowerCase();
+    const matchingViews = viewsResult.views.filter(view => {
+      const query = (view.query || '').toLowerCase();
+      const viewTime = view.timestamp ? new Date(view.timestamp).getTime() : 0;
+      return query.includes(subjectLower) && viewTime >= startTime;
+    });
+
+    expect(matchingViews.length).toBeGreaterThan(0);
+  }, 60000);
 });

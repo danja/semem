@@ -44,8 +44,8 @@ Update the checkboxes as work lands.
 
 ### Phase 5: Tests + Docs
 - [x] Update ZPT exercises/tests to match the canonical ladder and pipeline behavior.
-- [ ] Add integration coverage for Ask/Recall with ZPT navigation and provenance.
-- [ ] Document end-to-end ZPT flow (API → MCP verbs → UI).
+- [x] Add integration coverage for Ask/Recall with ZPT navigation and provenance.
+- [x] Document end-to-end ZPT flow (API → MCP verbs → UI).
 
 ## Progress Log
 - 2025-??-??: Plan created.
@@ -66,6 +66,8 @@ Update the checkboxes as work lands.
 - 2025-??-??: ZPT navigation selection now filters content/keywords correctly, excludes zpt_navigation echoes, and integration tests pass end-to-end.
 - 2025-12-30: HTTP Ask now returns zptState; HTTP Recall endpoint added; ZPT keyword normalization handles punctuation/numeric IDs; MCP tell/ask/recall e2e passes.
 - 2025-12-30: STDIO MCP tests now sequence init/tell/ask with longer timeouts to stabilize protocol checks against live services.
+- 2025-12-30: ZPT API now resolves SPARQL store from MemoryManager/store and uses SPARQLStore execute methods for session/view queries.
+- 2025-12-30: Documented end-to-end ZPT flow (API -> MCP verbs -> UI).
 
 ## Canonical Zoom Ladder
 Most detailed → most abstract:

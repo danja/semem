@@ -80,8 +80,12 @@ export default class ZptAPI extends BaseAPI {
             // Get storage - try to get SPARQL store if available
             try {
                 const memoryManager = registry.get('memory');
-                if (memoryManager && memoryManager.storage) {
+                if (memoryManager?.store) {
+                    this.sparqlStore = memoryManager.store;
+                } else if (memoryManager?.storage) {
                     this.sparqlStore = memoryManager.storage;
+                } else {
+                    this.sparqlStore = registry.get('storage');
                 }
             } catch (error) {
                 this.logger.warn('SPARQL store not available, ZPT functionality will be limited');
@@ -1173,28 +1177,50 @@ ${triples}
      * Execute SPARQL query
      */
     async _executeSPARQLQuery(query) {
-        if (!this.sparqlStore || !this.sparqlStore._executeSparqlQuery) {
+        if (!this.sparqlStore) {
             throw new Error('SPARQL query execution not available');
         }
-        
-        return await this.sparqlStore._executeSparqlQuery(
-            query,
-            this.sparqlStore.endpoint.query
-        );
+
+        if (this.sparqlStore.executeSparqlQuery) {
+            return await this.sparqlStore.executeSparqlQuery(
+                query,
+                this.sparqlStore.endpoint?.query
+            );
+        }
+
+        if (this.sparqlStore._executeSparqlQuery) {
+            return await this.sparqlStore._executeSparqlQuery(
+                query,
+                this.sparqlStore.endpoint?.query
+            );
+        }
+
+        throw new Error('SPARQL query execution not available');
     }
 
     /**
      * Execute SPARQL update
      */
     async _executeSPARQLUpdate(update) {
-        if (!this.sparqlStore || !this.sparqlStore._executeSparqlUpdate) {
+        if (!this.sparqlStore) {
             throw new Error('SPARQL update execution not available');
         }
-        
-        return await this.sparqlStore._executeSparqlUpdate(
-            update,
-            this.sparqlStore.endpoint.update
-        );
+
+        if (this.sparqlStore.executeSparqlUpdate) {
+            return await this.sparqlStore.executeSparqlUpdate(
+                update,
+                this.sparqlStore.endpoint?.update
+            );
+        }
+
+        if (this.sparqlStore._executeSparqlUpdate) {
+            return await this.sparqlStore._executeSparqlUpdate(
+                update,
+                this.sparqlStore.endpoint?.update
+            );
+        }
+
+        throw new Error('SPARQL update execution not available');
     }
 
     /**
