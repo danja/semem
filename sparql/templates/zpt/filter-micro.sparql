@@ -2,11 +2,23 @@
 SELECT DISTINCT ?uri ?label ?content ?attributeType ?metadata
 WHERE {
     GRAPH <{{graphName}}> {
-        ?uri a ragno:Attribute .
-        OPTIONAL { ?uri rdfs:label ?label }
-        OPTIONAL { ?uri ragno:content ?content }
-        OPTIONAL { ?uri ragno:subType ?attributeType }
-        OPTIONAL { ?uri semem:metadata ?metadata }
+        {
+            ?uri a ragno:Attribute .
+            OPTIONAL { ?uri rdfs:label ?label }
+            OPTIONAL { ?uri ragno:content ?content }
+            OPTIONAL { ?uri ragno:content ?prefLabel }
+            OPTIONAL { ?uri ragno:subType ?attributeType }
+            OPTIONAL { ?uri semem:metadata ?metadata }
+        }
+        UNION
+        {
+            ?uri a semem:Interaction ;
+                 semem:prompt ?label .
+            OPTIONAL { ?uri semem:output ?content }
+            OPTIONAL { ?uri semem:output ?prefLabel }
+            OPTIONAL { ?uri semem:metadata ?metadata }
+            BIND("interaction" AS ?attributeType)
+        }
         {{filters}}
     }
 }

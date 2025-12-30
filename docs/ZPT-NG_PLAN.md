@@ -62,6 +62,10 @@ Update the checkboxes as work lands.
 - 2025-??-??: ZPT labels/tooltips/help text aligned to canonical ladder.
 - 2025-??-??: ZPT integration exercises updated to canonical zoom/tilt ladder.
 - 2025-??-??: Ask/Recall e2e now asserts ZPT state presence in responses.
+- 2025-??-??: Allow non-ontology pan domains without hard failures; switch storage to live Fuseki endpoints for integration tests.
+- 2025-??-??: ZPT navigation selection now filters content/keywords correctly, excludes zpt_navigation echoes, and integration tests pass end-to-end.
+- 2025-12-30: HTTP Ask now returns zptState; HTTP Recall endpoint added; ZPT keyword normalization handles punctuation/numeric IDs; MCP tell/ask/recall e2e passes.
+- 2025-12-30: STDIO MCP tests now sequence init/tell/ask with longer timeouts to stabilize protocol checks against live services.
 
 ## Canonical Zoom Ladder
 Most detailed → most abstract:

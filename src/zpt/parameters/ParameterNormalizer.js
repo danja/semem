@@ -159,10 +159,13 @@ export default class ParameterNormalizer {
     normalizeCorpuscleFilter(corpuscles) {
         if (!corpuscles || !Array.isArray(corpuscles)) return undefined;
 
+        const values = corpuscles.map(c => c.trim()).filter(Boolean);
+        if (values.length === 0) return undefined;
+
         return {
-            values: corpuscles.map(c => c.trim()),
-            count: corpuscles.length,
-            type: corpuscles.length === 1 ? 'single' : 'multiple'
+            values,
+            count: values.length,
+            type: values.length === 1 ? 'single' : 'multiple'
         };
     }
 

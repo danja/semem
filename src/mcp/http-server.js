@@ -334,6 +334,7 @@ async function startRefactoredServer() {
           mode: result.mode,
           contextUsed: result.contextUsed,
           contextCount: result.contextCount || 0,
+          zptState: result.zptState,
           timestamp: result.timestamp
         };
 
@@ -344,6 +345,46 @@ async function startRefactoredServer() {
           success: false,
           verb: 'ask',
           question: req.body.question,
+          error: error.message
+        });
+      }
+    });
+
+    // Recall endpoint
+    app.post('/recall', async (req, res) => {
+      try {
+        const {
+          query,
+          domain,
+          domains,
+          timeRange,
+          limit,
+          threshold
+        } = req.body;
+
+        if (!query) {
+          return res.status(400).json({ error: 'Query is required' });
+        }
+
+        mcpDebugger.info(`📥 Refactored Recall request: ${query.substring(0, 50)}...`);
+
+        const result = await simpleVerbsService.recall({
+          query,
+          domains: domains || (domain ? [domain] : undefined),
+          timeRange,
+          maxResults: limit,
+          relevanceThreshold: threshold
+        });
+
+        mcpDebugger.info(`📥 Refactored Recall result: ${result.success ? 'SUCCESS' : 'FAILED'}`);
+
+        res.json(result);
+      } catch (error) {
+        mcpDebugger.error('❌ Refactored Recall error:', error.message);
+        res.status(500).json({
+          success: false,
+          verb: 'recall',
+          query: req.body.query,
           error: error.message
         });
       }
@@ -642,26 +683,25 @@ async function startRefactoredServer() {
           pan,
           tilt
         });
-
-        // Format response for workbench navigation
+        
         const navigateResponse = {
-          success: true,
+          ...navigationResult,
           navigation: {
             zoom,
             pan,
             tilt,
             query
           },
-          result: navigationResult || {
-            entities: [],
-            relationships: [],
-            concepts: [],
-            message: 'Navigation executed successfully'
-          },
           timestamp: new Date().toISOString()
         };
 
-        mcpDebugger.info(`🗺️ Refactored ZPT Navigate result: ${navigateResponse.success ? 'SUCCESS' : 'FAILED'} - ${zoom}/${tilt}`);
+        if (!navigationResult?.success) {
+          mcpDebugger.error(`🗺️ Refactored ZPT Navigate failed - ${zoom}/${tilt}: ${navigationResult?.error}`);
+          res.status(400).json(navigateResponse);
+          return;
+        }
+
+        mcpDebugger.info(`🗺️ Refactored ZPT Navigate result: SUCCESS - ${zoom}/${tilt}`);
         res.json(navigateResponse);
       } catch (error) {
         mcpDebugger.error('❌ Refactored ZPT Navigate error:', error.message);
@@ -683,6 +723,7 @@ async function startRefactoredServer() {
       mcpDebugger.info(`MCP endpoint: POST http://localhost:${port}/mcp`);
       mcpDebugger.info(`Tell endpoint: POST http://localhost:${port}/tell`);
       mcpDebugger.info(`Ask endpoint: POST http://localhost:${port}/ask`);
+      mcpDebugger.info(`Recall endpoint: POST http://localhost:${port}/recall`);
       mcpDebugger.info(`Chat endpoint: POST http://localhost:${port}/chat`);
       mcpDebugger.info(`Enhanced Chat endpoint: POST http://localhost:${port}/chat/enhanced`);
       mcpDebugger.info(`Augment endpoint: POST http://localhost:${port}/augment`);

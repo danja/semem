@@ -1,12 +1,23 @@
 # ZPT micro-level query for Attribute entities
 SELECT DISTINCT ?uri ?label ?content ?metadata ?timestamp ?similarity WHERE {
     GRAPH <{{graphName}}> {
-        ?uri a ragno:Attribute .
-        OPTIONAL { ?uri rdfs:label ?label }
-        OPTIONAL { ?uri ragno:content ?content }
-        OPTIONAL { ?uri semem:metadata ?metadata }
-        OPTIONAL { ?uri dcterms:created ?timestamp }
-        OPTIONAL { ?uri semem:similarity ?similarity }
+        {
+            ?uri a ragno:Attribute .
+            OPTIONAL { ?uri rdfs:label ?label }
+            OPTIONAL { ?uri ragno:content ?content }
+            OPTIONAL { ?uri semem:metadata ?metadata }
+            OPTIONAL { ?uri dcterms:created ?timestamp }
+            OPTIONAL { ?uri semem:similarity ?similarity }
+        }
+        UNION
+        {
+            ?uri a semem:Interaction ;
+                 semem:prompt ?label .
+            OPTIONAL { ?uri semem:output ?content }
+            OPTIONAL { ?uri semem:metadata ?metadata }
+            OPTIONAL { ?uri dcterms:created ?timestamp }
+            OPTIONAL { ?uri semem:similarity ?similarity }
+        }
         {{filters}}
     }
 }

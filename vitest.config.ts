@@ -49,8 +49,9 @@ export default defineConfig({
     env: {
       NODE_ENV: 'test',
       MCP_DEBUG: 'false',
-      MCP_PORT: '3001',
-      MCP_HOST: 'localhost'
+      MCP_PORT: process.env.MCP_PORT || '4101',
+      MCP_HOST: process.env.MCP_HOST || 'localhost',
+      MCP_URL: process.env.MCP_URL || ''
     },
     
     // Global setup files

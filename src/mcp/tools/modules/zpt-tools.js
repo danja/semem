@@ -11,6 +11,8 @@ import { initializeServices, getMemoryManager } from '../../lib/initialization.j
 import { SafeOperations } from '../../lib/safe-operations.js';
 import { mcpDebugger } from '../../lib/debug-utils.js';
 import { NamespaceUtils } from '../../../zpt/ontology/ZPTNamespaces.js';
+import CorpuscleSelector from '../../../zpt/selection/CorpuscleSelector.js';
+import CorpuscleTransformer from '../../../zpt/transform/CorpuscleTransformer.js';
 
 // ZPT components will be loaded lazily to avoid blocking imports
 
@@ -86,26 +88,6 @@ class ZPTNavigationService {
   }
 
   /**
-   * Initialize ZPT components lazily
-   */
-  async initializeComponents() {
-    if (this.parameterValidator) {
-      return; // Already initialized
-    }
-
-    try {
-      // Lazy import ZPT components
-      const { default: ParameterValidator } = await import('../../src/zpt/parameters/ParameterValidator.js');
-      const { default: ParameterNormalizer } = await import('../../src/zpt/parameters/ParameterNormalizer.js');
-      this.parameterValidator = new ParameterValidator();
-      this.parameterNormalizer = new ParameterNormalizer();
-    } catch (error) {
-      mcpDebugger.error('Failed to initialize ZPT components:', error);
-      throw error;
-    }
-  }
-
-  /**
    * Convert string-based ZPT parameters to formal URIs
    */
   convertParametersToURIs(params) {
@@ -138,13 +120,15 @@ class ZPTNavigationService {
     // Convert pan domain parameters
     if (params.pan && Array.isArray(params.pan.domains)) {
       convertedParams.pan = { ...params.pan };
-      convertedParams.pan.domainURIs = params.pan.domains.map(domain => {
-        const uri = NamespaceUtils.resolveStringToURI('pan', domain);
-        if (!uri) {
-          throw new Error(`Unsupported pan domain for ZPT ontology: ${domain}`);
-        }
-        return uri.value;
-      });
+      const resolvedDomainURIs = params.pan.domains
+        .map(domain => {
+          const uri = NamespaceUtils.resolveStringToURI('pan', domain);
+          return uri ? uri.value : null;
+        })
+        .filter(Boolean);
+      if (resolvedDomainURIs.length) {
+        convertedParams.pan.domainURIs = resolvedDomainURIs;
+      }
       convertedParams.pan.domainStrings = params.pan.domains; // Keep originals
     }
 
@@ -152,15 +136,30 @@ class ZPTNavigationService {
   }
 
   /**
-   * Initialize ZPT components with available corpus and handlers
+   * Initialize ZPT components with validators, corpus selectors, and handlers
    */
   async initializeComponents() {
+    if (this.parameterValidator && this.corpuscleSelector) {
+      return;
+    }
+
     try {
+      if (!this.parameterValidator) {
+        const { default: ParameterValidator } = await import('../../../zpt/parameters/ParameterValidator.js');
+        const { default: ParameterNormalizer } = await import('../../../zpt/parameters/ParameterNormalizer.js');
+        this.parameterValidator = new ParameterValidator();
+        this.parameterNormalizer = new ParameterNormalizer();
+      }
+
       // Get the SPARQL store and embedding handler from memory manager
       const sparqlStore = this.memoryManager?.store;
       const embeddingHandler = this.memoryManager?.embeddingHandler;
 
-      if (sparqlStore && embeddingHandler) {
+      if (!sparqlStore || !embeddingHandler) {
+        throw new Error('Missing SPARQL store or embedding handler for ZPT navigation');
+      }
+
+      if (!this.corpuscleSelector) {
         // Create a mock corpus object for now - in production this would come from ragno
         const corpus = {
           sparqlStore,
@@ -175,6 +174,7 @@ class ZPTNavigationService {
         this.corpuscleSelector = new CorpuscleSelector(corpus, {
           sparqlStore,
           embeddingHandler,
+          graphName: sparqlStore.graphName,
           maxResults: 1000,
           enableCaching: true,
           debugMode: false,
@@ -186,12 +186,10 @@ class ZPTNavigationService {
           enableMetadata: true,
           debugMode: false
         });
-
-        mcpDebugger.info('ZPT components initialized with real data sources');
-        return true;
       }
 
-      throw new Error('Missing SPARQL store or embedding handler for ZPT navigation');
+      mcpDebugger.info('ZPT components initialized with real data sources');
+      return true;
     } catch (error) {
       mcpDebugger.error('Failed to initialize ZPT components', error);
       throw error;
@@ -523,6 +521,12 @@ class ZPTNavigationService {
       // Phase 1: Parameter validation and normalization
       const selectionStart = Date.now();
 
+      const normalizeKeywordTokens = (keywords = []) => (
+        keywords
+          .map(keyword => keyword.replace(/[^\w-]/g, '').trim())
+          .filter(Boolean)
+      );
+
       // Convert ZPT parameters to selection parameters
       const selectionParams = {
         query: safeQuery,
@@ -533,7 +537,8 @@ class ZPTNavigationService {
           domains: [],
           keywords: [],
           temporal: {},
-          entities: []
+          entities: [],
+          corpuscle: []
         },
         tilt: (typeof normalizedParams.tilt === 'object' && normalizedParams.tilt.representation) 
               ? normalizedParams.tilt.representation 
@@ -542,40 +547,44 @@ class ZPTNavigationService {
         includeMetadata: true
       };
 
+      const panParams = params.pan || {};
+
       // Apply filters if provided in the pan parameter
-      if (pan) {
+      if (panParams) {
         // Handle domain filter
-        if (pan.domains) {
-          selectionParams.pan.domains = Array.isArray(pan.domains) ? pan.domains : [pan.domains];
+        if (panParams.domains) {
+          selectionParams.pan.domains = Array.isArray(panParams.domains) ? panParams.domains : [panParams.domains];
         }
 
         // Handle keywords filter
-        if (pan.keywords) {
-          selectionParams.pan.keywords = Array.isArray(pan.keywords)
-            ? pan.keywords
-            : [pan.keywords];
+        if (Array.isArray(panParams.keywords) && panParams.keywords.length > 0) {
+          selectionParams.pan.keywords = normalizeKeywordTokens(panParams.keywords);
+        } else if (typeof panParams.keywords === 'string' && panParams.keywords.trim()) {
+          selectionParams.pan.keywords = normalizeKeywordTokens([panParams.keywords.trim()]);
         } else if (selectionParams.pan.keywords.length === 0 && safeQuery) {
           // If no keywords from pan, use query terms
-          selectionParams.pan.keywords = safeQuery.split(' ').filter(w => w && w.length > 2);
+          selectionParams.pan.keywords = normalizeKeywordTokens(
+            safeQuery.split(' ').filter(w => w && w.length > 2)
+          );
         }
 
         // Handle temporal filter
-        if (pan.temporal) {
-          selectionParams.pan.temporal = { ...pan.temporal };
+        if (panParams.temporal) {
+          selectionParams.pan.temporal = { ...panParams.temporal };
         }
 
         // Handle entities filter
-        if (pan.entities) {
-          selectionParams.pan.entities = Array.isArray(pan.entities)
-            ? pan.entities
-            : [pan.entities];
+        if (panParams.entities) {
+          selectionParams.pan.entities = Array.isArray(panParams.entities)
+            ? panParams.entities
+            : [panParams.entities];
         }
 
         // Handle corpuscle filter
-        if (pan.corpuscle) {
-          selectionParams.pan.corpuscle = Array.isArray(pan.corpuscle)
-            ? pan.corpuscle
-            : [pan.corpuscle];
+        if (panParams.corpuscle) {
+          selectionParams.pan.corpuscle = Array.isArray(panParams.corpuscle)
+            ? panParams.corpuscle
+            : [panParams.corpuscle];
         }
 
         // Ensure arrays are properly initialized
@@ -584,6 +593,12 @@ class ZPTNavigationService {
         if (!selectionParams.pan.entities) selectionParams.pan.entities = [];
         if (!selectionParams.pan.corpuscle) selectionParams.pan.corpuscle = [];
         if (!selectionParams.pan.temporal) selectionParams.pan.temporal = {};
+      }
+
+      const numericKeywords = normalizeKeywordTokens(selectionParams.pan.keywords)
+        .filter(keyword => /\d/.test(keyword));
+      if (numericKeywords.length > 0) {
+        selectionParams.pan.keywords = numericKeywords;
       }
 
       const selectionResult = await this.corpuscleSelector.select(selectionParams);
@@ -614,19 +629,32 @@ class ZPTNavigationService {
         normalizedParams.transform
       );
 
-      // Ensure we always return an array for content.data with required fields
-      const transformedData = Array.isArray(transformResult.content) ? transformResult.content : 
-                              (transformResult.content ? [transformResult.content] : []);
-      
+      const navigationResults = this.convertSparqlToNavigation(corpuscles, currentZoom);
+      const keywordHints = selectionParams.pan.keywords?.length
+        ? selectionParams.pan.keywords
+        : (safeQuery ? safeQuery.split(' ').filter(w => w && w.length > 2) : []);
+      let enrichedResults = navigationResults;
+      if (normalizedParams.tilt.representation === 'keywords') {
+        enrichedResults = navigationResults.map(item => ({ ...item, keywords: keywordHints }));
+      }
+      if (normalizedParams.tilt.representation === 'graph') {
+        enrichedResults = enrichedResults.map(item => ({
+          ...item,
+          relationships: Array.isArray(item.relationships) ? item.relationships : []
+        }));
+      }
+
       const content = {
-        data: transformedData,
+        data: enrichedResults,
+        output: transformResult.content,
         success: true,
         zoom: currentZoom, // Include zoom level in response
-        estimatedResults: Math.max(
-          transformedData.length, // Use actual transformed data length
-          selectionResult.metadata?.estimatedResults || 1, // Ensure at least 1
-          1 // Final fallback
-        ),
+        estimatedResults: navigationResults.length > 0
+          ? Math.max(
+              navigationResults.length, // Use actual data length
+              selectionResult.metadata?.estimatedResults || navigationResults.length
+            )
+          : 0,
         suggestions: Array.isArray(selectionResult.metadata?.suggestions)
           ? selectionResult.metadata.suggestions
           : [],
@@ -641,7 +669,7 @@ class ZPTNavigationService {
       };
 
       // Store the navigation result
-      await this.storeNavigationResult(normalizedParams.query, {
+      void this.storeNavigationResult(normalizedParams.query, {
         zoom: normalizedParams.zoom,
         pan: normalizedParams.pan,
         tilt: normalizedParams.tilt,
@@ -1505,11 +1533,15 @@ class ZPTNavigationService {
     }
 
     return sparqlResults.map((result, index) => {
+      const contentLabel = result.content?.label || result.content?.prefLabel || result.content?.content;
+      const contentText = result.content?.content || result.content?.prefLabel || result.content?.label;
+
       // Handle different result formats from SPARQL queries
       if (result.uri || result.id) {
         return {
           id: result.uri || result.id,
-          label: result.label || result.prefLabel || `${zoom} item ${index + 1}`,
+          label: contentLabel || result.label || result.prefLabel || `${zoom} item ${index + 1}`,
+          content: contentText || result.content || '',
           type: zoom,
           score: result.similarity || result.score || (1 - index * 0.1).toFixed(2),
           metadata: {
@@ -1523,7 +1555,8 @@ class ZPTNavigationService {
         // Handle memory/interaction results
         return {
           id: result.id || `memory_${Math.random().toString(36).substring(2, 10)}`,
-          label: result.prompt || result.label || `${zoom} item ${index + 1}`,
+          label: contentLabel || result.prompt || result.label || `${zoom} item ${index + 1}`,
+          content: contentText || result.response || result.content || '',
           type: zoom,
           score: result.similarity || (1 - index * 0.1).toFixed(2),
           metadata: {

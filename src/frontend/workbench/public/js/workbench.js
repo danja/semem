@@ -2137,15 +2137,16 @@ class WorkbenchApp {
     DomUtils.show(resultsContainer);
     
     let html = '<div class="navigation-results">';
+    const contentData = result?.content?.data || result?.data;
     
-    if (result.success && result.data) {
+    if (result.success && contentData) {
       html += '<h4>Navigation Results</h4>';
       
-      if (result.data.entities && result.data.entities.length > 0) {
+      if (contentData.entities && contentData.entities.length > 0) {
         html += '<div class="result-section">';
         html += '<h5>📍 Found Entities</h5>';
         html += '<ul class="entity-list">';
-        result.data.entities.slice(0, 10).forEach(entity => {
+        contentData.entities.slice(0, 10).forEach(entity => {
           html += `<li class="entity-item">
             <strong>${DomUtils.escapeHtml(entity.name || entity.id)}</strong>
             ${entity.content ? `<p>${DomUtils.escapeHtml(entity.content.substring(0, 100))}...</p>` : ''}
@@ -2155,17 +2156,33 @@ class WorkbenchApp {
         html += '</div>';
       }
       
-      if (result.data.stats) {
+      if (contentData.stats) {
         html += '<div class="result-section">';
         html += '<h5>📊 Statistics</h5>';
         html += '<div class="stats-grid">';
-        Object.entries(result.data.stats).forEach(([key, value]) => {
+        Object.entries(contentData.stats).forEach(([key, value]) => {
           html += `<div class="stat-item">
             <span class="stat-label">${key}:</span>
             <span class="stat-value">${value}</span>
           </div>`;
         });
         html += '</div>';
+        html += '</div>';
+      }
+      
+      if (Array.isArray(contentData) && contentData.length > 0) {
+        html += '<div class="result-section">';
+        html += '<h5>📌 Navigation Items</h5>';
+        html += '<ul class="entity-list">';
+        contentData.slice(0, 10).forEach(item => {
+          const label = item.label || item.id || 'Item';
+          const preview = item.content?.substring?.(0, 100) || '';
+          html += `<li class="entity-item">
+            <strong>${DomUtils.escapeHtml(label)}</strong>
+            ${preview ? `<p>${DomUtils.escapeHtml(preview)}...</p>` : ''}
+          </li>`;
+        });
+        html += '</ul>';
         html += '</div>';
       }
     } else {

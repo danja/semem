@@ -2,9 +2,9 @@
   "storage": {
     "type": "sparql",
     "options": {
-      "query": "http://${SPARQL_HOST:-localhost}:${SPARQL_PORT:-3030}/semem/sparql",
-      "update": "http://${SPARQL_HOST:-localhost}:${SPARQL_PORT:-3030}/semem/update",
-      "data": "http://${SPARQL_HOST:-localhost}:${SPARQL_PORT:-3030}/semem/data",
+      "query": "https://fuseki.hyperdata.it/hyperdata.it/query",
+      "update": "https://fuseki.hyperdata.it/hyperdata.it/update",
+      "data": "https://fuseki.hyperdata.it/hyperdata.it/data",
       "graphName": "http://hyperdata.it/content",
       "user": "${SPARQL_USER}",
       "password": "${SPARQL_PASSWORD}"

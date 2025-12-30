@@ -298,7 +298,7 @@ export default class CorpuscleSelector {
         }
 
         // Build SPARQL query for embedding search
-        const queryConfig = this.filterBuilder.buildQuery(normalizedParams);
+        const queryConfig = await this.filterBuilder.buildQuery(normalizedParams);
         
         // Execute base query to get candidates
         const candidates = await this.executeQuery(queryConfig);
@@ -324,7 +324,7 @@ export default class CorpuscleSelector {
      * Select corpuscles using keyword matching
      */
     async selectByKeywords(normalizedParams, selectionCriteria) {
-        const queryConfig = this.filterBuilder.buildQuery(normalizedParams);
+        const queryConfig = await this.filterBuilder.buildQuery(normalizedParams);
         const candidates = await this.executeQuery(queryConfig);
         
         // Apply keyword-based scoring
@@ -335,7 +335,7 @@ export default class CorpuscleSelector {
      * Select corpuscles using graph structure
      */
     async selectByGraph(normalizedParams, selectionCriteria) {
-        const queryConfig = this.filterBuilder.buildQuery(normalizedParams);
+        const queryConfig = await this.filterBuilder.buildQuery(normalizedParams);
         const candidates = await this.executeQuery(queryConfig);
         
         // Apply graph-based scoring (connectivity, centrality)
@@ -346,7 +346,7 @@ export default class CorpuscleSelector {
      * Select corpuscles using temporal ordering
      */
     async selectByTemporal(normalizedParams, selectionCriteria) {
-        const queryConfig = this.filterBuilder.buildQuery(normalizedParams);
+        const queryConfig = await this.filterBuilder.buildQuery(normalizedParams);
         queryConfig.query = queryConfig.query.replace(
             'ORDER BY ?uri',
             'ORDER BY DESC(?created) DESC(?modified)'
@@ -369,7 +369,7 @@ export default class CorpuscleSelector {
                 query: queryConfig.query.substring(0, 200) + '...' 
             });
 
-            const result = await this.sparqlStore._executeSparqlQuery(
+            const result = await this.sparqlStore.executeSparqlQuery(
                 queryConfig.query,
                 this.sparqlStore.endpoint.query
             );
@@ -653,14 +653,15 @@ export default class CorpuscleSelector {
 
         // Convert pan domains (if available)
         if (normalizedParams.pan?.domains?.values) {
-            zptParams.panURIs = normalizedParams.pan.domains.values
-                .map(domain => NamespaceUtils.resolveStringToURI('pan', domain))
-                .map(uri => {
-                    if (!uri) {
-                        throw new Error(`Unsupported pan domain for ZPT ontology: ${domain}`);
-                    }
-                    return uri.value;
-                });
+            const resolvedURIs = normalizedParams.pan.domains.values
+                .map(domain => {
+                    const uri = NamespaceUtils.resolveStringToURI('pan', domain);
+                    return uri ? uri.value : null;
+                })
+                .filter(Boolean);
+            if (resolvedURIs.length) {
+                zptParams.panURIs = resolvedURIs;
+            }
         }
 
         return zptParams;

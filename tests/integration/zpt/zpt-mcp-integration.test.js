@@ -79,7 +79,16 @@ class ZPTTestRunner {
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        let errorMessage = response.statusText;
+        try {
+          const errorBody = await response.json();
+          if (errorBody?.error) {
+            errorMessage = errorBody.error;
+          }
+        } catch (parseError) {
+          // Keep default status text if response is not JSON
+        }
+        throw new Error(`HTTP ${response.status}: ${errorMessage}`);
       }
 
       return await response.json();

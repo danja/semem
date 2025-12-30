@@ -112,7 +112,7 @@ if (isE2ETest) {
   global.fetch = fetchMock;
 
   // Mock node-fetch module
-  vi.mock('node-fetch', () => ({
+  vi.doMock('node-fetch', () => ({
     default: vi.fn(),
     __esModule: true,
   }));

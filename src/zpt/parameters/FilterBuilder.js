@@ -3,6 +3,7 @@
  */
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import SPARQLTemplateLoader from '../../stores/SPARQLTemplateLoader.js';
 import { createUnifiedLogger } from '../../utils/LoggingConfig.js';
 
@@ -13,6 +14,7 @@ export default class FilterBuilder {
         this.templateCache = new Map(); // Cache for loaded templates
         this.templateLoader = new SPARQLTemplateLoader();
         this.templates = {}; // Initialize templates object for concept queries
+        this.projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
         this.initializeNamespaces();
         this.loadConceptQueries();
     }
@@ -64,7 +66,7 @@ export default class FilterBuilder {
      */
     loadConceptQueries() {
         try {
-            const templateDir = path.join(process.cwd(), 'sparql', 'queries', 'zpt');
+            const templateDir = path.join(this.projectRoot, 'sparql', 'queries', 'zpt');
 
             // Load concept extraction template
             const conceptExtractionPath = path.join(templateDir, 'concept-extraction.sparql');
@@ -139,6 +141,9 @@ export default class FilterBuilder {
     buildFilters(panParams) {
         const filterClauses = [];
 
+        // Exclude stored navigation outputs to avoid recursive matches
+        filterClauses.push(this.buildNavigationExclusionFilter());
+
         // Domain filter
         if (panParams.domains) {
             filterClauses.push(this.buildDomainFilter(panParams.domains));
@@ -170,6 +175,10 @@ export default class FilterBuilder {
         }
 
         return filterClauses.length > 0 ? filterClauses.join(' ') : '';
+    }
+
+    buildNavigationExclusionFilter() {
+        return 'FILTER NOT EXISTS { ?uri semem:type \"zpt_navigation\" }';
     }
 
     /**
@@ -217,7 +226,9 @@ export default class FilterBuilder {
 
         const clauses = values.map(value => `
             (CONTAINS(LCASE(STR(?label)), "${value.toLowerCase()}") || 
-             CONTAINS(LCASE(STR(?prefLabel)), "${value.toLowerCase()}"))
+             CONTAINS(LCASE(STR(?prefLabel)), "${value.toLowerCase()}") ||
+             (BOUND(?content) && CONTAINS(LCASE(STR(?content)), "${value.toLowerCase()}")) ||
+             (BOUND(?text) && CONTAINS(LCASE(STR(?text)), "${value.toLowerCase()}")))
         `);
 
         return `FILTER (${clauses.join(' || ')})`;
@@ -232,7 +243,9 @@ export default class FilterBuilder {
 
         const clauses = values.map(value => `
             (CONTAINS(LCASE(STR(?label)), "${value.toLowerCase()}") || 
-             CONTAINS(LCASE(STR(?prefLabel)), "${value.toLowerCase()}"))
+             CONTAINS(LCASE(STR(?prefLabel)), "${value.toLowerCase()}") ||
+             (BOUND(?content) && CONTAINS(LCASE(STR(?content)), "${value.toLowerCase()}")) ||
+             (BOUND(?text) && CONTAINS(LCASE(STR(?text)), "${value.toLowerCase()}")))
         `);
 
         return `FILTER (${clauses.join(' || ')})`;

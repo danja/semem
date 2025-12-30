@@ -61,6 +61,21 @@ export default class MemoryManager {
         // Replace EmbeddingHandler with Embeddings and EmbeddingsAPIBridge
         this.embeddings = new Embeddings(embeddingProviderToUse, this.embeddingModel, dimension, this.cacheManager);
         this.embeddingsAPIBridge = new EmbeddingsAPIBridge(config);
+        this.embeddingHandler = {
+            generateEmbedding: async (text) => {
+                return await this.embeddingsAPIBridge.generateEmbedding(text, {
+                    model: this.embeddingModel
+                });
+            },
+            validateEmbedding: (embedding) => {
+                return this.embeddings.validateEmbedding(embedding, this.dimension);
+            },
+            standardizeEmbedding: (embedding) => {
+                return this.embeddings.standardizeEmbedding(embedding, this.dimension);
+            },
+            dimension: this.dimension,
+            model: this.embeddingModel
+        };
 
         // Only initialize LLMHandler if the provider supports chat operations
         // Check if the provider has working chat capabilities by checking provider info
