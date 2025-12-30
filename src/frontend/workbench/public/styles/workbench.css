@@ -210,6 +210,33 @@ body {
     color: var(--text-muted);
 }
 
+.zpt-focus {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: var(--space-2xs) var(--space-xs);
+    background: var(--bg-tertiary);
+    border-radius: var(--border-radius);
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    margin-top: var(--space-2xs);
+    flex-wrap: wrap;
+}
+
+.zpt-focus-label {
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.zpt-focus-value {
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+.zpt-focus-separator {
+    color: var(--text-muted);
+}
+
 /* Connection Status */
 .connection-status {
     display: flex;
@@ -290,6 +317,12 @@ body {
     height: 100%;
     transition: all 0.2s ease;
     overflow: hidden;
+}
+
+.navigate-column {
+    order: -1;
+    border-color: rgba(37, 99, 235, 0.35);
+    box-shadow: var(--shadow-md);
 }
 
 .column-header {

@@ -1,0 +1,504 @@
+import { apiService } from '../services/ApiService.js';
+import { stateManager } from '../services/StateManager.js';
+import { consoleService } from '../services/ConsoleService.js';
+import DomUtils from '../utils/DomUtils.js';
+
+export default class NavigationController {
+  constructor() {
+    this.lastNavigationQuery = 'Navigate knowledge space';
+    this.navigationRequestId = 0;
+    this.elements = {};
+
+    this.handleZoomChange = this.handleZoomChange.bind(this);
+    this.handlePanChange = this.handlePanChange.bind(this);
+    this.handleTiltChange = this.handleTiltChange.bind(this);
+    this.handleThresholdChange = this.handleThresholdChange.bind(this);
+    this.handleNavigationExecute = this.handleNavigationExecute.bind(this);
+    this.handleNavigationHistoryRefresh = this.handleNavigationHistoryRefresh.bind(this);
+    this.updateZptDisplay = this.updateZptDisplay.bind(this);
+    this.handleZptStateChange = this.handleZptStateChange.bind(this);
+  }
+
+  init() {
+    this.cacheElements();
+    this.setupControls();
+    this.updateNavigationDisplay();
+    this.updateZptDisplay();
+  }
+
+  subscribeToState() {
+    stateManager.subscribe('zoomChange', this.handleZptStateChange);
+    stateManager.subscribe('panChange', this.handleZptStateChange);
+    stateManager.subscribe('tiltChange', this.handleZptStateChange);
+  }
+
+  handleZptStateChange() {
+    this.updateZptDisplay();
+    this.updateNavigationDisplay();
+  }
+
+  cacheElements() {
+    this.elements = {
+      zoomState: DomUtils.$('#zoom-state'),
+      panState: DomUtils.$('#pan-state'),
+      tiltState: DomUtils.$('#tilt-state'),
+      focusZoom: DomUtils.$('#zpt-focus-zoom'),
+      focusPan: DomUtils.$('#zpt-focus-pan'),
+      focusTilt: DomUtils.$('#zpt-focus-tilt'),
+      currentZoom: DomUtils.$('#current-zoom'),
+      zoomDescription: DomUtils.$('#zoom-description'),
+      currentPan: DomUtils.$('#current-pan'),
+      panDescription: DomUtils.$('#pan-description'),
+      currentTilt: DomUtils.$('#current-tilt'),
+      tiltDescription: DomUtils.$('#tilt-description'),
+      thresholdValue: DomUtils.$('#threshold-value'),
+      resultsContainer: DomUtils.$('#nav-results-content'),
+      sessionsContainer: DomUtils.$('#nav-sessions-list'),
+      viewsContainer: DomUtils.$('#nav-views-list')
+    };
+  }
+
+  setupControls() {
+    DomUtils.$$('.zoom-button').forEach(button => {
+      button.addEventListener('click', this.handleZoomChange);
+    });
+
+    DomUtils.$$('.tilt-button').forEach(button => {
+      button.addEventListener('click', this.handleTiltChange);
+    });
+
+    const thresholdSlider = DomUtils.$('#similarity-threshold');
+    if (thresholdSlider) {
+      thresholdSlider.addEventListener('input', this.handleThresholdChange);
+    }
+
+    const panDomains = DomUtils.$('#pan-domains');
+    const panKeywords = DomUtils.$('#pan-keywords');
+
+    if (panDomains) {
+      panDomains.addEventListener('input', DomUtils.debounce(this.handlePanChange, 500));
+    }
+
+    if (panKeywords) {
+      panKeywords.addEventListener('input', DomUtils.debounce(this.handlePanChange, 500));
+    }
+
+    const navExecuteButton = DomUtils.$('#nav-execute');
+    if (navExecuteButton) {
+      navExecuteButton.addEventListener('click', this.handleNavigationExecute);
+    }
+
+    const navHistoryButton = DomUtils.$('#nav-history-refresh');
+    if (navHistoryButton) {
+      navHistoryButton.addEventListener('click', this.handleNavigationHistoryRefresh);
+    }
+  }
+
+  updateZptDisplay() {
+    const state = stateManager.getState();
+    const panDisplay = stateManager.getPanDisplayString();
+
+    if (this.elements.zoomState) {
+      this.elements.zoomState.textContent = state.zoom;
+    }
+
+    if (this.elements.panState) {
+      this.elements.panState.textContent = panDisplay;
+    }
+
+    if (this.elements.tiltState) {
+      this.elements.tiltState.textContent = state.tilt;
+    }
+
+    if (this.elements.focusZoom) {
+      this.elements.focusZoom.textContent = this.formatZoomLevel(state.zoom);
+    }
+
+    if (this.elements.focusPan) {
+      this.elements.focusPan.textContent = panDisplay;
+    }
+
+    if (this.elements.focusTilt) {
+      this.elements.focusTilt.textContent = this.formatTiltStyle(state.tilt);
+    }
+  }
+
+  updateNavigationDisplay() {
+    const state = stateManager.getState();
+
+    if (this.elements.currentZoom && this.elements.zoomDescription) {
+      this.elements.currentZoom.textContent = this.formatZoomLevel(state.zoom);
+      this.elements.zoomDescription.textContent = this.getZoomDescription(state.zoom);
+    }
+
+    if (this.elements.currentTilt && this.elements.tiltDescription) {
+      this.elements.currentTilt.textContent = this.formatTiltStyle(state.tilt);
+      this.elements.tiltDescription.textContent = this.getTiltDescription(state.tilt);
+    }
+
+    if (this.elements.currentPan && this.elements.panDescription) {
+      const panText = this.formatPanFilters(state.pan);
+      this.elements.currentPan.textContent = panText;
+      this.elements.panDescription.textContent = this.getPanDescription(state.pan);
+    }
+  }
+
+  formatZoomLevel(zoom) {
+    const levels = {
+      micro: 'Micro',
+      entity: 'Entity',
+      text: 'Text',
+      unit: 'Unit',
+      community: 'Community',
+      corpus: 'Corpus'
+    };
+    if (!levels[zoom]) {
+      throw new Error(`Unsupported zoom level: ${zoom}`);
+    }
+    return levels[zoom];
+  }
+
+  getZoomDescription(zoom) {
+    const descriptions = {
+      micro: 'Sub-entity attributes and fine-grained components',
+      entity: 'Named entities and concrete elements',
+      text: 'Full documents and source fragments',
+      unit: 'Semantic units and local summaries',
+      community: 'Groups of related units and themes',
+      corpus: 'Entire knowledge collection'
+    };
+    if (!descriptions[zoom]) {
+      throw new Error(`Unsupported zoom level: ${zoom}`);
+    }
+    return descriptions[zoom];
+  }
+
+  formatTiltStyle(tilt) {
+    const styles = {
+      keywords: 'Keywords',
+      embedding: 'Embedding',
+      graph: 'Graph',
+      temporal: 'Temporal',
+      memory: 'Memory'
+    };
+    if (!styles[tilt]) {
+      throw new Error(`Unsupported tilt style: ${tilt}`);
+    }
+    return styles[tilt];
+  }
+
+  getTiltDescription(tilt) {
+    const descriptions = {
+      keywords: 'Keyword-based view of content',
+      embedding: 'Vector similarity view',
+      graph: 'Relationship network view',
+      temporal: 'Time-based organization',
+      memory: 'Memory importance and access patterns'
+    };
+    if (!descriptions[tilt]) {
+      throw new Error(`Unsupported tilt style: ${tilt}`);
+    }
+    return descriptions[tilt];
+  }
+
+  formatPanFilters(pan) {
+    const parts = [];
+    if (pan?.domains) parts.push(`Domains: ${pan.domains}`);
+    if (pan?.keywords) parts.push(`Keywords: ${pan.keywords}`);
+    return parts.length > 0 ? parts.join(', ') : 'All domains';
+  }
+
+  getPanDescription(pan) {
+    if (pan?.domains || pan?.keywords) {
+      return 'Filtered by specified criteria';
+    }
+    return 'No domain filters applied';
+  }
+
+  async handleZoomChange(event) {
+    const button = event.target;
+    const level = button.dataset.level;
+
+    if (!level) return;
+
+    try {
+      DomUtils.$$('.zoom-button').forEach(btn => {
+        DomUtils.removeClass(btn, 'active');
+      });
+      DomUtils.addClass(button, 'active');
+
+      await stateManager.setZoom(level);
+
+      consoleService.info(`🔍 Zoom level changed to "${level}" - adjusting abstraction level for search results`);
+
+      this.updateNavigationDisplay();
+      await this.executeNavigationFromState({ source: 'zoom' });
+    } catch (error) {
+      consoleService.error(`❌ Failed to change zoom level to "${level}": ${error.message}`);
+      DomUtils.showToast('Failed to change zoom level', 'error');
+    }
+  }
+
+  async handleTiltChange(event) {
+    const button = event.target;
+    const style = button.dataset.style;
+
+    if (!style) return;
+
+    try {
+      DomUtils.$$('.tilt-button').forEach(btn => {
+        DomUtils.removeClass(btn, 'active');
+      });
+      DomUtils.addClass(button, 'active');
+
+      await stateManager.setTilt(style);
+
+      consoleService.info(`🎯 Tilt view changed to "${style}" - adjusting content perspective and filtering`);
+
+      this.updateNavigationDisplay();
+      await this.executeNavigationFromState({ source: 'tilt' });
+    } catch (error) {
+      consoleService.error(`❌ Failed to change view style to "${style}": ${error.message}`);
+      DomUtils.showToast('Failed to change view style', 'error');
+    }
+  }
+
+  async handleThresholdChange(event) {
+    const slider = event.target;
+    const threshold = parseFloat(slider.value);
+
+    if (isNaN(threshold)) return;
+
+    try {
+      if (this.elements.thresholdValue) {
+        this.elements.thresholdValue.textContent = threshold.toFixed(2);
+      }
+
+      stateManager.setSimilarityThreshold(threshold);
+
+      const sensitivity = threshold < 0.3 ? 'more sensitive' : threshold > 0.7 ? 'less sensitive' : 'balanced';
+      consoleService.info(`⚖️ Similarity threshold set to ${(threshold * 100).toFixed(0)}% (${sensitivity} search)`);
+    } catch (error) {
+      consoleService.error(`❌ Failed to change similarity threshold to ${(threshold * 100).toFixed(0)}%: ${error.message}`);
+      DomUtils.showToast('Failed to change threshold', 'error');
+    }
+  }
+
+  async handlePanChange() {
+    const domainsInput = DomUtils.$('#pan-domains');
+    const keywordsInput = DomUtils.$('#pan-keywords');
+
+    const domains = domainsInput?.value || '';
+    const keywords = keywordsInput?.value || '';
+
+    try {
+      await stateManager.setPan({ domains, keywords });
+
+      const filterDesc = domains.length > 0 || keywords.length > 0
+        ? `filtering by ${domains.length} domains and ${keywords.length} keywords`
+        : 'removing all filters';
+      consoleService.info(`🔄 Pan filters updated - ${filterDesc}`);
+
+      this.updateNavigationDisplay();
+      await this.executeNavigationFromState({ source: 'pan' });
+    } catch (error) {
+      consoleService.error(`❌ Failed to update pan filters: ${error.message}`);
+      DomUtils.showToast('Failed to update filters', 'error');
+    }
+  }
+
+  async handleNavigationExecute(event) {
+    event.preventDefault();
+
+    const button = event.target.closest('button');
+    const buttonText = button.querySelector('.button-text');
+    const buttonLoader = button.querySelector('.button-loader');
+
+    try {
+      button.disabled = true;
+      DomUtils.hide(buttonText);
+      DomUtils.show(buttonLoader);
+
+      const query = this.lastNavigationQuery || 'Navigate knowledge space';
+      const result = await this.executeNavigationFromState({
+        query,
+        source: 'manual',
+        showToast: true
+      });
+      const resultCount = result?.results?.length || result?.items?.length || 0;
+      consoleService.success(`✅ Navigation completed - found ${resultCount} relevant items`);
+    } catch (error) {
+      consoleService.error(`❌ ZPT navigation failed: ${error.message}`);
+      DomUtils.showToast('Navigation execution failed', 'error');
+    } finally {
+      button.disabled = false;
+      DomUtils.show(buttonText);
+      DomUtils.hide(buttonLoader);
+    }
+  }
+
+  async executeNavigationFromState({ query, source = 'navigation', showToast = false } = {}) {
+    const state = stateManager.getState();
+    const requestId = ++this.navigationRequestId;
+    const resolvedQuery = query || this.lastNavigationQuery || 'Navigate knowledge space';
+    const navigationParams = {
+      zoom: state.zoom || 'entity',
+      pan: state.pan || {},
+      tilt: state.tilt || 'keywords'
+    };
+
+    this.lastNavigationQuery = resolvedQuery;
+    consoleService.info(`🗺️ Executing ZPT navigation (${source}) with zoom:"${state.zoom}", pan filters, and tilt:"${state.tilt}"`);
+
+    try {
+      const result = await apiService.zptNavigate({
+        query: resolvedQuery,
+        ...navigationParams
+      });
+
+      if (requestId !== this.navigationRequestId) {
+        return null;
+      }
+
+      this.displayNavigationResults(result);
+      if (showToast) {
+        DomUtils.showToast('Navigation executed successfully', 'success');
+      }
+      return result;
+    } catch (error) {
+      consoleService.error(`❌ ZPT navigation (${source}) failed: ${error.message}`);
+      if (showToast) {
+        DomUtils.showToast('Navigation execution failed', 'error');
+      }
+      throw error;
+    }
+  }
+
+  async handleNavigationHistoryRefresh(event) {
+    event.preventDefault();
+
+    const button = event.target.closest('button');
+    const buttonText = button.querySelector('.button-text');
+
+    try {
+      button.disabled = true;
+      DomUtils.hide(buttonText);
+      button.setAttribute('data-loading', 'true');
+
+      const [sessionsResult, viewsResult] = await Promise.all([
+        apiService.zptGetSessions(10),
+        apiService.zptGetViews(10)
+      ]);
+
+      this.displayNavigationHistory(sessionsResult, viewsResult);
+      consoleService.success('✅ Navigation history refreshed');
+    } catch (error) {
+      consoleService.error(`❌ Navigation history refresh failed: ${error.message}`);
+      DomUtils.showToast('Navigation history refresh failed', 'error');
+    } finally {
+      button.disabled = false;
+      DomUtils.show(buttonText);
+      button.removeAttribute('data-loading');
+    }
+  }
+
+  displayNavigationHistory(sessionsResult, viewsResult) {
+    const sessionsContainer = this.elements.sessionsContainer;
+    const viewsContainer = this.elements.viewsContainer;
+
+    if (!sessionsContainer || !viewsContainer) return;
+
+    const sessions = sessionsResult?.sessions || [];
+    const views = viewsResult?.views || [];
+
+    if (sessions.length === 0) {
+      sessionsContainer.innerHTML = '<p class="history-placeholder">No sessions recorded yet.</p>';
+    } else {
+      sessionsContainer.innerHTML = sessions.map(session => `
+        <div class="history-item">
+          <div class="history-title">${DomUtils.escapeHtml(session.purpose || 'Navigation session')}</div>
+          <div class="history-meta">Started: ${DomUtils.escapeHtml(session.startTime || 'unknown')}</div>
+          <div class="history-meta">Agent: ${DomUtils.escapeHtml(session.agentURI || 'unknown')}</div>
+        </div>
+      `).join('');
+    }
+
+    if (views.length === 0) {
+      viewsContainer.innerHTML = '<p class="history-placeholder">No views recorded yet.</p>';
+    } else {
+      viewsContainer.innerHTML = views.map(view => `
+        <div class="history-item">
+          <div class="history-title">${DomUtils.escapeHtml(view.query || 'Navigation view')}</div>
+          <div class="history-meta">Timestamp: ${DomUtils.escapeHtml(view.timestamp || 'unknown')}</div>
+          <div class="history-meta">Session: ${DomUtils.escapeHtml(view.sessionURI || 'unknown')}</div>
+        </div>
+      `).join('');
+    }
+  }
+
+  displayNavigationResults(result) {
+    const resultsContainer = this.elements.resultsContainer;
+    if (!resultsContainer) return;
+
+    DomUtils.show(resultsContainer);
+
+    let html = '<div class="navigation-results">';
+    const contentData = result?.content?.data || result?.data;
+
+    if (result.success && contentData) {
+      html += '<h4>Navigation Results</h4>';
+
+      if (contentData.entities && contentData.entities.length > 0) {
+        html += '<div class="result-section">';
+        html += '<h5>📍 Found Entities</h5>';
+        html += '<ul class="entity-list">';
+        contentData.entities.slice(0, 10).forEach(entity => {
+          html += `<li class="entity-item">
+            <strong>${DomUtils.escapeHtml(entity.name || entity.id)}</strong>
+            ${entity.content ? `<p>${DomUtils.escapeHtml(entity.content.substring(0, 100))}...</p>` : ''}
+          </li>`;
+        });
+        html += '</ul>';
+        html += '</div>';
+      }
+
+      if (contentData.stats) {
+        html += '<div class="result-section">';
+        html += '<h5>📊 Statistics</h5>';
+        html += '<div class="stats-grid">';
+        Object.entries(contentData.stats).forEach(([key, value]) => {
+          html += `<div class="stat-item">
+            <span class="stat-label">${key}:</span>
+            <span class="stat-value">${value}</span>
+          </div>`;
+        });
+        html += '</div>';
+        html += '</div>';
+      }
+
+      if (Array.isArray(contentData) && contentData.length > 0) {
+        html += '<div class="result-section">';
+        html += '<h5>📌 Navigation Items</h5>';
+        html += '<ul class="entity-list">';
+        contentData.slice(0, 10).forEach(item => {
+          const label = item.label || item.id || 'Item';
+          const preview = item.content?.substring?.(0, 100) || '';
+          html += `<li class="entity-item">
+            <strong>${DomUtils.escapeHtml(label)}</strong>
+            ${preview ? `<p>${DomUtils.escapeHtml(preview)}...</p>` : ''}
+          </li>`;
+        });
+        html += '</ul>';
+        html += '</div>';
+      }
+    } else {
+      html += '<div class="result-placeholder">';
+      html += '<p>No results found for current navigation settings.</p>';
+      html += '<p>Try adjusting the zoom level, domain filters, or view style.</p>';
+      html += '</div>';
+    }
+
+    html += '</div>';
+    resultsContainer.innerHTML = html;
+  }
+}

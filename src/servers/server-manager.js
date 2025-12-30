@@ -51,18 +51,27 @@ class ServerManager {
     }
 
     async isPortInUse(port) {
-        return new Promise((resolve) => {
-            const server = http.createServer()
-                .listen(port, '0.0.0.0')
-                .on('error', () => {
-                    resolve(true);
-                })
-                .on('listening', () => {
-                    server.close(() => {
-                        resolve(false);
-                    });
-                });
+        const checkHost = (host) => new Promise((resolve) => {
+            const server = http.createServer();
+            server.once('error', (error) => {
+                resolve(error.code === 'EADDRINUSE');
+            });
+            server.once('listening', () => {
+                server.close(() => resolve(false));
+            });
+            if (host) {
+                server.listen(port, host);
+            } else {
+                server.listen(port);
+            }
         });
+
+        const [ipv4InUse, ipv6InUse] = await Promise.all([
+            checkHost('0.0.0.0'),
+            checkHost('::')
+        ]);
+
+        return ipv4InUse || ipv6InUse;
     }
 
     killProcessOnPort(port) {
