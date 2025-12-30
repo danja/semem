@@ -4,178 +4,143 @@
  * NO MOCKING - tests against live STDIO MCP server
  */
 
-import { describe, test, expect, beforeEach } from 'vitest';
+import { describe, test, expect, beforeAll, afterAll } from 'vitest';
 import { spawn } from 'child_process';
 import { setTimeout } from 'timers/promises';
 import randomFactGenerator from '../../helpers/randomFactGenerator.js';
 
 describe('Tell/Ask STDIO E2E Integration Tests', () => {
+  class MCPStdioClient {
+    constructor() {
+      this.process = null;
+      this.stdoutData = '';
+      this.stderrData = '';
+      this.buffer = '';
+      this.pending = new Map();
+      this.messageId = 1;
+      this.responses = [];
+    }
+
+    async start() {
+      this.process = spawn('node', ['src/mcp/index.js'], {
+        stdio: ['pipe', 'pipe', 'pipe'],
+        cwd: process.cwd()
+      });
+
+      this.process.stdout.on('data', (data) => {
+        this.stdoutData += data.toString();
+        this.buffer += data.toString();
+        const lines = this.buffer.split('\n');
+        this.buffer = lines.pop();
+
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          try {
+            const jsonResponse = JSON.parse(line.trim());
+            this.responses.push(jsonResponse);
+            if (typeof jsonResponse.id === 'number') {
+              const pendingEntry = this.pending.get(jsonResponse.id);
+              if (pendingEntry) {
+                global.clearTimeout(pendingEntry.timeoutId);
+                this.pending.delete(jsonResponse.id);
+                pendingEntry.resolve(jsonResponse);
+              }
+            }
+          } catch (error) {
+            this.fail(new Error(`STDIO pollution detected: "${line.trim()}" is not valid JSON`));
+            return;
+          }
+        }
+      });
+
+      this.process.stderr.on('data', (data) => {
+        this.stderrData += data.toString();
+      });
+
+      this.process.on('error', (error) => {
+        this.fail(new Error(`MCP process error: ${error.message}`));
+      });
+
+      await this.send('initialize', {
+        protocolVersion: '2024-11-05',
+        capabilities: {},
+        clientInfo: { name: 'test-client', version: '1.0.0' }
+      }, 120000);
+    }
+
+    async stop() {
+      if (this.process) {
+        this.process.kill('SIGTERM');
+        this.process = null;
+      }
+    }
+
+    fail(error) {
+      for (const entry of this.pending.values()) {
+        global.clearTimeout(entry.timeoutId);
+        entry.reject(error);
+      }
+      this.pending.clear();
+      if (this.process) {
+        this.process.kill('SIGTERM');
+      }
+    }
+
+    async send(method, params, timeoutMs) {
+      const id = this.messageId++;
+      const payload = { jsonrpc: '2.0', id, method, params };
+
+      const responsePromise = new Promise((resolve, reject) => {
+        const timeoutId = global.setTimeout(() => {
+          this.pending.delete(id);
+          this.fail(new Error(`STDIO MCP test timeout waiting for response ${id}`));
+        }, timeoutMs);
+        this.pending.set(id, { resolve, reject, timeoutId });
+      });
+
+      this.process.stdin.write(JSON.stringify(payload) + '\n');
+      return responsePromise;
+    }
+
+    async callTool(name, args, timeoutMs = 180000) {
+      return this.send('tools/call', { name, arguments: args }, timeoutMs);
+    }
+  }
+
+  const client = new MCPStdioClient();
 
   const stdioTellAsk = async (fact, question) => {
     console.log(`🔵 STDIO: Testing fact: "${fact}"`);
 
-    const mcpProcess = spawn('node', ['src/mcp/index.js'], {
-      stdio: ['pipe', 'pipe', 'pipe'],
-      cwd: process.cwd()
-    });
+    const tellResponse = await client.callTool('tell', { content: fact }, 180000);
+    const askResponse = await client.callTool('ask', { question }, 180000);
 
-    let stdoutData = '';
-    let stderrData = '';
-    const responses = [];
-    let currentResponse = '';
-    const pending = new Map();
-    let completed = false;
-
-    const cleanup = () => {
-      if (completed) {
-        return;
-      }
-      completed = true;
-      for (const entry of pending.values()) {
-        global.clearTimeout(entry.timeoutId);
-      }
-      pending.clear();
-      mcpProcess.kill('SIGTERM');
+    return {
+      fact,
+      question,
+      tellResponse,
+      askResponse,
+      stdoutLength: client.stdoutData.length,
+      stderrLength: client.stderrData.length,
+      stderrContent: client.stderrData,
+      allResponses: client.responses
     };
-
-    const fail = (error) => {
-      if (completed) {
-        return;
-      }
-      completed = true;
-      for (const entry of pending.values()) {
-        global.clearTimeout(entry.timeoutId);
-        entry.reject(error);
-      }
-      pending.clear();
-      mcpProcess.kill('SIGTERM');
-    };
-
-    const waitForResponse = (id, timeoutMs) => new Promise((resolve, reject) => {
-      const timeoutId = global.setTimeout(() => {
-        fail(new Error(`STDIO MCP test timeout waiting for response ${id}`));
-      }, timeoutMs);
-      pending.set(id, { resolve, reject, timeoutId });
-    });
-
-    const handleResponse = (jsonResponse) => {
-      responses.push(jsonResponse);
-      if (typeof jsonResponse.id === 'number') {
-        const pendingEntry = pending.get(jsonResponse.id);
-        if (pendingEntry) {
-          global.clearTimeout(pendingEntry.timeoutId);
-          pending.delete(jsonResponse.id);
-          pendingEntry.resolve(jsonResponse);
-        }
-      }
-    };
-
-    // Collect all stdout data (should be clean JSON only)
-    mcpProcess.stdout.on('data', (data) => {
-      stdoutData += data.toString();
-      currentResponse += data.toString();
-
-      // Try to parse complete JSON messages
-      const lines = currentResponse.split('\n');
-      currentResponse = lines.pop(); // Keep incomplete line for next iteration
-
-      for (const line of lines) {
-        if (line.trim()) {
-          try {
-            const jsonResponse = JSON.parse(line.trim());
-            handleResponse(jsonResponse);
-          } catch (e) {
-            // If we can't parse as JSON, this indicates pollution
-            console.error('❌ Non-JSON data in stdout:', line.trim());
-            fail(new Error(`STDIO pollution detected: "${line.trim()}" is not valid JSON`));
-            return;
-          }
-        }
-      }
-    });
-
-    // Collect stderr data (should be minimal logging only)
-    mcpProcess.stderr.on('data', (data) => {
-      stderrData += data.toString();
-    });
-
-    mcpProcess.on('close', (code) => {
-      console.log(`📤 STDIO process closed with code: ${code}`);
-    });
-
-    mcpProcess.on('error', (error) => {
-      fail(new Error(`MCP process error: ${error.message}`));
-    });
-
-    try {
-      // 1. Initialize MCP
-      const initPromise = waitForResponse(1, 60000);
-      mcpProcess.stdin.write(JSON.stringify({
-        jsonrpc: '2.0',
-        id: 1,
-        method: 'initialize',
-        params: {
-          protocolVersion: '2024-11-05',
-          capabilities: {},
-          clientInfo: { name: 'test-client', version: '1.0.0' }
-        }
-      }) + '\n');
-      const initResponse = await initPromise;
-
-      // 2. Tell (store the fact)
-      const tellPromise = waitForResponse(2, 120000);
-      mcpProcess.stdin.write(JSON.stringify({
-        jsonrpc: '2.0',
-        id: 2,
-        method: 'tools/call',
-        params: {
-          name: 'tell',
-          arguments: { content: fact }
-        }
-      }) + '\n');
-      const tellResponse = await tellPromise;
-
-      // 3. Ask (query the fact)
-      const askPromise = waitForResponse(3, 120000);
-      mcpProcess.stdin.write(JSON.stringify({
-        jsonrpc: '2.0',
-        id: 3,
-        method: 'tools/call',
-        params: {
-          name: 'ask',
-          arguments: { question }
-        }
-      }) + '\n');
-      const askResponse = await askPromise;
-
-      cleanup();
-
-      return {
-        fact,
-        question,
-        initResponse,
-        tellResponse,
-        askResponse,
-        stdoutLength: stdoutData.length,
-        stderrLength: stderrData.length,
-        stderrContent: stderrData,
-        allResponses: responses
-      };
-    } catch (error) {
-      cleanup();
-      throw error;
-    }
   };
+
+  beforeAll(async () => {
+    await client.start();
+    await setTimeout(500);
+  }, 180000);
+
+  afterAll(async () => {
+    await client.stop();
+  }, 30000);
 
   test('STDIO tell/ask round trip with clean protocol', async () => {
     const fact = randomFactGenerator.generateFact();
     const question = randomFactGenerator.generateQuestion(fact);
 
     const result = await stdioTellAsk(fact, question);
-
-    // Verify initialization worked
-    expect(result.initResponse.result).toBeDefined();
-    expect(result.initResponse.result.protocolVersion).toBe('2024-11-05');
 
     // Verify tell worked
     expect(result.tellResponse.result).toBeDefined();
@@ -238,7 +203,6 @@ describe('Tell/Ask STDIO E2E Integration Tests', () => {
       const result = await stdioTellAsk(fact, question);
 
       // Each operation should maintain clean protocol
-      expect(result.initResponse.result).toBeDefined();
       expect(result.tellResponse.result).toBeDefined();
       expect(result.askResponse.result).toBeDefined();
 

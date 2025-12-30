@@ -4,12 +4,16 @@
  */
 
 import { SimpleVerbsService } from '../../tools/SimpleVerbsService.js';
+import { SafeOperations } from '../../lib/safe-operations.js';
+import { initializeServices, getMemoryManager } from '../../lib/initialization.js';
 import { mcpDebugger } from '../../lib/debug-utils.js';
+import { ZPTNavigationService, ZPTToolName } from '../../tools/modules/zpt-tools.js';
 
 export class ToolRouter {
   constructor() {
     this.coreTools = new SimpleVerbsService();
     this.initialized = false;
+    this.zptService = null;
   }
 
   async initialize() {
@@ -30,6 +34,11 @@ export class ToolRouter {
       if (this.coreTools.handles(toolName)) {
         mcpDebugger.debug(`Routing ${toolName} to core tools`);
         return await this.coreTools.execute(toolName, args);
+      }
+
+      if (this.isZptTool(toolName)) {
+        mcpDebugger.debug(`Routing ${toolName} to ZPT tools`);
+        return await this.executeZptTool(toolName, args);
       }
 
       // Handle legacy tools that don't fit the prefix pattern
@@ -54,6 +63,52 @@ export class ToolRouter {
         }]
       };
     }
+  }
+
+  isZptTool(toolName) {
+    return Object.values(ZPTToolName).includes(toolName);
+  }
+
+  async getZptService() {
+    if (this.zptService) {
+      return this.zptService;
+    }
+
+    await initializeServices();
+    const memoryManager = await getMemoryManager();
+    const safeOps = new SafeOperations(memoryManager);
+    const service = new ZPTNavigationService();
+    service.memoryManager = memoryManager;
+    service.safeOps = safeOps;
+    this.zptService = service;
+    return service;
+  }
+
+  async executeZptTool(toolName, args) {
+    const service = await this.getZptService();
+    let result;
+
+    switch (toolName) {
+      case ZPTToolName.PREVIEW:
+        result = await service.preview(args.query, args.zoom, args.pan);
+        break;
+      case ZPTToolName.GET_SCHEMA:
+        result = await service.getSchema();
+        break;
+      case ZPTToolName.VALIDATE_PARAMS:
+        result = await service.validateParams(args.params);
+        break;
+      case ZPTToolName.GET_OPTIONS:
+        result = await service.getOptions(args.context, args.query);
+        break;
+      case ZPTToolName.ANALYZE_CORPUS:
+        result = await service.analyzeCorpus(args.analysisType, args.includeStats);
+        break;
+      default:
+        throw new Error(`Unknown ZPT tool: ${toolName}`);
+    }
+
+    return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
   }
 
   /**

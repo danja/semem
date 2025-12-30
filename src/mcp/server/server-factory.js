@@ -220,8 +220,59 @@ async function getToolDefinitions(toolRouter) {
     }
   ];
 
-  // TODO: Add module-specific tools from the router
-  // const moduleTools = await toolRouter.getAvailableTools();
+  const zptTools = [
+    {
+      name: 'zpt_preview',
+      description: 'Get a lightweight preview of a navigation destination.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          query: { type: 'string', description: 'Navigation query' },
+          zoom: { type: 'string', enum: ['micro', 'entity', 'text', 'unit', 'community', 'corpus'] },
+          pan: { type: 'object', description: 'Optional pan filters' }
+        },
+        required: ['query']
+      }
+    },
+    {
+      name: 'zpt_get_schema',
+      description: 'Get the ZPT schema and available dimensions.',
+      inputSchema: { type: 'object', properties: {} }
+    },
+    {
+      name: 'zpt_validate_params',
+      description: 'Validate a set of ZPT navigation parameters.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          params: { type: 'object', description: 'ZPT parameters' }
+        },
+        required: ['params']
+      }
+    },
+    {
+      name: 'zpt_get_options',
+      description: 'Get available options for ZPT navigation.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          context: { type: 'string', enum: ['current', 'full'] },
+          query: { type: 'string' }
+        }
+      }
+    },
+    {
+      name: 'zpt_analyze_corpus',
+      description: 'Analyze the corpus for ZPT navigation readiness.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          analysisType: { type: 'string', enum: ['structure', 'performance', 'recommendations'] },
+          includeStats: { type: 'boolean' }
+        }
+      }
+    }
+  ];
 
-  return coreTools;
+  return coreTools.concat(zptTools);
 }
