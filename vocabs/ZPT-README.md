@@ -23,7 +23,7 @@ Agents, both human and artificial have limits on the amount of information they 
 
 Ragno describes a heterogenous knowledge graph in a generalized fashion, loosely scale-free - it may be a domain-specific local knowledgebase or the Web as a whole. ZPT adds navigation capabilities that adapt information presentation to user (agent) needs. A system may dynamically select optimal knowledge "corpuscles" based on query requirements across three orthogonal dimensions:
 
-- **🔍 Zoom**: Controls abstraction level (entity → summary → full text → community → corpus)
+- **🔍 Zoom**: Controls abstraction level (micro → entity → text → unit → community → corpus)
 - **🔄 Pan**: Controls domain boundaries (topics, entities, temporal periods, geographic regions)  
 - **📐 Tilt**: Controls representation method (embeddings, keywords, graph structure, temporal)
 

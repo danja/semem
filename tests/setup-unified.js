@@ -30,7 +30,7 @@ if (isE2ETest) {
 
   // Provide real fetch from node-fetch for compatibility
   const { default: fetch } = await import('node-fetch');
-  global.fetch = global.fetch || fetch;
+  global.fetch = fetch;
 
   // Keep real console for debugging
   // No mocking of any services
@@ -49,7 +49,7 @@ if (isE2ETest) {
 
   // Provide fetch but allow real network calls
   const { default: fetch } = await import('node-fetch');
-  global.fetch = global.fetch || fetch;
+  global.fetch = fetch;
 
   // Mock only problematic external services
   vi.mock('d3', () => ({

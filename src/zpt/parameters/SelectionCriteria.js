@@ -45,9 +45,10 @@ export default class SelectionCriteria {
      */
     getDefaultWeights() {
         return {
+            'micro': { relevance: 0.6, connectivity: 0.2, completeness: 0.2 },
             'entity': { relevance: 0.5, connectivity: 0.3, completeness: 0.2 },
             'unit': { relevance: 0.4, completeness: 0.3, diversity: 0.3 },
-            'text': { relevance: 0.6, recency: 0.2, completeness: 0.2 },
+            'text': { relevance: 0.55, recency: 0.25, completeness: 0.2 },
             'community': { connectivity: 0.5, diversity: 0.3, relevance: 0.2 },
             'corpus': { completeness: 0.4, diversity: 0.3, recency: 0.3 }
         };
@@ -97,12 +98,20 @@ export default class SelectionCriteria {
         });
 
         // Pan filter constraints
-        if (normalizedParams.pan.topic) {
-            rules.push(this.buildTopicRule(normalizedParams.pan.topic));
+        if (normalizedParams.pan.domains) {
+            rules.push(this.buildDomainRule(normalizedParams.pan.domains));
         }
 
-        if (normalizedParams.pan.entity) {
-            rules.push(this.buildEntityRule(normalizedParams.pan.entity));
+        if (normalizedParams.pan.keywords) {
+            rules.push(this.buildKeywordRule(normalizedParams.pan.keywords));
+        }
+
+        if (normalizedParams.pan.entities) {
+            rules.push(this.buildEntityRule(normalizedParams.pan.entities));
+        }
+
+        if (normalizedParams.pan.corpuscle) {
+            rules.push(this.buildCorpuscleRule(normalizedParams.pan.corpuscle));
         }
 
         if (normalizedParams.pan.temporal) {
@@ -310,7 +319,7 @@ export default class SelectionCriteria {
         };
 
         // Add index hints based on filters
-        if (normalizedParams.pan.topic) {
+        if (normalizedParams.pan.domains || normalizedParams.pan.keywords) {
             rules.indexHints.push('text_search_index');
         }
 
@@ -332,15 +341,27 @@ export default class SelectionCriteria {
     /**
      * Build topic-based selection rule
      */
-    buildTopicRule(topicFilter) {
+    buildDomainRule(domainFilter) {
         return {
-            type: 'topic_filter',
+            type: 'domain_filter',
             field: ['rdfs:label', 'skos:prefLabel'],
-            operator: topicFilter.pattern === 'wildcard' ? 'regex' : 'contains',
-            value: topicFilter.value,
+            operator: 'contains_any',
+            values: domainFilter.values,
             caseSensitive: false,
             priority: 'required',
-            description: `Topic must match: ${topicFilter.value}`
+            description: `Domains must match: ${domainFilter.values.slice(0, 3).join(', ')}${domainFilter.count > 3 ? '...' : ''}`
+        };
+    }
+
+    buildKeywordRule(keywordFilter) {
+        return {
+            type: 'keyword_filter',
+            field: ['rdfs:label', 'skos:prefLabel', 'schema:keywords'],
+            operator: 'contains_any',
+            values: keywordFilter.values,
+            caseSensitive: false,
+            priority: 'required',
+            description: `Keywords must match: ${keywordFilter.values.slice(0, 3).join(', ')}${keywordFilter.count > 3 ? '...' : ''}`
         };
     }
 
@@ -355,6 +376,20 @@ export default class SelectionCriteria {
             values: entityFilter.values,
             priority: 'required',
             description: `Must relate to entities: ${entityFilter.values.slice(0, 3).join(', ')}${entityFilter.count > 3 ? '...' : ''}`
+        };
+    }
+
+    /**
+     * Build corpuscle selection rule
+     */
+    buildCorpuscleRule(corpuscleFilter) {
+        return {
+            type: 'corpuscle_filter',
+            field: 'ragno:inCorpuscle',
+            operator: 'in',
+            values: corpuscleFilter.values,
+            priority: 'required',
+            description: `Must belong to corpuscles: ${corpuscleFilter.values.slice(0, 3).join(', ')}${corpuscleFilter.count > 3 ? '...' : ''}`
         };
     }
 
@@ -415,12 +450,16 @@ export default class SelectionCriteria {
      * Build relevance scoring function
      */
     buildRelevanceFunction(normalizedParams) {
+        const keywordValues = normalizedParams.pan.keywords?.values || [];
+        const domainValues = normalizedParams.pan.domains?.values || [];
+        const queryTerms = keywordValues.length > 0 ? keywordValues : domainValues;
+
         return {
             type: 'text_similarity',
             fields: ['rdfs:label', 'ragno:hasText', 'skos:prefLabel'],
-            query: normalizedParams.pan.topic?.value || '',
+            query: queryTerms.join(' '),
             algorithm: 'tf_idf',
-            boost: normalizedParams.pan.topic ? 1.5 : 1.0
+            boost: queryTerms.length > 0 ? 1.5 : 1.0
         };
     }
 
@@ -478,18 +517,21 @@ export default class SelectionCriteria {
         let selectivity = 1.0;
 
         // Reduce selectivity for each filter
-        if (normalizedParams.pan.topic) selectivity *= 0.3;
-        if (normalizedParams.pan.entity) selectivity *= 0.2;
+        if (normalizedParams.pan.domains) selectivity *= 0.3;
+        if (normalizedParams.pan.keywords) selectivity *= 0.25;
+        if (normalizedParams.pan.entities) selectivity *= 0.2;
+        if (normalizedParams.pan.corpuscle) selectivity *= 0.2;
         if (normalizedParams.pan.temporal) selectivity *= 0.5;
         if (normalizedParams.pan.geographic) selectivity *= 0.4;
 
         // Zoom level affects selectivity
         const zoomSelectivity = {
             'corpus': 0.1,
-            'community': 0.2,
-            'unit': 0.5,
-            'entity': 0.7,
-            'text': 0.9
+            'community': 0.3,
+            'unit': 0.6,
+            'text': 0.75,
+            'entity': 0.9,
+            'micro': 0.95
         };
 
         selectivity *= zoomSelectivity[normalizedParams.zoom.level];
@@ -559,7 +601,8 @@ export default class SelectionCriteria {
     getRuleSelectivity(rule) {
         const selectivityMap = {
             'type_constraint': 0.3,
-            'topic_filter': 0.2,
+            'domain_filter': 0.2,
+            'keyword_filter': 0.15,
             'entity_filter': 0.1,
             'temporal_filter': 0.4,
             'geographic_filter': 0.3

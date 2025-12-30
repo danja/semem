@@ -43,16 +43,25 @@ export default class ZoomLevelMapper {
             'entity': {
                 primaryTypes: ['ragno:Entity'],
                 secondaryTypes: ['ragno:Concept', 'ragno:NamedEntity'],
-                granularity: 4,
+                granularity: 5,
                 scope: 'conceptual',
-                description: 'Individual entities and concepts',
-                typicalResultCount: 500,
+                description: 'Individual entities and named elements',
+                typicalResultCount: 600,
                 aggregationLevel: 'entity'
+            },
+            'micro': {
+                primaryTypes: ['ragno:Attribute'],
+                secondaryTypes: ['ragno:Element'],
+                granularity: 6,
+                scope: 'fine',
+                description: 'Fine-grained attributes and sub-entity components',
+                typicalResultCount: 800,
+                aggregationLevel: 'micro'
             },
             'text': {
                 primaryTypes: ['ragno:TextElement', 'ragno:Text'],
                 secondaryTypes: ['ragno:Sentence', 'ragno:Paragraph', 'ragno:Document'],
-                granularity: 5,
+                granularity: 4,
                 scope: 'textual',
                 description: 'Raw text elements and documents',
                 typicalResultCount: 1000,
@@ -97,6 +106,14 @@ export default class ZoomLevelMapper {
                 requiresAggregation: false,
                 maxResults: 500,
                 sortBy: 'importance_desc'
+            },
+            'micro': {
+                primaryStrategy: 'entity_ranking',
+                scoringFactors: ['relevance', 'importance', 'connectivity'],
+                weights: { relevance: 0.5, importance: 0.3, connectivity: 0.2 },
+                requiresAggregation: false,
+                maxResults: 800,
+                sortBy: 'relevance_desc'
             },
             'text': {
                 primaryStrategy: 'text_retrieval',
@@ -215,6 +232,7 @@ export default class ZoomLevelMapper {
             'community': 100, // Community summaries
             'unit': 80,       // Semantic unit content
             'entity': 30,     // Entity information
+            'micro': 20,      // Fine-grained components
             'text': 150       // Text content
         };
         
@@ -250,6 +268,7 @@ export default class ZoomLevelMapper {
             'community': ['?community', '?topic'],
             'unit': [], // No aggregation
             'entity': [], // No aggregation
+            'micro': [], // No aggregation
             'text': [] // No aggregation
         };
         
@@ -277,6 +296,7 @@ export default class ZoomLevelMapper {
             ],
             'unit': [],
             'entity': [],
+            'micro': [],
             'text': []
         };
         
@@ -295,6 +315,7 @@ export default class ZoomLevelMapper {
             'community': ['keywords', 'graph', 'embedding'],
             'unit': ['keywords', 'embedding', 'temporal', 'graph'],
             'entity': ['keywords', 'embedding', 'graph'],
+            'micro': ['keywords', 'embedding'],
             'text': ['keywords', 'embedding', 'temporal']
         };
         
@@ -313,6 +334,7 @@ export default class ZoomLevelMapper {
             'community': 'graph',
             'unit': 'embedding',
             'entity': 'embedding',
+            'micro': 'keywords',
             'text': 'keywords'
         };
         
@@ -345,6 +367,7 @@ export default class ZoomLevelMapper {
             'community': ['?uri', '?label', '?description', '?memberCount', '?cohesion'],
             'unit': ['?uri', '?content', '?entity', '?unit', '?created'],
             'entity': ['?uri', '?label', '?type', '?prefLabel', '?importance'],
+            'micro': ['?uri', '?label', '?content', '?attributeType'],
             'text': ['?uri', '?text', '?source', '?position', '?created']
         };
         

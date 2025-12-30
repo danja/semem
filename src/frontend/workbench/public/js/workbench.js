@@ -30,6 +30,9 @@ class WorkbenchApp {
     this.updateConnectionStatus = this.updateConnectionStatus.bind(this);
     this.updateSessionStats = this.updateSessionStats.bind(this);
     this.updateZptDisplay = this.updateZptDisplay.bind(this);
+
+    this.lastNavigationQuery = 'Navigate knowledge space';
+    this.navigationRequestId = 0;
   }
 
   /**
@@ -160,6 +163,11 @@ class WorkbenchApp {
     const navExecuteButton = DomUtils.$('#nav-execute');
     if (navExecuteButton) {
       navExecuteButton.addEventListener('click', this.handleNavigationExecute.bind(this));
+    }
+
+    const navHistoryButton = DomUtils.$('#nav-history-refresh');
+    if (navHistoryButton) {
+      navHistoryButton.addEventListener('click', this.handleNavigationHistoryRefresh.bind(this));
     }
   }
 
@@ -920,9 +928,7 @@ class WorkbenchApp {
     const level = button.dataset.level;
     
     if (!level) return;
-    
-    const oldState = stateManager.getState();
-    
+
     try {
       // Update button states
       DomUtils.$$('.zoom-button').forEach(btn => {
@@ -932,14 +938,13 @@ class WorkbenchApp {
       
       await stateManager.setZoom(level);
       
-      const newState = stateManager.getState();
       consoleService.info(`🔍 Zoom level changed to "${level}" - adjusting abstraction level for search results`);
       
       // Update visual feedback
       this.updateNavigationDisplay();
+      await this.executeNavigationFromState({ source: 'zoom' });
       
     } catch (error) {
-      console.error('Zoom change failed:', error);
       consoleService.error(`❌ Failed to change zoom level to "${level}": ${error.message}`);
       DomUtils.showToast('Failed to change zoom level', 'error');
     }
@@ -950,9 +955,7 @@ class WorkbenchApp {
     const style = button.dataset.style;
     
     if (!style) return;
-    
-    const oldState = stateManager.getState();
-    
+
     try {
       // Update button states
       DomUtils.$$('.tilt-button').forEach(btn => {
@@ -962,14 +965,13 @@ class WorkbenchApp {
       
       await stateManager.setTilt(style);
       
-      const newState = stateManager.getState();
       consoleService.info(`🎯 Tilt view changed to "${style}" - adjusting content perspective and filtering`);
       
       // Update visual feedback
       this.updateNavigationDisplay();
+      await this.executeNavigationFromState({ source: 'tilt' });
       
     } catch (error) {
-      console.error('Tilt change failed:', error);
       consoleService.error(`❌ Failed to change view style to "${style}": ${error.message}`);
       DomUtils.showToast('Failed to change view style', 'error');
     }
@@ -1008,13 +1010,10 @@ class WorkbenchApp {
     
     const domains = domainsInput?.value || '';
     const keywords = keywordsInput?.value || '';
-    
-    const oldState = stateManager.getState();
-    
+
     try {
       await stateManager.setPan({ domains, keywords });
       
-      const newState = stateManager.getState();
       const filterDesc = domains.length > 0 || keywords.length > 0 
         ? `filtering by ${domains.length} domains and ${keywords.length} keywords`
         : 'removing all filters';
@@ -1022,9 +1021,9 @@ class WorkbenchApp {
       
       // Update visual feedback
       this.updateNavigationDisplay();
+      await this.executeNavigationFromState({ source: 'pan' });
       
     } catch (error) {
-      console.error('Pan change failed:', error);
       consoleService.error(`❌ Failed to update pan filters: ${error.message}`);
       DomUtils.showToast('Failed to update filters', 'error');
     }
@@ -1929,24 +1928,32 @@ class WorkbenchApp {
 
   formatZoomLevel(zoom) {
     const levels = {
+      'micro': 'Micro',
       'entity': 'Entity',
-      'unit': 'Unit', 
       'text': 'Text',
+      'unit': 'Unit',
       'community': 'Community',
       'corpus': 'Corpus'
     };
-    return levels[zoom] || 'Entity';
+    if (!levels[zoom]) {
+      throw new Error(`Unsupported zoom level: ${zoom}`);
+    }
+    return levels[zoom];
   }
 
   getZoomDescription(zoom) {
     const descriptions = {
-      'entity': 'Individual entities and concepts',
-      'unit': 'Semantic text units and paragraphs',
-      'text': 'Full documents and articles',
-      'community': 'Groups of related concepts',
+      'micro': 'Sub-entity attributes and fine-grained components',
+      'entity': 'Named entities and concrete elements',
+      'text': 'Full documents and source fragments',
+      'unit': 'Semantic units and local summaries',
+      'community': 'Groups of related units and themes',
       'corpus': 'Entire knowledge collection'
     };
-    return descriptions[zoom] || 'Individual entities and concepts';
+    if (!descriptions[zoom]) {
+      throw new Error(`Unsupported zoom level: ${zoom}`);
+    }
+    return descriptions[zoom];
   }
 
   formatTiltStyle(tilt) {
@@ -1957,7 +1964,10 @@ class WorkbenchApp {
       'temporal': 'Temporal',
       'memory': 'Memory'
     };
-    return styles[tilt] || 'Keywords';
+    if (!styles[tilt]) {
+      throw new Error(`Unsupported tilt style: ${tilt}`);
+    }
+    return styles[tilt];
   }
 
   getTiltDescription(tilt) {
@@ -1968,7 +1978,10 @@ class WorkbenchApp {
       'temporal': 'Time-based organization',
       'memory': 'Memory importance and access patterns'
     };
-    return descriptions[tilt] || 'Keyword-based view of content';
+    if (!descriptions[tilt]) {
+      throw new Error(`Unsupported tilt style: ${tilt}`);
+    }
+    return descriptions[tilt];
   }
 
   formatPanFilters(pan) {
@@ -1998,33 +2011,16 @@ class WorkbenchApp {
       DomUtils.hide(buttonText);
       DomUtils.show(buttonLoader);
       
-      const state = stateManager.getState();
-      
-      // Build navigation query
-      const query = "Navigate knowledge space";  // Default query
-      const navigationParams = {
-        zoom: state.zoom || 'entity',
-        pan: state.pan || {},
-        tilt: state.tilt || 'keywords'
-      };
-      
-      consoleService.info(`🗺️ Executing ZPT navigation with zoom:"${state.zoom}", pan filters, and tilt:"${state.tilt}"`);
-      
-      // Call ZPT navigation API
-      const result = await apiService.zptNavigate({
+      const query = this.lastNavigationQuery || 'Navigate knowledge space';
+      const result = await this.executeNavigationFromState({
         query,
-        ...navigationParams
+        source: 'manual',
+        showToast: true
       });
-      
-      // Display results
-      this.displayNavigationResults(result);
-      
       const resultCount = result?.results?.length || result?.items?.length || 0;
       consoleService.success(`✅ Navigation completed - found ${resultCount} relevant items`);
-      DomUtils.showToast('Navigation executed successfully', 'success');
       
     } catch (error) {
-      console.error('Navigation execution failed:', error);
       consoleService.error(`❌ ZPT navigation failed: ${error.message}`);
       DomUtils.showToast('Navigation execution failed', 'error');
     } finally {
@@ -2032,6 +2028,105 @@ class WorkbenchApp {
       button.disabled = false;
       DomUtils.show(buttonText);
       DomUtils.hide(buttonLoader);
+    }
+  }
+
+  async executeNavigationFromState({ query, source = 'navigation', showToast = false } = {}) {
+    const state = stateManager.getState();
+    const requestId = ++this.navigationRequestId;
+    const resolvedQuery = query || this.lastNavigationQuery || 'Navigate knowledge space';
+    const navigationParams = {
+      zoom: state.zoom || 'entity',
+      pan: state.pan || {},
+      tilt: state.tilt || 'keywords'
+    };
+
+    this.lastNavigationQuery = resolvedQuery;
+    consoleService.info(`🗺️ Executing ZPT navigation (${source}) with zoom:"${state.zoom}", pan filters, and tilt:"${state.tilt}"`);
+
+    try {
+      const result = await apiService.zptNavigate({
+        query: resolvedQuery,
+        ...navigationParams
+      });
+
+      if (requestId !== this.navigationRequestId) {
+        return null;
+      }
+
+      this.displayNavigationResults(result);
+      if (showToast) {
+        DomUtils.showToast('Navigation executed successfully', 'success');
+      }
+      return result;
+    } catch (error) {
+      consoleService.error(`❌ ZPT navigation (${source}) failed: ${error.message}`);
+      if (showToast) {
+        DomUtils.showToast('Navigation execution failed', 'error');
+      }
+      throw error;
+    }
+  }
+
+  async handleNavigationHistoryRefresh(event) {
+    event.preventDefault();
+
+    const button = event.target.closest('button');
+    const buttonText = button.querySelector('.button-text');
+
+    try {
+      button.disabled = true;
+      DomUtils.hide(buttonText);
+      button.setAttribute('data-loading', 'true');
+
+      const [sessionsResult, viewsResult] = await Promise.all([
+        apiService.zptGetSessions(10),
+        apiService.zptGetViews(10)
+      ]);
+
+      this.displayNavigationHistory(sessionsResult, viewsResult);
+      consoleService.success('✅ Navigation history refreshed');
+    } catch (error) {
+      consoleService.error(`❌ Navigation history refresh failed: ${error.message}`);
+      DomUtils.showToast('Navigation history refresh failed', 'error');
+    } finally {
+      button.disabled = false;
+      DomUtils.show(buttonText);
+      button.removeAttribute('data-loading');
+    }
+  }
+
+  displayNavigationHistory(sessionsResult, viewsResult) {
+    const sessionsContainer = DomUtils.$('#nav-sessions-list');
+    const viewsContainer = DomUtils.$('#nav-views-list');
+
+    if (!sessionsContainer || !viewsContainer) return;
+
+    const sessions = sessionsResult?.sessions || [];
+    const views = viewsResult?.views || [];
+
+    if (sessions.length === 0) {
+      sessionsContainer.innerHTML = '<p class="history-placeholder">No sessions recorded yet.</p>';
+    } else {
+      sessionsContainer.innerHTML = sessions.map(session => `
+        <div class="history-item">
+          <div class="history-title">${DomUtils.escapeHtml(session.purpose || 'Navigation session')}</div>
+          <div class="history-meta">Started: ${DomUtils.escapeHtml(session.startTime || 'unknown')}</div>
+          <div class="history-meta">Agent: ${DomUtils.escapeHtml(session.agentURI || 'unknown')}</div>
+        </div>
+      `).join('');
+    }
+
+    if (views.length === 0) {
+      viewsContainer.innerHTML = '<p class="history-placeholder">No views recorded yet.</p>';
+    } else {
+      viewsContainer.innerHTML = views.map(view => `
+        <div class="history-item">
+          <div class="history-title">${DomUtils.escapeHtml(view.query || 'Navigation view')}</div>
+          <div class="history-meta">Timestamp: ${DomUtils.escapeHtml(view.timestamp || 'unknown')}</div>
+          <div class="history-meta">Session: ${DomUtils.escapeHtml(view.sessionURI || 'unknown')}</div>
+        </div>
+      `).join('');
     }
   }
 

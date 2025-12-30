@@ -110,7 +110,7 @@ export class MemoryRelevanceEngine {
         const sharedContext = {
             currentTime: Date.now(),
             focusEmbedding: currentZPTState.focusEmbedding,
-            panDomains: currentZPTState.panDomains || [],
+            panDomains: currentZPTState.pan?.domains || [],
             weights: this.getContextualWeights(context.userId, currentZPTState)
         };
 
@@ -183,7 +183,7 @@ export class MemoryRelevanceEngine {
 
     computeDomainMatchScore(memory, currentZPTState) {
         const memoryDomains = memory.domains || [];
-        const currentDomains = currentZPTState.panDomains || [];
+        const currentDomains = currentZPTState.pan?.domains || [];
 
         if (!memoryDomains.length && !currentDomains.length) return 1.0; // Both empty = perfect match
         if (!memoryDomains.length || !currentDomains.length) return 0.1; // One empty = low match

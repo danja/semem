@@ -13,18 +13,26 @@ export default class ParameterValidator {
         return {
             zoom: {
                 type: 'enum',
-                values: ['entity', 'unit', 'text', 'community', 'corpus'],
+                values: ['micro', 'entity', 'text', 'unit', 'community', 'corpus'],
                 required: true
             },
             pan: {
                 type: 'object',
                 required: false,
                 properties: {
-                    topic: { 
-                        type: 'string',
-                        pattern: /^[a-zA-Z0-9\-_]+$/
+                    domains: { 
+                        type: 'array',
+                        items: { type: 'string' }
                     },
-                    entity: { 
+                    keywords: { 
+                        type: 'array',
+                        items: { type: 'string' }
+                    },
+                    entities: { 
+                        type: 'array',
+                        items: { type: 'string' }
+                    },
+                    corpuscle: {
                         type: 'array',
                         items: { type: 'string' }
                     },
@@ -215,21 +223,39 @@ export default class ParameterValidator {
 
         const errors = [];
 
-        // Validate topic filter
-        if (pan.topic !== undefined) {
-            if (typeof pan.topic !== 'string' || pan.topic.length === 0) {
-                errors.push('Topic filter must be a non-empty string');
-            } else if (!this.schemas.pan.properties.topic.pattern.test(pan.topic)) {
-                errors.push('Topic filter contains invalid characters');
+        // Validate domain filters
+        if (pan.domains !== undefined) {
+            if (!Array.isArray(pan.domains)) {
+                errors.push('Domain filters must be an array');
+            } else if (pan.domains.some(d => typeof d !== 'string')) {
+                errors.push('All domain filter values must be strings');
             }
         }
 
-        // Validate entity filter
-        if (pan.entity !== undefined) {
-            if (!Array.isArray(pan.entity)) {
-                errors.push('Entity filter must be an array');
-            } else if (pan.entity.some(e => typeof e !== 'string')) {
+        // Validate keyword filters
+        if (pan.keywords !== undefined) {
+            if (!Array.isArray(pan.keywords)) {
+                errors.push('Keyword filters must be an array');
+            } else if (pan.keywords.some(k => typeof k !== 'string')) {
+                errors.push('All keyword filter values must be strings');
+            }
+        }
+
+        // Validate entity filters
+        if (pan.entities !== undefined) {
+            if (!Array.isArray(pan.entities)) {
+                errors.push('Entity filters must be an array');
+            } else if (pan.entities.some(e => typeof e !== 'string')) {
                 errors.push('All entity filter values must be strings');
+            }
+        }
+
+        // Validate corpuscle filter
+        if (pan.corpuscle !== undefined) {
+            if (!Array.isArray(pan.corpuscle)) {
+                errors.push('Corpuscle filter must be an array');
+            } else if (pan.corpuscle.some(c => typeof c !== 'string')) {
+                errors.push('All corpuscle filter values must be strings');
             }
         }
 

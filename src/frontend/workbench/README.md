@@ -15,7 +15,7 @@ The Semantic Memory Workbench provides a user-friendly interface for interacting
 5. **Inspect** - Debug and monitor system state
 
 Secondary verbs (expandable panels):
-- **Zoom** - Set abstraction level (entity, unit, text, community, corpus)
+- **Zoom** - Set abstraction level (micro, entity, text, unit, community, corpus)
 - **Pan** - Apply domain and keyword filters
 - **Tilt** - Choose view representation (keywords, embedding, graph, temporal)
 
@@ -142,7 +142,7 @@ POST /api/zoom
 Content-Type: application/json
 
 {
-  "level": "unit",             // "entity" | "unit" | "text" | "community" | "corpus"
+  "level": "unit",             // "micro" | "entity" | "text" | "unit" | "community" | "corpus"
   "query": "optional query"
 }
 ```
@@ -201,7 +201,7 @@ GET /api/health
    - Enable/disable context usage
    - Click "Search Memory"
 5. **Navigate the knowledge space** using ZPT controls:
-   - **Zoom**: Choose abstraction level (entity → unit → text → community → corpus)
+   - **Zoom**: Choose abstraction level (micro → entity → text → unit → community → corpus)
    - **Pan**: Apply domain and keyword filters
    - **Tilt**: Select view representation style
 6. **Analyze content** using the Augment panel (expandable)
@@ -212,9 +212,10 @@ GET /api/health
 The workbench implements the ZPT (Zoom-Pan-Tilt) navigation paradigm:
 
 - **Zoom** controls the level of abstraction
+  - **Micro**: Sub-entity attributes and fine-grained components
   - **Entity**: Individual semantic entities
+  - **Text**: Full text documents and fragments
   - **Unit**: Independent semantic units
-  - **Text**: Full text documents
   - **Community**: Groups of related entities
   - **Corpus**: Entire knowledge collection
 

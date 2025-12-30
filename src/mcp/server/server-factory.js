@@ -174,7 +174,7 @@ async function getToolDefinitions(toolRouter) {
       inputSchema: {
         type: 'object',
         properties: {
-          level: { type: 'string', enum: ['entity', 'concept', 'document', 'community'], description: 'Zoom level' },
+          level: { type: 'string', enum: ['micro', 'entity', 'text', 'unit', 'community', 'corpus'], description: 'Zoom level' },
           query: { type: 'string', description: 'Optional focus query' }
         },
         required: ['level']
@@ -186,12 +186,11 @@ async function getToolDefinitions(toolRouter) {
       inputSchema: {
         type: 'object',
         properties: {
-          direction: { type: 'string', enum: ['semantic', 'temporal', 'conceptual'], description: 'Pan direction' },
-          domain: { type: 'string', description: 'Domain to pan to' },
-          timeRange: { type: 'string', description: 'Time range filter' },
-          conceptFilter: { type: 'array', items: { type: 'string' }, description: 'Concept filters' },
-          maxResults: { type: 'number', default: 50, description: 'Maximum results' },
-          threshold: { type: 'number', default: 0.5, description: 'Similarity threshold' }
+          domains: { type: 'array', items: { type: 'string' }, description: 'Domain filters' },
+          keywords: { type: 'array', items: { type: 'string' }, description: 'Keyword filters' },
+          entities: { type: 'array', items: { type: 'string' }, description: 'Entity filters' },
+          corpuscle: { type: 'array', items: { type: 'string' }, description: 'Corpuscle filters' },
+          temporal: { type: 'object', description: 'Temporal filter with start/end' }
         }
       }
     },
@@ -201,7 +200,7 @@ async function getToolDefinitions(toolRouter) {
       inputSchema: {
         type: 'object',
         properties: {
-          style: { type: 'string', enum: ['keywords', 'summary', 'detailed'], description: 'View style' },
+          style: { type: 'string', enum: ['keywords', 'embedding', 'graph', 'temporal'], description: 'View style' },
           query: { type: 'string', description: 'Optional focus query' }
         },
         required: ['style']

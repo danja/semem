@@ -234,6 +234,11 @@ export default class CorpuscleSelector {
 
             // Add zoom-specific fields
             switch (params.zoom?.toLowerCase()) {
+                case 'micro':
+                    corpuscle.label = binding.label?.value;
+                    corpuscle.attributeType = binding.attributeType?.value;
+                    corpuscle.entity = binding.entity?.value;
+                    break;
                 case 'entity':
                     corpuscle.label = binding.label?.value;
                     corpuscle.isEntryPoint = binding.isEntryPoint?.value === 'true';
@@ -274,6 +279,7 @@ export default class CorpuscleSelector {
      */
     getCorpuscleType(zoomLevel) {
         const typeMapping = {
+            'micro': 'ragno:Attribute',
             'entity': 'ragno:Entity',
             'unit': 'ragno:Unit',
             'text': 'ragno:TextElement', 
@@ -297,11 +303,14 @@ export default class CorpuscleSelector {
         // Execute base query to get candidates
         const candidates = await this.executeQuery(queryConfig);
         
-        // If we have a topic, generate query embedding for similarity
-        if (normalizedParams.pan.topic) {
-            const queryEmbedding = await this.embeddingHandler.generateEmbedding(
-                normalizedParams.pan.topic.value
-            );
+        const keywordValues = normalizedParams.pan.keywords?.values || [];
+        const domainValues = normalizedParams.pan.domains?.values || [];
+        const embeddingQuery = keywordValues.length > 0
+            ? keywordValues.join(' ')
+            : (domainValues.length > 0 ? domainValues.join(' ') : normalizedParams.query);
+
+        if (embeddingQuery) {
+            const queryEmbedding = await this.embeddingHandler.generateEmbedding(embeddingQuery);
             
             // Calculate similarities and rank
             return this.rankBySimilarity(candidates, queryEmbedding, selectionCriteria);
@@ -482,12 +491,12 @@ export default class CorpuscleSelector {
      * Score corpuscles by keyword relevance
      */
     scoreByKeywords(corpuscles, normalizedParams, selectionCriteria) {
-        const topicValue = normalizedParams.pan.topic?.value;
-        if (!topicValue) {
+        const keywordValues = normalizedParams.pan.keywords?.values;
+        if (!keywordValues || keywordValues.length === 0) {
             return this.filterCorpuscles(corpuscles, selectionCriteria);
         }
 
-        const keywords = topicValue.toLowerCase().split(/\s+/);
+        const keywords = keywordValues.map(keyword => keyword.toLowerCase());
         
         const scoredCorpuscles = corpuscles.map(corpuscle => {
             const text = [
@@ -561,58 +570,61 @@ export default class CorpuscleSelector {
      * Store navigation data as ZPT RDF metadata
      */
     async storeNavigationData(normalizedParams, selectionResult) {
-        if (!this.config.enableZPTStorage || !this.zptDataFactory) {
-            return;
+        if (!this.config.enableZPTStorage) {
+            throw new Error('ZPT storage disabled; cannot persist navigation data');
         }
 
-        try {
-            // Convert parameters to ZPT URIs
-            const zptParams = this.convertParametersToZPTURIs(normalizedParams);
-
-            // Create navigation session
-            const sessionConfig = {
-                agentURI: 'http://example.org/agents/corpuscle_selector',
-                startTime: new Date(),
-                purpose: `Corpuscle selection using ${zptParams.tiltURI || normalizedParams.tilt.representation} analysis`
-            };
-
-            const session = this.zptDataFactory.createNavigationSession(sessionConfig);
-
-            // Create navigation view with selected corpuscles
-            const viewConfig = {
-                query: normalizedParams.pan?.topic?.value || 'corpus selection',
-                zoom: zptParams.zoomURI || this.getDefaultZoomURI(normalizedParams.zoom.level),
-                tilt: zptParams.tiltURI || this.getDefaultTiltURI(normalizedParams.tilt.representation),
-                pan: { domains: zptParams.panURIs || [] },
-                sessionURI: session.uri.value,
-                selectedCorpuscles: selectionResult.corpuscles.map(c => c.uri).filter(Boolean)
-            };
-
-            const view = this.zptDataFactory.createNavigationView(viewConfig);
-
-            // Store in SPARQL if available
-            if (this.sparqlStore) {
-                await this.storeZPTDataInSPARQL(session, view);
-            }
-
-            // Add ZPT metadata to selection result
-            selectionResult.zptMetadata = {
-                sessionURI: session.uri.value,
-                viewURI: view.uri.value,
-                zptParameters: zptParams,
-                stored: !!this.sparqlStore
-            };
-
-            logger.info('ZPT navigation data stored', {
-                sessionURI: session.uri.value,
-                viewURI: view.uri.value,
-                selectedCorpuscles: viewConfig.selectedCorpuscles.length
-            });
-
-        } catch (error) {
-            logger.warn('Failed to store ZPT navigation data', { error });
-            // Don't throw - selection should succeed even if ZPT storage fails
+        if (!this.zptDataFactory) {
+            throw new Error('ZPT data factory unavailable for navigation storage');
         }
+
+        if (!this.sparqlStore) {
+            throw new Error('SPARQL store unavailable for navigation storage');
+        }
+
+        // Convert parameters to ZPT URIs
+        const zptParams = this.convertParametersToZPTURIs(normalizedParams);
+
+        if (!normalizedParams.query) {
+            throw new Error('Navigation query required to store ZPT session');
+        }
+
+        // Create navigation session
+        const sessionConfig = {
+            agentURI: 'http://example.org/agents/corpuscle_selector',
+            startTime: new Date(),
+            purpose: `Corpuscle selection using ${zptParams.tiltURI} analysis`
+        };
+
+        const session = this.zptDataFactory.createNavigationSession(sessionConfig);
+
+        // Create navigation view with selected corpuscles
+        const viewConfig = {
+            query: normalizedParams.query,
+            zoom: zptParams.zoomURI,
+            tilt: zptParams.tiltURI,
+            pan: { domains: zptParams.panURIs || [] },
+            sessionURI: session.uri.value,
+            selectedCorpuscles: selectionResult.corpuscles.map(c => c.uri).filter(Boolean)
+        };
+
+        const view = this.zptDataFactory.createNavigationView(viewConfig);
+
+        await this.storeZPTDataInSPARQL(session, view);
+
+        // Add ZPT metadata to selection result
+        selectionResult.zptMetadata = {
+            sessionURI: session.uri.value,
+            viewURI: view.uri.value,
+            zptParameters: zptParams,
+            stored: true
+        };
+
+        logger.info('ZPT navigation data stored', {
+            sessionURI: session.uri.value,
+            viewURI: view.uri.value,
+            selectedCorpuscles: viewConfig.selectedCorpuscles.length
+        });
     }
 
     /**
@@ -624,25 +636,31 @@ export default class CorpuscleSelector {
         // Convert zoom level
         if (normalizedParams.zoom?.level) {
             const zoomURI = NamespaceUtils.resolveStringToURI('zoom', normalizedParams.zoom.level);
-            if (zoomURI) {
-                zptParams.zoomURI = zoomURI.value;
+            if (!zoomURI) {
+                throw new Error(`Unsupported zoom level for ZPT ontology: ${normalizedParams.zoom.level}`);
             }
+            zptParams.zoomURI = zoomURI.value;
         }
 
         // Convert tilt representation
         if (normalizedParams.tilt?.representation) {
             const tiltURI = NamespaceUtils.resolveStringToURI('tilt', normalizedParams.tilt.representation);
-            if (tiltURI) {
-                zptParams.tiltURI = tiltURI.value;
+            if (!tiltURI) {
+                throw new Error(`Unsupported tilt representation for ZPT ontology: ${normalizedParams.tilt.representation}`);
             }
+            zptParams.tiltURI = tiltURI.value;
         }
 
         // Convert pan domains (if available)
-        if (normalizedParams.pan?.domains) {
-            zptParams.panURIs = normalizedParams.pan.domains
+        if (normalizedParams.pan?.domains?.values) {
+            zptParams.panURIs = normalizedParams.pan.domains.values
                 .map(domain => NamespaceUtils.resolveStringToURI('pan', domain))
-                .filter(uri => uri !== null)
-                .map(uri => uri.value);
+                .map(uri => {
+                    if (!uri) {
+                        throw new Error(`Unsupported pan domain for ZPT ontology: ${domain}`);
+                    }
+                    return uri.value;
+                });
         }
 
         return zptParams;
@@ -653,7 +671,10 @@ export default class CorpuscleSelector {
      */
     getDefaultZoomURI(zoomLevel) {
         const zoomURI = NamespaceUtils.resolveStringToURI('zoom', zoomLevel);
-        return zoomURI ? zoomURI.value : 'http://purl.org/stuff/zpt/EntityLevel';
+        if (!zoomURI) {
+            throw new Error(`Unsupported zoom level for ZPT ontology: ${zoomLevel}`);
+        }
+        return zoomURI.value;
     }
 
     /**
@@ -661,7 +682,10 @@ export default class CorpuscleSelector {
      */
     getDefaultTiltURI(tiltRepresentation) {
         const tiltURI = NamespaceUtils.resolveStringToURI('tilt', tiltRepresentation);
-        return tiltURI ? tiltURI.value : 'http://purl.org/stuff/zpt/KeywordProjection';
+        if (!tiltURI) {
+            throw new Error(`Unsupported tilt representation for ZPT ontology: ${tiltRepresentation}`);
+        }
+        return tiltURI.value;
     }
 
     /**
@@ -669,7 +693,7 @@ export default class CorpuscleSelector {
      */
     async storeZPTDataInSPARQL(session, view) {
         if (!this.sparqlStore) {
-            return;
+            throw new Error('SPARQL store not available');
         }
 
         try {
@@ -709,34 +733,13 @@ ${viewTriples}
             throw new Error('SPARQL store not available');
         }
 
-        try {
-            logger.debug(`Executing SPARQL update: ${description}`);
-            
-            // Use the SPARQL store's update method
-            if (typeof this.sparqlStore.update === 'function') {
-                await this.sparqlStore.update(sparql);
-            } else {
-                // Fallback to direct endpoint call
-                const response = await fetch(this.sparqlStore.endpoint.update, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/sparql-update',
-                        'Authorization': this.sparqlStore.auth
-                    },
-                    body: sparql
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-            }
-
-            logger.debug(`SPARQL update successful: ${description}`);
-
-        } catch (error) {
-            logger.error(`SPARQL update failed: ${description}`, { error });
-            throw error;
+        if (typeof this.sparqlStore.executeUpdate !== 'function') {
+            throw new Error('SPARQL store missing executeUpdate method');
         }
+
+        logger.debug(`Executing SPARQL update: ${description}`);
+        await this.sparqlStore.executeUpdate(sparql);
+        logger.debug(`SPARQL update successful: ${description}`);
     }
 
     /**

@@ -159,26 +159,26 @@ describe('Zoom Tool Integration Tests', () => {
     console.log(`✅ Zoom entity level test passed`);
   });
 
-  test('should set concept zoom level', async () => {
-    const result = await executeZoom({ level: 'concept' });
+  test('should set unit zoom level', async () => {
+    const result = await executeZoom({ level: 'unit' });
     const response = parseZoomResponse(result.zoomResponse);
 
     expect(response.success).toBe(true);
     expect(response).toHaveProperty('zoom');
-    expect(response.zoom.level).toBe('concept');
+    expect(response.zoom.level).toBe('unit');
 
-    console.log(`✅ Zoom concept level test passed`);
+    console.log(`✅ Zoom unit level test passed`);
   });
 
-  test('should set document zoom level', async () => {
-    const result = await executeZoom({ level: 'document' });
+  test('should set text zoom level', async () => {
+    const result = await executeZoom({ level: 'text' });
     const response = parseZoomResponse(result.zoomResponse);
 
     expect(response.success).toBe(true);
     expect(response).toHaveProperty('zoom');
-    expect(response.zoom.level).toBe('document');
+    expect(response.zoom.level).toBe('text');
 
-    console.log(`✅ Zoom document level test passed`);
+    console.log(`✅ Zoom text level test passed`);
   });
 
   test('should set community zoom level', async () => {
@@ -208,7 +208,7 @@ describe('Zoom Tool Integration Tests', () => {
 
   test('should support granularity control', async () => {
     const result = await executeZoom({
-      level: 'concept',
+      level: 'unit',
       granularity: 'fine',
       maxResults: 20
     });
@@ -236,7 +236,7 @@ describe('Zoom Tool Integration Tests', () => {
 
   test('should support temporal zoom constraints', async () => {
     const result = await executeZoom({
-      level: 'document',
+      level: 'text',
       timeRange: {
         start: '2024-01-01',
         end: '2024-12-31'
@@ -251,7 +251,7 @@ describe('Zoom Tool Integration Tests', () => {
   });
 
   test('should handle hierarchical zoom levels', async () => {
-    const levels = ['entity', 'concept', 'document', 'community'];
+    const levels = ['entity', 'unit', 'text', 'community'];
 
     for (const level of levels) {
       const result = await executeZoom({
@@ -271,7 +271,7 @@ describe('Zoom Tool Integration Tests', () => {
 
   test('should support zoom with relevance scoring', async () => {
     const result = await executeZoom({
-      level: 'concept',
+      level: 'unit',
       query: 'machine learning concepts',
       scoreThreshold: 0.7,
       sortBy: 'relevance'
@@ -300,7 +300,7 @@ describe('Zoom Tool Integration Tests', () => {
 
   test('should support zoom with semantic clustering', async () => {
     const result = await executeZoom({
-      level: 'concept',
+      level: 'unit',
       clustering: 'semantic',
       clusterThreshold: 0.8,
       maxClusters: 5
@@ -329,7 +329,7 @@ describe('Zoom Tool Integration Tests', () => {
 
   test('should support progressive zoom levels', async () => {
     const result = await executeZoom({
-      level: 'concept',
+      level: 'unit',
       progressive: true,
       steps: 3,
       direction: 'in'
@@ -376,7 +376,7 @@ describe('Zoom Tool Integration Tests', () => {
 
   test('should support complex zoom configuration', async () => {
     const result = await executeZoom({
-      level: 'concept',
+      level: 'unit',
       query: 'artificial intelligence research',
       domain: 'ai-research',
       granularity: 'medium',
@@ -390,7 +390,7 @@ describe('Zoom Tool Integration Tests', () => {
 
     const response = parseZoomResponse(result.zoomResponse);
     expect(response.success).toBe(true);
-    expect(response.zoom.level).toBe('concept');
+    expect(response.zoom.level).toBe('unit');
     expect(response.zoom.domain).toBe('ai-research');
 
     console.log(`✅ Zoom complex configuration test passed`);

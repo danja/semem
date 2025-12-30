@@ -642,8 +642,9 @@ export default class MetadataEncoder {
         if (!pan) return {};
         
         const summary = {};
-        if (pan.topic) summary.topic = pan.topic.value || pan.topic;
-        if (pan.entity) summary.entity = pan.entity.count || (Array.isArray(pan.entity) ? pan.entity.length : 1);
+        if (pan.domains) summary.domains = pan.domains.count || (Array.isArray(pan.domains) ? pan.domains.length : 1);
+        if (pan.keywords) summary.keywords = pan.keywords.count || (Array.isArray(pan.keywords) ? pan.keywords.length : 1);
+        if (pan.entities) summary.entities = pan.entities.count || (Array.isArray(pan.entities) ? pan.entities.length : 1);
         if (pan.temporal) summary.temporal = true;
         if (pan.geographic) summary.geographic = true;
         

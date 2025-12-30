@@ -1,0 +1,14 @@
+# ZPT FilterBuilder micro-level query
+SELECT DISTINCT ?uri ?label ?content ?attributeType ?metadata
+WHERE {
+    GRAPH <{{graphName}}> {
+        ?uri a ragno:Attribute .
+        OPTIONAL { ?uri rdfs:label ?label }
+        OPTIONAL { ?uri ragno:content ?content }
+        OPTIONAL { ?uri ragno:subType ?attributeType }
+        OPTIONAL { ?uri semem:metadata ?metadata }
+        {{filters}}
+    }
+}
+{{orderBy}}
+{{limit}}

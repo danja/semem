@@ -1,5 +1,5 @@
 /**
- * PanCommand - Command for navigating in different directions (semantic, temporal, conceptual)
+ * PanCommand - Command for applying pan filters (domains, keywords, entities, temporal, corpuscles)
  *
  * Implements pan operations for ZPT (Zoom, Pan, Tilt) navigation system.
  */
@@ -17,9 +17,11 @@ export class PanCommand extends BaseVerbCommand {
   /**
    * Execute pan command
    * @param {Object} params - Command parameters (panParams)
-   * @param {string} params.direction - Pan direction (semantic, temporal, conceptual)
-   * @param {string} params.domain - Domain to focus on
-   * @param {string} params.timeRange - Time range for temporal panning
+   * @param {Array<string>} params.domains - Domain filters
+   * @param {Array<string>} params.keywords - Keyword filters
+   * @param {Array<string>} params.entities - Entity filters
+   * @param {Object} params.temporal - Temporal bounds
+   * @param {Array<string>} params.corpuscle - Corpuscle scope filters
    * @returns {Promise<Object>} Command result
    */
   async execute(params) {

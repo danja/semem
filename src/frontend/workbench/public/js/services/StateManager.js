@@ -9,7 +9,7 @@ export class StateManager {
   constructor() {
     this.state = {
       // ZPT Navigation State
-      zoom: 'entity',      // entity | unit | text | community | corpus
+      zoom: 'entity',      // micro | entity | text | unit | community | corpus
       pan: {               // Domain filtering
         domains: [],
         keywords: [],

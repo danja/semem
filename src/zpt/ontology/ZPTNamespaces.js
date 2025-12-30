@@ -87,6 +87,7 @@ export const ZPT_TERMS = {
     NavigableElement: ZPT.NavigableElement,
     
     // Predefined Zoom Levels
+    MicroLevel: ZPT.MicroLevel,
     EntityLevel: ZPT.EntityLevel,
     UnitLevel: ZPT.UnitLevel,
     TextLevel: ZPT.TextLevel,
@@ -247,10 +248,10 @@ export const PROV_TERMS = {
 export const ZPT_STRING_MAPPINGS = {
     // Zoom levels
     zoom: {
+        'micro': ZPT_TERMS.MicroLevel,
         'entity': ZPT_TERMS.EntityLevel,
         'unit': ZPT_TERMS.UnitLevel,
         'text': ZPT_TERMS.TextLevel,
-        'micro': ZPT_TERMS.TextLevel, // Alias for text level
         'community': ZPT_TERMS.CommunityLevel,
         'corpus': ZPT_TERMS.CorpusLevel
     },
@@ -277,6 +278,7 @@ export const ZPT_STRING_MAPPINGS = {
  */
 export const ZPT_URI_MAPPINGS = {
     // Zoom levels
+    [ZPT_TERMS.MicroLevel.value]: 'micro',
     [ZPT_TERMS.EntityLevel.value]: 'entity',
     [ZPT_TERMS.UnitLevel.value]: 'unit',
     [ZPT_TERMS.TextLevel.value]: 'text',
@@ -383,6 +385,7 @@ export const NamespaceUtils = {
      */
     getAllZoomLevels() {
         return [
+            ZPT_TERMS.MicroLevel,
             ZPT_TERMS.EntityLevel,
             ZPT_TERMS.UnitLevel,
             ZPT_TERMS.TextLevel,
@@ -478,19 +481,24 @@ export const NamespaceUtils = {
     getZoomLevels() {
         return [
             {
-                string: 'entity',
-                uri: ZPT_TERMS.EntityLevel,
-                description: 'Individual concepts and named entities'
+                string: 'micro',
+                uri: ZPT_TERMS.MicroLevel,
+                description: 'Sub-entity attributes and fine-grained components'
             },
             {
-                string: 'unit',
-                uri: ZPT_TERMS.UnitLevel,
-                description: 'Semantic units and text passages'
+                string: 'entity',
+                uri: ZPT_TERMS.EntityLevel,
+                description: 'Named entities and concrete elements'
             },
             {
                 string: 'text',
                 uri: ZPT_TERMS.TextLevel,
                 description: 'Raw text elements and fragments'
+            },
+            {
+                string: 'unit',
+                uri: ZPT_TERMS.UnitLevel,
+                description: 'Semantic units and local summaries'
             },
             {
                 string: 'community',
@@ -501,11 +509,6 @@ export const NamespaceUtils = {
                 string: 'corpus',
                 uri: ZPT_TERMS.CorpusLevel,
                 description: 'Entire corpus view'
-            },
-            {
-                string: 'micro',
-                uri: ZPT_TERMS.TextLevel, // Alias for text level
-                description: 'Sub-entity components'
             }
         ];
     },

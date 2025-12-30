@@ -13,20 +13,11 @@ import SPARQLStore from '../../../src/stores/SPARQLStore.js';
 import MemoryManager from '../../../src/MemoryManager.js';
 import Config from '../../../src/Config.js';
 import { v4 as uuidv4 } from 'uuid';
+import path from 'path';
 
 // Set up global fetch for integration tests
 global.fetch = fetch;
 globalThis.fetch = fetch;
-
-// Integration test configuration for SPARQL endpoint
-const SPARQL_ENDPOINT = {
-  query: 'http://localhost:3030/test/query',
-  update: 'http://localhost:3030/test/update',
-  data: 'http://localhost:3030/test/data',
-  graphName: 'http://hyperdata.it/content-test-integration',
-  user: 'admin',
-  password: 'admin123'
-};
 
 // Skip all tests if INTEGRATION_TESTS is not set
 describe.skipIf(!process.env.INTEGRATION_TESTS)('Simple Verbs Integration Tests (Live SPARQL)', () => {
@@ -79,16 +70,30 @@ describe.skipIf(!process.env.INTEGRATION_TESTS)('Simple Verbs Integration Tests 
       })
     };
 
-    // Create SPARQL store with live endpoint
+    const configPath = path.join(process.cwd(), 'config', 'config.json');
+    config = new Config(configPath);
+    await config.init();
+
+    const sparqlEndpoints = config.get('sparqlEndpoints') || [];
+    const primaryEndpoint = sparqlEndpoints[0];
+    if (!primaryEndpoint?.urlBase || !primaryEndpoint?.query || !primaryEndpoint?.update) {
+      throw new Error('Primary SPARQL endpoint configuration is missing in config.sparqlEndpoints');
+    }
+
+    const graphName = config.get('graphName');
+    if (!graphName) {
+      throw new Error('graphName is required for SPARQL integration tests');
+    }
+
     const endpoints = {
-      query: SPARQL_ENDPOINT.query,
-      update: SPARQL_ENDPOINT.update
+      query: `${primaryEndpoint.urlBase}${primaryEndpoint.query}`,
+      update: `${primaryEndpoint.urlBase}${primaryEndpoint.update}`
     };
     
     store = new SPARQLStore(endpoints, {
-      user: SPARQL_ENDPOINT.user,
-      password: SPARQL_ENDPOINT.password,
-      graphName: SPARQL_ENDPOINT.graphName,
+      user: primaryEndpoint.user,
+      password: primaryEndpoint.password,
+      graphName,
       dimension: 1536
     });
 
@@ -98,7 +103,8 @@ describe.skipIf(!process.env.INTEGRATION_TESTS)('Simple Verbs Integration Tests 
       storage: store,
       chatModel: 'test-model',
       embeddingModel: 'test-embed',
-      dimension: 1536
+      dimension: 1536,
+      config
     });
 
     await memoryManager.initialize();
@@ -112,11 +118,7 @@ describe.skipIf(!process.env.INTEGRATION_TESTS)('Simple Verbs Integration Tests 
   beforeEach(async () => {
     // Create fresh service instance for each test
     service = new SimpleVerbsService();
-    await service.initialize({
-      memoryManager,
-      sparqlHelper: store.sparqlHelper,
-      config: new Config()
-    });
+    await service.initialize();
     
     // Reset mocks for clean state
     vi.clearAllMocks();
@@ -362,15 +364,15 @@ describe.skipIf(!process.env.INTEGRATION_TESTS)('Simple Verbs Integration Tests 
   describe('ZPT Navigation Integration', () => {
     it('should handle zoom operations with state persistence', async () => {
       const result = await service.zoom({
-        level: 'concept',
+        level: 'unit',
         query: 'machine learning algorithms'
       });
 
       expect(result).toBeDefined();
       expect(result.success).toBe(true);
-      expect(result.level).toBe('concept');
+      expect(result.level).toBe('unit');
       expect(result.zptState).toBeDefined();
-      expect(result.zptState.zoom).toBe('concept');
+      expect(result.zptState.zoom).toBe('unit');
       expect(result.zptState.lastQuery).toBe('machine learning algorithms');
 
       // Verify state was persisted
@@ -379,27 +381,31 @@ describe.skipIf(!process.env.INTEGRATION_TESTS)('Simple Verbs Integration Tests 
 
     it('should handle pan operations with contextual filtering', async () => {
       const result = await service.pan({
-        direction: 'temporal',
-        timeRange: '2023-2024',
-        domain: 'technology'
+        domains: ['technology'],
+        temporal: {
+          start: '2023-01-01T00:00:00Z',
+          end: '2024-01-01T00:00:00Z'
+        }
       });
 
       expect(result).toBeDefined();
       expect(result.success).toBe(true);
-      expect(result.zptState.pan.direction).toBe('temporal');
-      expect(result.zptState.pan.timeRange).toBe('2023-2024');
-      expect(result.zptState.pan.domain).toBe('technology');
+      expect(result.zptState.pan.domains).toEqual(['technology']);
+      expect(result.zptState.pan.temporal).toEqual({
+        start: '2023-01-01T00:00:00Z',
+        end: '2024-01-01T00:00:00Z'
+      });
     });
 
     it('should handle tilt operations for presentation changes', async () => {
       const result = await service.tilt({
-        style: 'summary'
+        style: 'graph'
       });
 
       expect(result).toBeDefined();
       expect(result.success).toBe(true);
-      expect(result.style).toBe('summary');
-      expect(result.zptState.tilt).toBe('summary');
+      expect(result.style).toBe('graph');
+      expect(result.zptState.tilt).toBe('graph');
     });
   });
 
@@ -520,14 +526,14 @@ describe.skipIf(!process.env.INTEGRATION_TESTS)('Simple Verbs Integration Tests 
 
     it('should maintain state consistency during operations', async () => {
       // Perform multiple state-changing operations
-      await service.zoom({ level: 'concept' });
-      await service.pan({ direction: 'semantic' });
-      await service.tilt({ style: 'detailed' });
+      await service.zoom({ level: 'unit' });
+      await service.pan({ domains: ['semantic-memory'] });
+      await service.tilt({ style: 'temporal' });
 
       const finalState = service.stateManager.getState();
-      expect(finalState.zoom).toBe('concept');
-      expect(finalState.pan.direction).toBe('semantic');
-      expect(finalState.tilt).toBe('detailed');
+      expect(finalState.zoom).toBe('unit');
+      expect(finalState.pan.domains).toEqual(['semantic-memory']);
+      expect(finalState.tilt).toBe('temporal');
       expect(finalState.sessionId).toBeDefined();
     });
   });

@@ -407,7 +407,7 @@ ORDER BY DESC(?viewCount)`;
      */
     getCorpusGraphForZoom(zoomLevelURI) {
         // Map zoom levels to appropriate data graphs
-        if (zoomLevelURI.includes('EntityLevel') || zoomLevelURI.includes('UnitLevel')) {
+        if (zoomLevelURI.includes('MicroLevel') || zoomLevelURI.includes('EntityLevel') || zoomLevelURI.includes('UnitLevel')) {
             return this.beerQAGraph; // Prefer BeerQA for entity/unit level
         }
         return this.ragnoGraph; // Default to Ragno graph

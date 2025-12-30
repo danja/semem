@@ -178,6 +178,20 @@ export class ApiService {
     });
   }
 
+  // ===== ZPT NAVIGATION HISTORY =====
+
+  async zptGetSessions(limit = 20) {
+    return this.makeRequest(`/navigate/sessions?limit=${limit}`, {
+      method: 'GET'
+    });
+  }
+
+  async zptGetViews(limit = 20) {
+    return this.makeRequest(`/navigate/views?limit=${limit}`, {
+      method: 'GET'
+    });
+  }
+
   /**
    * ASK - Query stored knowledge
    * @param {Object} params - Ask parameters
@@ -574,7 +588,7 @@ export class ApiService {
    * ZPT NAVIGATE - Execute navigation with zoom/pan/tilt parameters
    * @param {Object} params - Navigation parameters
    * @param {string} params.query - Navigation query
-   * @param {string} params.zoom - Zoom level (entity, unit, text, community, corpus)
+   * @param {string} params.zoom - Zoom level (micro, entity, text, unit, community, corpus)
    * @param {Object} params.pan - Pan filters {domains, keywords}
    * @param {string} params.tilt - Tilt style (keywords, embedding, graph, temporal)
    * @returns {Promise<Object>} Navigation results

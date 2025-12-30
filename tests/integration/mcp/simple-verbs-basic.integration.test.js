@@ -190,36 +190,35 @@ describe.skipIf(!process.env.INTEGRATION_TESTS)('Simple Verbs Basic Integration 
     it('should handle ZPT navigation operations', async () => {
       // Test zoom operation
       const zoomResult = await service.zoom({
-        level: 'concept',
+        level: 'unit',
         query: 'artificial intelligence applications'
       });
 
       expect(zoomResult).toBeDefined();
       expect(zoomResult.success).toBe(true);
-      expect(zoomResult.level).toBe('concept');
+      expect(zoomResult.level).toBe('unit');
       expect(zoomResult.zptState).toBeDefined();
-      expect(zoomResult.zptState.zoom).toBe('concept');
+      expect(zoomResult.zptState.zoom).toBe('unit');
 
       // Test pan operation
       const panResult = await service.pan({
-        direction: 'semantic',
-        domain: 'technology',
-        timeRange: '2023-2024'
+        domains: ['technology'],
+        temporal: { start: '2023-01-01T00:00:00Z', end: '2024-01-01T00:00:00Z' }
       });
 
       expect(panResult).toBeDefined();
       expect(panResult.success).toBe(true);
-      expect(panResult.zptState.pan.direction).toBe('semantic');
+      expect(panResult.zptState.pan.domains).toEqual(['technology']);
 
       // Test tilt operation
       const tiltResult = await service.tilt({
-        style: 'summary'
+        style: 'keywords'
       });
 
       expect(tiltResult).toBeDefined();
       expect(tiltResult.success).toBe(true);
-      expect(tiltResult.style).toBe('summary');
-      expect(tiltResult.zptState.tilt).toBe('summary');
+      expect(tiltResult.style).toBe('keywords');
+      expect(tiltResult.zptState.tilt).toBe('keywords');
 
       console.log('✓ ZPT navigation operations completed successfully');
     });
@@ -229,15 +228,14 @@ describe.skipIf(!process.env.INTEGRATION_TESTS)('Simple Verbs Basic Integration 
     it('should maintain state consistency across operations', async () => {
       // Perform multiple operations and verify state consistency
       await service.zoom({ level: 'entity' });
-      await service.pan({ direction: 'temporal', timeRange: '2024' });
-      await service.tilt({ style: 'detailed' });
+      await service.pan({ temporal: { start: '2024-01-01T00:00:00Z' } });
+      await service.tilt({ style: 'temporal' });
 
       const finalState = service.stateManager.getState();
       
       expect(finalState.zoom).toBe('entity');
-      expect(finalState.pan.direction).toBe('temporal');
-      expect(finalState.pan.timeRange).toBe('2024');
-      expect(finalState.tilt).toBe('detailed');
+      expect(finalState.pan.temporal).toEqual({ start: '2024-01-01T00:00:00Z' });
+      expect(finalState.tilt).toBe('temporal');
       expect(finalState.sessionId).toBeDefined();
       
       // Verify state history
@@ -449,9 +447,9 @@ describe.skipIf(!process.env.INTEGRATION_TESTS)('Simple Verbs Basic Integration 
       expect(content2Result.success).toBe(true);
 
       // Step 2: Navigate the knowledge space
-      await service.zoom({ level: 'concept', query: 'artificial intelligence' });
-      await service.pan({ direction: 'semantic', domain: 'technology' });
-      await service.tilt({ style: 'summary' });
+      await service.zoom({ level: 'unit', query: 'artificial intelligence' });
+      await service.pan({ domains: ['technology'] });
+      await service.tilt({ style: 'keywords' });
 
       // Step 3: Ask questions about stored content
       const healthcareQuestion = await service.ask({
@@ -470,9 +468,9 @@ describe.skipIf(!process.env.INTEGRATION_TESTS)('Simple Verbs Basic Integration 
 
       // Step 4: Verify system state
       const finalState = service.stateManager.getState();
-      expect(finalState.zoom).toBe('concept');
-      expect(finalState.pan.direction).toBe('semantic');
-      expect(finalState.tilt).toBe('summary');
+      expect(finalState.zoom).toBe('unit');
+      expect(finalState.pan.domains).toEqual(['technology']);
+      expect(finalState.tilt).toBe('keywords');
       
       // Step 5: Get system analytics
       const analyticsResult = await service.inspect({

@@ -148,296 +148,94 @@ describe('Pan Tool Integration Tests', () => {
     return JSON.parse(panResponse.result.content[0].text);
   };
 
-  test('should pan in semantic direction', async () => {
+  test('should pan with domain filters', async () => {
     const result = await executePan({
-      direction: 'semantic',
-      domain: 'artificial-intelligence',
-      maxResults: 20
+      domains: ['artificial-intelligence', 'cognitive-science']
     });
 
     const response = parsePanResponse(result.panResponse);
     expect(response.success).toBe(true);
     expect(response).toHaveProperty('pan');
-    expect(response.pan.direction).toBe('semantic');
+    expect(response.pan.domains).toEqual(['artificial-intelligence', 'cognitive-science']);
 
-    console.log(`✅ Pan semantic direction test passed`);
+    console.log(`✅ Pan domain filters test passed`);
   });
 
-  test('should pan in temporal direction', async () => {
+  test('should pan with keyword and entity filters', async () => {
     const result = await executePan({
-      direction: 'temporal',
-      timeRange: '7d',
-      maxResults: 15
+      keywords: ['memory', 'learning'],
+      entities: ['http://example.org/entity/memory-system']
     });
 
     const response = parsePanResponse(result.panResponse);
     expect(response.success).toBe(true);
-    expect(response.pan.direction).toBe('temporal');
+    expect(response.pan.keywords).toEqual(['memory', 'learning']);
+    expect(response.pan.entities).toEqual(['http://example.org/entity/memory-system']);
 
-    console.log(`✅ Pan temporal direction test passed`);
+    console.log(`✅ Pan keyword/entity filters test passed`);
   });
 
-  test('should pan in conceptual direction', async () => {
+  test('should pan with temporal bounds', async () => {
     const result = await executePan({
-      direction: 'conceptual',
-      conceptFilter: ['machine learning', 'neural networks', 'deep learning'],
-      threshold: 0.6
-    });
-
-    const response = parsePanResponse(result.panResponse);
-    expect(response.success).toBe(true);
-    expect(response.pan.direction).toBe('conceptual');
-
-    console.log(`✅ Pan conceptual direction test passed`);
-  });
-
-  test('should pan with relevance threshold', async () => {
-    const result = await executePan({
-      direction: 'semantic',
-      domain: 'memory',
-      threshold: 0.7,
-      sortBy: 'relevance'
-    });
-
-    const response = parsePanResponse(result.panResponse);
-    expect(response.success).toBe(true);
-    expect(response.pan.threshold).toBe(0.7);
-
-    console.log(`✅ Pan relevance threshold test passed`);
-  });
-
-  test('should support entity-based panning', async () => {
-    const result = await executePan({
-      direction: 'entity',
-      entityType: 'concept',
-      entityFilter: 'semantic_memory',
-      radius: 3
-    });
-
-    const response = parsePanResponse(result.panResponse);
-    expect(response.success).toBe(true);
-    expect(response.pan.direction).toBe('entity');
-
-    console.log(`✅ Pan entity-based test passed`);
-  });
-
-  test('should handle relationship-based panning', async () => {
-    const result = await executePan({
-      direction: 'relationship',
-      relationshipType: 'associatedWith',
-      fromEntity: 'neural_networks',
-      maxDepth: 2
-    });
-
-    const response = parsePanResponse(result.panResponse);
-    expect(response.success).toBe(true);
-    expect(response.pan.direction).toBe('relationship');
-
-    console.log(`✅ Pan relationship-based test passed`);
-  });
-
-  test('should support hierarchical panning', async () => {
-    const result = await executePan({
-      direction: 'hierarchical',
-      hierarchy: 'knowledge_tree',
-      level: 'concept',
-      includeChildren: true,
-      includeParents: false
-    });
-
-    const response = parsePanResponse(result.panResponse);
-    expect(response.success).toBe(true);
-    expect(response.pan.direction).toBe('hierarchical');
-
-    console.log(`✅ Pan hierarchical test passed`);
-  });
-
-  test('should handle spatial panning in knowledge space', async () => {
-    const result = await executePan({
-      direction: 'spatial',
-      coordinates: { x: 0.5, y: 0.3, z: 0.7 },
-      radius: 0.2,
-      spaceType: 'embedding'
-    });
-
-    const response = parsePanResponse(result.panResponse);
-    expect(response.success).toBe(true);
-    expect(response.pan.direction).toBe('spatial');
-
-    console.log(`✅ Pan spatial test passed`);
-  });
-
-  test('should support multi-dimensional panning', async () => {
-    const result = await executePan({
-      direction: 'multi',
-      dimensions: [
-        { type: 'semantic', weight: 0.6 },
-        { type: 'temporal', weight: 0.3 },
-        { type: 'conceptual', weight: 0.1 }
-      ],
-      maxResults: 25
-    });
-
-    const response = parsePanResponse(result.panResponse);
-    expect(response.success).toBe(true);
-    expect(response.pan.direction).toBe('multi');
-
-    console.log(`✅ Pan multi-dimensional test passed`);
-  });
-
-  test('should handle focused panning with anchor', async () => {
-    const result = await executePan({
-      direction: 'semantic',
-      anchor: 'artificial_intelligence',
-      focusRange: 0.3,
-      includeNeighbors: true
-    });
-
-    const response = parsePanResponse(result.panResponse);
-    expect(response.success).toBe(true);
-    expect(response.pan.anchor).toBe('artificial_intelligence');
-
-    console.log(`✅ Pan focused with anchor test passed`);
-  });
-
-  test('should support filtered panning', async () => {
-    const result = await executePan({
-      direction: 'semantic',
-      filters: {
-        contentType: ['document', 'concept'],
-        tags: ['ai', 'ml'],
-        minScore: 0.5,
-        maxAge: '30d'
+      temporal: {
+        start: '2024-01-01T00:00:00Z',
+        end: '2024-12-31T23:59:59Z'
       }
     });
 
     const response = parsePanResponse(result.panResponse);
     expect(response.success).toBe(true);
-    expect(response.pan.filters).toBeDefined();
+    expect(response.pan.temporal).toEqual({
+      start: '2024-01-01T00:00:00Z',
+      end: '2024-12-31T23:59:59Z'
+    });
 
-    console.log(`✅ Pan filtered test passed`);
+    console.log(`✅ Pan temporal filter test passed`);
   });
 
-  test('should handle incremental panning', async () => {
+  test('should pan with corpuscle scope', async () => {
     const result = await executePan({
-      direction: 'semantic',
-      mode: 'incremental',
-      step: 0.1,
-      from: 'current_position',
-      maxSteps: 5
+      corpuscle: ['http://example.org/corpuscle/ai', 'http://example.org/corpuscle/ml']
     });
 
     const response = parsePanResponse(result.panResponse);
     expect(response.success).toBe(true);
-    expect(response.pan.mode).toBe('incremental');
+    expect(response.pan.corpuscle).toEqual([
+      'http://example.org/corpuscle/ai',
+      'http://example.org/corpuscle/ml'
+    ]);
 
-    console.log(`✅ Pan incremental test passed`);
+    console.log(`✅ Pan corpuscle filter test passed`);
   });
 
-  test('should support contextual panning', async () => {
-    const result = await executePan({
-      direction: 'contextual',
-      context: 'machine_learning_research',
-      contextWindow: 10,
-      preserveContext: true
-    });
-
-    const response = parsePanResponse(result.panResponse);
-    expect(response.success).toBe(true);
-    expect(response.pan.direction).toBe('contextual');
-
-    console.log(`✅ Pan contextual test passed`);
-  });
-
-  test('should handle bounded panning', async () => {
-    const result = await executePan({
-      direction: 'semantic',
-      bounds: {
-        minRelevance: 0.3,
-        maxRelevance: 0.9,
-        domains: ['ai', 'cognitive-science'],
-        excludeDomains: ['obsolete']
-      }
-    });
-
-    const response = parsePanResponse(result.panResponse);
-    expect(response.success).toBe(true);
-    expect(response.pan.bounds).toBeDefined();
-
-    console.log(`✅ Pan bounded test passed`);
-  });
-
-  test('should support adaptive panning', async () => {
-    const result = await executePan({
-      direction: 'adaptive',
-      learningRate: 0.1,
-      adaptToResults: true,
-      feedbackLoop: true
-    });
-
-    const response = parsePanResponse(result.panResponse);
-    expect(response.success).toBe(true);
-    expect(response.pan.direction).toBe('adaptive');
-
-    console.log(`✅ Pan adaptive test passed`);
-  });
-
-  test('should handle empty direction gracefully', async () => {
-    const result = await executePan({ direction: '' });
-    const response = parsePanResponse(result.panResponse);
-
-    expect(response.success).toBe(false);
-    expect(response).toHaveProperty('error');
-    expect(response.error).toContain('direction');
-
-    console.log(`✅ Pan empty direction error handling test passed`);
-  });
-
-  test('should handle missing direction parameter', async () => {
-    const result = await executePan({ maxResults: 10 });
+  test('should reject invalid pan types', async () => {
+    const result = await executePan({ domains: 'ai' });
     const response = parsePanResponse(result.panResponse);
 
     expect(response.success).toBe(false);
     expect(response).toHaveProperty('error');
 
-    console.log(`✅ Pan missing direction error handling test passed`);
-  });
-
-  test('should handle invalid direction type', async () => {
-    const result = await executePan({ direction: 'invalid_direction' });
-    const response = parsePanResponse(result.panResponse);
-
-    expect(response.success).toBe(false);
-    expect(response).toHaveProperty('error');
-    expect(response.error).toContain('invalid');
-
-    console.log(`✅ Pan invalid direction error handling test passed`);
+    console.log(`✅ Pan invalid types error handling test passed`);
   });
 
   test('should support complex pan configuration', async () => {
     const result = await executePan({
-      direction: 'semantic',
-      domain: 'cognitive-science',
-      conceptFilter: ['memory', 'learning', 'cognition'],
-      threshold: 0.65,
-      maxResults: 30,
-      sortBy: 'relevance',
-      includeMetadata: true,
-      filters: {
-        contentType: ['concept', 'document'],
-        minScore: 0.4,
-        tags: ['research', 'validated']
-      },
-      bounds: {
-        minRelevance: 0.3,
-        maxRelevance: 0.95
+      domains: ['cognitive-science'],
+      keywords: ['memory', 'learning'],
+      entities: ['http://example.org/entity/cognition'],
+      corpuscle: ['http://example.org/corpuscle/intro'],
+      temporal: {
+        start: '2024-01-01T00:00:00Z'
       }
     });
 
     const response = parsePanResponse(result.panResponse);
     expect(response.success).toBe(true);
-    expect(response.pan.direction).toBe('semantic');
-    expect(response.pan.domain).toBe('cognitive-science');
+    expect(response.pan.domains).toEqual(['cognitive-science']);
+    expect(response.pan.keywords).toEqual(['memory', 'learning']);
+    expect(response.pan.entities).toEqual(['http://example.org/entity/cognition']);
+    expect(response.pan.corpuscle).toEqual(['http://example.org/corpuscle/intro']);
+    expect(response.pan.temporal).toEqual({ start: '2024-01-01T00:00:00Z' });
 
     console.log(`✅ Pan complex configuration test passed`);
   });

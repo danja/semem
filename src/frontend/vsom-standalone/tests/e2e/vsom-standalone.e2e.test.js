@@ -45,7 +45,7 @@ test.describe('VSOM Standalone Application', () => {
         
         // Test zoom controls
         const zoomButtons = page.locator('.zoom-button');
-        await expect(zoomButtons).toHaveCount(5);
+        await expect(zoomButtons).toHaveCount(6);
         
         // Test clicking zoom buttons
         const unitButton = page.locator('.zoom-button[data-level="unit"]');

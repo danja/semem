@@ -55,9 +55,10 @@ Environment variables:
 ## ZPT Navigation
 
 ### Zoom Levels
+- **Micro**: Fine-grained attributes and interaction details
 - **Entity**: Individual interactions as separate nodes
-- **Unit**: Semantic units grouping related interactions
 - **Text**: Document or conversation-level groupings
+- **Unit**: Semantic units grouping related interactions
 - **Community**: Concept communities and topic clusters
 - **Corpus**: Corpus-wide overview and statistics
 

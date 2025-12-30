@@ -126,18 +126,25 @@ zpt:NavigationAgent a owl:Class ;
 
 # Specific Zoom Levels
 
+zpt:MicroLevel a zpt:ZoomLevel ;
+    rdfs:label "Micro Level"@en ;
+    skos:prefLabel "Micro"@en ;
+    skos:definition "Focus on sub-entity attributes and fine-grained components."@en ;
+    zpt:abstractionOrder 1 ;
+    zpt:correspondsToRagno ragno:Attribute .
+
 zpt:EntityLevel a zpt:ZoomLevel ;
     rdfs:label "Entity Level"@en ;
     skos:prefLabel "Entity"@en ;
     skos:definition "Focus on individual named entities and their immediate properties."@en ;
-    zpt:abstractionOrder 1 ;
+    zpt:abstractionOrder 2 ;
     zpt:correspondsToRagno ragno:Entity .
 
 zpt:UnitLevel a zpt:ZoomLevel ;
     rdfs:label "Unit Level"@en ;
     skos:prefLabel "Semantic Unit"@en ;
     skos:definition "Focus on independent semantic events and local summaries."@en ;
-    zpt:abstractionOrder 2 ;
+    zpt:abstractionOrder 4 ;
     zpt:correspondsToRagno ragno:Unit .
 
 zpt:TextLevel a zpt:ZoomLevel ;
@@ -151,14 +158,14 @@ zpt:CommunityLevel a zpt:ZoomLevel ;
     rdfs:label "Community Level"@en ;
     skos:prefLabel "Community"@en ;
     skos:definition "Focus on high-level insights and community summaries."@en ;
-    zpt:abstractionOrder 4 ;
+    zpt:abstractionOrder 5 ;
     zpt:correspondsToRagno ragno:CommunityElement .
 
 zpt:CorpusLevel a zpt:ZoomLevel ;
     rdfs:label "Corpus Level"@en ;
     skos:prefLabel "Corpus Overview"@en ;
     skos:definition "Focus on complete knowledge base structure and metadata."@en ;
-    zpt:abstractionOrder 5 ;
+    zpt:abstractionOrder 6 ;
     zpt:correspondsToRagno ragno:Corpus .
 
 # Core Properties

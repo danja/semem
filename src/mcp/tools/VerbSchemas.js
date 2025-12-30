@@ -85,22 +85,23 @@ export const AugmentSchema = z.object({
 
 // ZPT Navigation schemas  
 export const ZoomSchema = z.object({
-  level: z.enum(['entity', 'concept', 'document', 'community']).default('entity'),
+  level: z.enum(['micro', 'entity', 'text', 'unit', 'community', 'corpus']).default('entity'),
   query: z.string().optional()
 });
 
 export const PanSchema = z.object({
-  direction: z.enum(['semantic', 'temporal', 'conceptual']).optional(),
-  domain: z.string().optional(),
-  timeRange: z.string().optional(),
-  conceptFilter: z.array(z.string()).optional(),
-  semanticVector: z.array(z.number()).optional(),
-  maxResults: z.number().optional().default(50),
-  threshold: z.number().optional().default(0.5)
+  domains: z.array(z.string()).optional(),
+  keywords: z.array(z.string()).optional(),
+  entities: z.array(z.string()).optional(),
+  corpuscle: z.array(z.string()).optional(),
+  temporal: z.object({
+    start: z.string().optional(),
+    end: z.string().optional()
+  }).optional()
 });
 
 export const TiltSchema = z.object({
-  style: z.enum(['keywords', 'summary', 'detailed']).default('keywords'),
+  style: z.enum(['keywords', 'embedding', 'graph', 'temporal']).default('keywords'),
   query: z.string().optional()
 });
 

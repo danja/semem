@@ -27,9 +27,10 @@ const ZPTToolName = {
 
 const ZPTPreviewSchema = z.object({
   query: z.string().min(1, "Query cannot be empty"),
-  zoom: z.enum(['entity', 'unit', 'text', 'community', 'corpus']).optional(),
+  zoom: z.enum(['micro', 'entity', 'text', 'unit', 'community', 'corpus']).optional(),
   pan: z.object({
-    topic: z.string().optional(),
+    domains: z.array(z.string()).optional(),
+    keywords: z.array(z.string()).optional(),
     temporal: z.object({
       start: z.string().optional(),
       end: z.string().optional()
@@ -37,7 +38,8 @@ const ZPTPreviewSchema = z.object({
     geographic: z.object({
       bbox: z.array(z.number()).length(4).optional()
     }).optional(),
-    entity: z.array(z.string()).optional()
+    entities: z.array(z.string()).optional(),
+    corpuscle: z.array(z.string()).optional()
   }).optional().default({})
 });
 
@@ -70,7 +72,6 @@ class ZPTNavigationService {
     // Lazy initialization - components will be loaded when needed
     this.parameterValidator = null;
     this.parameterNormalizer = null;
-    this.zptDataFactory = null;
     this.corpuscleSelector = null;
     this.corpuscleTransformer = null;
 
@@ -96,13 +97,8 @@ class ZPTNavigationService {
       // Lazy import ZPT components
       const { default: ParameterValidator } = await import('../../src/zpt/parameters/ParameterValidator.js');
       const { default: ParameterNormalizer } = await import('../../src/zpt/parameters/ParameterNormalizer.js');
-      const { ZPTDataFactory } = await import('../../src/zpt/ontology/ZPTDataFactory.js');
-
       this.parameterValidator = new ParameterValidator();
       this.parameterNormalizer = new ParameterNormalizer();
-      this.zptDataFactory = new ZPTDataFactory({
-        navigationGraph: 'http://purl.org/stuff/navigation'
-      });
     } catch (error) {
       mcpDebugger.error('Failed to initialize ZPT components:', error);
       throw error;
@@ -114,7 +110,7 @@ class ZPTNavigationService {
    */
   convertParametersToURIs(params) {
     if (!this.config.useZPTOntology) {
-      return params; // Return original if ZPT ontology is disabled
+      throw new Error('ZPT ontology usage is required for navigation');
     }
 
     const convertedParams = { ...params };
@@ -122,76 +118,37 @@ class ZPTNavigationService {
     // Convert zoom parameter
     if (typeof params.zoom === 'string') {
       const zoomURI = NamespaceUtils.resolveStringToURI('zoom', params.zoom);
-      if (zoomURI) {
-        convertedParams.zoomURI = zoomURI.value;
-        convertedParams.zoomString = params.zoom; // Keep original for backward compatibility
+      if (!zoomURI) {
+        throw new Error(`Unsupported zoom level for ZPT ontology: ${params.zoom}`);
       }
+      convertedParams.zoomURI = zoomURI.value;
+      convertedParams.zoomString = params.zoom; // Keep original for backward compatibility
     }
 
     // Convert tilt parameter
     if (typeof params.tilt === 'string') {
       const tiltURI = NamespaceUtils.resolveStringToURI('tilt', params.tilt);
-      if (tiltURI) {
-        convertedParams.tiltURI = tiltURI.value;
-        convertedParams.tiltString = params.tilt; // Keep original for backward compatibility
+      if (!tiltURI) {
+        throw new Error(`Unsupported tilt representation for ZPT ontology: ${params.tilt}`);
       }
+      convertedParams.tiltURI = tiltURI.value;
+      convertedParams.tiltString = params.tilt; // Keep original for backward compatibility
     }
 
     // Convert pan domain parameters
     if (params.pan && Array.isArray(params.pan.domains)) {
       convertedParams.pan = { ...params.pan };
-      convertedParams.pan.domainURIs = params.pan.domains
-        .map(domain => NamespaceUtils.resolveStringToURI('pan', domain))
-        .filter(uri => uri !== null)
-        .map(uri => uri.value);
+      convertedParams.pan.domainURIs = params.pan.domains.map(domain => {
+        const uri = NamespaceUtils.resolveStringToURI('pan', domain);
+        if (!uri) {
+          throw new Error(`Unsupported pan domain for ZPT ontology: ${domain}`);
+        }
+        return uri.value;
+      });
       convertedParams.pan.domainStrings = params.pan.domains; // Keep originals
     }
 
     return convertedParams;
-  }
-
-  /**
-   * Create ZPT navigation metadata and store in RDF
-   */
-  async createNavigationSession(query, convertedParams) {
-    if (!this.config.useZPTOntology) {
-      return null; // Skip if ZPT ontology is disabled
-    }
-
-    try {
-      // Create navigation session
-      const sessionConfig = {
-        agentURI: 'http://example.org/agents/mcp_zpt_navigator',
-        startTime: new Date(),
-        purpose: `MCP ZPT navigation for query: ${query}`
-      };
-
-      const session = this.zptDataFactory.createNavigationSession(sessionConfig);
-
-      // Create navigation view
-      const viewConfig = {
-        query: query,
-        zoom: convertedParams.zoomURI || convertedParams.zoom,
-        tilt: convertedParams.tiltURI || convertedParams.tilt,
-        pan: { 
-          domains: convertedParams.pan?.domainURIs || convertedParams.pan?.domains || []
-        },
-        sessionURI: session.uri.value,
-        selectedCorpuscles: [] // Will be populated after selection
-      };
-
-      const view = this.zptDataFactory.createNavigationView(viewConfig);
-
-      return {
-        session,
-        view,
-        sessionURI: session.uri.value,
-        viewURI: view.uri.value
-      };
-    } catch (error) {
-      mcpDebugger.warn('Failed to create ZPT navigation metadata', error);
-      return null;
-    }
   }
 
   /**
@@ -220,7 +177,8 @@ class ZPTNavigationService {
           embeddingHandler,
           maxResults: 1000,
           enableCaching: true,
-          debugMode: false
+          debugMode: false,
+          enableZPTStorage: true
         });
 
         this.corpuscleTransformer = new CorpuscleTransformer({
@@ -231,13 +189,12 @@ class ZPTNavigationService {
 
         mcpDebugger.info('ZPT components initialized with real data sources');
         return true;
-      } else {
-        mcpDebugger.warn('Missing SPARQL store or embedding handler - falling back to simulation');
-        return false;
       }
+
+      throw new Error('Missing SPARQL store or embedding handler for ZPT navigation');
     } catch (error) {
       mcpDebugger.error('Failed to initialize ZPT components', error);
-      return false;
+      throw error;
     }
   }
 
@@ -269,15 +226,6 @@ class ZPTNavigationService {
         converted: convertedParams 
       });
 
-      // Create ZPT navigation session
-      const zptSession = await this.createNavigationSession(query, convertedParams);
-      if (zptSession) {
-        mcpDebugger.info('Created ZPT navigation session', {
-          sessionURI: zptSession.sessionURI,
-          viewURI: zptSession.viewURI
-        });
-      }
-
       // Try to initialize components if not already done
       if (!this.corpuscleSelector && this.config.enableRealData) {
         await this.initializeComponents();
@@ -308,7 +256,7 @@ class ZPTNavigationService {
       const params = {
         query: safeQuery,
         zoom: currentZoom,
-        pan: pan || { domains: [], keywords: [], temporal: {}, entities: [] },
+        pan: pan || { domains: [], keywords: [], temporal: {}, entities: [], corpuscle: [] },
         tilt: tilt || 'keywords',
         transform: transform || {}
       };
@@ -319,6 +267,7 @@ class ZPTNavigationService {
       params.pan.keywords = Array.isArray(params.pan.keywords) ? params.pan.keywords : [];
       params.pan.temporal = params.pan.temporal || {};
       params.pan.entities = Array.isArray(params.pan.entities) ? params.pan.entities : [];
+      params.pan.corpuscle = Array.isArray(params.pan.corpuscle) ? params.pan.corpuscle : [];
 
       // For test environment, return mock data
       if (process.env.NODE_ENV === 'test') {
@@ -338,7 +287,8 @@ class ZPTNavigationService {
               domains: params.pan.domains || [],
               temporal: params.pan.temporal || {},
               keywords: params.pan.keywords || [],
-              entities: params.pan.entities || []
+              entities: params.pan.entities || [],
+              corpuscle: params.pan.corpuscle || []
             },
             tilt: params.tilt || 'keywords'
           };
@@ -367,10 +317,11 @@ class ZPTNavigationService {
               }
             },
             filters: {
-              domain: params.pan.domains || [],
+              domains: params.pan.domains || [],
               temporal: params.pan.temporal || {},
               keywords: params.pan.keywords || (safeQuery ? safeQuery.split(' ').filter(w => w && w.length > 2) : []),
-              entities: params.pan.entities || []
+              entities: params.pan.entities || [],
+              corpuscle: params.pan.corpuscle || []
             },
             metadata: {
               pipeline: {
@@ -492,7 +443,7 @@ class ZPTNavigationService {
             id: 'e1',
             type: currentZoom,
             label: 'Filtered by Domain: ' + params.pan.domains[0],
-            domain: params.pan.domains[0],
+            domains: [...params.pan.domains],
             metadata: {}
           }];
           response.content.estimatedResults = 1;
@@ -593,10 +544,8 @@ class ZPTNavigationService {
 
       // Apply filters if provided in the pan parameter
       if (pan) {
-        // Handle domain filter (supports both 'domain' and 'domains' for backward compatibility)
-        if (pan.domain) {
-          selectionParams.pan.domains = Array.isArray(pan.domain) ? pan.domain : [pan.domain];
-        } else if (pan.domains) {
+        // Handle domain filter
+        if (pan.domains) {
           selectionParams.pan.domains = Array.isArray(pan.domains) ? pan.domains : [pan.domains];
         }
 
@@ -622,10 +571,18 @@ class ZPTNavigationService {
             : [pan.entities];
         }
 
+        // Handle corpuscle filter
+        if (pan.corpuscle) {
+          selectionParams.pan.corpuscle = Array.isArray(pan.corpuscle)
+            ? pan.corpuscle
+            : [pan.corpuscle];
+        }
+
         // Ensure arrays are properly initialized
         if (!selectionParams.pan.domains) selectionParams.pan.domains = [];
         if (!selectionParams.pan.keywords) selectionParams.pan.keywords = [];
         if (!selectionParams.pan.entities) selectionParams.pan.entities = [];
+        if (!selectionParams.pan.corpuscle) selectionParams.pan.corpuscle = [];
         if (!selectionParams.pan.temporal) selectionParams.pan.temporal = {};
       }
 
@@ -675,10 +632,11 @@ class ZPTNavigationService {
           : [],
         corpusHealth: selectionResult.metadata?.corpusHealth || { valid: true, stats: {} },
         filters: {
-          domain: selectionParams.pan.domains,
+          domains: selectionParams.pan.domains,
           temporal: selectionParams.pan.temporal,
           keywords: selectionParams.pan.keywords,
-          entities: selectionParams.pan.entities
+          entities: selectionParams.pan.entities,
+          corpuscle: selectionParams.pan.corpuscle
         }
       };
 
@@ -820,7 +778,7 @@ class ZPTNavigationService {
             availableTilts: ['keywords', 'embedding', 'graph', 'temporal'],
             dataSource: 'test',
             filters: {
-              domain: pan?.domains || [],
+              domains: pan?.domains || [],
               keywords: pan?.keywords || (queryStr ? queryStr.split(' ').filter(w => w && w.length > 2) : []),
               temporal: pan?.temporal || {},
               entities: []
@@ -881,10 +839,10 @@ class ZPTNavigationService {
           },
           estimatedTokens: 500,
           suggestedParams: [],
-          availableTilts: ['keywords', 'similarity', 'temporal'],
+          availableTilts: ['keywords', 'embedding', 'graph', 'temporal'],
           dataSource: 'test',
           filters: {
-            domain: pan?.domains || [],
+            domains: pan?.domains || [],
             temporal: pan?.temporal || {},
             keywords: pan?.keywords || (queryStr ? queryStr.split(' ').filter(w => w && w.length > 2) : []),
             entities: pan?.entities || []
@@ -1776,7 +1734,7 @@ class ZPTNavigationService {
         errors.push('Pan must be an object');
       } else {
         // Validate pan object properties if needed
-        const allowedPanKeys = ['domain', 'temporal', 'keywords', 'similarity'];
+        const allowedPanKeys = ['domains', 'keywords', 'entities', 'temporal', 'corpuscle'];
         const panKeys = Object.keys(params.pan);
         const invalidKeys = panKeys.filter(key => !allowedPanKeys.includes(key));
 

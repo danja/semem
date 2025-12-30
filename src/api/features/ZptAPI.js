@@ -359,7 +359,7 @@ export default class ZptAPI extends BaseAPI {
         return {
             success: true,
             options: {
-                zoomLevels: ['entity', 'unit', 'text', 'community', 'corpus'],
+                zoomLevels: ['micro', 'entity', 'text', 'unit', 'community', 'corpus'],
                 tiltRepresentations: ['embedding', 'keywords', 'graph', 'temporal'],
                 outputFormats: this.supportedFormats,
                 encodingStrategies: ['structured', 'compact', 'inline'],
@@ -426,8 +426,8 @@ export default class ZptAPI extends BaseAPI {
                 }
             },
             documentation: {
-                zoom: 'Abstraction level: entity (specific elements), unit (semantic chunks), text (full content), community (summaries), corpus (overview)',
-                pan: 'Domain filtering: topic (subject constraints), entity (specific scope), temporal (time bounds), geographic (location limits)',
+                zoom: 'Abstraction level: micro (sub-entity detail), entity (named elements), text (full content), unit (semantic summaries), community (summaries), corpus (overview)',
+                pan: 'Filtering: topic (subject constraints), entity (specific scope), corpuscle (subset scope), temporal (time bounds), geographic (location limits)',
                 tilt: 'Representation format: embedding (vectors), keywords (terms), graph (relationships), temporal (sequences)',
                 transform: 'Output options: maxTokens (budget), format (structure), tokenizer (model), metadata (context)'
             },
@@ -1011,12 +1011,12 @@ export default class ZptAPI extends BaseAPI {
         try {
             const ontologyTerms = {
                 zoomLevels: [
-                    { string: 'entity', uri: 'http://purl.org/stuff/zpt/EntityLevel', description: 'Individual concepts and named entities' },
-                    { string: 'unit', uri: 'http://purl.org/stuff/zpt/UnitLevel', description: 'Semantic units and text passages' },
+                    { string: 'micro', uri: 'http://purl.org/stuff/zpt/MicroLevel', description: 'Sub-entity attributes and fine-grained components' },
+                    { string: 'entity', uri: 'http://purl.org/stuff/zpt/EntityLevel', description: 'Named entities and concrete elements' },
                     { string: 'text', uri: 'http://purl.org/stuff/zpt/TextLevel', description: 'Raw text elements and fragments' },
+                    { string: 'unit', uri: 'http://purl.org/stuff/zpt/UnitLevel', description: 'Semantic units and local summaries' },
                     { string: 'community', uri: 'http://purl.org/stuff/zpt/CommunityLevel', description: 'Topic clusters and concept groups' },
-                    { string: 'corpus', uri: 'http://purl.org/stuff/zpt/CorpusLevel', description: 'Entire corpus view' },
-                    { string: 'micro', uri: 'http://purl.org/stuff/zpt/MicroLevel', description: 'Sub-entity components' }
+                    { string: 'corpus', uri: 'http://purl.org/stuff/zpt/CorpusLevel', description: 'Entire corpus view' }
                 ],
                 tiltProjections: [
                     { string: 'keywords', uri: 'http://purl.org/stuff/zpt/KeywordProjection', description: 'Keyword-based analysis and matching' },

@@ -497,9 +497,10 @@
                                 Zoom <span class="nav-subtitle">Abstraction Level</span>
                             </h3>
                             <div class="zoom-controls">
+                                <button type="button" class="zoom-button" data-level="micro">Micro</button>
                                 <button type="button" class="zoom-button active" data-level="entity">Entity</button>
-                                <button type="button" class="zoom-button" data-level="unit">Unit</button>
                                 <button type="button" class="zoom-button" data-level="text">Text</button>
+                                <button type="button" class="zoom-button" data-level="unit">Unit</button>
                                 <button type="button" class="zoom-button" data-level="community">Community</button>
                                 <button type="button" class="zoom-button" data-level="corpus">Corpus</button>
                             </div>
@@ -590,7 +591,7 @@
                                         <div class="perspective-item">
                                             <span class="perspective-label">Zoom:</span>
                                             <span class="perspective-value" id="current-zoom">Entity</span>
-                                            <span class="perspective-description" id="zoom-description">Individual entities and concepts</span>
+                                            <span class="perspective-description" id="zoom-description">Named entities and concrete elements</span>
                                         </div>
                                         <div class="perspective-item">
                                             <span class="perspective-label">Pan:</span>
@@ -609,6 +610,30 @@
                             <div class="nav-results-content" id="nav-results-content" style="display: none;">
                                 <!-- Navigation results will appear here -->
                             </div>
+
+                            <div class="nav-history" id="nav-history">
+                                <div class="history-header">
+                                    <h4 class="status-title">Navigation History</h4>
+                                    <button type="button" class="verb-button secondary-button" id="nav-history-refresh">
+                                        <span class="button-icon">🕓</span>
+                                        <span class="button-text">Refresh History</span>
+                                    </button>
+                                </div>
+                                <div class="history-content">
+                                    <div class="history-section">
+                                        <h5>Sessions</h5>
+                                        <div class="history-list" id="nav-sessions-list">
+                                            <p class="history-placeholder">No sessions loaded.</p>
+                                        </div>
+                                    </div>
+                                    <div class="history-section">
+                                        <h5>Views</h5>
+                                        <div class="history-list" id="nav-views-list">
+                                            <p class="history-placeholder">No views loaded.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                             
                             <div class="nav-help">
                                 <details class="help-section">
@@ -617,10 +642,11 @@
                                         <div class="help-item">
                                             <h5>🔍 Zoom - Abstraction Level</h5>
                                             <ul>
-                                                <li><strong>Entity:</strong> Individual concepts and entities</li>
-                                                <li><strong>Unit:</strong> Semantic text units and paragraphs</li>
-                                                <li><strong>Text:</strong> Full documents and articles</li>
-                                                <li><strong>Community:</strong> Groups of related concepts</li>
+                                                <li><strong>Micro:</strong> Sub-entity attributes and fine-grained components</li>
+                                                <li><strong>Entity:</strong> Named entities and concrete elements</li>
+                                                <li><strong>Text:</strong> Full documents and source fragments</li>
+                                                <li><strong>Unit:</strong> Semantic units and local summaries</li>
+                                                <li><strong>Community:</strong> Groups of related units and themes</li>
                                                 <li><strong>Corpus:</strong> Entire knowledge collection</li>
                                             </ul>
                                         </div>

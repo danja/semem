@@ -57,6 +57,11 @@ describe('Tell/Ask E2E Integration Tests', () => {
       const askResult = await askResponse.json();
       console.log(`📥 HTTP Ask result:`, askResult);
       expect(askResult.success).toBe(true);
+      expect(askResult.zptState).toBeDefined();
+      expect(askResult.zptState.sessionId).toBeDefined();
+      expect(askResult.zptState.zoom).toBeDefined();
+      expect(askResult.zptState.tilt).toBeDefined();
+      expect(askResult.zptState.lastQuery).toBe(question);
 
       return { tellResult, askResult };
     } catch (error) {
@@ -147,5 +152,36 @@ describe('Tell/Ask E2E Integration Tests', () => {
     expect(askResult.answer.toLowerCase()).toContain(expectedColor);
 
     console.log(`✅ Storage consistency verified for: ${fact}`);
+  }, 30000);
+
+  test('HTTP recall returns ZPT state with memories array', async () => {
+    const fact = generateRandomFact();
+    const subject = fact.split(' ')[0];
+
+    const tellResponse = await fetch('http://localhost:4101/tell', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content: fact })
+    });
+
+    if (!tellResponse.ok) {
+      throw new Error(`HTTP ${tellResponse.status}: ${tellResponse.statusText}`);
+    }
+
+    const recallResponse = await fetch('http://localhost:4101/recall', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: subject })
+    });
+
+    if (!recallResponse.ok) {
+      throw new Error(`HTTP ${recallResponse.status}: ${recallResponse.statusText}`);
+    }
+
+    const recallResult = await recallResponse.json();
+    expect(recallResult.success).toBe(true);
+    expect(recallResult.zptState).toBeDefined();
+    expect(recallResult.zptState.sessionId).toBeDefined();
+    expect(Array.isArray(recallResult.memories)).toBe(true);
   }, 30000);
 });

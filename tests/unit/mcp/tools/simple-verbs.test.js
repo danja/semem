@@ -25,29 +25,29 @@ describe('ZPTStateManager Unit Tests', () => {
     });
 
     it('should update zoom level', async () => {
-      await stateManager.setZoom('concept');
-      expect(stateManager.state.zoom).toBe('concept');
+      await stateManager.setZoom('unit');
+      expect(stateManager.state.zoom).toBe('unit');
       expect(stateManager.stateHistory.length).toBe(1);
     });
 
     it('should update pan position', async () => {
-      const newPan = { direction: 'semantic', domain: 'science' };
+      const newPan = { domains: ['science'], temporal: { start: '2024-01-01T00:00:00Z' } };
       await stateManager.setPan(newPan);
       
       expect(stateManager.state.pan).toEqual(newPan);
     });
 
     it('should update tilt style', async () => {
-      await stateManager.setTilt('summary');
-      expect(stateManager.state.tilt).toBe('summary');
+      await stateManager.setTilt('graph');
+      expect(stateManager.state.tilt).toBe('graph');
       expect(stateManager.stateHistory.length).toBe(1);
     });
 
     it('should reset state to defaults', async () => {
       // Change some state first
-      await stateManager.setZoom('concept');
+      await stateManager.setZoom('unit');
       await stateManager.setPan({ x: 100, y: 200 });
-      await stateManager.setTilt('detailed');
+      await stateManager.setTilt('temporal');
       
       // Reset to defaults
       await stateManager.resetState();
@@ -103,7 +103,7 @@ describe('ZPTStateManager Unit Tests', () => {
       const previousState = { ...stateManager.state };
       
       // setZoom already calls persistState internally
-      await stateManager.setZoom('concept');
+      await stateManager.setZoom('unit');
       
       expect(stateManager.stateHistory).toHaveLength(1);
       expect(stateManager.stateHistory[0].previous).toEqual(previousState);
@@ -112,7 +112,7 @@ describe('ZPTStateManager Unit Tests', () => {
     it('should limit history size', async () => {
       // Add many state changes
       for (let i = 0; i < 25; i++) {
-        await stateManager.setZoom(i % 2 === 0 ? 'concept' : 'entity');
+        await stateManager.setZoom(i % 2 === 0 ? 'unit' : 'entity');
       }
       
       // Should be limited to maxHistorySize (default 20)
@@ -154,12 +154,58 @@ describe('SimpleVerbsService Unit Tests', () => {
     };
 
     service = new SimpleVerbsService();
-    
-    // Manually set up the service without calling initialize
-    service.memoryManager = mockMemoryManager;
+
+    const stateManager = new ZPTStateManager();
+    const context = {
+      memoryManager: mockMemoryManager,
+      stateManager,
+      config: mockConfig
+    };
+
+    service.registry = {
+      contextService: {
+        getContext: () => context
+      },
+      execute: vi.fn(async (verb, params = {}) => {
+        if (verb === 'tell') {
+          try {
+            await mockMemoryManager.store(params);
+            return { success: true, verb };
+          } catch (error) {
+            return { success: false, verb, error: error.message };
+          }
+        }
+
+        if (verb === 'zoom') {
+          await stateManager.setZoom(params.level);
+          return { success: true, verb, level: params.level };
+        }
+
+        if (verb === 'pan') {
+          await stateManager.setPan(params);
+          return { success: true, verb, pan: params };
+        }
+
+        if (verb === 'tilt') {
+          await stateManager.setTilt(params.style);
+          return { success: true, verb, style: params.style };
+        }
+
+        if (verb === 'inspect') {
+          try {
+            await mockSparqlHelper.executeQuery('SELECT 1');
+            return { success: true, verb };
+          } catch (error) {
+            return { success: false, verb, error: error.message };
+          }
+        }
+
+        return { success: true, verb };
+      })
+    };
+
     service.sparqlHelper = mockSparqlHelper;
     service.config = mockConfig;
-    service.stateManager = new ZPTStateManager();
     service.initialized = true;
   });
 
@@ -205,7 +251,7 @@ describe('SimpleVerbsService Unit Tests', () => {
 
     it('should handle zoom method calls', async () => {
       // Should accept valid zoom levels
-      const validLevels = ['entity', 'concept', 'document', 'community'];
+      const validLevels = ['micro', 'entity', 'text', 'unit', 'community', 'corpus'];
       for (const level of validLevels) {
         const result = await service.zoom({ level });
         expect(result).toBeDefined();
@@ -216,7 +262,7 @@ describe('SimpleVerbsService Unit Tests', () => {
 
     it('should handle tilt method calls', async () => {
       // Should accept valid tilt styles
-      const validStyles = ['keywords', 'summary', 'detailed'];
+      const validStyles = ['keywords', 'embedding', 'graph', 'temporal'];
       for (const style of validStyles) {
         const result = await service.tilt({ style });
         expect(result).toBeDefined();
@@ -227,20 +273,20 @@ describe('SimpleVerbsService Unit Tests', () => {
 
     it('should maintain state consistency across operations', async () => {
       // Perform state changes
-      await service.zoom({ level: 'concept' });
+      await service.zoom({ level: 'unit' });
       const state1 = service.stateManager.getState();
-      expect(state1.zoom).toBe('concept');
+      expect(state1.zoom).toBe('unit');
 
-      await service.tilt({ style: 'summary' });
+      await service.tilt({ style: 'graph' });
       const state2 = service.stateManager.getState();
-      expect(state2.zoom).toBe('concept'); // Should remain unchanged
-      expect(state2.tilt).toBe('summary');
+      expect(state2.zoom).toBe('unit'); // Should remain unchanged
+      expect(state2.tilt).toBe('graph');
 
-      await service.pan({ direction: 'temporal', timeRange: '2023' });
+      await service.pan({ temporal: { start: '2023-01-01T00:00:00Z' } });
       const state3 = service.stateManager.getState();
-      expect(state3.zoom).toBe('concept');
-      expect(state3.tilt).toBe('summary');
-      expect(state3.pan.direction).toBe('temporal');
+      expect(state3.zoom).toBe('unit');
+      expect(state3.tilt).toBe('graph');
+      expect(state3.pan.temporal).toEqual({ start: '2023-01-01T00:00:00Z' });
     });
   });
 

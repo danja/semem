@@ -274,7 +274,7 @@ export default class ResponseFormatter {
                         descriptions: this.getTiltDescriptions()
                     },
                     pan: {
-                        filters: ['topic', 'entity', 'temporal', 'geographic'],
+                        filters: ['topic', 'entity', 'corpuscle', 'temporal', 'geographic'],
                         descriptions: this.getPanDescriptions()
                     }
                 },
@@ -377,17 +377,24 @@ export default class ResponseFormatter {
 
         const formatted = { applied: true, filters: {} };
 
-        if (pan.topic) {
-            formatted.filters.topic = {
-                value: pan.topic.value || pan.topic,
-                pattern: pan.topic.pattern || 'exact'
+        if (pan.domains) {
+            formatted.filters.domains = {
+                count: pan.domains.count || (Array.isArray(pan.domains) ? pan.domains.length : 1),
+                sample: pan.domains.values ? pan.domains.values.slice(0, 3) : pan.domains
             };
         }
 
-        if (pan.entity) {
-            formatted.filters.entity = {
-                count: pan.entity.count || (Array.isArray(pan.entity) ? pan.entity.length : 1),
-                type: pan.entity.type || 'multiple'
+        if (pan.keywords) {
+            formatted.filters.keywords = {
+                count: pan.keywords.count || (Array.isArray(pan.keywords) ? pan.keywords.length : 1),
+                sample: pan.keywords.values ? pan.keywords.values.slice(0, 3) : pan.keywords
+            };
+        }
+
+        if (pan.entities) {
+            formatted.filters.entities = {
+                count: pan.entities.count || (Array.isArray(pan.entities) ? pan.entities.length : 1),
+                type: pan.entities.type || 'multiple'
             };
         }
 
@@ -798,9 +805,10 @@ export default class ResponseFormatter {
      */
     getZoomDescriptions() {
         return {
-            entity: 'Individual entities and concepts',
-            unit: 'Semantic units and meaningful segments',
+            micro: 'Sub-entity attributes and fine-grained components',
+            entity: 'Named entities and concrete elements',
             text: 'Full text elements and documents',
+            unit: 'Semantic units and meaningful segments',
             community: 'Thematic communities and clusters',
             corpus: 'Entire corpus overview and metadata'
         };
@@ -819,6 +827,7 @@ export default class ResponseFormatter {
         return {
             topic: 'Filter by subject area or theme',
             entity: 'Filter by specific entities or concepts',
+            corpuscle: 'Filter by corpuscle scope (ragno:Corpuscle)',
             temporal: 'Filter by time period or date range',
             geographic: 'Filter by location or geographic area'
         };

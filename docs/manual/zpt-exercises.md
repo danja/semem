@@ -6,18 +6,18 @@ This document outlines comprehensive exercises for testing the ZPT (Zoom-Pan-Til
 
 ZPT navigation is like using a semantic telescope to explore knowledge:
 
-- **Zoom**: Controls the level of abstraction (molecular → entity → concept → theme)
+- **Zoom**: Controls the level of abstraction (micro → entity → text → unit → community → corpus)
 - **Pan**: Filters content by specific domains or keywords (like pointing the telescope)
 - **Tilt**: Changes the viewing perspective (keywords, entities, relationships, temporal)
 
 ## Exercise Set 1: Basic Zoom Navigation
 
-### Exercise 1.1: Molecular Level Detail
-**Objective**: Navigate at the most detailed level to see specific facts and data points.
+### Exercise 1.1: Micro Level Detail
+**Objective**: Navigate at the most detailed level to see fine-grained attributes and atomic facts.
 
 **Setup**: 
 - Store content: "The mitochondria produces ATP through cellular respiration. DNA contains adenine, thymine, guanine, and cytosine bases."
-- Set Zoom: molecular
+- Set Zoom: micro
 
 **Expected Results**:
 - Should return specific molecular details: "ATP", "adenine", "thymine", "guanine", "cytosine"
@@ -25,7 +25,7 @@ ZPT navigation is like using a semantic telescope to explore knowledge:
 - Results should include raw data points and specific measurements
 
 **Test Criteria**:
-- ✅ Returns at least 3 specific molecular terms
+- ✅ Returns at least 3 specific micro-level terms or attributes
 - ✅ No abstract concepts in results
 - ✅ Detailed scientific facts present
 
@@ -46,39 +46,71 @@ ZPT navigation is like using a semantic telescope to explore knowledge:
 - ✅ Filters out abstract concepts and relationships
 - ✅ Shows concrete objects and identifiable things
 
-### Exercise 1.3: Concept Level Abstraction
-**Objective**: Navigate at concept level to see ideas, processes, and abstract notions.
+### Exercise 1.3: Text Level Detail
+**Objective**: Navigate at text level to see raw source fragments and full content.
 
 **Setup**:
 - Store content: "Democracy requires citizen participation and transparent governance. Education empowers individuals and strengthens society."
-- Set Zoom: concept
+- Set Zoom: text
 
 **Expected Results**:
-- Should return concepts: "democracy", "governance", "education", "empowerment"
-- Should focus on abstract ideas and processes
-- Should not show specific entities or molecular details
+- Should return full sentences or paragraph-length content
+- Should preserve original phrasing and context
+- Should not collapse into summaries
 
 **Test Criteria**:
-- ✅ Returns abstract concepts and ideas
-- ✅ Filters out specific entities and molecular facts
-- ✅ Shows processes and conceptual relationships
+- ✅ Returns raw text fragments or full documents
+- ✅ Preserves original wording
+- ✅ Avoids high-level summaries
 
-### Exercise 1.4: Theme Level Overview
-**Objective**: Navigate at theme level to see high-level topics and domains.
+### Exercise 1.4: Unit Level Abstraction
+**Objective**: Navigate at unit level to see semantic summaries and local abstractions.
 
 **Setup**:
 - Store diverse content covering: science, politics, education, technology
-- Set Zoom: theme
+- Set Zoom: unit
+
+**Expected Results**:
+- Should return semantic units: "democracy and governance", "education empowers society"
+- Should summarize local meaning from text
+- Should abstract away raw phrasing
+
+**Test Criteria**:
+- ✅ Returns semantic summaries
+- ✅ Abstracts away raw text
+- ✅ Preserves local meaning
+
+### Exercise 1.5: Community Level Overview
+**Objective**: Navigate at community level to see clustered topics and shared themes.
+
+**Setup**:
+- Store diverse content covering: science, politics, education, technology
+- Set Zoom: community
 
 **Expected Results**:
 - Should return broad themes: "scientific research", "political systems", "educational policy"
-- Should provide highest level abstraction
-- Should group related concepts into coherent themes
+- Should provide high-level abstraction
+- Should group related concepts into coherent communities
 
 **Test Criteria**:
-- ✅ Returns high-level thematic groupings
+- ✅ Returns thematic groupings
 - ✅ Abstracts away lower-level details
-- ✅ Shows domain-level categorization
+- ✅ Shows domain-level clustering
+
+### Exercise 1.6: Corpus Level Overview
+**Objective**: Navigate at corpus level to see whole-corpus structure and metadata.
+
+**Setup**:
+- Store diverse content across multiple domains
+- Set Zoom: corpus
+
+**Expected Results**:
+- Should return corpus-wide stats or summaries
+- Should avoid item-level details
+
+**Test Criteria**:
+- ✅ Returns corpus-level summaries
+- ✅ Omits entity/unit/text detail
 
 ## Exercise Set 2: Pan Filtering
 

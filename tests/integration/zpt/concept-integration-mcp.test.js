@@ -1,7 +1,7 @@
 /**
  * RDF Concept Integration MCP Tests
  * Tests the new RDF concept extraction and integration functionality through MCP endpoints
- * Validates concept tilt, concept filtering, and RDF-native concept storage
+ * Validates graph tilt, concept filtering, and RDF-native concept storage
  */
 
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
@@ -226,23 +226,21 @@ describe('RDF Concept Integration MCP Tests', () => {
   });
 
   describe('Concept Tilt Functionality', () => {
-    it('should extract concepts using concept tilt on entity zoom', async () => {
+    it('should extract concepts using graph tilt on entity zoom', async () => {
       const response = await testRunner.zptNavigate(
         'existentialism authenticity absurdity',
         'entity',
-        {},
-        'concept'
-      );
+        {}, 'graph');
 
       testRunner.validateZPTResponse(response, 'entity', 0);
-      expect(response.content.metadata.navigation.tilt).toBe('concept');
+      expect(response.content.metadata.navigation.tilt).toBe('graph');
 
       // Should have concept-oriented results
       const content = response.content.data;
       if (content.length > 0) {
         console.log(`📊 Found ${content.length} concept-tilted entity results`);
         
-        // Validate concept tilt results
+        // Validate graph tilt results
         testRunner.validateConceptTiltResults(content);
         
         // Should contain philosophical concepts
@@ -252,16 +250,14 @@ describe('RDF Concept Integration MCP Tests', () => {
       }
     }, TEST_CONFIG.TIMEOUT);
 
-    it('should extract concepts using concept tilt on text zoom', async () => {
+    it('should extract concepts using graph tilt on text zoom', async () => {
       const response = await testRunner.zptNavigate(
         'quantum mechanics superposition entanglement',
         'text',
-        {},
-        'concept'
-      );
+        {}, 'graph');
 
       testRunner.validateZPTResponse(response, 'text', 0);
-      expect(response.content.metadata.navigation.tilt).toBe('concept');
+      expect(response.content.metadata.navigation.tilt).toBe('graph');
 
       const content = response.content.data;
       if (content.length > 0) {
@@ -272,20 +268,18 @@ describe('RDF Concept Integration MCP Tests', () => {
         // Should contain quantum physics concepts
         const quantumConcepts = ['quantum', 'superposition', 'entanglement', 'wave-particle', 'duality'];
         const foundConcepts = testRunner.validateConceptFilterResults(content, quantumConcepts);
-        console.log(`⚛️ Found quantum concepts: ${foundConcepts.join(', ')}`);
+        console.log(`⚛️ Found quantum keywords: ${foundConcepts.join(', ')}`);
       }
     }, TEST_CONFIG.TIMEOUT);
 
-    it('should support concept tilt on community zoom for thematic concepts', async () => {
+    it('should support graph tilt on community zoom for thematic concepts', async () => {
       const response = await testRunner.zptNavigate(
         'psychology cognition perception memory',
         'community',
-        {},
-        'concept'
-      );
+        {}, 'graph');
 
       testRunner.validateZPTResponse(response, 'community', 0);
-      expect(response.content.metadata.navigation.tilt).toBe('concept');
+      expect(response.content.metadata.navigation.tilt).toBe('graph');
 
       const content = response.content.data;
       if (content.length > 0) {
@@ -299,7 +293,7 @@ describe('RDF Concept Integration MCP Tests', () => {
         
         const psychConcepts = ['psychology', 'cognition', 'perception', 'memory', 'decision-making'];
         const foundConcepts = testRunner.validateConceptFilterResults(content, psychConcepts);
-        console.log(`🧠 Found psychology concepts: ${foundConcepts.join(', ')}`);
+        console.log(`🧠 Found psychology keywords: ${foundConcepts.join(', ')}`);
       }
     }, TEST_CONFIG.TIMEOUT);
   });
@@ -309,7 +303,7 @@ describe('RDF Concept Integration MCP Tests', () => {
       const response = await testRunner.zptNavigate(
         'learning algorithms patterns data',
         'entity',
-        { concepts: ['machine learning', 'artificial intelligence'] }
+        { keywords: ['machine learning', 'artificial intelligence'] }
       );
 
       testRunner.validateZPTResponse(response, 'entity', 0);
@@ -321,11 +315,11 @@ describe('RDF Concept Integration MCP Tests', () => {
         // Should contain AI/ML concepts
         const mlConcepts = ['machine', 'learning', 'artificial', 'intelligence', 'neural', 'algorithm'];
         const foundConcepts = testRunner.validateConceptFilterResults(content, mlConcepts);
-        console.log(`🤖 Found ML concepts: ${foundConcepts.join(', ')}`);
+        console.log(`🤖 Found ML keywords: ${foundConcepts.join(', ')}`);
         
         // Should have concept filter metadata
         expect(response.content.filters).toBeDefined();
-        expect(response.content.filters.concepts).toEqual(['machine learning', 'artificial intelligence']);
+        expect(response.content.filters.keywords).toEqual(['machine learning', 'artificial intelligence']);
       }
     }, TEST_CONFIG.TIMEOUT);
 
@@ -333,7 +327,7 @@ describe('RDF Concept Integration MCP Tests', () => {
       const response = await testRunner.zptNavigate(
         'economic market supply demand',
         'entity',
-        { conceptCategories: ['economics', 'market theory'] }
+        { domains: ['economics', 'market theory'] }
       );
 
       testRunner.validateZPTResponse(response, 'entity', 0);
@@ -344,7 +338,9 @@ describe('RDF Concept Integration MCP Tests', () => {
         
         const economicConcepts = ['market', 'supply', 'demand', 'equilibrium', 'price', 'competition'];
         const foundConcepts = testRunner.validateConceptFilterResults(content, economicConcepts);
-        console.log(`💰 Found economic concepts: ${foundConcepts.join(', ')}`);
+        console.log(`💰 Found economic keywords: ${foundConcepts.join(', ')}`);
+
+        expect(response.content.filters.domains).toEqual(['economics', 'market theory']);
       }
     }, TEST_CONFIG.TIMEOUT);
 
@@ -352,7 +348,8 @@ describe('RDF Concept Integration MCP Tests', () => {
       const response = await testRunner.zptNavigate(
         'understanding consciousness thought mental processes',
         'text',
-        { conceptSimilarity: 0.7, conceptQuery: 'cognitive psychology mental processes' }
+        { keywords: ['cognitive', 'psychology', 'mental', 'processes'] },
+        'embedding'
       );
 
       testRunner.validateZPTResponse(response, 'text', 0);
@@ -363,10 +360,9 @@ describe('RDF Concept Integration MCP Tests', () => {
         
         const cognitiveConcepts = ['cognitive', 'psychology', 'mental', 'processes', 'perception', 'memory'];
         const foundConcepts = testRunner.validateConceptFilterResults(content, cognitiveConcepts);
-        console.log(`🧠 Found cognitive concepts: ${foundConcepts.join(', ')}`);
-        
-        // Should have similarity filter metadata
-        expect(response.content.filters.conceptSimilarity).toBe(0.7);
+        console.log(`🧠 Found cognitive keywords: ${foundConcepts.join(', ')}`);
+
+        expect(response.content.filters.keywords).toEqual(['cognitive', 'psychology', 'mental', 'processes']);
       }
     }, TEST_CONFIG.TIMEOUT);
   });
@@ -386,13 +382,11 @@ describe('RDF Concept Integration MCP Tests', () => {
       // Wait for concept extraction
       await new Promise(resolve => setTimeout(resolve, 2000));
 
-      // Now query for concepts using concept tilt
+      // Now query for concepts using graph tilt
       const response = await testRunner.zptNavigate(
         'phenomenology consciousness experience Husserl',
         'entity',
-        {},
-        'concept'
-      );
+        {}, 'graph');
 
       testRunner.validateZPTResponse(response, 'entity', 0);
 
@@ -405,7 +399,7 @@ describe('RDF Concept Integration MCP Tests', () => {
         
         const phenomenologyConcepts = ['phenomenology', 'consciousness', 'experience', 'husserl', 'transcendental'];
         const foundConcepts = testRunner.validateConceptFilterResults(content, phenomenologyConcepts);
-        console.log(`🔍 Found phenomenology concepts: ${foundConcepts.join(', ')}`);
+        console.log(`🔍 Found phenomenology keywords: ${foundConcepts.join(', ')}`);
       }
     }, TEST_CONFIG.TIMEOUT);
 
@@ -413,9 +407,7 @@ describe('RDF Concept Integration MCP Tests', () => {
       const response = await testRunner.zptNavigate(
         'quantum superposition measurement',
         'entity',
-        { rdfTypes: ['ragno:Concept'] },
-        'concept'
-      );
+        { rdfTypes: ['ragno:Concept'] }, 'graph');
 
       testRunner.validateZPTResponse(response, 'entity', 0);
 
@@ -441,8 +433,8 @@ describe('RDF Concept Integration MCP Tests', () => {
       const response = await testRunner.zptNavigate(
         'artificial intelligence machine learning algorithms',
         'entity',
-        { conceptRelations: ['ragno:hasConceptualRelation'] },
-        'relationships'
+        { keywords: ['artificial intelligence', 'machine learning'] },
+        'graph'
       );
 
       testRunner.validateZPTResponse(response, 'entity', 0);
@@ -469,16 +461,14 @@ describe('RDF Concept Integration MCP Tests', () => {
   });
 
   describe('Combined Concept Integration Features', () => {
-    it('should combine concept tilt with concept filtering', async () => {
+    it('should combine graph tilt with concept filtering', async () => {
       const response = await testRunner.zptNavigate(
         'philosophy ethics morality',
         'text',
         { 
-          concepts: ['existentialism', 'ethics'],
+          keywords: ['existentialism', 'ethics'],
           domains: ['philosophy']
-        },
-        'concept'
-      );
+        }, 'graph');
 
       testRunner.validateZPTResponse(response, 'text', 0);
 
@@ -486,39 +476,37 @@ describe('RDF Concept Integration MCP Tests', () => {
       if (content.length > 0) {
         console.log(`📊 Found ${content.length} combined concept results`);
         
-        // Should satisfy both concept tilt and concept filtering
+        // Should satisfy both graph tilt and concept filtering
         testRunner.validateConceptTiltResults(content);
         
         const philosophyConcepts = ['philosophy', 'ethics', 'morality', 'existentialism', 'authenticity'];
         const foundConcepts = testRunner.validateConceptFilterResults(content, philosophyConcepts);
-        console.log(`🧠 Found philosophy concepts: ${foundConcepts.join(', ')}`);
+        console.log(`🧠 Found philosophy keywords: ${foundConcepts.join(', ')}`);
         
         // Should have appropriate filters
-        expect(response.content.filters.concepts).toEqual(['existentialism', 'ethics']);
-        expect(response.content.filters.domain).toEqual(['philosophy']);
-        expect(response.content.metadata.navigation.tilt).toBe('concept');
+        expect(response.content.filters.keywords).toEqual(['existentialism', 'ethics']);
+        expect(response.content.filters.domains).toEqual(['philosophy']);
+        expect(response.content.metadata.navigation.tilt).toBe('graph');
       }
     }, TEST_CONFIG.TIMEOUT);
 
     it('should support concept-based zoom progression', async () => {
       const baseQuery = 'cognitive psychology mental processes';
-      const conceptFilters = { concepts: ['cognition', 'psychology'] };
+      const conceptFilters = { keywords: ['cognition', 'psychology'] };
       
-      // Test concept tilt across different zoom levels
+      // Test graph tilt across different zoom levels
       const zoomLevels = ['community', 'text', 'entity', 'unit'];
       
       for (const zoom of zoomLevels) {
-        console.log(`🔍 Testing concept tilt at ${zoom} level`);
+        console.log(`🔍 Testing graph tilt at ${zoom} level`);
         
         const response = await testRunner.zptNavigate(
           baseQuery,
           zoom,
-          conceptFilters,
-          'concept'
-        );
+          conceptFilters, 'graph');
         
         testRunner.validateZPTResponse(response, zoom, 0);
-        expect(response.content.metadata.navigation.tilt).toBe('concept');
+        expect(response.content.metadata.navigation.tilt).toBe('graph');
         
         if (response.content.data.length > 0) {
           console.log(`  📊 Found ${response.content.data.length} results at ${zoom} level`);
@@ -553,9 +541,7 @@ describe('RDF Concept Integration MCP Tests', () => {
       const response = await testRunner.zptNavigate(
         'systems thinking emergence feedback holistic',
         'entity',
-        { conceptCategories: ['systems theory'] },
-        'concept'
-      );
+        { keywords: ['systems theory'] }, 'graph');
 
       testRunner.validateZPTResponse(response, 'entity', 0);
 
@@ -570,10 +556,10 @@ describe('RDF Concept Integration MCP Tests', () => {
         
         const systemsConcepts = ['systems', 'thinking', 'emergence', 'feedback', 'holistic', 'complexity'];
         const foundConcepts = testRunner.validateConceptFilterResults(content, systemsConcepts);
-        console.log(`🌐 Found systems concepts: ${foundConcepts.join(', ')}`);
+        console.log(`🌐 Found systems keywords: ${foundConcepts.join(', ')}`);
 
         // Validate metadata indicates successful concept processing
-        expect(response.content.metadata.navigation.tilt).toBe('concept');
+        expect(response.content.metadata.navigation.tilt).toBe('graph');
         expect(response.content.metadata.pipeline).toBeDefined();
       }
     }, TEST_CONFIG.TIMEOUT);
@@ -584,14 +570,12 @@ describe('RDF Concept Integration MCP Tests', () => {
       const response = await testRunner.zptNavigate(
         'nonexistent made up concepts xyz123',
         'entity',
-        {},
-        'concept'
-      );
+        {}, 'graph');
 
       testRunner.validateZPTResponse(response, 'entity', 0);
       expect(response.content.data).toHaveLength(0);
       expect(response.content.estimatedResults).toBe(0);
-      expect(response.content.metadata.navigation.tilt).toBe('concept');
+      expect(response.content.metadata.navigation.tilt).toBe('graph');
     }, TEST_CONFIG.TIMEOUT);
 
     it('should maintain performance with complex concept queries', async () => {
@@ -601,11 +585,8 @@ describe('RDF Concept Integration MCP Tests', () => {
         'complex philosophical psychological economic technological concepts',
         'text',
         { 
-          concepts: ['philosophy', 'psychology', 'economics', 'technology'],
-          conceptSimilarity: 0.6
-        },
-        'concept'
-      );
+          keywords: ['philosophy', 'psychology', 'economics', 'technology']
+        }, 'graph');
       
       const duration = Date.now() - startTime;
       
@@ -623,19 +604,15 @@ describe('RDF Concept Integration MCP Tests', () => {
         'entity',
         { 
           domains: ['technology'],
-          keywords: ['AI', 'neural'],
-          concepts: ['machine learning', 'artificial intelligence']
-        },
-        'concept'
-      );
+          keywords: ['machine learning', 'artificial intelligence']
+        }, 'graph');
 
       testRunner.validateZPTResponse(response, 'entity', 0);
 
       // Should apply all filter types
-      expect(response.content.filters.domain).toEqual(['technology']);
-      expect(response.content.filters.keywords).toEqual(['AI', 'neural']);
-      expect(response.content.filters.concepts).toEqual(['machine learning', 'artificial intelligence']);
-      expect(response.content.metadata.navigation.tilt).toBe('concept');
+      expect(response.content.filters.domains).toEqual(['technology']);
+      expect(response.content.filters.keywords).toEqual(['machine learning', 'artificial intelligence']);
+      expect(response.content.metadata.navigation.tilt).toBe('graph');
     }, TEST_CONFIG.TIMEOUT);
   });
 });

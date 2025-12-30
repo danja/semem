@@ -751,8 +751,9 @@ export default class PromptFormatter {
         if (!pan || Object.keys(pan).length === 0) return 'none';
         
         const filters = [];
-        if (pan.topic) filters.push(`topic: ${pan.topic.value}`);
-        if (pan.entity) filters.push(`entities: ${pan.entity.count}`);
+        if (pan.domains) filters.push(`domains: ${pan.domains.count}`);
+        if (pan.keywords) filters.push(`keywords: ${pan.keywords.count}`);
+        if (pan.entities) filters.push(`entities: ${pan.entities.count}`);
         if (pan.temporal) filters.push('temporal constraints');
         if (pan.geographic) filters.push('geographic bounds');
         

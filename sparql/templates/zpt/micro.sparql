@@ -1,8 +1,9 @@
-# ZPT micro-level query for SemanticUnit entities
-SELECT DISTINCT ?uri ?content ?metadata ?timestamp ?similarity WHERE {
+# ZPT micro-level query for Attribute entities
+SELECT DISTINCT ?uri ?label ?content ?metadata ?timestamp ?similarity WHERE {
     GRAPH <{{graphName}}> {
-        ?uri a ragno:SemanticUnit ;
-             ragno:hasContent ?content .
+        ?uri a ragno:Attribute .
+        OPTIONAL { ?uri rdfs:label ?label }
+        OPTIONAL { ?uri ragno:content ?content }
         OPTIONAL { ?uri semem:metadata ?metadata }
         OPTIONAL { ?uri dcterms:created ?timestamp }
         OPTIONAL { ?uri semem:similarity ?similarity }

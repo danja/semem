@@ -4,9 +4,11 @@
 import fs from 'fs';
 import path from 'path';
 import SPARQLTemplateLoader from '../../stores/SPARQLTemplateLoader.js';
+import { createUnifiedLogger } from '../../utils/LoggingConfig.js';
 
 export default class FilterBuilder {
     constructor(options = {}) {
+        this.logger = createUnifiedLogger('FilterBuilder');
         this.graphName = options.graphName;
         this.templateCache = new Map(); // Cache for loaded templates
         this.templateLoader = new SPARQLTemplateLoader();
@@ -43,146 +45,18 @@ export default class FilterBuilder {
                 graphName: this.graphName
             });
 
-            if (template) {
-                return template;
+            if (!template) {
+                throw new Error(`Missing SPARQL template: filter-${zoomLevel}`);
             }
 
-            // Fallback to existing templates for backward compatibility
-            console.warn(`Template filter-${zoomLevel} not found, using fallback`);
-            return this.getFallbackTemplate(zoomLevel);
+            return template;
         } catch (error) {
-            console.warn(`Error loading template for ${zoomLevel}:`, error.message);
-            return this.getFallbackTemplate(zoomLevel);
+            this.logger.error('Failed to load ZPT filter template', {
+                zoomLevel,
+                error: error.message
+            });
+            throw new Error(`Failed to load ZPT filter template for ${zoomLevel}: ${error.message}`);
         }
-    }
-
-    /**
-     * Get fallback template for cases where external template files are not available
-     */
-    getFallbackTemplate(zoomLevel) {
-        const templates = {
-            entity: `
-                SELECT DISTINCT ?uri ?label ?type ?prefLabel ?embedding ?metadata
-                WHERE {
-                    GRAPH <${this.graphName}> {
-                        {
-                            ?uri a ragno:Entity ;
-                                 rdfs:label ?label ;
-                                 rdf:type ?type .
-                            OPTIONAL { ?uri skos:prefLabel ?prefLabel }
-                            OPTIONAL { ?uri semem:embedding ?embedding }
-                            OPTIONAL { ?uri semem:metadata ?metadata }
-                        }
-                        UNION
-                        {
-                            ?uri a semem:Interaction ;
-                                 semem:prompt ?label .
-                            OPTIONAL { ?uri semem:output ?prefLabel }
-                            OPTIONAL { ?uri semem:embedding ?embedding }
-                            OPTIONAL { ?uri semem:metadata ?metadata }
-                            BIND("interaction" AS ?type)
-                        }
-                        {{filters}}
-                    }
-                }
-                {{orderBy}}
-                {{limit}}
-            `,
-            unit: `
-                SELECT DISTINCT ?uri ?content ?entity ?unit ?embedding ?metadata
-                WHERE {
-                    GRAPH <${this.graphName}> {
-                        {
-                            ?uri a ragno:SemanticUnit ;
-                                 ragno:hasContent ?content .
-                            OPTIONAL { ?uri ragno:relatedTo ?entity }
-                            OPTIONAL { ?uri ragno:partOf ?unit }
-                            OPTIONAL { ?uri semem:embedding ?embedding }
-                            OPTIONAL { ?uri semem:metadata ?metadata }
-                        }
-                        UNION
-                        {
-                            ?uri a semem:Interaction .
-                            {
-                                ?uri semem:prompt ?content .
-                            } UNION {
-                                ?uri semem:output ?content .
-                            }
-                            OPTIONAL { ?uri semem:embedding ?embedding }
-                            OPTIONAL { ?uri semem:metadata ?metadata }
-                            BIND("memory" AS ?entity)
-                            BIND("interaction" AS ?unit)
-                        }
-                        {{filters}}
-                    }
-                }
-                {{orderBy}}
-                {{limit}}
-            `,
-            text: `
-                SELECT DISTINCT ?uri ?text ?source ?position ?embedding ?metadata
-                WHERE {
-                    GRAPH <${this.graphName}> {
-                        {
-                            ?uri a ragno:TextElement ;
-                                 ragno:hasText ?text .
-                            OPTIONAL { ?uri ragno:sourceDocument ?source }
-                            OPTIONAL { ?uri ragno:position ?position }
-                            OPTIONAL { ?uri semem:embedding ?embedding }
-                            OPTIONAL { ?uri semem:metadata ?metadata }
-                        }
-                        UNION
-                        {
-                            ?uri a semem:Interaction .
-                            {
-                                ?uri semem:prompt ?text .
-                            } UNION {
-                                ?uri semem:output ?text .
-                            }
-                            OPTIONAL { ?uri semem:embedding ?embedding }
-                            OPTIONAL { ?uri semem:metadata ?metadata }
-                            BIND("memory" AS ?source)
-                            BIND(0 AS ?position)
-                        }
-                        {{filters}}
-                    }
-                }
-                {{orderBy}}
-                {{limit}}
-            `,
-            community: `
-                SELECT DISTINCT ?uri ?label ?description ?members ?metadata
-                WHERE {
-                    GRAPH <${this.graphName}> {
-                        ?uri a ragno:Community ;
-                             rdfs:label ?label .
-                        OPTIONAL { ?uri rdfs:comment ?description }
-                        OPTIONAL { ?uri ragno:hasMember ?members }
-                        OPTIONAL { ?uri semem:metadata ?metadata }
-                        {{filters}}
-                    }
-                }
-                {{orderBy}}
-                {{limit}}
-            `,
-            corpus: `
-                SELECT DISTINCT ?uri ?label ?description ?created ?modified
-                WHERE {
-                    GRAPH <${this.graphName}> {
-                        ?uri a ragno:Corpus ;
-                             rdfs:label ?label .
-                        OPTIONAL { ?uri rdfs:comment ?description }
-                        OPTIONAL { ?uri dcterms:created ?created }
-                        OPTIONAL { ?uri dcterms:modified ?modified }
-                        {{filters}}
-                    }
-                }
-                {{orderBy}}
-                {{limit}}
-            `
-        };
-
-        return templates[zoomLevel] || templates.entity;
     }
 
     /**
@@ -194,51 +68,32 @@ export default class FilterBuilder {
 
             // Load concept extraction template
             const conceptExtractionPath = path.join(templateDir, 'concept-extraction.sparql');
-            if (fs.existsSync(conceptExtractionPath)) {
-                this.templates.conceptExtraction = fs.readFileSync(conceptExtractionPath, 'utf8');
-                this.templateCache.set('concept-extraction', this.templates.conceptExtraction);
+            if (!fs.existsSync(conceptExtractionPath)) {
+                throw new Error(`Missing template file: ${conceptExtractionPath}`);
             }
+            this.templates.conceptExtraction = fs.readFileSync(conceptExtractionPath, 'utf8');
+            this.templateCache.set('concept-extraction', this.templates.conceptExtraction);
 
             // Load concept navigation template  
             const conceptNavigationPath = path.join(templateDir, 'concept-navigation.sparql');
-            if (fs.existsSync(conceptNavigationPath)) {
-                this.templates.conceptNavigation = fs.readFileSync(conceptNavigationPath, 'utf8');
-                this.templateCache.set('concept-navigation', this.templates.conceptNavigation);
+            if (!fs.existsSync(conceptNavigationPath)) {
+                throw new Error(`Missing template file: ${conceptNavigationPath}`);
             }
+            this.templates.conceptNavigation = fs.readFileSync(conceptNavigationPath, 'utf8');
+            this.templateCache.set('concept-navigation', this.templates.conceptNavigation);
 
             // Load concept relationships template
             const conceptRelationshipsPath = path.join(templateDir, 'concept-relationships.sparql');
-            if (fs.existsSync(conceptRelationshipsPath)) {
-                this.templates.conceptRelationships = fs.readFileSync(conceptRelationshipsPath, 'utf8');
-                this.templateCache.set('concept-relationships', this.templates.conceptRelationships);
+            if (!fs.existsSync(conceptRelationshipsPath)) {
+                throw new Error(`Missing template file: ${conceptRelationshipsPath}`);
             }
+            this.templates.conceptRelationships = fs.readFileSync(conceptRelationshipsPath, 'utf8');
+            this.templateCache.set('concept-relationships', this.templates.conceptRelationships);
 
         } catch (error) {
-            console.warn('Could not load concept query templates:', error.message);
-            // Fallback to inline templates if external files not available
-            this.initializeFallbackConceptTemplates();
+            this.logger.error('Failed to load concept query templates', { error: error.message });
+            throw new Error(`Failed to load concept query templates: ${error.message}`);
         }
-    }
-
-    /**
-     * Initialize fallback concept templates if external files not available
-     */
-    initializeFallbackConceptTemplates() {
-        // Simple fallback concept extraction query
-        this.templates.conceptExtraction = `
-            SELECT DISTINCT ?concept ?label ?type ?confidence
-            WHERE {
-                GRAPH <${this.graphName}> {
-                    ?concept a ragno:Concept ;
-                             rdfs:label ?label ;
-                             rdf:type ?type .
-                    OPTIONAL { ?concept ragno:confidence ?confidence }
-                    {{CONCEPT_FILTERS}}
-                }
-            }
-            ORDER BY DESC(?confidence)
-            LIMIT \${maxResults}
-        `;
     }
 
     /**
@@ -284,14 +139,24 @@ export default class FilterBuilder {
     buildFilters(panParams) {
         const filterClauses = [];
 
-        // Topic filter
-        if (panParams.topic) {
-            filterClauses.push(this.buildTopicFilter(panParams.topic));
+        // Domain filter
+        if (panParams.domains) {
+            filterClauses.push(this.buildDomainFilter(panParams.domains));
+        }
+
+        // Keyword filter
+        if (panParams.keywords) {
+            filterClauses.push(this.buildKeywordFilter(panParams.keywords));
         }
 
         // Entity filter
-        if (panParams.entity) {
-            filterClauses.push(this.buildEntityFilter(panParams.entity));
+        if (panParams.entities) {
+            filterClauses.push(this.buildEntityFilter(panParams.entities));
+        }
+
+        // Corpuscle filter
+        if (panParams.corpuscle) {
+            filterClauses.push(this.buildCorpuscleFilter(panParams.corpuscle));
         }
 
         // Temporal filter
@@ -302,11 +167,6 @@ export default class FilterBuilder {
         // Geographic filter
         if (panParams.geographic) {
             filterClauses.push(this.buildGeographicFilter(panParams.geographic));
-        }
-
-        // Concept filter
-        if (panParams.concepts) {
-            filterClauses.push(this.buildConceptFilter(panParams.concepts));
         }
 
         return filterClauses.length > 0 ? filterClauses.join(' ') : '';
@@ -337,35 +197,45 @@ export default class FilterBuilder {
 
         return {
             query,
-            zoomLevel: 'concept',
+            zoomLevel: 'unit',
             filters: normalizedParams.pan,
             tilt: normalizedParams.tilt,
             metadata: {
                 complexity: 'concept-based',
                 type: 'concept-extraction',
-                cacheKey: this.buildCacheKey(normalizedParams, 'concept')
+                cacheKey: this.buildCacheKey(normalizedParams, 'unit')
             }
         };
     }
 
     /**
-     * Build topic filter clause
+     * Build domain filter clause
      */
-    buildTopicFilter(topicFilter) {
-        const { value, pattern } = topicFilter;
+    buildDomainFilter(domainFilter) {
+        const values = domainFilter.values || [];
+        if (values.length === 0) return '';
 
-        if (pattern === 'wildcard') {
-            const regexPattern = value.replace(/\*/g, '.*');
-            return `
-                FILTER (REGEX(STR(?label), "${regexPattern}", "i") || 
-                        REGEX(STR(?prefLabel), "${regexPattern}", "i"))
-            `;
-        } else {
-            return `
-                FILTER (CONTAINS(LCASE(STR(?label)), "${value}") || 
-                        CONTAINS(LCASE(STR(?prefLabel)), "${value}"))
-            `;
-        }
+        const clauses = values.map(value => `
+            (CONTAINS(LCASE(STR(?label)), "${value.toLowerCase()}") || 
+             CONTAINS(LCASE(STR(?prefLabel)), "${value.toLowerCase()}"))
+        `);
+
+        return `FILTER (${clauses.join(' || ')})`;
+    }
+
+    /**
+     * Build keyword filter clause
+     */
+    buildKeywordFilter(keywordFilter) {
+        const values = keywordFilter.values || [];
+        if (values.length === 0) return '';
+
+        const clauses = values.map(value => `
+            (CONTAINS(LCASE(STR(?label)), "${value.toLowerCase()}") || 
+             CONTAINS(LCASE(STR(?prefLabel)), "${value.toLowerCase()}"))
+        `);
+
+        return `FILTER (${clauses.join(' || ')})`;
     }
 
     /**
@@ -380,6 +250,20 @@ export default class FilterBuilder {
             const uriList = values.map(v => `<${v}>`).join(', ');
             return `FILTER (?uri IN (${uriList}) || ?entity IN (${uriList}))`;
         }
+    }
+
+    /**
+     * Build corpuscle filter clause
+     */
+    buildCorpuscleFilter(corpuscleFilter) {
+        const { values, type } = corpuscleFilter;
+
+        if (type === 'single') {
+            return `?uri ragno:inCorpuscle <${values[0]}> .`;
+        }
+
+        const uriList = values.map(v => `<${v}>`).join(', ');
+        return `?uri ragno:inCorpuscle ?corpuscle . FILTER (?corpuscle IN (${uriList}))`;
     }
 
     /**

@@ -4,8 +4,12 @@
  */
 
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
-import fetch from 'node-fetch';
 import Config from '../../../src/Config.js';
+
+const fetch = global.fetch;
+if (!fetch) {
+  throw new Error('Fetch unavailable in E2E tests');
+}
 
 // Test configuration
 const TEST_CONFIG = {
@@ -17,10 +21,10 @@ const TEST_CONFIG = {
 
 // Test data for seeding
 const TEST_CONTENT = {
-  molecular: {
+  micro: {
     content: "The mitochondria produces ATP through cellular respiration. DNA contains adenine, thymine, guanine, and cytosine bases.",
     type: "document",
-    tags: ["biology", "molecular", "cellular"]
+    tags: ["biology", "micro", "cellular"]
   },
   entities: {
     content: "Albert Einstein developed the theory of relativity at Princeton University in 1915. Marie Curie won Nobel Prizes in Physics and Chemistry.",
@@ -135,8 +139,9 @@ class ZPTTestRunner {
           console.log('✅ MCP server is ready');
           return true;
         }
+        console.warn(`Health check failed with status ${response.status}: ${response.statusText}`);
       } catch (error) {
-        // Server not ready yet
+        console.warn(`Health check error: ${error.message}`);
       }
 
       attempts++;
@@ -169,17 +174,17 @@ class ZPTTestRunner {
     });
   }
 
-  validateConceptResults(results) {
+  validateUnitResults(results) {
     results.forEach(item => {
       expect(item).toHaveProperty('id');
-      expect(item.type).toMatch(/concept|idea|process/);
+      expect(item.type).toMatch(/unit|summary|concept|idea|process/);
     });
   }
 
-  validateMolecularResults(results) {
+  validateMicroResults(results) {
     results.forEach(item => {
       expect(item).toHaveProperty('id');
-      expect(item.type).toMatch(/molecular|fact|data/);
+      expect(item.type).toMatch(/micro|molecular|fact|data/);
     });
   }
 }
@@ -201,26 +206,26 @@ describe('ZPT MCP Integration Tests', () => {
   });
 
   describe('Exercise Set 1: Basic Zoom Navigation', () => {
-    it('Exercise 1.1: Molecular Level Detail', async () => {
+    it('Exercise 1.1: Micro Level Detail', async () => {
       const response = await testRunner.zptNavigate(
         'mitochondria ATP cellular respiration',
-        'unit'
+        'micro'
       );
 
-      testRunner.validateZPTResponse(response, 'unit', 0);
+      testRunner.validateZPTResponse(response, 'micro', 0);
 
-      // Check for molecular-level terms
+      // Check for micro-level terms
       const content = response.content.data;
       const allText = content.map(item => 
         `${item.label || ''} ${item.content || ''}`
       ).join(' ').toLowerCase();
 
-      // Should contain specific molecular terms
+      // Should contain specific micro-level terms
       const molecularTerms = ['atp', 'adenine', 'thymine', 'guanine', 'cytosine'];
       const foundTerms = molecularTerms.filter(term => allText.includes(term));
       expect(foundTerms.length).toBeGreaterThanOrEqual(3);
 
-      testRunner.validateMolecularResults(content);
+      testRunner.validateMicroResults(content);
     }, TEST_CONFIG.TIMEOUT);
 
     it('Exercise 1.2: Entity Level Navigation', async () => {
@@ -245,29 +250,29 @@ describe('ZPT MCP Integration Tests', () => {
       testRunner.validateEntityResults(content);
     }, TEST_CONFIG.TIMEOUT);
 
-    it('Exercise 1.3: Concept Level Abstraction', async () => {
+    it('Exercise 1.3: Unit Level Abstraction', async () => {
       const response = await testRunner.zptNavigate(
         'democracy governance education empowerment',
-        'text'
+        'unit'
       );
 
-      testRunner.validateZPTResponse(response, 'text', 0);
+      testRunner.validateZPTResponse(response, 'unit', 0);
 
-      // Check for concept-level results
+      // Check for unit-level results
       const content = response.content.data;
       const allText = content.map(item => 
         `${item.label || ''} ${item.content || ''}`
       ).join(' ').toLowerCase();
 
-      // Should contain abstract concepts
-      const concepts = ['democracy', 'governance', 'education', 'empowerment'];
-      const foundConcepts = concepts.filter(concept => allText.includes(concept));
-      expect(foundConcepts.length).toBeGreaterThanOrEqual(1);
+      // Should contain abstract unit terms
+      const unitTerms = ['democracy', 'governance', 'education', 'empowerment'];
+      const foundUnitTerms = unitTerms.filter(term => allText.includes(term));
+      expect(foundUnitTerms.length).toBeGreaterThanOrEqual(1);
 
-      testRunner.validateConceptResults(content);
+      testRunner.validateUnitResults(content);
     }, TEST_CONFIG.TIMEOUT);
 
-    it('Exercise 1.4: Theme Level Overview', async () => {
+    it('Exercise 1.4: Community Level Overview', async () => {
       const response = await testRunner.zptNavigate(
         'science technology politics education',
         'community'
@@ -275,11 +280,11 @@ describe('ZPT MCP Integration Tests', () => {
 
       testRunner.validateZPTResponse(response, 'community', 0);
 
-      // Themes should provide high-level groupings
+      // Communities should provide high-level groupings
       const content = response.content.data;
       content.forEach(item => {
         expect(item).toHaveProperty('id');
-        expect(item.type).toMatch(/theme|domain|category/);
+        expect(item.type).toMatch(/community|theme|domain|category/);
       });
     }, TEST_CONFIG.TIMEOUT);
   });
@@ -296,7 +301,7 @@ describe('ZPT MCP Integration Tests', () => {
 
       // Results should be filtered to science/technology domains
       const content = response.content.data;
-      expect(response.content.filters.domain).toEqual(['science', 'technology']);
+      expect(response.content.filters.domains).toEqual(['science', 'technology']);
       
       // Verify domain filtering was applied
       if (content.length > 0) {
@@ -346,7 +351,7 @@ describe('ZPT MCP Integration Tests', () => {
       testRunner.validateZPTResponse(response, 'entity', 0);
 
       // Should apply both domain AND keyword filters
-      expect(response.content.filters.domain).toEqual(['science', 'technology']);
+      expect(response.content.filters.domains).toEqual(['science', 'technology']);
       expect(response.content.filters.keywords).toEqual(['space', 'telescope', 'nasa']);
       
       if (response.content.data.length > 0) {
@@ -382,18 +387,18 @@ describe('ZPT MCP Integration Tests', () => {
       }
     }, TEST_CONFIG.TIMEOUT);
 
-    it('Exercise 3.2: Entities Perspective', async () => {
+    it('Exercise 3.2: Embedding Perspective', async () => {
       const response = await testRunner.zptNavigate(
         'NASA James Webb Space Telescope galaxies',
         'entity',
         {},
-        'entities'
+        'embedding'
       );
 
       testRunner.validateZPTResponse(response, 'entity', 0);
-      expect(response.content.metadata.navigation.tilt).toBe('entities');
+      expect(response.content.metadata.navigation.tilt).toBe('embedding');
 
-      // Entities perspective should emphasize named entities
+      // Embedding perspective should emphasize named entities
       if (response.content.data.length > 0) {
         const allText = response.content.data.map(item => 
           `${item.label || ''} ${item.content || ''}`
@@ -405,18 +410,18 @@ describe('ZPT MCP Integration Tests', () => {
       }
     }, TEST_CONFIG.TIMEOUT);
 
-    it('Exercise 3.3: Relationships Perspective', async () => {
+    it('Exercise 3.3: Graph Perspective', async () => {
       const response = await testRunner.zptNavigate(
         'photosynthesis converts sunlight chemical energy',
         'entity',
         {},
-        'relationships'
+        'graph'
       );
 
       testRunner.validateZPTResponse(response, 'entity', 0);
-      expect(response.content.metadata.navigation.tilt).toBe('relationships');
+      expect(response.content.metadata.navigation.tilt).toBe('graph');
 
-      // Relationships perspective should show connections
+      // Graph perspective should show connections
       if (response.content.data.length > 0) {
         response.content.data.forEach(item => {
           // Should have relationship indicators
@@ -455,15 +460,15 @@ describe('ZPT MCP Integration Tests', () => {
         'molecular biology physics chemistry',
         'text',
         { domains: ['science'] },
-        'relationships'
+        'graph'
       );
 
       testRunner.validateZPTResponse(response, 'text', 0);
       
-      // Should combine concept zoom, science domain filter, and relationships tilt
+      // Should combine text zoom, science domain filter, and graph tilt
       expect(response.content.metadata.navigation.zoom).toBe('text');
-      expect(response.content.filters.domain).toEqual(['science']);
-      expect(response.content.metadata.navigation.tilt).toBe('relationships');
+      expect(response.content.filters.domains).toEqual(['science']);
+      expect(response.content.metadata.navigation.tilt).toBe('graph');
     }, TEST_CONFIG.TIMEOUT);
 
     it('Exercise 4.2: Historical Entity Analysis', async () => {
@@ -482,7 +487,7 @@ describe('ZPT MCP Integration Tests', () => {
       expect(response.content.metadata.navigation.tilt).toBe('temporal');
     }, TEST_CONFIG.TIMEOUT);
 
-    it('Exercise 4.3: Technology Theme Exploration', async () => {
+    it('Exercise 4.3: Technology Community Exploration', async () => {
       const response = await testRunner.zptNavigate(
         'artificial intelligence blockchain quantum computing',
         'community',
@@ -492,7 +497,7 @@ describe('ZPT MCP Integration Tests', () => {
 
       testRunner.validateZPTResponse(response, 'community', 0);
       
-      // Should combine theme zoom, keyword filter, and keywords tilt
+      // Should combine community zoom, keyword filter, and keywords tilt
       expect(response.content.metadata.navigation.zoom).toBe('community');
       expect(response.content.filters.keywords).toEqual(['innovation', 'computing']);
       expect(response.content.metadata.navigation.tilt).toBe('keywords');
@@ -501,21 +506,21 @@ describe('ZPT MCP Integration Tests', () => {
 
   describe('Exercise Set 5: Dynamic Navigation Sequences', () => {
     it('Exercise 5.1: Zoom Progression Sequence', async () => {
-      // Start with theme level
+      // Start with community level
       let response = await testRunner.zptNavigate('scientific research', 'community');
       testRunner.validateZPTResponse(response, 'community', 0);
       
-      // Move to concept level
-      response = await testRunner.zptNavigate('scientific research', 'text');
-      testRunner.validateZPTResponse(response, 'text', 0);
+      // Move to unit level
+      response = await testRunner.zptNavigate('scientific research', 'unit');
+      testRunner.validateZPTResponse(response, 'unit', 0);
       
       // Move to entity level
       response = await testRunner.zptNavigate('scientific research', 'entity');
       testRunner.validateZPTResponse(response, 'entity', 0);
       
-      // Move to molecular level
-      response = await testRunner.zptNavigate('scientific research', 'molecular');
-      testRunner.validateZPTResponse(response, 'molecular', 0);
+      // Move to micro level
+      response = await testRunner.zptNavigate('scientific research', 'micro');
+      testRunner.validateZPTResponse(response, 'micro', 0);
 
       // Each level should maintain topic coherence
       expect(response.content.metadata.navigation.query).toBe('scientific research');
@@ -547,7 +552,7 @@ describe('ZPT MCP Integration Tests', () => {
       testRunner.validateZPTResponse(response, 'entity', 0);
       
       // Should maintain relevance throughout refinement
-      expect(response.content.filters.domain).toEqual(['science']);
+      expect(response.content.filters.domains).toEqual(['science']);
       expect(response.content.filters.keywords).toEqual(['research']);
     }, TEST_CONFIG.TIMEOUT);
 
@@ -559,7 +564,7 @@ describe('ZPT MCP Integration Tests', () => {
       };
 
       // Test different tilt perspectives on same content
-      const tilts = ['keywords', 'entities', 'relationships', 'temporal'];
+      const tilts = ['keywords', 'embedding', 'graph', 'temporal'];
       
       for (const tilt of tilts) {
         const response = await testRunner.zptNavigate(
@@ -574,7 +579,7 @@ describe('ZPT MCP Integration Tests', () => {
         
         // Same base query and filters, different perspective
         expect(response.content.metadata.navigation.query).toBe(baseParams.query);
-        expect(response.content.filters.domain).toEqual(['technology']);
+        expect(response.content.filters.domains).toEqual(['technology']);
       }
     }, TEST_CONFIG.TIMEOUT);
   });

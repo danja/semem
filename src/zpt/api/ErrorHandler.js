@@ -373,7 +373,7 @@ export default class ErrorHandler {
                 recovered: true,
                 message: 'Suggested valid zoom levels',
                 data: {
-                    validZoomLevels: ['entity', 'unit', 'text', 'community', 'corpus'],
+                    validZoomLevels: ['micro', 'entity', 'text', 'unit', 'community', 'corpus'],
                     suggestion: 'unit'
                 }
             };

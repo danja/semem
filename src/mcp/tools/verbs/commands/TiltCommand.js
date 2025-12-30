@@ -17,7 +17,7 @@ export class TiltCommand extends BaseVerbCommand {
   /**
    * Execute tilt command
    * @param {Object} params - Command parameters
-   * @param {string} params.style - Presentation style (keywords, summary, detailed)
+   * @param {string} params.style - Presentation style (keywords, embedding, graph, temporal)
    * @param {string} params.query - Optional query for re-navigation
    * @returns {Promise<Object>} Command result
    */

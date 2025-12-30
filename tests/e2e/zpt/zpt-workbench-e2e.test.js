@@ -296,31 +296,31 @@ test.describe('ZPT Workbench E2E Tests', () => {
   });
 
   test.describe('Exercise Set 1: Basic Zoom Navigation', () => {
-    test('Exercise 1.1: Molecular Level Detail', async () => {
+    test('Exercise 1.1: Micro Level Detail', async () => {
       await tester.clearConsole();
       
-      // Set zoom to molecular level
-      await tester.setZoomLevel('molecular');
+      // Set zoom to micro level
+      await tester.setZoomLevel('micro');
       
       // Execute navigation
       await tester.executeNavigation();
       
       // Get and validate results
       const results = await tester.getNavigationResults();
-      console.log(`📊 Found ${results.length} molecular-level results`);
+      console.log(`📊 Found ${results.length} micro-level results`);
       
-      // Should contain specific molecular terms
+      // Should contain specific micro-level terms
       if (results.length > 0) {
-        const molecularTerms = ['ATP', 'adenine', 'thymine', 'guanine', 'cytosine', 'mitochondria'];
-        const foundTerms = tester.validateResultContent(results, molecularTerms);
-        console.log(`🧬 Found molecular terms: ${foundTerms.join(', ')}`);
+        const microTerms = ['ATP', 'adenine', 'thymine', 'guanine', 'cytosine', 'mitochondria'];
+        const foundTerms = tester.validateResultContent(results, microTerms);
+        console.log(`🧬 Found micro terms: ${foundTerms.join(', ')}`);
         
-        // Validate result types are molecular/detailed
-        tester.validateResultType(results, 'molecular|fact|data');
+        // Validate result types are micro/detailed
+        tester.validateResultType(results, 'micro|fact|data');
       }
       
       // Validate final state
-      await tester.validateZPTState('molecular');
+      await tester.validateZPTState('micro');
     });
 
     test('Exercise 1.2: Entity Level Navigation', async () => {
@@ -350,58 +350,58 @@ test.describe('ZPT Workbench E2E Tests', () => {
       await tester.validateZPTState('entity');
     });
 
-    test('Exercise 1.3: Concept Level Abstraction', async () => {
+    test('Exercise 1.3: Text Level Detail', async () => {
       await tester.clearConsole();
       
-      // Set zoom to concept level
-      await tester.setZoomLevel('concept');
+      // Set zoom to text level
+      await tester.setZoomLevel('text');
       
       // Execute navigation
       await tester.executeNavigation();
       
       // Get and validate results
       const results = await tester.getNavigationResults();
-      console.log(`📊 Found ${results.length} concept-level results`);
+      console.log(`📊 Found ${results.length} text-level results`);
       
-      // Should contain abstract concepts
+      // Should contain full text fragments
       if (results.length > 0) {
-        const concepts = ['democracy', 'governance', 'education', 'empowerment', 'intelligence', 'learning'];
-        const foundConcepts = tester.validateResultContent(results, concepts);
-        console.log(`💭 Found concepts: ${foundConcepts.join(', ')}`);
+        const terms = ['democracy', 'governance', 'education', 'empowerment', 'intelligence', 'learning'];
+        const foundTerms = tester.validateResultContent(results, terms);
+        console.log(`📄 Found text terms: ${foundTerms.join(', ')}`);
         
-        // Validate result types are concepts
-        tester.validateResultType(results, 'concept|idea|process');
+        // Validate result types are text fragments
+        tester.validateResultType(results, 'text|document|excerpt');
       }
       
       // Validate final state
-      await tester.validateZPTState('concept');
+      await tester.validateZPTState('text');
     });
 
-    test('Exercise 1.4: Theme Level Overview', async () => {
+    test('Exercise 1.4: Unit Level Abstraction', async () => {
       await tester.clearConsole();
       
-      // Set zoom to theme level
-      await tester.setZoomLevel('theme');
+      // Set zoom to unit level
+      await tester.setZoomLevel('unit');
       
       // Execute navigation
       await tester.executeNavigation();
       
       // Get and validate results
       const results = await tester.getNavigationResults();
-      console.log(`📊 Found ${results.length} theme-level results`);
+      console.log(`📊 Found ${results.length} unit-level results`);
       
-      // Should provide high-level thematic groupings
+      // Should provide semantic unit summaries
       if (results.length > 0) {
-        // Validate result types are themes
-        tester.validateResultType(results, 'theme|domain|category');
+        // Validate result types are semantic units
+        tester.validateResultType(results, 'unit|summary|segment');
         
-        const themes = ['science', 'technology', 'education', 'history'];
-        const foundThemes = tester.validateResultContent(results, themes);
-        console.log(`🎯 Found themes: ${foundThemes.join(', ')}`);
+        const terms = ['science', 'technology', 'education', 'history'];
+        const foundTerms = tester.validateResultContent(results, terms);
+        console.log(`🎯 Found unit terms: ${foundTerms.join(', ')}`);
       }
       
       // Validate final state
-      await tester.validateZPTState('theme');
+      await tester.validateZPTState('unit');
     });
   });
 
@@ -592,8 +592,8 @@ test.describe('ZPT Workbench E2E Tests', () => {
     test('Exercise 4.1: Science Research Navigation', async () => {
       await tester.clearConsole();
       
-      // Configure combined ZPT: concept zoom + science domain + relationships tilt
-      await tester.setZoomLevel('concept');
+      // Configure combined ZPT: unit zoom + science domain + relationships tilt
+      await tester.setZoomLevel('unit');
       await tester.setPanFilters(['science']);
       await tester.setTilt('relationships');
       
@@ -604,7 +604,7 @@ test.describe('ZPT Workbench E2E Tests', () => {
       const results = await tester.getNavigationResults();
       console.log(`📊 Found ${results.length} science research results`);
       
-      // Should show scientific concepts with relational emphasis
+      // Should show scientific units with relational emphasis
       if (results.length > 0) {
         const scienceTerms = ['research', 'study', 'technology', 'cellular', 'molecular'];
         const foundTerms = tester.validateResultContent(results, scienceTerms);
@@ -612,7 +612,7 @@ test.describe('ZPT Workbench E2E Tests', () => {
       }
       
       // Validate final state
-      await tester.validateZPTState('concept', { domains: ['science'] }, 'relationships');
+      await tester.validateZPTState('unit', { domains: ['science'] }, 'relationships');
     });
 
     test('Exercise 4.2: Historical Entity Analysis', async () => {
@@ -641,11 +641,11 @@ test.describe('ZPT Workbench E2E Tests', () => {
       await tester.validateZPTState('entity', { keywords: ['Renaissance', 'history'] }, 'temporal');
     });
 
-    test('Exercise 4.3: Technology Theme Exploration', async () => {
+    test('Exercise 4.3: Technology Community Exploration', async () => {
       await tester.clearConsole();
       
-      // Configure combined ZPT: theme zoom + technology keywords + keywords tilt
-      await tester.setZoomLevel('theme');
+      // Configure combined ZPT: community zoom + technology keywords + keywords tilt
+      await tester.setZoomLevel('community');
       await tester.setPanFilters([], ['technology', 'computing']);
       await tester.setTilt('keywords');
       
@@ -654,9 +654,9 @@ test.describe('ZPT Workbench E2E Tests', () => {
       
       // Get and validate results
       const results = await tester.getNavigationResults();
-      console.log(`📊 Found ${results.length} technology theme results`);
+      console.log(`📊 Found ${results.length} technology community results`);
       
-      // Should show technology themes with keyword emphasis
+      // Should show technology communities with keyword emphasis
       if (results.length > 0) {
         const techTerms = ['artificial', 'intelligence', 'machine', 'learning', 'technology', 'computing'];
         const foundTerms = tester.validateResultContent(results, techTerms);
@@ -664,7 +664,7 @@ test.describe('ZPT Workbench E2E Tests', () => {
       }
       
       // Validate final state
-      await tester.validateZPTState('theme', { keywords: ['technology', 'computing'] }, 'keywords');
+      await tester.validateZPTState('community', { keywords: ['technology', 'computing'] }, 'keywords');
     });
   });
 
@@ -672,8 +672,8 @@ test.describe('ZPT Workbench E2E Tests', () => {
     test('Exercise 5.1: Zoom Progression Sequence', async () => {
       await tester.clearConsole();
       
-      // Test zoom progression: theme → concept → entity → molecular
-      const zoomLevels = ['theme', 'concept', 'entity', 'molecular'];
+      // Test zoom progression: corpus → community → unit → text → entity → micro
+      const zoomLevels = ['corpus', 'community', 'unit', 'text', 'entity', 'micro'];
       
       for (const zoom of zoomLevels) {
         console.log(`🔍 Testing zoom level: ${zoom}`);
@@ -727,7 +727,7 @@ test.describe('ZPT Workbench E2E Tests', () => {
       await tester.clearConsole();
       
       // Test different tilt perspectives on same content
-      await tester.setZoomLevel('concept');
+      await tester.setZoomLevel('unit');
       await tester.setPanFilters(['technology']);
       
       const tilts = ['keywords', 'entities', 'relationships', 'temporal'];
@@ -742,7 +742,7 @@ test.describe('ZPT Workbench E2E Tests', () => {
         console.log(`  📊 Found ${results.length} results with ${tilt} tilt`);
         
         // Same base query and filters, different perspective
-        await tester.validateZPTState('concept', { domains: ['technology'] }, tilt);
+        await tester.validateZPTState('unit', { domains: ['technology'] }, tilt);
         
         // Wait between tilt changes
         await tester.page.waitForTimeout(500);
@@ -794,7 +794,7 @@ test.describe('ZPT Workbench E2E Tests', () => {
       await tester.clearConsole();
       
       // Perform ZPT operations
-      await tester.setZoomLevel('concept');
+      await tester.setZoomLevel('unit');
       await tester.executeNavigation();
       
       // Get console messages
@@ -854,12 +854,12 @@ test.describe('ZPT Workbench E2E Tests', () => {
 
     test('should maintain state consistency across operations', async () => {
       // Perform multiple state changes
-      await tester.setZoomLevel('concept');
+      await tester.setZoomLevel('unit');
       await tester.setPanFilters(['technology'], ['AI']);
       await tester.setTilt('relationships');
       
       // Validate state is maintained
-      await tester.validateZPTState('concept', {
+      await tester.validateZPTState('unit', {
         domains: ['technology'],
         keywords: ['AI']
       }, 'relationships');
@@ -868,7 +868,7 @@ test.describe('ZPT Workbench E2E Tests', () => {
       await tester.executeNavigation();
       
       // State should still be consistent after navigation
-      await tester.validateZPTState('concept', {
+      await tester.validateZPTState('unit', {
         domains: ['technology'], 
         keywords: ['AI']
       }, 'relationships');

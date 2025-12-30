@@ -301,7 +301,7 @@ export default class NavigationEndpoint {
             success: true,
             requestId,
             options: {
-                zoomLevels: ['entity', 'unit', 'text', 'community', 'corpus'],
+                zoomLevels: ['micro', 'entity', 'text', 'unit', 'community', 'corpus'],
                 tiltRepresentations: ['embedding', 'keywords', 'graph', 'temporal'],
                 outputFormats: this.transformer ? 
                     Object.keys(this.transformer.promptFormatter.formats) : 
@@ -353,8 +353,8 @@ export default class NavigationEndpoint {
                 }
             },
             documentation: {
-                zoom: 'Abstraction level: entity (specific elements), unit (semantic chunks), text (full content), community (summaries), corpus (overview)',
-                pan: 'Domain filtering: topic (subject constraints), entity (specific scope), temporal (time bounds), geographic (location limits)',
+                zoom: 'Abstraction level: micro (sub-entity detail), entity (named elements), text (full content), unit (semantic summaries), community (summaries), corpus (overview)',
+                pan: 'Filtering: topic (subject constraints), entity (specific scope), corpuscle (subset scope), temporal (time bounds), geographic (location limits)',
                 tilt: 'Representation format: embedding (vectors), keywords (terms), graph (relationships), temporal (sequences)',
                 transform: 'Output options: maxTokens (budget), format (structure), tokenizer (model), metadata (context)'
             }

@@ -479,25 +479,32 @@ export default class ZPTControls {
     
     getZoomLevelDescription(level) {
         const descriptions = {
+            micro: 'Fine-grained attributes and interaction details',
             entity: 'Individual interactions as separate entities',
-            unit: 'Semantic units grouping related interactions',
             text: 'Document or conversation-level groupings',
-            community: 'Concept communities and topic clusters',
+            unit: 'Semantic units grouping related interactions',
+            community: 'Unit communities and topic clusters',
             corpus: 'Corpus-wide overview and statistics'
         };
-        
-        return descriptions[level] || 'Unknown zoom level';
+
+        if (!descriptions[level]) {
+            throw new Error(`Unsupported zoom level: ${level}`);
+        }
+        return descriptions[level];
     }
     
     getTiltStyleDescription(style) {
         const descriptions = {
-            keywords: 'Focus on concept keywords and topics',
+            keywords: 'Focus on unit keywords and topics',
             embedding: 'Use vector embeddings for similarity',
             graph: 'Show relationship networks and connections',
             temporal: 'Arrange by time and sequence'
         };
-        
-        return descriptions[style] || 'Unknown tilt style';
+
+        if (!descriptions[style]) {
+            throw new Error(`Unsupported tilt style: ${style}`);
+        }
+        return descriptions[style];
     }
     
     cleanup() {

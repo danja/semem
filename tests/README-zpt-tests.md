@@ -6,9 +6,9 @@ This directory contains comprehensive tests for the ZPT navigation functionality
 
 The ZPT tests are based on exercises defined in [`docs/manual/zpt-exercises.md`](../docs/manual/zpt-exercises.md) and test the following functionality:
 
-- **Zoom**: Navigation at different abstraction levels (molecular → entity → concept → theme)
+- **Zoom**: Navigation at different abstraction levels (micro → entity → text → unit → community → corpus)
 - **Pan**: Content filtering by domains and keywords  
-- **Tilt**: Viewing perspectives (keywords, entities, relationships, temporal)
+- **Tilt**: Viewing perspectives (keywords, embedding, graph, temporal)
 
 ## Test Structure
 
@@ -16,7 +16,7 @@ The ZPT tests are based on exercises defined in [`docs/manual/zpt-exercises.md`]
 **Location**: `tests/integration/zpt/zpt-mcp-integration.test.js`
 
 Tests ZPT functionality directly through the MCP server API:
-- ✅ Basic zoom level navigation (molecular, entity, concept, theme)
+- ✅ Basic zoom level navigation (micro, entity, text, unit, community, corpus)
 - ✅ Pan filtering by domains and keywords
 - ✅ Tilt perspective changes
 - ✅ Combined ZPT operations
@@ -38,12 +38,11 @@ Tests ZPT functionality through the workbench UI:
 
 Both test suites seed the system with comprehensive test data covering:
 
-- **Molecular**: Cellular biology, DNA bases, mitochondria
+- **Micro**: Cellular biology, DNA bases, mitochondria
 - **Entities**: Scientists (Einstein, Curie), institutions (Princeton, NASA)
-- **Concepts**: Democracy, education, governance, artificial intelligence
-- **Science**: Space telescopes, astronomical observations
-- **History**: Renaissance, temporal events, cultural movements
-- **Technology**: AI, machine learning, neural networks
+- **Text**: Full passages about science, history, and technology
+- **Units**: Summarized chunks covering democracy, education, governance, AI
+- **Community**: Science, history, and technology clusters
 
 ## Prerequisites
 
@@ -155,10 +154,12 @@ Located in `playwright.config.js`:
 ## Test Exercises
 
 ### Exercise Set 1: Basic Zoom Navigation
-- **1.1**: Molecular level detail (ATP, DNA bases)
+- **1.1**: Micro level detail (ATP, DNA bases)
 - **1.2**: Entity level navigation (Einstein, Princeton)  
-- **1.3**: Concept level abstraction (democracy, education)
-- **1.4**: Theme level overview (science, technology domains)
+- **1.3**: Text level detail (full passages)
+- **1.4**: Unit level abstraction (semantic summaries)
+- **1.5**: Community level overview (science, technology clusters)
+- **1.6**: Corpus level overview (corpus stats)
 
 ### Exercise Set 2: Pan Filtering  
 - **2.1**: Domain-based filtering (science, technology)
@@ -177,7 +178,7 @@ Located in `playwright.config.js`:
 - **4.3**: Technology themes (theme + tech keywords + keywords)
 
 ### Exercise Set 5: Dynamic Navigation Sequences
-- **5.1**: Zoom progression (theme → concept → entity → molecular)
+- **5.1**: Zoom progression (corpus → community → unit → text → entity → micro)
 - **5.2**: Pan filter refinement (progressive narrowing)
 - **5.3**: Tilt perspective switching (same content, different views)
 

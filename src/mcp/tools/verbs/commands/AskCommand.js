@@ -160,10 +160,14 @@ export class AskCommand extends BaseVerbCommand {
   async processWithLocalContext(question, threshold, enhancementResults, startTime) {
     try {
       // Prepare ZPT state for context retrieval
+      const baseState = this.stateManager.getState();
       const zptState = {
-        ...this.stateManager.getState(),
+        ...baseState,
         focusQuery: question,
-        panDomains: [],
+        pan: {
+          ...baseState.pan,
+          domains: Array.isArray(baseState.pan?.domains) ? baseState.pan.domains : []
+        },
         relevanceThreshold: threshold || SPARQL_CONFIG.SIMILARITY.DEFAULT_THRESHOLD,
         maxMemories: 10
       };
@@ -177,15 +181,34 @@ export class AskCommand extends BaseVerbCommand {
         // Continue without embedding - will fallback to text similarity
       }
 
-      // Retrieve memories using domain manager
-      const searchResults = await this.memoryDomainManager.getVisibleMemories(question, zptState);
+      if (!this.zptService) {
+        throw new Error('ZPT service unavailable for context retrieval');
+      }
+
+      const navResult = await this.zptService.navigate({
+        query: question,
+        zoom: zptState.zoom,
+        pan: zptState.pan,
+        tilt: zptState.tilt
+      });
+
+      if (!navResult?.success || !Array.isArray(navResult.content?.data)) {
+        throw new Error('ZPT navigation failed to return context data');
+      }
+
+      const searchResults = navResult.content.data
+        .map(item => ({
+          ...item,
+          content: item.content || item.label || item.description || item.text || ''
+        }))
+        .filter(item => item.content);
 
       verbsLogger.info('Context retrieved successfully', {
         resultsCount: searchResults.length
       });
 
       // Generate response with available context
-      const answer = await this.generateContextualResponse(question, searchResults, enhancementResults);
+      const answer = await this.generateContextualResponse(question, searchResults, enhancementResults, zptState.tilt);
 
       return {
         success: true,
@@ -261,7 +284,7 @@ export class AskCommand extends BaseVerbCommand {
    * Generate response using available context
    * @private
    */
-  async generateContextualResponse(question, searchResults, enhancementResults) {
+  async generateContextualResponse(question, searchResults, enhancementResults, tilt) {
     const hasLocalContext = searchResults.length > 0;
     const hasEnhancementContext = enhancementResults?.context?.combinedPrompt;
 
@@ -273,9 +296,7 @@ export class AskCommand extends BaseVerbCommand {
 
     // Add local context if available
     if (hasLocalContext) {
-      const contextText = searchResults.map(result =>
-        result.content || result.output || result.prompt || result.response
-      ).join('\n\n');
+      const contextText = this.formatLocalContextForTilt(searchResults, tilt);
       promptParts.push(`Personal knowledge context:\n${contextText}`);
     }
 
@@ -296,6 +317,111 @@ export class AskCommand extends BaseVerbCommand {
       verbsLogger.error('LLM generation error:', llmError);
       return `I found relevant information but could not generate a response: ${llmError.message}`;
     }
+  }
+
+  formatLocalContextForTilt(searchResults, tilt) {
+    if (!tilt) {
+      throw new Error('Tilt representation required for context formatting');
+    }
+
+    switch (tilt) {
+      case 'keywords':
+        return this.formatKeywordContext(searchResults);
+      case 'embedding':
+        return this.formatEmbeddingContext(searchResults);
+      case 'graph':
+        return this.formatGraphContext(searchResults);
+      case 'temporal':
+        return this.formatTemporalContext(searchResults);
+      default:
+        throw new Error(`Unsupported tilt representation: ${tilt}`);
+    }
+  }
+
+  formatKeywordContext(searchResults) {
+    return searchResults.map(result => {
+      const keywords = this.extractKeywordList(result);
+      const label = result.label || result.id || 'item';
+      const content = result.content || result.output || result.prompt || result.response || result.description || result.text || '';
+      const keywordText = keywords.length > 0 ? `keywords: ${keywords.join(', ')}` : 'keywords: none';
+      const contentText = content ? `content: ${content.slice(0, 200)}` : 'content: none';
+      return `- ${label}\n  ${keywordText}\n  ${contentText}`;
+    }).join('\n');
+  }
+
+  formatEmbeddingContext(searchResults) {
+    return searchResults.map(result => {
+      const label = result.label || result.id || 'item';
+      const embedding = result.embedding || result.metadata?.embedding || result.metadata?.vector;
+      const similarity = result.similarity ?? result.metadata?.similarity;
+      const dimension = embedding?.dimension || embedding?.length || result.metadata?.dimension;
+      const model = embedding?.model || result.metadata?.model;
+      const content = result.content || result.output || result.prompt || result.response || result.description || result.text || '';
+
+      const embeddingParts = [
+        similarity !== undefined ? `similarity: ${similarity}` : null,
+        dimension ? `dimension: ${dimension}` : null,
+        model ? `model: ${model}` : null
+      ].filter(Boolean).join(', ');
+
+      const embeddingText = embeddingParts ? `embedding: ${embeddingParts}` : 'embedding: unavailable';
+      const contentText = content ? `content: ${content.slice(0, 200)}` : 'content: none';
+      return `- ${label}\n  ${embeddingText}\n  ${contentText}`;
+    }).join('\n');
+  }
+
+  formatGraphContext(searchResults) {
+    return searchResults.map(result => {
+      const label = result.label || result.id || 'item';
+      const nodes = result.nodes || result.graph?.nodes || result.metadata?.nodes;
+      const edges = result.edges || result.graph?.edges || result.metadata?.edges;
+      const relationships = result.relationships || result.conceptualRelations || result.relations;
+      const nodeCount = Array.isArray(nodes) ? nodes.length : (nodes?.count || 0);
+      const edgeCount = Array.isArray(edges) ? edges.length : (edges?.count || 0);
+      const relationCount = Array.isArray(relationships) ? relationships.length : (relationships?.count || 0);
+
+      const graphSummary = [
+        nodeCount ? `nodes: ${nodeCount}` : null,
+        edgeCount ? `edges: ${edgeCount}` : null,
+        relationCount ? `relations: ${relationCount}` : null
+      ].filter(Boolean).join(', ') || 'graph: unavailable';
+
+      return `- ${label}\n  ${graphSummary}`;
+    }).join('\n');
+  }
+
+  formatTemporalContext(searchResults) {
+    const temporalItems = searchResults
+      .map(result => {
+        const label = result.label || result.id || 'item';
+        const timestamp = result.timestamp || result.date || result.created || result.metadata?.timestamp || result.metadata?.date;
+        const content = result.content || result.output || result.prompt || result.response || result.description || result.text || '';
+        return { label, timestamp, content };
+      })
+      .sort((a, b) => {
+        const aTime = a.timestamp ? new Date(a.timestamp).getTime() : 0;
+        const bTime = b.timestamp ? new Date(b.timestamp).getTime() : 0;
+        return aTime - bTime;
+      });
+
+    return temporalItems.map(item => {
+      const timeText = item.timestamp ? `timestamp: ${item.timestamp}` : 'timestamp: unknown';
+      const contentText = item.content ? `content: ${item.content.slice(0, 200)}` : 'content: none';
+      return `- ${item.label}\n  ${timeText}\n  ${contentText}`;
+    }).join('\n');
+  }
+
+  extractKeywordList(result) {
+    const keywords = result.keywords || result.metadata?.keywords || result.tags || result.concepts || [];
+    if (Array.isArray(keywords)) {
+      return keywords.map(keyword => String(keyword)).filter(Boolean);
+    }
+
+    if (typeof keywords === 'string') {
+      return keywords.split(',').map(keyword => keyword.trim()).filter(Boolean);
+    }
+
+    return [];
   }
 
   /**

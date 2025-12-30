@@ -26,7 +26,9 @@ const mockDOM = new JSDOM(`
             <div id="interaction-list"></div>
         </div>
         <div id="zpt-controls">
+            <button class="zoom-button" data-level="micro">Micro</button>
             <button class="zoom-button" data-level="entity">Entity</button>
+            <button class="zoom-button" data-level="text">Text</button>
             <button class="zoom-button" data-level="unit">Unit</button>
             <button class="tilt-button" data-style="keywords">Keywords</button>
             <button class="tilt-button" data-style="embedding">Embedding</button>

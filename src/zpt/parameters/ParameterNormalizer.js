@@ -71,8 +71,10 @@ export default class ParameterNormalizer {
      */
     normalizePan(pan = {}) {
         const normalized = {
-            topic: this.normalizeTopicFilter(pan.topic),
-            entity: this.normalizeEntityFilter(pan.entity),
+            domains: this.normalizeDomainsFilter(pan.domains),
+            keywords: this.normalizeKeywordsFilter(pan.keywords),
+            entities: this.normalizeEntitiesFilter(pan.entities),
+            corpuscle: this.normalizeCorpuscleFilter(pan.corpuscle),
             temporal: this.normalizeTemporalFilter(pan.temporal),
             geographic: this.normalizeGeographicFilter(pan.geographic)
         };
@@ -127,29 +129,40 @@ export default class ParameterNormalizer {
         return normalized;
     }
 
-    /**
-     * Normalize topic filter
-     */
-    normalizeTopicFilter(topic) {
-        if (!topic) return undefined;
+    normalizeDomainsFilter(domains) {
+        return this.normalizeStringListFilter(domains);
+    }
+
+    normalizeKeywordsFilter(keywords) {
+        return this.normalizeStringListFilter(keywords);
+    }
+
+    normalizeEntitiesFilter(entities) {
+        return this.normalizeStringListFilter(entities);
+    }
+
+    normalizeStringListFilter(values) {
+        if (!values || !Array.isArray(values)) return undefined;
+        const normalizedValues = values.map(value => value.trim()).filter(Boolean);
+        if (normalizedValues.length === 0) return undefined;
 
         return {
-            value: topic.toLowerCase().trim(),
-            pattern: topic.includes('*') ? 'wildcard' : 'exact',
-            namespace: this.extractNamespace(topic)
+            values: normalizedValues,
+            count: normalizedValues.length,
+            type: normalizedValues.length === 1 ? 'single' : 'multiple'
         };
     }
 
     /**
-     * Normalize entity filter
+     * Normalize corpuscle filter
      */
-    normalizeEntityFilter(entities) {
-        if (!entities || !Array.isArray(entities)) return undefined;
+    normalizeCorpuscleFilter(corpuscles) {
+        if (!corpuscles || !Array.isArray(corpuscles)) return undefined;
 
         return {
-            values: entities.map(e => e.trim()),
-            count: entities.length,
-            type: entities.length === 1 ? 'single' : 'multiple'
+            values: corpuscles.map(c => c.trim()),
+            count: corpuscles.length,
+            type: corpuscles.length === 1 ? 'single' : 'multiple'
         };
     }
 
@@ -221,8 +234,9 @@ export default class ParameterNormalizer {
             'corpus': 1,    // Highest level overview
             'community': 2, // Community-level aggregation
             'unit': 3,      // Semantic unit level
-            'entity': 4,    // Individual entities
-            'text': 5       // Full text detail
+            'text': 4,      // Full text detail
+            'entity': 5,    // Individual entities
+            'micro': 6      // Sub-entity components
         };
         return granularityMap[zoom] || 3;
     }
@@ -236,7 +250,8 @@ export default class ParameterNormalizer {
             'community': ['ragno:Community'],
             'unit': ['ragno:SemanticUnit', 'ragno:Unit'],
             'entity': ['ragno:Entity'],
-            'text': ['ragno:TextElement', 'ragno:Text']
+            'text': ['ragno:TextElement', 'ragno:Text'],
+            'micro': ['ragno:Attribute']
         };
         return typeMap[zoom] || [];
     }
@@ -311,8 +326,9 @@ export default class ParameterNormalizer {
         complexity += params.zoom.granularity;
 
         // Add complexity for filters
-        if (params.pan.topic) complexity += 1;
-        if (params.pan.entity) complexity += params.pan.entity.count;
+        if (params.pan.domains) complexity += params.pan.domains.count;
+        if (params.pan.keywords) complexity += params.pan.keywords.count;
+        if (params.pan.entities) complexity += params.pan.entities.count;
         if (params.pan.temporal) complexity += 2;
         if (params.pan.geographic) complexity += 3;
 

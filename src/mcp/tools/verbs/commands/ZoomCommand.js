@@ -17,7 +17,7 @@ export class ZoomCommand extends BaseVerbCommand {
   /**
    * Execute zoom command
    * @param {Object} params - Command parameters
-   * @param {string} params.level - Zoom level (entity, concept, document, community)
+   * @param {string} params.level - Zoom level (micro, entity, text, unit, community, corpus)
    * @param {string} params.query - Optional query for navigation
    * @returns {Promise<Object>} Command result
    */

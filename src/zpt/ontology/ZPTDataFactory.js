@@ -436,10 +436,10 @@ export class ZPTDataFactory {
         }
 
         const zoomMap = {
+            'micro': ZPT.MicroLevel,
             'entity': ZPT.EntityLevel,
             'unit': ZPT.UnitLevel,
             'text': ZPT.TextLevel,
-            'micro': ZPT.TextLevel, // Alias for text level
             'community': ZPT.CommunityLevel,
             'corpus': ZPT.CorpusLevel
         };

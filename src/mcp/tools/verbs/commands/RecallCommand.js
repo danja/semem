@@ -44,10 +44,14 @@ export class RecallCommand extends BaseVerbCommand {
       });
 
       // Create ZPT state for memory retrieval
+      const baseState = this.stateManager.getState();
       const zptState = {
-        ...this.stateManager.getState(),
+        ...baseState,
         focusQuery: query,
-        panDomains: domains || [],
+        pan: {
+          ...baseState.pan,
+          domains: Array.isArray(domains) ? domains : (baseState.pan?.domains || [])
+        },
         relevanceThreshold: relevanceThreshold || SPARQL_CONFIG.SIMILARITY.DEFAULT_THRESHOLD,
         maxMemories: maxResults,
         timeRange
@@ -64,30 +68,39 @@ export class RecallCommand extends BaseVerbCommand {
         }
       }
 
-      // Use memory domain manager for targeted retrieval
-      const memories = await this.memoryDomainManager.getVisibleMemories(query || '', zptState);
-
-      // Filter by domains if specified
-      let filteredMemories = memories;
-      if (domains && domains.length > 0) {
-        filteredMemories = memories.filter(memory =>
-          domains.some(domain => memory.metadata?.domain === domain || memory.domain === domain)
-        );
+      if (!this.zptService) {
+        throw new Error('ZPT service unavailable for recall');
       }
 
-      // Apply time range filtering if specified
-      if (timeRange) {
-        const timeFilter = this.parseTimeRange(timeRange);
-        if (timeFilter) {
-          filteredMemories = filteredMemories.filter(memory => {
-            const memoryTime = new Date(memory.timestamp || memory.metadata?.timestamp || Date.now());
-            return memoryTime >= timeFilter.start && memoryTime <= timeFilter.end;
-          });
-        }
+      const timeFilter = timeRange ? this.parseTimeRange(timeRange) : null;
+
+      const navResult = await this.zptService.navigate({
+        query: query || '',
+        zoom: zptState.zoom,
+        pan: {
+          ...zptState.pan,
+          domains: Array.isArray(domains) ? domains : zptState.pan?.domains || [],
+          temporal: timeFilter ? {
+            start: timeFilter.start.toISOString(),
+            end: timeFilter.end.toISOString()
+          } : zptState.pan?.temporal || {}
+        },
+        tilt: zptState.tilt
+      });
+
+      if (!navResult?.success || !Array.isArray(navResult.content?.data)) {
+        throw new Error('ZPT navigation failed to return recall data');
       }
+
+      const memories = navResult.content.data
+        .map(item => ({
+          ...item,
+          content: item.content || item.label || item.description || item.text || ''
+        }))
+        .filter(item => item.content);
 
       // Limit results
-      const finalResults = filteredMemories.slice(0, maxResults);
+      const finalResults = memories.slice(0, maxResults);
 
       return this.createSuccessResponse({
         query,
@@ -95,7 +108,7 @@ export class RecallCommand extends BaseVerbCommand {
         timeRange,
         memories: finalResults,
         totalFound: memories.length,
-        filteredCount: filteredMemories.length,
+        filteredCount: memories.length,
         returnedCount: finalResults.length,
         relevanceThreshold,
         zptState: this.stateManager.getState()

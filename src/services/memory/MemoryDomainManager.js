@@ -151,7 +151,7 @@ export class MemoryDomainManager {
      */
     calculateRelevance(memory, currentZPTState) {
         const factors = {
-            domainMatch: this.computeDomainMatch(memory.domains || [], currentZPTState.panDomains || []),
+            domainMatch: this.computeDomainMatch(memory.domains || [], currentZPTState.pan?.domains || []),
             temporal: this.computeTemporalRelevance(memory.timestamp, memory.lastAccessed),
             semantic: this.computeSemanticRelevance(memory.embedding, currentZPTState.focusEmbedding),
             frequency: this.computeFrequencyRelevance(memory.accessCount, memory.metadata?.importance)

@@ -105,6 +105,8 @@ export default class DataProcessor {
     determineNodeLimit(zoomLevel, metadata = {}) {
         const baseLimit = metadata?.layout?.maxNodes || 250;
         switch (zoomLevel) {
+            case 'micro':
+                return Math.min(baseLimit, 220);
             case 'unit':
             case 'text':
                 return Math.min(baseLimit, 200);
@@ -401,6 +403,9 @@ export default class DataProcessor {
      */
     applyZoomFilter(interactions, zoom) {
         switch (zoom) {
+            case 'micro':
+                // Show fine-grained interaction details without aggregation
+                return interactions;
             case 'entity':
                 // Show individual interactions as entities
                 return interactions;

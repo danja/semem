@@ -67,6 +67,8 @@ export class EnhancedZPTQueries {
      */
     buildZoomQuery(zoomLevel) {
         switch (zoomLevel.toLowerCase()) {
+            case 'micro':
+                return this.buildMicroZoomQuery();
             case 'entity':
                 return this.buildEntityZoomQuery();
             case 'unit':
@@ -80,6 +82,25 @@ export class EnhancedZPTQueries {
             default:
                 throw new Error(`Unsupported zoom level: ${zoomLevel}`);
         }
+    }
+
+    /**
+     * Micro-level zoom: Focus on ragno:Attribute instances
+     */
+    buildMicroZoomQuery() {
+        return `
+            SELECT DISTINCT ?item ?label ?content ?attributeType ?entity WHERE {
+                GRAPH <${this.contentGraph}> {
+                    ?item a ragno:Attribute .
+                    
+                    OPTIONAL { ?item rdfs:label ?label }
+                    OPTIONAL { ?item ragno:content ?content }
+                    OPTIONAL { ?item ragno:subType ?attributeType }
+                    OPTIONAL { ?entity ragno:hasAttribute ?item }
+                }
+            }
+            ORDER BY LCASE(STR(?label))
+        `;
     }
 
     /**
@@ -446,6 +467,7 @@ export class EnhancedZPTQueries {
      */
     getRagnoTypeForZoom(zoomLevel) {
         const mapping = {
+            'micro': 'ragno:Attribute',
             'entity': 'ragno:Entity',
             'unit': 'ragno:Unit',
             'text': 'ragno:TextElement',

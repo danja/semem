@@ -112,7 +112,7 @@ describe('VSOM E2E Integration Tests', () => {
     const zoomResult = await makeVSOMRequest('/api/zpt/navigate', {
       method: 'POST',
       body: JSON.stringify({
-        zoom: 'concept',
+        zoom: 'unit',
         query: 'test navigation'
       })
     });
@@ -125,10 +125,8 @@ describe('VSOM E2E Integration Tests', () => {
       method: 'POST',
       body: JSON.stringify({
         pan: {
-          direction: 'semantic',
-          conceptFilter: ['testing', 'navigation'],
-          maxResults: 25,
-          threshold: 0.6
+          keywords: ['testing', 'navigation'],
+          domains: ['navigation']
         }
       })
     });
@@ -140,7 +138,7 @@ describe('VSOM E2E Integration Tests', () => {
     const tiltResult = await makeVSOMRequest('/api/zpt/navigate', {
       method: 'POST',
       body: JSON.stringify({
-        tilt: 'summary',
+        tilt: 'keywords',
         query: 'current view'
       })
     });
@@ -326,13 +324,12 @@ describe('VSOM E2E Integration Tests', () => {
     await makeVSOMRequest('/api/zpt/navigate', {
       method: 'POST',
       body: JSON.stringify({
-        zoom: 'concept',
+        zoom: 'unit',
         pan: {
-          direction: 'semantic',
-          conceptFilter: ['technology', 'computing'],
-          threshold: 0.6
+          domains: ['technology', 'computing'],
+          keywords: ['technology', 'computing']
         },
-        tilt: 'detailed'
+        tilt: 'graph'
       })
     });
 

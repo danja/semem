@@ -778,6 +778,8 @@ class VSOMStandaloneApp {
     }
 
     async updateComponents() {
+        this.applyTiltRendering();
+
         // Update VSOM Grid
         if (this.components.grid && this.state.vsomData) {
             await this.components.grid.updateData(this.state.vsomData);
@@ -843,6 +845,58 @@ class VSOMStandaloneApp {
         if (lastUpdate && this.state.lastUpdate) {
             lastUpdate.textContent = VSOMUtils.formatRelativeTime(this.state.lastUpdate);
         }
+    }
+
+    getTiltVisualizationOptions(tilt) {
+        switch (tilt) {
+            case 'keywords':
+                return {
+                    showLabels: true,
+                    showGrid: true,
+                    showConnections: false,
+                    showSemanticClusters: true,
+                    showQualityIndicators: true,
+                    showTemporalFlow: false
+                };
+            case 'embedding':
+                return {
+                    showLabels: false,
+                    showGrid: true,
+                    showConnections: true,
+                    showSemanticClusters: false,
+                    showQualityIndicators: true,
+                    showTemporalFlow: false
+                };
+            case 'graph':
+                return {
+                    showLabels: true,
+                    showGrid: false,
+                    showConnections: true,
+                    showSemanticClusters: true,
+                    showQualityIndicators: false,
+                    showTemporalFlow: false
+                };
+            case 'temporal':
+                return {
+                    showLabels: false,
+                    showGrid: false,
+                    showConnections: false,
+                    showSemanticClusters: false,
+                    showQualityIndicators: false,
+                    showTemporalFlow: true
+                };
+            default:
+                throw new Error(`Unsupported tilt style: ${tilt}`);
+        }
+    }
+
+    applyTiltRendering() {
+        if (!this.components.grid) {
+            return;
+        }
+
+        const options = this.getTiltVisualizationOptions(this.state.tilt);
+        this.components.grid.updateOptions(options);
     }
 
     async handleZPTChange(changes) {
