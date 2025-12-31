@@ -350,6 +350,82 @@ async function startRefactoredServer() {
       }
     });
 
+    // Zoom endpoint
+    app.post('/zoom', async (req, res) => {
+      try {
+        const { level, query } = req.body;
+        if (!level) {
+          return res.status(400).json({ error: 'Zoom level is required' });
+        }
+
+        mcpDebugger.info(`🔍 Refactored Zoom request: level=${level}`);
+
+        const result = await simpleVerbsService.zoom({ level, query });
+        mcpDebugger.info(`🔍 Refactored Zoom result: ${result.success ? 'SUCCESS' : 'FAILED'}`);
+
+        res.json(result);
+      } catch (error) {
+        mcpDebugger.error('❌ Refactored Zoom error:', error.message);
+        res.status(500).json({
+          success: false,
+          verb: 'zoom',
+          error: error.message
+        });
+      }
+    });
+
+    // Pan endpoint
+    app.post('/pan', async (req, res) => {
+      try {
+        const { domains, keywords, entities, temporal, corpuscle, query } = req.body;
+
+        mcpDebugger.info('🧭 Refactored Pan request received');
+
+        const result = await simpleVerbsService.pan({
+          domains,
+          keywords,
+          entities,
+          temporal,
+          corpuscle,
+          query
+        });
+        mcpDebugger.info(`🧭 Refactored Pan result: ${result.success ? 'SUCCESS' : 'FAILED'}`);
+
+        res.json(result);
+      } catch (error) {
+        mcpDebugger.error('❌ Refactored Pan error:', error.message);
+        res.status(500).json({
+          success: false,
+          verb: 'pan',
+          error: error.message
+        });
+      }
+    });
+
+    // Tilt endpoint
+    app.post('/tilt', async (req, res) => {
+      try {
+        const { style, query } = req.body;
+        if (!style) {
+          return res.status(400).json({ error: 'Tilt style is required' });
+        }
+
+        mcpDebugger.info(`🎯 Refactored Tilt request: style=${style}`);
+
+        const result = await simpleVerbsService.tilt({ style, query });
+        mcpDebugger.info(`🎯 Refactored Tilt result: ${result.success ? 'SUCCESS' : 'FAILED'}`);
+
+        res.json(result);
+      } catch (error) {
+        mcpDebugger.error('❌ Refactored Tilt error:', error.message);
+        res.status(500).json({
+          success: false,
+          verb: 'tilt',
+          error: error.message
+        });
+      }
+    });
+
     // Recall endpoint
     app.post('/recall', async (req, res) => {
       try {

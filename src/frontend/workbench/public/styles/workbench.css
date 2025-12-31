@@ -185,6 +185,139 @@ body {
     justify-content: center;
 }
 
+/* ZPT Lens Bar */
+.zpt-lens-bar {
+    margin-top: 12px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.08), rgba(14, 116, 144, 0.08));
+    border: 1px solid rgba(14, 116, 144, 0.2);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.zpt-lens-current {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+    color: #0f172a;
+    flex-wrap: wrap;
+}
+
+.zpt-lens-toggle {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #0f172a;
+}
+
+.zpt-lens-toggle input {
+    accent-color: #0e7490;
+}
+
+.zpt-lens-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    min-height: 26px;
+}
+
+.zpt-lens-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #e2e8f0;
+    color: #0f172a;
+    border-radius: 999px;
+    padding: 4px 8px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.zpt-lens-chip button {
+    border: none;
+    background: transparent;
+    color: #0f172a;
+    cursor: pointer;
+    font-size: 12px;
+    line-height: 1;
+}
+
+.zpt-lens-label {
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 11px;
+    color: #0e7490;
+}
+
+.zpt-lens-value {
+    font-size: 14px;
+}
+
+.zpt-lens-separator {
+    opacity: 0.5;
+}
+
+.zpt-lens-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.zpt-lens-presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.zpt-preset {
+    border: 1px solid rgba(15, 23, 42, 0.15);
+    background: #f8fafc;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #0f172a;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+}
+
+.zpt-preset:hover {
+    background: #e0f2fe;
+    border-color: rgba(14, 116, 144, 0.4);
+    transform: translateY(-1px);
+}
+
+.zpt-lens-run {
+    align-self: flex-start;
+    background: #0e7490;
+    color: #fff;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.zpt-lens-run:hover {
+    background: #0f5b6d;
+    transform: translateY(-1px);
+}
+
+@media (max-width: 1024px) {
+    .zpt-lens-actions {
+        align-items: flex-start;
+    }
+}
+
 .zpt-display {
     display: flex;
     align-items: center;

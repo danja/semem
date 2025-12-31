@@ -204,7 +204,7 @@ export class ApiService {
    * @param {boolean} params.useWebSearch - Whether to use Web Search enhancement
    * @returns {Promise<Object>} Ask result with answer and related content
    */
-  async ask({ question, mode = 'standard', useContext = true, useHyDE = false, useWikipedia = false, useWikidata = false, useWebSearch = false, threshold }) {
+  async ask({ question, mode = 'standard', useContext = true, useHyDE = false, useWikipedia = false, useWikidata = false, useWebSearch = false, threshold, zpt }) {
     consoleService.info(`🔵 [WORKBENCH ASK] Starting ask operation:`, {
       questionPreview: question?.substring(0, 100) + (question?.length > 100 ? '...' : ''),
       questionLength: question?.length,
@@ -214,7 +214,8 @@ export class ApiService {
       useWikipedia,
       useWikidata,
       useWebSearch,
-      threshold
+      threshold,
+      zpt: zpt ? { zoom: zpt.zoom, tilt: zpt.tilt } : undefined
     });
 
     try {
@@ -228,7 +229,8 @@ export class ApiService {
           useWikipedia,
           useWikidata,
           useWebSearch,
-          threshold
+          threshold,
+          zpt
         })
       });
 

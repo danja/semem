@@ -89,6 +89,35 @@
                                 <span class="button-text">Show Verbs</span>
                             </button>
                         </div>
+                        <div class="zpt-lens-bar" aria-label="ZPT lens controls">
+                            <div class="zpt-lens-current">
+                                <span class="zpt-lens-label">Lens</span>
+                                <span class="zpt-lens-value" id="zpt-lens-zoom">Entity</span>
+                                <span class="zpt-lens-separator">/</span>
+                                <span class="zpt-lens-value" id="zpt-lens-pan">All domains</span>
+                                <span class="zpt-lens-separator">/</span>
+                                <span class="zpt-lens-value" id="zpt-lens-tilt">Keywords</span>
+                                <label class="zpt-lens-toggle">
+                                    <input type="checkbox" id="zpt-lens-chat-toggle">
+                                    <span class="toggle-text">Use Lens on Ask</span>
+                                </label>
+                            </div>
+                            <div class="zpt-lens-chips" id="zpt-lens-chips" aria-live="polite">
+                                <!-- Pan filter chips -->
+                            </div>
+                            <div class="zpt-lens-actions">
+                                <div class="zpt-lens-presets" role="group" aria-label="ZPT presets">
+                                    <button type="button" class="zpt-preset" data-zoom="entity" data-tilt="keywords">Entity · Keywords</button>
+                                    <button type="button" class="zpt-preset" data-zoom="unit" data-tilt="embedding">Unit · Embedding</button>
+                                    <button type="button" class="zpt-preset" data-zoom="community" data-tilt="graph">Community · Graph</button>
+                                    <button type="button" class="zpt-preset" data-zoom="corpus" data-tilt="temporal">Corpus · Temporal</button>
+                                </div>
+                                <button type="button" class="zpt-lens-run" id="zpt-lens-run">
+                                    <span class="button-icon">🧭</span>
+                                    <span class="button-text">Run Lens</span>
+                                </button>
+                            </div>
+                        </div>
                     </form>
                 </div>
             </div>

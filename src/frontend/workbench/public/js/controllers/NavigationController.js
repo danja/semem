@@ -1,6 +1,7 @@
 import { apiService } from '../services/ApiService.js';
 import { stateManager } from '../services/StateManager.js';
 import { consoleService } from '../services/ConsoleService.js';
+import { lensState } from '../services/LensState.js';
 import DomUtils from '../utils/DomUtils.js';
 
 export default class NavigationController {
@@ -15,6 +16,10 @@ export default class NavigationController {
     this.handleThresholdChange = this.handleThresholdChange.bind(this);
     this.handleNavigationExecute = this.handleNavigationExecute.bind(this);
     this.handleNavigationHistoryRefresh = this.handleNavigationHistoryRefresh.bind(this);
+    this.handleLensPreset = this.handleLensPreset.bind(this);
+    this.handleLensRun = this.handleLensRun.bind(this);
+    this.handleLensChatToggle = this.handleLensChatToggle.bind(this);
+    this.handleLensChipRemove = this.handleLensChipRemove.bind(this);
     this.updateZptDisplay = this.updateZptDisplay.bind(this);
     this.handleZptStateChange = this.handleZptStateChange.bind(this);
   }
@@ -45,6 +50,11 @@ export default class NavigationController {
       focusZoom: DomUtils.$('#zpt-focus-zoom'),
       focusPan: DomUtils.$('#zpt-focus-pan'),
       focusTilt: DomUtils.$('#zpt-focus-tilt'),
+      lensZoom: DomUtils.$('#zpt-lens-zoom'),
+      lensPan: DomUtils.$('#zpt-lens-pan'),
+      lensTilt: DomUtils.$('#zpt-lens-tilt'),
+      lensChips: DomUtils.$('#zpt-lens-chips'),
+      lensChatToggle: DomUtils.$('#zpt-lens-chat-toggle'),
       currentZoom: DomUtils.$('#current-zoom'),
       zoomDescription: DomUtils.$('#zoom-description'),
       currentPan: DomUtils.$('#current-pan'),
@@ -54,7 +64,11 @@ export default class NavigationController {
       thresholdValue: DomUtils.$('#threshold-value'),
       resultsContainer: DomUtils.$('#nav-results-content'),
       sessionsContainer: DomUtils.$('#nav-sessions-list'),
-      viewsContainer: DomUtils.$('#nav-views-list')
+      viewsContainer: DomUtils.$('#nav-views-list'),
+      panDomainsInput: DomUtils.$('#pan-domains'),
+      panKeywordsInput: DomUtils.$('#pan-keywords'),
+      lensRunButton: DomUtils.$('#zpt-lens-run'),
+      lensPresetButtons: DomUtils.$$('.zpt-preset')
     };
   }
 
@@ -72,15 +86,12 @@ export default class NavigationController {
       thresholdSlider.addEventListener('input', this.handleThresholdChange);
     }
 
-    const panDomains = DomUtils.$('#pan-domains');
-    const panKeywords = DomUtils.$('#pan-keywords');
-
-    if (panDomains) {
-      panDomains.addEventListener('input', DomUtils.debounce(this.handlePanChange, 500));
+    if (this.elements.panDomainsInput) {
+      this.elements.panDomainsInput.addEventListener('input', DomUtils.debounce(this.handlePanChange, 500));
     }
 
-    if (panKeywords) {
-      panKeywords.addEventListener('input', DomUtils.debounce(this.handlePanChange, 500));
+    if (this.elements.panKeywordsInput) {
+      this.elements.panKeywordsInput.addEventListener('input', DomUtils.debounce(this.handlePanChange, 500));
     }
 
     const navExecuteButton = DomUtils.$('#nav-execute');
@@ -92,11 +103,26 @@ export default class NavigationController {
     if (navHistoryButton) {
       navHistoryButton.addEventListener('click', this.handleNavigationHistoryRefresh);
     }
+
+    if (this.elements.lensRunButton) {
+      this.elements.lensRunButton.addEventListener('click', this.handleLensRun);
+    }
+
+    if (this.elements.lensPresetButtons?.length) {
+      this.elements.lensPresetButtons.forEach(button => {
+        button.addEventListener('click', this.handleLensPreset);
+      });
+    }
+
+    if (this.elements.lensChatToggle) {
+      this.elements.lensChatToggle.addEventListener('change', this.handleLensChatToggle);
+    }
   }
 
   updateZptDisplay() {
     const state = stateManager.getState();
     const panDisplay = stateManager.getPanDisplayString();
+    const lensPrefs = lensState.get();
 
     if (this.elements.zoomState) {
       this.elements.zoomState.textContent = state.zoom;
@@ -120,6 +146,150 @@ export default class NavigationController {
 
     if (this.elements.focusTilt) {
       this.elements.focusTilt.textContent = this.formatTiltStyle(state.tilt);
+    }
+
+    if (this.elements.lensZoom) {
+      this.elements.lensZoom.textContent = this.formatZoomLevel(state.zoom);
+    }
+
+    if (this.elements.lensPan) {
+      this.elements.lensPan.textContent = panDisplay;
+    }
+
+    if (this.elements.lensTilt) {
+      this.elements.lensTilt.textContent = this.formatTiltStyle(state.tilt);
+    }
+
+    if (this.elements.lensChatToggle) {
+      const stored = lensPrefs.useLensOnAsk;
+      this.elements.lensChatToggle.checked = typeof stored === 'boolean'
+        ? stored
+        : !!state.ui?.useLensOnAsk;
+    }
+
+    this.renderPanChips(state.pan);
+  }
+
+  handleLensChatToggle(event) {
+    const checked = event.target.checked;
+    lensState.set({ ...lensState.get(), useLensOnAsk: checked });
+    stateManager.setState({
+      ui: {
+        ...stateManager.getState().ui,
+        useLensOnAsk: checked
+      }
+    }, false);
+  }
+
+  handleLensChipRemove(event) {
+    const button = event.currentTarget;
+    const type = button.dataset.type;
+    const value = button.dataset.value;
+    const state = stateManager.getState();
+    const pan = { ...state.pan };
+
+    if (type === 'domains') {
+      pan.domains = pan.domains.filter(item => item !== value);
+    }
+    if (type === 'keywords') {
+      pan.keywords = pan.keywords.filter(item => item !== value);
+    }
+    if (type === 'entities') {
+      pan.entities = pan.entities.filter(item => item !== value);
+    }
+
+    stateManager.setPan(pan);
+  }
+
+  renderPanChips(pan) {
+    if (!this.elements.lensChips) {
+      return;
+    }
+
+    const chips = [];
+    const addChip = (type, value) => {
+      chips.push({ type, value });
+    };
+
+    (pan?.domains || []).forEach(value => addChip('domains', value));
+    (pan?.keywords || []).forEach(value => addChip('keywords', value));
+    (pan?.entities || []).forEach(value => addChip('entities', value));
+
+    if (!chips.length) {
+      this.elements.lensChips.innerHTML = '<span class="zpt-lens-chip">No pan filters</span>';
+      return;
+    }
+
+    this.elements.lensChips.innerHTML = chips.map(chip => (
+      `<span class="zpt-lens-chip">${chip.type}: ${chip.value}` +
+      `<button type="button" data-type="${chip.type}" data-value="${chip.value}" aria-label="Remove filter">×</button>` +
+      `</span>`
+    )).join('');
+
+    this.elements.lensChips.querySelectorAll('button').forEach(button => {
+      button.addEventListener('click', this.handleLensChipRemove);
+    });
+  }
+
+  async handleLensPreset(event) {
+    const button = event.currentTarget;
+    const zoom = button.dataset.zoom;
+    const tilt = button.dataset.tilt;
+    const domains = button.dataset.domains;
+    const keywords = button.dataset.keywords;
+
+    if (!zoom || !tilt) {
+      return;
+    }
+
+    const panParams = {
+      domains: domains ? domains.split(',').map(item => item.trim()).filter(Boolean) : [],
+      keywords: keywords ? keywords.split(',').map(item => item.trim()).filter(Boolean) : []
+    };
+
+    try {
+      await stateManager.setZoom(zoom);
+      await stateManager.setTilt(tilt);
+      await stateManager.setPan(panParams);
+
+      if (this.elements.panDomainsInput) {
+        this.elements.panDomainsInput.value = panParams.domains.join(', ');
+      }
+      if (this.elements.panKeywordsInput) {
+        this.elements.panKeywordsInput.value = panParams.keywords.join(', ');
+      }
+
+      this.setActiveZoomButton(zoom);
+      this.setActiveTiltButton(tilt);
+
+      consoleService.info(`🧭 ZPT preset applied: ${zoom}/${panParams.domains.length ? 'domains' : 'all'}/${tilt}`);
+    } catch (error) {
+      consoleService.error(`❌ Failed to apply ZPT preset: ${error.message}`);
+      DomUtils.showToast('Failed to apply preset', 'error');
+    }
+  }
+
+  async handleLensRun() {
+    await this.executeNavigationFromState({ source: 'lens' });
+  }
+
+  setActiveZoomButton(level) {
+    DomUtils.$$('.zoom-button').forEach(btn => {
+      DomUtils.removeClass(btn, 'active');
+    });
+    const active = DomUtils.$(`.zoom-button[data-level="${level}"]`);
+    if (active) {
+      DomUtils.addClass(active, 'active');
+    }
+  }
+
+  setActiveTiltButton(style) {
+    DomUtils.$$('.tilt-button').forEach(btn => {
+      DomUtils.removeClass(btn, 'active');
+    });
+    const active = DomUtils.$(`.tilt-button[data-style="${style}"]`);
+    if (active) {
+      DomUtils.addClass(active, 'active');
     }
   }
 

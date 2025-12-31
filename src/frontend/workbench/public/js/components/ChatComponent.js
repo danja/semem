@@ -5,6 +5,8 @@
 
 import { apiService } from '../services/ApiService.js';
 import { consoleService } from '../services/ConsoleService.js';
+import { stateManager } from '../services/StateManager.js';
+import { lensState } from '../services/LensState.js';
 import DomUtils from '../utils/DomUtils.js';
 
 export default class ChatComponent {
@@ -45,10 +47,21 @@ export default class ChatComponent {
         this.setLoading(true, this.askButton);
 
         try {
+            const lensPrefs = lensState.get();
+            const state = stateManager.getState();
+            const useLens = typeof lensPrefs.useLensOnAsk === 'boolean'
+                ? lensPrefs.useLensOnAsk
+                : !!state.ui?.useLensOnAsk;
             const response = await apiService.ask({
                 question,
                 mode: 'standard',
-                useContext: true
+                useContext: true,
+                zpt: useLens ? {
+                    zoom: state.zoom,
+                    pan: state.pan,
+                    tilt: state.tilt,
+                    threshold: state.threshold
+                } : undefined
             });
 
             const answer = response?.answer || response?.content || 'No answer returned.';
@@ -76,7 +89,6 @@ export default class ChatComponent {
                 routing
             });
         } catch (error) {
-            console.error('Ask error:', error);
             this.addMessage({
                 content: `Ask failed: ${error.message}`,
                 messageType: 'error',
@@ -129,7 +141,6 @@ export default class ChatComponent {
                 summary
             });
         } catch (error) {
-            console.error('Tell error:', error);
             this.addMessage({
                 content: `Tell failed: ${error.message}`,
                 messageType: 'error',
@@ -200,7 +211,6 @@ export default class ChatComponent {
                 status: result?.success ? 'success' : 'unknown'
             });
         } catch (error) {
-            console.error('Upload error:', error);
             this.addMessage({
                 content: `Document upload failed: ${error.message}`,
                 messageType: 'error',
@@ -258,9 +268,11 @@ export default class ChatComponent {
             this.displayWelcomeMessage();
             
             this.initialized = true;
-            console.log('✅ Chat component initialized');
+            consoleService.success('Chat component initialized');
         } catch (error) {
-            console.error('❌ Failed to initialize chat component:', error);
+            consoleService.error('Chat component failed to initialize', {
+                error: error.message
+            });
             throw error;
         }
     }
@@ -309,6 +321,10 @@ export default class ChatComponent {
         if (this.uploadButton) {
             this.uploadButton.addEventListener('click', this.handleUploadAction);
         }
+
+        if (this.sendButton) {
+            this.sendButton.addEventListener('click', this.handleChatSubmit);
+        }
     }
 
     displayWelcomeMessage() {
@@ -346,8 +362,7 @@ export default class ChatComponent {
             });
 
             // Add response to UI
-            console.log('📋 [CHAT] Adding response message:', {
-                content: response.content?.substring(0, 100) + '...',
+            consoleService.info('Chat response message added', {
                 messageType: response.messageType,
                 routing: response.routing,
                 success: response.success
@@ -377,7 +392,6 @@ export default class ChatComponent {
             });
 
         } catch (error) {
-            console.error('Chat error:', error);
             this.addMessage({
                 content: `Error: ${error.message}. Please try again or check if the server is running.`,
                 messageType: 'error',
@@ -480,7 +494,7 @@ export default class ChatComponent {
     }
 
     addMessage({ content, messageType, routing, reasoning, timestamp }) {
-        console.log('📨 [CHAT] addMessage called with:', {
+        consoleService.info('Chat message added', {
             contentLength: content?.length,
             messageType,
             routing,
@@ -526,10 +540,12 @@ export default class ChatComponent {
 
     formatMessageContent(content) {
         // Basic formatting: preserve line breaks and handle basic markdown-like syntax
-        console.log('📝 [CHAT] Formatting content:', content);
+        consoleService.info('Formatting chat content', {
+            length: content?.length || 0
+        });
         
         if (!content) {
-            console.warn('❌ [CHAT] No content to format');
+            consoleService.warn('No content to format');
             return 'No content available';
         }
         
@@ -539,7 +555,9 @@ export default class ChatComponent {
             .replace(/\*(.*?)\*/g, '<em>$1</em>')
             .replace(/`(.*?)`/g, '<code>$1</code>');
             
-        console.log('✅ [CHAT] Formatted content:', formatted.substring(0, 100) + '...');
+        consoleService.info('Chat content formatted', {
+            preview: formatted.substring(0, 100)
+        });
         return formatted;
     }
 

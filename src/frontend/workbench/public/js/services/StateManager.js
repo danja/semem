@@ -40,7 +40,8 @@ export class StateManager {
       ui: {
         expandedPanels: new Set(),
         activeResults: {},
-        loadingStates: {}
+        loadingStates: {},
+        useLensOnAsk: false
       }
     };
     
