@@ -16,6 +16,7 @@ Semem runs multiple specialized servers that work together to provide different 
 - **Provides**: Tell/Ask/Navigate/Augment/Zoom/Pan/Tilt operations via MCP and REST
 - **Document Upload**: `POST /upload-document` for PDF, TXT, MD file processing
 - **Used by**: MCP clients, workbench UI, LLM integrations
+- **Simple Verbs REST endpoints**: `POST /tell`, `POST /ask`, `POST /augment`, `POST /zoom`, `POST /pan`, `POST /tilt`, `POST /inspect`, `GET /state`, `POST /zpt/navigate`
 
 ### Workbench UI (Port 4102)
 - **Purpose**: Web-based user interface for interactive semantic memory operations
@@ -29,7 +30,7 @@ The **Workbench UI** acts as both a static file server and an API proxy:
 
 ```
 Browser -> Workbench UI (4102) -> MCP Server (4101)
-           /api/* requests (/api/upload-document, /api/tell, etc.)
+           /api/* requests (/api/zoom, /api/pan, /api/tilt, /api/tell, etc.)
 ```
 
 **Why a proxy is needed:**

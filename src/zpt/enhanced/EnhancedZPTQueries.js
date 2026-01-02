@@ -413,6 +413,7 @@ export class EnhancedZPTQueries {
     async storeNavigationMetadata(params, results) {
         const sessionURI = `http://purl.org/stuff/instance/session-${Date.now()}`;
         const viewURI = `http://purl.org/stuff/instance/view-${Date.now()}`;
+        const queryText = this.escapeSparqlString(params.query || 'Enhanced navigation query');
 
         const metadataQuery = `
             ${this.prefixes}
@@ -426,7 +427,7 @@ export class EnhancedZPTQueries {
                     
                     <${viewURI}> a zpt:NavigationView ;
                         zpt:partOfSession <${sessionURI}> ;
-                        zpt:hasQuery "${params.query || 'Enhanced navigation query'}" ;
+                        zpt:hasQuery "${queryText}" ;
                         zpt:atZoomLevel <http://purl.org/stuff/zpt/${params.zoom}> ;
                         zpt:withTiltProjection <http://purl.org/stuff/zpt/${params.tilt}> ;
                         zpt:resultCount ${results.length} ;
@@ -442,6 +443,21 @@ export class EnhancedZPTQueries {
         } else {
             logger.debug('✅ Navigation metadata stored:', { sessionURI, viewURI });
         }
+    }
+
+    /**
+     * Escape special characters for SPARQL string literals
+     */
+    escapeSparqlString(value) {
+        if (typeof value !== 'string') {
+            return String(value ?? '');
+        }
+        return value
+            .replace(/\\/g, '\\\\')
+            .replace(/"/g, '\\"')
+            .replace(/\n/g, '\\n')
+            .replace(/\r/g, '\\r')
+            .replace(/\t/g, '\\t');
     }
 
     /**

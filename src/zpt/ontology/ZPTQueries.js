@@ -51,12 +51,13 @@ export class ZPTQueryBuilder {
     createNavigationView(config) {
         const prefixes = this.getPrefixes();
         const timestamp = new Date().toISOString();
+        const queryText = this.escapeSparqlString(config.query || '');
         
         let insertData = `
 INSERT DATA {
     GRAPH <${this.defaultGraph}> {
         <${config.viewURI}> a zpt:NavigationView ;
-            zpt:answersQuery "${config.query}" ;
+            zpt:answersQuery "${queryText}" ;
             zpt:navigationTimestamp "${timestamp}"^^xsd:dateTime `;
 
         // Link to session if provided
@@ -111,6 +112,21 @@ INSERT DATA {
         insertData += `.\n    }\n}`;
 
         return prefixes + insertData;
+    }
+
+    /**
+     * Escape special characters for SPARQL string literals
+     */
+    escapeSparqlString(value) {
+        if (typeof value !== 'string') {
+            return String(value ?? '');
+        }
+        return value
+            .replace(/\\/g, '\\\\')
+            .replace(/"/g, '\\"')
+            .replace(/\n/g, '\\n')
+            .replace(/\r/g, '\\r')
+            .replace(/\t/g, '\\t');
     }
 
     /**

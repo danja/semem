@@ -223,6 +223,8 @@ export class ZPTSessionManager {
      * Persist session data to SPARQL
      */
     async persistSession(session) {
+        const sessionData = this.escapeSparqlString(JSON.stringify(session.state));
+        const purpose = this.escapeSparqlString(session.metadata.purpose);
         const sessionQuery = `
             ${this.prefixes}
             
@@ -232,7 +234,7 @@ export class ZPTSessionManager {
                         dcterms:created "${session.created}"^^xsd:dateTime ;
                         dcterms:modified "${session.lastActivity}"^^xsd:dateTime ;
                         prov:wasAssociatedWith <http://purl.org/stuff/agent/zpt-navigation> ;
-                        zpt:hasPurpose "${session.metadata.purpose}" ;
+                        zpt:hasPurpose "${purpose}" ;
                         zpt:sessionId "${session.sessionId}" ;
                         zpt:currentZoom <http://purl.org/stuff/zpt/${session.state.zoom}> ;
                         zpt:currentTilt <http://purl.org/stuff/zpt/${session.state.tilt}> ;
@@ -240,7 +242,7 @@ export class ZPTSessionManager {
                 }
                 
                 GRAPH <${this.config.sessionGraph}> {
-                    <${session.sessionURI}> zpt:sessionData """${JSON.stringify(session.state)}""" .
+                    <${session.sessionURI}> zpt:sessionData """${sessionData}""" .
                 }
             }
         `;
@@ -256,6 +258,7 @@ export class ZPTSessionManager {
      * Persist session state updates
      */
     async persistSessionState(session) {
+        const sessionData = this.escapeSparqlString(JSON.stringify(session.state));
         const updateQuery = `
             ${this.prefixes}
             
@@ -278,7 +281,7 @@ export class ZPTSessionManager {
                                           zpt:interactionCount ${session.state.interactions} .
                 }
                 GRAPH <${this.config.sessionGraph}> {
-                    <${session.sessionURI}> zpt:sessionData """${JSON.stringify(session.state)}""" .
+                    <${session.sessionURI}> zpt:sessionData """${sessionData}""" .
                 }
             }
             WHERE {
@@ -312,6 +315,7 @@ export class ZPTSessionManager {
         if (!this.currentSession) return;
 
         const viewURI = `http://purl.org/stuff/instance/view-${Date.now()}`;
+        const queryText = this.escapeSparqlString(navigationEntry.zptParams.query || 'Navigation query');
 
         const viewQuery = `
             ${this.prefixes}
@@ -320,7 +324,7 @@ export class ZPTSessionManager {
                 GRAPH <${this.config.navigationGraph}> {
                     <${viewURI}> a zpt:NavigationView ;
                         zpt:partOfSession <${this.currentSession.sessionURI}> ;
-                        zpt:hasQuery "${navigationEntry.zptParams.query || 'Navigation query'}" ;
+                        zpt:hasQuery "${queryText}" ;
                         zpt:hasZoom <http://purl.org/stuff/zpt/${navigationEntry.zptParams.zoom}> ;
                         zpt:hasTilt <http://purl.org/stuff/zpt/${navigationEntry.zptParams.tilt}> ;
                         zpt:resultCount ${navigationEntry.resultCount} ;
@@ -335,6 +339,21 @@ export class ZPTSessionManager {
         if (!result.success) {
             logger.warn('⚠️  Failed to store navigation view:', result.error);
         }
+    }
+
+    /**
+     * Escape special characters for SPARQL string literals
+     */
+    escapeSparqlString(value) {
+        if (typeof value !== 'string') {
+            return String(value ?? '');
+        }
+        return value
+            .replace(/\\/g, '\\\\')
+            .replace(/"/g, '\\"')
+            .replace(/\n/g, '\\n')
+            .replace(/\r/g, '\\r')
+            .replace(/\t/g, '\\t');
     }
 
     /**
