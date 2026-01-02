@@ -30,130 +30,15 @@ export default class ChatComponent {
     }
 
     async handleAskAction() {
-        if (this.isLoading) return;
-
         const question = this.chatInput.value.trim();
         if (!question) return;
-
-        this.addMessage({
-            content: question,
-            messageType: 'user',
-            timestamp: new Date().toISOString()
-        });
-
-        this.chatInput.value = '';
-        this.hideCommandSuggestions();
-        this.updateActionButtons();
-        this.setLoading(true, this.askButton);
-
-        try {
-            const lensPrefs = lensState.get();
-            const state = stateManager.getState();
-            const useLens = typeof lensPrefs.useLensOnAsk === 'boolean'
-                ? lensPrefs.useLensOnAsk
-                : !!state.ui?.useLensOnAsk;
-            const response = await apiService.ask({
-                question,
-                mode: 'standard',
-                useContext: true,
-                zpt: useLens ? {
-                    zoom: state.zoom,
-                    pan: state.pan,
-                    tilt: state.tilt,
-                    threshold: state.threshold
-                } : undefined
-            });
-
-            const answer = response?.answer || response?.content || 'No answer returned.';
-            const routing = response?.routing || 'ask';
-            const timestamp = response?.timestamp || new Date().toISOString();
-
-            this.addMessage({
-                content: `🧠 Ask Result:\n${answer}`,
-                messageType: 'ask',
-                routing,
-                timestamp
-            });
-
-            this.conversationHistory.push({
-                user: question,
-                assistant: answer,
-                routing,
-                verb: 'ask',
-                timestamp
-            });
-
-            consoleService.success('Ask request completed', {
-                questionPreview: question.substring(0, 60) + (question.length > 60 ? '...' : ''),
-                hasAnswer: !!response?.answer,
-                routing
-            });
-        } catch (error) {
-            this.addMessage({
-                content: `Ask failed: ${error.message}`,
-                messageType: 'error',
-                timestamp: new Date().toISOString()
-            });
-
-            consoleService.error('Ask request failed', {
-                error: error.message
-            });
-        } finally {
-            this.setLoading(false);
-            this.chatInput.focus();
-        }
+        await this.executeAsk(question, { addUserMessage: true, clearInput: true, loadingButton: this.askButton });
     }
 
     async handleTellAction() {
-        if (this.isLoading) return;
-
         const content = this.chatInput.value.trim();
         if (!content) return;
-
-        this.addMessage({
-            content,
-            messageType: 'user',
-            timestamp: new Date().toISOString()
-        });
-
-        this.chatInput.value = '';
-        this.hideCommandSuggestions();
-        this.updateActionButtons();
-        this.setLoading(true, this.tellButton);
-
-        try {
-            const result = await apiService.tell({
-                content,
-                type: 'interaction',
-                lazy: false,
-                metadata: { source: 'chat' }
-            });
-
-            const summary = result?.message || result?.status || 'Content stored successfully.';
-            this.addMessage({
-                content: `✅ Tell stored: ${summary}`,
-                messageType: 'system',
-                timestamp: new Date().toISOString()
-            });
-
-            consoleService.success('Tell request completed', {
-                contentLength: content.length,
-                summary
-            });
-        } catch (error) {
-            this.addMessage({
-                content: `Tell failed: ${error.message}`,
-                messageType: 'error',
-                timestamp: new Date().toISOString()
-            });
-
-            consoleService.error('Tell request failed', {
-                error: error.message
-            });
-        } finally {
-            this.setLoading(false);
-            this.chatInput.focus();
-        }
+        await this.executeTell(content, { addUserMessage: true, clearInput: true, loadingButton: this.tellButton });
     }
 
     handleUploadAction() {
@@ -341,9 +226,12 @@ export default class ChatComponent {
         const message = this.chatInput.value.trim();
         if (!message || this.isLoading) return;
 
+        const parsed = this.parseSlashCommand(message);
+        const displayContent = parsed?.display || message;
+
         // Add user message to UI immediately
         this.addMessage({
-            content: message,
+            content: displayContent,
             messageType: 'user',
             timestamp: new Date().toISOString()
         });
@@ -352,13 +240,20 @@ export default class ChatComponent {
         this.chatInput.value = '';
         this.hideCommandSuggestions();
         this.updateActionButtons();
-        this.setLoading(true, this.sendButton);
 
         try {
+            if (parsed) {
+                await this.handleSlashCommand(parsed);
+                return;
+            }
+
+            this.setLoading(true, this.sendButton);
+
             // Call chat API
             const response = await apiService.chat({ 
                 message,
-                context: this.getConversationContext()
+                context: this.getConversationContext(),
+                threshold: stateManager.getState().threshold
             });
 
             // Add response to UI
@@ -419,6 +314,200 @@ export default class ChatComponent {
             DomUtils.addClass(this.chatContainer, 'collapsed');
             this.chatToggle.querySelector('.toggle-text').textContent = 'Expand Chat';
             this.chatToggle.querySelector('.toggle-icon').textContent = '▲';
+        }
+    }
+
+    parseSlashCommand(message) {
+        if (!message.startsWith('/')) {
+            return null;
+        }
+
+        const [command, ...rest] = message.trim().split(/\s+/);
+        const payload = rest.join(' ').trim();
+        const normalized = command.toLowerCase();
+
+        if (normalized === '/ask') {
+            return { type: 'ask', payload, display: payload || message };
+        }
+
+        if (normalized === '/tell') {
+            return { type: 'tell', payload, display: payload || message };
+        }
+
+        if (normalized === '/help') {
+            return { type: 'help', display: message };
+        }
+
+        return { type: 'unknown', display: message, payload: command };
+    }
+
+    async handleSlashCommand(parsed) {
+        if (parsed.type === 'help') {
+            this.addMessage({
+                content: 'Commands: /ask <question>, /tell <content>, or use the Ask/Tell buttons.',
+                messageType: 'system',
+                timestamp: new Date().toISOString()
+            });
+            return;
+        }
+
+        if (parsed.type === 'unknown') {
+            this.addMessage({
+                content: `Unknown command: ${parsed.payload}`,
+                messageType: 'error',
+                timestamp: new Date().toISOString()
+            });
+            return;
+        }
+
+        if (!parsed.payload) {
+            this.addMessage({
+                content: `Command ${parsed.type} requires a message.`,
+                messageType: 'error',
+                timestamp: new Date().toISOString()
+            });
+            return;
+        }
+
+        if (parsed.type === 'ask') {
+            await this.executeAsk(parsed.payload, { addUserMessage: false, clearInput: false, loadingButton: this.sendButton });
+            return;
+        }
+
+        if (parsed.type === 'tell') {
+            await this.executeTell(parsed.payload, { addUserMessage: false, clearInput: false, loadingButton: this.sendButton });
+        }
+    }
+
+    async executeAsk(question, { addUserMessage = true, clearInput = true, loadingButton = this.askButton } = {}) {
+        if (this.isLoading) return;
+        if (!question) return;
+
+        if (addUserMessage) {
+            this.addMessage({
+                content: question,
+                messageType: 'user',
+                timestamp: new Date().toISOString()
+            });
+        }
+
+        if (clearInput) {
+            this.chatInput.value = '';
+        }
+        this.hideCommandSuggestions();
+        this.updateActionButtons();
+        this.setLoading(true, loadingButton);
+
+        try {
+            const lensPrefs = lensState.get();
+            const state = stateManager.getState();
+            const useLens = typeof lensPrefs.useLensOnAsk === 'boolean'
+                ? lensPrefs.useLensOnAsk
+                : !!state.ui?.useLensOnAsk;
+            const response = await apiService.ask({
+                question,
+                mode: 'standard',
+                useContext: true,
+                threshold: state.threshold,
+                zpt: useLens ? {
+                    zoom: state.zoom,
+                    pan: state.pan,
+                    tilt: state.tilt,
+                    threshold: state.threshold
+                } : undefined
+            });
+
+            const answer = response?.answer || response?.content || 'No answer returned.';
+            const routing = response?.routing || 'ask';
+            const timestamp = response?.timestamp || new Date().toISOString();
+
+            this.addMessage({
+                content: `🧠 Ask Result:\n${answer}`,
+                messageType: 'ask',
+                routing,
+                timestamp
+            });
+
+            this.conversationHistory.push({
+                user: question,
+                assistant: answer,
+                routing,
+                verb: 'ask',
+                timestamp
+            });
+
+            consoleService.success('Ask request completed', {
+                questionPreview: question.substring(0, 60) + (question.length > 60 ? '...' : ''),
+                hasAnswer: !!response?.answer,
+                routing
+            });
+        } catch (error) {
+            this.addMessage({
+                content: `Ask failed: ${error.message}`,
+                messageType: 'error',
+                timestamp: new Date().toISOString()
+            });
+
+            consoleService.error('Ask request failed', {
+                error: error.message
+            });
+        } finally {
+            this.setLoading(false);
+            this.chatInput.focus();
+        }
+    }
+
+    async executeTell(content, { addUserMessage = true, clearInput = true, loadingButton = this.tellButton } = {}) {
+        if (this.isLoading) return;
+        if (!content) return;
+
+        if (addUserMessage) {
+            this.addMessage({
+                content,
+                messageType: 'user',
+                timestamp: new Date().toISOString()
+            });
+        }
+
+        if (clearInput) {
+            this.chatInput.value = '';
+        }
+        this.hideCommandSuggestions();
+        this.updateActionButtons();
+        this.setLoading(true, loadingButton);
+
+        try {
+            const result = await apiService.tell({
+                content,
+                type: 'interaction',
+                lazy: false,
+                metadata: { source: 'chat' }
+            });
+
+            const summary = result?.message || result?.status || 'Content stored successfully.';
+            this.addMessage({
+                content: `✅ Tell stored: ${summary}`,
+                messageType: 'system',
+                timestamp: new Date().toISOString()
+            });
+
+            consoleService.success('Tell request completed', {
+                contentLength: content.length,
+                summary
+            });
+        } catch (error) {
+            this.addMessage({
+                content: `Tell failed: ${error.message}`,
+                messageType: 'error',
+                timestamp: new Date().toISOString()
+            });
+
+            consoleService.error('Tell request failed', {
+                error: error.message
+            });
+        } finally {
+            this.setLoading(false);
+            this.chatInput.focus();
         }
     }
 

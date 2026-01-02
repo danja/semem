@@ -758,7 +758,13 @@ ${viewTriples}
      */
     formatRDFObject(object) {
         if (object.termType === 'Literal') {
-            let formatted = `"${object.value.replace(/"/g, '\\"')}"`;
+            const escaped = object.value
+                .replace(/\\/g, '\\\\')
+                .replace(/"/g, '\\"')
+                .replace(/\n/g, '\\n')
+                .replace(/\r/g, '\\r')
+                .replace(/\t/g, '\\t');
+            let formatted = `"${escaped}"`;
             if (object.datatype) {
                 formatted += `^^<${object.datatype.value}>`;
             } else if (object.language) {

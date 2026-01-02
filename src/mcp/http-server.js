@@ -469,7 +469,7 @@ async function startRefactoredServer() {
     // Chat endpoint - for workbench chat interface compatibility
     app.post('/chat', async (req, res) => {
       try {
-        const { message, context = {} } = req.body;
+        const { message, context = {}, threshold } = req.body;
         if (!message) {
           return res.status(400).json({ error: 'Message is required' });
         }
@@ -487,7 +487,8 @@ async function startRefactoredServer() {
         const result = await simpleVerbsService.ask({
           question: message,
           mode: 'standard',
-          useContext: true
+          useContext: true,
+          threshold
         });
 
         // Format response for chat interface compatibility

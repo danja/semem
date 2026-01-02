@@ -296,10 +296,10 @@ export class ApiService {
    * @param {Object} params.context - Optional conversation context
    * @returns {Promise<Object>} Chat result with response content and routing information
    */
-  async chat({ message, context = {} }) {
+  async chat({ message, context = {}, threshold }) {
     return this.makeRequest('/chat', {
       method: 'POST',
-      body: JSON.stringify({ message, context })
+      body: JSON.stringify({ message, context, threshold })
     });
   }
 
