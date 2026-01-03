@@ -10,6 +10,7 @@ import { AskSchema } from '../../VerbSchemas.js';
 import { logOperation, logPerformance, verbsLogger } from '../../VerbsLogger.js';
 import { AskOperationTimer } from '../../../../utils/PerformanceTiming.js';
 import { SPARQL_CONFIG } from '../../../../../config/preferences.js';
+import ContextWindowManager from '../../../../ContextWindowManager.js';
 
 export class AskCommand extends BaseVerbCommand {
   constructor() {
@@ -159,6 +160,7 @@ export class AskCommand extends BaseVerbCommand {
    */
   async processWithLocalContext(question, threshold, enhancementResults, startTime) {
     try {
+      const contextConfig = this.getContextConfig();
       // Prepare ZPT state for context retrieval
       const baseState = this.stateManager.getState();
       const zptState = {
@@ -203,25 +205,33 @@ export class AskCommand extends BaseVerbCommand {
         }))
         .filter(item => item.content);
 
+      const limitedResults = this.limitContextResults(searchResults, contextConfig);
+
       verbsLogger.info('Context retrieved successfully', {
-        resultsCount: searchResults.length
+        resultsCount: limitedResults.length
       });
 
       // Generate response with available context
-      const answer = await this.generateContextualResponse(question, searchResults, enhancementResults, zptState.tilt);
+      const answer = await this.generateContextualResponse(
+        question,
+        limitedResults,
+        enhancementResults,
+        zptState.tilt,
+        contextConfig
+      );
 
       return {
         success: true,
         answer,
-        contextItems: searchResults.length + (enhancementResults ? 1 : 0),
-        sessionResults: searchResults.length,
-        persistentResults: searchResults.length,
-        memories: searchResults.length,
-        localContextResults: searchResults,
+        contextItems: limitedResults.length + (enhancementResults ? 1 : 0),
+        sessionResults: limitedResults.length,
+        persistentResults: limitedResults.length,
+        memories: limitedResults.length,
+        localContextResults: limitedResults,
         enhancementResults: enhancementResults ? [enhancementResults] : [],
         enhancementUsed: !!enhancementResults,
-        localContextUsed: searchResults.length > 0,
-        selectedStrategy: searchResults.length > 0 || enhancementResults ? 'hybrid_enhanced' : 'no_context',
+        localContextUsed: limitedResults.length > 0,
+        selectedStrategy: limitedResults.length > 0 || enhancementResults ? 'hybrid_enhanced' : 'no_context',
         queryTime: Date.now() - startTime
       };
 
@@ -250,9 +260,14 @@ export class AskCommand extends BaseVerbCommand {
     let answer = `I don't have any context information to answer: ${question}`;
 
     if (enhancementResults?.context?.combinedPrompt) {
+      const contextConfig = this.getContextConfig();
+      const externalContext = this.applyContextWindow(
+        enhancementResults.context.combinedPrompt,
+        contextConfig
+      );
       // Use enhancement results even without local context
       const prompt = await this.templateLoader.loadAndInterpolate('mcp', 'ask-with-external-context', {
-        externalContext: enhancementResults.context.combinedPrompt,
+        externalContext,
         question: question
       });
 
@@ -284,7 +299,7 @@ export class AskCommand extends BaseVerbCommand {
    * Generate response using available context
    * @private
    */
-  async generateContextualResponse(question, searchResults, enhancementResults, tilt) {
+  async generateContextualResponse(question, searchResults, enhancementResults, tilt, contextConfig) {
     const hasLocalContext = searchResults.length > 0;
     const hasEnhancementContext = enhancementResults?.context?.combinedPrompt;
 
@@ -305,7 +320,7 @@ export class AskCommand extends BaseVerbCommand {
       promptParts.push(`External knowledge context:\n${enhancementResults.context.combinedPrompt}`);
     }
 
-    const fullContext = promptParts.join('\n\n---\n\n');
+    const fullContext = this.applyContextWindow(promptParts.join('\n\n---\n\n'), contextConfig);
     const prompt = await this.templateLoader.loadAndInterpolate('mcp', 'ask-with-hybrid-context', {
       fullContext: fullContext,
       question: question
@@ -344,7 +359,7 @@ export class AskCommand extends BaseVerbCommand {
       const label = result.label || result.id || 'item';
       const content = result.content || result.output || result.prompt || result.response || result.description || result.text || '';
       const keywordText = keywords.length > 0 ? `keywords: ${keywords.join(', ')}` : 'keywords: none';
-      const contentText = content ? `content: ${content.slice(0, 200)}` : 'content: none';
+      const contentText = content ? `content: ${content}` : 'content: none';
       return `- ${label}\n  ${keywordText}\n  ${contentText}`;
     }).join('\n');
   }
@@ -365,7 +380,7 @@ export class AskCommand extends BaseVerbCommand {
       ].filter(Boolean).join(', ');
 
       const embeddingText = embeddingParts ? `embedding: ${embeddingParts}` : 'embedding: unavailable';
-      const contentText = content ? `content: ${content.slice(0, 200)}` : 'content: none';
+      const contentText = content ? `content: ${content}` : 'content: none';
       return `- ${label}\n  ${embeddingText}\n  ${contentText}`;
     }).join('\n');
   }
@@ -406,9 +421,56 @@ export class AskCommand extends BaseVerbCommand {
 
     return temporalItems.map(item => {
       const timeText = item.timestamp ? `timestamp: ${item.timestamp}` : 'timestamp: unknown';
-      const contentText = item.content ? `content: ${item.content.slice(0, 200)}` : 'content: none';
+      const contentText = item.content ? `content: ${item.content}` : 'content: none';
       return `- ${item.label}\n  ${timeText}\n  ${contentText}`;
     }).join('\n');
+  }
+
+  getContextConfig() {
+    if (!this.config || typeof this.config.get !== 'function') {
+      throw new Error('Config instance required for context configuration');
+    }
+    const contextConfig = this.config.get('context');
+    if (!contextConfig || typeof contextConfig !== 'object') {
+      throw new Error('Context configuration missing');
+    }
+    const { maxTokens, maxContextSize, truncationLimit } = contextConfig;
+    if (typeof maxTokens !== 'number' || Number.isNaN(maxTokens)) {
+      throw new Error('Context configuration missing maxTokens');
+    }
+    if (typeof maxContextSize !== 'number' || Number.isNaN(maxContextSize)) {
+      throw new Error('Context configuration missing maxContextSize');
+    }
+    if (typeof truncationLimit !== 'number' || Number.isNaN(truncationLimit)) {
+      throw new Error('Context configuration missing truncationLimit');
+    }
+    return { maxTokens, maxContextSize, truncationLimit };
+  }
+
+  limitContextResults(results, contextConfig) {
+    const limited = results.slice(0, contextConfig.maxContextSize);
+    return limited.map(result => {
+      const content = result.content || '';
+      if (content.length <= contextConfig.truncationLimit) {
+        return result;
+      }
+      return {
+        ...result,
+        content: `${content.slice(0, contextConfig.truncationLimit)}...`
+      };
+    });
+  }
+
+  applyContextWindow(contextText, contextConfig) {
+    const windowManager = new ContextWindowManager({
+      maxWindowSize: contextConfig.maxTokens,
+      minWindowSize: Math.floor(contextConfig.maxTokens / 4)
+    });
+    if (windowManager.estimateTokens(contextText) <= contextConfig.maxTokens) {
+      return contextText;
+    }
+    const windows = windowManager.processContext(contextText);
+    return windowManager.mergeOverlappingContent(windows);
   }
 
   extractKeywordList(result) {

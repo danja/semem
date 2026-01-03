@@ -67,6 +67,11 @@ export default class Config {
             promotionThreshold: 2.0,    // Score needed for long-term promotion (lowered for testing)
             classificationChance: 0.5   // Probability of running classification per retrieval (increased for testing)
         },
+        context: {
+            maxTokens: 2000,
+            maxContextSize: 4,
+            truncationLimit: 800
+        },
         sparqlEndpoints: [{
             label: "Hyperdata Fuseki",
             user: "admin",
