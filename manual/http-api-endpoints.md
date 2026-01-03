@@ -49,6 +49,222 @@ This document provides comprehensive status information for all available HTTP A
 * **Side Effects**: None
 * **Behaviour**: Checks initialization status of all API handlers and core components
 
+---
+
+## MCP Simple Verbs REST API
+
+These endpoints are served by the MCP HTTP server (default port 4101). If you are using the Workbench proxy, the browser will call `/api/*` and the proxy will forward to these MCP endpoints (e.g. `/api/zoom` → MCP `/zoom`).
+
+### Simple Verb: Tell
+* **Name**: tell
+* **Purpose**: Store content in semantic memory with embeddings
+* **Endpoint URL**: `POST /tell`
+* **Supported HTTP Methods**: POST
+* **Inputs**:
+  ```json
+  {
+    "content": "string",
+    "type": "interaction",
+    "metadata": {}
+  }
+  ```
+* **Outputs**:
+  ```json
+  {
+    "success": true,
+    "id": "memory:...",
+    "timestamp": "2025-01-01T00:00:00.000Z"
+  }
+  ```
+* **Side Effects**: Stores content and embeddings in SPARQL
+* **Behaviour**: Delegates to SimpleVerbsService tell handler
+
+### Simple Verb: Ask
+* **Name**: ask
+* **Purpose**: Query stored knowledge with ZPT-aware context
+* **Endpoint URL**: `POST /ask`
+* **Supported HTTP Methods**: POST
+* **Inputs**:
+  ```json
+  {
+    "question": "string",
+    "mode": "standard",
+    "useContext": true,
+    "useHyDE": false,
+    "useWikipedia": false,
+    "useWikidata": false,
+    "useWebSearch": false,
+    "threshold": 0.3
+  }
+  ```
+* **Outputs**:
+  ```json
+  {
+    "success": true,
+    "answer": "string",
+    "zptState": { "zoom": "entity", "pan": {}, "tilt": "keywords" },
+    "timestamp": "2025-01-01T00:00:00.000Z"
+  }
+  ```
+* **Side Effects**: Updates session cache
+* **Behaviour**: Executes SimpleVerbsService ask pipeline
+
+### Simple Verb: Augment
+* **Name**: augment
+* **Purpose**: Extract concepts/relationships from input text
+* **Endpoint URL**: `POST /augment`
+* **Supported HTTP Methods**: POST
+* **Inputs**:
+  ```json
+  {
+    "target": "string",
+    "operation": "auto",
+    "options": {}
+  }
+  ```
+* **Outputs**:
+  ```json
+  {
+    "success": true,
+    "concepts": [],
+    "relationships": []
+  }
+  ```
+* **Side Effects**: May store extracted concepts/relationships
+* **Behaviour**: Runs SimpleVerbsService augment pipeline
+
+### Simple Verb: Zoom
+* **Name**: zoom
+* **Purpose**: Set ZPT abstraction level
+* **Endpoint URL**: `POST /zoom`
+* **Supported HTTP Methods**: POST
+* **Inputs**:
+  ```json
+  {
+    "level": "entity",
+    "query": "optional"
+  }
+  ```
+* **Outputs**:
+  ```json
+  {
+    "success": true,
+    "verb": "zoom",
+    "state": { "zoom": "entity", "pan": {}, "tilt": "keywords" }
+  }
+  ```
+* **Side Effects**: Updates ZPT state
+* **Behaviour**: Updates state via SimpleVerbsService zoom
+
+### Simple Verb: Pan
+* **Name**: pan
+* **Purpose**: Apply ZPT domain filters
+* **Endpoint URL**: `POST /pan`
+* **Supported HTTP Methods**: POST
+* **Inputs**:
+  ```json
+  {
+    "domains": ["ai"],
+    "keywords": ["rag"],
+    "entities": ["Ragno"],
+    "temporal": { "start": "2024-01-01", "end": "2024-12-31" },
+    "corpuscle": ["corpus:foo"],
+    "query": "optional"
+  }
+  ```
+* **Outputs**:
+  ```json
+  {
+    "success": true,
+    "verb": "pan",
+    "state": { "zoom": "entity", "pan": { "domains": ["ai"] }, "tilt": "keywords" }
+  }
+  ```
+* **Side Effects**: Updates ZPT state
+* **Behaviour**: Updates state via SimpleVerbsService pan
+
+### Simple Verb: Tilt
+* **Name**: tilt
+* **Purpose**: Choose ZPT representation style
+* **Endpoint URL**: `POST /tilt`
+* **Supported HTTP Methods**: POST
+* **Inputs**:
+  ```json
+  {
+    "style": "keywords",
+    "query": "optional"
+  }
+  ```
+* **Outputs**:
+  ```json
+  {
+    "success": true,
+    "verb": "tilt",
+    "state": { "zoom": "entity", "pan": {}, "tilt": "keywords" }
+  }
+  ```
+* **Side Effects**: Updates ZPT state
+* **Behaviour**: Updates state via SimpleVerbsService tilt
+
+### ZPT Navigate
+* **Name**: zpt-navigate
+* **Purpose**: Execute full ZPT navigation with zoom/pan/tilt parameters
+* **Endpoint URL**: `POST /zpt/navigate`
+* **Supported HTTP Methods**: POST
+* **Inputs**:
+  ```json
+  {
+    "query": "string",
+    "zoom": "entity",
+    "pan": {},
+    "tilt": "keywords"
+  }
+  ```
+* **Outputs**:
+  ```json
+  {
+    "success": true,
+    "navigation": { "zoom": "entity", "pan": {}, "tilt": "keywords" },
+    "timestamp": "2025-01-01T00:00:00.000Z"
+  }
+  ```
+* **Side Effects**: None
+* **Behaviour**: Uses ZPT navigation services in SimpleVerbsService
+
+### Inspect
+* **Name**: inspect
+* **Purpose**: Inspect system state and diagnostics
+* **Endpoint URL**: `POST /inspect`
+* **Supported HTTP Methods**: POST
+* **Inputs**:
+  ```json
+  { "type": "session" }
+  ```
+* **Outputs**:
+  ```json
+  { "success": true, "state": {} }
+  ```
+* **Side Effects**: None
+* **Behaviour**: Executes SimpleVerbsService inspect handlers
+
+### State
+* **Name**: state
+* **Purpose**: Get current ZPT state and session info
+* **Endpoint URL**: `GET /state`
+* **Supported HTTP Methods**: GET
+* **Inputs**: None
+* **Outputs**:
+  ```json
+  {
+    "success": true,
+    "state": { "zoom": "entity", "pan": {}, "tilt": "keywords" }
+  }
+  ```
+* **Side Effects**: None
+* **Behaviour**: Returns SimpleVerbsService state snapshot
+
+---
+
 ### System Configuration
 * **Name**: config
 * **Purpose**: Retrieve sanitized system configuration information

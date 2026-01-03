@@ -4,6 +4,22 @@
 
 A comprehensive SPARQL-to-MCP document ingestion system has been implemented for semem, providing flexible document ingestion from any SPARQL endpoint.
 
+**Note to self**
+cd ~/hyperdata/transmissions # my local path
+./trans link-finder
+./trans bookmark-get
+node utils/BookmarkIngest.js \
+  --endpoint "http://localhost:3030/semem/query" \
+  --graph "http://hyperdata.it/content" \
+  --limit 10
+node utils/ProcessBookmarksToMemory.js \
+  --limit 50 --batch-size 10
+node utils/SPARQLIngest.js \
+  --endpoint "https://fuseki.hyperdata.it/danny.ayers.name/query" \
+  --template blog-articles \
+  --graph "http://hyperdata.it/content" \
+  --user admin --password admin123  
+
 ## 🏗️ Core Components
 
 ### 1. SPARQLDocumentIngester Class
@@ -42,6 +58,13 @@ A comprehensive SPARQL-to-MCP document ingestion system has been implemented for
   - Uses bookmark vocabulary (http://purl.org/stuff/bm/)
   - Supports lazy and full processing modes
   - 360x faster lazy mode for bulk ingestion
+  - **Note**: Creates raw RDF bookmarks that need post-processing
+- **ProcessBookmarksToMemory.js**: Convert raw bookmarks to searchable memory items
+  - Finds unprocessed bookmarks in the graph
+  - Automatically chunks large content before processing
+  - Processes through tell verb to create semem:MemoryItem entities
+  - Generates embeddings for semantic search
+  - Marks bookmarks as processed to avoid duplicates
 - **QueryLazyContent.js**: Query and inspect lazy-stored content
   - View content waiting for augmentation
   - Filter by type and limit results
@@ -76,27 +99,42 @@ node utils/SPARQLIngest.js \
 node utils/SPARQLIngest.js --interactive
 ```
 
-#### Bookmark Ingestion
+#### Bookmark Ingestion (Two-Phase Process)
+
+**Phase 1: Ingest Raw Bookmarks**
 
 ```bash
 # Preview bookmarks first
 node utils/BookmarkIngest.js \
-  --endpoint "http://localhost:3030/test/query" \
+  --endpoint "http://localhost:3030/semem/query" \
   --graph "http://hyperdata.it/content" \
   --dry-run --limit 5
 
-# Fast bulk ingestion with lazy mode (360x faster)
+# Ingest raw bookmark RDF (creates bm:Bookmark entities)
 node utils/BookmarkIngest.js \
-  --endpoint "http://localhost:3030/test/query" \
+  --endpoint "http://localhost:3030/semem/query" \
   --graph "http://hyperdata.it/content" \
-  --limit 100 \
-  --lazy
-
-# Full processing mode (slower, immediate embeddings)
-node utils/BookmarkIngest.js \
-  --endpoint "http://localhost:3030/test/query" \
-  --limit 10
+  --limit 100
 ```
+
+**Phase 2: Process Bookmarks to Searchable Memory**
+
+```bash
+# Preview what will be processed
+node utils/ProcessBookmarksToMemory.js \
+  --limit 10 --dry-run --verbose
+
+# Process bookmarks to create searchable memory items
+# (chunks large content, generates embeddings, extracts concepts)
+node utils/ProcessBookmarksToMemory.js \
+  --limit 50 --batch-size 10
+
+# Process with verbose output
+node utils/ProcessBookmarksToMemory.js \
+  --limit 20 --verbose
+```
+
+**Important**: After Phase 2, bookmarks become searchable via the `ask` verb!
 
 #### Query Lazy Content
 
@@ -161,17 +199,21 @@ The implementation has been tested and verified:
 
 ### New Files:
 - `src/services/ingestion/SPARQLDocumentIngester.js` - Core ingestion service
-- `config/sparql-templates/blog-articles.sparql` - Blog template (from your example)
+- `src/services/ingestion/MemoryItemProcessor.js` - Processes raw bookmarks to searchable memory items
+- `config/sparql-templates/blog-articles.sparql` - Blog template
 - `config/sparql-templates/generic-documents.sparql` - Generic document template
 - `config/sparql-templates/wikidata-entities.sparql` - Wikidata template
+- `sparql/queries/find-unprocessed-bookmarks.sparql` - Query to find bookmarks needing processing
+- `utils/ProcessBookmarksToMemory.js` - CLI tool for bookmark-to-memory conversion
 - `examples/ingestion/SPARQLIngest.js` - CLI tool
 - `examples/ingestion/README.md` - Comprehensive documentation
 - `examples/ingestion/test-sparql-ingestion.js` - Test script
 
 ### Modified Files:
-- `config/config.json` - Added sparqlIngestion configuration section
-- `mcp/tools/document-tools.js` - Added createSparqlIngestTool function
+- `config/config.json` - Added sparqlIngestion configuration, updated graphName to http://hyperdata.it/content, increased Groq rate limit to 500ms
+- `mcp/tools/document-tools.js` - Added createSparqlIngestTool function, removed hardcoded graph URI
 - `mcp/index.js` - Registered sparql_ingest_documents tool
+- `src/handlers/LLMHandler.js` - Added configurable rate limit delay support
 
 ## 🎯 Key Features
 
@@ -229,16 +271,120 @@ This provides a 360x performance improvement for bulk ingestion.
 | Lazy | ~167ms/item | Bulk ingestion, process later |
 | Full | ~60s/item | Complete processing immediately |
 
+## 🔄 Bookmark Processing Workflow (Updated)
+
+The bookmark ingestion system now uses a two-phase approach:
+
+### Phase 1: Raw Bookmark Ingestion
+- **Tool**: `BookmarkIngest.js`
+- **Purpose**: Quickly ingest bookmark RDF from SPARQL endpoints
+- **Output**: Creates `bm:Bookmark` entities with content in the graph
+- **Speed**: Fast - no processing overhead
+
+### Phase 2: Memory Item Processing
+- **Tool**: `ProcessBookmarksToMemory.js`
+- **Purpose**: Convert raw bookmarks to searchable memory items
+- **Process**:
+  1. Queries for unprocessed bookmarks (`semem:processedToMemory != true`)
+  2. Automatically chunks large content (threshold: 5000 chars)
+  3. Processes each chunk through `tell` verb
+  4. Generates embeddings and extracts concepts
+  5. Marks bookmark as processed
+- **Output**: Creates `semem:MemoryItem` entities searchable via `ask` verb
+- **Speed**: Slower but makes content semantically searchable
+
+### Why Two Phases?
+
+1. **Separation of Concerns**: Raw data ingestion vs semantic processing
+2. **Flexibility**: Ingest all bookmarks first, process selectively later
+3. **Error Recovery**: Failed processing doesn't lose raw bookmark data
+4. **Performance**: Can ingest thousands of bookmarks, then process in batches
+5. **Reprocessing**: Can reprocess bookmarks without re-ingesting from source
+
 ## ✨ Next Steps
 
 The system is ready for immediate use! You can:
 
 1. **Test with your blog**: Use the CLI or MCP tool with your Fuseki endpoint
-2. **Ingest bookmarks**: Use BookmarkIngest.js for bookmark content
+2. **Ingest bookmarks**: Use two-phase bookmark workflow (BookmarkIngest.js → ProcessBookmarksToMemory.js)
 3. **Use lazy mode**: For bulk ingestion, use --lazy flag for 360x speedup
 4. **Add custom templates**: Create new `.sparql` files for other content sources
 5. **Extend field mappings**: Customize how SPARQL results map to document properties
 6. **Integrate with pipelines**: Use ingested documents with existing semem processing workflows
+7. **Query and search**: Use `ask` verb to search processed bookmark content
+
+## 🏷️ Label Generation for Unlabeled Entities
+
+After ingestion, entities may lack proper labels for visualization in interfaces like VSOM. The augment verb now includes a `label` command to automatically generate keyword-based labels.
+
+### How It Works
+
+The label strategy:
+1. Queries for entities with content but no `rdfs:label` (ragno:Element, skos:Concept, semem:Interaction)
+2. Extracts keywords from content using KeywordExtractor
+3. Generates both `rdfs:label` and `skos:prefLabel` properties
+4. Supports dry-run mode for preview
+
+### Usage
+
+```bash
+# Via MCP (programmatic)
+await simpleVerbsService.augment({
+    target: 'all',
+    operation: 'label',
+    options: {
+        limit: 1000,        // Max entities to process
+        keywordCount: 5,    // Keywords per label
+        dryRun: false       // Set true to preview
+    }
+});
+
+# Preview first 100 unlabeled entities
+{ operation: 'label', options: { limit: 100, dryRun: true } }
+
+# Label all unlabeled entities
+{ operation: 'label', options: { limit: 1000, dryRun: false } }
+```
+
+### What Gets Labeled
+
+The system finds and labels:
+- **ragno:Element** entities with `ragno:content` but no `rdfs:label`
+- **skos:Concept** entities with `ragno:content` but no `rdfs:label`
+- **semem:Interaction** entities with `semem:prompt` but no `rdfs:label`
+- Only processes entities with content ≥10 characters
+
+### Example Output
+
+Given content: `"Live system test: quantum entanglement and superposition in distributed computing systems"`
+
+Generated label: `"live system test quantum entanglement"`
+
+Both properties added:
+- `rdfs:label "live system test quantum entanglement"`
+- `skos:prefLabel "live system test quantum entanglement"@en`
+
+### Integration with Ingestion
+
+After running bookmark or document ingestion, you may want to label new entities:
+
+```bash
+# 1. Ingest documents
+node utils/BookmarkIngest.js --endpoint "..." --limit 100
+
+# 2. Process to memory (creates unlabeled entities)
+node utils/ProcessBookmarksToMemory.js --limit 100
+
+# 3. Generate labels for VSOM visualization
+# (via MCP augment with operation: 'label')
+```
+
+### Files
+
+- **Strategy**: `src/mcp/tools/verbs/strategies/augment/LabelStrategy.js`
+- **Query**: `sparql/queries/find-unlabeled-elements.sparql`
+- **Update**: `sparql/updates/add-labels.sparql`
+- **Tests**: `tests/integration/mcp/augment-label.integration.test.js`
 
 ## 📚 Related Documentation
 

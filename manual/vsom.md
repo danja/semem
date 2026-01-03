@@ -6,6 +6,18 @@ VSOM is a **Vectorized Self-Organizing Map** implementation that transforms high
 
 VSOM is part of the Ragno knowledge graph processing system within Semem and provides intelligent spatial organization of semantic entities, enabling both automated clustering and interactive visual exploration of knowledge structures.
 
+## Standalone VSOM UI (VSOM Workbench)
+
+The standalone VSOM workbench available at `src/frontend/vsom-standalone` provides a browser-based way to explore live MCP data. Recent updates focus on usability and deterministic graph rendering:
+
+- **Knowledge Graph Summary** – the data panel now shows total node/edge counts plus the most common node types so you can see at a glance whether the proxy is talking to Fuseki.
+- **Deterministic Layout** – the client derives repeatable positions from the inspected knowledge graph (instead of random scatter) so refreshes no longer scramble the map.
+- **Connection Reuse** – existing graph edges are reused where possible, so the visualization highlights real relationships rather than synthesized similarity edges.
+- **Contextual Interaction Feed** – the right panel presents the same ranked nodes that power the visualization, giving a textual way to inspect what each bubble represents.
+- **Adaptive Bounds** – layout bounds are computed from the node coordinates (not random padding), keeping the map centred regardless of data size.
+
+You can start the standalone server with `node src/frontend/vsom-standalone/server.js` (or via `./start.sh`) and visit `http://localhost:4103`. The UI proxies to the MCP HTTP server on port 4101, so be sure the MCP service is running first.
+
 ## What is VSOM?
 
 VSOM transforms high-dimensional entity embeddings (typically 1536 dimensions from nomic-embed-text) into a 2D grid structure where semantically similar entities are positioned close to each other, enabling:

@@ -1,5 +1,13 @@
 # Docker Installation and Deployment Guide
 
+tl;dr for next time
+
+```sh
+git pull
+docker-compose down
+docker-compose up -d --build
+```
+
 This guide provides instructions for running Semem using Docker. The Docker deployment works exactly like a local installation - it uses the same configuration files and .env setup, with only service hostnames changed for containerization.
 
 ## Table of Contents
@@ -367,7 +375,6 @@ Development containers mount source code as volumes:
 ```bash
 # Changes to these directories are reflected immediately:
 ./src      -> /app/src      (Application source)
-./mcp      -> /app/mcp      (MCP server)
 ./config   -> /app/config   (Configuration)
 ./prompts  -> /app/prompts  (Prompt templates)
 
