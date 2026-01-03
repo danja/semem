@@ -116,7 +116,12 @@ export default class MemoryManager {
             throw new Error('MemoryManager now requires a SPARQLStore instance or SPARQL configuration. In-memory and JSON storage are no longer supported.')
         }
         this.config = config
-        this.contextManager = new ContextManager(contextOptions)
+        const contextConfig = this.config?.get ? this.config.get('context') : null
+        const resolvedContextOptions = { ...contextOptions }
+        if (contextConfig && typeof contextConfig === 'object') {
+            Object.assign(resolvedContextOptions, contextConfig)
+        }
+        this.contextManager = new ContextManager(resolvedContextOptions, this.config)
 
         // Start initialization but don't wait for it here
         this._initialization = this.initialize().catch(error => {

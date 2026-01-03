@@ -193,7 +193,9 @@
   },
   "baseUri": "http://tensegrity.it/semem/",
   "context": {
-    "truncationLimit": null
+    "maxTokens": 2000,
+    "maxContextSize": 4,
+    "truncationLimit": 800
   },
   "conceptExtraction": {
     "maxConcepts": 3,

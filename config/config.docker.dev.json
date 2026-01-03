@@ -141,7 +141,9 @@
   },
   "baseUri": "http://hyperdata.it/",
   "context": {
-    "truncationLimit": null
+    "maxTokens": 2000,
+    "maxContextSize": 4,
+    "truncationLimit": 800
   },
   "conceptExtraction": {
     "maxConcepts": 3,

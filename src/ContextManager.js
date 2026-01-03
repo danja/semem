@@ -14,7 +14,11 @@ export default class ContextManager {
         this.contextBuffer = []
 
         // Get context truncation limit from config, default to no truncation (null)
-        this.contextTruncationLimit = this.getContextTruncationLimit()
+        if (Object.prototype.hasOwnProperty.call(options, 'truncationLimit')) {
+            this.contextTruncationLimit = options.truncationLimit
+        } else {
+            this.contextTruncationLimit = this.getContextTruncationLimit()
+        }
 
         this.windowManager = new ContextWindowManager({
             maxWindowSize: this.maxTokens,
