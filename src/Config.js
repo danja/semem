@@ -70,7 +70,11 @@ export default class Config {
         context: {
             maxTokens: 2000,
             maxContextSize: 4,
-            truncationLimit: 800
+            truncationLimit: 800,
+            recentInteractionsCount: 3,
+            recentInteractionsTruncationLimit: 240,
+            topicKeywordCount: 6,
+            topicConceptCount: 6
         },
         sparqlEndpoints: [{
             label: "Hyperdata Fuseki",

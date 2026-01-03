@@ -101,6 +101,8 @@ The **MCP Protocol Server** enables seamless AI integration through:
 
 **[ZPT MCP Integration](zpt-mcp.md)** - User guide for 3-dimensional knowledge exploration through MCP tools, covering navigation workflows, multi-dimensional filtering, and exploration scenarios.
 
+**[Topic Command](topic.md)** - How `/topic` derives subject labels and keywords from recent interaction and applies them as Pan filters.
+
 **[ZPT Architecture](zpt-json.md)** - Technical analysis of ZPT subsystem internals including parameter processing, selection algorithms, transformation layers, and API implementation details.
 
 ### VI. Core Operations and Workflows

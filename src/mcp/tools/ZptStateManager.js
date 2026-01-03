@@ -130,6 +130,26 @@ export class ZPTStateManager {
   }
 
   /**
+   * Get recent interactions from session cache
+   */
+  getRecentInteractions(limit = 3) {
+    const interactions = Array.from(this.sessionCache.interactions.values());
+    return interactions
+      .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
+      .slice(0, limit);
+  }
+
+  /**
+   * Clear session cache for recent interactions and related metadata
+   */
+  clearSessionCache() {
+    this.sessionCache.interactions.clear();
+    this.sessionCache.embeddings = [];
+    this.sessionCache.concepts.clear();
+    this.sessionCache.lastCacheUpdate = Date.now();
+  }
+
+  /**
    * Search session cache using semantic similarity
    */
   async searchSessionCache(queryText, queryEmbedding, limit = 5, threshold = 0.5) {

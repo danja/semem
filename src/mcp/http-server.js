@@ -128,6 +128,8 @@ async function handleSlashCommand(command, simpleVerbsService) {
 /help          - Show this help message
 /ask [query]   - Search your semantic memory for information
 /tell [info]   - Store new information in your semantic memory
+/clear         - Clear recent session context
+/topic         - Derive topic from recent context and set pan filters
 
 Examples:
 /ask What did I learn about machine learning?
@@ -202,6 +204,46 @@ You can also chat naturally - I'll understand your intentions and route appropri
           success: false,
           messageType: 'error',
           content: `Error processing tell command: ${error.message}`,
+          timestamp: new Date().toISOString()
+        };
+      }
+
+    case '/clear':
+      try {
+        const result = await simpleVerbsService.clearSessionContext();
+        return {
+          success: result.success,
+          messageType: 'clear_result',
+          content: '✅ Recent session context cleared.',
+          originalMessage: command,
+          routing: 'clear_command',
+          timestamp: new Date().toISOString()
+        };
+      } catch (error) {
+        return {
+          success: false,
+          messageType: 'error',
+          content: `Error processing clear command: ${error.message}`,
+          timestamp: new Date().toISOString()
+        };
+      }
+
+    case '/topic':
+      try {
+        const result = await simpleVerbsService.deriveTopicAndPan();
+        return {
+          success: result.success,
+          messageType: 'topic_result',
+          content: `✅ Topic set to "${result.topic.label}" with keywords: ${result.topic.keywords.join(', ')}`,
+          originalMessage: command,
+          routing: 'topic_command',
+          timestamp: new Date().toISOString()
+        };
+      } catch (error) {
+        return {
+          success: false,
+          messageType: 'error',
+          content: `Error processing topic command: ${error.message}`,
           timestamp: new Date().toISOString()
         };
       }

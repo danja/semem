@@ -261,15 +261,20 @@ export class AskCommand extends BaseVerbCommand {
 
     if (enhancementResults?.context?.combinedPrompt) {
       const contextConfig = this.getContextConfig();
-      const externalContext = this.applyContextWindow(
+      let externalContext = this.applyContextWindow(
         enhancementResults.context.combinedPrompt,
         contextConfig
       );
+      externalContext = await this.fitContextToPromptBudget('ask-with-external-context', {
+        externalContext,
+        question
+      }, 'externalContext', contextConfig);
       // Use enhancement results even without local context
       const prompt = await this.templateLoader.loadAndInterpolate('mcp', 'ask-with-external-context', {
         externalContext,
         question: question
       });
+      this.enforcePromptLimit(prompt, contextConfig);
 
       try {
         answer = await this.safeOps.generateResponse(prompt);
@@ -302,12 +307,17 @@ export class AskCommand extends BaseVerbCommand {
   async generateContextualResponse(question, searchResults, enhancementResults, tilt, contextConfig) {
     const hasLocalContext = searchResults.length > 0;
     const hasEnhancementContext = enhancementResults?.context?.combinedPrompt;
+    const recentContext = this.buildRecentContext(contextConfig);
 
-    if (!hasLocalContext && !hasEnhancementContext) {
+    if (!hasLocalContext && !hasEnhancementContext && !recentContext) {
       return `I don't have any relevant information to answer: ${question}`;
     }
 
     const promptParts = [];
+
+    if (recentContext) {
+      promptParts.push(`Recent session context:\n${recentContext}`);
+    }
 
     // Add local context if available
     if (hasLocalContext) {
@@ -320,11 +330,16 @@ export class AskCommand extends BaseVerbCommand {
       promptParts.push(`External knowledge context:\n${enhancementResults.context.combinedPrompt}`);
     }
 
-    const fullContext = this.applyContextWindow(promptParts.join('\n\n---\n\n'), contextConfig);
+    let fullContext = this.applyContextWindow(promptParts.join('\n\n---\n\n'), contextConfig);
+    fullContext = await this.fitContextToPromptBudget('ask-with-hybrid-context', {
+      fullContext,
+      question
+    }, 'fullContext', contextConfig);
     const prompt = await this.templateLoader.loadAndInterpolate('mcp', 'ask-with-hybrid-context', {
       fullContext: fullContext,
       question: question
     });
+    this.enforcePromptLimit(prompt, contextConfig);
 
     try {
       return await this.safeOps.generateResponse(prompt);
@@ -434,7 +449,7 @@ export class AskCommand extends BaseVerbCommand {
     if (!contextConfig || typeof contextConfig !== 'object') {
       throw new Error('Context configuration missing');
     }
-    const { maxTokens, maxContextSize, truncationLimit } = contextConfig;
+    const { maxTokens, maxContextSize, truncationLimit, recentInteractionsCount, recentInteractionsTruncationLimit } = contextConfig;
     if (typeof maxTokens !== 'number' || Number.isNaN(maxTokens)) {
       throw new Error('Context configuration missing maxTokens');
     }
@@ -444,7 +459,13 @@ export class AskCommand extends BaseVerbCommand {
     if (typeof truncationLimit !== 'number' || Number.isNaN(truncationLimit)) {
       throw new Error('Context configuration missing truncationLimit');
     }
-    return { maxTokens, maxContextSize, truncationLimit };
+    if (typeof recentInteractionsCount !== 'number' || Number.isNaN(recentInteractionsCount)) {
+      throw new Error('Context configuration missing recentInteractionsCount');
+    }
+    if (typeof recentInteractionsTruncationLimit !== 'number' || Number.isNaN(recentInteractionsTruncationLimit)) {
+      throw new Error('Context configuration missing recentInteractionsTruncationLimit');
+    }
+    return { maxTokens, maxContextSize, truncationLimit, recentInteractionsCount, recentInteractionsTruncationLimit };
   }
 
   limitContextResults(results, contextConfig) {
@@ -471,6 +492,64 @@ export class AskCommand extends BaseVerbCommand {
     }
     const windows = windowManager.processContext(contextText);
     return windowManager.mergeOverlappingContent(windows);
+  }
+
+  async fitContextToPromptBudget(templateName, templateData, contextKey, contextConfig) {
+    const baseData = { ...templateData, [contextKey]: '' };
+    const basePrompt = await this.templateLoader.loadAndInterpolate('mcp', templateName, baseData);
+    const windowManager = new ContextWindowManager({
+      maxWindowSize: contextConfig.maxTokens,
+      minWindowSize: Math.floor(contextConfig.maxTokens / 4)
+    });
+    const baseTokens = windowManager.estimateTokens(basePrompt);
+    const availableTokens = contextConfig.maxTokens - baseTokens;
+
+    if (availableTokens <= 0) {
+      throw new Error(`Context budget exceeded before adding ${contextKey}`);
+    }
+
+    const contextText = String(templateData[contextKey] || '');
+    if (windowManager.estimateTokens(contextText) <= availableTokens) {
+      return contextText;
+    }
+
+    const scopedWindowManager = new ContextWindowManager({
+      maxWindowSize: availableTokens,
+      minWindowSize: Math.max(1, Math.floor(availableTokens / 4))
+    });
+    const windows = scopedWindowManager.processContext(contextText);
+    return scopedWindowManager.mergeOverlappingContent(windows);
+  }
+
+  buildRecentContext(contextConfig) {
+    if (!this.stateManager?.getRecentInteractions) {
+      throw new Error('State manager missing recent interaction support');
+    }
+
+    const interactions = this.stateManager.getRecentInteractions(contextConfig.recentInteractionsCount);
+    if (!interactions.length) {
+      return '';
+    }
+
+    return interactions.map(interaction => {
+      const prompt = interaction.prompt || '';
+      const response = interaction.response || '';
+      const trimmedResponse = response.length > contextConfig.recentInteractionsTruncationLimit
+        ? `${response.slice(0, contextConfig.recentInteractionsTruncationLimit)}...`
+        : response;
+      return `- Q: ${prompt}\n  A: ${trimmedResponse}`;
+    }).join('\n');
+  }
+
+  enforcePromptLimit(prompt, contextConfig) {
+    const windowManager = new ContextWindowManager({
+      maxWindowSize: contextConfig.maxTokens,
+      minWindowSize: Math.floor(contextConfig.maxTokens / 4)
+    });
+    const estimatedTokens = windowManager.estimateTokens(prompt);
+    if (estimatedTokens > contextConfig.maxTokens) {
+      throw new Error(`Prompt exceeds max token budget (${estimatedTokens}/${contextConfig.maxTokens})`);
+    }
   }
 
   extractKeywordList(result) {

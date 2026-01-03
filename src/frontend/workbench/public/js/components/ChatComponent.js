@@ -334,6 +334,14 @@ export default class ChatComponent {
             return { type: 'tell', payload, display: payload || message };
         }
 
+        if (normalized === '/topic') {
+            return { type: 'topic', display: message };
+        }
+
+        if (normalized === '/clear') {
+            return { type: 'clear', display: message };
+        }
+
         if (normalized === '/help') {
             return { type: 'help', display: message };
         }
@@ -344,9 +352,39 @@ export default class ChatComponent {
     async handleSlashCommand(parsed) {
         if (parsed.type === 'help') {
             this.addMessage({
-                content: 'Commands: /ask <question>, /tell <content>, or use the Ask/Tell buttons.',
+                content: 'Commands: /ask <question>, /tell <content>, /topic (derive subject + pan filter), /clear (reset recent context), or use the Ask/Tell buttons.',
                 messageType: 'system',
                 timestamp: new Date().toISOString()
+            });
+            return;
+        }
+
+        if (parsed.type === 'clear') {
+            const response = await apiService.chat({
+                message: '/clear',
+                context: this.getConversationContext(),
+                threshold: stateManager.getState().threshold
+            });
+            this.addMessage({
+                content: response?.content || '✅ Recent session context cleared.',
+                messageType: response?.messageType || 'system',
+                routing: response?.routing,
+                timestamp: response?.timestamp || new Date().toISOString()
+            });
+            return;
+        }
+
+        if (parsed.type === 'topic') {
+            const response = await apiService.chat({
+                message: '/topic',
+                context: this.getConversationContext(),
+                threshold: stateManager.getState().threshold
+            });
+            this.addMessage({
+                content: response?.content || '✅ Topic set.',
+                messageType: response?.messageType || 'system',
+                routing: response?.routing,
+                timestamp: response?.timestamp || new Date().toISOString()
             });
             return;
         }
@@ -537,7 +575,9 @@ export default class ChatComponent {
         const commands = [
             { command: '/help', description: 'Show available commands' },
             { command: '/ask', description: 'Search your semantic memory' },
-            { command: '/tell', description: 'Store new information' }
+            { command: '/tell', description: 'Store new information' },
+            { command: '/topic', description: 'Derive topic and set pan filter' },
+            { command: '/clear', description: 'Clear recent session context' }
         ];
 
         const matching = commands.filter(cmd => 
