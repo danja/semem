@@ -45,27 +45,30 @@ ZPT (Zoom, Pan, Tilt) provides a revolutionary approach to knowledge graph navig
 #### Zoom: Level of Abstraction
 Controls how detailed or abstract your view is:
 
+- **Micro**: Fine-grained micro-level elements
 - **Entity**: Focus on individual entities and their properties
+- **Text**: Text-level content and structure
 - **Unit**: Balanced view of semantic units with related entities
-- **Text**: Broader view including detailed textual content
 - **Community**: Topic-level clusters and domain overviews
 - **Corpus**: Highest level patterns across entire knowledge base
 
 #### Pan: Content Filtering
 Controls what content is included in your view:
 
-- **Temporal Filtering**: Focus on specific time periods or chronological progression
-- **Geographic Filtering**: Limit to location-specific content
-- **Topic Filtering**: Focus on specific subject areas or themes
-- **Entity Filtering**: Focus on specific organizations, people, or concepts
+- **Domains**: Filter by domain strings
+- **Keywords**: Filter by keyword arrays
+- **Entities**: Focus on specific entities
+- **Corpuscle**: Filter by corpuscle identifiers
+- **Temporal**: Filter by time bounds (start/end dates)
 
 #### Tilt: Representation Style
 Controls how content is represented and presented:
 
-- **Keywords**: Term-based representation (fastest processing)
+- **Keywords**: Term-based representation (default, fastest)
 - **Embedding**: Vector-based semantic similarity representation
 - **Graph**: Relationship-based network representation
 - **Temporal**: Time-based sequential representation
+- **Concept**: Concept-focused structured representation
 
 ### Navigation Philosophy
 
@@ -81,37 +84,27 @@ ZPT treats knowledge exploration as a journey through information space where yo
 
 ## MCP Tools for ZPT
 
-### Core Navigation Tools
+### Core Navigation Verbs
 
-#### `mcp__semem__zpt_navigate`
-**Primary navigation tool for 3-dimensional knowledge exploration**
+#### `semem-zoom`
+**Set abstraction level for navigation**
 
-Navigate through knowledge space with full control over zoom, pan, and tilt parameters. This is your main tool for exploring content with camera-like precision.
+Controls granularity from micro-level elements to entire corpus. Levels: micro, entity, text, unit, community, corpus (default: entity).
 
-#### `mcp__semem__zpt_preview`
-**Lightweight preview of navigation destinations**
+#### `semem-pan`
+**Apply multi-dimensional filters**
 
-Preview navigation results before full processing. Essential for understanding what content is available and optimizing your navigation parameters.
+Filter content by domains, keywords, entities, corpuscles, and temporal bounds. All parameters are optional arrays/objects.
 
-#### `mcp__semem__zpt_get_schema`
-**Complete parameter schema and validation rules**
+#### `semem-tilt`
+**Choose representation style**
 
-Access the full navigation parameter schema with validation rules and examples. Use this to understand all available options and constraints.
+Control how content is presented. Styles: keywords (default), embedding, graph, temporal, concept.
 
-#### `mcp__semem__zpt_validate_params`
-**Parameter validation before navigation**
+#### `semem-inspect`
+**Examine system state and navigation context**
 
-Validate your navigation parameters before execution to catch errors early and ensure optimal results.
-
-#### `mcp__semem__zpt_get_options`
-**Available navigation options for current context**
-
-Discover what navigation options are available based on your current corpus and context. Essential for understanding your exploration possibilities.
-
-#### `mcp__semem__zpt_analyze_corpus`
-**Corpus analysis for navigation optimization**
-
-Analyze your knowledge corpus to understand its structure and get recommendations for optimal navigation strategies.
+Inspect session state, concepts, or complete system overview. Parameters: what (session/concepts/all), details (boolean).
 
 ### Supporting MCP Resources
 

@@ -124,15 +124,42 @@ class NavigationHandler {
         corpuscles = generateTestCorpuscles(safeQuery, currentZoom);
       }
 
-      const projectedContent = {
+      let projectedContent = {
         representation: normalizedParams.tilt.representation || 'keywords',
         data: {}
       };
+      let projectionResult = null;
+      let projectionTime = 0;
 
       const selectionResultWithCorpuscles = {
         corpuscles: corpuscles,
         navigation: {}
       };
+
+      if (normalizedParams.tilt.representation === 'concept') {
+        if (!this.context.tiltProjector) {
+          throw new Error('TiltProjector unavailable for concept projection');
+        }
+        if (!this.context.conceptExtractor) {
+          throw new Error('Concept extractor unavailable for concept tilt');
+        }
+        if (!this.context.sparqlStore) {
+          throw new Error('SPARQL store unavailable for concept tilt');
+        }
+
+        const projectionStart = Date.now();
+        projectionResult = await this.context.tiltProjector.project(
+          corpuscles,
+          normalizedParams.tilt,
+          {
+            conceptExtractor: this.context.conceptExtractor,
+            sparqlStore: this.context.sparqlStore
+          }
+        );
+        projectionTime = Date.now() - projectionStart;
+
+        projectedContent = projectionResult;
+      }
 
       const transformResult = await this.context.corpuscleTransformer.transform(
         projectedContent,
@@ -179,6 +206,10 @@ class NavigationHandler {
         }
       };
 
+      if (projectionResult) {
+        content.projection = projectionResult;
+      }
+
       void this.storeNavigationResult(normalizedParams.query, {
         zoom: normalizedParams.zoom,
         pan: normalizedParams.pan,
@@ -189,7 +220,7 @@ class NavigationHandler {
       content.metadata = {
         pipeline: {
           selectionTime: selectionTime,
-          projectionTime: 0,
+          projectionTime: projectionTime,
           transformationTime: 0,
           totalTime: Date.now() - startTime,
           mode: 'real-data'

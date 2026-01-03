@@ -72,7 +72,7 @@ export function getSimpleVerbsToolDefinitions() {
     },
     {
       name: SimpleVerbToolNames.zoom,
-      description: "Set the abstraction level for navigation (entity, unit, text, community, corpus).",
+      description: "Set the abstraction level for navigation (micro, entity, text, unit, community, corpus).",
       inputSchema: zodToJsonSchema(ZoomSchema)
     },
     {
@@ -82,7 +82,7 @@ export function getSimpleVerbsToolDefinitions() {
     },
     {
       name: SimpleVerbToolNames.tilt,
-      description: "Set the view filter/representation style (keywords, embedding, graph, temporal).",
+      description: "Set the view filter/representation style (keywords, embedding, graph, temporal, concept).",
       inputSchema: zodToJsonSchema(TiltSchema)
     },
     {

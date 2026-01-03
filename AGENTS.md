@@ -15,7 +15,7 @@ Only look at docs when requested. Always ignore all files under docs/ignore
 ## Architectural Notes
 
 - The memory and json storage backends are being phased out, sparql storage should be used throughout
-- The MCP (Model Context Protocol) system has been restructured around 12 core verbs instead of the previous complex tool hierarchy
+- The MCP (Model Context Protocol) system has been restructured around 13 core verbs instead of the previous complex tool hierarchy
 
 ## Development Guidelines
 
@@ -94,11 +94,11 @@ Semem has a layered architecture with the following key components:
    - Uses Ragno vocabulary (http://purl.org/stuff/ragno/) for RDF modeling
 
 7. **MCP Layer (Model Context Protocol)**
-   - 12 core verbs: `tell`, `ask`, `augment`, `inspect`, `state`, `zoom`, `pan`, `tilt`, `remember`, `recall`, `chat`, `chat-enhanced`
+   - 13 core verbs: `tell`, `ask`, `augment`, `zoom`, `pan`, `tilt`, `inspect`, `remember`, `forget`, `recall`, `project_context`, `fade_memory`, `train-vsom`
    - HTTP server: `src/mcp/http-server.js` - provides REST API endpoints
    - STDIO server: `src/mcp/index.js` - provides MCP protocol communication
    - Unified validation using Zod schemas for all verb parameters
-   - Direct HTTP endpoints: `/tell`, `/ask`, `/augment`, `/inspect`, `/state`, `/zpt/navigate`, `/chat`, `/chat/enhanced`
+   - Direct HTTP endpoints: `/tell`, `/ask`, `/augment`, `/zoom`, `/pan`, `/tilt`, `/inspect`, `/remember`, `/forget`, `/recall`
 
 8. **VSOM Layer (Visual Self-Organizing Map)**
    - Standalone server: `src/frontend/vsom-standalone/server.js` - serves VSOM UI and proxies to MCP
@@ -191,15 +191,16 @@ const llmHandler = new LLMHandler(llmProvider, modelConfig.chatModel);
 - **tell**: Store content in semantic memory
 - **ask**: Query stored knowledge with context
 - **augment**: Extract concepts and relationships
-- **inspect**: Examine system state and health
-- **state**: Manage system state and configuration
-- **zoom**: Navigate content at different granularities (entity/concept/document/community)
-- **pan**: Navigate content in semantic/temporal/conceptual directions
-- **tilt**: Present content at different detail levels (keywords/summary/detailed)
-- **remember**: Store in specific memory domains (user/project/session/instruction)
-- **recall**: Retrieve from specific memory domains
-- **chat**: Basic chat interaction
-- **chat-enhanced**: Chat with external service enhancements
+- **zoom**: Navigate content at different granularities (micro/entity/text/unit/community/corpus)
+- **pan**: Navigate content using multi-dimensional filters (domains/keywords/entities/corpuscle/temporal)
+- **tilt**: Present content at different styles (keywords/embedding/graph/temporal/concept)
+- **inspect**: Examine system state (session/concepts/all)
+- **remember**: Store in specific memory domains with importance weighting
+- **forget**: Reduce memory visibility using fade/remove methods
+- **recall**: Retrieve from specific memory domains with filtering
+- **project_context**: Manage project-specific memory domains
+- **fade_memory**: Gradually reduce memory visibility for context transitions
+- **train-vsom**: Train Visual Self-Organizing Map for data visualization
 
 ### VSOM Integration
 - VSOM standalone server: `src/frontend/vsom-standalone/server.js`
@@ -238,7 +239,7 @@ const llmHandler = new LLMHandler(llmProvider, modelConfig.chatModel);
 - Integration tests should work against live services and real data (no mocking except when absolutely necessary)
 - E2E tests follow pattern: `tests/integration/{component}/{component}-e2e.integration.test.js`
 - VSOM e2e tests: `tests/integration/vsom/` with comprehensive coverage of API proxy, ZPT navigation, and MCP integration
-- MCP tests: `tests/integration/mcp/` covering all 12 core verbs
+- MCP tests: `tests/integration/mcp/` covering all 13 core verbs
 - Run integration tests with: `INTEGRATION_TESTS=true npx vitest run tests/integration/`
 - Test environment uses real SPARQL endpoint and live LLM/embedding services
 

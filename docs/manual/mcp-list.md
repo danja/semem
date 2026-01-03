@@ -4,7 +4,7 @@ This document provides comprehensive documentation for all available MCP tools, 
 
 ## Overview
 
-The Semem MCP integration provides programmatic access to Semem's core capabilities through the Model Context Protocol via a simplified verb-based interface. The system centers around 12 core verbs that provide intelligent memory management, knowledge processing, and spatial navigation.
+The Semem MCP integration provides programmatic access to Semem's core capabilities through the Model Context Protocol via a simplified verb-based interface. The system centers around 13 core verbs that provide intelligent memory management, knowledge processing, spatial navigation, and visualization.
 
 **Server Information:**
 - **Name**: Semem Integration Server
@@ -26,7 +26,7 @@ The Semem MCP server provides the following core capabilities:
 
 ## Core Verbs (MCP Tools)
 
-Semem provides 12 core verbs that form a simple, intuitive interface for semantic memory and knowledge management:
+Semem provides 13 core verbs that form a simple, intuitive interface for semantic memory and knowledge management:
 
 ### Primary Memory Verbs
 
@@ -49,25 +49,25 @@ Semem provides 12 core verbs that form a simple, intuitive interface for semanti
 
 #### `semem-zoom`
 **Purpose**: Set abstraction level for navigation
-**Schema**: Level (entity/concept/document/community), optional query filter
-**Description**: Controls the granularity of content view from individual entities to corpus-wide communities.
+**Schema**: level (micro/entity/text/unit/community/corpus, default: entity), query (optional)
+**Description**: Controls the granularity of content view from micro-level elements to entire corpus.
 
 #### `semem-pan`
 **Purpose**: Set subject domain filters
-**Schema**: Direction (semantic/temporal/conceptual), domain, time range, concept filters, semantic vectors
-**Description**: Spatial filtering across semantic, temporal, or conceptual dimensions for focused exploration.
+**Schema**: domains (array), keywords (array), entities (array), corpuscle (array), temporal (object with start/end)
+**Description**: Multi-dimensional filtering using domains, keywords, entities, corpuscles, and temporal bounds for focused exploration.
 
 #### `semem-tilt`
 **Purpose**: Set representation style
-**Schema**: Style (keywords/summary/detailed), optional query
-**Description**: Controls how content is presented - from brief keywords to detailed structured views.
+**Schema**: style (keywords/embedding/graph/temporal/concept, default: keywords), query (optional)
+**Description**: Controls content presentation style - keywords, embedding-based, graph, temporal, or concept views.
 
 ### Inspection and Debugging
 
 #### `semem-inspect`
 **Purpose**: Examine system state and stored content
-**Schema**: Type (system/session/concept/memory), target, recommendation flag
-**Description**: Diagnostic verb for understanding memory state, session context, and system health.
+**Schema**: what (session/concepts/all, default: session), details (boolean, default: false)
+**Description**: Diagnostic verb for understanding session context, concepts, and system state.
 
 ### Advanced Memory Management
 
@@ -98,6 +98,13 @@ Semem provides 12 core verbs that form a simple, intuitive interface for semanti
 **Schema**: Target, domain, fade rate, importance preservation flag, dry run option
 **Description**: Smooth context transitions by gradually reducing memory visibility while preserving important information.
 
+### Visualization
+
+#### `semem-train-vsom`
+**Purpose**: Train Visual Self-Organizing Map for data visualization
+**Schema**: epochs (1-10000, default: 100), learningRate (0.001-1.0, default: 0.1), gridSize (5-50, default: 20)
+**Description**: Train VSOM neural network for visualizing high-dimensional semantic data in 2D/3D space.
+
 ---
 
 ## MCP Resources
@@ -117,7 +124,7 @@ Semem provides 12 core verbs that form a simple, intuitive interface for semanti
 ### Documentation Resources
 
 #### `semem://docs/verbs`
-**Description**: Complete documentation for all 12 core verbs
+**Description**: Complete documentation for all 13 core verbs
 **Type**: Markdown
 **Purpose**: Comprehensive guide to verb usage, parameters, schemas, and workflow patterns.
 
@@ -176,7 +183,7 @@ Semem provides 12 core verbs that form a simple, intuitive interface for semanti
 ## Architecture Notes
 
 ### Verb-Centric Design
-- **Simple Interface**: 12 intuitive verbs replace complex tool hierarchies
+- **Simple Interface**: 13 intuitive verbs replace complex tool hierarchies
 - **Unified Service**: Single `SimpleVerbsService` handles all verb operations
 - **Schema Validation**: Zod schemas ensure type safety and parameter validation
 - **Centralized Routing**: All verbs route through `tool-router.js` for consistent handling

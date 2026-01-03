@@ -64,7 +64,7 @@ export default class ParameterValidator {
             },
             tilt: {
                 type: 'enum',
-                values: ['embedding', 'keywords', 'graph', 'temporal'],
+                values: ['embedding', 'keywords', 'graph', 'temporal', 'concept'],
                 required: true
             },
             transform: {

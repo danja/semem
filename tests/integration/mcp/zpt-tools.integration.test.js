@@ -13,6 +13,7 @@ class MCPTestClient {
     this.buffer = '';
     this.messageId = 1;
     this.pending = new Map();
+    this.stderrBuffer = '';
   }
 
   async start() {
@@ -41,11 +42,24 @@ class MCPTestClient {
       }
     });
 
+    this.process.stderr.on('data', (data) => {
+      this.stderrBuffer += data.toString();
+    });
+
+    this.process.on('exit', (code, signal) => {
+      const detail = this.stderrBuffer.trim()
+        ? `\nSTDERR:\n${this.stderrBuffer.trim()}`
+        : '';
+      const error = new Error(`MCP process exited (code ${code}, signal ${signal}).${detail}`);
+      this.pending.forEach(pending => pending.reject(error));
+      this.pending.clear();
+    });
+
     await this.send('initialize', {
       protocolVersion: '2024-11-05',
       capabilities: {},
       clientInfo: { name: 'test-client', version: '1.0.0' }
-    }, 30000);
+    }, 120000);
   }
 
   async stop() {
@@ -55,20 +69,27 @@ class MCPTestClient {
     }
   }
 
-  async send(method, params, timeout = 60000) {
+  async send(method, params, timeout = 120000) {
     const id = this.messageId++;
     const payload = { jsonrpc: '2.0', id, method, params };
 
     const responsePromise = new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
         this.pending.delete(id);
-        reject(new Error(`MCP response timeout after ${timeout}ms`));
+        const detail = this.stderrBuffer.trim()
+          ? `\nSTDERR:\n${this.stderrBuffer.trim()}`
+          : '';
+        reject(new Error(`MCP response timeout after ${timeout}ms.${detail}`));
       }, timeout);
 
       this.pending.set(id, {
         resolve: (response) => {
           clearTimeout(timer);
           resolve(response);
+        },
+        reject: (error) => {
+          clearTimeout(timer);
+          reject(error);
         }
       });
     });
@@ -94,7 +115,7 @@ describe('ZPT Tools Integration Tests', () => {
 
   beforeAll(async () => {
     await client.start();
-    await delay(500);
+    await delay(1500);
   }, 120000);
 
   afterAll(async () => {
@@ -139,5 +160,31 @@ describe('ZPT Tools Integration Tests', () => {
     expect(response.success).toBe(true);
     expect(response.validation).toBeDefined();
     expect(response.validation.valid).toBe(true);
+  }, 120000);
+
+  test('zpt_get_options returns option payload', async () => {
+    const toolResponse = await client.callTool('zpt_get_options', {
+      context: 'current',
+      query: 'semantic memory'
+    });
+    const response = parseToolResponse(toolResponse);
+
+    expect(response.success).toBe(true);
+    expect(response.options).toBeDefined();
+    expect(response.options.zoom?.levels).toContain('entity');
+    expect(response.options.tilt?.styles).toContain('keywords');
+    expect(response.options.tilt?.styles).toContain('concept');
+  }, 120000);
+
+  test('zpt_analyze_corpus returns analysis payload', async () => {
+    const toolResponse = await client.callTool('zpt_analyze_corpus', {
+      analysisType: 'structure',
+      includeStats: true
+    });
+    const response = parseToolResponse(toolResponse);
+
+    expect(response.success).toBe(true);
+    expect(response.analysis).toBeDefined();
+    expect(response.analysis.analysisType).toBe('structure');
   }, 120000);
 });

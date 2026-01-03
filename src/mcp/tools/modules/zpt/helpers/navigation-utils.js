@@ -99,7 +99,7 @@ export function estimateTokensForQuery(query, zoom) {
 
 export function validateNavigationParams(params = {}) {
   const errors = [];
-  const validTilts = ['keywords', 'temporal', 'similarity', 'frequency'];
+  const validTilts = ['keywords', 'embedding', 'graph', 'temporal', 'concept'];
   const validZooms = ['entity', 'unit', 'text', 'micro', 'community', 'corpus'];
 
   if (params.query === undefined || params.query === null ||

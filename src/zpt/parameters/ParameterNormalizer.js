@@ -267,7 +267,8 @@ export default class ParameterNormalizer {
             'embedding': 'vector',
             'keywords': 'text',
             'graph': 'structured',
-            'temporal': 'sequence'
+            'temporal': 'sequence',
+            'concept': 'conceptual'
         };
         return formatMap[tilt] || 'text';
     }
@@ -280,7 +281,8 @@ export default class ParameterNormalizer {
             'embedding': 'vectorization',
             'keywords': 'extraction',
             'graph': 'relationship',
-            'temporal': 'chronological'
+            'temporal': 'chronological',
+            'concept': 'conceptual'
         };
         return processingMap[tilt] || 'extraction';
     }

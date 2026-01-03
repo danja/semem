@@ -363,6 +363,8 @@ export class AskCommand extends BaseVerbCommand {
         return this.formatGraphContext(searchResults);
       case 'temporal':
         return this.formatTemporalContext(searchResults);
+      case 'concept':
+        return this.formatConceptContext(searchResults);
       default:
         throw new Error(`Unsupported tilt representation: ${tilt}`);
     }
@@ -438,6 +440,42 @@ export class AskCommand extends BaseVerbCommand {
       const timeText = item.timestamp ? `timestamp: ${item.timestamp}` : 'timestamp: unknown';
       const contentText = item.content ? `content: ${item.content}` : 'content: none';
       return `- ${item.label}\n  ${timeText}\n  ${contentText}`;
+    }).join('\n');
+  }
+
+  formatConceptContext(searchResults) {
+    return searchResults.map(result => {
+      const label = result.label || result.id || 'item';
+      const projection = result.projection || result.content?.projection || result.metadata?.projection;
+      const concepts = projection?.data?.concepts
+        || result.concepts
+        || result.metadata?.concepts
+        || [];
+      const conceptLabels = (Array.isArray(concepts) ? concepts : [concepts])
+        .map(concept => concept?.label || concept?.name || concept)
+        .filter(Boolean)
+        .slice(0, 8);
+      const relationships = projection?.data?.relationships || result.relationships || [];
+      const relationshipList = Array.isArray(relationships)
+        ? relationships
+            .map(rel => {
+              const source = rel.source || rel.from;
+              const target = rel.target || rel.to;
+              if (!source || !target) {
+                return null;
+              }
+              return `${source} → ${target}`;
+            })
+            .filter(Boolean)
+            .slice(0, 5)
+        : [];
+      const conceptsText = conceptLabels.length > 0
+        ? `concepts: ${conceptLabels.join(', ')}`
+        : 'concepts: none';
+      const relationshipsText = relationshipList.length > 0
+        ? `relationships: ${relationshipList.join('; ')}`
+        : 'relationships: none';
+      return `- ${label}\n  ${conceptsText}\n  ${relationshipsText}`;
     }).join('\n');
   }
 
@@ -624,6 +662,7 @@ export class AskCommand extends BaseVerbCommand {
       sessionResults: hybridResult.sessionResults || 0,
       persistentResults: hybridResult.persistentResults || 0,
       memories: hybridResult.localContextResults?.length || 0,
+      localContextResults: hybridResult.localContextResults || [],
       enhancementType: hybridResult.enhancementType,
       enhancements: hybridResult.enhancements || [],
       enhancementStats: hybridResult.enhancementStats,

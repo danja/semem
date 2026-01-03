@@ -18,12 +18,20 @@ The `/topic` command derives a subject label and keywords from recent interactio
    - `keywords`: list of keywords
 5. Applies `pan` with `domains: [label]` and `keywords`.
 
+Workbench document uploads will automatically call `/topic` using document content (or the first chunk) to align the session pan filter with the newly ingested material.
+
 ## Usage
 
 In the workbench chat input:
 
 ```
 /topic
+```
+
+You can also provide source text directly:
+
+```
+/topic <text to summarize>
 ```
 
 ## Response

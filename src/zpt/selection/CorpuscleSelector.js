@@ -112,6 +112,9 @@ export default class CorpuscleSelector {
                 case 'keywords':
                     corpuscles = await this.selectByKeywords(normalizedParams, selectionCriteria);
                     break;
+                case 'concept':
+                    corpuscles = await this.selectByKeywords(normalizedParams, selectionCriteria);
+                    break;
                 case 'graph':
                     corpuscles = await this.selectByGraph(normalizedParams, selectionCriteria);
                     break;

@@ -92,10 +92,11 @@ class ZPTNavigationService {
           },
           zoom: {
             type: 'string',
-            enum: ['entity', 'unit', 'text', 'community', 'corpus'],
+            enum: ['micro', 'entity', 'unit', 'text', 'community', 'corpus'],
             default: 'entity',
             description: 'Level of abstraction for content selection',
             details: {
+              micro: 'Fine-grained snippets and fragments',
               entity: 'Individual entities and their properties',
               unit: 'Semantic units containing related entities',
               text: 'Raw text elements and content',
@@ -107,7 +108,26 @@ class ZPTNavigationService {
             type: 'object',
             description: 'Content filtering parameters',
             properties: {
-              topic: { type: 'string', description: 'Topic-based filtering' },
+              domains: {
+                type: 'array',
+                items: { type: 'string' },
+                description: 'Subject domain filters'
+              },
+              keywords: {
+                type: 'array',
+                items: { type: 'string' },
+                description: 'Keyword filters'
+              },
+              entities: {
+                type: 'array',
+                items: { type: 'string' },
+                description: 'Entity URI filters'
+              },
+              corpuscle: {
+                type: 'array',
+                items: { type: 'string' },
+                description: 'Corpuscle scope filters'
+              },
               temporal: {
                 type: 'object',
                 properties: {
@@ -127,23 +147,19 @@ class ZPTNavigationService {
                   }
                 }
               },
-              entity: {
-                type: 'array',
-                items: { type: 'string' },
-                description: 'Specific entities to focus on'
-              }
             }
           },
           tilt: {
             type: 'string',
-            enum: ['keywords', 'embedding', 'graph', 'temporal'],
+            enum: ['keywords', 'embedding', 'graph', 'temporal', 'concept'],
             default: 'keywords',
             description: 'Representation style for content',
             details: {
               keywords: 'Keyword-based content representation',
               embedding: 'Vector embedding-based similarity representation',
               graph: 'Graph connectivity-based representation',
-              temporal: 'Temporal sequence-based representation'
+              temporal: 'Temporal sequence-based representation',
+              concept: 'Concept extraction and relationship representation'
             }
           },
           transform: {
@@ -187,7 +203,7 @@ class ZPTNavigationService {
         });
       }
 
-      const validZooms = ['entity', 'unit', 'text', 'community', 'corpus'];
+      const validZooms = ['micro', 'entity', 'unit', 'text', 'community', 'corpus'];
       if (params.zoom && !validZooms.includes(params.zoom)) {
         validationResult.valid = false;
         validationResult.errors.push({
@@ -197,7 +213,7 @@ class ZPTNavigationService {
         });
       }
 
-      const validTilts = ['keywords', 'embedding', 'graph', 'temporal'];
+      const validTilts = ['keywords', 'embedding', 'graph', 'temporal', 'concept'];
       if (params.tilt && !validTilts.includes(params.tilt)) {
         validationResult.valid = false;
         validationResult.errors.push({
@@ -248,7 +264,7 @@ class ZPTNavigationService {
     try {
       const options = {
         zoom: {
-          levels: ['entity', 'unit', 'text', 'community', 'corpus'],
+          levels: ['micro', 'entity', 'unit', 'text', 'community', 'corpus'],
           recommendations: getZoomRecommendations(query)
         },
         pan: {
@@ -261,7 +277,7 @@ class ZPTNavigationService {
           }
         },
         tilt: {
-          styles: ['keywords', 'embedding', 'graph', 'temporal'],
+          styles: ['keywords', 'embedding', 'graph', 'temporal', 'concept'],
           recommendations: getTiltRecommendations(query)
         },
         transform: {

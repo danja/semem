@@ -200,7 +200,7 @@ async function getToolDefinitions(toolRouter) {
       inputSchema: {
         type: 'object',
         properties: {
-          style: { type: 'string', enum: ['keywords', 'embedding', 'graph', 'temporal'], description: 'View style' },
+          style: { type: 'string', enum: ['keywords', 'embedding', 'graph', 'temporal', 'concept'], description: 'View style' },
           query: { type: 'string', description: 'Optional focus query' }
         },
         required: ['style']

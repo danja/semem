@@ -569,6 +569,8 @@ class WorkbenchApp {
         consoleService.info(`📄 Document spans approximately ${result.conversion.metadata.pages} pages`);
       }
 
+      await this.applyTopicFromUpload(result, file);
+
       // Step 4: Return summarized result for UI consumption
       return {
         ...result,
@@ -582,6 +584,50 @@ class WorkbenchApp {
       consoleService.error(`⏱️ Upload attempt took ${uploadDuration}ms before failing`);
 
       throw new Error(`Failed to upload document: ${error.message}`);
+    }
+  }
+
+  getTopicSourceFromUpload(result, file) {
+    const chunkContent = result?.chunking?.chunks?.[0]?.content;
+    if (chunkContent) {
+      return chunkContent;
+    }
+
+    const conversionContent = result?.conversion?.content;
+    if (conversionContent) {
+      return conversionContent;
+    }
+
+    if (file?.name) {
+      return `Document: ${file.name}`;
+    }
+
+    return '';
+  }
+
+  async applyTopicFromUpload(result, file) {
+    const sourceText = this.getTopicSourceFromUpload(result, file);
+    if (!sourceText) {
+      consoleService.warn('⚠️ Unable to derive topic from upload: missing document content');
+      return;
+    }
+
+    try {
+      const response = await apiService.chat({
+        message: `/topic ${sourceText}`,
+        context: {},
+        threshold: stateManager.getState().threshold
+      });
+
+      if (response?.success === false) {
+        consoleService.warn('⚠️ Topic derivation failed after upload', {
+          error: response?.content || 'Unknown error'
+        });
+      }
+    } catch (error) {
+      consoleService.warn('⚠️ Topic derivation request failed after upload', {
+        error: error.message
+      });
     }
   }
 
@@ -836,7 +882,7 @@ class WorkbenchApp {
   handleVerbsToggle(event) {
     const button = event.currentTarget;
     const mainContent = DomUtils.$('#main-content');
-    const toggleText = button.querySelector('.toggle-text');
+    const toggleText = button.querySelector('.button-text');
 
     if (!mainContent) return;
 
@@ -845,11 +891,15 @@ class WorkbenchApp {
     // Toggle visibility
     if (isVisible) {
       mainContent.style.display = 'none';
-      toggleText.textContent = 'Show Verbs';
+      if (toggleText) {
+        toggleText.textContent = 'Show Verbs';
+      }
       button.classList.remove('active');
     } else {
       mainContent.style.display = 'flex';
-      toggleText.textContent = 'Hide Verbs';
+      if (toggleText) {
+        toggleText.textContent = 'Hide Verbs';
+      }
       button.classList.add('active');
     }
   }

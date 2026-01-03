@@ -659,6 +659,35 @@ body {
     margin-bottom: var(--space-lg);
 }
 
+.nav-hint {
+    margin: var(--space-sm) 0 0 0;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.nav-results-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.nav-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.nav-badge-concept {
+    background: rgba(255, 178, 66, 0.18);
+    color: #b35b00;
+    border: 1px solid rgba(179, 91, 0, 0.35);
+}
+
 .nav-section-title {
     margin: 0 0 var(--space-md) 0;
     font-size: 1rem;

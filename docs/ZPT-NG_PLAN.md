@@ -68,6 +68,7 @@ Update the checkboxes as work lands.
 - 2025-12-30: STDIO MCP tests now sequence init/tell/ask with longer timeouts to stabilize protocol checks against live services.
 - 2025-12-30: ZPT API now resolves SPARQL store from MemoryManager/store and uses SPARQLStore execute methods for session/view queries.
 - 2025-12-30: Documented end-to-end ZPT flow (API -> MCP verbs -> UI).
+- 2025-12-30: Added concept tilt projection support and verified ZPT navigation tests.
 
 ## Canonical Zoom Ladder
 Most detailed → most abstract:

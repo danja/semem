@@ -126,38 +126,47 @@ export default class NavigationController {
 
     if (this.elements.zoomState) {
       this.elements.zoomState.textContent = state.zoom;
+      this.elements.zoomState.title = `Zoom: ${state.zoom}`;
     }
 
     if (this.elements.panState) {
       this.elements.panState.textContent = panDisplay;
+      this.elements.panState.title = `Pan: ${panDisplay}`;
     }
 
     if (this.elements.tiltState) {
       this.elements.tiltState.textContent = state.tilt;
+      this.elements.tiltState.title = `Tilt: ${state.tilt}`;
     }
 
     if (this.elements.focusZoom) {
       this.elements.focusZoom.textContent = this.formatZoomLevel(state.zoom);
+      this.elements.focusZoom.title = `Zoom: ${state.zoom}`;
     }
 
     if (this.elements.focusPan) {
       this.elements.focusPan.textContent = panDisplay;
+      this.elements.focusPan.title = `Pan: ${panDisplay}`;
     }
 
     if (this.elements.focusTilt) {
       this.elements.focusTilt.textContent = this.formatTiltStyle(state.tilt);
+      this.elements.focusTilt.title = `Tilt: ${state.tilt}`;
     }
 
     if (this.elements.lensZoom) {
       this.elements.lensZoom.textContent = this.formatZoomLevel(state.zoom);
+      this.elements.lensZoom.title = `Zoom: ${state.zoom}`;
     }
 
     if (this.elements.lensPan) {
       this.elements.lensPan.textContent = panDisplay;
+      this.elements.lensPan.title = `Pan: ${panDisplay}`;
     }
 
     if (this.elements.lensTilt) {
       this.elements.lensTilt.textContent = this.formatTiltStyle(state.tilt);
+      this.elements.lensTilt.title = `Tilt: ${state.tilt}`;
     }
 
     if (this.elements.lensChatToggle) {
@@ -211,18 +220,22 @@ export default class NavigationController {
       chips.push({ type, value });
     };
 
-    (pan?.domains || []).forEach(value => addChip('domains', value));
-    (pan?.keywords || []).forEach(value => addChip('keywords', value));
-    (pan?.entities || []).forEach(value => addChip('entities', value));
+    const domains = Array.isArray(pan?.domains) ? pan.domains : (pan?.domains ? [pan.domains] : []);
+    const keywords = Array.isArray(pan?.keywords) ? pan.keywords : (pan?.keywords ? [pan.keywords] : []);
+    const entities = Array.isArray(pan?.entities) ? pan.entities : (pan?.entities ? [pan.entities] : []);
+
+    domains.forEach(value => addChip('domains', value));
+    keywords.forEach(value => addChip('keywords', value));
+    entities.forEach(value => addChip('entities', value));
 
     if (!chips.length) {
-      this.elements.lensChips.innerHTML = '<span class="zpt-lens-chip">No pan filters</span>';
+      this.elements.lensChips.innerHTML = '<span class="zpt-lens-chip" title="No active pan filters">No pan filters</span>';
       return;
     }
 
     this.elements.lensChips.innerHTML = chips.map(chip => (
-      `<span class="zpt-lens-chip">${chip.type}: ${chip.value}` +
-      `<button type="button" data-type="${chip.type}" data-value="${chip.value}" aria-label="Remove filter">×</button>` +
+      `<span class="zpt-lens-chip" title="Pan filter: ${chip.type} = ${chip.value}">${chip.type}: ${chip.value}` +
+      `<button type="button" data-type="${chip.type}" data-value="${chip.value}" aria-label="Remove ${chip.type} filter">×</button>` +
       `</span>`
     )).join('');
 
@@ -298,17 +311,20 @@ export default class NavigationController {
 
     if (this.elements.currentZoom && this.elements.zoomDescription) {
       this.elements.currentZoom.textContent = this.formatZoomLevel(state.zoom);
+      this.elements.currentZoom.title = `Zoom: ${state.zoom}`;
       this.elements.zoomDescription.textContent = this.getZoomDescription(state.zoom);
     }
 
     if (this.elements.currentTilt && this.elements.tiltDescription) {
       this.elements.currentTilt.textContent = this.formatTiltStyle(state.tilt);
+      this.elements.currentTilt.title = `Tilt: ${state.tilt}`;
       this.elements.tiltDescription.textContent = this.getTiltDescription(state.tilt);
     }
 
     if (this.elements.currentPan && this.elements.panDescription) {
       const panText = this.formatPanFilters(state.pan);
       this.elements.currentPan.textContent = panText;
+      this.elements.currentPan.title = `Pan: ${panText}`;
       this.elements.panDescription.textContent = this.getPanDescription(state.pan);
     }
   }
@@ -349,7 +365,7 @@ export default class NavigationController {
       embedding: 'Embedding',
       graph: 'Graph',
       temporal: 'Temporal',
-      memory: 'Memory'
+      concept: 'Concept'
     };
     if (!styles[tilt]) {
       throw new Error(`Unsupported tilt style: ${tilt}`);
@@ -363,7 +379,7 @@ export default class NavigationController {
       embedding: 'Vector similarity view',
       graph: 'Relationship network view',
       temporal: 'Time-based organization',
-      memory: 'Memory importance and access patterns'
+      concept: 'Concept extraction and relationship view'
     };
     if (!descriptions[tilt]) {
       throw new Error(`Unsupported tilt style: ${tilt}`);
@@ -373,8 +389,10 @@ export default class NavigationController {
 
   formatPanFilters(pan) {
     const parts = [];
-    if (pan?.domains) parts.push(`Domains: ${pan.domains}`);
-    if (pan?.keywords) parts.push(`Keywords: ${pan.keywords}`);
+    const domains = Array.isArray(pan?.domains) ? pan.domains : (pan?.domains ? [pan.domains] : []);
+    const keywords = Array.isArray(pan?.keywords) ? pan.keywords : (pan?.keywords ? [pan.keywords] : []);
+    if (domains.length) parts.push(`Domains: ${domains.join(', ')}`);
+    if (keywords.length) parts.push(`Keywords: ${keywords.join(', ')}`);
     return parts.length > 0 ? parts.join(', ') : 'All domains';
   }
 
@@ -458,8 +476,13 @@ export default class NavigationController {
     const domainsInput = DomUtils.$('#pan-domains');
     const keywordsInput = DomUtils.$('#pan-keywords');
 
-    const domains = domainsInput?.value || '';
-    const keywords = keywordsInput?.value || '';
+    const parseList = (value) => value
+      .split(',')
+      .map(entry => entry.trim())
+      .filter(Boolean);
+
+    const domains = parseList(domainsInput?.value || '');
+    const keywords = parseList(keywordsInput?.value || '');
 
     try {
       await stateManager.setPan({ domains, keywords });
@@ -616,15 +639,22 @@ export default class NavigationController {
     const contentData = result?.content?.data || result?.data;
 
     if (result.success && contentData) {
-      html += '<h4>Navigation Results</h4>';
+      const activeTilt = result?.navigation?.tilt || result?.content?.projection?.representation;
+      html += '<div class="nav-results-header">';
+      html += '<h4 title="Results returned by the current ZPT lens">Navigation Results</h4>';
+      if (activeTilt === 'concept') {
+        html += '<span class="nav-badge nav-badge-concept">Concept tilt active</span>';
+      }
+      html += '</div>';
 
       if (contentData.entities && contentData.entities.length > 0) {
         html += '<div class="result-section">';
-        html += '<h5>📍 Found Entities</h5>';
+        html += '<h5 title="Entities matched by the current lens">📍 Found Entities</h5>';
         html += '<ul class="entity-list">';
         contentData.entities.slice(0, 10).forEach(entity => {
+          const label = DomUtils.escapeHtml(entity.name || entity.id);
           html += `<li class="entity-item">
-            <strong>${DomUtils.escapeHtml(entity.name || entity.id)}</strong>
+            <strong title="${label}">${label}</strong>
             ${entity.content ? `<p>${DomUtils.escapeHtml(entity.content.substring(0, 100))}...</p>` : ''}
           </li>`;
         });
@@ -634,11 +664,11 @@ export default class NavigationController {
 
       if (contentData.stats) {
         html += '<div class="result-section">';
-        html += '<h5>📊 Statistics</h5>';
+        html += '<h5 title="Summary statistics for the navigation result">📊 Statistics</h5>';
         html += '<div class="stats-grid">';
         Object.entries(contentData.stats).forEach(([key, value]) => {
           html += `<div class="stat-item">
-            <span class="stat-label">${key}:</span>
+            <span class="stat-label" title="Stat: ${DomUtils.escapeHtml(key)}">${key}:</span>
             <span class="stat-value">${value}</span>
           </div>`;
         });
@@ -648,13 +678,14 @@ export default class NavigationController {
 
       if (Array.isArray(contentData) && contentData.length > 0) {
         html += '<div class="result-section">';
-        html += '<h5>📌 Navigation Items</h5>';
+        html += '<h5 title="Selected corpuscles for the current lens">📌 Navigation Items</h5>';
         html += '<ul class="entity-list">';
         contentData.slice(0, 10).forEach(item => {
           const label = item.label || item.id || 'Item';
           const preview = item.content?.substring?.(0, 100) || '';
+          const escapedLabel = DomUtils.escapeHtml(label);
           html += `<li class="entity-item">
-            <strong>${DomUtils.escapeHtml(label)}</strong>
+            <strong title="${escapedLabel}">${escapedLabel}</strong>
             ${preview ? `<p>${DomUtils.escapeHtml(preview)}...</p>` : ''}
           </li>`;
         });

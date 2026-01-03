@@ -461,7 +461,8 @@ export class ZPTDataFactory {
             'keywords': ZPT.KeywordProjection,
             'embedding': ZPT.EmbeddingProjection,
             'graph': ZPT.GraphProjection,
-            'temporal': ZPT.TemporalProjection
+            'temporal': ZPT.TemporalProjection,
+            'concept': ZPT.ConceptProjection
         };
 
         return tiltMap[tiltProjection] || this.datasetFactory.namedNode(tiltProjection);

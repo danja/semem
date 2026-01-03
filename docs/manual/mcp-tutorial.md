@@ -1,6 +1,6 @@
 # Semem MCP Tutorial: Core Verbs Guide
 
-**A practical guide to using Semem's 12 core verbs with MCP-enabled systems**
+**A practical guide to using Semem's 13 core verbs with MCP-enabled systems**
 
 ## Table of Contents
 
@@ -19,7 +19,7 @@
 
 ## Introduction
 
-Semem provides semantic memory management through 12 intuitive verbs accessible via the Model Context Protocol (MCP). These verbs form a simple, powerful interface for intelligent memory operations, knowledge processing, and spatial navigation.
+Semem provides semantic memory management through 13 intuitive verbs accessible via the Model Context Protocol (MCP). These verbs form a simple, powerful interface for intelligent memory operations, knowledge processing, spatial navigation, and visualization.
 
 ### Core Verb Categories
 
@@ -28,6 +28,7 @@ Semem provides semantic memory management through 12 intuitive verbs accessible 
 **🔍 Inspection Verbs**: `inspect` - system state and debugging
 **📚 Advanced Memory Verbs**: `remember`, `forget`, `recall` - precision memory management
 **🗂️ Context Management Verbs**: `project-context`, `fade-memory` - domain and transition management
+**📊 Visualization Verbs**: `train-vsom` - visual self-organizing map training
 
 ### What Makes Semem Unique
 
@@ -81,7 +82,7 @@ Add to your Claude Desktop configuration:
 ### Verify Connection
 
 Once connected, you should see:
-- **12 core verbs** with `semem-` prefix for all operations
+- **13 core verbs** with `semem-` prefix for all operations
 - **System resources** for status and documentation
 - **Unified interface** - all capabilities through simple verb calls
 
@@ -223,18 +224,20 @@ ZPT (Zoom, Pan, Tilt) provides camera-like controls for exploring knowledge spac
 **Purpose**: Control the granularity of content view
 
 **Levels**:
+- **micro**: Fine-grained micro-level elements
 - **entity**: Individual entities and their immediate properties
-- **concept**: Balanced view of concepts with related entities
-- **document**: Document-level content with broader context
+- **text**: Text-level content and structure
+- **unit**: Semantic units and chunks
 - **community**: Topic-level clusters and domain overviews
+- **corpus**: Entire corpus view
 
 **Usage Examples**:
 ```
 # Focus on specific entities
 Use semem-zoom with level: "entity", query: "artificial intelligence"
 
-# Get conceptual overview
-Use semem-zoom with level: "concept", query: "machine learning algorithms"
+# Get unit-level overview
+Use semem-zoom with level: "unit", query: "machine learning algorithms"
 
 # Understand topic communities
 Use semem-zoom with level: "community"
@@ -244,30 +247,29 @@ Use semem-zoom with level: "community"
 
 **Purpose**: Filter content across multiple dimensions
 
-**Filter Types**:
-- **semantic**: Filter by conceptual similarity using vector embeddings
-- **temporal**: Filter by time periods or chronological progression
-- **conceptual**: Filter by specific topics or domain areas
+**Filter Parameters**:
+- **domains**: Array of domain strings for filtering
+- **keywords**: Array of keyword strings
+- **entities**: Array of specific entities to filter by
+- **corpuscle**: Array of corpuscle identifiers
+- **temporal**: Object with `start` and `end` date/time bounds
 
 **Usage Examples**:
 ```
 # Temporal filtering
 Use semem-pan with:
-- direction: "temporal"
-- timeRange: "2020-2024"
-- maxResults: 50
+- temporal: { start: "2020-01-01", end: "2024-12-31" }
+- domains: ["artificial intelligence"]
 
-# Semantic filtering
+# Keyword filtering
 Use semem-pan with:
-- direction: "semantic"
-- conceptFilter: ["machine learning", "neural networks"]
-- threshold: 0.7
+- keywords: ["machine learning", "neural networks"]
+- domains: ["computer science"]
 
-# Domain-specific filtering
+# Entity-specific filtering
 Use semem-pan with:
-- direction: "conceptual"
-- domain: "computer science"
-- maxResults: 25
+- entities: ["GPT-4", "transformer"]
+- keywords: ["attention mechanism"]
 ```
 
 ### `semem-tilt`: Choose Representation
@@ -275,20 +277,22 @@ Use semem-pan with:
 **Purpose**: Control how content is presented
 
 **Styles**:
-- **keywords**: Brief term-based representation (fastest)
-- **summary**: Balanced summary with key points
-- **detailed**: Comprehensive structured representation
+- **keywords**: Brief term-based representation (default, fastest)
+- **embedding**: Embedding vector-based similarity view
+- **graph**: Graph-structured representation
+- **temporal**: Temporal/chronological representation
+- **concept**: Concept-focused structured view
 
 **Usage Examples**:
 ```
 # Quick keyword overview
 Use semem-tilt with style: "keywords"
 
-# Balanced summary
-Use semem-tilt with style: "summary", query: "recent developments"
+# Graph-based view
+Use semem-tilt with style: "graph", query: "recent developments"
 
-# Detailed analysis
-Use semem-tilt with style: "detailed"
+# Concept-focused analysis
+Use semem-tilt with style: "concept"
 ```
 
 ### Navigation Workflow
@@ -389,22 +393,20 @@ Use semem-recall with:
 
 **Purpose**: Examine system state and stored content for debugging
 
-**Types**:
-- `system`: Overall system health and configuration
-- `session`: Current session state and temporary memory
-- `concept`: Concept extraction and knowledge graph status
-- `memory`: Memory domain statistics and health
+**Parameters**:
+- `what`: What to inspect - "session" (default), "concepts", or "all"
+- `details`: Boolean flag for detailed output (default: false)
 
 **Usage Examples**:
 ```
-# Check system status
-Use semem-inspect with type: "system", includeRecommendations: true
+# Check session status
+Use semem-inspect with what: "session", details: true
 
-# Examine current session
-Use semem-inspect with type: "session"
+# Examine concepts
+Use semem-inspect with what: "concepts"
 
-# Review memory domain health
-Use semem-inspect with type: "memory", target: "project"
+# Get complete system overview
+Use semem-inspect with what: "all", details: true
 ```
 
 ---
@@ -566,11 +568,10 @@ Use semem-recall with:
 
 #### Domain Inspection
 ```
-# Check project domain status
+# Check complete system status
 Use semem-inspect with:
-- type: "memory"
-- target: "project"
-- includeRecommendations: true
+- what: "all"
+- details: true
 ```
 
 ---
@@ -603,11 +604,11 @@ Use semem-zoom with level: "community"
 
 # Filter by temporal progression
 Use semem-pan with:
-- direction: "temporal"
-- timeRange: "2020-2024"
+- temporal: { start: "2020-01-01", end: "2024-12-31" }
+- domains: ["AI research"]
 
-# Get detailed view of trends
-Use semem-tilt with style: "detailed"
+# Get concept view of trends
+Use semem-tilt with style: "concept"
 
 # Query for insights
 Use semem-ask with:
@@ -678,9 +679,8 @@ Use semem-recall with:
 
 # Check what's available in new context
 Use semem-inspect with:
-- type: "memory"
-- target: "project"
-- includeRecommendations: true
+- what: "all"
+- details: true
 
 # Ask context-aware question
 Use semem-ask with:
@@ -712,13 +712,13 @@ Use semem-augment with:
 - operation: "concepts"
 - options: {"maxConcepts": 20, "minConfidence": 0.7}
 
-# Navigate to concept level
-Use semem-zoom with level: "concept"
+# Navigate to unit level
+Use semem-zoom with level: "unit"
 
-# Filter by conceptual domain
+# Filter by domain
 Use semem-pan with:
-- direction: "conceptual"
-- domain: "blockchain"
+- domains: ["blockchain"]
+- keywords: ["consensus", "distributed"]
 
 # Ask for explanation with examples
 Use semem-ask with:
@@ -971,7 +971,7 @@ Use semem-recall with:
 
 ## Conclusion
 
-Semem's 12 core verbs provide a simple, powerful interface for semantic memory management, knowledge processing, and spatial navigation. The verb-centric design makes complex operations intuitive while maintaining the full power of the underlying systems.
+Semem's 13 core verbs provide a simple, powerful interface for semantic memory management, knowledge processing, spatial navigation, and visualization. The verb-centric design makes complex operations intuitive while maintaining the full power of the underlying systems.
 
 ### Key Success Patterns
 

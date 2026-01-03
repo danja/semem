@@ -2,16 +2,20 @@ import { mcpDebugger } from '../../../../lib/debug-utils.js';
 import { NamespaceUtils } from '../../../../../zpt/ontology/ZPTNamespaces.js';
 import CorpuscleSelector from '../../../../../zpt/selection/CorpuscleSelector.js';
 import CorpuscleTransformer from '../../../../../zpt/transform/CorpuscleTransformer.js';
+import TiltProjector from '../../../../../zpt/selection/TiltProjector.js';
 
 class ZPTContext {
   constructor({ memoryManager, safeOps } = {}) {
-    this.memoryManager = memoryManager;
-    this.safeOps = safeOps;
+    this.memoryManager = null;
+    this.safeOps = null;
 
     this.parameterValidator = null;
     this.parameterNormalizer = null;
     this.corpuscleSelector = null;
     this.corpuscleTransformer = null;
+    this.tiltProjector = null;
+    this.conceptExtractor = null;
+    this.sparqlStore = null;
 
     this.config = {
       enableRealData: true,
@@ -20,14 +24,26 @@ class ZPTContext {
       maxTransformationTime: 45000,
       useZPTOntology: true
     };
+
+    if (memoryManager) {
+      this.setMemoryManager(memoryManager);
+    }
+
+    if (safeOps) {
+      this.setSafeOps(safeOps);
+    }
   }
 
   setMemoryManager(memoryManager) {
     this.memoryManager = memoryManager;
+    this.sparqlStore = memoryManager?.store || null;
   }
 
   setSafeOps(safeOps) {
     this.safeOps = safeOps;
+    this.conceptExtractor = safeOps
+      ? { extractConcepts: (text) => this.safeOps.extractConcepts(text) }
+      : null;
   }
 
   convertParametersToURIs(params) {
@@ -78,6 +94,10 @@ class ZPTContext {
     }
 
     try {
+      if (this.safeOps && !this.conceptExtractor) {
+        this.setSafeOps(this.safeOps);
+      }
+
       if (!this.parameterValidator) {
         const { default: ParameterValidator } = await import('../../../../../zpt/parameters/ParameterValidator.js');
         const { default: ParameterNormalizer } = await import('../../../../../zpt/parameters/ParameterNormalizer.js');
@@ -118,6 +138,10 @@ class ZPTContext {
           enableMetadata: true,
           debugMode: false
         });
+      }
+
+      if (!this.tiltProjector) {
+        this.tiltProjector = new TiltProjector({});
       }
 
       mcpDebugger.info('ZPT components initialized with real data sources');

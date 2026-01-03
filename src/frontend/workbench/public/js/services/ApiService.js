@@ -592,7 +592,7 @@ export class ApiService {
    * @param {string} params.query - Navigation query
    * @param {string} params.zoom - Zoom level (micro, entity, text, unit, community, corpus)
    * @param {Object} params.pan - Pan filters {domains, keywords}
-   * @param {string} params.tilt - Tilt style (keywords, embedding, graph, temporal)
+   * @param {string} params.tilt - Tilt style (keywords, embedding, graph, temporal, concept)
    * @returns {Promise<Object>} Navigation results
    */
   async zptNavigate({ query, zoom = 'entity', pan = {}, tilt = 'keywords' }) {

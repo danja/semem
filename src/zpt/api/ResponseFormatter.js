@@ -819,7 +819,8 @@ export default class ResponseFormatter {
             embedding: 'Vector embeddings and similarity analysis',
             keywords: 'Keyword extraction and term analysis',
             graph: 'Graph structure and relationship analysis',
-            temporal: 'Temporal sequences and chronological analysis'
+            temporal: 'Temporal sequences and chronological analysis',
+            concept: 'Concept extraction and relationship analysis'
         };
     }
 

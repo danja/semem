@@ -16,7 +16,7 @@ export class StateManager {
         entities: [],
         temporal: null
       },
-      tilt: 'keywords',    // keywords | embedding | graph | temporal
+      tilt: 'keywords',    // keywords | embedding | graph | temporal | concept
       threshold: 0.3,      // similarity threshold (0.0 - 1.0)
       
       // Session State
@@ -136,11 +136,28 @@ export class StateManager {
   async setPan(panParams, query) {
     try {
       this.setLoadingState('pan', true);
-      
-      const result = await apiService.pan({ ...panParams, query });
-      
+
+      const normalizedParams = {
+        ...panParams,
+        domains: Array.isArray(panParams?.domains)
+          ? panParams.domains
+          : (panParams?.domains ? [panParams.domains] : undefined),
+        keywords: Array.isArray(panParams?.keywords)
+          ? panParams.keywords
+          : (panParams?.keywords ? [panParams.keywords] : undefined),
+        entities: Array.isArray(panParams?.entities)
+          ? panParams.entities
+          : (panParams?.entities ? [panParams.entities] : undefined)
+      };
+
+      const result = await apiService.pan({ ...normalizedParams, query });
+
+      const cleanedParams = Object.fromEntries(
+        Object.entries(normalizedParams).filter(([, value]) => value !== undefined)
+      );
+
       this.setState({
-        pan: { ...this.state.pan, ...panParams },
+        pan: { ...this.state.pan, ...cleanedParams },
         session: { interactionsCount: this.state.session.interactionsCount + 1 }
       });
       
@@ -204,9 +221,13 @@ export class StateManager {
     const { domains, keywords, entities } = this.state.pan;
     const filters = [];
     
-    if (domains?.length) filters.push(`domains:${domains.length}`);
-    if (keywords?.length) filters.push(`keywords:${keywords.length}`);
-    if (entities?.length) filters.push(`entities:${entities.length}`);
+    const domainList = Array.isArray(domains) ? domains : (domains ? [domains] : []);
+    const keywordList = Array.isArray(keywords) ? keywords : (keywords ? [keywords] : []);
+    const entityList = Array.isArray(entities) ? entities : (entities ? [entities] : []);
+
+    if (domainList.length) filters.push(`domains:${domainList.length}`);
+    if (keywordList.length) filters.push(`keywords:${keywordList.length}`);
+    if (entityList.length) filters.push(`entities:${entityList.length}`);
     
     return filters.length ? filters.join(',') : 'all';
   }

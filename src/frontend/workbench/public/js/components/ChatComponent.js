@@ -60,9 +60,11 @@ export default class ChatComponent {
         try {
             const workbench = window.workbenchApp;
             let result;
+            let shouldApplyTopic = true;
 
             if (workbench?.handleDocumentUpload) {
                 result = await workbench.handleDocumentUpload(file, { tags: '', source: 'chat-upload' });
+                shouldApplyTopic = false;
             } else {
                 const documentType = this.getDocumentType(file);
 
@@ -81,6 +83,10 @@ export default class ChatComponent {
                         ingest: true
                     }
                 });
+            }
+
+            if (shouldApplyTopic) {
+                await this.applyTopicFromUpload(result, file);
             }
 
             this.addMessage({
@@ -112,6 +118,50 @@ export default class ChatComponent {
                 event.target.value = '';
             }
             this.chatInput.focus();
+        }
+    }
+
+    getTopicSourceFromUpload(result, file) {
+        const chunkContent = result?.chunking?.chunks?.[0]?.content;
+        if (chunkContent) {
+            return chunkContent;
+        }
+
+        const conversionContent = result?.conversion?.content;
+        if (conversionContent) {
+            return conversionContent;
+        }
+
+        if (file?.name) {
+            return `Document: ${file.name}`;
+        }
+
+        return '';
+    }
+
+    async applyTopicFromUpload(result, file) {
+        const sourceText = this.getTopicSourceFromUpload(result, file);
+        if (!sourceText) {
+            consoleService.warn('⚠️ Unable to derive topic from upload: missing document content');
+            return;
+        }
+
+        try {
+            const response = await apiService.chat({
+                message: `/topic ${sourceText}`,
+                context: {},
+                threshold: stateManager.getState().threshold
+            });
+
+            if (response?.success === false) {
+                consoleService.warn('⚠️ Topic derivation failed after upload', {
+                    error: response?.content || 'Unknown error'
+                });
+            }
+        } catch (error) {
+            consoleService.warn('⚠️ Topic derivation request failed after upload', {
+                error: error.message
+            });
         }
     }
 
@@ -335,11 +385,23 @@ export default class ChatComponent {
         }
 
         if (normalized === '/topic') {
-            return { type: 'topic', display: message };
+            return { type: 'topic', payload, display: message };
         }
 
         if (normalized === '/clear') {
             return { type: 'clear', display: message };
+        }
+
+        if (normalized === '/zoom') {
+            return { type: 'zoom', payload, display: message };
+        }
+
+        if (normalized === '/pan') {
+            return { type: 'pan', payload, display: message };
+        }
+
+        if (normalized === '/tilt') {
+            return { type: 'tilt', payload, display: message };
         }
 
         if (normalized === '/help') {
@@ -352,7 +414,7 @@ export default class ChatComponent {
     async handleSlashCommand(parsed) {
         if (parsed.type === 'help') {
             this.addMessage({
-                content: 'Commands: /ask <question>, /tell <content>, /topic (derive subject + pan filter), /clear (reset recent context), or use the Ask/Tell buttons.',
+                content: 'Commands: /ask <question>, /tell <content>, /topic [text], /zoom <level>, /pan <filter>, /tilt <style>, /clear, or use the Ask/Tell buttons.',
                 messageType: 'system',
                 timestamp: new Date().toISOString()
             });
@@ -375,13 +437,38 @@ export default class ChatComponent {
         }
 
         if (parsed.type === 'topic') {
+            const topicMessage = parsed.payload ? `/topic ${parsed.payload}` : '/topic';
             const response = await apiService.chat({
-                message: '/topic',
+                message: topicMessage,
                 context: this.getConversationContext(),
                 threshold: stateManager.getState().threshold
             });
             this.addMessage({
                 content: response?.content || '✅ Topic set.',
+                messageType: response?.messageType || 'system',
+                routing: response?.routing,
+                timestamp: response?.timestamp || new Date().toISOString()
+            });
+            return;
+        }
+
+        if (['zoom', 'pan', 'tilt'].includes(parsed.type)) {
+            if (!parsed.payload) {
+                this.addMessage({
+                    content: `Command ${parsed.type} requires a value.`,
+                    messageType: 'error',
+                    timestamp: new Date().toISOString()
+                });
+                return;
+            }
+
+            const response = await apiService.chat({
+                message: parsed.display,
+                context: this.getConversationContext(),
+                threshold: stateManager.getState().threshold
+            });
+            this.addMessage({
+                content: response?.content || '✅ ZPT setting updated.',
                 messageType: response?.messageType || 'system',
                 routing: response?.routing,
                 timestamp: response?.timestamp || new Date().toISOString()
@@ -576,6 +663,9 @@ export default class ChatComponent {
             { command: '/help', description: 'Show available commands' },
             { command: '/ask', description: 'Search your semantic memory' },
             { command: '/tell', description: 'Store new information' },
+            { command: '/zoom', description: 'Set zoom level (unit/entity/etc.)' },
+            { command: '/pan', description: 'Set pan filters (domains/keywords/etc.)' },
+            { command: '/tilt', description: 'Set tilt style (keywords/embedding/graph/temporal/concept)' },
             { command: '/topic', description: 'Derive topic and set pan filter' },
             { command: '/clear', description: 'Clear recent session context' }
         ];

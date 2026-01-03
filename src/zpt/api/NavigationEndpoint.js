@@ -116,6 +116,13 @@ export default class NavigationEndpoint {
             // Initialize components in sequence to avoid race conditions
             logger.info('Initializing NavigationEndpoint components in sequence...');
 
+            this.llmHandler = llmHandler;
+            this.textAnalyzer = llmHandler;
+            this.embeddingHandler = embeddingHandler;
+            this.graphAnalyzer = dependencies.graphAnalyzer;
+            this.temporalAnalyzer = dependencies.temporalAnalyzer;
+            this.sparqlStore = sparqlStore;
+
             // Initialize CorpuscleSelector first (core component)
             logger.debug('Initializing CorpuscleSelector...');
             this.corpuscleSelector = new CorpuscleSelector(ragnoCorpus, {
@@ -539,7 +546,11 @@ export default class NavigationEndpoint {
             normalizedParams.tilt,
             {
                 embeddingHandler: this.embeddingHandler,
-                textAnalyzer: this.textAnalyzer
+                textAnalyzer: this.textAnalyzer,
+                conceptExtractor: { extractConcepts: (text) => this.llmHandler.extractConcepts(text) },
+                sparqlStore: this.sparqlStore,
+                graphAnalyzer: this.graphAnalyzer,
+                temporalAnalyzer: this.temporalAnalyzer
             }
         );
         const projectionTime = Date.now() - projectionStart;

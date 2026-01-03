@@ -119,6 +119,108 @@ async function handleSlashCommand(command, simpleVerbsService) {
   const cmd = commandParts[0].toLowerCase();
   const args = commandParts.slice(1).join(' ').trim();
 
+  const parseJsonArgs = (payload, expectedKeys) => {
+    let parsed;
+    try {
+      parsed = JSON.parse(payload);
+    } catch (error) {
+      throw new Error(`Invalid JSON payload: ${error.message}`);
+    }
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      throw new Error('JSON payload must be an object');
+    }
+    if (expectedKeys && !expectedKeys.some(key => key in parsed)) {
+      throw new Error(`JSON payload missing required fields: ${expectedKeys.join(', ')}`);
+    }
+    return parsed;
+  };
+
+  const parseZoomArgs = (payload) => {
+    if (!payload) {
+      throw new Error('Zoom command requires a level (e.g., /zoom unit)');
+    }
+    if (payload.startsWith('{')) {
+      const parsed = parseJsonArgs(payload, ['level']);
+      return parsed;
+    }
+    const [levelToken, ...rest] = payload.split(/\s+/);
+    const levelAliases = {
+      corpuscle: 'unit',
+      chunk: 'unit'
+    };
+    const normalizedLevel = levelToken.toLowerCase();
+    const level = levelAliases[normalizedLevel] || normalizedLevel;
+    const allowedLevels = new Set(['micro', 'entity', 'text', 'unit', 'community', 'corpus']);
+    if (!allowedLevels.has(level)) {
+      throw new Error(`Unsupported zoom level: ${levelToken}`);
+    }
+    const query = rest.join(' ').trim();
+    return query ? { level, query } : { level };
+  };
+
+  const parsePanArgs = (payload) => {
+    if (!payload) {
+      throw new Error('Pan command requires a filter (e.g., /pan cats)');
+    }
+    if (payload.startsWith('{')) {
+      return parseJsonArgs(payload);
+    }
+    const prefixMatch = payload.match(/^(domains|keywords|entities|corpuscle|temporal)\s*:\s*(.+)$/i);
+    if (prefixMatch) {
+      const [, key, value] = prefixMatch;
+      if (key.toLowerCase() === 'temporal') {
+        const temporal = {};
+        value.split(',').map(part => part.trim()).filter(Boolean).forEach((part) => {
+          const [tKey, tValue] = part.split('=').map(item => item.trim());
+          if (tKey === 'start' || tKey === 'end') {
+            temporal[tKey] = tValue;
+          }
+        });
+        if (!temporal.start && !temporal.end) {
+          throw new Error('Temporal pan requires start and/or end values');
+        }
+        return { temporal };
+      }
+      const values = value.includes(',')
+        ? value.split(',').map(item => item.trim()).filter(Boolean)
+        : [value.trim()];
+      return { [key.toLowerCase()]: values };
+    }
+
+    const values = payload.includes(',')
+      ? payload.split(',').map(item => item.trim()).filter(Boolean)
+      : [payload.trim()];
+    return { domains: values };
+  };
+
+  const parseTiltArgs = (payload) => {
+    if (!payload) {
+      throw new Error('Tilt command requires a style (e.g., /tilt keywords)');
+    }
+    if (payload.startsWith('{')) {
+      const parsed = parseJsonArgs(payload, ['style']);
+      return parsed;
+    }
+    const [styleToken, ...rest] = payload.split(/\s+/);
+    const styleAliases = {
+      search: 'keywords',
+      keyword: 'keywords',
+      keywords: 'keywords',
+      vector: 'embedding',
+      embedding: 'embedding',
+      graph: 'graph',
+      temporal: 'temporal',
+      time: 'temporal',
+      concept: 'concept'
+    };
+    const normalizedStyle = styleAliases[styleToken.toLowerCase()];
+    if (!normalizedStyle) {
+      throw new Error(`Unsupported tilt style: ${styleToken}`);
+    }
+    const query = rest.join(' ').trim();
+    return query ? { style: normalizedStyle, query } : { style: normalizedStyle };
+  };
+
   switch (cmd) {
     case '/help':
       return {
@@ -129,7 +231,10 @@ async function handleSlashCommand(command, simpleVerbsService) {
 /ask [query]   - Search your semantic memory for information
 /tell [info]   - Store new information in your semantic memory
 /clear         - Clear recent session context
-/topic         - Derive topic from recent context and set pan filters
+/topic [text]  - Derive topic from recent or supplied text and set pan filters
+/zoom [level]  - Set zoom level (micro/entity/text/unit/community/corpus)
+/pan [filter]  - Set pan filters (e.g., domains:ai, keywords:memory)
+/tilt [style]  - Set tilt style (keywords/embedding/graph/temporal/concept)
 
 Examples:
 /ask What did I learn about machine learning?
@@ -230,13 +335,14 @@ You can also chat naturally - I'll understand your intentions and route appropri
 
     case '/topic':
       try {
-        const result = await simpleVerbsService.deriveTopicAndPan();
+        const result = await simpleVerbsService.deriveTopicAndPan(args ? { sourceText: args } : {});
         return {
           success: result.success,
           messageType: 'topic_result',
           content: `✅ Topic set to "${result.topic.label}" with keywords: ${result.topic.keywords.join(', ')}`,
           originalMessage: command,
           routing: 'topic_command',
+          zptState: result.panResult?.zptState || result.panResult?.content?.zptState,
           timestamp: new Date().toISOString()
         };
       } catch (error) {
@@ -244,6 +350,72 @@ You can also chat naturally - I'll understand your intentions and route appropri
           success: false,
           messageType: 'error',
           content: `Error processing topic command: ${error.message}`,
+          timestamp: new Date().toISOString()
+        };
+      }
+
+    case '/zoom':
+      try {
+        const zoomParams = parseZoomArgs(args);
+        const result = await simpleVerbsService.zoom(zoomParams);
+        return {
+          success: result.success,
+          messageType: 'zoom_result',
+          content: `✅ Zoom set to "${result.level}"`,
+          originalMessage: command,
+          routing: 'zoom_command',
+          zptState: result.zptState,
+          timestamp: new Date().toISOString()
+        };
+      } catch (error) {
+        return {
+          success: false,
+          messageType: 'error',
+          content: `Error processing zoom command: ${error.message}`,
+          timestamp: new Date().toISOString()
+        };
+      }
+
+    case '/pan':
+      try {
+        const panParams = parsePanArgs(args);
+        const result = await simpleVerbsService.pan(panParams);
+        return {
+          success: result.success,
+          messageType: 'pan_result',
+          content: '✅ Pan filters updated.',
+          originalMessage: command,
+          routing: 'pan_command',
+          zptState: result.zptState,
+          timestamp: new Date().toISOString()
+        };
+      } catch (error) {
+        return {
+          success: false,
+          messageType: 'error',
+          content: `Error processing pan command: ${error.message}`,
+          timestamp: new Date().toISOString()
+        };
+      }
+
+    case '/tilt':
+      try {
+        const tiltParams = parseTiltArgs(args);
+        const result = await simpleVerbsService.tilt(tiltParams);
+        return {
+          success: result.success,
+          messageType: 'tilt_result',
+          content: `✅ Tilt set to "${result.style}"`,
+          originalMessage: command,
+          routing: 'tilt_command',
+          zptState: result.zptState,
+          timestamp: new Date().toISOString()
+        };
+      } catch (error) {
+        return {
+          success: false,
+          messageType: 'error',
+          content: `Error processing tilt command: ${error.message}`,
           timestamp: new Date().toISOString()
         };
       }
@@ -376,6 +548,7 @@ async function startRefactoredServer() {
           mode: result.mode,
           contextUsed: result.contextUsed,
           contextCount: result.contextCount || 0,
+          localContextResults: result.localContextResults || [],
           zptState: result.zptState,
           timestamp: result.timestamp
         };

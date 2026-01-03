@@ -101,7 +101,7 @@ export const PanSchema = z.object({
 });
 
 export const TiltSchema = z.object({
-  style: z.enum(['keywords', 'embedding', 'graph', 'temporal']).default('keywords'),
+  style: z.enum(['keywords', 'embedding', 'graph', 'temporal', 'concept']).default('keywords'),
   query: z.string().optional()
 });
 

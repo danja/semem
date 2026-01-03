@@ -99,6 +99,7 @@ export const ZPT_TERMS = {
     KeywordProjection: ZPT.KeywordProjection,
     GraphProjection: ZPT.GraphProjection,
     TemporalProjection: ZPT.TemporalProjection,
+    ConceptProjection: ZPT.ConceptProjection,
     
     // Pan Domains
     TopicDomain: ZPT.TopicDomain,
@@ -261,7 +262,8 @@ export const ZPT_STRING_MAPPINGS = {
         'keywords': ZPT_TERMS.KeywordProjection,
         'embedding': ZPT_TERMS.EmbeddingProjection,
         'graph': ZPT_TERMS.GraphProjection,
-        'temporal': ZPT_TERMS.TemporalProjection
+        'temporal': ZPT_TERMS.TemporalProjection,
+        'concept': ZPT_TERMS.ConceptProjection
     },
     
     // Pan domains
@@ -290,6 +292,7 @@ export const ZPT_URI_MAPPINGS = {
     [ZPT_TERMS.EmbeddingProjection.value]: 'embedding',
     [ZPT_TERMS.GraphProjection.value]: 'graph',
     [ZPT_TERMS.TemporalProjection.value]: 'temporal',
+    [ZPT_TERMS.ConceptProjection.value]: 'concept',
     
     // Pan domains
     [ZPT_TERMS.TopicDomain.value]: 'topic',
@@ -403,7 +406,8 @@ export const NamespaceUtils = {
             ZPT_TERMS.KeywordProjection,
             ZPT_TERMS.EmbeddingProjection,
             ZPT_TERMS.GraphProjection,
-            ZPT_TERMS.TemporalProjection
+            ZPT_TERMS.TemporalProjection,
+            ZPT_TERMS.ConceptProjection
         ];
     },
     
@@ -538,6 +542,11 @@ export const NamespaceUtils = {
                 string: 'temporal',
                 uri: ZPT_TERMS.TemporalProjection,
                 description: 'Time-based organization and sequencing'
+            },
+            {
+                string: 'concept',
+                uri: ZPT_TERMS.ConceptProjection,
+                description: 'Concept extraction and relationship analysis'
             }
         ];
     },

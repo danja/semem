@@ -175,6 +175,17 @@ export default class SelectionCriteria {
                     description: 'Prefer recently created items'
                 });
                 break;
+
+            case 'concept':
+                rules.push({
+                    type: 'text_preference',
+                    field: 'ragno:hasText',
+                    operator: 'length_min',
+                    value: 10,
+                    weight: 0.6,
+                    description: 'Prefer items with substantial text content for concept extraction'
+                });
+                break;
         }
 
         // Quality preferences

@@ -63,6 +63,8 @@ app.use('/workflow-logs/stream', createProxyMiddleware({
 app.use('/api/documents', createProxyMiddleware({
   target: `${API_SERVER_URL}`,
   changeOrigin: true,
+  proxyTimeout: 600000,
+  timeout: 600000,
   pathRewrite: (path) => {
     const PREFIX = '/api/documents';
     const [pathname, search = ''] = path.split('?');

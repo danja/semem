@@ -215,10 +215,12 @@ export class SimpleVerbsService {
   }
 
   /**
-   * Derive a topic label and keywords from recent context, then set pan filters.
+   * Derive a topic label and keywords from recent context or supplied source text, then set pan filters.
+   * @param {Object} params - Topic derivation parameters
+   * @param {string} params.sourceText - Optional text to use instead of recent interactions
    * @returns {Promise<Object>} Topic derivation result
    */
-  async deriveTopicAndPan() {
+  async deriveTopicAndPan(params = {}) {
     await this.initialize();
     const context = this.registry.contextService.getContext();
     const { stateManager, safeOps, templateLoader, config } = context || {};
@@ -236,7 +238,8 @@ export class SimpleVerbsService {
       recentInteractionsCount,
       recentInteractionsTruncationLimit,
       topicKeywordCount,
-      topicConceptCount
+      topicConceptCount,
+      truncationLimit
     } = contextConfig;
 
     if (typeof recentInteractionsCount !== 'number' || Number.isNaN(recentInteractionsCount)) {
@@ -251,24 +254,46 @@ export class SimpleVerbsService {
     if (typeof topicConceptCount !== 'number' || Number.isNaN(topicConceptCount)) {
       throw new Error('Context configuration missing topicConceptCount');
     }
-
-    const recentInteractions = stateManager.getRecentInteractions(recentInteractionsCount);
-    if (!recentInteractions.length) {
-      throw new Error('No recent interactions available for topic derivation');
+    if (typeof truncationLimit !== 'number' || Number.isNaN(truncationLimit)) {
+      throw new Error('Context configuration missing truncationLimit');
     }
 
-    const recentContext = recentInteractions.map(interaction => {
-      const prompt = interaction.prompt || '';
-      const response = interaction.response || '';
-      const trimmedResponse = response.length > recentInteractionsTruncationLimit
-        ? `${response.slice(0, recentInteractionsTruncationLimit)}...`
-        : response;
-      return `Q: ${prompt}\nA: ${trimmedResponse}`;
-    }).join('\n\n');
+    const { sourceText } = params;
+    const normalizedSourceText = typeof sourceText === 'string' ? sourceText.trim() : '';
+    const recentInteractions = stateManager.getRecentInteractions(recentInteractionsCount);
+    const recentContextBlocks = [];
+    const combinedTextBlocks = [];
 
-    const combinedText = recentInteractions
-      .map(interaction => `${interaction.prompt || ''}\n${interaction.response || ''}`)
-      .join('\n\n');
+    if (normalizedSourceText) {
+      const trimmedSource = normalizedSourceText.length > truncationLimit
+        ? `${normalizedSourceText.slice(0, truncationLimit)}...`
+        : normalizedSourceText;
+      recentContextBlocks.push(`Document:\n${trimmedSource}`);
+      combinedTextBlocks.push(normalizedSourceText);
+    }
+
+    if (recentInteractions.length) {
+      const recentInteractionContext = recentInteractions.map(interaction => {
+        const prompt = interaction.prompt || '';
+        const response = interaction.response || '';
+        const trimmedResponse = response.length > recentInteractionsTruncationLimit
+          ? `${response.slice(0, recentInteractionsTruncationLimit)}...`
+          : response;
+        return `Q: ${prompt}\nA: ${trimmedResponse}`;
+      }).join('\n\n');
+
+      recentContextBlocks.push(recentInteractionContext);
+      combinedTextBlocks.push(
+        recentInteractions.map(interaction => `${interaction.prompt || ''}\n${interaction.response || ''}`).join('\n\n')
+      );
+    }
+
+    if (!combinedTextBlocks.length) {
+      throw new Error('No recent interactions or source text available for topic derivation');
+    }
+
+    const recentContext = recentContextBlocks.join('\n\n');
+    const combinedText = combinedTextBlocks.join('\n\n');
 
     const keywordHints = extractKeywords(combinedText, topicKeywordCount);
     const conceptHints = await safeOps.extractConcepts(combinedText);
