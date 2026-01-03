@@ -4,8 +4,8 @@
  */
 
 import { test, expect, describe, beforeAll, afterAll } from 'vitest';
-import { CreateConcepts } from '../../src/ragno/CreateConcepts.js';
-import Config from '../../src/Config.js';
+import { CreateConcepts } from '../../../src/ragno/CreateConcepts.js';
+import Config from '../../../src/Config.js';
 import logger from 'loglevel';
 import { fileURLToPath } from 'url';
 import path from 'path';
@@ -137,7 +137,7 @@ describe('ExtractConcepts Prompt Integration', () => {
 
         test('should use PromptTemplates.formatConceptPrompt internally', async () => {
             // Import PromptTemplates to verify it's being used
-            const PromptTemplates = (await import('../../src/PromptTemplates.js')).default;
+            const PromptTemplates = (await import('../../../src/PromptTemplates.js')).default;
             
             // Test that formatConceptPrompt works as expected
             const testText = "Test concept extraction";
@@ -168,7 +168,7 @@ describe('ExtractConcepts Prompt Integration', () => {
             expect(concepts).toBeInstanceOf(Array);
             expect(extractionTime).toBeLessThan(30000); // Should complete within 30 seconds
             
-            console.log(`Original system extraction time: ${extractionTime}ms for ${concepts.length} concepts`);
+            logger.info(`Original system extraction time: ${extractionTime}ms for ${concepts.length} concepts`);
         });
 
         test('should handle concurrent extractions', async () => {
@@ -190,7 +190,7 @@ describe('ExtractConcepts Prompt Integration', () => {
                 expect(concepts).toBeInstanceOf(Array);
             });
             
-            console.log(`Original system concurrent extraction time: ${totalTime}ms`);
+            logger.info(`Original system concurrent extraction time: ${totalTime}ms`);
         });
     });
 

@@ -1,15 +1,8 @@
 // tests/unit/Config.vitest.js
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import Config from '../../../src/Config.js';
-import { setupTestEnvironment } from '../../helpers/testSetup.js';
-import fs from 'fs';
-import { join } from 'path';
-import { tmpdir } from 'os';
 
 describe('Config', () => {
-  // Set up test environment utilities
-  const utils = setupTestEnvironment();
-
   // Store original env to restore after tests
   let originalEnv;
   let tempConfigFiles = [];

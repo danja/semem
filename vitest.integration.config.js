@@ -12,6 +12,7 @@ export default mergeConfig(sharedConfig, defineConfig({
       'tests/integration/sparql/**',
       'tests/integration/storage/**',
       'tests/integration/ragno/**',
+      'tests/integration/llm/**',
       'tests/integration/llms/**',
       'tests/integration/embeddings/**',
       'tests/integration/extract-concepts-*'

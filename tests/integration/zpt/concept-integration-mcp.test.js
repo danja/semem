@@ -4,7 +4,7 @@
  * Validates graph tilt, concept filtering, and RDF-native concept storage
  */
 
-import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import fetch from 'node-fetch';
 import Config from '../../../src/Config.js';
 

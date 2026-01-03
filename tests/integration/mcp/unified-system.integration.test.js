@@ -6,7 +6,7 @@
  * Run with: INTEGRATION_TESTS=true npx vitest run tests/integration/mcp/unified-system.integration.test.js --reporter=verbose
  */
 
-import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
 import fetch from 'node-fetch';
 import dotenv from 'dotenv';
 import path from 'path';

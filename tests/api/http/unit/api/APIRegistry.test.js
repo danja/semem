@@ -1,7 +1,7 @@
 // tests/unit/api/APIRegistry.test.js
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import APIRegistry from '../../../src/api/common/APIRegistry.js';
-import BaseAPI from '../../../src/api/common/BaseAPI.js';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import APIRegistry from '../../../../../src/api/common/APIRegistry.js';
+import BaseAPI from '../../../../../src/api/common/BaseAPI.js';
 
 describe('APIRegistry', () => {
     let registry;
@@ -130,10 +130,15 @@ describe('APIRegistry', () => {
             const TestAPI = createMockAPI();
             const api = await registry.register('test', TestAPI);
             
-            const shutdownSpy = vi.spyOn(api, 'shutdown');
-            
+            let shutdownCalled = false;
+            const originalShutdown = api.shutdown.bind(api);
+            api.shutdown = async () => {
+                shutdownCalled = true;
+                return await originalShutdown();
+            };
+
             await registry.unregister('test');
-            expect(shutdownSpy).toHaveBeenCalled();
+            expect(shutdownCalled).toBe(true);
         });
 
         it('should handle shutdown errors', async () => {
@@ -148,9 +153,6 @@ describe('APIRegistry', () => {
         it('should cleanup on shutdown', async () => {
             const TestAPI = createMockAPI();
             await registry.register('test', TestAPI);
-            
-            // Mock the error to avoid real errors in test
-            vi.spyOn(console, 'error').mockImplementation(() => {});
             
             try {
                 await registry.shutdownAll();

@@ -3,7 +3,7 @@
  * Tests the configured chat API using Config.js to validate provider-agnostic functionality
  */
 
-import { test, expect, describe, beforeAll, afterAll, vi } from 'vitest';
+import { test, expect, describe, beforeAll, afterAll } from 'vitest';
 import Config from '../../../src/Config.js';
 
 // Skip this test if INTEGRATION_TESTS environment variable is not set
@@ -31,11 +31,7 @@ describe('LLM Chat API Integration (Config-Driven)', { skip: shouldSkip }, () =>
             const sortedProviders = chatProviders.sort((a, b) => (a.priority || 999) - (b.priority || 999));
             providerConfig = sortedProviders[0];
 
-            console.log(`Using configured LLM provider: ${providerConfig.type} (priority: ${providerConfig.priority})`);
-            console.log(`Model: ${providerConfig.chatModel}`);
-
         } catch (error) {
-            console.error('Failed to initialize LLM integration test:', error);
             throw error;
         }
     });
@@ -52,7 +48,6 @@ describe('LLM Chat API Integration (Config-Driven)', { skip: shouldSkip }, () =>
             const chatProviders = llmProviders.filter(p => p.capabilities?.includes('chat'));
             expect(chatProviders.length).toBeGreaterThan(0);
 
-            console.log(`✅ Config loaded with ${chatProviders.length} chat providers configured`);
         });
 
         test('should select correct provider by priority', () => {
@@ -66,7 +61,6 @@ describe('LLM Chat API Integration (Config-Driven)', { skip: shouldSkip }, () =>
                 expect(providerConfig.apiKey.length).toBeGreaterThan(0);
             }
 
-            console.log(`✅ Provider selected: ${providerConfig.type} with model: ${providerConfig.chatModel}`);
         });
     });
 
@@ -87,16 +81,25 @@ const apiKey = '${providerConfig.apiKey || ''}';
 const model = '${providerConfig.chatModel}';
 
 let llmProvider;
-if (providerType === 'groq' && apiKey) {
+if (providerType === 'groq') {
+    if (!apiKey) {
+        throw new Error('Missing Groq API key for configured provider');
+    }
     llmProvider = new GroqConnector(apiKey);
-} else if (providerType === 'mistral' && apiKey) {
+} else if (providerType === 'mistral') {
+    if (!apiKey) {
+        throw new Error('Missing Mistral API key for configured provider');
+    }
     llmProvider = new MistralConnector(apiKey);
-} else if (providerType === 'claude' && apiKey) {
+} else if (providerType === 'claude') {
+    if (!apiKey) {
+        throw new Error('Missing Claude API key for configured provider');
+    }
     llmProvider = new ClaudeConnector(apiKey);
 } else if (providerType === 'ollama') {
     llmProvider = new OllamaConnector();
 } else {
-    llmProvider = new OllamaConnector();
+    throw new Error(`Unsupported provider type: ${providerType}`);
 }
 
 const llmHandler = new LLMHandler(llmProvider, model);
@@ -145,7 +148,6 @@ try {
                 child.on('close', (code) => {
                     try {
                         if (code !== 0) {
-                            console.error('Process stderr:', stderr);
                             reject(new Error(`Process exited with code ${code}`));
                             return;
                         }
@@ -160,15 +162,8 @@ try {
                         expect(result.duration).toBeLessThan(5000); // Should complete in under 5 seconds
                         expect(result.conceptCount).toBeGreaterThanOrEqual(0);
 
-                        console.log(`✅ LLM API test completed successfully:`);
-                        console.log(`   Provider: ${result.provider}`);
-                        console.log(`   Model: ${result.model}`);
-                        console.log(`   Duration: ${result.duration}ms`);
-                        console.log(`   Concepts: ${result.conceptCount} found: [${result.concepts.join(', ')}]`);
-
                         resolve();
                     } catch (parseError) {
-                        console.error('Failed to parse result:', stdout, stderr);
                         reject(parseError);
                     }
                 });
@@ -194,16 +189,25 @@ const apiKey = '${providerConfig.apiKey || ''}';
 const model = '${providerConfig.chatModel}';
 
 let llmProvider;
-if (providerType === 'groq' && apiKey) {
+if (providerType === 'groq') {
+    if (!apiKey) {
+        throw new Error('Missing Groq API key for configured provider');
+    }
     llmProvider = new GroqConnector(apiKey);
-} else if (providerType === 'mistral' && apiKey) {
+} else if (providerType === 'mistral') {
+    if (!apiKey) {
+        throw new Error('Missing Mistral API key for configured provider');
+    }
     llmProvider = new MistralConnector(apiKey);
-} else if (providerType === 'claude' && apiKey) {
+} else if (providerType === 'claude') {
+    if (!apiKey) {
+        throw new Error('Missing Claude API key for configured provider');
+    }
     llmProvider = new ClaudeConnector(apiKey);
 } else if (providerType === 'ollama') {
     llmProvider = new OllamaConnector();
 } else {
-    llmProvider = new OllamaConnector();
+    throw new Error(`Unsupported provider type: ${providerType}`);
 }
 
 const llmHandler = new LLMHandler(llmProvider, model);
@@ -251,7 +255,6 @@ try {
                 child.on('close', (code) => {
                     try {
                         if (code !== 0) {
-                            console.error('Process stderr:', stderr);
                             reject(new Error(`Process exited with code ${code}`));
                             return;
                         }
@@ -266,15 +269,8 @@ try {
                         expect(result.duration).toBeLessThan(5000); // Should complete in under 5 seconds
                         expect(result.responseLength).toBeGreaterThan(0);
 
-                        console.log(`✅ Chat API test completed successfully:`);
-                        console.log(`   Provider: ${result.provider}`);
-                        console.log(`   Model: ${result.model}`);
-                        console.log(`   Duration: ${result.duration}ms`);
-                        console.log(`   Response: "${result.response}..."`);
-
                         resolve();
                     } catch (parseError) {
-                        console.error('Failed to parse result:', stdout, stderr);
                         reject(parseError);
                     }
                 });
@@ -294,14 +290,10 @@ try {
             expect(chatProviders.length).toBeGreaterThan(0);
 
             const providerTypes = chatProviders.map(p => p.type);
-            console.log(`✅ System supports provider types: [${providerTypes.join(', ')}]`);
-
             // Validate priority ordering works
             const priorities = chatProviders.map(p => p.priority || 999);
             const sortedPriorities = [...priorities].sort((a, b) => a - b);
             expect(priorities[0]).toBe(sortedPriorities[0]);
-
-            console.log(`✅ Ready for provider migration - current: ${providerConfig.type}`);
         });
     });
 });

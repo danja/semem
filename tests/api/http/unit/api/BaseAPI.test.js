@@ -1,6 +1,6 @@
 // tests/unit/api/BaseAPI.test.js
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import BaseAPI from '../../../src/api/common/BaseAPI.js';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import BaseAPI from '../../../../../src/api/common/BaseAPI.js';
 
 // Test implementation of BaseAPI
 class TestAPI extends BaseAPI {
@@ -117,12 +117,14 @@ describe('BaseAPI', () => {
         });
 
         it('should track operation metrics', async () => {
-            const listener = vi.fn();
-            api.on('metric', listener);
+            let receivedMetric = null;
+            api.on('metric', (metric) => {
+                receivedMetric = metric;
+            });
 
             await api.executeOperation('test', { param: 'value' });
 
-            expect(listener).toHaveBeenCalledWith(
+            expect(receivedMetric).toEqual(
                 expect.objectContaining({
                     name: 'operation.count',
                     value: 1
@@ -162,8 +164,10 @@ describe('BaseAPI', () => {
         });
 
         it('should cleanup on shutdown', async () => {
-            const listener = vi.fn();
-            api.on('metric', listener);
+            let called = false;
+            api.on('metric', () => {
+                called = true;
+            });
 
             await api.initialize();
             
@@ -178,7 +182,7 @@ describe('BaseAPI', () => {
             await api.shutdown();
 
             api._emitMetric('test', 1);
-            expect(listener).not.toHaveBeenCalled();
+            expect(called).toBe(false);
         });
     });
 
@@ -237,22 +241,25 @@ describe('BaseAPI', () => {
 
     describe('Event Management', () => {
         it('should handle multiple metric listeners', async () => {
-            const listener1 = vi.fn();
-            const listener2 = vi.fn();
+            let listener1Calls = 0;
+            let listener2Calls = 0;
 
-            api.on('metric', listener1);
-            api.on('metric', listener2);
+            api.on('metric', () => {
+                listener1Calls += 1;
+            });
+            api.on('metric', () => {
+                listener2Calls += 1;
+            });
 
             api._emitMetric('test', 1);
 
-            expect(listener1).toHaveBeenCalled();
-            expect(listener2).toHaveBeenCalled();
+            expect(listener1Calls).toBe(1);
+            expect(listener2Calls).toBe(1);
         });
 
         it('should remove listeners on cleanup', async () => {
-            const listener = vi.fn();
             const testApi = new TestAPI();
-            testApi.on('metric', listener);
+            testApi.on('metric', () => {});
 
             await testApi.initialize();
             

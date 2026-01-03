@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
 import path from 'path'
 import Config from '../../src/Config.js'
 import { SimpleVerbsService } from '../../src/mcp/tools/simple-verbs.js'

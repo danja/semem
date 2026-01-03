@@ -3,7 +3,7 @@
  * Tests based on exercises in docs/manual/zpt-exercises.md
  */
 
-import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import Config from '../../../src/Config.js';
 
 const fetch = global.fetch;

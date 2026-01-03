@@ -6,6 +6,7 @@ export default mergeConfig(sharedConfig, defineConfig({
   test: {
     name: 'llm',
     include: [
+      'tests/integration/llm/**/*.test.{js,jsx,ts,tsx}',
       'tests/integration/llms/**/*.test.{js,jsx,ts,tsx}',
       'tests/integration/embeddings/**/*.test.{js,jsx,ts,tsx}',
       'tests/integration/extract-concepts-*.test.{js,jsx,ts,tsx}'
