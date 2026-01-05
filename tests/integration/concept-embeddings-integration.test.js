@@ -261,10 +261,11 @@ describe('Concept Embeddings Integration Tests', () => {
     expect(firstConcept).toHaveProperty('embeddingDimension')
     expect(firstConcept).toHaveProperty('embeddingModel')
 
-    expect(firstConcept.embeddingDimension).toBe(1536) // nomic-embed-text dimension
+    const configuredDimension = config.get('memory.dimension') || config.get('memory.embeddingDimension')
+    expect(firstConcept.embeddingDimension).toBe(configuredDimension)
     expect(firstConcept.conceptUri).toContain('http://purl.org/stuff/instance/')
     expect(firstConcept.embeddingUri).toContain('http://purl.org/stuff/instance/')
-  }, 30000) // 30 second timeout for integration test
+  }, 120000) // 120 second timeout for integration test
 
   it('should handle concepts operation with embeddings', async () => {
     if (!servicesAvailable) {

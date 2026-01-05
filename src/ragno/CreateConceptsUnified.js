@@ -37,8 +37,8 @@ dotenv.config();
 export class CreateConceptsUnified {
     constructor(config = null) {
         this.config = config;
-        this.chatModel = Config.get('chatModel');
-        this.embeddingModel = Config.get('embeddingModel');
+        this.chatModel = null;
+        this.embeddingModel = null;
         this.sparqlHelper = null;
         this.queryService = null;
         this.embeddings = null;
@@ -61,6 +61,16 @@ export class CreateConceptsUnified {
                 : 'config/config.json';
             this.config = new Config(configPath);
             await this.config.init();
+        }
+
+        this.chatModel = this.config.get('chatModel');
+        if (!this.chatModel) {
+            throw new Error('chatModel must be configured');
+        }
+
+        this.embeddingModel = this.config.get('embeddingModel');
+        if (!this.embeddingModel) {
+            throw new Error('embeddingModel must be configured');
         }
 
         const storageConfig = this.config.get('storage');
@@ -129,8 +139,8 @@ export class CreateConceptsUnified {
                 if (template) {
                     loadedTemplates.push(templateName);
                 } else {
-                    console.warn(`⚠️  MISSING TEMPLATE: ${templateName}`);
-                    console.warn(`📁 Expected: prompts/templates/concept-extraction/${templateName.replace('concept-extraction-', '')}.json`);
+                    logger.warn(`Missing template: ${templateName}`);
+                    logger.warn(`Expected: prompts/templates/concept-extraction/${templateName.replace('concept-extraction-', '')}.json`);
                 }
             }
 
@@ -142,18 +152,10 @@ export class CreateConceptsUnified {
             }
 
         } catch (error) {
-            console.error('\n' + '='.repeat(80));
-            console.error('⚠️  WARNING: EXTERNAL TEMPLATE LOADING FAILED');
-            console.error('='.repeat(80));
-            console.error('❌ Failed to load concept extraction templates from external files');
-            console.error('📁 Expected location: prompts/templates/concept-extraction/');
-            console.error('💥 Error:', error.message);
-            console.error('🔄 Using fallback template - PERFORMANCE MAY BE DEGRADED');
-            console.error('🔧 Action required: Check template files exist and are valid JSON');
-            console.error('='.repeat(80) + '\n');
-
-            // Fallback to inline template registration for backward compatibility
-            await this.registerFallbackTemplates();
+            logger.error('Failed to load concept extraction templates from external files', {
+                error: error.message
+            });
+            throw error;
         }
     }
 
@@ -188,11 +190,7 @@ export class CreateConceptsUnified {
 
         this.promptManager.registerTemplate(fallbackTemplate);
 
-        console.warn('\n' + '⚠️'.repeat(20));
-        console.warn('🔄 FALLBACK TEMPLATE ACTIVE - SUBOPTIMAL PERFORMANCE');
-        console.warn('📝 Using basic concept extraction template');
-        console.warn('🎯 Fix external templates for model-specific optimizations');
-        console.warn('⚠️'.repeat(20) + '\n');
+        logger.warn('Fallback template active - performance may be degraded');
     }
 
     /**
@@ -469,7 +467,7 @@ export class CreateConceptsUnified {
                     templateName = 'concept-extraction-mistral';
                     options.format = 'chat';
                 } else {
-                    console.warn('⚠️  Mistral-specific template not available, using fallback');
+                    logger.warn('Mistral-specific template not available, using default template');
                 }
             } else if (this.chatModel.includes('llama') || this.chatModel.includes('qwen')) {
                 const llamaTemplate = this.promptManager.getTemplate('concept-extraction-llama');
@@ -477,7 +475,7 @@ export class CreateConceptsUnified {
                     templateName = 'concept-extraction-llama';
                     options.format = 'completion';
                 } else {
-                    console.warn('⚠️  Llama-specific template not available, using fallback');
+                    logger.warn('Llama-specific template not available, using default template');
                 }
             }
 
@@ -489,7 +487,7 @@ export class CreateConceptsUnified {
 
             // Show which template is being used
             const templateFile = templateName.replace('concept-extraction-', '') + '.json';
-            console.log(`Using prompt template: prompts/templates/concept-extraction/${templateFile}`);
+            logger.info(`Using prompt template: prompts/templates/concept-extraction/${templateFile}`);
 
             // Generate prompt using unified system
             const promptResult = await this.promptManager.generatePrompt(templateName, context, options);

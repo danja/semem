@@ -6,10 +6,12 @@ export default defineConfig({
     name: 'unit',
     environment: 'node',
     setupFiles: ['./tests/setup-unified.js'],
-    include: [
-      'tests/unit/**/*.test.{js,jsx,ts,tsx}',
-      'tests/integration/**/*.test.{js,jsx,ts,tsx}'
-    ],
+    include: process.env.INTEGRATION_TESTS === 'true'
+      ? [
+        'tests/unit/**/*.test.{js,jsx,ts,tsx}',
+        'tests/integration/**/*.test.{js,jsx,ts,tsx}'
+      ]
+      : ['tests/unit/**/*.test.{js,jsx,ts,tsx}'],
     exclude: [
       '**/node_modules/**',
       '**/dist/**',

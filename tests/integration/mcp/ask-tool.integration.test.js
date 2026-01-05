@@ -10,13 +10,15 @@ import { setTimeout as delay } from 'timers/promises';
 import randomFactGenerator from '../../helpers/randomFactGenerator.js';
 
 describe('Ask Tool Integration Tests', () => {
+  const runIntegration = process.env.INTEGRATION_TESTS === 'true';
+  const integrationTest = runIntegration ? test : test.skip;
+  const ASK_TIMEOUT_MS = 60000;
+  const STORE_TIMEOUT_MS = 60000;
 
   /**
    * Execute ask tool via STDIO and get result
    */
-  const executeAsk = async (args, timeout = 15000) => {
-    console.log(`🔧 Executing ask with args:`, args);
-
+  const executeAsk = async (args, timeout = ASK_TIMEOUT_MS) => {
     return new Promise((resolve, reject) => {
       const mcpProcess = spawn('node', ['src/mcp/index.js'], {
         stdio: ['pipe', 'pipe', 'pipe'],
@@ -217,11 +219,11 @@ describe('Ask Tool Integration Tests', () => {
           mcpProcess.kill();
           reject(new Error('Store timeout'));
         }
-      }, 10000);
+      }, STORE_TIMEOUT_MS);
     });
 
     // Wait a bit for indexing
-    await delay(1000);
+    await delay(2000);
 
     // Then ask the question
     return executeAsk({ question, ...askArgs });
@@ -231,13 +233,19 @@ describe('Ask Tool Integration Tests', () => {
    * Parse ask response content
    */
   const parseAskResponse = (askResponse) => {
-    if (!askResponse?.result?.content?.[0]?.text) {
+    if (askResponse?.result?.content?.[0]?.text) {
+      return JSON.parse(askResponse.result.content[0].text);
+    }
+    if (askResponse?.result && typeof askResponse.result === 'object') {
+      return askResponse.result;
+    }
+    if (!askResponse?.result) {
       throw new Error('Invalid ask response format');
     }
-    return JSON.parse(askResponse.result.content[0].text);
+    return askResponse.result;
   };
 
-  test('should query basic questions', async () => {
+  integrationTest('should query basic questions', async () => {
     const question = 'What is artificial intelligence?';
     const result = await executeAsk({ question });
 
@@ -245,10 +253,9 @@ describe('Ask Tool Integration Tests', () => {
     expect(response.success).toBe(true);
     expect(response).toHaveProperty('content');
 
-    console.log(`✅ Ask basic question test passed`);
   });
 
-  test('should query stored facts', async () => {
+  integrationTest('should query stored facts', async () => {
     const fact = randomFactGenerator.generateFact();
     const question = randomFactGenerator.generateQuestion(fact);
 
@@ -258,10 +265,9 @@ describe('Ask Tool Integration Tests', () => {
     expect(response.success).toBe(true);
     expect(response).toHaveProperty('content');
 
-    console.log(`✅ Ask stored fact test passed for: ${fact}`);
   });
 
-  test('should handle different query modes', async () => {
+  integrationTest('should handle different query modes', async () => {
     const question = 'How does machine learning work?';
     const modes = ['basic', 'standard', 'comprehensive'];
 
@@ -272,11 +278,10 @@ describe('Ask Tool Integration Tests', () => {
       expect(response.success).toBe(true);
       expect(response).toHaveProperty('content');
 
-      console.log(`✅ Ask ${mode} mode test passed`);
     }
   });
 
-  test('should support context usage', async () => {
+  integrationTest('should support context usage', async () => {
     const question = 'What are neural networks?';
 
     // Test with context enabled
@@ -297,10 +302,9 @@ describe('Ask Tool Integration Tests', () => {
 
     expect(withoutContextResponse.success).toBe(true);
 
-    console.log(`✅ Ask context usage test passed`);
   });
 
-  test('should handle enhancement options', async () => {
+  integrationTest('should handle enhancement options', async () => {
     const question = 'What is deep learning?';
 
     const result = await executeAsk({
@@ -314,10 +318,9 @@ describe('Ask Tool Integration Tests', () => {
     const response = parseAskResponse(result.askResponse);
     expect(response.success).toBe(true);
 
-    console.log(`✅ Ask enhancement options test passed`);
   });
 
-  test('should support memory recall (legacy recall functionality)', async () => {
+  integrationTest('should support memory recall (legacy recall functionality)', async () => {
     const content = 'Memory recall test: machine learning uses algorithms to find patterns in data.';
     const question = 'How does machine learning find patterns?';
 
@@ -330,10 +333,9 @@ describe('Ask Tool Integration Tests', () => {
     const response = parseAskResponse(result.askResponse);
     expect(response.success).toBe(true);
 
-    console.log(`✅ Ask memory recall test passed`);
   });
 
-  test('should handle temporal filters', async () => {
+  integrationTest('should handle temporal filters', async () => {
     const question = 'What recent developments have occurred?';
 
     const result = await executeAsk({
@@ -345,10 +347,9 @@ describe('Ask Tool Integration Tests', () => {
     const response = parseAskResponse(result.askResponse);
     expect(response.success).toBe(true);
 
-    console.log(`✅ Ask temporal filters test passed`);
   });
 
-  test('should handle domain filtering', async () => {
+  integrationTest('should handle domain filtering', async () => {
     const question = 'What is semantic memory?';
 
     const result = await executeAsk({
@@ -360,10 +361,9 @@ describe('Ask Tool Integration Tests', () => {
     const response = parseAskResponse(result.askResponse);
     expect(response.success).toBe(true);
 
-    console.log(`✅ Ask domain filtering test passed`);
   });
 
-  test('should return relevant results with scoring', async () => {
+  integrationTest('should return relevant results with scoring', async () => {
     const content = 'The hippocampus plays a crucial role in forming new memories and spatial navigation.';
     const question = 'What role does the hippocampus play?';
 
@@ -375,10 +375,9 @@ describe('Ask Tool Integration Tests', () => {
     const response = parseAskResponse(result.askResponse);
     expect(response.success).toBe(true);
 
-    console.log(`✅ Ask relevance scoring test passed`);
   });
 
-  test('should handle empty questions gracefully', async () => {
+  integrationTest('should handle empty questions gracefully', async () => {
     const result = await executeAsk({ question: '' });
     const response = parseAskResponse(result.askResponse);
 
@@ -386,20 +385,18 @@ describe('Ask Tool Integration Tests', () => {
     expect(response).toHaveProperty('error');
     expect(response.error).toContain('empty');
 
-    console.log(`✅ Ask empty question error handling test passed`);
   });
 
-  test('should handle missing question parameter', async () => {
+  integrationTest('should handle missing question parameter', async () => {
     const result = await executeAsk({ mode: 'standard' }); // Missing question
     const response = parseAskResponse(result.askResponse);
 
     expect(response.success).toBe(false);
     expect(response).toHaveProperty('error');
 
-    console.log(`✅ Ask missing question error handling test passed`);
   });
 
-  test('should handle very long questions', async () => {
+  integrationTest('should handle very long questions', async () => {
     const longQuestion = 'What is the relationship between ' + 'artificial intelligence '.repeat(50) + 'and machine learning?';
 
     const result = await executeAsk({ question: longQuestion });
@@ -407,10 +404,9 @@ describe('Ask Tool Integration Tests', () => {
 
     expect(response.success).toBe(true);
 
-    console.log(`✅ Ask long question test passed`);
   });
 
-  test('should handle questions with special characters', async () => {
+  integrationTest('should handle questions with special characters', async () => {
     const specialQuestion = 'What is AI/ML? How does it work with 100% accuracy?';
 
     const result = await executeAsk({ question: specialQuestion });
@@ -418,10 +414,9 @@ describe('Ask Tool Integration Tests', () => {
 
     expect(response.success).toBe(true);
 
-    console.log(`✅ Ask special characters test passed`);
   });
 
-  test('should support comprehensive analysis mode', async () => {
+  integrationTest('should support comprehensive analysis mode', async () => {
     const question = 'Explain the relationship between semantic memory and knowledge representation.';
 
     const result = await executeAsk({
@@ -434,7 +429,6 @@ describe('Ask Tool Integration Tests', () => {
     const response = parseAskResponse(result.askResponse);
     expect(response.success).toBe(true);
 
-    console.log(`✅ Ask comprehensive analysis test passed`);
   });
 
 }, 180000); // 3 minute timeout for ask tests

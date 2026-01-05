@@ -1,6 +1,27 @@
 import Config from '../../../src/Config.js';
 import SPARQLStore from '../../../src/stores/SPARQLStore.js';
-import { logger } from '../../../src/Utils.js';
+
+const getEmbeddingDimension = (config) => {
+    const providers = config.get('llmProviders');
+    if (!Array.isArray(providers) || providers.length === 0) {
+        throw new Error('No llmProviders configured for embedding dimension');
+    }
+
+    const embeddingProviders = providers
+        .filter(provider => provider.capabilities?.includes('embedding'))
+        .sort((a, b) => (a.priority ?? 999) - (b.priority ?? 999));
+
+    if (embeddingProviders.length === 0) {
+        throw new Error('No embedding-capable providers configured');
+    }
+
+    const dimension = embeddingProviders[0].embeddingDimension;
+    if (!dimension) {
+        throw new Error('Embedding dimension missing from embedding provider configuration');
+    }
+
+    return dimension;
+};
 
 describe('SPARQLStore Federation Integration', () => {
     let store;
@@ -12,17 +33,21 @@ describe('SPARQLStore Federation Integration', () => {
     };
 
     beforeAll(async () => {
-        config = new Config();
+        config = new Config('config/config.json');
+        await config.init();
         const sparqlConfig = config.get('sparqlEndpoints')[0];
+        const embeddingDimension = getEmbeddingDimension(config);
 
         store = new SPARQLStore({
             query: `${sparqlConfig.urlBase}${sparqlConfig.query}`,
-            update: `${sparqlConfig.urlBase}${sparqlConfig.update}`
+            update: `${sparqlConfig.urlBase}${sparqlConfig.update}`,
+            data: `${sparqlConfig.urlBase}${sparqlConfig.gspRead}`
         }, {
             user: sparqlConfig.user,
             password: sparqlConfig.password,
-            graphName: testGraphs.main
-        });
+            graphName: testGraphs.main,
+            dimension: embeddingDimension
+        }, config);
 
         // Initialize test graphs
         try {
@@ -35,10 +60,13 @@ describe('SPARQLStore Federation Integration', () => {
                 CREATE GRAPH <${testGraphs.metadata}>;
                 CREATE GRAPH <${testGraphs.archive}>
             `;
-            await store._executeSparqlUpdate(setupQuery, store.endpoint.update);
+            await store.executeSparqlUpdate(setupQuery);
 
             // Add test data to metadata graph
             const metadataQuery = `
+                PREFIX semem: <http://purl.org/stuff/semem/>
+                PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
                 INSERT DATA {
                     GRAPH <${testGraphs.metadata}> {
                         <${testGraphs.main}> a semem:MemoryStore ;
@@ -47,10 +75,9 @@ describe('SPARQLStore Federation Integration', () => {
                     }
                 }
             `;
-            await store._executeSparqlUpdate(metadataQuery, store.endpoint.update);
+            await store.executeSparqlUpdate(metadataQuery);
             await store.commitTransaction();
         } catch (error) {
-            logger.error('Error in federation test setup:', error);
             throw error;
         }
     });
@@ -63,7 +90,7 @@ describe('SPARQLStore Federation Integration', () => {
                 DROP SILENT GRAPH <${testGraphs.metadata}>;
                 DROP SILENT GRAPH <${testGraphs.archive}>
             `;
-            await store._executeSparqlUpdate(cleanupQuery, store.endpoint.update);
+            await store.executeSparqlUpdate(cleanupQuery);
             await store.commitTransaction();
         } finally {
             await store.close();
@@ -77,7 +104,7 @@ describe('SPARQLStore Federation Integration', () => {
                 id: 'federation-test-1',
                 prompt: 'federation test prompt',
                 output: 'federation test output',
-                embedding: new Array(1536).fill(0).map(() => Math.random()),
+                embedding: new Array(store.dimension).fill(0).map(() => Math.random()),
                 timestamp: Date.now(),
                 concepts: ['federation', 'test'],
                 accessCount: 1,
@@ -104,7 +131,7 @@ describe('SPARQLStore Federation Integration', () => {
             }
         `;
 
-        const results = await store._executeSparqlQuery(federatedQuery, store.endpoint.query);
+        const results = await store.executeSparqlQuery(federatedQuery, store.endpoint.query);
         expect(results.results.bindings.length).toBe(1);
         expect(results.results.bindings[0].version.value).toBe('1.0');
     });
@@ -114,6 +141,7 @@ describe('SPARQLStore Federation Integration', () => {
         const setupQuery = `
             PREFIX semem: <http://purl.org/stuff/semem/>
             PREFIX qb: <http://purl.org/linked-data/cube#>
+            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 
             INSERT DATA {
                 GRAPH <${testGraphs.main}> {
@@ -130,12 +158,13 @@ describe('SPARQLStore Federation Integration', () => {
             }
         `;
 
-        await store._executeSparqlUpdate(setupQuery, store.endpoint.update);
+        await store.executeSparqlUpdate(setupQuery);
 
         // Query relationship
         const relationQuery = `
             PREFIX semem: <http://purl.org/stuff/semem/>
             PREFIX qb: <http://purl.org/linked-data/cube#>
+            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 
             SELECT ?id ?cubeLabel
             WHERE {
@@ -149,7 +178,7 @@ describe('SPARQLStore Federation Integration', () => {
             }
         `;
 
-        const results = await store._executeSparqlQuery(relationQuery, store.endpoint.query);
+        const results = await store.executeSparqlQuery(relationQuery, store.endpoint.query);
         expect(results.results.bindings.length).toBe(1);
         expect(results.results.bindings[0].cubeLabel.value).toBe('Test Cube');
     });
@@ -177,7 +206,7 @@ describe('SPARQLStore Federation Integration', () => {
                 }
             `;
 
-            await store._executeSparqlUpdate(federatedUpdate, store.endpoint.update);
+            await store.executeSparqlUpdate(federatedUpdate);
             await store.commitTransaction();
 
             // Verify update
@@ -209,7 +238,7 @@ describe('SPARQLStore Federation Integration', () => {
             }
         `;
 
-        const results = await store._executeSparqlQuery(serviceQuery, store.endpoint.query);
+        const results = await store.executeSparqlQuery(serviceQuery, store.endpoint.query);
         expect(results.results.bindings.length).toBeGreaterThan(0);
     });
 });

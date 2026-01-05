@@ -34,12 +34,13 @@ import { decomposeCorpus } from './decomposeCorpus.js';
 import { CreateConceptsUnified } from './CreateConceptsUnified.js';
 import logger from 'loglevel';
 import crypto from 'crypto';
+import fs from 'fs';
 
 export default class Memorise {
     constructor(configPath = null) {
         this.config = null;
-        this.chatModel = Config.get('chatModel');
-        this.embeddingModel = Config.get('embeddingModel');
+        this.chatModel = null;
+        this.embeddingModel = null;
         this.queryService = null;
         this.sparqlHelper = null;
         this.embeddings = null;
@@ -105,8 +106,22 @@ export default class Memorise {
                 ? '../../config/config.json'
                 : 'config/config.json');
 
+        if (this.configPath && !fs.existsSync(configPath)) {
+            throw new Error(`Config file not found: ${configPath}`);
+        }
+
         this.config = new Config(configPath);
         await this.config.init();
+
+        this.chatModel = this.config.get('chatModel');
+        if (!this.chatModel) {
+            throw new Error('chatModel must be configured');
+        }
+
+        this.embeddingModel = this.config.get('embeddingModel');
+        if (!this.embeddingModel) {
+            throw new Error('embeddingModel must be configured');
+        }
 
         logger.debug(`Configuration loaded from: ${configPath}`);
     }
@@ -308,6 +323,14 @@ export default class Memorise {
         try {
             const targetGraph = options.graph || this.config.get('storage.options.graphName') ||
                 this.config.get('graphName');
+            if (!targetGraph) {
+                throw new Error('Target graph is not configured');
+            }
+            try {
+                new URL(targetGraph);
+            } catch (error) {
+                throw new Error(`Invalid graph URI: ${targetGraph}`);
+            }
 
             // Step 1: Create ragno:Unit and ragno:TextElement
             logger.info('📄 Step 1: Creating ragno:Unit and ragno:TextElement...');

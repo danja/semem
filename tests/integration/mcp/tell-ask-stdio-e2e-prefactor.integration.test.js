@@ -11,12 +11,14 @@ import randomFactGenerator from '../../helpers/randomFactGenerator.js';
 
 describe('Tell/Ask STDIO E2E Integration Tests', () => {
 
-  const stdioTellAsk = async (fact, question) => {
-    console.log(`🔵 STDIO: Testing fact: "${fact}"`);
+  const STDIO_TIMEOUT_MS = 60000;
+  const runIntegration = process.env.INTEGRATION_TESTS === 'true';
+  const integrationTest = runIntegration ? test : test.skip;
 
+  const stdioTellAsk = async (fact, question) => {
     // Test STDIO interface against live MCP server
     return new Promise((resolve, reject) => {
-      const mcpProcess = spawn('node', ['mcp/index.js'], {
+      const mcpProcess = spawn('node', ['src/mcp/index.js'], {
         stdio: ['pipe', 'pipe', 'pipe'],
         cwd: process.cwd()
       });
@@ -56,7 +58,6 @@ describe('Tell/Ask STDIO E2E Integration Tests', () => {
               }
             } catch (e) {
               // If we can't parse as JSON, this indicates pollution
-              console.error('❌ Non-JSON data in stdout:', line.trim());
               mcpProcess.kill('SIGTERM');
               reject(new Error(`STDIO pollution detected: "${line.trim()}" is not valid JSON`));
               return;
@@ -154,7 +155,6 @@ describe('Tell/Ask STDIO E2E Integration Tests', () => {
       };
 
       mcpProcess.on('close', (code) => {
-        console.log(`📤 STDIO process closed with code: ${code}`);
         // Resolution now happens immediately when we get all responses
       });
 
@@ -165,17 +165,17 @@ describe('Tell/Ask STDIO E2E Integration Tests', () => {
       // Start the test sequence
       runTest().catch(reject);
 
-      // Timeout after 15 seconds (now with forced termination)
-      const timeoutId = global.setTimeout(() => {
+      // Timeout after a longer window for live services
+      global.setTimeout(() => {
         if (!resolved) {
           mcpProcess.kill();
           reject(new Error('STDIO MCP test timeout'));
         }
-      }, 15000);
+      }, STDIO_TIMEOUT_MS);
     });
   };
 
-  test('STDIO tell/ask round trip with clean protocol', async () => {
+  integrationTest('STDIO tell/ask round trip with clean protocol', async () => {
     const fact = randomFactGenerator.generateFact();
     const question = randomFactGenerator.generateQuestion(fact);
 
@@ -196,8 +196,6 @@ describe('Tell/Ask STDIO E2E Integration Tests', () => {
     // Most important: verify stdout is clean JSON only
     expect(result.stderrLength).toBeLessThan(1000); // Allow some logging but not excessive
 
-    console.log(`✅ STDIO test passed for: ${fact}`);
-    console.log(`📊 Protocol cleanliness: stdout=${result.stdoutLength} chars, stderr=${result.stderrLength} chars`);
   }, 20000); // 20 second timeout
 
   test('STDIO protocol pollution detection', async () => {
@@ -213,21 +211,14 @@ describe('Tell/Ask STDIO E2E Integration Tests', () => {
       const hasConsoleLogs = result.stderrContent.includes('🔥 CONSOLE:');
       const hasDebugLogs = result.stderrContent.includes('🔥 DEBUG:');
 
-      console.log(`📊 Pollution analysis:`);
-      console.log(`  ServiceManager logs: ${hasServiceManagerLogs ? '❌' : '✅'}`);
-      console.log(`  Config logs: ${hasConfigLogs ? '❌' : '✅'}`);
-      console.log(`  Console logs: ${hasConsoleLogs ? '❌' : '✅'}`);
-      console.log(`  Debug logs: ${hasDebugLogs ? '❌' : '✅'}`);
 
       // For now, we expect some stderr logging, but we want to minimize it
       // The key is ensuring stdout is clean JSON only
       expect(hasConsoleLogs).toBe(false); // Should be fixed by our earlier work
 
-      console.log(`✅ Pollution detection completed for: ${fact}`);
 
     } catch (error) {
       if (error.message.includes('STDIO pollution detected')) {
-        console.error(`❌ STDIO pollution found: ${error.message}`);
         throw error;
       }
       throw error;
@@ -250,7 +241,6 @@ describe('Tell/Ask STDIO E2E Integration Tests', () => {
       expect(result.tellResponse.result).toBeDefined();
       expect(result.askResponse.result).toBeDefined();
 
-      console.log(`✅ Clean protocol maintained for: ${fact}`);
     }
   }, 45000); // Longer timeout for multiple operations
 });

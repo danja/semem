@@ -367,6 +367,10 @@ These tools are **faster and more accurate than text search** for architectural 
 - All API calls from VSOM go through HTTP proxy to MCP server endpoints
 - Content-Type header duplication bug fixed in VSOM proxy configuration
 
+## Refactoring
+
+* before deleting any code files they should first be moved to the archive dir and tests run. Only if the tests pass should the files be deleted.
+
 ## Check any potentially breaking changes with essential e2e tests 
 
 First stop/start the servers with `stop.sh` and `start.sh`, then -

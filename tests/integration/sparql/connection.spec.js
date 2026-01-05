@@ -1,38 +1,40 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { fileURLToPath } from 'url';
 import path from 'path';
-import fs from 'fs';
 import fetch from 'node-fetch';
+import Config from '../../../src/Config.js';
 
 // Test configuration
-const CONFIG_PATH = path.join(process.cwd(), 'config', 'config.json');
-
 // Test suite for SPARQL connection functionality
 describe('SPARQL Connection', () => {
   let config;
   let endpointUrl;
   let updateUrl;
+  let authHeader;
 
   // Load config before all tests
-  beforeAll(() => {
-    try {
-      const configData = fs.readFileSync(CONFIG_PATH, 'utf8');
-      config = JSON.parse(configData);
-      
-      const sparqlConfig = config.sparqlEndpoints?.[0];
-      if (!sparqlConfig) {
-        throw new Error('No SPARQL endpoints configured');
-      }
-      
-      endpointUrl = `${sparqlConfig.urlBase}${sparqlConfig.query || '/query'}`;
-      updateUrl = `${sparqlConfig.urlBase}${sparqlConfig.update || '/update'}`;
-      
-      console.log(`Using SPARQL endpoint: ${endpointUrl}`);
-      console.log(`Using SPARQL update endpoint: ${updateUrl}`);
-    } catch (error) {
-      console.error('Failed to load configuration:', error);
-      throw error;
+  beforeAll(async () => {
+    config = new Config(path.join(process.cwd(), 'config', 'config.json'));
+    await config.init();
+
+    const sparqlConfig = config.get('sparqlEndpoints')?.[0];
+    if (!sparqlConfig) {
+      throw new Error('No SPARQL endpoints configured');
     }
+
+    if (!sparqlConfig.urlBase || !sparqlConfig.query || !sparqlConfig.update) {
+      throw new Error('SPARQL endpoint configuration is incomplete');
+    }
+
+    endpointUrl = `${sparqlConfig.urlBase}${sparqlConfig.query}`;
+    updateUrl = `${sparqlConfig.urlBase}${sparqlConfig.update}`;
+
+    const username = sparqlConfig.user;
+    const password = sparqlConfig.password;
+    if (!username || !password) {
+      throw new Error('SPARQL credentials are not configured');
+    }
+
+    authHeader = `Basic ${Buffer.from(`${username}:${password}`).toString('base64')}`;
   });
 
   // Test SPARQL query functionality
@@ -42,6 +44,7 @@ describe('SPARQL Connection', () => {
     const response = await fetch(endpointUrl, {
       method: 'POST',
       headers: {
+        'Authorization': authHeader,
         'Content-Type': 'application/sparql-query',
         'Accept': 'application/json',
         'Cache-Control': 'no-cache',
@@ -59,12 +62,6 @@ describe('SPARQL Connection', () => {
 
   // Test SPARQL update functionality
   it('should execute a SPARQL update', async () => {
-    // Skip this test if we don't have update URL configured
-    if (!updateUrl) {
-      console.warn('No SPARQL update URL configured, skipping update test');
-      return;
-    }
-
     // Use a unique URI for test data to avoid conflicts
     const testUri = `http://example.org/test-${Date.now()}`;
     const updateQuery = `
@@ -77,6 +74,7 @@ describe('SPARQL Connection', () => {
     const response = await fetch(updateUrl, {
       method: 'POST',
       headers: {
+        'Authorization': authHeader,
         'Content-Type': 'application/sparql-update',
         'Cache-Control': 'no-cache',
         'Pragma': 'no-cache'
@@ -91,6 +89,7 @@ describe('SPARQL Connection', () => {
     const verifyResponse = await fetch(endpointUrl, {
       method: 'POST',
       headers: {
+        'Authorization': authHeader,
         'Content-Type': 'application/sparql-query',
         'Accept': 'application/json',
         'Cache-Control': 'no-cache',

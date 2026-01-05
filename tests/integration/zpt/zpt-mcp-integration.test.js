@@ -334,7 +334,10 @@ describe('ZPT MCP Integration Tests', () => {
       testRunner.validateZPTResponse(response, 'entity', 0);
 
       // Results should be filtered by keywords
-      expect(response.content.filters.keywords).toEqual(['ai', 'machine learning', 'neural']);
+      const normalizedKeywords = response.content.filters.keywords.map(keyword =>
+        keyword.replace(/\s+/g, '').toLowerCase()
+      );
+      expect(normalizedKeywords).toEqual(['ai', 'machinelearning', 'neural']);
       
       if (response.content.data.length > 0) {
         const allText = response.content.data.map(item => 

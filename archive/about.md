@@ -1,0 +1,1 @@
+The archive dir is a temporary location for use when refactoring is carried out. Prior to deleting any files these should be moved here and tests run.

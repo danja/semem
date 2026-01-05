@@ -43,7 +43,12 @@ export default defineConfig({
     },
     
     // Test file matching
-    include: ['**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
+    include: process.env.INTEGRATION_TESTS === 'true'
+      ? ['**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}']
+      : [
+        'tests/**/*.test.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
+        'src/**/tests/**/*.test.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'
+      ],
     
     // Environment variables
     env: {
@@ -77,7 +82,23 @@ export default defineConfig({
       '**/node_modules/**',
       '**/dist/**',
       '**/.git/**'
-    ]
+    ],
+    exclude: process.env.INTEGRATION_TESTS === 'true'
+      ? [
+        '**/node_modules/**',
+        '**/dist/**',
+        '**/.git/**',
+        '**/coverage/**'
+      ]
+      : [
+        '**/node_modules/**',
+        '**/dist/**',
+        '**/.git/**',
+        '**/coverage/**',
+        'tests/integration/**',
+        '**/e2e/**',
+        '**/*.e2e.*'
+      ]
   },
   
   // Resolve configuration

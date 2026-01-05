@@ -26,7 +26,7 @@ describe('Memorise Integration Tests', () => {
     const testGraph = 'http://purl.org/stuff/semem/test/memorise';
     
     // Test configuration using test config
-    const testConfigPath = path.resolve(__dirname, '../../../config/test-config.json');
+    const testConfigPath = path.resolve(__dirname, '../../../config/config.json');
 
     beforeEach(async () => {
         memorise = new Memorise(testConfigPath);
@@ -46,7 +46,7 @@ describe('Memorise Integration Tests', () => {
             expect(memorise.config).toBeDefined();
             expect(memorise.sparqlHelper).toBeDefined();
             expect(memorise.llmHandler).toBeDefined();
-            expect(memorise.embeddingHandler).toBeDefined();
+            expect(memorise.embeddings).toBeDefined();
             expect(memorise.chunker).toBeDefined();
             expect(memorise.conceptExtractor).toBeDefined();
         }, 30000);
@@ -54,10 +54,7 @@ describe('Memorise Integration Tests', () => {
         it('should handle missing config gracefully', async () => {
             const invalidMemoriseInstance = new Memorise('/nonexistent/config.json');
             
-            // Should fall back to default config and initialize successfully
-            // The Memorise class handles missing config by falling back to default config path
-            await expect(invalidMemoriseInstance.init()).resolves.not.toThrow();
-            expect(invalidMemoriseInstance.initialized).toBe(true);
+            await expect(invalidMemoriseInstance.init()).rejects.toThrow();
             
             // Cleanup
             await invalidMemoriseInstance.cleanup();
@@ -151,12 +148,9 @@ describe('Memorise Integration Tests', () => {
 
     describe('error handling and resilience', () => {
         it('should handle invalid graph URIs gracefully', async () => {
-            const result = await memorise.memorize('Test text', {
+            await expect(memorise.memorize('Test text', {
                 graph: 'invalid-graph-uri'
-            });
-
-            // Should still succeed with fallback behavior
-            expect(result.success).toBe(true);
+            })).rejects.toThrow(/Invalid graph URI/);
         }, 30000);
 
         it('should continue processing when optional steps fail', async () => {
@@ -179,7 +173,7 @@ describe('Memorise Integration Tests', () => {
             
             // Verify services are initialized
             expect(memorise.conceptExtractor).toBeDefined();
-            expect(memorise.embeddingHandler).toBeDefined();
+            expect(memorise.embeddings).toBeDefined();
             
             // Cleanup should not throw
             await expect(memorise.cleanup()).resolves.not.toThrow();

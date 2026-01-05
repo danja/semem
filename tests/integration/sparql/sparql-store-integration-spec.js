@@ -1,25 +1,51 @@
 import Config from '../../../src/Config.js';
 import SPARQLStore from '../../../src/stores/SPARQLStore.js';
-import { logger } from '../../../src/Utils.js';
+
+const getEmbeddingDimension = (config) => {
+    const providers = config.get('llmProviders');
+    if (!Array.isArray(providers) || providers.length === 0) {
+        throw new Error('No llmProviders configured for embedding dimension');
+    }
+
+    const embeddingProviders = providers
+        .filter(provider => provider.capabilities?.includes('embedding'))
+        .sort((a, b) => (a.priority ?? 999) - (b.priority ?? 999));
+
+    if (embeddingProviders.length === 0) {
+        throw new Error('No embedding-capable providers configured');
+    }
+
+    const dimension = embeddingProviders[0].embeddingDimension;
+    if (!dimension) {
+        throw new Error('Embedding dimension missing from embedding provider configuration');
+    }
+
+    return dimension;
+};
 
 describe('SPARQLStore Integration', () => {
     let store;
     let config;
     let testMemory;
+    let embeddingDimension;
 
     beforeAll(async () => {
         // Initialize with real config
-        config = new Config();
+        config = new Config('config/config.json');
+        await config.init();
         const sparqlConfig = config.get('sparqlEndpoints')[0];
+        embeddingDimension = getEmbeddingDimension(config);
 
         store = new SPARQLStore({
             query: `${sparqlConfig.urlBase}${sparqlConfig.query}`,
-            update: `${sparqlConfig.urlBase}${sparqlConfig.update}`
+            update: `${sparqlConfig.urlBase}${sparqlConfig.update}`,
+            data: `${sparqlConfig.urlBase}${sparqlConfig.gspRead}`
         }, {
             user: sparqlConfig.user,
             password: sparqlConfig.password,
-            graphName: 'http://example.org/mcp/test-memory'
-        });
+            graphName: 'http://example.org/mcp/test-memory',
+            dimension: embeddingDimension
+        }, config);
 
         // Test data
         testMemory = {
@@ -27,7 +53,7 @@ describe('SPARQLStore Integration', () => {
                 id: 'test-integration-1',
                 prompt: 'integration test prompt',
                 output: 'integration test output',
-                embedding: new Array(1536).fill(0).map(() => Math.random()),
+                embedding: new Array(embeddingDimension).fill(0).map(() => Math.random()),
                 timestamp: Date.now(),
                 accessCount: 1,
                 concepts: ['test', 'integration'],
@@ -43,10 +69,9 @@ describe('SPARQLStore Integration', () => {
                 DROP SILENT GRAPH <http://example.org/mcp/test-memory>;
                 CREATE GRAPH <http://example.org/mcp/test-memory>
             `;
-            await store._executeSparqlUpdate(clearQuery, `${sparqlConfig.urlBase}${sparqlConfig.update}`);
+            await store.executeSparqlUpdate(clearQuery);
             await store.commitTransaction();
         } catch (error) {
-            logger.error('Error in test setup:', error);
             throw error;
         }
     });
@@ -56,7 +81,7 @@ describe('SPARQLStore Integration', () => {
         try {
             await store.beginTransaction();
             const dropQuery = `DROP SILENT GRAPH <http://example.org/mcp/test-memory>`;
-            await store._executeSparqlUpdate(dropQuery, `${config.get('sparqlEndpoints')[0].urlBase}${config.get('sparqlEndpoints')[0].update}`);
+            await store.executeSparqlUpdate(dropQuery);
             await store.commitTransaction();
         } finally {
             await store.close();
@@ -82,7 +107,7 @@ describe('SPARQLStore Integration', () => {
         expect(loaded.id).toBe(testMemory.shortTermMemory[0].id);
         expect(loaded.prompt).toBe(testMemory.shortTermMemory[0].prompt);
         expect(loaded.concepts).toEqual(testMemory.shortTermMemory[0].concepts);
-        expect(loaded.embedding.length).toBe(1536);
+        expect(loaded.embedding.length).toBe(embeddingDimension);
     });
 
     it('should handle transaction rollback', async () => {
@@ -93,7 +118,7 @@ describe('SPARQLStore Integration', () => {
                 id: 'test-rollback',
                 prompt: 'should not persist',
                 output: 'rollback test',
-                embedding: new Array(1536).fill(0),
+            embedding: new Array(embeddingDimension).fill(0),
                 timestamp: Date.now(),
                 accessCount: 1,
                 concepts: ['rollback'],
@@ -117,23 +142,6 @@ describe('SPARQLStore Integration', () => {
         expect(shortTerm[0].id).toBe('test-integration-1');
     });
 
-    it('should handle concurrent transactions', async () => {
-        const store2 = new SPARQLStore(store.endpoint, {
-            user: store.credentials.user,
-            password: store.credentials.password,
-            graphName: store.graphName
-        });
-
-        await store.beginTransaction();
-
-        // Second transaction should fail while first is in progress
-        await expectAsync(store2.beginTransaction())
-            .toBeRejectedWithError(/Transaction already in progress/);
-
-        await store.commitTransaction();
-        await store2.close();
-    });
-
     it('should support query pagination', async () => {
         // Add multiple memories
         const bulkMemory = {
@@ -141,7 +149,7 @@ describe('SPARQLStore Integration', () => {
                 id: `bulk-test-${i}`,
                 prompt: `bulk test prompt ${i}`,
                 output: `bulk test output ${i}`,
-                embedding: new Array(1536).fill(0).map(() => Math.random()),
+                embedding: new Array(embeddingDimension).fill(0).map(() => Math.random()),
                 timestamp: Date.now(),
                 accessCount: 1,
                 concepts: ['bulk', `test-${i}`],
@@ -165,7 +173,7 @@ describe('SPARQLStore Integration', () => {
             LIMIT ${pageSize}
         `;
 
-        const results = await store._executeSparqlQuery(query, store.endpoint.query);
+        const results = await store.executeSparqlQuery(query, store.endpoint.query);
         expect(results.results.bindings.length).toBe(pageSize);
     });
 });

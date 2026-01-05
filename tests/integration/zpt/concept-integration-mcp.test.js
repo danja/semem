@@ -30,7 +30,7 @@ const CONCEPT_TEST_CONTENT = {
   },
   psychology: {
     content: "Cognitive psychology studies mental processes like perception, memory, and decision-making. Understanding cognition helps explain human behavior patterns.",
-    type: "fact",
+    type: "interaction",
     tags: ["psychology", "cognition", "concepts"]
   },
   economics: {
@@ -98,26 +98,21 @@ class ConceptTestRunner {
   }
 
   async seedConceptTestData() {
-    console.log('🌱 Seeding concept extraction test data...');
     
     for (const [key, data] of Object.entries(CONCEPT_TEST_CONTENT)) {
       try {
-        console.log(`  📝 Storing ${key} content for concept extraction...`);
         const result = await this.tell(data.content, data.type, data.tags);
         expect(result.success).toBe(true);
         
         // Small delay to prevent overwhelming the system
         await new Promise(resolve => setTimeout(resolve, 200));
       } catch (error) {
-        console.error(`Failed to seed ${key}:`, error);
         throw error;
       }
     }
     
     // Wait for concept processing to complete
-    console.log('⏳ Waiting for concept extraction and indexing...');
     await new Promise(resolve => setTimeout(resolve, TEST_CONFIG.SETUP_DELAY));
-    console.log('✅ Concept test data seeded successfully');
   }
 
   async waitForServer() {
@@ -128,7 +123,6 @@ class ConceptTestRunner {
       try {
         const response = await fetch(`${this.baseUrl}/health`, { timeout: 5000 });
         if (response.ok) {
-          console.log('✅ MCP server is ready');
           return true;
         }
       } catch (error) {
@@ -136,7 +130,6 @@ class ConceptTestRunner {
       }
 
       attempts++;
-      console.log(`⏳ Waiting for MCP server... (${attempts}/${maxAttempts})`);
       await new Promise(resolve => setTimeout(resolve, 1000));
     }
 
@@ -213,7 +206,6 @@ describe('RDF Concept Integration MCP Tests', () => {
   let testRunner;
 
   beforeAll(async () => {
-    console.log('🚀 Starting RDF Concept Integration MCP Tests');
     
     testRunner = new ConceptTestRunner();
     await testRunner.init();
@@ -222,7 +214,6 @@ describe('RDF Concept Integration MCP Tests', () => {
   }, TEST_CONFIG.TIMEOUT);
 
   afterAll(async () => {
-    console.log('🧹 Concept Integration MCP Tests completed');
   });
 
   describe('Concept Tilt Functionality', () => {
@@ -238,7 +229,6 @@ describe('RDF Concept Integration MCP Tests', () => {
       // Should have concept-oriented results
       const content = response.content.data;
       if (content.length > 0) {
-        console.log(`📊 Found ${content.length} concept-tilted entity results`);
         
         // Validate graph tilt results
         testRunner.validateConceptTiltResults(content);
@@ -246,7 +236,6 @@ describe('RDF Concept Integration MCP Tests', () => {
         // Should contain philosophical concepts
         const conceptTerms = ['existentialism', 'authenticity', 'absurdity', 'freedom', 'responsibility'];
         const foundTerms = testRunner.validateConceptFilterResults(content, conceptTerms);
-        console.log(`🧠 Found concept terms: ${foundTerms.join(', ')}`);
       }
     }, TEST_CONFIG.TIMEOUT);
 
@@ -261,14 +250,12 @@ describe('RDF Concept Integration MCP Tests', () => {
 
       const content = response.content.data;
       if (content.length > 0) {
-        console.log(`📊 Found ${content.length} concept-tilted text results`);
         
         testRunner.validateConceptTiltResults(content);
         
         // Should contain quantum physics concepts
         const quantumConcepts = ['quantum', 'superposition', 'entanglement', 'wave-particle', 'duality'];
         const foundConcepts = testRunner.validateConceptFilterResults(content, quantumConcepts);
-        console.log(`⚛️ Found quantum keywords: ${foundConcepts.join(', ')}`);
       }
     }, TEST_CONFIG.TIMEOUT);
 
@@ -283,7 +270,6 @@ describe('RDF Concept Integration MCP Tests', () => {
 
       const content = response.content.data;
       if (content.length > 0) {
-        console.log(`📊 Found ${content.length} concept-tilted community results`);
         
         // Community level should group conceptual themes
         content.forEach(item => {
@@ -293,7 +279,6 @@ describe('RDF Concept Integration MCP Tests', () => {
         
         const psychConcepts = ['psychology', 'cognition', 'perception', 'memory', 'decision-making'];
         const foundConcepts = testRunner.validateConceptFilterResults(content, psychConcepts);
-        console.log(`🧠 Found psychology keywords: ${foundConcepts.join(', ')}`);
       }
     }, TEST_CONFIG.TIMEOUT);
   });
@@ -310,12 +295,10 @@ describe('RDF Concept Integration MCP Tests', () => {
 
       const content = response.content.data;
       if (content.length > 0) {
-        console.log(`📊 Found ${content.length} concept-filtered results`);
         
         // Should contain AI/ML concepts
         const mlConcepts = ['machine', 'learning', 'artificial', 'intelligence', 'neural', 'algorithm'];
         const foundConcepts = testRunner.validateConceptFilterResults(content, mlConcepts);
-        console.log(`🤖 Found ML keywords: ${foundConcepts.join(', ')}`);
         
         // Should have concept filter metadata
         expect(response.content.filters).toBeDefined();
@@ -334,11 +317,9 @@ describe('RDF Concept Integration MCP Tests', () => {
 
       const content = response.content.data;
       if (content.length > 0) {
-        console.log(`📊 Found ${content.length} categorically concept-filtered results`);
         
         const economicConcepts = ['market', 'supply', 'demand', 'equilibrium', 'price', 'competition'];
         const foundConcepts = testRunner.validateConceptFilterResults(content, economicConcepts);
-        console.log(`💰 Found economic keywords: ${foundConcepts.join(', ')}`);
 
         expect(response.content.filters.domains).toEqual(['economics', 'market theory']);
       }
@@ -356,11 +337,9 @@ describe('RDF Concept Integration MCP Tests', () => {
 
       const content = response.content.data;
       if (content.length > 0) {
-        console.log(`📊 Found ${content.length} similarity concept-filtered results`);
         
         const cognitiveConcepts = ['cognitive', 'psychology', 'mental', 'processes', 'perception', 'memory'];
         const foundConcepts = testRunner.validateConceptFilterResults(content, cognitiveConcepts);
-        console.log(`🧠 Found cognitive keywords: ${foundConcepts.join(', ')}`);
 
         expect(response.content.filters.keywords).toEqual(['cognitive', 'psychology', 'mental', 'processes']);
       }
@@ -392,14 +371,12 @@ describe('RDF Concept Integration MCP Tests', () => {
 
       const content = response.content.data;
       if (content.length > 0) {
-        console.log(`📊 Found ${content.length} stored concept results`);
         
         // Validate RDF concept structure
         testRunner.validateRDFConceptStructure(content);
         
         const phenomenologyConcepts = ['phenomenology', 'consciousness', 'experience', 'husserl', 'transcendental'];
         const foundConcepts = testRunner.validateConceptFilterResults(content, phenomenologyConcepts);
-        console.log(`🔍 Found phenomenology keywords: ${foundConcepts.join(', ')}`);
       }
     }, TEST_CONFIG.TIMEOUT);
 
@@ -413,7 +390,6 @@ describe('RDF Concept Integration MCP Tests', () => {
 
       const content = response.content.data;
       if (content.length > 0) {
-        console.log(`📊 Found ${content.length} RDF concept entities`);
         
         // Should have proper RDF structure
         testRunner.validateRDFConceptStructure(content);
@@ -441,7 +417,6 @@ describe('RDF Concept Integration MCP Tests', () => {
 
       const content = response.content.data;
       if (content.length > 0) {
-        console.log(`📊 Found ${content.length} concept relationship results`);
         
         // Should include relationship information
         content.forEach(item => {
@@ -455,7 +430,6 @@ describe('RDF Concept Integration MCP Tests', () => {
 
         const aiConcepts = ['artificial', 'intelligence', 'machine', 'learning', 'algorithm', 'neural'];
         const foundConcepts = testRunner.validateConceptFilterResults(content, aiConcepts);
-        console.log(`🤖 Found AI concept relations: ${foundConcepts.join(', ')}`);
       }
     }, TEST_CONFIG.TIMEOUT);
   });
@@ -474,14 +448,12 @@ describe('RDF Concept Integration MCP Tests', () => {
 
       const content = response.content.data;
       if (content.length > 0) {
-        console.log(`📊 Found ${content.length} combined concept results`);
         
         // Should satisfy both graph tilt and concept filtering
         testRunner.validateConceptTiltResults(content);
         
         const philosophyConcepts = ['philosophy', 'ethics', 'morality', 'existentialism', 'authenticity'];
         const foundConcepts = testRunner.validateConceptFilterResults(content, philosophyConcepts);
-        console.log(`🧠 Found philosophy keywords: ${foundConcepts.join(', ')}`);
         
         // Should have appropriate filters
         expect(response.content.filters.keywords).toEqual(['existentialism', 'ethics']);
@@ -498,7 +470,6 @@ describe('RDF Concept Integration MCP Tests', () => {
       const zoomLevels = ['community', 'text', 'entity', 'unit'];
       
       for (const zoom of zoomLevels) {
-        console.log(`🔍 Testing graph tilt at ${zoom} level`);
         
         const response = await testRunner.zptNavigate(
           baseQuery,
@@ -509,7 +480,6 @@ describe('RDF Concept Integration MCP Tests', () => {
         expect(response.content.metadata.navigation.tilt).toBe('graph');
         
         if (response.content.data.length > 0) {
-          console.log(`  📊 Found ${response.content.data.length} results at ${zoom} level`);
           
           // Each level should maintain conceptual focus
           const cognitiveConcepts = ['cognitive', 'psychology', 'mental', 'processes', 'perception'];
@@ -548,7 +518,6 @@ describe('RDF Concept Integration MCP Tests', () => {
       // Step 4: Validate full pipeline results
       const content = response.content.data;
       if (content.length > 0) {
-        console.log(`📊 Full pipeline test found ${content.length} results`);
         
         // Should have concept-oriented structure
         testRunner.validateConceptTiltResults(content);
@@ -556,7 +525,6 @@ describe('RDF Concept Integration MCP Tests', () => {
         
         const systemsConcepts = ['systems', 'thinking', 'emergence', 'feedback', 'holistic', 'complexity'];
         const foundConcepts = testRunner.validateConceptFilterResults(content, systemsConcepts);
-        console.log(`🌐 Found systems keywords: ${foundConcepts.join(', ')}`);
 
         // Validate metadata indicates successful concept processing
         expect(response.content.metadata.navigation.tilt).toBe('graph');
@@ -594,7 +562,6 @@ describe('RDF Concept Integration MCP Tests', () => {
       expect(duration).toBeLessThan(15000); // Should complete within 15 seconds
       expect(response.content.metadata.pipeline.totalTime).toBeGreaterThan(0);
       
-      console.log(`⏱️ Complex concept query completed in ${duration}ms`);
     }, TEST_CONFIG.TIMEOUT);
 
     it('should validate concept filter compatibility', async () => {
