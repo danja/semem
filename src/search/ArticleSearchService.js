@@ -1,3 +1,5 @@
+// constants need moving out, should come from config or throw error
+
 import fetch from 'node-fetch';
 import faiss from 'faiss-node';
 const { IndexFlatIP } = faiss;
