@@ -9,6 +9,8 @@ import {
   TellSchema,
   AskSchema,
   AugmentSchema,
+  ComposeSchema,
+  DecomposeSchema,
   ZoomSchema,
   PanSchema,
   TiltSchema,
@@ -69,6 +71,16 @@ export function getSimpleVerbsToolDefinitions() {
       name: SimpleVerbToolNames.augment,
       description: "Run operations like concept extraction on relevant knowledgebase parts.",
       inputSchema: zodToJsonSchema(AugmentSchema)
+    },
+    {
+      name: SimpleVerbToolNames.compose,
+      description: "Assemble a focused context response from memory and current ZPT lens state.",
+      inputSchema: zodToJsonSchema(ComposeSchema)
+    },
+    {
+      name: SimpleVerbToolNames.decompose,
+      description: "Decompose text into Ragno units, entities, and relationships.",
+      inputSchema: zodToJsonSchema(DecomposeSchema)
     },
     {
       name: SimpleVerbToolNames.zoom,

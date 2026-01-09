@@ -169,6 +169,51 @@ async function getToolDefinitions(toolRouter) {
       }
     },
     {
+      name: 'compose',
+      description: 'Assemble a focused context response from memory and ZPT lens state',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          query: { type: 'string', description: 'Query to compose context around' },
+          context: { type: 'string', description: 'Optional user-provided context' },
+          maxResults: { type: 'number', description: 'Maximum memory results to include' },
+          threshold: { type: 'number', description: 'Similarity threshold for memory retrieval' },
+          maxTokens: { type: 'number', description: 'Target token budget for composed response' },
+          includeSession: { type: 'boolean', description: 'Include recent session interactions' },
+          includeMemory: { type: 'boolean', description: 'Include semantic memory search results' }
+        },
+        required: ['query']
+      }
+    },
+    {
+      name: 'decompose',
+      description: 'Decompose text into Ragno units, entities, and relationships',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          content: { type: 'string', description: 'Text content to decompose' },
+          source: { type: 'string', description: 'Optional source identifier' },
+          chunks: {
+            type: 'array',
+            description: 'Pre-split text chunks',
+            items: {
+              type: 'object',
+              properties: {
+                content: { type: 'string' },
+                source: { type: 'string' }
+              },
+              required: ['content']
+            }
+          },
+          options: {
+            type: 'object',
+            description: 'Decomposition options (summaries, relationships, limits)'
+          },
+          store: { type: 'boolean', description: 'Store results in SPARQL if supported' }
+        }
+      }
+    },
+    {
       name: 'zoom',
       description: 'Set navigation granularity level',
       inputSchema: {

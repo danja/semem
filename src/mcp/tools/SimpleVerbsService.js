@@ -18,7 +18,7 @@ export class SimpleVerbsService {
     this.initialized = false;
 
     // Core tool names for router interface compatibility
-    this.coreToolNames = ['tell', 'ask', 'augment', 'zoom', 'pan', 'tilt', 'inspect', 'remember', 'forget', 'recall', 'project_context', 'fade_memory', 'train-vsom'];
+    this.coreToolNames = ['tell', 'ask', 'augment', 'compose', 'decompose', 'zoom', 'pan', 'tilt', 'inspect', 'remember', 'forget', 'recall', 'project_context', 'fade_memory', 'train-vsom'];
   }
 
   /**
@@ -130,6 +130,24 @@ export class SimpleVerbsService {
    */
   async augment(params) {
     return await this.execute('augment', params);
+  }
+
+  /**
+   * Compose - assemble a focused context response
+   * @param {Object} params - Compose parameters
+   * @returns {Promise<Object>} Command result
+   */
+  async compose(params) {
+    return await this.execute('compose', params);
+  }
+
+  /**
+   * Decompose - extract units/entities/relationships from text
+   * @param {Object} params - Decompose parameters
+   * @returns {Promise<Object>} Command result
+   */
+  async decompose(params) {
+    return await this.execute('decompose', params);
   }
 
   /**

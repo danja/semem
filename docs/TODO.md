@@ -1,3 +1,6 @@
+Semem should know about itself (and me, for CV purposes).
+
+
 node src/frontend/vsom-standalone/server.js
 pkill -f "node src/frontend/vsom-standalone/server.js" 
 

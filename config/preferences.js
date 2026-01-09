@@ -284,6 +284,25 @@ export const EMBEDDING_CONFIG = {
 };
 
 /**
+ * ZPT Context Composition Configuration
+ * Used by MCP compose/decompose verbs for context assembly and decomposition
+ */
+export const CONTEXT_CONFIG = {
+    COMPOSE: {
+        DEFAULT_MAX_RESULTS: 8,
+        DEFAULT_THRESHOLD: 0.2,
+        DEFAULT_MAX_TOKENS: 700,
+        MAX_SESSION_ITEMS: 5,
+        MAX_MEMORY_ITEMS: 8
+    },
+    DECOMPOSE: {
+        MAX_TEXT_LENGTH: 50000,
+        MAX_CHUNKS: 10,
+        DEFAULT_MAX_ENTITIES_PER_UNIT: 10
+    }
+};
+
+/**
  * VSOM (Visual Self-Organizing Map) Configuration
  * Used by VSOM training and visualization components
  */

@@ -26,8 +26,13 @@ class WorkbenchApp {
     this.handlePanelToggle = this.handlePanelToggle.bind(this);
     this.updateConnectionStatus = this.updateConnectionStatus.bind(this);
     this.updateSessionStats = this.updateSessionStats.bind(this);
+    this.handleMobileMenuToggle = this.handleMobileMenuToggle.bind(this);
     this.navigationController = new NavigationController();
     this.inspectController = new InspectController();
+    this.mobilePreferenceKeys = {
+      verbsVisible: 'workbench.mobile.verbsVisible',
+      consoleVisible: 'workbench.mobile.consoleVisible'
+    };
   }
 
   /**
@@ -115,6 +120,9 @@ class WorkbenchApp {
     
     // Panel toggles
     this.setupPanelToggles();
+
+    // Mobile menu
+    this.setupMobileMenu();
   }
 
   setupPanelToggles() {
@@ -127,6 +135,47 @@ class WorkbenchApp {
     if (verbsToggle) {
       verbsToggle.addEventListener('click', this.handleVerbsToggle.bind(this));
     }
+  }
+
+  setupMobileMenu() {
+    const menuToggle = DomUtils.$('#mobile-menu-toggle');
+    const menu = DomUtils.$('#mobile-menu');
+    const consoleToggle = DomUtils.$('#mobile-console-toggle');
+    const verbsToggle = DomUtils.$('#mobile-verbs-toggle');
+
+    if (!menuToggle || !menu) return;
+
+    menuToggle.addEventListener('click', this.handleMobileMenuToggle);
+
+    document.addEventListener('click', event => {
+      if (menu.hidden) return;
+      if (menu.contains(event.target) || menuToggle.contains(event.target)) return;
+      this.setMobileMenuOpen(false);
+    });
+
+    document.addEventListener('keydown', event => {
+      if (event.key !== 'Escape') return;
+      this.setMobileMenuOpen(false);
+    });
+
+    if (consoleToggle) {
+      consoleToggle.addEventListener('click', () => {
+        const shouldShow = !document.body.classList.contains('mobile-show-console');
+        this.setMobileConsoleVisibility(shouldShow);
+        this.updateMobileMenuLabels();
+      });
+    }
+
+    if (verbsToggle) {
+      verbsToggle.addEventListener('click', () => {
+        const shouldShow = !this.isVerbsVisible();
+        this.setVerbsVisibility(shouldShow);
+        this.updateMobileMenuLabels();
+      });
+    }
+
+    this.applyStoredMobilePreferences();
+    this.updateMobileMenuLabels();
   }
 
 
@@ -879,29 +928,122 @@ class WorkbenchApp {
     stateManager.togglePanel(panelData);
   }
 
-  handleVerbsToggle(event) {
-    const button = event.currentTarget;
+  handleMobileMenuToggle(event) {
+    event.stopPropagation();
+    const menu = DomUtils.$('#mobile-menu');
+    const shouldOpen = menu ? menu.hidden : false;
+    this.setMobileMenuOpen(shouldOpen);
+  }
+
+  setMobileMenuOpen(isOpen) {
+    const menuToggle = DomUtils.$('#mobile-menu-toggle');
+    const menu = DomUtils.$('#mobile-menu');
+
+    if (!menuToggle || !menu) return;
+
+    menu.hidden = !isOpen;
+    menuToggle.setAttribute('aria-expanded', String(isOpen));
+  }
+
+  setMobileConsoleVisibility(isVisible) {
+    document.body.classList.toggle('mobile-show-console', isVisible);
+    const consoleToggle = DomUtils.$('#mobile-console-toggle');
+    if (consoleToggle) {
+      consoleToggle.setAttribute('aria-pressed', String(isVisible));
+    }
+    this.persistMobilePreference(this.mobilePreferenceKeys.consoleVisible, isVisible);
+  }
+
+  setVerbsVisibility(isVisible) {
     const mainContent = DomUtils.$('#main-content');
-    const toggleText = button.querySelector('.button-text');
+    const toggleButton = DomUtils.$('#verbs-toggle');
+    const toggleText = toggleButton?.querySelector('.button-text');
 
     if (!mainContent) return;
 
-    const isVisible = mainContent.style.display !== 'none';
+    mainContent.style.display = isVisible ? 'flex' : 'none';
 
-    // Toggle visibility
-    if (isVisible) {
-      mainContent.style.display = 'none';
-      if (toggleText) {
-        toggleText.textContent = 'Show Verbs';
-      }
-      button.classList.remove('active');
-    } else {
-      mainContent.style.display = 'flex';
-      if (toggleText) {
-        toggleText.textContent = 'Hide Verbs';
-      }
-      button.classList.add('active');
+    if (toggleText) {
+      toggleText.textContent = isVisible ? 'Hide Verbs' : 'Show Verbs';
     }
+
+    if (toggleButton) {
+      toggleButton.classList.toggle('active', isVisible);
+    }
+
+    const mobileVerbsToggle = DomUtils.$('#mobile-verbs-toggle');
+    if (mobileVerbsToggle) {
+      mobileVerbsToggle.setAttribute('aria-pressed', String(isVisible));
+    }
+    this.persistMobilePreference(this.mobilePreferenceKeys.verbsVisible, isVisible);
+  }
+
+  isVerbsVisible() {
+    const mainContent = DomUtils.$('#main-content');
+    if (!mainContent) return false;
+    return mainContent.style.display !== 'none';
+  }
+
+  updateMobileMenuLabels() {
+    const consoleToggle = DomUtils.$('#mobile-console-toggle');
+    const verbsToggle = DomUtils.$('#mobile-verbs-toggle');
+    const consoleVisible = document.body.classList.contains('mobile-show-console');
+    const verbsVisible = this.isVerbsVisible();
+
+    if (consoleToggle) {
+      consoleToggle.textContent = consoleVisible ? 'Hide Console' : 'Show Console';
+      consoleToggle.setAttribute('aria-pressed', String(consoleVisible));
+    }
+
+    if (verbsToggle) {
+      verbsToggle.textContent = verbsVisible ? 'Hide Verbs' : 'Show Verbs';
+      verbsToggle.setAttribute('aria-pressed', String(verbsVisible));
+    }
+  }
+
+  applyStoredMobilePreferences() {
+    const storedVerbs = this.getStoredMobilePreference(this.mobilePreferenceKeys.verbsVisible);
+    if (storedVerbs !== null) {
+      this.setVerbsVisibility(storedVerbs);
+    }
+
+    const isMobile = window.matchMedia('(max-width: 768px)').matches;
+    if (!isMobile) return;
+
+    const storedConsole = this.getStoredMobilePreference(this.mobilePreferenceKeys.consoleVisible);
+    if (storedConsole !== null) {
+      this.setMobileConsoleVisibility(storedConsole);
+    }
+  }
+
+  getStoredMobilePreference(key) {
+    try {
+      const rawValue = localStorage.getItem(key);
+      if (rawValue === null) return null;
+      if (rawValue !== 'true' && rawValue !== 'false') {
+        throw new Error(`Invalid persisted value for ${key}`);
+      }
+      return rawValue === 'true';
+    } catch (error) {
+      consoleService.error(`Failed to read persisted preference "${key}"`, error);
+      return null;
+    }
+  }
+
+  persistMobilePreference(key, value) {
+    try {
+      localStorage.setItem(key, String(value));
+    } catch (error) {
+      consoleService.error(`Failed to persist preference "${key}"`, error);
+    }
+  }
+
+  handleVerbsToggle(event) {
+    const mainContent = DomUtils.$('#main-content');
+    if (!mainContent) return;
+    const isVisible = mainContent.style.display !== 'none';
+    this.setVerbsVisibility(!isVisible);
+    this.updateMobileMenuLabels();
   }
 
   handleError(errorData) {

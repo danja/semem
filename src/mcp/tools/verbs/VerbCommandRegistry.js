@@ -22,6 +22,8 @@ import { RecallCommand } from './commands/RecallCommand.js';
 import { ProjectContextCommand } from './commands/ProjectContextCommand.js';
 import { FadeMemoryCommand } from './commands/FadeMemoryCommand.js';
 import { TrainVSOMCommand } from './commands/TrainVSOMCommand.js';
+import { ComposeCommand } from './commands/ComposeCommand.js';
+import { DecomposeCommand } from './commands/DecomposeCommand.js';
 
 export class VerbCommandRegistry {
   constructor() {
@@ -47,6 +49,8 @@ export class VerbCommandRegistry {
     await this.registerCommand('tell', new TellCommand(), sharedContext);
     await this.registerCommand('ask', new AskCommand(), sharedContext);
     await this.registerCommand('augment', new AugmentCommand(), sharedContext);
+    await this.registerCommand('compose', new ComposeCommand(), sharedContext);
+    await this.registerCommand('decompose', new DecomposeCommand(), sharedContext);
 
     // Register navigation commands
     await this.registerCommand('zoom', new ZoomCommand(), sharedContext);

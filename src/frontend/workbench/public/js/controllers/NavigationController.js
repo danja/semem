@@ -8,6 +8,7 @@ export default class NavigationController {
   constructor() {
     this.lastNavigationQuery = 'Navigate knowledge space';
     this.navigationRequestId = 0;
+    this.composeRequestId = 0;
     this.elements = {};
 
     this.handleZoomChange = this.handleZoomChange.bind(this);
@@ -16,6 +17,7 @@ export default class NavigationController {
     this.handleThresholdChange = this.handleThresholdChange.bind(this);
     this.handleNavigationExecute = this.handleNavigationExecute.bind(this);
     this.handleNavigationHistoryRefresh = this.handleNavigationHistoryRefresh.bind(this);
+    this.handleComposeContext = this.handleComposeContext.bind(this);
     this.handleLensPreset = this.handleLensPreset.bind(this);
     this.handleLensRun = this.handleLensRun.bind(this);
     this.handleLensChatToggle = this.handleLensChatToggle.bind(this);
@@ -68,7 +70,11 @@ export default class NavigationController {
       panDomainsInput: DomUtils.$('#pan-domains'),
       panKeywordsInput: DomUtils.$('#pan-keywords'),
       lensRunButton: DomUtils.$('#zpt-lens-run'),
-      lensPresetButtons: DomUtils.$$('.zpt-preset')
+      lensPresetButtons: DomUtils.$$('.zpt-preset'),
+      composeButton: DomUtils.$('#compose-context'),
+      composeResults: DomUtils.$('#compose-results'),
+      composeMeta: DomUtils.$('#compose-meta'),
+      composeBody: DomUtils.$('#compose-body')
     };
   }
 
@@ -102,6 +108,10 @@ export default class NavigationController {
     const navHistoryButton = DomUtils.$('#nav-history-refresh');
     if (navHistoryButton) {
       navHistoryButton.addEventListener('click', this.handleNavigationHistoryRefresh);
+    }
+
+    if (this.elements.composeButton) {
+      this.elements.composeButton.addEventListener('click', this.handleComposeContext);
     }
 
     if (this.elements.lensRunButton) {
@@ -421,10 +431,27 @@ export default class NavigationController {
 
       this.updateNavigationDisplay();
       await this.executeNavigationFromState({ source: 'zoom' });
+      await this.executeComposeContext({
+        source: 'zoom',
+        query: this.lastNavigationQuery,
+        showToast: false,
+        suppressErrors: true
+      });
     } catch (error) {
       consoleService.error(`❌ Failed to change zoom level to "${level}": ${error.message}`);
       DomUtils.showToast('Failed to change zoom level', 'error');
     }
+  }
+
+  async handleComposeContext(event) {
+    event.preventDefault();
+
+    const query = this.lastNavigationQuery;
+    await this.executeComposeContext({
+      source: 'manual',
+      query,
+      showToast: true
+    });
   }
 
   async handleTiltChange(event) {
@@ -701,5 +728,98 @@ export default class NavigationController {
 
     html += '</div>';
     resultsContainer.innerHTML = html;
+  }
+
+  async executeComposeContext({ query, context, source = 'compose', showToast = false, suppressErrors = false } = {}) {
+    const requestId = ++this.composeRequestId;
+    this.setComposeLoading(true);
+
+    try {
+      if (!query || !query.trim()) {
+        throw new Error('Compose query is required');
+      }
+
+      const result = await apiService.compose({ query: query.trim(), context });
+
+      if (requestId !== this.composeRequestId) {
+        return null;
+      }
+
+      this.displayComposeResults(result, { source });
+      if (showToast) {
+        DomUtils.showToast('Context composed successfully', 'success');
+      }
+      consoleService.success(`✅ Compose context completed (${source})`);
+      return result;
+    } catch (error) {
+      if (requestId !== this.composeRequestId) {
+        return null;
+      }
+
+      consoleService.error(`❌ Compose context (${source}) failed: ${error.message}`);
+      if (showToast) {
+        DomUtils.showToast('Context composition failed', 'error');
+      }
+      if (!suppressErrors) {
+        throw error;
+      }
+      return null;
+    } finally {
+      if (requestId === this.composeRequestId) {
+        this.setComposeLoading(false);
+      }
+    }
+  }
+
+  setComposeLoading(isLoading) {
+    const button = this.elements.composeButton;
+    if (!button) return;
+
+    const buttonText = button.querySelector('.button-text');
+    const buttonLoader = button.querySelector('.button-loader');
+
+    button.disabled = isLoading;
+    if (buttonText) {
+      isLoading ? DomUtils.hide(buttonText) : DomUtils.show(buttonText);
+    }
+    if (buttonLoader) {
+      isLoading ? DomUtils.show(buttonLoader) : DomUtils.hide(buttonLoader);
+    }
+  }
+
+  displayComposeResults(result, { source } = {}) {
+    const container = this.elements.composeResults;
+    const meta = this.elements.composeMeta;
+    const body = this.elements.composeBody;
+
+    if (!container || !meta || !body) {
+      return;
+    }
+
+    if (!result?.success || !result?.content) {
+      meta.textContent = 'No compose output returned.';
+      body.textContent = 'Try adjusting the zoom level, pan filters, or the query prompt.';
+      DomUtils.show(container);
+      return;
+    }
+
+    const zptState = result.zptState || stateManager.getState();
+    const metaParts = [];
+    if (source) {
+      metaParts.push(source === 'zoom' ? 'Auto (zoom)' : 'Manual');
+    }
+    if (Array.isArray(result.sources)) {
+      metaParts.push(`${result.sources.length} sources`);
+    }
+    if (zptState) {
+      metaParts.push(
+        `${this.formatZoomLevel(zptState.zoom)} / ${this.formatPanFilters(zptState.pan)} / ${this.formatTiltStyle(zptState.tilt)}`
+      );
+    }
+    metaParts.push(`Updated ${new Date().toLocaleTimeString()}`);
+
+    meta.textContent = metaParts.join(' · ');
+    body.textContent = result.content;
+    DomUtils.show(container);
   }
 }

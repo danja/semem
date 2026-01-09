@@ -230,6 +230,8 @@ async function handleSlashCommand(command, simpleVerbsService) {
 /help          - Show this help message
 /ask [query]   - Search your semantic memory for information
 /tell [info]   - Store new information in your semantic memory
+/compose [query] - Compose a focused context response
+/decompose [text] - Decompose text into units and entities
 /clear         - Clear recent session context
 /topic [text]  - Derive topic from recent or supplied text and set pan filters
 /zoom [level]  - Set zoom level (micro/entity/text/unit/community/corpus)
@@ -309,6 +311,71 @@ You can also chat naturally - I'll understand your intentions and route appropri
           success: false,
           messageType: 'error',
           content: `Error processing tell command: ${error.message}`,
+          timestamp: new Date().toISOString()
+        };
+      }
+
+    case '/compose':
+      if (!args) {
+        return {
+          success: false,
+          messageType: 'error',
+          content: 'Please provide a query after /compose. Example: /compose Summarize recent memory about ZPT.',
+          timestamp: new Date().toISOString()
+        };
+      }
+
+      try {
+        const result = await simpleVerbsService.compose({
+          query: args,
+          includeSession: true,
+          includeMemory: true
+        });
+
+        return {
+          success: true,
+          messageType: 'compose_result',
+          content: result.content || 'No response composed.',
+          originalMessage: command,
+          routing: 'compose_command',
+          timestamp: new Date().toISOString()
+        };
+      } catch (error) {
+        return {
+          success: false,
+          messageType: 'error',
+          content: `Error processing compose command: ${error.message}`,
+          timestamp: new Date().toISOString()
+        };
+      }
+
+    case '/decompose':
+      if (!args) {
+        return {
+          success: false,
+          messageType: 'error',
+          content: 'Please provide text after /decompose. Example: /decompose This is a sample paragraph.',
+          timestamp: new Date().toISOString()
+        };
+      }
+
+      try {
+        const result = await simpleVerbsService.decompose({ content: args });
+        const stats = result.statistics || {};
+
+        return {
+          success: true,
+          messageType: 'decompose_result',
+          content: `Decomposition complete: ${stats.totalUnits || 0} units, ${stats.totalEntities || 0} entities, ${stats.totalRelationships || 0} relationships.`,
+          originalMessage: command,
+          routing: 'decompose_command',
+          timestamp: new Date().toISOString()
+        };
+      } catch (error) {
+        return {
+          success: false,
+          messageType: 'error',
+          content: `Error processing decompose command: ${error.message}`,
           timestamp: new Date().toISOString()
         };
       }
@@ -869,6 +936,80 @@ async function startRefactoredServer() {
       }
     });
 
+    // Compose endpoint - assemble focused context response
+    app.post('/compose', async (req, res) => {
+      try {
+        const { query, context, maxResults, threshold, maxTokens, includeSession, includeMemory } = req.body;
+
+        if (!query || typeof query !== 'string' || !query.trim()) {
+          res.status(400).json({
+            success: false,
+            error: 'Query is required for compose',
+            timestamp: new Date().toISOString()
+          });
+          return;
+        }
+
+        const result = await simpleVerbsService.compose({
+          query,
+          context,
+          maxResults,
+          threshold,
+          maxTokens,
+          includeSession,
+          includeMemory
+        });
+
+        res.json({
+          success: result.success,
+          content: result.content,
+          zptState: result.zptState,
+          sources: result.sources,
+          timestamp: result.timestamp
+        });
+      } catch (error) {
+        mcpDebugger.error('❌ Compose error:', error.message);
+        res.status(500).json({
+          success: false,
+          error: error.message,
+          timestamp: new Date().toISOString()
+        });
+      }
+    });
+
+    // Decompose endpoint - extract units/entities/relationships
+    app.post('/decompose', async (req, res) => {
+      try {
+        const { content, source, chunks, options, store } = req.body;
+
+        if ((!content || !String(content).trim()) && (!Array.isArray(chunks) || chunks.length === 0)) {
+          res.status(400).json({
+            success: false,
+            error: 'Content or chunks are required for decompose',
+            timestamp: new Date().toISOString()
+          });
+          return;
+        }
+
+        const result = await simpleVerbsService.decompose({
+          content,
+          source,
+          chunks,
+          options,
+          store
+        });
+
+        res.json(result);
+      } catch (error) {
+        mcpDebugger.error('❌ Decompose error:', error.message);
+        res.status(500).json({
+          success: false,
+          error: error.message,
+          timestamp: new Date().toISOString()
+        });
+      }
+    });
+
     // State endpoint - for ZPT navigation state and session info
     app.get('/state', async (req, res) => {
       try {
@@ -1009,7 +1150,7 @@ async function startRefactoredServer() {
     mcpDebugger.info('✅ [REFACTORED-REST] Simple Verbs REST endpoints configured');
 
     // Start the server
-    const server = app.listen(port, () => {
+    const server = app.listen(port, '0.0.0.0', () => {
       mcpDebugger.info(`✅ REFACTORED HTTP server listening on port ${port}`);
       mcpDebugger.info(`Health check: http://localhost:${port}/health`);
       mcpDebugger.info(`MCP endpoint: POST http://localhost:${port}/mcp`);
@@ -1019,6 +1160,8 @@ async function startRefactoredServer() {
       mcpDebugger.info(`Chat endpoint: POST http://localhost:${port}/chat`);
       mcpDebugger.info(`Enhanced Chat endpoint: POST http://localhost:${port}/chat/enhanced`);
       mcpDebugger.info(`Augment endpoint: POST http://localhost:${port}/augment`);
+      mcpDebugger.info(`Compose endpoint: POST http://localhost:${port}/compose`);
+      mcpDebugger.info(`Decompose endpoint: POST http://localhost:${port}/decompose`);
       mcpDebugger.info(`State endpoint: GET http://localhost:${port}/state`);
       mcpDebugger.info(`Inspect endpoint: POST http://localhost:${port}/inspect`);
       mcpDebugger.info(`ZPT Navigate endpoint: POST http://localhost:${port}/zpt/navigate`);

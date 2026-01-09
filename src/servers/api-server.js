@@ -1621,7 +1621,7 @@ class APIServer {
             this.setupSignalHandlers();
 
             // Start the server
-            this.server = this.app.listen(this.port, () => {
+            this.server = this.app.listen(this.port, '0.0.0.0', () => {
                 this.logger.info(`Semem API Server is running at http://localhost:${this.port}`);
             });
 

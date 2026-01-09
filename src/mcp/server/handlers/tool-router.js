@@ -178,6 +178,8 @@ export class ToolRouter {
       'tell': 'Store information in semantic memory (documents, interactions, content)',
       'ask': 'Query semantic memory and generate answers',
       'augment': 'Process and enhance data (concepts, embeddings, memory operations)',
+      'compose': 'Assemble a focused context response from memory and ZPT lens state',
+      'decompose': 'Decompose text into Ragno units, entities, and relationships',
       'zoom': 'Set navigation granularity level',
       'pan': 'Set navigation domain filters',
       'tilt': 'Set navigation perspective style',

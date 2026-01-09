@@ -4,6 +4,7 @@
  */
 
 import { z } from 'zod';
+import { CONTEXT_CONFIG } from '../../../config/preferences.js';
 
 /**
  * Simple Verb Tool Names
@@ -12,6 +13,8 @@ export const SimpleVerbToolNames = {
   tell: 'semem-tell',
   ask: 'semem-ask', 
   augment: 'semem-augment',
+  compose: 'semem-compose',
+  decompose: 'semem-decompose',
   zoom: 'semem-zoom',
   pan: 'semem-pan',
   tilt: 'semem-tilt',
@@ -82,6 +85,37 @@ export const AugmentSchema = z.object({
     dryRun: z.boolean().optional().default(false)
   }).optional().default({})
 }).catchall(z.unknown());
+
+export const ComposeSchema = z.object({
+  query: z.string().min(1, 'Compose query cannot be empty'),
+  context: z.string().optional(),
+  maxResults: z.number().positive().optional().default(CONTEXT_CONFIG.COMPOSE.DEFAULT_MAX_RESULTS),
+  threshold: z.number().min(0).max(1).optional().default(CONTEXT_CONFIG.COMPOSE.DEFAULT_THRESHOLD),
+  maxTokens: z.number().positive().optional().default(CONTEXT_CONFIG.COMPOSE.DEFAULT_MAX_TOKENS),
+  includeSession: z.boolean().optional().default(true),
+  includeMemory: z.boolean().optional().default(true)
+});
+
+export const DecomposeSchema = z.object({
+  content: z.string().optional(),
+  source: z.string().optional(),
+  chunks: z.array(
+    z.object({
+      content: z.string().min(1, 'Chunk content cannot be empty'),
+      source: z.string().optional()
+    })
+  ).optional(),
+  options: z.object({
+    extractRelationships: z.boolean().optional().default(true),
+    generateSummaries: z.boolean().optional().default(true),
+    maxEntitiesPerUnit: z.number().optional().default(CONTEXT_CONFIG.DECOMPOSE.DEFAULT_MAX_ENTITIES_PER_UNIT),
+    minEntityConfidence: z.number().optional()
+  }).optional().default({}),
+  store: z.boolean().optional().default(false)
+}).refine(
+  data => (data.content && data.content.trim().length > 0) || (data.chunks && data.chunks.length > 0),
+  { message: 'Either content or chunks must be provided' }
+);
 
 // ZPT Navigation schemas  
 export const ZoomSchema = z.object({

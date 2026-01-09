@@ -335,6 +335,37 @@ export class ApiService {
   }
 
   /**
+   * COMPOSE - Build a focused context message using the current memory and lens state
+   * @param {Object} params - Compose parameters
+   * @param {string} params.query - Prompt to guide composition
+   * @param {string} params.context - Optional extra context to include
+   * @param {number} params.maxResults - Optional max memory results
+   * @param {number} params.threshold - Optional similarity threshold
+   * @param {number} params.maxTokens - Optional response length cap
+   * @param {boolean} params.includeSession - Include recent session interactions
+   * @param {boolean} params.includeMemory - Include stored memory items
+   * @returns {Promise<Object>} Compose result
+   */
+  async compose({ query, context, maxResults, threshold, maxTokens, includeSession, includeMemory }) {
+    if (!query || !query.trim()) {
+      throw new Error('compose requires a non-empty query');
+    }
+
+    const payload = { query: query.trim() };
+    if (context !== undefined) payload.context = context;
+    if (maxResults !== undefined) payload.maxResults = maxResults;
+    if (threshold !== undefined) payload.threshold = threshold;
+    if (maxTokens !== undefined) payload.maxTokens = maxTokens;
+    if (includeSession !== undefined) payload.includeSession = includeSession;
+    if (includeMemory !== undefined) payload.includeMemory = includeMemory;
+
+    return this.makeRequest('/compose', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+  }
+
+  /**
    * ZOOM - Set abstraction level for navigation
    * @param {Object} params - Zoom parameters
    * @param {string} params.level - Abstraction level: 'entity' | 'unit' | 'text' | 'community' | 'corpus'
